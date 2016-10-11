@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS "repositories_manager_project" ( id_repositories_mana
 CREATE TABLE IF NOT EXISTS "stats" (day DATE PRIMARY KEY, build BIGINT, unit_test BIGINT, testing BIGINT, deployment BIGINT, max_building_worker BIGINT, max_building_pipeline BIGINT);
 CREATE TABLE IF NOT EXISTS "activity" (day DATE, project_id BIGINT, application_id BIGINT, build BIGINT, unit_test BIGINT, testing BIGINT, deployment BIGINT, PRIMARY KEY(day, project_id, application_id));
 
-CREATE TABLE IF NOT EXISTS "warning" (id BIGSERIAL PRIMARY KEY, project_id BIGINT, app_id BIGINT, pip_id BIGINT, env_id BIGINT, action_id BIGINT, warning_id BIGINT);
+CREATE TABLE IF NOT EXISTS "warning" (id BIGSERIAL PRIMARY KEY, project_id BIGINT, app_id BIGINT, pip_id BIGINT, env_id BIGINT, action_id BIGINT, warning_id BIGINT, message_param JSONB);
 
 GRANT SELECT, INSERT, UPDATE, DELETE on ALL TABLES IN SCHEMA public TO "cds";
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "cds";
