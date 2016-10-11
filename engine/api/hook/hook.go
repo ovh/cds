@@ -1,0 +1,500 @@
+package hook
+
+import (
+	"crypto/rand"
+	"database/sql"
+	"encoding/hex"
+	"fmt"
+	"net/url"
+	"regexp"
+	"strings"
+
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk"
+	"github.com/spf13/viper"
+)
+
+//ReceivedHook is a temporary struct to manage received hook
+type ReceivedHook struct {
+	URL        url.URL
+	Data       []byte
+	ProjectKey string
+	Repository string
+	Branch     string
+	Hash       string
+	Author     string
+	Message    string
+	UID        string
+}
+
+// HookLink format in stash/bitbucket
+const HookLink = "/hook?uid=%s&project=%s&name=%s&branch=${refChange.name}&hash=${refChange.toHash}&message=${refChange.type}&author=${user.name}"
+
+// InsertReceivedHook insert raw data received from public handler in database
+func InsertReceivedHook(db *sql.DB, link string, data string) error {
+	query := `INSERT INTO received_hook (link, data) VALUES ($1, $2)`
+
+	_, err := db.Exec(query, link, data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateHook update the given hook
+func UpdateHook(db *sql.DB, h sdk.Hook) error {
+	query := `UPDATE hook set pipeline_id=$1, kind=$2, host=$3, project=$4, repository=$5, application_id=$6, enabled=$7 WHERE id=$8`
+
+	res, err := db.Exec(query, h.Pipeline.ID, h.Kind, h.Host, h.Project, h.Repository, h.ApplicationID, h.Enabled, h.ID)
+	if err != nil {
+		return err
+	}
+	nbRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if nbRows != 1 {
+		return sdk.ErrNoHook
+	}
+	return nil
+}
+
+// InsertHook add link between git repository and pipeline in database
+func InsertHook(db database.QueryExecuter, h *sdk.Hook) error {
+	query := `INSERT INTO hook (pipeline_id, kind, host, project, repository, application_id,enabled, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+
+	// Generate UID
+	uid, err := generateHash()
+	if err != nil {
+		return err
+	}
+	h.UID = uid
+
+	err = db.QueryRow(query, h.Pipeline.ID, h.Kind, h.Host, h.Project, h.Repository, h.ApplicationID, h.Enabled, h.UID).Scan(&h.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// LoadHook loads a single hook
+func LoadHook(db *sql.DB, id int64) (sdk.Hook, error) {
+	h := sdk.Hook{ID: id}
+	query := `SELECT application_id, pipeline_id, kind, host, project, repository FROM hook WHERE id = $1`
+
+	err := db.QueryRow(query, id).Scan(&h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository)
+	if err != nil {
+		return h, err
+	}
+
+	return h, nil
+}
+
+//FindHook loads a hook from its attributes
+func FindHook(db database.Querier, applicationID, pipelineID int64, kind, host, project, repository string) (sdk.Hook, error) {
+	h := sdk.Hook{}
+	query := `SELECT 	id, application_id, pipeline_id, kind, host, project, repository, uid
+						FROM 		hook
+						WHERE  	application_id=$1
+						AND 		pipeline_id=$2
+						AND 		kind=$3
+						AND 		host=$4
+						AND 		project=$5
+						AND 		repository=$6`
+
+	err := db.QueryRow(query, applicationID, pipelineID, kind, host, project, repository).Scan(&h.ID, &h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.UID)
+	if err != nil {
+		return h, err
+	}
+	return h, nil
+}
+
+// DeleteHook removes hook from database
+func DeleteHook(db database.QueryExecuter, id int64) error {
+	query := `DELETE FROM hook WHERE id = $1`
+
+	res, err := db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	nbRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if nbRows != 1 {
+		return sdk.ErrNoHook
+	}
+
+	return nil
+}
+
+// LoadApplicationHooks will load all hooks related to given application
+func LoadApplicationHooks(db database.Querier, applicationID int64) ([]sdk.Hook, error) {
+	hooks := []sdk.Hook{}
+	query := `SELECT hook.id, hook.kind, hook.host, hook.project, hook.repository, hook.enabled, hook.uid, pipeline.id, pipeline.name
+		  FROM hook
+		  JOIN pipeline ON pipeline.id = hook.pipeline_id
+		  WHERE application_id= $1
+		  LIMIT 200`
+
+	rows, err := db.Query(query, applicationID)
+	if err != nil {
+		return hooks, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var h sdk.Hook
+		h.ApplicationID = applicationID
+		err = rows.Scan(&h.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.Enabled, &h.UID, &h.Pipeline.ID, &h.Pipeline.Name)
+		if err != nil {
+			return hooks, err
+		}
+		link := viper.GetString("api_url") + HookLink
+		h.Link = fmt.Sprintf(link, h.UID, h.Project, h.Repository)
+		hooks = append(hooks, h)
+	}
+
+	return hooks, nil
+}
+
+// LoadPipelineHooks will load all hooks related to given pipeline
+func LoadPipelineHooks(db *sql.DB, pipelineID int64, applicationID int64) ([]sdk.Hook, error) {
+	query := `SELECT id, kind, host, project, repository, uid FROM hook WHERE pipeline_id = $1 AND application_id= $2`
+
+	rows, err := db.Query(query, pipelineID, applicationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var hooks []sdk.Hook
+	for rows.Next() {
+		var h sdk.Hook
+		h.Pipeline.ID = pipelineID
+		h.ApplicationID = applicationID
+		err = rows.Scan(&h.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.UID)
+		if err != nil {
+			return nil, err
+		}
+		hooks = append(hooks, h)
+	}
+
+	return hooks, nil
+}
+
+// LoadHooks related to given repository
+func LoadHooks(db *sql.DB, project string, repository string) ([]sdk.Hook, error) {
+	query := `SELECT id, pipeline_id, application_id, kind, host, enabled, uid FROM hook WHERE project = $1 AND repository = $2`
+
+	rows, err := db.Query(query, project, repository)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var hooks []sdk.Hook
+	for rows.Next() {
+		var h sdk.Hook
+		h.Project = project
+		h.Repository = repository
+		err = rows.Scan(&h.ID, &h.Pipeline.ID, &h.ApplicationID, &h.Kind, &h.Host, &h.Enabled, &h.UID)
+		if err != nil {
+			return nil, err
+		}
+		hooks = append(hooks, h)
+	}
+
+	return hooks, nil
+}
+
+// TriggerPipeline linked to received hook
+func TriggerPipeline(tx *sql.Tx, h sdk.Hook, branch string, hash string, author string, p *sdk.Pipeline, projectData *sdk.Project) (bool, error) {
+
+	// Create pipeline args
+	var args []sdk.Parameter
+	args = append(args, sdk.Parameter{
+		Name:  "git.branch",
+		Value: branch,
+	})
+	args = append(args, sdk.Parameter{
+		Name:  "git.hash",
+		Value: hash,
+	})
+	args = append(args, sdk.Parameter{
+		Name:  "git.author",
+		Value: author,
+	})
+	args = append(args, sdk.Parameter{
+		Name:  "git.repository",
+		Value: h.Repository,
+	})
+	args = append(args, sdk.Parameter{
+		Name:  "git.project",
+		Value: h.Project,
+	})
+	args = append(args, sdk.Parameter{
+		Name:  "git.url",
+		Value: fmt.Sprintf("ssh://git@%s:7999/%s/%s.git", h.Host, h.Project, h.Repository),
+	})
+
+	// Load pipeline Argument
+	parameters, err := pipeline.GetAllParametersInPipeline(tx, p.ID)
+	if err != nil {
+		return false, err
+	}
+	p.Parameter = parameters
+
+	// get application
+	a, err := application.LoadApplicationByID(tx, h.ApplicationID)
+	if err != nil {
+		return false, err
+	}
+	applicationPipelineArgs, err := application.GetAllPipelineParam(tx, h.ApplicationID, p.ID)
+	if err != nil {
+		return false, err
+	}
+
+	trigger := sdk.PipelineBuildTrigger{
+		ManualTrigger:    false,
+		VCSChangesBranch: branch,
+		VCSChangesHash:   hash,
+		VCSChangesAuthor: author,
+	}
+
+	// Get commit message to check if we have to skip the build
+	if a.RepositoriesManager != nil {
+		if b, _ := repositoriesmanager.CheckApplicationIsAttached(tx, a.RepositoriesManager.Name, projectData.Key, a.Name); b && a.RepositoryFullname != "" {
+			//Get the RepositoriesManager Client
+			client, _ := repositoriesmanager.AuthorizedClient(tx, projectData.Key, a.RepositoriesManager.Name)
+			if client != nil {
+				commit, err := client.Commit(a.RepositoryFullname, hash)
+				if err != nil {
+					log.Warning("hook> can't get commit %s from %s on %s : %s", hash, a.RepositoryFullname, a.RepositoriesManager.Name, err)
+				}
+				match, err := regexp.Match(".*\\[ci skip\\].*|.*\\[cd skip\\].*", []byte(commit.Message))
+				if err != nil {
+					log.Warning("hook> Cannot check %s/%s for commit %s by %s : %s (%s)", projectData.Key, a.Name, hash, author, commit.Message, err)
+				}
+				if match {
+					log.Notice("hook> Skipping build of %s/%s for commit %s by %s", projectData.Key, a.Name, hash, author)
+					return false, nil
+				}
+			}
+		} else {
+			log.Debug("Application is not attached (%s %s %s)", a.RepositoriesManager.Name, projectData.Key, a.Name)
+		}
+	}
+
+	// FIXME add possibility to trigger a pipeline on a specific env
+	_, err = pipeline.InsertPipelineBuild(tx, projectData, p, a, applicationPipelineArgs, args, &sdk.DefaultEnv, 0, trigger)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func generateHash() (string, error) {
+	size := 128
+	bs := make([]byte, size)
+	_, err := rand.Read(bs)
+	if err != nil {
+		log.Critical("generateID: rand.Read failed: %s\n", err)
+		return "", err
+	}
+	str := hex.EncodeToString(bs)
+	token := []byte(str)[0:size]
+
+	log.Debug("generateID: new generated id: %s\n", token)
+	return string(token), nil
+}
+
+// DeleteBranchBuilds deletes all builds related to given branch in given applications
+// in pipeline_build and pipeline_history
+func DeleteBranchBuilds(db *sql.DB, hooks []sdk.Hook, branch string) error {
+
+	for i := range hooks {
+		err := deleteBranchBuilds(db, hooks[i].ApplicationID, branch)
+		if err != nil {
+			log.Warning("DeleteBranchBuilds> Cannot delete branch builds for branch %s in %d\n", branch, hooks[i].ApplicationID)
+		}
+	}
+	return nil
+}
+
+func deleteBranchBuilds(db *sql.DB, appID int64, branch string) error {
+	var artIDs []int64
+
+	// Remove artifact and builds from history
+	query := `SELECT build_number, pipeline_id, environment_id
+		FROM pipeline_history WHERE vcs_changes_branch = $1 AND application_id = $2`
+	rows, err := db.Query(query, branch, appID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var pbs []sdk.PipelineBuild
+	for rows.Next() {
+		var pb sdk.PipelineBuild
+		err = rows.Scan(&pb.BuildNumber, &pb.Pipeline.ID, &pb.Environment.ID)
+		if err != nil {
+			return err
+		}
+		pbs = append(pbs, pb)
+	}
+	rows.Close()
+
+	// For each pipeline build in history, load and delete related artifacts
+	query = `SELECT id FROM artifact
+	WHERE build_number = $1
+	AND application_id = $2
+	AND pipeline_id = $3
+	AND environment_id = $4`
+	for _, pb := range pbs {
+		rows, err := db.Query(query, pb.BuildNumber, appID, pb.Pipeline.ID, pb.Environment.ID)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var id int64
+			err = rows.Scan(&id)
+			if err != nil {
+				return err
+			}
+			artIDs = append(artIDs, id)
+		}
+		rows.Close()
+	}
+
+	// Delete all related artifacts
+	for _, id := range artIDs {
+		err := artifact.DeleteArtifact(db, id)
+		if err != nil {
+			log.Warning("deleteBranchBuilds> Cannot delete artifact %d: %s\n", id, err)
+		}
+	}
+
+	// Now delete in pipeline_history
+	query = `DELETE FROM pipeline_history WHERE vcs_changes_branch = $1 AND application_id = $2`
+	_, err = db.Query(query, branch, appID)
+	if err != nil {
+		return err
+	}
+
+	// Now select all related build in pipeline build
+	query = `SELECT id	FROM pipeline_build WHERE vcs_changes_branch = $1 AND application_id = $2`
+	rows, err = db.Query(query, branch, appID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int64
+		err = rows.Scan(&id)
+		if err != nil {
+			return err
+		}
+
+		err = pipeline.DeletePipelineBuild(db, id)
+		if err != nil {
+			log.Warning("deleteBranchBuilds> Cannot delete PipelineBuild %d: %s\n", id, err)
+		}
+	}
+	rows.Close()
+
+	return nil
+}
+
+// CreateHook in CDS db + repo manager webhook
+func CreateHook(tx *sql.Tx, projectKey string, rm *sdk.RepositoriesManager, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
+	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name)
+	if err != nil {
+		log.Warning("addHookOnRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rm.Name, err)
+		return nil, err
+	}
+
+	t := strings.Split(repoFullName, "/")
+	if len(t) != 2 {
+		log.Warning("CreateHook> Wrong repo fullname %s.", repoFullName)
+		return nil, fmt.Errorf("CreateHook> Wrong repo fullname %s.", repoFullName)
+	}
+
+	var h sdk.Hook
+
+	h, err = FindHook(tx, application.ID, pipeline.ID, string(rm.Type), rm.URL, t[0], t[1])
+	if err == sql.ErrNoRows {
+		h = sdk.Hook{
+			Pipeline:      *pipeline,
+			ApplicationID: application.ID,
+			Kind:          string(rm.Type),
+			Host:          rm.URL,
+			Project:       t[0],
+			Repository:    t[1],
+			Enabled:       true,
+		}
+		err = InsertHook(tx, &h)
+		if err != nil {
+			log.Warning("addHookOnRepositoriesManagerHandler> Cannot insert hook: %s", err)
+			return nil, err
+		}
+	} else if err != nil {
+		log.Warning("addHookOnRepositoriesManagerHandler> Cannot get hook: %s", err)
+		return nil, err
+	}
+
+	s := viper.GetString("api_url") + HookLink
+	link := fmt.Sprintf(s, h.UID, t[0], t[1])
+
+	h.Link = link
+
+	err = client.CreateHook(repoFullName, link)
+	if err != nil {
+		log.Warning("addHookOnRepositoriesManagerHandler> Cannot create hook on stash: %s", err)
+		return nil, err
+	}
+	return &h, nil
+}
+
+//Recovery try to recovers hook in case of error
+func Recovery(h ReceivedHook, err error) {
+	log.Debug("hook.Recovery> %s", h.Repository)
+	switch err.(type) {
+	case sdk.Error:
+		log.Notice("hook.Recovery> %s is not handled", h.Repository)
+		return
+	default:
+
+	}
+	switch s := err.Error(); s {
+	case
+		"database not available",
+		"sql: database is closed",
+		"sql: connection returned that was never out",
+		"sql: Transaction has already been committed or rolled back",
+		"sql: statement is closed",
+		"sql: Rows are closed",
+		"sql: no Rows available",
+		"database/sql: internal sentinel error: conn is closed",
+		"database/sql: internal sentinel error: conn is busy":
+		log.Debug("hook.Recovery> Save %s/%s/%s for recover", h.ProjectKey, h.Repository, h.Hash)
+	default:
+		log.Notice("hook.Recovery> %s is not handled", s)
+		return
+	}
+
+	cache.Enqueue("hook:recovery", h)
+
+	return
+}
