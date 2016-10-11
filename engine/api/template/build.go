@@ -16,7 +16,10 @@ import (
 const UglyID = 10000
 
 func applyBuildTemplate(tx *sql.Tx, p *sdk.Project, app *sdk.Application) (*sdk.Pipeline, error) {
-
+	switch app.BuildTemplate.ID {
+	case UglyID:
+		return nil, nil
+	}
 	return nil, sdk.ErrUnknownTemplate
 }
 

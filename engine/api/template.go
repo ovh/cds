@@ -18,8 +18,13 @@ import (
 )
 
 func getBuildTemplates(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-
-	var tpl []sdk.Template
+	tpl := []sdk.Template{
+		sdk.Template{
+			ID:          template.UglyID,
+			Name:        "Void",
+			Description: "Empty template",
+		},
+	}
 	WriteJSON(w, r, tpl, http.StatusOK)
 }
 
