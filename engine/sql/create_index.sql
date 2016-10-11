@@ -89,9 +89,6 @@ select create_unique_index('plugin','IDX_PLUGIN_NAME', 'name');
 -- PROJECT
 select create_unique_index('project','IDX_PROJECT_KEY','projectKey');
 
--- SLA
-select create_index('sla','IDX_SLA_DATE','date');
-
 -- SYSTEM_LOG
 select create_index('system_log','IDX_SYS_LOG_LOGGED','logged');
 
