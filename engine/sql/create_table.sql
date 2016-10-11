@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS "action_requirement" (id BIGSERIAL PRIMARY KEY, actio
 CREATE TABLE IF NOT EXISTS "action_edge" (id BIGSERIAL PRIMARY KEY, parent_id BIGINT, child_id BIGINT, exec_order INT, final boolean not null default false, enabled boolean not null default true);
 CREATE TABLE IF NOT EXISTS "action_edge_parameter" (id BIGSERIAL PRIMARY KEY, action_edge_id BIGINT, name TEXT, type TEXT, value TEXT, description TEXT);
 CREATE TABLE IF NOT EXISTS "action_parameter" (id BIGSERIAL PRIMARY KEY, action_id BIGINT, name TEXT, type TEXT, value TEXT, description TEXT, worker_model_name TEXT);
-CREATE TABLE IF NOT EXISTS "action_build" (id BIGSERIAL PRIMARY KEY, pipeline_action_id INT, args TEXT, status TEXT, pipeline_build_id INT, queued TIMESTAMP WITH TIME ZONE, start TIMESTAMP WITH TIME ZONE, done TIMESTAMP WITH TIME ZONE);
+CREATE TABLE IF NOT EXISTS "action_build" (id BIGSERIAL PRIMARY KEY, pipeline_action_id INT, args TEXT, status TEXT, pipeline_build_id INT, queued TIMESTAMP WITH TIME ZONE, start TIMESTAMP WITH TIME ZONE, done TIMESTAMP WITH TIME ZONE, worker_model_name TEXT);
 CREATE TABLE IF NOT EXISTS "action_audit" (action_id BIGINT, user_id BIGINT, change TEXT, versionned TIMESTAMP WITH TIME ZONE, action_json JSONB);
 
 CREATE TABLE IF NOT EXISTS "artifact" (id BIGSERIAL PRIMARY KEY, name TEXT, tag TEXT, pipeline_id INT, application_id INT, environment_id INT, build_number INT, download_hash TEXT, size BIGINT, perm INT, md5sum TEXT, object_path TEXT);
