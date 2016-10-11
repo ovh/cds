@@ -35,7 +35,7 @@ It will then fetch all permitted actions in the queue and check action requireme
 
 Hatchery is a binary dedicated to spawn and kill worker in accordance with build queue needs.
 
-There is 3 modes for hatcheries:
+There is 5 modes for hatcheries:
 
  * Local (Start workers on a single host)
  * Local Docker (Start worker model instances on a single host)
@@ -61,7 +61,7 @@ Hatchery starts workers on Openstack servers using Openstack Nova.
 
 ### SDK
 
-A Go SDK is available at <>. It provide helper functions for all API handlers, with embedded authentification mechanism.
+A Go SDK is available at github.com/ovh/sdk. It provide helper functions for all API handlers, with embedded authentification mechanism.
 
 ### CLI
 
