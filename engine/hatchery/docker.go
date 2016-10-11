@@ -271,7 +271,7 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) erro
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
 	args = append(args, fmt.Sprintf("--add-host=%s", viper.GetString("docker-add-host")))
 	args = append(args, wm.Image)
-	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo lol && curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker", sdk.Host))
+	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", sdk.Host))
 
 	cmd := exec.Command("docker", args...)
 	//log.Debug("Running %s\n", cmd.Args)

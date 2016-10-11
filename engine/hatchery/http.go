@@ -91,7 +91,7 @@ func (c *HTTPClient) Request(method string, url string, args []byte, mods ...sdk
 			return nil, 0, err
 		}
 		// Avoid the infinite loop
-		nbRetry = nbRetry +1
+		nbRetry = nbRetry + 1
 	}
 
 	var body []byte

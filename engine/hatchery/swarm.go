@@ -45,8 +45,10 @@ func (h *HatcherySwarm) Init() error {
 		h.maxContainers = 10
 	} else {
 		h.maxContainers, err = strconv.Atoi(os.Getenv("MAX_CONTAINER"))
-		log.Critical("Invalid MAX_CONTAINER")
-		return err
+		if err != nil {
+			log.Critical("Invalid MAX_CONTAINER")
+			return err
+		}
 	}
 
 	h.dockerClient, err = docker.NewClientFromEnv()
