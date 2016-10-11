@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS "action_audit" (action_id BIGINT, user_id BIGINT, cha
 
 CREATE TABLE IF NOT EXISTS "artifact" (id BIGSERIAL PRIMARY KEY, name TEXT, tag TEXT, pipeline_id INT, application_id INT, environment_id INT, build_number INT, download_hash TEXT, size BIGINT, perm INT, md5sum TEXT, object_path TEXT);
 
-CREATE TABLE IF NOT EXISTS "application" (id BIGSERIAL PRIMARY KEY, name TEXT, project_id INT, description TEXT, repos_fullname TEXT, repositories_manager_id BIGINT, last_modified TIMESTAMP WITH TIME ZONE DEFAULT  LOCALTIMESTAMP);
+CREATE TABLE IF NOT EXISTS "application" (id BIGSERIAL PRIMARY KEY, name TEXT, project_id INT, description TEXT, repo_fullname TEXT, repositories_manager_id BIGINT, last_modified TIMESTAMP WITH TIME ZONE DEFAULT  LOCALTIMESTAMP);
 CREATE TABLE IF NOT EXISTS "application_group" (application_id INT, group_id INT, role INT, PRIMARY KEY(group_id, application_id));
 CREATE TABLE IF NOT EXISTS "application_pipeline" (id BIGSERIAL PRIMARY KEY, application_id INT, pipeline_id INT, args TEXT, last_modified TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP);
 CREATE TABLE IF NOT EXISTS "application_variable" (id BIGSERIAL, application_id INT, var_name TEXT, var_value TEXT, cipher_value BYTEA, var_type TEXT,PRIMARY KEY(application_id, var_name) );

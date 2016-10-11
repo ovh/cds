@@ -22,7 +22,7 @@ select create_foreign_key('FK_ARTIFACT_ENVIRONMENT', 'artifact', 'environment', 
 
 -- APPLICATION
 select create_foreign_key('FK_APPLICATION_PROJECT', 'application', 'project', 'project_id', 'id');
-select create_foreign_key('FK_APPLICATION_REPOSITORIES_MANAGER', 'application', 'repositories_manager', 'repository_manager_id', 'id');
+select create_foreign_key('FK_APPLICATION_REPOSITORIES_MANAGER', 'application', 'repositories_manager', 'repositories_manager_id', 'id');
 
 -- APPLICATION GROUP
 select create_foreign_key('FK_APPLICATION_GROUP_APPLICATION', 'application_group', 'application', 'application_id', 'id');
