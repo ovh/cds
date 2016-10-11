@@ -135,8 +135,8 @@ select create_foreign_key('FK_HATCHERY_MODEL_HATCHERY_ID', 'hatchery_model', 'ha
 select create_foreign_key('FK_HATCHERY_MODEL_WORKER_MODEL_ID', 'hatchery_model', 'worker_model', 'worker_model_id', 'id');
 
 -- repositories_manager_project
-select create_foreign_key('fk_repositories_manager_project_repositories_manager_id', 'repositories_manager_project', 'repositories_manager', 'id_repositories_manager', 'id')
-select create_foreign_key('fk_repositories_manager_project_project_id', 'repositories_manager_project', 'project', 'id_project', 'id')
+select create_foreign_key('fk_repositories_manager_project_repositories_manager_id', 'repositories_manager_project', 'repositories_manager', 'id_repositories_manager', 'id');
+select create_foreign_key('fk_repositories_manager_project_project_id', 'repositories_manager_project', 'project', 'id_project', 'id');
 
 -- warning
 ALTER TABLE warning ADD CONSTRAINT fk_application FOREIGN KEY (app_id) references application (id) ON delete cascade;
