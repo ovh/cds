@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS "application" (id BIGSERIAL PRIMARY KEY, name TEXT, p
 CREATE TABLE IF NOT EXISTS "application_group" (application_id INT, group_id INT, role INT, PRIMARY KEY(group_id, application_id));
 CREATE TABLE IF NOT EXISTS "application_pipeline" (id BIGSERIAL PRIMARY KEY, application_id INT, pipeline_id INT, args TEXT, last_modified TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP);
 CREATE TABLE IF NOT EXISTS "application_variable" (id BIGSERIAL, application_id INT, var_name TEXT, var_value TEXT, cipher_value BYTEA, var_type TEXT,PRIMARY KEY(application_id, var_name) );
-CREATE TABLE IF NOT EXISTS "application_variable_audit" (id BIGSERIAL PRIMARY KEY, application_id BIGINT, data TEXT, author TEXT);
+CREATE TABLE IF NOT EXISTS "application_variable_audit" (id BIGSERIAL PRIMARY KEY, application_id BIGINT, data TEXT, author TEXT, versionned TIMESTAMP WITH TIME ZONE);
 CREATE TABLE IF NOT EXISTS "application_pipeline_notif" (application_pipeline_id BIGINT, environment_id BIGINT, settings JSONB);
 
 CREATE TABLE IF NOT EXISTS "build_log" (id BIGSERIAL PRIMARY KEY, action_build_id INT, "timestamp" TIMESTAMP WITH TIME ZONE, step TEXT, value TEXT);
