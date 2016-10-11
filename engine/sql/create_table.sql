@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS "received_hook" (id BIGSERIAL PRIMARY KEY, link TEXT,
 CREATE TABLE IF NOT EXISTS "system_log" (id BIGSERIAL PRIMARY KEY, logged TIMESTAMP WITH TIME ZONE, level TEXT, log TEXT);
 CREATE TABLE IF NOT EXISTS "user" (id BIGSERIAL PRIMARY KEY, username TEXT, admin BOOL, data TEXT, auth TEXT, created TIMESTAMP WITH TIME ZONE, origin TEXT);
 
-CREATE TABLE IF NOT EXISTS "user_key" (user_id INT, user_key TEXT);
+CREATE TABLE IF NOT EXISTS "user_key" (user_id INT, user_key TEXT, expiry INT DEFAULT 0);
 
 CREATE TABLE IF NOT EXISTS "user_notification" (id BIGSERIAL PRIMARY KEY, type TEXT, content JSONB, status TEXT, creation_date INT);
 
