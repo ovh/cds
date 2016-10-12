@@ -22,7 +22,7 @@ To get the best out of CDS api though, one should use all compatible third parti
  - Openstack Swift for artifact storage
  - Vault for cipher and app keys
  - SMTP for mail notification
- - SSL for end-to-end crypted communication
+ - SSL for end-to-end encrypted communication
  - Redis for caching
  - LDAP for user management
 
