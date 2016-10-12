@@ -2,6 +2,7 @@
 
 CDS is a pipeline based Continuous Delivery μservice written in Go.
 
+**/!\ This project is under active development.**
 
 ## Documentation
 
