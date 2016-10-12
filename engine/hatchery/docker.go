@@ -109,12 +109,6 @@ func (hd *HatcheryDocker) Refresh() error {
 	}
 
 	for _, ms := range wms {
-		/* TODO: Add model type in model status ffs
-			// if model is not of docker type, ignore it
-		if ms.Type != sdk.Docker {
-			continue
-		}
-		*/
 
 		if ms.CurrentCount == ms.WantedCount {
 			// ok, do nothing
@@ -259,9 +253,10 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) erro
 	}
 	name = wm.Name + "-" + name
 
+	addhost := viper.GetString("docker-add-host")
+
 	var args []string
 	args = append(args, "run", "--rm", "-a", "STDOUT", "-a", "STDERR")
-	//args = append(args, "run")
 	args = append(args, fmt.Sprintf("--name=%s", name))
 	args = append(args, "-e", "CDS_SINGLE_USE=1")
 	args = append(args, "-e", fmt.Sprintf("CDS_API=%s", sdk.Host))
@@ -269,12 +264,14 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) erro
 	args = append(args, "-e", fmt.Sprintf("CDS_KEY=%s", uk))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
-	args = append(args, fmt.Sprintf("--add-host=%s", viper.GetString("docker-add-host")))
+	if addhost != "" {
+		args = append(args, fmt.Sprintf("--add-host=%s", addhost))
+	}
 	args = append(args, wm.Image)
 	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", sdk.Host))
 
 	cmd := exec.Command("docker", args...)
-	//log.Debug("Running %s\n", cmd.Args)
+	log.Debug("Running %s\n", cmd.Args)
 
 	err = cmd.Start()
 	if err != nil {
