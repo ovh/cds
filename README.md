@@ -26,7 +26,7 @@ A Go SDK is available at github.com/ovh/cds/sdk. It provide helper functions for
 
 ### API usage
 
-To start CDS api, the only mandatory dependency is a PostreSQL database dsn and a path to the directory containing other CDS binaries. Ex:
+To start CDS api, the only mandatory dependency is a PostgreSQL database dsn and a path to the directory containing other CDS binaries. Ex:
 
 ```
 $ ./api --db-host=127.0.0.1 --db-user=cds --db-password=XX --download-directory=$GOPATH/bin
