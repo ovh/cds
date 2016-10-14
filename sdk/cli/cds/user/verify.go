@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/sdk"
 	"os"
 	"path"
-	"github.com/ovh/cds/sdk"
 )
 
 type configFile struct {

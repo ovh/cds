@@ -462,7 +462,7 @@ func cloneApplication(db *sql.DB, project *sdk.Project, newApp *sdk.Application,
 		for i := range newApp.Variable {
 			if vToDelete == newApp.Variable[i].Name {
 				newApp.Variable = append(newApp.Variable[:i], newApp.Variable[i+1:]...)
-				break;
+				break
 			}
 		}
 	}

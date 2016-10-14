@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -191,6 +192,13 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 				return
 			}
 		}
+	}
+
+	p.ReposManager, err = repositoriesmanager.LoadAllForProject(db, p.Key)
+	if err != nil {
+		log.Warning("GetProject: Cannot load repos manager for project %s: %s\n", p.Key, err)
+		WriteError(w, r, err)
+		return
 	}
 
 	WriteJSON(w, r, p, http.StatusOK)

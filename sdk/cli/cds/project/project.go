@@ -1,9 +1,9 @@
 package project
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/ovh/cds/sdk/cli/cds/project/group"
 	"github.com/ovh/cds/sdk/cli/cds/project/repositoriesmanager"
+	"github.com/spf13/cobra"
 )
 
 func init() {

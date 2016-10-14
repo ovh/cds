@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/ovh/cds/sdk"
+	"github.com/spf13/cobra"
 )
 
 func copyTriggerCmd() *cobra.Command {

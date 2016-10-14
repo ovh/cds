@@ -10,16 +10,17 @@ import (
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID            int64             `json:"-"`
-	Key           string            `json:"key"`
-	Name          string            `json:"name"`
-	Pipelines     []Pipeline        `json:"pipelines,omitempty"`
-	Applications  []Application     `json:"applications,omitempty"`
-	ProjectGroups []GroupPermission `json:"groups,omitempty"`
-	Variable      []Variable        `json:"variables,omitempty"`
-	Environments  []Environment     `json:"environments,omitempty"`
-	Permission    int               `json:"permission"`
-	LastModified  int64             `json:"last_modified"`
+	ID            int64                 `json:"-"`
+	Key           string                `json:"key"`
+	Name          string                `json:"name"`
+	Pipelines     []Pipeline            `json:"pipelines,omitempty"`
+	Applications  []Application         `json:"applications,omitempty"`
+	ProjectGroups []GroupPermission     `json:"groups,omitempty"`
+	Variable      []Variable            `json:"variables,omitempty"`
+	Environments  []Environment         `json:"environments,omitempty"`
+	Permission    int                   `json:"permission"`
+	LastModified  int64                 `json:"last_modified"`
+	ReposManager  []RepositoriesManager `json:"repositories_manager"`
 }
 
 //ProjectLastUpdates update times of project, application and pipelines

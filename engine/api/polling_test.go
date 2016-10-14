@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/database"
@@ -23,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	test "github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 func testfindLinkedProject(t *testing.T, db *sql.DB) (*sdk.Project, *sdk.RepositoriesManager) {

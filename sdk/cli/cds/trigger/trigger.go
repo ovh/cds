@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/ovh/cds/sdk"
+	"github.com/spf13/cobra"
 )
 
 // Cmd for pipeline operation

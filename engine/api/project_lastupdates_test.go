@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
@@ -19,6 +18,7 @@ import (
 	test "github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 func deleteUser(t *testing.T, db *sql.DB, u *sdk.User, g *sdk.Group) error {
