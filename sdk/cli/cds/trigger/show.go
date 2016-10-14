@@ -5,8 +5,8 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/spf13/cobra"
 	"github.com/ovh/cds/sdk"
+	"github.com/spf13/cobra"
 )
 
 func showTriggerCmd() *cobra.Command {

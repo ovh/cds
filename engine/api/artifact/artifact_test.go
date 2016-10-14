@@ -3,8 +3,8 @@ package artifact
 import (
 	"testing"
 
-	"github.com/proullon/ramsql/engine/log"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/proullon/ramsql/engine/log"
 )
 
 func TestCreateBuiltinArtifactActions(t *testing.T) {

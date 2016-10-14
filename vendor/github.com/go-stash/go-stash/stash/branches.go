@@ -17,9 +17,9 @@ type BranchResource struct {
 }
 
 type BranchResponse struct {
-	Values        []Branch `json:"values"`
-	Size          int    `json:"size"`
-	IsLastPage    bool   `json:"isLastPage"`
+	Values     []Branch `json:"values"`
+	Size       int      `json:"size"`
+	IsLastPage bool     `json:"isLastPage"`
 }
 
 // List list of branches for repo
