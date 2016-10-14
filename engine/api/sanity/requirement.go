@@ -129,6 +129,10 @@ func checkNoWorkerModelMatchRequirement(db database.Querier, proj string, pip st
 	var warns []sdk.Warning
 	areqs := a.Requirements
 
+	if len(a.Requirements) == 0 {
+		return warns, nil
+	}
+
 	// Check all binary requirement are present in at least one model
 	validModel := false
 	for _, wm := range wms {
