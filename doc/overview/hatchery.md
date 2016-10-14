@@ -16,7 +16,7 @@ Hatchery starts workers directly as local process.
 
 ## Docker mode
 
-Hatchery starts workers inside docker containers on the same host.
+Hatchery starts workers inside docker containers on the same host. Setup tutorial [here](/doc/tutorials/first-hatchery.md)
 
 ## Marathon mode
 
