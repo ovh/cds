@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -48,8 +47,8 @@ var (
 
 var cmd = &cobra.Command{
 	Use:   "hatchery",
-	Short: "CDS Hatchery",
-	Run:   func(cmd *cobra.Command, args []string) {},
+	Short: "hatchery --mode=<mode> --api=<cds.domain> --cds-user=<cds.user> --cds-password=<cds.password>",
+	Run:   hatcheryCmd,
 }
 
 func init() {
@@ -57,21 +56,30 @@ func init() {
 	viper.SetEnvPrefix("hatchery")
 	viper.AutomaticEnv()
 
-	flags.String("mode", "", "Hatchery mode : local, docker, mesos")
+	flags.String("mode", "", "Hatchery mode : local, docker, mesos, swarm, openstack")
 	viper.BindPFlag("mode", flags.Lookup("mode"))
 
 	flags.String("docker-add-host", "", "Start worker with a custom host-to-IP mapping (host:ip)")
 	viper.BindPFlag("docker-add-host", flags.Lookup("docker-add-host"))
 
+	flags.String("api", "", "CDS api endpoint")
+	viper.BindPFlag("api", flags.Lookup("api"))
+
+	flags.String("cds-user", "", "CDS user. Hatchery will use its permissions")
+	viper.BindPFlag("cds-user", flags.Lookup("cds-user"))
+
+	flags.String("cds-password", "", "CDS user password")
+	viper.BindPFlag("cds-password", flags.Lookup("cds-password"))
+
 	flags.Int("provision", 0, "Allowed worker model provisioning")
 	viper.BindPFlag("provision", flags.Lookup("provision"))
+
+	flags.Int("max-worker", 10, "Maximum simultaenous worker allowed")
+	viper.BindPFlag("max-worker", flags.Lookup("max-worker"))
 }
 
-func main() {
-	log.SetLevel(log.NoticeLevel)
-
-	cmd.Execute()
-	h := parseConfig()
+func hatcheryCmd(cmd *cobra.Command, args []string) {
+	h := parseConfig(cmd)
 
 	if err := h.Init(); err != nil {
 		log.Critical("Init error: %s\n", err)
@@ -86,6 +94,13 @@ func main() {
 			log.Warning("Error: %s\n", err)
 		}
 	}
+
+}
+
+func main() {
+	log.SetLevel(log.NoticeLevel)
+
+	cmd.Execute()
 }
 
 func hatcheryRoutine(h HatcheryMode) error {
@@ -183,38 +198,11 @@ func killWorker(h HatcheryMode, model *sdk.Model) error {
 	return nil
 }
 
-func parseConfig() HatcheryMode {
-	hatcheryMode = os.Getenv("HATCHERY_MODE")
+func parseConfig(cmd *cobra.Command) HatcheryMode {
+	hatcheryMode = viper.GetString("mode")
 	if hatcheryMode == "" {
-		sdk.Exit("HATCHERY_MODE not provided, aborting.\n")
+		sdk.Exit("Hatchery mode not provided. See usage:\n%s\n", cmd.Short)
 	}
-
-	maxWorker = 90
-	maxS := os.Getenv("CDS_MAX_WORKER")
-	if maxS != "" {
-		maxI, err := strconv.Atoi(maxS)
-		if err != nil {
-			sdk.Exit("CDS_MAX_WORKER is not a valid integer, aborting.\n")
-		}
-		maxWorker = maxI
-	}
-
-	if api = os.Getenv("CDS_API"); api == "" {
-		sdk.Exit("CDS_API not provided, aborting.\n")
-	}
-
-	if os.Getenv("CDS_USER") == "" {
-		sdk.Exit("CDS_USER not provided, aborting.\n")
-	}
-
-	if os.Getenv("CDS_PASSWORD") == "" && os.Getenv("CDS_TOKEN") == "" {
-		sdk.Exit("CDS_PASSWORD or CDS_TOKEN not provided, aborting\n")
-	}
-
-	client = NewHTTPClient(os.Getenv("CDS_API"), os.Getenv("CDS_USER"), os.Getenv("CDS_PASSWORD"), os.Getenv("CDS_TOKEN"))
-	sdk.SetHTTPClient(client)
-	sdk.Options(os.Getenv("CDS_API"), os.Getenv("CDS_USER"), os.Getenv("CDS_PASSWORD"), os.Getenv("CDS_TOKEN"))
-
 	var h HatcheryMode
 	switch hatcheryMode {
 	case LocalMode:
@@ -230,6 +218,34 @@ func parseConfig() HatcheryMode {
 	default:
 		sdk.Exit("Unknown hatchery mode, aborting\n")
 	}
+
+	maxWorker = viper.GetInt("max-worker")
+
+	if api = viper.GetString("api"); api == "" {
+		sdk.Exit("CDS api endpoint not provided. See usage:\n%s\n", cmd.Short)
+	}
+
+	usr := viper.GetString("cds-user")
+	passwd := viper.GetString("cds-password")
+	token := os.Getenv("CDS_TOKEN")
+	if usr == "" && passwd == "" && token == "" {
+		sdk.Exit("Authentification not provided. See usage:\n%s\n", cmd.Short)
+	}
+
+	// legacy
+	if e := os.Getenv("CDS_API"); e != "" {
+		api = e
+	}
+	if e := os.Getenv("CDS_USER"); e != "" {
+		usr = e
+	}
+	if e := os.Getenv("CDS_PASSWORD"); e != "" {
+		passwd = e
+	}
+
+	client = NewHTTPClient(api, usr, passwd, token)
+	sdk.SetHTTPClient(client)
+	sdk.Options(api, usr, passwd, token)
 
 	h.ParseConfig()
 	return h

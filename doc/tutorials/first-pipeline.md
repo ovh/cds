@@ -71,6 +71,8 @@ DATE                       ACTION                     LOG
 0001-01-01 00:00:00        SYSTEM                     Build finished with status: Success
 ```
 
+Your pipeline does not start ? Try to [setup a docker hatchery](/doc/tutorial/first-hatchery.md)
+
 ### Cleanup
 
 Delete everything with the cli
