@@ -32,7 +32,7 @@ To start CDS api, the only mandatory dependency is a PostgreSQL database dsn and
 $ ./api --db-host=127.0.0.1 --db-user=cds --db-password=XX --download-directory=$GOPATH/bin
 ```
 
-To get the best out of CDS api though, one should use all compatible third parties to ensure maximum security and availability:
+To get the best out of CDS api though, one should use all compatible third partie softwares to ensure maximum security and availability:
  - Openstack Swift for artifact storage
  - Vault for cipher and app keys
  - SMTP for mail notification
