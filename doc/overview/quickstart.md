@@ -23,8 +23,3 @@ Harness the power of continuous build, test and deployment. Check everything in 
 
 ![organisation](/doc/img/workflow-view.png)
 
-## Step 4. Go further
-
-Things to try:
-
- * Setup your own [worker](/doc/overview/worker.md) ([tuto](/doc/tutorials/setup-worker.md))
