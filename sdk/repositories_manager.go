@@ -138,8 +138,8 @@ func ConnectReposManagerCallback(key, name, requestToken, verifier string) (stri
 
 //DisconnectReposManager removes access token for the project
 func DisconnectReposManager(key, name string) error {
-	uri := fmt.Sprintf("/project/%s/repositories_manager/%s/unauthorize", key, name)
-	_, code, err := Request("POST", uri, nil)
+	uri := fmt.Sprintf("/project/%s/repositories_manager/%s", key, name)
+	_, code, err := Request("DELETE", uri, nil)
 	if err != nil {
 		return err
 	}

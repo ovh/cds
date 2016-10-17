@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
@@ -101,9 +103,12 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *sq
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
+
 	//Load the repositories manager from the DB
 	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	//If we don't find anyl repositories manager for the project, let's insert it
+	var lastModified time.Time
+
+	//If we don't find any repositories manager for the project, let's insert it
 	if err == sql.ErrNoRows {
 		var e error
 		rm, e = repositoriesmanager.LoadByName(db, rmName)
@@ -113,8 +118,24 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *sq
 			return
 		}
 
-		if e := repositoriesmanager.InsertForProject(db, rm, projectKey); e != nil {
-			log.Warning("repositoriesManagerAuthorize> error while inserting repositories manager for project %s\n", e)
+		tx, err := db.Begin()
+		if err != nil {
+			log.Warning("repositoriesManagerAuthorize> Cannot start transaction %s\n", err)
+			WriteError(w, r, e)
+			return
+		}
+		defer tx.Rollback()
+
+		lastModified, e = repositoriesmanager.InsertForProject(tx, rm, projectKey)
+		if e != nil {
+			log.Warning("repositoriesManagerAuthorize> error while inserting repositories manager for project %s: %s\n", projectKey, e)
+			WriteError(w, r, e)
+			return
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			log.Warning("repositoriesManagerAuthorize> Cannot commit transaction %s\n", err)
 			WriteError(w, r, e)
 			return
 		}
@@ -134,6 +155,7 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *sq
 
 	data := map[string]string{
 		"project_key":          projectKey,
+		"last_modified":        strconv.FormatInt(lastModified.Unix(), 10),
 		"repositories_manager": rmName,
 		"url":           url,
 		"request_token": token,
@@ -204,10 +226,10 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
-	//Load the repositories manager from the DB
+
 	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
 	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> error %s\n", err)
+		log.Warning("repositoriesManagerAuthorizeCallback> Cannot find repository manager %s for project %s\n", rmName, projectKey)
 		WriteError(w, r, sdk.ErrNoReposManager)
 		return
 	}
@@ -260,25 +282,75 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	p, err := project.LoadProject(db, projectKey, c.User)
+	if err != nil {
+		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load project %s: %s\n", projectKey, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	p.ReposManager, err = repositoriesmanager.LoadAllForProject(db, projectKey)
+	if err != nil {
+		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load repositories manager for project %s: %s\n", projectKey, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func repositoriesManagerUnauthorize(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
-	//Load the repositories manager from the DB
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
+
+	p, err := project.LoadProject(db, projectKey, c.User)
 	if err != nil {
-		log.Warning("repositoriesManagerUnauthorize> error loading %s-%s: %s\n", projectKey, rmName, err)
-		WriteError(w, r, sdk.ErrNoReposManager)
-		return
-	}
-	if err := repositoriesmanager.DeleteForProject(db, rm, projectKey); err != nil {
-		log.Warning("repositoriesManagerUnauthorize> error deleting %s-%s: %s\n", projectKey, rmName, err)
+		log.Warning("deleteRepositoriesManagerHandler> Cannot load project %s: %s\n", projectKey, err)
 		WriteError(w, r, err)
 		return
 	}
+
+	//Load the repositories manager from the DB
+	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
+	if err != nil {
+		log.Warning("deleteRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
+		WriteError(w, r, sdk.ErrNoReposManager)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("deleteRepositoriesManagerHandler> Cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := repositoriesmanager.DeleteForProject(tx, rm, p); err != nil {
+		log.Warning("deleteRepositoriesManagerHandler> error deleting %s-%s: %s\n", projectKey, rmName, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Warning("deleteRepositoriesManagerHandler> Cannot commit transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	p.ReposManager, err = repositoriesmanager.LoadAllForProject(db, p.Key)
+	if err != nil {
+		log.Warning("deleteRepositoriesManagerHandler> Cannot load repos manager for project %s: %s\n", p.Key, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
+
 }
 
 func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
@@ -169,7 +170,8 @@ func Update(db *sql.DB, rm *sdk.RepositoriesManager) error {
 }
 
 //InsertForProject associates a repositories manager with a project
-func InsertForProject(db *sql.DB, rm *sdk.RepositoriesManager, projectKey string) error {
+func InsertForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, projectKey string) (time.Time, error) {
+	var lastModified time.Time
 	query := `INSERT INTO
 							repositories_manager_project (id_repositories_manager, id_project)
 						VALUES (
@@ -179,30 +181,30 @@ func InsertForProject(db *sql.DB, rm *sdk.RepositoriesManager, projectKey string
 
 	_, err := db.Exec(query, rm.ID, projectKey)
 	if err != nil {
-		return err
+		return lastModified, err
 	}
 	// Update project
 	query = `
 		UPDATE project 
 		SET last_modified = current_timestamp
-		WHERE projectkey = $1
+		WHERE projectkey = $1 RETURNING last_modified
 	`
-	if _, err = db.Exec(query, projectKey); err != nil {
-		return err
+	if err = db.QueryRow(query, projectKey).Scan(&lastModified); err != nil {
+		return lastModified, err
 	}
-	return nil
+	return lastModified, nil
 }
 
 //DeleteForProject removes association between  a repositories manager and a project
 //it deletes the corresponding line in repositories_manager_project
-func DeleteForProject(db *sql.DB, rm *sdk.RepositoriesManager, projectKey string) error {
+func DeleteForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, project *sdk.Project) error {
 	query := `DELETE 	FROM  repositories_manager_project
 						WHERE 	id_repositories_manager = $1
 						AND 		id_project IN (
 							select id from project where projectkey = $2
 						)`
 
-	_, err := db.Exec(query, rm.ID, projectKey)
+	_, err := db.Exec(query, rm.ID, project.Key)
 	if err != nil {
 		return err
 	}
@@ -210,9 +212,9 @@ func DeleteForProject(db *sql.DB, rm *sdk.RepositoriesManager, projectKey string
 	query = `
 		UPDATE project 
 		SET last_modified = current_timestamp
-		WHERE projectkey = $1
+		WHERE projectkey = $1 RETURNING last_modified
 	`
-	if _, err = db.Exec(query, projectKey); err != nil {
+	if err = db.QueryRow(query, project.Key).Scan(&project.LastModified); err != nil {
 		return err
 	}
 	return nil
