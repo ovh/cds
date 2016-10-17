@@ -361,7 +361,7 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/repositories_manager", GET(getRepositoriesManagerForProjectHandler))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize", POST(repositoriesManagerAuthorize))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/callback", POST(repositoriesManagerAuthorizeCallback))
-	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/unauthorize", POST(repositoriesManagerUnauthorize))
+	router.Handle("/project/{permProjectKey}/repositories_manager/{name}", DELETE(deleteRepositoriesManagerHandler))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo", GET(getRepoFromRepositoriesManagerHandler))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo/commits", GET(getCommitsHandler))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", GET(getReposFromRepositoriesManagerHandler))
