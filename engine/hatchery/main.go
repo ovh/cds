@@ -227,25 +227,14 @@ func parseConfig(cmd *cobra.Command) HatcheryMode {
 	}
 
 	uk = viper.GetString("token")
-
-	token := os.Getenv("CDS_TOKEN")
-	if token != "" && uk == "" {
-		uk = token
-	}
-
-	if token == "" && uk == "" {
+	if uk == "" {
 		sdk.Exit("Worker token not provided. See usage:\n%s\n", cmd.Short)
 	}
 
-	// legacy
-	if e := os.Getenv("CDS_API"); e != "" {
-		api = e
-	}
-
 	var usr, passwd string
-	client = NewHTTPClient(api, usr, passwd, token)
+	client = NewHTTPClient(api, usr, passwd, uk)
 	sdk.SetHTTPClient(client)
-	sdk.Options(api, usr, passwd, token)
+	sdk.Options(api, usr, passwd, uk)
 
 	h.ParseConfig()
 	return h

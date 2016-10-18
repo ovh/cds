@@ -205,46 +205,6 @@ func generateTokenHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	WriteJSON(w, r, s, http.StatusOK)
 }
 
-/*
-func generateUserKeyHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	vars := mux.Vars(r)
-	e := vars["expiration"]
-
-	if c.User == nil {
-		WriteError(w, r, sdk.ErrUnauthorized)
-		return
-	}
-
-	exp, err := sdk.ExpirationFromString(e)
-	if err != nil {
-		log.Warning("generateUserKeyHandler> '%s' -> %s\n", e, err)
-		WriteError(w, r, err)
-		return
-	}
-
-	key, err := worker.GenerateKey()
-	if err != nil {
-		log.Warning("generateUserKeyHandler> key generation failed: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	err = worker.InsertUserKey(db, c.User.ID, key, exp)
-	if err != nil {
-		log.Warning("generateUserKeyHandler> cannot insert new key: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	s := struct {
-		Key string `json:"key"`
-	}{
-		Key: key,
-	}
-	WriteJSON(w, r, s, http.StatusOK)
-}
-*/
-
 func addWorkerModel(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 
 	if !c.User.Admin {

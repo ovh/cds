@@ -556,11 +556,11 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 
 	var queue []sdk.ActionBuild
 	var err error
-	// LEGACY
-	if c.User != nil && c.User.ID != 0 {
-		queue, err = build.LoadUserWaitingQueue(db, c.User)
-	} else {
+	switch c.Agent {
+	case sdk.HatcheryAgent, sdk.WorkerAgent:
 		queue, err = build.LoadGroupWaitingQueue(db, c.Worker.GroupID)
+	default:
+		queue, err = build.LoadUserWaitingQueue(db, c.User)
 	}
 
 	if log.IsDebug() {
