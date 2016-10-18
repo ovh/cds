@@ -114,11 +114,12 @@ type Log struct {
 
 //SendLog send logs to CDS engine for the current
 func SendLog(a IAction, step, format string, i ...interface{}) error {
+	if a == nil {
+		//If action is nil: do nothing
+		return nil
+	}
 	Trace.Printf(format+"\n", i)
 
-	if a == nil {
-		return errors.New("CDS Action should not be nil")
-	}
 	s := fmt.Sprintf(format, i...)
 	l := Log{
 		ActionID: a.ID(),
