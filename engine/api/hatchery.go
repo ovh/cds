@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -30,7 +31,15 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		WriteError(w, r, sdk.ErrUnknownError)
 		return
 	}
-	hatch.OwnerID = c.User.ID
+
+	// Load token
+	tk, err := worker.LoadToken(db, hatch.UID)
+	if err != nil {
+		log.Warning("registerHatchery: Invalid token> %s\n", err)
+		WriteError(w, r, sdk.ErrUnauthorized)
+		return
+	}
+	hatch.GroupID = tk.GroupID
 
 	err = hatchery.InsertHatchery(db, &hatch)
 	if err != nil {

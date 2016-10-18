@@ -7,9 +7,17 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+)
+
+var (
+	modelCapabilities       map[int64][]sdk.Requirement
+	modelCapaMutex          sync.RWMutex
+	actionRequirements      map[int64][]sdk.Requirement
+	actionRequirementsMutex sync.RWMutex
 )
 
 func logTime(name string, then time.Time) {
@@ -20,16 +28,70 @@ func logTime(name string, then time.Time) {
 	}
 }
 
-// loadWorkerModelStatus loads from database the number of worker deployed for each model
-func loadWorkerModelStatus(db *sql.DB, userID int64) ([]sdk.ModelStatus, error) {
+func loadWorkerModelStatus(db *sql.DB, c *context.Context) ([]sdk.ModelStatus, error) {
 	defer logTime("loadWorkerModelStatus", time.Now())
 
+	switch c.Agent {
+	case sdk.HatcheryAgent:
+		return loadWorkerModelStatusForGroup(db, c.User.Groups[0].ID)
+	default:
+		return loadWorkerModelStatusForUser(db, c.User.ID)
+	}
+}
+
+func loadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus, error) {
 	query := `
-	SELECT worker_model.id, worker_model.name, COALESCE(waiting.count, 0) as waiting, COALESCE(building.count,0) as building FROM worker_model
-	LEFT JOIN LATERAL (SELECT model, COUNT(id) as count FROM worker WHERE worker.status = 'Waiting' AND worker.model = worker_model.id AND worker.owner_id = $1 GROUP BY model) AS waiting ON waiting.model = worker_model.id
-	LEFT JOIN LATERAL (SELECT model, COUNT(id) as count FROM worker WHERE worker.status = 'Building' AND worker.model = worker_model.id AND worker.owner_id = $1 GROUP BY model) AS building ON building.model = worker_model.id
-	ORDER BY worker_model.name ASC;
-	`
+SELECT worker_model.id, worker_model.name, COALESCE(waiting.count, 0) as waiting, COALESCE(building.count,0) as building FROM worker_model
+	LEFT JOIN LATERAL (SELECT model, COUNT(worker.id) as count FROM worker
+		WHERE worker.group_id = $1 AND worker.status = 'Waiting'
+		AND worker.model = worker_model.id
+		GROUP BY model) AS waiting ON waiting.model = worker_model.id
+	LEFT JOIN LATERAL (SELECT model, COUNT(worker.id) as count FROM worker
+		WHERE worker.group_id = $1 AND worker.status = 'Building'
+		AND worker.model = worker_model.id
+		GROUP BY model) AS building ON building.model = worker_model.id
+ORDER BY worker_model.name ASC;
+`
+	rows, err := db.Query(query, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var status []sdk.ModelStatus
+	for rows.Next() {
+		var ms sdk.ModelStatus
+		err := rows.Scan(&ms.ModelID, &ms.ModelName, &ms.CurrentCount, &ms.BuildingCount)
+		if err != nil {
+			return nil, err
+		}
+		status = append(status, ms)
+	}
+
+	return status, nil
+
+}
+
+// loadWorkerModelStatus loads from database the number of worker deployed for each model
+// start with group permissions calling user has access to.
+func loadWorkerModelStatusForUser(db *sql.DB, userID int64) ([]sdk.ModelStatus, error) {
+
+	query := `
+SELECT worker_model.id, worker_model.name, COALESCE(waiting.count, 0) as waiting, COALESCE(building.count,0) as building FROM worker_model
+	LEFT JOIN LATERAL (SELECT model, COUNT(worker.id) as count FROM worker
+		JOIN "group" ON "group".id = worker.group_id
+		JOIN group_user ON "group".id = group_user.group_id
+		WHERE group_user.user_id = $1 AND worker.status = 'Waiting'
+		AND worker.model = worker_model.id
+		GROUP BY model) AS waiting ON waiting.model = worker_model.id
+	LEFT JOIN LATERAL (SELECT model, COUNT(worker.id) as count FROM worker
+		JOIN "group" ON "group".id = worker.group_id
+		JOIN group_user ON "group".id = group_user.group_id
+		WHERE group_user.user_id = $1 AND worker.status = 'Building'
+		AND worker.model = worker_model.id
+		GROUP BY model) AS building ON building.model = worker_model.id
+ORDER BY worker_model.name ASC;
+`
 
 	rows, err := db.Query(query, userID)
 	if err != nil {
@@ -125,27 +187,30 @@ func scanActionCount(db *sql.DB, s database.Scanner) (actioncount, error) {
 	return ac, nil
 }
 
-func loadAllActionCount(db *sql.DB) ([]actioncount, error) {
+func loadGroupActionCount(db *sql.DB, groupID int64) ([]actioncount, error) {
 	acs := []actioncount{}
 	query := `
 	SELECT COUNT(action_build.id), pipeline_action.action_id
 	FROM action_build
 	JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
-	WHERE action_build.status = $1
+  JOIN pipeline_build ON pipeline_build.id = action_build.pipeline_build_id
+  JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
+	JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
+	WHERE action_build.status = $1 AND pipeline_group.group_id = $2
 	GROUP BY pipeline_action.action_id
 	LIMIT 1000
 	`
 
-	rows, err := db.Query(query, string(sdk.StatusWaiting))
+	rows, err := db.Query(query, string(sdk.StatusWaiting), groupID)
 	if err != nil {
-		return nil, fmt.Errorf("loadAllActionCount> cannot query> %s", err)
+		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		ac, err := scanActionCount(db, rows)
 		if err != nil {
-			return nil, fmt.Errorf("loadAllActionCount> cannot scanActionCount> %s", err)
+			return nil, err
 		}
 
 		acs = append(acs, ac)
@@ -153,7 +218,6 @@ func loadAllActionCount(db *sql.DB) ([]actioncount, error) {
 
 	return acs, nil
 }
-
 func loadUserActionCount(db *sql.DB, userID int64) ([]actioncount, error) {
 	acs := []actioncount{}
 	query := `
@@ -187,22 +251,17 @@ func loadUserActionCount(db *sql.DB, userID int64) ([]actioncount, error) {
 	return acs, nil
 }
 
-func loadActionCount(db *sql.DB, user *sdk.User) ([]actioncount, error) {
+func loadActionCount(db *sql.DB, c *context.Context) ([]actioncount, error) {
 	defer logTime("EstimateWorkerModelNeeds", time.Now())
 
-	if user.Admin {
-		return loadAllActionCount(db)
+	switch c.Agent {
+	case sdk.HatcheryAgent:
+		return loadGroupActionCount(db, c.User.Groups[0].ID)
+	default:
+		return loadUserActionCount(db, c.User.ID)
 	}
 
-	return loadUserActionCount(db, user.ID)
 }
-
-var (
-	modelCapabilities       map[int64][]sdk.Requirement
-	modelCapaMutex          sync.RWMutex
-	actionRequirements      map[int64][]sdk.Requirement
-	actionRequirementsMutex sync.RWMutex
-)
 
 // UpdateModelCapabilitiesCache updates model capabilities cache
 func UpdateModelCapabilitiesCache() {
@@ -248,18 +307,19 @@ func UpdateActionRequirementsCache() {
 }
 
 // EstimateWorkerModelNeeds returns for each worker model the needs of instances
-func EstimateWorkerModelNeeds(db *sql.DB, u *sdk.User) ([]sdk.ModelStatus, error) {
+func EstimateWorkerModelNeeds(db *sql.DB, c *context.Context) ([]sdk.ModelStatus, error) {
 	defer logTime("EstimateWorkerModelNeeds", time.Now())
+	u := c.User
 
 	// Load models stats
-	ms, err := loadWorkerModelStatus(db, u.ID)
+	ms, err := loadWorkerModelStatus(db, c)
 	if err != nil {
 		log.Warning("EstimateWorkerModelsNeeds> Cannot LoadWorkerModelStatus for user %d: %s\n", u.ID, err)
 		return nil, fmt.Errorf("EstimateWorkerModelNeeds> Cannot loadWorkerModelStatus> %s", err)
 	}
 
 	// Load actions in queue grouped by action (same requirement, same worker model)
-	acs, err := loadActionCount(db, u)
+	acs, err := loadActionCount(db, c)
 	if err != nil {
 		log.Warning("EstimateWorkerModelsNeeds> Cannot LoadActionCount for user %d: %s\n", u.ID, err)
 		return nil, fmt.Errorf("EstimateWorkerModelNeeds> cannot loadActionCount> %s", err)

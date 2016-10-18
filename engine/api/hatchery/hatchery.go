@@ -1,7 +1,9 @@
 package hatchery
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"math"
 	"strings"
 	"time"
@@ -14,9 +16,10 @@ import (
 // Hatchery registration model
 type Hatchery struct {
 	ID       int64     `json:"id"`
+	UID      string    `json:"uid"`
 	Name     string    `json:"name"`
 	Status   string    `json:"status"`
-	OwnerID  int64     `json:"owner_id"`
+	GroupID  int64     `json:"group_id"`
 	LastBeat time.Time `json:"-"`
 	Model    sdk.Model `json:"model"`
 }
@@ -30,8 +33,13 @@ func InsertHatchery(db *sql.DB, h *Hatchery) error {
 	}
 	defer tx.Rollback()
 
-	query := `INSERT INTO hatchery (name, owner_id, last_beat) VALUES ($1, $2, NOW()) RETURNING id`
-	err = tx.QueryRow(query, h.Name, h.OwnerID).Scan(&h.ID)
+	h.UID, err = generateID()
+	if err != nil {
+		return err
+	}
+
+	query := `INSERT INTO hatchery (name, group_id, last_beat, uid) VALUES ($1, $2, NOW(), $3) RETURNING id`
+	err = tx.QueryRow(query, h.Name, h.GroupID, h.UID).Scan(&h.ID)
 	if err != nil {
 		return err
 	}
@@ -41,8 +49,8 @@ func InsertHatchery(db *sql.DB, h *Hatchery) error {
 		return tx.Commit()
 	}
 
-	query = `INSERT INTO worker_model (type, name, image, owner_id) VALUES ($1,$2, $3,$4) RETURNING id`
-	err = tx.QueryRow(query, string(sdk.HostProcess), h.Model.Name, h.Model.Image, h.OwnerID).Scan(&h.Model.ID)
+	query = `INSERT INTO worker_model (type, name, image, group_id) VALUES ($1,$2, $3,$4) RETURNING id`
+	err = tx.QueryRow(query, string(sdk.HostProcess), h.Model.Name, h.Model.Image, h.GroupID).Scan(&h.Model.ID)
 	if err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
 		return sdk.ErrModelNameExist
 	}
@@ -120,7 +128,7 @@ func Exists(db *sql.DB, id int64) error {
 // LoadDeadHatcheries load hatchery with refresh last beat > timeout
 func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]Hatchery, error) {
 	var hatcheries []Hatchery
-	query := `	SELECT id, name, last_beat, owner_id, worker_model_id
+	query := `	SELECT id, name, last_beat, group_id, worker_model_id
 				FROM hatchery
 				LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 				WHERE now() - last_beat > $1 * INTERVAL '1' SECOND
@@ -134,7 +142,7 @@ func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]Hatchery, error) {
 	var wmID sql.NullInt64
 	for rows.Next() {
 		var h Hatchery
-		err = rows.Scan(&h.ID, &h.Name, &h.LastBeat, &h.OwnerID, &wmID)
+		err = rows.Scan(&h.ID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
 		if err != nil {
 			return nil, err
 		}
@@ -147,11 +155,32 @@ func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]Hatchery, error) {
 	return hatcheries, nil
 }
 
+// LoadHatchery fetch hatchery info from database given UID
+func LoadHatchery(db *sql.DB, uid string) (*Hatchery, error) {
+	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
+							FROM hatchery
+							LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
+							WHERE uid = $1`
+
+	var h Hatchery
+	var wmID sql.NullInt64
+	err := db.QueryRow(query, uid).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	if err != nil {
+		return nil, err
+	}
+
+	if wmID.Valid {
+		h.Model.ID = wmID.Int64
+	}
+
+	return &h, nil
+}
+
 // LoadHatcheries retrieves in database all registered hatcheries
 func LoadHatcheries(db *sql.DB) ([]Hatchery, error) {
 	var hatcheries []Hatchery
 
-	query := `SELECT id, name, last_beat, owner_id, worker_model_id
+	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
 							FROM hatchery
 							LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 							LIMIT 10000`
@@ -164,7 +193,7 @@ func LoadHatcheries(db *sql.DB) ([]Hatchery, error) {
 	var wmID sql.NullInt64
 	for rows.Next() {
 		var h Hatchery
-		err = rows.Scan(&h.ID, &h.Name, &h.LastBeat, &h.OwnerID, &wmID)
+		err = rows.Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
 		if err != nil {
 			return nil, err
 		}
@@ -195,4 +224,19 @@ func RefreshHatchery(db *sql.DB, hatchID string) error {
 	}
 
 	return nil
+}
+
+func generateID() (string, error) {
+	size := 64
+	bs := make([]byte, size)
+	_, err := rand.Read(bs)
+	if err != nil {
+		log.Critical("generateID: rand.Read failed: %s\n", err)
+		return "", err
+	}
+	str := hex.EncodeToString(bs)
+	token := []byte(str)[0:size]
+
+	log.Debug("generateID: new generated id: %s\n", token)
+	return string(token), nil
 }

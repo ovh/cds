@@ -88,6 +88,7 @@ func (hd *HatcheryDocker) Init() error {
 	name += "-docker"
 	hd.hatch = &hatchery.Hatchery{
 		Name: name,
+		UID:  uk,
 	}
 
 	if err := register(hd.hatch); err != nil {
@@ -97,59 +98,6 @@ func (hd *HatcheryDocker) Init() error {
 	go hd.workerIndexCleanupRoutine()
 	go hd.killAwolWorkerRoutine()
 	return nil
-}
-
-// Refresh fetch worker model status from API
-// and spawn/delete workers if needed
-func (hd *HatcheryDocker) Refresh() error {
-
-	wms, err := sdk.GetWorkerModelStatus()
-	if err != nil {
-		return err
-	}
-
-	for _, ms := range wms {
-
-		if ms.CurrentCount == ms.WantedCount {
-			// ok, do nothing
-			continue
-		}
-
-		m, err := sdk.GetWorkerModel(ms.ModelName)
-		if err != nil {
-			return fmt.Errorf("cannot get model named '%s' (%s)", ms.ModelName, err)
-		}
-		// if model is not of docker type, ignore it
-		if m.Type != sdk.Docker {
-			continue
-		}
-
-		if ms.CurrentCount < ms.WantedCount {
-			diff := ms.WantedCount - ms.CurrentCount
-			log.Notice("I got to spawn %d %s worker !\n", diff, ms.ModelName)
-			for i := 0; i < int(diff); i++ {
-				err = hd.SpawnWorker(m, ms.Requirements)
-				if err != nil {
-					return err
-				}
-			}
-			continue
-		}
-
-		if ms.CurrentCount > ms.WantedCount {
-			diff := ms.CurrentCount - ms.WantedCount
-			log.Notice("I got to kill %d %s worker !\n", diff, ms.ModelName)
-			err = killWorker(hd, m)
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
-	}
-
-	return nil
-
 }
 
 func (hd *HatcheryDocker) workerIndexCleanupRoutine() {
@@ -234,10 +182,6 @@ func (hd *HatcheryDocker) WorkerStarted(model *sdk.Model) int {
 // SpawnWorker starts a new worker in a docker container locally
 func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) error {
 	var err error
-	uk, err = sdk.GenerateWorkerKey(sdk.FirstUseExpire)
-	if err != nil {
-		return fmt.Errorf("cannot generate worker key: %s", err)
-	}
 
 	if wm.Type != sdk.Docker {
 		return fmt.Errorf("cannot handle %s worker model", wm.Type)

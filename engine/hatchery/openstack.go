@@ -93,6 +93,7 @@ func (h *HatcheryCloud) Init() error {
 	}
 	h.hatch = &hatchery.Hatchery{
 		Name: name,
+		UID:  uk,
 	}
 	err = register(h.hatch)
 	if err != nil {
@@ -312,11 +313,6 @@ func (h *HatcheryCloud) ParseConfig() {
 	}
 }
 
-// Refresh engine needs
-func (h *HatcheryCloud) Refresh() error {
-	return nil
-}
-
 // WorkerStarted returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryCloud) WorkerStarted(model *sdk.Model) int {
@@ -351,11 +347,6 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
 	var err error
 	var omd sdk.OpenstackModelData
-
-	uk, err = sdk.GenerateWorkerKey(sdk.FirstUseExpire)
-	if err != nil {
-		return fmt.Errorf("cannot generate worker key: %s", err)
-	}
 
 	if h.hatch == nil {
 		return fmt.Errorf("hatchery disconnected from engine")

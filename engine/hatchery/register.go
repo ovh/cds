@@ -31,6 +31,7 @@ func register(h *hatchery.Hatchery) error {
 		return err
 	}
 
+	sdk.Authorization(h.UID)
 	return nil
 }
 
@@ -85,7 +86,7 @@ func hearbeat(m HatcheryMode) {
 			m.SetWorkerModelID(m.Hatchery().Model.ID)
 		}
 
-		_, _, err := client.CDSRequest("PUT", fmt.Sprintf("/hatchery/%d", m.Hatchery().ID), nil)
+		_, _, err := sdk.Request("PUT", fmt.Sprintf("/hatchery/%d", m.Hatchery().ID), nil)
 		if err != nil {
 			log.Notice("heartbeat> cannot refresh beat: %s\n", err)
 			m.Hatchery().ID = 0
