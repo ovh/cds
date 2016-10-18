@@ -55,14 +55,15 @@ CREATE TABLE IF NOT EXISTS "system_log" (id BIGSERIAL PRIMARY KEY, logged TIMEST
 CREATE TABLE IF NOT EXISTS "user" (id BIGSERIAL PRIMARY KEY, username TEXT, admin BOOL, data TEXT, auth TEXT, created TIMESTAMP WITH TIME ZONE, origin TEXT);
 
 CREATE TABLE IF NOT EXISTS "user_key" (user_id INT, user_key TEXT, expiry INT DEFAULT 0);
+CREATE TABLE IF NOT EXISTS "token" (group_id INT, token TEXT, expiration INT, created TIMESTAMP WITH TIME ZONE);
 
 CREATE TABLE IF NOT EXISTS "user_notification" (id BIGSERIAL PRIMARY KEY, type TEXT, content JSONB, status TEXT, creation_date INT);
 
-CREATE TABLE IF NOT EXISTS "worker" (id TEXT PRIMARY KEY, name TEXT, last_beat TIMESTAMP WITH TIME ZONE, owner_id INT, model INT, status TEXT, action_build_id BIGINT, hatchery_id BIGINT DEFAULT 0);
+CREATE TABLE IF NOT EXISTS "worker" (id TEXT PRIMARY KEY, name TEXT, last_beat TIMESTAMP WITH TIME ZONE, owner_id INT, group_id INT, model INT, status TEXT, action_build_id BIGINT, hatchery_id BIGINT DEFAULT 0);
 CREATE TABLE IF NOT EXISTS "worker_capability" (worker_model_id INT, type TEXT, name TEXT, argument TEXT);
 CREATE TABLE IF NOT EXISTS "worker_model" (id BIGSERIAL PRIMARY KEY, type TEXT, name TEXT, image TEXT, owner_id INT);
 
-CREATE TABLE IF NOT EXISTS "hatchery" (id BIGSERIAL PRIMARY KEY, name TEXT, last_beat TIMESTAMP WITH TIME ZONE, owner_id INT, status TEXT);
+CREATE TABLE IF NOT EXISTS "hatchery" (id BIGSERIAL PRIMARY KEY, name TEXT, last_beat TIMESTAMP WITH TIME ZONE, uid TEXT, group_id INT, status TEXT);
 CREATE TABLE IF NOT EXISTS "hatchery_model" (hatchery_id BIGINT, worker_model_id BIGINT, PRIMARY KEY(hatchery_id, worker_model_id));
 
 CREATE TABLE IF NOT EXISTS "repositories_manager" (id BIGSERIAL PRIMARY KEY , type TEXT, name TEXT UNIQUE, url TEXT UNIQUE, data JSONB );

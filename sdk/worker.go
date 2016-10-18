@@ -8,14 +8,16 @@ import (
 
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	LastBeat   time.Time `json:"-"`
-	OwnerID    int64     `json:"-"`
-	Owner      User      `json:"owner"`
-	Model      int64     `json:"model"`
-	HatcheryID int64     `json:"hatchery_id"`
-	Status     Status    `json:"status"` // Waiting, Building, Disabled, Unknown
+	ID       string    `json:"id"`
+	Name     string    `json:"name"`
+	LastBeat time.Time `json:"-"`
+	GroupID  int64     `json:"group_id"`
+	// Owner is deprecated in favor of Group for permission
+	OwnerID    int64  `json:"-"`
+	Owner      User   `json:"owner"`
+	Model      int64  `json:"model"`
+	HatcheryID int64  `json:"hatchery_id"`
+	Status     Status `json:"status"` // Waiting, Building, Disabled, Unknown
 }
 
 // WorkerType defines where worker can be started

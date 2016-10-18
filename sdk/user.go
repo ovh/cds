@@ -298,19 +298,48 @@ func ListUsers() ([]User, error) {
 }
 
 // Expiry defines how worker key should expire
-type Expiry int
+type Expiration int
 
 // Worker key expiry options
 const (
-	_ = iota
-	FirstUseExpire
-	NeverExpire
+	_ Expiration = iota
+	Session
+	Daily
+	Persistent
 )
 
-// GenerateWorkerKey creates a key tied to calling user that allow registering workers
-func GenerateWorkerKey(e Expiry) (string, error) {
+func (e Expiration) String() string {
+	switch e {
+	case Session:
+		return "session"
+	case Daily:
+		return "daily"
+	case Persistent:
+		return "persistent"
+	default:
+		return "sessions"
+	}
+}
 
-	path := fmt.Sprintf("/user/worker/key/%d", int(e))
+// ExpirationFromString returns a typed Expiration from a string
+func ExpirationFromString(s string) (Expiration, error) {
+	switch s {
+	case "session":
+		return Session, nil
+	case "daily":
+		return Daily, nil
+	case "persistent":
+		return Persistent, nil
+	}
+
+	return Expiration(0), fmt.Errorf("invalid expiration format (%s)",
+		[]Expiration{Session, Daily, Persistent})
+}
+
+// GenerateWorkerToken creates a key tied to calling user that allow registering workers
+func GenerateWorkerToken(group string, e Expiration) (string, error) {
+
+	path := fmt.Sprintf("/group/%s/token/%s", group, e)
 	data, code, err := Request("POST", path, nil)
 	if err != nil {
 		return "", err

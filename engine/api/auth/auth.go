@@ -209,25 +209,37 @@ func checkWorkerAuth(db *sql.DB, auth string, ctx *context.Context) error {
 	if w == nil {
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot load worker: %s", err)
 		}
 		putWorkerInCache = true
 	}
 
-	// Load user
-	u, err := user.LoadUserWithoutAuthByID(db, w.OwnerID)
-	if err != nil {
-		return fmt.Errorf("cannot load worker owner %d: %s", w.OwnerID, err)
+	// /!\ Deprecated
+	if w.OwnerID != 0 {
+		// Load user
+		u, err := user.LoadUserWithoutAuthByID(db, w.OwnerID)
+		if err != nil {
+			return fmt.Errorf("cannot load worker owner %d: %s", w.OwnerID, err)
+		}
+		err = user.LoadUserPermissions(db, u)
+		if err != nil {
+			return fmt.Errorf("cannot load user %d permissions: %s", w.OwnerID, err)
+		}
+		ctx.User = u
+		w.Owner = *u
+	} else {
+		// craft a user as a member of worker group
+		ctx.User = &sdk.User{Username: w.Name}
+		g, err := user.LoadGroupPermissions(db, w.GroupID)
+		if err != nil {
+			return fmt.Errorf("cannot load group permissions: %s", err)
+		}
+		ctx.User.Groups = append(ctx.User.Groups, *g)
 	}
-	err = user.LoadUserPermissions(db, u)
-	if err != nil {
-		return fmt.Errorf("cannot load user %d permissions: %s", w.OwnerID, err)
-	}
-	ctx.User = u
-	ctx.WorkerID = w.ID
+
+	ctx.Worker = *w
 	if putWorkerInCache {
 		//Set the worker in cache
-		w.Owner = *u
 		cache.Set(key, *w)
 	}
 	return nil

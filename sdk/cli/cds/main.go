@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/cli/cds/artifact"
 	"github.com/ovh/cds/sdk/cli/cds/dashboard"
 	"github.com/ovh/cds/sdk/cli/cds/environment"
+	"github.com/ovh/cds/sdk/cli/cds/generate"
 	"github.com/ovh/cds/sdk/cli/cds/group"
 	"github.com/ovh/cds/sdk/cli/cds/internal"
 	"github.com/ovh/cds/sdk/cli/cds/login"
@@ -57,7 +58,6 @@ func main() {
 	rootCmd.AddCommand(artifact.Cmd)
 	rootCmd.AddCommand(environment.Cmd())
 	rootCmd.AddCommand(statusCmd())
-	//rootCmd.AddCommand(queueCmd())
 	rootCmd.AddCommand(pipeline.Cmd())
 	rootCmd.AddCommand(project.Cmd)
 	rootCmd.AddCommand(group.Cmd)
@@ -71,6 +71,7 @@ func main() {
 	rootCmd.AddCommand(track.Cmd)
 	rootCmd.AddCommand(repositoriesmanager.Cmd())
 	rootCmd.AddCommand(plugin.Cmd())
+	rootCmd.AddCommand(generate.Cmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

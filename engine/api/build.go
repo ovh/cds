@@ -554,7 +554,14 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 		}
 	}
 
-	queue, err := build.LoadUserWaitingQueue(db, c.User)
+	var queue []sdk.ActionBuild
+	var err error
+	// LEGACY
+	if c.User != nil && c.User.ID != 0 {
+		queue, err = build.LoadUserWaitingQueue(db, c.User)
+	} else {
+		queue, err = build.LoadGroupWaitingQueue(db, c.Worker.GroupID)
+	}
 
 	if log.IsDebug() {
 		for _, a := range queue {
