@@ -7,7 +7,6 @@ func init() {
 	Cmd.AddCommand(cmdUserList)
 	Cmd.AddCommand(cmdUserReset())
 	Cmd.AddCommand(cmdUserVerify())
-	Cmd.AddCommand(cmdUserGenerate())
 	Cmd.AddCommand(cmdUserUpdate())
 	Cmd.AddCommand(cmdUserDelete())
 }

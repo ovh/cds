@@ -195,6 +195,51 @@ func LoadWaitingQueue(db *sql.DB) ([]sdk.ActionBuild, error) {
 	return queue, nil
 }
 
+// LoadGroupWaitingQueue loads action build in queue accessbible to given group
+func LoadGroupWaitingQueue(db *sql.DB, groupID int64) ([]sdk.ActionBuild, error) {
+	//log.Notice("LoadGroupWaitingQueue for group %d\n", groupID)
+	var queue []sdk.ActionBuild
+
+	query := `
+			 SELECT action_build.id,
+			 action_build.pipeline_action_id,
+			 action.id,
+			 action.name,
+			 action_build.args,
+			 action_build.status, action_build.pipeline_build_id,
+			 pipeline_build.pipeline_id,
+			 pipeline_build.build_number
+		  FROM action_build
+		  JOIN pipeline_build ON pipeline_build.id = action_build.pipeline_build_id
+		  JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
+		  JOIN action ON action.id = pipeline_action.action_id
+		  JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
+			JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
+			WHERE action_build.status = $1
+			AND pipeline_group.group_id = $2
+			AND pipeline_group.role > 4
+			ORDER BY pipeline_build.id,action.name,action_build.pipeline_action_id
+			LIMIT 100
+			`
+
+	rows, err := db.Query(query, sdk.StatusWaiting.String(), groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		b, err := loadQueue(db, rows)
+		if err != nil {
+			return nil, err
+		}
+		queue = append(queue, b)
+	}
+
+	return queue, nil
+
+}
+
 // LoadUserWaitingQueue loads action build in queue where user has access
 func LoadUserWaitingQueue(db *sql.DB, u *sdk.User) ([]sdk.ActionBuild, error) {
 	var queue []sdk.ActionBuild

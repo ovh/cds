@@ -308,3 +308,36 @@ func LoadUserPermissions(db *sql.DB, user *sdk.User) error {
 	}
 	return nil
 }
+
+// LoadGroupPermissions retrieves all group memberships
+func LoadGroupPermissions(db *sql.DB, groupID int64) (*sdk.Group, error) {
+	query := `SELECT "group".name FROM "group" WHERE "group".id = $1`
+
+	group := &sdk.Group{ID: groupID}
+	err := db.QueryRow(query, groupID).Scan(&group.Name)
+	if err != nil {
+		return nil, fmt.Errorf("no group with id %d: %s", groupID, err)
+	}
+
+	err = project.LoadProjectByGroup(db, group)
+	if err != nil {
+		return nil, err
+	}
+
+	err = pipeline.LoadPipelineByGroup(db, group)
+	if err != nil {
+		return nil, err
+	}
+
+	err = application.LoadApplicationByGroup(db, group)
+	if err != nil {
+		return nil, err
+	}
+
+	err = environment.LoadEnvironmentByGroup(db, group)
+	if err != nil {
+		return nil, err
+	}
+
+	return group, nil
+}
