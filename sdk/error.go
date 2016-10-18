@@ -85,6 +85,7 @@ var (
 	ErrInfiniteTriggerLoop          = &Error{ID: 71, Status: http.StatusBadRequest}
 	ErrInvalidResetUser             = &Error{ID: 72, Status: http.StatusBadRequest}
 	ErrUserConflict                 = &Error{ID: 73, Status: http.StatusBadRequest}
+	ErrWrongRequest                 = &Error{ID: 74, Status: http.StatusBadRequest}
 )
 
 // SupportedLanguages on API errors
@@ -169,6 +170,7 @@ You can safely use them in a String or Text parameter`,
 	ErrInfiniteTriggerLoop.ID:          "infinite trigger loop are forbidden",
 	ErrInvalidResetUser.ID:             "invalid user or email",
 	ErrUserConflict.ID:                 "this user already exist",
+	ErrWrongRequest.ID:                 "wrong request",
 }
 
 var errorsFrench = map[int]string{
@@ -247,6 +249,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrInfiniteTriggerLoop.ID:          "création d'une boucle de trigger infinie interdite",
 	ErrInvalidResetUser.ID:             "mauvaise combinaison compte/mail utilisateur",
 	ErrUserConflict.ID:                 "cet utilisateur existe deja",
+	ErrWrongRequest.ID:                 "la requête est incorrecte",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)

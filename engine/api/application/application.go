@@ -321,12 +321,13 @@ func InsertApplication(db database.QueryExecuter, project *sdk.Project, app *sdk
 }
 
 // UpdateApplication Update an application
-func UpdateApplication(db database.Executer, application *sdk.Application) error {
+func UpdateApplication(db database.QueryExecuter, application *sdk.Application) error {
 	query := `UPDATE application SET name=$1, last_modified=current_timestamp WHERE id=$2`
 	_, err := db.Exec(query, application.Name, application.ID)
 	if err != nil {
 		return err
 	}
+	var lastModified time.Time
 	// Update project
 	query = `
 		UPDATE project 
@@ -334,8 +335,13 @@ func UpdateApplication(db database.Executer, application *sdk.Application) error
 		WHERE id IN (
 			select project_id from application where id = $1
 		)
+		RETURNING last_modified
+
 	`
-	_, err = db.Exec(query, application.ID)
+	err = db.QueryRow(query, application.ID).Scan(&lastModified)
+	if err == nil {
+		application.LastModified = lastModified.Unix()
+	}
 	return err
 }
 

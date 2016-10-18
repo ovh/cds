@@ -180,7 +180,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	app, err := application.LoadApplicationByName(db, projectKey, applicationName)
 	if err != nil {
 		log.Warning("getApplicationHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -272,7 +272,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	projectData, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("addApplicationHandler: Cannot load %s: %s\n", key, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -280,12 +280,14 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		log.Warning("addApplicationHandler: Cannot read body: %s\n", err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	err = json.Unmarshal(data, &app)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		log.Warning("addApplicationHandler: Cannot unmarshal request: %s\n", err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -400,12 +402,12 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		WriteError(w, r, fmt.Errorf("cloneApplicationHandler> Unable to read request body: %s", err))
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	err = json.Unmarshal(data, &newApp)
 	if err != nil {
-		WriteError(w, r, fmt.Errorf("cloneApplicationHandler> Unable to unmarshal request: %s", err))
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -524,7 +526,7 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	app, err := application.LoadApplicationByName(db, projectKey, applicationName)
 	if err != nil {
 		log.Warning("updateApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -532,12 +534,14 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		log.Warning("updateApplicationHandler> Cannot read body: %s\n", err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	err = json.Unmarshal(data, &appPost)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		log.Warning("updateApplicationHandler> Cannot unmarshal request: %s\n", err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -551,15 +555,30 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 
 	app.Name = appPost.Name
 
-	err = application.UpdateApplication(db, app)
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("updateApplicationHandler> Cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
+	err = application.UpdateApplication(tx, app)
 	if err != nil {
 		log.Warning("updateApplicationHandler> Cannot delete application %s: %s\n", applicationName, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Warning("updateApplicationHandler> Cannot commit transaction: %s\n", err)
+		WriteError(w, r, err)
 		return
 	}
 
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
 
-	w.WriteHeader(http.StatusOK)
+	WriteJSON(w, r, app, http.StatusOK)
 }
