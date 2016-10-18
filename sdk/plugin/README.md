@@ -1,8 +1,8 @@
-# CDS Plugin 
+# CDS Plugin
 
 ## How to implement a plugin
 
-```
+```go
     package main
 
     import "github.com/ovh/cds/sdk/plugin"
