@@ -577,7 +577,7 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 }
 
 func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	ms, err := worker.EstimateWorkerModelNeeds(db, c.User)
+	ms, err := worker.EstimateWorkerModelNeeds(db, c)
 	if err != nil {
 		log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -588,7 +588,7 @@ func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 }
 
 func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	err := worker.DeleteWorker(db, c.WorkerID)
+	err := worker.DeleteWorker(db, c.Worker.ID)
 	if err != nil {
 		log.Warning("unregisterWorkerHandler> cannot delete worker %s\n", err)
 		WriteError(w, r, err)

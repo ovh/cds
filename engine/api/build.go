@@ -605,7 +605,7 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 	buildNumberS := vars["build"]
-	appName := vars["permApplicationName"]
+	appName := vars["app"]
 
 	var err error
 	var env *sdk.Environment

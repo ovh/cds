@@ -227,7 +227,7 @@ func (router *Router) init() {
 	router.Handle("/group/{permGroupName}/token/{expiration}", POST(generateTokenHandler))
 
 	// Hatchery
-	router.Handle("/hatchery", POST(registerHatchery))
+	router.Handle("/hatchery", Auth(false), POST(registerHatchery))
 	router.Handle("/hatchery/{id}", PUT(refreshHatcheryHandler))
 
 	// Hooks
