@@ -636,6 +636,13 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 		return
 	}
 
+	err = group.AddGlobalGroupToPipeline(tx, p.ID)
+	if err != nil {
+		log.Warning("addPipelineHandler> Cannot add Global infra group: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
 	for _, param := range p.Parameter {
 		err = pipeline.InsertParameterInPipeline(tx, p.ID, &param)
 		if err != nil {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
@@ -211,6 +212,16 @@ func AddUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Cont
 	}
 
 	go mail.SendMailVerifyToken(createUserRequest.User.Email, createUserRequest.User.Username, tokenVerify, createUserRequest.Callback)
+
+	// If it's the first user, add him to shared.infra group
+	if nbUsers == 0 {
+		err = group.AddAdminInGlobalGroup(db, u.ID)
+		if err != nil {
+			log.Warning("AddUser: Cannot add user in global group: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+	}
 
 	w.WriteHeader(http.StatusCreated)
 }

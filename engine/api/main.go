@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/notification"
@@ -75,6 +76,10 @@ var mainCmd = &cobra.Command{
 			}
 			if err = artifact.CreateBuiltinArtifactActions(db); err != nil {
 				log.Critical("Cannot setup builtin Artifact actions: %s\n", err)
+			}
+
+			if err = group.CreateDefaultGlobalGroup(db); err != nil {
+				log.Critical("Cannot setup default global group: %s\n", err)
 			}
 
 			if err = worker.CreateBuiltinActions(db); err != nil {
