@@ -35,6 +35,8 @@ var (
 	SessionTokenHeader = "Session-Token"
 	// HTTP client
 	client httpClient
+	// current agent calling
+	agent Agent
 )
 
 var home = os.Getenv("HOME")
@@ -52,9 +54,24 @@ func Authorization(h string) {
 	hash = h
 }
 
+// Agent describe the type of authentication method to use
+type Agent string
+
+const (
+	SDKAgent      Agent = "CDS/sdk"
+	WorkerAgent         = "CDS/worker"
+	HatcheryAgent       = "CDS/hatchery"
+)
+
+func SetAgent(a Agent) {
+	agent = a
+}
+
 // If CDS_SKIP_VERIFY is present, use a specific http client
 // with TLS InsecureSkipVerify enabled
 func init() {
+	agent = SDKAgent
+
 	skip := os.Getenv("CDS_SKIP_VERIFY")
 	if skip != "" {
 		tr := &http.Transport{
@@ -69,7 +86,7 @@ func init() {
 
 func initRequest(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "CDS/"+VERSION)
+	req.Header.Set("User-Agent", string(agent))
 	req.Header.Set("Connection", "close")
 	req.Header.Add(RequestedWithHeader, RequestedWithValue)
 }

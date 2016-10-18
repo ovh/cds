@@ -99,6 +99,7 @@ func hatcheryCmd(cmd *cobra.Command, args []string) {
 
 func main() {
 	log.SetLevel(log.NoticeLevel)
+	sdk.SetAgent(sdk.HatcheryAgent)
 
 	cmd.Execute()
 }
