@@ -202,8 +202,6 @@ func checkWorkerAuth(db *sql.DB, auth string, ctx *context.Context) error {
 	var putWorkerInCache bool
 	if oldWorker.ID != "" {
 		w = &oldWorker
-		//OwnerID is not serialized, we have to override it
-		w.OwnerID = w.Owner.ID
 	}
 	// Else load it from DB
 	if w == nil {
@@ -214,28 +212,13 @@ func checkWorkerAuth(db *sql.DB, auth string, ctx *context.Context) error {
 		putWorkerInCache = true
 	}
 
-	// /!\ Deprecated
-	if w.OwnerID != 0 {
-		// Load user
-		u, err := user.LoadUserWithoutAuthByID(db, w.OwnerID)
-		if err != nil {
-			return fmt.Errorf("cannot load worker owner %d: %s", w.OwnerID, err)
-		}
-		err = user.LoadUserPermissions(db, u)
-		if err != nil {
-			return fmt.Errorf("cannot load user %d permissions: %s", w.OwnerID, err)
-		}
-		ctx.User = u
-		w.Owner = *u
-	} else {
-		// craft a user as a member of worker group
-		ctx.User = &sdk.User{Username: w.Name}
-		g, err := user.LoadGroupPermissions(db, w.GroupID)
-		if err != nil {
-			return fmt.Errorf("cannot load group permissions: %s", err)
-		}
-		ctx.User.Groups = append(ctx.User.Groups, *g)
+	// craft a user as a member of worker group
+	ctx.User = &sdk.User{Username: w.Name}
+	g, err := user.LoadGroupPermissions(db, w.GroupID)
+	if err != nil {
+		return fmt.Errorf("cannot load group permissions: %s", err)
 	}
+	ctx.User.Groups = append(ctx.User.Groups, *g)
 
 	ctx.Worker = *w
 	if putWorkerInCache {

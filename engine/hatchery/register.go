@@ -12,6 +12,7 @@ import (
 )
 
 func register(h *hatchery.Hatchery) error {
+	h.UID = uk
 	data, err := json.Marshal(h)
 	if err != nil {
 		return err
