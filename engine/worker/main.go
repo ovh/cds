@@ -137,6 +137,8 @@ func init() {
 }
 
 func main() {
+	sdk.SetAgent(sdk.WorkerAgent)
+
 	mainCmd.Execute()
 }
 

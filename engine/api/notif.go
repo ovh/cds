@@ -39,7 +39,7 @@ func notifHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context
 		return
 	}
 
-	if idWorker != c.WorkerID {
+	if idWorker != c.Worker.ID {
 		log.Warning("PostNotifHandler> this worker (%s) doesn't work on actionBuildId: %s\n", idWorker, id)
 		WriteError(w, r, sdk.ErrForbidden)
 		return

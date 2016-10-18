@@ -290,7 +290,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		// load pipeline_build.id
 		pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
 		if err != nil {
-			log.Warning("getBuildStateHandler> %s[%s] ! Cannot load last pipeline build for %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, c.WorkerID, projectKey, appName, pipelineName, env.Name, buildNumber, err)
+			log.Warning("getBuildStateHandler> %s! Cannot load last pipeline build for %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, projectKey, appName, pipelineName, env.Name, buildNumber, err)
 			WriteError(w, r, err)
 			return
 		}
@@ -345,8 +345,8 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 			return
 		}
 
-		if c.WorkerID != workerID {
-			log.Warning("addQueueResultHandler> Worker %s is not supposed to be building %s\n", c.WorkerID, id)
+		if c.Worker.ID != workerID {
+			log.Warning("addQueueResultHandler> Worker %s is not supposed to be building %s\n", c.Worker.ID, id)
 			WriteError(w, r, sdk.ErrForbidden)
 			return
 		}
@@ -386,9 +386,9 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	defer tx.Rollback()
 
 	//Update worker status
-	err = worker.UpdateWorkerStatus(tx, c.WorkerID, sdk.StatusWaiting)
+	err = worker.UpdateWorkerStatus(tx, c.Worker.ID, sdk.StatusWaiting)
 	if err != nil {
-		log.Warning("addQueueResultHandler> Cannot update worker status (%s): %s\n", c.WorkerID, err)
+		log.Warning("addQueueResultHandler> Cannot update worker status (%s): %s\n", c.Worker.ID, err)
 		// We want to update ActionBuild status anyway
 	}
 
@@ -417,7 +417,7 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 	id := vars["id"]
 
 	// Load worker
-	caller, err := worker.LoadWorker(db, c.WorkerID)
+	caller, err := worker.LoadWorker(db, c.Worker.ID)
 	if err != nil {
 		log.Warning("takeActionBuildHandler> cannot load calling worker: %s\n", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -440,7 +440,7 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 	}
 
 	// Update worker status to "building"
-	err = worker.SetToBuilding(db, c.WorkerID, ab.ID)
+	err = worker.SetToBuilding(db, c.Worker.ID, ab.ID)
 	if err != nil {
 		log.Warning("takeActionBuildHandler> Cannot update worker status: %s\n", err)
 		// We want the worker to run the task anyway now
@@ -539,9 +539,9 @@ func loadActionBuildSecrets(db *sql.DB, abID int64) ([]sdk.Variable, error) {
 }
 
 func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	if c.WorkerID != "" {
+	if c.Worker.ID != "" {
 		// Load calling worker
-		caller, err := worker.LoadWorker(db, c.WorkerID)
+		caller, err := worker.LoadWorker(db, c.Worker.ID)
 		if err != nil {
 			log.Warning("getQueueHandler> cannot load calling worker: %s\n", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -586,16 +586,16 @@ func requirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 		return
 	}
 
-	if c.WorkerID != "" {
+	if c.Worker.ID != "" {
 		// Load calling worker
-		caller, err := worker.LoadWorker(db, c.WorkerID)
+		caller, err := worker.LoadWorker(db, c.Worker.ID)
 		if err != nil {
 			log.Warning("requirementsErrorHandler> cannot load calling worker: %s\n", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		log.Warning("%s (%s) > %s", c.WorkerID, caller.Name, string(body))
+		log.Warning("%s (%s) > %s", c.Worker.ID, caller.Name, string(body))
 	}
 }
 
