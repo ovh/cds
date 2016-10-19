@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -26,18 +27,20 @@ const (
 	CannotUseEnvironmentVariable
 	MultipleHostnameRequirement
 	IncompatibleBinaryAndModelRequirements
+	IncompatibleServiceAndModelRequirements
 )
 
 var messageAmericanEnglish = map[int64]string{
-	MultipleWorkerModelWarning:             `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} has multiple Worker Model as requirement. It will never start building.`,
-	NoWorkerModelMatchRequirement:          `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: No worker model matches all required binaries`,
-	InvalidVariableFormat:                  `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Invalid variable format '{{index . "VarName"}}'`,
-	ProjectVariableDoesNotExist:            `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Project variable '{{index . "VarName"}}' used but doesn't exist`,
-	ApplicationVariableDoesNotExist:        `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Application variable '{{index . "VarName"}}' used but doesn't exist in application '{{index . "AppName"}}'`,
-	EnvironmentVariableDoesNotExist:        `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Environment variable {{index . "VarName"}} used but doesn't exist in all environments`,
-	CannotUseEnvironmentVariable:           `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Cannot use environment variable '{{index . "VarName"}} in a pipeline of type 'Build'`,
-	MultipleHostnameRequirement:            `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} has multiple Hostname requirements. It will never start building.`,
-	IncompatibleBinaryAndModelRequirements: `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} does not have the binary '{{index . "BinaryRequirement"}}' capability`,
+	MultipleWorkerModelWarning:              `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} has multiple Worker Model as requirement. It will never start building.`,
+	NoWorkerModelMatchRequirement:           `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: No worker model matches all required binaries`,
+	InvalidVariableFormat:                   `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Invalid variable format '{{index . "VarName"}}'`,
+	ProjectVariableDoesNotExist:             `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Project variable '{{index . "VarName"}}' used but doesn't exist`,
+	ApplicationVariableDoesNotExist:         `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Application variable '{{index . "VarName"}}' used but doesn't exist in application '{{index . "AppName"}}'`,
+	EnvironmentVariableDoesNotExist:         `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Environment variable {{index . "VarName"}} used but doesn't exist in all environments`,
+	CannotUseEnvironmentVariable:            `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Cannot use environment variable '{{index . "VarName"}} in a pipeline of type 'Build'`,
+	MultipleHostnameRequirement:             `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} has multiple Hostname requirements. It will never start building.`,
+	IncompatibleBinaryAndModelRequirements:  `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} does not have the binary '{{index . "BinaryRequirement"}}' capability`,
+	IncompatibleServiceAndModelRequirements: `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} cannoe be linkder to service '{{index . "ServiceRequirement"}}'`,
 }
 
 func processWarning(w *sdk.Warning, acceptedlanguage string) error {
@@ -346,7 +349,14 @@ func CheckAction(tx *sql.Tx, project *sdk.Project, pip *sdk.Pipeline, actionID i
 		return nil, err
 	}
 
-	w, err := checkActionRequirements(tx, project.Key, pip.Name, actionID)
+	// Load registered worker model
+	wms, err := worker.LoadWorkerModels(tx)
+	if err != nil {
+		log.Warning("CheckActionRequirements> Cannot LoadWorkerModels")
+		return nil, err
+	}
+
+	w, err := checkActionRequirements(a, project.Key, pip.Name, wms)
 	if err != nil {
 		return nil, err
 	}
