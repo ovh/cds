@@ -112,10 +112,22 @@ ORDER BY worker_model.name ASC;
 	return status, nil
 }
 
-func modelCanRun(name string, req []sdk.Requirement, capa []sdk.Requirement) bool {
+func modelCanRun(db *sql.DB, name string, req []sdk.Requirement, capa []sdk.Requirement) bool {
 	defer logTime("compareRequirements", time.Now())
+
+	m, err := LoadWorkerModel(db, name)
+	if err != nil {
+		log.Warning("modelCanRun> Unable to load model %s", name)
+		return false
+	}
+
 	log.Info("Comparing %d requirements to %d capa\n", len(req), len(capa))
 	for _, r := range req {
+		// service requirement are only supported by docker model
+		if r.Type == sdk.ServiceRequirement && m.Type != sdk.Docker {
+			return false
+		}
+
 		found := false
 
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
@@ -347,7 +359,7 @@ func EstimateWorkerModelNeeds(db *sql.DB, c *context.Context) ([]sdk.ModelStatus
 					}
 				}
 
-				if modelCanRun(ms[i].ModelName, ac.Action.Requirements, capas) {
+				if modelCanRun(db, ms[i].ModelName, ac.Action.Requirements, capas) {
 					if ac.Count > 0 {
 						ms[i].WantedCount++
 						ac.Count--
