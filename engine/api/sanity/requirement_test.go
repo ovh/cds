@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
-	"stash.ovh.net/cds/sdk"
 )
 
 func Test_checkActionRequirements(t *testing.T) {
