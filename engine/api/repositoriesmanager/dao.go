@@ -3,7 +3,6 @@ package repositoriesmanager
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -214,9 +213,11 @@ func DeleteForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, pr
 		SET last_modified = current_timestamp
 		WHERE projectkey = $1 RETURNING last_modified
 	`
-	if err = db.QueryRow(query, project.Key).Scan(&project.LastModified); err != nil {
+	var lastModified time.Time
+	if err = db.QueryRow(query, project.Key).Scan(&lastModified); err != nil {
 		return err
 	}
+	project.LastModified = lastModified.Unix()
 	return nil
 }
 
@@ -280,93 +281,49 @@ func AuthorizedClient(db database.Querier, projectKey, rmName string) (sdk.Repos
 }
 
 //InsertForApplication associates a repositories manager with an application
-func InsertForApplication(db database.Executer, rm *sdk.RepositoriesManager, projectKey, applicationName, repoFullname string) error {
+func InsertForApplication(db database.QueryExecuter, app *sdk.Application, projectKey string) error {
 	query := `UPDATE application
 						SET
 							repositories_manager_id =  $1,
 							repo_fullname = $2,
 							last_modified = current_timestamp
 						WHERE
-							project_id IN (
-								SELECT id FROM project WHERE projectkey = $3
-							)
-						AND
-							name = $4
+							id = $3
+						RETURNING last_modified
 						`
 
-	res, err := db.Exec(query, rm.ID, repoFullname, projectKey, applicationName)
+	var lastModified time.Time
+	err := db.QueryRow(query, app.RepositoriesManager.ID, app.RepositoryFullname, app.ID).Scan(&lastModified)
 	if err != nil {
 		return err
 	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return fmt.Errorf("Error updating application table : %d rows affected", rowsAffected)
-	}
+	app.LastModified = lastModified.Unix()
 
-	// Update application
-	query = `
-		UPDATE application 
-		SET last_modified = current_timestamp
-		WHERE name = $1
-		AND project_id IN (
-			SELECT id FROM project WHERE projectkey = $2
-		)
-	`
-	if _, err = db.Exec(query, applicationName, projectKey); err != nil {
-		return err
-	}
-
-	k := cache.Key("application", projectKey, "*"+applicationName+"*")
+	k := cache.Key("application", projectKey, "*"+app.Name+"*")
 	cache.DeleteAll(k)
-
 	return nil
 }
 
 //DeleteForApplication removes association between  a repositories manager and an application
 //it deletes the corresponding line in repositories_manager_project
-func DeleteForApplication(db database.QueryExecuter, rm *sdk.RepositoriesManager, projectKey, applicationName string) error {
+func DeleteForApplication(db database.QueryExecuter, projectKey string, app *sdk.Application) error {
 	query := `UPDATE application
 						SET
 							repositories_manager_id =  NULL,
 							repo_fullname = NULL,
 							last_modified = current_timestamp
 						WHERE
-							project_id IN (
-								SELECT id FROM project WHERE projectkey = $1
-							)
-						AND
-							name = $2
+							id = $1
+						RETURNING last_modified
 						`
-
-	res, err := db.Exec(query, projectKey, applicationName)
+	var lastModified time.Time
+	err := db.QueryRow(query, app.ID).Scan(&lastModified)
 	if err != nil {
 		return err
 	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return fmt.Errorf("Error updating application table : %d rows affected", rowsAffected)
-	}
+	app.LastModified = lastModified.Unix()
 
-	// Update application
-	query = `
-		UPDATE application 
-		SET last_modified = current_timestamp
-		WHERE name = $1
-		AND project_id IN (
-			SELECT id FROM project WHERE projectkey = $2
-		)
-	`
-	if _, err = db.Exec(query, applicationName, projectKey); err != nil {
-		return err
-	}
-
-	k := cache.Key("application", projectKey, "*"+applicationName+"*")
+	k := cache.Key("application", projectKey, "*"+app.Name+"*")
 	cache.DeleteAll(k)
 	return nil
 }

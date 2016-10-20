@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/log"
@@ -437,6 +438,13 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *sql.D
 	rmName := vars["name"]
 	fullname := r.FormValue("fullname")
 
+	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	if err != nil {
+		log.Warning("attachRepositoriesManager> Cannot load application %s: %s\n", appName, err)
+		WriteError(w, r, err)
+		return
+	}
+
 	//Load the repositoriesManager for the project
 	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
 	if err != nil {
@@ -455,16 +463,21 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *sql.D
 
 	_, errR := client.RepoByFullname(fullname)
 	if errR != nil {
-		log.Warning("attachRepositoriesManager> Cannot get repo: %s", errR)
+		log.Warning("attachRepositoriesManager> Cannot get repo %s: %s", fullname, errR)
 		WriteError(w, r, sdk.ErrRepoNotFound)
 		return
 	}
 
-	if err := repositoriesmanager.InsertForApplication(db, rm, projectKey, appName, fullname); err != nil {
+	app.RepositoriesManager = rm
+	app.RepositoryFullname = fullname
+
+	if err := repositoriesmanager.InsertForApplication(db, app, projectKey); err != nil {
 		log.Warning("attachRepositoriesManager> Cannot insert for application: %s", err)
 		WriteError(w, r, err)
 		return
 	}
+
+	WriteJSON(w, r, app, http.StatusOK)
 }
 
 func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -480,14 +493,6 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *sql.D
 		return
 	}
 
-	//Load the repositoriesManager for the project
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("detachRepositoriesManager> error loading %s-%s: %s\n", projectKey, rmName, err)
-		WriteError(w, r, sdk.ErrNoReposManager)
-		return
-	}
-
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
 	if err != nil {
 		log.Warning("detachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
@@ -499,7 +504,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *sql.D
 	tx, err := db.Begin()
 	defer tx.Rollback()
 
-	if err := repositoriesmanager.DeleteForApplication(tx, rm, projectKey, appName); err != nil {
+	if err := repositoriesmanager.DeleteForApplication(tx, projectKey, application); err != nil {
 		log.Warning("detachRepositoriesManager> Cannot delete for application: %s", err)
 		WriteError(w, r, err)
 		return
@@ -531,12 +536,20 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *sql.D
 		}
 	}
 
+	// Remove reposmanager poller
+	err = poller.DeleteAllPollers(tx, application.ID)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
 	if err := tx.Commit(); err != nil {
 		log.Warning("detachRepositoriesManager> Cannot commit transaction: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
+	WriteJSON(w, r, application, http.StatusOK)
 }
 
 func getRepositoriesManagerForApplicationsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -874,7 +887,9 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	}
 
 	//Attach the application to the repositories manager
-	if err := repositoriesmanager.InsertForApplication(db, rm, projectKey, app.Name, repoFullname); err != nil {
+	app.RepositoriesManager = rm
+	app.RepositoryFullname = repoFullname
+	if err := repositoriesmanager.InsertForApplication(db, &app, projectKey); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot attach application: %s", err)
 		WriteError(w, r, err)
 		return

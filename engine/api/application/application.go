@@ -52,14 +52,13 @@ func CreateFromWizard(db database.QueryExecuter, app *sdk.Application, p *sdk.Pr
 			return err
 		}
 
-		repo, err := client.RepoByFullname(app.RepositoryFullname)
-		if err != nil {
+		if _, err = client.RepoByFullname(app.RepositoryFullname); err != nil {
 			log.Warning("CreateFromWizard> Cannot get repo: %s", err)
 			return err
 		}
 
 		//Attach the application to the repositories manager
-		if err := repositoriesmanager.InsertForApplication(db, app.RepositoriesManager, p.Key, app.Name, repo.Fullname); err != nil {
+		if err := repositoriesmanager.InsertForApplication(db, app, p.Key); err != nil {
 			log.Warning("CreateFromWizard> Cannot attach application: %s", err)
 			return err
 		}
