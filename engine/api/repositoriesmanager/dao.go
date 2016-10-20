@@ -213,9 +213,11 @@ func DeleteForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, pr
 		SET last_modified = current_timestamp
 		WHERE projectkey = $1 RETURNING last_modified
 	`
-	if err = db.QueryRow(query, project.Key).Scan(&project.LastModified); err != nil {
+	var lastModified time.Time
+	if err = db.QueryRow(query, project.Key).Scan(&lastModified); err != nil {
 		return err
 	}
+	project.LastModified = lastModified.Unix()
 	return nil
 }
 
