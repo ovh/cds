@@ -237,7 +237,7 @@ func GetAllVariableByID(db database.Querier, applicationID int64, fargs ...FuncA
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db database.Executer, applicationID int64, variable sdk.Variable) error {
+func InsertVariable(db database.QueryExecuter, app *sdk.Application, variable sdk.Variable) error {
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
 		return err
@@ -245,18 +245,18 @@ func InsertVariable(db database.Executer, applicationID int64, variable sdk.Vari
 
 	query := `INSERT INTO application_variable(application_id, var_name, var_value, cipher_value, var_type)
 		  VALUES($1, $2, $3, $4, $5)`
-	_, err = db.Exec(query, applicationID, variable.Name, clear, cipher, string(variable.Type))
+	_, err = db.Exec(query, app.ID, variable.Name, clear, cipher, string(variable.Type))
 	if err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
 		return sdk.ErrVariableExists
 	}
 	if err != nil {
 		return err
 	}
-	return UpdateLastModified(db, applicationID)
+	return UpdateLastModified(db, app)
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db database.Executer, applicationID int64, variable sdk.Variable) error {
+func UpdateVariable(db database.QueryExecuter, app *sdk.Application, variable sdk.Variable) error {
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -270,7 +270,7 @@ func UpdateVariable(db database.Executer, applicationID int64, variable sdk.Vari
 	          SET var_value=$1, cipher_value=$2,var_type=$3
 		  WHERE 	application_id = $4
 		  AND 	var_name=$5`
-	result, err := db.Exec(query, clear, cipher, string(variable.Type), applicationID, variable.Name)
+	result, err := db.Exec(query, clear, cipher, string(variable.Type), app.ID, variable.Name)
 	if err != nil {
 		return err
 	}
@@ -283,15 +283,15 @@ func UpdateVariable(db database.Executer, applicationID int64, variable sdk.Vari
 	}
 
 	// Update application
-	return UpdateLastModified(db, applicationID)
+	return UpdateLastModified(db, app)
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db database.Executer, applicationID int64, variableName string) error {
+func DeleteVariable(db database.QueryExecuter, app *sdk.Application, variableName string) error {
 	query := `DELETE FROM application_variable
 	          USING application
 						WHERE application.id = $1 AND application_variable.var_name = $2`
-	result, err := db.Exec(query, applicationID, variableName)
+	result, err := db.Exec(query, app.ID, variableName)
 	if err != nil {
 		return err
 	}
@@ -303,7 +303,7 @@ func DeleteVariable(db database.Executer, applicationID int64, variableName stri
 	if rowAffected == 0 {
 		return ErrNoVariable
 	}
-	return UpdateLastModified(db, applicationID)
+	return UpdateLastModified(db, app)
 }
 
 // DeleteAllVariable Delete all variables from the given pipeline

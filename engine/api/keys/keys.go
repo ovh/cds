@@ -73,7 +73,7 @@ func AddKeyPairToProject(db database.Executer, projectID int64, keyname string) 
 }
 
 // AddKeyPairToApplication generate a ssh key pair and add them as application variables
-func AddKeyPairToApplication(db database.Executer, appID int64, keyname string) error {
+func AddKeyPairToApplication(db database.QueryExecuter, app *sdk.Application, keyname string) error {
 	pub, priv, err := generatekeypair(keyname)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func AddKeyPairToApplication(db database.Executer, appID int64, keyname string) 
 		Type:  sdk.KeyVariable,
 		Value: priv,
 	}
-	err = application.InsertVariable(db, appID, v)
+	err = application.InsertVariable(db, app, v)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func AddKeyPairToApplication(db database.Executer, appID int64, keyname string) 
 		Type:  sdk.TextVariable,
 		Value: pub,
 	}
-	err = application.InsertVariable(db, appID, p)
+	err = application.InsertVariable(db, app, p)
 	if err != nil {
 		return err
 	}

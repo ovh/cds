@@ -229,17 +229,17 @@ func RemovePipeline(db *sql.Tx, key, appName, pipelineName string) error {
 }
 
 // UpdatePipelineApplication Update arguments passed to pipeline
-func UpdatePipelineApplication(db database.Executer, applicationID, pipelineID int64, params []sdk.Parameter) error {
+func UpdatePipelineApplication(db database.QueryExecuter, app *sdk.Application, pipelineID int64, params []sdk.Parameter) error {
 	data, err := json.Marshal(params)
 	if err != nil {
 		log.Warning("UpdatePipelineApplication> Cannot marshal parameters:  %s \n", err)
 		return fmt.Errorf("UpdatePipelineApplication>Cannot marshal parameters:  %s", err)
 	}
-	return UpdatePipelineApplicationString(db, applicationID, pipelineID, string(data))
+	return UpdatePipelineApplicationString(db, app, pipelineID, string(data))
 }
 
 // UpdatePipelineApplicationString Update application pipeline parameters
-func UpdatePipelineApplicationString(db database.Executer, applicationID, pipelineID int64, data string) error {
+func UpdatePipelineApplicationString(db database.QueryExecuter, app *sdk.Application, pipelineID int64, data string) error {
 	query := `
 		UPDATE application_pipeline SET 
 		args = $1,
@@ -248,12 +248,12 @@ func UpdatePipelineApplicationString(db database.Executer, applicationID, pipeli
 		`
 
 	// TODO: cipher args here
-	_, err := db.Exec(query, data, applicationID, pipelineID)
+	_, err := db.Exec(query, data, app.ID, pipelineID)
 	if err != nil {
 		return err
 	}
 
-	return UpdateLastModified(db, applicationID)
+	return UpdateLastModified(db, app)
 }
 
 // GetAllPipelineParam Get all the pipeline parameters

@@ -107,7 +107,7 @@ func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	defer tx.Rollback()
 
 	for _, appPip := range appPipelines {
-		err = application.UpdatePipelineApplication(tx, app.ID, appPip.Pipeline.ID, appPip.Parameters)
+		err = application.UpdatePipelineApplication(tx, app, appPip.Pipeline.ID, appPip.Parameters)
 		if err != nil {
 			log.Warning("updatePipelinesToApplicationHandler: Cannot update  application pipeline  %s/%s parameters: %s\n", appName, appPip.Pipeline.Name, err)
 			WriteError(w, r, sdk.ErrUnknownError)
@@ -156,7 +156,7 @@ func updatePipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	err = application.UpdatePipelineApplicationString(db, app.ID, pipeline.ID, string(data))
+	err = application.UpdatePipelineApplicationString(db, app, pipeline.ID, string(data))
 	if err != nil {
 		log.Warning("updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s:  %s\n", appName, pipelineName, err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -359,7 +359,7 @@ func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	err = application.UpdateLastModified(tx, applicationData.ID)
+	err = application.UpdateLastModified(tx, applicationData)
 	if err != nil {
 		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot update application last_modified date: %s\n", err)
 		WriteError(w, r, err)
@@ -441,7 +441,7 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	err = application.UpdateLastModified(tx, applicationData.ID)
+	err = application.UpdateLastModified(tx, applicationData)
 	if err != nil {
 		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot update application last_modified date: %s\n", err)
 		WriteError(w, r, err)

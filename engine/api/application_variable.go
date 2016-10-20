@@ -100,7 +100,7 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 			}
 			v.Value = string(value)
 		}
-		err := application.InsertVariable(tx, app.ID, v)
+		err := application.InsertVariable(tx, app, v)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot insert variable %s for application %s:  %s\n", v.Name, appName, err)
 			WriteError(w, r, err)
@@ -168,7 +168,7 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = application.DeleteVariable(tx, app.ID, varName)
+	err = application.DeleteVariable(tx, app, varName)
 	if err != nil {
 		log.Warning("deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
 		WriteError(w, r, err)
@@ -263,7 +263,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 					}
 				}
 			}
-			err := application.InsertVariable(tx, app.ID, v)
+			err := application.InsertVariable(tx, app, v)
 			if err != nil {
 				log.Warning("updateVariablesInApplicationHandler: Cannot insert variable %s for application %s:  %s\n", v.Name, appName, err)
 				WriteError(w, r, err)
@@ -272,7 +272,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 			break
 		case sdk.KeyVariable:
 			if v.Value == "" {
-				err := keys.AddKeyPairToApplication(tx, app.ID, v.Name)
+				err := keys.AddKeyPairToApplication(tx, app, v.Name)
 				if err != nil {
 					log.Warning("updateVariablesInApplicationHandler> cannot generate keypair: %s\n", err)
 					WriteError(w, r, err)
@@ -284,7 +284,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 						v.Value = p.Value
 					}
 				}
-				err = application.InsertVariable(tx, app.ID, v)
+				err = application.InsertVariable(tx, app, v)
 				if err != nil {
 					log.Warning("updateVariablesInApplication: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 					WriteError(w, r, err)
@@ -293,7 +293,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 			}
 			break
 		default:
-			err := application.InsertVariable(tx, app.ID, v)
+			err := application.InsertVariable(tx, app, v)
 			if err != nil {
 				log.Warning("updateVariablesInApplicationHandler: Cannot insert variable %s for application %s:  %s\n", v.Name, appName, err)
 				WriteError(w, r, err)
@@ -374,7 +374,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	err = application.UpdateVariable(tx, app.ID, newVar)
+	err = application.UpdateVariable(tx, app, newVar)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot update variable %s for application %s:  %s\n", varName, appName, err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -456,10 +456,10 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = keys.AddKeyPairToApplication(tx, app.ID, newVar.Name)
+		err = keys.AddKeyPairToApplication(tx, app, newVar.Name)
 		break
 	default:
-		err = application.InsertVariable(tx, app.ID, newVar)
+		err = application.InsertVariable(tx, app, newVar)
 		break
 	}
 	if err != nil {

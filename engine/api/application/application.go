@@ -39,7 +39,7 @@ func CreateFromWizard(db database.QueryExecuter, app *sdk.Application, p *sdk.Pr
 			Type:  v.Type,
 			Value: v.Value,
 		}
-		err = InsertVariable(db, app.ID, variable)
+		err = InsertVariable(db, app, variable)
 		if err != nil {
 			log.Warning("CreateFromWizard: Cannot add variable  %s in application %s: %s \n", v.Name, app.Name, err)
 			return err
@@ -345,11 +345,15 @@ func UpdateApplication(db database.QueryExecuter, application *sdk.Application) 
 }
 
 // UpdateLastModified Update last_modified column in application table
-func UpdateLastModified(db database.Executer, applicationID int64) error {
+func UpdateLastModified(db database.QueryExecuter, app *sdk.Application) error {
 	query := `
-		UPDATE application SET last_modified=current_timestamp WHERE id = $1
+		UPDATE application SET last_modified=current_timestamp WHERE id = $1 RETURNING last_modified
 	`
-	_, err := db.Exec(query, applicationID)
+	var lastModified time.Time
+	err := db.QueryRow(query, app.ID).Scan(&lastModified)
+	if err == nil {
+		app.LastModified = lastModified.Unix()
+	}
 	return err
 }
 
