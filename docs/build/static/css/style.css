@@ -1,0 +1,87 @@
+/* background behind the logo*/
+#top-github-link, #body #breadcrumbs {
+    -webkit-transform: translateY(50%);
+    -moz-transform: translateY(50%);
+    -o-transform: translateY(50%);
+    -ms-transform: translateY(50%);
+    transform: translateY(50%);
+}
+
+#header {
+    background: #202f3c;
+    /*border-color: #545454;*/
+    border-color: #202f3c;
+
+    background-color: #202f3c;
+    border-radius: 0 0 70px 70px;
+    cursor: pointer;
+    height: 72px;
+    transition: width .3s cubic-bezier(.78,.05,.88,.99) 0s;
+}
+
+/* Background color of the menu */
+#sidebar {
+  background-color: #161D23;
+}
+
+/* Background color of the menu, when clicked */
+#sidebar ul.topics > li.parent, #sidebar ul.topics > li.active {
+  background-color: #202f3c;
+}
+
+a {
+    color: #0082a7;
+}
+
+a:hover {
+    color: #0082a7;
+}
+
+/* Color of all links, including arrows to get to previous and next pages */
+#sidebar ul li a {
+    color: #fff;
+}
+#sidebar ul li a:hover {
+   color: #fff;
+}
+
+#toc-menu {
+  cursor: pointer;
+}
+
+#top-bar {
+  height: inherit;
+}
+
+@media only all and (max-width: 47.938em) {
+    #body .padding {
+        padding: 5px 5rem;
+    }
+}
+
+@media only all and (max-width: 47.938em) {
+    #sidebar {
+        width: 230px;
+        left: -180px;
+    }
+
+    .ps-container {
+      display:none;
+    }
+}
+
+.progress {
+    position: relative;
+    background-color: rgba(246, 246, 246, 0.97);
+    width: auto;
+    border: thin solid #ECECEC;
+    display: block;
+    z-index: 200;
+}
+
+#TableOfContents {
+    font-size: 13px !important;
+    max-height: initial;
+    overflow: visible;
+    padding: 15px !important;
+}
