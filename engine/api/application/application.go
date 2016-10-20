@@ -52,8 +52,7 @@ func CreateFromWizard(db database.QueryExecuter, app *sdk.Application, p *sdk.Pr
 			return err
 		}
 
-		_, err = client.RepoByFullname(app.RepositoryFullname)
-		if err != nil {
+		if _, err = client.RepoByFullname(app.RepositoryFullname); err != nil {
 			log.Warning("CreateFromWizard> Cannot get repo: %s", err)
 			return err
 		}
