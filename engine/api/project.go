@@ -374,7 +374,7 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 					Type:  v.Type,
 					Value: v.Value,
 				}
-				err = application.InsertVariable(tx, app.ID, variable)
+				err = application.InsertVariable(tx, &app, variable)
 				if err != nil {
 					log.Warning("addProject: Cannot add variable  %s in application %s: %s \n", v.Name, app.Name, err)
 					w.WriteHeader(http.StatusInternalServerError)
@@ -389,7 +389,7 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 						Value: "{{.cds.app.repositoryUrl}}",
 					}
 					params = append(params, p)
-					err = application.UpdatePipelineApplication(tx, app.ID, newPipeline.ID, params)
+					err = application.UpdatePipelineApplication(tx, &app, newPipeline.ID, params)
 				}
 			}
 

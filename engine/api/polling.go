@@ -29,6 +29,13 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		return
 	}
 
+	app.RepositoryPollers, err = poller.LoadPollersByApplication(db, app.ID)
+	if err != nil {
+		log.Warning("addPollerHandler> Cannot load pollers for application %s: %s\n", app.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+
 	// Load pipeline
 	pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
 	if err != nil {
@@ -75,6 +82,14 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		return
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("addPollerHandler> Cannot start transaction: %s", e)
+		WriteError(w, r, e)
+		return
+	}
+	defer tx.Rollback()
+
 	// Insert poller in database
 	err = poller.InsertPoller(db, &h)
 	if err != nil {
@@ -83,7 +98,23 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		return
 	}
 
-	WriteJSON(w, r, h, http.StatusOK)
+	err = application.UpdateLastModified(tx, app)
+	if err != nil {
+		log.Warning("addPollerHandler: cannot update application (%s) lastmodified date: %s\n", app.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Warning("addPollerHandler> Cannot commit transaction: %s", e)
+		WriteError(w, r, e)
+		return
+	}
+
+	app.RepositoryPollers = append(app.RepositoryPollers, h)
+
+	WriteJSON(w, r, app, http.StatusOK)
 }
 
 func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -126,15 +157,42 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	h.Application = *app
 	h.Pipeline = *pip
 
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("updatePollerHandler> cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
 	// Update poller in database
-	err = poller.UpdatePoller(db, &h)
+	err = poller.UpdatePoller(tx, &h)
 	if err != nil {
 		log.Warning("updatePollerHandler: cannot update poller in db: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	WriteJSON(w, r, h, http.StatusOK)
+	if err = application.UpdateLastModified(tx, app); err != nil {
+		log.Warning("updatePollerHandler: cannot update application last modified date: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		log.Warning("updatePollerHandler> cannot commit transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	app.RepositoryPollers, err = poller.LoadPollersByApplication(db, app.ID)
+	if err != nil {
+		log.Warning("deleteHook> cannot load pollers: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, app, http.StatusOK)
 }
 
 func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -220,9 +278,38 @@ func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 		return
 	}
 
-	if err = poller.DeletePoller(db, po); err != nil {
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("deleteHook> cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err = poller.DeletePoller(tx, po); err != nil {
 		log.Warning("deleteHook> cannot delete poller: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
+
+	if err = application.UpdateLastModified(tx, a); err != nil {
+		log.Warning("deleteHook> cannot update application last modified date: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		log.Warning("deleteHook> cannot commit transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	a.RepositoryPollers, err = poller.LoadPollersByApplication(db, a.ID)
+	if err != nil {
+		log.Warning("deleteHook> cannot load pollers: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, a, http.StatusOK)
 }

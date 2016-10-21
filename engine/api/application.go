@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -174,6 +175,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	applicationName := vars["permApplicationName"]
 
 	applicationStatus := r.FormValue("applicationStatus")
+	withPollers := r.FormValue("withPollers")
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
@@ -182,6 +184,16 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		log.Warning("getApplicationHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
 		WriteError(w, r, err)
 		return
+	}
+
+	if withPollers == "true" {
+		app.RepositoryPollers, err = poller.LoadPollersByApplication(db, app.ID)
+		if err != nil {
+			log.Warning("getApplicationHandler: Cannot load pollers for application %s: %s\n", applicationName, err)
+			WriteError(w, r, err)
+			return
+		}
+
 	}
 
 	if applicationStatus == "true" {
@@ -473,9 +485,9 @@ func cloneApplication(db *sql.DB, project *sdk.Project, newApp *sdk.Application,
 	for _, v := range newApp.Variable {
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			err = keys.AddKeyPairToApplication(tx, newApp.ID, v.Name)
+			err = keys.AddKeyPairToApplication(tx, newApp, v.Name)
 		} else {
-			err = application.InsertVariable(tx, newApp.ID, v)
+			err = application.InsertVariable(tx, newApp, v)
 		}
 		if err != nil {
 			return err
@@ -489,7 +501,7 @@ func cloneApplication(db *sql.DB, project *sdk.Project, newApp *sdk.Application,
 			return err
 		}
 
-		err = application.UpdatePipelineApplication(tx, newApp.ID, appPip.Pipeline.ID, appPip.Parameters)
+		err = application.UpdatePipelineApplication(tx, newApp, appPip.Pipeline.ID, appPip.Parameters)
 		if err != nil {
 			return err
 		}
