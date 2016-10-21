@@ -837,7 +837,16 @@ func getServers(endpoint, token string) ([]Server, error) {
 		return nil, err
 	}
 
-	return s.Servers, nil
+	// Remove servers without "worker" tag
+	var servers []Server
+	for _, s := range servers {
+		_, worker := s.Metadata["worker"]
+		if !worker {
+			continue
+		}
+		servers = append(servers, s)
+	}
+	return servers, nil
 }
 
 func getNetworks(endpoint string, token string) ([]Network, error) {
