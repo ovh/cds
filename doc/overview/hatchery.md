@@ -26,7 +26,7 @@ Hatchery starts workers inside containers on a mesos cluster using Marathon API.
 
 ### Openstack mode
 
-Hatchery starts workers on Openstack servers using Openstack Nova.
+Hatchery starts workers on Openstack servers using Openstack Nova. Setup tutorial [here](/doc/tutorials/hatchery-openstack.md)
 
 ### Swarm mode
 
