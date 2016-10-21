@@ -15,7 +15,7 @@ func TestInsertWorker(t *testing.T) {
 		Name: "foo.bar.io",
 	}
 
-	err := InsertWorker(db, w, 0, 0)
+	err := InsertWorker(db, w, 0)
 	if err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
@@ -30,7 +30,7 @@ func TestDeletetWorker(t *testing.T) {
 		Name: "foo.bar.io",
 	}
 
-	err := InsertWorker(db, w, 0, 0)
+	err := InsertWorker(db, w, 0)
 	if err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
@@ -45,19 +45,19 @@ func TestLoadWorkers(t *testing.T) {
 	db := test.Setup("LoadWorkers", t)
 
 	w := &sdk.Worker{ID: "foo", Name: "aa.bar.io"}
-	if err := InsertWorker(db, w, 0, 0); err != nil {
+	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 	w = &sdk.Worker{ID: "foo", Name: "zz.bar.io"}
-	if err := InsertWorker(db, w, 0, 0); err != nil {
+	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 	w = &sdk.Worker{ID: "foo", Name: "bb.bar.io"}
-	if err := InsertWorker(db, w, 0, 0); err != nil {
+	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 	w = &sdk.Worker{ID: "foo", Name: "aa.car.io"}
-	if err := InsertWorker(db, w, 0, 0); err != nil {
+	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 
