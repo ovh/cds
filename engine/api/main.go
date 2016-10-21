@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/notification"
@@ -75,6 +76,10 @@ var mainCmd = &cobra.Command{
 			}
 			if err = artifact.CreateBuiltinArtifactActions(db); err != nil {
 				log.Critical("Cannot setup builtin Artifact actions: %s\n", err)
+			}
+
+			if err = group.CreateDefaultGlobalGroup(db); err != nil {
+				log.Critical("Cannot setup default global group: %s\n", err)
 			}
 
 			if err = worker.CreateBuiltinActions(db); err != nil {
@@ -224,9 +229,10 @@ func (router *Router) init() {
 	router.Handle("/group/{permGroupName}/user", POST(addUserInGroup))
 	router.Handle("/group/{permGroupName}/user/{user}", DELETE(removeUserFromGroupHandler))
 	router.Handle("/group/{permGroupName}/user/{user}/admin", POST(setUserGroupAdminHandler), DELETE(removeUserGroupAdminHandler))
+	router.Handle("/group/{permGroupName}/token/{expiration}", POST(generateTokenHandler))
 
 	// Hatchery
-	router.Handle("/hatchery", POST(registerHatchery))
+	router.Handle("/hatchery", Auth(false), POST(registerHatchery))
 	router.Handle("/hatchery/{id}", PUT(refreshHatcheryHandler))
 
 	// Hooks
@@ -284,7 +290,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/history", GET(getPipelineHistoryHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/log", GET(getBuildLogsHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/test", POST(addBuildTestResultsHandler), GET(getBuildTestResultsHandler))
-	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/variable", POST(addBuildVariableHandler))
+	router.Handle("/project/{key}/application/{app}/pipeline/{permPipelineKey}/build/{build}/variable", POSTEXECUTE(addBuildVariableHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/action/{actionID}/log", GET(getActionBuildLogsHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}", GET(getBuildStateHandler), DELETE(deleteBuildHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/triggered", GET(getPipelineBuildTriggeredHandler))
@@ -388,7 +394,6 @@ func (router *Router) init() {
 	router.Handle("/user/{name}", NeedAdmin(true), GET(GetUserHandler), PUT(UpdateUserHandler), DELETE(DeleteUserHandler))
 	router.Handle("/user/{name}/confirm/{token}", Auth(false), GET(ConfirmUser))
 	router.Handle("/user/{name}/reset", Auth(false), POST(ResetUser))
-	router.Handle("/user/worker/key/{expiry}", POST(generateUserKeyHandler))
 	router.Handle("/auth/mode", Auth(false), GET(AuthModeHandler))
 
 	// Workers

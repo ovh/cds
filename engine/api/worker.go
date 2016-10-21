@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
@@ -152,40 +153,46 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 
 func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 
-	err := worker.RefreshWorker(db, c.WorkerID)
+	err := worker.RefreshWorker(db, c.Worker.ID)
 	if err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
-		log.Warning("refreshWorkerHandler> cannot refresh last beat of %s: %s\n", c.WorkerID, err)
+		log.Warning("refreshWorkerHandler> cannot refresh last beat of %s: %s\n", c.Worker.ID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
-func generateUserKeyHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+// generateTokenHandler allows a user to generate a token associated to a group permission
+// and used by worker to take action from API.
+// User generating the token needs to be admin of given group
+func generateTokenHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)
-	expiry := vars["expiry"]
+	groupName := vars["permGroupName"]
+	expiration := vars["expiration"]
 
-	e, err := strconv.Atoi(expiry)
+	exp, err := sdk.ExpirationFromString(expiration)
 	if err != nil {
-		log.Warning("generateUserKeyHandler> invalid expiry option: %s\n", err)
+		log.Warning("generateTokenHandler> '%s' -> %s\n", expiration, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	if c.User == nil {
-		WriteError(w, r, sdk.ErrUnauthorized)
-		return
-	}
-
-	key, err := worker.GenerateKey()
+	g, err := group.LoadGroup(db, groupName)
 	if err != nil {
-		log.Warning("generateUserKeyHandler> key generation failed: %s\n", err)
+		log.Warning("generateTokenHandler> cannot load group '%s': %s\n", groupName, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = worker.InsertUserKey(db, c.User.ID, key, sdk.Expiry(e))
+	tk, err := worker.GenerateToken()
 	if err != nil {
-		log.Warning("generateUserKeyHandler> cannot insert new key: %s\n", err)
+		log.Warning("generateTokenHandler: cannot generate key: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	err = worker.InsertToken(db, g.ID, tk, exp)
+	if err != nil {
+		log.Warning("generateTokenHandler> cannot insert new key: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -193,7 +200,7 @@ func generateUserKeyHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 	s := struct {
 		Key string `json:"key"`
 	}{
-		Key: key,
+		Key: tk,
 	}
 	WriteJSON(w, r, s, http.StatusOK)
 }
@@ -530,7 +537,7 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 }
 
 func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	ms, err := worker.EstimateWorkerModelNeeds(db, c.User)
+	ms, err := worker.EstimateWorkerModelNeeds(db, c)
 	if err != nil {
 		log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -541,7 +548,7 @@ func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 }
 
 func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	err := worker.DeleteWorker(db, c.WorkerID)
+	err := worker.DeleteWorker(db, c.Worker.ID)
 	if err != nil {
 		log.Warning("unregisterWorkerHandler> cannot delete worker %s\n", err)
 		WriteError(w, r, err)

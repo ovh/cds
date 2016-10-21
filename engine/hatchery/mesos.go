@@ -95,12 +95,6 @@ func (m *HatcheryMesos) Hatchery() *hatchery.Hatchery {
 	return m.hatch
 }
 
-// Refresh retrieves worker models status from API
-// and tries to act if needed
-func (m *HatcheryMesos) Refresh() error {
-	return nil
-}
-
 // KillWorker deletes an application on mesos via marathon
 func (m *HatcheryMesos) KillWorker(worker sdk.Worker) error {
 	appID := path.Join(marathonID, worker.Name)
@@ -125,10 +119,6 @@ func (m *HatcheryMesos) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
 	log.Notice("Spawning worker %s (%s)\n", model.Name, model.Image)
 	var err error
-	uk, err = sdk.GenerateWorkerKey(sdk.NeverExpire)
-	if err != nil {
-		return fmt.Errorf("cannot generate worker key: %s", err)
-	}
 
 	// Do not DOS marathon, if deployment queue is longer than 10, wait
 	deployments, err := getDeployments(marathonHost, marathonUser, marathonPassword, "/cds/")
@@ -230,6 +220,7 @@ func (m *HatcheryMesos) Init() error {
 	}
 	m.hatch = &hatchery.Hatchery{
 		Name: name,
+		UID:  uk,
 	}
 	err = register(m.hatch)
 	if err != nil {
@@ -238,13 +229,7 @@ func (m *HatcheryMesos) Init() error {
 
 	// Start cleaning routines
 	startKillAwolWorkerRoutine()
-	go suicide()
 	return nil
-}
-
-func suicide() {
-	time.Sleep(1 * time.Hour)
-	os.Exit(0)
 }
 
 func spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64) error {

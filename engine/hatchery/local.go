@@ -62,12 +62,6 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 	return true
 }
 
-// Refresh retrieves worker models status from API
-// and tries to act if needed
-func (h *HatcheryLocal) Refresh() error {
-	return nil
-}
-
 // KillWorker kill a local process
 func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 	for name, cmd := range h.workers {
@@ -83,10 +77,6 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) error {
 	var err error
-	uk, err = sdk.GenerateWorkerKey(sdk.FirstUseExpire)
-	if err != nil {
-		return fmt.Errorf("cannot generate worker key: %s", err)
-	}
 
 	if len(h.workers) >= maxWorker {
 		return fmt.Errorf("Max capacity reached (%d)\n", maxWorker)
@@ -171,6 +161,7 @@ func (h *HatcheryLocal) Init() error {
 
 	h.hatch = &hatchery.Hatchery{
 		Name: name,
+		UID:  uk,
 		Model: sdk.Model{
 			Name:         name,
 			Image:        name,

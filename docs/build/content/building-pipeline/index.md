@@ -1,11 +1,11 @@
 ---
 weight: 0
-title: "Tat Webui"
+title: "Building Pipeline"
 chapter: true
 icon: "<b>2. </b>"
-next: "/tatwebui/introduction"
+next: "/building-pipeline/pipeline-stage-job"
 ---
 
 ### Chapter 2
 
-# Tat Webui
+# Building Pipeline

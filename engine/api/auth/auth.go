@@ -202,32 +202,27 @@ func checkWorkerAuth(db *sql.DB, auth string, ctx *context.Context) error {
 	var putWorkerInCache bool
 	if oldWorker.ID != "" {
 		w = &oldWorker
-		//OwnerID is not serialized, we have to override it
-		w.OwnerID = w.Owner.ID
 	}
 	// Else load it from DB
 	if w == nil {
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot load worker: %s", err)
 		}
 		putWorkerInCache = true
 	}
 
-	// Load user
-	u, err := user.LoadUserWithoutAuthByID(db, w.OwnerID)
+	// craft a user as a member of worker group
+	ctx.User = &sdk.User{Username: w.Name}
+	g, err := user.LoadGroupPermissions(db, w.GroupID)
 	if err != nil {
-		return fmt.Errorf("cannot load worker owner %d: %s", w.OwnerID, err)
+		return fmt.Errorf("cannot load group permissions: %s", err)
 	}
-	err = user.LoadUserPermissions(db, u)
-	if err != nil {
-		return fmt.Errorf("cannot load user %d permissions: %s", w.OwnerID, err)
-	}
-	ctx.User = u
-	ctx.WorkerID = w.ID
+	ctx.User.Groups = append(ctx.User.Groups, *g)
+
+	ctx.Worker = *w
 	if putWorkerInCache {
 		//Set the worker in cache
-		w.Owner = *u
 		cache.Set(key, *w)
 	}
 	return nil

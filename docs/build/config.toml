@@ -1,8 +1,9 @@
-baseurl = "http://localhost:1313/"
+baseurl = "https://ovh.github.io/cds"
 title = "CDS Documentation"
 languageCode = "en-us"
 theme = "hugo-theme-learn"
 canonifyurls = true
 createFromSiteMenusMain = true
 [params]
-  menu = [ "getting-started", "building-pipeline", "deployment-uploads", "integration-notification", "tutorials", "managing-permissions", "advanced" ]
+  menu = [ "getting-started", "building-pipeline", "deployment-upload", "integrations-notifications", "tutorials", "managing-permissions", "advanced" ]
+  search = true

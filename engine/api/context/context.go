@@ -6,6 +6,7 @@ import (
 
 // Context gather information about http call origin
 type Context struct {
-	User     *sdk.User
-	WorkerID string
+	Agent  sdk.Agent
+	User   *sdk.User
+	Worker sdk.Worker
 }

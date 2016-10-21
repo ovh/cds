@@ -74,9 +74,10 @@ func DeleteWorker(db *sql.DB, id string) error {
 }
 
 // InsertWorker inserts worker representation into database
-func InsertWorker(db database.Executer, w *sdk.Worker, userID int64) error {
-	query := `INSERT INTO worker (id, name, last_beat, owner_id, model, status, hatchery_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	_, err := db.Exec(query, w.ID, w.Name, time.Now(), userID, w.Model, w.Status.String(), w.HatcheryID)
+func InsertWorker(db database.Executer, w *sdk.Worker, groupID int64) error {
+	query := `INSERT INTO worker (id, name, last_beat, model, status, hatchery_id, group_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`
+
+	_, err := db.Exec(query, w.ID, w.Name, time.Now(), w.Model, w.Status.String(), w.HatcheryID, groupID)
 	return err
 }
 
@@ -84,9 +85,9 @@ func InsertWorker(db database.Executer, w *sdk.Worker, userID int64) error {
 func LoadWorker(db database.Querier, id string) (*sdk.Worker, error) {
 	w := &sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, owner_id, model, status, hatchery_id FROM worker WHERE worker.id = $1 FOR UPDATE`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
 
-	err := db.QueryRow(query, id).Scan(&w.ID, &w.Name, &w.LastBeat, &w.OwnerID, &w.Model, &statusS, &w.HatcheryID)
+	err := db.QueryRow(query, id).Scan(&w.ID, &w.Name, &w.LastBeat, &w.GroupID, &w.Model, &statusS, &w.HatcheryID, &w.GroupID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,10 +100,8 @@ func LoadWorker(db database.Querier, id string) (*sdk.Worker, error) {
 func LoadWorkersByModel(db database.Querier, modelID int64) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT worker.id, worker.name, worker.last_beat, worker.owner_id, worker.model, worker.status, worker.hatchery_id,
-						"user".username
+	query := `SELECT worker.id, worker.name, worker.last_beat, worker.group_id, worker.model, worker.status, worker.hatchery_id
 	          FROM worker
-	          JOIN "user" ON "user".id = worker.owner_id
 	          WHERE worker.model = $1
 	          ORDER BY worker.name ASC`
 
@@ -114,14 +113,12 @@ func LoadWorkersByModel(db database.Querier, modelID int64) ([]sdk.Worker, error
 
 	for rows.Next() {
 		var worker sdk.Worker
-		var user sdk.User
 
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.OwnerID, &worker.Model, &statusS, &worker.HatcheryID, &user.Username)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID)
 		if err != nil {
 			return nil, err
 		}
 		worker.Status = sdk.StatusFromString(statusS)
-		worker.Owner = user
 		w = append(w, worker)
 	}
 
@@ -132,7 +129,7 @@ func LoadWorkersByModel(db database.Querier, modelID int64) ([]sdk.Worker, error
 func LoadWorkers(db *sql.DB) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, owner_id, model, status, hatchery_id FROM worker WHERE 1 = 1 ORDER BY name ASC`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id FROM worker WHERE 1 = 1 ORDER BY name ASC`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -142,7 +139,7 @@ func LoadWorkers(db *sql.DB) ([]sdk.Worker, error) {
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.OwnerID, &worker.Model, &statusS, &worker.HatcheryID)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID)
 		if err != nil {
 			return nil, err
 		}
@@ -157,7 +154,7 @@ func LoadWorkers(db *sql.DB) ([]sdk.Worker, error) {
 func LoadDeadWorkers(db *sql.DB, timeout float64) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
-	query := `	SELECT id, name, last_beat, owner_id, model, status, hatchery_id
+	query := `	SELECT id, name, last_beat, group_id, model, status, hatchery_id
 				FROM worker 
 				WHERE 1 = 1
 				AND now() - last_beat > $1 * INTERVAL '1' SECOND
@@ -172,7 +169,7 @@ func LoadDeadWorkers(db *sql.DB, timeout float64) ([]sdk.Worker, error) {
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.OwnerID, &worker.Model, &statusS, &worker.HatcheryID)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID)
 		if err != nil {
 			log.Warning("LoadDeadWorkers> Error scanning workers")
 			return nil, err
@@ -239,14 +236,15 @@ func RegisterWorker(db *sql.DB, name string, uk string, modelID int64, hatcheryI
 		return nil, fmt.Errorf("cannot register worker with empty worker key")
 	}
 
-	// Load user key
-	userID, e, err := LoadUserKey(db, uk)
-	if err != nil && err == sql.ErrNoRows {
-		return nil, fmt.Errorf("invalid worker key")
-	}
+	/// Load token
+	var groupID int64
+	var e sdk.Expiration
+	t, err := LoadToken(db, uk)
 	if err != nil {
 		return nil, err
 	}
+	groupID = t.GroupID
+	e = t.Expiration
 
 	id, err := generateID()
 	if err != nil {
@@ -268,13 +266,13 @@ func RegisterWorker(db *sql.DB, name string, uk string, modelID int64, hatcheryI
 	}
 	defer tx.Rollback()
 
-	err = InsertWorker(tx, w, userID)
+	err = InsertWorker(tx, w, groupID)
 	if err != nil {
 		log.Warning("registerWorker: Cannot insert worker in database: %s\n", err)
 		return nil, err
 	}
 
-	if e == sdk.FirstUseExpire {
+	if e == sdk.Session {
 		err = DeleteUserKey(tx, uk)
 		if err != nil {
 			log.Warning("registerWorker> Cannot remove single use key: %s\n", err)

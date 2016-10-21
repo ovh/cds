@@ -1,11 +1,11 @@
 ---
 weight: 30
 chapter: true
-title: "Tat'n Hack"
+title: "Advanced"
 icon: "<b>7. </b>"
-next: "/tatnhack/monitoring-process"
+next: "/advanced/todo"
 ---
 
 ### Chapter 7
 
-# Tat'n Hack
+# Advanced

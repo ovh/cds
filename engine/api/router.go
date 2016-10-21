@@ -3,6 +3,7 @@ package main
 import (
 	"compress/gzip"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +19,8 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -159,7 +162,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		}
 
 		if rc.auth {
-			if err := r.checkAuthHeader(db, req.Header, c); err != nil {
+			if err := r.checkAuthentication(db, req.Header, c); err != nil {
 				log.Warning("Authorization denied on %s %s for %s: %s\n", req.Method, req.URL, req.RemoteAddr, err)
 				WriteError(w, req, sdk.ErrUnauthorized)
 				return
@@ -311,6 +314,41 @@ func Auth(v bool) RouterConfigParam {
 
 func (r *Router) checkAuthHeader(db *sql.DB, headers http.Header, c *context.Context) error {
 	return r.authDriver.GetCheckAuthHeaderFunc(localCLientAuthMode)(db, headers, c)
+}
+
+func (r *Router) checkAuthentication(db *sql.DB, headers http.Header, c *context.Context) error {
+
+	c.Agent = sdk.Agent(headers.Get("User-Agent"))
+
+	switch headers.Get("User-Agent") {
+	// TODO: case sdk.WorkerAgent should be moved here
+	case sdk.HatcheryAgent:
+		return r.checkHatcheryAuth(db, headers, c)
+	default:
+		return r.checkAuthHeader(db, headers, c)
+	}
+}
+
+func (r *Router) checkHatcheryAuth(db *sql.DB, headers http.Header, c *context.Context) error {
+	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
+	if err != nil {
+		return fmt.Errorf("bad worker key syntax: %s", err)
+	}
+	log.Debug("HatcheryAuth> Hatchery looking for auth (%s)\n", id)
+
+	h, err := hatchery.LoadHatchery(db, string(id))
+	if err != nil {
+		return err
+	}
+
+	log.Debug("HatcheryAuth> Loading permissions for group %d\n", h.GroupID)
+	c.User = &sdk.User{Username: h.Name}
+	g, err := user.LoadGroupPermissions(db, h.GroupID)
+	if err != nil {
+		return fmt.Errorf("cannot load group permissions: %s", err)
+	}
+	c.User.Groups = append(c.User.Groups, *g)
+	return nil
 }
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best

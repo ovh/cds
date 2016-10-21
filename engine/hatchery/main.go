@@ -17,7 +17,6 @@ import (
 type HatcheryMode interface {
 	ParseConfig()
 	Init() error
-	Refresh() error
 	KillWorker(worker sdk.Worker) error
 	SpawnWorker(model *sdk.Model, req []sdk.Requirement) error
 	CanSpawn(model *sdk.Model, req []sdk.Requirement) bool
@@ -47,7 +46,7 @@ var (
 
 var cmd = &cobra.Command{
 	Use:   "hatchery",
-	Short: "hatchery --mode=<mode> --api=<cds.domain> --cds-user=<cds.user> --cds-password=<cds.password>",
+	Short: "hatchery --mode=<mode> --api=<cds.domain> --cds-user=<cds.user> --cds-password=<cds.password> --token=<token>",
 	Run:   hatcheryCmd,
 }
 
@@ -65,11 +64,8 @@ func init() {
 	flags.String("api", "", "CDS api endpoint")
 	viper.BindPFlag("api", flags.Lookup("api"))
 
-	flags.String("cds-user", "", "CDS user. Hatchery will use its permissions")
-	viper.BindPFlag("cds-user", flags.Lookup("cds-user"))
-
-	flags.String("cds-password", "", "CDS user password")
-	viper.BindPFlag("cds-password", flags.Lookup("cds-password"))
+	flags.String("token", "", "CDS token")
+	viper.BindPFlag("token", flags.Lookup("token"))
 
 	flags.Int("provision", 0, "Allowed worker model provisioning")
 	viper.BindPFlag("provision", flags.Lookup("provision"))
@@ -90,6 +86,10 @@ func hatcheryCmd(cmd *cobra.Command, args []string) {
 
 	for {
 		time.Sleep(2 * time.Second)
+		if h.Hatchery() == nil || h.Hatchery().ID == 0 {
+			continue
+		}
+
 		if err := hatcheryRoutine(h); err != nil {
 			log.Warning("Error: %s\n", err)
 		}
@@ -99,6 +99,7 @@ func hatcheryCmd(cmd *cobra.Command, args []string) {
 
 func main() {
 	log.SetLevel(log.NoticeLevel)
+	sdk.SetAgent(sdk.HatcheryAgent)
 
 	cmd.Execute()
 }
@@ -225,27 +226,15 @@ func parseConfig(cmd *cobra.Command) HatcheryMode {
 		sdk.Exit("CDS api endpoint not provided. See usage:\n%s\n", cmd.Short)
 	}
 
-	usr := viper.GetString("cds-user")
-	passwd := viper.GetString("cds-password")
-	token := os.Getenv("CDS_TOKEN")
-	if usr == "" && passwd == "" && token == "" {
-		sdk.Exit("Authentification not provided. See usage:\n%s\n", cmd.Short)
+	uk = viper.GetString("token")
+	if uk == "" {
+		sdk.Exit("Worker token not provided. See usage:\n%s\n", cmd.Short)
 	}
 
-	// legacy
-	if e := os.Getenv("CDS_API"); e != "" {
-		api = e
-	}
-	if e := os.Getenv("CDS_USER"); e != "" {
-		usr = e
-	}
-	if e := os.Getenv("CDS_PASSWORD"); e != "" {
-		passwd = e
-	}
-
-	client = NewHTTPClient(api, usr, passwd, token)
+	var usr, passwd string
+	client = NewHTTPClient(api, usr, passwd, uk)
 	sdk.SetHTTPClient(client)
-	sdk.Options(api, usr, passwd, token)
+	sdk.Options(api, usr, passwd, uk)
 
 	h.ParseConfig()
 	return h

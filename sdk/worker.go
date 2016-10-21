@@ -11,8 +11,7 @@ type Worker struct {
 	ID         string    `json:"id"`
 	Name       string    `json:"name"`
 	LastBeat   time.Time `json:"-"`
-	OwnerID    int64     `json:"-"`
-	Owner      User      `json:"owner"`
+	GroupID    int64     `json:"group_id"`
 	Model      int64     `json:"model"`
 	HatcheryID int64     `json:"hatchery_id"`
 	Status     Status    `json:"status"` // Waiting, Building, Disabled, Unknown

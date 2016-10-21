@@ -36,6 +36,16 @@ func DeletePoller(db database.Executer, poller *sdk.RepositoryPoller) error {
 	return nil
 }
 
+// DeleteAllPollers  Delete all the poller of the given application
+func DeleteAllPollers(db database.Executer, appID int64) error {
+	query := "DELETE FROM poller WHERE application_id = $1"
+	if _, err := db.Exec(query, appID); err != nil {
+		log.Warning("DeleteAllPoller> Error :%s", err)
+		return err
+	}
+	return nil
+}
+
 //UpdatePoller update the poller
 func UpdatePoller(db database.Executer, poller *sdk.RepositoryPoller) error {
 	query := `

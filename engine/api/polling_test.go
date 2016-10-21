@@ -236,7 +236,10 @@ func TestAddPollerHandler(t *testing.T) {
 	//5. Attach pipeline to application
 	err = application.AttachPipeline(db, app.ID, pip.ID)
 	assert.NoError(t, err)
-	repositoriesmanager.InsertForApplication(db, rm, proj.Key, appName, "test/"+app.Name)
+
+	app.RepositoriesManager = rm
+	app.RepositoryFullname = "test/" + app.Name
+	repositoriesmanager.InsertForApplication(db, app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -321,7 +324,10 @@ func TestUpdatePollerHandler(t *testing.T) {
 	//5. Attach pipeline to application
 	err = application.AttachPipeline(db, app.ID, pip.ID)
 	assert.NoError(t, err)
-	repositoriesmanager.InsertForApplication(db, rm, proj.Key, appName, "test/"+app.Name)
+
+	app.RepositoriesManager = rm
+	app.RepositoryFullname = "test/" + app.Name
+	repositoriesmanager.InsertForApplication(db, app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -430,7 +436,9 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	//5. Attach pipeline to application
 	err = application.AttachPipeline(db, app.ID, pip.ID)
 	assert.NoError(t, err)
-	repositoriesmanager.InsertForApplication(db, rm, proj.Key, appName, "test/"+app.Name)
+	app.RepositoriesManager = rm
+	app.RepositoryFullname = "test/" + app.Name
+	repositoriesmanager.InsertForApplication(db, app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -536,7 +544,9 @@ func TestGetPollersHandler(t *testing.T) {
 	//5. Attach pipeline to application
 	err = application.AttachPipeline(db, app.ID, pip.ID)
 	assert.NoError(t, err)
-	repositoriesmanager.InsertForApplication(db, rm, proj.Key, appName, "test/"+app.Name)
+	app.RepositoriesManager = rm
+	app.RepositoryFullname = "test/" + app.Name
+	repositoriesmanager.InsertForApplication(db, app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -642,7 +652,9 @@ func TestDeletePollerHandler(t *testing.T) {
 	err = application.AttachPipeline(db, app.ID, pip.ID)
 	assert.NoError(t, err)
 
-	repositoriesmanager.InsertForApplication(db, rm, proj.Key, appName, "test/"+app.Name)
+	app.RepositoriesManager = rm
+	app.RepositoryFullname = "test/" + app.Name
+	repositoriesmanager.InsertForApplication(db, app, proj.Key)
 
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{

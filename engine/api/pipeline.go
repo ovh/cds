@@ -483,51 +483,6 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 
 }
 
-/*
-func addActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-
-	// Get pipeline and action name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	pipelineName := vars["permPipelineKey"]
-
-	var pipelineAction sdk.PipelineAction
-
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	err = json.Unmarshal(data, &pipelineAction)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	args, err := json.Marshal(pipelineAction.Args)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	a, err := action.LoadPublicAction(db, pipelineAction.ActionName)
-	if err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot load action %s: %s\n", pipelineAction.ActionName, err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	_, err = pipeline.InsertPipelineAction(db, projectKey, pipelineName, a.ID, string(args), pipelineAction.PipelineStageID)
-	if err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot insert in database: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-*/
 func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -678,6 +633,13 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	if err != nil {
 		log.Warning("addPipelineHandler> Cannot add groups on pipeline: %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = group.AddGlobalGroupToPipeline(tx, p.ID)
+	if err != nil {
+		log.Warning("addPipelineHandler> Cannot add Global infra group: %s\n", err)
+		WriteError(w, r, err)
 		return
 	}
 

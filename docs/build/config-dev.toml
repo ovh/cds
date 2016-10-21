@@ -1,0 +1,9 @@
+baseurl = "http://localhost:1313/cds"
+title = "CDS Documentation"
+languageCode = "en-us"
+theme = "hugo-theme-learn"
+canonifyurls = true
+createFromSiteMenusMain = true
+[params]
+  menu = [ "getting-started", "building-pipeline", "deployment-upload", "integrations-notifications", "tutorials", "managing-permissions", "advanced" ]
+  search = true

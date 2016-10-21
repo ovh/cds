@@ -1,27 +1,41 @@
 <nav id="sidebar">
   <div id="header-wrapper">
     <div id="header">
-      <span href="#" id="sidebar-toggle" data-sidebar-toggle="">
       {{ partial "logo.html" . }}
-      </span>
-      {{ if .Site.Params.search }}
-      <div class="searchbox">
-        <label for="search-by"><i class="fa fa-search"></i></label>
-        <input id="search-by" type="text" placeholder="Search Documentation" data-search-input="/lunr.json/query">
-        <span data-search-clear=""><i class="fa fa-close"></i></span>
-      </div>
-      {{ end }}
     </div>
+    {{ if .Site.Params.search }}
+      {{ partial "search.html" . }}
+    {{ end }}
 </div>
 
 
   <div class="highlightable">
     <ul class="topics">
       {{ $page := . }}
-      {{ range $i, $key := .Site.Params.menu }}
+      {{ if .Site.Params.menu }}
+        {{ $.Scratch.Set "menuItems" (slice) }}
+        {{ range $i, $key := .Site.Params.menu }}
+          {{ if isset $page.Site.Sections $key }}
+            {{ $.Scratch.Add "menuItems" $key }}
+          {{ else }}
+            <li class="dd-item"><div class="notices warning"><p>
+            {{ printf "Unknown section '%s' found in site menu" $key }}
+            </p></div></li>
+          {{ end }}
+        {{ end }}
+      {{ else }}
+        {{ $.Scratch.Set "menuItems" .Site.Sections }}
+      {{ end }}
+      {{ $menuItems := $.Scratch.Get "menuItems" }}
+      {{ range $i, $key := $menuItems }}
       {{ if ne $key "" }}
 
-      {{ $value := (index $page.Site.Sections $key) }}
+      {{ if not $.Site.Params.menu }}
+        {{ $.Scratch.Set "currentItem" (index $page.Site.Sections $i) }}
+      {{ else }}
+        {{ $.Scratch.Set "currentItem" (index $page.Site.Sections $key) }}
+      {{ end }}
+      {{ $value := $.Scratch.Get "currentItem" }}
       {{ $first := (index $value 0).Page }}
 
       <li class="dd-item {{ if eq $page.RelPermalink $first.RelPermalink }}active{{ end }} {{if in $page.RelPermalink $first.RelPermalink }}parent{{ end }}" data-nav-id="{{ $first.RelPermalink }}">
@@ -59,6 +73,8 @@
      {{ end }}
     <section id="footer">
       <p>Built with <a href="http://gohugo.io/">Hugo</a> and <a href="https://github.com/matcornic/hugo-theme-learn">learn theme</a></i></p>
+      <p>CDS is an <a href="https://github.com/ovh">OVH OSS</a></p>
+      <p><a href="https://ovh.com"><img src="https://ovh.github.io/tat/imgs/ovh-logo.png"></a></p>
     </section>
   </div>
 </nav>

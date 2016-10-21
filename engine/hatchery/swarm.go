@@ -84,11 +84,6 @@ func (h *HatcherySwarm) Init() error {
 	return nil
 }
 
-// Refresh doesn't do anything
-func (h *HatcherySwarm) Refresh() error {
-	return nil
-}
-
 // KillWorker kill the worker
 func (h *HatcherySwarm) KillWorker(worker sdk.Worker) error {
 	log.Warning("killing container %s", worker.Name)
@@ -162,11 +157,6 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 
 //SpawnWorker start a new docker container
 func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
-	//uk is the worker key for worker auth
-	uk, err := sdk.GenerateWorkerKey(sdk.FirstUseExpire)
-	if err != nil {
-		return fmt.Errorf("SpawnWorker> Cannot generate worker key: %s", err)
-	}
 
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))

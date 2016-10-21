@@ -13,8 +13,10 @@
     <link href="/css/hybrid.css" rel="stylesheet">
     <link href="/css/featherlight.min.css" rel="stylesheet">
     <link href="/css/perfect-scrollbar.min.css" rel="stylesheet">
+    <link href="/css/horsey.css" rel="stylesheet">
     <link href="/css/theme.css" rel="stylesheet">
     <link href="/css/hugo-theme.css" rel="stylesheet">
+    <script src="/js/jquery-2.x.min.js"></script>
     <style type="text/css">:root #header + #content > #left > #rlblock_left
     {display:none !important;}</style>
     {{ partial "style.html" . }}
@@ -46,7 +48,7 @@
                       </a>
                   </span>
                 {{ if and (not .Params.chapter) (.Params.toc) }}
-                <span id="toc-menu"><i class="fa fa-list-alt"></i></span>
+                <span id="toc-menu"><a href=""><i class="fa fa-list-alt"></i></a></span>
                 {{ end }}
                 {{ $type := .Type }}
                 {{ $relLink := .RelPermalink }}

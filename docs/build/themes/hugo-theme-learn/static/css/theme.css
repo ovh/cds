@@ -903,10 +903,15 @@ td {
 }
 #body #breadcrumbs {
     height: auto;
-    display: block;
     margin-bottom: 0;
     padding-left: 0;
     line-height: 1.4;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 70%;
+    display: inline-block;
+    float: left;
 }
 #body #breadcrumbs span {
     padding: 0 0.1rem;
@@ -988,7 +993,6 @@ pre .copy-to-clipboard:hover {
     transform-style: preserve-3d;
 }
 
-/* Add checkmark icon align to right and color*/
 #sidebar ul.topics > li > a .read-icon {
     margin-top: 9px;
 }
@@ -1003,6 +1007,10 @@ pre .copy-to-clipboard:hover {
 #sidebar ul li.visited > a .read-icon {
     color: #00bdf3;
     display: inline;
+}
+
+#searchResults {
+    text-align: left;
 }
 
 /*# sourceMappingURL=theme.css.map */
