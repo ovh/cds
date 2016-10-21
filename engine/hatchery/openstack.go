@@ -839,7 +839,7 @@ func getServers(endpoint, token string) ([]Server, error) {
 
 	// Remove servers without "worker" tag
 	var servers []Server
-	for _, s := range servers {
+	for _, s := range s.Servers {
 		_, worker := s.Metadata["worker"]
 		if !worker {
 			continue
