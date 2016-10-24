@@ -20,6 +20,10 @@ There are also some interesting projects using termbox-go:
  - [xterm-color-chart](https://github.com/kutuluk/xterm-color-chart) is a XTerm 256 color chart.
  - [gocui](https://github.com/jroimartin/gocui) is a minimalist Go library aimed at creating console user interfaces.
  - [dry](https://github.com/moncho/dry) is an interactive cli to manage Docker containers.
+ - [pxl](https://github.com/ichinaski/pxl) displays images in the terminal.
+ - [snake-game](https://github.com/DyegoCosta/snake-game) is an implementation of the Snake game.
+ - [gone](https://github.com/guillaumebreton/gone) is a CLI pomodoro® timer.
+ - [Spoof.go](https://github.com/sabey/spoofgo) controllable movement spoofing from the cli
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)

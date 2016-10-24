@@ -16,7 +16,7 @@ import (
    data[0] := []int{3, 2, 5, 7, 9, 4}
    data[1] := []int{7, 8, 5, 3, 1, 6}
    bclabels := []string{"S0", "S1", "S2", "S3", "S4", "S5"}
-   bc.Border.Label = "Bar Chart"
+   bc.BorderLabel = "Bar Chart"
    bc.Data = data
    bc.Width = 26
    bc.Height = 10
@@ -111,20 +111,19 @@ func (bc *MBarChart) layout() {
 	}
 
 	//If Max value is not set then we have to populate, this time the max value will be max(sum(d1[0],d2[0],d3[0]) .... sum(d1[n], d2[n], d3[n]))
-	/*
-		if bc.max == 0 {
-			bc.max = -1
+
+	if bc.max == 0 {
+		bc.max = -1
+	}
+	for i := 0; i < bc.minDataLen && i < LabelLen; i++ {
+		var dsum int
+		for j := 0; j < bc.numStack; j++ {
+			dsum += bc.Data[j][i]
 		}
-		for i := 0; i < bc.minDataLen && i < LabelLen; i++ {
-			var dsum int
-			for j := 0; j < bc.numStack; j++ {
-				dsum += bc.Data[j][i]
-			}
-			if dsum > bc.max {
-				bc.max = dsum
-			}
+		if dsum > bc.max {
+			bc.max = dsum
 		}
-	*/
+	}
 
 	//Finally Calculate max sale
 	if bc.ShowScale {
@@ -155,9 +154,6 @@ func (bc *MBarChart) Buffer() Buffer {
 		oftX = i * (bc.BarWidth + bc.BarGap)
 		for i1 := 0; i1 < bc.numStack; i1++ {
 			h := int(float64(bc.Data[i1][i]) / bc.scale)
-			if h > bc.innerArea.Dy()-(bc.numStack-i1)-ph {
-				h = bc.innerArea.Dy() - (bc.numStack - i1) - ph
-			}
 			// plot bars
 			for j := 0; j < bc.BarWidth; j++ {
 				for k := 0; k < h; k++ {
@@ -185,8 +181,7 @@ func (bc *MBarChart) Buffer() Buffer {
 				Fg: bc.TextColor,
 			}
 			y := bc.innerArea.Min.Y + bc.innerArea.Dy() - 1
-			x := bc.innerArea.Min.X + oftX + k
-			//x := bc.innerArea.Max.X + oftX + ((bc.BarWidth - len(bc.labels[i])) / 2) + k
+			x := bc.innerArea.Max.X + oftX + ((bc.BarWidth - len(bc.labels[i])) / 2) + k
 			buf.Set(x, y, c)
 			k += w
 		}
@@ -194,9 +189,6 @@ func (bc *MBarChart) Buffer() Buffer {
 		ph = 0 //re-initialize previous height
 		for i1 := 0; i1 < bc.numStack; i1++ {
 			h := int(float64(bc.Data[i1][i]) / bc.scale)
-			if h > bc.innerArea.Dy()-(bc.numStack-i1)-ph {
-				h = bc.innerArea.Dy() - (bc.numStack - i1) - ph
-			}
 			for j := 0; j < len(bc.dataNum[i1][i]) && h > 0; j++ {
 				c := Cell{
 					Ch: bc.dataNum[i1][i][j],

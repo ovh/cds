@@ -1,4 +1,4 @@
-// Copyright 2015 Frank Schroeder. All rights reserved.
+// Copyright 2016 Frank Schroeder. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -101,6 +101,16 @@
 //   v = p.GetFloat64("key", 123.0)
 //   v = p.GetString("key", "def")
 //   v = p.GetDuration("key", 999)
+//
+// As an alterantive properties may be applied with the standard
+// library's flag implementation at any time.
+//
+//   # Standard configuration
+//   v = flag.Int("key", 999, "help message")
+//   flag.Parse()
+//
+//   # Merge p into the flag set
+//   p.MustFlag(flag.CommandLine)
 //
 // Properties provides several MustXXX() convenience functions
 // which will terminate the app if an error occurs. The behavior

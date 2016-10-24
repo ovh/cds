@@ -32,6 +32,10 @@ var (
 	ErrSSLNotSupported           = errors.New("pq: SSL is not enabled on the server")
 	ErrSSLKeyHasWorldPermissions = errors.New("pq: Private key file has group or world access. Permissions should be u=rw (0600) or less.")
 	ErrCouldNotDetectUsername    = errors.New("pq: Could not detect default username. Please provide one explicitly.")
+
+	errUnexpectedReady = errors.New("unexpected ReadyForQuery")
+	errNoRowsAffected  = errors.New("no RowsAffected available after the empty statement")
+	errNoLastInsertId  = errors.New("no LastInsertId available after the empty statement")
 )
 
 type drv struct{}
@@ -143,6 +147,80 @@ func (c *conn) handleDriverSettings(o values) (err error) {
 	return nil
 }
 
+func (c *conn) handlePgpass(o values) {
+	// if a password was supplied, do not process .pgpass
+	_, ok := o["password"]
+	if ok {
+		return
+	}
+	filename := os.Getenv("PGPASSFILE")
+	if filename == "" {
+		// XXX this code doesn't work on Windows where the default filename is
+		// XXX %APPDATA%\postgresql\pgpass.conf
+		user, err := user.Current()
+		if err != nil {
+			return
+		}
+		filename = filepath.Join(user.HomeDir, ".pgpass")
+	}
+	fileinfo, err := os.Stat(filename)
+	if err != nil {
+		return
+	}
+	mode := fileinfo.Mode()
+	if mode&(0x77) != 0 {
+		// XXX should warn about incorrect .pgpass permissions as psql does
+		return
+	}
+	file, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(io.Reader(file))
+	hostname := o.Get("host")
+	ntw, _ := network(o)
+	port := o.Get("port")
+	db := o.Get("dbname")
+	username := o.Get("user")
+	// From: https://github.com/tg/pgpass/blob/master/reader.go
+	getFields := func(s string) []string {
+		fs := make([]string, 0, 5)
+		f := make([]rune, 0, len(s))
+
+		var esc bool
+		for _, c := range s {
+			switch {
+			case esc:
+				f = append(f, c)
+				esc = false
+			case c == '\\':
+				esc = true
+			case c == ':':
+				fs = append(fs, string(f))
+				f = f[:0]
+			default:
+				f = append(f, c)
+			}
+		}
+		return append(fs, string(f))
+	}
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) == 0 || line[0] == '#' {
+			continue
+		}
+		split := getFields(line)
+		if len(split) != 5 {
+			continue
+		}
+		if (split[0] == "*" || split[0] == hostname || (split[0] == "localhost" && (hostname == "" || ntw == "unix"))) && (split[1] == "*" || split[1] == port) && (split[2] == "*" || split[2] == db) && (split[3] == "*" || split[3] == username) {
+			o["password"] = split[4]
+			return
+		}
+	}
+}
+
 func (c *conn) writeBuf(b byte) *writeBuf {
 	c.scratch[0] = b
 	return &writeBuf{
@@ -234,6 +312,7 @@ func DialOpen(d Dialer, name string) (_ driver.Conn, err error) {
 	if err != nil {
 		return nil, err
 	}
+	cn.handlePgpass(o)
 
 	cn.c, err = dial(d, o)
 	if err != nil {
@@ -287,7 +366,7 @@ func network(o values) (string, string) {
 		return "unix", sockPath
 	}
 
-	return "tcp", host + ":" + o.Get("port")
+	return "tcp", net.JoinHostPort(host, o.Get("port"))
 }
 
 type values map[string]string
@@ -523,11 +602,16 @@ func (cn *conn) simpleExec(q string) (res driver.Result, commandTag string, err 
 			res, commandTag = cn.parseComplete(r.string())
 		case 'Z':
 			cn.processReadyForQuery(r)
+			if res == nil && err == nil {
+				err = errUnexpectedReady
+			}
 			// done
 			return
 		case 'E':
 			err = parseError(r)
-		case 'T', 'D', 'I':
+		case 'I':
+			res = emptyRows
+		case 'T', 'D':
 			// ignore any results
 		default:
 			cn.bad = true
@@ -538,8 +622,6 @@ func (cn *conn) simpleExec(q string) (res driver.Result, commandTag string, err 
 
 func (cn *conn) simpleQuery(q string) (res *rows, err error) {
 	defer cn.errRecover(&err)
-
-	st := &stmt{cn: cn, name: ""}
 
 	b := cn.writeBuf('Q')
 	b.string(q)
@@ -559,10 +641,7 @@ func (cn *conn) simpleQuery(q string) (res *rows, err error) {
 			}
 			if res == nil {
 				res = &rows{
-					cn:       cn,
-					colNames: st.colNames,
-					colTyps:  st.colTyps,
-					colFmts:  st.colFmts,
+					cn: cn,
 				}
 			}
 			res.done = true
@@ -594,6 +673,20 @@ func (cn *conn) simpleQuery(q string) (res *rows, err error) {
 			errorf("unknown response for simple query: %q", t)
 		}
 	}
+}
+
+type noRows struct{}
+
+var emptyRows noRows
+
+var _ driver.Result = noRows{}
+
+func (noRows) LastInsertId() (int64, error) {
+	return 0, errNoLastInsertId
+}
+
+func (noRows) RowsAffected() (int64, error) {
+	return 0, errNoRowsAffected
 }
 
 // Decides which column formats to use for a prepared statement.  The input is
@@ -679,19 +772,21 @@ func (cn *conn) Prepare(q string) (_ driver.Stmt, err error) {
 }
 
 func (cn *conn) Close() (err error) {
-	if cn.bad {
-		return driver.ErrBadConn
-	}
+	// Skip cn.bad return here because we always want to close a connection.
 	defer cn.errRecover(&err)
+
+	// Ensure that cn.c.Close is always run. Since error handling is done with
+	// panics and cn.errRecover, the Close must be in a defer.
+	defer func() {
+		cerr := cn.c.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
 
 	// Don't go through send(); ListenerConn relies on us not scribbling on the
 	// scratch buffer of this connection.
-	err = cn.sendSimpleMessage('X')
-	if err != nil {
-		return err
-	}
-
-	return cn.c.Close()
+	return cn.sendSimpleMessage('X')
 }
 
 // Implement the "Queryer" interface
@@ -898,8 +993,23 @@ func (cn *conn) ssl(o values) {
 	verifyCaOnly := false
 	tlsConf := tls.Config{}
 	switch mode := o.Get("sslmode"); mode {
-	case "require", "":
+	// "require" is the default.
+	case "", "require":
+		// We must skip TLS's own verification since it requires full
+		// verification since Go 1.3.
 		tlsConf.InsecureSkipVerify = true
+
+		// From http://www.postgresql.org/docs/current/static/libpq-ssl.html:
+		// Note: For backwards compatibility with earlier versions of PostgreSQL, if a
+		// root CA file exists, the behavior of sslmode=require will be the same as
+		// that of verify-ca, meaning the server certificate is validated against the
+		// CA. Relying on this behavior is discouraged, and applications that need
+		// certificate validation should always use verify-ca or verify-full.
+		if _, err := os.Stat(o.Get("sslrootcert")); err == nil {
+			verifyCaOnly = true
+		} else {
+			o.Set("sslrootcert", "")
+		}
 	case "verify-ca":
 		// We must skip TLS's own verification since it requires full
 		// verification since Go 1.3.
@@ -910,7 +1020,7 @@ func (cn *conn) ssl(o values) {
 	case "disable":
 		return
 	default:
-		errorf(`unsupported sslmode %q; only "require" (default), "verify-full", and "disable" supported`, mode)
+		errorf(`unsupported sslmode %q; only "require" (default), "verify-full", "verify-ca", and "disable" supported`, mode)
 	}
 
 	cn.setupSSLClientCertificates(&tlsConf, o)
@@ -1635,6 +1745,9 @@ func (cn *conn) readExecuteResponse(protocolState string) (res driver.Result, co
 			res, commandTag = cn.parseComplete(r.string())
 		case 'Z':
 			cn.processReadyForQuery(r)
+			if res == nil && err == nil {
+				err = errUnexpectedReady
+			}
 			return res, commandTag, err
 		case 'E':
 			err = parseError(r)
@@ -1642,6 +1755,9 @@ func (cn *conn) readExecuteResponse(protocolState string) (res driver.Result, co
 			if err != nil {
 				cn.bad = true
 				errorf("unexpected %q after error %s", t, err)
+			}
+			if t == 'I' {
+				res = emptyRows
 			}
 			// ignore any results
 		default:
@@ -1721,7 +1837,7 @@ func parseEnviron(env []string) (out map[string]string) {
 			accrue("user")
 		case "PGPASSWORD":
 			accrue("password")
-		case "PGPASSFILE", "PGSERVICE", "PGSERVICEFILE", "PGREALM":
+		case "PGSERVICE", "PGSERVICEFILE", "PGREALM":
 			unsupported()
 		case "PGOPTIONS":
 			accrue("options")

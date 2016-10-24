@@ -7,9 +7,11 @@ package termui
 import (
 	"regexp"
 	"strings"
+
+	"github.com/mitchellh/go-wordwrap"
 )
 
-// TextBuilder is a minial interface to produce text []Cell using sepcific syntax (markdown).
+// TextBuilder is a minimal interface to produce text []Cell using specific syntax (markdown).
 type TextBuilder interface {
 	Build(s string, fg, bg Attribute) []Cell
 }
@@ -187,6 +189,67 @@ func (mtb *MarkdownTxBuilder) parse(str string) {
 	}
 
 	mtb.plainTx = normTx
+}
+
+func wrapTx(cs []Cell, wl int) []Cell {
+	tmpCell := make([]Cell, len(cs))
+	copy(tmpCell, cs)
+
+	// get the plaintext
+	plain := CellsToStr(cs)
+
+	// wrap
+	plainWrapped := wordwrap.WrapString(plain, uint(wl))
+
+	// find differences and insert
+	finalCell := tmpCell // finalcell will get the inserts and is what is returned
+
+	plainRune := []rune(plain)
+	plainWrappedRune := []rune(plainWrapped)
+	trigger := "go"
+	plainRuneNew := plainRune
+
+	for trigger != "stop" {
+		plainRune = plainRuneNew
+		for i := range plainRune {
+			if plainRune[i] == plainWrappedRune[i] {
+				trigger = "stop"
+			} else if plainRune[i] != plainWrappedRune[i] && plainWrappedRune[i] == 10 {
+				trigger = "go"
+				cell := Cell{10, 0, 0}
+				j := i - 0
+
+				// insert a cell into the []Cell in correct position
+				tmpCell[i] = cell
+
+				// insert the newline into plain so we avoid indexing errors
+				plainRuneNew = append(plainRune, 10)
+				copy(plainRuneNew[j+1:], plainRuneNew[j:])
+				plainRuneNew[j] = plainWrappedRune[j]
+
+				// restart the inner for loop until plain and plain wrapped are
+				// the same; yeah, it's inefficient, but the text amounts
+				// should be small
+				break
+
+			} else if plainRune[i] != plainWrappedRune[i] &&
+				plainWrappedRune[i-1] == 10 && // if the prior rune is a newline
+				plainRune[i] == 32 { // and this rune is a space
+				trigger = "go"
+				// need to delete plainRune[i] because it gets rid of an extra
+				// space
+				plainRuneNew = append(plainRune[:i], plainRune[i+1:]...)
+				break
+
+			} else {
+				trigger = "stop" // stops the outer for loop
+			}
+		}
+	}
+
+	finalCell = tmpCell
+
+	return finalCell
 }
 
 // Build implements TextBuilder interface.

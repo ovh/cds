@@ -1,3 +1,7 @@
+// Copyright 2016 Frank Schroeder. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package properties
 
 import (
@@ -186,7 +190,7 @@ func dec(p *Properties, key string, def *string, opts map[string]string, v refle
 			fv := v.Field(i)
 			fk, def, opts := keydef(t.Field(i))
 			if !fv.CanSet() {
-				return fmt.Errorf("cannot set ", t.Field(i).Name)
+				return fmt.Errorf("cannot set %s", t.Field(i).Name)
 			}
 			if fk == "-" {
 				continue

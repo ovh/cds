@@ -1,5 +1,11 @@
 ## Changelog
 
+### [1.7.0](https://github.com/magiconair/properties/tags/v1.7.0) - 20 Mar 2016
+
+ * [Issue #10](https://github.com/magiconair/properties/issues/10): Add [LoadURL,LoadURLs,MustLoadURL,MustLoadURLs](http://godoc.org/github.com/magiconair/properties#Properties.LoadURL) method to load properties from a URL.
+ * [Issue #11](https://github.com/magiconair/properties/issues/11): Add [LoadString,MustLoadString](http://godoc.org/github.com/magiconair/properties#Properties.LoadString) method to load properties from an UTF8 string.
+ * [PR #8](https://github.com/magiconair/properties/pull/8): Add [MustFlag](http://godoc.org/github.com/magiconair/properties#Properties.MustFlag) method to provide overrides via command line flags. (@pascaldekloe)
+
 ### [1.6.0](https://github.com/magiconair/properties/tags/v1.6.0) - 11 Dec 2015
 
  * Add [Decode](http://godoc.org/github.com/magiconair/properties#Properties.Decode) method to populate struct from properties via tags.
@@ -10,7 +16,7 @@
 
 ### [1.5.5](https://github.com/magiconair/properties/tags/v1.5.5) - 31 Jul 2015
 
- * [Pull Request #6](https://github.com/magiconair/properties/pull/6): Add [Delete](http://godoc.org/github.com/magiconair/properties#Properties.Delete) method to remove keys including comments. (@gerbenjacobs)
+ * [PR #6](https://github.com/magiconair/properties/pull/6): Add [Delete](http://godoc.org/github.com/magiconair/properties#Properties.Delete) method to remove keys including comments. (@gerbenjacobs)
 
 ### [1.5.4](https://github.com/magiconair/properties/tags/v1.5.4) - 23 Jun 2015
 

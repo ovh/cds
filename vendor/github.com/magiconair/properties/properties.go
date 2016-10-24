@@ -1,4 +1,4 @@
-// Copyright 2013-2014 Frank Schroeder. All rights reserved.
+// Copyright 2016 Frank Schroeder. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -26,7 +26,11 @@ type ErrorHandlerFunc func(error)
 
 // ErrorHandler is the function which handles failures of the MustXXX()
 // functions. The default is LogFatalHandler.
-var ErrorHandler = LogFatalHandler
+var ErrorHandler ErrorHandlerFunc = LogFatalHandler
+
+type LogHandlerFunc func(fmt string, args ...interface{})
+
+var LogPrintf LogHandlerFunc = log.Printf
 
 // LogFatalHandler handles the error by logging a fatal error and exiting.
 func LogFatalHandler(err error) {
@@ -624,6 +628,26 @@ func (p *Properties) Delete(key string) {
 		}
 	}
 	p.k = newKeys
+}
+
+// Merge merges properties, comments and keys from other *Properties into p
+func (p *Properties) Merge(other *Properties) {
+	for k,v := range other.m {
+		p.m[k] = v
+	}
+	for k,v := range other.c {
+		p.c[k] = v
+	}
+
+	outer:
+	for _, otherKey := range other.k {
+		for _, key := range p.k {
+			if otherKey == key {
+				continue outer
+			}
+		}
+		p.k = append(p.k, otherKey)
+	}
 }
 
 // ----------------------------------------------------------------------------

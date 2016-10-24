@@ -57,7 +57,6 @@ func Init() error {
 	tios.Iflag &^= syscall_IGNBRK | syscall_BRKINT | syscall_PARMRK |
 		syscall_ISTRIP | syscall_INLCR | syscall_IGNCR |
 		syscall_ICRNL | syscall_IXON
-	tios.Oflag &^= syscall_OPOST
 	tios.Lflag &^= syscall_ECHO | syscall_ECHONL | syscall_ICANON |
 		syscall_ISIG | syscall_IEXTEN
 	tios.Cflag &^= syscall_CSIZE | syscall_PARENB

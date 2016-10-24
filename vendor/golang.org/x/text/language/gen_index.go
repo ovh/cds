@@ -90,6 +90,15 @@ func main() {
 		m[tag] = true
 		// }
 	}
+	// Include locales for plural rules, which uses a different structure.
+	for _, plurals := range data.Supplemental().Plurals {
+		for _, rules := range plurals.PluralRules {
+			for _, lang := range strings.Split(rules.Locales, " ") {
+				m[language.Make(lang)] = true
+			}
+		}
+	}
+
 	var core, special []language.Tag
 
 	for t := range m {
