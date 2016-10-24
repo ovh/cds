@@ -632,6 +632,16 @@ func (b *builder) parseIndices() {
 			}
 		}
 	}
+	// Include locales for plural rules, which uses a different structure.
+	for _, plurals := range b.data.Supplemental().Plurals {
+		for _, rules := range plurals.PluralRules {
+			for _, lang := range strings.Split(rules.Locales, " ") {
+				if lang = strings.Split(lang, "_")[0]; lang != "root" {
+					b.lang.add(lang)
+				}
+			}
+		}
+	}
 	// Include languages in likely subtags.
 	for _, m := range b.supp.LikelySubtags.LikelySubtag {
 		from := strings.Split(m.From, "_")
@@ -668,6 +678,8 @@ func (b *builder) parseIndices() {
 	b.locale.parse(meta.DefaultContent.Locales)
 }
 
+// TODO: region inclusion data will probably not be use used in future matchers.
+
 func (b *builder) computeRegionGroups() {
 	b.groups = make(map[int]index)
 
@@ -676,6 +688,11 @@ func (b *builder) computeRegionGroups() {
 		b.groups[i] = index(len(b.groups))
 	}
 	for _, g := range b.supp.TerritoryContainment.Group {
+		// Skip UN and EURO zone as they are flattening the containment
+		// relationship.
+		if g.Type == "EZ" || g.Type == "UN" {
+			continue
+		}
 		group := b.region.index(g.Type)
 		if _, ok := b.groups[group]; !ok {
 			b.groups[group] = index(len(b.groups))
@@ -772,6 +789,7 @@ func (b *builder) writeLanguage() {
 	lang.updateLater("tw", "twi")
 	lang.updateLater("nb", "nob")
 	lang.updateLater("ak", "aka")
+	lang.updateLater("bh", "bih")
 
 	// Ensure that each 2-letter code is matched with a 3-letter code.
 	for _, v := range lang.s[1:] {
@@ -1453,7 +1471,7 @@ func (b *builder) writeMatchData() {
 			}
 		}
 	}
-	sort.Sort(sortByConf(matchLang))
+	sort.Stable(sortByConf(matchLang))
 	// collapse percentage into confidence classes
 	for i, m := range matchLang {
 		matchLang[i].conf = toConf(m.conf)
@@ -1472,6 +1490,11 @@ func (b *builder) writeRegionInclusionData() {
 		containment = make(map[index][]index)
 	)
 	for _, g := range b.supp.TerritoryContainment.Group {
+		// Skip UN and EURO zone as they are flattening the containment
+		// relationship.
+		if g.Type == "EZ" || g.Type == "UN" {
+			continue
+		}
 		group := b.region.index(g.Type)
 		groupIdx := b.groups[group]
 		for _, mem := range strings.Split(g.Contains, " ") {
