@@ -55,8 +55,9 @@ func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 		sendLog(actionBuild.ID, sdk.ArtifactUpload, fmt.Sprintf("tag variable is empty. aborting\n"))
 		return res
 	}
-	tag = url.QueryEscape(tag)
 	tag = strings.Replace(tag, "/", "-", -1)
+	tag = url.QueryEscape(tag)
+
 
 	// Global all files matching filePath
 	filesPath, err := filepath.Glob(filePattern)
@@ -137,6 +138,10 @@ func runArtifactDownload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result 
 		sendLog(actionBuild.ID, sdk.ArtifactDownload, fmt.Sprintf("tag variable is empty. aborting\n"))
 		return res
 	}
+	tag = strings.Replace(tag, "/", "-", -1)
+	tag = url.QueryEscape(tag)
+
+
 	if pipeline == "" {
 		res.Status = sdk.StatusFail
 		sendLog(actionBuild.ID, sdk.ArtifactDownload, fmt.Sprintf("pipeline variable is empty. aborting\n"))
