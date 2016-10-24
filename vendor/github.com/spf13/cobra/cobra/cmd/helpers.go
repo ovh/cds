@@ -196,7 +196,7 @@ func isEmpty(path string) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		list, err := f.Readdir(-1)
+		list, _ := f.Readdir(-1)
 		// f.Close() - see bug fix above
 		return len(list) == 0, nil
 	}
@@ -318,6 +318,15 @@ func whichLicense() string {
 	// TODO: Inspect project for existing license
 
 	// default to viper's setting
+
+	if viper.IsSet("license.header") || viper.IsSet("license.text") {
+		if custom, ok := Licenses["custom"]; ok {
+			custom.Header = viper.GetString("license.header")
+			custom.Text = viper.GetString("license.text")
+			Licenses["custom"] = custom
+			return "custom"
+		}
+	}
 
 	return matchLicense(viper.GetString("license"))
 }
