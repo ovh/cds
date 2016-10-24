@@ -32,6 +32,7 @@ type Application struct {
 	RepositoriesManager *RepositoriesManager `json:"repositories_manager,omitempty"`
 	RepositoryFullname  string               `json:"repository_fullname,omitempty"`
 	RepositoryPollers   []RepositoryPoller   `json:"pollers,omitempty"`
+	Hooks               []Hook               `json:"hooks,omitempty"`
 }
 
 // ApplicationPipeline Represent the link between an application and a pipeline

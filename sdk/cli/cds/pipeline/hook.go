@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"strconv"
 )
 
 func init() {
@@ -38,7 +39,7 @@ func pipelineAddHookCmd() *cobra.Command {
 func pipelineDeleteHookCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
-		Short: "cds pipeline hook delete <projectKey> <applicationName> <pipelineName> [<host>/<project>/<slug>]",
+		Short: "cds pipeline hook delete <projectKey> <applicationName> <pipelineName> [<host>/<project>/<slug> if application non connected to a repository] [<idHook> if application connected to a repository]",
 		Long:  ``,
 		Run:   deletePipelineHook,
 	}
@@ -123,7 +124,15 @@ func deletePipelineHook(cmd *cobra.Command, args []string) {
 
 	//If the application is attached to a repositories manager, parameter <host>/<project>/<slug> aren't taken in account
 	if a.RepositoriesManager != nil {
-		err = sdk.DeleteHookOnRepositoriesManager(pipelineProject, appName, a.RepositoriesManager.Name, a.RepositoryFullname, pipelineName)
+
+		hookIDString := args[3]
+		hookID, err := strconv.ParseInt(hookIDString, 10, 64)
+		if err != nil {
+			sdk.Exit("Hook id must be a number (%s)\n", err)
+		}
+
+		a.Notifications = nil
+		err = sdk.DeleteHookOnRepositoriesManager(pipelineProject, appName, a.RepositoriesManager.Name, hookID)
 		if err != nil {
 			sdk.Exit("Cannot delete on pipeline %s-%s-%s (%s)\n", pipelineProject, appName, pipelineName, err)
 		}
@@ -168,7 +177,7 @@ func listPipelineHook(cmd *cobra.Command, args []string) {
 	}
 
 	for _, h := range hooks {
-		fmt.Printf("- %s/%s/%s\n", h.Host, h.Project, h.Repository)
+		fmt.Printf("ID: %d - %s/%s/%s\n", h.ID, h.Host, h.Project, h.Repository)
 	}
 
 }
