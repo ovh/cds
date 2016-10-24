@@ -131,7 +131,6 @@ func deletePipelineHook(cmd *cobra.Command, args []string) {
 			sdk.Exit("Hook id must be a number (%s)\n", err)
 		}
 
-		a.Notifications = nil
 		err = sdk.DeleteHookOnRepositoriesManager(pipelineProject, appName, a.RepositoriesManager.Name, hookID)
 		if err != nil {
 			sdk.Exit("Cannot delete on pipeline %s-%s-%s (%s)\n", pipelineProject, appName, pipelineName, err)
