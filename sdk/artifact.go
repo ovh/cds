@@ -128,6 +128,9 @@ func DownloadArtifact(project, app, pip, tag, destdir, env, filename string) err
 
 // ListArtifacts retrieves the list of file stored as artifacts for given project-pipeline-tag
 func ListArtifacts(project string, application string, pipeline string, tag string, env string) ([]Artifact, error) {
+	tag = strings.Replace(tag, "/", "-", -1)
+	tag = url.QueryEscape(tag)
+
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/artifact/%s?envName=%s", project, application, pipeline, tag, env)
 	data, code, err := Request("GET", uri, nil)
 	if err != nil {
