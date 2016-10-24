@@ -15,7 +15,9 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
@@ -176,6 +178,8 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 	applicationStatus := r.FormValue("applicationStatus")
 	withPollers := r.FormValue("withPollers")
+	withHooks := r.FormValue("withHooks")
+	withNotifs := r.FormValue("withNotifs")
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
@@ -194,6 +198,24 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 			return
 		}
 
+	}
+
+	if withHooks == "true" {
+		app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
+		if err != nil {
+			log.Warning("getApplicationHandler: Cannot load hooks for application %s: %s\n", applicationName, err)
+			WriteError(w, r, err)
+			return
+		}
+	}
+
+	if withNotifs == "true" {
+		app.Notifications, err = notification.LoadAllUserNotificationSettings(db, app.ID)
+		if err != nil {
+			log.Warning("getApplicationHandler: Cannot load user notifications for application %s: %s\n", applicationName, err)
+			WriteError(w, r, err)
+			return
+		}
 	}
 
 	if applicationStatus == "true" {

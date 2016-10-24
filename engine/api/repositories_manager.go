@@ -619,7 +619,7 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	repoFullname := data["repository_fullname"]
 	pipelineName := data["pipeline_name"]
 
-	application, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadApplicationByName(db, projectKey, appName)
 	if err != nil {
 		WriteError(w, r, sdk.ErrApplicationNotFound)
 		return
@@ -664,8 +664,14 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	}
 	defer tx.Rollback()
 
-	h, err := hook.CreateHook(tx, projectKey, rm, repoFullname, application, pipeline)
+	_, err = hook.CreateHook(tx, projectKey, rm, repoFullname, app, pipeline)
 	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := application.UpdateLastModified(tx, app); err != nil {
+		log.Warning("addHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -677,7 +683,14 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	WriteJSON(w, r, h, http.StatusCreated)
+	app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
+	if err != nil {
+		log.Warning("addHookOnRepositoriesManagerHandler> Cannot load application hooks: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, app, http.StatusCreated)
 }
 
 func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -686,46 +699,24 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
 	rmName := vars["name"]
+	hookIdString := vars["hookId"]
 
-	var data map[string]string
-	dataBytes, err := ioutil.ReadAll(r.Body)
+	hookId, err := strconv.ParseInt(hookIdString, 10, 64)
 	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot read request body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
-	if e := json.Unmarshal(dataBytes, &data); e != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot parse request body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	repoFullname := data["repository_fullname"]
-	pipelineName := data["pipeline_name"]
-
-	application, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadApplicationByName(db, projectKey, appName)
 	if err != nil {
 		WriteError(w, r, sdk.ErrApplicationNotFound)
 		return
 	}
 
-	pipeline, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	h, err := hook.LoadHook(db, hookId)
 	if err != nil {
-		WriteError(w, r, sdk.ErrPipelineNotFound)
-		return
-	}
-
-	if !permission.AccessToPipeline(sdk.DefaultEnv.ID, pipeline.ID, c.User, permission.PermissionReadWriteExecute) {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> You don't have enought right on this pipeline %s", pipeline.Name)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
-	}
-
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
-		WriteError(w, r, sdk.ErrNoReposManager)
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot load hook %d: %s", hookId, err)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -748,38 +739,55 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	t := strings.Split(repoFullname, "/")
+	t := strings.Split(app.RepositoryFullname, "/")
 	if len(t) != 2 {
 		WriteError(w, r, sdk.ErrRepoNotFound)
-		return
-	}
-
-	var h sdk.Hook
-
-	h, err = hook.FindHook(db, application.ID, pipeline.ID, string(rm.Type), rm.URL, t[0], t[1])
-	if err == sql.ErrNoRows {
-		WriteError(w, r, sdk.ErrNoHook)
-		return
-	} else if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot get hook: %s", err)
-		WriteError(w, r, err)
 		return
 	}
 
 	s := viper.GetString("api_url") + hook.HookLink
 	link := fmt.Sprintf(s, h.UID, t[0], t[1])
 
-	if err = client.DeleteHook(repoFullname, link); err != nil {
+	if err = client.DeleteHook(app.RepositoryFullname, link); err != nil {
 		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	if err = hook.DeleteHook(db, h.ID); err != nil {
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot start transaction: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err = hook.DeleteHook(tx, h.ID); err != nil {
 		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot get hook: %s", err)
 		WriteError(w, r, err)
 		return
 	}
+
+	if err = application.UpdateLastModified(tx, app); err != nil {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot commit transaction: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
+	if err != nil {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot load hook from application %s: %s", app.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, app, http.StatusOK)
 
 }
 

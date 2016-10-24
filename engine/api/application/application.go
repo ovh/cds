@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -279,12 +278,6 @@ func loadDependencies(db database.Querier, app *sdk.Application, fargs ...FuncAr
 	if err != nil {
 		return err
 	}
-
-	notifs, err := notification.LoadAllUserNotificationSettings(db, app.ID)
-	if err != nil {
-		return err
-	}
-	app.Notifications = notifs
 
 	pipelines, err := GetAllPipelinesByID(db, app.ID)
 	if err != nil {
