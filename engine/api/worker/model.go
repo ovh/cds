@@ -77,15 +77,14 @@ func LoadWorkerModels(db database.Querier) ([]sdk.Model, error) {
 
 // LoadWorkerModel retrieves a specific worker model in database
 func LoadWorkerModel(db *sql.DB, name string) (*sdk.Model, error) {
-	query := `SELECT worker_model.id, worker_model.type, worker_model.name, worker_model.image, worker_model.owner_id , "user".username
+	query := `SELECT worker_model.id, worker_model.type, worker_model.name, worker_model.image
 		  FROM worker_model
-		  JOIN "user" ON "user".id = worker_model.owner_id
 		  WHERE name = $1`
 
 	var m sdk.Model
-	var u sdk.User
+
 	var typeS string
-	err := db.QueryRow(query, name).Scan(&m.ID, &typeS, &m.Name, &m.Image, &m.OwnerID, &u.Username)
+	err := db.QueryRow(query, name).Scan(&m.ID, &typeS, &m.Name, &m.Image)
 	if err != nil && err == sql.ErrNoRows {
 		return nil, sdk.ErrNoWorkerModel
 	}
@@ -103,7 +102,6 @@ func LoadWorkerModel(db *sql.DB, name string) (*sdk.Model, error) {
 		m.Type = sdk.HostProcess
 		break
 	}
-	m.Owner = u
 
 	m.Capabilities, err = LoadWorkerModelCapabilities(db, m.ID)
 	if err != nil {
