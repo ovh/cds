@@ -1,1 +1,3 @@
 *.swp
+engine/api/api
+engine/api/.secrets

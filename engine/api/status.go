@@ -16,9 +16,9 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/vault"
 	"github.com/ovh/cds/engine/log"
 
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -52,7 +52,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	output = append(output, fmt.Sprintf("Nb of Panics: %d", nbPanic))
 
 	// Check vault
-	output = append(output, fmt.Sprintf("Vault: %s", vault.Status))
+	output = append(output, fmt.Sprintf("Secret Backend: %s", secret.Status()))
 
 	// Check redis
 	output = append(output, fmt.Sprintf("Cache: %s", cache.Status))

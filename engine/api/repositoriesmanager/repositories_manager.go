@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
-	"github.com/ovh/cds/engine/api/vault"
+	"github.com/ovh/cds/engine/api/secret/secretbackend"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -28,23 +28,15 @@ var (
 //CDS private keys in repositories manager have to be stored as secrets in Vault
 //For instance for a repositories manager named "github.com/ovh", the private key
 //is stored in a secret name "repositoriesmanager-secrets-github.com/ovh-privateKey"
-func Initialize(vaultAPI, vaultTokenHeader, vaultKey, vaultPassword, keysDirectory, secretsDir, uiBaseURL, apiBaseURL string) error {
+func Initialize(secretClient secretbackend.Driver, keysDirectory, uiBaseURL, apiBaseURL string) error {
 	uiURL = uiBaseURL
 	apiURL = apiBaseURL
 
 	db := database.DB()
 	if db != nil {
-		vaultClient, err := vault.GetClient(vaultAPI, vaultKey, vaultPassword, keysDirectory, secretsDir, vaultTokenHeader)
-		if err != nil {
-			log.Warning("RepositoriesManager> Unable to get a Vault client %s\n", err)
-			return err
-		}
-
-		secrets, err := vaultClient.GetSecrets()
-
-		if err != nil {
-			log.Warning("RepositoriesManager> Unable to fetch Vault secrets %s\n", err)
-			return sdk.ErrSecretKeyFetchFailed
+		secrets := secretClient.GetSecrets()
+		if secrets.Err() != nil {
+			return secrets.Err()
 		}
 
 		repositoriesManager, err := LoadAll(db)
@@ -56,7 +48,8 @@ func Initialize(vaultAPI, vaultTokenHeader, vaultKey, vaultPassword, keysDirecto
 			log.Notice("RepositoriesManager> Searching key for %s \n", rm.Name)
 			s := fmt.Sprintf("cds/repositoriesmanager-secrets-%s-", rm.Name)
 			rmSecrets := map[string]string{}
-			for k, v := range secrets {
+			all, _ := secrets.All()
+			for k, v := range all {
 				if strings.HasPrefix(k, s) {
 					found = true
 					log.Notice("RepositoriesManager> Found a key for %s\n", rm.Name)
