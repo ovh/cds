@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS "user_notification" (id BIGSERIAL PRIMARY KEY, type T
 
 CREATE TABLE IF NOT EXISTS "worker" (id TEXT PRIMARY KEY, name TEXT, last_beat TIMESTAMP WITH TIME ZONE, owner_id INT, group_id INT, model INT, status TEXT, action_build_id BIGINT, hatchery_id BIGINT DEFAULT 0);
 CREATE TABLE IF NOT EXISTS "worker_capability" (worker_model_id INT, type TEXT, name TEXT, argument TEXT);
-CREATE TABLE IF NOT EXISTS "worker_model" (id BIGSERIAL PRIMARY KEY, type TEXT, name TEXT, image TEXT, owner_id INT);
+CREATE TABLE IF NOT EXISTS "worker_model" (id BIGSERIAL PRIMARY KEY, type TEXT, name TEXT, image TEXT, owner_id INT, GROUP_ID INT);
 
 CREATE TABLE IF NOT EXISTS "hatchery" (id BIGSERIAL PRIMARY KEY, name TEXT, last_beat TIMESTAMP WITH TIME ZONE, uid TEXT, group_id INT, status TEXT);
 CREATE TABLE IF NOT EXISTS "hatchery_model" (hatchery_id BIGINT, worker_model_id BIGINT, PRIMARY KEY(hatchery_id, worker_model_id));

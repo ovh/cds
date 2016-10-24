@@ -46,7 +46,7 @@ var (
 
 var cmd = &cobra.Command{
 	Use:   "hatchery",
-	Short: "hatchery --mode=<mode> --api=<cds.domain> --cds-user=<cds.user> --cds-password=<cds.password> --token=<token>",
+	Short: "hatchery --mode=<mode> --api=<cds.domain> --token=<token>",
 	Run:   hatcheryCmd,
 }
 
