@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 	"syscall"
 	"time"
 
@@ -121,25 +122,30 @@ var mainCmd = &cobra.Command{
 		baseURL = viper.GetString("base_url")
 		notification.Initialize(viper.GetString("notifs_urls"), viper.GetString("notifs_key"), baseURL)
 
+		//Initialize secret driver
+		secretBackend := viper.GetString("secret_backend")
+		secretBackendOptions := viper.GetStringSlice("secret_backend_option")
+		secretBackendOptionsMap := map[string]string{}
+		for _, o := range secretBackendOptions {
+			if !strings.Contains(o, "=") {
+				log.Warning("Malformated options : %s", o)
+				continue
+			}
+			t := strings.Split(o, "=")
+			secretBackendOptionsMap[t[0]] = t[1]
+		}
+		if err := secret.Init(secretBackend, secretBackendOptionsMap); err != nil {
+			log.Critical("Cannot initialize secret manager: %s\n", err)
+		}
+
+		//Intialize repositories manager
 		if err := repositoriesmanager.Initialize(
-			viper.GetString("vault_host"),
-			viper.GetString("vault_token_header"),
-			viper.GetString("vault_key"),
-			viper.GetString("vault_password"),
+			secret.Client,
 			viper.GetString("keys_directory"),
-			viper.GetString("vault_insecure_secrets_dir"),
 			baseURL,
 			viper.GetString("api_url"),
 		); err != nil {
 			log.Warning("Error initializing repositories manager connections: %s\n", err)
-		}
-
-		vaultKey := viper.GetString("vault_key")
-		vaultHostname := viper.GetString("vault_host")
-		vaultTOPT := viper.GetString("vault_password")
-		vaultTokenHeader := viper.GetString("vault_token_header")
-		if err := secret.Init(vaultKey, vaultHostname, vaultTOPT, vaultTokenHeader); err != nil {
-			log.Critical("Cannot initialize secret manager: %s\n", err)
 		}
 
 		// Initialize the auth driver
@@ -510,20 +516,11 @@ func init() {
 	flags.String("ldap-user-fullname", "{{.givenName}} {{.sn}}", "LDAP User fullname")
 	viper.BindPFlag("ldap_user_fullname", flags.Lookup("ldap-user-fullname"))
 
-	flags.String("vault-token-header", "X-Vault-Token", "Vault application header")
-	viper.BindPFlag("vault_token_header", flags.Lookup("vault-token-header"))
+	flags.String("secret-backend", "", "Secret Backend plugin")
+	viper.BindPFlag("secret_backend", flags.Lookup("secret-backend"))
 
-	flags.String("vault-key", "cds", "Vault application key")
-	viper.BindPFlag("vault_key", flags.Lookup("vault-key"))
-
-	flags.String("vault-password", "", "Vault password key")
-	viper.BindPFlag("vault_password", flags.Lookup("vault-password"))
-
-	flags.String("vault-host", "local-insecure", "Vault hostname")
-	viper.BindPFlag("vault_host", flags.Lookup("vault-host"))
-
-	flags.String("vault-insecure-secrets-dir", ".secrets", "Load secrets from directory")
-	viper.BindPFlag("vault_insecure_secrets_dir", flags.Lookup("vault-insecure-secrets-dir"))
+	flags.StringSlice("secret-backend-option", []string{}, "Secret Backend plugin options")
+	viper.BindPFlag("secret_backend_option", flags.Lookup("secret-backend-option"))
 
 	flags.String("redis-host", "localhost:6379", "Redis hostname")
 	viper.BindPFlag("redis_host", flags.Lookup("redis-host"))

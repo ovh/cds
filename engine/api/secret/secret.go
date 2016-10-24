@@ -11,15 +11,13 @@ import (
 	"io"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/vault"
+	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
+	"github.com/ovh/cds/engine/api/secret/secretbackend"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
-// AES key fetched from Vault
-var key []byte
-var prefix string
-
+// AES key fetched
 const (
 	nonceSize = aes.BlockSize
 	macSize   = 32
@@ -27,46 +25,50 @@ const (
 )
 
 var (
-	testingKey    = []byte("78eKVxCGLm6gwoH9LAQ15ZD5AOABo1Xf")
+	key           []byte
+	prefix        = "3DICC3It"
+	defaultKey    = []byte("78eKVxCGLm6gwoH9LAQ15ZD5AOABo1Xf")
 	testingPrefix = "3IFCC4Ib"
+	//Client is a shared instance
+	Client secretbackend.Driver
 )
 
-func init() {
-	prefix = "3DICC3It"
-}
-
 // Init password manager
-// If vaultKey is empty, use default testing key
-// otherwise, fetch AES key from vault
-func Init(appKey, vaultHostname, vaultTOTP, vaultTokenHeader string) error {
-
-	if vaultHostname == "local-insecure" {
+// if secretBackendBinary is empty, use default AES key and default file secret backend
+func Init(secretBackendBinary string, opts map[string]string) error {
+	//Initializing secret backend
+	var err error
+	if secretBackendBinary == "" {
+		//Default is embedded file secretbackend
 		log.Warning("Using default AES key")
-		key = testingKey
+		key = defaultKey
 		prefix = testingPrefix
-		return nil
+		log.Warning("Using default file secret backend")
+		Client = filesecretbackend.Client(opts)
+	} else {
+		//Load the secretbackend plugin
+		log.Notice("Loading Secret Backend Plugin %s", secretBackendBinary)
+		client := secretbackend.NewClient(secretBackendBinary, opts)
+		Client, err = client.Instance()
+		if err != nil {
+			return err
+		}
 	}
 
-	// Fetch key from vault
-	vaultClient, err := vault.GetClient(vaultHostname, appKey, vaultTOTP, "", "", vaultTokenHeader)
-	if err != nil {
-		log.Warning("secret.Init> Unable to get a Vault client %s\n", err)
-		return err
+	//If key hasn't been initilized with default key
+	if len(key) == 0 {
+		secrets := Client.GetSecrets()
+		if secrets.Err() != nil {
+			return secrets.Err()
+		}
+		aesKey, _ := secrets.Get("cds/aes-key")
+		if aesKey == "" {
+			log.Critical("secret.Init> cds/aes-key not found\n")
+			return sdk.ErrSecretKeyFetchFailed
+		}
+		key = []byte(aesKey)
 	}
 
-	secrets, err := vaultClient.GetSecrets()
-	if err != nil {
-		log.Warning("secret.Init> Unable to fetch Vault secrets %s\n", err)
-		return sdk.ErrSecretKeyFetchFailed
-	}
-
-	aesKey, ok := secrets["cds/aes-key"]
-	if !ok {
-		log.Critical("secret.Init> cds/aes-key not found\n")
-		return sdk.ErrSecretKeyFetchFailed
-	}
-
-	key = []byte(aesKey)
 	return nil
 }
 
