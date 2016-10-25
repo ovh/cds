@@ -609,7 +609,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("addPipelineHandler> Cannot start transaction: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	defer tx.Rollback()
@@ -618,29 +618,38 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	err = pipeline.InsertPipeline(tx, &p)
 	if err != nil {
 		log.Warning("addPipelineHandler> Cannot insert pipeline: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
 	err = group.LoadGroupByProject(tx, project)
 	if err != nil {
 		log.Warning("addPipelineHandler> Cannot load groupfrom project: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
+	sharedInfraPresent := false
+	for _, g := range project.ProjectGroups {
+		if g.Group.Name == group.SharedInfraGroup {
+			sharedInfraPresent = true
+			break
+		}
+	}
 	err = group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID)
 	if err != nil {
 		log.Warning("addPipelineHandler> Cannot add groups on pipeline: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
-	err = group.AddGlobalGroupToPipeline(tx, p.ID)
-	if err != nil {
-		log.Warning("addPipelineHandler> Cannot add Global infra group: %s\n", err)
-		WriteError(w, r, err)
-		return
+	if !sharedInfraPresent {
+		err = group.AddGlobalGroupToPipeline(tx, p.ID)
+		if err != nil {
+			log.Warning("addPipelineHandler> Cannot add Global infra group: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
 	}
 
 	for _, param := range p.Parameter {
@@ -664,7 +673,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	err = tx.Commit()
 	if err != nil {
 		log.Warning("addPipelineHandler> Cannot commit transaction: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
