@@ -5,14 +5,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/facebookgo/httpcontrol"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateServer(t *testing.T) {
-	client = &HTTPClient{
-		http: http.DefaultClient,
+	client = &http.Client{
+		Transport: &httpcontrol.Transport{
+			RequestTimeout: 10 * time.Second,
+			MaxTries:       5,
+		},
 	}
 
 	router := mux.NewRouter()
