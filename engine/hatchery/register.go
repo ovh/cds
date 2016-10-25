@@ -69,7 +69,6 @@ func checkRequirement(r sdk.Requirement) (bool, error) {
 		}
 		return true, nil
 	default:
-		log.Warning("checkRequirement> Unknown type of requirement: %s\n", r.Type)
 		return false, nil
 	}
 }

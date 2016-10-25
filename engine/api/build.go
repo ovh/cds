@@ -693,7 +693,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 	buildNumberS := vars["build"]
-	appName := vars["permApplicationName"]
+	appName := vars["app"]
 
 	var err error
 	var env *sdk.Environment
@@ -836,7 +836,7 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 	buildNumberS := vars["build"]
-	appName := vars["permApplicationName"]
+	appName := vars["app"]
 
 	var err error
 	var env *sdk.Environment
