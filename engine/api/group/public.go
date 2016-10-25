@@ -6,17 +6,18 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 )
 
-const sharedInfraGroup = "shared.infra"
+// SharedInfraGroup is the name of the builtin group used to share infrastructure between projects
+const SharedInfraGroup = "shared.infra"
 
 // CreateDefaultGlobalGroup creates a group 'public' where every user will be
 func CreateDefaultGlobalGroup(db *sql.DB) error {
 
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
-	err := db.QueryRow(query, sharedInfraGroup).Scan(&id)
+	err := db.QueryRow(query, SharedInfraGroup).Scan(&id)
 	if err == sql.ErrNoRows {
 		query = `INSERT INTO "group" (name) VALUES ($1)`
-		_, err = db.Exec(query, sharedInfraGroup)
+		_, err = db.Exec(query, SharedInfraGroup)
 		if err != nil {
 			return err
 		}
@@ -30,7 +31,7 @@ func AddAdminInGlobalGroup(db *sql.DB, userID int64) error {
 
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
-	err := db.QueryRow(query, sharedInfraGroup).Scan(&id)
+	err := db.QueryRow(query, SharedInfraGroup).Scan(&id)
 	if err != nil {
 		return err
 	}
@@ -48,7 +49,7 @@ func AddAdminInGlobalGroup(db *sql.DB, userID int64) error {
 func AddGlobalGroupToPipeline(tx *sql.Tx, pipID int64) error {
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
-	err := tx.QueryRow(query, sharedInfraGroup).Scan(&id)
+	err := tx.QueryRow(query, SharedInfraGroup).Scan(&id)
 	if err != nil {
 		return err
 	}
