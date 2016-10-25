@@ -692,6 +692,12 @@ func DeleteProject(db database.QueryExecuter, key string) error {
 		return err
 	}
 
+	query = `DELETE FROM repositories_manager_project WHERE id_project = $1`
+	_, err = db.Exec(query, projectID)
+	if err != nil {
+		return err
+	}
+
 	query = `DELETE FROM project WHERE project.id = $1`
 	_, err = db.Exec(query, projectID)
 	if err != nil {
