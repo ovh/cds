@@ -1,3 +1,4 @@
 *.swp
 engine/api/api
 engine/api/.secrets
+engine/hatchery/hatchery
