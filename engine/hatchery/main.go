@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/facebookgo/httpcontrol"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -40,7 +42,7 @@ var (
 	uk           string
 	hatcheryMode string
 	maxWorker    int
-	client       *HTTPClient
+	client       sdk.HttpClient
 	api          string
 )
 
@@ -232,7 +234,12 @@ func parseConfig(cmd *cobra.Command) HatcheryMode {
 	}
 
 	var usr, passwd string
-	client = NewHTTPClient(api, usr, passwd, uk)
+	client = &http.Client{
+		Transport: &httpcontrol.Transport{
+			RequestTimeout: 10 * time.Second,
+			MaxTries:       5,
+		},
+	}
 	sdk.SetHTTPClient(client)
 	sdk.Options(api, usr, passwd, uk)
 

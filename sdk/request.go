@@ -34,7 +34,7 @@ var (
 	//SessionTokenHeader is user as HTTP header
 	SessionTokenHeader = "Session-Token"
 	// HTTP client
-	client httpClient
+	client HttpClient
 	// current agent calling
 	agent Agent
 )
@@ -142,12 +142,12 @@ func readConfig() error {
 // RequestModifier is used to modify behavior of Request and Steam functions
 type RequestModifier func(req *http.Request)
 
-type httpClient interface {
+type HttpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
 //SetHTTPClient aims to change the default http client of the sdk
-func SetHTTPClient(c httpClient) {
+func SetHTTPClient(c HttpClient) {
 	client = c
 }
 

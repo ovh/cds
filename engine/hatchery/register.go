@@ -18,7 +18,7 @@ func register(h *hatchery.Hatchery) error {
 		return err
 	}
 
-	data, code, err := client.CDSRequest("POST", "/hatchery", data)
+	data, code, err := sdk.Request("POST", "/hatchery", data)
 	if err != nil {
 		return err
 	}
