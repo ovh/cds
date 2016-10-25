@@ -3,6 +3,7 @@ package repositoriesmanager
 import (
 	"database/sql"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -149,7 +150,11 @@ func LoadAllForProject(db *sql.DB, projectkey string) ([]sdk.RepositoriesManager
 //FIXME: Invalid name: it can only contain lowercase letters, numbers, dots or dashes, and run between 1 and 99 characters long not valid
 func Insert(db *sql.DB, rm *sdk.RepositoriesManager) error {
 	query := `INSERT INTO repositories_manager (type, name, url, data) VALUES ($1, $2, $3, $4) RETURNING id`
-	if err := db.QueryRow(query, string(rm.Type), rm.Name, rm.URL, rm.Consumer.Data()).Scan(&rm.ID); err != nil {
+	err := db.QueryRow(query, string(rm.Type), rm.Name, rm.URL, rm.Consumer.Data()).Scan(&rm.ID)
+	if err != nil && strings.Contains(err.Error(), "repositories_manager_name_key") {
+		return sdk.ErrAlreadyExist
+	}
+	if err != nil {
 		return err
 	}
 	return nil

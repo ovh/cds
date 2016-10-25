@@ -86,6 +86,7 @@ var (
 	ErrInvalidResetUser             = &Error{ID: 72, Status: http.StatusBadRequest}
 	ErrUserConflict                 = &Error{ID: 73, Status: http.StatusBadRequest}
 	ErrWrongRequest                 = &Error{ID: 74, Status: http.StatusBadRequest}
+	ErrAlreadyExist                 = &Error{ID: 75, Status: http.StatusConflict}
 )
 
 // SupportedLanguages on API errors
@@ -171,6 +172,7 @@ You can safely use them in a String or Text parameter`,
 	ErrInvalidResetUser.ID:             "invalid user or email",
 	ErrUserConflict.ID:                 "this user already exist",
 	ErrWrongRequest.ID:                 "wrong request",
+	ErrAlreadyExist.ID:                 "already exist",
 }
 
 var errorsFrench = map[int]string{
@@ -250,6 +252,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrInvalidResetUser.ID:             "mauvaise combinaison compte/mail utilisateur",
 	ErrUserConflict.ID:                 "cet utilisateur existe deja",
 	ErrWrongRequest.ID:                 "la requête est incorrecte",
+	ErrAlreadyExist.ID:                 "conflit",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)
