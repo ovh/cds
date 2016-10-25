@@ -15,6 +15,18 @@
 			"revisionTime": "2016-06-01T11:32:10Z"
 		},
 		{
+			"checksumSHA1": "mEPx03tDisj6nvPDxzIeb1gt4xg=",
+			"path": "github.com/armon/consul-api",
+			"revision": "dcfedd50ed5334f96adee43fc88518a4f095e15c",
+			"revisionTime": "2015-01-07T20:56:47Z"
+		},
+		{
+			"checksumSHA1": "BJXHEdzHxRPmVnt6GFaPpwgns2c=",
+			"path": "github.com/coreos/go-etcd/etcd",
+			"revision": "003851be7bb0694fe3cc457a49529a19388ee7cf",
+			"revisionTime": "2015-10-26T16:03:18Z"
+		},
+		{
 			"checksumSHA1": "5rPfda8jFccr3A6heL+JAmi9K9g=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
 			"path": "github.com/davecgh/go-spew/spew",
@@ -473,6 +485,18 @@
 			"revisionTime": "2016-06-15T09:26:46Z"
 		},
 		{
+			"checksumSHA1": "jfIUoeCY4uLz1zCgnCxndi5/UNE=",
+			"path": "github.com/ugorji/go/codec",
+			"revision": "faddd6128c66c4708f45fdc007f575f75e592a3c",
+			"revisionTime": "2016-09-28T01:52:44Z"
+		},
+		{
+			"checksumSHA1": "TT1rac6kpQp2vz24m5yDGUNQ/QQ=",
+			"path": "golang.org/x/crypto/cast5",
+			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
+			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
 			"checksumSHA1": "h+pFYiRHBogczS8/F1NoN3Ata44=",
 			"path": "golang.org/x/crypto/curve25519",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
@@ -491,8 +515,50 @@
 			"revisionTime": "2016-10-19T17:38:27Z"
 		},
 		{
+			"checksumSHA1": "UNPfK0hrYqgqblnilzpI4gj8ffA=",
+			"path": "golang.org/x/crypto/openpgp",
+			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
+			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
+			"checksumSHA1": "olOKkhrdkYQHZ0lf1orrFQPQrv4=",
+			"path": "golang.org/x/crypto/openpgp/armor",
+			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
+			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
+			"checksumSHA1": "eo/KtdjieJQXH7Qy+faXFcF70ME=",
+			"path": "golang.org/x/crypto/openpgp/elgamal",
+			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
+			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
+			"checksumSHA1": "rlxVSaGgqdAgwblsErxTxIfuGfg=",
+			"path": "golang.org/x/crypto/openpgp/errors",
+			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
+			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
+			"checksumSHA1": "YnE37Em/WQNj+OCV6NaES8K+6hg=",
+			"path": "golang.org/x/crypto/openpgp/packet",
+			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
+			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
+			"checksumSHA1": "s2qT4UwvzBSkzXuiuMkowif1Olw=",
+			"path": "golang.org/x/crypto/openpgp/s2k",
+			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
+			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
 			"checksumSHA1": "LlElMHeTC34ng8eHzjvtUhAgrr8=",
 			"path": "golang.org/x/crypto/ssh",
+			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
+			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
+			"checksumSHA1": "SJ3Ma3Ozavxpbh1usZWBCnzMKIc=",
+			"path": "golang.org/x/crypto/ssh/agent",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
 			"revisionTime": "2016-10-19T17:38:27Z"
 		},
