@@ -171,6 +171,11 @@ func (h *HatcheryLocal) Init() error {
 
 	h.workerModelID = h.hatch.Model.ID
 
+	if err := register(h.hatch); err != nil {
+		log.Warning("Cannot register hatchery: %s\n", err)
+		return err
+	}
+
 	go h.startKillAwolWorkerRoutine()
 	return nil
 }
