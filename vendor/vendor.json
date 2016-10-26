@@ -431,6 +431,18 @@
 			"revisionTime": "2016-08-29T05:01:19Z"
 		},
 		{
+			"checksumSHA1": "Y1gIGoR8z/lDf2j+vcH1eKZGDSk=",
+			"path": "github.com/rubenv/sql-migrate",
+			"revision": "6f4757563362064790a6687a6b60f182062c8634",
+			"revisionTime": "2016-06-20T08:32:29Z"
+		},
+		{
+			"checksumSHA1": "aoSLe79p1m0Lznfed0X0SoYofNg=",
+			"path": "github.com/rubenv/sql-migrate/sqlparse",
+			"revision": "6f4757563362064790a6687a6b60f182062c8634",
+			"revisionTime": "2016-06-20T08:32:29Z"
+		},
+		{
 			"checksumSHA1": "59wTbS4fE2282Q88NrBYImbFGbo=",
 			"path": "github.com/spf13/afero",
 			"revision": "52e4a6cfac46163658bd4f123c49b6ee7dc75f78",
@@ -627,6 +639,12 @@
 			"path": "gopkg.in/bsm/ratelimit.v1",
 			"revision": "db14e161995a5177acef654cb0dd785e8ee8bc22",
 			"revisionTime": "2016-02-20T15:49:07Z"
+		},
+		{
+			"checksumSHA1": "xunNOgG8P6Xh4SM+LPQ1zMDXa8Q=",
+			"path": "gopkg.in/gorp.v1",
+			"revision": "c87af80f3cc5036b55b83d77171e156791085e2e",
+			"revisionTime": "2015-02-04T08:55:30Z"
 		},
 		{
 			"checksumSHA1": "UCRz3lI2KcVOjUbjxeMAasufews=",
