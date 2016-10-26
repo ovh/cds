@@ -3,10 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
-	"strings"
 	"sync"
 
 	"log"
@@ -25,29 +23,6 @@ var (
 	db         *sql.DB
 	mutex      = &sync.Mutex{}
 )
-
-// QueryExecuter execute and query SQL query
-type QueryExecuter interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
-
-// Executer execute SQL query
-type Executer interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-}
-
-// Querier execute query in database
-type Querier interface {
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
-
-// Scanner is implemented by sql.Row and sql.Rows
-type Scanner interface {
-	Scan(dest ...interface{}) error
-}
 
 // DB returns the current sql.DB object
 func DB() *sql.DB {
@@ -126,32 +101,9 @@ func Init() (*sql.DB, error) {
 		return nil, err
 	}
 
-	var initSchema bool
-	switch dbDriver {
-	case "ramsql":
-		initSchema = true
-	case "postgres":
-		//Check if schema is empty
-		rows, err := db.Query("SELECT tablename FROM pg_catalog.pg_tables WHERE tableowner like $1", dbUser+"%")
-
-		if err != nil {
-			log.Printf(err.Error())
-			return db, err
-		}
-		defer rows.Close()
-		if !rows.Next() {
-			log.Printf("Database schema has to be initialized")
-			initSchema = true
-		}
-		if err := rows.Err(); err != nil {
-			log.Printf(err.Error())
-			return db, err
-		}
-	}
-
-	//If driver is ramsql or PG schema is empty, need to init
-	if initSchema {
-		if err = InitSchemas(db); err != nil {
+	if dbDriver == "ramsql" {
+		sqlfile := path.Join(os.Getenv("GOPATH"), "src", "github.com/ovh", "cds", "engine", "sql", "create_table.sql")
+		if err = InitSchemas(db, sqlfile); err != nil {
 			log.Printf("InitSchema: %s\n", err)
 			return db, err
 		}
@@ -161,7 +113,6 @@ func Init() (*sql.DB, error) {
 	if max <= 0 || max > 100 {
 		max = 20
 	}
-	log.Printf("Database> Setting MaxOpenConns to %d\n", max)
 	db.SetMaxOpenConns(max)
 	db.SetMaxIdleConns(int(max / 2))
 
@@ -179,27 +130,4 @@ func Status() string {
 	}
 
 	return fmt.Sprintf("Database: %s OK (%d conns)", dbDriver, db.Stats().OpenConnections)
-}
-
-// InitSchemas checks that all tables are correct, and create them if not
-func InitSchemas(sqlDB *sql.DB) error {
-	sqlfile := path.Join(os.Getenv("GOPATH"), "src", "github.com/ovh", "cds", "engine", "sql", "create_table.sql")
-	sqlcontent, err := ioutil.ReadFile(sqlfile)
-	if err != nil {
-		return err
-	}
-
-	queries := strings.Split(string(sqlcontent), ";")
-
-	for _, q := range queries {
-		q = strings.Trim(q, " \n")
-		if q == "" {
-			continue
-		}
-		_, err := sqlDB.Exec(q)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

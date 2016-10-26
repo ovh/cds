@@ -1,3 +1,4 @@
+-- +migrate Up
 -- ACTION REQUIREMENT
 select create_index('action_requirement', 'IDX_ACTION_REQUIREMENT_ACTION_ID', 'action_id');
 

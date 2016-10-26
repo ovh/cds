@@ -1,6 +1,0 @@
-BEGIN;
-ALTER TABLE worker ADD COLUMN group_id BIGINT;
-ALTER TABLE hatchery ADD COLUMN group_id BIGINT;
-ALTER TABLE hatchery ADD COLUMN uid TEXT;
-CREATE TABLE IF NOT EXISTS "token" (group_id INT, token TEXT, expiration INT, created TIMESTAMP WITH TIME ZONE);
-COMMIT;

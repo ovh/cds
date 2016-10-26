@@ -33,6 +33,7 @@ $ ./api --db-host=127.0.0.1 --db-user=cds --db-password=XX --download-directory=
 ```
 
 To get the best out of CDS api though, one should use all compatible third parties to ensure maximum security and availability:
+
  - Openstack Swift for artifact storage
  - Vault for cipher and app keys
  - SMTP for mail notification
@@ -48,6 +49,7 @@ To get the best out of CDS api though, one should use all compatible third parti
 It is possible to configure CDS to fetch secret cipher keys from Vault.
 
 Keys are needed for:
+
  - AES+HMAC secret variable cipher key (looking for "cds/aes-key")
  - OAUTH2 Application secret for Stash and Github integration ("cds/repositoriesmanager-secrets-%s")
 
@@ -129,18 +131,33 @@ API logs can either be printed on stdout or send in a dedicated table in databas
  --db-logging                          Logging in Database: true of false
 ```
 
-## Database configuration
+## Database management
 
-4 files are available in sql/ folder, containing tables and constraints declarations.
+CDS provide all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the `api` binary.
 
-### PostgreSQL
+### Creation
 
+On a brand new database run the following command:
+
+```shell
+    $ cd $GOPATH/src/github/ovh/cds
+    $ engine/api/api database create --db-host <host> --db-host <port> --db-password <password> --db-name <database>
 ```
-psql -U postgres -d postgres -h <dbHost> -p <dbPort> -a -f sql/func.sql
-psql -U postgres -d postgres -h <dbHost> -p <dbPort> -a -f sql/create_table.sql
-psql -U postgres -d postgres -h <dbHost> -p <dbPort> -a -f sql/create_index.sql
-psql -U postgres -d postgres -h <dbHost> -p <dbPort> -a -f sql/create_foreign-key.sql
+
+### Upgrade
+
+On an existing database, run the following command on each CDS update:
+
+```shell
+    $ cd $GOPATH/src/github/ovh/cds
+    $ engine/api/api database upgrade --db-host <host> --db-host <port> --db-password <password> --db-name <database>
 ```
+
+### More details
+
+[Read more about CDS Database Management](https://github.com/ovh/cds/tree/master/engine/sql)
+
+
 ## Links
 
 - *OVH home (us)*: https://www.ovh.com/us/
