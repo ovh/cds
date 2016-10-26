@@ -418,6 +418,24 @@ func (router *Router) init() {
 }
 
 func init() {
+	pflags := mainCmd.PersistentFlags()
+	pflags.String("db-user", "cds", "DB User")
+	pflags.String("db-password", "", "DB Password")
+	pflags.String("db-name", "cds", "DB Name")
+	pflags.String("db-host", "localhost", "DB Host")
+	pflags.String("db-port", "5432", "DB Port")
+	pflags.String("db-sslmode", "require", "DB SSL Mode: require (default), verify-full, or disable")
+	pflags.Int("db-maxconn", 20, "DB Max connection")
+	pflags.Int("db-timeout", 3000, "Statement timeout value")
+	viper.BindPFlag("db_user", pflags.Lookup("db-user"))
+	viper.BindPFlag("db_password", pflags.Lookup("db-password"))
+	viper.BindPFlag("db_name", pflags.Lookup("db-name"))
+	viper.BindPFlag("db_host", pflags.Lookup("db-host"))
+	viper.BindPFlag("db_port", pflags.Lookup("db-port"))
+	viper.BindPFlag("db_sslmode", pflags.Lookup("db-sslmode"))
+	viper.BindPFlag("db_maxconn", pflags.Lookup("db-maxconn"))
+	viper.BindPFlag("db_timeout", pflags.Lookup("db-timeout"))
+
 	flags := mainCmd.Flags()
 
 	flags.String("log-level", "notice", "Log Level : debug, info, notice, warning, critical")
@@ -445,23 +463,6 @@ func init() {
 	viper.BindPFlag("artifact_user", flags.Lookup("artifact-user"))
 	viper.BindPFlag("artifact_password", flags.Lookup("artifact-password"))
 	viper.BindPFlag("artifact_basedir", flags.Lookup("artifact-basedir"))
-
-	flags.String("db-user", "cds", "DB User")
-	flags.String("db-password", "", "DB Password")
-	flags.String("db-name", "cds", "DB Name")
-	flags.String("db-host", "localhost", "DB Host")
-	flags.String("db-port", "5432", "DB Port")
-	flags.String("db-sslmode", "require", "DB SSL Mode: require (default), verify-full, or disable")
-	flags.Int("db-maxconn", 20, "DB Max connection")
-	flags.Int("db-timeout", 3000, "Statement timeout value")
-	viper.BindPFlag("db_user", flags.Lookup("db-user"))
-	viper.BindPFlag("db_password", flags.Lookup("db-password"))
-	viper.BindPFlag("db_name", flags.Lookup("db-name"))
-	viper.BindPFlag("db_host", flags.Lookup("db-host"))
-	viper.BindPFlag("db_port", flags.Lookup("db-port"))
-	viper.BindPFlag("db_sslmode", flags.Lookup("db-sslmode"))
-	viper.BindPFlag("db_maxconn", flags.Lookup("db-maxconn"))
-	viper.BindPFlag("db_timeout", flags.Lookup("db-timeout"))
 
 	flags.Bool("no-smtp", true, "No SMTP mode: true or false")
 	flags.String("smtp-host", "", "SMTP Host")
@@ -537,6 +538,8 @@ func init() {
 
 	flags.Int("session-ttl", 60, "Session Time to Live (minutes)")
 	viper.BindPFlag("session_ttl", flags.Lookup("session-ttl"))
+
+	mainCmd.AddCommand(database.DBCmd)
 
 }
 

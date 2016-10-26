@@ -1,3 +1,4 @@
+-- +migrate Up
 -- ACTION BUILD
 select create_foreign_key('FK_ACTION_BUILD_PIPELINE_ACTION', 'action_build', 'pipeline_action', 'pipeline_action_id', 'id');
 select create_foreign_key('FK_ACTION_BUILD_PIPELINE_BUILD', 'action_build', 'pipeline_build', 'pipeline_build_id', 'id');

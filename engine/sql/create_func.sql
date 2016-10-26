@@ -1,3 +1,5 @@
+-- +migrate Up
+-- +migrate StatementBegin
 CREATE OR REPLACE FUNCTION create_index(table_name text, index_name text, column_name text) RETURNS void AS $$
 declare
    l_count integer;
@@ -14,7 +16,9 @@ begin
   end if;
 end;
 $$ LANGUAGE plpgsql;
+-- +migrate StatementEnd
 
+-- +migrate StatementBegin
 CREATE OR REPLACE FUNCTION create_unique_index(table_name text, index_name text, column_names text) RETURNS void AS $$
 declare
    l_count integer;
@@ -31,7 +35,9 @@ begin
   end if;
 end;
 $$ LANGUAGE plpgsql;
+-- +migrate StatementEnd
 
+-- +migrate StatementBegin
 CREATE OR REPLACE FUNCTION create_foreign_key(fk_name text, table_name_child text, table_name_parent text, column_name_child text, column_name_parent text) RETURNS void AS $$
 declare
    l_count integer;
@@ -48,3 +54,10 @@ begin
   end if;
 end;
 $$ LANGUAGE plpgsql;
+-- +migrate StatementEnd
+
+
+-- +migrate Down
+DROP FUNCTION create_index();
+DROP FUNCTION create_unique_index();
+DROP FUNCTION create_foreign_key();

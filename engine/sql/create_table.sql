@@ -1,3 +1,4 @@
+-- +migrate Up
 CREATE TABLE IF NOT EXISTS "action" (id BIGSERIAL PRIMARY KEY, name TEXT, type TEXT, description TEXT, enabled BOOLEAN, public BOOLEAN, last_modified TIMESTAMP WITH TIME ZONE DEFAULT  LOCALTIMESTAMP);
 CREATE TABLE IF NOT EXISTS "action_requirement" (id BIGSERIAL PRIMARY KEY, action_id BIGINT, name TEXT, type TEXT, value TEXT);
 CREATE TABLE IF NOT EXISTS "action_edge" (id BIGSERIAL PRIMARY KEY, parent_id BIGINT, child_id BIGINT, exec_order INT, final boolean not null default false, enabled boolean not null default true);
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS "pipeline_parameter" (id BIGSERIAL, pipeline_id INT, 
 
 CREATE TABLE IF NOT EXISTS "pipeline_trigger" (id BIGSERIAL PRIMARY KEY, src_application_id INT, src_pipeline_id INT, src_environment_id INT, dest_application_id INT, dest_pipeline_id INT, dest_environment_id INT, manual BOOL, last_modified TIMESTAMP WITH TIME ZONE DEFAULT  LOCALTIMESTAMP);
 CREATE TABLE IF NOT EXISTS "pipeline_trigger_parameter" (id BIGSERIAL PRIMARY KEY, pipeline_trigger_id BIGINT, name TEXT, type TEXT, value TEXT, description TEXT);
+
 CREATE TABLE IF NOT EXISTS "pipeline_trigger_prerequisite" (id BIGSERIAL PRIMARY KEY, pipeline_trigger_id BIGINT, parameter TEXT, expected_value TEXT);
 
 CREATE TABLE IF NOT EXISTS "plugin" (id BIGSERIAL PRIMARY KEY, name TEXT, size BIGINT, perm INT, md5sum TEXT, object_path TEXT);
