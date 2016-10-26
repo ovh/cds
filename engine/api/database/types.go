@@ -2,19 +2,19 @@ package database
 
 import "database/sql"
 
-// QueryExecuter execute and query SQL query
+// QueryExecuter executes and queries SQL query
 type QueryExecuter interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 }
 
-// Executer execute SQL query
+// Executer executes SQL query
 type Executer interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
-// Querier execute query in database
+// Querier executes query in database
 type Querier interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row

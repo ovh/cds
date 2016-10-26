@@ -10,9 +10,9 @@ import (
 	"gopkg.in/gorp.v1"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/ovh/cds/sdk"
 	"github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
-	"stash.ovh.net/cds/sdk"
 )
 
 var DBCmd = &cobra.Command{
@@ -245,6 +245,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 }
 
+//ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	db, err := Init()
 	if err != nil {
@@ -264,28 +265,29 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 		for _, m := range migrations {
 			printMigration(m, dir)
 		}
+		return nil
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		sdk.Exit("Error: %s", err)
+	}
+	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
+	if err := lockMigrate(db, hostname); err != nil {
+		sdk.Exit("Unable to lock database: %s", err)
+	}
+
+	defer unlockMigrate(db, hostname)
+
+	n, err := migrate.ExecMax(db, "postgres", source, dir, limit)
+	if err != nil {
+		return fmt.Errorf("Migration failed: %s", err)
+	}
+
+	if n == 1 {
+		fmt.Println("Applied 1 migration")
 	} else {
-		hostname, err := os.Hostname()
-		if err != nil {
-			sdk.Exit("Error: %s", err)
-		}
-		hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
-		if err := lockMigrate(db, hostname); err != nil {
-			sdk.Exit("Unable to lock database: %s", err)
-		}
-
-		defer unlockMigrate(db, hostname)
-
-		n, err := migrate.ExecMax(db, "postgres", source, dir, limit)
-		if err != nil {
-			return fmt.Errorf("Migration failed: %s", err)
-		}
-
-		if n == 1 {
-			fmt.Println("Applied 1 migration")
-		} else {
-			fmt.Printf("Applied %d migrations\n", n)
-		}
+		fmt.Printf("Applied %d migrations\n", n)
 	}
 
 	return nil
@@ -307,6 +309,7 @@ func printMigration(m *migrate.PlannedMigration, dir migrate.MigrationDirection)
 	}
 }
 
+//MigrationLock is used to lock the migration (managed by gorp)
 type MigrationLock struct {
 	Id       string     `db:"id"`
 	Locked   *time.Time `db:"locked"`
