@@ -146,7 +146,7 @@ On a brand new database run the following command:
 
 ### Upgrade
 
-On an existing, on each CDS update run the following command:
+On an existing database, run the following command on each CDS update:
 
 ```shell
     $ cd $GOPATH/src/github/ovh/cds
