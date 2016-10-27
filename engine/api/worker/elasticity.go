@@ -23,7 +23,7 @@ var (
 func logTime(name string, then time.Time) {
 	d := time.Since(then)
 	if d > 10*time.Second {
-		log.Warning("%s took %s to execute\n", name, d)
+		log.Critical("%s took %s to execute\n", name, d)
 		return
 	}
 
