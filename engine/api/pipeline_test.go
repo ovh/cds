@@ -26,6 +26,7 @@ func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *s
 	p := &sdk.Pipeline{
 		Name:      name,
 		ProjectID: projectFoo.ID,
+		Type:      sdk.BuildPipeline,
 	}
 
 	app := &sdk.Application{

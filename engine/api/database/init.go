@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"os"
+	"regexp"
 
 	"github.com/rubenv/sql-migrate/sqlparse"
 )
@@ -20,8 +21,12 @@ func InitSchemas(sqlDB *sql.DB, sqlfile string) error {
 		return err
 	}
 
+	//Do not consider comments
+	r, _ := regexp.Compile("--.*\n")
+
 	for _, q := range queries {
-		_, err := sqlDB.Exec(q)
+		s := r.ReplaceAllString(q, "")
+		_, err := sqlDB.Exec(s)
 		if err != nil {
 			return err
 		}
