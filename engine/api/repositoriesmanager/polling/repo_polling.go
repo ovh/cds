@@ -89,6 +89,8 @@ func Initialize() {
 
 				if !ok {
 					pollerhasStop()
+					close(quit)
+					continue
 				}
 
 				go func() {
@@ -103,18 +105,22 @@ func Initialize() {
 
 //Poll initiate a poller
 func (w *Worker) Poll() (bool, chan bool, error) {
+	var quit chan bool
+	quit = make(chan bool)
+
 	//Check database connection
 	db := database.DB()
 	if db == nil {
-		return false, nil, errors.New("Database is unavailable")
+		log.Warning("Polling> Database is unavailable")
+		return false, quit, errors.New("Database is unavailable")
 	}
 
 	pollers, err := poller.LoadEnabledPollers(db)
 	if err != nil {
-		return false, nil, err
+		log.Warning("Polling> Unable to load enabled pollers")
+		return false, quit, err
 	}
 
-	var quit chan bool
 	var atLeastOne bool
 	for i := range pollers {
 		p := &pollers[i]
@@ -128,13 +134,12 @@ func (w *Worker) Poll() (bool, chan bool, error) {
 		}
 		log.Info("Starting poller on %s %s %s", p.Name, p.Application.Name, p.Pipeline.Name)
 		atLeastOne = true
-		quit = make(chan bool)
 		go w.poll(p.Application.RepositoriesManager, p.Application.ID, p.Pipeline.ID, quit)
 		time.Sleep(2 * time.Minute)
 	}
 
 	if !atLeastOne {
-		return false, nil, nil
+		return false, quit, nil
 	}
 	return true, quit, nil
 }
