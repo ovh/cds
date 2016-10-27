@@ -21,11 +21,18 @@ var (
 )
 
 func logTime(name string, then time.Time) {
-
 	d := time.Since(then)
-	if d > 2000*time.Millisecond {
+	if d > 10*time.Second {
 		log.Warning("%s took %s to execute\n", name, d)
+		return
 	}
+
+	if d > 2*time.Second {
+		log.Warning("%s took %s to execute\n", name, d)
+		return
+	}
+
+	log.Debug("%s took %s to execute\n", name, d)
 }
 
 func loadWorkerModelStatus(db *sql.DB, c *context.Context) ([]sdk.ModelStatus, error) {
