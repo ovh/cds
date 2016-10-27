@@ -176,7 +176,6 @@ func TestVerifyAlreadyDone(t *testing.T) {
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestLoadUserWithGroup(t *testing.T) {
 	log.UseTestLogger(t)
-	log.SetLevel(log.InfoLevel)
 	db := test.Setup("TestLoadUserWithGroup", t)
 
 	u := &sdk.User{
