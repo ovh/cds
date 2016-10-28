@@ -21,6 +21,7 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(listTriggerCmd())
 	cmd.AddCommand(deleteTriggerCmd())
 	cmd.AddCommand(copyTriggerCmd())
+	cmd.AddCommand(paramTriggerCmd())
 
 	return cmd
 }

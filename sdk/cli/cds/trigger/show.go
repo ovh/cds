@@ -20,13 +20,9 @@ func showTriggerCmd() *cobra.Command {
 	return cmd
 }
 
-func showTrigger(cmd *cobra.Command, args []string) {
+func retrieveTrigger(src, dest string) *sdk.PipelineTrigger {
 
-	if len(args) != 2 {
-		sdk.Exit("Wrong usage: see %s\n", cmd.Short)
-	}
-
-	t, err := triggerFromString(args[0], args[1])
+	t, err := triggerFromString(src, dest)
 	if err != nil {
 		sdk.Exit("Error: %s", err)
 	}
@@ -49,6 +45,17 @@ func showTrigger(cmd *cobra.Command, args []string) {
 	if trigger == nil {
 		sdk.Exit("Error: trigger not found")
 	}
+
+	return trigger
+}
+
+func showTrigger(cmd *cobra.Command, args []string) {
+
+	if len(args) != 2 {
+		sdk.Exit("Wrong usage: see %s\n", cmd.Short)
+	}
+
+	trigger := retrieveTrigger(args[0], args[1])
 
 	data, err := yaml.Marshal(trigger)
 	if err != nil {
