@@ -7,12 +7,18 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -54,6 +60,39 @@ func SetupPG(t *testing.T) (*sql.DB, error) {
 		return db, err
 	}
 	database.Set(db)
+
+	// Gracefully shutdown sql connections
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGKILL)
+	go func() {
+		<-c
+		log.Warning("Cleanup SQL connections\n")
+		db.Close()
+		os.Exit(0)
+	}()
+
+	if err := artifact.CreateBuiltinArtifactActions(db); err != nil {
+		log.Critical("Cannot setup builtin Artifact actions: %s\n", err)
+		return nil, err
+	}
+
+	if err := group.CreateDefaultGlobalGroup(db); err != nil {
+		log.Critical("Cannot setup default global group: %s\n", err)
+		return nil, err
+	}
+
+	if err := worker.CreateBuiltinActions(db); err != nil {
+		log.Critical("Cannot setup builtin actions: %s\n", err)
+		return nil, err
+	}
+
+	if err := worker.CreateBuiltinEnvironments(db); err != nil {
+		log.Critical("Cannot setup builtin environments: %s\n", err)
+		return nil, err
+	}
+
 	return db, nil
 }
 
