@@ -26,7 +26,7 @@ func updateParamTrigger(cmd *cobra.Command, args []string) {
 
 	for _, arg := range args[2:] {
 
-		splitted := strings.Split(arg, "=")
+		splitted := strings.SplitN(arg, "=", 2)
 		if len(splitted) != 2 {
 			sdk.Exit("Invalid argument : format should be <paramName>=<paramValue> : %s\n", arg)
 		}
