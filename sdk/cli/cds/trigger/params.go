@@ -2,7 +2,7 @@ package trigger
 
 import (
 	"github.com/spf13/cobra"
-	"stash.ovh.net/cds/sdk"
+	"github.com/ovh/cds/sdk"
 )
 
 var cmdParamPipelineTrigger *sdk.PipelineTrigger
