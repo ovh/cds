@@ -95,11 +95,12 @@ func CheckDefaultEnv(db database.Querier) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			query := `INSERT INTO environment (name) VALUES($1) RETURNING id`
-			if err := db.QueryRow(query, sdk.DefaultEnv.Name).Scan(&env.ID); err != nil {
-				return err
+			if err1 := db.QueryRow(query, sdk.DefaultEnv.Name).Scan(&env.ID); err1 != nil {
+				return err1
 			} else if env.ID != sdk.DefaultEnv.ID {
 				return fmt.Errorf("CheckDefaultEnv> default env created, but with wrong id. Please check db")
 			}
+			return nil
 		}
 		return err
 	} else if env.ID != sdk.DefaultEnv.ID || env.Name != sdk.DefaultEnv.Name {

@@ -5,14 +5,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // CreateBuiltinActions add builtin actions in database if needed
 func CreateBuiltinActions(db *sql.DB) error {
-	log.Debug("CreateBuiltinActions")
-
 	// ----------------------------------- Script ---------------------------
 	script := sdk.NewAction(sdk.ScriptAction)
 	script.Type = sdk.BuiltinAction
@@ -83,8 +80,6 @@ Parse given file to extract Unit Test results.`
 
 // checkBuiltinAction add builtin actions in database if needed
 func checkBuiltinAction(db *sql.DB, a *sdk.Action) error {
-	log.Debug("checkBuiltinAction for %s", a.Name)
-
 	var name string
 	query := `SELECT action.name FROM action WHERE action.name = $1`
 
@@ -105,7 +100,6 @@ func checkBuiltinAction(db *sql.DB, a *sdk.Action) error {
 }
 
 func createBuiltinAction(db *sql.DB, a *sdk.Action) error {
-	log.Debug("createBuiltinAction for %s", a.Name)
 	tx, err := db.Begin()
 	if err != nil {
 		return err
