@@ -228,7 +228,7 @@ func GetVariableInProject(db database.Querier, projectID int64, variableName str
 }
 
 // InsertVariableInProject Insert a new variable in the given project
-func InsertVariableInProject(db database.Executer, projectID int64, variable sdk.Variable) error {
+func InsertVariableInProject(db database.QueryExecuter, proj *sdk.Project, variable sdk.Variable) error {
 	query := `INSERT INTO project_variable(project_id, var_name, var_value, cipher_value, var_type)
 		  VALUES($1, $2, $3, $4, $5)`
 
@@ -237,19 +237,20 @@ func InsertVariableInProject(db database.Executer, projectID int64, variable sdk
 		return err
 	}
 
-	_, err = db.Exec(query, projectID, variable.Name, clear, cipher, string(variable.Type))
+	_, err = db.Exec(query, proj.ID, variable.Name, clear, cipher, string(variable.Type))
 	if err != nil {
 		return err
 	}
 
-	query = "UPDATE project SET last_modified = current_timestamp WHERE id=$1"
-	_, err = db.Exec(query, projectID)
-
+	lastModified, err := UpdateProjectDB(db, proj.Key, proj.Name)
+	if err == nil {
+		proj.LastModified = lastModified.Unix()
+	}
 	return err
 }
 
 // UpdateVariableInProject Update a variable in the given project
-func UpdateVariableInProject(db database.Executer, projectID int64, variable sdk.Variable) error {
+func UpdateVariableInProject(db database.QueryExecuter, proj *sdk.Project, variable sdk.Variable) error {
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -261,28 +262,30 @@ func UpdateVariableInProject(db database.Executer, projectID int64, variable sdk
 	}
 
 	query := `UPDATE project_variable SET var_value=$1, cipher_value=$2, var_type=$3 WHERE project_id=$4 AND var_name=$5`
-	_, err = db.Exec(query, clear, cipher, string(variable.Type), projectID, variable.Name)
+	_, err = db.Exec(query, clear, cipher, string(variable.Type), proj.ID, variable.Name)
 	if err != nil {
 		return err
 	}
 
-	query = "UPDATE project SET last_modified = current_timestamp WHERE id=$1"
-	_, err = db.Exec(query, projectID)
-
+	lastModifier, err := UpdateProjectDB(db, proj.Key, proj.Name)
+	if err == nil {
+		proj.LastModified = lastModifier.Unix()
+	}
 	return err
 }
 
 // DeleteVariableFromProject Delete a variable from the given project
-func DeleteVariableFromProject(db database.Executer, projectID int64, variableName string) error {
+func DeleteVariableFromProject(db database.QueryExecuter, proj *sdk.Project, variableName string) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1 AND var_name=$2`
-	_, err := db.Exec(query, projectID, variableName)
+	_, err := db.Exec(query, proj.ID, variableName)
 	if err != nil {
 		return err
 	}
 
-	query = "UPDATE project SET last_modified = current_timestamp WHERE id=$1"
-	_, err = db.Exec(query, projectID)
-
+	lastModified, err := UpdateProjectDB(db, proj.Key, proj.Name)
+	if err == nil {
+		proj.LastModified = lastModified.Unix()
+	}
 	return err
 }
 

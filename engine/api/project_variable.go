@@ -89,7 +89,7 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 			}
 			v.Value = string(value)
 		}
-		err := project.InsertVariableInProject(tx, p.ID, v)
+		err := project.InsertVariableInProject(tx, p, v)
 		if err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot insert variable %s for project %s:  %s\n", v.Name, key, err)
 			WriteError(w, r, err)
@@ -156,7 +156,7 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 		return
 	}
 
-	err = project.DeleteVariableFromProject(tx, p.ID, varName)
+	err = project.DeleteVariableFromProject(tx, p, varName)
 	if err != nil {
 		log.Warning("deleteVariableFromProject: Cannot delete %s: %s\n", varName, err)
 		WriteError(w, r, err)
@@ -170,7 +170,14 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	p.Variable, err = project.GetAllVariableInProject(db, p.ID)
+	if err != nil {
+		log.Warning("deleteVariableFromProject: Cannot load all variables: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
 func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -242,7 +249,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 					}
 				}
 			}
-			err = project.InsertVariableInProject(tx, p.ID, v)
+			err = project.InsertVariableInProject(tx, p, v)
 			if err != nil {
 				log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 				WriteError(w, r, err)
@@ -252,7 +259,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		// In case of a key variable, if empty, generate a pair and add them as variable
 		case sdk.KeyVariable:
 			if v.Value == "" {
-				err := keys.AddKeyPairToProject(tx, p.ID, v.Name)
+				err := keys.AddKeyPairToProject(tx, p, v.Name)
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler> cannot generate keypair: %s\n", err)
 					WriteError(w, r, err)
@@ -264,7 +271,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 						v.Value = p.Value
 					}
 				}
-				err = project.InsertVariableInProject(tx, p.ID, v)
+				err = project.InsertVariableInProject(tx, p, v)
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 					WriteError(w, r, err)
@@ -273,7 +280,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 			}
 			break
 		default:
-			err = project.InsertVariableInProject(tx, p.ID, v)
+			err = project.InsertVariableInProject(tx, p, v)
 			if err != nil {
 				log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 				WriteError(w, r, err)
@@ -353,7 +360,7 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 			return
 		}
 
-		err = project.UpdateVariableInProject(tx, p.ID, newVar)
+		err = project.UpdateVariableInProject(tx, p, newVar)
 		if err != nil {
 			log.Warning("updateVariableInProject: Cannot update variable %s in project %s:  %s\n", varName, p.Name, err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -375,7 +382,14 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	p.Variable, err = project.GetAllVariableInProject(db, p.ID)
+	if err != nil {
+		log.Warning("updateVariableInProject: Cannot get all variables: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
 func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -439,10 +453,10 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = keys.AddKeyPairToProject(tx, p.ID, newVar.Name)
+		err = keys.AddKeyPairToProject(tx, p, newVar.Name)
 		break
 	default:
-		err = project.InsertVariableInProject(tx, p.ID, newVar)
+		err = project.InsertVariableInProject(tx, p, newVar)
 		break
 	}
 	if err != nil {
@@ -465,4 +479,12 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql
 		return
 	}
 
+	p.Variable, err = project.GetAllVariableInProject(db, p.ID)
+	if err != nil {
+		log.Warning("AddVariableInProject: Cannot get variables: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }
