@@ -11,6 +11,8 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestUpdateProject test updating project
@@ -175,8 +177,12 @@ func TestAddGroupInProject(t *testing.T) {
 }
 
 func TestVariableInProject(t *testing.T) {
-	log.UseTestLogger(t)
-	db := test.Setup("TestVariableInProject", t)
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
+	}
+	db, err := testwithdb.SetupPG(t)
+	assert.NoError(t, err)
 
 	// 1. Create project
 	project1 := &sdk.Project{
@@ -184,7 +190,7 @@ func TestVariableInProject(t *testing.T) {
 		Name: "foo",
 	}
 
-	err := project.InsertProject(db, project1)
+	err = project.InsertProject(db, project1)
 	if err != nil {
 		t.Fatalf("cannot insert project1: %s", err)
 	}
@@ -195,14 +201,14 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value1",
 		Type:  "PASSWORD",
 	}
-	err = project.InsertVariableInProject(db, project1.ID, var1)
+	err = project.InsertVariableInProject(db, project1, var1)
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
 
 	// 3. Test Update variable
 	var1.Value = "value1Updated"
-	err = project.UpdateVariableInProject(db, project1.ID, var1)
+	err = project.UpdateVariableInProject(db, project1, var1)
 	if err != nil {
 		t.Fatalf("cannot update var1 in project1: %s", err)
 	}
@@ -217,7 +223,7 @@ func TestVariableInProject(t *testing.T) {
 	*/
 
 	// 4. Delete variable
-	err = project.DeleteVariableFromProject(db, project1.ID, var1.Name)
+	err = project.DeleteVariableFromProject(db, project1, var1.Name)
 	if err != nil {
 		t.Fatalf("cannot delete var1 from project: %s", err)
 	}
@@ -232,7 +238,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value2",
 		Type:  "STRING",
 	}
-	err = project.InsertVariableInProject(db, project1.ID, var2)
+	err = project.InsertVariableInProject(db, project1, var2)
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
