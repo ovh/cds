@@ -58,7 +58,6 @@ func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	tag = strings.Replace(tag, "/", "-", -1)
 	tag = url.QueryEscape(tag)
 
-
 	// Global all files matching filePath
 	filesPath, err := filepath.Glob(filePattern)
 	if err != nil {
@@ -140,7 +139,6 @@ func runArtifactDownload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result 
 	}
 	tag = strings.Replace(tag, "/", "-", -1)
 	tag = url.QueryEscape(tag)
-
 
 	if pipeline == "" {
 		res.Status = sdk.StatusFail
