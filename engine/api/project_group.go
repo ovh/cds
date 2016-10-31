@@ -157,7 +157,7 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 
 		lastModified, err := project.UpdateProjectDB(db, p.Key, p.Name)
 		if err != nil {
-			log.Warning("AddGroupInProject: Cannot update project last modified date: %s\n", err)
+			log.Warning("updateGroupRoleHandler: Cannot update project last modified date: %s\n", err)
 			WriteError(w, r, err)
 			return
 		}
