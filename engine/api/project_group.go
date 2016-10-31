@@ -29,24 +29,53 @@ func deleteGroupFromProjectHandler(w http.ResponseWriter, r *http.Request, db *s
 	p, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("deleteGroupFromProjectHandler: Cannot load %s: %s\n", key, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
 	g, err := group.LoadGroup(db, groupName)
 	if err != nil {
 		log.Warning("deleteGroupFromProjectHandler: Cannot find %s: %s\n", groupName, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("deleteGroupFromProjectHandler: Cannot start transaction:  %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
 	err = group.DeleteGroupFromProject(db, p.ID, g.ID)
 	if err != nil {
 		log.Warning("deleteGroupFromProjectHandler: Cannot delete group %s from project %s:  %s\n", g.Name, p.Name, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	lastModified, err := project.UpdateProjectDB(db, p.Key, p.Name)
+	if err != nil {
+		log.Warning("deleteGroupFromProjectHandler: Cannot update project last modified date: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	p.LastModified = lastModified.Unix()
+
+	err = tx.Commit()
+	if err != nil {
+		log.Warning("deleteGroupFromProjectHandler: Cannot commit transaction:  %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	err = group.LoadGroupByProject(db, p)
+	if err != nil {
+		log.Warning("deleteGroupFromProjectHandler: Cannot load groups for project %s:  %s\n", p.Key, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
 func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -58,14 +87,14 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		WriteError(w, r, sdk.ErrUnknownError)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var groupProject sdk.GroupPermission
 	err = json.Unmarshal(data, &groupProject)
 	if err != nil {
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -111,14 +140,44 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 			}
 		}
 
+		tx, err := db.Begin()
+		if err != nil {
+			log.Warning("updateGroupRoleHandler: Cannot start transaction: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+		defer tx.Rollback()
+
 		err = group.UpdateGroupRoleInProject(db, p.ID, g.ID, groupProject.Permission)
 		if err != nil {
 			log.Warning("updateGroupRoleHandler: Cannot add group %s in project %s:  %s\n", g.Name, p.Name, err)
 			WriteError(w, r, err)
 			return
 		}
+
+		lastModified, err := project.UpdateProjectDB(db, p.Key, p.Name)
+		if err != nil {
+			log.Warning("AddGroupInProject: Cannot update project last modified date: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+		p.LastModified = lastModified.Unix()
+
+		err = tx.Commit()
+		if err != nil {
+			log.Warning("updateGroupRoleHandler: Cannot start transaction: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
 	}
-	w.WriteHeader(http.StatusOK)
+
+	err = group.LoadGroupByProject(db, p)
+	if err != nil {
+		log.Warning("updateGroupRoleHandler: Cannot load group for project %s: %s\n", p.Key, err)
+		WriteError(w, r, err)
+		return
+	}
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
 func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -129,14 +188,14 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		WriteError(w, r, sdk.ErrUnknownError)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var groupProject []sdk.GroupPermission
 	err = json.Unmarshal(data, &groupProject)
 	if err != nil {
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -216,35 +275,35 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var groupProject sdk.GroupPermission
 	err = json.Unmarshal(data, &groupProject)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	p, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("AddGroupInProject: Cannot load %s: %s\n", key, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
 	g, err := group.LoadGroup(db, groupProject.Group.Name)
 	if err != nil {
 		log.Warning("AddGroupInProject: Cannot find %s: %s\n", groupProject.Group.Name, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
 	groupInProject, err := group.CheckGroupInProject(db, p.ID, g.ID)
 	if err != nil {
 		log.Warning("AddGroupInProject: Cannot check if group %s is already in the project %s: %s\n", g.Name, p.Name, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	if !groupInProject {
@@ -260,7 +319,7 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 		err = group.InsertGroupInProject(tx, p.ID, g.ID, groupProject.Permission)
 		if err != nil {
 			log.Warning("AddGroupInProject: Cannot add group %s in project %s:  %s\n", g.Name, p.Name, err)
-			w.WriteHeader(http.StatusInternalServerError)
+			WriteError(w, r, err)
 			return
 		}
 
@@ -370,6 +429,14 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 			}
 		}
 
+		lastModified, err := project.UpdateProjectDB(db, p.Key, p.Name)
+		if err != nil {
+			log.Warning("AddGroupInProject: Cannot update project last modified date: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+		p.LastModified = lastModified.Unix()
+
 		err = tx.Commit()
 		if err != nil {
 			log.Warning("AddGroupInProject: Cannot commit transaction:  %s\n", err)
@@ -378,5 +445,12 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
+	err = group.LoadGroupByProject(db, p)
+	if err != nil {
+		log.Warning("AddGroupInProject: Cannot load groups on project %s:  %s\n", p.Key, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }
