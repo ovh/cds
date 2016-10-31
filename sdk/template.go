@@ -86,9 +86,9 @@ func ApplyApplicationTemplates(projectKey string, name, repo string, build, depl
 	uri := fmt.Sprintf("/template/%s", projectKey)
 
 	app := &Application{
-		Name:           name,
-		BuildTemplate:  build,
-		DeployTemplate: deploy,
+		Name: name,
+		//		BuildTemplate:  build,
+		//		DeployTemplate: deploy,
 		Variable: []Variable{
 			Variable{
 				Name:  "repo",
