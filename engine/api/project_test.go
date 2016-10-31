@@ -10,8 +10,8 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 )
 
