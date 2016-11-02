@@ -302,6 +302,7 @@ func AddVariableInProject(projectKey, varName, varValue, varType string) error {
 	return nil
 }
 
+// GetVariableInProject Get a variable by her name in the given project
 func GetVariableInProject(projectKey, name string) (*Variable, error) {
 	var v Variable
 
