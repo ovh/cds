@@ -83,7 +83,7 @@ func addApplicationVariable(cmd *cobra.Command, args []string) {
 func cmdApplicationUpdateVariable() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "cds application variable update <projectKey> <applicationName> <variableName> <variableValue> <variableType>",
+		Short: "cds application variable update <projectKey> <applicationName> <oldVariableName> <variableName> <variableValue> <variableType>",
 		Long:  ``,
 		Run:   updateApplicationVariable,
 	}
@@ -91,16 +91,17 @@ func cmdApplicationUpdateVariable() *cobra.Command {
 }
 
 func updateApplicationVariable(cmd *cobra.Command, args []string) {
-	if len(args) != 5 {
+	if len(args) != 6 {
 		sdk.Exit("Wrong usage: %s\n", cmd.Short)
 	}
 	projectKey := args[0]
 	appName := args[1]
-	varName := args[2]
-	varValue := args[3]
-	varType := args[4]
+	oldName := args[2]
+	varName := args[3]
+	varValue := args[4]
+	varType := args[5]
 
-	err := sdk.UpdateApplicationVariable(projectKey, appName, varName, varValue, varType)
+	err := sdk.UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, varType)
 	if err != nil {
 		sdk.Exit("Error: cannot update variable %s in application %s (%s)\n", varName, appName, err)
 	}

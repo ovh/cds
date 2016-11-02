@@ -267,10 +267,9 @@ func UpdateVariable(db database.QueryExecuter, app *sdk.Application, variable sd
 	}
 
 	query := `UPDATE application_variable
-	          SET var_value=$1, cipher_value=$2,var_type=$3
-		  WHERE 	application_id = $4
-		  AND 	var_name=$5`
-	result, err := db.Exec(query, clear, cipher, string(variable.Type), app.ID, variable.Name)
+	          SET var_name= $1, var_value=$2, cipher_value=$3,var_type=$4
+		  WHERE id = $5`
+	result, err := db.Exec(query, variable.Name, clear, cipher, string(variable.Type), variable.ID)
 	if err != nil {
 		return err
 	}

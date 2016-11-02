@@ -208,10 +208,41 @@ func AddApplicationVariable(projectKey, appName, varName, varValue string, varTy
 	return nil
 }
 
+// GetVariableInApplication Get a variable in the given application
+func GetVariableInApplication(projectKey, appName, name string) (*Variable, error) {
+	var v Variable
+
+	path := fmt.Sprintf("/project/%s/application/%s/variable/%s", projectKey, appName, name)
+	data, code, err := Request("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if code != http.StatusCreated && code != http.StatusOK {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
+	}
+	e := DecodeError(data)
+	if e != nil {
+		return nil, e
+	}
+
+	err = json.Unmarshal(data, &v)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v, nil
+}
+
 // UpdateApplicationVariable update a variable in an application
-func UpdateApplicationVariable(projectKey, appName, varName, varValue, varType string) error {
+func UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, varType string) error {
+	oldVar, err := GetVariableInApplication(projectKey, appName, oldName)
+	if err != nil {
+		return err
+	}
 
 	newVar := Variable{
+		ID:    oldVar.ID,
 		Name:  varName,
 		Value: varValue,
 		Type:  VariableTypeFromString(varType),
