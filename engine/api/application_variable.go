@@ -139,7 +139,7 @@ func getVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 
 	variable, err := application.LoadVariable(db, app.ID, varName)
 	if err != nil {
-		log.Warning("getVariablesInApplicationHandler: Cannot get variable %s for application %s: %s\n", varName, appName, err)
+		log.Warning("getVariableInApplicationHandler: Cannot get variable %s for application %s: %s\n", varName, appName, err)
 		WriteError(w, r, err)
 		return
 	}
