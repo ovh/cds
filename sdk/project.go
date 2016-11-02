@@ -302,10 +302,40 @@ func AddVariableInProject(projectKey, varName, varValue, varType string) error {
 	return nil
 }
 
+func GetVariableInProject(projectKey, name string) (*Variable, error) {
+	var v Variable
+
+	path := fmt.Sprintf("/project/%s/variable/%s", projectKey, name)
+	data, code, err := Request("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if code != http.StatusCreated && code != http.StatusOK {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
+	}
+	e := DecodeError(data)
+	if e != nil {
+		return nil, e
+	}
+
+	err = json.Unmarshal(data, &v)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v, nil
+}
+
 // UpdateVariableInProject  update a variable in a project
-func UpdateVariableInProject(projectKey, varName, varValue, varType string) error {
+func UpdateVariableInProject(projectKey, oldName, varName, varValue, varType string) error {
+	oldVar, err := GetVariableInProject(projectKey, oldName)
+	if err != nil {
+		return err
+	}
 
 	newVar := Variable{
+		ID:    oldVar.ID,
 		Name:  varName,
 		Value: varValue,
 		Type:  VariableTypeFromString(varType),

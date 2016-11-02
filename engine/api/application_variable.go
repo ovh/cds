@@ -124,6 +124,29 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 }
 
+func getVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+	varName := vars["name"]
+
+	app, err := application.LoadApplicationByName(db, key, appName)
+	if err != nil {
+		log.Warning("getVariableInApplicationHandler: Cannot load application %s: %s\n", appName, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	variable, err := application.LoadVariable(db, app.ID, varName)
+	if err != nil {
+		log.Warning("getVariablesInApplicationHandler: Cannot get variable %s for application %s: %s\n", varName, appName, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, variable, http.StatusOK)
+}
+
 func getVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -182,9 +205,16 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	app.Variable, err = application.GetAllVariableByID(db, app.ID)
+	if err != nil {
+		log.Warning("deleteVariableFromApplicationHandler: Cannot load variables: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-	w.WriteHeader(http.StatusOK)
+	WriteJSON(w, r, app, http.StatusOK)
 }
 
 func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -203,7 +233,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("updateVariablesInApplicationHandler: Cannot read body: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -211,7 +241,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 	err = json.Unmarshal(data, &varsToUpdate)
 	if err != nil {
 		log.Warning("updateVariablesInApplicationHandler: Cannot unmarshal body : %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -328,7 +358,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	p, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot load %s: %s\n", key, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -336,7 +366,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot read body: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -344,11 +374,11 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	err = json.Unmarshal(data, &newVar)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot unmarshal body : %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	if newVar.Name != varName {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -377,7 +407,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	err = application.UpdateVariable(tx, app, newVar)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot update variable %s for application %s:  %s\n", varName, appName, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -395,9 +425,16 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	app.Variable, err = application.GetAllVariableByID(db, app.ID)
+	if err != nil {
+		log.Warning("updateVariableInApplicationHandler: Cannot load variables: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-	w.WriteHeader(http.StatusOK)
+	WriteJSON(w, r, app, http.StatusOK)
 }
 
 func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -409,26 +446,26 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 	p, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("addVariableInApplicationHandler: Cannot load %s: %s\n", key, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var newVar sdk.Variable
 	err = json.Unmarshal(data, &newVar)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	if newVar.Name != varName {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -482,7 +519,14 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 		return
 	}
 
+	app.Variable, err = application.GetAllVariableByID(db, app.ID)
+	if err != nil {
+		log.Warning("addVariableInApplicationHandler: Cannot get variables: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-	w.WriteHeader(http.StatusOK)
+	WriteJSON(w, r, app, http.StatusOK)
 }

@@ -82,7 +82,7 @@ func addVarInProject(cmd *cobra.Command, args []string) {
 func cmdProjectUpdateVariable() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "cds project variable update <projectKey> <variableName> <variableValue> <variableType>",
+		Short: "cds project variable update <projectKey> <oldVariableName> <variableName> <variableValue> <variableType>",
 		Long:  ``,
 		Run:   updateVarInProject,
 	}
@@ -90,15 +90,16 @@ func cmdProjectUpdateVariable() *cobra.Command {
 }
 
 func updateVarInProject(cmd *cobra.Command, args []string) {
-	if len(args) != 4 {
+	if len(args) != 5 {
 		sdk.Exit("Wrong usage: %s\n", cmd.Short)
 	}
 	projectKey := args[0]
-	varName := args[1]
-	varValue := args[2]
-	varType := args[3]
+	oldName := args[1]
+	varName := args[2]
+	varValue := args[3]
+	varType := args[4]
 
-	err := sdk.UpdateVariableInProject(projectKey, varName, varValue, varType)
+	err := sdk.UpdateVariableInProject(projectKey, oldName, varName, varValue, varType)
 	if err != nil {
 		sdk.Exit("Error: cannot update variable %s in project %s (%s)\n", varName, projectKey, err)
 	}

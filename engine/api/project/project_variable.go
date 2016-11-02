@@ -261,8 +261,9 @@ func UpdateVariableInProject(db database.QueryExecuter, proj *sdk.Project, varia
 		return err
 	}
 
-	query := `UPDATE project_variable SET var_value=$1, cipher_value=$2, var_type=$3 WHERE project_id=$4 AND var_name=$5`
-	_, err = db.Exec(query, clear, cipher, string(variable.Type), proj.ID, variable.Name)
+	query := `UPDATE project_variable SET var_name=$1, var_value=$2, cipher_value=$3, var_type=$4
+		   WHERE id=$5`
+	_, err = db.Exec(query, variable.Name, clear, cipher, string(variable.Type), variable.ID)
 	if err != nil {
 		return err
 	}
