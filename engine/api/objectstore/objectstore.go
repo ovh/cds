@@ -21,7 +21,7 @@ func Status() string {
 //StoreArtifact an artifact with default objectstore driver
 func StoreArtifact(art sdk.Artifact, data io.ReadCloser) (string, error) {
 	if storage != nil {
-		return storage.StoreArtifact(art, data)
+		return storage.Store(&art, data)
 	}
 	return "", fmt.Errorf("store not initialized")
 }
@@ -29,7 +29,7 @@ func StoreArtifact(art sdk.Artifact, data io.ReadCloser) (string, error) {
 //FetchArtifact an artifact with default objectstore driver
 func FetchArtifact(art sdk.Artifact) (io.ReadCloser, error) {
 	if storage != nil {
-		return storage.FetchArtifact(art)
+		return storage.Fetch(&art)
 	}
 	return nil, fmt.Errorf("store not initialized")
 }
@@ -37,31 +37,55 @@ func FetchArtifact(art sdk.Artifact) (io.ReadCloser, error) {
 //DeleteArtifact an artifact with default objectstore driver
 func DeleteArtifact(art sdk.Artifact) error {
 	if storage != nil {
-		return storage.DeleteArtifact(art)
+		return storage.Delete(&art)
 	}
 	return fmt.Errorf("store not initialized")
 }
 
-//StorePlugin call StorePlugin on the common driver
+//StorePlugin call Store on the common driver
 func StorePlugin(art sdk.ActionPlugin, data io.ReadCloser) (string, error) {
 	if storage != nil {
-		return storage.StorePlugin(art, data)
+		return storage.Store(&art, data)
 	}
 	return "", fmt.Errorf("store not initialized")
 }
 
-//FetchPlugin call FetchPlugin on the common driver
+//FetchPlugin call Fetch on the common driver
 func FetchPlugin(art sdk.ActionPlugin) (io.ReadCloser, error) {
 	if storage != nil {
-		return storage.FetchPlugin(art)
+		return storage.Fetch(&art)
 	}
 	return nil, fmt.Errorf("store not initialized")
 }
 
-//DeletePlugin call DeletePlugin on the common driver
+//DeletePlugin call Delete on the common driver
 func DeletePlugin(art sdk.ActionPlugin) error {
 	if storage != nil {
-		return storage.DeletePlugin(art)
+		return storage.Delete(&art)
+	}
+	return fmt.Errorf("store not initialized")
+}
+
+//StoreTemplateExtension call Store on the common driver
+func StoreTemplateExtension(tmpl sdk.TemplateExtention, data io.ReadCloser) (string, error) {
+	if storage != nil {
+		return storage.Store(&tmpl, data)
+	}
+	return "", fmt.Errorf("store not initialized")
+}
+
+//FetchTemplateExtension call Fetch on the common driver
+func FetchTemplateExtension(tmpl sdk.TemplateExtention) (io.ReadCloser, error) {
+	if storage != nil {
+		return storage.Fetch(&tmpl)
+	}
+	return nil, fmt.Errorf("store not initialized")
+}
+
+//DeleteTemplateExtension call Delete on the common driver
+func DeleteTemplateExtension(tmpl sdk.TemplateExtention) error {
+	if storage != nil {
+		return storage.Delete(&tmpl)
 	}
 	return fmt.Errorf("store not initialized")
 }
@@ -71,12 +95,9 @@ func DeletePlugin(art sdk.ActionPlugin) error {
 // - Filesystem
 type Driver interface {
 	Status() string
-	StoreArtifact(art sdk.Artifact, data io.ReadCloser) (string, error)
-	FetchArtifact(art sdk.Artifact) (io.ReadCloser, error)
-	DeleteArtifact(art sdk.Artifact) error
-	StorePlugin(art sdk.ActionPlugin, data io.ReadCloser) (string, error)
-	FetchPlugin(art sdk.ActionPlugin) (io.ReadCloser, error)
-	DeletePlugin(art sdk.ActionPlugin) error
+	Store(o Object, data io.ReadCloser) (string, error)
+	Fetch(o Object) (io.ReadCloser, error)
+	Delete(o Object) error
 }
 
 // Initialize setup wanted ObjectStore driver
