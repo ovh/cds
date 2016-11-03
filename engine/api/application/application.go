@@ -274,7 +274,7 @@ func loadDependencies(db database.Querier, app *sdk.Application, fargs ...FuncAr
 	}
 	app.Variable = variables
 
-	err = loadGroupByApplication(db, app)
+	err = LoadGroupByApplication(db, app)
 	if err != nil {
 		return err
 	}
@@ -449,7 +449,8 @@ func DeleteApplication(db *sql.Tx, applicationID int64) error {
 	return nil
 }
 
-func loadGroupByApplication(db database.Querier, application *sdk.Application) error {
+func LoadGroupByApplication(db database.Querier, application *sdk.Application) error {
+	application.ApplicationGroups = []sdk.GroupPermission{}
 	query := `SELECT "group".id, "group".name, application_group.role FROM "group"
 	 		  JOIN application_group ON application_group.group_id = "group".id
 	 		  WHERE application_group.application_id = $1 ORDER BY "group".name ASC`
