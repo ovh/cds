@@ -274,7 +274,7 @@ func loadDependencies(db database.Querier, app *sdk.Application, fargs ...FuncAr
 	}
 	app.Variable = variables
 
-	if err = LoadGroupByApplication(db, app); err != nil {
+	if err := LoadGroupByApplication(db, app); err != nil {
 		return err
 	}
 
