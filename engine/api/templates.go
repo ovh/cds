@@ -283,7 +283,26 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 }
 
 func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	tpl := []sdk.Template{
+	tpl, err := getTypedTemplatesHandler(db, "BUILD")
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+	WriteJSON(w, r, tpl, http.StatusOK)
+}
+
+func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	tpl, err := getTypedTemplatesHandler(db, "DEPLOY")
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+	WriteJSON(w, r, tpl, http.StatusOK)
+}
+
+func getTypedTemplatesHandler(db *sql.DB, t string) ([]sdk.Template, error) {
+	var tpl []sdk.Template
+	tpl = []sdk.Template{
 		sdk.Template{
 			ID:          template.UglyID,
 			Name:        "Void",
@@ -293,23 +312,19 @@ func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 
 	tplFromDB := []sdk.TemplateExtention{}
 	dbmap := database.DBMap(db)
-	if _, err := dbmap.Select(&tplFromDB, "select * from template where type = 'BUILD' order by name"); err != nil {
-		log.Warning("getBuildTemplates> Error : %s", err)
-		WriteError(w, r, err)
-		return
+	if _, err := dbmap.Select(&tplFromDB, "select * from template where type = $1 order by name", t); err != nil {
+		log.Warning("getTypedTemplatesHandler> Error : %s", err)
+		return nil, err
 	}
 
 	for _, t := range tplFromDB {
 		params := []sdk.TemplateParam{}
 		str, err := dbmap.SelectStr("select params from template_params where template_id = $1", t.ID)
-		log.Debug(str)
 		if err != nil {
-			WriteError(w, r, err)
-			return
+			return nil, err
 		}
 		if err := json.Unmarshal([]byte(str), &params); err != nil {
-			WriteError(w, r, err)
-			return
+			return nil, err
 		}
 
 		tpl = append(tpl, sdk.Template{
@@ -321,11 +336,5 @@ func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 
 	}
 
-	WriteJSON(w, r, tpl, http.StatusOK)
-}
-
-func getDeployTemplates(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-
-	var tpl []sdk.Template
-	WriteJSON(w, r, tpl, http.StatusOK)
+	return tpl, nil
 }
