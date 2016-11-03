@@ -187,7 +187,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 		return
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateGroupsInApplicationHandler: Cannot commit transaction: %s\n", err)
 		WriteError(w, r, sdk.ErrUnknownError)
 		return
