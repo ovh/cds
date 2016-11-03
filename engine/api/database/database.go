@@ -7,8 +7,11 @@ import (
 	"path"
 	"sync"
 
+	"gopkg.in/gorp.v1"
+
 	"log"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/spf13/viper"
 )
 
@@ -130,4 +133,13 @@ func Status() string {
 	}
 
 	return fmt.Sprintf("Database: %s OK (%d conns)", dbDriver, db.Stats().OpenConnections)
+}
+
+//DBMap returns a propor intialized gorp.DBMap pointer
+func DBMap(db *sql.DB) *gorp.DbMap {
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
+
+	dbmap.AddTableWithName(sdk.TemplateExtention{}, "template").SetKeys(true, "id")
+
+	return dbmap
 }

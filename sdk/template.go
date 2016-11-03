@@ -118,3 +118,28 @@ func ApplyApplicationTemplates(projectKey string, name, repo string, build, depl
 
 	return app, nil
 }
+
+//TemplateExtention represents a template store as a binary extension
+type TemplateExtention struct {
+	ID          string `json:"id" db:"id"`
+	Name        string `json:"name" db:"name"`
+	Author      string `json:"author" db:"author"`
+	Description string `json:"description"`
+	Identifier  string `json:"identifier" db:"identifier"`
+	Size        int64  `json:"-" db:"size"`
+	Perm        uint32 `json:"-" db:"perm"`
+	MD5Sum      string `json:"md5sum" db:"md5sum"`
+	ObjectPath  string `json:"-" db:"object_path"`
+	Filename    string `json:"-" db:"-"`
+	Path        string `json:"-" db:"-"`
+}
+
+//GetName returns the name of the template extension
+func (a *TemplateExtention) GetName() string {
+	return a.Name
+}
+
+//GetPath returns the storage path of the template extension
+func (a *TemplateExtention) GetPath() string {
+	return fmt.Sprintf("templates")
+}

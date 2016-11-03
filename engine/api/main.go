@@ -396,7 +396,7 @@ func (router *Router) init() {
 	router.Handle("/template/add", NeedAdmin(true), POST(addTemplateHandler))
 	router.Handle("/template/build", Auth(false), GET(getBuildTemplates))
 	router.Handle("/template/deploy", Auth(false), GET(getDeployTemplates))
-	router.Handle("/template/{id}", NeedAdmin(true), PUT(updateTemplateHandler), DELETE(updateTemplateHandler))
+	router.Handle("/template/{id}", NeedAdmin(true), PUT(updateTemplateHandler), DELETE(deleteTemplateHandler))
 
 	// Users
 	router.Handle("/user", GET(GetUsers))

@@ -256,144 +256,144 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 		return
 	}
 
-	if len(p.Applications) == 1 && p.Applications[0].BuildTemplate.ID != 0 {
+	/*if len(p.Applications) == 1 && p.Applications[0].BuildTemplate.ID != 0 {
 		err = project.CreateFromWizard(tx, p, c.User)
 		if err != nil {
 			log.Warning("AddProject: Cannot create project: %s\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	} else {
-		// Project without application
-		err = project.InsertProject(tx, p)
+	} else {*/
+	// Project without application
+	err = project.InsertProject(tx, p)
+	if err != nil {
+		log.Warning("AddProject: Cannot insert project: %s\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Add group
+	for i := range p.ProjectGroups {
+		groupPermission := &p.ProjectGroups[i]
+
+		// Insert group
+		groupID, new, err := group.AddGroup(tx, &groupPermission.Group)
+		if groupID == 0 {
+			WriteError(w, r, err)
+			return
+		}
+		groupPermission.Group.ID = groupID
+
+		// Add group on project
+		err = group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission)
 		if err != nil {
-			log.Warning("AddProject: Cannot insert project: %s\n", err)
+			log.Warning("addProject: Cannot add group %s in project %s:  %s\n", groupPermission.Group.Name, p.Name, err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		// Add group
-		for i := range p.ProjectGroups {
-			groupPermission := &p.ProjectGroups[i]
-
-			// Insert group
-			groupID, new, err := group.AddGroup(tx, &groupPermission.Group)
-			if groupID == 0 {
-				WriteError(w, r, err)
-				return
-			}
-			groupPermission.Group.ID = groupID
-
-			// Add group on project
-			err = group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission)
+		// Add user in group
+		if new {
+			err = group.InsertUserInGroup(tx, groupPermission.Group.ID, c.User.ID, true)
 			if err != nil {
-				log.Warning("addProject: Cannot add group %s in project %s:  %s\n", groupPermission.Group.Name, p.Name, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			// Add user in group
-			if new {
-				err = group.InsertUserInGroup(tx, groupPermission.Group.ID, c.User.ID, true)
-				if err != nil {
-					log.Warning("addProject: Cannot add user %s in group %s:  %s\n", c.User.Username, groupPermission.Group.Name, err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-			}
-		}
-
-		var newPipeline sdk.Pipeline
-		// Add pipeline if at leat 1 application was added
-		if len(p.Applications) > 0 {
-			newPipeline.Name = "build"
-			newPipeline.Type = sdk.BuildPipeline
-			newPipeline.ProjectID = p.ID
-
-			err := pipeline.InsertPipeline(tx, &newPipeline)
-			if err != nil {
-				log.Warning("addProject: Cannot add build pipeline for project %s: %s \n", p.Name, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			err = group.InsertGroupsInPipeline(tx, p.ProjectGroups, newPipeline.ID)
-			if err != nil {
-				log.Warning("addProject> Cannot add groups on pipeline: %s\n", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			// add parameter for repository
-			param := sdk.Parameter{
-				Name:        "urlRepository",
-				Type:        sdk.StringParameter,
-				Description: "Url of the source repository",
-				Value:       "",
-			}
-			err = pipeline.InsertParameterInPipeline(tx, newPipeline.ID, &param)
-			if err != nil {
-				log.Warning("addProject: Cannot add pipeline parameter : %s \n", err)
+				log.Warning("addProject: Cannot add user %s in group %s:  %s\n", c.User.Username, groupPermission.Group.Name, err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		}
+	}
 
-		// Add application
-		for _, app := range p.Applications {
-			//app.Project = p
-			err = application.InsertApplication(tx, p, &app)
-			if err != nil {
-				log.Warning("addProject: Cannot add application %s in project %s: %s \n", app.Name, p.Name, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+	var newPipeline sdk.Pipeline
+	// Add pipeline if at leat 1 application was added
+	if len(p.Applications) > 0 {
+		newPipeline.Name = "build"
+		newPipeline.Type = sdk.BuildPipeline
+		newPipeline.ProjectID = p.ID
 
-			// Add Groups
-			err = group.InsertGroupsInApplication(tx, p.ProjectGroups, app.ID)
-			if err != nil {
-				log.Warning("addProject> Cannot add groups on application: %s\n", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			// Attach pipeline to application
-			if newPipeline.ID != 0 {
-				err = application.AttachPipeline(tx, app.ID, newPipeline.ID)
-				if err != nil {
-					log.Warning("addProject: Cannot attach pipeline %s to application %s : %s\n", newPipeline.Name, app.Name, err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-			}
-
-			// Add variable
-			for _, v := range app.Variable {
-				variable := sdk.Variable{
-					Name:  v.Name,
-					Type:  v.Type,
-					Value: v.Value,
-				}
-				err = application.InsertVariable(tx, &app, variable)
-				if err != nil {
-					log.Warning("addProject: Cannot add variable  %s in application %s: %s \n", v.Name, app.Name, err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-
-				if newPipeline.ID != 0 && v.Name == "repositoryUrl" {
-					var params []sdk.Parameter
-					p := sdk.Parameter{
-						Name:  "urlRepository",
-						Type:  "string",
-						Value: "{{.cds.app.repositoryUrl}}",
-					}
-					params = append(params, p)
-					err = application.UpdatePipelineApplication(tx, &app, newPipeline.ID, params)
-				}
-			}
-
+		err := pipeline.InsertPipeline(tx, &newPipeline)
+		if err != nil {
+			log.Warning("addProject: Cannot add build pipeline for project %s: %s \n", p.Name, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
+
+		err = group.InsertGroupsInPipeline(tx, p.ProjectGroups, newPipeline.ID)
+		if err != nil {
+			log.Warning("addProject> Cannot add groups on pipeline: %s\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// add parameter for repository
+		param := sdk.Parameter{
+			Name:        "urlRepository",
+			Type:        sdk.StringParameter,
+			Description: "Url of the source repository",
+			Value:       "",
+		}
+		err = pipeline.InsertParameterInPipeline(tx, newPipeline.ID, &param)
+		if err != nil {
+			log.Warning("addProject: Cannot add pipeline parameter : %s \n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Add application
+	for _, app := range p.Applications {
+		//app.Project = p
+		err = application.InsertApplication(tx, p, &app)
+		if err != nil {
+			log.Warning("addProject: Cannot add application %s in project %s: %s \n", app.Name, p.Name, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Add Groups
+		err = group.InsertGroupsInApplication(tx, p.ProjectGroups, app.ID)
+		if err != nil {
+			log.Warning("addProject> Cannot add groups on application: %s\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Attach pipeline to application
+		if newPipeline.ID != 0 {
+			err = application.AttachPipeline(tx, app.ID, newPipeline.ID)
+			if err != nil {
+				log.Warning("addProject: Cannot attach pipeline %s to application %s : %s\n", newPipeline.Name, app.Name, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Add variable
+		for _, v := range app.Variable {
+			variable := sdk.Variable{
+				Name:  v.Name,
+				Type:  v.Type,
+				Value: v.Value,
+			}
+			err = application.InsertVariable(tx, &app, variable)
+			if err != nil {
+				log.Warning("addProject: Cannot add variable  %s in application %s: %s \n", v.Name, app.Name, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			if newPipeline.ID != 0 && v.Name == "repositoryUrl" {
+				var params []sdk.Parameter
+				p := sdk.Parameter{
+					Name:  "urlRepository",
+					Type:  "string",
+					Value: "{{.cds.app.repositoryUrl}}",
+				}
+				params = append(params, p)
+				err = application.UpdatePipelineApplication(tx, &app, newPipeline.ID, params)
+			}
+		}
+
+		//}
 	}
 
 	err = tx.Commit()

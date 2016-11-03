@@ -47,6 +47,16 @@ type ActionPlugin struct {
 	ObjectPath string `json:"object_path,omitempty"`
 }
 
+//GetName returns the name the action plugin
+func (a *ActionPlugin) GetName() string {
+	return a.Name
+}
+
+//GetPath returns the storage path of the action plugin
+func (a *ActionPlugin) GetPath() string {
+	return fmt.Sprintf("plugins")
+}
+
 // Action type
 const (
 	DefaultAction = "Default"

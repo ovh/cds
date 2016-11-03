@@ -2,7 +2,7 @@ package template
 
 import (
 	"github.com/ovh/cds/sdk"
-	"stash.ovh.net/cds/sdk/plugin"
+	"github.com/ovh/cds/sdk/plugin"
 )
 
 //RPCServer is the struct called to serve the plugin

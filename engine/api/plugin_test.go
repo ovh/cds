@@ -94,10 +94,10 @@ func postFile(t *testing.T,
 	}
 }
 
-func downloadFile(t *testing.T, name string) (string, func(), error) {
-	t.Logf("Downloading file %s", dummyBinaryFile)
+func downloadFile(t *testing.T, name, url string) (string, func(), error) {
+	t.Logf("Downloading file %s", url)
 
-	resp, err := http.Get(dummyBinaryFile)
+	resp, err := http.Get(url)
 	assert.NoError(t, err)
 	if err != nil {
 		t.Fail()
@@ -148,7 +148,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
 
-	path, delete, err := downloadFile(t, "dummy")
+	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}
@@ -200,7 +200,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
 
-	path, delete, err := downloadFile(t, "dummy1")
+	path, delete, err := downloadFile(t, "dummy1", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}
@@ -231,7 +231,7 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
 
-	path, delete, err := downloadFile(t, "dummy")
+	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}
@@ -271,7 +271,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
 
-	path, delete, err := downloadFile(t, "dummy")
+	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}
@@ -326,7 +326,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
 
-	path, delete, err := downloadFile(t, "dummy")
+	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}

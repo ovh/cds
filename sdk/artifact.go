@@ -36,6 +36,16 @@ type Artifact struct {
 	ObjectPath   string `json:"object_path,omitempty"`
 }
 
+//GetName returns the name the artifact
+func (a *Artifact) GetName() string {
+	return a.Name
+}
+
+//GetPath returns the path of the artifact
+func (a *Artifact) GetPath() string {
+	return fmt.Sprintf("%s/%s/%s/%s/%s", a.Project, a.Application, a.Environment, a.Pipeline, a.Tag)
+}
+
 // Builtin artifact manipulation actions
 const (
 	ArtifactUpload   = "Artifact Upload"

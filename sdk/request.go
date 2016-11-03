@@ -57,12 +57,14 @@ func Authorization(h string) {
 // Agent describe the type of authentication method to use
 type Agent string
 
+//Agent constants
 const (
 	SDKAgent      Agent = "CDS/sdk"
 	WorkerAgent         = "CDS/worker"
 	HatcheryAgent       = "CDS/hatchery"
 )
 
+//SetAgent set the agent onto the sdk
 func SetAgent(a Agent) {
 	agent = a
 }
@@ -142,6 +144,7 @@ func readConfig() error {
 // RequestModifier is used to modify behavior of Request and Steam functions
 type RequestModifier func(req *http.Request)
 
+// HttpClient is a interface for HttpClient mock
 type HttpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
