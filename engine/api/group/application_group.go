@@ -52,16 +52,8 @@ func CheckGroupInApplication(db database.Querier, applicationID, groupID int64) 
 
 // InsertGroupInApplication add permissions on Application to Group
 func InsertGroupInApplication(db database.Executer, applicationID, groupID int64, role int) error {
-
 	query := `INSERT INTO application_group (application_id, group_id,role) VALUES($1,$2,$3)`
-
 	_, err := db.Exec(query, applicationID, groupID, role)
-	if err != nil {
-		return err
-	}
-
-	query = "UPDATE application SET last_modified = current_timestamp WHERE id=$1"
-	_, err = db.Exec(query, applicationID)
 	return err
 }
 
@@ -73,15 +65,6 @@ func UpdateGroupRoleInApplication(db database.Executer, key, appName, groupName 
 	          WHERE application.id = application_id AND application.project_id = project.id AND "group".id = group_id
 	          AND application.name = $2 AND  project.projectKey = $3 AND "group".name = $4 `
 	_, err := db.Exec(query, role, appName, key, groupName)
-	if err != nil {
-		return err
-	}
-
-	query = `UPDATE application
-		 SET last_modified = current_timestamp
-		 FROM project
-		 WHERE application.project_id = project.id AND application.name=$1 AND project.projectKey = $2`
-	_, err = db.Exec(query, appName, key)
 	return err
 }
 
@@ -100,12 +83,6 @@ func DeleteGroupFromApplication(db database.Executer, key, appName, groupName st
 		  WHERE application.id = application_group.application_id AND application.project_id = project.id AND "group".id = application_group.group_id
 		  AND application.name = $1 AND  project.projectKey = $2 AND "group".name = $3`
 	_, err := db.Exec(query, appName, key, groupName)
-
-	query = `UPDATE application
-		 SET last_modified = current_timestamp
-		 FROM project
-		 WHERE application.project_id = project.id AND application.name=$1 AND project.projectKey = $2`
-	_, err = db.Exec(query, appName, key)
 	return err
 }
 
