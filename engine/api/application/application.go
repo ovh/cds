@@ -449,6 +449,7 @@ func DeleteApplication(db *sql.Tx, applicationID int64) error {
 	return nil
 }
 
+// LoadGroupByApplication loads all the groups on the given application
 func LoadGroupByApplication(db database.Querier, application *sdk.Application) error {
 	application.ApplicationGroups = []sdk.GroupPermission{}
 	query := `SELECT "group".id, "group".name, application_group.role FROM "group"
