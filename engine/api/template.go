@@ -17,23 +17,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getBuildTemplates(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	tpl := []sdk.Template{
-		sdk.Template{
-			ID:          template.UglyID,
-			Name:        "Void",
-			Description: "Empty template",
-		},
-	}
-	WriteJSON(w, r, tpl, http.StatusOK)
-}
-
-func getDeployTemplates(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-
-	var tpl []sdk.Template
-	WriteJSON(w, r, tpl, http.StatusOK)
-}
-
 func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,14 +11,15 @@ import (
 	"strconv"
 	"strings"
 
+	"bytes"
+
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/log"
-
-	"bytes"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/template"
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/sdk"
 )
@@ -278,4 +280,52 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 	//OK
 	w.WriteHeader(http.StatusOK)
+}
+
+func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	tpl := []sdk.Template{
+		sdk.Template{
+			ID:          template.UglyID,
+			Name:        "Void",
+			Description: "Empty template",
+		},
+	}
+
+	tplFromDB := []sdk.TemplateExtention{}
+	dbmap := database.DBMap(db)
+	if _, err := dbmap.Select(&tplFromDB, "select * from template where type = 'BUILD' order by name"); err != nil {
+		log.Warning("getBuildTemplates> Error : %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	for _, t := range tplFromDB {
+		params := []sdk.TemplateParam{}
+		str, err := dbmap.SelectStr("select params from template_params where template_id = $1", t.ID)
+		log.Debug(str)
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		if err := json.Unmarshal([]byte(str), &params); err != nil {
+			WriteError(w, r, err)
+			return
+		}
+
+		tpl = append(tpl, sdk.Template{
+			ID:          t.ID,
+			Name:        t.Name,
+			Description: t.Description,
+			Params:      params,
+		})
+
+	}
+
+	WriteJSON(w, r, tpl, http.StatusOK)
+}
+
+func getDeployTemplates(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+
+	var tpl []sdk.Template
+	WriteJSON(w, r, tpl, http.StatusOK)
 }

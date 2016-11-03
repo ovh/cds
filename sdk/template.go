@@ -3,6 +3,8 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+
+	"gopkg.in/gorp.v1"
 )
 
 // TemplateParam can be a String/Date/Script/URL...
@@ -121,17 +123,57 @@ func ApplyApplicationTemplates(projectKey string, name, repo string, build, depl
 
 //TemplateExtention represents a template store as a binary extension
 type TemplateExtention struct {
-	ID          string `json:"id" db:"id"`
-	Name        string `json:"name" db:"name"`
-	Author      string `json:"author" db:"author"`
-	Description string `json:"description"`
-	Identifier  string `json:"identifier" db:"identifier"`
-	Size        int64  `json:"-" db:"size"`
-	Perm        uint32 `json:"-" db:"perm"`
-	MD5Sum      string `json:"md5sum" db:"md5sum"`
-	ObjectPath  string `json:"-" db:"object_path"`
-	Filename    string `json:"-" db:"-"`
-	Path        string `json:"-" db:"-"`
+	ID          int64           `json:"id" db:"id"`
+	Name        string          `json:"name" db:"name"`
+	Type        string          `json:"type" db:"type"`
+	Author      string          `json:"author" db:"author"`
+	Description string          `json:"description"`
+	Identifier  string          `json:"identifier" db:"identifier"`
+	Size        int64           `json:"-" db:"size"`
+	Perm        uint32          `json:"-" db:"perm"`
+	MD5Sum      string          `json:"md5sum" db:"md5sum"`
+	ObjectPath  string          `json:"-" db:"object_path"`
+	Filename    string          `json:"-" db:"-"`
+	Path        string          `json:"-" db:"-"`
+	Params      []TemplateParam `json:"-" db:"-"`
+}
+
+//PostInsert is a DB Hook on TemplateExtention to store params as JSON in DB
+func (t *TemplateExtention) PostInsert(s gorp.SqlExecutor) error {
+	btes, err := json.Marshal(t.Params)
+	if err != nil {
+		return err
+	}
+
+	query := "insert into template_params (template_id, params) values ($1, $2)"
+	if _, err := s.Exec(query, t.ID, btes); err != nil {
+		return err
+	}
+	return nil
+}
+
+//PostUpdate is a DB Hook on TemplateExtention to store params as JSON in DB
+func (t *TemplateExtention) PostUpdate(s gorp.SqlExecutor) error {
+	btes, err := json.Marshal(t.Params)
+	if err != nil {
+		return err
+	}
+
+	query := "update template_params set params = $2 where template_id = $1"
+	if _, err := s.Exec(query, t.ID, btes); err != nil {
+		return err
+	}
+	return nil
+}
+
+//PreDelete is a DB Hook on TemplateExtention to store params as JSON in DB
+func (t *TemplateExtention) PreDelete(s gorp.SqlExecutor) error {
+	query := "delete from template_params where template_id = $1"
+	if _, err := s.Exec(query, t.ID); err != nil {
+		return err
+	}
+	return nil
+
 }
 
 //GetName returns the name of the template extension

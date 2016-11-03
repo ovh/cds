@@ -394,7 +394,7 @@ func (router *Router) init() {
 	//router.Handle("/template/{permProjectKey}", POST(applyTemplateHandler))
 	router.Handle("/template", Auth(false), GET(getTemplatesHandler))
 	router.Handle("/template/add", NeedAdmin(true), POST(addTemplateHandler))
-	router.Handle("/template/build", Auth(false), GET(getBuildTemplates))
+	router.Handle("/template/build", Auth(false), GET(getBuildTemplatesHandler))
 	router.Handle("/template/deploy", Auth(false), GET(getDeployTemplates))
 	router.Handle("/template/{id}", NeedAdmin(true), PUT(updateTemplateHandler), DELETE(deleteTemplateHandler))
 

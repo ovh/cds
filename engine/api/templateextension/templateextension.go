@@ -43,10 +43,11 @@ func Get(name, path string) (*sdk.TemplateExtention, []sdk.TemplateParam, error)
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
-
+	params := _templ.Parameters()
 	te := sdk.TemplateExtention{
 		Filename:    name,
 		Name:        _templ.Name(),
+		Type:        _templ.Type(),
 		Author:      _templ.Author(),
 		Description: _templ.Description(),
 		Identifier:  _templ.Identifier(),
@@ -54,9 +55,8 @@ func Get(name, path string) (*sdk.TemplateExtention, []sdk.TemplateParam, error)
 		Size:        stat.Size(),
 		Perm:        uint32(stat.Mode().Perm()),
 		MD5Sum:      md5sumStr,
+		Params:      params,
 	}
-
-	params := _templ.Parameters()
 
 	return &te, params, nil
 }
