@@ -17,15 +17,16 @@ func Cmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(addTemplateCmd)
-	cmd.AddCommand(updateTemplateCmd)
 	cmd.AddCommand(deleteTemplateCmd)
-	cmd.AddCommand(downloadTemplateCmd)
+	cmd.AddCommand(listTemplateCmd)
+	cmd.AddCommand(updateTemplateCmd)
+
 	return cmd
 }
 
 var addTemplateCmd = &cobra.Command{
 	Use:   "add",
-	Short: "cds Template add <file>",
+	Short: "cds templates add <file>",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
@@ -46,14 +47,14 @@ var addTemplateCmd = &cobra.Command{
 
 var updateTemplateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "cds Template update <name> <file>",
+	Short: "cds templates update <name> <file>",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 2 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
 		}
 		var err error
 		for i := 0; i < 5; i++ {
-			_, err = sdk.UploadTemplate(args[0], true, args[1])
+			_, err = sdk.UploadTemplate(args[1], true, args[0])
 			if err == nil {
 				break
 			}
@@ -67,7 +68,7 @@ var updateTemplateCmd = &cobra.Command{
 
 var deleteTemplateCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "cds Template delete <name>",
+	Short: "cds templates delete <name>",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
@@ -79,16 +80,16 @@ var deleteTemplateCmd = &cobra.Command{
 	},
 }
 
-var downloadTemplateCmd = &cobra.Command{
-	Use:   "download",
-	Short: "cds Template download <name>",
+var listTemplateCmd = &cobra.Command{
+	Use:   "list",
+	Short: "cds templates list",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			sdk.Exit("Wrong usage: %s\n", cmd.Short)
+		tmpls, err := sdk.ListTemplates()
+		if err != nil {
+			sdk.Exit("Error: cannot list templates: %s\n", err)
 		}
-		if err := sdk.DownloadTemplate(args[0], "."); err != nil {
-			sdk.Exit("Error: cannot download Template %s (%s)\n", args[0], err)
+		for _, t := range tmpls {
+			fmt.Println(t.Name)
 		}
-		fmt.Printf("OK\n")
 	},
 }

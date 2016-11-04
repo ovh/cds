@@ -295,12 +295,45 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 
 //DeleteTemplate delete Template
 func DeleteTemplate(name string) error {
-	path := fmt.Sprintf("/Template/%s", name)
-
-	_, _, err := Request("DELETE", path, nil)
+	tmpls, err := ListTemplates()
 	if err != nil {
 		return err
 	}
 
+	var id int64
+	var found bool
+	for _, t := range tmpls {
+		if t.Name == name {
+			id = t.ID
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("Unable to found template %s", name)
+	}
+
+	path := fmt.Sprintf("/template/%d", id)
+	if _, _, err := Request("DELETE", path, nil); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+//ListTemplates returns all templates
+func ListTemplates() ([]TemplateExtention, error) {
+	tmpls := []TemplateExtention{}
+	body, code, err := Request("GET", "/template", nil)
+	if err != nil {
+		return nil, err
+	}
+	if code >= 300 {
+		return nil, fmt.Errorf("HTTP Error %d\n", code)
+	}
+	if err := json.Unmarshal(body, &tmpls); err != nil {
+		return nil, err
+	}
+	return tmpls, nil
 }
