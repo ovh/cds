@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/howeyc/gopass"
@@ -15,10 +15,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var (
+	defaultEndPoint string
+	defaultUser     string
+)
+
+func init() {
+	Cmd.Flags().StringVarP(&defaultEndPoint, "host", "", "", "CDS API URL")
+	Cmd.Flags().StringVarP(&defaultUser, "user", "", "", "CDS User")
+}
+
 // Cmd login
 var Cmd = &cobra.Command{
 	Use:   "login",
-	Short: "Ease up creation of ~/.cds/config.json",
+	Short: "Ease up creation of config file",
 	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
 		runLogin()
@@ -34,49 +44,71 @@ type config struct {
 
 func runLogin() {
 	conf := config{}
-	defaultEndpoint := ""
 
-	fmt.Printf("Username: ")
-	username := readline()
-	conf.User = username
+	//Check if file exists
+	if _, err := os.Stat(sdk.CDSConfigFile); err == nil {
+		fmt.Printf("File %s exists, do you want to overwrite? [y/N]: ", sdk.CDSConfigFile)
+		overwrite := readline()
+		if overwrite != "y" && overwrite != "Y" {
+			fmt.Println("Aborted")
+			return
+		}
+	}
+
+	//Take the endpoint from flags or ask for on command line
+	if defaultEndPoint == "" {
+		fmt.Printf("CDS endpoint: ")
+		conf.Host = readline()
+	} else {
+		fmt.Printf("CDS endpoint: %s\n", defaultEndPoint)
+		conf.Host = defaultEndPoint
+	}
+
+	//Take the user from flags or ask for on command line
+	if defaultUser == "" {
+		fmt.Printf("Username: ")
+		conf.User = readline()
+	} else {
+		fmt.Printf("Username: %s\n", defaultUser)
+		conf.User = defaultUser
+	}
+
+	//Ask for the password
 	fmt.Printf("Password: ")
 	password, err := gopass.GetPasswd()
 	if err != nil {
 		sdk.Exit("Error: wrong usage (%s)\n", err)
 	}
-	fmt.Printf("CDS endpoint [%s]: ", defaultEndpoint)
-	conf.Host = readline()
-	if conf.Host == "" {
-		conf.Host = defaultEndpoint
-	}
 
-	home := os.Getenv("HOME")
-	err = os.Mkdir(path.Join(home, ".cds"), 0700)
-	if err != nil && !os.IsExist(err) {
+	//Create the config directory
+	if err := os.Mkdir(filepath.Base(sdk.CDSConfigFile), 0700); err != nil && !os.IsExist(err) {
 		sdk.Exit("Error: Cannot create config folder (%s)\n", err)
 	}
 
-	sdk.InitEndpoint(conf.Host)
+	//Configure sdk
+	sdk.Options(conf.Host, "", "", "")
 
-	loginOK, res, err := sdk.LoginUser(username, string(password))
+	//Login
+	loginOK, res, err := sdk.LoginUser(conf.User, string(password))
 	if !loginOK {
 		if err != nil {
 			sdk.Exit("Error: Login failed (%s)\n", err)
 		}
 	}
+
+	//Store result in conf object
 	if res.Token != "" {
 		conf.Token = res.Token
 	} else {
 		conf.Password = string(password)
 	}
 
+	//Write conf in file
 	data, err := json.MarshalIndent(conf, " ", " ")
 	if err != nil {
 		sdk.Exit("Error: Cannot create config file (%s)\n", err)
 	}
-
-	err = ioutil.WriteFile(path.Join(home, ".cds", "config.json"), data, 0640)
-	if err != nil {
+	if err := ioutil.WriteFile(sdk.CDSConfigFile, data, 0640); err != nil {
 		sdk.Exit("Error: Cannot write config file (%s)\n", err)
 	}
 
