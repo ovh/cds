@@ -47,7 +47,7 @@ func runLogin() {
 
 	//Check if file exists
 	if _, err := os.Stat(sdk.CDSConfigFile); err == nil {
-		fmt.Printf("File %s exist, do you want to overwrite? [y/N]: ", sdk.CDSConfigFile)
+		fmt.Printf("File %s exists, do you want to overwrite? [y/N]: ", sdk.CDSConfigFile)
 		overwrite := readline()
 		if overwrite != "y" && overwrite != "Y" {
 			fmt.Println("Aborted")
