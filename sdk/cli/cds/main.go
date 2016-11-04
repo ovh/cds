@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cli/cds/action"
@@ -36,12 +36,7 @@ var rootCmd = &cobra.Command{
 	Long:  `CDS - Command Line Tool`,
 }
 
-func main() {
-	rootCmd.PersistentFlags().StringVarP(&sdk.Host, "host", "H", "", "")
-	rootCmd.PersistentFlags().BoolVarP(&internal.Verbose, "verbose", "v", false, "verbose output")
-
-	viper.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host"))
-
+func displayWarnings() {
 	// Display warnings, on failure, fail silently
 	warnings, err := sdk.GetWarnings()
 	if err == nil && len(warnings) > 0 {
@@ -50,6 +45,44 @@ func main() {
 			fmt.Printf("- %s\n", w.Message)
 		}
 		fmt.Printf("\n")
+	}
+}
+
+func main() {
+	rootCmd.PersistentFlags().StringVarP(&internal.ConfigFile, "file", "f", "", "set configuration file")
+	rootCmd.PersistentFlags().BoolVarP(&internal.Verbose, "verbose", "v", false, "verbose output")
+	rootCmd.PersistentFlags().BoolVarP(&internal.NoWarnings, "no-warnings", "w", false, "do not display warnings")
+
+	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		//ConfigFile default file
+		if internal.ConfigFile == "" {
+			internal.ConfigFile = path.Join(os.Getenv("HOME"), ".cds", "config.json")
+		}
+
+		//Set the config file
+		sdk.CDSConfigFile = internal.ConfigFile
+
+		//On login command: do nothing
+		if cmd == login.Cmd {
+			return
+		}
+
+		//If file doesn't exist, stop here
+		if _, err := os.Stat(internal.ConfigFile); os.IsNotExist(err) {
+			sdk.Exit("File %s doesn't exists", internal.ConfigFile)
+			return
+		}
+
+		//Do not check warning on user command
+		if cmd == user.Cmd {
+			return
+		}
+
+		//Manage warnings
+		if internal.NoWarnings {
+			return
+		}
+		displayWarnings()
 	}
 
 	rootCmd.AddCommand(login.Cmd)
