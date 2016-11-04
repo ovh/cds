@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-
 	"path"
 
 	"github.com/spf13/cobra"
