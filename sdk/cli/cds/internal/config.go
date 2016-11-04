@@ -15,4 +15,10 @@ var (
 
 	// PackagingInformations contains link to CI / CD system use for building
 	PackagingInformations string
+
+	// ConfigFile is the path to the configfile
+	ConfigFile string
+
+	// NoWarnings set to True wont display warnings
+	NoWarnings bool
 )

@@ -37,12 +37,9 @@ var (
 	client HttpClient
 	// current agent calling
 	agent Agent
+	// CDSConfigFile is path to the default config file
+	CDSConfigFile = path.Join(os.Getenv("HOME"), ".cds", "config.json")
 )
-
-var home = os.Getenv("HOME")
-
-// CDSConfigFile  path to the config file
-var CDSConfigFile = path.Join(home, ".cds", "config.json")
 
 // InitEndpoint force sdk package request to given endpoint
 func InitEndpoint(en string) {
@@ -57,12 +54,14 @@ func Authorization(h string) {
 // Agent describe the type of authentication method to use
 type Agent string
 
+// Different values of agent
 const (
 	SDKAgent      Agent = "CDS/sdk"
 	WorkerAgent         = "CDS/worker"
 	HatcheryAgent       = "CDS/hatchery"
 )
 
+//SetAgent set a agent value
 func SetAgent(a Agent) {
 	agent = a
 }
