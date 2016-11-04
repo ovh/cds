@@ -51,8 +51,8 @@ func applyTemplates(projectKey string, name, repo string, build, deploy sdk.Temp
 	fmt.Printf("\n")
 	fmt.Printf("Application %s/%s created\n", projectKey, app.Name)
 	fmt.Printf("Application variable repo=%s\n", app.Variable[0].Value)
-	fmt.Printf("Applied template %s on %s/%s\n", app.BuildTemplate.Name, projectKey, app.Name)
-	fmt.Printf("Applied template %s on %s/%s\n", app.DeployTemplate.Name, projectKey, app.Name)
+	//fmt.Printf("Applied template %s on %s/%s\n", app.BuildTemplate.Name, projectKey, app.Name)
+	//fmt.Printf("Applied template %s on %s/%s\n", app.DeployTemplate.Name, projectKey, app.Name)
 
 	var pip sdk.Pipeline
 	for i := range app.Pipelines {

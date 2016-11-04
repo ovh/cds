@@ -1,8 +1,14 @@
 package sdk
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
+	"path"
+	"path/filepath"
 
 	"gopkg.in/gorp.v1"
 )
@@ -184,4 +190,117 @@ func (a *TemplateExtention) GetName() string {
 //GetPath returns the storage path of the template extension
 func (a *TemplateExtention) GetPath() string {
 	return fmt.Sprintf("templates")
+}
+
+//DownloadTemplate download Template from action
+func DownloadTemplate(name string, destdir string) error {
+	var lasterr error
+	for retry := 5; retry >= 0; retry-- {
+		uri := fmt.Sprintf("/Template/download/%s", name)
+		reader, code, err := Stream("GET", uri, nil)
+		if err != nil {
+			lasterr = err
+			continue
+		}
+		if code >= 300 {
+			lasterr = fmt.Errorf("HTTP %d", code)
+			continue
+		}
+		destPath := path.Join(destdir, name)
+		//If the file already exists, remove it
+		if _, err := os.Stat(destPath); err == nil {
+			os.RemoveAll(destPath)
+		}
+
+		f, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+
+		if _, err = io.Copy(f, reader); err != nil {
+			lasterr = err
+		}
+
+		if err := f.Close(); err == nil {
+			fmt.Printf("Download %s completed\n", destPath)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("x5: %s", lasterr)
+}
+
+//UploadTemplate uploads binary file to perform a new action
+func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("UploadFile", filepath.Base(filePath))
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
+
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+	path := "/template/add"
+	method := "POST"
+	if update {
+		method = "PUT"
+		path = "/template/"
+
+		btes, _, err := Request("GET", "/template", nil)
+		if err != nil {
+			return nil, err
+		}
+		tmpls := []TemplateExtention{}
+		if err := json.Unmarshal(btes, &tmpls); err != nil {
+			return nil, err
+		}
+
+		var found bool
+		for _, t := range tmpls {
+			if t.Name == name {
+				path += fmt.Sprintf("%d", t.ID)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("Template %s not found", name)
+		}
+	}
+	btes, code, err := UploadMultiPart(method, path, body, SetHeader("uploadfile", filePath), SetHeader("Content-Type", writer.FormDataContentType()))
+	if err != nil {
+		return nil, err
+	}
+
+	if code >= 300 {
+		return nil, fmt.Errorf("HTTP Error %d\n", code)
+	}
+
+	return btes, nil
+}
+
+//DeleteTemplate delete Template
+func DeleteTemplate(name string) error {
+	path := fmt.Sprintf("/Template/%s", name)
+
+	_, _, err := Request("DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
