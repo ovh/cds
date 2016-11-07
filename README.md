@@ -1,10 +1,10 @@
 # CDS: Continuous Delivery Service
 
+<img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo.png" style="max-width:100%;background-color:#153f6c;padding:10px;border-radius:25px;">
+
 CDS is a pipeline based Continuous Delivery μservice written in Go.
 
 **/!\ This project is under active development.**
-
-<img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo.png">
 
 ## Documentation
 
