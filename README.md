@@ -1,8 +1,10 @@
-# CDS: Continuous Delivery μservice
+# CDS: Continuous Delivery Service
 
 CDS is a pipeline based Continuous Delivery μservice written in Go.
 
 **/!\ This project is under active development.**
+
+<img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo.png">
 
 ## Documentation
 
@@ -48,18 +50,7 @@ To get the best out of CDS api though, one should use all compatible third parti
 
 It is possible to configure CDS to fetch secret cipher keys from Vault.
 
-Keys are needed for:
-
- - AES+HMAC secret variable cipher key (looking for "cds/aes-key")
- - OAUTH2 Application secret for Stash and Github integration ("cds/repositoriesmanager-secrets-%s")
-
-
-```
- --vault-host string                   Vault hostname (default "local-insecure")
- --vault-insecure-secrets-dir string   Load secrets from directory (default ".secrets")
- --vault-key string                    Vault application key (default "cds")
- --vault-password string               Vault password key
-```
+See documentation at https://github.com/ovh/cds-contrib/tree/master/secret-backend-vault
 
 ### Artifact Storage
 
@@ -162,6 +153,7 @@ On an existing database, run the following command on each CDS update:
 
 - *OVH home (us)*: https://www.ovh.com/us/
 - *OVH home (fr)*: https://www.ovh.com/fr/
+- *OVH community *: https://community.ovh.com/c/open-source/continuous-delivery-service
 
 
 ## License
