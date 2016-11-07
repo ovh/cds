@@ -272,8 +272,7 @@ func UpdateVariable(db database.Executer, envID int64, variable sdk.Variable) er
 
 	query := `UPDATE environment_variable
 	          SET value=$1, cipher_value=$2, type=$3
-	          FROM environment
-	          WHERE environment.id = $4 AND environment_variable.name = $5`
+	          WHERE environment_id = $4 AND environment_variable.name = $5`
 	result, err := db.Exec(query, clear, cipher, string(variable.Type), envID, variable.Name)
 	if err != nil {
 		return err
