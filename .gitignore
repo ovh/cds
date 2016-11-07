@@ -1,4 +1,5 @@
 *.swp
+.DS_Store
 engine/api/api
 engine/api/.secrets
 engine/hatchery/hatchery
