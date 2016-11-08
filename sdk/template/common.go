@@ -8,7 +8,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ovh/cds/sdk"
+
 	"github.com/ovh/cds/sdk/plugin"
+
+	"strings"
 
 	"github.com/facebookgo/httpcontrol"
 )
@@ -23,7 +27,6 @@ const (
 )
 
 var (
-	auth   plugin.IOptions
 	client *http.Client
 	//Trace is a debug logger
 	Trace *log.Logger
@@ -40,9 +43,16 @@ func SetTrace(traceHandle io.Writer) {
 //Init is a common function for all plugins
 func (p *Common) Init(o plugin.IOptions) string {
 	SetTrace(ioutil.Discard)
-	auth = o
 
-	if auth.TLSSkipVerify() {
+	if !strings.Contains(o.Hash(), ":") {
+		return "template: init aborted"
+	}
+	username := strings.Split(o.Hash(), ":")[0]
+	token := strings.Split(o.Hash(), ":")[1]
+
+	sdk.Options(o.GetURL(), username, "", token)
+
+	if o.TLSSkipVerify() {
 		client = &http.Client{
 			Transport: &httpcontrol.Transport{
 				RequestTimeout: RequestTimeout,

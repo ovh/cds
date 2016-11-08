@@ -3,6 +3,7 @@ package sdk
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -91,40 +92,7 @@ func GetDeploymentTemplates() ([]Template, error) {
 
 // ApplyApplicationTemplates creates given application and apply build and deployment templates
 func ApplyApplicationTemplates(projectKey string, name, repo string, build, deploy Template) (*Application, error) {
-	uri := fmt.Sprintf("/template/%s", projectKey)
-
-	app := &Application{
-		Name: name,
-		//		BuildTemplate:  build,
-		//		DeployTemplate: deploy,
-		Variable: []Variable{
-			Variable{
-				Name:  "repo",
-				Type:  StringVariable,
-				Value: repo,
-			},
-		},
-	}
-
-	data, err := json.Marshal(app)
-	if err != nil {
-		return nil, err
-	}
-
-	data, code, err := Request("POST", uri, data)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	err = json.Unmarshal(data, app)
-	if err != nil {
-		return nil, err
-	}
-
-	return app, nil
+	return nil, errors.New("Unsupported operation")
 }
 
 //TemplateExtention represents a template store as a binary extension
@@ -141,7 +109,17 @@ type TemplateExtention struct {
 	ObjectPath  string          `json:"-" db:"object_path"`
 	Filename    string          `json:"-" db:"-"`
 	Path        string          `json:"-" db:"-"`
-	Params      []TemplateParam `json:"-" db:"-"`
+	Params      []TemplateParam `json:"params" db:"-"`
+}
+
+//ApplyTemplatesOptions represents arguments to create an application and all its components from templates
+type ApplyTemplatesOptions struct {
+	ApplicationName      string            `json:"name"`
+	ApplicationVariables map[string]string `json:"application_variables"`
+	BuildTemplateName    string            `json:"build_template"`
+	BuildTemplateParams  []TemplateParam   `json:"build_template_params"`
+	DeployTemplateName   string            `json:"deploy_template"`
+	DeployTemplateParams []TemplateParam   `json:"deploy_template_params"`
 }
 
 //PostInsert is a DB Hook on TemplateExtention to store params as JSON in DB

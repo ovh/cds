@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"io"
@@ -11,16 +12,15 @@ import (
 	"strconv"
 	"strings"
 
-	"bytes"
-
 	"github.com/gorilla/mux"
-	"github.com/ovh/cds/engine/log"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/template"
 	"github.com/ovh/cds/engine/api/templateextension"
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -104,8 +104,8 @@ func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	}
 	defer file.Close()
 
-	log.Debug("Uploaded template %s", templ.Identifier)
-	log.Debug("Template params %v", params)
+	log.Info("Uploaded template %s", templ.Identifier)
+	log.Info("Template params %v", params)
 
 	//Upload to objectstore
 	objectpath, err := objectstore.StoreTemplateExtension(*templ, file)
@@ -337,4 +337,62 @@ func getTypedTemplatesHandler(db *sql.DB, t string) ([]sdk.Template, error) {
 	}
 
 	return tpl, nil
+}
+
+func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	vars := mux.Vars(r)
+	projectKey := vars["permProjectKey"]
+
+	//Load the project
+	p, err := project.LoadProject(db, projectKey, c.User)
+	if err != nil {
+		log.Warning("applyTemplatesHandler> Cannot load project %s: %s\n", projectKey, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	// Get data in body
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	// Parse body to sdk.ApplyTemplatesOptions
+	var opts sdk.ApplyTemplatesOptions
+	if err := json.Unmarshal(data, &opts); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	// Get template from DB
+	dbmap := database.DBMap(db)
+	tmpl := sdk.TemplateExtention{}
+	if err := dbmap.SelectOne(&tmpl, "select * from template where name = $1", opts.BuildTemplateName); err != nil {
+		if err == sql.ErrNoRows {
+			WriteError(w, r, sdk.ErrUnknownTemplate)
+			return
+		}
+		WriteError(w, r, err)
+		return
+	}
+
+	// Load the template binary
+	templ, deferFunc, err := templateextension.Instance(router.authDriver, &tmpl, c.User)
+	if deferFunc != nil {
+		defer deferFunc()
+	}
+	if err != nil {
+		log.Warning("applyTemplatesHandler> error getting template extention instance : %s", err)
+		WriteError(w, r, err)
+	}
+
+	// Apply thet template
+	app, err := templateextension.Apply(templ, p, opts.BuildTemplateParams, opts.ApplicationName)
+	if err != nil {
+		log.Warning("applyTemplatesHandler> error applying template : %s", err)
+		WriteError(w, r, err)
+	}
+
+	WriteJSON(w, r, app, http.StatusOK)
 }

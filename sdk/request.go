@@ -239,7 +239,6 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 			}
 		}
 
-		//resp, err := http.DefaultClient.Do(req)
 		resp, err := client.Do(req)
 
 		// if everything is fine, return body
