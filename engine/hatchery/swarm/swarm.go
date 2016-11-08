@@ -1,7 +1,6 @@
-package main
+package swarm
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -11,45 +10,26 @@ import (
 
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/fsouza/go-dockerclient"
-
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/spf13/viper"
 )
+
+var hatcherySwarm *HatcherySwarm
 
 //HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
 type HatcherySwarm struct {
 	sync               sync.Mutex
-	hatch              *hatchery.Hatchery
+	hatch              *sdk.Hatchery
 	dockerClient       *docker.Client
 	onlyWithServiceReq bool
 	maxContainers      int
 }
 
-//ParseConfig do nothing
-func (h *HatcherySwarm) ParseConfig() {}
-
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
 	var err error
-
-	if os.Getenv("DOCKER_HOST") == "" {
-		return errors.New("Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
-	}
-
-	if os.Getenv("ONLY_WITH_SERVICE_REQ") == "true" {
-		h.onlyWithServiceReq = true
-	}
-
-	if os.Getenv("MAX_CONTAINER") == "" {
-		h.maxContainers = 10
-	} else {
-		h.maxContainers, err = strconv.Atoi(os.Getenv("MAX_CONTAINER"))
-		if err != nil {
-			log.Critical("Invalid MAX_CONTAINER")
-			return err
-		}
-	}
 
 	h.dockerClient, err = docker.NewClientFromEnv()
 	if err != nil {
@@ -57,9 +37,9 @@ func (h *HatcherySwarm) Init() error {
 		return err
 	}
 
-	if err := h.dockerClient.Ping(); err != nil {
+	if errPing := h.dockerClient.Ping(); errPing != nil {
 		log.Critical("Unable to ping docker host")
-		return err
+		return errPing
 	}
 
 	// Register without declaring model
@@ -69,11 +49,11 @@ func (h *HatcherySwarm) Init() error {
 		name = "cds-hatchery"
 	}
 	name += "-dockerapi"
-	h.hatch = &hatchery.Hatchery{
+	h.hatch = &sdk.Hatchery{
 		Name: name,
 	}
 
-	if err := register(h.hatch); err != nil {
+	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
 		log.Warning("Cannot register hatchery: %s\n", err)
 		return err
 	}
@@ -201,7 +181,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 	env := []string{
 		"CDS_API" + "=" + sdk.Host,
 		"CDS_NAME" + "=" + name,
-		"CDS_KEY" + "=" + uk,
+		"CDS_KEY" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 	}
@@ -332,11 +312,8 @@ func (h *HatcherySwarm) WorkerStarted(model *sdk.Model) int {
 	return len(list)
 }
 
-// SetWorkerModelID does nothing
-func (h *HatcherySwarm) SetWorkerModelID(int64) {}
-
 // Hatchery returns Hatchery instances
-func (h *HatcherySwarm) Hatchery() *hatchery.Hatchery {
+func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
@@ -346,11 +323,6 @@ func (h *HatcherySwarm) ID() int64 {
 		return 0
 	}
 	return h.hatch.ID
-}
-
-//Mode returns DockerAPIMode value
-func (h *HatcherySwarm) Mode() string {
-	return SwarmMode
 }
 
 func (h *HatcherySwarm) killAwolWorkerRoutine() {
@@ -367,9 +339,13 @@ func (h *HatcherySwarm) killAwolWorker() {
 		return
 	}
 
-	containers, err := h.dockerClient.ListContainers(docker.ListContainersOptions{
+	containers, errList := h.dockerClient.ListContainers(docker.ListContainersOptions{
 		All: true,
 	})
+	if errList != nil {
+		log.Warning("Cannot list containers: %s", errList)
+		return
+	}
 
 	oldContainers := []docker.APIContainers{}
 	//Checking workers

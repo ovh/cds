@@ -1,4 +1,4 @@
-package main
+package mesos
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"path"
 	"strings"
+
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // Application is the definition for an application in marathon
@@ -53,7 +55,7 @@ func deleteApp(url, user, password string, appID string) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(user, password)
 
-	resp, err := client.Do(req)
+	resp, err := hatchery.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -74,7 +76,7 @@ func getApps(url, user, password string, env string) ([]Application, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(user, password)
 
-	resp, err := client.Do(req)
+	resp, err := hatchery.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +88,7 @@ func getApps(url, user, password string, env string) ([]Application, error) {
 	}
 
 	var apps Applications
-	err = json.Unmarshal(body, &apps)
-	if err != nil {
+	if err = json.Unmarshal(body, &apps); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +107,7 @@ func countOf(model string, apps []Application) int {
 	return count
 }
 
-func getDeployments(url, user, password string, env string) ([]Application, error) {
+func getDeployments(url, user, password string) ([]Application, error) {
 	req, err := http.NewRequest("GET", url+"/v2/deployments", nil)
 	if err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func getDeployments(url, user, password string, env string) ([]Application, erro
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(user, password)
 
-	resp, err := client.Do(req)
+	resp, err := hatchery.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +131,7 @@ func getDeployments(url, user, password string, env string) ([]Application, erro
 	}
 
 	var apps []Application
-	err = json.Unmarshal(body, &apps)
-	if err != nil {
+	if err = json.Unmarshal(body, &apps); err != nil {
 		return nil, err
 	}
 
