@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -75,103 +76,59 @@ func selectAllPipelineActionID(db database.QueryExecuter, pipelineStageID int64)
 	return pipelineActionIDs, nil
 }
 
-/*
-//func loadPipelineAction(db database.Querier, stageData *sdk.Stage, args ...FuncArg) error {
-func loadPipelineAction(db database.Querier, stageData *sdk.Stage) error {
-
-	stageData.Actions = []sdk.Action{}
-	query := `SELECT
-			pipeline_action.id,
-			action.id,
-			pipeline_action.args,
-			pipeline_action.enabled
-		  FROM action
-		  JOIN pipeline_action ON pipeline_action.action_id = action.id
-      WHERE pipeline_action.pipeline_stage_id = $1 ORDER BY action.name,pipeline_action.id ASC`
-
-	rows, err := db.Query(query, stageData.ID)
+//InsertPipelineJob insert data in pipeline_action table
+func InsertPipelineJob(db database.QueryExecuter, pip *sdk.Pipeline, s *sdk.Stage, a *sdk.Action) error {
+	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, args, enabled) VALUES ($1, $2, $3, $4) RETURNING id`
+	args, err := json.Marshal(a.Parameters)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-
-	var actions []sdk.Action
-	var argss []string
-	for rows.Next() {
-		var args string
-		var a sdk.Action
-		err = rows.Scan(&a.PipelineActionID, &a.ID, &args, &a.Enabled)
-		if err != nil {
-			return err
-		}
-		actions = append(actions, a)
-		argss = append(argss, args)
+	if err := db.QueryRow(query, s.ID, a.ID, string(args), a.Enabled).Scan(&a.PipelineActionID); err != nil {
+		return err
 	}
-	rows.Close()
-
-	for index := range actions {
-		var a *sdk.Action
-		a, err = action.LoadActionByID(db, actions[index].ID)
-		if err != nil {
-			return fmt.Errorf("cannot LoadActionByID> %s", err)
-		}
-		a.Enabled = actions[index].Enabled
-		a.PipelineStageID = stageData.ID
-		a.PipelineActionID = actions[index].PipelineActionID
-
-		var pipelineActionParameter []sdk.Parameter
-		var isUpdated bool
-		err = json.Unmarshal([]byte(argss[index]), &pipelineActionParameter)
-		if err != nil {
-			return err
-		}
-
-		for i := range a.Parameters {
-			isUpdated, pipelineActionParameter = updateParamInList(pipelineActionParameter, a.Parameters[i])
-			if !isUpdated {
-				pipelineActionParameter = append(pipelineActionParameter, a.Parameters[i])
-			}
-		}
-		a.Parameters = pipelineActionParameter
-
-		stageData.Actions = append(stageData.Actions, *a)
-	}
-
 	return nil
 }
-*/
 
 // InsertPipelineAction insert an action in a pipeline
 func InsertPipelineAction(db database.QueryExecuter, projectKey, pipelineName string, actionID int64, args string, stageID int64) (int64, error) {
-	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, args, enabled) VALUES ($1, $2, $3, $4) RETURNING id`
-
 	p, err := LoadPipeline(db, projectKey, pipelineName, true)
 	if err != nil {
 		return 0, fmt.Errorf("Cannot LoadPipeline> %s", err)
 	}
 
+	var stage *sdk.Stage
+	//Create stage if stageID == 0
 	if stageID == 0 {
-		newStage := sdk.Stage{
+		stage = &sdk.Stage{
 			Name:       fmt.Sprintf("Stage %d", len(p.Stages)+1),
 			PipelineID: p.ID,
 			BuildOrder: len(p.Stages) + 1,
 			Enabled:    true,
 		}
-		err = InsertStage(db, &newStage)
-		if err != nil {
+		if err := InsertStage(db, stage); err != nil {
 			return 0, fmt.Errorf("Cannot InsertStage on pipeline %d> %s", p.ID, err)
 		}
-		stageID = newStage.ID
+		stageID = stage.ID
+	} else {
+		//Else load the stage
+		stage, err = LoadStage(db, p.ID, stageID)
+		if err != nil {
+			return 0, err
+		}
 	}
 
-	var pipelineActionID int64
-	err = db.QueryRow(query, stageID, actionID, args, true).Scan(&pipelineActionID)
+	//Reload action
+	a, err := action.LoadActionByID(db, actionID)
 	if err != nil {
-		return pipelineActionID, err
+		return 0, err
 	}
 
-	err = UpdatePipelineLastModified(db, p.ID)
-	return pipelineActionID, err
+	//Insert in pipeline_action table
+	if err := InsertPipelineJob(db, p, stage, a); err != nil {
+		return 0, err
+	}
+
+	return a.PipelineActionID, UpdatePipelineLastModified(db, p.ID)
 }
 
 // UpdatePipelineAction Update an action in a pipeline

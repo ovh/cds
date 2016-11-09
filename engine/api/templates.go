@@ -14,8 +14,10 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/template"
@@ -344,7 +346,7 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	projectKey := vars["permProjectKey"]
 
 	//Load the project
-	p, err := project.LoadProject(db, projectKey, c.User)
+	proj, err := project.LoadProject(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("applyTemplatesHandler> Cannot load project %s: %s\n", projectKey, err)
 		WriteError(w, r, err)
@@ -387,10 +389,41 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		WriteError(w, r, err)
 	}
 
-	// Apply thet template
-	app, err := templateextension.Apply(templ, p, opts.BuildTemplateParams, opts.ApplicationName)
+	// Apply the template
+	app, err := templateextension.Apply(templ, proj, opts.BuildTemplateParams, opts.ApplicationName)
 	if err != nil {
 		log.Warning("applyTemplatesHandler> error applying template : %s", err)
+		WriteError(w, r, err)
+	}
+
+	//Start a new transaction
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("applyTemplatesHandler> error beginning transaction : %s", err)
+		WriteError(w, r, err)
+	}
+
+	defer tx.Rollback()
+
+	// Import the application
+	msgChan := make(chan msg.Message)
+	msgList := []string{}
+	al := r.Header.Get("Accept-Language")
+	go func(array *[]string) {
+		for m := range msgChan {
+			s := m.String(al)
+			*array = append(*array, s)
+			log.Debug("applyTemplatesHandler> message : %s", s)
+		}
+	}(&msgList)
+
+	if err := application.Import(tx, proj, app, nil, msgChan); err != nil {
+		log.Warning("applyTemplatesHandler> error applying template : %s", err)
+		WriteError(w, r, err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("applyTemplatesHandler> error commiting transaction : %s", err)
 		WriteError(w, r, err)
 	}
 

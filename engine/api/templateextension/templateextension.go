@@ -148,5 +148,9 @@ func Apply(templ template.Interface, proj *sdk.Project, params []sdk.TemplatePar
 	templParameters := template.NewParameters(parameters)
 	applyOptions := template.NewApplyOptions(proj.Key, appName, *templParameters)
 	app, err := templ.Apply(applyOptions)
+
+	app.Name = appName
+	app.ProjectKey = proj.Key
+
 	return &app, err
 }

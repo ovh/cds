@@ -24,6 +24,8 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 
+	"net/url"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -641,6 +643,23 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
+	//Load the gitclone public action
+	//Prepare request
+	uri := router.getRoute("POST", loadActionHandler, nil)
+	if uri == "" {
+		t.Fail()
+		return
+	}
+	req, err := http.NewRequest("POST", uri, nil)
+	req.Form = url.Values{}
+	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds-contrib/actions/action-scripts/cds-git-clone.hcl")
+	testwithdb.AuthentifyRequest(t, req, u, pass)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.mux.ServeHTTP(w, req)
+	assert.True(t, w.Code >= 200)
+
 	//download the binary from plik
 	path, delete, err := downloadFile(t, "testtemplate", testTestTemplate)
 	if delete != nil {
@@ -683,18 +702,18 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("POST", addTemplateHandler, vars)
+	uri = router.getRoute("POST", addTemplateHandler, vars)
 	if uri == "" {
 		t.Fail()
 		return
 	}
-	req, err := http.NewRequest("POST", uri, bodyBuf)
+	req, err = http.NewRequest("POST", uri, bodyBuf)
 	testwithdb.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
 	//Do the request
-	w := httptest.NewRecorder()
+	w = httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)

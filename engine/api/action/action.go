@@ -27,7 +27,7 @@ func Exists(db database.Querier, name string) (bool, error) {
 }
 
 // InsertAction insert given action into given database
-func InsertAction(tx *sql.Tx, a *sdk.Action, public bool) error {
+func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
 	ok, err := isTreeLoopFree(tx, a, nil)
 	if err != nil {
 		return err
@@ -208,7 +208,6 @@ func loadAction(db database.Querier, s database.Scanner) (*sdk.Action, error) {
 }
 
 // UpdateActionDB  Update an action
-// FIXME: remove pointer on Action
 func UpdateActionDB(tx *sql.Tx, a *sdk.Action, userID int64) error {
 
 	ok, err := isTreeLoopFree(tx, a, nil)
@@ -398,6 +397,7 @@ func isTreeLoopFree(db database.Querier, a *sdk.Action, parents []int64) (bool, 
 		if cobaye.ID == 0 {
 			cobaye, err = LoadPublicAction(db, cobaye.Name)
 			if err != nil {
+				log.Warning("isTreeLoopFree> error on action %s: %s", child.Name, err)
 				return false, err
 			}
 		}

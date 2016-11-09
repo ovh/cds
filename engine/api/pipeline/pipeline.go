@@ -359,25 +359,19 @@ func InsertPipeline(db database.QueryExecuter, p *sdk.Pipeline) error {
 		return sdk.ErrInvalidName
 	}
 
-	if err := db.QueryRow(query, p.Name, p.ProjectID, string(p.Type)).Scan(&p.ID); err != nil {
-		return err
+	if p.Type != sdk.BuildPipeline && p.Type != sdk.DeploymentPipeline {
+		return sdk.ErrInvalidType
 	}
 
-	// Update project
-	query = `
-		UPDATE project 
-		SET last_modified = current_timestamp
-		WHERE id = $1
-	`
-	if _, err := db.Exec(query, p.ProjectID); err != nil {
-		return err
+	if p.ProjectID == 0 {
+		return sdk.ErrInvalidProject
 	}
 
-	return nil
+	return db.QueryRow(query, p.Name, p.ProjectID, string(p.Type)).Scan(&p.ID)
 }
 
 // ExistPipeline Check if the given pipeline exist in database
-func ExistPipeline(db *sql.DB, projectID int64, name string) (bool, error) {
+func ExistPipeline(db database.Querier, projectID int64, name string) (bool, error) {
 	query := `SELECT COUNT(id) FROM pipeline WHERE pipeline.project_id = $1 AND pipeline.name= $2`
 
 	var nb int64
