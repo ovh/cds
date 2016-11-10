@@ -15,7 +15,6 @@ func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "templates",
 		Short:   "templates management (admin only)",
-		Long:    ``,
 		Aliases: []string{},
 	}
 

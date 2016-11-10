@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Import is able to create a new application and all its component
+//Import is able to create a new application and all its components
 func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, msgChan chan<- msg.Message) error {
 	//Save application in database
 	if err := InsertApplication(db, proj, app); err != nil {
@@ -34,13 +34,17 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 
 	//Insert group permission on application
 	for i := range app.ApplicationGroups {
-		//FIX ME:Reload group
-		log.Debug("application.Import> Insert group %d in application", app.ApplicationGroups[i].Group.ID)
-		if err := group.InsertGroupInApplication(db, app.ID, app.ApplicationGroups[i].Group.ID, app.ApplicationGroups[i].Permission); err != nil {
+		//Load the group by name
+		g, err := group.LoadGroup(db, app.ApplicationGroups[i].Group.Name)
+		if err != nil {
+			return err
+		}
+		log.Debug("application.Import> Insert group %d in application", g.ID)
+		if err := group.InsertGroupInApplication(db, app.ID, g.ID, app.ApplicationGroups[i].Permission); err != nil {
 			return err
 		}
 		if msgChan != nil {
-			msgChan <- msg.New(msg.AppGroupSetPermission, app.ApplicationGroups[i].Group.Name, app.Name)
+			msgChan <- msg.New(msg.AppGroupSetPermission, g.Name, app.Name)
 		}
 	}
 
@@ -130,7 +134,7 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 
 	//Set repositories manager
 	app.RepositoriesManager = repomanager
-	if app.RepositoriesManager != nil && app.RepositoryFullname != "" {
+	if app.RepositoriesManager != nil && app.RepositoryFullname != "" && len(app.Pipelines) > 0 {
 		if err := repositoriesmanager.InsertForApplication(db, app, proj.Key); err != nil {
 			return err
 		}

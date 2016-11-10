@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/hcl"
 )
 
+//ActionScript represents the structure of a HCL action file
 type ActionScript struct {
 	Name         string                 `json:"name"`
 	Description  string                 `json:"description,omitempty"`
@@ -26,6 +27,7 @@ type ActionScript struct {
 	} `json:"steps"`
 }
 
+//NewActionFromScript creates an action from a HCL file as bytes
 func NewActionFromScript(btes []byte) (*Action, error) {
 	as := ActionScript{}
 	if err := hcl.Decode(&as, string(btes)); err != nil {
@@ -184,6 +186,7 @@ func loadRemoteScript(url string) (*Action, error) {
 	return NewActionFromScript(body)
 }
 
+//NewActionFromRemoteScript creates an action from an URL giving an HCL file
 func NewActionFromRemoteScript(url string, params []Parameter) (*Action, error) {
 	a, err := loadRemoteScript(url)
 	if err != nil {
@@ -200,6 +203,7 @@ func NewActionFromRemoteScript(url string, params []Parameter) (*Action, error) 
 	return a, nil
 }
 
+//NewActionScript creates a builtin action script
 func NewActionScript(script string, requirements []Requirement) Action {
 	return Action{
 		Name: ScriptAction,
@@ -215,6 +219,7 @@ func NewActionScript(script string, requirements []Requirement) Action {
 	}
 }
 
+//NewActionArtifactDownload creates a builtin action artifactDownload
 func NewActionArtifactDownload(path, tag string) Action {
 	return Action{
 		Name: ArtifactDownload,
@@ -234,6 +239,7 @@ func NewActionArtifactDownload(path, tag string) Action {
 	}
 }
 
+//NewActionArtifactUpload creates a builtin action artifactUpload
 func NewActionArtifactUpload(path, tag string) Action {
 	return Action{
 		Name: ArtifactUpload,
@@ -253,6 +259,7 @@ func NewActionArtifactUpload(path, tag string) Action {
 	}
 }
 
+//NewActionJUnit  creates a builtin action junit
 func NewActionJUnit(path string) Action {
 	return Action{
 		Name: JUnitAction,
@@ -267,6 +274,7 @@ func NewActionJUnit(path string) Action {
 	}
 }
 
+//NewActionPlugin  creates a plugin action
 func NewActionPlugin(pluginname string, parameters []Parameter) Action {
 	return Action{
 		Name:       pluginname,

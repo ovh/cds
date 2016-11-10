@@ -23,7 +23,7 @@ import (
 func Get(name, path string) (*sdk.TemplateExtension, []sdk.TemplateParam, error) {
 	//FIXME: run this in a jail with apparmor
 	log.Debug("templateextension.Get> Getting info from '%s' (%s)", name, path)
-	client := template.NewClient(name, path, "ID", "http://127.0.0.1:8081", true)
+	client := template.NewClient(name, path, "", "", true)
 	defer func() {
 		log.Debug("templateextension.Get> kill rpc-server")
 		client.Kill()
