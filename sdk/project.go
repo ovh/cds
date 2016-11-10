@@ -460,9 +460,9 @@ func WithApplicationHistory(length int) Mod {
 }
 
 // GetProject retrieves project informations from CDS
-func GetProject(pk string, mods ...Mod) (Project, error) {
+func GetProject(key string, mods ...Mod) (Project, error) {
 	var p Project
-	path := fmt.Sprintf("/project/%s?gzip=true", pk)
+	path := fmt.Sprintf("/project/%s", key)
 	for _, f := range mods {
 		path = f(path)
 	}
@@ -481,9 +481,9 @@ func GetProject(pk string, mods ...Mod) (Project, error) {
 }
 
 // DeleteProject removes a project and all its pipeline from CDS
-func DeleteProject(pk string) error {
+func DeleteProject(key string) error {
 
-	path := fmt.Sprintf("/project/%s", pk)
+	path := fmt.Sprintf("/project/%s", key)
 	_, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err

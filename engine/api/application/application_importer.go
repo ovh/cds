@@ -1,8 +1,6 @@
 package application
 
 import (
-	"fmt"
-
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
@@ -35,37 +33,40 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 	}
 
 	//Insert group permission on application
-	for _, perm := range app.ApplicationGroups {
+	for i := range app.ApplicationGroups {
 		//FIX ME:Reload group
-		log.Debug("application.Import> Insert group %d in application", perm.Group.ID)
-		if err := group.InsertGroupInApplication(db, app.ID, perm.Group.ID, perm.Permission); err != nil {
+		log.Debug("application.Import> Insert group %d in application", app.ApplicationGroups[i].Group.ID)
+		if err := group.InsertGroupInApplication(db, app.ID, app.ApplicationGroups[i].Group.ID, app.ApplicationGroups[i].Permission); err != nil {
 			return err
 		}
 		if msgChan != nil {
-			msgChan <- msg.New(msg.AppGroupSetPermission, perm.Group.Name, app.Name)
+			msgChan <- msg.New(msg.AppGroupSetPermission, app.ApplicationGroups[i].Group.Name, app.Name)
 		}
 	}
 
 	//Import pipelines
-	for _, apip := range app.Pipelines {
+	for i := range app.Pipelines {
 		//Import pipeline
-		log.Debug("application.Import> Insert pipeline %s", apip.Pipeline.Name)
-		if err := pipeline.Import(db, proj, &apip.Pipeline, msgChan); err != nil {
+		log.Debug("application.Import> Insert pipeline %s", app.Pipelines[i].Pipeline.Name)
+		if err := pipeline.Import(db, proj, &app.Pipelines[i].Pipeline, msgChan); err != nil {
 			return err
 		}
 		//Attach pipeline
-		log.Debug("application.Import> Attach pipeline %s", apip.Pipeline.Name)
-		if err := AttachPipeline(db, app.ID, apip.Pipeline.ID); err != nil {
+		log.Debug("application.Import> Attach pipeline %s", app.Pipelines[i].Pipeline.Name)
+		if err := AttachPipeline(db, app.ID, app.Pipelines[i].Pipeline.ID); err != nil {
 			return err
 		}
 		if msgChan != nil {
-			msgChan <- msg.New(msg.PipelineAttached, apip.Pipeline.Name, app.Name)
+			msgChan <- msg.New(msg.PipelineAttached, app.Pipelines[i].Pipeline.Name, app.Name)
 		}
 	}
 
 	//Insert triggers
-	for _, apip := range app.Pipelines {
-		for _, t := range apip.Triggers {
+	for i := range app.Pipelines {
+		for j := range app.Pipelines[i].Triggers {
+			t := &app.Pipelines[i].Triggers[j]
+			//Source pipeline is always the current pipeline
+			t.SrcPipeline = app.Pipelines[i].Pipeline
 
 			//Source application is always the current application
 			t.SrcApplication = *app
@@ -103,9 +104,6 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 				t.DestEnvironment = *env
 			}
 
-			//Set source pipeline
-			t.SrcPipeline = apip.Pipeline
-
 			//Load dest pipeline
 			destPipeline, err := pipeline.LoadPipeline(db, proj.Key, t.DestPipeline.Name, false)
 			if err != nil {
@@ -113,8 +111,15 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 			}
 			t.DestPipeline = *destPipeline
 
+			//Check if environment and pipeline type are compatible
+			if t.DestEnvironment.ID == sdk.DefaultEnv.ID && t.DestPipeline.Type == sdk.DeploymentPipeline {
+				return sdk.ErrNoEnvironmentProvided
+			}
+
+			log.Debug("application.Import> creating trigger SrcApp=%d SrpPip=%d SrcEnv=%d DestApp=%d DestPip=%d DestEnv=%d", t.SrcApplication.ID, t.SrcPipeline.ID, t.SrcEnvironment.ID, t.DestApplication.ID, t.DestPipeline.ID, t.DestEnvironment.ID)
+
 			//Insert trigger
-			if err := trigger.InsertTrigger(db, &t); err != nil {
+			if err := trigger.InsertTrigger(db, t); err != nil {
 				return err
 			}
 			if msgChan != nil {
@@ -122,7 +127,7 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 			}
 		}
 	}
-	fmt.Println("ici")
+
 	//Set repositories manager
 	app.RepositoriesManager = repomanager
 	if app.RepositoriesManager != nil && app.RepositoryFullname != "" {

@@ -120,6 +120,7 @@ func Instance(authDriver auth.Driver, tmpl *sdk.TemplateExtention, u *sdk.User) 
 	}
 
 	//FIXME: export tls feature will impact this
+	log.Debug("Instance>  %s:%s", u.Username, string(sessionKey))
 	client := template.NewClient(tmpl.Name, f.Name(), u.Username+":"+string(sessionKey), "http://"+hostname+":"+viper.GetString("listen_port"), true)
 	deferFunc = func() {
 		client.Kill()

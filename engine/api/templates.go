@@ -225,6 +225,8 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		return
 	}
 
+	//FIXME: Save relations between template and actions
+
 	WriteJSON(w, r, templ2, http.StatusOK)
 
 }
@@ -406,11 +408,17 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	defer tx.Rollback()
 
 	// Import the application
+	done := make(chan bool)
 	msgChan := make(chan msg.Message)
 	msgList := []string{}
 	al := r.Header.Get("Accept-Language")
 	go func(array *[]string) {
-		for m := range msgChan {
+		for {
+			m, more := <-msgChan
+			if !more {
+				done <- true
+				return
+			}
 			s := m.String(al)
 			*array = append(*array, s)
 			log.Debug("applyTemplatesHandler> message : %s", s)
@@ -420,12 +428,20 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	if err := application.Import(tx, proj, app, nil, msgChan); err != nil {
 		log.Warning("applyTemplatesHandler> error applying template : %s", err)
 		WriteError(w, r, err)
+		close(msgChan)
+		return
 	}
 
+	close(msgChan)
+	<-done
+
+	log.Debug("applyTemplatesHandler> Commit the transaction")
 	if err := tx.Commit(); err != nil {
 		log.Warning("applyTemplatesHandler> error commiting transaction : %s", err)
 		WriteError(w, r, err)
+		return
 	}
 
-	WriteJSON(w, r, app, http.StatusOK)
+	deferFunc()
+	log.Debug("applyTemplatesHandler> Done")
 }

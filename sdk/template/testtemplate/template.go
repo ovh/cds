@@ -44,6 +44,8 @@ func (t *TestTemplate) Parameters() []sdk.TemplateParam {
 	}
 }
 
+//TODO: Test trigger
+
 func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, error) {
 	//Prepare action gitclone
 	actionGitClone, err := sdk.NewActionFromRemoteScript("https://raw.githubusercontent.com/ovh/cds-contrib/actions/action-scripts/cds-git-clone.hcl", nil)
@@ -130,6 +132,21 @@ docker push cds/{{.cds.app.name}}-{{.cds.version}}`, []sdk.Requirement{
 							},
 						},
 					},
+				},
+				Triggers: []sdk.PipelineTrigger{
+					{
+						DestPipeline: sdk.Pipeline{
+							Name: "deploy",
+						},
+						DestEnvironment: sdk.Environment{
+							Name: "Production",
+						},
+					},
+				},
+			}, {
+				Pipeline: sdk.Pipeline{
+					Name: "deploy",
+					Type: sdk.DeploymentPipeline,
 				},
 			},
 		},

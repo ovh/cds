@@ -26,11 +26,12 @@ import (
 
 	"net/url"
 
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/sdk"
 )
 
 const (
-	testTestTemplate = "https://dl.plik.ovh/file/blHntG6HDsMt2C3E/rBatDljsct2eDpL3/testtemplate"
+	testTestTemplate = "https://dl.plik.ovh/file/eaO6sjo9GnaAFIPG/KgK1M9ar1teAeP8i/testtemplate"
 )
 
 func Test_getTemplatesHandler(t *testing.T) {
@@ -611,6 +612,10 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 }
 
 func Test_applyTemplatesHandler(t *testing.T) {
+	/*
+	* TEST SETUP
+	 */
+
 	log.SetLevel(log.DebugLevel)
 	if testwithdb.DBDriver == "" {
 		t.SkipNow()
@@ -620,7 +625,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_getBuildTemplatesHandler"}
+	router = &Router{authDriver, mux.NewRouter(), "/Test_applyTemplatesHandler"}
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
@@ -636,12 +641,20 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	defer os.RemoveAll(tmpDir)
 
+	/*
+	* CREATE AN ADMIN USER
+	 */
+
 	//Create admin user
 	u, pass, err := testwithdb.InsertAdminUser(t, db)
 	assert.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
+
+	/*
+	* UPLOAD THE ACTION
+	 */
 
 	//Load the gitclone public action
 	//Prepare request
@@ -659,6 +672,10 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
 	assert.True(t, w.Code >= 200)
+
+	/*
+	* UPLOAD THE TEMPLATE
+	 */
 
 	//download the binary from plik
 	path, delete, err := downloadFile(t, "testtemplate", testTestTemplate)
@@ -721,9 +738,23 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	templ := sdk.TemplateExtention{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
+	/*
+	* CREATE THE PROJECT
+	 */
+
 	//Insert a new project
 	pKey := testwithdb.RandomString(t, 10)
-	testwithdb.InsertTestProject(t, db, pKey, pKey)
+	p, _ := testwithdb.InsertTestProject(t, db, pKey, pKey)
+	//Insert a Production environment
+	environment.InsertEnvironment(db, &sdk.Environment{
+		ProjectKey: pKey,
+		ProjectID:  p.ID,
+		Name:       "Production",
+	})
+
+	/*
+	* APPLY THE TEMPLATE
+	 */
 
 	//Prepare the data send on applyTemplatesHandler
 	opts := sdk.ApplyTemplatesOptions{
