@@ -64,6 +64,7 @@ func Get(name, path string) (*sdk.TemplateExtention, []sdk.TemplateParam, error)
 		Perm:        uint32(stat.Mode().Perm()),
 		MD5Sum:      md5sumStr,
 		Params:      params,
+		Actions:     _templ.ActionsNeeded(),
 	}
 
 	return &te, params, nil

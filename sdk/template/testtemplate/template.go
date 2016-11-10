@@ -44,15 +44,13 @@ func (t *TestTemplate) Parameters() []sdk.TemplateParam {
 	}
 }
 
-//TODO: Test trigger
+func (t *TestTemplate) ActionsNeeded() []string {
+	return []string{
+		"CDS_GitClone",
+	}
+}
 
 func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, error) {
-	//Prepare action gitclone
-	actionGitClone, err := sdk.NewActionFromRemoteScript("https://raw.githubusercontent.com/ovh/cds-contrib/actions/action-scripts/cds-git-clone.hcl", nil)
-	if err != nil {
-		return sdk.Application{}, err
-	}
-
 	//Return full application
 	return sdk.Application{
 		Name:       opts.ApplicationName(),
@@ -81,7 +79,9 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 								{
 									Name: "Compile", //First job : compile
 									Actions: []sdk.Action{
-										*actionGitClone,
+										sdk.Action{
+											Name: "CDS_GitClone",
+										},
 										sdk.NewActionScript("cd {{.cds.app.name}} && make", []sdk.Requirement{
 											{
 												Name:  "make",
@@ -95,7 +95,9 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 								{
 									Name: "Test", //Second job : test
 									Actions: []sdk.Action{
-										*actionGitClone,
+										sdk.Action{
+											Name: "CDS_GitClone",
+										},
 										sdk.NewActionScript("cd {{.cds.app.name}} && make test", []sdk.Requirement{
 											{
 												Name:  "make",
@@ -116,7 +118,9 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 								{
 									Name: "Docker package",
 									Actions: []sdk.Action{
-										*actionGitClone,
+										sdk.Action{
+											Name: "CDS_GitClone",
+										},
 										sdk.NewActionScript(`
 cd {{.cds.app.name}} 
 docker build -t cds/{{.cds.app.name}}-{{.cds.version}} . 

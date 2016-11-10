@@ -46,6 +46,12 @@ func (s *RPCServer) Parameters(args interface{}, resp *[]sdk.TemplateParam) erro
 	return nil
 }
 
+//ActionsNeeded returns the list of needed action of the template
+func (s *RPCServer) ActionsNeeded(args interface{}, resp *[]string) error {
+	*resp = s.Impl.ActionsNeeded()
+	return nil
+}
+
 //Apply returns an application instance ready to persist in database
 func (s *RPCServer) Apply(args interface{}, resp *sdk.Application) error {
 	var err error

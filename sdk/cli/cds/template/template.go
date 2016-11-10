@@ -2,7 +2,10 @@ package template
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/cobra"
 )
@@ -88,8 +91,16 @@ var listTemplateCmd = &cobra.Command{
 		if err != nil {
 			sdk.Exit("Error: cannot list templates: %s\n", err)
 		}
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Name", "Type", "Description", "Actions"})
+		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+		table.SetCenterSeparator("|")
+
 		for _, t := range tmpls {
-			fmt.Println(t.Name)
+			table.Append([]string{t.Name, t.Type, t.Description, strings.Join(t.Actions, ",")})
 		}
+
+		table.Render()
 	},
 }

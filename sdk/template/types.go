@@ -24,6 +24,7 @@ type Interface interface {
 	Author() string
 	Type() string
 	Parameters() []sdk.TemplateParam
+	ActionsNeeded() []string
 	Apply(opts IApplyOptions) (sdk.Application, error)
 }
 

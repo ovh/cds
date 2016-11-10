@@ -110,6 +110,7 @@ type TemplateExtention struct {
 	Filename    string          `json:"-" db:"-"`
 	Path        string          `json:"-" db:"-"`
 	Params      []TemplateParam `json:"params" db:"-"`
+	Actions     []string        `json:"actions" db:"-"`
 }
 
 //ApplyTemplatesOptions represents arguments to create an application and all its components from templates
@@ -133,6 +134,17 @@ func (t *TemplateExtention) PostInsert(s gorp.SqlExecutor) error {
 	if _, err := s.Exec(query, t.ID, btes); err != nil {
 		return err
 	}
+
+	for _, a := range t.Actions {
+		query := `insert into template_action (template_id, action_id) values ($1, 
+					(
+						select id from action where name = $2
+					))`
+		if _, err := s.Exec(query, t.ID, a); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -147,12 +159,29 @@ func (t *TemplateExtention) PostUpdate(s gorp.SqlExecutor) error {
 	if _, err := s.Exec(query, t.ID, btes); err != nil {
 		return err
 	}
+	query = "delete from template_action where template_id = $1"
+	if _, err := s.Exec(query, t.ID); err != nil {
+		return err
+	}
+	for _, a := range t.Actions {
+		query := `insert into template_action (template_id, action_id) values ($1, 
+					(
+						select id from action where name = $2
+					))`
+		if _, err := s.Exec(query, t.ID, a); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 //PreDelete is a DB Hook on TemplateExtention to store params as JSON in DB
 func (t *TemplateExtention) PreDelete(s gorp.SqlExecutor) error {
 	query := "delete from template_params where template_id = $1"
+	if _, err := s.Exec(query, t.ID); err != nil {
+		return err
+	}
+	query = "delete from template_action where template_id = $1"
 	if _, err := s.Exec(query, t.ID); err != nil {
 		return err
 	}

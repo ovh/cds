@@ -14,6 +14,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
@@ -90,6 +91,15 @@ func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 		WriteError(w, r, err)
 		return
 	}
+	//Load actions
+	for i := range tmpls {
+		_, err := dbmap.Select(&tmpls[i].Actions, "select action.name from action, template_action where template_action.action_id = action.id and template_id = $1", tmpls[i].ID)
+		if err != nil {
+			log.Warning("getTemplatesHandler> Error: %s", err)
+			WriteError(w, r, err)
+			return
+		}
+	}
 	WriteJSON(w, r, tmpls, http.StatusOK)
 }
 
@@ -108,6 +118,20 @@ func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 
 	log.Info("Uploaded template %s", templ.Identifier)
 	log.Info("Template params %v", params)
+
+	//Check actions
+	for _, a := range templ.Actions {
+		log.Debug("Checking action %s", a)
+		pa, err := action.LoadPublicAction(db, a)
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		if pa == nil {
+			WriteError(w, r, sdk.ErrNoAction)
+			return
+		}
+	}
 
 	//Upload to objectstore
 	objectpath, err := objectstore.StoreTemplateExtension(*templ, file)
@@ -200,6 +224,20 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 	log.Debug("Uploaded template %s", templ2.Identifier)
 	log.Debug("Template params %v", params)
+
+	//Check actions
+	for _, a := range templ2.Actions {
+		log.Debug("updateTemplateHandler> Checking action %s", a)
+		pa, err := action.LoadPublicAction(db, a)
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		if pa == nil {
+			WriteError(w, r, sdk.ErrNoAction)
+			return
+		}
+	}
 
 	//Upload to objectstore
 	objectpath, err := objectstore.StoreTemplateExtension(*templ2, file)

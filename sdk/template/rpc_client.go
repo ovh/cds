@@ -90,6 +90,16 @@ func (c *RPCClient) Parameters() []sdk.TemplateParam {
 	return resp
 }
 
+func (c *RPCClient) ActionsNeeded() []string {
+	var resp []string
+	err := c.client.Call("Plugin.ActionsNeeded", new(interface{}), &resp)
+	if err != nil {
+		log.Println("[ERROR] Plugin.ActionsNeeded rpc failed")
+		panic(err)
+	}
+	return resp
+}
+
 //Apply create a fresh new CDS application from the template extension
 func (c *RPCClient) Apply(opts IApplyOptions) (sdk.Application, error) {
 	var resp sdk.Application

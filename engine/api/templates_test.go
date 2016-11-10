@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	testTestTemplate = "https://dl.plik.ovh/file/eaO6sjo9GnaAFIPG/KgK1M9ar1teAeP8i/testtemplate"
+	testTestTemplate = "https://dl.plik.ovh/file/AbEjO18t7g5cIaAO/59B5FL0gCqa307LB/testtemplate"
 )
 
 func Test_getTemplatesHandler(t *testing.T) {
