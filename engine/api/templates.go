@@ -21,13 +21,14 @@ import (
 	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/template"
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
-func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.TemplateExtention, []sdk.TemplateParam, io.ReadCloser, func(), error) {
+func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.TemplateExtension, []sdk.TemplateParam, io.ReadCloser, func(), error) {
 	r.ParseMultipartForm(64 << 20)
 	file, handler, err := r.FormFile("UploadFile")
 	if err != nil {
@@ -84,14 +85,14 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 
 func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	dbmap := database.DBMap(db)
-	tmpls := []sdk.TemplateExtention{}
+	tmpls := []database.TemplateExtension{}
 	_, err := dbmap.Select(&tmpls, "select * from template order by id")
 	if err != nil {
 		log.Warning("getTemplatesHandler> Error: %s", err)
 		WriteError(w, r, err)
 		return
 	}
-	//Load actions
+	//Load actions and params
 	for i := range tmpls {
 		_, err := dbmap.Select(&tmpls[i].Actions, "select action.name from action, template_action where template_action.action_id = action.id and template_id = $1", tmpls[i].ID)
 		if err != nil {
@@ -99,6 +100,17 @@ func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 			WriteError(w, r, err)
 			return
 		}
+		params := []sdk.TemplateParam{}
+		str, err := dbmap.SelectStr("select params from template_params where template_id = $1", tmpls[i].ID)
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		if err := json.Unmarshal([]byte(str), &params); err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		tmpls[i].Params = params
 	}
 	WriteJSON(w, r, tmpls, http.StatusOK)
 }
@@ -145,13 +157,14 @@ func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 
 	//Insert in database
 	dbmap := database.DBMap(db)
-	if err := dbmap.Insert(templ); err != nil {
+	dbtempl := database.TemplateExtension(*templ)
+	if err := dbmap.Insert(&dbtempl); err != nil {
 		log.Warning("addTemplateHandler>%T %s", err, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	WriteJSON(w, r, templ, http.StatusOK)
+	WriteJSON(w, r, dbtempl, http.StatusOK)
 }
 
 func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -175,7 +188,7 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	dbmap := database.DBMap(db)
 
 	//Find it
-	templ := sdk.TemplateExtention{}
+	templ := database.TemplateExtension{}
 	if err := dbmap.SelectOne(&templ, "select * from template where id = $1", id); err != nil {
 		if err == sql.ErrNoRows {
 			WriteError(w, r, sdk.ErrNotFound)
@@ -187,7 +200,7 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 
 	//Store previous file from objectstore
-	tmpbuf, err := objectstore.FetchTemplateExtension(templ)
+	tmpbuf, err := objectstore.FetchTemplateExtension(sdk.TemplateExtension(templ))
 	if err != nil {
 		log.Warning("updateTemplateHandler>Unable to fetch plugin: %s", err)
 		WriteError(w, r, sdk.NewError(sdk.ErrPluginInvalid, err))
@@ -204,7 +217,7 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 
 	//Delete from storage
-	if err := objectstore.DeleteTemplateExtension(templ); err != nil {
+	if err := objectstore.DeleteTemplateExtension(sdk.TemplateExtension(templ)); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -250,7 +263,8 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	templ.ObjectPath = objectpath
 
 	//Update in database
-	if _, err := dbmap.Update(templ2); err != nil {
+	dbtempl2 := database.TemplateExtension(*templ2)
+	if _, err := dbmap.Update(&dbtempl2); err != nil {
 		//re-store the old file in case of error
 		if _, err := objectstore.StoreTemplateExtension(*templ2, ioutil.NopCloser(bytes.NewBuffer(btes))); err != nil {
 			log.Warning("updateTemplateHandler> Error while uploading to object store %s: %s\n", templ2.Name, err)
@@ -262,8 +276,6 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		WriteError(w, r, err)
 		return
 	}
-
-	//FIXME: Save relations between template and actions
 
 	WriteJSON(w, r, templ2, http.StatusOK)
 
@@ -290,7 +302,7 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	dbmap := database.DBMap(db)
 
 	//Find it
-	templ := sdk.TemplateExtention{}
+	templ := database.TemplateExtension{}
 	if err := dbmap.SelectOne(&templ, "select * from template where id = $1", id); err != nil {
 		if err == sql.ErrNoRows {
 			WriteError(w, r, sdk.ErrNotFound)
@@ -315,7 +327,7 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 
 	//Delete from storage
-	if err := objectstore.DeleteTemplateExtension(templ); err != nil {
+	if err := objectstore.DeleteTemplateExtension(sdk.TemplateExtension(templ)); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -352,7 +364,7 @@ func getTypedTemplatesHandler(db *sql.DB, t string) ([]sdk.Template, error) {
 		},
 	}
 
-	tplFromDB := []sdk.TemplateExtention{}
+	tplFromDB := []sdk.TemplateExtension{}
 	dbmap := database.DBMap(db)
 	if _, err := dbmap.Select(&tplFromDB, "select * from template where type = $1 order by name", t); err != nil {
 		log.Warning("getTypedTemplatesHandler> Error : %s", err)
@@ -409,8 +421,8 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 	// Get template from DB
 	dbmap := database.DBMap(db)
-	tmpl := sdk.TemplateExtention{}
-	if err := dbmap.SelectOne(&tmpl, "select * from template where name = $1", opts.BuildTemplateName); err != nil {
+	tmpl := database.TemplateExtension{}
+	if err := dbmap.SelectOne(&tmpl, "select * from template where name = $1", opts.TemplateName); err != nil {
 		if err == sql.ErrNoRows {
 			WriteError(w, r, sdk.ErrUnknownTemplate)
 			return
@@ -420,20 +432,34 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 
 	// Load the template binary
-	templ, deferFunc, err := templateextension.Instance(router.authDriver, &tmpl, c.User)
+	sdktmpl := sdk.TemplateExtension(tmpl)
+	templ, deferFunc, err := templateextension.Instance(router.authDriver, &sdktmpl, c.User)
 	if deferFunc != nil {
 		defer deferFunc()
 	}
 	if err != nil {
-		log.Warning("applyTemplatesHandler> error getting template extention instance : %s", err)
+		log.Warning("applyTemplatesHandler> error getting template Extension instance : %s", err)
 		WriteError(w, r, err)
 	}
 
 	// Apply the template
-	app, err := templateextension.Apply(templ, proj, opts.BuildTemplateParams, opts.ApplicationName)
+	app, err := templateextension.Apply(templ, proj, opts.TemplateParams, opts.ApplicationName)
 	if err != nil {
 		log.Warning("applyTemplatesHandler> error applying template : %s", err)
 		WriteError(w, r, err)
+		return
+	}
+
+	//Check reposmanager
+	if opts.RepositoriesManagerName != "" {
+		app.RepositoriesManager, err = repositoriesmanager.LoadByName(db, opts.RepositoriesManagerName)
+		if err != nil {
+			log.Warning("applyTemplatesHandler> error getting repositories manager %s : %s", opts.RepositoriesManagerName, err)
+			WriteError(w, r, err)
+			return
+		}
+
+		app.RepositoryFullname = opts.ApplicationRepositoryFullname
 	}
 
 	//Start a new transaction
@@ -463,7 +489,7 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		}
 	}(&msgList)
 
-	if err := application.Import(tx, proj, app, nil, msgChan); err != nil {
+	if err := application.Import(tx, proj, app, app.RepositoriesManager, msgChan); err != nil {
 		log.Warning("applyTemplatesHandler> error applying template : %s", err)
 		WriteError(w, r, err)
 		close(msgChan)

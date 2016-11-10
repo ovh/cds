@@ -8,10 +8,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
-	"path"
 	"path/filepath"
-
-	"gopkg.in/gorp.v1"
 )
 
 // TemplateParam can be a String/Date/Script/URL...
@@ -95,8 +92,8 @@ func ApplyApplicationTemplates(projectKey string, name, repo string, build, depl
 	return nil, errors.New("Unsupported operation")
 }
 
-//TemplateExtention represents a template store as a binary extension
-type TemplateExtention struct {
+//TemplateExtension represents a template store as a binary extension
+type TemplateExtension struct {
 	ID          int64           `json:"id" db:"id"`
 	Name        string          `json:"name" db:"name"`
 	Type        string          `json:"type" db:"type"`
@@ -115,126 +112,22 @@ type TemplateExtention struct {
 
 //ApplyTemplatesOptions represents arguments to create an application and all its components from templates
 type ApplyTemplatesOptions struct {
-	ApplicationName      string            `json:"name"`
-	ApplicationVariables map[string]string `json:"application_variables"`
-	BuildTemplateName    string            `json:"build_template"`
-	BuildTemplateParams  []TemplateParam   `json:"build_template_params"`
-	DeployTemplateName   string            `json:"deploy_template"`
-	DeployTemplateParams []TemplateParam   `json:"deploy_template_params"`
-}
-
-//PostInsert is a DB Hook on TemplateExtention to store params as JSON in DB
-func (t *TemplateExtention) PostInsert(s gorp.SqlExecutor) error {
-	btes, err := json.Marshal(t.Params)
-	if err != nil {
-		return err
-	}
-
-	query := "insert into template_params (template_id, params) values ($1, $2)"
-	if _, err := s.Exec(query, t.ID, btes); err != nil {
-		return err
-	}
-
-	for _, a := range t.Actions {
-		query := `insert into template_action (template_id, action_id) values ($1, 
-					(
-						select id from action where name = $2
-					))`
-		if _, err := s.Exec(query, t.ID, a); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-//PostUpdate is a DB Hook on TemplateExtention to store params as JSON in DB
-func (t *TemplateExtention) PostUpdate(s gorp.SqlExecutor) error {
-	btes, err := json.Marshal(t.Params)
-	if err != nil {
-		return err
-	}
-
-	query := "update template_params set params = $2 where template_id = $1"
-	if _, err := s.Exec(query, t.ID, btes); err != nil {
-		return err
-	}
-	query = "delete from template_action where template_id = $1"
-	if _, err := s.Exec(query, t.ID); err != nil {
-		return err
-	}
-	for _, a := range t.Actions {
-		query := `insert into template_action (template_id, action_id) values ($1, 
-					(
-						select id from action where name = $2
-					))`
-		if _, err := s.Exec(query, t.ID, a); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-//PreDelete is a DB Hook on TemplateExtention to store params as JSON in DB
-func (t *TemplateExtention) PreDelete(s gorp.SqlExecutor) error {
-	query := "delete from template_params where template_id = $1"
-	if _, err := s.Exec(query, t.ID); err != nil {
-		return err
-	}
-	query = "delete from template_action where template_id = $1"
-	if _, err := s.Exec(query, t.ID); err != nil {
-		return err
-	}
-	return nil
-
+	ApplicationName               string            `json:"name"`
+	ApplicationVariables          map[string]string `json:"application_variables"`
+	TemplateName                  string            `json:"template"`
+	TemplateParams                []TemplateParam   `json:"template_params"`
+	RepositoriesManagerName       string            `json:"repositories_manager_name"`
+	ApplicationRepositoryFullname string            `json:"repository_fullname"`
 }
 
 //GetName returns the name of the template extension
-func (a *TemplateExtention) GetName() string {
+func (a *TemplateExtension) GetName() string {
 	return a.Name
 }
 
 //GetPath returns the storage path of the template extension
-func (a *TemplateExtention) GetPath() string {
+func (a *TemplateExtension) GetPath() string {
 	return fmt.Sprintf("templates")
-}
-
-//DownloadTemplate download Template from action
-func DownloadTemplate(name string, destdir string) error {
-	var lasterr error
-	for retry := 5; retry >= 0; retry-- {
-		uri := fmt.Sprintf("/Template/download/%s", name)
-		reader, code, err := Stream("GET", uri, nil)
-		if err != nil {
-			lasterr = err
-			continue
-		}
-		if code >= 300 {
-			lasterr = fmt.Errorf("HTTP %d", code)
-			continue
-		}
-		destPath := path.Join(destdir, name)
-		//If the file already exists, remove it
-		if _, err := os.Stat(destPath); err == nil {
-			os.RemoveAll(destPath)
-		}
-
-		f, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return err
-		}
-
-		if _, err = io.Copy(f, reader); err != nil {
-			lasterr = err
-		}
-
-		if err := f.Close(); err == nil {
-			fmt.Printf("Download %s completed\n", destPath)
-			return nil
-		}
-	}
-
-	return fmt.Errorf("x5: %s", lasterr)
 }
 
 //UploadTemplate uploads binary file to perform a new action
@@ -271,7 +164,7 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		tmpls := []TemplateExtention{}
+		tmpls := []TemplateExtension{}
 		if err := json.Unmarshal(btes, &tmpls); err != nil {
 			return nil, err
 		}
@@ -330,8 +223,8 @@ func DeleteTemplate(name string) error {
 }
 
 //ListTemplates returns all templates
-func ListTemplates() ([]TemplateExtention, error) {
-	tmpls := []TemplateExtention{}
+func ListTemplates() ([]TemplateExtension, error) {
+	tmpls := []TemplateExtension{}
 	body, code, err := Request("GET", "/template", nil)
 	if err != nil {
 		return nil, err

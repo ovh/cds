@@ -67,7 +67,7 @@ func DeletePlugin(art sdk.ActionPlugin) error {
 }
 
 //StoreTemplateExtension call Store on the common driver
-func StoreTemplateExtension(tmpl sdk.TemplateExtention, data io.ReadCloser) (string, error) {
+func StoreTemplateExtension(tmpl sdk.TemplateExtension, data io.ReadCloser) (string, error) {
 	if storage != nil {
 		return storage.Store(&tmpl, data)
 	}
@@ -75,7 +75,7 @@ func StoreTemplateExtension(tmpl sdk.TemplateExtention, data io.ReadCloser) (str
 }
 
 //FetchTemplateExtension call Fetch on the common driver
-func FetchTemplateExtension(tmpl sdk.TemplateExtention) (io.ReadCloser, error) {
+func FetchTemplateExtension(tmpl sdk.TemplateExtension) (io.ReadCloser, error) {
 	if storage != nil {
 		return storage.Fetch(&tmpl)
 	}
@@ -83,7 +83,7 @@ func FetchTemplateExtension(tmpl sdk.TemplateExtention) (io.ReadCloser, error) {
 }
 
 //DeleteTemplateExtension call Delete on the common driver
-func DeleteTemplateExtension(tmpl sdk.TemplateExtention) error {
+func DeleteTemplateExtension(tmpl sdk.TemplateExtension) error {
 	if storage != nil {
 		return storage.Delete(&tmpl)
 	}

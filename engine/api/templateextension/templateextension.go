@@ -20,7 +20,7 @@ import (
 )
 
 //Get returns action plugin metadata and parameters list
-func Get(name, path string) (*sdk.TemplateExtention, []sdk.TemplateParam, error) {
+func Get(name, path string) (*sdk.TemplateExtension, []sdk.TemplateParam, error) {
 	//FIXME: run this in a jail with apparmor
 	log.Debug("templateextension.Get> Getting info from '%s' (%s)", name, path)
 	client := template.NewClient(name, path, "ID", "http://127.0.0.1:8081", true)
@@ -52,7 +52,7 @@ func Get(name, path string) (*sdk.TemplateExtention, []sdk.TemplateParam, error)
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
 	params := _templ.Parameters()
-	te := sdk.TemplateExtention{
+	te := sdk.TemplateExtension{
 		Filename:    name,
 		Name:        _templ.Name(),
 		Type:        _templ.Type(),
@@ -71,7 +71,7 @@ func Get(name, path string) (*sdk.TemplateExtention, []sdk.TemplateParam, error)
 }
 
 //Instance returns the template instance
-func Instance(authDriver auth.Driver, tmpl *sdk.TemplateExtention, u *sdk.User) (template.Interface, func(), error) {
+func Instance(authDriver auth.Driver, tmpl *sdk.TemplateExtension, u *sdk.User) (template.Interface, func(), error) {
 	//Fetch fro mobject store
 	buf, err := objectstore.FetchTemplateExtension(*tmpl)
 	if err != nil {

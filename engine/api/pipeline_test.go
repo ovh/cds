@@ -7,18 +7,14 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/sdk"
 )
 
 func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
-
-	projectFoo := &sdk.Project{
-		Name: "Foo",
-		Key:  "FOO",
-	}
-	err := project.InsertProject(db, projectFoo)
+	pkey := testwithdb.RandomString(t, 10)
+	projectFoo, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
 	if err != nil {
 		t.Fatalf("cannot insert project: %s", err)
 	}
@@ -48,12 +44,20 @@ func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *s
 func TestInsertAndDeletePipeline(t *testing.T) {
 	db := test.Setup("TestInsertAndDeletePipeline", t)
 
-	p := &sdk.Pipeline{
-		Name: "Foo",
+	pkey := testwithdb.RandomString(t, 10)
+	projectFoo, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
+	if err != nil {
+		t.Fatalf("cannot insert project: %s", err)
 	}
 
-	err := pipeline.InsertPipeline(db, p)
-	if err != nil {
+	p := &sdk.Pipeline{
+		Name:       "Foo",
+		Type:       sdk.BuildPipeline,
+		ProjectID:  projectFoo.ID,
+		ProjectKey: projectFoo.Key,
+	}
+
+	if err := pipeline.InsertPipeline(db, p); err != nil {
 		t.Fatalf("cannot insert pipeline: %s", err)
 	}
 

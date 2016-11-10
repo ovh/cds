@@ -168,7 +168,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
 
-	templ := sdk.TemplateExtention{}
+	templ := sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
 	//Prepare request
@@ -185,15 +185,20 @@ func Test_addTemplateHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
 
-	templs := []sdk.TemplateExtention{}
+	templs := []sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templs)
 
-	assert.EqualValues(t, []sdk.TemplateExtention{templ}, templs)
+	dbmap := database.DBMap(db)
+	dbtempl := database.TemplateExtension(templ)
+
+	if _, err := dbmap.Delete(&dbtempl); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.EqualValues(t, []sdk.TemplateExtension{templ}, templs)
 
 	assert.Equal(t, 200, w.Code)
 
-	dbmap := database.DBMap(db)
-	dbmap.Delete(&templ)
 }
 
 func Test_deleteTemplateHandler(t *testing.T) {
@@ -288,7 +293,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
 
-	templ := sdk.TemplateExtention{}
+	templ := sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
 	//Prepare request
@@ -403,7 +408,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
 
-	templ := sdk.TemplateExtention{}
+	templ := sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
 	//Prepare request
@@ -420,10 +425,10 @@ func Test_updateTemplateHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
 
-	templs := []sdk.TemplateExtention{}
+	templs := []sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templs)
 
-	assert.EqualValues(t, []sdk.TemplateExtention{templ}, templs)
+	assert.EqualValues(t, []sdk.TemplateExtension{templ}, templs)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -479,11 +484,12 @@ func Test_updateTemplateHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
 
-	templ = sdk.TemplateExtention{}
+	templ = sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
 	dbmap := database.DBMap(db)
-	dbmap.Delete(&templ)
+	dbtempl := database.TemplateExtension(templ)
+	dbmap.Delete(&dbtempl)
 }
 
 func Test_getBuildTemplatesHandler(t *testing.T) {
@@ -578,7 +584,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
 
-	templ := sdk.TemplateExtention{}
+	templ := sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
 	//Prepare request
@@ -607,7 +613,8 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	assert.NotEmpty(t, templs[1].Params)
 
 	dbmap := database.DBMap(db)
-	dbmap.Delete(&templ)
+	dbtempl := database.TemplateExtension(templ)
+	dbmap.Delete(&dbtempl)
 
 }
 
@@ -735,7 +742,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	templ := sdk.TemplateExtention{}
+	templ := sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
 	/*
@@ -762,8 +769,8 @@ func Test_applyTemplatesHandler(t *testing.T) {
 		ApplicationVariables: map[string]string{
 			"repo": "git@github.com:ovh/cds.git",
 		},
-		BuildTemplateName: templ.Name,
-		BuildTemplateParams: []sdk.TemplateParam{
+		TemplateName: templ.Name,
+		TemplateParams: []sdk.TemplateParam{
 			{
 				Name:  templ.Params[0].Name,
 				Value: "value1",
@@ -801,5 +808,6 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	t.Logf("body: %s", w.Body.String())
 
 	dbmap := database.DBMap(db)
-	dbmap.Delete(&templ)
+	dbtempl := database.TemplateExtension(templ)
+	dbmap.Delete(&dbtempl)
 }
