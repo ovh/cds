@@ -6,26 +6,14 @@ import (
 	"encoding/hex"
 	"math"
 	"strings"
-	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
-// Hatchery registration model
-type Hatchery struct {
-	ID       int64     `json:"id"`
-	UID      string    `json:"uid"`
-	Name     string    `json:"name"`
-	Status   string    `json:"status"`
-	GroupID  int64     `json:"group_id"`
-	LastBeat time.Time `json:"-"`
-	Model    sdk.Model `json:"model"`
-}
-
 // InsertHatchery registers in database new hatchery
-func InsertHatchery(db *sql.DB, h *Hatchery) error {
+func InsertHatchery(db *sql.DB, h *sdk.Hatchery) error {
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -126,8 +114,8 @@ func Exists(db *sql.DB, id int64) error {
 }
 
 // LoadDeadHatcheries load hatchery with refresh last beat > timeout
-func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]Hatchery, error) {
-	var hatcheries []Hatchery
+func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]sdk.Hatchery, error) {
+	var hatcheries []sdk.Hatchery
 	query := `	SELECT id, name, last_beat, group_id, worker_model_id
 				FROM hatchery
 				LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
@@ -141,7 +129,7 @@ func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]Hatchery, error) {
 
 	var wmID sql.NullInt64
 	for rows.Next() {
-		var h Hatchery
+		var h sdk.Hatchery
 		err = rows.Scan(&h.ID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
 		if err != nil {
 			return nil, err
@@ -156,13 +144,13 @@ func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]Hatchery, error) {
 }
 
 // LoadHatchery fetch hatchery info from database given UID
-func LoadHatchery(db *sql.DB, uid string) (*Hatchery, error) {
+func LoadHatchery(db *sql.DB, uid string) (*sdk.Hatchery, error) {
 	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
 							FROM hatchery
 							LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 							WHERE uid = $1`
 
-	var h Hatchery
+	var h sdk.Hatchery
 	var wmID sql.NullInt64
 	err := db.QueryRow(query, uid).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
 	if err != nil {
@@ -177,8 +165,8 @@ func LoadHatchery(db *sql.DB, uid string) (*Hatchery, error) {
 }
 
 // LoadHatcheries retrieves in database all registered hatcheries
-func LoadHatcheries(db *sql.DB) ([]Hatchery, error) {
-	var hatcheries []Hatchery
+func LoadHatcheries(db *sql.DB) ([]sdk.Hatchery, error) {
+	var hatcheries []sdk.Hatchery
 
 	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
 							FROM hatchery
@@ -192,7 +180,7 @@ func LoadHatcheries(db *sql.DB) ([]Hatchery, error) {
 
 	var wmID sql.NullInt64
 	for rows.Next() {
-		var h Hatchery
+		var h sdk.Hatchery
 		err = rows.Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
 		if err != nil {
 			return nil, err
