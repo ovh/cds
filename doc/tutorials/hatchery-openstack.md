@@ -66,13 +66,11 @@ fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 Then start hatchery:
 
 ```shell
-OPENSTACK_USER=<user> OPENSTACK_TENANT=<tenant> OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net OPENSTACK_PASSWORD=<password> OPENSTACK_REGION=SBG1 hatchery \
+OPENSTACK_USER=<user> OPENSTACK_TENANT=<tenant> OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net OPENSTACK_PASSWORD=<password> OPENSTACK_REGION=SBG1 hatchery openstack \
         --api=https://api.domain \
         --max-worker=10 \
-        --mode=openstack \
         --provision=1 \
         --token=fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 ```
 
 This hatchery will now start worker of model 'docker' on OVH.com Openstack infrastructure when a pipeline is in queue with requirement docker.
-

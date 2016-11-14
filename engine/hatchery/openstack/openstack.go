@@ -1,4 +1,4 @@
-package main
+package openstack
 
 import (
 	"bytes"
@@ -15,18 +15,20 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/spf13/viper"
 )
+
+var hatcheryOpenStack *HatcheryCloud
 
 var mapWorkerBinaries = map[string][]byte{}
 
 // HatcheryCloud spawns instances of worker model with type 'ISO'
 // by startup up virtual machines on /cloud
 type HatcheryCloud struct {
-	hatch     *hatchery.Hatchery
+	hatch     *sdk.Hatchery
 	token     *Token
 	servers   []Server
 	networkID string
@@ -53,19 +55,8 @@ func (h *HatcheryCloud) ID() int64 {
 	return h.hatch.ID
 }
 
-// SetWorkerModelID set the workerModelIDon each heartbeat
-func (h *HatcheryCloud) SetWorkerModelID(id int64) {}
-
-// Mode must returns hatchery mode
-func (h *HatcheryCloud) Mode() string {
-	if h == nil {
-		return ""
-	}
-	return LocalMode
-}
-
 //Hatchery returns hatchery instance
-func (h *HatcheryCloud) Hatchery() *hatchery.Hatchery {
+func (h *HatcheryCloud) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
@@ -81,6 +72,9 @@ func (h *HatcheryCloud) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 	return true
 }
 
+const serverStatusBuild = "BUILD"
+const serverStatusActive = "ACTIVE"
+
 // Init fetch uri from nova
 // then list available models
 // then list available images
@@ -91,13 +85,13 @@ func (h *HatcheryCloud) Init() error {
 		log.Warning("Cannot retrieve hostname: %s\n", err)
 		name = "cds-hatchery-openstack"
 	}
-	h.hatch = &hatchery.Hatchery{
+	h.hatch = &sdk.Hatchery{
 		Name: name,
-		UID:  uk,
+		UID:  viper.GetString("uk"),
 	}
-	err = register(h.hatch)
-	if err != nil {
-		log.Warning("Cannot register hatchery: %s\n", err)
+
+	if errRegistrer := hatchery.Register(h.hatch, viper.GetString("token")); errRegistrer != nil {
+		log.Warning("Cannot register hatchery: %s\n", errRegistrer)
 	}
 
 	h.token, h.endpoint, err = getToken(h.user, h.password, h.address, h.tenant, h.region)
@@ -271,48 +265,6 @@ func (h *HatcheryCloud) refreshTokenRoutine() {
 	}
 }
 
-// ParseConfig for openstack mode
-func (h *HatcheryCloud) ParseConfig() {
-	h.tenant = os.Getenv("OPENSTACK_TENANT")
-	if h.tenant == "" {
-		sdk.Exit("OPENSTACK_TENANT not provided, aborting\n")
-	}
-
-	h.user = os.Getenv("OPENSTACK_USER")
-	if h.user == "" {
-		sdk.Exit("OPENSTACK_USER not provided, aborting\n")
-	}
-
-	h.address = os.Getenv("OPENSTACK_AUTH_ENDPOINT")
-	if h.address == "" {
-		sdk.Exit("OPENSTACK_AUTH_ENDPOINT not provided, aborting\n")
-	}
-
-	h.password = os.Getenv("OPENSTACK_PASSWORD")
-	if h.password == "" {
-		sdk.Exit("OPENSTACK_PASSWORD not provided, aborting\n")
-	}
-
-	h.region = os.Getenv("OPENSTACK_REGION")
-	if h.region == "" {
-		sdk.Exit("OPENSTACK_REGION not provided, aborting\n")
-	}
-
-	h.network = os.Getenv("OPENSTACK_NETWORK")
-	if h.network == "" {
-		h.network = "Ext-Net"
-	}
-
-	var err error
-	r := os.Getenv("OPENSTACK_IP_RANGE")
-	if r != "" {
-		h.ips, err = IPinRanges(r)
-		if err != nil {
-			sdk.Exit("OPENSTACK_IP_RANGE error: %s\n", err)
-		}
-	}
-}
-
 // WorkerStarted returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryCloud) WorkerStarted(model *sdk.Model) int {
@@ -331,8 +283,7 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 	log.Notice("KillWorker> Kill %s\n", worker.Name)
 	for _, s := range h.servers {
 		if s.Name == worker.Name {
-			err := deleteServer(h.endpoint, h.token.ID, s.ID)
-			if err != nil {
+			if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 				return err
 			}
 			return nil
@@ -352,13 +303,12 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 		return fmt.Errorf("hatchery disconnected from engine")
 	}
 
-	if len(h.servers) == maxWorker {
-		log.Info("MaxWorker limit (%d) reached\n", maxWorker)
+	if len(h.servers) == viper.GetInt("max-worker") {
+		log.Info("MaxWorker limit (%d) reached\n", viper.GetInt("max-worker"))
 		return nil
 	}
 
-	err = json.Unmarshal([]byte(model.Image), &omd)
-	if err != nil {
+	if err = json.Unmarshal([]byte(model.Image), &omd); err != nil {
 		return err
 	}
 
@@ -427,15 +377,14 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Model    int64
 		Hatchery int64
 	}{
-		API:      api,
+		API:      viper.GetString("api"),
 		Name:     name,
-		Key:      uk,
+		Key:      viper.GetString("token"),
 		Model:    model.ID,
 		Hatchery: h.hatch.ID,
 	}
 	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, udataParam)
-	if err != nil {
+	if err = tmpl.Execute(&buffer, udataParam); err != nil {
 		return err
 	}
 
@@ -545,9 +494,9 @@ func (h *HatcheryCloud) updateServerList() {
 			}
 			out += fmt.Sprintf(")\n")
 			switch s.Status {
-			case "BUILD":
+			case serverStatusBuild:
 				building++
-			case "ACTIVE":
+			case serverStatusActive:
 				active++
 			}
 		}
@@ -718,7 +667,7 @@ func createServer(endpoint, token, name, image, flavor, network, ip, udata strin
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Auth-Token", token)
 
-	resp, err := client.Do(req)
+	resp, err := hatchery.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -732,7 +681,6 @@ func createServer(endpoint, token, name, image, flavor, network, ip, udata strin
 	}
 
 	return nil
-
 }
 
 func deleteServer(endpoint, token, serverID string) error {
@@ -745,7 +693,7 @@ func deleteServer(endpoint, token, serverID string) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Auth-Token", token)
 
-	resp, err := client.Do(req)
+	resp, err := hatchery.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -763,17 +711,17 @@ func deleteServer(endpoint, token, serverID string) error {
 
 func getFlavors(endpoint string, token string) ([]Flavor, error) {
 	uri := fmt.Sprintf("%s/flavors", endpoint)
-	req, err := http.NewRequest("GET", uri, nil)
-	if err != nil {
-		return nil, err
+	req, errRequest := http.NewRequest("GET", uri, nil)
+	if errRequest != nil {
+		return nil, errRequest
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Auth-Token", token)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	resp, errDo := hatchery.Client.Do(req)
+	if errDo != nil {
+		return nil, errDo
 	}
 
 	if resp.StatusCode >= 400 {
@@ -803,17 +751,17 @@ func getFlavors(endpoint string, token string) ([]Flavor, error) {
 
 func getServers(endpoint, token string) ([]Server, error) {
 	uri := fmt.Sprintf("%s/servers/detail", endpoint)
-	req, err := http.NewRequest("GET", uri, nil)
-	if err != nil {
-		return nil, err
+	req, errRequest := http.NewRequest("GET", uri, nil)
+	if errRequest != nil {
+		return nil, errRequest
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Auth-Token", token)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	resp, errDo := hatchery.Client.Do(req)
+	if errDo != nil {
+		return nil, errDo
 	}
 
 	if resp.StatusCode >= 400 {
@@ -832,8 +780,8 @@ func getServers(endpoint, token string) ([]Server, error) {
 	var s struct {
 		Servers []Server `json:"servers"`
 	}
-	err = json.Unmarshal(rbody, &s)
-	if err != nil {
+
+	if err = json.Unmarshal(rbody, &s); err != nil {
 		return nil, err
 	}
 
@@ -851,17 +799,17 @@ func getServers(endpoint, token string) ([]Server, error) {
 
 func getNetworks(endpoint string, token string) ([]Network, error) {
 	uri := fmt.Sprintf("%s/os-networks", endpoint)
-	req, err := http.NewRequest("GET", uri, nil)
-	if err != nil {
-		return nil, err
+	req, errRequest := http.NewRequest("GET", uri, nil)
+	if errRequest != nil {
+		return nil, errRequest
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Auth-Token", token)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	resp, errDo := hatchery.Client.Do(req)
+	if errDo != nil {
+		return nil, errDo
 	}
 
 	if resp.StatusCode >= 400 {
@@ -881,8 +829,7 @@ func getNetworks(endpoint string, token string) ([]Network, error) {
 		Networks []Network `json:"networks"`
 	}{}
 
-	err = json.Unmarshal(rbody, &s)
-	if err != nil {
+	if err = json.Unmarshal(rbody, &s); err != nil {
 		return nil, err
 	}
 
@@ -891,17 +838,17 @@ func getNetworks(endpoint string, token string) ([]Network, error) {
 
 func getImages(endpoint string, token string) ([]Image, error) {
 	uri := fmt.Sprintf("%s/images", endpoint)
-	req, err := http.NewRequest("GET", uri, nil)
-	if err != nil {
-		return nil, err
+	req, errRequest := http.NewRequest("GET", uri, nil)
+	if errRequest != nil {
+		return nil, errRequest
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Auth-Token", token)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	resp, errDo := hatchery.Client.Do(req)
+	if errDo != nil {
+		return nil, errDo
 	}
 
 	if resp.StatusCode >= 400 {
@@ -921,8 +868,7 @@ func getImages(endpoint string, token string) ([]Image, error) {
 		Images []Image `json:"images"`
 	}{}
 
-	err = json.Unmarshal(rbody, &s)
-	if err != nil {
+	if err = json.Unmarshal(rbody, &s); err != nil {
 		return nil, err
 	}
 
@@ -939,40 +885,45 @@ func getToken(user string, password string, url string, project string, region s
 
 	data, err := json.Marshal(a)
 	if err != nil {
+		log.Critical("AAAA %s", err)
 		return nil, endpoint, err
 	}
 
 	uri := fmt.Sprintf("%s/v2.0/tokens", url)
 	req, err := http.NewRequest("POST", uri, bytes.NewReader(data))
 	if err != nil {
+		log.Critical("BBBB %s", err)
 		return nil, endpoint, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(user, password)
 
-	resp, err := client.Do(req)
+	resp, err := hatchery.Client.Do(req)
 	if err != nil {
+		log.Critical("CCCC %s", err)
 		return nil, endpoint, err
 	}
 
 	contentType := strings.ToLower(resp.Header.Get("Content-Type"))
 	if strings.Contains(contentType, "json") != true {
+		log.Critical("DDDD %s", err)
 		return nil, endpoint, fmt.Errorf("err (%s): header Content-Type is not JSON (%s)", contentType, resp.Status)
 	}
 
 	rbody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.Critical("EEEE %s", err)
 		return nil, endpoint, fmt.Errorf("cannot read body")
 	}
 
 	if resp.StatusCode >= 400 {
+		log.Critical("FFFF user %s, password %s, url %s, project %s, region %s", user, password, url, project, region)
 		return nil, endpoint, unmarshalOpenstackError(rbody, resp.Status)
 	}
 
 	var authRet AuthToken
-	err = json.Unmarshal(rbody, &authRet)
-	if err != nil {
+	if err = json.Unmarshal(rbody, &authRet); err != nil {
 		return nil, endpoint, err
 	}
 
@@ -1005,8 +956,8 @@ type openstackError struct {
 func unmarshalOpenstackError(data []byte, status string) error {
 	operror := openstackError{}
 	fmt.Printf("Error: %s\n", data)
-	err := json.Unmarshal(data, &operror)
-	if err != nil {
+
+	if err := json.Unmarshal(data, &operror); err != nil {
 		return fmt.Errorf("%s", status)
 	}
 

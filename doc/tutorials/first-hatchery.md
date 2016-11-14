@@ -43,6 +43,5 @@ worker --api=<cds-api> --key=2706bda13748877c57029598b915d46236988c7c57ea0d38085
 To start a new hatchery in docker mode, download hatchery binary on a host with docker and run:
 
 ```shell
-$ hatchery --mode=docker --api=https://<api.domain> --token=<token>
+$ hatchery docker --api=https://<api.domain> --token=<token>
 ```
-
