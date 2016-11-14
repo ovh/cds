@@ -359,7 +359,7 @@ func InsertPipeline(db database.QueryExecuter, p *sdk.Pipeline) error {
 		return sdk.ErrInvalidName
 	}
 
-	if p.Type != sdk.BuildPipeline && p.Type != sdk.DeploymentPipeline {
+	if p.Type != sdk.BuildPipeline && p.Type != sdk.DeploymentPipeline && p.Type != sdk.TestingPipeline {
 		return sdk.ErrInvalidType
 	}
 

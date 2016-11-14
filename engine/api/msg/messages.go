@@ -26,11 +26,13 @@ var (
 	HookCreated               = &Message{trad{FR: "Hook créé sur le depôt %s vers le pipeline %s", EN: "Hook created on repository %s to pipeline %s"}, nil}
 )
 
+//Message represent a struc format translated messages
 type Message struct {
 	Format trad
 	Args   []interface{}
 }
 
+//New instanciantes a new message
 func New(m *Message, args ...interface{}) Message {
 	return Message{
 		Format: m.Format,
@@ -47,6 +49,7 @@ var (
 	matcher = language.NewMatcher(SupportedLanguages)
 )
 
+//String returns formated string for the specified language
 func (m *Message) String(al string) string {
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
 	if err != nil {
