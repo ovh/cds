@@ -3,7 +3,9 @@ package templateextension
 import (
 	"bytes"
 	"crypto/md5"
+	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,8 +13,9 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/template"
@@ -71,7 +74,7 @@ func Get(name, path string) (*sdk.TemplateExtension, []sdk.TemplateParam, error)
 }
 
 //Instance returns the template instance
-func Instance(authDriver auth.Driver, tmpl *sdk.TemplateExtension, u *sdk.User) (template.Interface, func(), error) {
+func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.SessionKey) (template.Interface, func(), error) {
 	//Fetch fro mobject store
 	buf, err := objectstore.FetchTemplateExtension(*tmpl)
 	if err != nil {
@@ -107,12 +110,6 @@ func Instance(authDriver auth.Driver, tmpl *sdk.TemplateExtension, u *sdk.User) 
 		return nil, deferFunc, err
 	}
 	f.Close()
-
-	//Create a session for current user
-	sessionKey, err := auth.NewSession(authDriver, u)
-	if err != nil {
-		log.Critical("Instance> Error while creating new session: %s\n", err)
-	}
 
 	//The template will call local API
 	hostname, _ := os.Hostname()
@@ -155,4 +152,118 @@ func Apply(templ template.Interface, proj *sdk.Project, params []sdk.TemplatePar
 	app.ProjectKey = proj.Key
 
 	return &app, err
+}
+
+//LoadByID returns a templateextension from its ID
+func LoadByID(db *sql.DB, id int64) (*sdk.TemplateExtension, error) {
+	//Get the database map
+	dbmap := database.DBMap(db)
+
+	//Find it
+	templ := database.TemplateExtension{}
+	if err := dbmap.SelectOne(&templ, "select * from template where id = $1", id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNotFound
+		}
+		log.Warning("deleteTemplateHandler>%T %s", err, err)
+		return nil, err
+	}
+
+	sdktmpl := sdk.TemplateExtension(templ)
+	return &sdktmpl, nil
+}
+
+//Insert inserts a new template
+func Insert(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
+	templ := database.TemplateExtension(*sdktmpl)
+	//Get the database map
+	dbmap := database.DBMap(db)
+	if err := dbmap.Insert(&templ); err != nil {
+		return err
+	}
+	sdktmpl.ID = templ.ID
+	sdktmpl.Actions = templ.Actions
+	sdktmpl.Params = templ.Params
+	return nil
+}
+
+//Update updates the provided template given it ID
+func Update(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
+	templ := database.TemplateExtension(*sdktmpl)
+	//Get the database map
+	dbmap := database.DBMap(db)
+	_, err := dbmap.Update(&templ)
+	sdktmpl.Actions = templ.Actions
+	sdktmpl.Params = templ.Params
+	return err
+}
+
+//Delete deletes the provided template given it ID
+func Delete(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
+	templ := database.TemplateExtension(*sdktmpl)
+	//Get the database map
+	dbmap := database.DBMap(db)
+	n, err := dbmap.Delete(&templ)
+	if n == 0 {
+		return sdk.ErrNotFound
+	}
+	return err
+}
+
+//LoadByName returns a templateextension from its name
+func LoadByName(db *sql.DB, name string) (*sdk.TemplateExtension, error) {
+	// Get template from DB
+	dbmap := database.DBMap(db)
+	tmpl := database.TemplateExtension{}
+	if err := dbmap.SelectOne(&tmpl, "select * from template where name = $1", name); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrUnknownTemplate
+		}
+		return nil, err
+	}
+
+	// Load the template binary
+	sdktmpl := sdk.TemplateExtension(tmpl)
+	return &sdktmpl, nil
+}
+
+const UglyID = 10000
+
+//LoadByType returns list of templates by type
+func LoadByType(db *sql.DB, t string) ([]sdk.Template, error) {
+	var tpl []sdk.Template
+	tpl = []sdk.Template{
+		sdk.Template{
+			ID:          UglyID,
+			Name:        "Void",
+			Description: "Empty template",
+		},
+	}
+
+	tplFromDB := []sdk.TemplateExtension{}
+	dbmap := database.DBMap(db)
+	if _, err := dbmap.Select(&tplFromDB, "select * from template where type = $1 order by name", t); err != nil {
+		log.Warning("getTypedTemplatesHandler> Error : %s", err)
+		return nil, err
+	}
+
+	for _, t := range tplFromDB {
+		params := []sdk.TemplateParam{}
+		str, err := dbmap.SelectStr("select params from template_params where template_id = $1", t.ID)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(str), &params); err != nil {
+			return nil, err
+		}
+
+		tpl = append(tpl, sdk.Template{
+			ID:          t.ID,
+			Name:        t.Name,
+			Description: t.Description,
+			Params:      params,
+		})
+	}
+
+	return tpl, nil
 }

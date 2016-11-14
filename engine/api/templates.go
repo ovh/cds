@@ -15,13 +15,11 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/template"
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/log"
@@ -153,18 +151,17 @@ func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		return
 	}
 
+	//Set the objectpath in the template
 	templ.ObjectPath = objectpath
 
 	//Insert in database
-	dbmap := database.DBMap(db)
-	dbtempl := database.TemplateExtension(*templ)
-	if err := dbmap.Insert(&dbtempl); err != nil {
+	if err := templateextension.Insert(db, templ); err != nil {
 		log.Warning("addTemplateHandler>%T %s", err, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	WriteJSON(w, r, dbtempl, http.StatusOK)
+	WriteJSON(w, r, templ, http.StatusOK)
 }
 
 func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -184,23 +181,11 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		return
 	}
 
-	//Get the database map
-	dbmap := database.DBMap(db)
-
 	//Find it
-	templ := database.TemplateExtension{}
-	if err := dbmap.SelectOne(&templ, "select * from template where id = $1", id); err != nil {
-		if err == sql.ErrNoRows {
-			WriteError(w, r, sdk.ErrNotFound)
-			return
-		}
-		log.Warning("updateTemplateHandler>%T %s", err, err)
-		WriteError(w, r, err)
-		return
-	}
+	templ, err := templateextension.LoadByID(db, int64(id))
 
 	//Store previous file from objectstore
-	tmpbuf, err := objectstore.FetchTemplateExtension(sdk.TemplateExtension(templ))
+	tmpbuf, err := objectstore.FetchTemplateExtension(*templ)
 	if err != nil {
 		log.Warning("updateTemplateHandler>Unable to fetch plugin: %s", err)
 		WriteError(w, r, sdk.NewError(sdk.ErrPluginInvalid, err))
@@ -217,7 +202,7 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 
 	//Delete from storage
-	if err := objectstore.DeleteTemplateExtension(sdk.TemplateExtension(templ)); err != nil {
+	if err := objectstore.DeleteTemplateExtension(*templ); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -260,11 +245,9 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		return
 	}
 
-	templ.ObjectPath = objectpath
+	templ2.ObjectPath = objectpath
 
-	//Update in database
-	dbtempl2 := database.TemplateExtension(*templ2)
-	if _, err := dbmap.Update(&dbtempl2); err != nil {
+	if err := templateextension.Update(db, templ2); err != nil {
 		//re-store the old file in case of error
 		if _, err := objectstore.StoreTemplateExtension(*templ2, ioutil.NopCloser(bytes.NewBuffer(btes))); err != nil {
 			log.Warning("updateTemplateHandler> Error while uploading to object store %s: %s\n", templ2.Name, err)
@@ -278,7 +261,6 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 
 	WriteJSON(w, r, templ2, http.StatusOK)
-
 }
 
 func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -298,36 +280,21 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		return
 	}
 
-	//Get the database map
-	dbmap := database.DBMap(db)
-
-	//Find it
-	templ := database.TemplateExtension{}
-	if err := dbmap.SelectOne(&templ, "select * from template where id = $1", id); err != nil {
-		if err == sql.ErrNoRows {
-			WriteError(w, r, sdk.ErrNotFound)
-			return
-		}
-		log.Warning("deleteTemplateHandler>%T %s", err, err)
-		WriteError(w, r, err)
-		return
-	}
-
-	//Delete it
-	n, err := dbmap.Delete(&templ)
+	//Load it
+	templ, err := templateextension.LoadByID(db, int64(id))
 	if err != nil {
 		WriteError(w, r, err)
 		return
 	}
 
-	//Check if it has been deleted
-	if n == 0 {
-		WriteError(w, r, sdk.ErrNotFound)
+	//Delete it
+	if err := templateextension.Delete(db, templ); err != nil {
+		WriteError(w, r, err)
 		return
 	}
 
 	//Delete from storage
-	if err := objectstore.DeleteTemplateExtension(sdk.TemplateExtension(templ)); err != nil {
+	if err := objectstore.DeleteTemplateExtension(*templ); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -337,7 +304,7 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 }
 
 func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	tpl, err := getTypedTemplatesHandler(db, "BUILD")
+	tpl, err := templateextension.LoadByType(db, "BUILD")
 	if err != nil {
 		WriteError(w, r, err)
 		return
@@ -346,51 +313,12 @@ func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 }
 
 func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	tpl, err := getTypedTemplatesHandler(db, "DEPLOY")
+	tpl, err := templateextension.LoadByType(db, "DEPLOY")
 	if err != nil {
 		WriteError(w, r, err)
 		return
 	}
 	WriteJSON(w, r, tpl, http.StatusOK)
-}
-
-func getTypedTemplatesHandler(db *sql.DB, t string) ([]sdk.Template, error) {
-	var tpl []sdk.Template
-	tpl = []sdk.Template{
-		sdk.Template{
-			ID:          template.UglyID,
-			Name:        "Void",
-			Description: "Empty template",
-		},
-	}
-
-	tplFromDB := []sdk.TemplateExtension{}
-	dbmap := database.DBMap(db)
-	if _, err := dbmap.Select(&tplFromDB, "select * from template where type = $1 order by name", t); err != nil {
-		log.Warning("getTypedTemplatesHandler> Error : %s", err)
-		return nil, err
-	}
-
-	for _, t := range tplFromDB {
-		params := []sdk.TemplateParam{}
-		str, err := dbmap.SelectStr("select params from template_params where template_id = $1", t.ID)
-		if err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal([]byte(str), &params); err != nil {
-			return nil, err
-		}
-
-		tpl = append(tpl, sdk.Template{
-			ID:          t.ID,
-			Name:        t.Name,
-			Description: t.Description,
-			Params:      params,
-		})
-
-	}
-
-	return tpl, nil
 }
 
 func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -419,93 +347,28 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		return
 	}
 
-	// Get template from DB
-	dbmap := database.DBMap(db)
-	tmpl := database.TemplateExtension{}
-	if err := dbmap.SelectOne(&tmpl, "select * from template where name = $1", opts.TemplateName); err != nil {
-		if err == sql.ErrNoRows {
-			WriteError(w, r, sdk.ErrUnknownTemplate)
-			return
-		}
+	//Create a session for current user
+	sessionKey, err := auth.NewSession(router.authDriver, c.User)
+	if err != nil {
+		log.Critical("Instance> Error while creating new session: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	// Load the template binary
-	sdktmpl := sdk.TemplateExtension(tmpl)
-	templ, deferFunc, err := templateextension.Instance(router.authDriver, &sdktmpl, c.User)
-	if deferFunc != nil {
-		defer deferFunc()
-	}
+	//Apply the template
+	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey)
 	if err != nil {
-		log.Warning("applyTemplatesHandler> error getting template Extension instance : %s", err)
-		WriteError(w, r, err)
-	}
-
-	// Apply the template
-	app, err := templateextension.Apply(templ, proj, opts.TemplateParams, opts.ApplicationName)
-	if err != nil {
-		log.Warning("applyTemplatesHandler> error applying template : %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	//Check reposmanager
-	if opts.RepositoriesManagerName != "" {
-		app.RepositoriesManager, err = repositoriesmanager.LoadByName(db, opts.RepositoriesManagerName)
-		if err != nil {
-			log.Warning("applyTemplatesHandler> error getting repositories manager %s : %s", opts.RepositoriesManagerName, err)
-			WriteError(w, r, err)
-			return
-		}
-
-		app.RepositoryFullname = opts.ApplicationRepositoryFullname
-	}
-
-	//Start a new transaction
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("applyTemplatesHandler> error beginning transaction : %s", err)
-		WriteError(w, r, err)
-	}
-
-	defer tx.Rollback()
-
-	// Import the application
-	done := make(chan bool)
-	msgChan := make(chan msg.Message)
-	msgList := []string{}
 	al := r.Header.Get("Accept-Language")
-	go func(array *[]string) {
-		for {
-			m, more := <-msgChan
-			if !more {
-				done <- true
-				return
-			}
-			s := m.String(al)
-			*array = append(*array, s)
-			log.Debug("applyTemplatesHandler> message : %s", s)
-		}
-	}(&msgList)
+	msgList := []string{}
 
-	if err := application.Import(tx, proj, app, app.RepositoriesManager, msgChan); err != nil {
-		log.Warning("applyTemplatesHandler> error applying template : %s", err)
-		WriteError(w, r, err)
-		close(msgChan)
-		return
+	for _, m := range msg {
+		s := m.String(al)
+		msgList = append(msgList, s)
 	}
 
-	close(msgChan)
-	<-done
-
-	log.Debug("applyTemplatesHandler> Commit the transaction")
-	if err := tx.Commit(); err != nil {
-		log.Warning("applyTemplatesHandler> error commiting transaction : %s", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	deferFunc()
-	log.Debug("applyTemplatesHandler> Done")
+	WriteJSON(w, r, msgList, http.StatusOK)
 }
