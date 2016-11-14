@@ -229,15 +229,17 @@ func LoadByName(db *sql.DB, name string) (*sdk.TemplateExtension, error) {
 
 const UglyID = 10000
 
+var EmptyTemplate = sdk.Template{
+	ID:          UglyID,
+	Name:        "Void",
+	Description: "Empty template",
+}
+
 //LoadByType returns list of templates by type
 func LoadByType(db *sql.DB, t string) ([]sdk.Template, error) {
 	var tpl []sdk.Template
 	tpl = []sdk.Template{
-		sdk.Template{
-			ID:          UglyID,
-			Name:        "Void",
-			Description: "Empty template",
-		},
+		EmptyTemplate,
 	}
 
 	tplFromDB := []sdk.TemplateExtension{}

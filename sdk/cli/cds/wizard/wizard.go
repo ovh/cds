@@ -35,24 +35,18 @@ func runWizard() {
 	project := choseProject(appName)
 	buildTmpl := choseBuildTemplate()
 	buildTmpl = choseBuildTemplateParameters(buildTmpl)
-	deployTmpl := choseDeploymentTemplate()
-	deployTmpl = choseDeploymentTemplateParameters(deployTmpl)
 
-	applyTemplates(project.Key, appName, appRepo, buildTmpl, deployTmpl)
+	applyTemplate(project.Key, appName, appRepo, buildTmpl)
 }
 
-func applyTemplates(projectKey string, name, repo string, build, deploy sdk.Template) {
-
-	app, err := sdk.ApplyApplicationTemplates(projectKey, name, repo, build, deploy)
+func applyTemplate(projectKey string, name, repo string, build sdk.Template) {
+	app, err := sdk.ApplyApplicationTemplate(projectKey, name, repo, build)
 	if err != nil {
 		sdk.Exit("Error: Cannot apply template (%s)\n", err)
 	}
 
 	fmt.Printf("\n")
 	fmt.Printf("Application %s/%s created\n", projectKey, app.Name)
-	fmt.Printf("Application variable repo=%s\n", app.Variable[0].Value)
-	//fmt.Printf("Applied template %s on %s/%s\n", app.BuildTemplate.Name, projectKey, app.Name)
-	//fmt.Printf("Applied template %s on %s/%s\n", app.DeployTemplate.Name, projectKey, app.Name)
 
 	var pip sdk.Pipeline
 	for i := range app.Pipelines {

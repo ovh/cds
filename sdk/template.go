@@ -3,7 +3,6 @@ package sdk
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -87,9 +86,35 @@ func GetDeploymentTemplates() ([]Template, error) {
 	return tmpls, nil
 }
 
-// ApplyApplicationTemplates creates given application and apply build and deployment templates
-func ApplyApplicationTemplates(projectKey string, name, repo string, build, deploy Template) (*Application, error) {
-	return nil, errors.New("Unsupported operation")
+// ApplyApplicationTemplate creates given application and apply build template
+func ApplyApplicationTemplate(projectKey string, name, repo string, build Template) (*Application, error) {
+
+	uri := fmt.Sprintf("/project/%s/template", projectKey)
+
+	opts := ApplyTemplatesOptions{
+		ApplicationName: name,
+		ApplicationVariables: map[string]string{
+			"repo": "git@github.com:ovh/cds.git",
+		},
+		TemplateName:   build.Name,
+		TemplateParams: build.Params,
+	}
+
+	btes, _ := json.Marshal(opts)
+	data, code, err := Request("POST", uri, btes)
+	if err != nil {
+		return nil, err
+	}
+	if code >= 300 {
+		return nil, DecodeError(data)
+	}
+
+	app, err := GetApplication(projectKey, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
 }
 
 //TemplateExtension represents a template store as a binary extension

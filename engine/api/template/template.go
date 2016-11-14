@@ -19,27 +19,38 @@ const (
 
 // ApplyTemplate creates an application and configure it with given template
 func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]msg.Message, error) {
-	//Get the template
-	sdktmpl, err := templateextension.LoadByName(db, opts.TemplateName)
-	if err != nil {
-		return nil, err
-	}
+	var app *sdk.Application
+	var err error
 
-	// Get the go-plugin instance
-	templ, deferFunc, err := templateextension.Instance(sdktmpl, user, sessionKey)
-	if deferFunc != nil {
-		defer deferFunc()
-	}
-	if err != nil {
-		log.Warning("ApplyTemplate> error getting template Extension instance : %s", err)
-		return nil, err
-	}
+	if opts.TemplateName == templateextension.EmptyTemplate.Name {
+		app = &sdk.Application{
+			Name: opts.ApplicationName,
+		}
+	} else {
+		//Get the template
+		sdktmpl, err := templateextension.LoadByName(db, opts.TemplateName)
+		if err != nil {
+			return nil, err
+		}
 
-	// Apply the template
-	app, err := templateextension.Apply(templ, proj, opts.TemplateParams, opts.ApplicationName)
-	if err != nil {
-		log.Warning("ApplyTemplate> error applying template : %s", err)
-		return nil, err
+		// Get the go-plugin instance
+		templ, deferFunc, err := templateextension.Instance(sdktmpl, user, sessionKey)
+		if deferFunc != nil {
+			defer deferFunc()
+		}
+		if err != nil {
+			log.Warning("ApplyTemplate> error getting template Extension instance : %s", err)
+			return nil, err
+		}
+
+		// Apply the template
+		app, err = templateextension.Apply(templ, proj, opts.TemplateParams, opts.ApplicationName)
+		if err != nil {
+			log.Warning("ApplyTemplate> error applying template : %s", err)
+			return nil, err
+		}
+
+		deferFunc()
 	}
 
 	//Check reposmanager
@@ -92,7 +103,6 @@ func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions
 		return msgList, err
 	}
 
-	deferFunc()
 	log.Debug("ApplyTemplate> Done")
 
 	return msgList, nil
