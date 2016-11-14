@@ -54,23 +54,6 @@ func NewProject(key string) *Project {
 	return p
 }
 
-// JSON return the marshalled string of Project object
-func (p *Project) JSON() string {
-
-	data, err := json.Marshal(p)
-	if err != nil {
-		fmt.Printf("Project.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into Project object
-func (p *Project) FromJSON(data []byte) (*Project, error) {
-	return p, json.Unmarshal(data, &p)
-}
-
 // RemoveProject call api to delete a project
 func RemoveProject(key string) error {
 
@@ -144,7 +127,7 @@ func AddProject(name, key, groupName string) error {
 	}
 
 	if code == 409 {
-		return fmt.Errorf("Conflict: please use another project key")
+		return ErrConflict
 	}
 
 	if code != http.StatusCreated && code != http.StatusOK {

@@ -48,6 +48,30 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 		}
 	}
 
+	if err := ImportPipelines(db, proj, app, msgChan); err != nil {
+		return err
+	}
+
+	//Set repositories manager
+	app.RepositoriesManager = repomanager
+	if app.RepositoriesManager != nil && app.RepositoryFullname != "" && len(app.Pipelines) > 0 {
+		if err := repositoriesmanager.InsertForApplication(db, app, proj.Key); err != nil {
+			return err
+		}
+		//Manage hook
+		if _, err := hook.CreateHook(db, proj.Key, repomanager, app.RepositoryFullname, app, &app.Pipelines[0].Pipeline); err != nil {
+			return err
+		}
+		if msgChan != nil {
+			msgChan <- msg.New(msg.HookCreated, app.RepositoryFullname, app.Pipelines[0].Pipeline.Name)
+		}
+	}
+
+	return nil
+}
+
+//ImportPipelines is able to create pipelines on an existing application
+func ImportPipelines(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, msgChan chan<- msg.Message) error {
 	//Import pipelines
 	for i := range app.Pipelines {
 		//Import pipeline
@@ -55,13 +79,22 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 		if err := pipeline.Import(db, proj, &app.Pipelines[i].Pipeline, msgChan); err != nil {
 			return err
 		}
-		//Attach pipeline
-		log.Debug("application.Import> Attach pipeline %s", app.Pipelines[i].Pipeline.Name)
-		if err := AttachPipeline(db, app.ID, app.Pipelines[i].Pipeline.ID); err != nil {
+
+		//Check if application is attached to the pipeline
+		attached, err := IsAttached(db, proj.ID, app.ID, app.Pipelines[i].Pipeline.Name)
+		if err != nil {
 			return err
 		}
-		if msgChan != nil {
-			msgChan <- msg.New(msg.PipelineAttached, app.Pipelines[i].Pipeline.Name, app.Name)
+
+		//Attach pipeline
+		if !attached {
+			log.Debug("application.Import> Attach pipeline %s", app.Pipelines[i].Pipeline.Name)
+			if err := AttachPipeline(db, app.ID, app.Pipelines[i].Pipeline.ID); err != nil {
+				return err
+			}
+			if msgChan != nil {
+				msgChan <- msg.New(msg.PipelineAttached, app.Pipelines[i].Pipeline.Name, app.Name)
+			}
 		}
 	}
 
@@ -122,30 +155,22 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 
 			log.Debug("application.Import> creating trigger SrcApp=%d SrpPip=%d SrcEnv=%d DestApp=%d DestPip=%d DestEnv=%d", t.SrcApplication.ID, t.SrcPipeline.ID, t.SrcEnvironment.ID, t.DestApplication.ID, t.DestPipeline.ID, t.DestEnvironment.ID)
 
-			//Insert trigger
-			if err := trigger.InsertTrigger(db, t); err != nil {
+			//Check if trigger exists
+			exists, err := trigger.Exists(db, t.SrcApplication.ID, t.SrcPipeline.ID, t.SrcEnvironment.ID, t.DestApplication.ID, t.DestPipeline.ID, t.DestEnvironment.ID)
+			if err != nil {
 				return err
 			}
-			if msgChan != nil {
-				msgChan <- msg.New(msg.PipelineTriggerCreated, t.SrcPipeline.Name, t.SrcApplication.Name, t.DestPipeline.Name, t.DestApplication.Name)
+			if exists {
+				//Insert trigger
+				if err := trigger.InsertTrigger(db, t); err != nil {
+					return err
+				}
+				if msgChan != nil {
+					msgChan <- msg.New(msg.PipelineTriggerCreated, t.SrcPipeline.Name, t.SrcApplication.Name, t.DestPipeline.Name, t.DestApplication.Name)
+				}
+
 			}
 		}
 	}
-
-	//Set repositories manager
-	app.RepositoriesManager = repomanager
-	if app.RepositoriesManager != nil && app.RepositoryFullname != "" && len(app.Pipelines) > 0 {
-		if err := repositoriesmanager.InsertForApplication(db, app, proj.Key); err != nil {
-			return err
-		}
-		//Manage hook
-		if _, err := hook.CreateHook(db, proj.Key, repomanager, app.RepositoryFullname, app, &app.Pipelines[0].Pipeline); err != nil {
-			return err
-		}
-		if msgChan != nil {
-			msgChan <- msg.New(msg.HookCreated, app.RepositoryFullname, app.Pipelines[0].Pipeline.Name)
-		}
-	}
-
 	return nil
 }

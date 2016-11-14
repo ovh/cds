@@ -85,24 +85,25 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	projectArg, err := sdk.NewProject("").FromJSON(data)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	if projectArg.Name == "" {
+	proj := &sdk.Project{}
+	if json.Unmarshal(data, proj); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	if proj.Name == "" {
 		log.Warning("updateProject: Project name must no be empty")
 		WriteError(w, r, sdk.ErrInvalidProjectName)
 		return
 	}
 
 	// Check Request
-	if key != projectArg.Key {
-		log.Warning("updateProject: bad Project key %s/%s \n", key, projectArg.Key)
+	if key != proj.Key {
+		log.Warning("updateProject: bad Project key %s/%s \n", key, proj.Key)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -115,14 +116,14 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 		return
 	}
 
-	lastModified, err := project.UpdateProjectDB(db, key, projectArg.Name)
+	lastModified, err := project.UpdateProjectDB(db, key, proj.Name)
 	if err != nil {
 		log.Warning("updateProject: Cannot update project %s : %s\n", key, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	p.Name = projectArg.Name
+	p.Name = proj.Name
 	p.LastModified = lastModified.Unix()
 
 	WriteJSON(w, r, p, http.StatusOK)

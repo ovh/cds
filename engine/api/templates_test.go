@@ -789,11 +789,39 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	vars = map[string]string{
 		"permProjectKey": pKey,
 	}
-	uri = router.getRoute("POST", applyTemplatesHandler, vars)
+	uri = router.getRoute("POST", applyTemplateHandler, vars)
 	if uri == "" {
 		t.Fail()
 		return
 	}
+	req, err = http.NewRequest("POST", uri, bodyBuf)
+	testwithdb.AuthentifyRequest(t, req, u, pass)
+
+	req.Header.Add("Content-Type", contentType)
+
+	//Do the request
+	w = httptest.NewRecorder()
+	router.mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	t.Logf("body: %s", w.Body.String())
+
+	/*
+	* APPLY THE TEMPLATE ON THE APPLICATION (second handler)
+	 */
+
+	//Prepare request
+	vars = map[string]string{
+		"key": pKey,
+		"permApplicationName": opts.ApplicationName,
+	}
+	uri = router.getRoute("POST", applyTemplateOnApplicationHandler, vars)
+	if uri == "" {
+		t.Fail()
+		return
+	}
+	bodyBuf = bytes.NewBuffer(btes)
 	req, err = http.NewRequest("POST", uri, bodyBuf)
 	testwithdb.AuthentifyRequest(t, req, u, pass)
 

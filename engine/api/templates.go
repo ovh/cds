@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
@@ -321,11 +322,11 @@ func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	WriteJSON(w, r, tpl, http.StatusOK)
 }
 
-func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
-	//Load the project
+	// Load the project
 	proj, err := project.LoadProject(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("applyTemplatesHandler> Cannot load project %s: %s\n", projectKey, err)
@@ -347,6 +348,69 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		return
 	}
 
+	// Create a session for current user
+	sessionKey, err := auth.NewSession(router.authDriver, c.User)
+	if err != nil {
+		log.Critical("Instance> Error while creating new session: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	// Apply the template
+	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	al := r.Header.Get("Accept-Language")
+	msgList := []string{}
+
+	for _, m := range msg {
+		s := m.String(al)
+		msgList = append(msgList, s)
+	}
+
+	WriteJSON(w, r, msgList, http.StatusOK)
+}
+
+func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	// Get pipeline and action name in URL
+	vars := mux.Vars(r)
+	projectKey := vars["key"]
+	appName := vars["permApplicationName"]
+
+	// Load the project
+	proj, err := project.LoadProject(db, projectKey, c.User)
+	if err != nil {
+		log.Warning("applyTemplateOnApplicationHandler> Cannot load project %s: %s\n", projectKey, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	// Load the application
+	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	if err != nil {
+		log.Warning("applyTemplateOnApplicationHandler> Cannot load application %s: %s\n", appName, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	// Get data in body
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Warning("applyTemplateOnApplicationHandler> Unable to read body : %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	// Parse body to sdk.ApplyTemplatesOptions
+	var opts sdk.ApplyTemplatesOptions
+	if err := json.Unmarshal(data, &opts); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
 	//Create a session for current user
 	sessionKey, err := auth.NewSession(router.authDriver, c.User)
 	if err != nil {
@@ -356,7 +420,7 @@ func applyTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 
 	//Apply the template
-	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey)
+	msg, err := template.ApplyTemplateOnApplication(db, proj, app, opts, c.User, sessionKey)
 	if err != nil {
 		WriteError(w, r, err)
 		return
