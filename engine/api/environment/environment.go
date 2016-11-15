@@ -76,15 +76,26 @@ func LoadEnvironmentByName(db database.Querier, projectKey, envName string) (*sd
 		  FROM environment
 		  JOIN project ON project.id = environment.project_id
 		  WHERE project.projectKey = $1 AND environment.name = $2`
-	err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name)
-	if err != nil {
+	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name); err != nil {
 		if err == sql.ErrNoRows {
 			return &env, sdk.ErrNoEnvironment
 		}
 		return &env, err
 	}
-	err = loadDependencies(db, &env)
-	return &env, err
+	return &env, loadDependencies(db, &env)
+}
+
+//Exists checks if an environment already exists on the project
+func Exists(db database.Querier, projectKey, envName string) (bool, error) {
+	var n int
+	query := `SELECT count(1)
+		  FROM environment
+		  JOIN project ON project.id = environment.project_id
+		  WHERE project.projectKey = $1 AND environment.name = $2`
+	if err := db.QueryRow(query, projectKey, envName).Scan(&n); err != nil {
+		return false, err
+	}
+	return n == 1, nil
 }
 
 // CheckDefaultEnv create default env if not exists

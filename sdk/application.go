@@ -14,32 +14,28 @@ type Repository struct {
 
 // Application represent an application in a project
 type Application struct {
-	ID                int64                 `json:"id"`
-	Name              string                `json:"name"`
-	ProjectKey        string                `json:"project_key"`
-	ApplicationGroups []GroupPermission     `json:"groups,omitempty"`
-	Variable          []Variable            `json:"variables,omitempty"`
-	Pipelines         []ApplicationPipeline `json:"pipelines"`
-	PipelinesBuild    []PipelineBuild       `json:"pipelines_build"`
-	Permission        int                   `json:"permission"`
-	Notifications     []UserNotification    `json:"notifications"`
-	LastModified      int64                 `json:"last_modified"`
-
-	// Fill out to create a templated app
-	BuildTemplate  Template `json:"buildTemplate"`
-	DeployTemplate Template `json:"deployTemplate"`
-
-	RepositoriesManager *RepositoriesManager `json:"repositories_manager,omitempty"`
-	RepositoryFullname  string               `json:"repository_fullname,omitempty"`
-	RepositoryPollers   []RepositoryPoller   `json:"pollers,omitempty"`
-	Hooks               []Hook               `json:"hooks,omitempty"`
+	ID                  int64                 `json:"id"`
+	Name                string                `json:"name"`
+	ProjectKey          string                `json:"project_key"`
+	ApplicationGroups   []GroupPermission     `json:"groups,omitempty"`
+	Variable            []Variable            `json:"variables,omitempty"`
+	Pipelines           []ApplicationPipeline `json:"pipelines,omitempty"`
+	PipelinesBuild      []PipelineBuild       `json:"pipelines_build,omitempty"`
+	Permission          int                   `json:"permission"`
+	Notifications       []UserNotification    `json:"notifications,omitempty"`
+	LastModified        int64                 `json:"last_modified"`
+	RepositoriesManager *RepositoriesManager  `json:"repositories_manager,omitempty"`
+	RepositoryFullname  string                `json:"repository_fullname,omitempty"`
+	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty"`
+	Hooks               []Hook                `json:"hooks,omitempty"`
 }
 
 // ApplicationPipeline Represent the link between an application and a pipeline
 type ApplicationPipeline struct {
-	Pipeline     Pipeline    `json:"pipeline"`
-	Parameters   []Parameter `json:"parameters"`
-	LastModified int64       `json:"last_modified"`
+	Pipeline     Pipeline          `json:"pipeline"`
+	Parameters   []Parameter       `json:"parameters"`
+	LastModified int64             `json:"last_modified"`
+	Triggers     []PipelineTrigger `json:"triggers,omitempty"`
 }
 
 // NewApplication instanciate a new NewApplication

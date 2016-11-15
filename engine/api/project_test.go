@@ -185,12 +185,7 @@ func TestVariableInProject(t *testing.T) {
 	assert.NoError(t, err)
 
 	// 1. Create project
-	project1 := &sdk.Project{
-		Key:  "foo",
-		Name: "foo",
-	}
-
-	err = project.InsertProject(db, project1)
+	project1, err := testwithdb.InsertTestProject(t, db, testwithdb.RandomString(t, 10), testwithdb.RandomString(t, 10))
 	if err != nil {
 		t.Fatalf("cannot insert project1: %s", err)
 	}

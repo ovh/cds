@@ -3,7 +3,6 @@ package project
 import (
 	"database/sql"
 	"fmt"
-	"regexp"
 	"sync"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/template"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -46,66 +44,6 @@ func WithApplications(historylength int) Mod {
 	}
 
 	return f
-}
-
-// CreateFromWizard  Create a project from the creation wizard
-func CreateFromWizard(db *sql.Tx, p *sdk.Project, u *sdk.User) error {
-
-	// INSERT NEW PROJECT
-	err := InsertProject(db, p)
-	if err != nil {
-		log.Warning("CreateFromWizard: Cannot insert project: %s\n", err)
-		return err
-	}
-
-	// INSERT & CONFIGURE GROUP
-	for i := range p.ProjectGroups {
-		groupPermission := &p.ProjectGroups[i]
-
-		// Insert group
-		groupID, new, err := group.AddGroup(db, &groupPermission.Group)
-		if groupID == 0 {
-			if err == sdk.ErrInvalidGroupPattern {
-				log.Warning("CreateFromWizard: Wrong group name: %s\n", err)
-				return err
-			}
-			log.Warning("CreateFromWizard: Cannot add group: %s\n", err)
-			return err
-		}
-		groupPermission.Group.ID = groupID
-
-		// Add group on project
-		err = group.InsertGroupInProject(db, p.ID, groupPermission.Group.ID, groupPermission.Permission)
-		if err != nil {
-			log.Warning("CreateFromWizard: Cannot add group %s in project %s:  %s\n", groupPermission.Group.Name, p.Name, err)
-			return err
-		}
-
-		// Add user in the new group as admin
-		if new {
-			err = group.InsertUserInGroup(db, groupPermission.Group.ID, u.ID, true)
-			if err != nil {
-				log.Warning("CreateFromWizard: Cannot add user %s in group %s:  %s\n", u.Username, groupPermission.Group.Name, err)
-				return err
-			}
-		}
-	}
-
-	for i := range p.Applications {
-		// check application name pattern
-		regexp := regexp.MustCompile(sdk.NamePattern)
-		if !regexp.MatchString(p.Applications[i].Name) {
-			log.Warning("CreateFromWizard: Application name %s do not respect pattern %s", p.Applications[i].Name, sdk.NamePattern)
-			return sdk.ErrInvalidApplicationPattern
-		}
-
-		err = template.ApplyTemplate(db, p, &p.Applications[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // LoadProjectByGroup loads all projects where group has access

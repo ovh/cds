@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -22,11 +21,8 @@ import (
 )
 
 func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
-	projectFoo := &sdk.Project{
-		Name: "Foo",
-		Key:  "FOO",
-	}
-	err := project.InsertProject(db, projectFoo)
+	pkey := testwithdb.RandomString(t, 10)
+	projectFoo, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
 	if err != nil {
 		t.Fatalf("cannot insert project: %s", err)
 	}
@@ -34,6 +30,7 @@ func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *s
 	p := &sdk.Pipeline{
 		Name:      name,
 		ProjectID: projectFoo.ID,
+		Type:      sdk.BuildPipeline,
 	}
 
 	app := &sdk.Application{

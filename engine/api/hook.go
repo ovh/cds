@@ -280,7 +280,7 @@ func processHook(h hook.ReceivedHook) error {
 		}
 		projectData.Variable = projectsVar
 
-		ok, err := hook.TriggerPipeline(tx, hooks[i], h.Branch, h.Hash, h.Author, p, projectData)
+		ok, err := application.TriggerPipeline(tx, hooks[i], h.Branch, h.Hash, h.Author, p, projectData)
 		if err != nil {
 			log.Warning("processHook> cannot trigger pipeline %d: %s\n", hooks[i].Pipeline.ID, err)
 			return err

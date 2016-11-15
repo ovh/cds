@@ -297,7 +297,7 @@ func ListUsers() ([]User, error) {
 	return users, nil
 }
 
-// Expiry defines how worker key should expire
+// Expiration defines how worker key should expire
 type Expiration int
 
 // Worker key expiry options

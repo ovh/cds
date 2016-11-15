@@ -87,8 +87,9 @@ var (
 	ErrUserConflict                          = &Error{ID: 73, Status: http.StatusBadRequest}
 	ErrWrongRequest                          = &Error{ID: 74, Status: http.StatusBadRequest}
 	ErrAlreadyExist                          = &Error{ID: 75, Status: http.StatusConflict}
-	ErrParentApplicationAndPipelineMandatory = &Error{ID: 76, Status: http.StatusBadRequest}
-	ErrNoParentBuildFound                    = &Error{ID: 77, Status: http.StatusNotFound}
+	ErrInvalidType                           = &Error{ID: 76, Status: http.StatusBadRequest}
+	ErrParentApplicationAndPipelineMandatory = &Error{ID: 77, Status: http.StatusBadRequest}
+	ErrNoParentBuildFound                    = &Error{ID: 78, Status: http.StatusNotFound}
 )
 
 // SupportedLanguages on API errors
@@ -175,6 +176,7 @@ You can safely use them in a String or Text parameter`,
 	ErrUserConflict.ID:                          "this user already exist",
 	ErrWrongRequest.ID:                          "wrong request",
 	ErrAlreadyExist.ID:                          "already exist",
+	ErrInvalidType.ID:                           "invalid type",
 	ErrParentApplicationAndPipelineMandatory.ID: "parent application and pipeline are mandatory",
 	ErrNoParentBuildFound.ID:                    "no parent build found",
 }
@@ -257,6 +259,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrUserConflict.ID:                          "cet utilisateur existe deja",
 	ErrWrongRequest.ID:                          "la requête est incorrecte",
 	ErrAlreadyExist.ID:                          "conflit",
+	ErrInvalidType.ID:                           "type non valide",
 	ErrParentApplicationAndPipelineMandatory.ID: "application et pipeline parents obligatoires",
 	ErrNoParentBuildFound.ID:                    "aucun build parent n'a pu être trouvé",
 }

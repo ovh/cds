@@ -213,6 +213,7 @@ func (router *Router) init() {
 
 	// Action
 	router.Handle("/action", GET(getActionsHandler))
+	router.Handle("/action/load", NeedAdmin(true), POST(loadActionHandler))
 	router.Handle("/action/requirement", Auth(false), GET(getActionsRequirements))
 	router.Handle("/action/{permActionName}", GET(getActionHandler), POST(addActionHandler), PUT(updateActionHandler), DELETE(deleteActionHandler))
 	router.Handle("/action/{actionName}/using", NeedAdmin(true), GET(getPipelinesUsingActionHandler))
@@ -392,9 +393,13 @@ func (router *Router) init() {
 	router.Handle("/suggest/variable/{permProjectKey}", GET(getVariablesHandler))
 
 	// Templates
-	router.Handle("/template/build", Auth(false), GET(getBuildTemplates))
-	router.Handle("/template/deploy", Auth(false), GET(getDeployTemplates))
-	router.Handle("/template/{permProjectKey}", POST(applyTemplateHandler))
+	router.Handle("/template", Auth(false), GET(getTemplatesHandler))
+	router.Handle("/template/add", NeedAdmin(true), POST(addTemplateHandler))
+	router.Handle("/template/build", Auth(false), GET(getBuildTemplatesHandler))
+	router.Handle("/template/deploy", Auth(false), GET(getDeployTemplatesHandler))
+	router.Handle("/template/{id}", NeedAdmin(true), PUT(updateTemplateHandler), DELETE(deleteTemplateHandler))
+	router.Handle("/project/{permProjectKey}/template", POST(applyTemplateHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/template", POST(applyTemplateOnApplicationHandler))
 
 	// Users
 	router.Handle("/user", GET(GetUsers))
