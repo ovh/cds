@@ -68,7 +68,7 @@ func (h *HatcherySwarm) Init() error {
 		log.Warning("Cannot retrieve hostname: %s\n", err)
 		name = "cds-hatchery"
 	}
-	name += "-dockerapi"
+	name += "-swarm"
 	h.hatch = &hatchery.Hatchery{
 		Name: name,
 	}
@@ -163,9 +163,11 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 
 	log.Debug("Spawning worker %s with requirements %v", name, req)
 
+	//Create a network
+	network := name + "-net"
+	h.createNetwork(network)
+
 	//Prepare worker services from requirements
-	//docker legacy links (https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/) are <name or id>:alias
-	links := []string{}
 	services := []string{}
 	for _, r := range req {
 		if r.Type == sdk.ServiceRequirement {
@@ -185,12 +187,11 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 				"service_name":   serviceName,
 			}
 			//Start the services
-			if err := h.createAndStartContainer(serviceName, img, []string{}, env, []string{}, labels); err != nil {
+			if err := h.createAndStartContainer(serviceName, img, network, name, []string{}, env, labels); err != nil {
 				log.Warning("SpawnWorker>Unable to start required container: %s\n", err)
 				return err
 			}
 			services = append(services, serviceName)
-			links = append(links, serviceName+":"+r.Name)
 		}
 	}
 
@@ -214,15 +215,29 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 	}
 
 	//start the worker
-	if err := h.createAndStartContainer(name, model.Image, cmd, env, links, labels); err != nil {
+	if err := h.createAndStartContainer(name, model.Image, network, "worker", cmd, env, labels); err != nil {
 		log.Warning("SpawnWorker> Unable to start container %s\n", err)
 	}
 
 	return nil
 }
 
+func (h *HatcherySwarm) createNetwork(name string) error {
+	_, err := h.dockerClient.CreateNetwork(docker.CreateNetworkOptions{
+		Name:           name,
+		Driver:         "bridge",
+		Internal:       false,
+		CheckDuplicate: true,
+		EnableIPv6:     false,
+		IPAM: docker.IPAMOptions{
+			Driver: "default",
+		},
+	})
+	return err
+}
+
 //shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(name, image string, cmd, env, links []string, labels map[string]string) error {
+func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAlias string, cmd, env []string, labels map[string]string) error {
 	log.Debug("createAndStartContainer> Create container %s from %s\n", name, image)
 	opts := docker.CreateContainerOptions{
 		Name: name,
@@ -232,8 +247,12 @@ func (h *HatcherySwarm) createAndStartContainer(name, image string, cmd, env, li
 			Env:    env,
 			Labels: labels,
 		},
-		HostConfig: &docker.HostConfig{
-			Links: links,
+		NetworkingConfig: &docker.NetworkingConfig{
+			EndpointsConfig: map[string]*docker.EndpointConfig{
+				network: &docker.EndpointConfig{
+					Aliases: []string{networkAlias, name},
+				},
+			},
 		},
 	}
 
