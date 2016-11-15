@@ -75,7 +75,7 @@ func ImportPipelines(db database.QueryExecuter, proj *sdk.Project, app *sdk.Appl
 	//Import pipelines
 	for i := range app.Pipelines {
 		//Import pipeline
-		log.Debug("application.Import> Insert pipeline %s", app.Pipelines[i].Pipeline.Name)
+		log.Debug("application.Import> Import pipeline %s", app.Pipelines[i].Pipeline.Name)
 		if err := pipeline.Import(db, proj, &app.Pipelines[i].Pipeline, msgChan); err != nil {
 			return err
 		}
@@ -119,26 +119,22 @@ func ImportPipelines(db database.QueryExecuter, proj *sdk.Project, app *sdk.Appl
 				t.DestApplication = *dest
 			}
 
-			//Load source environmment
+			//Load or import source environmment
 			if t.SrcEnvironment.Name == "" {
 				t.SrcEnvironment = sdk.DefaultEnv
 			} else {
-				env, err := environment.LoadEnvironmentByName(db, proj.Key, t.SrcEnvironment.Name)
-				if err != nil {
+				if err := environment.Import(db, proj, &t.SrcEnvironment, msgChan); err != nil {
 					return err
 				}
-				t.SrcEnvironment = *env
 			}
 
-			//Load destination environment
+			//Load or import destination environment
 			if t.DestEnvironment.Name == "" {
 				t.DestEnvironment = sdk.DefaultEnv
 			} else {
-				env, err := environment.LoadEnvironmentByName(db, proj.Key, t.DestEnvironment.Name)
-				if err != nil {
+				if err := environment.Import(db, proj, &t.DestEnvironment, msgChan); err != nil {
 					return err
 				}
-				t.DestEnvironment = *env
 			}
 
 			//Load dest pipeline
@@ -160,7 +156,7 @@ func ImportPipelines(db database.QueryExecuter, proj *sdk.Project, app *sdk.Appl
 			if err != nil {
 				return err
 			}
-			if exists {
+			if !exists {
 				//Insert trigger
 				if err := trigger.InsertTrigger(db, t); err != nil {
 					return err

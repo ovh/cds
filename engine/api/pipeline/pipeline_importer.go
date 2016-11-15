@@ -25,7 +25,13 @@ func Import(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline, msg
 		}
 		return importNew(db, proj, pip)
 	}
+	//Reload the pipeline
+	pip2, err := LoadPipeline(db, proj.Key, pip.Name, false)
+	if err != nil {
+		return err
+	}
 	//Be confident: use the pipeline
+	*pip = *pip2
 	if msgChan != nil {
 		msgChan <- msg.New(msg.PipelineExists, pip.Name)
 	}
