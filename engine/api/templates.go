@@ -314,7 +314,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	// Get data in body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -377,7 +377,7 @@ func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, d
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("applyTemplateOnApplicationHandler> Unable to read body : %s\n", err)
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
