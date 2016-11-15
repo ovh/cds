@@ -293,37 +293,6 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 		}
 	}
 
-	// Add application
-	for _, app := range p.Applications {
-		if err := application.InsertApplication(tx, p, &app); err != nil {
-			log.Warning("addProject: Cannot add application %s in project %s: %s \n", app.Name, p.Name, err)
-			WriteError(w, r, err)
-			return
-		}
-
-		// Add Groups
-		if err = group.InsertGroupsInApplication(tx, p.ProjectGroups, app.ID); err != nil {
-			log.Warning("addProject> Cannot add groups on application: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-
-		// Add variable
-		for _, v := range app.Variable {
-			variable := sdk.Variable{
-				Name:  v.Name,
-				Type:  v.Type,
-				Value: v.Value,
-			}
-
-			if err := application.InsertVariable(tx, &app, variable); err != nil {
-				log.Warning("addProject: Cannot add variable  %s in application %s: %s \n", v.Name, app.Name, err)
-				WriteError(w, r, err)
-				return
-			}
-		}
-	}
-
 	if err := tx.Commit(); err != nil {
 		log.Warning("addProject: Cannot commit transaction:  %s\n", err)
 		WriteError(w, r, err)
