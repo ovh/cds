@@ -1,4 +1,4 @@
-package main
+package openstack
 
 import (
 	"io/ioutil"
@@ -9,11 +9,12 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gorilla/mux"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateServer(t *testing.T) {
-	client = &http.Client{
+	hatchery.Client = &http.Client{
 		Transport: &httpcontrol.Transport{
 			RequestTimeout: 10 * time.Second,
 			MaxTries:       5,

@@ -141,6 +141,7 @@ func readConfig() error {
 // RequestModifier is used to modify behavior of Request and Steam functions
 type RequestModifier func(req *http.Request)
 
+// HttpClient is a interface for HttpClient mock
 type HttpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
@@ -238,7 +239,6 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 			}
 		}
 
-		//resp, err := http.DefaultClient.Do(req)
 		resp, err := client.Do(req)
 
 		// if everything is fine, return body

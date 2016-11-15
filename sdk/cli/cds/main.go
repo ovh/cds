@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/sdk/cli/cds/plugin"
 	"github.com/ovh/cds/sdk/cli/cds/project"
 	"github.com/ovh/cds/sdk/cli/cds/repositoriesmanager"
+	"github.com/ovh/cds/sdk/cli/cds/template"
 	"github.com/ovh/cds/sdk/cli/cds/track"
 	"github.com/ovh/cds/sdk/cli/cds/trigger"
 	"github.com/ovh/cds/sdk/cli/cds/update"
@@ -104,6 +105,7 @@ func main() {
 	rootCmd.AddCommand(track.Cmd)
 	rootCmd.AddCommand(repositoriesmanager.Cmd())
 	rootCmd.AddCommand(plugin.Cmd())
+	rootCmd.AddCommand(template.Cmd())
 	rootCmd.AddCommand(generate.Cmd())
 
 	if err := rootCmd.Execute(); err != nil {

@@ -2,247 +2,82 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
-	"time"
 
-	"github.com/facebookgo/httpcontrol"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
-	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/hatchery/docker"
+	"github.com/ovh/cds/engine/hatchery/local"
+	"github.com/ovh/cds/engine/hatchery/mesos"
+	"github.com/ovh/cds/engine/hatchery/openstack"
+	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-// HatcheryMode describe an interface for each hatchery mode (mesos, local)
-type HatcheryMode interface {
-	ParseConfig()
-	Init() error
-	KillWorker(worker sdk.Worker) error
-	SpawnWorker(model *sdk.Model, req []sdk.Requirement) error
-	CanSpawn(model *sdk.Model, req []sdk.Requirement) bool
-	WorkerStarted(model *sdk.Model) int
-	SetWorkerModelID(int64)
-	Hatchery() *hatchery.Hatchery
-	ID() int64
-	Mode() string
-}
-
-// Definition of different hatchery mode
-const (
-	LocalMode  = "local"
-	DockerMode = "docker"
-	SwarmMode  = "swarm"
-	MesosMode  = "mesos"
-	CloudMode  = "openstack"
-)
-
-var (
-	uk           string
-	hatcheryMode string
-	maxWorker    int
-	client       sdk.HttpClient
-	api          string
-)
-
-var cmd = &cobra.Command{
+var rootCmd = &cobra.Command{
 	Use:   "hatchery",
-	Short: "hatchery --mode=<mode> --api=<cds.domain> --token=<token>",
-	Run:   hatcheryCmd,
-}
+	Short: "hatchery <mode> --api=<cds.domain> --token=<token>",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
-func init() {
-	flags := cmd.Flags()
-	viper.SetEnvPrefix("hatchery")
-	viper.AutomaticEnv()
+		log.Initialize()
+		sdk.SetAgent(sdk.HatcheryAgent)
 
-	flags.String("mode", "", "Hatchery mode : local, docker, mesos, swarm, openstack")
-	viper.BindPFlag("mode", flags.Lookup("mode"))
-
-	flags.String("docker-add-host", "", "Start worker with a custom host-to-IP mapping (host:ip)")
-	viper.BindPFlag("docker-add-host", flags.Lookup("docker-add-host"))
-
-	flags.String("api", "", "CDS api endpoint")
-	viper.BindPFlag("api", flags.Lookup("api"))
-
-	flags.String("token", "", "CDS token")
-	viper.BindPFlag("token", flags.Lookup("token"))
-
-	flags.Int("provision", 0, "Allowed worker model provisioning")
-	viper.BindPFlag("provision", flags.Lookup("provision"))
-
-	flags.Int("max-worker", 10, "Maximum simultaenous worker allowed")
-	viper.BindPFlag("max-worker", flags.Lookup("max-worker"))
-}
-
-func hatcheryCmd(cmd *cobra.Command, args []string) {
-	h := parseConfig(cmd)
-
-	if err := h.Init(); err != nil {
-		log.Critical("Init error: %s\n", err)
-		os.Exit(10)
-	}
-
-	go hearbeat(h)
-
-	for {
-		time.Sleep(2 * time.Second)
-		if h.Hatchery() == nil || h.Hatchery().ID == 0 {
-			continue
+		if viper.GetInt("max-worker") < 1 {
+			sdk.Exit("max-worker have to be > 0\n")
 		}
 
-		if err := hatcheryRoutine(h); err != nil {
-			log.Warning("Error: %s\n", err)
+		if viper.GetInt("provision") < 0 {
+			sdk.Exit("provision have to be >= 0\n")
 		}
-	}
 
+		if viper.GetString("api") == "" {
+			sdk.Exit("CDS api endpoint not provided. See help on flag --api\n")
+		}
+
+		if viper.GetString("token") == "" {
+			sdk.Exit("Worker token not provided. See help on flag --token\n")
+		}
+	},
 }
 
 func main() {
-	log.SetLevel(log.NoticeLevel)
-	sdk.SetAgent(sdk.HatcheryAgent)
+	addFlags()
+	addCommands()
 
-	cmd.Execute()
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 }
 
-func hatcheryRoutine(h HatcheryMode) error {
-	wms, err := sdk.GetWorkerModelStatus()
-	if err != nil {
-		return err
-	}
-
-	provision := int64(viper.GetInt("provision"))
-
-	for _, ms := range wms {
-		// Provisionning
-		ms.WantedCount += provision
-
-		if ms.CurrentCount == ms.WantedCount {
-			// ok, do nothing
-			continue
-		}
-		m, err := sdk.GetWorkerModel(ms.ModelName)
-		if err != nil {
-			return fmt.Errorf("cannot get model named '%s' (%s)", ms.ModelName, err)
-		}
-
-		if !h.CanSpawn(m, ms.Requirements) {
-			continue
-		}
-
-		if ms.CurrentCount < ms.WantedCount {
-			diff := ms.WantedCount - ms.CurrentCount
-			// Check the number of worker started by hatchery
-			if ms.WantedCount < int64(h.WorkerStarted(m))-ms.BuildingCount {
-				// Ok so they are starting...
-				log.Notice("%d wanted, but %d (%d building) %s workers started already...\n", ms.WantedCount, h.WorkerStarted(m), ms.BuildingCount, ms.ModelName)
-				continue
-			}
-			log.Notice("I got to spawn %d %s worker ! (%d/%d)\n", diff, ms.ModelName, ms.CurrentCount, ms.WantedCount)
-
-			for i := 0; i < int(diff); i++ {
-				if err := h.SpawnWorker(m, ms.Requirements); err != nil {
-					log.Warning("Cannot spawn %s: %s\n", ms.ModelName, err)
-					continue
-				}
-			}
-			continue
-		}
-
-		if ms.CurrentCount > ms.WantedCount {
-			diff := ms.CurrentCount - ms.WantedCount
-			if int(diff) < viper.GetInt("provision") { // Chill...
-				continue
-			}
-			log.Notice("I got to kill %d %s worker !\n", diff, ms.ModelName)
-			err = killWorker(h, m)
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
-	}
-
-	return nil
-
+func addCommands() {
+	rootCmd.AddCommand(local.Cmd)
+	rootCmd.AddCommand(docker.Cmd)
+	rootCmd.AddCommand(mesos.Cmd)
+	rootCmd.AddCommand(swarm.Cmd)
+	rootCmd.AddCommand(openstack.Cmd)
 }
 
-func killWorker(h HatcheryMode, model *sdk.Model) error {
+func addFlags() {
+	viper.SetEnvPrefix("cds")
+	viper.AutomaticEnv()
 
-	workers, err := sdk.GetWorkers()
-	if err != nil {
-		return err
-	}
+	rootCmd.PersistentFlags().String("log-level", "noticea", "Log Level: debug, info, warning, notice, critical")
+	viper.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level"))
 
-	// Get list of worker for this model
-	for i := range workers {
-		if workers[i].Model != model.ID {
-			continue
-		}
+	rootCmd.PersistentFlags().String("api", "", "CDS api endpoint")
+	viper.BindPFlag("api", rootCmd.PersistentFlags().Lookup("api"))
 
-		// Check if worker was spawned by this hatchery
-		if workers[i].HatcheryID == 0 || workers[i].HatcheryID != h.ID() {
-			continue
-		}
+	rootCmd.PersistentFlags().String("token", "", "CDS token")
+	viper.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token"))
 
-		// If worker is not currently executing an action
-		if workers[i].Status == sdk.StatusWaiting {
-			// then disable him
-			if err = sdk.DisableWorker(workers[i].ID); err != nil {
-				return err
-			}
-			log.Notice("KillWorker> Disabled %s\n", workers[i].Name)
-			return h.KillWorker(workers[i])
-		}
-	}
+	rootCmd.PersistentFlags().Int("request-api-timeout", 10, "Request CDS API: timeout in seconds")
+	viper.BindPFlag("request-api-timeout", rootCmd.PersistentFlags().Lookup("request-api-timeout"))
 
-	return nil
-}
+	rootCmd.PersistentFlags().Int("provision", 0, "Allowed worker model provisioning")
+	viper.BindPFlag("provision", rootCmd.PersistentFlags().Lookup("provision"))
 
-func parseConfig(cmd *cobra.Command) HatcheryMode {
-	hatcheryMode = viper.GetString("mode")
-	if hatcheryMode == "" {
-		sdk.Exit("Hatchery mode not provided. See usage:\n%s\n", cmd.Short)
-	}
-	var h HatcheryMode
-	switch hatcheryMode {
-	case LocalMode:
-		h = &HatcheryLocal{}
-	case DockerMode:
-		h = &HatcheryDocker{}
-	case MesosMode:
-		h = &HatcheryMesos{}
-	case CloudMode:
-		h = &HatcheryCloud{}
-	case SwarmMode:
-		h = &HatcherySwarm{}
-	default:
-		sdk.Exit("Unknown hatchery mode, aborting\n")
-	}
-
-	maxWorker = viper.GetInt("max-worker")
-
-	if api = viper.GetString("api"); api == "" {
-		sdk.Exit("CDS api endpoint not provided. See usage:\n%s\n", cmd.Short)
-	}
-
-	uk = viper.GetString("token")
-	if uk == "" {
-		sdk.Exit("Worker token not provided. See usage:\n%s\n", cmd.Short)
-	}
-
-	var usr, passwd string
-	client = &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout: 10 * time.Second,
-			MaxTries:       5,
-		},
-	}
-	sdk.SetHTTPClient(client)
-	sdk.Options(api, usr, passwd, uk)
-
-	h.ParseConfig()
-	return h
+	rootCmd.PersistentFlags().Int("max-worker", 10, "Maximum allowed simultaenous workers")
+	viper.BindPFlag("max-worker", rootCmd.PersistentFlags().Lookup("max-worker"))
 }

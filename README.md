@@ -153,7 +153,7 @@ On an existing database, run the following command on each CDS update:
 
 - *OVH home (us)*: https://www.ovh.com/us/
 - *OVH home (fr)*: https://www.ovh.com/fr/
-- *OVH community *: https://community.ovh.com/c/open-source/continuous-delivery-service
+- *OVH community*: https://community.ovh.com/c/open-source/continuous-delivery-service
 
 
 ## License

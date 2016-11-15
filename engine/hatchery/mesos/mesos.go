@@ -1,4 +1,4 @@
-package main
+package mesos
 
 import (
 	"bytes"
@@ -12,18 +12,13 @@ import (
 
 	"github.com/docker/docker/pkg/namesgenerator"
 
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/spf13/viper"
 )
 
-var (
-	marathonHost     string
-	marathonID       string
-	marathonVHOST    string
-	marathonUser     string
-	marathonPassword string
-)
+var hatcheryMesos *HatcheryMesos
 
 type marathonPOSTAppParams struct {
 	DockerImage   string
@@ -68,7 +63,13 @@ const marathonPOSTAppTemplate = `
 
 // HatcheryMesos implements HatcheryMode interface for mesos mode
 type HatcheryMesos struct {
-	hatch *hatchery.Hatchery
+	hatch *sdk.Hatchery
+
+	marathonHost     string
+	marathonID       string
+	marathonVHOST    string
+	marathonUser     string
+	marathonPassword string
 }
 
 // ID must returns hatchery id
@@ -79,27 +80,16 @@ func (m *HatcheryMesos) ID() int64 {
 	return m.hatch.ID
 }
 
-// SetWorkerModelID set the workerModelIDon each heartbeat
-func (m *HatcheryMesos) SetWorkerModelID(id int64) {}
-
-// Mode must returns hatchery mode
-func (m *HatcheryMesos) Mode() string {
-	if m == nil {
-		return ""
-	}
-	return MesosMode
-}
-
 //Hatchery returns hatchery instance
-func (m *HatcheryMesos) Hatchery() *hatchery.Hatchery {
+func (m *HatcheryMesos) Hatchery() *sdk.Hatchery {
 	return m.hatch
 }
 
 // KillWorker deletes an application on mesos via marathon
 func (m *HatcheryMesos) KillWorker(worker sdk.Worker) error {
-	appID := path.Join(marathonID, worker.Name)
+	appID := path.Join(hatcheryMesos.marathonID, worker.Name)
 	log.Notice("killMesosWorker> Killing %s\n", appID)
-	return deleteApp(marathonHost, marathonUser, marathonPassword, appID)
+	return deleteApp(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, appID)
 }
 
 // CanSpawn return wether or not hatchery can spawn model
@@ -121,7 +111,7 @@ func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 	var err error
 
 	// Do not DOS marathon, if deployment queue is longer than 10, wait
-	deployments, err := getDeployments(marathonHost, marathonUser, marathonPassword, "/cds/")
+	deployments, err := getDeployments(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword)
 	if err != nil {
 		return err
 	}
@@ -131,11 +121,11 @@ func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 		return nil
 	}
 
-	apps, err := getApps(marathonHost, marathonUser, marathonPassword, marathonID)
+	apps, err := getApps(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, hatcheryMesos.marathonID)
 	if err != nil {
 		return err
 	}
-	if len(apps) >= maxWorker {
+	if len(apps) >= viper.GetInt("max-worker") {
 		return fmt.Errorf("max number of containers reached, aborting")
 	}
 
@@ -165,7 +155,7 @@ func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 // WorkerStarted returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (m *HatcheryMesos) WorkerStarted(model *sdk.Model) int {
-	apps, err := getApps(marathonHost, marathonUser, marathonPassword, marathonID)
+	apps, err := getApps(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, hatcheryMesos.marathonID)
 	if err != nil {
 		return 0
 	}
@@ -180,35 +170,6 @@ func (m *HatcheryMesos) WorkerStarted(model *sdk.Model) int {
 	return x
 }
 
-// ParseConfig for mesos mode
-func (m *HatcheryMesos) ParseConfig() {
-	marathonHost = os.Getenv("MARATHON_HOST")
-	if marathonHost == "" {
-		sdk.Exit("marathon-host not provided, aborting\n")
-	}
-
-	marathonID = os.Getenv("MARATHON_ID")
-	if marathonID == "" {
-		sdk.Exit("marathon-id not provided, aborting\n")
-	}
-
-	marathonVHOST = os.Getenv("MARATHON_VHOST")
-	if marathonVHOST == "" {
-		sdk.Exit("marathon-vhost not provided, aborting\n")
-	}
-
-	marathonUser = os.Getenv("MARATHON_USER")
-	if marathonUser == "" {
-		sdk.Exit("marathon-user not provided, aborting\n")
-	}
-
-	marathonPassword = os.Getenv("MARATHON_PASSWORD")
-	if marathonPassword == "" {
-		sdk.Exit("marathon-password not provided, aborting\n")
-	}
-
-}
-
 // Init only starts killing routine of worker not registered
 func (m *HatcheryMesos) Init() error {
 
@@ -218,12 +179,12 @@ func (m *HatcheryMesos) Init() error {
 		log.Warning("Cannot retrieve hostname: %s\n", err)
 		name = "cds-hatchery-mesos"
 	}
-	m.hatch = &hatchery.Hatchery{
+	m.hatch = &sdk.Hatchery{
 		Name: name,
-		UID:  uk,
+		UID:  viper.GetString("token"),
 	}
-	err = register(m.hatch)
-	if err != nil {
+
+	if err = hatchery.Register(m.hatch, viper.GetString("token")); err != nil {
 		log.Warning("Cannot register hatchery: %s\n", err)
 	}
 
@@ -259,31 +220,30 @@ func spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64) error {
 		params := marathonPOSTAppParams{
 			DockerImage:   model.Image,
 			APIEndpoint:   sdk.Host,
-			WorkerKey:     uk,
+			WorkerKey:     viper.GetString("token"),
 			WorkerName:    fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)),
 			WorkerModelID: model.ID,
 			HatcheryID:    hatcheryID,
-			MarathonID:    marathonID,
-			MarathonVHOST: marathonVHOST,
+			MarathonID:    hatcheryMesos.marathonID,
+			MarathonVHOST: hatcheryMesos.marathonVHOST,
 			Memory:        memory,
 		}
 
 		var buffer bytes.Buffer
-		err = tmpl.Execute(&buffer, params)
-		if err != nil {
+		if err = tmpl.Execute(&buffer, params); err != nil {
 			return err
 		}
 
-		req, err := http.NewRequest("POST", marathonHost+"/v2/apps", &buffer)
+		req, err := http.NewRequest("POST", hatcheryMesos.marathonHost+"/v2/apps", &buffer)
 		if err != nil {
 			return err
 		}
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("User-Agent", "CDS-HATCHERY/1.0")
-		req.SetBasicAuth(marathonUser, marathonPassword)
+		req.SetBasicAuth(hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword)
 
-		resp, err := client.Do(req)
+		resp, err := hatchery.Client.Do(req)
 		if err != nil {
 			return err
 		}
@@ -306,16 +266,12 @@ func spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64) error {
 }
 
 func startKillAwolWorkerRoutine() {
-	if hatcheryMode != "mesos" {
-		return
-	}
 
 	go func() {
 		for {
 			time.Sleep(10 * time.Second)
 
-			err := killDisabledWorkers()
-			if err != nil {
+			if err := killDisabledWorkers(); err != nil {
 				log.Warning("Cannot kill awol workers: %s\n", err)
 			}
 		}
@@ -325,8 +281,7 @@ func startKillAwolWorkerRoutine() {
 		for {
 			time.Sleep(10 * time.Second)
 
-			err := killAwolWorkers()
-			if err != nil {
+			if err := killAwolWorkers(); err != nil {
 				log.Warning("Cannot kill awol workers: %s\n", err)
 			}
 		}
@@ -339,7 +294,7 @@ func killDisabledWorkers() error {
 		return err
 	}
 
-	apps, err := getApps(marathonHost, marathonUser, marathonPassword, marathonID)
+	apps, err := getApps(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, hatcheryMesos.marathonID)
 	if err != nil {
 		return err
 	}
@@ -353,13 +308,12 @@ func killDisabledWorkers() error {
 		for _, app := range apps {
 			if strings.HasSuffix(app.ID, w.Name) {
 				log.Notice("killing disabled worker %s\n", app.ID)
-				err := deleteApp(marathonHost, marathonUser, marathonPassword, app.ID)
+				err := deleteApp(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, app.ID)
 				if err != nil {
 					return err
 				}
 			}
 		}
-
 	}
 
 	return nil
@@ -371,7 +325,7 @@ func killAwolWorkers() error {
 		return err
 	}
 
-	apps, err := getApps(marathonHost, marathonUser, marathonPassword, marathonID)
+	apps, err := getApps(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, hatcheryMesos.marathonID)
 	if err != nil {
 		return err
 	}
@@ -394,18 +348,18 @@ func killAwolWorkers() error {
 		for _, w := range workers {
 			if strings.HasSuffix(apps[i].ID, w.Name) && w.Status != sdk.StatusDisabled {
 				found = true
+				break
 			}
 		}
 
 		// then if it's not found, kill it !
 		if !found && time.Since(t) > 1*time.Minute {
 			log.Notice("killing awol worker %s\n", apps[i].ID)
-			err := deleteApp(marathonHost, marathonUser, marathonPassword, apps[i].ID)
-			if err != nil {
+
+			if err := deleteApp(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, apps[i].ID); err != nil {
 				return err
 			}
 		}
-
 	}
 
 	return nil

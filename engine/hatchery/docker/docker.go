@@ -1,4 +1,4 @@
-package main
+package docker
 
 import (
 	"crypto/rand"
@@ -10,24 +10,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/spf13/viper"
-
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/spf13/viper"
 )
+
+var hatcheryDocker *HatcheryDocker
 
 // HatcheryDocker spawns instances of worker model with type 'Docker'
 // by directly using available docker daemon
 type HatcheryDocker struct {
 	sync.Mutex
 	workers map[string]*exec.Cmd
-
-	hatch *hatchery.Hatchery
-}
-
-// ParseConfig for docker mode
-func (hd *HatcheryDocker) ParseConfig() {
+	hatch   *sdk.Hatchery
+	addhost string
 }
 
 // ID must returns hatchery id
@@ -38,19 +35,8 @@ func (hd *HatcheryDocker) ID() int64 {
 	return hd.hatch.ID
 }
 
-// SetWorkerModelID set the workerModelIDon each heartbeat
-func (hd *HatcheryDocker) SetWorkerModelID(id int64) {}
-
-// Mode must returns hatchery mode
-func (hd *HatcheryDocker) Mode() string {
-	if hd == nil {
-		return ""
-	}
-	return DockerMode
-}
-
 //Hatchery returns hatchery instance
-func (hd *HatcheryDocker) Hatchery() *hatchery.Hatchery {
+func (hd *HatcheryDocker) Hatchery() *sdk.Hatchery {
 	return hd.hatch
 }
 
@@ -71,7 +57,7 @@ func (hd *HatcheryDocker) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool
 func (hd *HatcheryDocker) Init() error {
 	hd.workers = make(map[string]*exec.Cmd)
 
-	ok, err := checkRequirement(sdk.Requirement{Type: sdk.BinaryRequirement, Value: "docker"})
+	ok, err := hatchery.CheckRequirement(sdk.Requirement{Type: sdk.BinaryRequirement, Value: "docker"})
 	if err != nil {
 		return err
 	}
@@ -86,12 +72,12 @@ func (hd *HatcheryDocker) Init() error {
 		name = "cds-hatchery"
 	}
 	name += "-docker"
-	hd.hatch = &hatchery.Hatchery{
+	hd.hatch = &sdk.Hatchery{
 		Name: name,
-		UID:  uk,
+		UID:  viper.GetString("token"),
 	}
 
-	if err := register(hd.hatch); err != nil {
+	if err := hatchery.Register(hd.hatch, viper.GetString("token")); err != nil {
 		log.Warning("Cannot register hatchery: %s\n", err)
 	}
 
@@ -187,8 +173,8 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) erro
 		return fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
 
-	if len(hd.workers) >= maxWorker {
-		return fmt.Errorf("Max capacity reached (%d)", maxWorker)
+	if len(hd.workers) >= viper.GetInt("max-worker") {
+		return fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
 	}
 
 	name, err := randSeq(16)
@@ -197,19 +183,17 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) erro
 	}
 	name = wm.Name + "-" + name
 
-	addhost := viper.GetString("docker-add-host")
-
 	var args []string
 	args = append(args, "run", "--rm", "-a", "STDOUT", "-a", "STDERR")
 	args = append(args, fmt.Sprintf("--name=%s", name))
 	args = append(args, "-e", "CDS_SINGLE_USE=1")
 	args = append(args, "-e", fmt.Sprintf("CDS_API=%s", sdk.Host))
 	args = append(args, "-e", fmt.Sprintf("CDS_NAME=%s", name))
-	args = append(args, "-e", fmt.Sprintf("CDS_KEY=%s", uk))
+	args = append(args, "-e", fmt.Sprintf("CDS_KEY=%s", viper.GetString("token")))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
-	if addhost != "" {
-		args = append(args, fmt.Sprintf("--add-host=%s", addhost))
+	if hd.addhost != "" {
+		args = append(args, fmt.Sprintf("--add-host=%s", hd.addhost))
 	}
 	args = append(args, wm.Image)
 	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", sdk.Host))

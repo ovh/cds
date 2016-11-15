@@ -78,13 +78,13 @@ func runScriptAction(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	tmpscript.Close()
 	var scriptPath string
 	if runtime.GOOS == "windows" {
-		//Remove all .txt extentions, there is not always a .txt extension
+		//Remove all .txt Extensions, there is not always a .txt extension
 		newPath := strings.Replace(oldPath, ".txt", "", -1)
 		//and add .PS1 extension
 		newPath = newPath + ".PS1"
 		err = os.Rename(oldPath, newPath)
 		if err != nil {
-			sendLog(actionBuild.ID, sdk.ScriptAction, fmt.Sprintf("cannot rename script to add powershell extention, aborting\n"))
+			sendLog(actionBuild.ID, sdk.ScriptAction, fmt.Sprintf("cannot rename script to add powershell Extension, aborting\n"))
 			return res
 		}
 		//This aims to stop a the very first error and return the right exit code

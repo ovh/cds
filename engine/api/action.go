@@ -299,3 +299,83 @@ func getActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 
 	WriteJSON(w, r, a, http.StatusOK)
 }
+
+func loadActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	var a *sdk.Action
+	var err error
+
+	url := r.Form.Get("url")
+	//Load action from url
+	if url != "" {
+		a, err = sdk.NewActionFromRemoteScript(url, nil)
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+	} else {
+		//Try to load from the file
+		r.ParseMultipartForm(64 << 20)
+		file, _, err := r.FormFile("UploadFile")
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		btes, err := ioutil.ReadAll(file)
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+
+		a, err = sdk.NewActionFromScript(btes)
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+	}
+
+	if a == nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	defer tx.Rollback()
+
+	//Check if action exists
+	b, err := action.Exists(tx, a.Name)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	//http code status
+	var code int
+
+	//Update or Insert the action
+	if b {
+		if err := action.UpdateActionDB(tx, a, c.User.ID); err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		code = 200
+	} else {
+		a.Type = sdk.DefaultAction
+		if err := action.InsertAction(tx, a, true); err != nil {
+			WriteError(w, r, err)
+			return
+		}
+		code = 201
+	}
+
+	if err := tx.Commit(); err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, a, code)
+}

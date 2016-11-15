@@ -1,4 +1,4 @@
-package main
+package local
 
 import (
 	"fmt"
@@ -9,32 +9,20 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/spf13/viper"
 )
+
+var hatcheryLocal *HatcheryLocal
 
 // HatcheryLocal implements HatcheryMode interface for local usage
 type HatcheryLocal struct {
 	sync.Mutex
-	hatch         *hatchery.Hatchery
-	basedir       string
-	workers       map[string]*exec.Cmd
-	workerModelID int64
-}
-
-// SetWorkerModelID set the workerModelIDon each heartbeat
-func (h *HatcheryLocal) SetWorkerModelID(id int64) {
-	h.workerModelID = id
-}
-
-// Mode must returns hatchery mode
-func (h *HatcheryLocal) Mode() string {
-	if h == nil {
-		return ""
-	}
-	return LocalMode
+	hatch   *sdk.Hatchery
+	basedir string
+	workers map[string]*exec.Cmd
 }
 
 // ID must returns hatchery id
@@ -46,19 +34,26 @@ func (h *HatcheryLocal) ID() int64 {
 }
 
 //Hatchery returns hatchery instance
-func (h *HatcheryLocal) Hatchery() *hatchery.Hatchery {
+func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryLocal) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
-	if model.ID != h.workerModelID {
+	if h.Hatchery() == nil {
+		log.Debug("CanSpawn false Hatchery nil\n")
+		return false
+	}
+	if model.ID != h.Hatchery().Model.ID {
+		log.Debug("CanSpawn false ID different model.ID:%d h.workerModelID:%d \n", model.ID, h.Hatchery().Model.ID)
 		return false
 	}
 	if len(req) > 0 {
+		log.Debug("CanSpawn false len(req) > 0 \n")
 		return false
 	}
+	log.Debug("CanSpawn true")
 	return true
 }
 
@@ -78,17 +73,17 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) error {
 	var err error
 
-	if len(h.workers) >= maxWorker {
-		return fmt.Errorf("Max capacity reached (%d)\n", maxWorker)
+	if len(h.workers) >= viper.GetInt("max-worker") {
+		return fmt.Errorf("Max capacity reached (%d)\n", viper.GetInt("max-worker"))
 	}
 
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
 
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", sdk.Host))
-	args = append(args, fmt.Sprintf("--key=%s", uk))
+	args = append(args, fmt.Sprintf("--key=%s", viper.GetString("token")))
 	args = append(args, fmt.Sprintf("--basedir=%s", h.basedir))
-	args = append(args, fmt.Sprintf("--model=%d", h.workerModelID))
+	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
 	args = append(args, "--single-use")
@@ -132,12 +127,29 @@ func (h *HatcheryLocal) WorkerStarted(model *sdk.Model) int {
 	return x
 }
 
-// ParseConfig for local mode
-func (h *HatcheryLocal) ParseConfig() {
-	h.basedir = os.Getenv("BASEDIR")
-	if h.basedir == "" {
-		sdk.Exit("basedir not provided, aborting\n")
+// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
+// returns an error "Exit status X" if current host misses one requirement
+func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
+	var capa []sdk.Requirement
+	var tmp map[string]sdk.Requirement
+
+	tmp = make(map[string]sdk.Requirement)
+	for _, r := range req {
+		ok, err := hatchery.CheckRequirement(r)
+		if err != nil {
+			return nil, err
+		}
+
+		if ok {
+			tmp[r.Name] = r
+		}
 	}
+
+	for _, r := range tmp {
+		capa = append(capa, r)
+	}
+
+	return capa, nil
 }
 
 // Init register local hatchery with its worker model
@@ -146,22 +158,22 @@ func (h *HatcheryLocal) Init() error {
 
 	name, err := os.Hostname()
 	if err != nil {
-		log.Warning("Cannot retrieve hostname: %s\n", err)
+		return fmt.Errorf("Cannot retrieve hostname: %s", err)
 	}
 
 	req, err := sdk.GetRequirements()
 	if err != nil {
-		log.Warning("Cannot fetch requirements: %s\n", err)
+		return fmt.Errorf("Cannot fetch requirements: %s", err)
 	}
 
 	capa, err := checkCapabilities(req)
 	if err != nil {
-		log.Warning("Cannot check local capabilities: %s\n", err)
+		return fmt.Errorf("Cannot check local capabilities: %s", err)
 	}
 
-	h.hatch = &hatchery.Hatchery{
+	h.hatch = &sdk.Hatchery{
 		Name: name,
-		UID:  uk,
+		UID:  viper.GetString("token"),
 		Model: sdk.Model{
 			Name:         name,
 			Image:        name,
@@ -169,9 +181,9 @@ func (h *HatcheryLocal) Init() error {
 		},
 	}
 
-	h.workerModelID = h.hatch.Model.ID
+	log.Notice("Call hatchery.Register Init()\n")
 
-	if err := register(h.hatch); err != nil {
+	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
 		log.Warning("Cannot register hatchery: %s\n", err)
 		return err
 	}
