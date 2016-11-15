@@ -743,30 +743,42 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	defer tx.Rollback()
 
 	p.ProjectID = project.ID
-	err = pipeline.InsertPipeline(tx, &p)
-	if err != nil {
+	if err := pipeline.InsertPipeline(tx, &p); err != nil {
 		log.Warning("addPipelineHandler> Cannot insert pipeline: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = group.LoadGroupByProject(tx, project)
-	if err != nil {
+	if err := group.LoadGroupByProject(tx, project); err != nil {
 		log.Warning("addPipelineHandler> Cannot load groupfrom project: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID)
-	if err != nil {
+	sharedInfraPresent := false
+	for _, g := range project.ProjectGroups {
+		if g.Group.Name == group.SharedInfraGroup {
+			sharedInfraPresent = true
+			break
+		}
+	}
+
+	if err := group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID); err != nil {
 		log.Warning("addPipelineHandler> Cannot add groups on pipeline: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
+	if !sharedInfraPresent {
+		if err := group.AddGlobalGroupToPipeline(tx, p.ID); err != nil {
+			log.Warning("addPipelineHandler> Cannot add Global infra group: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+	}
+
 	for _, param := range p.Parameter {
-		err = pipeline.InsertParameterInPipeline(tx, p.ID, &param)
-		if err != nil {
+		if err := pipeline.InsertParameterInPipeline(tx, p.ID, &param); err != nil {
 			log.Warning("addPipelineHandler> Cannot add parameter %s: %s\n", param.Name, err)
 			WriteError(w, r, err)
 			return
@@ -774,16 +786,14 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	}
 
 	for _, app := range p.AttachedApplication {
-		err = application.AttachPipeline(tx, app.ID, p.ID)
-		if err != nil {
+		if err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 			log.Warning("addPipelineHandler> Cannot attach pipeline %d to %d: %s\n", app.ID, p.ID, err)
 			WriteError(w, r, err)
 			return
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("addPipelineHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
