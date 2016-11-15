@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/template"
@@ -83,33 +82,11 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 }
 
 func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	dbmap := database.DBMap(db)
-	tmpls := []database.TemplateExtension{}
-	_, err := dbmap.Select(&tmpls, "select * from template order by id")
+	tmpls, err := templateextension.All(db)
 	if err != nil {
-		log.Warning("getTemplatesHandler> Error: %s", err)
+		log.Warning("getTemplatesHandler>%T %s", err, err)
 		WriteError(w, r, err)
 		return
-	}
-	//Load actions and params
-	for i := range tmpls {
-		_, err := dbmap.Select(&tmpls[i].Actions, "select action.name from action, template_action where template_action.action_id = action.id and template_id = $1", tmpls[i].ID)
-		if err != nil {
-			log.Warning("getTemplatesHandler> Error: %s", err)
-			WriteError(w, r, err)
-			return
-		}
-		params := []sdk.TemplateParam{}
-		str, err := dbmap.SelectStr("select params from template_params where template_id = $1", tmpls[i].ID)
-		if err != nil {
-			WriteError(w, r, err)
-			return
-		}
-		if err := json.Unmarshal([]byte(str), &params); err != nil {
-			WriteError(w, r, err)
-			return
-		}
-		tmpls[i].Params = params
 	}
 	WriteJSON(w, r, tmpls, http.StatusOK)
 }

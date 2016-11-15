@@ -154,6 +154,39 @@ func Apply(templ template.Interface, proj *sdk.Project, params []sdk.TemplatePar
 	return &app, err
 }
 
+//All returns all template extensions
+func All(db *sql.DB) ([]sdk.TemplateExtension, error) {
+	dbmap := database.DBMap(db)
+	tmpls := []database.TemplateExtension{}
+	_, err := dbmap.Select(&tmpls, "select * from template order by id")
+	if err != nil {
+		log.Warning("All> Error: %s", err)
+		return nil, err
+	}
+
+	sdktmpls := []sdk.TemplateExtension{}
+
+	//Load actions and params
+	for i := range tmpls {
+		_, err := dbmap.Select(&tmpls[i].Actions, "select action.name from action, template_action where template_action.action_id = action.id and template_id = $1", tmpls[i].ID)
+		if err != nil {
+			log.Warning("All> Error: %s", err)
+			return nil, err
+		}
+		params := []sdk.TemplateParam{}
+		str, err := dbmap.SelectStr("select params from template_params where template_id = $1", tmpls[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(str), &params); err != nil {
+			return nil, err
+		}
+		tmpls[i].Params = params
+		sdktmpls = append(sdktmpls, sdk.TemplateExtension(tmpls[i]))
+	}
+	return sdktmpls, nil
+}
+
 //LoadByID returns a templateextension from its ID
 func LoadByID(db *sql.DB, id int64) (*sdk.TemplateExtension, error) {
 	//Get the database map
@@ -212,6 +245,7 @@ func Delete(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
 
 //LoadByName returns a templateextension from its name
 func LoadByName(db *sql.DB, name string) (*sdk.TemplateExtension, error) {
+	log.Debug("Loading template %s", name)
 	// Get template from DB
 	dbmap := database.DBMap(db)
 	tmpl := database.TemplateExtension{}

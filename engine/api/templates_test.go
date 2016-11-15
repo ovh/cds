@@ -9,24 +9,20 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/testwithdb"
-
-	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/objectstore"
-
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
-
-	"net/url"
-
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/sdk"
 )
 

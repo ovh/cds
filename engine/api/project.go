@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
@@ -33,7 +32,7 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	projects, err := project.LoadProjects(db, c.User)
 	if err != nil {
 		log.Warning("GetProjects: Cannot load project from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -42,7 +41,7 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 			applications, err := application.LoadApplications(db, p.Key, includePipeline == "true", c.User)
 			if err != nil {
 				log.Warning("GetProjects: Cannot load applications for projects %s : %s\n", p.Key, err)
-				w.WriteHeader(http.StatusInternalServerError)
+				WriteError(w, r, err)
 				return
 			}
 			p.Applications = append(p.Applications, applications...)
@@ -54,7 +53,7 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 			envs, err := environment.LoadEnvironments(db, p.Key, true, c.User)
 			if err != nil {
 				log.Warning("GetProjects: Cannot load environments for projects %s : %s\n", p.Key, err)
-				w.WriteHeader(http.StatusInternalServerError)
+				WriteError(w, r, err)
 				return
 			}
 			p.Environments = append(p.Environments, envs...)
@@ -104,7 +103,7 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	// Check Request
 	if key != proj.Key {
 		log.Warning("updateProject: bad Project key %s/%s \n", key, proj.Key)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -112,14 +111,14 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	p, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("updateProject: Cannot load project from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
 	lastModified, err := project.UpdateProjectDB(db, key, proj.Name)
 	if err != nil {
 		log.Warning("updateProject: Cannot update project %s : %s\n", key, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -151,14 +150,14 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	p, err := project.LoadProject(db, key, c.User, project.WithVariables(), project.WithApplications(historyLength))
 	if err != nil {
 		log.Warning("getProject: Cannot load project from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
 	pipelines, err := pipeline.LoadPipelines(db, p.ID, false, c.User)
 	if err != nil {
 		log.Warning("getProject: Cannot load pipelines from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	p.Pipelines = append(p.Pipelines, pipelines...)
@@ -166,7 +165,7 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	envs, err := environment.LoadEnvironments(db, key, true, c.User)
 	if err != nil {
 		log.Warning("getProject: Cannot load environments from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	p.Environments = append(p.Environments, envs...)
@@ -174,7 +173,7 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	err = group.LoadGroupByProject(db, p)
 	if err != nil {
 		log.Warning("getProject: Cannot load groups from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -210,12 +209,12 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	//Unmarshal data
-	p := &sdk.CreateProjectOptions{}
+	p := &sdk.Project{}
 	if err := json.Unmarshal(data, &p); err != nil {
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
@@ -239,113 +238,96 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	exist, err := project.Exist(db, p.Key)
 	if err != nil {
 		log.Warning("AddProject: Cannot check if project %s exist: %s\n", p.Key, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
 	if exist {
 		log.Warning("AddProject: Project %s already exists\n", p.Key)
 		// Write nice error message here
-		w.WriteHeader(http.StatusConflict)
+		WriteError(w, r, sdk.ErrConflict)
 		return
 	}
 
-	//If an ApplyTemplateOptions is provided, create the project from the wizard
-	if p.NewApplication != nil {
-		//Create a session for current user
-		sessionKey, err := auth.NewSession(router.authDriver, c.User)
-		if err != nil {
-			log.Critical("Instance> Error while creating new session: %s\n", err)
+	//Create a project within a transaction
+	tx, err := db.Begin()
+	defer tx.Rollback()
+	if err != nil {
+		log.Warning("AddProject: Cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err = project.InsertProject(tx, p); err != nil {
+		log.Warning("AddProject: Cannot insert project: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	// Add group
+	for i := range p.ProjectGroups {
+		groupPermission := &p.ProjectGroups[i]
+
+		// Insert group
+		groupID, new, err := group.AddGroup(tx, &groupPermission.Group)
+		if groupID == 0 {
 			WriteError(w, r, err)
 			return
 		}
-		//Create from wizard
-		if err := project.CreateFromWizard(db, p, c.User, sessionKey); err != nil {
-			log.Warning("AddProject: Cannot create project: %s\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	} else {
-		//Create a project within a transaction
-		tx, err := db.Begin()
-		defer tx.Rollback()
-		if err != nil {
-			log.Warning("AddProject: Cannot start transaction: %s\n", err)
+		groupPermission.Group.ID = groupID
+
+		// Add group on project
+		if err := group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission); err != nil {
+			log.Warning("addProject: Cannot add group %s in project %s:  %s\n", groupPermission.Group.Name, p.Name, err)
 			WriteError(w, r, err)
 			return
 		}
 
-		if err = project.InsertProject(tx, &p.Project); err != nil {
-			log.Warning("AddProject: Cannot insert project: %s\n", err)
+		// Add user in group
+		if new {
+			if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, c.User.ID, true); err != nil {
+				log.Warning("addProject: Cannot add user %s in group %s:  %s\n", c.User.Username, groupPermission.Group.Name, err)
+				WriteError(w, r, err)
+				return
+			}
+		}
+	}
+
+	// Add application
+	for _, app := range p.Applications {
+		if err := application.InsertApplication(tx, p, &app); err != nil {
+			log.Warning("addProject: Cannot add application %s in project %s: %s \n", app.Name, p.Name, err)
 			WriteError(w, r, err)
 			return
 		}
 
-		// Add group
-		for i := range p.ProjectGroups {
-			groupPermission := &p.ProjectGroups[i]
-
-			// Insert group
-			groupID, new, err := group.AddGroup(tx, &groupPermission.Group)
-			if groupID == 0 {
-				WriteError(w, r, err)
-				return
-			}
-			groupPermission.Group.ID = groupID
-
-			// Add group on project
-			if err := group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission); err != nil {
-				log.Warning("addProject: Cannot add group %s in project %s:  %s\n", groupPermission.Group.Name, p.Name, err)
-				WriteError(w, r, err)
-				return
-			}
-
-			// Add user in group
-			if new {
-				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, c.User.ID, true); err != nil {
-					log.Warning("addProject: Cannot add user %s in group %s:  %s\n", c.User.Username, groupPermission.Group.Name, err)
-					WriteError(w, r, err)
-					return
-				}
-			}
-		}
-
-		// Add application
-		for _, app := range p.Applications {
-			if err := application.InsertApplication(tx, &p.Project, &app); err != nil {
-				log.Warning("addProject: Cannot add application %s in project %s: %s \n", app.Name, p.Name, err)
-				WriteError(w, r, err)
-				return
-			}
-
-			// Add Groups
-			if err = group.InsertGroupsInApplication(tx, p.ProjectGroups, app.ID); err != nil {
-				log.Warning("addProject> Cannot add groups on application: %s\n", err)
-				WriteError(w, r, err)
-				return
-			}
-
-			// Add variable
-			for _, v := range app.Variable {
-				variable := sdk.Variable{
-					Name:  v.Name,
-					Type:  v.Type,
-					Value: v.Value,
-				}
-
-				if err := application.InsertVariable(tx, &app, variable); err != nil {
-					log.Warning("addProject: Cannot add variable  %s in application %s: %s \n", v.Name, app.Name, err)
-					WriteError(w, r, err)
-					return
-				}
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			log.Warning("addProject: Cannot commit transaction:  %s\n", err)
+		// Add Groups
+		if err = group.InsertGroupsInApplication(tx, p.ProjectGroups, app.ID); err != nil {
+			log.Warning("addProject> Cannot add groups on application: %s\n", err)
 			WriteError(w, r, err)
 			return
 		}
+
+		// Add variable
+		for _, v := range app.Variable {
+			variable := sdk.Variable{
+				Name:  v.Name,
+				Type:  v.Type,
+				Value: v.Value,
+			}
+
+			if err := application.InsertVariable(tx, &app, variable); err != nil {
+				log.Warning("addProject: Cannot add variable  %s in application %s: %s \n", v.Name, app.Name, err)
+				WriteError(w, r, err)
+				return
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("addProject: Cannot commit transaction:  %s\n", err)
+		WriteError(w, r, err)
+		return
 	}
 
 	WriteJSON(w, r, p, http.StatusCreated)
@@ -381,7 +363,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	countApplications, err := application.CountApplicationByProject(db, p.ID)
 	if err != nil {
 		log.Warning("deleteProject: Cannot count application for project %s: %s\n", p.Name, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	if countApplications > 0 {
@@ -393,7 +375,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deleteProject: Cannot start transaction: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	defer tx.Rollback()
@@ -401,13 +383,13 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	err = project.DeleteProject(tx, p.Key)
 	if err != nil {
 		log.Warning("deleteProject: cannot delete project %s: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	err = tx.Commit()
 	if err != nil {
 		log.Warning("deleteProject: Cannot commit transaction: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	log.Notice("Project %s deleted.\n", p.Name)

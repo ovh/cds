@@ -37,12 +37,6 @@ type ProjectLastUpdates struct {
 	} `json:"pipelines"`
 }
 
-//CreateProjectOptions represents project creation with a template
-type CreateProjectOptions struct {
-	Project
-	NewApplication *ApplyTemplatesOptions `json:"application,omitempty"`
-}
-
 // ProjectKeyPattern  pattern for project key
 const ProjectKeyPattern = "^[A-Z0-9]{1,}$"
 
