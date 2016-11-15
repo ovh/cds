@@ -73,6 +73,13 @@ func (c *LocalClient) GetCheckAuthHeaderFunc(options interface{}) func(db *sql.D
 				return nil
 			}
 
+			//Even if we are in BasicAuthMode, we may receive session token (from template extension by example)
+			sessionToken := headers.Get(sdk.SessionTokenHeader)
+			if sessionToken != "" {
+				return c.checkUserSessionAuth(db, headers, ctx)
+			}
+
+			//Standard way : basic auth
 			h := headers.Get("Authorization")
 			if h == "" {
 				return fmt.Errorf("no authorization header")

@@ -1,8 +1,13 @@
 package sdk
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
+	"path/filepath"
 )
 
 // TemplateParam can be a String/Date/Script/URL...
@@ -81,40 +86,179 @@ func GetDeploymentTemplates() ([]Template, error) {
 	return tmpls, nil
 }
 
-// ApplyApplicationTemplates creates given application and apply build and deployment templates
-func ApplyApplicationTemplates(projectKey string, name, repo string, build, deploy Template) (*Application, error) {
-	uri := fmt.Sprintf("/template/%s", projectKey)
+// ApplyApplicationTemplate creates given application and apply build template
+func ApplyApplicationTemplate(projectKey string, name, repo string, build Template) (*Application, error) {
 
-	app := &Application{
-		Name:           name,
-		BuildTemplate:  build,
-		DeployTemplate: deploy,
-		Variable: []Variable{
-			Variable{
-				Name:  "repo",
-				Type:  StringVariable,
-				Value: repo,
-			},
+	uri := fmt.Sprintf("/project/%s/template", projectKey)
+
+	opts := ApplyTemplatesOptions{
+		ApplicationName: name,
+		ApplicationVariables: map[string]string{
+			"repo": "git@github.com:ovh/cds.git",
 		},
+		TemplateName:   build.Name,
+		TemplateParams: build.Params,
 	}
 
-	data, err := json.Marshal(app)
-	if err != nil {
-		return nil, err
-	}
-
-	data, code, err := Request("POST", uri, data)
+	btes, _ := json.Marshal(opts)
+	data, code, err := Request("POST", uri, btes)
 	if err != nil {
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
+		return nil, DecodeError(data)
 	}
 
-	err = json.Unmarshal(data, app)
+	app, err := GetApplication(projectKey, name)
 	if err != nil {
 		return nil, err
 	}
 
 	return app, nil
+}
+
+//TemplateExtension represents a template store as a binary extension
+type TemplateExtension struct {
+	ID          int64           `json:"id" db:"id"`
+	Name        string          `json:"name" db:"name"`
+	Type        string          `json:"type" db:"type"`
+	Author      string          `json:"author" db:"author"`
+	Description string          `json:"description"`
+	Identifier  string          `json:"identifier" db:"identifier"`
+	Size        int64           `json:"-" db:"size"`
+	Perm        uint32          `json:"-" db:"perm"`
+	MD5Sum      string          `json:"md5sum" db:"md5sum"`
+	ObjectPath  string          `json:"-" db:"object_path"`
+	Filename    string          `json:"-" db:"-"`
+	Path        string          `json:"-" db:"-"`
+	Params      []TemplateParam `json:"params" db:"-"`
+	Actions     []string        `json:"actions" db:"-"`
+}
+
+//ApplyTemplatesOptions represents arguments to create an application and all its components from templates
+type ApplyTemplatesOptions struct {
+	ApplicationName               string            `json:"name"`
+	ApplicationVariables          map[string]string `json:"application_variables"`
+	TemplateName                  string            `json:"template"`
+	TemplateParams                []TemplateParam   `json:"template_params"`
+	RepositoriesManagerName       string            `json:"repositories_manager_name"`
+	ApplicationRepositoryFullname string            `json:"repository_fullname"`
+}
+
+//GetName returns the name of the template extension
+func (a *TemplateExtension) GetName() string {
+	return a.Name
+}
+
+//GetPath returns the storage path of the template extension
+func (a *TemplateExtension) GetPath() string {
+	return fmt.Sprintf("templates")
+}
+
+//UploadTemplate uploads binary file to perform a new action
+func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("UploadFile", filepath.Base(filePath))
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
+
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+	path := "/template/add"
+	method := "POST"
+	if update {
+		method = "PUT"
+		path = "/template/"
+
+		btes, _, err := Request("GET", "/template", nil)
+		if err != nil {
+			return nil, err
+		}
+		tmpls := []TemplateExtension{}
+		if err := json.Unmarshal(btes, &tmpls); err != nil {
+			return nil, err
+		}
+
+		var found bool
+		for _, t := range tmpls {
+			if t.Name == name {
+				path += fmt.Sprintf("%d", t.ID)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("Template %s not found", name)
+		}
+	}
+	btes, code, err := UploadMultiPart(method, path, body, SetHeader("uploadfile", filePath), SetHeader("Content-Type", writer.FormDataContentType()))
+	if err != nil {
+		return nil, err
+	}
+
+	if code >= 300 {
+		return nil, fmt.Errorf("HTTP Error %d\n", code)
+	}
+
+	return btes, nil
+}
+
+//DeleteTemplate delete Template
+func DeleteTemplate(name string) error {
+	tmpls, err := ListTemplates()
+	if err != nil {
+		return err
+	}
+
+	var id int64
+	var found bool
+	for _, t := range tmpls {
+		if t.Name == name {
+			id = t.ID
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("Unable to found template %s", name)
+	}
+
+	path := fmt.Sprintf("/template/%d", id)
+	if _, _, err := Request("DELETE", path, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//ListTemplates returns all templates
+func ListTemplates() ([]TemplateExtension, error) {
+	tmpls := []TemplateExtension{}
+	body, code, err := Request("GET", "/template", nil)
+	if err != nil {
+		return nil, err
+	}
+	if code >= 300 {
+		return nil, fmt.Errorf("HTTP Error %d\n", code)
+	}
+	if err := json.Unmarshal(body, &tmpls); err != nil {
+		return nil, err
+	}
+	return tmpls, nil
 }

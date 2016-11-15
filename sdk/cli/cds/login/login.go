@@ -81,7 +81,7 @@ func runLogin() {
 	}
 
 	//Create the config directory
-	if err := os.Mkdir(filepath.Base(sdk.CDSConfigFile), 0700); err != nil && !os.IsExist(err) {
+	if err := os.Mkdir(filepath.Dir(sdk.CDSConfigFile), 0700); err != nil && !os.IsExist(err) {
 		sdk.Exit("Error: Cannot create config folder (%s)\n", err)
 	}
 

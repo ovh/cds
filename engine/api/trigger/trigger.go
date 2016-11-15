@@ -23,7 +23,7 @@ func InsertTriggerParameter(db database.Executer, triggerID int64, p sdk.Paramet
 }
 
 // InsertTrigger adds a new trigger in database
-func InsertTrigger(tx *sql.Tx, t *sdk.PipelineTrigger) error {
+func InsertTrigger(tx database.QueryExecuter, t *sdk.PipelineTrigger) error {
 	query := `INSERT INTO pipeline_trigger (src_application_id, src_pipeline_id, src_environment_id,
 	dest_application_id, dest_pipeline_id, dest_environment_id, manual) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 
@@ -80,7 +80,7 @@ type parent struct {
 	EnvID int64
 }
 
-func isTriggerLoopFree(tx *sql.Tx, t *sdk.PipelineTrigger, parents []parent) error {
+func isTriggerLoopFree(tx database.Querier, t *sdk.PipelineTrigger, parents []parent) error {
 
 	// First, check yourself
 	for _, p := range parents {
@@ -833,4 +833,20 @@ func CheckPrerequisites(t sdk.PipelineTrigger, pb sdk.PipelineBuild) (bool, erro
 	}
 
 	return prerequisitesOK, nil
+}
+
+//Exists checks if trigger exists
+func Exists(db database.Querier, applicationSource, pipelineSource, EnvSource, applicationDest, pipelineDest, EnvDest int64) (bool, error) {
+	query := `SELECT COUNT(1) FROM pipeline_trigger
+			  WHERE src_application_id = $1
+			  AND src_pipeline_id = $2
+			  AND src_environment_id = $3
+			  AND dest_application_id = $4
+			  AND dest_pipeline_id = $5
+			  AND dest_environment_id = $6`
+	var n int
+	if err := db.QueryRow(query, applicationSource, pipelineSource, EnvSource, applicationDest, pipelineDest, EnvDest).Scan(&n); err != nil {
+		return false, err
+	}
+	return n == 1, nil
 }

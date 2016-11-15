@@ -16,6 +16,21 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+//IsAttached checks if an application is attach to a pipeline given its name
+func IsAttached(db database.Querier, projectID, appID int64, pipelineName string) (bool, error) {
+	query := `SELECT count(1) 
+		from application_pipeline, pipeline 
+		WHERE application_pipeline.pipeline_id = pipeline.id
+		AND pipeline.name = $3
+		AND pipeline.project_id = $1
+		AND application_pipeline.application_id = $2`
+	var n int
+	if err := db.QueryRow(query, projectID, appID, pipelineName).Scan(&n); err != nil {
+		return false, err
+	}
+	return n == 1, nil
+}
+
 // AttachPipeline Attach a pipeline to an application
 func AttachPipeline(db database.Executer, appID, pipelineID int64) error {
 	query := `INSERT INTO application_pipeline(application_id, pipeline_id, args) VALUES($1, $2, $3)`

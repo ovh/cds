@@ -210,6 +210,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 	pipelinePip1 := &sdk.Pipeline{
 		Name:      "PIP1",
 		ProjectID: project1.ID,
+		Type:      sdk.BuildPipeline,
 	}
 
 	err = pipeline.InsertPipeline(db, pipelinePip1)
