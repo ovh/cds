@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
@@ -20,7 +19,6 @@ var hatcherySwarm *HatcherySwarm
 
 //HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
 type HatcherySwarm struct {
-	sync               sync.Mutex
 	hatch              *sdk.Hatchery
 	dockerClient       *docker.Client
 	onlyWithServiceReq bool
@@ -48,7 +46,8 @@ func (h *HatcherySwarm) Init() error {
 		log.Warning("Cannot retrieve hostname: %s\n", err)
 		name = "cds-hatchery"
 	}
-	name += "-dockerapi"
+
+	name += "-swarm"
 	h.hatch = &sdk.Hatchery{
 		Name: name,
 	}
@@ -104,48 +103,65 @@ func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error)
 }
 
 func (h *HatcherySwarm) killAndRemove(ID string) error {
-	log.Debug("Remove container %s", ID)
 	container, err := h.dockerClient.InspectContainer(ID)
 	if err != nil {
 		return err
 	}
 
-	links := container.HostConfig.Links
-	for _, l := range links {
-		log.Debug("Remove linked containers : %s", l)
-		if strings.Contains(l, ":") {
-			c, _ := h.getContainer(strings.Split(l, ":")[0])
-			if c != nil {
-				defer h.killAndRemove(c.ID)
+	network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
+	if err != nil {
+		return err
+	}
+
+	if netname, ok := network.Labels["worker_net"]; ok {
+		log.Notice("Remove network %s", netname)
+		for id, _ := range network.Containers {
+			log.Notice("Remove container %s", id)
+			if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
+				ID:     id,
+				Signal: docker.SIGKILL,
+			}); err != nil {
+				log.Warning("Unable to kill container %s", err)
+				continue
 			}
-		} else {
-			log.Warning("I dont know what to do with %s", l)
+
+			if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
+				ID: id,
+			}); err != nil {
+				log.Warning("Unable to remove container %s", err)
+			}
+		}
+	} else {
+		log.Notice("Remove container %s", ID)
+		if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
+			ID:     ID,
+			Signal: docker.SIGKILL,
+		}); err != nil {
+			log.Warning("Unable to kill container %s", err)
+		}
+
+		if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
+			ID: ID,
+		}); err != nil {
+			log.Warning("Unable to remove container %s", err)
 		}
 	}
 
-	h.dockerClient.KillContainer(docker.KillContainerOptions{
-		ID:     ID,
-		Signal: docker.SIGKILL,
-	})
-
-	err = h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-		ID: ID,
-	})
-
-	return err
+	return nil
 }
 
 //SpawnWorker start a new docker container
 func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
-
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 
-	log.Debug("Spawning worker %s with requirements %v", name, req)
+	log.Notice("Spawning worker %s with requirements %v", name, req)
+
+	//Create a network
+	network := name + "-net"
+	h.createNetwork(network)
 
 	//Prepare worker services from requirements
-	//docker legacy links (https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/) are <name or id>:alias
-	links := []string{}
 	services := []string{}
 	for _, r := range req {
 		if r.Type == sdk.ServiceRequirement {
@@ -165,12 +181,11 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 				"service_name":   serviceName,
 			}
 			//Start the services
-			if err := h.createAndStartContainer(serviceName, img, []string{}, env, []string{}, labels); err != nil {
+			if err := h.createAndStartContainer(serviceName, img, network, name, []string{}, env, labels, 0); err != nil {
 				log.Warning("SpawnWorker>Unable to start required container: %s\n", err)
 				return err
 			}
 			services = append(services, serviceName)
-			links = append(links, serviceName+":"+r.Name)
 		}
 	}
 
@@ -194,16 +209,37 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 	}
 
 	//start the worker
-	if err := h.createAndStartContainer(name, model.Image, cmd, env, links, labels); err != nil {
+	if err := h.createAndStartContainer(name, model.Image, network, "worker", cmd, env, labels, 0); err != nil {
 		log.Warning("SpawnWorker> Unable to start container %s\n", err)
 	}
 
 	return nil
 }
 
+func (h *HatcherySwarm) createNetwork(name string) error {
+	_, err := h.dockerClient.CreateNetwork(docker.CreateNetworkOptions{
+		Name:           name,
+		Driver:         "bridge",
+		Internal:       false,
+		CheckDuplicate: true,
+		EnableIPv6:     false,
+		IPAM: docker.IPAMOptions{
+			Driver: "default",
+		},
+		Labels: map[string]string{
+			"worker_net": name,
+		},
+	})
+	return err
+}
+
 //shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(name, image string, cmd, env, links []string, labels map[string]string) error {
+func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAlias string, cmd, env []string, labels map[string]string, memory int64) error {
 	log.Debug("createAndStartContainer> Create container %s from %s\n", name, image)
+	//Memory is set to 1GB by default
+	if memory == 0 {
+		memory = 1024
+	}
 	opts := docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
@@ -211,9 +247,14 @@ func (h *HatcherySwarm) createAndStartContainer(name, image string, cmd, env, li
 			Cmd:    cmd,
 			Env:    env,
 			Labels: labels,
+			Memory: memory,
 		},
-		HostConfig: &docker.HostConfig{
-			Links: links,
+		NetworkingConfig: &docker.NetworkingConfig{
+			EndpointsConfig: map[string]*docker.EndpointConfig{
+				network: &docker.EndpointConfig{
+					Aliases: []string{networkAlias, name},
+				},
+			},
 		},
 	}
 
