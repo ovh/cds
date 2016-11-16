@@ -33,8 +33,10 @@ var (
 	ab             sdk.ActionBuild
 	buildVariables []sdk.Variable
 	// Git ssh configuration
-	pkey   string
-	gitssh string
+	pkey           string
+	gitssh         string
+	startTimestamp *time.Time
+	nbActionsDone  int
 )
 
 var mainCmd = &cobra.Command{
@@ -91,6 +93,9 @@ var mainCmd = &cobra.Command{
 		}
 		exportport = port
 
+		now := time.Now()
+		startTimestamp = &now
+
 		// start logger routine
 		logChan = make(chan sdk.Log)
 		go logger(logChan)
@@ -133,6 +138,9 @@ func init() {
 	flags.String("basedir", "", "Worker working directory")
 	viper.BindPFlag("basedir", flags.Lookup("basedir"))
 
+	flags.Int("ttl", 12, "Worker time to live (hours)")
+	viper.BindPFlag("ttl", flags.Lookup("ttl"))
+
 	mainCmd.AddCommand(cmdExport)
 }
 
@@ -156,13 +164,17 @@ func queuePolling() {
 			}
 		}
 
+		//We we've done nothing until ttl is over, let's exit
+		if nbActionsDone == 0 && startTimestamp.Add(time.Duration(viper.GetInt("ttl"))*time.Hour).Before(time.Now()) {
+			os.Exit(0)
+		}
+
 		checkQueue()
 		time.Sleep(5 * time.Second)
 	}
 }
 
 func checkQueue() {
-
 	queue, err := sdk.GetBuildQueue()
 	if err != nil {
 		log.Notice("checkQueue> Cannot get build queue: %s\n", err)
@@ -175,6 +187,7 @@ func checkQueue() {
 		requirementsOK := true
 		// Check requirement
 		for _, r := range queue[i].Requirements {
+			log.Notice("Checking requirements %s(%v)=%s for %s", r.Name, r.Type, r.Value, queue[i].ID)
 			ok, err := checkRequirement(r)
 			if err != nil {
 				postCheckRequirementError(&r, err)
@@ -200,6 +213,8 @@ func postCheckRequirementError(r *sdk.Requirement, err error) {
 }
 
 func takeAction(b sdk.ActionBuild) {
+	nbActionsDone++
+
 	gitssh = ""
 	pkey = ""
 	path := fmt.Sprintf("/queue/%d/take", b.ID)

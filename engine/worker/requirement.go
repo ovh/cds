@@ -7,30 +7,31 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
+var requirementCheckFuncs = map[sdk.RequirementType]func(r sdk.Requirement) (bool, error){
+	sdk.BinaryRequirement:        checkBinaryRequirement,
+	sdk.HostnameRequirement:      checkHostnameRequirement,
+	sdk.ModelRequirement:         checkModelRequirement,
+	sdk.NetworkAccessRequirement: checkNetworkAccessRequirement,
+	sdk.PluginRequirement:        checkPluginRequirement,
+	sdk.ServiceRequirement:       checkServiceRequirement,
+	sdk.MemoryRequirement:        checkMemoryRequirement,
+}
+
 func checkRequirement(r sdk.Requirement) (bool, error) {
-	switch r.Type {
-	case sdk.BinaryRequirement:
-		return checkBinaryRequirement(r)
-	case sdk.HostnameRequirement:
-		return checkHostnameRequirement(r)
-	case sdk.ModelRequirement:
-		return checkModelRequirement(r)
-	case sdk.NetworkAccessRequirement:
-		return checkNetworkAccessRequirement(r)
-	case sdk.PluginRequirement:
-		return checkPluginRequirement(r)
-	case sdk.ServiceRequirement:
-		return checkServiceRequirement(r)
-	default:
+	check := requirementCheckFuncs[r.Type]
+	if check == nil {
 		log.Printf("checkRequirement> Unknown type of requirement: %s\n", r.Type)
+		log.Printf("checkRequirement> Support requirements are : %v", requirementCheckFuncs)
 		return false, fmt.Errorf("unknown type of requirement %s", r.Type)
 	}
+	return check(r)
 }
 
 func checkPluginRequirement(r sdk.Requirement) (bool, error) {
@@ -68,9 +69,7 @@ func checkHostnameRequirement(r sdk.Requirement) (bool, error) {
 }
 
 func checkBinaryRequirement(r sdk.Requirement) (bool, error) {
-
-	_, err := exec.LookPath(r.Value)
-	if err != nil {
+	if _, err := exec.LookPath(r.Value); err != nil {
 		// Return nil because the error contains 'Executable file not found', that's what we wanted
 		return false, nil
 	}
@@ -79,7 +78,6 @@ func checkBinaryRequirement(r sdk.Requirement) (bool, error) {
 }
 
 func checkModelRequirement(r sdk.Requirement) (bool, error) {
-
 	wm, err := sdk.GetWorkerModel(r.Value)
 	if err != nil {
 		return false, nil
@@ -103,10 +101,23 @@ func checkNetworkAccessRequirement(r sdk.Requirement) (bool, error) {
 }
 
 func checkServiceRequirement(r sdk.Requirement) (bool, error) {
-	_, err := net.LookupIP(r.Name)
-	if err != nil {
+	if _, err := net.LookupIP(r.Name); err != nil {
 		return false, err
 	}
 
 	return true, nil
+}
+
+func checkMemoryRequirement(r sdk.Requirement) (bool, error) {
+	totalMemory, err := systemTotalMemory()
+	if err != nil {
+		return false, err
+	}
+	neededMemory, err := strconv.ParseInt(r.Value, 10, 64)
+	if err != nil {
+		return false, err
+	}
+	//Assuming memory is in megabytes
+	//If we have more than 90% of neededMemory, lets do it
+	return int64(totalMemory) >= (neededMemory*1024*1024)*90/100, nil
 }
