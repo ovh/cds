@@ -146,3 +146,8 @@ ALTER TABLE warning ADD CONSTRAINT fk_action FOREIGN KEY (action_id) references 
 ALTER TABLE project_variable_audit ADD CONSTRAINT fk_project FOREIGN KEY (project_id) references project (id) ON delete cascade;
 ALTER TABLE application_variable_audit ADD CONSTRAINT fk_application FOREIGN KEY (application_id) references application (id) ON delete cascade;
 ALTER TABLE environment_variable_audit ADD CONSTRAINT fk_environment FOREIGN KEY (environment_id) references environment (id) ON delete cascade;
+
+-- TEMPLATES
+SELECT create_foreign_key('FK_TEMPLATE_PARAMS_TEMPLATE', 'template_params', 'template', 'template_id', 'id');
+SELECT create_foreign_key('FK_TEMPLATE_ACTIONS_TEMPLATE', 'template_params', 'template', 'template_id', 'id');
+SELECT create_foreign_key('FK_TEMPLATE_ACTIONS_ACTION', 'template_action', 'action', 'action_id', 'id');
