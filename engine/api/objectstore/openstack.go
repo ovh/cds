@@ -59,7 +59,7 @@ func (ops *OpenstackStore) Status() string {
 
 // Delete should delete on openstack
 func (ops *OpenstackStore) Delete(o Object) error {
-	return nil
+	return deleteObject(ops.token.ID, ops.endpoint, o.GetPath(), o.GetName())
 }
 
 // Store stores in openstack
