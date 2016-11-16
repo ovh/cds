@@ -607,3 +607,95 @@ func Test_checkIncompatibleServiceWithModelRequirement(t *testing.T) {
 		assert.EqualValues(t, tt.want, got)
 	}
 }
+
+func Test_checkIncompatibleMemoryWithModelRequirement(t *testing.T) {
+	type args struct {
+		proj      string
+		pip       string
+		a         *sdk.Action
+		wms       []sdk.Model
+		modelName string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []sdk.Warning
+		wantErr bool
+	}{
+		{
+			name: "With a model matching all requirements it should not return warning",
+			args: args{
+				proj: "proj",
+				pip:  "pipeline",
+				a: &sdk.Action{
+					ID:   1,
+					Name: "Action Name 1",
+					Requirements: []sdk.Requirement{
+						{
+							Name:  "service-1",
+							Type:  sdk.MemoryRequirement,
+							Value: "service-1",
+						},
+					},
+				},
+				modelName: "model",
+				wms: []sdk.Model{
+					sdk.Model{
+						Name: "model",
+						Type: sdk.Docker,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "With a model != docker it should return 1 warning",
+			args: args{
+				proj: "proj",
+				pip:  "pipeline",
+				a: &sdk.Action{
+					ID:   1,
+					Name: "Action Name 1",
+					Requirements: []sdk.Requirement{
+						{
+							Name:  "service-1",
+							Type:  sdk.MemoryRequirement,
+							Value: "service-1",
+						},
+					},
+				},
+				modelName: "model",
+				wms: []sdk.Model{
+					sdk.Model{
+						Name: "model",
+						Type: sdk.Openstack,
+					},
+				},
+			},
+			want: []sdk.Warning{
+				{
+					Action: sdk.Action{
+						ID: 1,
+					},
+					ID: IncompatibleMemoryAndModelRequirements,
+					MessageParam: map[string]string{
+						"ActionName":   "Action Name 1",
+						"PipelineName": "pipeline",
+						"ProjectKey":   "proj",
+						"ModelName":    "model",
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		got, err := checkIncompatibleMemoryWithModelRequirement(tt.args.proj, tt.args.pip, tt.args.a, tt.args.wms, tt.args.modelName)
+		if (err != nil) != tt.wantErr {
+			t.Errorf("%q. checkIncompatibleMemoryWithModelRequirement() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+			continue
+		}
+		assert.EqualValues(t, tt.want, got)
+	}
+}

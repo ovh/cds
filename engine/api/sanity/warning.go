@@ -28,6 +28,7 @@ const (
 	MultipleHostnameRequirement
 	IncompatibleBinaryAndModelRequirements
 	IncompatibleServiceAndModelRequirements
+	IncompatibleMemoryAndModelRequirements
 )
 
 var messageAmericanEnglish = map[int64]string{
@@ -41,6 +42,7 @@ var messageAmericanEnglish = map[int64]string{
 	MultipleHostnameRequirement:             `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} has multiple Hostname requirements. It will never start building.`,
 	IncompatibleBinaryAndModelRequirements:  `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} does not have the binary '{{index . "BinaryRequirement"}}' capability`,
 	IncompatibleServiceAndModelRequirements: `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} cannot be linked to service '{{index . "ServiceRequirement"}}'`,
+	IncompatibleMemoryAndModelRequirements:  `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} cannot handle memory requirement`,
 }
 
 func processWarning(w *sdk.Warning, acceptedlanguage string) error {

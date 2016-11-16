@@ -123,8 +123,8 @@ func checkNoWorkerModelMatchRequirement(proj string, pip string, a *sdk.Action, 
 	for _, wm := range wms {
 		ok := true
 		for _, ar := range areqs {
-			//Service requirements are only compliant with docker worker models
-			if ar.Type == sdk.ServiceRequirement && wm.Type != sdk.Docker {
+			//Service requirements and Memory requirements are only compliant with docker worker models
+			if (ar.Type == sdk.ServiceRequirement || ar.Type == sdk.MemoryRequirement) && wm.Type != sdk.Docker {
 				// Model doesn't have this requirement
 				ok = false
 				break
@@ -269,6 +269,55 @@ func checkIncompatibleServiceWithModelRequirement(proj string, pip string, a *sd
 				"ProjectKey":         proj,
 				"ModelName":          modelName,
 				"ServiceRequirement": service.Value,
+			},
+		}
+		warns = append(warns, w)
+	}
+
+	return warns, nil
+}
+
+func checkIncompatibleMemoryWithModelRequirement(proj string, pip string, a *sdk.Action, wms []sdk.Model, modelName string) ([]sdk.Warning, error) {
+	var warns []sdk.Warning
+	var m sdk.Model
+	areqs := a.Requirements
+
+	// find worker model
+	for _, wm := range wms {
+		if wm.Name == modelName {
+			m = wm
+			break
+		}
+	}
+
+	if m.Name == "" {
+		log.Warning("checkIncompatibleMemoryWithModelRequirement> Model '%s' not found\n", modelName)
+		return nil, sdk.ErrNoWorkerModel
+	}
+
+	var req *sdk.Requirement
+	// now for each binary requirement in areqs, check it is found in model capas
+	for i, b := range areqs {
+		if b.Type == sdk.MemoryRequirement {
+			req = &areqs[i]
+			break
+		}
+	}
+
+	if req != nil {
+		if m.Type == sdk.Docker {
+			return nil, nil
+		}
+		w := sdk.Warning{
+			Action: sdk.Action{
+				ID: a.ID,
+			},
+			ID: IncompatibleMemoryAndModelRequirements,
+			MessageParam: map[string]string{
+				"ActionName":   a.Name,
+				"PipelineName": pip,
+				"ProjectKey":   proj,
+				"ModelName":    modelName,
 			},
 		}
 		warns = append(warns, w)

@@ -88,6 +88,8 @@ const (
 	PluginRequirement RequirementType = "plugin"
 	//ServiceRequirement links a service to a worker
 	ServiceRequirement RequirementType = "service"
+	//MemoryRequirement set memory limit on a container
+	MemoryRequirement RequirementType = "memory"
 )
 
 var (
@@ -99,6 +101,7 @@ var (
 		string(HostnameRequirement),
 		string(PluginRequirement),
 		string(ServiceRequirement),
+		string(MemoryRequirement),
 	}
 )
 
