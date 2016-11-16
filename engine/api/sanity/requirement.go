@@ -38,10 +38,14 @@ func checkActionRequirements(a *sdk.Action, proj string, pip string, wms []sdk.M
 			return nil, err
 		}
 		warns = append(warns, w...)
-	}
 
-	if modelReq == 1 {
 		w, err = checkIncompatibleServiceWithModelRequirement(proj, pip, a, wms, modelName)
+		if err != nil {
+			return nil, err
+		}
+		warns = append(warns, w...)
+
+		w, err = checkIncompatibleMemoryWithModelRequirement(proj, pip, a, wms, modelName)
 		if err != nil {
 			return nil, err
 		}

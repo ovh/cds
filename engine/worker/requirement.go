@@ -28,9 +28,9 @@ func checkRequirement(r sdk.Requirement) (bool, error) {
 	check := requirementCheckFuncs[r.Type]
 	if check == nil {
 		log.Printf("checkRequirement> Unknown type of requirement: %s\n", r.Type)
+		log.Printf("checkRequirement> Support requirements are : %v", requirementCheckFuncs)
 		return false, fmt.Errorf("unknown type of requirement %s", r.Type)
 	}
-
 	return check(r)
 }
 
@@ -113,10 +113,11 @@ func checkMemoryRequirement(r sdk.Requirement) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	neededMemory, err := strconv.ParseUint(r.Value, 10, 64)
+	neededMemory, err := strconv.ParseInt(r.Value, 10, 64)
 	if err != nil {
 		return false, err
 	}
 	//Assuming memory is in megabytes
-	return totalMemory >= neededMemory*1024, nil
+	//If we have more than 90% of neededMemory, lets do it
+	return int64(totalMemory) >= (neededMemory*1024*1024)*90/100, nil
 }

@@ -63,7 +63,7 @@ func addFlags() {
 	viper.SetEnvPrefix("cds")
 	viper.AutomaticEnv()
 
-	rootCmd.PersistentFlags().String("log-level", "notice=", "Log Level: debug, info, warning, notice, critical")
+	rootCmd.PersistentFlags().String("log-level", "notice", "Log Level: debug, info, warning, notice, critical")
 	viper.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level"))
 
 	rootCmd.PersistentFlags().String("api", "", "CDS api endpoint")

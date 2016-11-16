@@ -314,6 +314,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	// Get data in body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Warning("applyTemplatesHandler> Cannot read body %s: %s\n", string(data), err)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
@@ -321,6 +322,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	// Parse body to sdk.ApplyTemplatesOptions
 	var opts sdk.ApplyTemplatesOptions
 	if err := json.Unmarshal(data, &opts); err != nil {
+		log.Warning("applyTemplatesHandler> Cannot parse body %s: %s\n", string(data), err)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}

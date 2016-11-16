@@ -9,5 +9,5 @@ import (
 
 func systemTotalMemory() (uint64, error) {
 	s := C.sysconf(C._SC_PHYS_PAGES) * C.sysconf(C._SC_PAGE_SIZE)
-	return C.uint64(s), nil
+	return uint64(s), nil
 }

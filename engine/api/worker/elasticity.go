@@ -128,7 +128,7 @@ func modelCanRun(db *sql.DB, name string, req []sdk.Requirement, capa []sdk.Requ
 		return false
 	}
 
-	log.Info("Comparing %d requirements to %d capa\n", len(req), len(capa))
+	log.Debug("Comparing %d requirements to %d capa\n", len(req), len(capa))
 	for _, r := range req {
 		// service and memory requirements are only supported by docker model
 		if (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) && m.Type != sdk.Docker {
@@ -148,12 +148,7 @@ func modelCanRun(db *sql.DB, name string, req []sdk.Requirement, capa []sdk.Requ
 		}
 
 		// Skip network access requirement as we can't check it
-		if r.Type == sdk.NetworkAccessRequirement {
-			continue
-		}
-
-		// Everyone can play plugins
-		if r.Type == sdk.PluginRequirement {
+		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			continue
 		}
 
