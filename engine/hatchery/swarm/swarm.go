@@ -24,6 +24,7 @@ type HatcherySwarm struct {
 	dockerClient       *docker.Client
 	onlyWithServiceReq bool
 	maxContainers      int
+	defaultMemory      int
 }
 
 //Init connect the hatchery to the docker api
@@ -163,7 +164,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 	h.createNetwork(network)
 
 	//Memory for the worker
-	memory := int64(0)
+	memory := int64(h.defaultMemory)
 
 	for _, r := range req {
 		if r.Type == sdk.MemoryRequirement {

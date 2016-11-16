@@ -17,6 +17,9 @@ func init() {
 
 	Cmd.Flags().IntVar(&hatcherySwarm.maxContainers, "max-containers", 10, "")
 	viper.BindPFlag("max-containers", Cmd.Flags().Lookup("max-containers"))
+
+	Cmd.Flags().IntVar(&hatcherySwarm.defaultMemory, "worker-memory", 1024, "Worker default memory")
+	viper.BindPFlag("worker-memory", Cmd.Flags().Lookup("worker-memory"))
 }
 
 // Cmd configures comamnd for HatcherySwarm
