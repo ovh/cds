@@ -216,7 +216,9 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 	return nil
 }
 
+//create the docker bridge
 func (h *HatcherySwarm) createNetwork(name string) error {
+	log.Debug("createAndStartContainer> Create network %s\n", name)
 	_, err := h.dockerClient.CreateNetwork(docker.CreateNetworkOptions{
 		Name:           name,
 		Driver:         "bridge",
@@ -235,7 +237,7 @@ func (h *HatcherySwarm) createNetwork(name string) error {
 
 //shortcut to create+start(=run) a container
 func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAlias string, cmd, env []string, labels map[string]string, memory int64) error {
-	log.Debug("createAndStartContainer> Create container %s from %s\n", name, image)
+	log.Debug("createAndStartContainer> Create container %s from %s\n on network %s as %s", name, image, network, networkAlias)
 	//Memory is set to 1GB by default
 	if memory == 0 {
 		memory = 1024
@@ -247,7 +249,7 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 			Cmd:    cmd,
 			Env:    env,
 			Labels: labels,
-			Memory: memory,
+			Memory: memory * 1024, //from MB to B
 		},
 		NetworkingConfig: &docker.NetworkingConfig{
 			EndpointsConfig: map[string]*docker.EndpointConfig{
