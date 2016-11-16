@@ -12,82 +12,84 @@ import (
 // Existing CDS errors
 // Note: the error id is useless except to ensure objects are different in map
 var (
-	ErrUnknownError                 = &Error{ID: 1, Status: http.StatusInternalServerError}
-	ErrActionAlreadyUpdated         = &Error{ID: 2, Status: http.StatusBadRequest}
-	ErrNoAction                     = &Error{ID: 3, Status: http.StatusNotFound}
-	ErrActionLoop                   = &Error{ID: 4, Status: http.StatusBadRequest}
-	ErrInvalidID                    = &Error{ID: 5, Status: http.StatusBadRequest}
-	ErrInvalidProject               = &Error{ID: 6, Status: http.StatusBadRequest}
-	ErrInvalidProjectKey            = &Error{ID: 7, Status: http.StatusBadRequest}
-	ErrProjectHasPipeline           = &Error{ID: 8, Status: http.StatusConflict}
-	ErrProjectHasApplication        = &Error{ID: 9, Status: http.StatusConflict}
-	ErrUnauthorized                 = &Error{ID: 10, Status: http.StatusUnauthorized}
-	ErrForbidden                    = &Error{ID: 11, Status: http.StatusForbidden}
-	ErrPipelineNotFound             = &Error{ID: 12, Status: http.StatusBadRequest}
-	ErrPipelineNotAttached          = &Error{ID: 13, Status: http.StatusBadRequest}
-	ErrNoEnvironmentProvided        = &Error{ID: 14, Status: http.StatusBadRequest}
-	ErrEnvironmentProvided          = &Error{ID: 15, Status: http.StatusBadRequest}
-	ErrUnknownEnv                   = &Error{ID: 16, Status: http.StatusBadRequest}
-	ErrEnvironmentExist             = &Error{ID: 17, Status: http.StatusConflict}
-	ErrNoPipelineBuild              = &Error{ID: 18, Status: http.StatusNotFound}
-	ErrApplicationNotFound          = &Error{ID: 19, Status: http.StatusNotFound}
-	ErrGroupNotFound                = &Error{ID: 20, Status: http.StatusNotFound}
-	ErrInvalidUsername              = &Error{ID: 21, Status: http.StatusBadRequest}
-	ErrInvalidEmail                 = &Error{ID: 22, Status: http.StatusBadRequest}
-	ErrGroupPresent                 = &Error{ID: 23, Status: http.StatusBadRequest}
-	ErrInvalidName                  = &Error{ID: 24, Status: http.StatusBadRequest}
-	ErrInvalidUser                  = &Error{ID: 25, Status: http.StatusBadRequest}
-	ErrBuildArchived                = &Error{ID: 26, Status: http.StatusBadRequest}
-	ErrNoEnvironment                = &Error{ID: 27, Status: http.StatusNotFound}
-	ErrModelNameExist               = &Error{ID: 28, Status: http.StatusConflict}
-	ErrNoWorkerModel                = &Error{ID: 29, Status: http.StatusNotFound}
-	ErrNoProject                    = &Error{ID: 30, Status: http.StatusNotFound}
-	ErrVariableExists               = &Error{ID: 31, Status: http.StatusConflict}
-	ErrInvalidGroupPattern          = &Error{ID: 32, Status: http.StatusBadRequest}
-	ErrGroupExists                  = &Error{ID: 33, Status: http.StatusConflict}
-	ErrNotEnoughAdmin               = &Error{ID: 34, Status: http.StatusBadRequest}
-	ErrInvalidProjectName           = &Error{ID: 35, Status: http.StatusBadRequest}
-	ErrInvalidApplicationPattern    = &Error{ID: 36, Status: http.StatusBadRequest}
-	ErrInvalidPipelinePattern       = &Error{ID: 37, Status: http.StatusBadRequest}
-	ErrNotFound                     = &Error{ID: 38, Status: http.StatusNotFound}
-	ErrNoWorkerModelCapa            = &Error{ID: 39, Status: http.StatusNotFound}
-	ErrNoHook                       = &Error{ID: 40, Status: http.StatusNotFound}
-	ErrNoAttachedPipeline           = &Error{ID: 41, Status: http.StatusNotFound}
-	ErrNoReposManager               = &Error{ID: 42, Status: http.StatusNotFound}
-	ErrNoReposManagerAuth           = &Error{ID: 43, Status: http.StatusUnauthorized}
-	ErrNoReposManagerClientAuth     = &Error{ID: 44, Status: http.StatusForbidden}
-	ErrRepoNotFound                 = &Error{ID: 45, Status: http.StatusNotFound}
-	ErrSecretStoreUnreachable       = &Error{ID: 46, Status: http.StatusMethodNotAllowed}
-	ErrSecretKeyFetchFailed         = &Error{ID: 47, Status: http.StatusMethodNotAllowed}
-	ErrInvalidGoPath                = &Error{ID: 48, Status: http.StatusBadRequest}
-	ErrCommitsFetchFailed           = &Error{ID: 49, Status: http.StatusNotFound}
-	ErrInvalidSecretFormat          = &Error{ID: 50, Status: http.StatusInternalServerError}
-	ErrUnknownTemplate              = &Error{ID: 51, Status: http.StatusNotFound}
-	ErrNoPreviousSuccess            = &Error{ID: 52, Status: http.StatusNotFound}
-	ErrNoEnvExecution               = &Error{ID: 53, Status: http.StatusForbidden}
-	ErrSessionNotFound              = &Error{ID: 54, Status: http.StatusUnauthorized}
-	ErrInvalidSecretValue           = &Error{ID: 55, Status: http.StatusBadRequest}
-	ErrPipelineHasApplication       = &Error{ID: 56, Status: http.StatusBadRequest}
-	ErrNoDirectSecretUse            = &Error{ID: 57, Status: http.StatusForbidden}
-	ErrNoBranch                     = &Error{ID: 58, Status: http.StatusNotFound}
-	ErrLDAPConn                     = &Error{ID: 59, Status: http.StatusInternalServerError}
-	ErrServiceUnavailable           = &Error{ID: 60, Status: http.StatusServiceUnavailable}
-	ErrParseUserNotification        = &Error{ID: 61, Status: http.StatusBadRequest}
-	ErrNotSupportedUserNotification = &Error{ID: 62, Status: http.StatusBadRequest}
-	ErrGroupNeedAdmin               = &Error{ID: 63, Status: http.StatusBadRequest}
-	ErrGroupNeedWrite               = &Error{ID: 64, Status: http.StatusBadRequest}
-	ErrNoVariable                   = &Error{ID: 65, Status: http.StatusNotFound}
-	ErrPluginInvalid                = &Error{ID: 66, Status: http.StatusBadRequest}
-	ErrConflict                     = &Error{ID: 67, Status: http.StatusConflict}
-	ErrPipelineAlreadyAttached      = &Error{ID: 68, Status: http.StatusConflict}
-	ErrApplicationExist             = &Error{ID: 69, Status: http.StatusConflict}
-	ErrBranchNameNotProvided        = &Error{ID: 70, Status: http.StatusBadRequest}
-	ErrInfiniteTriggerLoop          = &Error{ID: 71, Status: http.StatusBadRequest}
-	ErrInvalidResetUser             = &Error{ID: 72, Status: http.StatusBadRequest}
-	ErrUserConflict                 = &Error{ID: 73, Status: http.StatusBadRequest}
-	ErrWrongRequest                 = &Error{ID: 74, Status: http.StatusBadRequest}
-	ErrAlreadyExist                 = &Error{ID: 75, Status: http.StatusConflict}
-	ErrInvalidType                  = &Error{ID: 76, Status: http.StatusBadRequest}
+	ErrUnknownError                          = &Error{ID: 1, Status: http.StatusInternalServerError}
+	ErrActionAlreadyUpdated                  = &Error{ID: 2, Status: http.StatusBadRequest}
+	ErrNoAction                              = &Error{ID: 3, Status: http.StatusNotFound}
+	ErrActionLoop                            = &Error{ID: 4, Status: http.StatusBadRequest}
+	ErrInvalidID                             = &Error{ID: 5, Status: http.StatusBadRequest}
+	ErrInvalidProject                        = &Error{ID: 6, Status: http.StatusBadRequest}
+	ErrInvalidProjectKey                     = &Error{ID: 7, Status: http.StatusBadRequest}
+	ErrProjectHasPipeline                    = &Error{ID: 8, Status: http.StatusConflict}
+	ErrProjectHasApplication                 = &Error{ID: 9, Status: http.StatusConflict}
+	ErrUnauthorized                          = &Error{ID: 10, Status: http.StatusUnauthorized}
+	ErrForbidden                             = &Error{ID: 11, Status: http.StatusForbidden}
+	ErrPipelineNotFound                      = &Error{ID: 12, Status: http.StatusBadRequest}
+	ErrPipelineNotAttached                   = &Error{ID: 13, Status: http.StatusBadRequest}
+	ErrNoEnvironmentProvided                 = &Error{ID: 14, Status: http.StatusBadRequest}
+	ErrEnvironmentProvided                   = &Error{ID: 15, Status: http.StatusBadRequest}
+	ErrUnknownEnv                            = &Error{ID: 16, Status: http.StatusBadRequest}
+	ErrEnvironmentExist                      = &Error{ID: 17, Status: http.StatusConflict}
+	ErrNoPipelineBuild                       = &Error{ID: 18, Status: http.StatusNotFound}
+	ErrApplicationNotFound                   = &Error{ID: 19, Status: http.StatusNotFound}
+	ErrGroupNotFound                         = &Error{ID: 20, Status: http.StatusNotFound}
+	ErrInvalidUsername                       = &Error{ID: 21, Status: http.StatusBadRequest}
+	ErrInvalidEmail                          = &Error{ID: 22, Status: http.StatusBadRequest}
+	ErrGroupPresent                          = &Error{ID: 23, Status: http.StatusBadRequest}
+	ErrInvalidName                           = &Error{ID: 24, Status: http.StatusBadRequest}
+	ErrInvalidUser                           = &Error{ID: 25, Status: http.StatusBadRequest}
+	ErrBuildArchived                         = &Error{ID: 26, Status: http.StatusBadRequest}
+	ErrNoEnvironment                         = &Error{ID: 27, Status: http.StatusNotFound}
+	ErrModelNameExist                        = &Error{ID: 28, Status: http.StatusConflict}
+	ErrNoWorkerModel                         = &Error{ID: 29, Status: http.StatusNotFound}
+	ErrNoProject                             = &Error{ID: 30, Status: http.StatusNotFound}
+	ErrVariableExists                        = &Error{ID: 31, Status: http.StatusConflict}
+	ErrInvalidGroupPattern                   = &Error{ID: 32, Status: http.StatusBadRequest}
+	ErrGroupExists                           = &Error{ID: 33, Status: http.StatusConflict}
+	ErrNotEnoughAdmin                        = &Error{ID: 34, Status: http.StatusBadRequest}
+	ErrInvalidProjectName                    = &Error{ID: 35, Status: http.StatusBadRequest}
+	ErrInvalidApplicationPattern             = &Error{ID: 36, Status: http.StatusBadRequest}
+	ErrInvalidPipelinePattern                = &Error{ID: 37, Status: http.StatusBadRequest}
+	ErrNotFound                              = &Error{ID: 38, Status: http.StatusNotFound}
+	ErrNoWorkerModelCapa                     = &Error{ID: 39, Status: http.StatusNotFound}
+	ErrNoHook                                = &Error{ID: 40, Status: http.StatusNotFound}
+	ErrNoAttachedPipeline                    = &Error{ID: 41, Status: http.StatusNotFound}
+	ErrNoReposManager                        = &Error{ID: 42, Status: http.StatusNotFound}
+	ErrNoReposManagerAuth                    = &Error{ID: 43, Status: http.StatusUnauthorized}
+	ErrNoReposManagerClientAuth              = &Error{ID: 44, Status: http.StatusForbidden}
+	ErrRepoNotFound                          = &Error{ID: 45, Status: http.StatusNotFound}
+	ErrSecretStoreUnreachable                = &Error{ID: 46, Status: http.StatusMethodNotAllowed}
+	ErrSecretKeyFetchFailed                  = &Error{ID: 47, Status: http.StatusMethodNotAllowed}
+	ErrInvalidGoPath                         = &Error{ID: 48, Status: http.StatusBadRequest}
+	ErrCommitsFetchFailed                    = &Error{ID: 49, Status: http.StatusNotFound}
+	ErrInvalidSecretFormat                   = &Error{ID: 50, Status: http.StatusInternalServerError}
+	ErrUnknownTemplate                       = &Error{ID: 51, Status: http.StatusNotFound}
+	ErrNoPreviousSuccess                     = &Error{ID: 52, Status: http.StatusNotFound}
+	ErrNoEnvExecution                        = &Error{ID: 53, Status: http.StatusForbidden}
+	ErrSessionNotFound                       = &Error{ID: 54, Status: http.StatusUnauthorized}
+	ErrInvalidSecretValue                    = &Error{ID: 55, Status: http.StatusBadRequest}
+	ErrPipelineHasApplication                = &Error{ID: 56, Status: http.StatusBadRequest}
+	ErrNoDirectSecretUse                     = &Error{ID: 57, Status: http.StatusForbidden}
+	ErrNoBranch                              = &Error{ID: 58, Status: http.StatusNotFound}
+	ErrLDAPConn                              = &Error{ID: 59, Status: http.StatusInternalServerError}
+	ErrServiceUnavailable                    = &Error{ID: 60, Status: http.StatusServiceUnavailable}
+	ErrParseUserNotification                 = &Error{ID: 61, Status: http.StatusBadRequest}
+	ErrNotSupportedUserNotification          = &Error{ID: 62, Status: http.StatusBadRequest}
+	ErrGroupNeedAdmin                        = &Error{ID: 63, Status: http.StatusBadRequest}
+	ErrGroupNeedWrite                        = &Error{ID: 64, Status: http.StatusBadRequest}
+	ErrNoVariable                            = &Error{ID: 65, Status: http.StatusNotFound}
+	ErrPluginInvalid                         = &Error{ID: 66, Status: http.StatusBadRequest}
+	ErrConflict                              = &Error{ID: 67, Status: http.StatusConflict}
+	ErrPipelineAlreadyAttached               = &Error{ID: 68, Status: http.StatusConflict}
+	ErrApplicationExist                      = &Error{ID: 69, Status: http.StatusConflict}
+	ErrBranchNameNotProvided                 = &Error{ID: 70, Status: http.StatusBadRequest}
+	ErrInfiniteTriggerLoop                   = &Error{ID: 71, Status: http.StatusBadRequest}
+	ErrInvalidResetUser                      = &Error{ID: 72, Status: http.StatusBadRequest}
+	ErrUserConflict                          = &Error{ID: 73, Status: http.StatusBadRequest}
+	ErrWrongRequest                          = &Error{ID: 74, Status: http.StatusBadRequest}
+	ErrAlreadyExist                          = &Error{ID: 75, Status: http.StatusConflict}
+	ErrInvalidType                           = &Error{ID: 76, Status: http.StatusBadRequest}
+	ErrParentApplicationAndPipelineMandatory = &Error{ID: 77, Status: http.StatusBadRequest}
+	ErrNoParentBuildFound                    = &Error{ID: 78, Status: http.StatusNotFound}
 )
 
 // SupportedLanguages on API errors
@@ -156,25 +158,27 @@ var errorsAmericanEnglish = map[int]string{
 	ErrNoDirectSecretUse.ID: `From now on, usage of 'password' parameter is not possible anymore.
 Please use either Project, Application or Environment variable to store your secrets.
 You can safely use them in a String or Text parameter`,
-	ErrNoBranch.ID:                     "branch not found in repository",
-	ErrLDAPConn.ID:                     "LDAP server connection error",
-	ErrServiceUnavailable.ID:           "service currently unavailable or down for maintenance",
-	ErrParseUserNotification.ID:        "unrecognized user notification settings",
-	ErrNotSupportedUserNotification.ID: "unsupported user notification",
-	ErrGroupNeedAdmin.ID:               "need at least 1 administrator",
-	ErrGroupNeedWrite.ID:               "need at least 1 group with write permission",
-	ErrNoVariable.ID:                   "variable not found",
-	ErrPluginInvalid.ID:                "invalid plugin",
-	ErrConflict.ID:                     "object conflict",
-	ErrPipelineAlreadyAttached.ID:      "pipeline already attached to this application",
-	ErrApplicationExist.ID:             "application already exist",
-	ErrBranchNameNotProvided.ID:        "branchName parameter must be provided",
-	ErrInfiniteTriggerLoop.ID:          "infinite trigger loop are forbidden",
-	ErrInvalidResetUser.ID:             "invalid user or email",
-	ErrUserConflict.ID:                 "this user already exist",
-	ErrWrongRequest.ID:                 "wrong request",
-	ErrAlreadyExist.ID:                 "already exist",
-	ErrInvalidType.ID:                  "invalid type",
+	ErrNoBranch.ID:                              "branch not found in repository",
+	ErrLDAPConn.ID:                              "LDAP server connection error",
+	ErrServiceUnavailable.ID:                    "service currently unavailable or down for maintenance",
+	ErrParseUserNotification.ID:                 "unrecognized user notification settings",
+	ErrNotSupportedUserNotification.ID:          "unsupported user notification",
+	ErrGroupNeedAdmin.ID:                        "need at least 1 administrator",
+	ErrGroupNeedWrite.ID:                        "need at least 1 group with write permission",
+	ErrNoVariable.ID:                            "variable not found",
+	ErrPluginInvalid.ID:                         "invalid plugin",
+	ErrConflict.ID:                              "object conflict",
+	ErrPipelineAlreadyAttached.ID:               "pipeline already attached to this application",
+	ErrApplicationExist.ID:                      "application already exist",
+	ErrBranchNameNotProvided.ID:                 "branchName parameter must be provided",
+	ErrInfiniteTriggerLoop.ID:                   "infinite trigger loop are forbidden",
+	ErrInvalidResetUser.ID:                      "invalid user or email",
+	ErrUserConflict.ID:                          "this user already exist",
+	ErrWrongRequest.ID:                          "wrong request",
+	ErrAlreadyExist.ID:                          "already exist",
+	ErrInvalidType.ID:                           "invalid type",
+	ErrParentApplicationAndPipelineMandatory.ID: "parent application and pipeline are mandatory",
+	ErrNoParentBuildFound.ID:                    "no parent build found",
 }
 
 var errorsFrench = map[int]string{
@@ -237,25 +241,27 @@ var errorsFrench = map[int]string{
 	ErrNoDirectSecretUse.ID: `Désormais, l'utilisation du type de paramêtre 'password' n'est plus possible.
 Merci d'utiliser les variable de Projet, Application ou Environnement pour stocker vos secrets.
 Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Text`,
-	ErrNoBranch.ID:                     "la branche est introuvable dans le dépôt",
-	ErrLDAPConn.ID:                     "erreur de connexion au serveur LDAP",
-	ErrServiceUnavailable.ID:           "service temporairement indisponible ou en maintenance",
-	ErrParseUserNotification.ID:        "notification non reconnue",
-	ErrNotSupportedUserNotification.ID: "notification non supportée",
-	ErrGroupNeedAdmin.ID:               "il faut au moins 1 administrateur",
-	ErrGroupNeedWrite.ID:               "il faut au moins 1 groupe avec les droits d'écriture",
-	ErrNoVariable.ID:                   "la variable n'existe pas",
-	ErrPluginInvalid.ID:                "plugin non valide",
-	ErrConflict.ID:                     "l'objet est en conflit",
-	ErrPipelineAlreadyAttached.ID:      "le pipeline est déjà attaché à cette application",
-	ErrApplicationExist.ID:             "une application du même nom existe déjà",
-	ErrBranchNameNotProvided.ID:        "le paramètre branchName doit être envoyé",
-	ErrInfiniteTriggerLoop.ID:          "création d'une boucle de trigger infinie interdite",
-	ErrInvalidResetUser.ID:             "mauvaise combinaison compte/mail utilisateur",
-	ErrUserConflict.ID:                 "cet utilisateur existe deja",
-	ErrWrongRequest.ID:                 "la requête est incorrecte",
-	ErrAlreadyExist.ID:                 "conflit",
-	ErrInvalidType.ID:                  "type non valide",
+	ErrNoBranch.ID:                              "la branche est introuvable dans le dépôt",
+	ErrLDAPConn.ID:                              "erreur de connexion au serveur LDAP",
+	ErrServiceUnavailable.ID:                    "service temporairement indisponible ou en maintenance",
+	ErrParseUserNotification.ID:                 "notification non reconnue",
+	ErrNotSupportedUserNotification.ID:          "notification non supportée",
+	ErrGroupNeedAdmin.ID:                        "il faut au moins 1 administrateur",
+	ErrGroupNeedWrite.ID:                        "il faut au moins 1 groupe avec les droits d'écriture",
+	ErrNoVariable.ID:                            "la variable n'existe pas",
+	ErrPluginInvalid.ID:                         "plugin non valide",
+	ErrConflict.ID:                              "l'objet est en conflit",
+	ErrPipelineAlreadyAttached.ID:               "le pipeline est déjà attaché à cette application",
+	ErrApplicationExist.ID:                      "une application du même nom existe déjà",
+	ErrBranchNameNotProvided.ID:                 "le paramètre branchName doit être envoyé",
+	ErrInfiniteTriggerLoop.ID:                   "création d'une boucle de trigger infinie interdite",
+	ErrInvalidResetUser.ID:                      "mauvaise combinaison compte/mail utilisateur",
+	ErrUserConflict.ID:                          "cet utilisateur existe deja",
+	ErrWrongRequest.ID:                          "la requête est incorrecte",
+	ErrAlreadyExist.ID:                          "conflit",
+	ErrInvalidType.ID:                           "type non valide",
+	ErrParentApplicationAndPipelineMandatory.ID: "application et pipeline parents obligatoires",
+	ErrNoParentBuildFound.ID:                    "aucun build parent n'a pu être trouvé",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)
