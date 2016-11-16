@@ -23,6 +23,9 @@ func init() {
 
 	Cmd.Flags().StringVar(&hatcheryMesos.marathonPassword, "marathon-password", "", "marathon-password")
 	viper.BindPFlag("marathon-password", Cmd.Flags().Lookup("marathon-password"))
+
+	Cmd.Flags().IntVar(&hatcheryMesos.defaultMemory, "worker-memory", 1024, "Worker default memory")
+	viper.BindPFlag("worker-memory", Cmd.Flags().Lookup("worker-memory"))
 }
 
 // Cmd configures comamnd for HatcheryLocal

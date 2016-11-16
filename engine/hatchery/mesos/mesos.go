@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -70,6 +71,8 @@ type HatcheryMesos struct {
 	marathonVHOST    string
 	marathonUser     string
 	marathonPassword string
+
+	defaultMemory int
 }
 
 // ID must returns hatchery id
@@ -107,6 +110,10 @@ func (m *HatcheryMesos) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 // SpawnWorker creates an application on mesos via marathon
 // requirements are not supported
 func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
+	if model.Type != sdk.Docker {
+		return fmt.Errorf("Model not handled")
+	}
+
 	log.Notice("Spawning worker %s (%s)\n", model.Name, model.Image)
 	var err error
 
@@ -144,12 +151,7 @@ func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 		}
 	}
 
-	switch model.Type {
-	case sdk.Docker:
-		return spawnMesosDockerWorker(model, m.hatch.ID)
-	}
-
-	return fmt.Errorf("Model not handled\n")
+	return m.spawnMesosDockerWorker(model, m.hatch.ID, req)
 }
 
 // WorkerStarted returns the number of instances of given model started but
@@ -193,26 +195,23 @@ func (m *HatcheryMesos) Init() error {
 	return nil
 }
 
-func spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64) error {
+func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64, req []sdk.Requirement) error {
 	tmpl, err := template.New("marathonPOST").Parse(marathonPOSTAppTemplate)
 	if err != nil {
 		return err
 	}
 
-	// Estimate needed memory
-	memory := 1024
-	for _, c := range model.Capabilities {
-		if c.Value == "java" {
-			memory = 4096
-		}
-		if c.Value == "go" && memory < 3072 {
-			memory = 3072
-		}
-		if c.Value == "npm" && memory < 2048 {
-			memory = 2048
-		}
-		if c.Value == "python" && memory < 2048 {
-			memory = 2048
+	// Estimate needed memory, we will set 110% of required memory
+	memory := m.defaultMemory
+	//Check if there is a memory requirement
+	for _, r := range req {
+		if r.Type == sdk.MemoryRequirement {
+			var err error
+			memory, err = strconv.Atoi(r.Value)
+			if err != nil {
+				log.Warning("spawnMesosDockerWorker>Unable to parse memory requirement %s :s\n", memory, err)
+				return err
+			}
 		}
 	}
 
@@ -226,7 +225,7 @@ func spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64) error {
 			HatcheryID:    hatcheryID,
 			MarathonID:    hatcheryMesos.marathonID,
 			MarathonVHOST: hatcheryMesos.marathonVHOST,
-			Memory:        memory,
+			Memory:        memory * 110 / 100,
 		}
 
 		var buffer bytes.Buffer
