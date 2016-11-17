@@ -818,10 +818,6 @@ func Test_applyTemplatesHandler(t *testing.T) {
 }
 
 func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
-	/*
-	* UPLOAD THE ACTION
-	 */
-
 	//Load the gitclone public action
 	//Prepare request
 	uri := router.getRoute("POST", loadActionHandler, nil)
