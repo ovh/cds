@@ -113,3 +113,7 @@ select create_index('worker_model','IDX_WORKER_MODEL_OWNER_ID','owner_id');
 
 -- REPOSITORIES_MANAGER_PROJECT
 select create_unique_index('repositories_manager_project', 'IDX_REPOSITORIES_MANAGER_PROJECT_ID' ,'id_repositories_manager, id_project');
+
+-- TEMPLATES
+SELECT create_unique_index('template', 'IDX_TEMPLATE_IDENTIFIER', 'identifier');
+SELECT create_unique_index('template', 'IDX_TEMPLATE_NAME', 'name');

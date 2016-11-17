@@ -161,11 +161,16 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 	//Find it
 	templ, err := templateextension.LoadByID(db, int64(id))
+	if err != nil {
+		log.Warning("updateTemplateHandler>Unable to load template: %s", err)
+		WriteError(w, r, sdk.NewError(sdk.ErrNotFound, err))
+		return
+	}
 
 	//Store previous file from objectstore
 	tmpbuf, err := objectstore.FetchTemplateExtension(*templ)
 	if err != nil {
-		log.Warning("updateTemplateHandler>Unable to fetch plugin: %s", err)
+		log.Warning("updateTemplateHandler>Unable to fetch template: %s", err)
 		WriteError(w, r, sdk.NewError(sdk.ErrPluginInvalid, err))
 		return
 	}
