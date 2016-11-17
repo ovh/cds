@@ -1,14 +1,22 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -37,295 +45,306 @@ func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *s
 	}
 
 	err = application.AttachPipeline(db, app.ID, p.ID)
+	if err != nil {
+		t.Fatalf("cannot attach pipeline: %s", err)
+	}
 
 	return projectFoo, p, app
 }
 
-func TestInsertAndDeletePipeline(t *testing.T) {
-	db := test.Setup("TestInsertAndDeletePipeline", t)
-
-	pkey := testwithdb.RandomString(t, 10)
-	projectFoo, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	if err != nil {
-		t.Fatalf("cannot insert project: %s", err)
+func Test_runPipelineHandler(t *testing.T) {
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
 	}
 
-	p := &sdk.Pipeline{
-		Name:       "Foo",
+	db, err := testwithdb.SetupPG(t)
+	assert.NoError(t, err)
+	if err != nil {
+		t.FailNow()
+		return
+	}
+
+	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
+	router = &Router{authDriver, mux.NewRouter(), "/Test_runPipelineHandler"}
+	router.init()
+
+	//1. Create admin user
+	u, pass, err := testwithdb.InsertAdminUser(t, db)
+	assert.NoError(t, err)
+
+	//2. Create project
+	proj, _ := testwithdb.InsertTestProject(t, db, testwithdb.RandomString(t, 10), testwithdb.RandomString(t, 10))
+	assert.NotNil(t, proj)
+	if proj == nil {
+		t.Fail()
+		return
+	}
+
+	//3. Create Pipeline
+	pipelineKey := testwithdb.RandomString(t, 10)
+	pip := &sdk.Pipeline{
+		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
-		ProjectID:  projectFoo.ID,
-		ProjectKey: projectFoo.Key,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	err = pipeline.InsertPipeline(db, pip)
+	assert.NoError(t, err)
+
+	//4. Insert Application
+	appName := testwithdb.RandomString(t, 10)
+	app := &sdk.Application{
+		Name: appName,
+	}
+	err = application.InsertApplication(db, proj, app)
+
+	//5. Attach pipeline to application
+	err = application.AttachPipeline(db, app.ID, pip.ID)
+	assert.NoError(t, err)
+
+	//6. Prepare the run request
+	runRequest := sdk.RunRequest{}
+
+	jsonBody, _ := json.Marshal(runRequest)
+	body := bytes.NewBuffer(jsonBody)
+
+	//7. Prepare the route
+	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+		"permPipelineKey":     pip.Name,
+	}
+	uri := router.getRoute("POST", runPipelineHandler, vars)
+	if uri == "" {
+		t.Fail()
+		return
 	}
 
-	if err := pipeline.InsertPipeline(db, p); err != nil {
-		t.Fatalf("cannot insert pipeline: %s", err)
-	}
-
-	if p.ID == 0 {
-		t.Fatal("expected id being not 0 after insert")
-	}
-
-	groupInsert := &sdk.Group{
-		Name: "GroupeFoo",
-	}
-
-	err = group.InsertGroup(db, groupInsert)
+	//8. Send the request
+	req, err := http.NewRequest("POST", uri, body)
 	if err != nil {
-		t.Fatalf("cannot insert group: %s", err)
+		t.FailNow()
+		return
 	}
-	if groupInsert.ID == 0 {
-		t.Fatal("expected groupInsert.id being not 0 after insert")
+	testwithdb.AuthentifyRequest(t, req, u, pass)
+
+	//8. Do the request
+	w := httptest.NewRecorder()
+	router.mux.ServeHTTP(w, req)
+
+	//9. Check response
+	assert.Equal(t, 200, w.Code)
+	t.Logf("Response : %s", string(w.Body.Bytes()))
+
+	pb := sdk.PipelineBuild{}
+	if err := json.Unmarshal(w.Body.Bytes(), &pb); err != nil {
+		t.Error(err)
+		t.FailNow()
+		return
 	}
 
-	err = group.InsertGroupInPipeline(db, p.ID, groupInsert.ID, 4)
-	if err != nil {
-		t.Fatalf("cannot add group in pipeline: %s", err)
-	}
-
-	// FIXME subqueries in ramsql
-	/*
-		err = pipeline.DeletePipeline(db, p.ID)
-		if err != nil {
-			t.Fatalf("cannot delete pipeline: %s", err)
-		}
-
-		query := `SELECT pipeline_id from pipeline_group`
-		rows, err := db.Query(query)
-		if rows.Next() || err != nil {
-			var id int
-			rows.Scan(&id)
-			t.Fatalf("Should not have pipeline group for pipeline : %d", id)
-		}
-
-		query = `SELECT id from pipeline`
-		rows, err = db.Query(query)
-		if rows.Next() || err != nil {
-			var id int
-			rows.Scan(&id)
-			t.Fatalf("Should not have pipeline for pipeline : %d", id)
-		}
-	*/
+	assert.Equal(t, int64(1), pb.Version)
+	assert.Equal(t, int64(1), pb.BuildNumber)
+	assert.Equal(t, "NoEnv", pb.Environment.Name)
 
 }
 
-/*
-func TestLoadPipelineHistory(t *testing.T) {
-	db := test.Setup("LoadPipelineHistory", t)
-
-	_, p := insertTestPipeline(db, t, "Foo")
-
-	_, err := pipeline.LoadPipelineHistory(db, p.ID)
-	if err != nil {
-		t.Fatalf("cannot load pipeline history: %s\n", err)
+func Test_runPipelineWithLastParentHandler(t *testing.T) {
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
 	}
+
+	db, err := testwithdb.SetupPG(t)
+	assert.NoError(t, err)
+	if err != nil {
+		t.FailNow()
+		return
+	}
+
+	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
+	router = &Router{authDriver, mux.NewRouter(), "/Test_runPipelineHandler"}
+	router.init()
+
+	//1. Create admin user
+	u, pass, err := testwithdb.InsertAdminUser(t, db)
+	assert.NoError(t, err)
+
+	//2. Create project
+	proj, _ := testwithdb.InsertTestProject(t, db, testwithdb.RandomString(t, 10), testwithdb.RandomString(t, 10))
+	assert.NotNil(t, proj)
+	if proj == nil {
+		t.Fail()
+		return
+	}
+
+	//3. Create Pipeline
+	pipelineKey := testwithdb.RandomString(t, 10)
+	pip := &sdk.Pipeline{
+		Name:       pipelineKey,
+		Type:       sdk.BuildPipeline,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	err = pipeline.InsertPipeline(db, pip)
+	assert.NoError(t, err)
+
+	//4. Insert Application
+	appName := testwithdb.RandomString(t, 10)
+	app := &sdk.Application{
+		Name: appName,
+	}
+	err = application.InsertApplication(db, proj, app)
+
+	//5. Attach pipeline to application
+	err = application.AttachPipeline(db, app.ID, pip.ID)
+	assert.NoError(t, err)
+
+	//6. Prepare the run request
+	runRequest := sdk.RunRequest{}
+
+	jsonBody, _ := json.Marshal(runRequest)
+	body := bytes.NewBuffer(jsonBody)
+
+	//7. Prepare the route
+	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+		"permPipelineKey":     pip.Name,
+	}
+	uri := router.getRoute("POST", runPipelineHandler, vars)
+	if uri == "" {
+		t.Fail()
+		return
+	}
+
+	//8. Send the request
+	req, err := http.NewRequest("POST", uri, body)
+	if err != nil {
+		t.FailNow()
+		return
+	}
+	testwithdb.AuthentifyRequest(t, req, u, pass)
+
+	//8. Do the request
+	w := httptest.NewRecorder()
+	router.mux.ServeHTTP(w, req)
+
+	//9. Check response
+	assert.Equal(t, 200, w.Code)
+	t.Logf("Response : %s", string(w.Body.Bytes()))
+
+	pb := sdk.PipelineBuild{}
+	if err := json.Unmarshal(w.Body.Bytes(), &pb); err != nil {
+		t.Error(err)
+		t.FailNow()
+		return
+	}
+
+	assert.Equal(t, int64(1), pb.Version)
+	assert.Equal(t, int64(1), pb.BuildNumber)
+	assert.Equal(t, "NoEnv", pb.Environment.Name)
+
+	//9. Update build status to Success
+	pb.Status = sdk.StatusSuccess
+	err = pipeline.UpdatePipelineBuildStatus(db, pb, sdk.StatusSuccess)
+	assert.NoError(t, err)
+
+	//10. Create another Pipeline
+	pip2 := &sdk.Pipeline{
+		Name:       testwithdb.RandomString(t, 10),
+		Type:       sdk.BuildPipeline,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	err = pipeline.InsertPipeline(db, pip2)
+	assert.NoError(t, err)
+
+	//11. Insert another Application
+	app2 := &sdk.Application{
+		Name: testwithdb.RandomString(t, 10),
+	}
+	err = application.InsertApplication(db, proj, app2)
+
+	//12. Attach pipeline to application
+	err = application.AttachPipeline(db, app2.ID, pip2.ID)
+	assert.NoError(t, err)
+
+	//13. Prepare the pipelne trigger
+	tigrou := sdk.PipelineTrigger{
+		DestApplication: *app2,
+		DestEnvironment: sdk.DefaultEnv,
+		DestPipeline:    *pip2,
+		DestProject:     *proj,
+		SrcApplication:  *app,
+		SrcEnvironment:  sdk.DefaultEnv,
+		SrcPipeline:     *pip,
+		SrcProject:      *proj,
+	}
+
+	//14. Insert the pipeline trigger
+	tx, _ := db.Begin()
+	defer tx.Rollback()
+	err = trigger.InsertTrigger(tx, &tigrou)
+	assert.NoError(t, err)
+	tx.Commit()
+
+	//15. Prepare the run request
+	runRequest2 := sdk.RunRequest{
+		ParentApplicationID: app.ID,
+		ParentPipelineID:    pip.ID,
+	}
+
+	jsonBody, _ = json.Marshal(runRequest2)
+	body = bytes.NewBuffer(jsonBody)
+
+	t.Logf("Request : %s", string(jsonBody))
+
+	//16. Prepare the route
+	vars = map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app2.Name,
+		"permPipelineKey":     pip2.Name,
+	}
+	uri = router.getRoute("POST", runPipelineWithLastParentHandler, vars)
+	if uri == "" {
+		t.Fail()
+		return
+	}
+
+	//17. Send the request
+	req, err = http.NewRequest("POST", uri, body)
+	if err != nil {
+		t.FailNow()
+		return
+	}
+	testwithdb.AuthentifyRequest(t, req, u, pass)
+
+	//18. Do the request
+	w = httptest.NewRecorder()
+	router.mux.ServeHTTP(w, req)
+
+	//19. Check response
+	assert.Equal(t, 200, w.Code)
+	t.Logf("Response : %s", string(w.Body.Bytes()))
+
+	pb1 := sdk.PipelineBuild{}
+	if err := json.Unmarshal(w.Body.Bytes(), &pb1); err != nil {
+		t.Error(err)
+		t.FailNow()
+		return
+	}
+
+	assert.Equal(t, int64(1), pb1.Version)
+	assert.Equal(t, int64(1), pb1.BuildNumber)
+	assert.Equal(t, "NoEnv", pb1.Environment.Name)
+
+	assert.Equal(t, pb.ID, pb1.Trigger.ParentPipelineBuild.ID)
+	assert.Equal(t, pb.Version, pb1.Trigger.ParentPipelineBuild.Version)
+	assert.Equal(t, pb.BuildNumber, pb1.Trigger.ParentPipelineBuild.BuildNumber)
+	assert.Equal(t, pb.Application.ID, pb1.Trigger.ParentPipelineBuild.Application.ID)
+	assert.Equal(t, pb.Pipeline.ID, pb1.Trigger.ParentPipelineBuild.Pipeline.ID)
+	assert.Equal(t, pb.Environment.ID, pb1.Trigger.ParentPipelineBuild.Environment.ID)
+
 }
-*/
-// FIXME when ramsql will be able to do arithmetic operations
-/*
-func TestMoveStage(t *testing.T) {
-	db := test.Setup("TestMoveStage", t)
-
-	_, p := insertTestPipeline(db, t, "Foo")
-
-	insertStage(db, t, p.ID, "Stage1", 1)
-	s2 := insertStage(db, t, p.ID, "Stage2", 2)
-	s3 := insertStage(db, t, p.ID, "Stage3", 3)
-	insertStage(db, t, p.ID, "Stage4", 4)
-	insertStage(db, t, p.ID, "Stage5", 5)
-
-	err := pipeline.MoveStage(db, s3, 1)
-	if err != nil {
-		t.Fatalf("cannot move stage3 : %s\n", err)
-	}
-
-	err = pipeline.MoveStage(db, s2, 4)
-	if err != nil {
-		t.Fatalf("cannot move stage2 : %s\n", err)
-	}
-
-	s1Verif, _ := pipeline.LoadStage(db, p.ID, 1)
-	if s1Verif.BuildOrder != 2 {
-		t.Fatalf("Stage1 should be in 2nd position : %s\n", err)
-	}
-	s2Verif, _ := pipeline.LoadStage(db, p.ID, 2)
-	if s2Verif.BuildOrder != 4 {
-		t.Fatalf("Stage2 should be in 4th position : %s\n", err)
-	}
-	s3Verif, _ := pipeline.LoadStage(db, p.ID, 3)
-	if s3Verif.BuildOrder != 1 {
-		t.Fatalf("Stage3 should be in 1st position : %s\n", err)
-	}
-	s4Verif, _ := pipeline.LoadStage(db, p.ID, 4)
-	if s4Verif.BuildOrder != 3 {
-		t.Fatalf("Stage4 should be in 3rd position : %s\n", err)
-	}
-	s5Verif, _ := pipeline.LoadStage(db, p.ID, 5)
-	if s5Verif.BuildOrder != 5 {
-		t.Fatalf("Stage1 should be in 5th position : %s\n", err)
-	}
-}
-*/
-// FIXME ramsql subqueries
-/*
-func TestLoadPipelineActions(t *testing.T) {
-	db := test.Setup("LoadPipelineActions", t)
-
-	project, p := insertTestPipeline(db, t, "Foo")
-
-	a := sdk.NewAction("foo")
-	a.Step("echo", sdk.CommandStep, "echo 'bar space bar'")
-	a.Requirement("foo", sdk.BinaryRequirement, "foo")
-
-	err := action.InsertAction(db, a)
-	if err != nil {
-		t.Fatalf("Cannot insert action: %s\n", err)
-	}
-
-	err = pipeline.InsertPipelineAction(db, project.Key, p.Name, a.Name, "[{\"name\":\"yo\",\"value\":\"lol\"}]", 0)
-	if err != nil {
-		t.Fatalf("cannot add action into pipeline: %s", err)
-	}
-
-	reloaded, err := pipeline.LoadPipeline(db, project.Key, p.Name, true)
-	if err != nil {
-		t.Fatalf("Cannot load pipeline: %s", err)
-	}
-
-	if len(reloaded.Stages) != 1 {
-		t.Fatalf("Expected 1 stage, got %d", len(reloaded.Stages))
-	}
-
-	if len(reloaded.Stages[0].Actions) != 1 {
-		t.Fatalf("Expected 1 action, got %d", len(reloaded.Stages[0].Actions))
-	}
-}
-
-func TestLoadBuildingPipelines(t *testing.T) {
-	db := test.Setup("LoadBuildingPipelines", t)
-
-	// 1- Create a pipeline
-	project, p := insertTestPipeline(db, t, "Foo")
-
-	// 2- Create some actions
-	a := sdk.NewAction("foo")
-	a.Step("echo", sdk.CommandStep, "echo 'bar space bar'")
-	a.Requirement("foo", sdk.BinaryRequirement, "foo")
-
-	err := action.InsertAction(db, a)
-	if err != nil {
-		t.Fatalf("Cannot insert action: %s\n", err)
-	}
-
-	b := sdk.NewAction("bar")
-	b.Step("bar", sdk.CommandStep, "bar --cloud")
-	b.Requirement("bar", sdk.BinaryRequirement, "bar")
-
-	err = action.InsertAction(db, b)
-	if err != nil {
-		t.Fatalf("Cannot insert action: %s\n", err)
-	}
-
-	c := sdk.NewAction("git pull")
-	c.Step("git pull", sdk.CommandStep, "git pull")
-	c.Requirement("git", sdk.BinaryRequirement, "git")
-
-	err = action.InsertAction(db, c)
-	if err != nil {
-		t.Fatalf("Cannot insert action: %s\n", err)
-	}
-
-	// 3- Add actions in pipeline
-	err = pipeline.InsertPipelineAction(db, project.Key, p.Name, a.Name, "[]", 1)
-	if err != nil {
-		t.Fatalf("cannot add action %s to pipeline %s: %s", p.Name, a.Name, err)
-	}
-	err = pipeline.InsertPipelineAction(db, project.Key, p.Name, b.Name, "[]", 1)
-	if err != nil {
-		t.Fatalf("cannot add action %s to pipeline %s: %s", p.Name, b.Name, err)
-	}
-	err = pipeline.InsertPipelineAction(db, project.Key, p.Name, c.Name, "[]", 1)
-	if err != nil {
-		t.Fatalf("cannot add action %s to pipeline %s: %s", p.Name, c.Name, err)
-	}
-
-	// 4- Start a pipeline build
-	_, err = pipeline.InsertPipelineBuild(db, p, []string{})
-	if err != nil {
-		t.Fatalf("cannot insert pipeline build: %s\n", err)
-	}
-
-	// 5- Load building pipelines
-	pbs, err := pipeline.LoadBuildingPipelines(db)
-	if err != nil {
-		t.Fatalf("cannot load building pipelines: %s", err)
-	}
-
-	if len(pbs) != 1 {
-		t.Fatalf("expected 1 building pipeline, got %d", len(pbs))
-	}
-}
-
-func TestVariableInPipeline(t *testing.T) {
-
-	db := test.Setup("TestVariableInPipeline", t)
-
-	// 1. Create project and pipeline
-	_, pipelineData := insertTestPipeline(db, t, "pipeline")
-
-	// 2. Insert new variable
-	var1 := sdk.Variable{
-		Name:  "var1",
-		Value: "value1",
-		Type:  "PASSWORD",
-	}
-	err := pipeline.InsertVariableInPipeline(db, pipelineData.ID, var1)
-	if err != nil {
-		t.Fatalf("cannot insert var1 in project1: %s", err)
-	}
-
-	// 3. Test Update variable
-	var1.Value = "value1Updated"
-	err = pipeline.UpdateVariableInPipeline(db, pipelineData.ID, var1)
-	if err != nil {
-		t.Fatalf("cannot update var1 in project1: %s", err)
-	}
-	varTest, err := pipeline.GetVariableInPipeline(db, pipelineData.ID, var1.Name)
-	if err != nil {
-		t.Fatalf("cannot get var1 in project1: %s", err)
-	}
-	if varTest.Value != var1.Value {
-		t.Fatalf("wrong value forvar1 in project1: %s", err)
-	}
-
-	// 4. Delete variable
-	err = pipeline.DeleteVariableFromPipeline(db, pipelineData.ID, var1.Name)
-	if err != nil {
-		t.Fatalf("cannot delete var1 from project: %s", err)
-	}
-	varTest, err = pipeline.GetVariableInPipeline(db, pipelineData.ID, var1.Name)
-	if varTest.Value != "" {
-		t.Fatalf("var1 should be deleted: %s", err)
-	}
-
-	// 5. Insert new var
-	var2 := sdk.Variable{
-		Name:  "var2",
-		Value: "value2",
-		Type:  "STRING",
-	}
-	err = pipeline.InsertVariableInPipeline(db, pipelineData.ID, var2)
-	if err != nil {
-		t.Fatalf("cannot insert var1 in project1: %s", err)
-	}
-
-	// 6. Delete pipeline
-	err = pipeline.DeletePipeline(db, pipelineData.ID)
-	if err != nil {
-		t.Fatalf("cannot delete project: %s", err)
-	}
-	varTest, err = pipeline.GetVariableInPipeline(db, pipelineData.ID, var2.Name)
-	if err == nil || err != sql.ErrNoRows {
-		t.Fatalf("var2 should be deleted: %s", err)
-	}
-}
-*/

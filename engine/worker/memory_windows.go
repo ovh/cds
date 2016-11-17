@@ -14,8 +14,7 @@ func systemTotalMemory() (uint64, error) {
 
 	_, _, err := proc.Call(uintptr(unsafe.Pointer(&mem)))
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
-
 	return mem, nil
 }

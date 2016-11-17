@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -23,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/scheduler"
+	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -138,29 +140,152 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 
 	WriteJSON(w, r, newPb, http.StatusOK)
 }
-func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 
+func loadDestEnvFromRunRequest(db *sql.DB, c *context.Context, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
+	var envDest = &sdk.DefaultEnv
+	var err error
+	if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
+		envDest, err = environment.LoadEnvironmentByName(db, projectKey, request.Env.Name)
+		if err != nil {
+			log.Warning("loadDestEnvFromRunRequest> Cannot load destination environment: %s", err)
+			return nil, sdk.ErrNoEnvironment
+		}
+
+		if envDest.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(envDest.ID, c.User, permission.PermissionReadExecute) {
+			log.Warning("loadDestEnvFromRunRequest> No enought right on this environment %s: \n", request.Env.Name)
+			return nil, sdk.ErrForbidden
+		}
+	}
+	if envDest.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(envDest.ID, c.User, permission.PermissionReadExecute) {
+		log.Warning("loadDestEnvFromRunRequest> You do not have Execution Right on this environment\n")
+		return nil, sdk.ErrNoEnvExecution
+	}
+	return envDest, nil
+}
+
+func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 	appName := vars["permApplicationName"]
 
-	var request sdk.RunRequest
+	app, err := application.LoadApplicationByName(db, projectKey, appName, application.WithClearPassword())
+	if err != nil {
+		if err != sdk.ErrApplicationNotFound {
+			log.Warning("runPipelineWithLastParentHandler> Cannot load application %s: %s\n", appName, err)
+		}
+		WriteError(w, r, err)
+		return
+	}
 
 	// Get args in body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
+	var request sdk.RunRequest
 	// Unmarshal args
-	err = json.Unmarshal(data, &request)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	if err := json.Unmarshal(data, &request); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
+
+	//Check parent stuff
+	if request.ParentApplicationID == 0 && request.ParentPipelineID == 0 {
+		WriteError(w, r, sdk.ErrParentApplicationAndPipelineMandatory)
+		return
+	}
+	envID := sdk.DefaultEnv.ID
+	if request.ParentEnvironmentID != 0 {
+		envID = request.ParentEnvironmentID
+	}
+
+	// Load pipeline
+	pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	if err != nil {
+		if err != sdk.ErrPipelineNotFound {
+			log.Warning("runPipelineWithLastParentHandler> Cannot load pipeline %s; %s\n", pipelineName, err)
+		}
+		WriteError(w, r, err)
+		return
+	}
+
+	// Check that pipeline is attached to application
+	ok, err := application.PipelineAttached(db, app.ID, pip.ID)
+	if !ok {
+		log.Warning("runPipelineWithLastParentHandler> Pipeline %s is not attached to app %s\n", pipelineName, appName)
+		WriteError(w, r, sdk.ErrPipelineNotAttached)
+		return
+	}
+	if err != nil {
+		log.Warning("runPipelineWithLastParentHandler> Cannot check if pipeline %s is attached to %s: %s\n", pipelineName, appName, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	//Load environment
+	envDest, err := loadDestEnvFromRunRequest(db, c, &request, projectKey)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	//Load triggers
+	triggers, err := trigger.LoadTriggers(db, app.ID, pip.ID, envDest.ID)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	//Find parent trigger
+	var trig *sdk.PipelineTrigger
+	for i, t := range triggers {
+		fmt.Printf("Trigger from app(%s[%d]) pip(%s[%d]) env(%s[%d]) to app(%s[%d]) pip(%s[%d]) env(%s[%d])\n", t.SrcApplication.Name, t.SrcApplication.ID, t.SrcPipeline.Name, t.SrcPipeline.ID, t.SrcEnvironment.Name, t.SrcEnvironment.ID, t.DestApplication.Name, t.DestApplication.ID, t.DestPipeline.Name, t.DestPipeline.ID, t.DestEnvironment.Name, t.DestEnvironment.ID)
+		if t.SrcApplication.ID == request.ParentApplicationID &&
+			t.SrcPipeline.ID == request.ParentPipelineID &&
+			t.SrcEnvironment.ID == envID {
+			trig = &triggers[i]
+		}
+	}
+
+	//If trigger not found: exit
+	if trig == nil {
+		WriteError(w, r, sdk.ErrPipelineNotFound)
+		return
+	}
+
+	//Branch
+	var branch string
+	for _, p := range request.Params {
+		if p.Name == "git.branch" {
+			branch = p.Value
+		}
+	}
+
+	builds, err := pipeline.LoadPipelineBuildHistoryByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch)
+	if err != nil {
+		log.Warning("runPipelineWithLastParentHandler> Unable to find any successfull pipeline build")
+		WriteError(w, r, sdk.ErrNoParentBuildFound)
+		return
+	}
+	if len(builds) == 0 {
+		WriteError(w, r, sdk.ErrNoPipelineBuild)
+	}
+
+	request.ParentBuildNumber = builds[0].BuildNumber
+
+	runPipelineHandlerFunc(w, r, db, c, &request)
+}
+
+func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context, request *sdk.RunRequest) {
+	// Get pipeline and action name in URL
+	vars := mux.Vars(r)
+	projectKey := vars["key"]
+	pipelineName := vars["permPipelineKey"]
+	appName := vars["permApplicationName"]
 
 	// Load application to be send to scheduler.Run() from DB
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
@@ -210,14 +335,14 @@ func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		if err != nil {
 			if err != sdk.ErrNoPipelineBuild {
 				log.Warning("runPipelineHandler> Cannot load parent pipeline build: %s\n", err)
-				w.WriteHeader(http.StatusNotFound)
+				WriteError(w, r, err)
 				return
 			}
 			log.Notice("Loading parent pipeline build %d from history", request.ParentPipelineID)
 			pb, err = pipeline.LoadPipelineHistoryBuild(db, request.ParentPipelineID, request.ParentApplicationID, request.ParentBuildNumber, envID)
 			if err != nil {
 				log.Warning("runPipelineHandler> Cannot load parent pipeline build from history: %s\n", err)
-				w.WriteHeader(http.StatusNotFound)
+				WriteError(w, r, err)
 				return
 			}
 
@@ -225,7 +350,7 @@ func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		parentParams, err := scheduler.ParentBuildInfos(pb)
 		if err != nil {
 			log.Warning("runPipelineHandler> Cannot create parent build infos: %s\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			WriteError(w, r, err)
 		}
 		request.Params = append(request.Params, parentParams...)
 
@@ -238,24 +363,9 @@ func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		parentPipelineBuild = &pb
 	}
 
-	envDest := &sdk.DefaultEnv
-	if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
-		envDest, err = environment.LoadEnvironmentByName(db, projectKey, request.Env.Name)
-		if err != nil {
-			log.Warning("runPipelineHandler> Cannot load destination environment: %s", err)
-			WriteError(w, r, sdk.ErrNoEnvironment)
-			return
-		}
-
-		if envDest.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(envDest.ID, c.User, permission.PermissionReadExecute) {
-			log.Warning("runPipelineHandler> No enought right on this environment %s: \n", request.Env.Name)
-			WriteError(w, r, sdk.ErrForbidden)
-			return
-		}
-	}
-	if envDest.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(envDest.ID, c.User, permission.PermissionReadExecute) {
-		log.Warning("runPipelineHandler> You do not have Execution Right on this environment\n")
-		WriteError(w, r, sdk.ErrNoEnvExecution)
+	envDest, err := loadDestEnvFromRunRequest(db, c, request, projectKey)
+	if err != nil {
+		WriteError(w, r, err)
 		return
 	}
 
@@ -300,7 +410,26 @@ func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	cache.DeleteAll(k)
 
 	WriteJSON(w, r, pb, http.StatusOK)
+}
 
+func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	var request sdk.RunRequest
+
+	// Get args in body
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	// Unmarshal args
+	err = json.Unmarshal(data, &request)
+	if err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	runPipelineHandlerFunc(w, r, db, c, &request)
 }
 
 func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -480,7 +609,6 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 	cache.DeleteAll(k)
 
 	w.WriteHeader(http.StatusOK)
-
 }
 
 func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -494,14 +622,14 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("updatePipelineHandler: Cannot read body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	err = json.Unmarshal(data, &p)
 	if err != nil {
 		log.Warning("updatePipelineHandler: Cannot unmarshal body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -516,7 +644,7 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	pipelineDB, err := pipeline.LoadPipeline(db, key, name, false)
 	if err != nil {
 		log.Warning("updatePipelineHandler> cannot load pipeline %s: %s\n", name, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -526,7 +654,7 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	err = pipeline.UpdatePipeline(db, pipelineDB)
 	if err != nil {
 		log.Warning("updatePipelineHandler> cannot update pipeline %s: %s\n", name, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -567,7 +695,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	project, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("AddPipeline: Cannot load %s: %s\n", key, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, sdk.ErrNoProject)
 		return
 	}
 
@@ -575,13 +703,13 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	err = json.Unmarshal(data, &p)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -597,12 +725,12 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	exist, err := pipeline.ExistPipeline(db, project.ID, p.Name)
 	if err != nil {
 		log.Warning("addPipeline> cannot check if pipeline exist: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	if exist {
 		log.Warning("addPipeline> Pipeline %s already exists\n", p.Name)
-		w.WriteHeader(http.StatusConflict)
+		WriteError(w, r, sdk.ErrConflict)
 		return
 	}
 
@@ -615,15 +743,13 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	defer tx.Rollback()
 
 	p.ProjectID = project.ID
-	err = pipeline.InsertPipeline(tx, &p)
-	if err != nil {
+	if err := pipeline.InsertPipeline(tx, &p); err != nil {
 		log.Warning("addPipelineHandler> Cannot insert pipeline: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = group.LoadGroupByProject(tx, project)
-	if err != nil {
+	if err := group.LoadGroupByProject(tx, project); err != nil {
 		log.Warning("addPipelineHandler> Cannot load groupfrom project: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -636,16 +762,15 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 			break
 		}
 	}
-	err = group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID)
-	if err != nil {
+
+	if err := group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID); err != nil {
 		log.Warning("addPipelineHandler> Cannot add groups on pipeline: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
 	if !sharedInfraPresent {
-		err = group.AddGlobalGroupToPipeline(tx, p.ID)
-		if err != nil {
+		if err := group.AddGlobalGroupToPipeline(tx, p.ID); err != nil {
 			log.Warning("addPipelineHandler> Cannot add Global infra group: %s\n", err)
 			WriteError(w, r, err)
 			return
@@ -653,8 +778,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	}
 
 	for _, param := range p.Parameter {
-		err = pipeline.InsertParameterInPipeline(tx, p.ID, &param)
-		if err != nil {
+		if err := pipeline.InsertParameterInPipeline(tx, p.ID, &param); err != nil {
 			log.Warning("addPipelineHandler> Cannot add parameter %s: %s\n", param.Name, err)
 			WriteError(w, r, err)
 			return
@@ -662,16 +786,14 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	}
 
 	for _, app := range p.AttachedApplication {
-		err = application.AttachPipeline(tx, app.ID, p.ID)
-		if err != nil {
+		if err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 			log.Warning("addPipelineHandler> Cannot attach pipeline %d to %d: %s\n", app.ID, p.ID, err)
 			WriteError(w, r, err)
 			return
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("addPipelineHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -692,7 +814,7 @@ func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, true)
 	if err != nil {
 		log.Warning("getPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -789,7 +911,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 			if err != sdk.ErrNoEnvironment {
 				log.Warning("getPipelineHistoryHandler> Cannot load environment %s: %s\n", envName, err)
 			}
-			w.WriteHeader(http.StatusNotFound)
+			WriteError(w, r, err)
 			return
 		}
 	}
@@ -808,7 +930,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	pbs, err := pipeline.LoadPipelineBuildHistoryByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName, args...)
 	if err != nil {
 		log.Warning("getPipelineHistoryHandler> cannot load pipeline %s history: %s\n", p.Name, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -826,14 +948,14 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *conte
 		if err != sdk.ErrPipelineNotFound {
 			log.Warning("deletePipeline> Cannot load pipeline %s: %s\n", pipelineName, err)
 		}
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
 	used, err := application.CountPipeline(db, p.ID)
 	if err != nil {
 		log.Warning("deletePipeline> Cannot check if pipeline is used by an application: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -846,7 +968,7 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *conte
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deletePipeline> Cannot begin transaction: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	defer tx.Rollback()
@@ -854,14 +976,14 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *conte
 	err = pipeline.DeletePipeline(tx, p.ID, c.User.ID)
 	if err != nil {
 		log.Warning("deletePipeline> Cannot delete pipeline %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Warning("deletePipeline> Cannot commit transaction: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -870,7 +992,6 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *conte
 
 	log.Notice("Pipeline %s removed.\n", pipelineName)
 	w.WriteHeader(http.StatusOK)
-
 }
 
 func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -884,20 +1005,20 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	stageID, err := strconv.ParseInt(stageIDString, 10, 60)
 	if err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Stage ID must be an int: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	// Get args in body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	a, err := sdk.NewAction("").FromJSON(data)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -915,28 +1036,6 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		return
 	}
 
-	/*
-		// Check if action parameter has a value to PasswordPlaceholder
-		// if so, load default action parameter value and set it
-		for actionIndex, c := range a.Actions {
-			for paramIndex, p := range c.Parameters {
-				if p.Type == sdk.PasswordParameter && p.Value == sdk.PasswordPlaceholder {
-					// load action with clear and set value
-					clearA, err := action.LoadActionByID(db, c.ID, action.WithClearPasswords())
-					if err != nil {
-						WriteError(w, r, err)
-						return
-					}
-					for _, cp := range clearA.Parameters {
-						if cp.Name == p.Name {
-							a.Actions[actionIndex].Parameters[paramIndex].Value = cp.Value
-						}
-					}
-				}
-			}
-		}
-	*/
-
 	tx, err := db.Begin()
 	if err != nil {
 		WriteError(w, r, err)
@@ -950,7 +1049,7 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	err = action.InsertAction(tx, a, false)
 	if err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot insert action: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -963,7 +1062,6 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	}
 	a.PipelineActionID = pipelineActionID
 
-	//warnings, err := sanity.CheckActionRequirements(tx, proj.Key, pip.Name, a.ID)
 	warnings, err := sanity.CheckAction(tx, proj, pip, a.ID)
 	if err != nil {
 		log.Warning("addActionToPipelineHandler> Cannot check action %d requirements: %s\n", a.ID, err)
@@ -1016,7 +1114,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	actionID, err := strconv.ParseInt(actionIDString, 10, 60)
 	if err != nil {
 		log.Warning("updateJoinedAction> Action ID must be an int: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -1024,19 +1122,18 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("updateJoinedAction> Unable to parse payload: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	a, err := sdk.NewAction("").FromJSON(data)
 	if err != nil {
 		log.Warning("updateJoinedAction> Unable to parse json %s: %s\n", actionIDString, err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	a.ID = actionID
 
-	//clearJoinedAction, err := action.LoadActionByID(db, actionID, action.WithClearPasswords())
 	clearJoinedAction, err := action.LoadActionByID(db, actionID)
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot load action %d: %s\n", actionID, err)
@@ -1049,50 +1146,6 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		WriteError(w, r, sdk.ErrForbidden)
 		return
 	}
-	/*
-		// Check if action parameter has a value to PasswordPlaceholder
-		// if so, load default action parameter value and set it
-		for actionIndex, c := range a.Actions {
-			for paramIndex, p := range c.Parameters {
-				if p.Type == sdk.PasswordParameter && p.Value == sdk.PasswordPlaceholder {
-					found := false
-					for _, clearChild := range clearJoinedAction.Actions {
-						if clearChild.ID == c.ID {
-							for _, clearParam := range clearChild.Parameters {
-								if clearParam.Name == p.Name {
-									found = true
-									a.Actions[actionIndex].Parameters[paramIndex].Value = clearParam.Value
-									break
-								}
-							}
-						}
-					}
-					if !found {
-						// Ok our user just added this one, we need to set the default value of this action
-						log.Notice("updateJoinedAction> Tried to load %s.'%s' value but did not found it action_edge_parameters. Loading action '%s' with default clear secrets\n", c.Name, p.Name, c.Name)
-						clearA, err := action.LoadPublicAction(db, c.Name, action.WithClearPasswords())
-						if err != nil {
-							WriteError(w, r, err)
-							return
-						}
-						for _, p := range clearA.Parameters {
-							if p.Name == p.Name {
-								found = true
-								a.Actions[actionIndex].Parameters[paramIndex].Value = p.Value
-								break
-							}
-						}
-					}
-
-					if !found {
-						log.Critical("updateJoinedAction> Tried to load %s.'%s' value but did not found it\n", c.Name, p.Name)
-						WriteError(w, r, sdk.ErrUnknownError)
-						return
-					}
-				}
-			}
-		}
-	*/
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -1116,7 +1169,6 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		return
 	}
 
-	//warnings, err := sanity.CheckActionRequirements(tx, proj.Key, pip.Name, a.ID)
 	warnings, err := sanity.CheckAction(tx, proj, pip, a.ID)
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot check action %d requirements: %s\n", a.ID, err)
@@ -1608,7 +1660,7 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 			if err != sdk.ErrNoEnvironment {
 				log.Warning("getPipelineBuildCommitsHandler> Cannot load environment %s: %s\n", envName, err)
 			}
-			w.WriteHeader(http.StatusNotFound)
+			WriteError(w, r, err)
 			return
 		}
 	}
