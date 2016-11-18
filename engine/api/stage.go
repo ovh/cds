@@ -322,22 +322,19 @@ func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	}
 	defer tx.Rollback()
 
-	err = pipeline.DeleteStageByID(tx, s, c.User.ID)
-	if err != nil {
+	if err := pipeline.DeleteStageByID(tx, s, c.User.ID); err != nil {
 		log.Warning("deleteStageHandler> Cannot Delete stage: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
 		log.Warning("deleteStageHandler> Cannot Update pipeline last_modified: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteStageHandler> Cannot commit transaction: %s", err)
 		WriteError(w, r, err)
 		return
