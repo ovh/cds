@@ -166,7 +166,7 @@ func InsertJob(db database.QueryExecuter, job *sdk.Job, stageID int64, pip *sdk.
 	job.PipelineStageID = stage.ID
 
 	// Create pipeline action
-	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, args, enabled) VALUES ($1, $2, '[]', $4) RETURNING id`
+	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, enabled) VALUES ($1, $2, $3) RETURNING id`
 	if err := db.QueryRow(query, job.PipelineStageID, job.Action.ID, job.Enabled).Scan(&job.PipelineActionID); err != nil {
 		return err
 	}

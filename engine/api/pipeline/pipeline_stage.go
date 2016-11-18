@@ -146,6 +146,7 @@ func LoadStages(db *sql.DB, pipelineID int64) ([]sdk.Stage, error) {
 }
 
 func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) error {
+	p.Stages = []sdk.Stage{}
 	c := structarg{}
 	for _, f := range args {
 		f(&c)
@@ -239,7 +240,7 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 		}
 
 		//Get actions
-		if pipelineActionID.Valid && actionID.Valid && actionArgs.Valid && actionEnabled.Valid && actionLastModified.Valid {
+		if pipelineActionID.Valid && actionID.Valid && actionEnabled.Valid && actionLastModified.Valid {
 			var a *sdk.Action
 			a = mapAllActions[pipelineActionID.Int64]
 
@@ -252,7 +253,12 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 				}
 				mapAllActions[pipelineActionID.Int64] = a
 				mapActionsStages[stageID] = append(mapActionsStages[stageID], *a)
-				mapArgs[stageID] = append(mapArgs[stageID], actionArgs.String)
+
+				if actionArgs.Valid {
+					mapArgs[stageID] = append(mapArgs[stageID], actionArgs.String)
+				} else {
+					mapArgs[stageID] = append(mapArgs[stageID], "[]")
+				}
 			}
 		}
 	}
