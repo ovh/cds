@@ -64,7 +64,7 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pip); err != nil {
-		log.Warning("deletepipelineActionHandler>Cannot load stages: %s\n", err)
+		log.Warning("addJobToStageHandler>Cannot load stages: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -74,11 +74,12 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	for _, s := range pip.Stages {
 		if s.ID == stageID {
 			found = true
+			break
 		}
 	}
 
 	if !found {
-		log.Warning("deletepipelineActionHandler>Stage not found\n")
+		log.Warning("addJobToStageHandler>Stage not found\n")
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
@@ -116,8 +117,7 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -150,7 +150,7 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 
 	stageID, err := strconv.ParseInt(stageIDString, 10, 64)
 	if err != nil {
-		log.Warning("deletepipelineActionHandler>ID is not a int: %s\n", err)
+		log.Warning("updateJobHandler>ID is not a int: %s\n", err)
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
@@ -185,7 +185,7 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
-		log.Warning("deletepipelineActionHandler>Cannot load stages: %s\n", err)
+		log.Warning("updateJobHandler>Cannot load stages: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -197,13 +197,14 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 			for _, j := range s.Actions {
 				if j.PipelineActionID == jobID {
 					found = true
+					break
 				}
 			}
 		}
 	}
 
 	if !found {
-		log.Warning("deletepipelineActionHandler>Job not found\n")
+		log.Warning("updateJobHandler>Job not found\n")
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
@@ -222,22 +223,20 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
 		log.Warning("updateJobHandler> Cannot update pipeline last_modified: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateJobHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
-		log.Warning("addJobToStageHandler> Cannot load stages: %s\n", err)
+		log.Warning("updateJobHandler> Cannot load stages: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -255,45 +254,48 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 
 	jobID, err := strconv.ParseInt(jobIDString, 10, 64)
 	if err != nil {
-		log.Warning("deletepipelineActionHandler>ID is not a int: %s\n", err)
+		log.Warning("deleteJobHandler>ID is not a int: %s\n", err)
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
 	stageID, err := strconv.ParseInt(stageIDString, 10, 64)
 	if err != nil {
-		log.Warning("deletepipelineActionHandler>ID is not a int: %s\n", err)
+		log.Warning("deleteJobHandler>ID is not a int: %s\n", err)
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
 	pipelineData, err := pipeline.LoadPipeline(db, key, pipName, false)
 	if err != nil {
-		log.Warning("deletepipelineActionHandler>Cannot load pipeline %s: %s\n", pipName, err)
+		log.Warning("deleteJobHandler>Cannot load pipeline %s: %s\n", pipName, err)
 		WriteError(w, r, err)
 		return
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
-		log.Warning("deletepipelineActionHandler>Cannot load stages: %s\n", err)
+		log.Warning("deleteJobHandler>Cannot load stages: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
 	// check if job is in the current pipeline
 	found := false
+	var jobToDelete sdk.Job
 	for _, s := range pipelineData.Stages {
 		if s.ID == stageID {
-			for _, j := range s.Actions {
+			for _, j := range s.Jobs {
 				if j.PipelineActionID == jobID {
+					jobToDelete = j
 					found = true
+					break
 				}
 			}
 		}
 	}
 
 	if !found {
-		log.Warning("deletepipelineActionHandler>Job not found\n")
+		log.Warning("deleteJobHandler>Job not found\n")
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
@@ -307,7 +309,7 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	var ids []int64
 	rows, err := db.Query(query, jobID)
 	if err != nil {
-		log.Warning("deletePipelineActionHandler> cannot retrieves pipeline build: %s\n", err)
+		log.Warning("deleteJobHandler> cannot retrieves pipeline build: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -317,18 +319,18 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		err = rows.Scan(&id)
 		if err != nil {
 			rows.Close()
-			log.Warning("deletePipelineActionHandler> cannot retrieves pipeline build: %s\n", err)
+			log.Warning("deleteJobHandler> cannot retrieves pipeline build: %s\n", err)
 			WriteError(w, r, err)
 			return
 		}
 		ids = append(ids, id)
 	}
 	rows.Close()
-	log.Notice("deletePipelineActionHandler> Got %d PipelineBuild to archive\n", len(ids))
+	log.Notice("deleteJobHandler> Got %d PipelineBuild to archive\n", len(ids))
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("deletePipelineActionHandler> Cannot begin transaction: %s\n", err)
+		log.Warning("deleteJobHandler> Cannot begin transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -338,29 +340,26 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	for _, id := range ids {
 		err = archivist.ArchiveBuild(tx, id)
 		if err != nil {
-			log.Warning("deletePipelineActionHandler> cannot archive pipeline build: %s\n", err)
+			log.Warning("deleteJobHandler> cannot archive pipeline build: %s\n", err)
 			WriteError(w, r, err)
 			return
 		}
 	}
 
-	err = pipeline.DeleteJob(tx, jobID, c.User.ID)
-	if err != nil {
-		log.Warning("deletePipelineActionHandler> Cannot delete pipeline action: %s", err)
+	if err := pipeline.DeleteJob(tx, jobToDelete, c.User.ID); err != nil {
+		log.Warning("deleteJobHandler> Cannot delete pipeline action: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData)
-	if err != nil {
-		log.Warning("deletePipelineActionHandler> Cannot update pipeline last_modified: %s", err)
+	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
+		log.Warning("deleteJobHandler> Cannot update pipeline last_modified: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("deletePipelineActionHandler> Cannot commit transaction: %s", err)
+	if err := tx.Commit(); err != nil {
+		log.Warning("deleteJobHandler> Cannot commit transaction: %s", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -368,6 +367,12 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	k := cache.Key("application", key, "*")
 	cache.DeleteAll(k)
 
-	w.WriteHeader(http.StatusOK)
+	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		log.Warning("deleteJobHandler> Cannot load stages: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, pipelineData, http.StatusOK)
 
 }

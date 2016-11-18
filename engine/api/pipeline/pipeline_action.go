@@ -193,8 +193,8 @@ func UpdateJob(db database.QueryExecuter, job *sdk.Job, userID int64) error {
 }
 
 // DeleteJob Delete a job ( action + pipeline_action )
-func DeleteJob(db database.QueryExecuter, actionID int64, userID int64) error {
-	return action.DeleteAction(db, actionID, userID)
+func DeleteJob(db database.QueryExecuter, job sdk.Job, userID int64) error {
+	return action.DeleteAction(db, job.Action.ID, userID)
 }
 
 // UpdatePipelineAction Update an action in a pipeline
