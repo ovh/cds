@@ -92,7 +92,7 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 			return
 		}
 
-		err = pipeline.UpdatePipelineLastModified(tx, p.ID)
+		err = pipeline.UpdatePipelineLastModified(tx, p)
 		if err != nil {
 			log.Warning("updateGroupRoleOnPipelineHandler: Cannot update pipeline last_modified date: %s\n", err)
 			WriteError(w, r, err)
@@ -186,7 +186,7 @@ func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *s
 		}
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, p)
 	if err != nil {
 		log.Warning("updateGroupsOnPipelineHandler: Cannot update pipeline last_modified date: %s\n", err)
 		WriteError(w, r, sdk.ErrUnknownError)
@@ -260,7 +260,7 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 			return
 		}
 
-		err = pipeline.UpdatePipelineLastModified(tx, p.ID)
+		err = pipeline.UpdatePipelineLastModified(tx, p)
 		if err != nil {
 			log.Warning("addGroupInPipeline: Cannot update pipeline last_modified date: %s\n", err)
 			WriteError(w, r, err)
@@ -314,7 +314,7 @@ func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, p)
 	if err != nil {
 		log.Warning("deleteGroupFromPipelineHandler: Cannot update pipeline last_modified date: %s\n", err)
 		WriteError(w, r, err)

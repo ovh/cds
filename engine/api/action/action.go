@@ -208,9 +208,9 @@ func loadAction(db database.Querier, s database.Scanner) (*sdk.Action, error) {
 }
 
 // UpdateActionDB  Update an action
-func UpdateActionDB(tx *sql.Tx, a *sdk.Action, userID int64) error {
+func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) error {
 
-	ok, err := isTreeLoopFree(tx, a, nil)
+	ok, err := isTreeLoopFree(db, a, nil)
 	if err != nil {
 		return err
 	}
@@ -218,43 +218,43 @@ func UpdateActionDB(tx *sql.Tx, a *sdk.Action, userID int64) error {
 		return sdk.ErrActionLoop
 	}
 
-	err = insertAudit(tx, a.ID, userID, "Action update")
+	err = insertAudit(db, a.ID, userID, "Action update")
 	if err != nil {
 		return err
 	}
 
-	err = deleteActionChildren(tx, a.ID)
+	err = deleteActionChildren(db, a.ID)
 	if err != nil {
 		return err
 	}
 	for i := range a.Actions {
 		// if child id is not given, try to load by name
 		if a.Actions[i].ID == 0 {
-			ch, errl := LoadPublicAction(tx, a.Actions[i].Name)
+			ch, errl := LoadPublicAction(db, a.Actions[i].Name)
 			if errl != nil {
 				return errl
 			}
 			a.Actions[i].ID = ch.ID
 		}
 
-		if err = insertActionChild(tx, a.ID, a.Actions[i], i+1); err != nil {
+		if err = insertActionChild(db, a.ID, a.Actions[i], i+1); err != nil {
 			return err
 		}
 	}
 
-	err = DeleteActionParameters(tx, a.ID)
+	err = DeleteActionParameters(db, a.ID)
 	if err != nil {
 		return err
 	}
 	for i := range a.Parameters {
-		err = InsertActionParameter(tx, a.ID, a.Parameters[i])
+		err = InsertActionParameter(db, a.ID, a.Parameters[i])
 		if err != nil {
 			log.Warning("UpdateAction> InsertActionParameter for %s failed: %s\n", a.Parameters[i].Name, err)
 			return err
 		}
 	}
 
-	err = DeleteActionRequirements(tx, a.ID)
+	err = DeleteActionRequirements(db, a.ID)
 	if err != nil {
 		return err
 	}
@@ -275,14 +275,14 @@ func UpdateActionDB(tx *sql.Tx, a *sdk.Action, userID int64) error {
 		}
 	}
 	for i := range a.Requirements {
-		err = InsertActionRequirement(tx, a.ID, a.Requirements[i])
+		err = InsertActionRequirement(db, a.ID, a.Requirements[i])
 		if err != nil {
 			return err
 		}
 	}
 
 	query := `UPDATE action SET name=$1,description=$2, type=$3, enabled=$4 WHERE id=$5`
-	_, err = tx.Exec(query, a.Name, a.Description, string(a.Type), a.Enabled, a.ID)
+	_, err = db.Exec(query, a.Name, a.Description, string(a.Type), a.Enabled, a.ID)
 	if err != nil {
 		return err
 	}

@@ -88,7 +88,7 @@ func InsertStagePrequisites(db database.QueryExecuter, s *sdk.Stage) error {
 			return err
 		}
 	}
-	return UpdatePipelineLastModified(db, s.PipelineID)
+	return nil
 }
 
 // LoadStages Get all stages for the given pipeline
@@ -145,7 +145,7 @@ func LoadStages(db *sql.DB, pipelineID int64) ([]sdk.Stage, error) {
 	return stages, nil
 }
 
-func loadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) error {
+func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) error {
 	c := structarg{}
 	for _, f := range args {
 		f(&c)
@@ -421,7 +421,7 @@ func DeleteAllStage(db database.QueryExecuter, pipelineID int64, userID int64) e
 }
 
 // MoveStage Move a stage
-func MoveStage(db *sql.DB, stageToMove *sdk.Stage, newBuildOrder int) error {
+func MoveStage(db *sql.DB, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -429,20 +429,21 @@ func MoveStage(db *sql.DB, stageToMove *sdk.Stage, newBuildOrder int) error {
 	defer tx.Rollback()
 
 	if stageToMove.BuildOrder > newBuildOrder {
-		err = moveUpStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder)
-		if err != nil {
+		if err := moveUpStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
 		}
 	} else if stageToMove.BuildOrder < newBuildOrder {
-		err = moveDownStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder)
-		if err != nil {
+		if err := moveDownStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
 		}
 	}
 
 	stageToMove.BuildOrder = newBuildOrder
-	err = UpdateStage(tx, stageToMove)
-	if err != nil {
+	if err := UpdateStage(tx, stageToMove); err != nil {
+		return err
+	}
+
+	if err := UpdatePipelineLastModified(tx, p); err != nil {
 		return err
 	}
 

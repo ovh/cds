@@ -486,7 +486,7 @@ LIMIT 1000`
 		}
 
 		// load pipeline actions
-		if err := loadPipelineStage(db, &p.Pipeline, args...); err != nil {
+		if err := LoadPipelineStage(db, &p.Pipeline, args...); err != nil {
 			log.Warning("Cannot load pipeline stages : %s", err)
 			return nil, err
 		}
