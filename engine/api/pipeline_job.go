@@ -12,8 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/archivist"
@@ -49,13 +47,6 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		return
 	}
 
-	proj, err := project.LoadProject(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("addJobToStageHandler> Cannot load project %s: %s\n", projectKey, err)
-		WriteError(w, r, sdk.ErrNoProject)
-		return
-	}
-
 	pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		log.Warning("addJobToStageHandler> Cannot load pipeline %s for project %s: %s\n", pipelineName, projectKey, err)
@@ -80,7 +71,7 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 
 	if !found {
 		log.Warning("addJobToStageHandler>Stage not found\n")
-		WriteError(w, r, sdk.ErrWrongRequest)
+		WriteError(w, r, sdk.ErrNotFound)
 		return
 	}
 
@@ -99,20 +90,6 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 
 	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
 		log.Warning("addJobToStageHandler> Cannot update pipeline last modified date: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	//warnings, err := sanity.CheckActionRequirements(tx, proj.Key, pip.Name, a.ID)
-	warnings, err := sanity.CheckAction(tx, proj, pip, job.Action.ID)
-	if err != nil {
-		log.Warning("addJobToStageHandler> Cannot check action %d requirements: %s\n", job.Action.ID, err)
-		WriteError(w, r, err)
-		return
-	}
-
-	if err := sanity.InsertActionWarnings(tx, proj.ID, pip.ID, job.Action.ID, warnings); err != nil {
-		log.Warning("addJobToStageHandler> Cannot insert warning for action %d: %s\n", job.Action.ID, err)
 		WriteError(w, r, err)
 		return
 	}
@@ -205,7 +182,7 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 
 	if !found {
 		log.Warning("updateJobHandler>Job not found\n")
-		WriteError(w, r, sdk.ErrWrongRequest)
+		WriteError(w, r, sdk.ErrNotFound)
 		return
 	}
 
@@ -296,7 +273,7 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 
 	if !found {
 		log.Warning("deleteJobHandler>Job not found\n")
-		WriteError(w, r, sdk.ErrWrongRequest)
+		WriteError(w, r, sdk.ErrNotFound)
 		return
 	}
 

@@ -60,22 +60,19 @@ func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, 
 	}
 	defer tx.Rollback()
 
-	err = pipeline.DeleteParameterFromPipeline(tx, p.ID, paramName)
-	if err != nil {
+	if err := pipeline.DeleteParameterFromPipeline(tx, p.ID, paramName); err != nil {
 		log.Warning("deleteParameterFromPipelineHandler: Cannot delete %s: %s\n", paramName, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
 		log.Warning("deleteParameterFromPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteParameterFromPipelineHandler: Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -97,8 +94,7 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	}
 
 	var pipParams []sdk.Parameter
-	err = json.Unmarshal(data, &pipParams)
-	if err != nil {
+	if err := json.Unmarshal(data, &pipParams); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -160,24 +156,21 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	// Ok now permform actual update
 	for i := range added {
 		p := &added[i]
-		err = pipeline.InsertParameterInPipeline(tx, pip.ID, p)
-		if err != nil {
+		if err := pipeline.InsertParameterInPipeline(tx, pip.ID, p); err != nil {
 			log.Warning("UpdatePipelineParameters> Cannot insert new params %s: %s", p.Name, err)
 			WriteError(w, r, err)
 			return
 		}
 	}
 	for _, p := range updated {
-		err = pipeline.UpdateParameterInPipeline(tx, pip.ID, p)
-		if err != nil {
+		if err := pipeline.UpdateParameterInPipeline(tx, pip.ID, p); err != nil {
 			log.Warning("UpdatePipelineParameters> Cannot update parameter %s: %s", p.Name, err)
 			WriteError(w, r, err)
 			return
 		}
 	}
 	for _, p := range deleted {
-		err = pipeline.DeleteParameterFromPipeline(tx, pip.ID, p.Name)
-		if err != nil {
+		if err := pipeline.DeleteParameterFromPipeline(tx, pip.ID, p.Name); err != nil {
 			log.Warning("UpdatePipelineParameters> Cannot delete parameter %s: %s", p.Name, err)
 			WriteError(w, r, err)
 			return
@@ -191,22 +184,19 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 			WHERE application_pipeline.application_id = application.id
 			AND application_pipeline.pipeline_id = $1
 		`
-	_, err = tx.Exec(query, pip.ID)
-	if err != nil {
+	if _, err := tx.Exec(query, pip.ID); err != nil {
 		log.Warning("UpdatePipelineParameters> Cannot update linked application [%d]: %s", pip.ID, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pip)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
 		log.Warning("UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateParametersInPipelineHandler: Cannot commit transaction: %s", err)
 		WriteError(w, r, sdk.ErrUnknownError)
 		return
@@ -229,13 +219,12 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	var newParam sdk.Parameter
-	err = json.Unmarshal(data, &newParam)
-	if err != nil {
+	if err := json.Unmarshal(data, &newParam); err != nil {
 		WriteError(w, r, err)
 		return
 	}
 	if newParam.Name != paramName {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -262,23 +251,20 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	defer tx.Rollback()
 
 	if paramInPipeline {
-		err := pipeline.UpdateParameterInPipeline(tx, p.ID, newParam)
-		if err != nil {
+		if err := pipeline.UpdateParameterInPipeline(tx, p.ID, newParam); err != nil {
 			log.Warning("updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s:  %s\n", paramName, pipelineName, err)
 			WriteError(w, r, err)
 			return
 		}
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
 		log.Warning("updateParameterInPipelineHandler: Cannot update pipeline last_modified date:  %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateParameterInPipelineHandler: Cannot commit transaction:  %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -298,27 +284,26 @@ func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *s
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("addParameterInPipelineHandler> Cannot read body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var newParam sdk.Parameter
-	err = json.Unmarshal(data, &newParam)
-	if err != nil {
+	if err := json.Unmarshal(data, &newParam); err != nil {
 		log.Warning("addParameterInPipelineHandler> Cannot unmarshal body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	if newParam.Name != paramName {
 		log.Warning("addParameterInPipelineHandler> Wrong param name got %s instead of %s", newParam.Name, paramName)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	p, err := pipeline.LoadPipeline(db, key, pipelineName, false)
 	if err != nil {
 		log.Warning("addParameterInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -338,23 +323,20 @@ func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *s
 	defer tx.Rollback()
 
 	if !paramInProject {
-		err := pipeline.InsertParameterInPipeline(tx, p.ID, &newParam)
-		if err != nil {
+		if err := pipeline.InsertParameterInPipeline(tx, p.ID, &newParam); err != nil {
 			log.Warning("addParameterInPipelineHandler: Cannot add parameter %s in pipeline %s:  %s\n", paramName, pipelineName, err)
 			WriteError(w, r, err)
 			return
 		}
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
 		log.Warning("addParameterInPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("addParameterInPipelineHandler: Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
