@@ -67,7 +67,7 @@ func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, p)
 	if err != nil {
 		log.Warning("deleteParameterFromPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		WriteError(w, r, err)
@@ -198,7 +198,7 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pip.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, pip)
 	if err != nil {
 		log.Warning("UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
 		WriteError(w, r, err)
@@ -270,7 +270,7 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		}
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, p)
 	if err != nil {
 		log.Warning("updateParameterInPipelineHandler: Cannot update pipeline last_modified date:  %s\n", err)
 		WriteError(w, r, err)
@@ -346,7 +346,7 @@ func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *s
 		}
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, p)
 	if err != nil {
 		log.Warning("addParameterInPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		WriteError(w, r, err)

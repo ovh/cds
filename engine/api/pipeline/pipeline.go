@@ -19,9 +19,13 @@ type structarg struct {
 }
 
 // UpdatePipelineLastModified Update last_modified date on pipeline
-func UpdatePipelineLastModified(db database.Executer, pipelineID int64) error {
-	query := "UPDATE pipeline SET last_modified = current_timestamp WHERE id = $1"
-	_, err := db.Exec(query, pipelineID)
+func UpdatePipelineLastModified(db database.QueryExecuter, p *sdk.Pipeline) error {
+	query := "UPDATE pipeline SET last_modified = current_timestamp WHERE id = $1 RETURNING last_modified"
+	var lastModified time.Time
+	err := db.QueryRow(query, p.ID).Scan(&lastModified)
+	if err == nil {
+		p.LastModified = lastModified.Unix()
+	}
 	return err
 }
 
@@ -66,7 +70,7 @@ func LoadPipeline(db database.Querier, projectKey, name string, deep bool) (*sdk
 
 	if deep {
 		// load pipeline actions by stage
-		err = loadPipelineStage(db, &p)
+		err = LoadPipelineStage(db, &p)
 		if err != nil {
 			return nil, fmt.Errorf("cannot loadPipelineStage> %s", err)
 		}
@@ -241,8 +245,7 @@ func LoadPipelines(db database.Querier, projectID int64, loadDependencies bool, 
 		var lastModified time.Time
 
 		// scan pipeline id
-		err = rows.Scan(&p.ID, &p.Name, &p.ProjectID, &pType, &lastModified)
-		if err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.ProjectID, &pType, &lastModified); err != nil {
 			return nil, err
 		}
 		p.Type = sdk.PipelineTypeFromString(pType)
@@ -250,8 +253,7 @@ func LoadPipelines(db database.Querier, projectID int64, loadDependencies bool, 
 
 		if loadDependencies {
 			// load pipeline stages
-			err = loadPipelineStage(db, &p)
-			if err != nil {
+			if err := LoadPipelineStage(db, &p); err != nil {
 				return nil, err
 			}
 

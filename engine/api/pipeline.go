@@ -432,6 +432,7 @@ func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	runPipelineHandlerFunc(w, r, db, c, &request)
 }
 
+// DEPRECATED
 func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -497,7 +498,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, pipelineData)
 	if err != nil {
 		log.Warning("updatePipelineActionHandler> Cannot update pipeline last_modified: %s\n", err)
 		WriteError(w, r, err)
@@ -591,7 +592,7 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, pipelineData)
 	if err != nil {
 		log.Warning("deletePipelineActionHandler> Cannot update pipeline last_modified: %s", err)
 		WriteError(w, r, err)
@@ -1005,19 +1006,21 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	stageID, err := strconv.ParseInt(stageIDString, 10, 60)
 	if err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Stage ID must be an int: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
+		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
 	// Get args in body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot read body: %s\n", err)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	a, err := sdk.NewAction("").FromJSON(data)
 	if err != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot unmarshall body: %s\n", err)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
@@ -1046,8 +1049,7 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	// Insert joined action
 	a.Type = sdk.JoinedAction
 	a.Enabled = true
-	err = action.InsertAction(tx, a, false)
-	if err != nil {
+	if err := action.InsertAction(tx, a, false); err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot insert action: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -1162,7 +1164,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pip.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, pip)
 	if err != nil {
 		log.Warning("updateJoinedAction> cannot update pipeline last_modified date: %s\n", err)
 		WriteError(w, r, err)
@@ -1232,7 +1234,7 @@ func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pip.ID)
+	err = pipeline.UpdatePipelineLastModified(tx, pip)
 	if err != nil {
 		log.Warning("deleteJoinedAction> Cannot update last_modified pipeline date: %s", err)
 		WriteError(w, r, err)

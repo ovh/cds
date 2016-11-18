@@ -1,7 +1,8 @@
 package pipeline
 
 import (
-	"github.com/ovh/cds/engine/api/action"
+	"time"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"
@@ -59,22 +60,17 @@ func importNew(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline) 
 			return err
 		}
 		//Insert stage's Jobs
-		for _, job := range s.Actions {
-			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", job.Name, s.Name, pip.Name)
-			//Default is job enabled
-			job.Enabled = true
-			//No parameter
-			job.Parameters = []sdk.Parameter{}
-			//Set relation with stage
-			job.PipelineStageID = s.ID
-			//Insert Actions type Joined = Job
-			job.Type = sdk.JoinedAction
-			if err := action.InsertAction(db, &job, false); err != nil {
-				return err
+		for _, jobAction := range s.Actions {
+			job := &sdk.Job {
+				PipelineStageID: s.ID,
+				Action: jobAction,
+				Enabled: true,
+				LastModified: time.Now().Unix(),
 			}
-			log.Debug("pipeline.importNew> Linking job %s to stage %s on pipeline %s", job.Name, s.Name, pip.Name)
-			//Then insert Job
-			if err := InsertPipelineJob(db, pip, &s, &job); err != nil {
+
+
+			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", job.Action.Name, s.Name, pip.Name)
+			if err := InsertJob(db, job, s.ID, pip); err != nil {
 				return err
 			}
 		}
