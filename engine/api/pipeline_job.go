@@ -69,7 +69,7 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		return
 	}
 
-	// check if job is in the current pipeline
+	// check if stage is in the current pipeline
 	found := false
 	for _, s := range pip.Stages {
 		if s.ID == stageID {

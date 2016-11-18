@@ -261,14 +261,6 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 	for id := range mapStages {
 		for index := range mapActionsStages[id] {
 			var a *sdk.Action
-
-			/*
-				if c.clearsecret {
-					a, err = action.LoadActionByID(db, mapActionsStages[id][index].ID, action.WithClearPasswords())
-				} else {
-					a, err = action.LoadActionByID(db, mapActionsStages[id][index].ID)
-				}
-			*/
 			a, err = action.LoadActionByID(db, mapActionsStages[id][index].ID)
 			if err != nil {
 				return fmt.Errorf("loadPipelineStage> cannot action.LoadActionByID %d > %s", mapActionsStages[id][index].ID, err)
@@ -292,6 +284,15 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 			}
 			a.Parameters = pipelineActionParameter
 			mapStages[id].Actions = append(mapStages[id].Actions, *a)
+
+			// Insert job also
+			mapStages[id].Jobs = append(mapStages[id].Jobs, sdk.Job{
+				PipelineActionID: a.PipelineActionID,
+				Enabled: a.Enabled,
+				LastModified: a.LastModified,
+				PipelineStageID: a.PipelineStageID,
+				Action: *a,
+			})
 		}
 	}
 	for _, s := range stagesPtr {
