@@ -24,7 +24,7 @@ func InsertWorkerModel(db *sql.DB, model *sdk.Model) error {
 func LoadWorkerModels(db database.Querier) ([]sdk.Model, error) {
 	query := `SELECT worker_model.id, worker_model.type, worker_model.name, worker_model.image, worker_model.owner_id , "user".username
 	          FROM worker_model
-	          JOIN "user" ON "user".id =  worker_model.owner_id
+	          LEFT JOIN "user" ON "user".id =  worker_model.owner_id
 	          ORDER BY worker_model.name
 	          LIMIT 1000`
 
@@ -39,9 +39,17 @@ func LoadWorkerModels(db database.Querier) ([]sdk.Model, error) {
 		var m sdk.Model
 		var u sdk.User
 		var typeS string
-		err = rows.Scan(&m.ID, &typeS, &m.Name, &m.Image, &m.OwnerID, &u.Username)
+		var username sql.NullString
+		var ownerID sql.NullInt64
+		err = rows.Scan(&m.ID, &typeS, &m.Name, &m.Image, &ownerID, &username)
 		if err != nil {
 			return nil, err
+		}
+		if ownerID.Valid {
+			m.OwnerID = ownerID.Int64
+		}
+		if username.Valid {
+			u.Username = username.String
 		}
 		switch typeS {
 		case string(sdk.Docker):
@@ -69,7 +77,6 @@ func LoadWorkerModels(db database.Querier) ([]sdk.Model, error) {
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	return models, nil
