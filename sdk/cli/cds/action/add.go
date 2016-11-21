@@ -43,10 +43,12 @@ $cds action add --url $HOME/src/github.com/ovh/cds-contrib/action-scripts/cds-gi
 }
 
 func addAction(cmd *cobra.Command, args []string) {
-	if len(args) == 0 {
+	name := ""
+	if len(args) == 0 && cmdActionAddParams.URL == "" {
 		sdk.Exit("Wrong usage: %s\n", cmd.Short)
+	} else if len(args) > 0 {
+		name = args[0]
 	}
-	name := args[0]
 
 	var req []sdk.Requirement
 	for _, r := range cmdActionAddParams.Requirements {
@@ -130,7 +132,7 @@ func cmdActionAddStep() *cobra.Command {
 
 func addActionStep(cmd *cobra.Command, args []string) {
 
-	if len(args) != 2 && cmdActionAddParams.URL == "" {
+	if len(args) != 2 {
 		sdk.Exit("Wrong usage. See '%s'\n", cmd.Short)
 	}
 

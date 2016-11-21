@@ -365,8 +365,8 @@ func loadActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	existingAction, err := action.LoadPublicAction(tx, a.Name)
 	if err == nil {
 		exist = true
+		a.ID = existingAction.ID
 	}
-	a.ID = existingAction.ID
 
 	//http code status
 	var code int
