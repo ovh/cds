@@ -87,7 +87,7 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	cache.DeleteAll(k)
 	cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
 
-	WriteJSON(w, r, stageData, http.StatusCreated)
+	WriteJSON(w, r, pipelineData, http.StatusCreated)
 }
 
 func getStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
