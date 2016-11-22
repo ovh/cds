@@ -319,7 +319,8 @@ func loadActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 		r.ParseMultipartForm(64 << 20)
 		file, _, errUpload := r.FormFile("UploadFile")
 		if errUpload != nil {
-			WriteError(w, r, errUpload)
+			log.Warning("loadActionHandler> Cannot load file uploaded: %s\n", errUpload)
+			WriteError(w, r, sdk.ErrWrongRequest)
 			return
 		}
 		btes, errRead := ioutil.ReadAll(file)
