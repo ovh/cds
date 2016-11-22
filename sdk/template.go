@@ -185,13 +185,13 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 		method = "PUT"
 		path = "/template/"
 
-		btes, _, err := Request("GET", "/template", nil)
-		if err != nil {
-			return nil, err
+		btes, _, errrequest := Request("GET", "/template", nil)
+		if errrequest != nil {
+			return nil, errrequest
 		}
 		tmpls := []TemplateExtension{}
-		if err := json.Unmarshal(btes, &tmpls); err != nil {
-			return nil, err
+		if errjson := json.Unmarshal(btes, &tmpls); errjson != nil {
+			return nil, errjson
 		}
 
 		var found bool

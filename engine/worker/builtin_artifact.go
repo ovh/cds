@@ -13,6 +13,7 @@ import (
 func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusSuccess}
 	var project, pipeline, application, environment, tag, filePattern string
+	enabled := true
 
 	// Replace step argument in action arguments
 	for _, p := range a.Parameters {
@@ -24,6 +25,10 @@ func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 		case "tag":
 			fmt.Printf("runArtifactUpload: tag=%s\n", p.Value)
 			tag = p.Value
+			break
+		case "enabled":
+			fmt.Printf("runArtifactUpload: enabled=%s\n", p.Value)
+			enabled = (p.Value != "false")
 			break
 		}
 	}
@@ -47,7 +52,11 @@ func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 			environment = p.Value
 			break
 		}
+	}
 
+	if !enabled {
+		sendLog(actionBuild.ID, sdk.ArtifactUpload, fmt.Sprintf("Artifact Upload is disabled. return\n"))
+		return res
 	}
 
 	if tag == "" {
@@ -88,8 +97,8 @@ func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 
 func runArtifactDownload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusSuccess}
-
 	var project, pipeline, application, environment, tag, filePath string
+	enabled := true
 
 	for _, p := range actionBuild.Args {
 		switch p.Name {
@@ -108,6 +117,10 @@ func runArtifactDownload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result 
 		case "cds.environment":
 			fmt.Printf("runArtifactDownload: cds.environment=%s\n", p.Value)
 			environment = p.Value
+			break
+		case "enabled":
+			fmt.Printf("runArtifactDownload: enabled=%s\n", p.Value)
+			enabled = (p.Value != "false")
 			break
 		}
 	}
@@ -130,6 +143,11 @@ func runArtifactDownload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result 
 			fmt.Printf("runArtifactDownload: application=%s\n", p.Value)
 			application = p.Value
 		}
+	}
+
+	if !enabled {
+		sendLog(actionBuild.ID, sdk.ArtifactUpload, fmt.Sprintf("Artifact Download is disabled. return\n"))
+		return res
 	}
 
 	if tag == "" {
