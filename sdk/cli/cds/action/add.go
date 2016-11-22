@@ -20,8 +20,7 @@ func cmdActionAdd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
 		Short: "cds action add [<actionName>]",
-		Long: `
-cds action add [<actionName>]
+		Long: `cds action add [<actionName>]
 
 <actionName> is mandatory if you don't use --url flag
 
