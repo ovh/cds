@@ -213,7 +213,7 @@ func (router *Router) init() {
 
 	// Action
 	router.Handle("/action", GET(getActionsHandler))
-	router.Handle("/action/load", NeedAdmin(true), POST(loadActionHandler))
+	router.Handle("/action/import", NeedAdmin(true), POST(importActionHandler))
 	router.Handle("/action/requirement", Auth(false), GET(getActionsRequirements))
 	router.Handle("/action/{permActionName}", GET(getActionHandler), POST(addActionHandler), PUT(updateActionHandler), DELETE(deleteActionHandler))
 	router.Handle("/action/{actionName}/using", NeedAdmin(true), GET(getPipelinesUsingActionHandler))

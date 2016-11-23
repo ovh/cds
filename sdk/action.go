@@ -361,9 +361,9 @@ func UpdateJoinedAction(projectKey, pipelineName string, stage int, a Action) er
 	return nil
 }
 
-//LoadAction creates an action on CDS
-func LoadAction(action *Action) (*Action, error) {
-	path := "/action/load"
+//ImportAction imports an action on CDS
+func ImportAction(action *Action) (*Action, error) {
+	path := "/action/import"
 
 	btes, errMarshall := json.Marshal(action)
 	if errMarshall != nil {

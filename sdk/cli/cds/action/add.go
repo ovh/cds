@@ -102,7 +102,7 @@ func addActionFromScript() (*sdk.Action, error) {
 			return nil, errFrom
 		}
 	}
-	return sdk.LoadAction(action)
+	return sdk.ImportAction(action)
 }
 
 func cmdActionAddRequirement() *cobra.Command {

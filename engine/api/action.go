@@ -301,8 +301,8 @@ func getActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	WriteJSON(w, r, a, http.StatusOK)
 }
 
-// loadActionHandler insert OR update an existing action.
-func loadActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+// importActionHandler insert OR update an existing action.
+func importActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	var a *sdk.Action
 	var err error
 
@@ -319,7 +319,7 @@ func loadActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 		r.ParseMultipartForm(64 << 20)
 		file, _, errUpload := r.FormFile("UploadFile")
 		if errUpload != nil {
-			log.Warning("loadActionHandler> Cannot load file uploaded: %s\n", errUpload)
+			log.Warning("importActionHandler> Cannot load file uploaded: %s\n", errUpload)
 			WriteError(w, r, sdk.ErrWrongRequest)
 			return
 		}
