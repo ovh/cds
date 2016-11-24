@@ -289,16 +289,15 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 // UploadMultiPart upload multipart
 func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
 
-	err := readConfig()
-	if err != nil {
+	if err := readConfig(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)
 	}
 
 	var req *http.Request
-	req, _ = http.NewRequest(method, Host+path, body)
-	if err != nil {
-		return nil, 0, err
+	req, errRequest := http.NewRequest(method, Host+path, body)
+	if errRequest != nil {
+		return nil, 0, errRequest
 	}
 	initRequest(req)
 
