@@ -6,16 +6,16 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"strconv"
+	"testing"
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/testwithdb"
 	test "github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/sdk"
 )
@@ -55,12 +55,11 @@ func TestAddJobHandler(t *testing.T) {
 	err = pipeline.InsertPipeline(db, pip)
 	assert.NoError(t, err)
 
-
 	//4. Add Stage
 	stage := &sdk.Stage{
 		BuildOrder: 1,
-		Enabled: true,
-		Name: "Stage1",
+		Enabled:    true,
+		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
 	err = pipeline.InsertStage(db, stage)
@@ -69,7 +68,7 @@ func TestAddJobHandler(t *testing.T) {
 
 	// 5. Prepare the request
 	addJobRequest := sdk.Job{
-		Enabled: true,
+		Enabled:         true,
 		PipelineStageID: stage.ID,
 		Action: sdk.Action{
 			Name: "myJob",
@@ -79,11 +78,10 @@ func TestAddJobHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":             proj.Key,
 		"permPipelineKey": pip.Name,
-		"stageID":     strconv.FormatInt(stage.ID, 10),
+		"stageID":         strconv.FormatInt(stage.ID, 10),
 	}
-
 
 	uri := router.getRoute("POST", addJobToStageHandler, vars)
 	if uri == "" {
@@ -141,12 +139,11 @@ func TestUpdateJobHandler(t *testing.T) {
 	err = pipeline.InsertPipeline(db, pip)
 	assert.NoError(t, err)
 
-
 	//4. Add Stage
 	stage := &sdk.Stage{
 		BuildOrder: 1,
-		Enabled: true,
-		Name: "Stage1",
+		Enabled:    true,
+		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
 	err = pipeline.InsertStage(db, stage)
@@ -154,25 +151,24 @@ func TestUpdateJobHandler(t *testing.T) {
 
 	//5. Prepare the request
 	job := &sdk.Job{
-		Enabled: true,
+		Enabled:         true,
 		PipelineStageID: stage.ID,
 		Action: sdk.Action{
 			Name: "myJob",
 		},
 	}
-	err = pipeline.InsertJob(db , job, stage.ID, pip)
+	err = pipeline.InsertJob(db, job, stage.ID, pip)
 	assert.NoError(t, err)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
-
 	// 6. Prepare the request
 	addJobRequest := sdk.Job{
-		Enabled: true,
-		PipelineStageID: stage.ID,
+		Enabled:          true,
+		PipelineStageID:  stage.ID,
 		PipelineActionID: job.PipelineActionID,
 		Action: sdk.Action{
-			ID: job.Action.ID,
+			ID:   job.Action.ID,
 			Name: "myJobUpdated",
 		},
 	}
@@ -180,10 +176,10 @@ func TestUpdateJobHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":             proj.Key,
 		"permPipelineKey": pip.Name,
-		"stageID":     strconv.FormatInt(stage.ID, 10),
-		"jobID": 	strconv.FormatInt(job.PipelineActionID, 10),
+		"stageID":         strconv.FormatInt(stage.ID, 10),
+		"jobID":           strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
 	uri := router.getRoute("PUT", updateJobHandler, vars)
@@ -242,12 +238,11 @@ func TestDeleteJobHandler(t *testing.T) {
 	err = pipeline.InsertPipeline(db, pip)
 	assert.NoError(t, err)
 
-
 	//4. Add Stage
 	stage := &sdk.Stage{
 		BuildOrder: 1,
-		Enabled: true,
-		Name: "Stage1",
+		Enabled:    true,
+		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
 	err = pipeline.InsertStage(db, stage)
@@ -255,23 +250,22 @@ func TestDeleteJobHandler(t *testing.T) {
 
 	//5. Prepare the request
 	job := &sdk.Job{
-		Enabled: true,
+		Enabled:         true,
 		PipelineStageID: stage.ID,
 		Action: sdk.Action{
 			Name: "myJob",
 		},
 	}
-	err = pipeline.InsertJob(db , job, stage.ID, pip)
+	err = pipeline.InsertJob(db, job, stage.ID, pip)
 	assert.NoError(t, err)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
-
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":             proj.Key,
 		"permPipelineKey": pip.Name,
-		"stageID":     strconv.FormatInt(stage.ID, 10),
-		"jobID":  strconv.FormatInt(job.PipelineActionID, 10),
+		"stageID":         strconv.FormatInt(stage.ID, 10),
+		"jobID":           strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
 	uri := router.getRoute("DELETE", deleteJobHandler, vars)
@@ -293,4 +287,3 @@ func TestDeleteJobHandler(t *testing.T) {
 	assert.Equal(t, len(pipResult.Stages), 1)
 	assert.Equal(t, len(pipResult.Stages[0].Jobs), 0)
 }
-

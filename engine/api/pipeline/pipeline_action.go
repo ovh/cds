@@ -11,8 +11,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-
-
 // DeletePipelineActionByStage Delete all action from a stage
 func DeletePipelineActionByStage(db database.QueryExecuter, stageID int64, userID int64) error {
 	pipelineActionsID, err := selectAllPipelineActionID(db, stageID)

@@ -61,13 +61,12 @@ func importNew(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline) 
 		}
 		//Insert stage's Jobs
 		for _, jobAction := range s.Actions {
-			job := &sdk.Job {
+			job := &sdk.Job{
 				PipelineStageID: s.ID,
-				Action: jobAction,
-				Enabled: true,
-				LastModified: time.Now().Unix(),
+				Action:          jobAction,
+				Enabled:         true,
+				LastModified:    time.Now().Unix(),
 			}
-
 
 			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", job.Action.Name, s.Name, pip.Name)
 			if err := InsertJob(db, job, s.ID, pip); err != nil {

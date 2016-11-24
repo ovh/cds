@@ -294,10 +294,10 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 			// Insert job also
 			mapStages[id].Jobs = append(mapStages[id].Jobs, sdk.Job{
 				PipelineActionID: a.PipelineActionID,
-				Enabled: a.Enabled,
-				LastModified: a.LastModified,
-				PipelineStageID: a.PipelineStageID,
-				Action: *a,
+				Enabled:          a.Enabled,
+				LastModified:     a.LastModified,
+				PipelineStageID:  a.PipelineStageID,
+				Action:           *a,
 			})
 		}
 	}
