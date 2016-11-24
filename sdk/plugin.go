@@ -26,7 +26,7 @@ func DownloadPlugin(name string, destdir string) error {
 		}
 		destPath := path.Join(destdir, name)
 		//If the file already exists, remove it
-		if _, err := os.Stat(destPath); err == nil {
+		if _, errstat := os.Stat(destPath); errstat == nil {
 			os.RemoveAll(destPath)
 		}
 

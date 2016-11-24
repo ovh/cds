@@ -13,10 +13,11 @@ type Stage struct {
 	PipelineID    int64          `json:"-" yaml:"-"`
 	BuildOrder    int            `json:"build_order"`
 	Enabled       bool           `json:"enabled"`
-	Actions       []Action       `json:"actions"`
+	Actions       []Action       `json:"actions"` // WIP: refacto to delete Actions and use Jobs
 	ActionBuilds  []ActionBuild  `json:"builds"`
 	Prerequisites []Prerequisite `json:"prerequisites"`
 	LastModified  int64          `json:"last_modified"`
+	Jobs          []Job          `json:"jobs"`
 }
 
 // NewStage instanciate a new Stage

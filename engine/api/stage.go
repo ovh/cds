@@ -26,30 +26,60 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("addStageHandler> cannot read body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	stageData, err := sdk.NewStage("").FromJSON(data)
 	if err != nil {
 		log.Warning("addStageHandler> cannot unmarshal body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	// Check if pipeline exist
-	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, true)
+	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
 	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		log.Warning("addStageHandler> Cannot load pipeline stages: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
 	stageData.BuildOrder = len(pipelineData.Stages) + 1
 	stageData.PipelineID = pipelineData.ID
-	err = pipeline.InsertStage(db, stageData)
+
+	tx, err := db.Begin()
 	if err != nil {
+		log.Warning("addStageHandler> Cannot start transaction: %s", err)
+		WriteError(w, r, err)
+	}
+	defer tx.Rollback()
+
+	if err := pipeline.InsertStage(db, stageData); err != nil {
 		log.Warning("addStageHandler> Cannot insert stage: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
+		log.Warning("addStageHandler> Cannot update pipeline last modified date: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("addStageHandler> Cannot commit transaction: %s", err)
+		WriteError(w, r, err)
+	}
+
+	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		log.Warning("addStageHandler> Cannot load pipeline stages: %s", err)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -57,7 +87,7 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	cache.DeleteAll(k)
 	cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
 
-	WriteJSON(w, r, stageData, http.StatusCreated)
+	WriteJSON(w, r, pipelineData, http.StatusCreated)
 }
 
 func getStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -70,7 +100,7 @@ func getStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	stageID, err := strconv.ParseInt(stageIDString, 10, 60)
 	if err != nil {
 		log.Warning("getStageHandler> Stage ID must be an int: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -83,14 +113,7 @@ func getStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 
 	s, err := pipeline.LoadStage(db, pipelineData.ID, stageID)
 	if err != nil {
-		httpStatus := http.StatusInternalServerError
-		if err == pipeline.ErrNoStage {
-			httpStatus = http.StatusNotFound
-			log.Warning("getStageHandler> Stage does not exist: %s", err)
-		} else {
-			log.Warning("getStageHandler> Cannot Load stage: %s", err)
-		}
-		w.WriteHeader(httpStatus)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -108,7 +131,7 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("moveStageHandler> cannot read body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -116,55 +139,57 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	stageData, err := sdk.NewStage("").FromJSON(data)
 	if err != nil {
 		log.Warning("moveStageHandler> Cannot unmarshal body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	if stageData.BuildOrder != 0 {
-		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
+	if stageData.BuildOrder < 1 {
+		log.Warning("moveStageHandler> Build Order must be greater than 0")
+		WriteError(w, r, sdk.ErrWrongRequest)
+	}
+
+	// Check if pipeline exist
+	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	// count stage for this pipeline
+	nbStage, err := pipeline.CountStageByPipelineID(db, pipelineData.ID)
+	if err != nil {
+		log.Warning("moveStageHandler> Cannot count stage for pipeline %s : %s", pipelineData.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if stageData.BuildOrder <= nbStage {
+		// check if stage exist
+		s, err := pipeline.LoadStage(db, pipelineData.ID, stageData.ID)
 		if err != nil {
+			log.Warning("moveStageHandler> Cannot load stage: %s", err)
 			WriteError(w, r, err)
 			return
 		}
 
-		// count stage for this pipeline
-		nbStage, err := pipeline.CountStageByPipelineID(db, pipelineData.ID)
-		if err != nil {
-			log.Warning("moveStageHandler> Cannot count stage for pipeline %s : %s", pipelineData.Name, err)
-			w.WriteHeader(http.StatusInternalServerError)
+		if err := pipeline.MoveStage(db, s, stageData.BuildOrder, pipelineData); err != nil {
+			log.Warning("moveStageHandler> Cannot move stage: %s", err)
+			WriteError(w, r, err)
 			return
 		}
+	}
 
-		if stageData.BuildOrder <= nbStage {
-			// check if stage exist
-			s, err := pipeline.LoadStage(db, pipelineData.ID, stageData.ID)
-			if err != nil {
-				httpStatus := http.StatusInternalServerError
-				if err == pipeline.ErrNoStage {
-					httpStatus = http.StatusNotFound
-					log.Warning("moveStageHandler> Stage does not exist: %s", err)
-				} else {
-					log.Warning("moveStageHandler> Cannot Load stage: %s", err)
-				}
-				w.WriteHeader(httpStatus)
-				return
-			}
-
-			err = pipeline.MoveStage(db, s, stageData.BuildOrder)
-			if err != nil {
-				log.Warning("moveStageHandler> Cannot move stage: %s", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		}
+	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		log.Warning("moveStageHandler> Cannot load stages: %s", err)
+		WriteError(w, r, err)
+		return
 	}
 
 	k := cache.Key("application", projectKey, "*")
 	cache.DeleteAll(k)
 	cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
 
-	w.WriteHeader(http.StatusOK)
+	WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
 func updateStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -179,14 +204,14 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("addStageHandler> cannot read body: %s", err)
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	stageData, err := sdk.NewStage("").FromJSON(data)
 	if err != nil {
 		log.Warning("addStageHandler> Cannot unmarshal body: %s", err)
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -226,15 +251,13 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	}
 	defer tx.Rollback()
 
-	err = pipeline.UpdateStage(tx, stageData)
-	if err != nil {
+	if err := pipeline.UpdateStage(tx, stageData); err != nil {
 		log.Warning("addStageHandler> Cannot update stage: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData.ID)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
 		log.Warning("addStageHandler> Cannot update pipeline last_modified: %s", err)
 		WriteError(w, r, err)
 		return
@@ -247,11 +270,17 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		return
 	}
 
+	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		log.Warning("addStageHandler> Cannot load stages: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
 	k := cache.Key("application", projectKey, "*")
 	cache.DeleteAll(k)
 	cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
 
-	w.WriteHeader(http.StatusOK)
+	WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
 func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -293,23 +322,26 @@ func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	}
 	defer tx.Rollback()
 
-	err = pipeline.DeleteStageByID(tx, s, c.User.ID)
-	if err != nil {
+	if err := pipeline.DeleteStageByID(tx, s, c.User.ID); err != nil {
 		log.Warning("deleteStageHandler> Cannot Delete stage: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData.ID)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
 		log.Warning("deleteStageHandler> Cannot Update pipeline last_modified: %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteStageHandler> Cannot commit transaction: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		log.Warning("deleteStageHandler> Cannot load stages: %s", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -318,5 +350,5 @@ func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	cache.DeleteAll(k)
 	cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
 
-	w.WriteHeader(http.StatusOK)
+	WriteJSON(w, r, pipelineData, http.StatusOK)
 }

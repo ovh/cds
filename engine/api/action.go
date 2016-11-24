@@ -18,7 +18,7 @@ func getActionsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	acts, err := action.LoadActions(db)
 	if err != nil {
 		log.Warning("GetActions: Cannot load action from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -117,24 +117,27 @@ func deleteActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	vars := mux.Vars(r)
 	name := vars["permActionName"]
 
-	a, err := action.LoadPublicAction(db, name)
-	if err != nil {
-		if err != sdk.ErrNoAction {
-			log.Warning("deleteAction> Cannot load action %s: %s\n", name, err)
+	a, errLoad := action.LoadPublicAction(db, name)
+	if errLoad != nil {
+		if errLoad != sdk.ErrNoAction {
+			log.Warning("deleteAction> Cannot load action %s: %s\n", name, errLoad)
 		}
-		WriteError(w, r, err)
+		WriteError(w, r, errLoad)
 		return
 	}
 
-	used, err := action.Used(db, a.ID)
+	used, errUsed := action.Used(db, a.ID)
+	if errUsed != nil {
+		WriteError(w, r, errUsed)
+		return
+	}
 	if used {
 		log.Warning("deleteAction> Cannot delete action %s: used in pipelines\n", name)
-		w.WriteHeader(http.StatusForbidden)
+		WriteError(w, r, sdk.ErrForbidden)
 		return
 	}
 
-	err = action.DeleteAction(db, a.ID, c.User.ID)
-	if err != nil {
+	if err := action.DeleteAction(db, a.ID, c.User.ID); err != nil {
 		log.Warning("deleteAction> Cannot delete action %s: %s\n", name, err)
 		WriteError(w, r, err)
 		return
@@ -149,15 +152,15 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	name := vars["permActionName"]
 
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	a, err := sdk.NewAction("").FromJSON(data)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	a, errJSON := sdk.NewAction("").FromJSON(data)
+	if errJSON != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -166,7 +169,7 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	actionDB, err := action.LoadPublicAction(db, name)
 	if err != nil {
 		log.Warning("updateAction> Cannot check if action %s exist: %s\n", a.Name, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -195,16 +198,15 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	defer tx.Rollback()
 
 	a.ID = actionDB.ID
-	err = action.UpdateActionDB(tx, a, c.User.ID)
-	if err != nil {
+
+	if err = action.UpdateActionDB(tx, a, c.User.ID); err != nil {
 		log.Warning("updateAction: Cannot update action: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 	log.Notice("Action %s updated\n", a.Name)
 
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit(); err != nil {
 		log.Warning("updateAction> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -215,46 +217,45 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 
 func addActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	a, err := sdk.NewAction("").FromJSON(data)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	a, errJSON := sdk.NewAction("").FromJSON(data)
+	if errJSON != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	// Check that action does not already exists
-	conflict, err := action.Exists(db, a.Name)
-	if err != nil {
-		WriteError(w, r, err)
+	conflict, errConflict := action.Exists(db, a.Name)
+	if errConflict != nil {
+		WriteError(w, r, errConflict)
 		return
 	}
+
 	if conflict {
 		log.Warning("addAction> Action %s already exists\n", a.Name)
 		WriteError(w, r, sdk.ErrConflict)
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		WriteError(w, r, err)
+	tx, errDB := db.Begin()
+	if errDB != nil {
+		WriteError(w, r, errDB)
 		return
 	}
 	defer tx.Rollback()
 
 	a.Type = sdk.DefaultAction
-	err = action.InsertAction(tx, a, true)
-	if err != nil {
+	if err := action.InsertAction(tx, a, true); err != nil {
 		log.Warning("Action: Cannot insert action: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -300,7 +301,8 @@ func getActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	WriteJSON(w, r, a, http.StatusOK)
 }
 
-func loadActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+// importActionHandler insert OR update an existing action.
+func importActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	var a *sdk.Action
 	var err error
 
@@ -312,23 +314,36 @@ func loadActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 			WriteError(w, r, err)
 			return
 		}
-	} else {
+	} else if r.Header.Get("content-type") == "multipart/form-data" {
 		//Try to load from the file
 		r.ParseMultipartForm(64 << 20)
-		file, _, err := r.FormFile("UploadFile")
-		if err != nil {
-			WriteError(w, r, err)
+		file, _, errUpload := r.FormFile("UploadFile")
+		if errUpload != nil {
+			log.Warning("importActionHandler> Cannot load file uploaded: %s\n", errUpload)
+			WriteError(w, r, sdk.ErrWrongRequest)
 			return
 		}
-		btes, err := ioutil.ReadAll(file)
-		if err != nil {
-			WriteError(w, r, err)
+		btes, errRead := ioutil.ReadAll(file)
+		if errRead != nil {
+			WriteError(w, r, errRead)
 			return
 		}
 
 		a, err = sdk.NewActionFromScript(btes)
 		if err != nil {
 			WriteError(w, r, err)
+			return
+		}
+	} else { // a jsonified action is posted in body
+		btes, errRead := ioutil.ReadAll(r.Body)
+		if errRead != nil {
+			WriteError(w, r, sdk.ErrWrongRequest)
+			return
+		}
+
+		a, err = sdk.NewAction("").FromJSON(btes)
+		if err != nil {
+			WriteError(w, r, sdk.ErrWrongRequest)
 			return
 		}
 	}
@@ -347,17 +362,18 @@ func loadActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	defer tx.Rollback()
 
 	//Check if action exists
-	b, err := action.Exists(tx, a.Name)
-	if err != nil {
-		WriteError(w, r, err)
-		return
+	exist := false
+	existingAction, err := action.LoadPublicAction(tx, a.Name)
+	if err == nil {
+		exist = true
+		a.ID = existingAction.ID
 	}
 
 	//http code status
 	var code int
 
 	//Update or Insert the action
-	if b {
+	if exist {
 		if err := action.UpdateActionDB(tx, a, c.User.ID); err != nil {
 			WriteError(w, r, err)
 			return

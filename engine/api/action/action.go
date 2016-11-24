@@ -28,17 +28,16 @@ func Exists(db database.Querier, name string) (bool, error) {
 
 // InsertAction insert given action into given database
 func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
-	ok, err := isTreeLoopFree(tx, a, nil)
-	if err != nil {
-		return err
+	ok, errLoop := isTreeLoopFree(tx, a, nil)
+	if errLoop != nil {
+		return errLoop
 	}
 	if !ok {
 		return sdk.ErrActionLoop
 	}
 
 	query := `INSERT INTO action (name, description, type, enabled, public) VALUES($1, $2, $3, $4, $5) RETURNING id`
-	err = tx.QueryRow(query, a.Name, a.Description, a.Type, a.Enabled, public).Scan(&a.ID)
-	if err != nil {
+	if err := tx.QueryRow(query, a.Name, a.Description, a.Type, a.Enabled, public).Scan(&a.ID); err != nil {
 		return err
 	}
 
@@ -57,7 +56,7 @@ func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
 			a.Actions[i].ID = ch.ID
 		}
 
-		if err = insertActionChild(tx, a.ID, a.Actions[i], i+1); err != nil {
+		if err := insertActionChild(tx, a.ID, a.Actions[i], i+1); err != nil {
 			return err
 		}
 	}
@@ -79,13 +78,13 @@ func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
 		}
 	}
 	for i := range a.Requirements {
-		if err = InsertActionRequirement(tx, a.ID, a.Requirements[i]); err != nil {
+		if err := InsertActionRequirement(tx, a.ID, a.Requirements[i]); err != nil {
 			return err
 		}
 	}
 
 	for i := range a.Parameters {
-		if err = InsertActionParameter(tx, a.ID, a.Parameters[i]); err != nil {
+		if err := InsertActionParameter(tx, a.ID, a.Parameters[i]); err != nil {
 			log.Warning("InsertAction> Cannot InsertActionParameter %s: %s\n", a.Parameters[i].Name, err)
 			return err
 		}
@@ -209,22 +208,19 @@ func loadAction(db database.Querier, s database.Scanner) (*sdk.Action, error) {
 
 // UpdateActionDB  Update an action
 func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) error {
-
-	ok, err := isTreeLoopFree(db, a, nil)
-	if err != nil {
-		return err
+	ok, errLoop := isTreeLoopFree(db, a, nil)
+	if errLoop != nil {
+		return errLoop
 	}
 	if !ok {
 		return sdk.ErrActionLoop
 	}
 
-	err = insertAudit(db, a.ID, userID, "Action update")
-	if err != nil {
+	if err := insertAudit(db, a.ID, userID, "Action update"); err != nil {
 		return err
 	}
 
-	err = deleteActionChildren(db, a.ID)
-	if err != nil {
+	if err := deleteActionChildren(db, a.ID); err != nil {
 		return err
 	}
 	for i := range a.Actions {
@@ -237,25 +233,22 @@ func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) erro
 			a.Actions[i].ID = ch.ID
 		}
 
-		if err = insertActionChild(db, a.ID, a.Actions[i], i+1); err != nil {
+		if err := insertActionChild(db, a.ID, a.Actions[i], i+1); err != nil {
 			return err
 		}
 	}
 
-	err = DeleteActionParameters(db, a.ID)
-	if err != nil {
+	if err := DeleteActionParameters(db, a.ID); err != nil {
 		return err
 	}
 	for i := range a.Parameters {
-		err = InsertActionParameter(db, a.ID, a.Parameters[i])
-		if err != nil {
+		if err := InsertActionParameter(db, a.ID, a.Parameters[i]); err != nil {
 			log.Warning("UpdateAction> InsertActionParameter for %s failed: %s\n", a.Parameters[i].Name, err)
 			return err
 		}
 	}
 
-	err = DeleteActionRequirements(db, a.ID)
-	if err != nil {
+	if err := DeleteActionRequirements(db, a.ID); err != nil {
 		return err
 	}
 	// Requirements of children are requirement of parent
@@ -275,31 +268,24 @@ func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) erro
 		}
 	}
 	for i := range a.Requirements {
-		err = InsertActionRequirement(db, a.ID, a.Requirements[i])
-		if err != nil {
+		if err := InsertActionRequirement(db, a.ID, a.Requirements[i]); err != nil {
 			return err
 		}
 	}
 
 	query := `UPDATE action SET name=$1,description=$2, type=$3, enabled=$4 WHERE id=$5`
-	_, err = db.Exec(query, a.Name, a.Description, string(a.Type), a.Enabled, a.ID)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, errdb := db.Exec(query, a.Name, a.Description, string(a.Type), a.Enabled, a.ID)
+	return errdb
 }
 
 // DeleteAction remove action from database
 func DeleteAction(db database.QueryExecuter, actionID, userID int64) error {
 
-	err := insertAudit(db, actionID, userID, "Action delete")
-	if err != nil {
+	if err := insertAudit(db, actionID, userID, "Action delete"); err != nil {
 		return err
 	}
 
-	err = deleteActionChildren(db, actionID)
-	if err != nil {
+	if err := deleteActionChildren(db, actionID); err != nil {
 		return err
 	}
 
@@ -307,42 +293,36 @@ func DeleteAction(db database.QueryExecuter, actionID, userID int64) error {
 	(SELECT id FROM action_build WHERE pipeline_action_id IN
 		(SELECT id FROM pipeline_action WHERE action_id = $1)
 	)`
-	_, err = db.Exec(query, actionID)
-	if err != nil {
+
+	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}
 
 	query = `DELETE FROM action_build WHERE pipeline_action_id IN
 		(SELECT id FROM pipeline_action WHERE action_id = $1)`
-	_, err = db.Exec(query, actionID)
-	if err != nil {
+	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}
 
 	query = `DELETE FROM pipeline_action WHERE action_id = $1`
-	_, err = db.Exec(query, actionID)
-	if err != nil {
+	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}
 
 	query = `DELETE FROM action_parameter WHERE action_id = $1`
-	_, err = db.Exec(query, actionID)
-	if err != nil {
+	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}
 
 	query = `DELETE FROM action_requirement WHERE action_id = $1`
-	_, err = db.Exec(query, actionID)
-	if err != nil {
+	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}
 
 	query = `DELETE FROM action WHERE action.id = $1`
-	_, err = db.Exec(query, actionID)
-	if err != nil {
+	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -351,8 +331,7 @@ func Used(db *sql.DB, actionID int64) (bool, error) {
 	var count int
 
 	query := `SELECT COUNT(id) FROM pipeline_action WHERE pipeline_action.action_id = $1`
-	err := db.QueryRow(query, actionID).Scan(&count)
-	if err != nil {
+	if err := db.QueryRow(query, actionID).Scan(&count); err != nil {
 		return false, err
 	}
 
@@ -361,16 +340,10 @@ func Used(db *sql.DB, actionID int64) (bool, error) {
 	}
 
 	query = `SELECT COUNT(id) FROM action_edge WHERE child_id = $1`
-	err = db.QueryRow(query, actionID).Scan(&count)
-	if err != nil {
+	if err := db.QueryRow(query, actionID).Scan(&count); err != nil {
 		return false, err
 	}
-
-	if count > 0 {
-		return true, nil
-	}
-
-	return false, nil
+	return count > 0, nil
 }
 
 func isTreeLoopFree(db database.Querier, a *sdk.Action, parents []int64) (bool, error) {
@@ -412,15 +385,15 @@ func isTreeLoopFree(db database.Querier, a *sdk.Action, parents []int64) (bool, 
 }
 
 func insertAudit(db database.QueryExecuter, actionID, userID int64, change string) error {
-	a, err := LoadActionByID(db, actionID)
-	if err != nil {
-		return err
+	a, errLoad := LoadActionByID(db, actionID)
+	if errLoad != nil {
+		return errLoad
 	}
 
 	query := `INSERT INTO action_audit (action_id, user_id, change, versionned, action_json)
 			VALUES ($1, $2, $3, NOW(), $4)`
-	_, err = db.Exec(query, actionID, userID, change, a.JSON())
-	if err != nil {
+
+	if _, err := db.Exec(query, actionID, userID, change, a.JSON()); err != nil {
 		return err
 	}
 

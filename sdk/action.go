@@ -190,14 +190,10 @@ func (a *Action) FromJSON(data []byte) (*Action, error) {
 
 // AddAction creates a new action available only to creator by default
 // params are stringParameter only (for now), with no description
-func AddAction(name string, params []string, requirements []Requirement) error {
+func AddAction(name string, params []Parameter, requirements []Requirement) error {
 
 	a := NewAction(name)
-
-	for _, p := range params {
-		a.Parameter(Parameter{Name: p, Type: StringParameter})
-	}
-
+	a.Parameters = params
 	a.Requirements = requirements
 	a.Enabled = true
 
@@ -360,6 +356,34 @@ func UpdateJoinedAction(projectKey, pipelineName string, stage int, a Action) er
 	}
 
 	return nil
+}
+
+//ImportAction imports an action on CDS
+func ImportAction(action *Action) (*Action, error) {
+	path := "/action/import"
+
+	btes, errMarshall := json.Marshal(action)
+	if errMarshall != nil {
+		return nil, errMarshall
+	}
+	data, code, errRequest := Request("POST", path, btes)
+	if errRequest != nil {
+		return nil, errRequest
+	}
+
+	if code >= 300 {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
+	}
+
+	if err := DecodeError(data); err != nil {
+		return nil, err
+	}
+
+	var act Action
+	if err := json.Unmarshal(data, &act); err != nil {
+		return nil, err
+	}
+	return &act, nil
 }
 
 //GetRequirements returns the list of all used requirements

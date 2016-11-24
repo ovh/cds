@@ -77,6 +77,7 @@ func selectAllPipelineActionID(db database.QueryExecuter, pipelineStageID int64)
 }
 
 //InsertPipelineJob insert data in pipeline_action table
+// DEPRECATED
 func InsertPipelineJob(db database.QueryExecuter, pip *sdk.Pipeline, s *sdk.Stage, a *sdk.Action) error {
 	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, args, enabled) VALUES ($1, $2, $3, $4) RETURNING id`
 	args, err := json.Marshal(a.Parameters)
@@ -128,7 +129,70 @@ func InsertPipelineAction(db database.QueryExecuter, projectKey, pipelineName st
 		return 0, err
 	}
 
-	return a.PipelineActionID, UpdatePipelineLastModified(db, p.ID)
+	return a.PipelineActionID, UpdatePipelineLastModified(db, p)
+}
+
+// InsertJob  Insert a new Job ( pipeline_action + joinedAction )
+func InsertJob(db database.QueryExecuter, job *sdk.Job, stageID int64, pip *sdk.Pipeline) error {
+	// Insert Joined Action
+	job.Action.Type = sdk.JoinedAction
+	job.Action.Enabled = true
+	if err := action.InsertAction(db, &job.Action, false); err != nil {
+		return err
+	}
+
+	// Create Stage if needed
+	var stage *sdk.Stage
+	var err error
+	if stageID == 0 {
+		stage = &sdk.Stage{
+			Name:       fmt.Sprintf("Stage %d", len(pip.Stages)+1),
+			PipelineID: pip.ID,
+			BuildOrder: len(pip.Stages) + 1,
+			Enabled:    true,
+		}
+		if err := InsertStage(db, stage); err != nil {
+			return fmt.Errorf("Cannot InsertStage on pipeline %d> %s", pip.ID, err)
+		}
+	} else {
+		//Else load the stage
+		stage, err = LoadStage(db, pip.ID, stageID)
+		if err != nil {
+			return err
+		}
+	}
+	job.PipelineStageID = stage.ID
+
+	// Create pipeline action
+	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, enabled) VALUES ($1, $2, $3) RETURNING id`
+	if err := db.QueryRow(query, job.PipelineStageID, job.Action.ID, job.Enabled).Scan(&job.PipelineActionID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateJob  updates the job by actionData.PipelineActionID and actionData.ID
+func UpdateJob(db database.QueryExecuter, job *sdk.Job, userID int64) error {
+	clearJoinedAction, err := action.LoadActionByID(db, job.Action.ID)
+	if err != nil {
+		return err
+	}
+
+	if clearJoinedAction.Type != sdk.JoinedAction {
+		return sdk.ErrForbidden
+	}
+
+	query := `UPDATE pipeline_action set action_id=$1, pipeline_stage_id=$2, enabled=$4  WHERE id=$3`
+	_, err = db.Exec(query, job.Action.ID, job.PipelineStageID, job.PipelineActionID, job.Enabled)
+	if err != nil {
+		return err
+	}
+	return action.UpdateActionDB(db, &job.Action, userID)
+}
+
+// DeleteJob Delete a job ( action + pipeline_action )
+func DeleteJob(db database.QueryExecuter, job sdk.Job, userID int64) error {
+	return action.DeleteAction(db, job.Action.ID, userID)
 }
 
 // UpdatePipelineAction Update an action in a pipeline

@@ -88,7 +88,7 @@ func InsertStagePrequisites(db database.QueryExecuter, s *sdk.Stage) error {
 			return err
 		}
 	}
-	return UpdatePipelineLastModified(db, s.PipelineID)
+	return nil
 }
 
 // LoadStages Get all stages for the given pipeline
@@ -145,7 +145,8 @@ func LoadStages(db *sql.DB, pipelineID int64) ([]sdk.Stage, error) {
 	return stages, nil
 }
 
-func loadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) error {
+func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) error {
+	p.Stages = []sdk.Stage{}
 	c := structarg{}
 	for _, f := range args {
 		f(&c)
@@ -239,7 +240,7 @@ func loadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 		}
 
 		//Get actions
-		if pipelineActionID.Valid && actionID.Valid && actionArgs.Valid && actionEnabled.Valid && actionLastModified.Valid {
+		if pipelineActionID.Valid && actionID.Valid && actionEnabled.Valid && actionLastModified.Valid {
 			var a *sdk.Action
 			a = mapAllActions[pipelineActionID.Int64]
 
@@ -252,7 +253,12 @@ func loadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 				}
 				mapAllActions[pipelineActionID.Int64] = a
 				mapActionsStages[stageID] = append(mapActionsStages[stageID], *a)
-				mapArgs[stageID] = append(mapArgs[stageID], actionArgs.String)
+
+				if actionArgs.Valid {
+					mapArgs[stageID] = append(mapArgs[stageID], actionArgs.String)
+				} else {
+					mapArgs[stageID] = append(mapArgs[stageID], "[]")
+				}
 			}
 		}
 	}
@@ -261,14 +267,6 @@ func loadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 	for id := range mapStages {
 		for index := range mapActionsStages[id] {
 			var a *sdk.Action
-
-			/*
-				if c.clearsecret {
-					a, err = action.LoadActionByID(db, mapActionsStages[id][index].ID, action.WithClearPasswords())
-				} else {
-					a, err = action.LoadActionByID(db, mapActionsStages[id][index].ID)
-				}
-			*/
 			a, err = action.LoadActionByID(db, mapActionsStages[id][index].ID)
 			if err != nil {
 				return fmt.Errorf("loadPipelineStage> cannot action.LoadActionByID %d > %s", mapActionsStages[id][index].ID, err)
@@ -292,6 +290,15 @@ func loadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 			}
 			a.Parameters = pipelineActionParameter
 			mapStages[id].Actions = append(mapStages[id].Actions, *a)
+
+			// Insert job also
+			mapStages[id].Jobs = append(mapStages[id].Jobs, sdk.Job{
+				PipelineActionID: a.PipelineActionID,
+				Enabled:          a.Enabled,
+				LastModified:     a.LastModified,
+				PipelineStageID:  a.PipelineStageID,
+				Action:           *a,
+			})
 		}
 	}
 	for _, s := range stagesPtr {
@@ -421,7 +428,7 @@ func DeleteAllStage(db database.QueryExecuter, pipelineID int64, userID int64) e
 }
 
 // MoveStage Move a stage
-func MoveStage(db *sql.DB, stageToMove *sdk.Stage, newBuildOrder int) error {
+func MoveStage(db *sql.DB, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -429,20 +436,21 @@ func MoveStage(db *sql.DB, stageToMove *sdk.Stage, newBuildOrder int) error {
 	defer tx.Rollback()
 
 	if stageToMove.BuildOrder > newBuildOrder {
-		err = moveUpStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder)
-		if err != nil {
+		if err := moveUpStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
 		}
 	} else if stageToMove.BuildOrder < newBuildOrder {
-		err = moveDownStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder)
-		if err != nil {
+		if err := moveDownStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
 		}
 	}
 
 	stageToMove.BuildOrder = newBuildOrder
-	err = UpdateStage(tx, stageToMove)
-	if err != nil {
+	if err := UpdateStage(tx, stageToMove); err != nil {
+		return err
+	}
+
+	if err := UpdatePipelineLastModified(tx, p); err != nil {
 		return err
 	}
 
