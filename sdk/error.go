@@ -90,6 +90,7 @@ var (
 	ErrInvalidType                           = &Error{ID: 76, Status: http.StatusBadRequest}
 	ErrParentApplicationAndPipelineMandatory = &Error{ID: 77, Status: http.StatusBadRequest}
 	ErrNoParentBuildFound                    = &Error{ID: 78, Status: http.StatusNotFound}
+	ErrParameterExists                       = &Error{ID: 79, Status: http.StatusConflict}
 )
 
 // SupportedLanguages on API errors
@@ -179,6 +180,7 @@ You can safely use them in a String or Text parameter`,
 	ErrInvalidType.ID:                           "invalid type",
 	ErrParentApplicationAndPipelineMandatory.ID: "parent application and pipeline are mandatory",
 	ErrNoParentBuildFound.ID:                    "no parent build found",
+	ErrParameterExists.ID:                       "parameter already exists",
 }
 
 var errorsFrench = map[int]string{
@@ -262,6 +264,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrInvalidType.ID:                           "type non valide",
 	ErrParentApplicationAndPipelineMandatory.ID: "application et pipeline parents obligatoires",
 	ErrNoParentBuildFound.ID:                    "aucun build parent n'a pu être trouvé",
+	ErrParameterExists.ID:                       "le paramètre existe déjà",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)

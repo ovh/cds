@@ -12,6 +12,7 @@ import (
 
 func getArtifactParams(action *sdk.Action) (string, string) {
 	var tag, filePattern string
+
 	// Replace step argument in action arguments
 	for _, p := range action.Parameters {
 		switch p.Name {
@@ -91,6 +92,7 @@ func runArtifactUpload(filePattern, tag string, actionBuild sdk.ActionBuild) sdk
 func runArtifactDownload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusSuccess}
 	var project, pipeline, application, environment, tag, filePath string
+	enabled := true
 
 	for _, p := range actionBuild.Args {
 		switch p.Name {
@@ -109,6 +111,10 @@ func runArtifactDownload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result 
 		case "cds.environment":
 			fmt.Printf("runArtifactDownload: cds.environment=%s\n", p.Value)
 			environment = p.Value
+			break
+		case "enabled":
+			fmt.Printf("runArtifactDownload: enabled=%s\n", p.Value)
+			enabled = (p.Value != "false")
 			break
 		}
 	}
@@ -131,6 +137,11 @@ func runArtifactDownload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result 
 			fmt.Printf("runArtifactDownload: application=%s\n", p.Value)
 			application = p.Value
 		}
+	}
+
+	if !enabled {
+		sendLog(actionBuild.ID, sdk.ArtifactUpload, fmt.Sprintf("Artifact Download is disabled. return\n"))
+		return res
 	}
 
 	if tag == "" {

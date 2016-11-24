@@ -105,6 +105,7 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
+// Deprecated
 func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)

@@ -48,6 +48,11 @@ func createBuiltinArtifactUploadAction(db *sql.DB) error {
 		Type:        sdk.StringParameter,
 		Description: "Artifact will be uploaded with a tag, generally {{.cds.version}}",
 		Value:       "{{.cds.version}}"})
+	upload.Parameter(sdk.Parameter{
+		Name:        "enabled",
+		Type:        sdk.BooleanParameter,
+		Description: "Enable artifact upload",
+		Value:       "true"})
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -83,6 +88,11 @@ func createBuiltinArtifactDownloadAction(db *sql.DB) error {
 		Name:        "application",
 		Description: "Application from where artifacts will be downloaded, generally {{.cds.application}}",
 		Type:        sdk.StringParameter})
+	dl.Parameter(sdk.Parameter{
+		Name:        "enabled",
+		Type:        sdk.BooleanParameter,
+		Description: "Enable artifact download",
+		Value:       "true"})
 
 	tx, err := db.Begin()
 	if err != nil {

@@ -23,14 +23,14 @@ func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *
 	p, err := pipeline.LoadPipeline(db, key, pipelineName, false)
 	if err != nil {
 		log.Warning("getParametersInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
 	parameters, err := pipeline.GetAllParametersInPipeline(db, p.ID)
 	if err != nil {
 		log.Warning("getParametersInPipelineHandler: Cannot get parameters for pipeline %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -78,9 +78,15 @@ func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	p.Parameter, err = pipeline.GetAllParametersInPipeline(db, p.ID)
+	if err != nil {
+		log.Warning("deleteParameterFromPipelineHandler: Cannot load pipeline parameters: %s\n", err)
+		WriteError(w, r, err)
+	}
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
+// Deprecated
 func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -89,13 +95,13 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var pipParams []sdk.Parameter
 	if err := json.Unmarshal(data, &pipParams); err != nil {
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -214,13 +220,13 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var newParam sdk.Parameter
 	if err := json.Unmarshal(data, &newParam); err != nil {
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	if newParam.Name != paramName {
@@ -270,7 +276,13 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	p.Parameter, err = pipeline.GetAllParametersInPipeline(db, p.ID)
+	if err != nil {
+		log.Warning("updateParameterInPipelineHandler: Cannot load pipeline parameters:  %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
 func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -313,6 +325,11 @@ func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *s
 		WriteError(w, r, err)
 		return
 	}
+	if paramInProject {
+		log.Warning("addParameterInPipelineHandler:Parameter %s is already in the pipeline %s\n", paramName, pipelineName)
+		WriteError(w, r, sdk.ErrParameterExists)
+		return
+	}
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -342,5 +359,12 @@ func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *s
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	p.Parameter, err = pipeline.GetAllParametersInPipeline(db, p.ID)
+	if err != nil {
+		log.Warning("addParameterInPipelineHandler: Cannot get pipeline parameters: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }
