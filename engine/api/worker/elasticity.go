@@ -122,7 +122,7 @@ ORDER BY worker_model.name ASC;
 func modelCanRun(db *sql.DB, name string, req []sdk.Requirement, capa []sdk.Requirement) bool {
 	defer logTime("compareRequirements", time.Now())
 
-	m, err := LoadWorkerModel(db, name)
+	m, err := LoadWorkerModelByName(database.DBMap(db), name)
 	if err != nil {
 		log.Warning("modelCanRun> Unable to load model %s", name)
 		return false
@@ -285,7 +285,8 @@ func UpdateModelCapabilitiesCache() {
 		time.Sleep(5 * time.Second)
 		db := database.DB()
 		if db != nil {
-			wms, err := LoadWorkerModels(db)
+			dbmap := database.DBMap(db)
+			wms, err := LoadWorkerModels(dbmap)
 			if err != nil {
 				log.Warning("updateModelCapabilities> Cannot load worker models: %s\n", err)
 			}

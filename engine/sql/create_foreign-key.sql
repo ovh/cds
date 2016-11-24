@@ -128,6 +128,9 @@ select create_foreign_key('FK_WORKER_CAPABILITY_WORKER_MODEL', 'worker_capabilit
 -- WORKER
 select create_foreign_key('FK_WORKER_ACTION_BUILD', 'worker', 'action_build', 'action_build_id', 'id');
 
+-- WORKER MODEL
+select create_foreign_key('FK_WORKER_MODEL_GROUP', 'worker_model', 'group', 'group_id', 'id');
+
 -- HATCHERY MODEL
 select create_foreign_key('FK_HATCHERY_MODEL_HATCHERY_ID', 'hatchery_model', 'hatchery', 'hatchery_id', 'id');
 select create_foreign_key('FK_HATCHERY_MODEL_WORKER_MODEL_ID', 'hatchery_model', 'worker_model', 'worker_model_id', 'id');

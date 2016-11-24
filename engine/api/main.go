@@ -16,11 +16,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/archivist"
-	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/notification"
@@ -36,7 +35,7 @@ import (
 	"github.com/ovh/cds/engine/log"
 )
 
-var startup time.Time
+var startupTime time.Time
 var b *Broker
 var baseURL string
 var localCLientAuthMode = auth.LocalClientBasicAuthMode
@@ -51,7 +50,7 @@ var mainCmd = &cobra.Command{
 		log.Initialize()
 		log.Notice("Starting CDS server...\n")
 
-		startup = time.Now()
+		startupTime = time.Now()
 
 		if err := mail.CheckMailConfiguration(); err != nil {
 			log.Fatalf("SMTP configuration error: %s\n", err)
@@ -75,20 +74,9 @@ var mainCmd = &cobra.Command{
 			if viper.GetBool("db_logging") {
 				log.UseDatabaseLogger(db)
 			}
-			if err = artifact.CreateBuiltinArtifactActions(db); err != nil {
-				log.Critical("Cannot setup builtin Artifact actions: %s\n", err)
-			}
 
-			if err = group.CreateDefaultGlobalGroup(db); err != nil {
-				log.Critical("Cannot setup default global group: %s\n", err)
-			}
-
-			if err = worker.CreateBuiltinActions(db); err != nil {
-				log.Critical("Cannot setup builtin actions: %s\n", err)
-			}
-
-			if err = worker.CreateBuiltinEnvironments(db); err != nil {
-				log.Critical("Cannot setup builtin environments: %s\n", err)
+			if err = bootstrap.InitiliazeDB(db); err != nil {
+				log.Critical("Cannot setup databases: %s\n", err)
 			}
 
 			// Gracefully shutdown sql connections
@@ -417,10 +405,10 @@ func (router *Router) init() {
 	router.Handle("/worker/{id}/disable", POST(disableWorkerHandler))
 	router.Handle("/worker/model", POST(addWorkerModel), GET(getWorkerModels))
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
-	router.Handle("/worker/model/{id}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
-	router.Handle("/worker/model/{id}/capability", POST(addWorkerModelCapa))
+	router.Handle("/worker/model/{permModelID}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
+	router.Handle("/worker/model/{permModelID}/capability", POST(addWorkerModelCapa))
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
-	router.Handle("/worker/model/{id}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
+	router.Handle("/worker/model/{permModelID}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
 }
 
 func init() {

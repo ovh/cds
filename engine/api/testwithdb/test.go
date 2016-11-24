@@ -13,12 +13,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/artifact"
+	"bytes"
+	"encoding/json"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -45,18 +46,20 @@ func init() {
 	log.SetLevel(log.DebugLevel)
 }
 
+type bootstrap func(db *sql.DB) error
+
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T) (*sql.DB, error) {
-	log.Info("Setug PG Database connection")
+func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) (*sql.DB, error) {
 	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=3000", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode)
 
 	db, err := sql.Open(DBDriver, dsn)
 	if err != nil {
-		log.Warning("Cannot open database: %s\n", err)
+		t.Fatalf("Cannot open database: %s\n", err)
 		return db, err
 	}
 
 	if err = db.Ping(); err != nil {
+		t.Fatalf("Cannot ping database: %s\n", err)
 		return db, err
 	}
 	database.Set(db)
@@ -73,24 +76,10 @@ func SetupPG(t *testing.T) (*sql.DB, error) {
 		os.Exit(0)
 	}()
 
-	if err := artifact.CreateBuiltinArtifactActions(db); err != nil {
-		log.Critical("Cannot setup builtin Artifact actions: %s\n", err)
-		return nil, err
-	}
-
-	if err := group.CreateDefaultGlobalGroup(db); err != nil {
-		log.Critical("Cannot setup default global group: %s\n", err)
-		return nil, err
-	}
-
-	if err := worker.CreateBuiltinActions(db); err != nil {
-		log.Critical("Cannot setup builtin actions: %s\n", err)
-		return nil, err
-	}
-
-	if err := worker.CreateBuiltinEnvironments(db); err != nil {
-		log.Critical("Cannot setup builtin environments: %s\n", err)
-		return nil, err
+	for _, f := range bootstrapFunc {
+		if err := f(db); err != nil {
+			return nil, err
+		}
 	}
 
 	return db, nil
@@ -142,8 +131,52 @@ func InsertAdminUser(t *testing.T, db *sql.DB) (*sdk.User, string, error) {
 	return u, password, nil
 }
 
+// InsertLambaUser have to be used only for tests
+func InsertLambaUser(t *testing.T, db database.QueryExecuter, groups ...*sdk.Group) (*sdk.User, string, error) {
+	s := RandomString(t, 10)
+	password, hash, _ := user.GeneratePassword()
+	u := &sdk.User{
+		Admin:    false,
+		Email:    "no-reply-" + s + "@corp.ovh.com",
+		Username: s,
+		Origin:   "local",
+		Fullname: "Test " + s,
+		Auth: sdk.Auth{
+			EmailVerified:  true,
+			HashedPassword: hash,
+		},
+	}
+	user.InsertUser(db, u, &u.Auth)
+	for _, g := range groups {
+		group.InsertGroup(db, g)
+		group.InsertUserInGroup(db, g.ID, u.ID, false)
+	}
+	return u, password, nil
+}
+
 // AuthentifyRequest  have to be used only for tests
 func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, pass string) {
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+pass))
 	req.Header.Add("Authorization", auth)
+}
+
+//NewAuthentifiedRequest prepare a request
+func NewAuthentifiedRequest(t *testing.T, u *sdk.User, pass, method, uri string, i interface{}) *http.Request {
+	var btes []byte
+	var err error
+	if i != nil {
+		btes, err = json.Marshal(i)
+		if err != nil {
+			t.FailNow()
+		}
+	}
+
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
+	if err != nil {
+		t.FailNow()
+	}
+	AuthentifyRequest(t, req, u, pass)
+
+	return req
+
 }

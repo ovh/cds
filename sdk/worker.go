@@ -17,14 +17,11 @@ type Worker struct {
 	Status     Status    `json:"status"` // Waiting, Building, Disabled, Unknown
 }
 
-// WorkerType defines where worker can be started
-type WorkerType string
-
 // Existing worker type
 const (
-	Docker      WorkerType = "docker"
-	HostProcess WorkerType = "host"
-	Openstack   WorkerType = "openstack"
+	Docker      = "docker"
+	HostProcess = "host"
+	Openstack   = "openstack"
 )
 
 var (
@@ -39,15 +36,13 @@ var (
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 type Model struct {
-	ID           int64         `json:"id"`
-	Name         string        `json:"name"`
-	Type         WorkerType    `json:"type"`
-	Image        string        `json:"image"`
-	Capabilities []Requirement `json:"capabilities"`
-	Worker       []Worker      `json:"workers"`
-	OwnerID      int64         `json:"-"`
-	Owner        User          `json:"owner"`
-	Validated    bool          `json:"validated"` // Model is tested and marked as functionnal
+	ID           int64         `json:"id" db:"id"`
+	Name         string        `json:"name"  db:"name"`
+	Type         string        `json:"type"  db:"type"`
+	Image        string        `json:"image" db:"image"`
+	Capabilities []Requirement `json:"capabilities" db:"-"`
+	CreatedBy    User          `json:"created_by" db:"-"`
+	GroupID      int64         `json:"group_id" db:"group_id"`
 }
 
 // ModelStatus sums up the number of worker deployed and wanted for a given model
@@ -110,7 +105,7 @@ func DisableWorker(workerID string) error {
 }
 
 // AddWorkerModel registers a new worker model available
-func AddWorkerModel(name string, t WorkerType, img string) (*Model, error) {
+func AddWorkerModel(name string, t string, img string) (*Model, error) {
 	uri := fmt.Sprintf("/worker/model")
 
 	m := Model{
@@ -161,7 +156,7 @@ func GetWorkerModel(name string) (*Model, error) {
 }
 
 // UpdateWorkerModel updates all characteristics of a worker model
-func UpdateWorkerModel(id int64, name string, t WorkerType, value string) error {
+func UpdateWorkerModel(id int64, name string, t string, value string) error {
 	uri := fmt.Sprintf("/worker/model/%d", id)
 
 	data, err := json.Marshal(Model{ID: id, Name: name, Type: t, Image: value})
@@ -211,7 +206,7 @@ func DeleteWorkerModel(workerModelID int64) error {
 }
 
 // AddCapabilityToWorkerModel adds a capability to given model
-func AddCapabilityToWorkerModel(modelID int64, name string, capaType RequirementType, value string) error {
+func AddCapabilityToWorkerModel(modelID int64, name string, capaType string, value string) error {
 
 	uri := fmt.Sprintf("/worker/model/%d/capability", modelID)
 
@@ -237,7 +232,7 @@ func AddCapabilityToWorkerModel(modelID int64, name string, capaType Requirement
 }
 
 // UpdateCapabilityToWorkerModel updates a capability to given model
-func UpdateCapabilityToWorkerModel(modelID int64, name string, capaType RequirementType, value string) error {
+func UpdateCapabilityToWorkerModel(modelID int64, name string, capaType string, value string) error {
 
 	uri := fmt.Sprintf("/worker/model/%d/capability/%s", modelID, name)
 

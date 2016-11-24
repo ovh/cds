@@ -7,7 +7,7 @@ import (
 	"path"
 	"time"
 
-	"gopkg.in/gorp.v1"
+	"github.com/go-gorp/gorp"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/ovh/cds/sdk"

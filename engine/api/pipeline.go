@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -1036,7 +1037,7 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		return
 	}
 
-	tx, err := db.Begin()
+	tx, err := database.DBMap(db).Begin()
 	if err != nil {
 		WriteError(w, r, err)
 		return
@@ -1147,7 +1148,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		return
 	}
 
-	tx, err := db.Begin()
+	tx, err := database.DBMap(db).Begin()
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot begin tx: %s\n", err)
 		WriteError(w, r, err)
@@ -1155,15 +1156,13 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	}
 	defer tx.Rollback()
 
-	err = action.UpdateActionDB(tx, a, c.User.ID)
-	if err != nil {
+	if err := action.UpdateActionDB(tx, a, c.User.ID); err != nil {
 		log.Warning("updateJoinedAction> cannot update action: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pip.ID)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, pip.ID); err != nil {
 		log.Warning("updateJoinedAction> cannot update pipeline last_modified date: %s\n", err)
 		WriteError(w, r, err)
 		return

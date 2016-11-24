@@ -1,69 +1,139 @@
 package worker
 
 import (
-	"database/sql"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/user"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/sdk"
 )
 
-func insertUser(t *testing.T, db *sql.DB, name string) sdk.User {
-	u := sdk.User{
-		Username: name,
+func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
+	//Loading all models
+	models, err := LoadWorkerModels(db)
+	if err != nil {
+		t.Fatalf("Error getting models : %s", err)
 	}
 
-	err := user.InsertUser(db, &u, nil)
-	if err != nil {
-		t.Fatalf("Cannot insert user: %s", err)
+	//Delete all of them
+	for _, m := range models {
+		if err := DeleteWorkerModel(db, m.ID); err != nil {
+			t.Fatalf("Error deleting model : %s", err)
+		}
 	}
-	return u
 }
 
-func insertWorkerModel(t *testing.T, db *sql.DB, name string, userID int64) {
+func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
+	g := &sdk.Group{
+		Name: testwithdb.RandomString(t, 10),
+	}
+
+	if err := group.InsertGroup(db, g); err != nil {
+		t.Fatalf("Unable to create group %s", err)
+	}
+
+	return g
+}
+
+func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID int64) *sdk.Model {
 	m := sdk.Model{
 		Name:    name,
 		Type:    sdk.Docker,
 		Image:   "foo/bar:3.4",
-		OwnerID: userID,
+		GroupID: groupID,
+		Capabilities: []sdk.Requirement{
+			{
+				Name:  "capa_1",
+				Type:  sdk.BinaryRequirement,
+				Value: "capa_1",
+			},
+		},
 	}
 
-	err := InsertWorkerModel(db, &m)
-	if err != nil {
+	if err := InsertWorkerModel(db, &m); err != nil {
 		t.Fatalf("Cannot insert worker model: %s", err)
 	}
+
+	assert.NotEqual(t, 0, m.ID)
+	return &m
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	db := test.Setup("TestInsertWorkerModel", t)
-	u := insertUser(t, db, "fakeUser")
-	insertWorkerModel(t, db, "Foo", u.ID)
-}
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
+	}
+	_db, _ := testwithdb.SetupPG(t)
+	db := database.DBMap(_db)
+	deleteAllWorkerModel(t, db)
 
-func TestLoadWorkerModel(t *testing.T) {
-	db := test.Setup("TestLoadWorkerModel", t)
+	g := insertGroup(t, db)
 
-	u := insertUser(t, db, "fakeUser")
+	m := insertWorkerModel(t, db, "Foo", g.ID)
 
-	insertWorkerModel(t, db, "Foo", u.ID)
-
-	m, err := LoadWorkerModel(db, "Foo")
+	m1, err := LoadWorkerModelByID(db, m.ID)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
+	assert.EqualValues(t, m, m1)
 
-	if m.Type != sdk.Docker {
-		t.Fatalf("Unexpected model type '%s', wanted '%s'", m.Type, sdk.Docker)
-	}
+	m2, err := LoadWorkerModelByGroup(db, g.ID)
+	assert.EqualValues(t, []sdk.Model{*m}, m2)
+
+	u, _, _ := testwithdb.InsertLambaUser(t, db, g)
+
+	m3, err := LoadWorkerModelByUser(db, u.ID)
+	assert.EqualValues(t, []sdk.Model{*m}, m3)
 
 }
 
+func TestLoadWorkerModel(t *testing.T) {
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
+	}
+	_db, _ := testwithdb.SetupPG(t)
+	db := database.DBMap(_db)
+	deleteAllWorkerModel(t, db)
+
+	g, err := group.LoadGroup(db, "shared.infra")
+	if err != nil {
+		t.Fatalf("Error : %s", err)
+	}
+	insertWorkerModel(t, db, "Foo", g.ID)
+
+	m, err := LoadWorkerModelByName(db, "Foo")
+	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Cannot load worker model: %s", err)
+	}
+	assert.NotNil(t, m)
+	assert.Equal(t, sdk.Docker, m.Type)
+
+	m1, err := LoadSharedWorkerModel(db)
+	if err != nil {
+		t.Fatalf("Error : %s", err)
+	}
+	assert.EqualValues(t, []sdk.Model{*m}, m1)
+}
+
 func TestLoadWorkerModels(t *testing.T) {
-	db := test.Setup("TestLoadWorkerModels", t)
-	u := insertUser(t, db, "fakeUser")
-	insertWorkerModel(t, db, "lol", u.ID)
-	insertWorkerModel(t, db, "foo", u.ID)
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
+	}
+	_db, _ := testwithdb.SetupPG(t)
+	db := database.DBMap(_db)
+	deleteAllWorkerModel(t, db)
+
+	g := insertGroup(t, db)
+
+	insertWorkerModel(t, db, "lol", g.ID)
+	insertWorkerModel(t, db, "foo", g.ID)
 
 	models, err := LoadWorkerModels(db)
 	if err != nil {
@@ -81,29 +151,55 @@ func TestLoadWorkerModels(t *testing.T) {
 	}
 }
 
-func insertCapacity(db *sql.DB, t *testing.T, modelID int64, capa sdk.Requirement) {
-
-	err := InsertWorkerModelCapability(db, modelID, capa)
-	if err != nil {
-		t.Fatalf("Cannot insert worker model capacity: %s", err)
+func TestLoadWorkerModelCapabilities(t *testing.T) {
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
 	}
+	_db, _ := testwithdb.SetupPG(t)
+	db := database.DBMap(_db)
+	deleteAllWorkerModel(t, db)
+
+	g, err := group.LoadGroup(db, "shared.infra")
+	if err != nil {
+		t.Fatalf("Error : %s", err)
+	}
+	m := insertWorkerModel(t, db, "Foo", g.ID)
+
+	capa, err := LoadWorkerModelCapabilities(db, m.ID)
+	assert.EqualValues(t, m.Capabilities, capa)
 }
 
-func TestInsertWorkerModelCapacity(t *testing.T) {
-	db := test.Setup("TestInsertWorkerModelCapacity", t)
-	u := insertUser(t, db, "fakeUser")
-	insertWorkerModel(t, db, "Foo", u.ID)
-
-	m, err := LoadWorkerModel(db, "Foo")
-	if err != nil {
-		t.Fatalf("cannot load model: %s", err)
+func TestUpdateWorkerModel(t *testing.T) {
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
 	}
+	_db, _ := testwithdb.SetupPG(t)
+	db := database.DBMap(_db)
+	deleteAllWorkerModel(t, db)
 
-	capa := sdk.Requirement{
-		Name:  "Go",
+	g := insertGroup(t, db)
+
+	m := insertWorkerModel(t, db, "lol", g.ID)
+	m1 := *m
+	m1.Capabilities = append(m1.Capabilities, sdk.Requirement{
+		Name:  "Capa_2",
 		Type:  sdk.BinaryRequirement,
-		Value: "1.5.1",
+		Value: "Capa_2",
+	})
+
+	if err := UpdateWorkerModel(db, m1); err != nil {
+		t.Fatalf("Error : %s", err)
 	}
-	insertCapacity(db, t, m.ID, capa)
+
+	m3, err := LoadWorkerModelByName(db, "lol")
+	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Cannot load worker model: %s", err)
+	}
+	assert.NotNil(t, m)
+	assert.Equal(t, sdk.Docker, m3.Type)
+	assert.Equal(t, 2, len(m3.Capabilities))
 
 }

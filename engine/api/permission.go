@@ -4,8 +4,11 @@ import (
 	"strconv"
 
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk"
 )
 
 // PermCheckFunc defines func call to check permission
@@ -22,6 +25,7 @@ func initPermissionFunc() map[string]PermCheckFunc {
 		"permGroupName":       checkGroupPermissions,
 		"permActionName":      checkActionPermissions,
 		"permEnvironmentName": checkEnvironmentPermissions,
+		"permModelID":         checkWorkerModelPermissions,
 	}
 }
 
@@ -72,12 +76,10 @@ func checkProjectPermissions(projectKey string, c *context.Context, permission i
 func checkPipelinePermissions(pipelineName string, c *context.Context, permission int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
-		if c.User.Groups != nil {
-			for _, g := range c.User.Groups {
-				for _, p := range g.PipelineGroups {
-					if pipelineName == p.Pipeline.Name && p.Permission >= permission && projectKey == p.Pipeline.ProjectKey {
-						return true
-					}
+		for _, g := range c.User.Groups {
+			for _, p := range g.PipelineGroups {
+				if pipelineName == p.Pipeline.Name && p.Permission >= permission && projectKey == p.Pipeline.ProjectKey {
+					return true
 				}
 			}
 		}
@@ -176,5 +178,47 @@ func checkActionPermissions(groupName string, c *context.Context, permissionValu
 		return true
 	}
 
+	return false
+}
+
+func checkWorkerModelPermissions(modelID string, c *context.Context, permissionValue int, routeVar map[string]string) bool {
+	id, err := strconv.ParseInt(modelID, 10, 64)
+	if err != nil {
+		log.Warning("checkWorkerModelPermissions> modelID is not an integer: %s\n", err)
+		return false
+	}
+
+	db := database.DB()
+	if db == nil {
+		return false
+	}
+
+	m, err := worker.LoadWorkerModelByID(database.DBMap(db), id)
+	if err != nil {
+		log.Warning("checkWorkerModelPermissions> unable to load model by id %s: %s\n", modelID, err)
+		return false
+	}
+
+	return checkWorkerModelPermissionsByUser(m, c.User, permissionValue)
+}
+
+func checkWorkerModelPermissionsByUser(m *sdk.Model, u *sdk.User, permissionValue int) bool {
+	if u.Admin {
+		return true
+	}
+
+	for _, g := range u.Groups {
+		if g.ID == m.GroupID {
+			if permissionValue <= permission.PermissionRead {
+				return true
+			}
+
+			for _, a := range g.Admins {
+				if a.ID == u.ID {
+					return true
+				}
+			}
+		}
+	}
 	return false
 }

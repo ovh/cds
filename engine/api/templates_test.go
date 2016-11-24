@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -35,7 +36,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
@@ -78,7 +79,7 @@ func Test_addTemplateHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
@@ -205,7 +206,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
@@ -322,7 +323,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
@@ -498,7 +499,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
@@ -628,7 +629,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})

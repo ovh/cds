@@ -19,12 +19,10 @@ func LoadAllActionRequirements(db database.Querier) ([]sdk.Requirement, error) {
 
 	for rows.Next() {
 		var r sdk.Requirement
-		var t string
-		err = rows.Scan(&r.Name, &t, &r.Value)
+		err = rows.Scan(&r.Name, &r.Type, &r.Value)
 		if err != nil {
 			return nil, err
 		}
-		r.Type = sdk.RequirementType(t)
 		req = append(req, r)
 	}
 
@@ -44,12 +42,10 @@ func LoadActionRequirements(db database.Querier, actionID int64) ([]sdk.Requirem
 
 	for rows.Next() {
 		var r sdk.Requirement
-		var t string
-		err = rows.Scan(&r.Name, &t, &r.Value)
+		err = rows.Scan(&r.Name, &r.Type, &r.Value)
 		if err != nil {
 			return nil, err
 		}
-		r.Type = sdk.RequirementType(t)
 		req = append(req, r)
 	}
 

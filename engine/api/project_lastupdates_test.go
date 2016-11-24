@@ -11,14 +11,16 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	test "github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func deleteUser(t *testing.T, db *sql.DB, u *sdk.User, g *sdk.Group) error {
@@ -47,7 +49,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	//Create a user
@@ -159,7 +161,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	//Create a user
@@ -285,7 +287,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	//Create a user
@@ -423,7 +425,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	//Create a user
@@ -549,7 +551,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	//Create a user

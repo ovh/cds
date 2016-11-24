@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/testwithdb"
@@ -58,7 +59,7 @@ func Test_runPipelineHandler(t *testing.T) {
 		return
 	}
 
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 	if err != nil {
 		t.FailNow()
@@ -156,7 +157,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		return
 	}
 
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 	if err != nil {
 		t.FailNow()

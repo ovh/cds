@@ -226,20 +226,18 @@ type RegistrationForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db *sql.DB, name string, uk string, modelID int64, hatcheryID int64, binaryCapabilities []string) (*sdk.Worker, error) {
-
+func RegisterWorker(db *sql.DB, name string, key string, modelID int64, hatcheryID int64, binaryCapabilities []string) (*sdk.Worker, error) {
 	if name == "" {
 		return nil, fmt.Errorf("cannot register worker with empty name")
 	}
-
-	if uk == "" {
+	if key == "" {
 		return nil, fmt.Errorf("cannot register worker with empty worker key")
 	}
 
 	/// Load token
 	var groupID int64
 	var e sdk.Expiration
-	t, err := LoadToken(db, uk)
+	t, err := LoadToken(db, key)
 	if err != nil {
 		return nil, err
 	}
@@ -266,14 +264,13 @@ func RegisterWorker(db *sql.DB, name string, uk string, modelID int64, hatcheryI
 	}
 	defer tx.Rollback()
 
-	err = InsertWorker(tx, w, groupID)
-	if err != nil {
+	if err := InsertWorker(tx, w, groupID); err != nil {
 		log.Warning("registerWorker: Cannot insert worker in database: %s\n", err)
 		return nil, err
 	}
 
 	if e == sdk.Session {
-		err = DeleteUserKey(tx, uk)
+		err = DeleteUserKey(tx, key)
 		if err != nil {
 			log.Warning("registerWorker> Cannot remove single use key: %s\n", err)
 			return nil, err

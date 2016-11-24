@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -72,7 +73,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *s
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	_ = deleteAll(t, db, "TEST_APP_PIPELINE_NOTIF")

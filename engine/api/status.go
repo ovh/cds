@@ -46,7 +46,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	output = append(output, fmt.Sprintf("Version: %s", internal.VERSION))
 
 	// Uptime
-	output = append(output, fmt.Sprintf("Uptime: %s", time.Since(startup)))
+	output = append(output, fmt.Sprintf("Uptime: %s", time.Since(startupTime)))
 
 	//Nb Panics
 	output = append(output, fmt.Sprintf("Nb of Panics: %d", nbPanic))

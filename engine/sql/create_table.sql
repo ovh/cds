@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS "warning" (id BIGSERIAL PRIMARY KEY, project_id BIGIN
 
 CREATE TABLE IF NOT EXISTS "worker" (id TEXT PRIMARY KEY, name TEXT, last_beat TIMESTAMP WITH TIME ZONE, owner_id INT, group_id INT, model INT, status TEXT, action_build_id BIGINT, hatchery_id BIGINT DEFAULT 0);
 CREATE TABLE IF NOT EXISTS "worker_capability" (worker_model_id INT, type TEXT, name TEXT, argument TEXT);
-CREATE TABLE IF NOT EXISTS "worker_model" (id BIGSERIAL PRIMARY KEY, type TEXT, name TEXT, image TEXT, owner_id INT, GROUP_ID INT);
+CREATE TABLE IF NOT EXISTS "worker_model" (id BIGSERIAL PRIMARY KEY, type TEXT, name TEXT, image TEXT, created_by JSONB, GROUP_ID BIGINT);
 
 GRANT SELECT, INSERT, UPDATE, DELETE on ALL TABLES IN SCHEMA public TO "cds";
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "cds";
