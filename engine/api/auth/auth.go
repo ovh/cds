@@ -66,13 +66,13 @@ func NewSession(d Driver, u *sdk.User) (sessionstore.SessionKey, error) {
 
 //NewPersistentSession create a new session with token stored as user_key in database
 func NewPersistentSession(db *sql.DB, d Driver, u *sdk.User) (sessionstore.SessionKey, error) {
-	u, err := user.LoadUserAndAuth(db, u.Username)
-	if err != nil {
-		return "", err
+	u, errLoad := user.LoadUserAndAuth(db, u.Username)
+	if errLoad != nil {
+		return "", errLoad
 	}
-	t, err := sessionstore.NewSessionKey()
-	if err != nil {
-		return "", err
+	t, errSession := sessionstore.NewSessionKey()
+	if errSession != nil {
+		return "", errSession
 	}
 	log.Notice("Auth> New Persistent Session for %s", u.Username)
 	newToken := sdk.UserToken{
@@ -85,14 +85,14 @@ func NewPersistentSession(db *sql.DB, d Driver, u *sdk.User) (sessionstore.Sessi
 		return "", err
 	}
 
-	session, err := d.Store().New(t)
-	if err != nil {
-		return "", err
+	session, errStore := d.Store().New(t)
+	if errStore != nil {
+		return "", errStore
 	}
 	log.Notice("Auth> New Session for %s", u.Username)
 	d.Store().Set(session, "username", u.Username)
 
-	return session, err
+	return session, nil
 }
 
 //GetUsername retrieve the username from the token
