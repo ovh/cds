@@ -17,7 +17,7 @@ type Stage struct {
 	ActionBuilds  []ActionBuild  `json:"builds"`
 	Prerequisites []Prerequisite `json:"prerequisites"`
 	LastModified  int64          `json:"last_modified"`
-	Jobs	      []Job	     `json:"jobs"`
+	Jobs          []Job          `json:"jobs"`
 }
 
 // NewStage instanciate a new Stage

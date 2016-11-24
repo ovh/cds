@@ -26,14 +26,13 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		WriteError(w, r, sdk.ErrUnknownError)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var groupPipeline sdk.GroupPermission
-	err = json.Unmarshal(data, &groupPipeline)
-	if err != nil {
-		WriteError(w, r, err)
+	if err := json.Unmarshal(data, &groupPipeline); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -52,7 +51,7 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	g, err := group.LoadGroup(db, groupPipeline.Group.Name)
 	if err != nil {
 		log.Warning("updateGroupRoleOnPipelineHandler: Cannot find %s: %s\n", groupPipeline.Group.Name, err)
-		WriteError(w, r, sdk.ErrGroupNotFound)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -62,54 +61,61 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		WriteError(w, r, err)
 		return
 	}
-	if groupInPipeline {
-		if groupPipeline.Permission != permission.PermissionReadWriteExecute {
-			permissions, err := group.LoadAllPipelineGroupByRole(db, p.ID, permission.PermissionReadWriteExecute)
-			if err != nil {
-				log.Warning("updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s: %s\n", p.Name, err)
-				WriteError(w, r, err)
-				return
-			}
-			if len(permissions) == 1 && permissions[0].Group.ID == g.ID {
-				log.Warning("updateGroupRoleOnPipelineHandler: Cannot remove write permission for group %s in pipeline %s\n", g.Name, p.Name)
-				WriteError(w, r, sdk.ErrGroupNeedWrite)
-				return
-			}
-		}
-
-		tx, err := db.Begin()
-		if err != nil {
-			log.Warning("updateGroupRoleOnPipelineHandler: Cannot start transaction: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-		defer tx.Rollback()
-
-		err = group.UpdateGroupRoleInPipeline(tx, p.ID, g.ID, groupPipeline.Permission)
-		if err != nil {
-			log.Warning("updateGroupRoleOnPipelineHandler: Cannot add group %s in pipeline %s:  %s\n", g.Name, p.Name, err)
-			WriteError(w, r, err)
-			return
-		}
-
-		err = pipeline.UpdatePipelineLastModified(tx, p)
-		if err != nil {
-			log.Warning("updateGroupRoleOnPipelineHandler: Cannot update pipeline last_modified date: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-
-		err = tx.Commit()
-		if err != nil {
-			log.Warning("updateGroupRoleOnPipelineHandler: Cannot start transaction: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-
+	if !groupInPipeline {
+		log.Warning("updateGroupRoleOnPipelineHandler: Cannot find group %s in pipeline %s: %s\n", g.Name, p.Name, err)
+		WriteError(w, r, sdk.ErrGroupNotFound)
 	}
-	w.WriteHeader(http.StatusOK)
+
+	if groupPipeline.Permission != permission.PermissionReadWriteExecute {
+		permissions, err := group.LoadAllPipelineGroupByRole(db, p.ID, permission.PermissionReadWriteExecute)
+		if err != nil {
+			log.Warning("updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s: %s\n", p.Name, err)
+			WriteError(w, r, err)
+			return
+		}
+		if len(permissions) == 1 && permissions[0].Group.ID == g.ID {
+			log.Warning("updateGroupRoleOnPipelineHandler: Cannot remove write permission for group %s in pipeline %s\n", g.Name, p.Name)
+			WriteError(w, r, sdk.ErrGroupNeedWrite)
+			return
+		}
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("updateGroupRoleOnPipelineHandler: Cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := group.UpdateGroupRoleInPipeline(tx, p.ID, g.ID, groupPipeline.Permission); err != nil {
+		log.Warning("updateGroupRoleOnPipelineHandler: Cannot add group %s in pipeline %s:  %s\n", g.Name, p.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+		log.Warning("updateGroupRoleOnPipelineHandler: Cannot update pipeline last_modified date: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Warning("updateGroupRoleOnPipelineHandler: Cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := group.LoadGroupByPipeline(db, p); err != nil {
+		log.Warning("updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s: %s\n", p.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
+// DEPRECATED
 func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -212,14 +218,13 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var groupPermission sdk.GroupPermission
-	err = json.Unmarshal(data, &groupPermission)
-	if err != nil {
-		WriteError(w, r, err)
+	if err := json.Unmarshal(data, &groupPermission); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -243,38 +248,44 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 		WriteError(w, r, err)
 		return
 	}
-	if !groupInPipeline {
-
-		tx, err := db.Begin()
-		if err != nil {
-			log.Warning("addGroupInPipeline: Cannot start transaction: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-		defer tx.Rollback()
-
-		err = group.InsertGroupInPipeline(tx, p.ID, g.ID, groupPermission.Permission)
-		if err != nil {
-			log.Warning("addGroupInPipeline: Cannot add group %s in pipeline %s:  %s\n", g.Name, p.Name, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		err = pipeline.UpdatePipelineLastModified(tx, p)
-		if err != nil {
-			log.Warning("addGroupInPipeline: Cannot update pipeline last_modified date: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-
-		err = tx.Commit()
-		if err != nil {
-			log.Warning("addGroupInPipeline: Cannot commit transaction: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
+	if groupInPipeline {
+		log.Warning("addGroupInPipeline: The group is already attached to the pipeline %s: %s\n", g.Name, p.Name, err)
+		WriteError(w, r, sdk.ErrGroupExists)
+		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("addGroupInPipeline: Cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := group.InsertGroupInPipeline(tx, p.ID, g.ID, groupPermission.Permission); err != nil {
+		log.Warning("addGroupInPipeline: Cannot add group %s in pipeline %s:  %s\n", g.Name, p.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+		log.Warning("addGroupInPipeline: Cannot update pipeline last_modified date: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("addGroupInPipeline: Cannot commit transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := group.LoadGroupByPipeline(db, p); err != nil {
+		log.Warning("addGroupInPipeline: Cannot load group: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	WriteJSON(w, r, p, http.StatusOK)
 }
 
 func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -307,26 +318,29 @@ func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *
 	}
 	defer tx.Rollback()
 
-	err = group.DeleteGroupFromPipeline(tx, p.ID, g.ID)
-	if err != nil {
+	if err := group.DeleteGroupFromPipeline(tx, p.ID, g.ID); err != nil {
 		log.Warning("deleteGroupFromPipelineHandler: Cannot delete group %s from project %s:  %s\n", g.Name, p.Name, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, p)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
 		log.Warning("deleteGroupFromPipelineHandler: Cannot update pipeline last_modified date: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteGroupFromPipelineHandler: Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	if err := group.LoadGroupByPipeline(db, p); err != nil {
+		log.Warning("deleteGroupFromPipelineHandler: Cannot load groups: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }

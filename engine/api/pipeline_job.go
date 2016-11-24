@@ -9,12 +9,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"encoding/json"
+	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/engine/api/archivist"
 )
 
 func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -276,8 +276,6 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		WriteError(w, r, sdk.ErrNotFound)
 		return
 	}
-
-
 
 	// Select all pipeline build where given pipelineAction has been run
 	query := `SELECT pipeline_build.id FROM pipeline_build
