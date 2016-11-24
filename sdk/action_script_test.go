@@ -19,8 +19,8 @@ requirements = {
 	}
 	"ssh-keygen" = {
 		type = "binary"
-		value = "ssh-keygen" 
-	} 
+		value = "ssh-keygen"
+	}
 }
 
 // Parameters
@@ -71,7 +71,7 @@ EOF
 	a, err := NewActionFromScript(b)
 	assert.NotNil(t, a)
 	assert.NoError(t, err)
-	t.Logf("Action : %s", a)
+	t.Logf("Action : %v", a)
 
 	assert.Equal(t, len(a.Requirements), 2)
 	assert.Equal(t, len(a.Parameters), 5)

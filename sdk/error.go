@@ -332,8 +332,7 @@ type Error struct {
 func DecodeError(data []byte) error {
 	var e Error
 
-	err := json.Unmarshal(data, &e)
-	if err != nil {
+	if err := json.Unmarshal(data, &e); err != nil {
 		return nil
 	}
 

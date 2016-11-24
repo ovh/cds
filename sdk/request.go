@@ -34,7 +34,7 @@ var (
 	//SessionTokenHeader is user as HTTP header
 	SessionTokenHeader = "Session-Token"
 	// HTTP client
-	client HttpClient
+	client HTTPClient
 	// current agent calling
 	agent Agent
 	// CDSConfigFile is path to the default config file
@@ -97,8 +97,8 @@ func readConfig() error {
 	skipReadConfig = true
 
 	viper.SetConfigFile(CDSConfigFile)
-	err := viper.ReadInConfig()
-	if err == nil {
+	errReadConfigFile := viper.ReadInConfig()
+	if errReadConfigFile == nil {
 		if viper.GetString("host") != "" {
 			Host = viper.GetString("host")
 		}
@@ -131,8 +131,8 @@ func readConfig() error {
 		return nil
 	}
 
-	if err != nil {
-		fmt.Printf("Warning: Invalid configuration file (%s)\n", err)
+	if errReadConfigFile != nil {
+		fmt.Printf("Warning: Invalid configuration file (%s)\n", errReadConfigFile)
 	}
 
 	return nil
@@ -141,13 +141,13 @@ func readConfig() error {
 // RequestModifier is used to modify behavior of Request and Steam functions
 type RequestModifier func(req *http.Request)
 
-// HttpClient is a interface for HttpClient mock
-type HttpClient interface {
+// HTTPClient is a interface for HTTPClient mock
+type HTTPClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
 //SetHTTPClient aims to change the default http client of the sdk
-func SetHTTPClient(c HttpClient) {
+func SetHTTPClient(c HTTPClient) {
 	client = c
 }
 
@@ -189,8 +189,7 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 		fmt.Fprintf(os.Stderr, "Response Body: %s\n", body)
 	}
 
-	err = DecodeError(body)
-	if err != nil {
+	if err := DecodeError(body); err != nil {
 		return nil, code, err
 	}
 

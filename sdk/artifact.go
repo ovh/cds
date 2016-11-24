@@ -197,8 +197,8 @@ func uploadArtifact(project string, pipeline string, application string, tag str
 
 	//Compute md5sum
 	hash := md5.New()
-	if _, err := io.Copy(hash, file); err != nil {
-		return err
+	if _, errcopy := io.Copy(hash, file); errcopy != nil {
+		return errcopy
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
@@ -225,8 +225,8 @@ func uploadArtifact(project string, pipeline string, application string, tag str
 	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10))
 	writer.WriteField("md5sum", md5sumStr)
 
-	if err := writer.Close(); err != nil {
-		return err
+	if errclose := writer.Close(); errclose != nil {
+		return errclose
 	}
 
 	_, code, err := UploadMultiPart("POST", uri, body, SetHeader(ArtifactFileName, name), SetHeader("Content-Type", writer.FormDataContentType()))

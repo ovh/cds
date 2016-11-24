@@ -28,9 +28,9 @@ func Exists(db database.Querier, name string) (bool, error) {
 
 // InsertAction insert given action into given database
 func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
-	ok, err := isTreeLoopFree(tx, a, nil)
-	if err != nil {
-		return err
+	ok, errLoop := isTreeLoopFree(tx, a, nil)
+	if errLoop != nil {
+		return errLoop
 	}
 	if !ok {
 		return sdk.ErrActionLoop
@@ -56,7 +56,7 @@ func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
 			a.Actions[i].ID = ch.ID
 		}
 
-		if err = insertActionChild(tx, a.ID, a.Actions[i], i+1); err != nil {
+		if err := insertActionChild(tx, a.ID, a.Actions[i], i+1); err != nil {
 			return err
 		}
 	}
@@ -78,13 +78,13 @@ func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
 		}
 	}
 	for i := range a.Requirements {
-		if err = InsertActionRequirement(tx, a.ID, a.Requirements[i]); err != nil {
+		if err := InsertActionRequirement(tx, a.ID, a.Requirements[i]); err != nil {
 			return err
 		}
 	}
 
 	for i := range a.Parameters {
-		if err = InsertActionParameter(tx, a.ID, a.Parameters[i]); err != nil {
+		if err := InsertActionParameter(tx, a.ID, a.Parameters[i]); err != nil {
 			log.Warning("InsertAction> Cannot InsertActionParameter %s: %s\n", a.Parameters[i].Name, err)
 			return err
 		}
@@ -207,11 +207,12 @@ func loadAction(db database.Querier, s database.Scanner) (*sdk.Action, error) {
 }
 
 // UpdateActionDB  Update an action
+// UpdateActionDB  Update an action
 func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) error {
 
-	ok, err := isTreeLoopFree(db, a, nil)
-	if err != nil {
-		return err
+	ok, errLoop := isTreeLoopFree(db, a, nil)
+	if errLoop != nil {
+		return errLoop
 	}
 	if !ok {
 		return sdk.ErrActionLoop
@@ -234,7 +235,7 @@ func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) erro
 			a.Actions[i].ID = ch.ID
 		}
 
-		if err = insertActionChild(db, a.ID, a.Actions[i], i+1); err != nil {
+		if err := insertActionChild(db, a.ID, a.Actions[i], i+1); err != nil {
 			return err
 		}
 	}
@@ -275,8 +276,8 @@ func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) erro
 	}
 
 	query := `UPDATE action SET name=$1,description=$2, type=$3, enabled=$4 WHERE id=$5`
-	_, err = db.Exec(query, a.Name, a.Description, string(a.Type), a.Enabled, a.ID);
-	return err
+	_, errdb := db.Exec(query, a.Name, a.Description, string(a.Type), a.Enabled, a.ID)
+	return errdb
 }
 
 // DeleteAction remove action from database
@@ -294,6 +295,7 @@ func DeleteAction(db database.QueryExecuter, actionID, userID int64) error {
 	(SELECT id FROM action_build WHERE pipeline_action_id IN
 		(SELECT id FROM pipeline_action WHERE action_id = $1)
 	)`
+
 	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}
@@ -343,12 +345,7 @@ func Used(db *sql.DB, actionID int64) (bool, error) {
 	if err := db.QueryRow(query, actionID).Scan(&count); err != nil {
 		return false, err
 	}
-
-	if count > 0 {
-		return true, nil
-	}
-
-	return false, nil
+	return count > 0, nil
 }
 
 func isTreeLoopFree(db database.Querier, a *sdk.Action, parents []int64) (bool, error) {
@@ -390,13 +387,17 @@ func isTreeLoopFree(db database.Querier, a *sdk.Action, parents []int64) (bool, 
 }
 
 func insertAudit(db database.QueryExecuter, actionID, userID int64, change string) error {
-	a, err := LoadActionByID(db, actionID)
-	if err != nil {
-		return err
+	a, errLoad := LoadActionByID(db, actionID)
+	if errLoad != nil {
+		return errLoad
 	}
 
 	query := `INSERT INTO action_audit (action_id, user_id, change, versionned, action_json)
 			VALUES ($1, $2, $3, NOW(), $4)`
-	_, err = db.Exec(query, actionID, userID, change, a.JSON())
-	return err
+
+	if _, err := db.Exec(query, actionID, userID, change, a.JSON()); err != nil {
+		return err
+	}
+
+	return nil
 }

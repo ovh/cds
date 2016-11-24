@@ -26,7 +26,7 @@ type Interface interface {
 
 var (
 	// Client is a CDS Client
-	Client sdk.HttpClient
+	Client sdk.HTTPClient
 )
 
 // Born creates hatchery
