@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -61,7 +62,10 @@ func uploadCmd(cmd *cobra.Command, args []string) {
 			sdk.Exit("cannot post worker upload (Request): %s\n", errRequest)
 		}
 
-		resp, errDo := http.DefaultClient.Do(req)
+		client := http.DefaultClient
+		client.Timeout = 10 * time.Second
+
+		resp, errDo := client.Do(req)
 		if errDo != nil {
 			sdk.Exit("cannot post worker upload (Do): %s\n", errDo)
 		}
