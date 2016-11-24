@@ -75,7 +75,7 @@ func LoadPipeline(db database.Querier, projectKey, name string, deep bool) (*sdk
 			return nil, fmt.Errorf("cannot loadPipelineStage> %s", err)
 		}
 
-		err = loadGroupByPipeline(db, &p)
+		err = LoadGroupByPipeline(db, &p)
 		if err != nil {
 			return nil, fmt.Errorf("cannot loadGroupByPipeline> %s", err)
 		}
@@ -308,7 +308,7 @@ func updateParamInList(params []sdk.Parameter, paramAction sdk.Parameter) (bool,
 	return false, params
 }
 
-func loadGroupByPipeline(db database.Querier, pipeline *sdk.Pipeline) error {
+func LoadGroupByPipeline(db database.Querier, pipeline *sdk.Pipeline) error {
 	query := `SELECT "group".id,"group".name,pipeline_group.role FROM "group"
 	 		  JOIN pipeline_group ON pipeline_group.group_id = "group".id
 	 		  WHERE pipeline_group.pipeline_id = $1 ORDER BY "group".name ASC`

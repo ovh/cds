@@ -290,33 +290,6 @@ func LoadGroupByProject(db database.Querier, project *sdk.Project) error {
 	return nil
 }
 
-// LoadGroupByPipeline retrieves all groups related to pipeline
-func LoadGroupByPipeline(db database.Querier, pipeline *sdk.Pipeline) error {
-	query := `SELECT "group".id,"group".name,pipeline_group.role FROM "group"
-	 		  JOIN pipeline_group ON pipeline_group.group_id = "group".id
-	 		  WHERE pipeline_group.pipeline_id = $1 ORDER BY "group".name ASC`
-
-	rows, err := db.Query(query, pipeline.ID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var group sdk.Group
-		var perm int
-		err = rows.Scan(&group.ID, &group.Name, &perm)
-		if err != nil {
-			return err
-		}
-		pipeline.GroupPermission = append(pipeline.GroupPermission, sdk.GroupPermission{
-			Group:      group,
-			Permission: perm,
-		})
-	}
-	return nil
-}
-
 func deleteGroup(db database.Executer, g *sdk.Group) error {
 	query := `DELETE FROM "group" WHERE id=$1`
 	_, err := db.Exec(query, g.ID)

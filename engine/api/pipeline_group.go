@@ -100,14 +100,13 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateGroupRoleOnPipelineHandler: Cannot start transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	if err := group.LoadGroupByPipeline(db, p); err != nil {
+	if err := pipeline.LoadGroupByPipeline(db, p); err != nil {
 		log.Warning("updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s: %s\n", p.Name, err)
 		WriteError(w, r, err)
 		return
@@ -280,7 +279,7 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 		return
 	}
 
-	if err := group.LoadGroupByPipeline(db, p); err != nil {
+	if err := pipeline.LoadGroupByPipeline(db, p); err != nil {
 		log.Warning("addGroupInPipeline: Cannot load group: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -336,7 +335,7 @@ func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *
 		return
 	}
 
-	if err := group.LoadGroupByPipeline(db, p); err != nil {
+	if err := pipeline.LoadGroupByPipeline(db, p); err != nil {
 		log.Warning("deleteGroupFromPipelineHandler: Cannot load groups: %s\n", err)
 		WriteError(w, r, err)
 		return

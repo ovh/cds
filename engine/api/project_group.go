@@ -347,12 +347,10 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 						WriteError(w, r, err)
 						return
 					}
-				} else {
-					if err := group.InsertGroupInApplication(tx, app.ID, g.ID, groupProject.Permission); err != nil {
-						log.Warning("AddGroupInProject: Cannot insert group %s on application %s: %s\n", g.Name, app.Name, err)
-						WriteError(w, r, err)
-						return
-					}
+				} else if err := group.InsertGroupInApplication(tx, app.ID, g.ID, groupProject.Permission); err != nil {
+					log.Warning("AddGroupInProject: Cannot insert group %s on application %s: %s\n", g.Name, app.Name, err)
+					WriteError(w, r, err)
+					return
 				}
 			}
 		}
@@ -379,12 +377,10 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 						WriteError(w, r, err)
 						return
 					}
-				} else {
-					if err := group.InsertGroupInPipeline(tx, pip.ID, g.ID, groupProject.Permission); err != nil {
-						log.Warning("AddGroupInProject: Cannot insert group %s on pipeline %s: %s\n", g.Name, pip.Name, err)
-						WriteError(w, r, err)
-						return
-					}
+				} else if err := group.InsertGroupInPipeline(tx, pip.ID, g.ID, groupProject.Permission); err != nil {
+					log.Warning("AddGroupInProject: Cannot insert group %s on pipeline %s: %s\n", g.Name, pip.Name, err)
+					WriteError(w, r, err)
+					return
 				}
 			}
 		}
@@ -411,12 +407,10 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 						WriteError(w, r, err)
 						return
 					}
-				} else {
-					if err := group.InsertGroupInEnvironment(tx, env.ID, g.ID, groupProject.Permission); err != nil {
-						log.Warning("AddGroupInProject: Cannot insert group %s on environment %s: %s\n", g.Name, env.Name, err)
-						WriteError(w, r, err)
-						return
-					}
+				} else if err := group.InsertGroupInEnvironment(tx, env.ID, g.ID, groupProject.Permission); err != nil {
+					log.Warning("AddGroupInProject: Cannot insert group %s on environment %s: %s\n", g.Name, env.Name, err)
+					WriteError(w, r, err)
+					return
 				}
 			}
 		}

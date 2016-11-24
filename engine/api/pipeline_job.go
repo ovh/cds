@@ -2,13 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 
-	"encoding/json"
 	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
