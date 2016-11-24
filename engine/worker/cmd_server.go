@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/engine/log"
 )
 
-// Name of environment variable set to local worker HTTP server port
+// WorkerServerPort is name of environment variable set to local worker HTTP server port
 // Used only to export build variables for now
 const WorkerServerPort = "CDS_EXPORT_PORT"
 

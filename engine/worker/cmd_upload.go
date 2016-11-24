@@ -75,19 +75,19 @@ func uploadCmd(cmd *cobra.Command, args []string) {
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	var a sdk.Artifact
-	if err = json.Unmarshal(data, &a); err != nil {
+	if err := json.Unmarshal(data, &a); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if e := runArtifactUpload(a.Name, a.Tag, ab); e.Status != sdk.StatusSuccess {
+	if result := runArtifactUpload(a.Name, a.Tag, ab); result.Status != sdk.StatusSuccess {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
