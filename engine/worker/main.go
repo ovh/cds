@@ -291,8 +291,7 @@ func heartbeat() {
 		time.Sleep(10 * time.Second)
 		if WorkerID == "" {
 			log.Notice("[WORKER] Disconnected from CDS engine, trying to register...\n")
-			err := register(api, name, key)
-			if err != nil {
+			if err := register(api, name, key); err != nil {
 				log.Notice("Cannot register: %s\n", err)
 				continue
 			}
