@@ -12,8 +12,8 @@
 ## How to build
 
 ```bash
- $ mkdir -p $GOPATH/github.com/ovh
- $ git clone https://github.com/ovh/cds.git $GOPATH/github.com/ovh/cds
- $ cd $GOPATH/github.com/ovh/cds/cli/cds
+ $ mkdir -p $GOPATH/src/github.com/ovh
+ $ git clone https://github.com/ovh/cds.git $GOPATH/src/github.com/ovh/cds
+ $ cd $GOPATH/src/github.com/ovh/cds/cli/cds
  $ go build
 ```
