@@ -3,10 +3,10 @@ package version
 import (
 	"fmt"
 
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cli/cds/internal"
-
 	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/cli/cds/internal"
+	"github.com/ovh/cds/sdk"
 )
 
 // Cmd version
