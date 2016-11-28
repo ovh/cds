@@ -434,7 +434,7 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	}
 	defer tx.Rollback()
 
-	//Insert or update notification
+	// Insert or update notification
 	if err := notification.InsertOrUpdateUserNotificationSettings(tx, applicationData.ID, pipeline.ID, notifs.Environment.ID, notifs); err != nil {
 		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot update user notification %s\n", err)
 		WriteError(w, r, err)

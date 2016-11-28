@@ -1,8 +1,8 @@
 package project
 
 import (
-	"github.com/ovh/cds/sdk/cli/cds/project/group"
-	"github.com/ovh/cds/sdk/cli/cds/project/repositoriesmanager"
+	"github.com/ovh/cds/cli/cds/project/group"
+	"github.com/ovh/cds/cli/cds/project/repositoriesmanager"
 	"github.com/spf13/cobra"
 )
 

@@ -10,13 +10,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
-	res := sdk.Result{Status: sdk.StatusSuccess}
-	var project, pipeline, application, environment, tag, filePattern string
-	enabled := true
+func getArtifactParams(action *sdk.Action) (string, string) {
+	var tag, filePattern string
 
 	// Replace step argument in action arguments
-	for _, p := range a.Parameters {
+	for _, p := range action.Parameters {
 		switch p.Name {
 		case "path":
 			fmt.Printf("runArtifactUpload: path=%s\n", p.Value)
@@ -26,12 +24,14 @@ func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 			fmt.Printf("runArtifactUpload: tag=%s\n", p.Value)
 			tag = p.Value
 			break
-		case "enabled":
-			fmt.Printf("runArtifactUpload: enabled=%s\n", p.Value)
-			enabled = (p.Value != "false")
-			break
 		}
 	}
+	return filePattern, tag
+}
+
+func runArtifactUpload(filePattern, tag string, actionBuild sdk.ActionBuild) sdk.Result {
+	res := sdk.Result{Status: sdk.StatusSuccess}
+	var project, pipeline, application, environment string
 
 	for _, p := range actionBuild.Args {
 		switch p.Name {
@@ -52,11 +52,6 @@ func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 			environment = p.Value
 			break
 		}
-	}
-
-	if !enabled {
-		sendLog(actionBuild.ID, sdk.ArtifactUpload, fmt.Sprintf("Artifact Upload is disabled. return\n"))
-		return res
 	}
 
 	if tag == "" {
@@ -84,10 +79,9 @@ func runArtifactUpload(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	for _, filePath := range filesPath {
 		filename := filepath.Base(filePath)
 		sendLog(actionBuild.ID, sdk.ArtifactUpload, fmt.Sprintf("Uploading '%s' into %s-%s-%s/%s...\n", filename, project, application, pipeline, tag))
-		err := sdk.UploadArtifact(project, pipeline, application, tag, filePath, actionBuild.BuildNumber, environment)
-		if err != nil {
+		if err := sdk.UploadArtifact(project, pipeline, application, tag, filePath, actionBuild.BuildNumber, environment); err != nil {
 			res.Status = sdk.StatusFail
-			sendLog(actionBuild.ID, sdk.ArtifactUpload, fmt.Sprintf("%s\n", err))
+			sendLog(actionBuild.ID, sdk.ArtifactUpload, fmt.Sprintf("Error while uploading artefact: %s\n", err))
 			return res
 		}
 	}

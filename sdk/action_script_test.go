@@ -79,7 +79,7 @@ EOF
 }
 
 func TestLoadFromRemoteActionScript(t *testing.T) {
-	a, err := NewActionFromRemoteScript("https://raw.githubusercontent.com/ovh/cds-contrib/actions/action-scripts/cds-git-clone.hcl", nil)
+	a, err := NewActionFromRemoteScript("https://raw.githubusercontent.com/ovh/cds-contrib/master/actions/cds-git-clone.hcl", nil)
 	assert.NotNil(t, a)
 	assert.NoError(t, err)
 }
@@ -104,6 +104,8 @@ steps  = [{
 func TestTestLoadFromActionScriptWithArtifactUpload(t *testing.T) {
 	b := []byte(`
 steps  = [{
+	final = true
+	enabled = true
 	artifactUpload = {
         path = "myartifact"
         tag = "{{.cds.version}}"
@@ -117,6 +119,8 @@ steps  = [{
 
 	assert.Equal(t, ArtifactUpload, a.Actions[0].Name)
 	assert.Equal(t, BuiltinAction, a.Actions[0].Type)
+	assert.Equal(t, true, a.Actions[0].Final)
+	assert.Equal(t, true, a.Actions[0].Enabled)
 	assert.Equal(t, "path", a.Actions[0].Parameters[0].Name)
 	assert.Equal(t, "myartifact", a.Actions[0].Parameters[0].Value)
 	assert.Equal(t, "tag", a.Actions[0].Parameters[1].Name)

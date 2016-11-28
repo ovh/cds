@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/cli/cds/worker/model"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cli/cds/worker/model"
 )
 
 func init() {

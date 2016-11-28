@@ -13,7 +13,8 @@ func runBuiltin(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail}
 	switch a.Name {
 	case sdk.ArtifactUpload:
-		return runArtifactUpload(a, actionBuild)
+		filePattern, tag := getArtifactParams(a)
+		return runArtifactUpload(filePattern, tag, actionBuild)
 	case sdk.ArtifactDownload:
 		return runArtifactDownload(a, actionBuild)
 	case sdk.ScriptAction:
