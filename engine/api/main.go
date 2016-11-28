@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -175,8 +176,8 @@ var mainCmd = &cobra.Command{
 		go auditCleanerRoutine()
 		go repositoriesmanager.RepositoriesCacheLoader(30)
 		go stats.StartRoutine()
-		go worker.UpdateModelCapabilitiesCache()
-		go worker.UpdateActionRequirementsCache()
+		go action.RequirementsCacheLoader(5)
+		go worker.ModelCapabilititiesCacheLoader(5)
 		go hookRecoverer()
 		go polling.Initialize()
 		go polling.ExecutionCleaner()

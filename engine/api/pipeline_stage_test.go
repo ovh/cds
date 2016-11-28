@@ -95,6 +95,8 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
+	deleteAll(t, db, "TESTPIPELINESTAGES")
+
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 	assert.NoError(t, err)
@@ -154,6 +156,8 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	}
 	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
@@ -223,6 +227,8 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	}
 	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
@@ -324,6 +330,8 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	}
 	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
@@ -453,6 +461,8 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
+	deleteAll(t, db, "TESTPIPELINESTAGES")
+
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 	assert.NoError(t, err)
@@ -517,6 +527,8 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	}
 	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")

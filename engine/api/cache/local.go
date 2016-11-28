@@ -20,15 +20,18 @@ type LocalStore struct {
 }
 
 //Get a key from local store
-func (s *LocalStore) Get(key string, value interface{}) {
+func (s *LocalStore) Get(key string, value interface{}) bool {
 	s.Mutex.Lock()
 	b := s.Data[key]
 	s.Mutex.Unlock()
 	if b != nil && len(b) > 0 {
 		if err := json.Unmarshal(b, value); err != nil {
 			log.Warning("Cache> Cannot unmarshal %s :%s", key, err)
+			return false
 		}
+		return true
 	}
+	return false
 }
 
 //SetWithTTL a value in local store with a specific ttl (in seconds): (0 for eternity)

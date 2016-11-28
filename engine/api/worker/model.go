@@ -35,7 +35,7 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	ms := []database.WorkerModel{}
 	if _, err := db.Select(&ms, "select * from worker_model order by name"); err != nil {
-		log.Warning("Err>%T %s", err)
+		log.Warning("LoadWorkerModels> Unable to load worker models : %T %s", err, err)
 		return nil, err
 	}
 	models := []sdk.Model{}
@@ -81,8 +81,8 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 	return &model, nil
 }
 
-// LoadWorkerModelByGroup returns worker models for a group
-func LoadWorkerModelByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Model, error) {
+// LoadWorkerModelsByGroup returns worker models for a group
+func LoadWorkerModelsByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Model, error) {
 	ms := []database.WorkerModel{}
 	if _, err := db.Select(&ms, "select * from worker_model where group_id = $1 order by name", groupID); err != nil {
 		return nil, err
@@ -97,8 +97,8 @@ func LoadWorkerModelByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Model, er
 	return models, nil
 }
 
-// LoadWorkerModelByUser returns worker models list according to user's groups
-func LoadWorkerModelByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Model, error) {
+// LoadWorkerModelsByUser returns worker models list according to user's groups
+func LoadWorkerModelsByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Model, error) {
 	ms := []database.WorkerModel{}
 	query := `	select * 
 				from worker_model 
@@ -120,8 +120,8 @@ func LoadWorkerModelByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Model, erro
 	return models, nil
 }
 
-//LoadSharedWorkerModel returns worker models with group shared.infra
-func LoadSharedWorkerModel(db gorp.SqlExecutor) ([]sdk.Model, error) {
+//LoadSharedWorkerModels returns worker models with group shared.infra
+func LoadSharedWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	ms := []database.WorkerModel{}
 	if _, err := db.Select(&ms, `select * from worker_model where group_id in (select id from "group" where name = $1)`, group.SharedInfraGroup); err != nil {
 		return nil, err
@@ -216,4 +216,54 @@ func UpdateWorkerModelCapability(db database.Executer, capa sdk.Requirement, mod
 	}
 
 	return nil
+}
+
+func modelCanRun(db *sql.DB, name string, req []sdk.Requirement, capa []sdk.Requirement) bool {
+	defer logTime("compareRequirements", time.Now())
+
+	m, err := LoadWorkerModelByName(database.DBMap(db), name)
+	if err != nil {
+		log.Warning("modelCanRun> Unable to load model %s", name)
+		return false
+	}
+
+	log.Debug("Comparing %d requirements to %d capa\n", len(req), len(capa))
+	for _, r := range req {
+		// service and memory requirements are only supported by docker model
+		if (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) && m.Type != sdk.Docker {
+			return false
+		}
+
+		found := false
+
+		// If requirement is a Model requirement, it's easy. It's either can or can't run
+		if r.Type == sdk.ModelRequirement {
+			return r.Value == name
+		}
+
+		// If requirement is an hostname requirement, it's for a specific worker
+		if r.Type == sdk.HostnameRequirement {
+			return false // TODO: update when hatchery in local mode declare an hostname capa
+		}
+
+		// Skip network access requirement as we can't check it
+		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			continue
+		}
+
+		// Check binary requirement against worker model capabilities
+		for _, c := range capa {
+			log.Debug("Comparing [%s] and [%s]\n", r.Name, c.Name)
+			if r.Value == c.Value || r.Value == c.Name {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return false
+		}
+	}
+
+	return true
 }

@@ -18,6 +18,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/log"
@@ -92,7 +93,37 @@ func InsertTestProject(t *testing.T, db database.QueryExecuter, key, name string
 		Name: name,
 	}
 	t.Logf("Insert Project %s", key)
-	return &proj, project.InsertProject(db, &proj)
+
+	g := sdk.Group{
+		Name: name + "-group",
+	}
+
+	eg, _ := group.LoadGroup(db, g.Name)
+	if eg != nil {
+		g = *eg
+	} else {
+		if err := group.InsertGroup(db, &g); err != nil {
+			t.Fatalf("Cannot insert group : %s", err)
+			return nil, err
+		}
+	}
+
+	if err := project.InsertProject(db, &proj); err != nil {
+		t.Fatalf("Cannot insert project : %s", err)
+		return nil, err
+	}
+
+	if err := group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute); err != nil {
+		t.Fatalf("Cannot insert permission : %s", err)
+		return nil, err
+	}
+
+	if err := group.LoadGroupByProject(db, &proj); err != nil {
+		t.Fatalf("Cannot load permission : %s", err)
+		return nil, err
+	}
+
+	return &proj, nil
 }
 
 // DeleteTestProject delete a test project

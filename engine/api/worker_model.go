@@ -253,7 +253,7 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 		return
 	}
 
-	models, err := worker.LoadWorkerModels(database.DBMap(db))
+	models, err := worker.LoadWorkerModelsByUser(database.DBMap(db), c.User.ID)
 	if err != nil {
 		log.Warning("getWorkerModels> cannot load worker models: %s\n", err)
 		WriteError(w, r, err)
@@ -420,14 +420,29 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 }
 
 func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	ms, err := worker.EstimateWorkerModelNeeds(db, c)
-	if err != nil {
-		log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
-		WriteError(w, r, err)
+	if c.Agent == sdk.HatcheryAgent {
+		ms, err := worker.EstimateWorkerModelNeeds(db, c.User.Groups[0].ID, worker.LoadWorkerModelStatusForGroup, worker.LoadGroupActionCount)
+		if err != nil {
+			log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+		WriteJSON(w, r, ms, http.StatusOK)
 		return
 	}
 
-	WriteJSON(w, r, ms, http.StatusOK)
+	if c.User.Admin == true {
+		ms, err := worker.EstimateWorkerModelNeeds(db, c.User.ID, worker.LoadWorkerModelStatusForAdminUser, worker.LoadAllActionCount)
+		if err != nil {
+			log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+		WriteJSON(w, r, ms, http.StatusOK)
+		return
+	}
+
+	WriteError(w, r, sdk.ErrForbidden)
 }
 
 func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {

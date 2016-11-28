@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -55,6 +56,16 @@ func deleteAll(t *testing.T, db *sql.DB, key string) error {
 		err = pipeline.DeletePipeline(db, pip.ID, 1)
 		if err != nil {
 			t.Logf("DeletePipeline: %s", err)
+			return err
+		}
+	}
+
+	if err := group.LoadGroupByProject(db, proj); err != nil {
+		return err
+	}
+
+	for _, g := range proj.ProjectGroups {
+		if err := group.DeleteGroupAndDependencies(db, &g.Group); err != nil {
 			return err
 		}
 	}

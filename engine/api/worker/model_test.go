@@ -81,12 +81,12 @@ func TestInsertWorkerModel(t *testing.T) {
 	}
 	assert.EqualValues(t, m, m1)
 
-	m2, err := LoadWorkerModelByGroup(db, g.ID)
+	m2, err := LoadWorkerModelsByGroup(db, g.ID)
 	assert.EqualValues(t, []sdk.Model{*m}, m2)
 
 	u, _, _ := testwithdb.InsertLambaUser(t, db, g)
 
-	m3, err := LoadWorkerModelByUser(db, u.ID)
+	m3, err := LoadWorkerModelsByUser(db, u.ID)
 	assert.EqualValues(t, []sdk.Model{*m}, m3)
 
 }
@@ -114,7 +114,7 @@ func TestLoadWorkerModel(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m.Type)
 
-	m1, err := LoadSharedWorkerModel(db)
+	m1, err := LoadSharedWorkerModels(db)
 	if err != nil {
 		t.Fatalf("Error : %s", err)
 	}

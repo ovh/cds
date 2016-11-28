@@ -72,15 +72,15 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 
 	//Load created_by
 	m.CreatedBy = sdk.User{}
-	str, errSelect := s.SelectStr("select created_by from worker_model where id = $1", &m.ID)
+	str, errSelect := s.SelectNullStr("select created_by from worker_model where id = $1", &m.ID)
 	if errSelect != nil {
 		return errSelect
 	}
-	if str == "" {
+	if !str.Valid || str.String == "" {
 		return nil
 	}
 
-	if err := json.Unmarshal([]byte(str), &m.CreatedBy); err != nil {
+	if err := json.Unmarshal([]byte(str.String), &m.CreatedBy); err != nil {
 		return err
 	}
 

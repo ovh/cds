@@ -412,28 +412,52 @@ func (h *HatcherySwarm) killAwolWorker() {
 		os.Exit(1)
 	}
 
-	oldContainers := []docker.APIContainers{}
 	//Checking workers
+	oldContainers := []docker.APIContainers{}
 	for _, c := range containers {
+		//Ignore containers spawned by other things that this Hatchery
 		if c.Labels["worker_name"] == "" {
 			continue
 		}
-		var found bool
+		//If there isn't any worker registered on the API. Kill the container
+		if len(apiworkers) == 0 {
+			oldContainers = append(oldContainers, c)
+			continue
+		}
+		//Loop on all worker registered on the API
+		//Try to find the worker matching this container
+		var found = false
 		for _, n := range apiworkers {
-			// If worker is disabled, kill it
-			if n.Name == c.Names[0] {
+			if n.Name == c.Names[0] || n.Name == strings.Replace(c.Names[0], "/", "", 1) {
+				found = true
+				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
 					log.Info("Worker %s is disabled. Kill it with fire !\n", c.Names[0])
 					oldContainers = append(oldContainers, c)
-					continue
+					break
 				}
-				found = true
 			}
 		}
+		//If the container doesn't match any worker : Kill it.
 		if !found {
 			oldContainers = append(oldContainers, c)
 		}
 	}
+
+	//Delete the workers
+	for _, c := range oldContainers {
+		h.killAndRemove(c.ID)
+		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s\n", c.Names[0])
+	}
+
+	containers, err = h.dockerClient.ListContainers(docker.ListContainersOptions{
+		All: true,
+	})
+	if err != nil {
+		log.Warning("Cannot get containers: %s", err)
+		return
+	}
+
 	//Checking services
 	for _, c := range containers {
 		if c.Labels["service_worker"] == "" {

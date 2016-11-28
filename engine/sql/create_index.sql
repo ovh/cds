@@ -101,7 +101,6 @@ select create_index('user_key','IDX_USER_KEY_USER_KEY','user_key');
 
 -- WORKER
 select create_index('worker','IDX_WORKER_ID','id');
-select create_index('worker','IDX_WORKER_OWNER_ID','owner_id');
 
 -- WORKER_CAPABILITY
 select create_unique_index('worker_capability','IDX_WORKER_CAPABILITY_NAME','worker_model_id,name');
@@ -109,7 +108,6 @@ select create_index('worker_capability','IDX_WORKER_CAPABILITY_MODEL_ID','worker
 
 -- WORKER_MODEL
 select create_unique_index('worker_model','IDX_WORKER_MODEL_NAME','name');
-select create_index('worker_model','IDX_WORKER_MODEL_OWNER_ID','owner_id');
 
 -- REPOSITORIES_MANAGER_PROJECT
 select create_unique_index('repositories_manager_project', 'IDX_REPOSITORIES_MANAGER_PROJECT_ID' ,'id_repositories_manager, id_project');

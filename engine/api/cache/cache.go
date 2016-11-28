@@ -18,7 +18,7 @@ func Key(args ...string) string {
 
 //Store is an interface
 type Store interface {
-	Get(key string, value interface{})
+	Get(key string, value interface{}) bool
 	Set(key string, value interface{})
 	SetWithTTL(key string, value interface{}, ttl int)
 	Delete(key string)
@@ -55,11 +55,11 @@ func Initialize(mode, redisHost, redisPassword string, TTL int) {
 }
 
 //Get something from the cache.
-func Get(key string, value interface{}) {
+func Get(key string, value interface{}) bool {
 	if s == nil {
-		return
+		return false
 	}
-	s.Get(key, value)
+	return s.Get(key, value)
 }
 
 //Set something from the cache.

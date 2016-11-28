@@ -48,6 +48,17 @@ func InsertGroupInEnvironment(db database.Executer, environmentID, groupID int64
 	return err
 }
 
+// InsertGroupsInEnvironment Link the given groups and the given environment
+func InsertGroupsInEnvironment(db database.Executer, groupPermission []sdk.GroupPermission, envID int64) error {
+	for _, g := range groupPermission {
+		err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // UpdateGroupRoleInEnvironment update permission on environment
 func UpdateGroupRoleInEnvironment(db database.Executer, key, envName, groupName string, role int) error {
 	query := `UPDATE environment_group
