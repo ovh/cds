@@ -331,6 +331,63 @@ func LoadAutomaticTriggersAsSource(db database.Querier, appID, pipelineID, envID
 	return triggers, nil
 }
 
+
+
+// LoadTriggerByApp Load trigger for the given app and pipeline
+func LoadTriggerByAppAndPipeline(db database.Querier, appID int64, pipID int64) ([]sdk.PipelineTrigger, error) {
+	query := `
+	SELECT pipeline_trigger.id,
+	src_application_id, src_app.name,
+	src_pipeline_id, src_pip.name, src_pip.type,
+	src_environment_id, src_env.name,
+	src_project.id, src_project.projectkey, src_project.name,
+	dest_application_id, dest_app.name,
+	dest_pipeline_id, dest_pip.name, dest_pip.type,
+	dest_environment_id, dest_env.name,
+	dest_project.id, dest_project.projectkey, dest_project.name,
+	manual
+	FROM pipeline_trigger
+	JOIN pipeline as src_pip ON src_pip.id = src_pipeline_id
+	JOIN application AS src_app ON src_app.id = src_application_id
+	JOIN project AS src_project ON src_project.id = src_app.project_id
+	JOIN pipeline as dest_pip ON dest_pip.id = dest_pipeline_id
+	JOIN application AS dest_app ON dest_app.id = dest_application_id
+	JOIN project AS dest_project ON dest_project.id = dest_app.project_id
+	LEFT JOIN environment AS src_env ON src_env.id = src_environment_id
+	LEFT JOIN environment AS dest_env ON dest_env.id = dest_environment_id
+	WHERE (src_application_id = $1 AND src_pipeline_id = $2) OR (dest_application_id = $1 AND dest_pipeline_id = $2)
+	`
+	rows, err := db.Query(query, appID, pipID)
+	if err != nil {
+		return nil, err
+	}
+	triggers := []sdk.PipelineTrigger{}
+	for rows.Next() {
+		t, err := loadTrigger(db, rows, false)
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+		triggers = append(triggers, t)
+	}
+	rows.Close()
+
+	for i := range triggers {
+		triggers[i].Parameters, err = loadTriggerParameters(db, triggers[i].ID)
+		if err != nil {
+			return nil, err
+		}
+
+		triggers[i].Prerequisites, err = loadTriggerPrerequisites(db, triggers[i].ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return triggers, nil
+}
+
+
 // LoadTriggerByApp Load trigger where given app is source
 func LoadTriggerByApp(db database.Querier, appID int64) ([]sdk.PipelineTrigger, error) {
 	query := `
