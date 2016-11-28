@@ -222,7 +222,12 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	if withTriggers == "true" {
 		for i := range app.Pipelines {
 			appPip := &app.Pipelines[i];
-			appPip.Triggers, err = trigger.LoadTriggerByAppAndPipeline(db, app.ID, appPip.Pipeline.ID)
+			appPip.Triggers, err = trigger.LoadTriggersByAppAndPipeline(db, app.ID, appPip.Pipeline.ID)
+			if err != nil {
+				log.Warning("getApplicationHandler: Cannot load triggers: %s\n", err)
+				WriteError(w, r, err)
+				return
+			}
 		}
 	}
 

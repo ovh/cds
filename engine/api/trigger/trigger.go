@@ -331,10 +331,8 @@ func LoadAutomaticTriggersAsSource(db database.Querier, appID, pipelineID, envID
 	return triggers, nil
 }
 
-
-
-// LoadTriggerByApp Load trigger for the given app and pipeline
-func LoadTriggerByAppAndPipeline(db database.Querier, appID int64, pipID int64) ([]sdk.PipelineTrigger, error) {
+// LoadTriggerByAppAndPipeline Load triggers for the given app and pipeline
+func LoadTriggersByAppAndPipeline(db database.Querier, appID int64, pipID int64) ([]sdk.PipelineTrigger, error) {
 	query := `
 	SELECT pipeline_trigger.id,
 	src_application_id, src_app.name,
@@ -386,7 +384,6 @@ func LoadTriggerByAppAndPipeline(db database.Querier, appID int64, pipID int64) 
 
 	return triggers, nil
 }
-
 
 // LoadTriggerByApp Load trigger where given app is source
 func LoadTriggerByApp(db database.Querier, appID int64) ([]sdk.PipelineTrigger, error) {
