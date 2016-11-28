@@ -662,7 +662,7 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	cache.DeleteAll(cache.Key("application", key, "*"))
 	cache.Delete(cache.Key("pipeline", key, name))
 
-	w.WriteHeader(http.StatusOK)
+	WriteJSON(w, r, pipelineDB, http.StatusOK)
 }
 
 func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
