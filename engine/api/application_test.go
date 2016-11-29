@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
 	test "github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -38,7 +37,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj, _ := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
 	assert.NotNil(t, proj)
 	if proj == nil {
 		t.Fail()
