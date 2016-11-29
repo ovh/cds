@@ -14,7 +14,7 @@ import (
 )
 
 //Import is able to create a new application and all its components
-func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, msgChan chan<- msg.Message) error {
+func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, user *sdk.User, msgChan chan<- msg.Message) error {
 	//Save application in database
 	if err := InsertApplication(db, proj, app); err != nil {
 		return err
@@ -48,7 +48,7 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 		}
 	}
 
-	if err := importVariables(db, proj, app, msgChan); err != nil {
+	if err := importVariables(db, proj, app, user, msgChan); err != nil {
 		return err
 	}
 
@@ -75,13 +75,7 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 }
 
 //importVariables is able to create variable on an existing application
-func importVariables(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, msgChan chan<- msg.Message) error {
-
-	/*	if err := CreateAudit(tx, key, app, c.User); err != nil {
-			log.Warning("importVariabitles> Cannot create variable audit for application %s:  %s\n", app.Name, err)
-			return err
-		}
-	*/
+func importVariables(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, user *sdk.User, msgChan chan<- msg.Message) error {
 
 	for _, newVar := range app.Variable {
 		var errCreate error
@@ -96,6 +90,10 @@ func importVariables(db database.QueryExecuter, proj *sdk.Project, app *sdk.Appl
 		if errCreate != nil {
 			log.Warning("importVariables> Cannot add variable %s in application %s:  %s\n", newVar.Name, app.Name, errCreate)
 			return errCreate
+		}
+		if err := CreateAudit(db, newVar.Name, app, user); err != nil {
+			log.Warning("importVariabitles> Cannot create variable audit for application %s:  %s\n", app.Name, err)
+			return err
 		}
 	}
 
