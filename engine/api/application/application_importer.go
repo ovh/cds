@@ -48,6 +48,10 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 		}
 	}
 
+	if err := importVariables(db, proj, app, msgChan); err != nil {
+		return err
+	}
+
 	if err := ImportPipelines(db, proj, app, msgChan); err != nil {
 		return err
 	}
@@ -65,6 +69,38 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 		if msgChan != nil {
 			msgChan <- msg.New(msg.HookCreated, app.RepositoryFullname, app.Pipelines[0].Pipeline.Name)
 		}
+	}
+
+	return nil
+}
+
+//importVariables is able to create variable on an existing application
+func importVariables(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, msgChan chan<- msg.Message) error {
+
+	/*	if err := CreateAudit(tx, key, app, c.User); err != nil {
+			log.Warning("importVariabitles> Cannot create variable audit for application %s:  %s\n", app.Name, err)
+			return err
+		}
+	*/
+
+	for _, newVar := range app.Variable {
+		var errCreate error
+		switch newVar.Type {
+		case sdk.KeyVariable:
+			errCreate = AddKeyPairToApplication(db, app, newVar.Name)
+			break
+		default:
+			errCreate = InsertVariable(db, app, newVar)
+			break
+		}
+		if errCreate != nil {
+			log.Warning("importVariables> Cannot add variable %s in application %s:  %s\n", newVar.Name, app.Name, errCreate)
+			return errCreate
+		}
+	}
+
+	if msgChan != nil {
+		msgChan <- msg.New(msg.AppVariablesCreated, app.Name)
 	}
 
 	return nil

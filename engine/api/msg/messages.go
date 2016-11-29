@@ -23,6 +23,7 @@ var (
 	PipelineTriggerCreated    = &Message{trad{FR: "Le trigger du pipeline %s de l'application %s vers le pipeline %s l'application %s a été créé avec succès", EN: "Trigger from pipeline %s of application %s to pipeline %s attached to application %s successfully created"}, nil}
 	AppGroupInheritPermission = &Message{trad{FR: "Les permissions du projet sont appliquées sur l'application %s", EN: "Application %s inherits project permissions"}, nil}
 	AppGroupSetPermission     = &Message{trad{FR: "Permission accordée au groupe %s sur l'application %s", EN: "Permission applied to group %s to application %s"}, nil}
+	AppVariablesCreated       = &Message{trad{FR: "Les variables ont été ajoutées avec succès sur l'application %s", EN: "Application variable for %s are successfully created"}, nil}
 	HookCreated               = &Message{trad{FR: "Hook créé sur le depôt %s vers le pipeline %s", EN: "Hook created on repository %s to pipeline %s"}, nil}
 	EnvironmentExists         = &Message{trad{FR: "L'environnement %s existe déjà", EN: "Environment %s already exist"}, nil}
 	EnvironmentCreated        = &Message{trad{FR: "L'environnement %s a été créé avec succès", EN: "Environment %s successfully created"}, nil}

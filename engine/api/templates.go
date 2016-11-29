@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/template"
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/log"
@@ -335,12 +336,13 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	// Create a session for current user
 	sessionKey, err := auth.NewSession(router.authDriver, c.User)
 	if err != nil {
-		log.Critical("Instance> Error while creating new session: %s\n", err)
+		log.Critical("applyTemplateHandler> Error while creating new session: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
 	// Apply the template
+	log.Debug("applyTemplateHandler> applyTemplate")
 	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey)
 	if err != nil {
 		WriteError(w, r, err)
@@ -353,6 +355,13 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	for _, m := range msg {
 		s := m.String(al)
 		msgList = append(msgList, s)
+	}
+
+	log.Debug("applyTemplatesHandler> Check warnings on project")
+	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+		log.Warning("applyTemplatesHandler> Cannot check warnings: %s\n", err)
+		WriteError(w, r, err)
+		return
 	}
 
 	WriteJSON(w, r, msgList, http.StatusOK)
@@ -416,6 +425,13 @@ func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, d
 	for _, m := range msg {
 		s := m.String(al)
 		msgList = append(msgList, s)
+	}
+
+	log.Debug("applyTemplatesHandler> Check warnings on project")
+	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+		log.Warning("applyTemplatesHandler> Cannot check warnings: %s\n", err)
+		WriteError(w, r, err)
+		return
 	}
 
 	WriteJSON(w, r, msgList, http.StatusOK)

@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
@@ -259,7 +258,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		// In case of a key variable, if empty, generate a pair and add them as variable
 		case sdk.KeyVariable:
 			if v.Value == "" {
-				err := keys.AddKeyPairToProject(tx, p, v.Name)
+				err := project.AddKeyPairToProject(tx, p, v.Name)
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler> cannot generate keypair: %s\n", err)
 					WriteError(w, r, err)
@@ -467,7 +466,7 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = keys.AddKeyPairToProject(tx, p, newVar.Name)
+		err = project.AddKeyPairToProject(tx, p, newVar.Name)
 		break
 	default:
 		err = project.InsertVariableInProject(tx, p, newVar)

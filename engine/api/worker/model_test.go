@@ -59,28 +59,6 @@ func TestLoadWorkerModel(t *testing.T) {
 
 }
 
-func TestLoadWorkerModels(t *testing.T) {
-	db := test.Setup("TestLoadWorkerModels", t)
-	u := insertUser(t, db, "fakeUser")
-	insertWorkerModel(t, db, "lol", u.ID)
-	insertWorkerModel(t, db, "foo", u.ID)
-
-	models, err := LoadWorkerModels(db)
-	if err != nil {
-		t.Fatalf("Cannot load worker model: %s", err)
-	}
-
-	if len(models) != 2 {
-		t.Fatalf("Expected 2 models, got %d", len(models))
-	}
-
-	for _, m := range models {
-		if m.Type != sdk.Docker {
-			t.Fatalf("Unexpected model type '%s', wanted '%s'", m.Type, sdk.Docker)
-		}
-	}
-}
-
 func insertCapacity(db *sql.DB, t *testing.T, modelID int64, capa sdk.Requirement) {
 
 	err := InsertWorkerModelCapability(db, modelID, capa)

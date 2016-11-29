@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -49,10 +50,10 @@ func WithApplications(historylength int) Mod {
 // LoadProjectByGroup loads all projects where group has access
 func LoadProjectByGroup(db database.Querier, group *sdk.Group) error {
 	query := `
-		SELECT project.projectKey, project.name, project.last_modified, project_group.role 
+		SELECT project.projectKey, project.name, project.last_modified, project_group.role
 		FROM project
 	 	JOIN project_group ON project_group.project_id = project.id
-	 	WHERE project_group.group_id = $1 
+	 	WHERE project_group.group_id = $1
 		ORDER BY project.name ASC`
 
 	rows, err := db.Query(query, group.ID)
@@ -649,7 +650,7 @@ func DeleteProject(db database.QueryExecuter, key string) error {
 func LastUpdates(db database.Querier, user *sdk.User, since time.Time) ([]sdk.ProjectLastUpdates, error) {
 	query := `
 		SELECT 	project.projectkey, project.last_modified, apps.name, apps.last_modified, pipelines.name, pipelines.last_modified
-		FROM 	project	
+		FROM 	project
 		JOIN    project_group ON project_group.project_id = project.id
 		JOIN    group_user ON project_group.group_id = group_user.group_id
 		LEFT OUTER JOIN (
@@ -824,4 +825,31 @@ func LastUpdates(db database.Querier, user *sdk.User, since time.Time) ([]sdk.Pr
 	}
 
 	return res, nil
+}
+
+// AddKeyPairToProject generate a ssh key pair and add them as project variables
+func AddKeyPairToProject(db database.QueryExecuter, proj *sdk.Project, keyname string) error {
+
+	pub, priv, errGenerate := keys.Generatekeypair(keyname)
+	if errGenerate != nil {
+		return errGenerate
+	}
+
+	v := sdk.Variable{
+		Name:  keyname,
+		Type:  sdk.KeyVariable,
+		Value: priv,
+	}
+
+	if err := InsertVariableInProject(db, proj, v); err != nil {
+		return err
+	}
+
+	p := sdk.Variable{
+		Name:  keyname + ".pub",
+		Type:  sdk.TextVariable,
+		Value: pub,
+	}
+
+	return InsertVariableInProject(db, proj, p)
 }
