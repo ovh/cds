@@ -186,6 +186,34 @@ func LoadGroupByUser(db database.Querier, userID int64) ([]sdk.Group, error) {
 	return groups, nil
 }
 
+//LoadGroupByAdmin return group list from database
+func LoadGroupByAdmin(db database.Querier, userID int64) ([]sdk.Group, error) {
+	groups := []sdk.Group{}
+
+	query := `
+		SELECT "group".id, "group".name
+		FROM "group"
+		JOIN "group_user" ON "group".id = "group_user".group_id
+		WHERE "group_user".user_id = $1
+		and "group_user".group_admin = true
+		`
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int64
+		var name string
+		rows.Scan(&id, &name)
+		g := sdk.NewGroup(name)
+		g.ID = id
+		groups = append(groups, *g)
+	}
+	return groups, nil
+}
+
 // CheckUserInGroup verivies that user is in given group
 func CheckUserInGroup(db *sql.DB, groupID, userID int64) (bool, error) {
 	query := `SELECT COUNT(user_id) FROM group_user WHERE group_id = $1 AND user_id = $2`

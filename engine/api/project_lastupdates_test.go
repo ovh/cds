@@ -177,13 +177,10 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	g := sdk.NewGroup("testgroup")
 
 	//Delete user and group
-	if err := deleteUser(t, db, u, g); err != nil && err != sql.ErrNoRows {
-		t.Fatalf("Error deteling user : %s", err)
-	}
+	deleteUser(t, db, u, g)
 	//All the project
-	if err := deleteAll(t, db, "TEST_LAST_UPDATE"); err != nil && err != sql.ErrNoRows {
-		t.Fatalf("Error deteling project : %s", err)
-	}
+	deleteAll(t, db, "TEST_LAST_UPDATE")
+
 	//Insert Project
 	proj, err := test.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
 	assert.NoError(t, err)
@@ -306,16 +303,10 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 	g := sdk.NewGroup("testgroup")
 
 	//Delete user and group
-	if err := deleteUser(t, db, u, g); err != nil && err != sql.ErrNoRows {
-		t.Fatalf("Error deteling user : %s", err)
-	}
+	deleteUser(t, db, u, g)
 	//All the project
-	if err := deleteAll(t, db, "TEST_LAST_UPDATE"); err != nil && err != sql.ErrNoRows {
-		t.Fatalf("Error deteling project : %s", err)
-	}
-	if err := deleteAll(t, db, "TEST_LAST_UPDATE_2"); err != nil && err != sql.ErrNoRows {
-		t.Fatalf("Error deteling project : %s", err)
-	}
+	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, db, "TEST_LAST_UPDATE_2")
 
 	//Insert Project
 	proj, err := test.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")

@@ -82,22 +82,37 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	query := `
 		SELECT  worker_model.id, 
 				worker_model.name, 
+				worker_model.group_id,
 				COALESCE(waiting.count, 0) as waiting, 
 				COALESCE(building.count,0) as building 
 		FROM worker_model
 		LEFT JOIN LATERAL (
 				SELECT model, COUNT(worker.id) as count FROM worker
-				WHERE worker.group_id = $1 AND worker.status = 'Waiting'
+				WHERE worker.status = 'Waiting'
+				AND (
+					worker.group_id = $1
+					OR 
+					$1 = $2
+				)
 				AND worker.model = worker_model.id
 				GROUP BY model
 		) AS waiting ON waiting.model = worker_model.id
 		LEFT JOIN LATERAL (
 				SELECT model, COUNT(worker.id) as count FROM worker
-				WHERE worker.group_id = $1 AND worker.status = 'Building'
+				WHERE worker.status = 'Building'
+				AND (
+					worker.group_id = $1
+					OR 
+					$1 = $2
+				)
 				AND worker.model = worker_model.id
 				GROUP BY model
 		) AS building ON building.model = worker_model.id
-		WHERE worker_model.group_id IN ($1, $2)
+		WHERE (
+			worker_model.group_id IN ($1, $2)
+			OR
+			$1 = $2
+		)
 		ORDER BY worker_model.name ASC
 		`
 	rows, err := db.Query(query, groupID, sharedInfraGroup.ID)
@@ -110,7 +125,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	var status []sdk.ModelStatus
 	for rows.Next() {
 		var ms sdk.ModelStatus
-		err := rows.Scan(&ms.ModelID, &ms.ModelName, &ms.CurrentCount, &ms.BuildingCount)
+		err := rows.Scan(&ms.ModelID, &ms.ModelName, &ms.ModelGroupID, &ms.CurrentCount, &ms.BuildingCount)
 		if err != nil {
 			log.Warning("LoadWorkerModelStatusForGroup> Error : %s", err)
 			return nil, err
@@ -218,6 +233,11 @@ func EstimateWorkerModelNeeds(db *sql.DB, uid int64, workerModelStatus ModelStat
 	if errStatus != nil {
 		log.Warning("EstimateWorkerModelsNeeds> Cannot LoadWorkerModelStatus  %s\n", errStatus)
 		return nil, errStatus
+	}
+
+	if log.IsDebug() {
+		b, _ := json.Marshal(ms)
+		log.Debug("Worker model status : %s ", string(b))
 	}
 
 	// Load actions in queue grouped by action (same requirement, same worker model)

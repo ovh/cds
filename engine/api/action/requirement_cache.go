@@ -39,7 +39,6 @@ func RequirementsCacheLoader(delay time.Duration) {
 //GetRequirements load action capabilities from cache
 func GetRequirements(db database.Querier, id int64) ([]sdk.Requirement, error) {
 	k := cache.Key("action", "requirements", fmt.Sprintf("%d", id))
-	log.Debug("GetRequirements> action %d", id)
 	req := []sdk.Requirement{}
 	//if we didn't got any data, try to load from DB
 	if !cache.Get(k, &req) {

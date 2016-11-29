@@ -94,24 +94,24 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	vars := mux.Vars(r)
 	idString := vars["permModelID"]
 
-	modelID, err := strconv.ParseInt(idString, 10, 64)
-	if err != nil {
-		log.Warning("updateWorkerModel> modelID must be an integer : %s\n", err)
+	modelID, errParse := strconv.ParseInt(idString, 10, 64)
+	if errParse != nil {
+		log.Warning("updateWorkerModel> modelID must be an integer : %s\n", errParse)
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
-	old, err := worker.LoadWorkerModelByID(database.DBMap(db), modelID)
-	if err != nil {
-		WriteError(w, r, err)
+	old, errLoad := worker.LoadWorkerModelByID(database.DBMap(db), modelID)
+	if errLoad != nil {
+		WriteError(w, r, errLoad)
 		return
 	}
 
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateWorkerModel> cannot read body: %s\n", err)
-		WriteError(w, r, err)
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		log.Warning("updateWorkerModel> cannot read body: %s\n", errRead)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -119,7 +119,7 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	var model sdk.Model
 	if err := json.Unmarshal(data, &model); err != nil {
 		log.Warning("updateWorkerModel> cannot unmarshal body data: %s\n", err)
-		WriteError(w, r, err)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -172,18 +172,19 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	}
 
 	if modelID != model.ID {
-		log.Warning("updateWorkerModel> wrong ID.\n", err)
+		log.Warning("updateWorkerModel> wrong ID.\n")
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
 	// update model in db
-	err = worker.UpdateWorkerModel(database.DBMap(db), model)
-	if err != nil {
+	if err := worker.UpdateWorkerModel(database.DBMap(db), model); err != nil {
 		log.Warning("updateWorkerModel> cannot update worker model: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
+
+	WriteJSON(w, r, model, http.StatusOK)
 
 	// Recompute warnings
 	go func() {

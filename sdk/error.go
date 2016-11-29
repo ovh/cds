@@ -91,6 +91,7 @@ var (
 	ErrParentApplicationAndPipelineMandatory = &Error{ID: 77, Status: http.StatusBadRequest}
 	ErrNoParentBuildFound                    = &Error{ID: 78, Status: http.StatusNotFound}
 	ErrParameterExists                       = &Error{ID: 79, Status: http.StatusConflict}
+	ErrNoHatchery                            = &Error{ID: 80, Status: http.StatusNotFound}
 )
 
 // SupportedLanguages on API errors
@@ -181,6 +182,7 @@ You can safely use them in a String or Text parameter`,
 	ErrParentApplicationAndPipelineMandatory.ID: "parent application and pipeline are mandatory",
 	ErrNoParentBuildFound.ID:                    "no parent build found",
 	ErrParameterExists.ID:                       "parameter already exists",
+	ErrNoHatchery.ID:                            "No hatchery found",
 }
 
 var errorsFrench = map[int]string{
@@ -189,7 +191,7 @@ var errorsFrench = map[int]string{
 	ErrNoAction.ID:                  "l'action n'existe pas",
 	ErrActionLoop.ID:                "la définition de l'action contient une boucle récursive",
 	ErrInvalidID.ID:                 "l'ID doit être un nombre entier",
-	ErrInvalidProject.ID:            "project manquant",
+	ErrInvalidProject.ID:            "projet manquant",
 	ErrInvalidProjectKey.ID:         "la clef de project doit uniquement contenir des lettres majuscules et des chiffres",
 	ErrProjectHasPipeline.ID:        "le project contient un pipeline",
 	ErrProjectHasApplication.ID:     "le project contient une application",
@@ -265,6 +267,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrParentApplicationAndPipelineMandatory.ID: "application et pipeline parents obligatoires",
 	ErrNoParentBuildFound.ID:                    "aucun build parent n'a pu être trouvé",
 	ErrParameterExists.ID:                       "le paramètre existe déjà",
+	ErrNoHatchery.ID:                            "La hatchery n'existe pas",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)

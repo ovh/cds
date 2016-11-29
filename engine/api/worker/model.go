@@ -227,7 +227,6 @@ func modelCanRun(db *sql.DB, name string, req []sdk.Requirement, capa []sdk.Requ
 		return false
 	}
 
-	log.Debug("Comparing %d requirements to %d capa\n", len(req), len(capa))
 	for _, r := range req {
 		// service and memory requirements are only supported by docker model
 		if (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) && m.Type != sdk.Docker {
@@ -253,7 +252,6 @@ func modelCanRun(db *sql.DB, name string, req []sdk.Requirement, capa []sdk.Requ
 
 		// Check binary requirement against worker model capabilities
 		for _, c := range capa {
-			log.Debug("Comparing [%s] and [%s]\n", r.Name, c.Name)
 			if r.Value == c.Value || r.Value == c.Name {
 				found = true
 				break

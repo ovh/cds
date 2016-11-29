@@ -49,6 +49,7 @@ type Model struct {
 type ModelStatus struct {
 	ModelID       int64         `json:"model_id" yaml:"-"`
 	ModelName     string        `json:"model_name" yaml:"name"`
+	ModelGroupID  int64         `json:"model_group_id" yaml:"name"`
 	CurrentCount  int64         `json:"current_count" yaml:"current"`
 	WantedCount   int64         `json:"wanted_count" yaml:"wanted"`
 	BuildingCount int64         `json:"building_count" yaml:"building"`

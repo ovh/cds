@@ -19,31 +19,39 @@ import (
 func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Read body
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	// Unmarshal body
 	params := &worker.RegistrationForm{}
-	err = json.Unmarshal(data, params)
-	if err != nil {
+	if err := json.Unmarshal(data, params); err != nil {
 		fmt.Printf("registerWorkerHandler: Cannot unmarshal parameters: %s\n", err)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	// Check that hatchery exists
+	var h *sdk.Hatchery
 	if params.Hatchery != 0 {
 		if err := hatchery.Exists(db, params.Hatchery); err != nil {
 			WriteError(w, r, err)
 			return
 		}
+
+		var errH error
+		h, errH = hatchery.LoadHatcheryByID(db, params.Hatchery)
+		if errH != nil {
+			fmt.Printf("registerWorkerHandler> Unable to load hatchery: %s\n", errH)
+			WriteError(w, r, errH)
+			return
+		}
 	}
 
 	// Try to register worker
-	worker, err := worker.RegisterWorker(db, params.Name, params.UserKey, params.Model, params.Hatchery, params.BinaryCapabilities)
+	worker, err := worker.RegisterWorker(db, params.Name, params.UserKey, params.Model, h, params.BinaryCapabilities)
 	if err != nil {
 		log.Warning("registerWorkerHandler: [%s] Registering failed: %s\n", params.Name, err)
 		WriteError(w, r, sdk.ErrUnauthorized)

@@ -153,6 +153,30 @@ func LoadHatchery(db *sql.DB, uid string) (*sdk.Hatchery, error) {
 	return &h, nil
 }
 
+// LoadHatcheryByID fetch hatchery info from database given ID
+func LoadHatcheryByID(db *sql.DB, id int64) (*sdk.Hatchery, error) {
+	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
+			FROM hatchery
+			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
+			WHERE id = $1`
+
+	var h sdk.Hatchery
+	var wmID sql.NullInt64
+	err := db.QueryRow(query, id).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoHatchery
+		}
+		return nil, err
+	}
+
+	if wmID.Valid {
+		h.Model.ID = wmID.Int64
+	}
+
+	return &h, nil
+}
+
 // LoadHatcheries retrieves in database all registered hatcheries
 func LoadHatcheries(db *sql.DB) ([]sdk.Hatchery, error) {
 	var hatcheries []sdk.Hatchery

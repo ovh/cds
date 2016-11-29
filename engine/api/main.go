@@ -397,6 +397,7 @@ func (router *Router) init() {
 	// Users
 	router.Handle("/user", GET(GetUsers))
 	router.Handle("/user/signup", Auth(false), POST(AddUser))
+	router.Handle("/user/group", Auth(true), GET(getUserGroupsHandler))
 	router.Handle("/user/{name}", NeedAdmin(true), GET(GetUserHandler), PUT(UpdateUserHandler), DELETE(DeleteUserHandler))
 	router.Handle("/user/{name}/confirm/{token}", Auth(false), GET(ConfirmUser))
 	router.Handle("/user/{name}/reset", Auth(false), POST(ResetUser))
