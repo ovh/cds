@@ -88,7 +88,7 @@ func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions
 		}
 	}(&msgList)
 
-	if err := application.Import(tx, proj, app, app.RepositoriesManager, msgChan); err != nil {
+	if err := application.Import(tx, proj, app, app.RepositoriesManager, user, msgChan); err != nil {
 		log.Warning("ApplyTemplate> error applying template : %s", err)
 		close(msgChan)
 		return msgList, err

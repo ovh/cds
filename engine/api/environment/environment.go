@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -349,4 +350,30 @@ func LoadEnvironmentByGroup(db database.Querier, group *sdk.Group) error {
 		})
 	}
 	return nil
+}
+
+// AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
+func AddKeyPairToEnvironment(db database.QueryExecuter, envID int64, keyname string) error {
+	pub, priv, errGenerate := keys.Generatekeypair(keyname)
+	if errGenerate != nil {
+		return errGenerate
+	}
+
+	v := &sdk.Variable{
+		Name:  keyname,
+		Type:  sdk.KeyVariable,
+		Value: priv,
+	}
+
+	if err := InsertVariable(db, envID, v); err != nil {
+		return err
+	}
+
+	p := &sdk.Variable{
+		Name:  keyname + ".pub",
+		Type:  sdk.TextVariable,
+		Value: pub,
+	}
+
+	return InsertVariable(db, envID, p)
 }

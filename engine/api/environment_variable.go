@@ -11,7 +11,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
@@ -322,7 +321,7 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = keys.AddKeyPairToEnvironment(tx, env.ID, newVar.Name)
+		err = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name)
 		break
 	default:
 		err = environment.InsertVariable(tx, env.ID, &newVar)

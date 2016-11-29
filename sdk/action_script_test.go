@@ -185,3 +185,40 @@ steps  = [{
 	assert.Error(t, err)
 	t.Logf("Error : %s", err)
 }
+
+func TestTestDefautValues(t *testing.T) {
+	b := []byte(`
+	steps  = [{
+	artifactDownload = {
+				path = "myartifact"
+				tag = "{{.cds.version}}"
+		}
+	},{
+	final = false
+	enabled = false
+	artifactDownload = {
+				path = "myartifact"
+				tag = "{{.cds.version}}"
+		}
+	},{
+	final = true
+	enabled = true
+	artifactDownload = {
+				path = "myartifact"
+				tag = "{{.cds.version}}"
+		}
+	}]`)
+
+	a, err := NewActionFromScript(b)
+	assert.NotNil(t, a)
+	assert.NoError(t, err)
+	t.Logf("Action : %v", a)
+
+	assert.Equal(t, false, a.Actions[0].Final)
+	assert.Equal(t, true, a.Actions[0].Enabled)
+	assert.Equal(t, false, a.Actions[1].Final)
+	assert.Equal(t, false, a.Actions[1].Enabled)
+	assert.Equal(t, true, a.Actions[2].Final)
+	assert.Equal(t, true, a.Actions[2].Enabled)
+
+}
