@@ -54,8 +54,14 @@ func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
 				return errl
 			}
 			a.Actions[i].ID = ch.ID
+			a.Actions[i].Final = ch.Final
+			a.Actions[i].Enabled = ch.Enabled
+			log.Debug("InsertAction> Get existing child Action %s with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
+		} else {
+			log.Debug("InsertAction> Child Action %s is knowned with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
 		}
 
+		log.Debug("InsertAction> Insert Child Action %s with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
 		if err := insertActionChild(tx, a.ID, a.Actions[i], i+1); err != nil {
 			return err
 		}
@@ -206,7 +212,6 @@ func loadAction(db database.Querier, s database.Scanner) (*sdk.Action, error) {
 	return a, nil
 }
 
-// UpdateActionDB  Update an action
 // UpdateActionDB  Update an action
 func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) error {
 

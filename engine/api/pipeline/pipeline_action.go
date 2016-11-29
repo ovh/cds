@@ -137,13 +137,13 @@ func InsertJob(db database.QueryExecuter, job *sdk.Job, stageID int64, pip *sdk.
 	// Insert Joined Action
 	job.Action.Type = sdk.JoinedAction
 	job.Action.Enabled = true
+	log.Debug("InsertJob> Insert Action %s on pipeline %s with %d children", job.Action.Name, pip.Name, len(job.Action.Actions))
 	if err := action.InsertAction(db, &job.Action, false); err != nil {
 		return err
 	}
 
 	// Create Stage if needed
 	var stage *sdk.Stage
-	var err error
 	if stageID == 0 {
 		stage = &sdk.Stage{
 			Name:       fmt.Sprintf("Stage %d", len(pip.Stages)+1),
@@ -151,15 +151,18 @@ func InsertJob(db database.QueryExecuter, job *sdk.Job, stageID int64, pip *sdk.
 			BuildOrder: len(pip.Stages) + 1,
 			Enabled:    true,
 		}
+		log.Debug("InsertJob> Creating stage %s on pipeline %s", stage.Name, pip.Name)
 		if err := InsertStage(db, stage); err != nil {
 			return fmt.Errorf("Cannot InsertStage on pipeline %d> %s", pip.ID, err)
 		}
 	} else {
 		//Else load the stage
-		stage, err = LoadStage(db, pip.ID, stageID)
-		if err != nil {
-			return err
+		var errLoad error
+		stage, errLoad = LoadStage(db, pip.ID, stageID)
+		if errLoad != nil {
+			return errLoad
 		}
+		log.Debug("InsertJob> Load existing stage %s on pipeline %s", stage.Name, pip.Name)
 	}
 	job.PipelineStageID = stage.ID
 

@@ -42,6 +42,7 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 		Requirements: []Requirement{},
 		Parameters:   []Parameter{},
 		Actions:      []Action{},
+		Enabled:      true,
 	}
 
 	for k, v := range as.Requirements {
