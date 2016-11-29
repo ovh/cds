@@ -238,6 +238,11 @@ func GetAllVariableByID(db database.Querier, applicationID int64, fargs ...FuncA
 
 // InsertVariable Insert a new variable in the given application
 func InsertVariable(db database.QueryExecuter, app *sdk.Application, variable sdk.Variable) error {
+
+	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
+		return fmt.Errorf("You try to insert a placeholder for new variable %s", variable.Name)
+	}
+
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
 		return err
@@ -266,10 +271,8 @@ func UpdateVariable(db database.QueryExecuter, app *sdk.Application, variable sd
 		return err
 	}
 
-	query := `UPDATE application_variable
-	          SET var_name= $1, var_value=$2, cipher_value=$3,var_type=$4
-		  WHERE id = $5`
-	result, err := db.Exec(query, variable.Name, clear, cipher, string(variable.Type), variable.ID)
+	query := `UPDATE application_variable SET var_name= $1, var_value=$2, cipher_value=$3 WHERE id = $4`
+	result, err := db.Exec(query, variable.Name, clear, cipher, variable.ID)
 	if err != nil {
 		return err
 	}

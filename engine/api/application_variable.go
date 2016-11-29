@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
@@ -217,6 +216,7 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
+// deprecated
 func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -302,7 +302,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 			break
 		case sdk.KeyVariable:
 			if v.Value == "" {
-				err := keys.AddKeyPairToApplication(tx, app, v.Name)
+				err := application.AddKeyPairToApplication(tx, app, v.Name)
 				if err != nil {
 					log.Warning("updateVariablesInApplicationHandler> cannot generate keypair: %s\n", err)
 					WriteError(w, r, err)
@@ -493,7 +493,7 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = keys.AddKeyPairToApplication(tx, app, newVar.Name)
+		err = application.AddKeyPairToApplication(tx, app, newVar.Name)
 		break
 	default:
 		err = application.InsertVariable(tx, app, newVar)

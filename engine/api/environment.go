@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -199,7 +198,7 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 				break
 			case sdk.KeyVariable:
 				if varEnv.Value == "" {
-					err := keys.AddKeyPairToEnvironment(tx, env.ID, varEnv.Name)
+					err := environment.AddKeyPairToEnvironment(tx, env.ID, varEnv.Name)
 					if err != nil {
 						log.Warning("updateEnvironmentsHandler> cannot generate keypair: %s\n", err)
 						WriteError(w, r, err)

@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -507,7 +506,7 @@ func cloneApplication(db *sql.DB, project *sdk.Project, newApp *sdk.Application,
 	for _, v := range newApp.Variable {
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			err = keys.AddKeyPairToApplication(tx, newApp, v.Name)
+			err = application.AddKeyPairToApplication(tx, newApp, v.Name)
 		} else {
 			err = application.InsertVariable(tx, newApp, v)
 		}
