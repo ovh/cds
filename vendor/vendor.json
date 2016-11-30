@@ -647,12 +647,6 @@
 			"revisionTime": "2016-02-20T15:49:07Z"
 		},
 		{
-			"checksumSHA1": "xunNOgG8P6Xh4SM+LPQ1zMDXa8Q=",
-			"path": "gopkg.in/gorp.v1",
-			"revision": "c87af80f3cc5036b55b83d77171e156791085e2e",
-			"revisionTime": "2015-02-04T08:55:30Z"
-		},
-		{
 			"checksumSHA1": "UCRz3lI2KcVOjUbjxeMAasufews=",
 			"path": "gopkg.in/ldap.v2",
 			"revision": "0e7db8eb77695b5a952f0e5d78df9ab160050c73",

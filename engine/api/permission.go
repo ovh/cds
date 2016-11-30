@@ -209,7 +209,7 @@ func checkWorkerModelPermissionsByUser(m *sdk.Model, u *sdk.User, permissionValu
 
 	for _, g := range u.Groups {
 		if g.ID == m.GroupID {
-			if permissionValue <= permission.PermissionRead {
+			if permissionValue >= permission.PermissionRead {
 				return true
 			}
 

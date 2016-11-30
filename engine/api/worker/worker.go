@@ -240,8 +240,6 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 	if errL != nil {
 		return nil, errL
 	}
-	//groupID = t.GroupID
-	//e = t.Expiration
 
 	if h != nil {
 		if h.GroupID != t.GroupID {
