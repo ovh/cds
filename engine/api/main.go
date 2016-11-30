@@ -221,6 +221,7 @@ func (router *Router) init() {
 
 	// Group
 	router.Handle("/group", GET(getGroups), POST(addGroupHandler))
+	router.Handle("/group/public", GET(getPublicGroups))
 	router.Handle("/group/{permGroupName}", GET(getGroupHandler), PUT(updateGroupHandler), DELETE(deleteGroupHandler))
 	router.Handle("/group/{permGroupName}/user", POST(addUserInGroup))
 	router.Handle("/group/{permGroupName}/user/{user}", DELETE(removeUserFromGroupHandler))
@@ -413,6 +414,7 @@ func (router *Router) init() {
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
 	router.Handle("/worker/model/{permModelID}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
 	router.Handle("/worker/model/{permModelID}/capability", POST(addWorkerModelCapa))
+	router.Handle("/worker/model/{permModelID}/instances", GET(getWorkerModelInstances))
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
 	router.Handle("/worker/model/{permModelID}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
 }

@@ -108,6 +108,22 @@ func LoadGroup(db database.Querier, name string) (*sdk.Group, error) {
 	}, nil
 }
 
+// LoadGroupByID retrieves group informations from database
+func LoadGroupByID(db database.Querier, id int64) (*sdk.Group, error) {
+	query := `SELECT "group".id FROM "group" WHERE "group".id = $1`
+	var name string
+	if err := db.QueryRow(query, name).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrGroupNotFound
+		}
+		return nil, err
+	}
+	return &sdk.Group{
+		ID:   id,
+		Name: name,
+	}, nil
+}
+
 // LoadUserGroup retrieves all group users from database
 func LoadUserGroup(db *sql.DB, group *sdk.Group) error {
 	query := `SELECT "user".username, "group_user".group_admin FROM "user"
@@ -141,7 +157,7 @@ func LoadUserGroup(db *sql.DB, group *sdk.Group) error {
 func LoadGroups(db *sql.DB) ([]sdk.Group, error) {
 	groups := []sdk.Group{}
 
-	query := `SELECT * FROM "group" WHERE 1=1`
+	query := `SELECT * FROM "group"`
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -198,6 +214,33 @@ func LoadGroupByAdmin(db database.Querier, userID int64) ([]sdk.Group, error) {
 		and "group_user".group_admin = true
 		`
 	rows, err := db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int64
+		var name string
+		rows.Scan(&id, &name)
+		g := sdk.NewGroup(name)
+		g.ID = id
+		groups = append(groups, *g)
+	}
+	return groups, nil
+}
+
+// LoadPublicGroups returns public groups,
+// actually it returns shared.infra group only because public group are not supported
+func LoadPublicGroups(db database.Querier) ([]sdk.Group, error) {
+	groups := []sdk.Group{}
+	//This query should have to be fixed with a new public column
+	query := `
+		SELECT id, name
+		FROM "group"
+		WHERE name = $1
+		`
+	rows, err := db.Query(query, SharedInfraGroup)
 	if err != nil {
 		return nil, err
 	}

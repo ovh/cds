@@ -261,6 +261,8 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 		return
 	}
 
+	log.Debug("getWorkerModels> %s", models)
+
 	WriteJSON(w, r, models, http.StatusOK)
 }
 
@@ -516,4 +518,30 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *sql
 	}()
 
 	WriteJSON(w, r, res, http.StatusAccepted)
+}
+
+func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	vars := mux.Vars(r)
+	idString := vars["permModelID"]
+
+	modelID, errParse := strconv.ParseInt(idString, 10, 64)
+	if errParse != nil {
+		log.Warning("getWorkerModelInstances> modelID must be an integer : %s\n", errParse)
+		WriteError(w, r, sdk.ErrInvalidID)
+		return
+	}
+
+	m, errLoad := worker.LoadWorkerModelByID(database.DBMap(db), modelID)
+	if errLoad != nil {
+		WriteError(w, r, errLoad)
+		return
+	}
+
+	ws, errW := worker.LoadWorkersByModel(db, m.ID)
+	if errW != nil {
+		WriteError(w, r, errW)
+		return
+	}
+
+	WriteJSON(w, r, ws, http.StatusOK)
 }

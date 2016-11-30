@@ -362,6 +362,9 @@ func (c *LDAPClient) checkUserSessionAuth(db *sql.DB, headers http.Header, ctx *
 	if err != nil {
 		return err
 	}
+	if err := user.LoadUserPermissions(db, u); err != nil {
+		return err
+	}
 	ctx.User = u
 
 	if !exists {

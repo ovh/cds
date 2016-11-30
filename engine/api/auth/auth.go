@@ -162,12 +162,15 @@ func reloadUserPersistentSession(db *sql.DB, store sessionstore.Store, headers h
 	}
 
 	// Load user
-	u, err := user.LoadUserAndAuth(db, userPwdArray[0])
-	ctx.User = u
-	if err != nil {
+	u, err1 := user.LoadUserAndAuth(db, userPwdArray[0])
+	if err1 != nil {
 		log.Warning("ReloadUserPersistentSession> Authorization failed")
 		return false
 	}
+	if user.LoadUserPermissions(db, u) != nil {
+		return false
+	}
+	ctx.User = u
 
 	// Verify token
 	for _, t := range u.Auth.Tokens {
