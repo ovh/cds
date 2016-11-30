@@ -335,33 +335,39 @@ func scheduleAction(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
+		log.Debug("scheduleAction> err loadPipelineActionArguments: %s", err)
 		return nil, err
 	}
 
 	// Get project and pipeline Information
 	projectData, pipelineData, err := project.LoadProjectAndPipelineByPipelineActionID(db, a.PipelineActionID)
 	if err != nil {
+		log.Debug("scheduleAction> err LoadProjectAndPipelineByPipelineActionID: %s", err)
 		return nil, err
 	}
 
 	// Load project Variables
 	projectVariables, err := project.GetAllVariableInProject(db, projectData.ID)
 	if err != nil {
+		log.Debug("scheduleAction> err GetAllVariableInProject: %s", err)
 		return nil, err
 	}
 	// Load application Variables
 	appVariables, err := application.GetAllVariableByID(db, pb.Application.ID)
 	if err != nil {
+		log.Debug("scheduleAction> err GetAllVariableByID for app ID: %s", err)
 		return nil, err
 	}
 	// Load environment Variables
 	envVariables, err := environment.GetAllVariableByID(db, pb.Environment.ID)
 	if err != nil {
+		log.Debug("scheduleAction> err GetAllVariableByID for env ID : %s", err)
 		return nil, err
 	}
 
 	pipelineParameters, err := pipeline.GetAllParametersInPipeline(db, pipelineData.ID)
 	if err != nil {
+		log.Debug("scheduleAction> err GetAllParametersInPipeline: %s", err)
 		return nil, err
 	}
 
@@ -380,7 +386,9 @@ func scheduleAction(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 		pipelineParameters,
 		pipelineActionArgs,
 		pb.Parameters, a)
+
 	if err != nil {
+		log.Debug("scheduleAction> err ProcessActionBuildVariables: %s", err)
 		return nil, err
 	}
 
@@ -399,6 +407,7 @@ func scheduleAction(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 	}
 
 	if err := InsertBuild(db, &b); err != nil {
+		log.Debug("scheduleAction> err InsertBuild: %s", err)
 		return nil, fmt.Errorf("Cannot push action %s for pipeline %s #%d in build queue: %s\n",
 			a.Name, pb.Pipeline.Name, b.PipelineBuildID, err)
 	}
@@ -407,20 +416,20 @@ func scheduleAction(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 }
 
 func loadPipelineActionArguments(db database.Querier, pipelineActionID int64) ([]sdk.Parameter, error) {
-	query := `SELECT args FROM pipeline_action
-		  WHERE id = $1`
+	query := `SELECT args FROM pipeline_action WHERE id = $1`
 
-	var argsJSON string
-	err := db.QueryRow(query, pipelineActionID).Scan(&argsJSON)
-	if err != nil {
+	var argsJSON sql.NullString
+	if err := db.QueryRow(query, pipelineActionID).Scan(&argsJSON); err != nil {
 		return nil, err
 	}
 
 	var parameters []sdk.Parameter
-	err = json.Unmarshal([]byte(argsJSON), &parameters)
-	if err != nil {
-		return nil, err
+	if argsJSON.Valid {
+		if err := json.Unmarshal([]byte(argsJSON.String), &parameters); err != nil {
+			return nil, err
+		}
 	}
+
 	return parameters, nil
 }
 

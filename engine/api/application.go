@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -180,6 +179,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	withPollers := r.FormValue("withPollers")
 	withHooks := r.FormValue("withHooks")
 	withNotifs := r.FormValue("withNotifs")
+	withTriggers := r.FormValue("withTriggers")
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
@@ -215,6 +215,18 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 			log.Warning("getApplicationHandler: Cannot load user notifications for application %s: %s\n", applicationName, err)
 			WriteError(w, r, err)
 			return
+		}
+	}
+
+	if withTriggers == "true" {
+		for i := range app.Pipelines {
+			appPip := &app.Pipelines[i]
+			appPip.Triggers, err = trigger.LoadTriggersByAppAndPipeline(db, app.ID, appPip.Pipeline.ID)
+			if err != nil {
+				log.Warning("getApplicationHandler: Cannot load triggers: %s\n", err)
+				WriteError(w, r, err)
+				return
+			}
 		}
 	}
 
@@ -507,7 +519,7 @@ func cloneApplication(db *sql.DB, project *sdk.Project, newApp *sdk.Application,
 	for _, v := range newApp.Variable {
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			err = keys.AddKeyPairToApplication(tx, newApp, v.Name)
+			err = application.AddKeyPairToApplication(tx, newApp, v.Name)
 		} else {
 			err = application.InsertVariable(tx, newApp, v)
 		}

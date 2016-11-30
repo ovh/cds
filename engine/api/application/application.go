@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -303,7 +304,7 @@ func InsertApplication(db database.QueryExecuter, project *sdk.Project, app *sdk
 	}
 	// Update project
 	query = `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE id=$1
 	`
@@ -321,7 +322,7 @@ func UpdateApplication(db database.QueryExecuter, application *sdk.Application) 
 	var lastModified time.Time
 	// Update project
 	query = `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE id IN (
 			select project_id from application where id = $1
@@ -437,7 +438,7 @@ func DeleteApplication(db *sql.Tx, applicationID int64) error {
 
 	// Update project
 	query = `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE id IN (
 			select project_id from application where id = $1
@@ -551,4 +552,30 @@ func PipelineAttached(db *sql.DB, appID, pipID int64) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// AddKeyPairToApplication generate a ssh key pair and add them as application variables
+func AddKeyPairToApplication(db database.QueryExecuter, app *sdk.Application, keyname string) error {
+	pub, priv, errGenerate := keys.Generatekeypair(keyname)
+	if errGenerate != nil {
+		return errGenerate
+	}
+
+	v := sdk.Variable{
+		Name:  keyname,
+		Type:  sdk.KeyVariable,
+		Value: priv,
+	}
+
+	if err := InsertVariable(db, app, v); err != nil {
+		return err
+	}
+
+	p := sdk.Variable{
+		Name:  keyname + ".pub",
+		Type:  sdk.TextVariable,
+		Value: pub,
+	}
+
+	return InsertVariable(db, app, p)
 }

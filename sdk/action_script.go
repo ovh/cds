@@ -19,7 +19,7 @@ type ActionScript struct {
 	Requirements map[string]Requirement `json:"requirement,omitempty"`
 	Parameters   map[string]Parameter   `json:"parameters,omitempty"`
 	Steps        []struct {
-		Enabled          bool                         `json:"enabled"`
+		Enabled          *bool                        `json:"enabled"`
 		Final            bool                         `json:"final"`
 		ArtifactUpload   map[string]string            `json:"artifactUpload,omitempty"`
 		ArtifactDownload map[string]string            `json:"artifactDownload,omitempty"`
@@ -42,6 +42,7 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 		Requirements: []Requirement{},
 		Parameters:   []Parameter{},
 		Actions:      []Action{},
+		Enabled:      true,
 	}
 
 	for k, v := range as.Requirements {
@@ -75,7 +76,6 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 						Type:  TextParameter,
 					},
 				},
-				Enabled: true,
 			}
 			goto next
 		}
@@ -92,7 +92,6 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 						Type:  StringParameter,
 					},
 				},
-				Enabled: true,
 			}
 			goto next
 		}
@@ -114,7 +113,6 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 						Type:  StringParameter,
 					},
 				},
-				Enabled: true,
 			}
 			goto next
 		}
@@ -136,7 +134,6 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 						Type:  StringParameter,
 					},
 				},
-				Enabled: true,
 			}
 			goto next
 		}
@@ -162,7 +159,11 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 		return nil, fmt.Errorf("Unsupported action : %s", string(btes))
 
 	next:
-		newAction.Enabled = v.Enabled
+		if v.Enabled != nil {
+			newAction.Enabled = *v.Enabled
+		} else {
+			newAction.Enabled = true
+		}
 		newAction.Final = v.Final
 		a.Actions = append(a.Actions, newAction)
 	}

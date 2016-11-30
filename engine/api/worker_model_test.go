@@ -71,6 +71,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 		Name:    "Test1",
 		GroupID: g.ID,
 		Type:    sdk.Docker,
+		Image:   "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",
@@ -121,6 +122,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	//Type is mandatory
 	model := sdk.Model{
 		Name:    "Test1",
+		Image:   "buildpack-deps:jessie",
 		GroupID: g.ID,
 		Capabilities: []sdk.Requirement{
 			{
@@ -172,8 +174,9 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 
 	//GroupID is mandatory
 	model = sdk.Model{
-		Name: "Test1",
-		Type: sdk.Docker,
+		Name:  "Test1",
+		Type:  sdk.Docker,
+		Image: "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",
@@ -234,6 +237,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 		Name:    "Test1",
 		GroupID: g.ID,
 		Type:    sdk.Docker,
+		Image:   "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",
@@ -289,6 +293,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 		Name:    "Test1",
 		GroupID: g.ID,
 		Type:    sdk.Docker,
+		Image:   "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",
@@ -353,6 +358,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Name:    "Test1",
 		GroupID: g1.ID,
 		Type:    sdk.Docker,
+		Image:   "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",
@@ -408,6 +414,7 @@ func Test_updateWorkerModel(t *testing.T) {
 		Name:    "Test1",
 		GroupID: g.ID,
 		Type:    sdk.Docker,
+		Image:   "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",
@@ -500,6 +507,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 		Name:    "Test1",
 		GroupID: g.ID,
 		Type:    sdk.Docker,
+		Image:   "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",
@@ -572,6 +580,7 @@ func Test_getWorkerModel(t *testing.T) {
 		Name:    "Test1",
 		GroupID: g.ID,
 		Type:    sdk.Docker,
+		Image:   "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",
@@ -640,6 +649,7 @@ func Test_getWorkerModels(t *testing.T) {
 		Name:    "Test1",
 		GroupID: g.ID,
 		Type:    sdk.Docker,
+		Image:   "buildpack-deps:jessie",
 		Capabilities: []sdk.Requirement{
 			{
 				Name:  "capa1",

@@ -380,6 +380,7 @@ func importActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 		}
 		code = 200
 	} else {
+		a.Enabled = true
 		a.Type = sdk.DefaultAction
 		if err := action.InsertAction(tx, a, true); err != nil {
 			WriteError(w, r, err)
