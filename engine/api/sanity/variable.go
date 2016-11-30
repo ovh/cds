@@ -3,11 +3,10 @@ package sanity
 import (
 	"regexp"
 
-	"stash.ovh.net/cds/engine/api/database"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/log"
