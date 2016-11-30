@@ -22,7 +22,7 @@ func RequirementsCacheLoader(delay time.Duration) {
 				cache.SetWithTTL(loaderKey, "true", 60)
 				actions, err := LoadActions(db)
 				if err != nil {
-					log.Warning("ModelCapabilititiesCacheLoader> Unable to load worker models: %s", err)
+					log.Warning("RequirementsCacheLoader> Unable to load worker models: %s", err)
 					continue
 				}
 				for _, a := range actions {
@@ -44,7 +44,7 @@ func GetRequirements(db database.Querier, id int64) ([]sdk.Requirement, error) {
 		var err error
 		req, err = LoadActionRequirements(db, id)
 		if err != nil {
-			return nil, fmt.Errorf("Requirements> cannot LoadActionRequirements: %s\n", err)
+			return nil, fmt.Errorf("GetRequirements> cannot LoadActionRequirements: %s\n", err)
 		}
 		cache.Set(k, req)
 	}
