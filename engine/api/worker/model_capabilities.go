@@ -19,8 +19,7 @@ func ModelCapabilititiesCacheLoader(delay time.Duration) {
 		if db != nil {
 			var mayIWork string
 			loaderKey := cache.Key("worker", "modelcapabilitites", "loading")
-			cache.Get(loaderKey, &mayIWork)
-			if mayIWork == "" {
+			if cache.Get(loaderKey, &mayIWork) {
 				cache.SetWithTTL(loaderKey, "true", 60)
 				wms, err := LoadWorkerModels(dbmap)
 				if err != nil {

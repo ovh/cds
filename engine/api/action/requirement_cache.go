@@ -18,8 +18,7 @@ func RequirementsCacheLoader(delay time.Duration) {
 		if db != nil {
 			var mayIWork string
 			loaderKey := cache.Key("action", "requirements", "loading")
-			cache.Get(loaderKey, &mayIWork)
-			if mayIWork == "" {
+			if cache.Get(loaderKey, &mayIWork) {
 				cache.SetWithTTL(loaderKey, "true", 60)
 				actions, err := LoadActions(db)
 				if err != nil {
