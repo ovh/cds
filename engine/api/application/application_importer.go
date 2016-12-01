@@ -136,11 +136,36 @@ func ImportPipelines(db database.QueryExecuter, proj *sdk.Project, app *sdk.Appl
 	for i := range app.Pipelines {
 		for j := range app.Pipelines[i].Triggers {
 			t := &app.Pipelines[i].Triggers[j]
-			//Source pipeline is always the current pipeline
-			t.SrcPipeline = app.Pipelines[i].Pipeline
 
-			//Source application is always the current application
-			t.SrcApplication = *app
+			// You have an existing build pipeline. You want to create a template
+			// for create a deploy package, and this template add trigger with only srcApp.
+			// so, if SrcApplication.Name != "" -> load existing application.
+			if t.SrcApplication.Name == "" {
+				//Source application is the current application
+				t.SrcApplication = *app
+				log.Debug("ImportPipelines> current app")
+			} else {
+				log.Debug("Load t.SrcApplication.Name:%s", t.SrcApplication.Name)
+				srcApp, err := LoadApplicationByName(db, proj.Key, t.SrcApplication.Name)
+				if err != nil {
+					return err
+				}
+				t.SrcApplication = *srcApp
+			}
+
+			// Same explanation for pipeline
+			if t.SrcPipeline.Name == "" {
+				//Source pipeline is the current pipeline
+				t.SrcPipeline = app.Pipelines[i].Pipeline
+				log.Debug("ImportPipelines> current pipeline")
+			} else {
+				log.Debug("ImportPipelines> Load t.SrcPipeline.Name:%s", t.SrcApplication.Name)
+				srcPipeline, err := pipeline.LoadPipeline(db, proj.Key, t.SrcPipeline.Name, false)
+				if err != nil {
+					return err
+				}
+				t.SrcPipeline = *srcPipeline
+			}
 
 			//Load destination App
 			if t.DestApplication.Name == "" {
@@ -151,6 +176,17 @@ func ImportPipelines(db database.QueryExecuter, proj *sdk.Project, app *sdk.Appl
 					return err
 				}
 				t.DestApplication = *dest
+			}
+
+			//Load dest pipeline
+			if t.DestPipeline.Name == "" {
+				t.DestPipeline = app.Pipelines[i].Pipeline
+			} else {
+				destPipeline, err := pipeline.LoadPipeline(db, proj.Key, t.DestPipeline.Name, false)
+				if err != nil {
+					return err
+				}
+				t.DestPipeline = *destPipeline
 			}
 
 			//Load or import source environmment
@@ -170,13 +206,6 @@ func ImportPipelines(db database.QueryExecuter, proj *sdk.Project, app *sdk.Appl
 					return err
 				}
 			}
-
-			//Load dest pipeline
-			destPipeline, err := pipeline.LoadPipeline(db, proj.Key, t.DestPipeline.Name, false)
-			if err != nil {
-				return err
-			}
-			t.DestPipeline = *destPipeline
 
 			//Check if environment and pipeline type are compatible
 			if t.DestEnvironment.ID == sdk.DefaultEnv.ID && t.DestPipeline.Type == sdk.DeploymentPipeline {
