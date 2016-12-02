@@ -176,25 +176,28 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
 		}
 		if permissionOk {
+			start := time.Now()
+			defer func() {
+				end := time.Now()
+				latency := end.Sub(start)
+				log.Info("%-7s | %13v | %v", req.Method, latency, req.URL)
+			}()
+
 			if req.Method == "GET" && rc.get != nil {
-				log.Info("GET \t%v\n", req.URL)
 				rc.get(w, req, db, c)
 				return
 			}
 
 			if req.Method == "POST" && rc.post != nil {
-				log.Info("POST \t%v\n", req.URL)
 				rc.post(w, req, db, c)
 				return
 			}
 			if req.Method == "PUT" && rc.put != nil {
-				log.Info("PUT \t%v\n", req.URL)
 				rc.put(w, req, db, c)
 				return
 			}
 
 			if req.Method == "DELETE" && rc.deleteHandler != nil {
-				log.Info("DELETE \t%v\n", req.URL)
 				rc.deleteHandler(w, req, db, c)
 				return
 			}
@@ -359,7 +362,18 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status 
 		WriteError(w, r, sdk.ErrUnknownError)
 		return
 	}
+
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(b)
+}
+
+func notFoundHandler(w http.ResponseWriter, req *http.Request) {
+	start := time.Now()
+	defer func() {
+		end := time.Now()
+		latency := end.Sub(start)
+		log.Warning("%-7s | %13v | %v", req.Method, latency, req.URL)
+	}()
+	WriteError(w, req, sdk.ErrNotFound)
 }
