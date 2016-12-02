@@ -541,38 +541,38 @@ func loadActionBuildSecrets(db *sql.DB, abID int64) ([]sdk.Variable, error) {
 func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	if c.Worker.ID != "" {
 		// Load calling worker
-		caller, err := worker.LoadWorker(db, c.Worker.ID)
-		if err != nil {
-			log.Warning("getQueueHandler> cannot load calling worker: %s\n", err)
-			w.WriteHeader(http.StatusBadRequest)
+		caller, errW := worker.LoadWorker(db, c.Worker.ID)
+		if errW != nil {
+			log.Warning("getQueueHandler> cannot load calling worker: %s\n", errW)
+			WriteError(w, r, errW)
 			return
 		}
 		if caller.Status != sdk.StatusWaiting {
 			log.Debug("getQueueHandler> worker %s is not available to build (status = %s)\n", caller.ID, caller.Status)
-			w.WriteHeader(http.StatusBadRequest)
+			WriteError(w, r, sdk.ErrInvalidID)
 			return
 		}
 	}
 
 	var queue []sdk.ActionBuild
-	var err error
+	var errQ error
 	switch c.Agent {
 	case sdk.HatcheryAgent, sdk.WorkerAgent:
-		queue, err = build.LoadGroupWaitingQueue(db, c.Worker.GroupID)
+		queue, errQ = build.LoadGroupWaitingQueue(db, c.Worker.GroupID)
 	default:
-		queue, err = build.LoadUserWaitingQueue(db, c.User)
+		queue, errQ = build.LoadUserWaitingQueue(db, c.User)
+	}
+
+	if errQ != nil {
+		log.Warning("getQueueHandler> Cannot load queue from db: %s\n", errQ)
+		WriteError(w, r, errQ)
+		return
 	}
 
 	if log.IsDebug() {
 		for _, a := range queue {
 			log.Debug("getQueueHandler> ActionBuild : %d %s [%s]", a.ID, a.ActionName, a.Status)
 		}
-	}
-
-	if err != nil {
-		log.Warning("getQueueHandler> Cannot load queue from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
 	}
 
 	WriteJSON(w, r, queue, http.StatusOK)

@@ -53,21 +53,24 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 }
 
 //Get a key from redis
-func (s *RedisStore) Get(key string, value interface{}) {
+func (s *RedisStore) Get(key string, value interface{}) bool {
 	if s.Client == nil {
 		log.Critical("redis> cannot get redis client")
-		return
+		return false
 	}
 	val, err := s.Client.Get(key).Result()
 	if err != nil && err != redis.Nil {
 		log.Warning("redis> Get error %s : %s", key, err)
-		return
+		return false
 	}
 	if val != "" && err != redis.Nil {
 		if err := json.Unmarshal([]byte(val), value); err != nil {
 			log.Warning("redis> Cannot unmarshal %s :%s", key, err)
+			return false
 		}
+		return true
 	}
+	return false
 }
 
 //SetWithTTL a value in local store (0 for eternity)

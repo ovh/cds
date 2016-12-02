@@ -166,6 +166,12 @@
 			"revisionTime": "2016-10-24T02:17:13Z"
 		},
 		{
+			"checksumSHA1": "sd74nfsZXvigcGBf1gDXYzO2AKY=",
+			"path": "github.com/go-gorp/gorp",
+			"revision": "38e1f13a40bf2445da3204161a38df0d0b006e83",
+			"revisionTime": "2016-11-13T21:19:33Z"
+		},
+		{
 			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
 			"path": "github.com/gorilla/context",
 			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
@@ -639,12 +645,6 @@
 			"path": "gopkg.in/bsm/ratelimit.v1",
 			"revision": "db14e161995a5177acef654cb0dd785e8ee8bc22",
 			"revisionTime": "2016-02-20T15:49:07Z"
-		},
-		{
-			"checksumSHA1": "xunNOgG8P6Xh4SM+LPQ1zMDXa8Q=",
-			"path": "gopkg.in/gorp.v1",
-			"revision": "c87af80f3cc5036b55b83d77171e156791085e2e",
-			"revisionTime": "2015-02-04T08:55:30Z"
 		},
 		{
 			"checksumSHA1": "UCRz3lI2KcVOjUbjxeMAasufews=",

@@ -7,6 +7,7 @@ import (
 	"math"
 	"strings"
 
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -66,8 +67,8 @@ func InsertHatchery(db *sql.DB, h *sdk.Hatchery) error {
 
 // DeleteHatchery removes from database given hatchery and linked model
 func DeleteHatchery(db *sql.DB, id int64, workerModelID int64) error {
-
-	tx, err := db.Begin()
+	dbmap := database.DBMap(db)
+	tx, err := dbmap.Begin()
 	if err != nil {
 		return err
 	}
@@ -85,18 +86,6 @@ func DeleteHatchery(db *sql.DB, id int64, workerModelID int64) error {
 			return err
 		}
 	}
-
-	// disable all related workers
-	// Why would we do this ?
-	/*
-		if id > 0 {
-			query = `UPDATE worker SET status = $1 WHERE hatchery_id = $2 and status != $3`
-			_, err = tx.Exec(query, string(sdk.StatusDisabled), id, string(sdk.StatusBuilding))
-			if err != nil {
-				return err
-			}
-		}
-	*/
 
 	query = `DELETE FROM hatchery WHERE id = $1`
 	_, err = tx.Exec(query, id)
@@ -154,6 +143,30 @@ func LoadHatchery(db *sql.DB, uid string) (*sdk.Hatchery, error) {
 	var wmID sql.NullInt64
 	err := db.QueryRow(query, uid).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
 	if err != nil {
+		return nil, err
+	}
+
+	if wmID.Valid {
+		h.Model.ID = wmID.Int64
+	}
+
+	return &h, nil
+}
+
+// LoadHatcheryByID fetch hatchery info from database given ID
+func LoadHatcheryByID(db *sql.DB, id int64) (*sdk.Hatchery, error) {
+	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
+			FROM hatchery
+			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
+			WHERE id = $1`
+
+	var h sdk.Hatchery
+	var wmID sql.NullInt64
+	err := db.QueryRow(query, id).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoHatchery
+		}
 		return nil, err
 	}
 

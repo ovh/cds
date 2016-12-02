@@ -15,12 +15,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/archivist"
-	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/notification"
@@ -36,7 +36,7 @@ import (
 	"github.com/ovh/cds/engine/log"
 )
 
-var startup time.Time
+var startupTime time.Time
 var b *Broker
 var baseURL string
 var localCLientAuthMode = auth.LocalClientBasicAuthMode
@@ -51,7 +51,7 @@ var mainCmd = &cobra.Command{
 		log.Initialize()
 		log.Notice("Starting CDS server...\n")
 
-		startup = time.Now()
+		startupTime = time.Now()
 
 		if err := mail.CheckMailConfiguration(); err != nil {
 			log.Fatalf("SMTP configuration error: %s\n", err)
@@ -75,20 +75,9 @@ var mainCmd = &cobra.Command{
 			if viper.GetBool("db_logging") {
 				log.UseDatabaseLogger(db)
 			}
-			if err = artifact.CreateBuiltinArtifactActions(db); err != nil {
-				log.Critical("Cannot setup builtin Artifact actions: %s\n", err)
-			}
 
-			if err = group.CreateDefaultGlobalGroup(db); err != nil {
-				log.Critical("Cannot setup default global group: %s\n", err)
-			}
-
-			if err = worker.CreateBuiltinActions(db); err != nil {
-				log.Critical("Cannot setup builtin actions: %s\n", err)
-			}
-
-			if err = worker.CreateBuiltinEnvironments(db); err != nil {
-				log.Critical("Cannot setup builtin environments: %s\n", err)
+			if err = bootstrap.InitiliazeDB(db); err != nil {
+				log.Critical("Cannot setup databases: %s\n", err)
 			}
 
 			// Gracefully shutdown sql connections
@@ -187,8 +176,8 @@ var mainCmd = &cobra.Command{
 		go auditCleanerRoutine()
 		go repositoriesmanager.RepositoriesCacheLoader(30)
 		go stats.StartRoutine()
-		go worker.UpdateModelCapabilitiesCache()
-		go worker.UpdateActionRequirementsCache()
+		go action.RequirementsCacheLoader(5)
+		go worker.ModelCapabilititiesCacheLoader(5)
 		go hookRecoverer()
 		go polling.Initialize()
 		go polling.ExecutionCleaner()
@@ -232,6 +221,7 @@ func (router *Router) init() {
 
 	// Group
 	router.Handle("/group", GET(getGroups), POST(addGroupHandler))
+	router.Handle("/group/public", GET(getPublicGroups))
 	router.Handle("/group/{permGroupName}", GET(getGroupHandler), PUT(updateGroupHandler), DELETE(deleteGroupHandler))
 	router.Handle("/group/{permGroupName}/user", POST(addUserInGroup))
 	router.Handle("/group/{permGroupName}/user/{user}", DELETE(removeUserFromGroupHandler))
@@ -408,6 +398,7 @@ func (router *Router) init() {
 	// Users
 	router.Handle("/user", GET(GetUsers))
 	router.Handle("/user/signup", Auth(false), POST(AddUser))
+	router.Handle("/user/group", Auth(true), GET(getUserGroupsHandler))
 	router.Handle("/user/{name}", NeedAdmin(true), GET(GetUserHandler), PUT(UpdateUserHandler), DELETE(DeleteUserHandler))
 	router.Handle("/user/{name}/confirm/{token}", Auth(false), GET(ConfirmUser))
 	router.Handle("/user/{name}/reset", Auth(false), POST(ResetUser))
@@ -421,10 +412,11 @@ func (router *Router) init() {
 	router.Handle("/worker/{id}/disable", POST(disableWorkerHandler))
 	router.Handle("/worker/model", POST(addWorkerModel), GET(getWorkerModels))
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
-	router.Handle("/worker/model/{id}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
-	router.Handle("/worker/model/{id}/capability", POST(addWorkerModelCapa))
+	router.Handle("/worker/model/{permModelID}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
+	router.Handle("/worker/model/{permModelID}/capability", POST(addWorkerModelCapa))
+	router.Handle("/worker/model/{permModelID}/instances", GET(getWorkerModelInstances))
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
-	router.Handle("/worker/model/{id}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
+	router.Handle("/worker/model/{permModelID}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
 }
 
 func init() {

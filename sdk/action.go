@@ -72,36 +72,33 @@ const (
 	JUnitAction  = "JUnit"
 )
 
-// RequirementType define the type of requirement for an action to be run
-type RequirementType string
-
 const (
 	//BinaryRequirement refers to the need to a specific binary on host running the action
-	BinaryRequirement RequirementType = "binary"
+	BinaryRequirement = "binary"
 	// NetworkAccessRequirement refers to the need of an opened network acces to given endpoint.
-	NetworkAccessRequirement RequirementType = "network"
+	NetworkAccessRequirement = "network"
 	// ModelRequirement refers to the need fo a specific model
-	ModelRequirement RequirementType = "model"
+	ModelRequirement = "model"
 	// HostnameRequirement checks the hostname of the worker
-	HostnameRequirement RequirementType = "hostname"
+	HostnameRequirement = "hostname"
 	//PluginRequirement installs & checks plugins of the worker
-	PluginRequirement RequirementType = "plugin"
+	PluginRequirement = "plugin"
 	//ServiceRequirement links a service to a worker
-	ServiceRequirement RequirementType = "service"
+	ServiceRequirement = "service"
 	//MemoryRequirement set memory limit on a container
-	MemoryRequirement RequirementType = "memory"
+	MemoryRequirement = "memory"
 )
 
 var (
 	// AvailableRequirementsType List of all requirements
 	AvailableRequirementsType = []string{
-		string(BinaryRequirement),
-		string(NetworkAccessRequirement),
-		string(ModelRequirement),
-		string(HostnameRequirement),
-		string(PluginRequirement),
-		string(ServiceRequirement),
-		string(MemoryRequirement),
+		BinaryRequirement,
+		NetworkAccessRequirement,
+		ModelRequirement,
+		HostnameRequirement,
+		PluginRequirement,
+		ServiceRequirement,
+		MemoryRequirement,
 	}
 )
 
@@ -109,9 +106,9 @@ var (
 // - a binary "which /usr/bin/docker"
 // - a network access "telnet google.com 443"
 type Requirement struct {
-	Name  string          `json:"name"`
-	Type  RequirementType `json:"type" yaml:"-"`
-	Value string          `json:"value" yaml:"-"`
+	Name  string `json:"name"`
+	Type  string `json:"type" yaml:"-"`
+	Value string `json:"value" yaml:"-"`
 }
 
 // NewAction instanciate a new Action
@@ -151,7 +148,7 @@ func NewJoinedAction(actionName string, parameters []Parameter) (*Action, error)
 }
 
 // Requirement add given requirement to Action
-func (a *Action) Requirement(name string, t RequirementType, value string) *Action {
+func (a *Action) Requirement(name string, t string, value string) *Action {
 	r := Requirement{
 		Name:  name,
 		Type:  t,

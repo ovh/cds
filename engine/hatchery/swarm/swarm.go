@@ -128,7 +128,9 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			}
 
 			if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-				ID: id,
+				ID:            id,
+				RemoveVolumes: true,
+				Force:         true,
 			}); err != nil {
 				log.Warning("Unable to remove container %s", err)
 			}
@@ -412,28 +414,53 @@ func (h *HatcherySwarm) killAwolWorker() {
 		os.Exit(1)
 	}
 
-	oldContainers := []docker.APIContainers{}
 	//Checking workers
+	oldContainers := []docker.APIContainers{}
 	for _, c := range containers {
+		//Ignore containers spawned by other things that this Hatchery
 		if c.Labels["worker_name"] == "" {
 			continue
 		}
-		var found bool
+		//If there isn't any worker registered on the API. Kill the container
+		if len(apiworkers) == 0 {
+			oldContainers = append(oldContainers, c)
+			continue
+		}
+		//Loop on all worker registered on the API
+		//Try to find the worker matching this container
+		var found = false
 		for _, n := range apiworkers {
-			// If worker is disabled, kill it
-			if n.Name == c.Names[0] {
+			if n.Name == c.Names[0] || n.Name == strings.Replace(c.Names[0], "/", "", 1) {
+				found = true
+				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
 					log.Info("Worker %s is disabled. Kill it with fire !\n", c.Names[0])
 					oldContainers = append(oldContainers, c)
-					continue
+					break
 				}
-				found = true
 			}
 		}
+		//If the container doesn't match any worker : Kill it.
 		if !found {
 			oldContainers = append(oldContainers, c)
 		}
 	}
+
+	//Delete the workers
+	for _, c := range oldContainers {
+		h.killAndRemove(c.ID)
+		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s\n", c.Names[0])
+	}
+
+	var errLC error
+	containers, errLC = h.dockerClient.ListContainers(docker.ListContainersOptions{
+		All: true,
+	})
+	if errLC != nil {
+		log.Warning("Cannot get containers: %s", errLC)
+		return
+	}
+
 	//Checking services
 	for _, c := range containers {
 		if c.Labels["service_worker"] == "" {
@@ -451,9 +478,9 @@ func (h *HatcherySwarm) killAwolWorker() {
 	}
 
 	//Checking networks
-	nets, err := h.dockerClient.ListNetworks()
-	if err != nil {
-		log.Warning("Cannot get networks: %s", err)
+	nets, errLN := h.dockerClient.ListNetworks()
+	if errLN != nil {
+		log.Warning("Cannot get networks: %s", errLN)
 		return
 	}
 
@@ -475,5 +502,4 @@ func (h *HatcherySwarm) killAwolWorker() {
 			log.Warning("HatcherySwarm.killAwolWorker> Unable to delete network %s", n.Name)
 		}
 	}
-
 }

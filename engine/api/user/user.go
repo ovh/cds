@@ -253,7 +253,7 @@ func deleteUser(db database.Executer, u *sdk.User) error {
 }
 
 // InsertUser Insert new user
-func InsertUser(db *sql.DB, u *sdk.User, a *sdk.Auth) error {
+func InsertUser(db database.QueryExecuter, u *sdk.User, a *sdk.Auth) error {
 	query := `INSERT INTO "user" (username, admin, data, auth, created, origin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`
 	err := db.QueryRow(query, u.Username, u.Admin, u.JSON(), a.JSON(), time.Now(), u.Origin).Scan(&u.ID)
 	return err

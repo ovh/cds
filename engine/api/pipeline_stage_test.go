@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/testwithdb"
@@ -91,8 +92,10 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
@@ -151,8 +154,10 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
@@ -220,8 +225,10 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
@@ -321,8 +328,10 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
@@ -449,8 +458,10 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
@@ -514,8 +525,10 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
+
+	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
 	proj, err := testwithdb.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")

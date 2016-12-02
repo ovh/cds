@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -43,6 +44,16 @@ func importNew(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline) 
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
 	if err := InsertPipeline(db, pip); err != nil {
+		return err
+	}
+
+	//If no GroupPermission provided, inherit from project
+	if pip.GroupPermission == nil {
+		pip.GroupPermission = proj.ProjectGroups
+	}
+
+	//Insert group permission
+	if err := group.InsertGroupsInPipeline(db, pip.GroupPermission, pip.ID); err != nil {
 		return err
 	}
 

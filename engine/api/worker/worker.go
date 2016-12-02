@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -226,55 +227,82 @@ type RegistrationForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db *sql.DB, name string, uk string, modelID int64, hatcheryID int64, binaryCapabilities []string) (*sdk.Worker, error) {
-
+func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.Hatchery, binaryCapabilities []string) (*sdk.Worker, error) {
 	if name == "" {
 		return nil, fmt.Errorf("cannot register worker with empty name")
 	}
-
-	if uk == "" {
+	if key == "" {
 		return nil, fmt.Errorf("cannot register worker with empty worker key")
 	}
 
-	/// Load token
-	var groupID int64
-	var e sdk.Expiration
-	t, err := LoadToken(db, uk)
-	if err != nil {
-		return nil, err
-	}
-	groupID = t.GroupID
-	e = t.Expiration
-
-	id, err := generateID()
-	if err != nil {
-		log.Warning("registerWorker: Cannot generate ID: %s\n", err)
-		return nil, err
+	// Load token
+	t, errL := LoadToken(db, key)
+	if errL != nil {
+		return nil, errL
 	}
 
+	if h != nil {
+		if h.GroupID != t.GroupID {
+			return nil, sdk.ErrForbidden
+		}
+	}
+
+	//Load Model
+	m, errM := LoadWorkerModelByID(database.DBMap(db), modelID)
+	if errM != nil {
+		log.Warning("RegisterWorker> Cannot load model: %s\n", errM)
+		return nil, errM
+	}
+
+	//Load the famous sharedInfraGroup
+	sharedInfraGroup, errLoad := group.LoadGroup(db, group.SharedInfraGroup)
+	if errLoad != nil {
+		log.Warning("RegisterWorker> Cannot load shared infra group: %s\n", errLoad)
+		return nil, errLoad
+	}
+
+	//If worker model is public (sharedInfraGroup) it can be ran by every one
+	//If worker is public it can run every model
+	//Private worker for a group cannot run a private model for another group
+	if t.GroupID != sharedInfraGroup.ID && t.GroupID != m.GroupID && m.GroupID != sharedInfraGroup.ID {
+		log.Warning("RegisterWorker> worker %s (%d) cannot be spawned as %s (%d)", name, t.GroupID, m.Name, m.GroupID)
+		return nil, sdk.ErrForbidden
+	}
+
+	//generate an ID
+	id, errG := generateID()
+	if errG != nil {
+		log.Warning("registerWorker: Cannot generate ID: %s\n", errG)
+		return nil, errG
+	}
+
+	//Instanciate a new worker
 	w := &sdk.Worker{
 		ID:         id,
 		Name:       name,
 		Model:      modelID,
-		HatcheryID: hatcheryID,
+		HatcheryID: h.ID,
 		Status:     sdk.StatusWaiting,
+		GroupID:    t.GroupID,
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
+	if h != nil {
+		w.HatcheryID = h.ID
+	}
+
+	tx, errTx := db.Begin()
+	if errTx != nil {
+		return nil, errTx
 	}
 	defer tx.Rollback()
 
-	err = InsertWorker(tx, w, groupID)
-	if err != nil {
+	if err := InsertWorker(tx, w, t.GroupID); err != nil {
 		log.Warning("registerWorker: Cannot insert worker in database: %s\n", err)
 		return nil, err
 	}
 
-	if e == sdk.Session {
-		err = DeleteUserKey(tx, uk)
-		if err != nil {
+	if t.Expiration == sdk.Session {
+		if err := DeleteUserKey(tx, key); err != nil {
 			log.Warning("registerWorker> Cannot remove single use key: %s\n", err)
 			return nil, err
 		}

@@ -172,10 +172,20 @@ func getGroups(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Co
 	var groups []sdk.Group
 	var err error
 
+	public := r.FormValue("withPublic")
 	if c.User.Admin {
 		groups, err = group.LoadGroups(db)
 	} else {
 		groups, err = group.LoadGroupByUser(db, c.User.ID)
+		if public == "true" {
+			publicGroups, errP := group.LoadPublicGroups(db)
+			if errP != nil {
+				log.Warning("GetGroups: Cannot load group from db: %s\n", errP)
+				WriteError(w, r, errP)
+				return
+			}
+			groups = append(groups, publicGroups...)
+		}
 	}
 	if err != nil {
 		log.Warning("GetGroups: Cannot load group from db: %s\n", err)
@@ -186,8 +196,17 @@ func getGroups(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Co
 	WriteJSON(w, r, groups, http.StatusOK)
 }
 
-func addGroupHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPublicGroups(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	groups, err := group.LoadPublicGroups(db)
+	if err != nil {
+		log.Warning("GetGroups: Cannot load group from db: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	WriteJSON(w, r, groups, http.StatusOK)
+}
 
+func addGroupHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {

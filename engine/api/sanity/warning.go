@@ -8,7 +8,10 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
@@ -253,7 +256,7 @@ func LoadUserWarnings(db *sql.DB, al string, userID int64) ([]sdk.Warning, error
 }
 
 // InsertActionWarnings in database
-func InsertActionWarnings(tx *sql.Tx, projectID, pipelineID int64, actionID int64, warnings []sdk.Warning) error {
+func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, actionID int64, warnings []sdk.Warning) error {
 
 	query := `DELETE FROM warning WHERE action_id = $1`
 	_, err := tx.Exec(query, actionID)
@@ -313,7 +316,7 @@ func CheckProjectPipelines(db *sql.DB, project *sdk.Project) error {
 
 // CheckPipeline loads all PipelineAction and checks them all
 func CheckPipeline(db *sql.DB, project *sdk.Project, pip *sdk.Pipeline) error {
-	tx, err := db.Begin()
+	tx, err := database.DBMap(db).Begin()
 	if err != nil {
 		return err
 	}
@@ -343,7 +346,7 @@ func CheckPipeline(db *sql.DB, project *sdk.Project, pip *sdk.Pipeline) error {
 // CheckAction checks for configuration errors like:
 // - incompatible requirements
 // - inexisting variable usage
-func CheckAction(tx *sql.Tx, project *sdk.Project, pip *sdk.Pipeline, actionID int64) ([]sdk.Warning, error) {
+func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, actionID int64) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	a, err := action.LoadActionByID(tx, actionID)

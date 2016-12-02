@@ -7,12 +7,14 @@ import (
 
 	_ "database/sql"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 // TestUpdateProject test updating project
@@ -181,7 +183,7 @@ func TestVariableInProject(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := testwithdb.SetupPG(t)
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	// 1. Create project

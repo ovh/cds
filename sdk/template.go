@@ -123,7 +123,7 @@ type TemplateExtension struct {
 	Name        string          `json:"name" db:"name"`
 	Type        string          `json:"type" db:"type"`
 	Author      string          `json:"author" db:"author"`
-	Description string          `json:"description"`
+	Description string          `json:"description" db:"description"`
 	Identifier  string          `json:"identifier" db:"identifier"`
 	Size        int64           `json:"-" db:"size"`
 	Perm        uint32          `json:"-" db:"perm"`

@@ -10,9 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
@@ -21,7 +24,6 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	test "github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func testfindLinkedProject(t *testing.T, db *sql.DB) (*sdk.Project, *sdk.RepositoriesManager) {
@@ -70,7 +72,7 @@ func TestAddPollerOnLinkedApplications(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	query := `
@@ -192,7 +194,7 @@ func TestAddPollerHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
@@ -278,7 +280,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
@@ -388,7 +390,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
@@ -494,7 +496,7 @@ func TestGetPollersHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
@@ -599,7 +601,7 @@ func TestDeletePollerHandler(t *testing.T) {
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})

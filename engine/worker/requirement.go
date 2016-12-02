@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-var requirementCheckFuncs = map[sdk.RequirementType]func(r sdk.Requirement) (bool, error){
+var requirementCheckFuncs = map[string]func(r sdk.Requirement) (bool, error){
 	sdk.BinaryRequirement:        checkBinaryRequirement,
 	sdk.HostnameRequirement:      checkHostnameRequirement,
 	sdk.ModelRequirement:         checkModelRequirement,

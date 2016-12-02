@@ -1,14 +1,21 @@
 package main
 
 import (
+	"encoding/json"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"github.com/proullon/ramsql/engine/log"
+	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
@@ -259,4 +266,54 @@ func TestLoadUserWithGroup(t *testing.T) {
 	if len(u.Groups[0].PipelineGroups) != 1 {
 		t.Fatalf("Missing/TooMuch pipeline on group.Need 1, got %d", len(u.Groups[0].PipelineGroups))
 	}
+}
+
+func Test_getUserGroupsHandler(t *testing.T) {
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
+	}
+	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
+	assert.NoError(t, err)
+
+	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
+	router = &Router{authDriver, mux.NewRouter(), "/Test_getUserGroupsHandler"}
+	router.init()
+
+	g1 := &sdk.Group{
+		Name: testwithdb.RandomString(t, 10),
+	}
+
+	g2 := &sdk.Group{
+		Name: testwithdb.RandomString(t, 10),
+	}
+
+	u, pass, err := testwithdb.InsertLambaUser(t, db, g1, g2)
+	assert.NoError(t, err)
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
+
+	uri := router.getRoute("GET", getUserGroupsHandler, map[string]string{"name": u.Username})
+	if uri == "" {
+		t.Fatal("Route not found")
+	}
+
+	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	t.Logf("Body: %s", w.Body.String())
+
+	res := map[string][]sdk.Group{}
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, 2, len(res["groups"]))
+	assert.Equal(t, 0, len(res["groups_admin"]))
+
 }

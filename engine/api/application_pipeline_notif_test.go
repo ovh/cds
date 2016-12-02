@@ -13,7 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -58,6 +60,16 @@ func deleteAll(t *testing.T, db *sql.DB, key string) error {
 		}
 	}
 
+	if err := group.LoadGroupByProject(db, proj); err != nil {
+		return err
+	}
+
+	for _, g := range proj.ProjectGroups {
+		if err := group.DeleteGroupAndDependencies(db, &g.Group); err != nil {
+			return err
+		}
+	}
+
 	// Delete project
 	err = project.DeleteProject(db, key)
 	if err != nil {
@@ -72,7 +84,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *s
 		t.SkipNow()
 		return
 	}
-	db, err := test.SetupPG(t)
+	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
 	assert.NoError(t, err)
 
 	_ = deleteAll(t, db, "TEST_APP_PIPELINE_NOTIF")

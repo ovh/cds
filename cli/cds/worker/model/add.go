@@ -42,7 +42,7 @@ func addWorkerModel(cmd *cobra.Command, args []string) {
 	name := args[0]
 	modelType := args[1]
 
-	var t sdk.WorkerType
+	var t string
 	var image string
 	switch modelType {
 	case string(sdk.Docker):
@@ -112,22 +112,12 @@ func addWorkerModelCapability(cmd *cobra.Command, args []string) {
 	typeS := args[2]
 	value := args[3]
 
-	var t sdk.RequirementType
-	switch typeS {
-	case string(sdk.BinaryRequirement):
-		t = sdk.BinaryRequirement
-		break
-	case string(sdk.NetworkAccessRequirement):
-		t = sdk.NetworkAccessRequirement
-		break
-	}
-
 	m, err := sdk.GetWorkerModel(workerModelName)
 	if err != nil {
 		sdk.Exit("Error: cannot retrieve worker model %s (%s)\n", workerModelName, err)
 	}
 
-	err = sdk.AddCapabilityToWorkerModel(m.ID, name, t, value)
+	err = sdk.AddCapabilityToWorkerModel(m.ID, name, typeS, value)
 	if err != nil {
 		sdk.Exit("Error: cannot add capability to model (%s)\n", err)
 	}

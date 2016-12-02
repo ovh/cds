@@ -49,8 +49,6 @@ func Schedule() {
 
 // PipelineScheduler Schedule action for the given Build
 func PipelineScheduler(db *sql.DB, pb sdk.PipelineBuild) {
-	log.Info("PipelineScheduler> Building pipeline: %s\n", pb.Pipeline.Name)
-
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("PipelineScheduler> cannot start tx for pb %d: %s\n", pb.ID, err)
@@ -85,34 +83,17 @@ func PipelineScheduler(db *sql.DB, pb sdk.PipelineBuild) {
 	var runningStage = -1
 	var doneStage = 0
 	for stageIndex, s := range pb.Pipeline.Stages {
-		log.Info("PipelineScheduler> Pipeline %s #%d has stage %s (%d/%d)\n",
-			pb.Pipeline.Name,
-			pb.BuildNumber,
-			s.Name,
-			stageIndex+1,
-			len(pb.Pipeline.Stages))
-
 		// Need len(s.Actions) on Success to go to next stage, count them
 		var numberOfActionSuccess int
 
 		// browse all actions in the current stage
-		for i, a := range s.Actions {
+		for _, a := range s.Actions {
 			// get action status
 			status, errActionStatus := pipeline.LoadActionStatus(tx, a.PipelineActionID, pb.ID)
 			if errActionStatus != nil && errActionStatus != sql.ErrNoRows {
 				log.Warning("PipelineScheduler> Cannot load action %s with pipelineBuildID %d: %s\n", a.Name, pb.ID, errActionStatus)
 				return
 			}
-
-			log.Info("PipelineScheduler> Pipeline %s #%d (stage %d)[enabled=%v] has action %s [%s] (%d/%d)\n",
-				pb.Pipeline.Name,
-				pb.BuildNumber,
-				stageIndex,
-				s.Enabled,
-				a.Name,
-				status,
-				i+1,
-				len(s.Actions))
 
 			//Check stage prerequisites
 			prerequisitesOK, err := pipeline.CheckPrerequisites(s, pb)
@@ -159,16 +140,13 @@ func PipelineScheduler(db *sql.DB, pb sdk.PipelineBuild) {
 						continue
 					}
 				}
-
-				log.Debug("PipelineScheduler> %s.%s #%d has status %s\n", pb.Pipeline.Name, a.Name, pb.BuildNumber, status)
-
 				if status == sdk.StatusSuccess || status == sdk.StatusDisabled {
 					numberOfActionSuccess++
 				}
 
 				//condition de sortie
 				if status == sdk.StatusFail {
-					log.Info("PipelineScheduler> %s #%d: Action %s failed, stoping\n", pb.Pipeline.Name, pb.BuildNumber, a.Name)
+					//log.Info("PipelineScheduler> %s #%d: Action %s failed, stoping\n", pb.Pipeline.Name, pb.BuildNumber, a.Name)
 					if err := pipeline.UpdatePipelineBuildStatus(tx, pb, status); err != nil {
 						log.Warning("PipelineScheduler> Cannot update pipeline status: %s\n", err)
 					} else {

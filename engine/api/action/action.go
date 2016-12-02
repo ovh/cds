@@ -214,7 +214,6 @@ func loadAction(db database.Querier, s database.Scanner) (*sdk.Action, error) {
 
 // UpdateActionDB  Update an action
 func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) error {
-
 	ok, errLoop := isTreeLoopFree(db, a, nil)
 	if errLoop != nil {
 		return errLoop

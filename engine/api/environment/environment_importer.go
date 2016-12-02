@@ -2,6 +2,7 @@ package environment
 
 import (
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -35,6 +36,14 @@ func Import(db database.QueryExecuter, proj *sdk.Project, env *sdk.Environment, 
 	env.ProjectKey = proj.Key
 	if err := InsertEnvironment(db, env); err != nil {
 		log.Warning("environment.Exists> Unable to create env %s on project %s(%d) : %s", env.Name, env.ProjectKey, env.ProjectID, err)
+		return err
+	}
+
+	//If no GroupPermission provided, inherit from project
+	if env.EnvironmentGroups == nil {
+		env.EnvironmentGroups = proj.ProjectGroups
+	}
+	if err := group.InsertGroupsInEnvironment(db, env.EnvironmentGroups, env.ID); err != nil {
 		return err
 	}
 

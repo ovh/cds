@@ -79,6 +79,46 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *conte
 
 }
 
+// getUserGroupsHandler returns groups of the user
+func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+
+	log.Debug("getUserGroupsHandler> get groups for user %d", c.User.ID)
+
+	var groups, groupsAdmin []sdk.Group
+
+	//Admin are considered as admin of all groups
+	if c.User.Admin {
+		allgroups, err := group.LoadGroups(db)
+		if err != nil {
+			WriteError(w, r, err)
+			return
+		}
+
+		groups = allgroups
+		groupsAdmin = allgroups
+	} else {
+		var err1, err2 error
+
+		groups, err1 = group.LoadGroupByUser(db, c.User.ID)
+		if err1 != nil {
+			WriteError(w, r, err1)
+			return
+		}
+
+		groupsAdmin, err2 = group.LoadGroupByAdmin(db, c.User.ID)
+		if err2 != nil {
+			WriteError(w, r, err2)
+			return
+		}
+	}
+
+	res := map[string][]sdk.Group{}
+	res["groups"] = groups
+	res["groups_admin"] = groupsAdmin
+
+	WriteJSON(w, r, res, http.StatusOK)
+}
+
 // UpdateUserHandler modifies user informations
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)

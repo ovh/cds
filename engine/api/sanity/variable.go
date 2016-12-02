@@ -1,17 +1,19 @@
 package sanity
 
 import (
-	"database/sql"
 	"regexp"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
-func loadUsedVariables(tx *sql.Tx, a *sdk.Action) ([]string, []string, []string, []string, error) {
+func loadUsedVariables(tx gorp.SqlExecutor, a *sdk.Action) ([]string, []string, []string, []string, error) {
 	projectVarReg := regexp.MustCompile(`{{\.cds\.proj\.(.*?)}}`)
 	appVarReg := regexp.MustCompile(`{{\.cds\.app\.(.*?)}}`)
 	envVarReg := regexp.MustCompile(`{{\.cds\.env\.(.*?)}}`)
@@ -82,11 +84,11 @@ func loadUsedVariables(tx *sql.Tx, a *sdk.Action) ([]string, []string, []string,
 }
 
 // For each project variable used, check it's present in project variables
-func checkProjectVariables(tx *sql.Tx, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
+func checkProjectVariables(db database.Querier, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	var err error
-	p.Variable, err = project.GetAllVariableInProject(tx, p.ID)
+	p.Variable, err = project.GetAllVariableInProject(db, p.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -119,18 +121,18 @@ func checkProjectVariables(tx *sql.Tx, vars []string, p *sdk.Project, pip *sdk.P
 }
 
 // For each application variable used, check it's present in application where pipeline is used
-func checkApplicationVariables(tx *sql.Tx, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
+func checkApplicationVariables(db database.Querier, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	// Load all application where pipeline is attached
-	apps, err := application.LoadApplicationByPipeline(tx, pip.ID)
+	apps, err := application.LoadApplicationByPipeline(db, pip.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// For all apps, load variables and check all used vars
 	for _, app := range apps {
-		avars, err := application.GetAllVariableByID(tx, app.ID)
+		avars, err := application.GetAllVariableByID(db, app.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +174,7 @@ func checkApplicationVariables(tx *sql.Tx, vars []string, project *sdk.Project, 
 // For each environment variable used:
 // Add a warning for each variable if pipeline type is BuildPipeline
 // Add a warning for each variable used but not presend in environment variables
-func checkEnvironmentVariables(tx *sql.Tx, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
+func checkEnvironmentVariables(db database.Querier, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	// If it's a build pipeline, it cannot use environment variables at all
@@ -194,7 +196,7 @@ func checkEnvironmentVariables(tx *sql.Tx, vars []string, project *sdk.Project, 
 	}
 
 	// Load all project environment and check them
-	envs, err := environment.LoadEnvironments(tx, project.Key, true, &sdk.User{Admin: true})
+	envs, err := environment.LoadEnvironments(db, project.Key, true, &sdk.User{Admin: true})
 	if err != nil {
 		return nil, err
 	}
