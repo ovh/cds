@@ -163,8 +163,7 @@ func LoadWorkerModelCapabilities(db database.Querier, workerID int64) ([]sdk.Req
 	var capas []sdk.Requirement
 	for rows.Next() {
 		var c sdk.Requirement
-		err = rows.Scan(&c.Name, &c.Type, &c.Value)
-		if err != nil {
+		if err := rows.Scan(&c.Name, &c.Type, &c.Value); err != nil {
 			return nil, err
 		}
 		capas = append(capas, c)

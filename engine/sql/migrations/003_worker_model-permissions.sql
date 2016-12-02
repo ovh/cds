@@ -8,6 +8,7 @@ UPDATE worker_model set group_id = (SELECT id FROM "group" WHERE name = 'shared.
 
 ALTER TABLE worker_model DROP COLUMN owner_id;
 
+select create_index('worker_model','IDX_WORKER_MODEL_GROUP_ID','group_id');
 SELECT create_foreign_key('FK_WORKER_MODEL_GROUP', 'worker_model', 'group', 'group_id', 'id');
 
 -- +migrate Down

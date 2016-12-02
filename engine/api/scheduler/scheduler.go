@@ -83,13 +83,6 @@ func PipelineScheduler(db *sql.DB, pb sdk.PipelineBuild) {
 	var runningStage = -1
 	var doneStage = 0
 	for stageIndex, s := range pb.Pipeline.Stages {
-		/*log.Info("PipelineScheduler> Pipeline %s #%d has stage %s (%d/%d)\n",
-		pb.Pipeline.Name,
-		pb.BuildNumber,
-		s.Name,
-		stageIndex+1,
-		len(pb.Pipeline.Stages))*/
-
 		// Need len(s.Actions) on Success to go to next stage, count them
 		var numberOfActionSuccess int
 
@@ -101,16 +94,6 @@ func PipelineScheduler(db *sql.DB, pb sdk.PipelineBuild) {
 				log.Warning("PipelineScheduler> Cannot load action %s with pipelineBuildID %d: %s\n", a.Name, pb.ID, errActionStatus)
 				return
 			}
-
-			/*log.Info("PipelineScheduler> Pipeline %s #%d (stage %d)[enabled=%v] has action %s [%s] (%d/%d)\n",
-			pb.Pipeline.Name,
-			pb.BuildNumber,
-			stageIndex,
-			s.Enabled,
-			a.Name,
-			status,
-			i+1,
-			len(s.Actions))*/
 
 			//Check stage prerequisites
 			prerequisitesOK, err := pipeline.CheckPrerequisites(s, pb)
@@ -157,9 +140,6 @@ func PipelineScheduler(db *sql.DB, pb sdk.PipelineBuild) {
 						continue
 					}
 				}
-				/*
-					log.Debug("PipelineScheduler> %s.%s #%d has status %s\n", pb.Pipeline.Name, a.Name, pb.BuildNumber, status)
-				*/
 				if status == sdk.StatusSuccess || status == sdk.StatusDisabled {
 					numberOfActionSuccess++
 				}

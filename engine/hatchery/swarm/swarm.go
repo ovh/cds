@@ -128,7 +128,9 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			}
 
 			if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-				ID: id,
+				ID:            id,
+				RemoveVolumes: true,
+				Force:         true,
 			}); err != nil {
 				log.Warning("Unable to remove container %s", err)
 			}
@@ -450,11 +452,12 @@ func (h *HatcherySwarm) killAwolWorker() {
 		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s\n", c.Names[0])
 	}
 
-	containers, err = h.dockerClient.ListContainers(docker.ListContainersOptions{
+	var errLC error
+	containers, errLC = h.dockerClient.ListContainers(docker.ListContainersOptions{
 		All: true,
 	})
-	if err != nil {
-		log.Warning("Cannot get containers: %s", err)
+	if errLC != nil {
+		log.Warning("Cannot get containers: %s", errLC)
 		return
 	}
 
@@ -475,9 +478,9 @@ func (h *HatcherySwarm) killAwolWorker() {
 	}
 
 	//Checking networks
-	nets, err := h.dockerClient.ListNetworks()
-	if err != nil {
-		log.Warning("Cannot get networks: %s", err)
+	nets, errLN := h.dockerClient.ListNetworks()
+	if errLN != nil {
+		log.Warning("Cannot get networks: %s", errLN)
 		return
 	}
 
@@ -499,5 +502,4 @@ func (h *HatcherySwarm) killAwolWorker() {
 			log.Warning("HatcherySwarm.killAwolWorker> Unable to delete network %s", n.Name)
 		}
 	}
-
 }

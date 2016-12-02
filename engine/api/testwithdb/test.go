@@ -1,8 +1,10 @@
 package testwithdb
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -12,9 +14,6 @@ import (
 	"syscall"
 	"testing"
 	"time"
-
-	"bytes"
-	"encoding/json"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"

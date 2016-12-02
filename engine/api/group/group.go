@@ -74,8 +74,7 @@ func AddGroup(db database.QueryExecuter, group *sdk.Group) (int64, bool, error) 
 		log.Warning("AddGroup: Group %s already exists\n", group.Name)
 
 		var groupID int64
-		err = rows.Scan(&groupID)
-		if err != nil {
+		if err := rows.Scan(&groupID); err != nil {
 			log.Warning("AddGroup: Cannot get the ID of the existing group %s (%s)\n", group.Name, err)
 			return 0, false, sdk.ErrGroupExists
 		}
@@ -139,8 +138,7 @@ func LoadUserGroup(db *sql.DB, group *sdk.Group) error {
 	for rows.Next() {
 		var userName string
 		var admin bool
-		err = rows.Scan(&userName, &admin)
-		if err != nil {
+		if err := rows.Scan(&userName, &admin); err != nil {
 			return err
 		}
 		u := sdk.User{Username: userName}
@@ -167,7 +165,9 @@ func LoadGroups(db *sql.DB) ([]sdk.Group, error) {
 	for rows.Next() {
 		var id int64
 		var name string
-		rows.Scan(&id, &name)
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, err
+		}
 		g := sdk.NewGroup(name)
 		g.ID = id
 		groups = append(groups, *g)
@@ -194,7 +194,9 @@ func LoadGroupByUser(db database.Querier, userID int64) ([]sdk.Group, error) {
 	for rows.Next() {
 		var id int64
 		var name string
-		rows.Scan(&id, &name)
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, err
+		}
 		g := sdk.NewGroup(name)
 		g.ID = id
 		groups = append(groups, *g)
@@ -222,7 +224,9 @@ func LoadGroupByAdmin(db database.Querier, userID int64) ([]sdk.Group, error) {
 	for rows.Next() {
 		var id int64
 		var name string
-		rows.Scan(&id, &name)
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, err
+		}
 		g := sdk.NewGroup(name)
 		g.ID = id
 		groups = append(groups, *g)
@@ -249,7 +253,9 @@ func LoadPublicGroups(db database.Querier) ([]sdk.Group, error) {
 	for rows.Next() {
 		var id int64
 		var name string
-		rows.Scan(&id, &name)
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, err
+		}
 		g := sdk.NewGroup(name)
 		g.ID = id
 		groups = append(groups, *g)
@@ -349,8 +355,7 @@ func LoadGroupByProject(db database.Querier, project *sdk.Project) error {
 	for rows.Next() {
 		var group sdk.Group
 		var perm int
-		err = rows.Scan(&group.ID, &group.Name, &perm)
-		if err != nil {
+		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
 			return err
 		}
 		project.ProjectGroups = append(project.ProjectGroups, sdk.GroupPermission{
@@ -371,9 +376,9 @@ func deleteGroup(db database.Executer, g *sdk.Group) error {
 func SetUserGroupAdmin(db database.Executer, groupID int64, userID int64) error {
 	query := `UPDATE "group_user" SET group_admin = true WHERE group_id = $1 AND user_id = $2`
 
-	res, err := db.Exec(query, groupID, userID)
-	if err != nil {
-		return err
+	res, errE := db.Exec(query, groupID, userID)
+	if errE != nil {
+		return errE
 	}
 
 	rowsAffected, err := res.RowsAffected()
@@ -391,11 +396,8 @@ func SetUserGroupAdmin(db database.Executer, groupID int64, userID int64) error 
 // RemoveUserGroupAdmin remove the privilege to perform operations on given group
 func RemoveUserGroupAdmin(db *sql.DB, groupID int64, userID int64) error {
 	query := `UPDATE "group_user" SET group_admin = false WHERE group_id = $1 AND user_id = $2`
-
-	_, err := db.Exec(query, groupID, userID)
-	if err != nil {
+	if _, err := db.Exec(query, groupID, userID); err != nil {
 		return err
 	}
-
 	return nil
 }

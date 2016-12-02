@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
@@ -8,10 +9,7 @@ import (
 	"github.com/proullon/ramsql/engine/log"
 	"github.com/stretchr/testify/assert"
 
-	"encoding/json"
-
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"

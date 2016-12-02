@@ -50,7 +50,7 @@ func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "Should return false for user who has the right group for updating the model",
+			name: "Should return false for user who has not the right group for updating the model",
 			args: args{
 				m: &sdk.Model{
 					GroupID: 1,
