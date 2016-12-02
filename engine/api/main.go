@@ -417,6 +417,9 @@ func (router *Router) init() {
 	router.Handle("/worker/model/{permModelID}/instances", GET(getWorkerModelInstances))
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
 	router.Handle("/worker/model/{permModelID}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
+
+	//Not Found handler
+	router.mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 }
 
 func init() {
