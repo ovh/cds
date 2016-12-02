@@ -502,7 +502,7 @@ func CheckPrerequisites(s sdk.Stage, pb sdk.PipelineBuild) (bool, error) {
 	for _, p := range s.Prerequisites {
 		for _, pbp := range pb.Parameters {
 			param := p.Parameter
-			//in wort case, prequisite must begin with "cds.pip."
+			//in worst case, prerequisite must begin with "cds.pip."
 			if !strings.HasPrefix(param, "git.") && !strings.HasPrefix(param, "cds.") {
 				param = "cds.pip." + param
 			}
