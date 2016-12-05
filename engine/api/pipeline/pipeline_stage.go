@@ -501,7 +501,13 @@ func CheckPrerequisites(s sdk.Stage, pb sdk.PipelineBuild) (bool, error) {
 	// Check conditions
 	for _, p := range s.Prerequisites {
 		for _, pbp := range pb.Parameters {
-			if p.Parameter == pbp.Name {
+			param := p.Parameter
+			//in worst case, prerequisite must begin with "cds.pip."
+			if !strings.HasPrefix(param, "git.") && !strings.HasPrefix(param, "cds.") {
+				param = "cds.pip." + param
+			}
+
+			if param == pbp.Name {
 				//Process expected value as in triggers
 				var expectedValue = trigger.ProcessTriggerExpectedValue(p.ExpectedValue, pb)
 				//Checking regular expression
@@ -511,6 +517,7 @@ func CheckPrerequisites(s sdk.Stage, pb sdk.PipelineBuild) (bool, error) {
 				if !strings.HasSuffix(expectedValue, "$") {
 					expectedValue = expectedValue + "$"
 				}
+
 				ok, err := regexp.Match(expectedValue, []byte(pbp.Value))
 				if err != nil {
 					log.Warning("CheckPrerequisites> Cannot eval regexp '%s': %s", p.ExpectedValue, err)
