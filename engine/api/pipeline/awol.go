@@ -34,18 +34,6 @@ func AWOLPipelineKiller() {
 					time.Sleep(1 * time.Second) // Do not spam an unavailable database
 				}
 			}
-
-			// Disable worker building an action in a pipeline failed
-			query := `UPDATE worker set status = 'Disabled' WHERE worker.id IN
-			(select worker.id from worker
-			JOIN action_build ON action_build.id = worker.action_build_id
-			JOIN pipeline_build ON pipeline_build.id = action_build.pipeline_build_id
-			WHERE worker.hatchery_id > 0 AND
-			worker.status = 'Building' AND pipeline_build.status = 'Fail')`
-			_, err = db.Exec(query)
-			if err != nil {
-				log.Warning("AWOLPipelineKiller> Cannot disable AWOL workers: %s\n", err)
-			}
 		}
 	}
 }
