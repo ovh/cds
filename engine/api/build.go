@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
@@ -193,6 +194,8 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	appName := vars["permApplicationName"]
 
 	envName := r.FormValue("envName")
+	withArtifacts := r.FormValue("withArtifacts")
+	withTests := r.FormValue("withTests")
 
 	// Check that pipeline exists
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
@@ -327,6 +330,26 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	result.Application = *a
 	result.Pipeline = *p
 	result.BuildNumber = buildNumber
+
+	if withArtifacts == "true" {
+		var errLoadArtifact error
+		result.Artifacts, errLoadArtifact = artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
+		if errLoadArtifact != nil {
+			log.Warning("getBuildStateHandler> Cannot load artifacts: %s", errLoadArtifact)
+			WriteError(w, r, errLoadArtifact)
+			return
+		}
+	}
+
+	if withTests == "true" {
+		var errLoadTests error
+		result.Tests, errLoadTests = build.LoadTestResults(db, result.ID)
+		if errLoadTests != nil {
+			log.Warning("getBuildStateHandler> Cannot load tests: %s", errLoadTests)
+			WriteError(w, r, errLoadTests)
+			return
+		}
+	}
 
 	WriteJSON(w, r, result, http.StatusOK)
 }

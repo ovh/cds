@@ -47,7 +47,7 @@ func LoadArtifactByHash(db *sql.DB, hash string) (*sdk.Artifact, error) {
 }
 
 // LoadArtifactsByBuildNumber Load artifact by pipeline ID and buildNUmber
-func LoadArtifactsByBuildNumber(db *sql.DB, pipelineID int64, applicationID int64, buildNumber int, environmentID int64) ([]sdk.Artifact, error) {
+func LoadArtifactsByBuildNumber(db *sql.DB, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64) ([]sdk.Artifact, error) {
 	query := `SELECT id, name, tag, download_hash, size, perm, md5sum, object_path
 	          FROM "artifact"
 	          WHERE build_number = $1 AND pipeline_id = $2 AND application_id = $3 AND environment_id = $4

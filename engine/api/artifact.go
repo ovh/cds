@@ -240,7 +240,7 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 		return
 	}
 
-	buildNumber, err := strconv.Atoi(buildNumberString)
+	buildNumber, err := strconv.ParseInt(buildNumberString, 10, 64)
 	if err != nil {
 		log.Warning("listArtifactsBuildHandler> BuildNumber must be an integer: %s\n", err)
 		w.WriteHeader(http.StatusBadRequest)

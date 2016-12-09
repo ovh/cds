@@ -39,6 +39,9 @@ type PipelineBuild struct {
 	Application Application `json:"application"`
 	Environment Environment `json:"environment"`
 
+	Artifacts []Artifact `json:"artifacts"`
+	Tests     Tests      `json:"tests"`
+
 	Trigger PipelineBuildTrigger `json:"trigger"`
 }
 
