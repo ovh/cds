@@ -42,6 +42,7 @@ type Model struct {
 	Image        string        `json:"image" db:"image"`
 	Capabilities []Requirement `json:"capabilities" db:"-"`
 	CreatedBy    User          `json:"created_by" db:"-"`
+	OwnerID      int64         `json:"owner_id" db:"owner_id"` //DEPRECATED
 	GroupID      int64         `json:"group_id" db:"group_id"`
 }
 
