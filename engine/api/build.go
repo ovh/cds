@@ -342,12 +342,14 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	}
 
 	if withTests == "true" {
-		var errLoadTests error
-		result.Tests, errLoadTests = build.LoadTestResults(db, result.ID)
+		tests, errLoadTests := build.LoadTestResults(db, result.ID)
 		if errLoadTests != nil {
 			log.Warning("getBuildStateHandler> Cannot load tests: %s", errLoadTests)
 			WriteError(w, r, errLoadTests)
 			return
+		}
+		if len(tests.TestSuites) > 0 {
+			result.Tests = &tests
 		}
 	}
 
