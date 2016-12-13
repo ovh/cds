@@ -86,25 +86,23 @@ func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Retrieve build info
-	var proj, app, pip, bnS string
+	var proj, app, pip, bnS, env string
 	for _, p := range ab.Args {
 		switch p.Name {
 		case "cds.pipeline":
 			pip = p.Value
-			break
 		case "cds.project":
 			proj = p.Value
-			break
 		case "cds.application":
 			app = p.Value
-			break
 		case "cds.buildNumber":
 			bnS = p.Value
-			break
+		case "cds.environment":
+			env = p.Value
 		}
 	}
 
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable", proj, app, pip, bnS)
+	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, env)
 	_, code, err := sdk.Request("POST", uri, data)
 	if err == nil && code > 300 {
 		err = fmt.Errorf("HTTP %d", code)
