@@ -42,7 +42,7 @@ Start worker on a docker openstack cluster.
 $ cds generate token --group shared.infra --expiration persistent
 2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4
 
-$ OPENSTACK_USER=<user> OPENSTACK_TENANT=<tenant> OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net OPENSTACK_PASSWORD=<password> OPENSTACK_REGION=SBG1 hatchery \
+$ CDS_OPENSTACK_USER=<user> CDS_OPENSTACK_TENANT=<tenant> CDS_OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net CDS_OPENSTACK_PASSWORD=<password> CDS_OPENSTACK_REGION=SBG1 hatchery \
         --api=https://api.domain \
         --max-worker=10 \
         --mode=openstack \
@@ -54,22 +54,27 @@ $ OPENSTACK_USER=<user> OPENSTACK_TENANT=<tenant> OPENSTACK_AUTH_ENDPOINT=https:
 		hatchery.Born(hatcheryOpenStack, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
+		hatcheryOpenStack.tenant = viper.GetString("openstack-tenant")
 		if hatcheryOpenStack.tenant == "" {
 			sdk.Exit("flag or environmnent variable openstack-tenant not provided, aborting\n")
 		}
 
+		hatcheryOpenStack.user = viper.GetString("openstack-user")
 		if hatcheryOpenStack.user == "" {
 			sdk.Exit("flag or environmnent variable openstack-user not provided, aborting\n")
 		}
 
+		hatcheryOpenStack.address = viper.GetString("openstack-auth-endpoint")
 		if hatcheryOpenStack.address == "" {
 			sdk.Exit("flag or environmnent variable openstack-auth-endpoint not provided, aborting\n")
 		}
 
+		hatcheryOpenStack.password = viper.GetString("openstack-password")
 		if hatcheryOpenStack.password == "" {
 			sdk.Exit("flag or environmnent variable openstack-password not provided, aborting\n")
 		}
 
+		hatcheryOpenStack.region = viper.GetString("openstack-region")
 		if hatcheryOpenStack.region == "" {
 			sdk.Exit("flag or environmnent variable openstack-region not provided, aborting\n")
 		}
