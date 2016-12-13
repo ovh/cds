@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ovh/cds/engine/hatchery/docker"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -59,9 +60,18 @@ func addCommands() {
 	rootCmd.AddCommand(openstack.Cmd)
 }
 
+// Cannot rely on viper.AutomaticEnv here because of the presence of hyphen '-'
+// in the flag (ie. for openstack cmd).
+// AutomaticEnv will only lookup for a strings.ToUpper
+// which will not replace hypen '-' with underscore '_'.
+// i.e "openstack-tenant" -> "CDS_OPENSTACK-TENANT" instead of "CDS_OPENSTACK_TENANT"
+// Hence SetEnvKeyReplacer.
+// Sadly, this isn't used by Flags().*Var functions, so no automatic binding on variables.
 func addFlags() {
 	viper.SetEnvPrefix("cds")
 	viper.AutomaticEnv()
+	replacer := strings.NewReplacer("-", "_")
+	viper.SetEnvKeyReplacer(replacer)
 
 	rootCmd.PersistentFlags().String("log-level", "notice", "Log Level: debug, info, warning, notice, critical")
 	viper.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level"))

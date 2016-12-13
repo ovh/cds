@@ -46,22 +46,27 @@ $ hatchery mesos --api=https://<api.domain> --token=<token>
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 
+		hatcheryMesos.marathonHost = viper.GetString("marathon-host")
 		if hatcheryMesos.marathonHost == "" {
 			sdk.Exit("flag or environmnent variable marathon-host not provided, aborting\n")
 		}
 
+		hatcheryMesos.marathonID = viper.GetString("marathon-id")
 		if hatcheryMesos.marathonID == "" {
 			sdk.Exit("flag or environmnent variable marathon-id not provided, aborting\n")
 		}
 
+		hatcheryMesos.marathonVHOST = viper.GetString("marathon-vhost")
 		if hatcheryMesos.marathonVHOST == "" {
 			sdk.Exit("flag or environmnent variable marathon-vhost not provided, aborting\n")
 		}
 
+		hatcheryMesos.marathonUser = viper.GetString("marathon-user")
 		if hatcheryMesos.marathonUser == "" {
 			sdk.Exit("flag or environmnent variable marathon-user not provided, aborting\n")
 		}
 
+		hatcheryMesos.marathonPassword = viper.GetString("marathon-password")
 		if hatcheryMesos.marathonPassword == "" {
 			sdk.Exit("flag or environmnent variable marathon-password not provided, aborting\n")
 		}

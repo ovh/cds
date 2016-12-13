@@ -42,6 +42,10 @@ $ hatchery swarm --api=https://<api.domain> --token=<token> --basedir=/tmp
 		hatchery.Born(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
+		hatcherySwarm.onlyWithServiceReq = viper.GetBool("only-with-service-req")
+		hatcherySwarm.maxContainers = viper.GetInt("max-containers")
+		hatcherySwarm.defaultMemory = viper.GetInt("worker-memory")
+
 		if os.Getenv("DOCKER_HOST") == "" {
 			sdk.Exit("Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
 		}
