@@ -339,7 +339,7 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 				}
 			}
 			if len(newCapas) > 0 {
-				log.Notice("Updating model %d binary capabilities with %d capabilities", modelID, len(newCapas))
+				log.Debug("Updating model %d binary capabilities with %d capabilities", modelID, len(newCapas))
 				for _, b := range newCapas {
 					query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
 					if _, err := ntx.Exec(query, modelID, b, b, string(sdk.BinaryRequirement)); err != nil {

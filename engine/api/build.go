@@ -632,12 +632,12 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	buildNumberS := vars["build"]
 	appName := vars["app"]
 
-	var err error
 	var env *sdk.Environment
 	envName := r.FormValue("envName")
 	if envName == "" || envName == sdk.DefaultEnv.Name {
 		env = &sdk.DefaultEnv
 	} else {
+		var err error
 		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if err != nil {
 			log.Warning("addBuildVariableHandler> Cannot load environment %s: %s\n", envName, err)
@@ -654,56 +654,54 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	}
 
 	// Check that pipeline exists
-	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if err != nil {
-		log.Warning("addBuildVariableHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusNotFound)
+	p, errLP := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	if errLP != nil {
+		log.Warning("addBuildVariableHandler> Cannot load pipeline %s: %s\n", pipelineName, errLP)
+		WriteError(w, r, errLP)
 		return
 	}
 
 	// Check that application exists
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
-	if err != nil {
-		log.Warning("addBuildVariableHandler> Cannot load application %s: %s\n", appName, err)
-		w.WriteHeader(http.StatusNotFound)
+	a, errLA := application.LoadApplicationByName(db, projectKey, appName)
+	if errLA != nil {
+		log.Warning("addBuildVariableHandler> Cannot load application %s: %s\n", appName, errLA)
+		WriteError(w, r, errLA)
 		return
 	}
 
 	// if buildNumber is 'last' fetch last build number
-	var buildNumber int64
-	buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
-	if err != nil {
-		log.Warning("addBuildVariableHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
-		WriteError(w, r, err)
+	buildNumber, errP := strconv.ParseInt(buildNumberS, 10, 64)
+	if errP != nil {
+		log.Warning("addBuildVariableHandler> Cannot parse build number %s: %s\n", buildNumberS, errP)
+		WriteError(w, r, errP)
 		return
 	}
 
 	// load pipeline_build.id
-	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
-	if err != nil {
-		log.Warning("addBuildVariableHandler> Cannot load pipeline build: %s\n", err)
-		WriteError(w, r, err)
+	pb, errPB := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
+	if errPB != nil {
+		log.Warning("addBuildVariableHandler> Cannot load pipeline build %d: %s\n", buildNumber, errPB)
+		WriteError(w, r, errPB)
+		return
 	}
 
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addBuildVariableHandler> Cannot read body: %s\n", err)
-		WriteError(w, r, err)
+	data, errR := ioutil.ReadAll(r.Body)
+	if errR != nil {
+		log.Warning("addBuildVariableHandler> Cannot read body: %s\n", errR)
+		WriteError(w, r, errR)
 		return
 	}
 
 	// Unmarshal into results
 	var v sdk.Variable
-	err = json.Unmarshal([]byte(data), &v)
-	if err != nil {
+	if err := json.Unmarshal([]byte(data), &v); err != nil {
 		log.Warning("addBuildVariableHandler> Cannot unmarshal Tests: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = pipeline.InsertBuildVariable(db, pb.ID, v)
-	if err != nil {
+	if err := pipeline.InsertBuildVariable(db, pb.ID, v); err != nil {
 		log.Warning("addBuildVariableHandler> Cannot add build variable: %s\n", err)
 		WriteError(w, r, err)
 		return
