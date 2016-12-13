@@ -110,7 +110,7 @@ func createCmdFunc(cmd *cobra.Command, args []string) {
 	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
 	//Lock DB
 	if err := lockMigrate(db, hostname); err != nil {
-		sdk.Exit("Unable to lock database: %s", err)
+		sdk.Exit("Unable to lock database: %s\n", err)
 	}
 
 	defer unlockMigrate(db, hostname)
@@ -274,7 +274,7 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 	}
 	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
 	if err := lockMigrate(db, hostname); err != nil {
-		sdk.Exit("Unable to lock database: %s", err)
+		sdk.Exit("Unable to lock database: %s\n", err)
 	}
 
 	defer unlockMigrate(db, hostname)
