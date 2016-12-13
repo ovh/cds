@@ -5,7 +5,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/scheduler"
+	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
@@ -33,7 +33,7 @@ func TestInsertBuild(t *testing.T) {
 		PipelineBuildID:  pb.ID,
 	}
 
-	err = scheduler.InsertBuild(db, b)
+	err = queue.InsertActionBuild(db, b)
 	if err != nil {
 		t.Fatalf("cannot insert build: %s", err)
 	}
@@ -66,7 +66,7 @@ func TestUpdateActionBuildStatus(t *testing.T) {
 		PipelineBuildID:  pb.ID,
 	}
 
-	err = scheduler.InsertBuild(db, b)
+	err = queue.InsertActionBuild(db, b)
 	if err != nil {
 		t.Fatalf("cannot insert build: %s", err)
 	}
