@@ -400,8 +400,8 @@ func ExecutionCleaner() {
 		execs, _ := LoadExecutions(db, "", "")
 
 		for i := range execs {
-			twoDaysAgo := time.Now().Add(-5 * 24 * time.Hour)
-			if execs[i].Execution.Before(twoDaysAgo) {
+			fiveDaysAgo := time.Now().Add(-5 * 24 * time.Hour)
+			if execs[i].Execution.Before(fiveDaysAgo) {
 				deleteExecution(db, &execs[i])
 			}
 		}
