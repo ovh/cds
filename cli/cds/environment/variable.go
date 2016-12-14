@@ -83,7 +83,7 @@ func addEnvironmentVariable(cmd *cobra.Command, args []string) {
 func cmdEnvironmentUpdateVariable() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "cds environment variable update <projectKey> <environmentName> <variableName> <variableValue> <variableType>",
+		Short: "cds environment variable update <projectKey> <environmentName> <oldVariableName> <variableName> <variableValue> <variableType>",
 		Long:  ``,
 		Run:   updateEnvironmentVariable,
 	}
@@ -91,16 +91,17 @@ func cmdEnvironmentUpdateVariable() *cobra.Command {
 }
 
 func updateEnvironmentVariable(cmd *cobra.Command, args []string) {
-	if len(args) != 5 {
+	if len(args) != 6 {
 		sdk.Exit("Wrong usage: %s\n", cmd.Short)
 	}
 	projectKey := args[0]
 	envName := args[1]
-	varName := args[2]
-	varValue := args[3]
-	varType := args[4]
+	varOldName := args[2]
+	varName := args[3]
+	varValue := args[4]
+	varType := args[5]
 
-	err := sdk.UpdateEnvironmentVariable(projectKey, envName, varName, varValue, varType)
+	err := sdk.UpdateEnvironmentVariable(projectKey, envName, varOldName, varName, varValue, varType)
 	if err != nil {
 		sdk.Exit("Error: cannot update variable %s in environment %s (%s)\n", varName, envName, err)
 	}

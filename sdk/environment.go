@@ -185,10 +185,37 @@ func AddEnvironmentVariable(projectKey, envName, varName, varValue string, varTy
 	return nil
 }
 
+// GetEnvironmentVariable Get a specific variable from the given environment
+func GetEnvironmentVariable(projectKey, envName, varName string) (*Variable, error) {
+	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, envName, varName)
+	data, code, err := Request("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if code != http.StatusCreated && code != http.StatusOK {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
+	}
+
+	myVar := &Variable{}
+
+	err = json.Unmarshal(data, &myVar)
+	if err != nil {
+		return nil, err
+	}
+	return myVar, nil
+}
+
 // UpdateEnvironmentVariable update a variable in an environment
-func UpdateEnvironmentVariable(projectKey, envName, varName, varValue, varType string) error {
+func UpdateEnvironmentVariable(projectKey, envName, oldVarName, varName, varValue, varType string) error {
+
+	oldVar, errGetVar := GetEnvironmentVariable(projectKey, envName, oldVarName)
+	if errGetVar != nil {
+		return errGetVar
+	}
 
 	newVar := Variable{
+		ID:    oldVar.ID,
 		Name:  varName,
 		Value: varValue,
 		Type:  VariableTypeFromString(varType),
