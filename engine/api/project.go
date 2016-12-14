@@ -374,7 +374,6 @@ func getUserLastUpdates(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		since, _ = time.Parse(time.RFC1123, sinceHeader)
 	}
 
-	log.Debug("getUserLastUpdates> search updates since %v", since)
 	lastUpdates, err := project.LastUpdates(db, c.User, since)
 	if err != nil {
 		if err == sql.ErrNoRows {

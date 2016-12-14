@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -23,13 +22,15 @@ import (
 )
 
 //RunningPollers is the map of all runningPollers
-var RunningPollers = struct {
-	Workers map[string]*Worker
-	mutex   *sync.RWMutex
-}{
-	Workers: map[string]*Worker{},
-	mutex:   &sync.RWMutex{},
-}
+var (
+	RunningPollers = struct {
+		Workers map[string]*Worker
+	}{
+		Workers: map[string]*Worker{},
+	}
+	newPollerChan = make(chan *Worker)
+	endPollerChan = make(chan *Worker)
+)
 
 //Worker represent a goroutine for each project responsible of repo polling
 type Worker struct {
@@ -53,6 +54,35 @@ type WorkerExecution struct {
 
 //Initialize all existing pollers (one poller per project)
 func Initialize() {
+	//This goroutine handles life of the workers
+	go func() {
+		for {
+			select {
+			case w := <-newPollerChan:
+				RunningPollers.Workers[w.ProjectKey] = w
+				ok, quit, err := w.Poll()
+				if err != nil {
+					log.Warning("Polling> Unable to lauch worker %s: %s", w.ProjectKey, err)
+					endPollerChan <- w
+					continue
+				}
+
+				go func() {
+					<-quit
+					endPollerChan <- w
+				}()
+
+				if !ok {
+					close(quit)
+				}
+
+			case w := <-endPollerChan:
+				delete(RunningPollers.Workers, w.ProjectKey)
+			}
+		}
+	}()
+
+	//This go routine creates (if needed) workers for all projects
 	for {
 		db := database.DB()
 		if db == nil {
@@ -70,33 +100,7 @@ func Initialize() {
 		for _, p := range proj {
 			if RunningPollers.Workers[p.Key] == nil {
 				w := NewWorker(p.Key)
-
-				RunningPollers.mutex.Lock()
-				RunningPollers.Workers[p.Key] = w
-				RunningPollers.mutex.Unlock()
-
-				var pollerhasStop = func() {
-					RunningPollers.mutex.Lock()
-					delete(RunningPollers.Workers, w.ProjectKey)
-					RunningPollers.mutex.Unlock()
-				}
-
-				ok, quit, err := w.Poll()
-				if err != nil {
-					log.Warning("Polling> Unable to lauch worker %s: %s", p.Key, err)
-					continue
-				}
-
-				if !ok {
-					pollerhasStop()
-					close(quit)
-					continue
-				}
-
-				go func() {
-					<-quit
-					pollerhasStop()
-				}()
+				newPollerChan <- w
 			}
 		}
 		time.Sleep(1 * time.Minute)
@@ -115,13 +119,16 @@ func (w *Worker) Poll() (bool, chan bool, error) {
 		return false, quit, errors.New("Database is unavailable")
 	}
 
-	pollers, err := poller.LoadEnabledPollers(db)
+	pollers, err := poller.LoadEnabledPollersByProject(db, w.ProjectKey)
 	if err != nil {
 		log.Warning("Polling> Unable to load enabled pollers")
 		return false, quit, err
 	}
 
-	var atLeastOne bool
+	if len(pollers) == 0 {
+		return false, quit, nil
+	}
+
 	for i := range pollers {
 		p := &pollers[i]
 		b, _ := repositoriesmanager.CheckApplicationIsAttached(db, p.Name, w.ProjectKey, p.Application.Name)
@@ -133,14 +140,9 @@ func (w *Worker) Poll() (bool, chan bool, error) {
 			continue
 		}
 		log.Info("Starting poller on %s %s %s", p.Name, p.Application.Name, p.Pipeline.Name)
-		atLeastOne = true
 		go w.poll(p.Application.RepositoriesManager, p.Application.ID, p.Pipeline.ID, quit)
-		time.Sleep(2 * time.Minute)
 	}
 
-	if !atLeastOne {
-		return false, quit, nil
-	}
 	return true, quit, nil
 }
 
@@ -171,10 +173,8 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 		}
 
 		k := cache.Key("reposmanager", "polling", w.ProjectKey, p.Application.Name, p.Pipeline.Name, p.Name)
-		//Get fro mcache to know if someone is polling the repo
-		cache.Get(k, &mayIWork)
 		//If nobody is polling it
-		if mayIWork == "" {
+		if !cache.Get(k, &mayIWork) {
 			log.Info("Polling> Polling repository %s for %s/%s\n", p.Application.RepositoryFullname, w.ProjectKey, p.Application.Name)
 			cache.SetWithTTL(k, "true", 300)
 
@@ -185,24 +185,28 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 
 			if err := insertExecution(db, &p.Application, &p.Pipeline, e); err != nil {
 				log.Warning("Polling> Unable to save execution : %s", err)
+				continue
 			}
 
 			//get the client for the repositories manager
 			client, err := repositoriesmanager.AuthorizedClient(db, w.ProjectKey, rm.Name)
 			if err != nil {
 				log.Warning("Polling> Unable to get client for %s %s : %s\n", w.ProjectKey, rm.Name, err)
-				break
+				continue
 			}
 			var events []sdk.VCSPushEvent
 			events, delay, err = client.PushEvents(p.Application.RepositoryFullname, p.DateCreation)
 
-			s, err := triggerPipelines(db, w.ProjectKey, rm, p, events)
-			if err != nil {
-				log.Warning("Polling> Unable to trigger pipeline %s for repository %s\n", p.Pipeline.Name, p.Application.RepositoryFullname)
-				break
+			if len(events) > 0 {
+				s, err := triggerPipelines(db, w.ProjectKey, rm, p, events)
+				if err != nil {
+					log.Warning("Polling> Unable to trigger pipeline %s for repository %s\n", p.Pipeline.Name, p.Application.RepositoryFullname)
+				}
+				e.Status = s
+			} else {
+				e.Status = "No events"
 			}
 
-			e.Status = fmt.Sprintf(s)
 			e.Events = events
 
 			if err := updateExecution(db, e); err != nil {
@@ -212,10 +216,13 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 			//Wait for the delay
 			time.Sleep(delay * time.Second)
 			cache.Delete(k)
+		} else {
+			log.Debug("SOmeone is already doing this... %s", k)
 		}
 		//Wait for sometime between 0 and 10 seconds
 		time.Sleep(time.Duration(r.Float64()*10) * time.Second)
 	}
+
 	log.Debug("Polling> End\n")
 	quit <- true
 }
@@ -390,11 +397,11 @@ func ExecutionCleaner() {
 			continue
 		}
 
-		execs, _ := LoadExecutions(db)
+		execs, _ := LoadExecutions(db, "", "")
 
 		for i := range execs {
-			tenDaysAGo := time.Now().Add(-10 * 24 * time.Hour)
-			if execs[i].Execution.Before(tenDaysAGo) {
+			twoDaysAgo := time.Now().Add(-5 * 24 * time.Hour)
+			if execs[i].Execution.Before(twoDaysAgo) {
 				deleteExecution(db, &execs[i])
 			}
 		}
@@ -403,7 +410,7 @@ func ExecutionCleaner() {
 }
 
 //LoadExecutions returns all executions in database
-func LoadExecutions(db database.QueryExecuter) ([]WorkerExecution, error) {
+func LoadExecutions(db database.QueryExecuter, application, pipeline string) ([]WorkerExecution, error) {
 	query := `
 		select poller_execution.id, application.name, pipeline.name, poller_execution.execution_date, poller_execution.status, poller_execution.data
 		from poller_execution, application, pipeline
@@ -432,7 +439,16 @@ func LoadExecutions(db database.QueryExecuter) ([]WorkerExecution, error) {
 			b := []byte(j.String)
 			json.Unmarshal(b, &e.Events)
 		}
-		es = append(es, e)
+		var ok = true
+		if application != "" && application != e.Application {
+			ok = false
+		}
+		if pipeline != "" && pipeline != e.Pipeline {
+			ok = false
+		}
+		if ok {
+			es = append(es, e)
+		}
 	}
 
 	return es, nil

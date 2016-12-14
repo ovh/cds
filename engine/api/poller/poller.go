@@ -71,6 +71,19 @@ func LoadEnabledPollers(db database.Querier) ([]sdk.RepositoryPoller, error) {
 	return loadPollersByQUery(db, query)
 }
 
+//LoadEnabledPollersByProject load all RepositoryPoller for a project
+func LoadEnabledPollersByProject(db database.Querier, projKey string) ([]sdk.RepositoryPoller, error) {
+	query := `
+        SELECT poller.application_id, poller.pipeline_id, poller.name, poller.enabled, poller.date_creation
+        FROM poller, application, project
+        WHERE poller.application_id = application.id
+		AND application.project_id = project.id
+		and project.projectkey = $1
+		AND enabled = true
+    `
+	return loadPollersByQUery(db, query, projKey)
+}
+
 //LoadPollersByApplication loads all pollers for an application
 func LoadPollersByApplication(db database.Querier, applicationID int64) ([]sdk.RepositoryPoller, error) {
 	query := `
