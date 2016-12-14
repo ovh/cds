@@ -22,9 +22,9 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sanity"
-	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -122,7 +122,7 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	trigger := pbs[1].Trigger
 	trigger.TriggeredBy = c.User
 
-	newPb, err := scheduler.Run(tx, projectKey, app, pipelineName, env.Name, pbs[1].Parameters, pbs[1].Version, trigger, c.User)
+	newPb, err := queue.RunPipeline(tx, projectKey, app, pipelineName, env.Name, pbs[1].Parameters, pbs[1].Version, trigger, c.User)
 	if err != nil {
 		log.Warning("rollbackPipelineHandler> Cannot run pipeline: %s\n", err)
 		WriteError(w, r, err)
@@ -348,7 +348,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 			}
 
 		}
-		parentParams, err := scheduler.ParentBuildInfos(pb)
+		parentParams, err := queue.ParentBuildInfos(pb)
 		if err != nil {
 			log.Warning("runPipelineHandler> Cannot create parent build infos: %s\n", err)
 			WriteError(w, r, err)
@@ -393,7 +393,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 		trigger.VCSChangesBranch = parentPipelineBuild.Trigger.VCSChangesBranch
 	}
 
-	pb, err := scheduler.Run(tx, projectKey, app, pipelineName, envDest.Name, request.Params, version, trigger, c.User)
+	pb, err := queue.RunPipeline(tx, projectKey, app, pipelineName, envDest.Name, request.Params, version, trigger, c.User)
 	if err != nil {
 		log.Warning("runPipelineHandler> Cannot run pipeline: %s\n", err)
 		WriteError(w, r, err)
