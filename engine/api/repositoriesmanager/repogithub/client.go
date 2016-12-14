@@ -201,6 +201,13 @@ func (g *GithubClient) Branch(fullname, branch string) (sdk.VCSBranch, error) {
 
 // Commits returns the commits list on a branch between a commit SHA (since) until anotger commit SHA (until). The branch is given by the branch of the first commit SHA (since)
 func (g *GithubClient) Commits(repo, since, until string) ([]sdk.VCSCommit, error) {
+	var theCommits []Commit
+	var commitsResult []sdk.VCSCommit
+
+	if cache.Get(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
+		return commitsResult, nil
+	}
+
 	//1. get all Branches
 	branches, err := g.Branches(repo)
 	if err != nil {
@@ -215,36 +222,44 @@ func (g *GithubClient) Commits(repo, since, until string) ([]sdk.VCSCommit, erro
 			return nil, err
 		}
 		allCommits[branch.DisplayID] = commits
+		log.Info("Branch %s : %d commits", branch.DisplayID, len(commits))
 	}
 
-	//3. find the branch for the commit SHA=since
-	//4. find the commits in the branch between SHA=since and SHA=until
+	//3. find the branch for the commit SHA=since of SHA=until
 	var theBranch string
-	var theCommits []Commit
-	var sinceFound bool
 	for branch, commits := range allCommits {
 		for i := range commits {
-			if commits[i].Sha == since {
+			if commits[i].Sha == since || commits[i].Sha == until {
 				theBranch = branch
-				theCommits = append(theCommits, commits[i])
+				break
+			}
+		}
+	}
+
+	log.Info("Filtering commits of branch %s : %d", theBranch, len(allCommits[theBranch]))
+
+	//4. find the commits in the branch between SHA=since and SHA=until
+	var sinceFound = since == ""
+	if since == "" {
+		theCommits = allCommits[theBranch]
+	} else {
+		for i := range allCommits[theBranch] {
+			if allCommits[theBranch][i].Sha == since {
+				theCommits = append(theCommits, allCommits[theBranch][i])
 				sinceFound = true
 				continue
 			}
-			if commits[i].Sha == until && theBranch != "" {
-				theCommits = append(theCommits, commits[i])
+			if allCommits[theBranch][i].Sha == until {
+				theCommits = append(theCommits, allCommits[theBranch][i])
 				break
 			}
-			if sinceFound && theBranch != "" {
-				theCommits = append(theCommits, commits[i])
+			if sinceFound {
+				theCommits = append(theCommits, allCommits[theBranch][i])
 			}
-		}
-		if theBranch != "" {
-			break
 		}
 	}
 
 	//5. convert to sdk.VCSCommit
-	commitsResult := []sdk.VCSCommit{}
 	for _, c := range theCommits {
 		commit := sdk.VCSCommit{
 			Timestamp: c.Commit.Author.Date.Unix() * 1000,
@@ -261,6 +276,8 @@ func (g *GithubClient) Commits(repo, since, until string) ([]sdk.VCSCommit, erro
 
 		commitsResult = append(commitsResult, commit)
 	}
+
+	cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), commitsResult, 3*60*60)
 
 	return commitsResult, nil
 }
@@ -299,16 +316,18 @@ func (g *GithubClient) allCommitsForBranch(repo, branch string) ([]Commit, error
 	var commits = []Commit{}
 	urlValues := url.Values{}
 	urlValues.Add("sha", branch)
-	var nextPage = "/repos/" + repo + "/commits"
+	var nextPage = "/repos/" + repo + "/commits?a=a"
 
 	for {
 		if nextPage != "" {
-			status, body, headers, err := g.get(nextPage + "?" + urlValues.Encode())
+
+			status, body, headers, err := g.get(nextPage + "&" + urlValues.Encode())
 			if err != nil {
 				log.Warning("GithubClient.Commits> Error %s", err)
 				return nil, err
 			}
 			if status >= 400 {
+				log.Warning("GithubClient.Commits> Error %s", ErrorAPI(body))
 				return nil, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
 			}
 			nextCommits := []Commit{}
@@ -323,11 +342,10 @@ func (g *GithubClient) allCommitsForBranch(repo, branch string) ([]Commit, error
 					return nil, err
 				}
 				//Put the body on cache for one hour and one minute
-				cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", g.OAuthToken, nextPage, branch), nextCommits, 61*60)
+				cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", g.OAuthToken, nextPage, branch), nextCommits, 60*60)
 			}
 
 			commits = append(commits, nextCommits...)
-
 			nextPage = getNextPage(headers)
 		} else {
 			break

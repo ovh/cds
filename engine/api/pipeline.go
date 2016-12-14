@@ -1708,9 +1708,22 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 	//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
 	//buildNumber, pipelineID, applicationID, environmentID
 	cur, prev, err := pipeline.CurrentAndPreviousPipelineBuildNumberAndHash(db, int64(buildNumber), pip.ID, application.ID, env.ID)
+
+	if prev == nil {
+		log.Info("getPipelineBuildCommitsHandler> No previous build was found for branch %s", cur.Branch)
+	} else {
+		log.Info("getPipelineBuildCommitsHandler> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+	}
+
 	if err != nil {
 		log.Warning("getPipelineBuildCommitsHandler> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", buildNumber, pip.ID, application.ID, env.ID, err)
 		WriteError(w, r, err)
+		return
+	}
+
+	//If there is not difference between the previous build and the current build
+	if prev != nil && cur.Hash == prev.Hash {
+		WriteJSON(w, r, []sdk.VCSCommit{}, http.StatusOK)
 		return
 	}
 
@@ -1728,13 +1741,14 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 
 	if cur.Hash != "" {
 		//If we only get current pipeline build hash
-		c, err := client.Commit(application.RepositoryFullname, cur.Hash)
+		log.Info("getPipelineBuildCommitsHandler>  Looking for every commit until %s ", cur.Hash)
+		c, err := client.Commits(application.RepositoryFullname, "", cur.Hash)
 		if err != nil {
 			log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
 			WriteError(w, r, err)
 			return
 		}
-		WriteJSON(w, r, []sdk.VCSCommit{c}, http.StatusOK)
+		WriteJSON(w, r, c, http.StatusOK)
 	} else {
 		//If we only have the current branch, search for the branch
 		br, err := client.Branch(application.RepositoryFullname, cur.Branch)

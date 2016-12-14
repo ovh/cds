@@ -77,7 +77,7 @@ func (c *GithubClient) setETag(path string, headers http.Header) {
 	}
 
 	if etag != "" {
-		log.Debug("Github API>> Store ETag: %s : %s", path, etag)
+		//log.Debug("Github API>> Store ETag: %s : %s", path, etag)
 		//Put etag for this path in cache for 59 minutes
 		cache.SetWithTTL(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
 	}
@@ -86,7 +86,7 @@ func (c *GithubClient) setETag(path string, headers http.Header) {
 func (c *GithubClient) getETag(path string) string {
 	var s string
 	cache.Get(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
-	log.Debug("Github API>> Retrieve ETag: %s : %s", path, s)
+	//log.Debug("Github API>> Retrieve ETag: %s : %s", path, s)
 	return s
 }
 
@@ -132,7 +132,7 @@ func (c *GithubClient) get(path string) (int, []byte, http.Header, error) {
 	}
 
 	log.Debug("Github API>> Request URL %s", req.URL.String())
-	log.Debug("Github API>> Request Headers %v", req.Header)
+	//log.Debug("Github API>> Request Headers %v", req.Header)
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -145,7 +145,7 @@ func (c *GithubClient) get(path string) (int, []byte, http.Header, error) {
 	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
 
 	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
-		log.Info("Github API>> Response Rate Limit: %s - Remaining: %s - Reset: %s", rateLimitLimit, rateLimitRemaining, rateLimitReset)
+		//log.Info("Github API>> Response Rate Limit: %s - Remaining: %s - Reset: %s", rateLimitLimit, rateLimitRemaining, rateLimitReset)
 		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
 		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
 	}

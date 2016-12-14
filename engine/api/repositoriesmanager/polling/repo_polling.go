@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"sync"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
@@ -25,8 +27,10 @@ import (
 var (
 	RunningPollers = struct {
 		Workers map[string]*Worker
+		mutex   *sync.RWMutex
 	}{
 		Workers: map[string]*Worker{},
+		mutex:   &sync.RWMutex{},
 	}
 	newPollerChan = make(chan *Worker)
 	endPollerChan = make(chan *Worker)
@@ -50,6 +54,12 @@ type WorkerExecution struct {
 	Execution   time.Time          `json:"execution"`
 	Status      string             `json:"status"`
 	Events      []sdk.VCSPushEvent `json:"events,omitempty"`
+}
+
+func isWorkerRunning(key string) bool {
+	RunningPollers.mutex.RLock()
+	defer RunningPollers.mutex.RUnlock()
+	return RunningPollers.Workers[key] != nil
 }
 
 //Initialize all existing pollers (one poller per project)
@@ -98,7 +108,7 @@ func Initialize() {
 		}
 
 		for _, p := range proj {
-			if RunningPollers.Workers[p.Key] == nil {
+			if isWorkerRunning(p.Key) {
 				w := NewWorker(p.Key)
 				newPollerChan <- w
 			}
@@ -153,7 +163,7 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 
 	log.Debug("Polling> Start on appID=%d, pipID=%d\n", appID, pipID)
 
-	for RunningPollers.Workers[w.ProjectKey] != nil {
+	for isWorkerRunning(w.ProjectKey) {
 		//Check database connection
 		db := database.DB()
 		if db == nil {

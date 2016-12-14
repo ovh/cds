@@ -198,7 +198,6 @@ func LoadWaitingQueue(db *sql.DB) ([]sdk.ActionBuild, error) {
 
 // LoadGroupWaitingQueue loads action build in queue accessbible to given group
 func LoadGroupWaitingQueue(db *sql.DB, groupID int64) ([]sdk.ActionBuild, error) {
-	//log.Notice("LoadGroupWaitingQueue for group %d\n", groupID)
 	var queue []sdk.ActionBuild
 
 	query := `
@@ -218,11 +217,14 @@ func LoadGroupWaitingQueue(db *sql.DB, groupID int64) ([]sdk.ActionBuild, error)
 			JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
 			WHERE action_build.status = $1
 			AND ( 
-				pipeline_group.group_id = $2
+					(
+						pipeline_group.group_id = $2
+						AND
+						pipeline_group.role > 4
+					)
 				OR
 				$2 = (SELECT id FROM "group" WHERE name = $3)
 			)
-			AND pipeline_group.role > 4
 			ORDER BY pipeline_build.id,action.name,action_build.pipeline_action_id
 			LIMIT 100
 			`
