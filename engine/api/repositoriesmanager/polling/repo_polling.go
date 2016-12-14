@@ -69,7 +69,9 @@ func Initialize() {
 		for {
 			select {
 			case w := <-newPollerChan:
+				RunningPollers.mutex.Lock()
 				RunningPollers.Workers[w.ProjectKey] = w
+				RunningPollers.mutex.Unlock()
 				ok, quit, err := w.Poll()
 				if err != nil {
 					log.Warning("Polling> Unable to lauch worker %s: %s", w.ProjectKey, err)
@@ -87,7 +89,9 @@ func Initialize() {
 				}
 
 			case w := <-endPollerChan:
+				RunningPollers.mutex.Lock()
 				delete(RunningPollers.Workers, w.ProjectKey)
+				RunningPollers.mutex.Unlock()
 			}
 		}
 	}()
@@ -108,7 +112,7 @@ func Initialize() {
 		}
 
 		for _, p := range proj {
-			if isWorkerRunning(p.Key) {
+			if !isWorkerRunning(p.Key) {
 				w := NewWorker(p.Key)
 				newPollerChan <- w
 			}
