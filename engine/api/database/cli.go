@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
 	"github.com/olekukonko/tablewriter"
-	"github.com/ovh/cds/sdk"
 	"github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/sdk"
 )
 
 var DBCmd = &cobra.Command{
@@ -84,28 +84,28 @@ type statusRow struct {
 func createCmdFunc(cmd *cobra.Command, args []string) {
 	db, err := Init()
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 
 	//Check if schema is empty
 	rows, err := db.Query("SELECT tablename FROM pg_catalog.pg_tables WHERE tableowner like $1", dbUser+"%")
 
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 	defer rows.Close()
 
 	if err := rows.Err(); err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 	//if schema is not empty: exit
 	if rows.Next() {
-		sdk.Exit("Database schema is not empty. Abort.")
+		sdk.Exit("Database schema %s is not empty. Abort.\n", dbUser)
 	}
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
 	//Lock DB
@@ -150,12 +150,12 @@ func createCmdFunc(cmd *cobra.Command, args []string) {
 
 	planned, dbMap, err := migrate.PlanMigration(db, "postgres", source, migrate.Up, 0)
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 
 	trans, err := dbMap.Begin()
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 
 	for _, m := range planned {
@@ -166,31 +166,31 @@ func createCmdFunc(cmd *cobra.Command, args []string) {
 		})
 		if err != nil {
 			trans.Rollback()
-			sdk.Exit("Error: %s", err)
+			sdk.Exit("Error: %s\n", err)
 		}
 	}
 
 	if err := trans.Commit(); err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 }
 
 func upgradeCmdFunc(cmd *cobra.Command, args []string) {
 	if err := ApplyMigrations(migrate.Up, sqlMigrateDryRun, sqlMigrateLimit); err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 }
 
 func downgradeCmdFunc(cmd *cobra.Command, args []string) {
 	if err := ApplyMigrations(migrate.Down, sqlMigrateDryRun, sqlMigrateLimit); err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 }
 
 func statusCmdFunc(cmd *cobra.Command, args []string) {
 	db, err := Init()
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 
 	source := migrate.FileMigrationSource{
@@ -199,12 +199,12 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 	migrations, err := source.FindMigrations()
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 
 	records, err := migrate.GetMigrationRecords(db, "postgres")
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
@@ -249,7 +249,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	db, err := Init()
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 
 	source := migrate.FileMigrationSource{
@@ -270,7 +270,7 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		sdk.Exit("Error: %s", err)
+		sdk.Exit("Error: %s\n", err)
 	}
 	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
 	if err := lockMigrate(db, hostname); err != nil {
