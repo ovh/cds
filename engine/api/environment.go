@@ -23,10 +23,10 @@ func getEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
-	environments, err := environment.LoadEnvironments(db, projectKey, true, c.User)
-	if err != nil {
-		log.Warning("getEnvironmentsHandler: Cannot load environments from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	environments, errEnv := environment.LoadEnvironments(db, projectKey, true, c.User)
+	if errEnv != nil {
+		log.Warning("getEnvironmentsHandler: Cannot load environments from db: %s\n", errEnv)
+		WriteError(w, r, errEnv)
 		return
 	}
 
@@ -38,10 +38,10 @@ func getEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	projectKey := vars["key"]
 	environmentName := vars["permEnvironmentName"]
 
-	environment, err := environment.LoadEnvironmentByName(db, projectKey, environmentName)
-	if err != nil {
-		log.Warning("getEnvironmentHandler: Cannot load environment %s for project %s from db: %s\n", environmentName, projectKey, err)
-		WriteError(w, r, err)
+	environment, errEnv := environment.LoadEnvironmentByName(db, projectKey, environmentName)
+	if errEnv != nil {
+		log.Warning("getEnvironmentHandler: Cannot load environment %s for project %s from db: %s\n", environmentName, projectKey, errEnv)
+		WriteError(w, r, errEnv)
 		return
 	}
 
@@ -50,6 +50,7 @@ func getEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	WriteJSON(w, r, environment, http.StatusOK)
 }
 
+// Deprecated
 func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -264,66 +265,75 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	projectData, err := project.LoadProject(db, key, c.User)
-	if err != nil {
-		log.Warning("addEnvironmentHandler: Cannot load %s: %s\n", key, err)
-		w.WriteHeader(http.StatusNotFound)
+	projectData, errProj := project.LoadProject(db, key, c.User)
+	if errProj != nil {
+		log.Warning("addEnvironmentHandler: Cannot load %s: %s\n", key, errProj)
+		WriteError(w, r, errProj)
 		return
 	}
 
 	var env sdk.Environment
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
-	err = json.Unmarshal(data, &env)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	if err := json.Unmarshal(data, &env); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	env.ProjectID = projectData.ID
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("addEnvironmentHandler> Cannot start transaction: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("addEnvironmentHandler> Cannot start transaction: %s\n", errBegin)
+		WriteError(w, r, errBegin)
 		return
 	}
 
 	defer tx.Rollback()
 
-	err = environment.InsertEnvironment(tx, &env)
-	if err != nil {
+	if err := environment.InsertEnvironment(tx, &env); err != nil {
 		log.Warning("addEnvironmentHandler> Cannot insert environment: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
-
-	err = group.LoadGroupByProject(tx, projectData)
-	if err != nil {
+	if err := group.LoadGroupByProject(tx, projectData); err != nil {
 		log.Warning("addEnvironmentHandler> Cannot load group from project: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
-
 	for _, g := range projectData.ProjectGroups {
-		err = group.InsertGroupInEnvironment(tx, env.ID, g.Group.ID, g.Permission)
-		if err != nil {
+		if err := group.InsertGroupInEnvironment(tx, env.ID, g.Group.ID, g.Permission); err != nil {
 			log.Warning("addEnvironmentHandler> Cannot add group on environment: %s\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			WriteError(w, r, err)
 			return
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("addEnvironmentHandler> Cannot commit transaction: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	lastModified, errDate := project.UpdateProjectDB(tx, projectData.Key, projectData.Name)
+	if errDate != nil {
+		log.Warning("addEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
+		WriteError(w, r, errDate)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	projectData.LastModified = lastModified.Unix()
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("addEnvironmentHandler> Cannot commit transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	var errEnvs error
+	projectData.Environments, errEnvs = environment.LoadEnvironments(db, projectData.Key, true, c.User)
+	if errEnvs != nil {
+		log.Warning("addEnvironmentHandler> Cannot load all environments: %s\n", errEnvs)
+		WriteError(w, r, errEnvs)
+		return
+	}
+	WriteJSON(w, r, projectData, http.StatusOK)
 }
 
 func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -332,52 +342,57 @@ func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	projectKey := vars["key"]
 	environmentName := vars["permEnvironmentName"]
 
-	p, err := project.LoadProject(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("deleteEnvironmentHandler> Cannot load project %s: %s\n", projectKey, err)
-		WriteError(w, r, err)
+	p, errProj := project.LoadProject(db, projectKey, c.User)
+	if errProj != nil {
+		log.Warning("deleteEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
+		WriteError(w, r, errProj)
 		return
 	}
 
-	env, err := environment.LoadEnvironmentByName(db, projectKey, environmentName)
-	if err != nil {
-		if err != sdk.ErrNoEnvironment {
-			log.Warning("deleteEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, err)
+	env, errEnv := environment.LoadEnvironmentByName(db, projectKey, environmentName)
+	if errEnv != nil {
+		if errEnv != sdk.ErrNoEnvironment {
+			log.Warning("deleteEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
 		}
-		WriteError(w, r, err)
+		WriteError(w, r, errEnv)
 		return
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deleteEnvironmentHandler> Cannot begin transaction: %s\n", err)
-		WriteError(w, r, err)
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("deleteEnvironmentHandler> Cannot begin transaction: %s\n", errBegin)
+		WriteError(w, r, errBegin)
 		return
 	}
 	defer tx.Rollback()
 
-	err = environment.DeleteEnvironment(tx, env.ID)
-	if err != nil {
+	if err := environment.DeleteEnvironment(tx, env.ID); err != nil {
 		WriteError(w, r, err)
 		return
 	}
 
-	lastModified, err := project.UpdateProjectDB(tx, projectKey, p.Name)
-	if err != nil {
-		log.Warning("deleteEnvironmentHandler> Cannot update project last modified date: %s\n", err)
-		WriteError(w, r, err)
+	lastModified, errDate := project.UpdateProjectDB(tx, projectKey, p.Name)
+	if errDate != nil {
+		log.Warning("deleteEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
+		WriteError(w, r, errDate)
 		return
 	}
 	p.LastModified = lastModified.Unix()
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteEnvironmentHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
 	log.Notice("Environment %s deleted.\n", environmentName)
+	var errEnvs error
+	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
+	if errEnvs != nil {
+		log.Warning("deleteEnvironmentHandler> Cannot load environments: %s\n", errEnvs)
+		WriteError(w, r, errEnvs)
+		return
+	}
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
@@ -387,52 +402,50 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	projectKey := vars["key"]
 	environmentName := vars["permEnvironmentName"]
 
-	env, err := environment.LoadEnvironmentByName(db, projectKey, environmentName)
-	if err != nil {
-		log.Warning("updateEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, err)
-		WriteError(w, r, err)
+	env, errEnv := environment.LoadEnvironmentByName(db, projectKey, environmentName)
+	if errEnv != nil {
+		log.Warning("updateEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
+		WriteError(w, r, errEnv)
 		return
 	}
 
-	p, err := project.LoadProject(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("updateEnvironmentHandler> Cannot load project %s: %s\n", projectKey, err)
-		WriteError(w, r, err)
+	p, errProj := project.LoadProject(db, projectKey, c.User)
+	if errProj != nil {
+		log.Warning("updateEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
+		WriteError(w, r, errProj)
 		return
 	}
 
 	var envPost sdk.Environment
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		WriteError(w, r, err)
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
-	err = json.Unmarshal(data, &envPost)
-	if err != nil {
-		WriteError(w, r, err)
+
+	if err := json.Unmarshal(data, &envPost); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	env.Name = envPost.Name
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("updateEnvironmentHandler> Cannot start transaction: %s\n", err)
-		WriteError(w, r, err)
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("updateEnvironmentHandler> Cannot start transaction: %s\n", errBegin)
+		WriteError(w, r, errBegin)
 		return
 	}
 	defer tx.Rollback()
 
-	err = environment.CreateAudit(tx, projectKey, env, c.User)
-	if err != nil {
+	if err := environment.CreateAudit(tx, projectKey, env, c.User); err != nil {
 		log.Warning("updateEnvironmentHandler> Cannot create audit for env %s: %s\n", env.Name, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = environment.UpdateEnvironment(tx, env)
-	if err != nil {
+	if err := environment.UpdateEnvironment(tx, env); err != nil {
 		log.Warning("updateEnvironmentHandler> Cannot update environment %s: %s\n", environmentName, err)
 		WriteError(w, r, err)
 		return
@@ -478,19 +491,25 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 		}
 	}
 
-	lastModified, err := project.UpdateProjectDB(tx, projectKey, p.Name)
-	if err != nil {
-		log.Warning("updateEnvironmentHandler> Cannot update project last modified date: %s\n", err)
-		WriteError(w, r, err)
+	lastModified, errDate := project.UpdateProjectDB(tx, projectKey, p.Name)
+	if errDate != nil {
+		log.Warning("updateEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
+		WriteError(w, r, errDate)
 		return
 	}
 	p.LastModified = lastModified.Unix()
-	p.Environments = append(p.Environments, *env)
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateEnvironmentHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
+		return
+	}
+
+	var errEnvs error
+	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
+	if errEnvs != nil {
+		log.Warning("updateEnvironmentHandler> Cannot load environments: %s\n", errEnvs)
+		WriteError(w, r, errEnvs)
 		return
 	}
 
