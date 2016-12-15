@@ -153,6 +153,43 @@ func WithEncryptPassword() GetAllVariableFuncArg {
 	}
 }
 
+// GetVariable Get a variable for the given environment
+func GetVariable(db database.Querier, key, envName string, varName string, args ...GetAllVariableFuncArg) (sdk.Variable, error) {
+	v := sdk.Variable{}
+	var clearVal sql.NullString
+	var cipherVal []byte
+	var typeVar string
+
+	c := structarg{}
+	for _, f := range args {
+		f(&c)
+	}
+
+	query := `SELECT environment_variable.id, environment_variable.name, environment_variable.value,
+						environment_variable.cipher_value, environment_variable.type
+	          FROM environment_variable
+	          JOIN environment ON environment.id = environment_variable.environment_id
+	          JOIN project ON project.id = environment.project_id
+	          WHERE environment.name = $1 AND project.projectKey = $2 AND environment_variable.name = $3
+	          ORDER BY name`
+	if err := db.QueryRow(query, envName, key, varName).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &typeVar); err != nil {
+		return v, err
+	}
+
+	v.Type = sdk.VariableTypeFromString(typeVar)
+
+	if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
+		v.Value = string(cipherVal)
+	} else {
+		var errDecrypt error
+		v.Value, errDecrypt = secret.DecryptS(v.Type, clearVal, cipherVal, c.clearsecret)
+		if errDecrypt != nil {
+			return v, errDecrypt
+		}
+	}
+	return v, nil
+}
+
 // GetAllVariable Get all variable for the given environment
 func GetAllVariable(db database.Querier, key, envName string, args ...GetAllVariableFuncArg) ([]sdk.Variable, error) {
 	c := structarg{}
@@ -271,9 +308,9 @@ func UpdateVariable(db database.Executer, envID int64, variable sdk.Variable) er
 	}
 
 	query := `UPDATE environment_variable
-	          SET value=$1, cipher_value=$2, type=$3
-	          WHERE environment_id = $4 AND environment_variable.name = $5`
-	result, err := db.Exec(query, clear, cipher, string(variable.Type), envID, variable.Name)
+	          SET value=$1, cipher_value=$2, type=$3, name=$6
+	          WHERE environment_id = $4 AND environment_variable.id = $5`
+	result, err := db.Exec(query, clear, cipher, string(variable.Type), envID, variable.ID, variable.Name)
 	if err != nil {
 		return err
 	}
