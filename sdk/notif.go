@@ -100,30 +100,6 @@ func (n *JabberEmailUserNotificationSettings) Start() bool {
 	return n.OnStart
 }
 
-// TATUserNotificationSettings are email settings
-type TATUserNotificationSettings struct {
-	OnSuccess UserNotificationEventType `json:"on_success"`
-	OnFailure UserNotificationEventType `json:"on_failure"`
-	OnStart   bool                      `json:"on_start"`
-	Topics    []string                  `json:"topics"`
-	Template  string                    `json:"message"`
-}
-
-//Success returns always/never/change
-func (n *TATUserNotificationSettings) Success() UserNotificationEventType {
-	return n.OnSuccess
-}
-
-//Failure returns always/never/change
-func (n *TATUserNotificationSettings) Failure() UserNotificationEventType {
-	return n.OnFailure
-}
-
-//Start returns always/never/change
-func (n *TATUserNotificationSettings) Start() bool {
-	return n.OnStart
-}
-
 // UserNotificationTemplate is the notification content
 type UserNotificationTemplate struct {
 	Subject string `json:"subject,omitempty"`

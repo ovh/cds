@@ -1,5 +1,7 @@
 package notification
 
+/* // TODO EVENT yesnault FILE TO DELETE
+
 import (
 	"time"
 
@@ -9,6 +11,8 @@ import (
 )
 
 // SendActionBuild sends a build notification
+
+
 func SendActionBuild(db database.QueryExecuter, ab *sdk.ActionBuild, event sdk.NotifEventType, status sdk.Status) {
 	if !notifON {
 		return
@@ -27,3 +31,5 @@ func SendActionBuild(db database.QueryExecuter, ab *sdk.ActionBuild, event sdk.N
 
 	go post(n)
 }
+
+*/

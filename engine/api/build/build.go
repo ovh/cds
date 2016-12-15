@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -142,7 +141,7 @@ func UpdateActionBuildStatus(db *sql.Tx, build *sdk.ActionBuild, status sdk.Stat
 
 	build.Status = status
 
-	notification.SendActionBuild(db, build, sdk.UpdateNotifEvent, status)
+	// TODO EVENT yesnault
 
 	if status == sdk.StatusFail || status == sdk.StatusDisabled || status == sdk.StatusSkipped {
 		var log string
@@ -216,7 +215,7 @@ func LoadGroupWaitingQueue(db *sql.DB, groupID int64) ([]sdk.ActionBuild, error)
 		  JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
 			JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
 			WHERE action_build.status = $1
-			AND ( 
+			AND (
 					(
 						pipeline_group.group_id = $2
 						AND

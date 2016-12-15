@@ -23,7 +23,6 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/queue"
@@ -107,9 +106,7 @@ var mainCmd = &cobra.Command{
 			mux: mux.NewRouter(),
 		}
 		router.init()
-
 		baseURL = viper.GetString("base_url")
-		notification.Initialize(viper.GetString("notifs_urls"), viper.GetString("notifs_key"), baseURL)
 
 		//Initialize secret driver
 		secretBackend := viper.GetString("secret_backend")
@@ -249,9 +246,6 @@ func (router *Router) init() {
 	router.Handle("/mon/building/{hash}", GET(getPipelineBuildingCommit))
 	router.Handle("/mon/warning", GET(getUserWarnings))
 	router.Handle("/mon/lastupdates", GET(getUserLastUpdates))
-
-	// Notif builtin from worker
-	router.Handle("/notif/{actionBuildId}", POST(notifHandler))
 
 	// Project
 	router.Handle("/project", GET(getProjects), POST(addProject))

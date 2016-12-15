@@ -19,8 +19,6 @@ func runBuiltin(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 		return runArtifactDownload(a, actionBuild)
 	case sdk.ScriptAction:
 		return runScriptAction(a, actionBuild)
-	case sdk.NotifAction:
-		return runNotifAction(a, actionBuild)
 	case sdk.JUnitAction:
 		return runParseJunitTestResultAction(a, actionBuild)
 	}
