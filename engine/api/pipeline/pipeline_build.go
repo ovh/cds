@@ -1831,11 +1831,12 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db database.Querier, buildNumb
 						AND 			environment_id = $4
 					)
 					ORDER BY  build_number DESC
-					LIMIT 1
 				) AS previous_pipeline ON (
 					previous_pipeline.pipeline_id = current_pipeline.pipeline_id AND previous_pipeline.vcs_changes_branch = current_pipeline.vcs_changes_branch
 				)
-			WHERE current_pipeline.build_number = $1;
+			WHERE current_pipeline.build_number = $1
+			ORDER BY  previous_pipeline.build_number DESC
+			LIMIT 1;
 	`
 	var curBuildNumber, prevBuildNumber sql.NullInt64
 	var curHash, prevHash, curBranch, prevBranch sql.NullString
