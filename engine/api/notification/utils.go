@@ -1,5 +1,7 @@
 package notification
 
+/* // TODO EVENT yesnault FILE TO DELETE
+
 import (
 	"bytes"
 
@@ -17,3 +19,5 @@ func SendMailNotif(notif *sdk.Notif) {
 		}
 	}
 }
+
+*/

@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/notification"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/log"
@@ -536,9 +536,7 @@ func UpdatePipelineBuildStatus(db database.QueryExecuter, pb sdk.PipelineBuild, 
 
 	k := cache.Key("application", pb.Application.ProjectKey, "*")
 	cache.DeleteAll(k)
-
-	notification.SendPipeline(db, &pb, sdk.UpdateNotifEvent, status, previous)
-
+	event.Publish(db, &pb, sdk.UpdateEvent, status, previous)
 	return nil
 }
 
@@ -1031,7 +1029,7 @@ func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, appl
 		}
 	}
 
-	notification.SendPipeline(tx, &pb, sdk.CreateNotifEvent, sdk.StatusBuilding, previous)
+	event.Publish(tx, &pb, sdk.CreateEvent, sdk.StatusBuilding, previous)
 
 	return pb, nil
 }
@@ -1132,7 +1130,7 @@ func LoadPipelineBuildHistoryByApplicationAndPipeline(db database.Querier, appli
 	pbs := []sdk.PipelineBuild{}
 	var query string
 	var rows *sql.Rows
-	var err error
+	var errQuery error
 
 	c := structarg{}
 	for _, f := range args {
@@ -1142,33 +1140,31 @@ func LoadPipelineBuildHistoryByApplicationAndPipeline(db database.Querier, appli
 	// Load history from pipeline build
 	if status == "" && branchName == "" {
 		query = fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.application_id= $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3", "LIMIT $4")
-		rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit)
+		rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit)
 	} else if status != "" && branchName == "" {
 		query = fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.application_id= $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3 AND pb.status = $5", "LIMIT $4")
-		rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, status)
+		rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, status)
 	} else if status == "" && branchName != "" {
 		query = fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.application_id= $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3 AND pb.vcs_changes_branch = $5", "LIMIT $4")
-		rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, branchName)
+		rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, branchName)
 	} else {
 		query = fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.application_id= $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3 AND pb.status = $5 AND pb.vcs_changes_branch = $6", "LIMIT $4")
-		rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, status, branchName)
+		rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, status, branchName)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load pipeline build: %s", err)
+	if errQuery != nil {
+		return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load pipeline build: %s", errQuery)
 	}
 
 	for rows.Next() {
 		var pb sdk.PipelineBuild
-		err = scanPbShort(&pb, rows)
-		if err != nil {
+		if err := scanPbShort(&pb, rows); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot read db result when loading pipeline build: %s", err)
 		}
 
 		if c.loadstages {
-			err := loadStageAndActionBuilds(db, &pb)
-			if err != nil {
+			if err := loadStageAndActionBuilds(db, &pb); err != nil {
 				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load stages from pipeline build %d: %s", pb.ID, err)
 			}
 		}
@@ -1176,12 +1172,10 @@ func LoadPipelineBuildHistoryByApplicationAndPipeline(db database.Querier, appli
 		if c.loadparameters {
 			queryParams := `SELECT args FROM pipeline_build WHERE id = $1`
 			var params string
-			err = db.QueryRow(queryParams, pb.ID).Scan(&params)
-			if err != nil {
+			if err := db.QueryRow(queryParams, pb.ID).Scan(&params); err != nil {
 				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load pipeline build parameters: %s", err)
 			}
-			err = json.Unmarshal([]byte(params), &pb.Parameters)
-			if err != nil {
+			if err := json.Unmarshal([]byte(params), &pb.Parameters); err != nil {
 				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot unmarshal pipeline build parameters: %s", err)
 			}
 		}
@@ -1203,25 +1197,24 @@ func LoadPipelineBuildHistoryByApplicationAndPipeline(db database.Querier, appli
 		} else {
 			if status == "" && branchName == "" {
 				query = fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.application_id= $1 AND ph.pipeline_id = $2 AND ph.environment_id = $3", "LIMIT $4")
-				rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit)
+				rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit)
 			} else if status != "" && branchName == "" {
 				query = fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.application_id= $1 AND ph.pipeline_id = $2 AND ph.environment_id = $3 AND ph.status = $5", "LIMIT $4")
-				rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, status)
+				rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, status)
 			} else if status == "" && branchName != "" {
 				query = fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.application_id= $1 AND ph.pipeline_id = $2 AND ph.environment_id = $3 ph.vcs_changes_branch = $5", "LIMIT $4")
-				rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, branchName)
+				rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, branchName)
 			} else {
 				query = fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.application_id= $1 AND ph.pipeline_id = $2 AND ph.environment_id = $3 AND ph.status = $5 AND ph.vcs_changes_branch = $6", "LIMIT $4")
-				rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, status, branchName)
+				rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, status, branchName)
 			}
-			if err != nil {
-				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplication> Cannot load pipeline history: %s", err)
+			if errQuery != nil {
+				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplication> Cannot load pipeline history: %s", errQuery)
 			}
 
 			for rows.Next() {
 				var pb sdk.PipelineBuild
-				err = scanPbShort(&pb, rows)
-				if err != nil {
+				if err := scanPbShort(&pb, rows); err != nil {
 					rows.Close()
 					return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplication> Cannot read db result when loading pipeline build: %s", err)
 				}
@@ -1380,8 +1373,7 @@ func RestartPipelineBuild(db *sql.DB, pb sdk.PipelineBuild) error {
 		}
 
 		for _, id := range actionBuildIDs {
-			err := build.DeleteBuildLogs(tx, id)
-			if err != nil {
+			if err := build.DeleteBuildLogs(tx, id); err != nil {
 				return err
 			}
 			queryDelete := `DELETE FROM action_build WHERE id = $1`
