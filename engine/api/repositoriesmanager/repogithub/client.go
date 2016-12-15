@@ -41,23 +41,24 @@ func (g *GithubClient) Repos() ([]sdk.VCSRepo, error) {
 			//Github may return 304 status because we are using conditionnal request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "repos", g.OAuthToken, nextPage), &nextRepos)
+				cache.Get(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), &repos)
+				break
 			} else {
 				if err := json.Unmarshal(body, &nextRepos); err != nil {
 					log.Warning("GithubClient.Repos> Unable to parse github repositories: %s", err)
 					return nil, err
 				}
-				//Put the body on cache for one hour and one minute
-				cache.SetWithTTL(cache.Key("reposmanager", "github", "repos", g.OAuthToken, nextPage), nextRepos, 61*60)
 			}
 
 			repos = append(repos, nextRepos...)
-
 			nextPage = getNextPage(headers)
 		} else {
 			break
 		}
 	}
+
+	//Put the body on cache for one hour and one minute
+	cache.SetWithTTL(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), repos, 61*60)
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {
@@ -150,14 +151,13 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			//Github may return 304 status because we are using conditionnal request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, nextPage), &nextBranches)
+				cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
+				break
 			} else {
 				if err := json.Unmarshal(body, &nextBranches); err != nil {
 					log.Warning("GithubClient.Branches> Unable to parse github branches: %s", err)
 					return nil, err
 				}
-				//Put the body on cache for one hour and one minute
-				cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, nextPage), nextBranches, 61*60)
 			}
 
 			branches = append(branches, nextBranches...)
@@ -167,6 +167,9 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			break
 		}
 	}
+
+	//Put the body on cache for one hour and one minute
+	cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), branches, 61*60)
 
 	branchesResult := []sdk.VCSBranch{}
 	for _, b := range branches {
@@ -222,7 +225,6 @@ func (g *GithubClient) Commits(repo, since, until string) ([]sdk.VCSCommit, erro
 			return nil, err
 		}
 		allCommits[branch.DisplayID] = commits
-		log.Info("Branch %s : %d commits", branch.DisplayID, len(commits))
 	}
 
 	//3. find the branch for the commit SHA=since of SHA=until
@@ -235,8 +237,6 @@ func (g *GithubClient) Commits(repo, since, until string) ([]sdk.VCSCommit, erro
 			}
 		}
 	}
-
-	log.Info("Filtering commits of branch %s : %d", theBranch, len(allCommits[theBranch]))
 
 	//4. find the commits in the branch between SHA=since and SHA=until
 	var sinceFound = since == ""
@@ -335,14 +335,13 @@ func (g *GithubClient) allCommitsForBranch(repo, branch string) ([]Commit, error
 			//Github may return 304 status because we are using conditionnal request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "commits", g.OAuthToken, nextPage, branch), &nextCommits)
+				cache.Get(cache.Key("reposmanager", "github", "commits", g.OAuthToken, "/repos/"+repo+"/commits", branch), &commits)
+				break
 			} else {
 				if err := json.Unmarshal(body, &nextCommits); err != nil {
 					log.Warning("GithubClient.Commits> Unable to parse github commits: %s", err)
 					return nil, err
 				}
-				//Put the body on cache for one hour and one minute
-				cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", g.OAuthToken, nextPage, branch), nextCommits, 60*60)
 			}
 
 			commits = append(commits, nextCommits...)
@@ -351,6 +350,9 @@ func (g *GithubClient) allCommitsForBranch(repo, branch string) ([]Commit, error
 			break
 		}
 	}
+
+	//Put the body on cache for one hour and one minute
+	cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", g.OAuthToken, nextPage, "/repos/"+repo+"/commits"), commits, 61*60)
 
 	return commits, nil
 }

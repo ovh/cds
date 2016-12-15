@@ -820,6 +820,7 @@ func GetLastBuildNumber(tx *sql.Tx, pipelineID int64, applicationID int64, envir
 func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, applicationData *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (sdk.PipelineBuild, error) {
 	var buildNumber int64
 	var pb sdk.PipelineBuild
+	var client sdk.RepositoriesManagerClient
 
 	// Load last finished build
 	buildNumber, _, err := GetLastBuildNumber(tx, p.ID, applicationData.ID, env.ID)
@@ -909,7 +910,7 @@ func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, appl
 		defautlBranch := "master"
 		lastGitHash := map[string]string{}
 		if applicationData.RepositoriesManager != nil && applicationData.RepositoryFullname != "" {
-			client, _ := repositoriesmanager.AuthorizedClient(tx, project.Key, applicationData.RepositoriesManager.Name)
+			client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, applicationData.RepositoriesManager.Name)
 			if client != nil {
 				branches, _ := client.Branches(applicationData.RepositoryFullname)
 				for _, b := range branches {
@@ -1003,15 +1004,47 @@ func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, appl
 	pb.Environment = *env
 
 	/*
-		There should not be any password here
-		// Now we have all clear password, replace them again before return
-		for i, p := range pb.Parameters {
-			if sdk.NeedPlaceholder(p.Type) {
-				pb.Parameters[i].Value = sdk.PasswordPlaceholder
+		if client != nil {
+			//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
+			//buildNumber, pipelineID, applicationID, environmentID
+			cur, prev, err := CurrentAndPreviousPipelineBuildNumberAndHash(tx, int64(buildNumber), p.ID, applicationData.ID, env.ID)
+			if err != nil {
+				log.Warning("InsertPipelineBuild> Error fetching previous Pipeline Build for %s : %s", cur.Branch, err)
 			}
+
+			if prev == nil {
+				log.Info("InsertPipelineBuild> No previous build was found for branch %s", cur.Branch)
+			} else {
+				log.Info("InsertPipelineBuild> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+			}
+
+			// Fetch commits
+			if prev != nil && cur.Hash == prev.Hash {
+				//If the previous pipeline build was on the same git.hash => no commit
+				pb.Commits = []sdk.VCSCommit{}
+			} else if prev != nil && cur.Hash != prev.Hash {
+				//If we are lucky, return a true diff
+				pb.Commits, err = client.Commits(applicationData.RepositoryFullname, prev.Hash, cur.Hash)
+				if err != nil {
+					log.Warning("InsertPipelineBuild> Error fetching commits : %s", err)
+				}
+			} else if prev == nil && cur.Hash != "" {
+				//If we only get current pipeline build hash
+				log.Info("InsertPipelineBuild>  Looking for every commit until %s ", cur.Hash)
+				pb.Commits, err = client.Commits(applicationData.RepositoryFullname, "", cur.Hash)
+				if err != nil {
+					log.Warning("InsertPipelineBuild> Error fetching commits : %s", err)
+				}
+			}
+
+			// Load previous pipeline buid based on the buildnumber
+			prevPB, err := LoadPipelineBuild(tx, p, applicationData.ID, buildNumber, env.ID)
+			if err != nil {
+				log.Warning("InsertPipelineBuild> Unable to load pipelinebuild : %s", err)
+			}
+
 		}
 	*/
-
 	// Update stats
 	stats.PipelineEvent(tx, p.Type, project.ID, applicationData.ID)
 
@@ -1262,7 +1295,7 @@ func LoadPipelineHistoryBuild(db database.Querier, pipelineID int64, application
 }
 
 // LoadPipelineBuild retrieves informations about a specific build
-func LoadPipelineBuild(db *sql.DB, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64, args ...FuncArg) (sdk.PipelineBuild, error) {
+func LoadPipelineBuild(db database.Querier, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64, args ...FuncArg) (sdk.PipelineBuild, error) {
 	var pb sdk.PipelineBuild
 
 	query := fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.pipeline_id = $1 AND pb.build_number = $2 AND pb.application_id = $3 AND pb.environment_id = $4", "")
