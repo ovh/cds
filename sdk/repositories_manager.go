@@ -187,27 +187,6 @@ func GetProjectReposFromReposManager(k, n string) ([]VCSRepo, error) {
 	return repos, nil
 }
 
-//GetCommits returns the commits
-func GetCommits(key, repoManagername, repoFullname, since, until string) ([]VCSCommit, error) {
-	var commits []VCSCommit
-	uri := fmt.Sprintf("/project/%s/repositories_manager/%s/repo/commits?repo=%s&since=%s&until=%s",
-		key, repoManagername, url.QueryEscape(repoFullname), url.QueryEscape(since), url.QueryEscape(until))
-
-	data, code, err := Request("GET", uri, nil)
-	if err != nil {
-		return commits, err
-	}
-
-	if code >= 300 {
-		return commits, fmt.Errorf("HTTP %d", code)
-	}
-
-	if err := json.Unmarshal(data, &commits); err != nil {
-		return commits, err
-	}
-	return commits, nil
-}
-
 //AttachApplicationToReposistoriesManager attachs the application to the repo identified by its fullname in the reposManager
 func AttachApplicationToReposistoriesManager(projectKey, appName, reposManager, repoFullname string) error {
 	uri := fmt.Sprintf("/project/%s/repositories_manager/%s/application/%s/attach?fullname=%s", projectKey, reposManager, appName, url.QueryEscape(repoFullname))
@@ -295,7 +274,7 @@ type RepositoriesManagerClient interface {
 	Branch(string, string) (VCSBranch, error)
 
 	//Commits
-	Commits(repo, since, until string) ([]VCSCommit, error)
+	Commits(repo, branch, since, until string) ([]VCSCommit, error)
 	Commit(repo, hash string) (VCSCommit, error)
 
 	//Hooks

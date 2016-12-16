@@ -371,7 +371,6 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/callback", POST(repositoriesManagerAuthorizeCallback))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}", DELETE(deleteRepositoriesManagerHandler))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo", GET(getRepoFromRepositoriesManagerHandler))
-	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo/commits", GET(getCommitsHandler))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", GET(getReposFromRepositoriesManagerHandler))
 
 	// RepositoriesManager for applications
@@ -379,7 +378,6 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/attach", POST(attachRepositoriesManager))
 	router.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/detach", POST(detachRepositoriesManager))
 	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager", GET(getRepositoriesManagerForApplicationsHandler))
-	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/commits", GET(getApplicationCommitsHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook", POST(addHookOnRepositoriesManagerHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/repositories_manager/{name}/hook/{hookId}", DELETE(deleteHookOnRepositoriesManagerHandler))
 

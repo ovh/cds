@@ -165,7 +165,7 @@ func (s *StashClient) Branch(fullname, branchName string) (sdk.VCSBranch, error)
 
 //Commits returns commit data from a given starting commit, between two commits
 //The commits may be identified by branch or tag name or by hash.
-func (s *StashClient) Commits(repo, since, until string) ([]sdk.VCSCommit, error) {
+func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommit, error) {
 	commits := []sdk.VCSCommit{}
 	t := strings.Split(repo, "/")
 	if len(t) != 2 {

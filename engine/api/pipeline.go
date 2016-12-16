@@ -1615,7 +1615,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	}
 
 	//If we are lucky, return a true diff
-	commits, err = client.Commits(application.RepositoryFullname, pbs[0].Trigger.VCSChangesHash, hash)
+	commits, err = client.Commits(application.RepositoryFullname, pbs[0].Trigger.VCSChangesBranch, pbs[0].Trigger.VCSChangesHash, hash)
 	if err != nil {
 		log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
 		WriteError(w, r, err)
@@ -1729,7 +1729,7 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 
 	if prev != nil && cur.Hash != "" && prev.Hash != "" {
 		//If we are lucky, return a true diff
-		commits, err := client.Commits(application.RepositoryFullname, prev.Hash, cur.Hash)
+		commits, err := client.Commits(application.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
 		if err != nil {
 			log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
 			WriteError(w, r, err)
@@ -1742,7 +1742,7 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 	if cur.Hash != "" {
 		//If we only get current pipeline build hash
 		log.Info("getPipelineBuildCommitsHandler>  Looking for every commit until %s ", cur.Hash)
-		c, err := client.Commits(application.RepositoryFullname, "", cur.Hash)
+		c, err := client.Commits(application.RepositoryFullname, cur.Branch, "", cur.Hash)
 		if err != nil {
 			log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
 			WriteError(w, r, err)
