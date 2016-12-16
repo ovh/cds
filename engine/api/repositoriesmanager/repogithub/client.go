@@ -41,23 +41,24 @@ func (g *GithubClient) Repos() ([]sdk.VCSRepo, error) {
 			//Github may return 304 status because we are using conditionnal request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "repos", g.OAuthToken, nextPage), &nextRepos)
+				cache.Get(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), &repos)
+				break
 			} else {
 				if err := json.Unmarshal(body, &nextRepos); err != nil {
 					log.Warning("GithubClient.Repos> Unable to parse github repositories: %s", err)
 					return nil, err
 				}
-				//Put the body on cache for one hour and one minute
-				cache.SetWithTTL(cache.Key("reposmanager", "github", "repos", g.OAuthToken, nextPage), nextRepos, 61*60)
 			}
 
 			repos = append(repos, nextRepos...)
-
 			nextPage = getNextPage(headers)
 		} else {
 			break
 		}
 	}
+
+	//Put the body on cache for one hour and one minute
+	cache.SetWithTTL(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), repos, 61*60)
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {
@@ -150,14 +151,13 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			//Github may return 304 status because we are using conditionnal request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, nextPage), &nextBranches)
+				cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
+				break
 			} else {
 				if err := json.Unmarshal(body, &nextBranches); err != nil {
 					log.Warning("GithubClient.Branches> Unable to parse github branches: %s", err)
 					return nil, err
 				}
-				//Put the body on cache for one hour and one minute
-				cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, nextPage), nextBranches, 61*60)
 			}
 
 			branches = append(branches, nextBranches...)
@@ -167,6 +167,9 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			break
 		}
 	}
+
+	//Put the body on cache for one hour and one minute
+	cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), branches, 61*60)
 
 	branchesResult := []sdk.VCSBranch{}
 	for _, b := range branches {
@@ -200,51 +203,29 @@ func (g *GithubClient) Branch(fullname, branch string) (sdk.VCSBranch, error) {
 }
 
 // Commits returns the commits list on a branch between a commit SHA (since) until anotger commit SHA (until). The branch is given by the branch of the first commit SHA (since)
-func (g *GithubClient) Commits(repo, since, until string) ([]sdk.VCSCommit, error) {
-	//1. get all Branches
-	branches, err := g.Branches(repo)
+func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSCommit, error) {
+	var theCommits []Commit
+	var commitsResult []sdk.VCSCommit
+
+	log.Debug("Looking for commits on repo %s since = %s until = %s", repo, since, until)
+	if cache.Get(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
+		return commitsResult, nil
+	}
+
+	theCommits, err := g.allCommitsForBranch(repo, theBranch)
 	if err != nil {
 		return nil, err
 	}
 
-	//2. get all commits for all branches
-	allCommits := map[string][]Commit{}
-	for _, branch := range branches {
-		commits, err := g.allCommitsForBranch(repo, branch.DisplayID)
-		if err != nil {
-			return nil, err
-		}
-		allCommits[branch.DisplayID] = commits
-	}
+	log.Debug("Found %d commits for branch %s", len(theCommits), theBranch)
 
-	//3. find the branch for the commit SHA=since
 	//4. find the commits in the branch between SHA=since and SHA=until
-	var theBranch string
-	var theCommits []Commit
-	var sinceFound bool
-	for branch, commits := range allCommits {
-		for i := range commits {
-			if commits[i].Sha == since {
-				theBranch = branch
-				theCommits = append(theCommits, commits[i])
-				sinceFound = true
-				continue
-			}
-			if commits[i].Sha == until && theBranch != "" {
-				theCommits = append(theCommits, commits[i])
-				break
-			}
-			if sinceFound && theBranch != "" {
-				theCommits = append(theCommits, commits[i])
-			}
-		}
-		if theBranch != "" {
-			break
-		}
+	if since != "" {
+		log.Debug("filter commit between %s and %s", since, until)
+		theCommits = filterCommits(theCommits, since, until)
 	}
 
 	//5. convert to sdk.VCSCommit
-	commitsResult := []sdk.VCSCommit{}
 	for _, c := range theCommits {
 		commit := sdk.VCSCommit{
 			Timestamp: c.Commit.Author.Date.Unix() * 1000,
@@ -261,6 +242,8 @@ func (g *GithubClient) Commits(repo, since, until string) ([]sdk.VCSCommit, erro
 
 		commitsResult = append(commitsResult, commit)
 	}
+
+	cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), commitsResult, 3*60*60)
 
 	return commitsResult, nil
 }
@@ -303,37 +286,33 @@ func (g *GithubClient) allCommitsForBranch(repo, branch string) ([]Commit, error
 
 	for {
 		if nextPage != "" {
-			status, body, headers, err := g.get(nextPage + "?" + urlValues.Encode())
+			if strings.Contains(nextPage, "?") {
+				nextPage += "&"
+			} else {
+				nextPage += "?"
+			}
+			status, body, headers, err := g.get(nextPage+urlValues.Encode(), withoutETag)
 			if err != nil {
 				log.Warning("GithubClient.Commits> Error %s", err)
 				return nil, err
 			}
 			if status >= 400 {
+				log.Warning("GithubClient.Commits> Error %s", ErrorAPI(body))
 				return nil, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
 			}
 			nextCommits := []Commit{}
 
-			//Github may return 304 status because we are using conditionnal request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "commits", g.OAuthToken, nextPage, branch), &nextCommits)
-			} else {
-				if err := json.Unmarshal(body, &nextCommits); err != nil {
-					log.Warning("GithubClient.Commits> Unable to parse github commits: %s", err)
-					return nil, err
-				}
-				//Put the body on cache for one hour and one minute
-				cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", g.OAuthToken, nextPage, branch), nextCommits, 61*60)
+			if err := json.Unmarshal(body, &nextCommits); err != nil {
+				log.Warning("GithubClient.Commits> Unable to parse github commits: %s", err)
+				return nil, err
 			}
 
 			commits = append(commits, nextCommits...)
-
 			nextPage = getNextPage(headers)
 		} else {
 			break
 		}
 	}
-
 	return commits, nil
 }
 

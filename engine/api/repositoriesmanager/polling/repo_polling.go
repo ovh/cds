@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -25,8 +26,10 @@ import (
 var (
 	RunningPollers = struct {
 		Workers map[string]*Worker
+		mutex   *sync.RWMutex
 	}{
 		Workers: map[string]*Worker{},
+		mutex:   &sync.RWMutex{},
 	}
 	newPollerChan = make(chan *Worker)
 	endPollerChan = make(chan *Worker)
@@ -52,6 +55,12 @@ type WorkerExecution struct {
 	Events      []sdk.VCSPushEvent `json:"events,omitempty"`
 }
 
+func isWorkerRunning(key string) bool {
+	RunningPollers.mutex.RLock()
+	defer RunningPollers.mutex.RUnlock()
+	return RunningPollers.Workers[key] != nil
+}
+
 //Initialize all existing pollers (one poller per project)
 func Initialize() {
 	//This goroutine handles life of the workers
@@ -59,7 +68,9 @@ func Initialize() {
 		for {
 			select {
 			case w := <-newPollerChan:
+				RunningPollers.mutex.Lock()
 				RunningPollers.Workers[w.ProjectKey] = w
+				RunningPollers.mutex.Unlock()
 				ok, quit, err := w.Poll()
 				if err != nil {
 					log.Warning("Polling> Unable to lauch worker %s: %s", w.ProjectKey, err)
@@ -77,7 +88,9 @@ func Initialize() {
 				}
 
 			case w := <-endPollerChan:
+				RunningPollers.mutex.Lock()
 				delete(RunningPollers.Workers, w.ProjectKey)
+				RunningPollers.mutex.Unlock()
 			}
 		}
 	}()
@@ -98,7 +111,7 @@ func Initialize() {
 		}
 
 		for _, p := range proj {
-			if RunningPollers.Workers[p.Key] == nil {
+			if !isWorkerRunning(p.Key) {
 				w := NewWorker(p.Key)
 				newPollerChan <- w
 			}
@@ -147,13 +160,13 @@ func (w *Worker) Poll() (bool, chan bool, error) {
 }
 
 func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan bool) {
-	delay := time.Duration(60.0)
+	delay := time.Duration(60.0 * time.Second)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var mayIWork string
 
 	log.Debug("Polling> Start on appID=%d, pipID=%d\n", appID, pipID)
 
-	for RunningPollers.Workers[w.ProjectKey] != nil {
+	for isWorkerRunning(w.ProjectKey) {
 		//Check database connection
 		db := database.DB()
 		if db == nil {
@@ -175,8 +188,8 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 		k := cache.Key("reposmanager", "polling", w.ProjectKey, p.Application.Name, p.Pipeline.Name, p.Name)
 		//If nobody is polling it
 		if !cache.Get(k, &mayIWork) {
-			log.Info("Polling> Polling repository %s for %s/%s\n", p.Application.RepositoryFullname, w.ProjectKey, p.Application.Name)
-			cache.SetWithTTL(k, "true", 300)
+			log.Info("Polling> Polling repository %s for %s/%s  : %d\n", p.Application.RepositoryFullname, w.ProjectKey, p.Application.Name, int(delay.Seconds()))
+			cache.SetWithTTL(k, "true", int(delay.Seconds()))
 
 			e := &WorkerExecution{
 				Status:    "Running",
@@ -216,8 +229,6 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 			//Wait for the delay
 			time.Sleep(delay * time.Second)
 			cache.Delete(k)
-		} else {
-			log.Debug("SOmeone is already doing this... %s", k)
 		}
 		//Wait for sometime between 0 and 10 seconds
 		time.Sleep(time.Duration(r.Float64()*10) * time.Second)

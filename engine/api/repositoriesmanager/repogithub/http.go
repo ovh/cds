@@ -77,7 +77,6 @@ func (c *GithubClient) setETag(path string, headers http.Header) {
 	}
 
 	if etag != "" {
-		log.Debug("Github API>> Store ETag: %s : %s", path, etag)
 		//Put etag for this path in cache for 59 minutes
 		cache.SetWithTTL(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
 	}
@@ -86,7 +85,6 @@ func (c *GithubClient) setETag(path string, headers http.Header) {
 func (c *GithubClient) getETag(path string) string {
 	var s string
 	cache.Get(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
-	log.Debug("Github API>> Retrieve ETag: %s : %s", path, s)
 	return s
 }
 
@@ -108,7 +106,17 @@ func getNextPage(headers http.Header) string {
 	return ""
 }
 
-func (c *GithubClient) get(path string) (int, []byte, http.Header, error) {
+type getArgFunc func(c *GithubClient, req *http.Request, path string)
+
+func withETag(c *GithubClient, req *http.Request, path string) {
+	etag := c.getETag(path)
+	if etag != "" {
+		req.Header.Add("If-None-Match", fmt.Sprintf("W/\"%s\"", etag))
+	}
+}
+func withoutETag(c *GithubClient, req *http.Request, path string) {}
+
+func (c *GithubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
 	if RateLimitRemaining < 100 {
 		return 0, nil, nil, ErrorRateLimit
 	}
@@ -126,13 +134,15 @@ func (c *GithubClient) get(path string) (int, []byte, http.Header, error) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
 
-	etag := c.getETag(path)
-	if etag != "" {
-		req.Header.Add("If-None-Match", fmt.Sprintf("W/\"%s\"", etag))
+	if opts == nil {
+		withETag(c, req, path)
+	} else {
+		for _, o := range opts {
+			o(c, req, path)
+		}
 	}
 
 	log.Debug("Github API>> Request URL %s", req.URL.String())
-	log.Debug("Github API>> Request Headers %v", req.Header)
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -145,7 +155,6 @@ func (c *GithubClient) get(path string) (int, []byte, http.Header, error) {
 	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
 
 	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
-		log.Info("Github API>> Response Rate Limit: %s - Remaining: %s - Reset: %s", rateLimitLimit, rateLimitRemaining, rateLimitReset)
 		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
 		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
 	}

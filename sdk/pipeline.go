@@ -39,10 +39,11 @@ type PipelineBuild struct {
 	Application Application `json:"application"`
 	Environment Environment `json:"environment"`
 
-	Artifacts []Artifact `json:"artifacts,omitempty"`
-	Tests     *Tests     `json:"tests,omitempty"`
-
-	Trigger PipelineBuildTrigger `json:"trigger"`
+	Artifacts             []Artifact           `json:"artifacts,omitempty"`
+	Tests                 *Tests               `json:"tests,omitempty"`
+	Commits               []VCSCommit          `json:"commits,omitempty"`
+	Trigger               PipelineBuildTrigger `json:"trigger"`
+	PreviousPipelineBuild *PipelineBuild       `json:"previous_pipeline_build"`
 }
 
 // PipelineBuildTrigger Struct for history table

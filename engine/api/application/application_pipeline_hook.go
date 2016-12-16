@@ -2,7 +2,6 @@ package application
 
 import (
 	"database/sql"
-	"fmt"
 	"regexp"
 
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -35,10 +34,6 @@ func TriggerPipeline(tx *sql.Tx, h sdk.Hook, branch string, hash string, author 
 	args = append(args, sdk.Parameter{
 		Name:  "git.project",
 		Value: h.Project,
-	})
-	args = append(args, sdk.Parameter{
-		Name:  "git.url",
-		Value: fmt.Sprintf("ssh://git@%s:7999/%s/%s.git", h.Host, h.Project, h.Repository),
 	})
 
 	// Load pipeline Argument

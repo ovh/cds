@@ -16,5 +16,4 @@ func init() {
 	Cmd.AddCommand(connectReposManagerCmd())
 	Cmd.AddCommand(disconnectReposManagerCmd())
 	Cmd.AddCommand(getReposFromReposManagerCmd())
-	Cmd.AddCommand(getCommitsCmd())
 }

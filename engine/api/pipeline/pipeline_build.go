@@ -820,6 +820,7 @@ func GetLastBuildNumber(tx *sql.Tx, pipelineID int64, applicationID int64, envir
 func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, applicationData *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (sdk.PipelineBuild, error) {
 	var buildNumber int64
 	var pb sdk.PipelineBuild
+	var client sdk.RepositoriesManagerClient
 
 	// Load last finished build
 	buildNumber, _, err := GetLastBuildNumber(tx, p.ID, applicationData.ID, env.ID)
@@ -909,7 +910,7 @@ func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, appl
 		defautlBranch := "master"
 		lastGitHash := map[string]string{}
 		if applicationData.RepositoriesManager != nil && applicationData.RepositoryFullname != "" {
-			client, _ := repositoriesmanager.AuthorizedClient(tx, project.Key, applicationData.RepositoriesManager.Name)
+			client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, applicationData.RepositoriesManager.Name)
 			if client != nil {
 				branches, _ := client.Branches(applicationData.RepositoryFullname)
 				for _, b := range branches {
@@ -1001,16 +1002,6 @@ func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, appl
 	pb.Parameters = params
 	pb.Application = *applicationData
 	pb.Environment = *env
-
-	/*
-		There should not be any password here
-		// Now we have all clear password, replace them again before return
-		for i, p := range pb.Parameters {
-			if sdk.NeedPlaceholder(p.Type) {
-				pb.Parameters[i].Value = sdk.PasswordPlaceholder
-			}
-		}
-	*/
 
 	// Update stats
 	stats.PipelineEvent(tx, p.Type, project.ID, applicationData.ID)
@@ -1262,7 +1253,7 @@ func LoadPipelineHistoryBuild(db database.Querier, pipelineID int64, application
 }
 
 // LoadPipelineBuild retrieves informations about a specific build
-func LoadPipelineBuild(db *sql.DB, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64, args ...FuncArg) (sdk.PipelineBuild, error) {
+func LoadPipelineBuild(db database.Querier, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64, args ...FuncArg) (sdk.PipelineBuild, error) {
 	var pb sdk.PipelineBuild
 
 	query := fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.pipeline_id = $1 AND pb.build_number = $2 AND pb.application_id = $3 AND pb.environment_id = $4", "")
@@ -1831,11 +1822,12 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db database.Querier, buildNumb
 						AND 			environment_id = $4
 					)
 					ORDER BY  build_number DESC
-					LIMIT 1
 				) AS previous_pipeline ON (
 					previous_pipeline.pipeline_id = current_pipeline.pipeline_id AND previous_pipeline.vcs_changes_branch = current_pipeline.vcs_changes_branch
 				)
-			WHERE current_pipeline.build_number = $1;
+			WHERE current_pipeline.build_number = $1
+			ORDER BY  previous_pipeline.build_number DESC
+			LIMIT 1;
 	`
 	var curBuildNumber, prevBuildNumber sql.NullInt64
 	var curHash, prevHash, curBranch, prevBranch sql.NullString

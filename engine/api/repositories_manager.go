@@ -404,32 +404,6 @@ func getRepoFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reques
 	WriteJSON(w, r, repo, http.StatusOK)
 }
 
-func getCommitsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-	rmName := vars["name"]
-	repoName := r.FormValue("repo")
-	since := r.FormValue("since")
-	until := r.FormValue("until")
-
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("getCommitsHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		WriteError(w, r, sdk.ErrNoReposManagerClientAuth)
-		return
-	}
-
-	log.Notice("getCommitsHandler> Searching commits for %s %s %s", repoName, since, until)
-	commits, err := client.Commits(repoName, since, until)
-	if err != nil {
-		log.Warning("getCommitsHandler> Cannot get commits: %s", err)
-		WriteError(w, r, err)
-		return
-	}
-	WriteJSON(w, r, commits, http.StatusOK)
-}
-
 func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -555,44 +529,6 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *sql.D
 func getRepositoriesManagerForApplicationsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	WriteError(w, r, errors.New("Not implemented"))
 	return
-}
-
-func getApplicationCommitsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
-	rmName := vars["name"]
-	fullname := r.FormValue("fullname")
-	since := r.FormValue("since")
-	until := r.FormValue("until")
-
-	b, e := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
-	if e != nil {
-		log.Warning("getCommitsHandler> Cannot check app (%s,%s,%s): %s", rmName, projectKey, appName, e)
-		WriteError(w, r, e)
-		return
-	}
-
-	if !b {
-		WriteError(w, r, sdk.ErrNoReposManagerClientAuth)
-		return
-	}
-
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("getCommitsHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		WriteError(w, r, sdk.ErrNoReposManagerClientAuth)
-		return
-	}
-
-	commits, err := client.Commits(fullname, since, until)
-	if err != nil {
-		log.Warning("getCommitsHandler> Cannot get commits: %s", err)
-		WriteError(w, r, err)
-		return
-	}
-	WriteJSON(w, r, commits, http.StatusOK)
 }
 
 func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
