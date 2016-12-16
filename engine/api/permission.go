@@ -5,6 +5,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
@@ -46,6 +47,12 @@ func getPermissionByMethod(method string, isExecution bool) int {
 }
 
 func checkPermission(routeVar map[string]string, c *context.Context, permission int) bool {
+	for _, g := range c.User.Groups {
+		if g.Name == group.SharedInfraGroup {
+			return true
+		}
+	}
+
 	permissionOk := true
 	for key, value := range routeVar {
 		if permFunc, ok := permissionMapFunction[key]; ok {
