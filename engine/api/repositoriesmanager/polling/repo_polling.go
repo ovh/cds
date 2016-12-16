@@ -113,6 +113,7 @@ func Initialize() {
 
 		for _, p := range proj {
 			if !isWorkerRunning(p.Key) {
+				log.Debug("Stating new worker for %s", p.Key)
 				w := NewWorker(p.Key)
 				newPollerChan <- w
 			}
@@ -190,7 +191,7 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 		//If nobody is polling it
 		if !cache.Get(k, &mayIWork) {
 			log.Info("Polling> Polling repository %s for %s/%s\n", p.Application.RepositoryFullname, w.ProjectKey, p.Application.Name)
-			cache.SetWithTTL(k, "true", 300)
+			cache.SetWithTTL(k, "true", int(delay.Seconds()))
 
 			e := &WorkerExecution{
 				Status:    "Running",
@@ -230,8 +231,6 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 			//Wait for the delay
 			time.Sleep(delay * time.Second)
 			cache.Delete(k)
-		} else {
-			log.Debug("SOmeone is already doing this... %s", k)
 		}
 		//Wait for sometime between 0 and 10 seconds
 		time.Sleep(time.Duration(r.Float64()*10) * time.Second)

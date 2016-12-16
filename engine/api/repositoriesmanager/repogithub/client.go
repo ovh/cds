@@ -208,12 +208,9 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 	var commitsResult []sdk.VCSCommit
 
 	log.Debug("Looking for commits on repo %s since = %s until = %s", repo, since, until)
-	/*
-		if cache.Get(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
-
-			return commitsResult, nil
-		}
-	*/
+	if cache.Get(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
+		return commitsResult, nil
+	}
 
 	theCommits, err := g.allCommitsForBranch(repo, theBranch)
 	if err != nil {
