@@ -1,6 +1,8 @@
 package event
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -19,11 +21,17 @@ func Publish(event sdk.Event) {
 func PublishActionBuild(ab *sdk.ActionBuild, eventAction sdk.EventAction) {
 	log.Debug("PublishActionBuild> pb:%d ab:%d event:%s", ab.PipelineBuildID, ab.ID, eventAction)
 
+	payload, err := json.Marshal(ab)
+	if err != nil {
+		log.Critical("PublishActionBuild> error while converting payload: %s", err)
+	}
+
 	Publish(sdk.Event{
 		DateEvent:   time.Now().Unix(),
-		ActionBuild: ab,
+		Payload:     payload,
 		Action:      eventAction,
-		EventType:   sdk.SystemEvent,
+		EventSource: sdk.SystemEvent,
+		EventType:   fmt.Sprintf("%T", ab),
 	})
 }
 
@@ -36,10 +44,16 @@ func PublishPipelineBuild(db database.QueryExecuter, pb *sdk.PipelineBuild, even
 		Publish(event)
 	}
 
+	payload, err := json.Marshal(pb)
+	if err != nil {
+		log.Critical("PublishPipelineBuild> error while converting payload: %s", err)
+	}
+
 	Publish(sdk.Event{
-		DateEvent:     time.Now().Unix(),
-		PipelineBuild: pb,
-		Action:        eventAction,
-		EventType:     sdk.SystemEvent,
+		DateEvent:   time.Now().Unix(),
+		Payload:     payload,
+		Action:      eventAction,
+		EventSource: sdk.SystemEvent,
+		EventType:   fmt.Sprintf("%T", pb),
 	})
 }

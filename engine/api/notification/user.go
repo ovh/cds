@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -182,21 +181,19 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 }
 
 func getEvent(pb *sdk.PipelineBuild, notif *sdk.JabberEmailUserNotificationSettings, params map[string]string) (sdk.Event, error) {
-	title := notif.Template.Subject
-	message := notif.Template.Body
-	for k, value := range params {
-		key := "{{." + k + "}}"
-		title = strings.Replace(title, key, value, -1)
-		message = strings.Replace(message, key, value, -1)
+
+	payload, err := json.Marshal(notif.Template)
+	if err != nil {
+		log.Critical("getEvent> error while converting payload: %s", err)
+		return sdk.Event{}, err
 	}
 
 	n := sdk.Event{
 		DateEvent:   time.Now().Unix(),
-		Status:      pb.Status,
-		EventType:   sdk.UserEvent,
+		EventSource: sdk.UserEvent,
+		EventType:   fmt.Sprintf("%T", notif.Template),
+		Payload:     payload,
 		Destination: "jabber",
-		Title:       title,
-		Message:     message,
 	}
 	for _, r := range notif.Recipients {
 		n.Recipients = append(n.Recipients, r)
