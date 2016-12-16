@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -47,7 +48,7 @@ func InsertActionBuild(db database.QueryExecuter, b *sdk.ActionBuild) error {
 		return err
 	}
 
-	// TODO EVENT yesnault SEND EVENT notification.SendActionBuild(db, b, sdk.CreateNotifEvent, sdk.StatusWaiting)
+	event.PublishActionBuild(b, sdk.CreateEvent)
 	return nil
 }
 

@@ -334,17 +334,16 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 // InsertBuildVariable adds a variable exported in user scripts and forwarded by building worker
 func InsertBuildVariable(db *sql.DB, pbID int64, v sdk.Variable) error {
 
-	tx, err := db.Begin()
-	if err != nil {
-		return err
+	tx, errDb := db.Begin()
+	if errDb != nil {
+		return errDb
 	}
 	defer tx.Rollback()
 
 	// Load args from pipeline build and lock it
 	query := `SELECT args FROM pipeline_build WHERE id = $1 FOR UPDATE`
 	var argsJSON string
-	err = tx.QueryRow(query, pbID).Scan(&argsJSON)
-	if err != nil {
+	if err := tx.QueryRow(query, pbID).Scan(&argsJSON); err != nil {
 		return err
 	}
 
@@ -362,33 +361,30 @@ func InsertBuildVariable(db *sql.DB, pbID int64, v sdk.Variable) error {
 	})
 
 	// Update pb in database
-	data, err := json.Marshal(params)
-	if err != nil {
-		return err
+	data, errJson := json.Marshal(params)
+	if errJson != nil {
+		return errJson
 	}
 
 	query = `UPDATE pipeline_build SET args = $1 WHERE id = $2`
-	_, err = tx.Exec(query, string(data), pbID)
-	if err != nil {
+	if _, err := tx.Exec(query, string(data), pbID); err != nil {
 		return err
 	}
 
 	// now load all related action build
 	query = `SELECT id, args FROM action_build WHERE pipeline_build_id = $1 FOR UPDATE`
-	rows, err := tx.Query(query, pbID)
-	if err != nil {
-		return err
+	rows, errQuery := tx.Query(query, pbID)
+	if errQuery != nil {
+		return errQuery
 	}
 	defer rows.Close()
 	var abs []sdk.ActionBuild
 	for rows.Next() {
 		var ab sdk.ActionBuild
-		err = rows.Scan(&ab.ID, &argsJSON)
-		if err != nil {
+		if err := rows.Scan(&ab.ID, &argsJSON); err != nil {
 			return err
 		}
-		err = json.Unmarshal([]byte(argsJSON), &ab.Args)
-		if err != nil {
+		if err := json.Unmarshal([]byte(argsJSON), &ab.Args); err != nil {
 			return err
 		}
 		abs = append(abs, ab)
@@ -403,19 +399,17 @@ func InsertBuildVariable(db *sql.DB, pbID int64, v sdk.Variable) error {
 			Value: v.Value,
 		})
 
-		data, err := json.Marshal(ab.Args)
-		if err != nil {
-			return err
+		data, errMarshal := json.Marshal(ab.Args)
+		if errMarshal != nil {
+			return errMarshal
 		}
 
-		_, err = tx.Exec(query, string(data), ab.ID)
-		if err != nil {
+		if _, err := tx.Exec(query, string(data), ab.ID); err != nil {
 			return err
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 
@@ -536,7 +530,7 @@ func UpdatePipelineBuildStatus(db database.QueryExecuter, pb sdk.PipelineBuild, 
 
 	k := cache.Key("application", pb.Application.ProjectKey, "*")
 	cache.DeleteAll(k)
-	event.Publish(db, &pb, sdk.UpdateEvent, status, previous)
+	event.PublishPipelineBuild(db, &pb, sdk.UpdateEvent, previous)
 	return nil
 }
 
@@ -1029,8 +1023,7 @@ func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, appl
 		}
 	}
 
-	event.Publish(tx, &pb, sdk.CreateEvent, sdk.StatusBuilding, previous)
-
+	event.PublishPipelineBuild(tx, &pb, sdk.CreateEvent, previous)
 	return pb, nil
 }
 

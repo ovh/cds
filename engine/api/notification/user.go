@@ -16,7 +16,7 @@ import (
 )
 
 // GetUserEvents returns event from user notification
-func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, eventAction sdk.EventAction, status sdk.Status, previous *sdk.PipelineBuild) []sdk.Event {
+func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, eventAction sdk.EventAction, previous *sdk.PipelineBuild) []sdk.Event {
 	//Load notif
 	userNotifs, errLoad := LoadUserNotificationSettings(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if errLoad != nil {
@@ -33,7 +33,7 @@ func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, eventAction
 	for _, p := range pb.Parameters {
 		params[p.Name] = p.Value
 	}
-	params["cds.status"] = status.String()
+	params["cds.status"] = pb.Status.String()
 	//Set PipelineBuild UI URL
 	params["cds.buildURL"] = fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s&tab=detail", viper.GetString("base_url"), pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
 	//find author (triggeredBy user or changes author)
@@ -46,7 +46,7 @@ func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, eventAction
 	events := []sdk.Event{}
 
 	for t, notif := range userNotifs.Notifications {
-		if shouldSendUserNotification(notif, pb, previous) {
+		if ShouldSendUserNotification(notif, pb, previous) {
 			switch t {
 			case sdk.JabberUserNotification:
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
@@ -149,8 +149,8 @@ func removeDuplicates(xs *[]string) {
 	*xs = (*xs)[:j]
 }
 
-//shouldSendUserNotification check if user notification has to be sent
-func shouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk.PipelineBuild, previous *sdk.PipelineBuild) bool {
+//ShouldSendUserNotification check if user notification has to be sent
+func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk.PipelineBuild, previous *sdk.PipelineBuild) bool {
 	var check = func(s sdk.UserNotificationEventType) bool {
 		switch s {
 		case sdk.UserNotificationAlways:

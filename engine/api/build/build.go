@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -141,7 +142,7 @@ func UpdateActionBuildStatus(db *sql.Tx, build *sdk.ActionBuild, status sdk.Stat
 
 	build.Status = status
 
-	// TODO EVENT yesnault
+	event.PublishActionBuild(build, sdk.UpdateEvent)
 
 	if status == sdk.StatusFail || status == sdk.StatusDisabled || status == sdk.StatusSkipped {
 		var log string
@@ -395,15 +396,13 @@ func DeleteActionBuild(db database.QueryExecuter, pipelineActionIDs []int64) err
 		}
 
 		for _, abID := range actionBuildIDs {
-			err := DeleteBuildLogs(db, abID)
-			if err != nil {
+			if err := DeleteBuildLogs(db, abID); err != nil {
 				return err
 			}
 		}
 
 		queryDelete := `DELETE FROM action_build WHERE pipeline_action_id = $1`
-		_, err = db.Exec(queryDelete, id)
-		if err != nil {
+		if _, err := db.Exec(queryDelete, id); err != nil {
 			log.Warning("DeleteActionBuild> Cannot remove action builds for PipelineAction %d\n", id)
 			return err
 		}
