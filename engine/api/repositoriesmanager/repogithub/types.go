@@ -272,8 +272,7 @@ type Commit struct {
 		URL     string `json:"url"`
 		HTMLURL string `json:"html_url"`
 	} `json:"parents"`
-	ParentCommits []*Commit `json:"-"`
-	Stats         struct {
+	Stats struct {
 		Total     int `json:"total"`
 		Additions int `json:"additions"`
 		Deletions int `json:"deletions"`

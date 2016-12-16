@@ -77,7 +77,6 @@ func (c *GithubClient) setETag(path string, headers http.Header) {
 	}
 
 	if etag != "" {
-		//log.Debug("Github API>> Store ETag: %s : %s", path, etag)
 		//Put etag for this path in cache for 59 minutes
 		cache.SetWithTTL(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
 	}
@@ -86,7 +85,6 @@ func (c *GithubClient) setETag(path string, headers http.Header) {
 func (c *GithubClient) getETag(path string) string {
 	var s string
 	cache.Get(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
-	//log.Debug("Github API>> Retrieve ETag: %s : %s", path, s)
 	return s
 }
 
@@ -110,13 +108,13 @@ func getNextPage(headers http.Header) string {
 
 type getArgFunc func(c *GithubClient, req *http.Request, path string)
 
-func WithETag(c *GithubClient, req *http.Request, path string) {
+func withETag(c *GithubClient, req *http.Request, path string) {
 	etag := c.getETag(path)
 	if etag != "" {
 		req.Header.Add("If-None-Match", fmt.Sprintf("W/\"%s\"", etag))
 	}
 }
-func WithoutETag(c *GithubClient, req *http.Request, path string) {}
+func withoutETag(c *GithubClient, req *http.Request, path string) {}
 
 func (c *GithubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
 	if RateLimitRemaining < 100 {
@@ -137,7 +135,7 @@ func (c *GithubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
 
 	if opts == nil {
-		WithETag(c, req, path)
+		withETag(c, req, path)
 	} else {
 		for _, o := range opts {
 			o(c, req, path)

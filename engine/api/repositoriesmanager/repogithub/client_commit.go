@@ -1,9 +1,6 @@
 package repogithub
 
-import (
-	"fmt"
-	"reflect"
-)
+import "reflect"
 
 func interfaceSlice(slice interface{}) []interface{} {
 	s := reflect.ValueOf(slice)
@@ -49,20 +46,16 @@ ancestorLoop:
 					goto ancestorLoop
 				}
 			}
-		} else {
-			if arrayContains(ancestors, c.Sha) {
-				for _, p := range c.Parents {
-					if !arrayContains(ancestors, p.Sha) {
-						ancestors = append(ancestors, p.Sha)
-						goto ancestorLoop
-					}
+		} else if arrayContains(ancestors, c.Sha) {
+			for _, p := range c.Parents {
+				if !arrayContains(ancestors, p.Sha) {
+					ancestors = append(ancestors, p.Sha)
+					goto ancestorLoop
 				}
 			}
 		}
+
 	}
-
-	fmt.Printf("%s has %d ancestors among %d commits \n", since, len(ancestors), len(allCommits))
-
 	return ancestors
 }
 

@@ -282,12 +282,16 @@ func (g *GithubClient) allCommitsForBranch(repo, branch string) ([]Commit, error
 	var commits = []Commit{}
 	urlValues := url.Values{}
 	urlValues.Add("sha", branch)
-	var nextPage = "/repos/" + repo + "/commits?a=a"
+	var nextPage = "/repos/" + repo + "/commits"
 
 	for {
 		if nextPage != "" {
-
-			status, body, headers, err := g.get(nextPage+"&"+urlValues.Encode(), WithoutETag)
+			if strings.Contains(nextPage, "?") {
+				nextPage += "&"
+			} else {
+				nextPage += "?"
+			}
+			status, body, headers, err := g.get(nextPage+urlValues.Encode(), withoutETag)
 			if err != nil {
 				log.Warning("GithubClient.Commits> Error %s", err)
 				return nil, err

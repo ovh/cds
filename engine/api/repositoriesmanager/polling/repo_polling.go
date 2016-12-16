@@ -8,9 +8,8 @@ import (
 	"math/rand"
 	"regexp"
 	"strings"
-	"time"
-
 	"sync"
+	"time"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
