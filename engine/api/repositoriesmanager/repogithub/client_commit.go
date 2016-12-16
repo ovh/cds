@@ -33,13 +33,13 @@ func arrayContains(array interface{}, s interface{}) bool {
 func findAncestors(allCommits []Commit, since string) []string {
 	ancestors := []string{}
 	var i int
-	//var limit = len(allCommits) * len(allCommits)
+	var limit = len(allCommits) * len(allCommits)
 
 ancestorLoop:
-	/*	if i > limit {
-			return ancestors
-		}
-	*/
+	if i > limit {
+		return ancestors
+	}
+
 	for _, c := range allCommits {
 		i++
 		if c.Sha == since {

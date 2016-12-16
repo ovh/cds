@@ -1003,48 +1003,6 @@ func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, appl
 	pb.Application = *applicationData
 	pb.Environment = *env
 
-	/*
-		if client != nil {
-			//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
-			//buildNumber, pipelineID, applicationID, environmentID
-			cur, prev, err := CurrentAndPreviousPipelineBuildNumberAndHash(tx, int64(buildNumber), p.ID, applicationData.ID, env.ID)
-			if err != nil {
-				log.Warning("InsertPipelineBuild> Error fetching previous Pipeline Build for %s : %s", cur.Branch, err)
-			}
-
-			if prev == nil {
-				log.Info("InsertPipelineBuild> No previous build was found for branch %s", cur.Branch)
-			} else {
-				log.Info("InsertPipelineBuild> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
-			}
-
-			// Fetch commits
-			if prev != nil && cur.Hash == prev.Hash {
-				//If the previous pipeline build was on the same git.hash => no commit
-				pb.Commits = []sdk.VCSCommit{}
-			} else if prev != nil && cur.Hash != prev.Hash {
-				//If we are lucky, return a true diff
-				pb.Commits, err = client.Commits(applicationData.RepositoryFullname, prev.Hash, cur.Hash)
-				if err != nil {
-					log.Warning("InsertPipelineBuild> Error fetching commits : %s", err)
-				}
-			} else if prev == nil && cur.Hash != "" {
-				//If we only get current pipeline build hash
-				log.Info("InsertPipelineBuild>  Looking for every commit until %s ", cur.Hash)
-				pb.Commits, err = client.Commits(applicationData.RepositoryFullname, "", cur.Hash)
-				if err != nil {
-					log.Warning("InsertPipelineBuild> Error fetching commits : %s", err)
-				}
-			}
-
-			// Load previous pipeline buid based on the buildnumber
-			prevPB, err := LoadPipelineBuild(tx, p, applicationData.ID, buildNumber, env.ID)
-			if err != nil {
-				log.Warning("InsertPipelineBuild> Unable to load pipelinebuild : %s", err)
-			}
-
-		}
-	*/
 	// Update stats
 	stats.PipelineEvent(tx, p.Type, project.ID, applicationData.ID)
 
