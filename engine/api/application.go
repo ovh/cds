@@ -179,41 +179,45 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	withPollers := r.FormValue("withPollers")
 	withHooks := r.FormValue("withHooks")
 	withNotifs := r.FormValue("withNotifs")
+	withWorkflow := r.FormValue("withWorkflow")
 	withTriggers := r.FormValue("withTriggers")
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
-	app, err := application.LoadApplicationByName(db, projectKey, applicationName)
-	if err != nil {
-		log.Warning("getApplicationHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
-		WriteError(w, r, err)
+	app, errApp := application.LoadApplicationByName(db, projectKey, applicationName)
+	if errApp != nil {
+		log.Warning("getApplicationHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, errApp)
+		WriteError(w, r, errApp)
 		return
 	}
 
 	if withPollers == "true" {
-		app.RepositoryPollers, err = poller.LoadPollersByApplication(db, app.ID)
-		if err != nil {
-			log.Warning("getApplicationHandler: Cannot load pollers for application %s: %s\n", applicationName, err)
-			WriteError(w, r, err)
+		var errPoller error
+		app.RepositoryPollers, errPoller = poller.LoadPollersByApplication(db, app.ID)
+		if errPoller != nil {
+			log.Warning("getApplicationHandler: Cannot load pollers for application %s: %s\n", applicationName, errPoller)
+			WriteError(w, r, errPoller)
 			return
 		}
 
 	}
 
 	if withHooks == "true" {
-		app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
-		if err != nil {
-			log.Warning("getApplicationHandler: Cannot load hooks for application %s: %s\n", applicationName, err)
-			WriteError(w, r, err)
+		var errHook error
+		app.Hooks, errHook = hook.LoadApplicationHooks(db, app.ID)
+		if errHook != nil {
+			log.Warning("getApplicationHandler: Cannot load hooks for application %s: %s\n", applicationName, errHook)
+			WriteError(w, r, errHook)
 			return
 		}
 	}
 
 	if withNotifs == "true" {
-		app.Notifications, err = notification.LoadAllUserNotificationSettings(db, app.ID)
-		if err != nil {
-			log.Warning("getApplicationHandler: Cannot load user notifications for application %s: %s\n", applicationName, err)
-			WriteError(w, r, err)
+		var errNotif error
+		app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, app.ID)
+		if errNotif != nil {
+			log.Warning("getApplicationHandler: Cannot load user notifications for application %s: %s\n", applicationName, errNotif)
+			WriteError(w, r, errNotif)
 			return
 		}
 	}
@@ -221,12 +225,23 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	if withTriggers == "true" {
 		for i := range app.Pipelines {
 			appPip := &app.Pipelines[i]
-			appPip.Triggers, err = trigger.LoadTriggersByAppAndPipeline(db, app.ID, appPip.Pipeline.ID)
-			if err != nil {
-				log.Warning("getApplicationHandler: Cannot load triggers: %s\n", err)
-				WriteError(w, r, err)
+			var errTrig error
+			appPip.Triggers, errTrig = trigger.LoadTriggersByAppAndPipeline(db, app.ID, appPip.Pipeline.ID)
+			if errTrig != nil {
+				log.Warning("getApplicationHandler: Cannot load triggers: %s\n", errTrig)
+				WriteError(w, r, errTrig)
 				return
 			}
+		}
+	}
+
+	if withWorkflow == "true" {
+		var errWorflow error
+		app.Workflows, errWorflow = application.LoadCDTree(db, projectKey, applicationName, c.User)
+		if errWorflow != nil {
+			log.Warning("getApplicationHandler: Cannot load CD Tree for applications %s: %s\n", app.Name, errWorflow)
+			WriteError(w, r, errWorflow)
+			return
 		}
 	}
 
@@ -235,31 +250,34 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 		version := 0
 		if versionString != "" {
-			version, err = strconv.Atoi(versionString)
-			if err != nil {
-				log.Warning("getApplicationHandler: Version %s is not an integer: %s\n", versionString, err)
-				WriteError(w, r, err)
+			var errStatus error
+			version, errStatus = strconv.Atoi(versionString)
+			if errStatus != nil {
+				log.Warning("getApplicationHandler: Version %s is not an integer: %s\n", versionString, errStatus)
+				WriteError(w, r, errStatus)
 				return
 			}
 		}
 
 		if version == 0 {
-			pipelineBuilds, err = pipeline.GetAllLastBuildByApplication(db, app.ID, branchName)
-			if err != nil {
-				log.Warning("getApplicationHandler: Cannot load app status: %s\n", err)
-				WriteError(w, r, err)
+			var errBuilds error
+			pipelineBuilds, errBuilds = pipeline.GetAllLastBuildByApplication(db, app.ID, branchName)
+			if errBuilds != nil {
+				log.Warning("getApplicationHandler: Cannot load app status: %s\n", errBuilds)
+				WriteError(w, r, errBuilds)
 				return
 			}
 		} else {
 			if branchName == "" {
-				log.Warning("getApplicationHandler: branchName must be provided with version param: %s\n", err)
+				log.Warning("getApplicationHandler: branchName must be provided with version param\n")
 				WriteError(w, r, sdk.ErrBranchNameNotProvided)
 				return
 			}
-			pipelineBuilds, err = pipeline.GetAllLastBuildByApplicationAndVersion(db, app.ID, branchName, version)
-			if err != nil {
-				log.Warning("getApplicationHandler: Cannot load app status by version: %s\n", err)
-				WriteError(w, r, err)
+			var errPipBuilds error
+			pipelineBuilds, errPipBuilds = pipeline.GetAllLastBuildByApplicationAndVersion(db, app.ID, branchName, version)
+			if errPipBuilds != nil {
+				log.Warning("getApplicationHandler: Cannot load app status by version: %s\n", errPipBuilds)
+				WriteError(w, r, errPipBuilds)
 				return
 			}
 		}
