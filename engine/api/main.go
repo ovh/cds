@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -88,6 +89,7 @@ var mainCmd = &cobra.Command{
 				<-c
 				log.Warning("Cleanup SQL connections\n")
 				db.Close()
+				event.Close()
 				os.Exit(0)
 			}()
 		}
@@ -163,6 +165,7 @@ var mainCmd = &cobra.Command{
 
 		cache.Initialize(viper.GetString("cache"), viper.GetString("redis_host"), viper.GetString("redis_password"), viper.GetInt("cache_ttl"))
 
+		go event.Routine()
 		go archivist.Archive(viper.GetInt("interval_archive_seconds"), viper.GetInt("archived_build_hours"))
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller()
@@ -535,6 +538,18 @@ func init() {
 
 	flags.Int("session-ttl", 60, "Session Time to Live (minutes)")
 	viper.BindPFlag("session_ttl", flags.Lookup("session-ttl"))
+
+	flags.String("event-kafka-broker-addresses", "", "Ex: --event-kafka-broker-addresses=host:port,host2:port2")
+	viper.BindPFlag("event_kafka_broker_addresses", flags.Lookup("event-kafka-broker-addresses"))
+
+	flags.String("event-kafka-topic", "", "Ex: --kafka-topic=your-kafka-topic")
+	viper.BindPFlag("event_kafka_topic", flags.Lookup("event-kafka-topic"))
+
+	flags.String("event-kafka-user", "", "Ex: --kafka-user=your-kafka-user")
+	viper.BindPFlag("event_kafka_user", flags.Lookup("event-kafka-user"))
+
+	flags.String("event-kafka-password", "", "Ex: --kafka-password=your-kafka-password")
+	viper.BindPFlag("event_kafka_password", flags.Lookup("event-kafka-password"))
 
 	mainCmd.AddCommand(database.DBCmd)
 

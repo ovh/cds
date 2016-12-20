@@ -52,7 +52,7 @@ func PublishPipelineBuild(db database.QueryExecuter, pb *sdk.PipelineBuild, even
 	Publish(sdk.Event{
 		DateEvent:   time.Now().Unix(),
 		Payload:     payload,
-		Action:      eventAction,
+		Action:      eventAction, // create / update
 		EventSource: sdk.SystemEvent,
 		EventType:   fmt.Sprintf("%T", pb),
 	})
