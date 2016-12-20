@@ -197,6 +197,8 @@ func Test_workerWaitingHandler(t *testing.T) {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
+	worker.SetStatus(db, workr.ID, sdk.StatusBuilding)
+
 	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
 	router = &Router{authDriver, mux.NewRouter(), "/Test_workerWaitingHandler"}
 	router.init()
