@@ -357,25 +357,30 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 	return w, tx.Commit()
 }
 
+// SetStatus sets action_build_id and status to building on given worker
+func SetStatus(db database.Executer, workerID string, status sdk.Status) error {
+	query := `UPDATE worker SET status = $1 WHERE id = $2`
+
+	res, errE := db.Exec(query, status.String(), workerID)
+	if errE != nil {
+		return errE
+	}
+
+	_, err := res.RowsAffected()
+	return err
+}
+
 // SetToBuilding sets action_build_id and status to building on given worker
 func SetToBuilding(db database.Executer, workerID string, actionBuildID int64) error {
 	query := `UPDATE worker SET status = $1, action_build_id = $2 WHERE id = $3`
 
-	res, err := db.Exec(query, sdk.StatusBuilding.String(), actionBuildID, workerID)
-	if err != nil {
-		return err
+	res, errE := db.Exec(query, sdk.StatusBuilding.String(), actionBuildID, workerID)
+	if errE != nil {
+		return errE
 	}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected != 1 {
-		return fmt.Errorf("SetActionBuild: Multiple (%d) rows affected ! (id=%s)\n", rowsAffected, workerID)
-	}
-
-	return nil
+	_, err := res.RowsAffected()
+	return err
 }
 
 // UpdateWorkerStatus changes worker status to Disabled

@@ -406,6 +406,8 @@ func (router *Router) init() {
 	router.Handle("/worker", Auth(false), GET(getWorkersHandler), POST(registerWorkerHandler))
 	router.Handle("/worker/status", GET(getWorkerModelStatus))
 	router.Handle("/worker/refresh", POST(refreshWorkerHandler))
+	router.Handle("/worker/checking", POST(workerCheckingHandler))
+	router.Handle("/worker/waiting", POST(workerWaitingHandler))
 	router.Handle("/worker/unregister", POST(unregisterWorkerHandler))
 	router.Handle("/worker/{id}/disable", POST(disableWorkerHandler))
 	router.Handle("/worker/model", POST(addWorkerModel), GET(getWorkerModels))
