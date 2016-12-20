@@ -158,9 +158,24 @@ func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 }
 
 func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	err := worker.DeleteWorker(db, c.Worker.ID)
-	if err != nil {
+	if err := worker.DeleteWorker(db, c.Worker.ID); err != nil {
 		log.Warning("unregisterWorkerHandler> cannot delete worker %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+}
+
+func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	if err := worker.SetStatus(db, c.Worker.ID, sdk.StatusChecking); err != nil {
+		log.Warning("workerCheckingHandler> cannot update worker %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+}
+
+func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	if err := worker.SetStatus(db, c.Worker.ID, sdk.StatusWaiting); err != nil {
+		log.Warning("workerCheckingHandler> cannot update worker %s\n", err)
 		WriteError(w, r, err)
 		return
 	}

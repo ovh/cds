@@ -169,6 +169,9 @@ func queuePolling() {
 }
 
 func checkQueue() {
+	//Set the status to checking to avoid beeing killed while checking queue, actions and requirements
+	sdk.SetWorkerStatus(sdk.StatusChecking)
+
 	queue, err := sdk.GetBuildQueue()
 	if err != nil {
 		log.Notice("checkQueue> Cannot get build queue: %s\n", err)
@@ -198,6 +201,7 @@ func checkQueue() {
 			takeAction(queue[i])
 		}
 	}
+	sdk.SetWorkerStatus(sdk.StatusWaiting)
 }
 
 func postCheckRequirementError(r *sdk.Requirement, err error) {

@@ -42,6 +42,8 @@ func StatusFromString(in string) Status {
 		return StatusWaiting
 	case StatusBuilding.String():
 		return StatusBuilding
+	case StatusChecking.String():
+		return StatusChecking
 	case StatusSuccess.String():
 		return StatusSuccess
 	case StatusNeverBuilt.String():
@@ -64,6 +66,7 @@ func (t Status) String() string {
 // Action status in queue
 const (
 	StatusWaiting    Status = "Waiting"
+	StatusChecking   Status = "Checking"
 	StatusBuilding   Status = "Building"
 	StatusSuccess    Status = "Success"
 	StatusFail       Status = "Fail"
