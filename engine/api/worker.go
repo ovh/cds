@@ -166,6 +166,18 @@ func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 }
 
 func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	wk, errW := worker.LoadWorker(db, c.Worker.ID)
+	if errW != nil {
+		WriteError(w, r, errW)
+		return
+	}
+
+	if wk.Status != sdk.StatusWaiting {
+		log.Warning("workerCheckingHandler> Worker %s cannot be Checking", wk.Name)
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
 	if err := worker.SetStatus(db, c.Worker.ID, sdk.StatusChecking); err != nil {
 		log.Warning("workerCheckingHandler> cannot update worker %s\n", err)
 		WriteError(w, r, err)
@@ -174,8 +186,20 @@ func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 }
 
 func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	wk, errW := worker.LoadWorker(db, c.Worker.ID)
+	if errW != nil {
+		WriteError(w, r, errW)
+		return
+	}
+
+	if wk.Status != sdk.StatusChecking && wk.Status != sdk.StatusBuilding {
+		log.Warning("workerWaitingHandler> Worker %s cannot be Waiting", wk.Name)
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
 	if err := worker.SetStatus(db, c.Worker.ID, sdk.StatusWaiting); err != nil {
-		log.Warning("workerCheckingHandler> cannot update worker %s\n", err)
+		log.Warning("workerWaitingHandler> cannot update worker %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
