@@ -1,10 +1,11 @@
 package scheduler
 
 import (
+	"testing"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestLoadAllPipelineScheduler(t *testing.T) {
@@ -15,7 +16,7 @@ func TestLoadAllPipelineScheduler(t *testing.T) {
 	_db, _ := testwithdb.SetupPG(t)
 	db := database.DBMap(_db)
 
-	schedulers, err := LoadAllPipelineScheduler(db)
+	schedulers, err := LoadAll(db)
 	assert.NoError(t, err)
 	assert.NotNil(t, schedulers)
 }
