@@ -49,7 +49,7 @@ const marathonPOSTAppTemplate = `
 				},
         "type": "DOCKER"
     },
-		"cmd": "rm -f worker && curl https://dl.plik.ovh/file/8i0E2L0bkoh3tEla/ncCdbAA3saiGlaE9/worker -o worker &&  chmod +x worker && exec ./worker",
+		"cmd": "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker",
 		"cpus": 0.5,
     "env": {
         "CDS_API": "{{.APIEndpoint}}",
