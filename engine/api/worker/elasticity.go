@@ -50,7 +50,7 @@ func LoadWorkerModelStatusForAdminUser(db *sql.DB, userID int64) ([]sdk.ModelSta
 				) AS building ON building.model = worker_model.id
 		ORDER BY worker_model.name ASC
 		`
-	rows, err := db.Query(query, sdk.StatusWaiting, sdk.StatusChecking, sdk.StatusBuilding)
+	rows, err := db.Query(query, sdk.StatusWaiting.String(), sdk.StatusChecking.String(), sdk.StatusBuilding.String())
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 		)
 		ORDER BY worker_model.name ASC
 		`
-	rows, err := db.Query(query, groupID, sharedInfraGroup.ID, sdk.StatusWaiting, sdk.StatusChecking, sdk.StatusBuilding)
+	rows, err := db.Query(query, groupID, sharedInfraGroup.ID, sdk.StatusWaiting.String(), sdk.StatusChecking.String(), sdk.StatusBuilding.String())
 	if err != nil {
 		log.Warning("LoadWorkerModelStatusForGroup> Error : %s", err)
 		return nil, err
