@@ -73,7 +73,7 @@ func TestUpdateActionBuildStatus(t *testing.T) {
 		t.Fatalf("cannot update action build status: %s", err)
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err := tx.Commit(); err != nil {
 		t.Fatalf("cannot commit tx: %s", err)
 	}
 }

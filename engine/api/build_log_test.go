@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	_ "github.com/ovh/cds/engine/api/action"
-	_ "github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/pipeline"
 	_ "github.com/ovh/cds/engine/api/project"
 	_ "github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/test"
@@ -14,8 +14,7 @@ import (
 func TestInsertLog(t *testing.T) {
 	db := test.Setup("InsertLog", t)
 
-	err := pipeline.InsertLog(db, 3, "1", "hello world")
-	if err != nil {
+	if err := pipeline.InsertLog(db, 3, "1", "hello world"); err != nil {
 		t.Fatalf("Cannot insert log: %s", err)
 	}
 }

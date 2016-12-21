@@ -263,8 +263,7 @@ func UpdateCapabilityToWorkerModel(modelID int64, name string, capaType string, 
 func DeleteWorkerCapability(workerModelID int64, capaName string) error {
 	uri := fmt.Sprintf("/worker/model/%d/capability/%s", workerModelID, capaName)
 
-	_, _, err := Request("DELETE", uri, nil)
-	if err != nil {
+	if _, _, err := Request("DELETE", uri, nil); err != nil {
 		return err
 	}
 
@@ -285,8 +284,7 @@ func GetWorkerModelStatus() ([]ModelStatus, error) {
 	}
 
 	var ms []ModelStatus
-	err = json.Unmarshal(data, &ms)
-	if err != nil {
+	if err := json.Unmarshal(data, &ms); err != nil {
 		return nil, err
 	}
 
@@ -302,7 +300,7 @@ func SetWorkerStatus(s Status) error {
 	case StatusWaiting:
 		uri = fmt.Sprintf("/worker/waiting")
 	default:
-		return fmt.Errorf("Unsupported status : %s", s.String)
+		return fmt.Errorf("Unsupported status : %s", s.String())
 	}
 
 	_, code, err := Request("POST", uri, nil)

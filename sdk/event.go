@@ -4,17 +4,6 @@ import (
 	"time"
 )
 
-// EventSource reprensents a type of event
-type EventSource string
-
-// Type of event
-const (
-	// UserEvent represent an event that a user want to have
-	// a mail, a jabb
-	UserEvent   EventSource = "userEvent"
-	SystemEvent EventSource = "systemEvent"
-)
-
 // Event represents a event from API
 // Event is "create", "update", "delete"
 // Status is  "Waiting" "Building" "Success" "Fail" "Unknown", optional

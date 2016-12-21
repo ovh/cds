@@ -553,7 +553,7 @@ func Test_SendPipeline(t *testing.T) {
 
 		var event sdk.Event
 		cache.Dequeue("events", event)
-		assert.Equal(t, sdk.UserEvent, event.EventType, nil)
+		assert.Equal(t, event.EventType, "sdk.EventPipelineBuild", nil)
 
 		err = pipeline.DeletePipelineBuild(db, pb.ID)
 		assert.NoError(t, err)
