@@ -2,7 +2,9 @@ package mesos
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -12,15 +14,11 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-
-	"encoding/json"
-
-	"io"
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/spf13/viper"
 )
 
 var hatcheryMesos *HatcheryMesos
@@ -124,7 +122,6 @@ func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 	}
 
 	log.Notice("Spawning worker %s (%s)\n", model.Name, model.Image)
-	var err error
 
 	// Do not DOS marathon, if deployment queue is longer than 10, wait
 	deployments, err := getDeployments(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword)
