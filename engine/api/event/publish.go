@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/fatih/structs"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
-	"github.com/fatih/structs"
 )
 
 // Publish sends a event to a queue
@@ -35,16 +35,17 @@ func PublishActionBuild(pb *sdk.PipelineBuild, ab *sdk.ActionBuild) {
 		Version:         pb.Version,
 		JobName:         ab.ActionName,
 		Status:          ab.Status,
-		Queued:          ab.Queued,
-		Start:           ab.Start,
-		Done:            ab.Done,
+		Queued:          ab.Queued.Unix(),
+		Start:           ab.Start.Unix(),
+		Done:            ab.Done.Unix(),
 		Model:           ab.Model,
 		PipelineName:    pb.Pipeline.Name,
 		PipelineType:    pb.Pipeline.Type,
 		ProjectKey:      pb.Pipeline.ProjectKey,
 		ApplicationName: pb.Application.Name,
 		EnvironmentName: pb.Environment.Name,
-		BranchName:      getBranch(pb),
+		BranchName:      getParamValue(".git.hash", pb),
+		Hash:            getParamValue(".git.hash", pb),
 	}
 
 	Publish(e)
@@ -59,24 +60,26 @@ func PublishPipelineBuild(db database.QueryExecuter, pb *sdk.PipelineBuild, prev
 
 	e := sdk.EventPipelineBuild{
 		Version:         pb.Version,
+		BuildNumber:     pb.BuildNumber,
 		Status:          pb.Status,
-		Start:           pb.Start,
-		Done:            pb.Done,
+		Start:           pb.Start.Unix(),
+		Done:            pb.Done.Unix(),
 		PipelineName:    pb.Pipeline.Name,
 		PipelineType:    pb.Pipeline.Type,
 		ProjectKey:      pb.Pipeline.ProjectKey,
 		ApplicationName: pb.Application.Name,
 		EnvironmentName: pb.Environment.Name,
-		BranchName:      getBranch(pb),
+		BranchName:      getParamValue(".git.branch", pb),
+		Hash:            getParamValue(".git.hash", pb),
 	}
 
 	Publish(e)
 }
 
-func getBranch(pb *sdk.PipelineBuild) string {
+func getParamValue(paramName string, pb *sdk.PipelineBuild) string {
 	branch := ""
 	for _, param := range pb.Parameters {
-		if param.Name == ".git.branch" {
+		if param.Name == paramName {
 			branch = param.Value
 			break
 		}

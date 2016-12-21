@@ -24,15 +24,17 @@ type EventEngine struct {
 // EventPipelineBuild contains event data for a pipeline build
 type EventPipelineBuild struct {
 	Version         int64        `json:"version,omitempty"`
+	BuildNumber     int64        `json:"buildNumber,omitempty"`
 	Status          Status       `json:"status,omitempty"`
-	Start           time.Time    `json:"start,omitempty"`
-	Done            time.Time    `json:"done,omitempty"`
+	Start           int64        `json:"start,omitempty"`
+	Done            int64        `json:"done,omitempty"`
 	PipelineName    string       `json:"pipelineName,omitempty"`
 	PipelineType    PipelineType `json:"type,omitempty"`
 	ProjectKey      string       `json:"projectKey,omitempty"`
 	ApplicationName string       `json:"applicationName,omitempty"`
 	EnvironmentName string       `json:"environmentName,omitempty"`
 	BranchName      string       `json:"branchName,omitempty"`
+	Hash            string       `json:"hash,omitempty"`
 }
 
 // EventJob contains event data for a job
@@ -40,9 +42,9 @@ type EventJob struct {
 	Version         int64        `json:"version,omitempty"`
 	JobName         string       `json:"jobName,omitempty"`
 	Status          Status       `json:"status,omitempty"`
-	Queued          time.Time    `json:"queued,omitempty"`
-	Start           time.Time    `json:"start,omitempty"`
-	Done            time.Time    `json:"done,omitempty"`
+	Queued          int64        `json:"queued,omitempty"`
+	Start           int64        `json:"start,omitempty"`
+	Done            int64        `json:"done,omitempty"`
 	Model           string       `json:"model,omitempty"`
 	PipelineName    string       `json:"pipelineName,omitempty"`
 	PipelineType    PipelineType `json:"type,omitempty"`
@@ -50,6 +52,7 @@ type EventJob struct {
 	ApplicationName string       `json:"applicationName,omitempty"`
 	EnvironmentName string       `json:"environmentName,omitempty"`
 	BranchName      string       `json:"branchName,omitempty"`
+	Hash            string       `json:"hash,omitempty"`
 }
 
 // EventNotif contains event data for a job
