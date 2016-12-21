@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -117,7 +116,7 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 					}
 
 					log.Debug("queue.RunActions> Disable action %d %s (status=%s)", actionBuild.ID, actionBuild.ActionName, status)
-					if err := build.UpdateActionBuildStatus(tx, actionBuild, status); err != nil {
+					if err := pipeline.UpdateActionBuildStatus(tx, actionBuild, status); err != nil {
 						log.Warning("queue.RunActions> Cannot disable action %s with pipelineBuildID %d: %s\n", a.Name, pb.ID, err)
 					}
 

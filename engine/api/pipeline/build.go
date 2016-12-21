@@ -1,4 +1,4 @@
-package build
+package pipeline
 
 import (
 	"database/sql"

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -13,13 +12,12 @@ import (
 
 // DeletePipelineActionByStage Delete all action from a stage
 func DeletePipelineActionByStage(db database.QueryExecuter, stageID int64, userID int64) error {
-	pipelineActionsID, err := selectAllPipelineActionID(db, stageID)
-	if err != nil {
-		return err
+	pipelineActionsID, errSelect := selectAllPipelineActionID(db, stageID)
+	if errSelect != nil {
+		return errSelect
 	}
 
-	err = build.DeleteActionBuild(db, pipelineActionsID)
-	if err != nil {
+	if err := DeleteActionBuild(db, pipelineActionsID); err != nil {
 		return err
 	}
 
@@ -29,15 +27,13 @@ func DeletePipelineActionByStage(db database.QueryExecuter, stageID int64, userI
 		var actionType string
 		// Fetch id and type of action linked to pipeline_action so we can delete it if it's a joined action
 		query := `SELECT action.id, action.type FROM action JOIN pipeline_action ON pipeline_action.action_id = action.id WHERE pipeline_action.id = $1`
-		err = db.QueryRow(query, pipelineActionsID[i]).Scan(&id, &actionType)
-		if err != nil {
+		if err := db.QueryRow(query, pipelineActionsID[i]).Scan(&id, &actionType); err != nil {
 			return err
 		}
 
 		// Delete pipeline_action
 		query = `DELETE FROM pipeline_action WHERE id = $1`
-		_, err = db.Exec(query, pipelineActionsID[i])
-		if err != nil {
+		if _, err := db.Exec(query, pipelineActionsID[i]); err != nil {
 			return err
 		}
 
@@ -46,8 +42,7 @@ func DeletePipelineActionByStage(db database.QueryExecuter, stageID int64, userI
 			continue
 		}
 		log.Info("DeletePipelineActionByStage> Deleting action %d\n", id)
-		err = action.DeleteAction(db, id, userID)
-		if err != nil {
+		if err := action.DeleteAction(db, id, userID); err != nil {
 			return err
 		}
 	}

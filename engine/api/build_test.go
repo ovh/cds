@@ -3,7 +3,6 @@ package main
 import (
 	"testing"
 
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/test"
@@ -48,17 +47,17 @@ func TestUpdateActionBuildStatus(t *testing.T) {
 
 	project, p, app := insertTestPipeline(db, t, "Foo")
 
-	tx, err := db.Begin()
-	if err != nil {
-		t.Fatalf("Cannot begin tx: %s", err)
+	tx, errDB := db.Begin()
+	if errDB != nil {
+		t.Fatalf("Cannot begin tx: %s", errDB)
 	}
 
 	trigger := sdk.PipelineBuildTrigger{
 		ManualTrigger: true,
 	}
-	pb, err := pipeline.InsertPipelineBuild(tx, project, p, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, trigger)
-	if err != nil {
-		t.Fatalf("cannot insert pipeline build: %s\n", err)
+	pb, errInsert := pipeline.InsertPipelineBuild(tx, project, p, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, trigger)
+	if errInsert != nil {
+		t.Fatalf("cannot insert pipeline build: %s\n", errInsert)
 	}
 
 	b := &sdk.ActionBuild{
@@ -66,13 +65,11 @@ func TestUpdateActionBuildStatus(t *testing.T) {
 		PipelineBuildID:  pb.ID,
 	}
 
-	err = queue.InsertActionBuild(db, b)
-	if err != nil {
+	if err := queue.InsertActionBuild(db, b); err != nil {
 		t.Fatalf("cannot insert build: %s", err)
 	}
 
-	err = build.UpdateActionBuildStatus(tx, b, sdk.StatusBuilding)
-	if err != nil {
+	if err := pipeline.UpdateActionBuildStatus(tx, b, sdk.StatusBuilding); err != nil {
 		t.Fatalf("cannot update action build status: %s", err)
 	}
 

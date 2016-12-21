@@ -6,7 +6,6 @@ import (
 	_ "github.com/proullon/ramsql/engine/log"
 
 	_ "github.com/ovh/cds/engine/api/action"
-	_ "github.com/ovh/cds/engine/api/build"
 	_ "github.com/ovh/cds/engine/api/pipeline"
 	_ "github.com/ovh/cds/engine/api/project"
 	_ "github.com/ovh/cds/engine/api/scheduler"

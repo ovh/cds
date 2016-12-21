@@ -11,7 +11,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
@@ -1366,7 +1365,7 @@ func RestartPipelineBuild(db *sql.DB, pb sdk.PipelineBuild) error {
 		}
 
 		for _, id := range actionBuildIDs {
-			if err := build.DeleteBuildLogs(tx, id); err != nil {
+			if err := DeleteBuildLogs(tx, id); err != nil {
 				return err
 			}
 			queryDelete := `DELETE FROM action_build WHERE id = $1`
@@ -1378,7 +1377,7 @@ func RestartPipelineBuild(db *sql.DB, pb sdk.PipelineBuild) error {
 		}
 
 		// Delete test results
-		err = build.DeletePipelineTestResults(db, pb.ID)
+		err = DeletePipelineTestResults(db, pb.ID)
 		if err != nil {
 			return err
 		}
@@ -1745,14 +1744,13 @@ func DeletePipelineBuildArtifact(db database.QueryExecuter, pipelineBuildID int6
 
 // DeletePipelineBuild deletes a pipeline build and generated artifacts
 func DeletePipelineBuild(db database.QueryExecuter, pipelineBuildID int64) error {
-	err := DeletePipelineBuildArtifact(db, pipelineBuildID)
-	if err != nil {
+
+	if err := DeletePipelineBuildArtifact(db, pipelineBuildID); err != nil {
 		return err
 	}
 
 	// Then delete pipeline build data
-	err = build.DeleteBuild(db, pipelineBuildID)
-	if err != nil {
+	if err := DeleteBuild(db, pipelineBuildID); err != nil {
 		return err
 	}
 
