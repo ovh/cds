@@ -37,6 +37,12 @@ var (
 	gitssh         string
 	startTimestamp *time.Time
 	nbActionsDone  int
+	status         struct {
+		Name      string    `json:"name"`
+		Heartbeat time.Time `json:"heartbeat"`
+		Status    string    `json:"status"`
+		Model     int64     `json:"model"`
+	}
 )
 
 var mainCmd = &cobra.Command{
@@ -79,6 +85,7 @@ var mainCmd = &cobra.Command{
 		if givenName != "" {
 			name = givenName
 		}
+		status.Name = name
 
 		basedir = viper.GetString("basedir")
 		if basedir == "" {
@@ -86,6 +93,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		model = int64(viper.GetInt("model"))
+		status.Model = model
 
 		port, err := server()
 		if err != nil {
@@ -181,11 +189,13 @@ func checkQueue() {
 		return
 	}
 
+	log.Notice("checkQueue> %d Actions in queue", len(queue))
+
 	for i := range queue {
 		requirementsOK := true
 		// Check requirement
+		log.Notice("checkQueue> Checking requirements for action %s", queue[i].ID)
 		for _, r := range queue[i].Requirements {
-			log.Notice("Checking requirements %s(%v)=%s for %s", r.Name, r.Type, r.Value, queue[i].ID)
 			ok, err := checkRequirement(r)
 			if err != nil {
 				postCheckRequirementError(&r, err)
@@ -199,9 +209,12 @@ func checkQueue() {
 		}
 
 		if requirementsOK {
+			log.Notice("checkQueue> Taking action %s", queue[i].ID)
 			takeAction(queue[i])
 		}
 	}
+
+	log.Notice("checkQueue> Nothing to do...")
 }
 
 func postCheckRequirementError(r *sdk.Requirement, err error) {
