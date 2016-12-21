@@ -100,6 +100,30 @@ func WithParameters() FuncArg {
 	}
 }
 
+// LoadPipelineBuildByID look for a pipeline build by pipelineBuildID
+func LoadPipelineBuildByID(tx *sql.Tx, pipelineBuildID int64) (sdk.PipelineBuild, error) {
+	var pb sdk.PipelineBuild
+
+	query := fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.id= $1", "")
+	row := tx.QueryRow(query, pipelineBuildID)
+	if err := scanPbShort(&pb, row); err != nil {
+		return pb, err
+	}
+
+	queryParams := "SELECT args FROM pipeline_build WHERE id =$1"
+	var params sql.NullString
+
+	if err := tx.QueryRow(queryParams, pipelineBuildID).Scan(&params); err != nil {
+		return pb, fmt.Errorf("LoadPipelineBuildByID> Cannot load pipeline build parameters for pb.ID:%d: %s", pipelineBuildID, err)
+	}
+	if params.Valid {
+		if err := json.Unmarshal([]byte(params.String), &pb.Parameters); err != nil {
+			return pb, fmt.Errorf("LoadPipelineBuildByID> Cannot unmarshal pipeline build parameters: %s", err)
+		}
+	}
+	return pb, nil
+}
+
 // LoadPipelineBuildByHash look for a pipeline build triggered by a change with given hash
 func LoadPipelineBuildByHash(db *sql.DB, hash string) ([]sdk.PipelineBuild, error) {
 	var pbs []sdk.PipelineBuild
@@ -684,13 +708,13 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 	return pb, nil
 }
 
-func scanPbShort(p *sdk.PipelineBuild, rows database.Scanner) error {
+func scanPbShort(p *sdk.PipelineBuild, row database.Scanner) error {
 	var status, typePipeline string
 	var manual sql.NullBool
 	var trigBy, pPbID, version sql.NullInt64
 	var branch, hash, author, fromUser, fromPipeline sql.NullString
 
-	err := rows.Scan(&p.Pipeline.ID, &p.Application.ID, &p.Environment.ID, &p.ID, &p.Pipeline.ProjectID,
+	err := row.Scan(&p.Pipeline.ID, &p.Application.ID, &p.Environment.ID, &p.ID, &p.Pipeline.ProjectID,
 		&p.Environment.Name, &p.Application.Name, &p.Pipeline.Name, &p.Pipeline.ProjectKey,
 		&typePipeline,
 		&p.BuildNumber, &p.Version, &status,

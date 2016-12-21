@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -367,7 +368,7 @@ func newActionBuild(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 		return nil, err
 	}
 
-	b := sdk.ActionBuild{
+	ab := sdk.ActionBuild{
 		PipelineBuildID:  pb.ID,
 		PipelineID:       pb.Pipeline.ID,
 		PipelineActionID: a.PipelineActionID,
@@ -377,17 +378,17 @@ func newActionBuild(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 	}
 
 	if !a.Enabled {
-		b.Status = sdk.StatusDisabled
-		b.Done = time.Now()
+		ab.Status = sdk.StatusDisabled
+		ab.Done = time.Now()
 	}
 
-	if err := InsertActionBuild(db, &b); err != nil {
+	if err := InsertActionBuild(db, &ab); err != nil {
 		log.Debug("newActionBuild> err InsertBuild: %s", err)
 		return nil, fmt.Errorf("Cannot push action %s for pipeline %s #%d in build queue: %s\n",
-			a.Name, pb.Pipeline.Name, b.PipelineBuildID, err)
+			a.Name, pb.Pipeline.Name, ab.PipelineBuildID, err)
 	}
 
-	// TODO YESNAULT event.PublishActionBuild(pb, b)
+	event.PublishActionBuild(&pb, &ab)
 
-	return &b, nil
+	return &ab, nil
 }

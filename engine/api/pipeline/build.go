@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -99,48 +100,53 @@ func LoadActionBuild(db *sql.DB, id string) (sdk.ActionBuild, error) {
 }
 
 // UpdateActionBuildStatus Update status of an action_build
-func UpdateActionBuildStatus(db *sql.Tx, build *sdk.ActionBuild, status sdk.Status) error {
+func UpdateActionBuildStatus(db *sql.Tx, ab *sdk.ActionBuild, status sdk.Status) error {
 	var query string
-	var err error
-	log.Debug("UpdateActionBuildStatus> Updating action_build %d to %s\n", build.ID, status)
+	log.Debug("UpdateActionBuildStatus> Updating action_build %d to %s\n", ab.ID, status)
 
 	query = `SELECT status FROM action_build WHERE id = $1 FOR UPDATE`
 	var currentStatus string
-	err = db.QueryRow(query, build.ID).Scan(&currentStatus)
-	if err != nil {
+	if err := db.QueryRow(query, ab.ID).Scan(&currentStatus); err != nil {
 		return err
 	}
 
+	var errExec error
 	switch status {
 	case sdk.StatusBuilding:
 		if currentStatus != sdk.StatusWaiting.String() {
 			return fmt.Errorf("Cannot update status of ActionBuild %d to %s, expected current status %s, got %s",
-				build.ID, status, sdk.StatusWaiting, currentStatus)
+				ab.ID, status, sdk.StatusWaiting, currentStatus)
 		}
 
 		query = `UPDATE action_build SET status = $1, start = $2 WHERE id = $3`
-		_, err = db.Exec(query, status.String(), time.Now(), build.ID)
+		_, errExec = db.Exec(query, status.String(), time.Now(), ab.ID)
 		break
 
 	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped:
 		if currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
-			log.Info("Status is %, cannot update %d to %s", currentStatus, build.ID, status)
+			log.Info("Status is %, cannot update %d to %s", currentStatus, ab.ID, status)
 			// too late, Nate
 			return nil
 		}
 
 		query = `UPDATE action_build SET status = $1, done = $2 WHERE id = $3`
-		_, err = db.Exec(query, status.String(), time.Now(), build.ID)
+		_, errExec = db.Exec(query, status.String(), time.Now(), ab.ID)
 	default:
-		err = fmt.Errorf("Cannot update ActionBuild %d to status %v", build.ID, status.String())
+		errExec = fmt.Errorf("Cannot update ActionBuild %d to status %v", ab.ID, status.String())
 	}
 
-	if err != nil {
-		return err
+	if errExec != nil {
+		return errExec
 	}
 
-	build.Status = status
-	// TODO yesnault event.PublishActionBuild(pb, build)
+	ab.Status = status
+
+	pb, errLoad := LoadPipelineBuildByID(db, ab.PipelineBuildID)
+	if errLoad != nil {
+		return errLoad
+	}
+
+	event.PublishActionBuild(&pb, ab)
 
 	if status == sdk.StatusFail || status == sdk.StatusDisabled || status == sdk.StatusSkipped {
 		var log string
@@ -152,7 +158,7 @@ func UpdateActionBuildStatus(db *sql.Tx, build *sdk.ActionBuild, status sdk.Stat
 		case sdk.StatusSkipped:
 			log = fmt.Sprintf("Action skipped\n")
 		}
-		return InsertLog(db, build.ID, "SYSTEM", log)
+		return InsertLog(db, ab.ID, "SYSTEM", log)
 	}
 
 	return nil

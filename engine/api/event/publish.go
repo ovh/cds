@@ -31,8 +31,6 @@ func Publish(payload interface{}) {
 
 // PublishActionBuild sends a actionBuild event
 func PublishActionBuild(pb *sdk.PipelineBuild, ab *sdk.ActionBuild) {
-	log.Debug("PublishActionBuild> pb:%d ab:%d", ab.PipelineBuildID, ab.ID)
-
 	e := sdk.EventJob{
 		Version:         pb.Version,
 		JobName:         ab.ActionName,
@@ -54,8 +52,6 @@ func PublishActionBuild(pb *sdk.PipelineBuild, ab *sdk.ActionBuild) {
 
 // PublishPipelineBuild sends a pipelineBuild event
 func PublishPipelineBuild(db database.QueryExecuter, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) {
-	log.Debug("PublishPipelineBuild> pb:%d event:%s", pb.ID)
-
 	// get and send all user notifications
 	for _, event := range notification.GetUserEvents(db, pb, previous) {
 		Publish(event)
