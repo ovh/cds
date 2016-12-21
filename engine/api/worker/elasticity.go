@@ -20,7 +20,7 @@ func logTime(name string, then time.Time) {
 		return
 	}
 
-	if d > 2*time.Second {
+	if d > 4*time.Second {
 		log.Warning("%s took %s to execute\n", name, d)
 		return
 	}
@@ -38,19 +38,19 @@ func LoadWorkerModelStatusForAdminUser(db *sql.DB, userID int64) ([]sdk.ModelSta
 		FROM worker_model
 		LEFT JOIN LATERAL (
 				SELECT model, COUNT(worker.id) as count FROM worker
-				WHERE worker.status = 'Waiting'
-				AND worker.model = worker_model.id
+				WHERE worker.model = worker_model.id
+				AND (worker.status = $1 OR worker.status = $2)
 				GROUP BY model
 				) AS waiting ON waiting.model = worker_model.id
 		LEFT JOIN LATERAL (
 				SELECT model, COUNT(worker.id) as count FROM worker
-				WHERE worker.status = 'Building'
+				WHERE worker.status = $3
 				AND worker.model = worker_model.id
 				GROUP BY model
 				) AS building ON building.model = worker_model.id
 		ORDER BY worker_model.name ASC
 		`
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, sdk.StatusWaiting.String(), sdk.StatusChecking.String(), sdk.StatusBuilding.String())
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 		FROM worker_model
 		LEFT JOIN LATERAL (
 				SELECT model, COUNT(worker.id) as count FROM worker
-				WHERE worker.status = 'Waiting'
+				WHERE (worker.status = $3 OR worker.status = $4)
 				AND (
 					worker.group_id = $1
 					OR 
@@ -99,7 +99,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 		) AS waiting ON waiting.model = worker_model.id
 		LEFT JOIN LATERAL (
 				SELECT model, COUNT(worker.id) as count FROM worker
-				WHERE worker.status = 'Building'
+				WHERE worker.status = $5
 				AND (
 					worker.group_id = $1
 					OR 
@@ -115,7 +115,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 		)
 		ORDER BY worker_model.name ASC
 		`
-	rows, err := db.Query(query, groupID, sharedInfraGroup.ID)
+	rows, err := db.Query(query, groupID, sharedInfraGroup.ID, sdk.StatusWaiting.String(), sdk.StatusChecking.String(), sdk.StatusBuilding.String())
 	if err != nil {
 		log.Warning("LoadWorkerModelStatusForGroup> Error : %s", err)
 		return nil, err

@@ -292,3 +292,27 @@ func GetWorkerModelStatus() ([]ModelStatus, error) {
 
 	return ms, nil
 }
+
+// SetWorkerStatus update worker status
+func SetWorkerStatus(s Status) error {
+	var uri string
+	switch s {
+	case StatusChecking:
+		uri = fmt.Sprintf("/worker/checking")
+	case StatusWaiting:
+		uri = fmt.Sprintf("/worker/waiting")
+	default:
+		return fmt.Errorf("Unsupported status : %s", s.String)
+	}
+
+	_, code, err := Request("POST", uri, nil)
+	if err != nil {
+		return err
+	}
+
+	if code >= 300 {
+		return fmt.Errorf("cds: api error (%d)", code)
+	}
+
+	return nil
+}

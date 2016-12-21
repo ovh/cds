@@ -31,7 +31,6 @@ func processActionVariables(a *sdk.Action, parent *sdk.Action, ab sdk.ActionBuil
 
 			if parent != nil {
 				for _, p := range parent.Parameters {
-					log.Printf("Replacing %s (%s) with %s (%s)\n", a.Parameters[i].Name, a.Parameters[i].Value, p.Name, p.Value)
 					a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
 				}
 			}

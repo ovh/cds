@@ -43,7 +43,10 @@ func (a *Artifact) GetName() string {
 
 //GetPath returns the path of the artifact
 func (a *Artifact) GetPath() string {
-	return fmt.Sprintf("%s/%s/%s/%s/%s", a.Project, a.Application, a.Environment, a.Pipeline, a.Tag)
+	container := fmt.Sprintf("%s-%s-%s-%s-%s", a.Project, a.Application, a.Environment, a.Pipeline, a.Tag)
+	container = url.QueryEscape(container)
+	container = strings.Replace(container, "/", "-", -1)
+	return container
 }
 
 // Builtin artifact manipulation actions

@@ -447,7 +447,7 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if caller.Status != sdk.StatusWaiting {
+	if caller.Status != sdk.StatusChecking {
 		log.Info("takeActionBuildHandler> worker %s is not available to for build (status = %s)\n", caller.ID, caller.Status)
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -571,8 +571,8 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 			WriteError(w, r, errW)
 			return
 		}
-		if caller.Status != sdk.StatusWaiting {
-			log.Debug("getQueueHandler> worker %s is not available to build (status = %s)\n", caller.ID, caller.Status)
+		if caller.Status != sdk.StatusChecking {
+			log.Warning("getQueueHandler> worker %s is not available to build (status = %s)\n", caller.ID, caller.Status)
 			WriteError(w, r, sdk.ErrInvalidID)
 			return
 		}
