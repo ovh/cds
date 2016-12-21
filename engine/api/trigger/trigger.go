@@ -126,13 +126,7 @@ func InsertTriggerPrerequisite(db database.Executer, triggerID int64, paramName,
 }
 
 // UpdateTrigger update trigger data
-func UpdateTrigger(db *sql.DB, t sdk.PipelineTrigger) error {
-
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+func UpdateTrigger(db database.QueryExecuter, t sdk.PipelineTrigger) error {
 
 	var srcEnvID sql.NullInt64
 	if t.SrcEnvironment.ID != 0 {
@@ -147,8 +141,7 @@ func UpdateTrigger(db *sql.DB, t sdk.PipelineTrigger) error {
 	}
 
 	// Check we are not creating an infinite loop first
-	err = isTriggerLoopFree(tx, &t, []parent{parent{AppID: t.SrcApplication.ID, PipID: t.SrcPipeline.ID, EnvID: t.SrcEnvironment.ID}})
-	if err != nil {
+	if err := isTriggerLoopFree(db, &t, []parent{parent{AppID: t.SrcApplication.ID, PipID: t.SrcPipeline.ID, EnvID: t.SrcEnvironment.ID}}); err != nil {
 		log.Warning("InsertTrigger: Infinite trigger loop found for trigger %s/%s/%s[%s] %s/%s/%s[%s]\n",
 			t.SrcProject.Name, t.SrcApplication.Name, t.SrcPipeline.Name, t.SrcEnvironment.Name, t.DestProject.Name, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
 		return err
@@ -160,41 +153,31 @@ func UpdateTrigger(db *sql.DB, t sdk.PipelineTrigger) error {
 	dest_application_id = $4, dest_pipeline_id = $5, dest_environment_id = $6,
 	manual = $7
 	WHERE id = $8`
-	_, err = tx.Exec(query, t.SrcApplication.ID, t.SrcPipeline.ID, srcEnvID, t.DestApplication.ID, t.DestPipeline.ID, destEnvID, t.Manual, t.ID)
-	if err != nil {
+	if _, err := db.Exec(query, t.SrcApplication.ID, t.SrcPipeline.ID, srcEnvID, t.DestApplication.ID, t.DestPipeline.ID, destEnvID, t.Manual, t.ID); err != nil {
 		return err
 	}
 
 	// Update parameters
 	query = `DELETE FROM pipeline_trigger_parameter WHERE pipeline_trigger_id = $1`
-	_, err = tx.Exec(query, t.ID)
-	if err != nil {
+	if _, err := db.Exec(query, t.ID); err != nil {
 		return err
 	}
 	for _, p := range t.Parameters {
-		err = InsertTriggerParameter(tx, t.ID, p)
-		if err != nil {
+		if err := InsertTriggerParameter(db, t.ID, p); err != nil {
 			return err
 		}
 	}
 
 	// Update prerequisite
 	query = `DELETE FROM pipeline_trigger_prerequisite WHERE pipeline_trigger_id = $1`
-	_, err = tx.Exec(query, t.ID)
-	if err != nil {
+	if _, err := db.Exec(query, t.ID); err != nil {
 		return err
 	}
 	query = `INSERT INTO pipeline_trigger_prerequisite (pipeline_trigger_id, parameter, expected_value) VALUES ($1, $2, $3)`
 	for _, p := range t.Prerequisites {
-		_, err = tx.Exec(query, t.ID, p.Parameter, p.ExpectedValue)
-		if err != nil {
+		if _, err := db.Exec(query, t.ID, p.Parameter, p.ExpectedValue); err != nil {
 			return err
 		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return err
 	}
 
 	return nil
