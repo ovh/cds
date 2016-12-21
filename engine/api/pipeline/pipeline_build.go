@@ -530,7 +530,7 @@ func UpdatePipelineBuildStatus(db database.QueryExecuter, pb sdk.PipelineBuild, 
 
 	k := cache.Key("application", pb.Application.ProjectKey, "*")
 	cache.DeleteAll(k)
-	event.PublishPipelineBuild(db, &pb, sdk.UpdateEvent, previous)
+	event.PublishPipelineBuild(db, &pb, previous)
 	return nil
 }
 
@@ -1023,7 +1023,7 @@ func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, appl
 		}
 	}
 
-	event.PublishPipelineBuild(tx, &pb, sdk.CreateEvent, previous)
+	event.PublishPipelineBuild(tx, &pb, previous)
 	return pb, nil
 }
 

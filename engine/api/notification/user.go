@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"time"
+	//	"time"
 
 	"github.com/spf13/viper"
 
@@ -15,7 +15,7 @@ import (
 )
 
 // GetUserEvents returns event from user notification
-func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, eventAction sdk.EventAction, previous *sdk.PipelineBuild) []sdk.Event {
+func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) []sdk.EventNotif {
 	//Load notif
 	userNotifs, errLoad := LoadUserNotificationSettings(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if errLoad != nil {
@@ -42,7 +42,7 @@ func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, eventAction
 		params["cds.author"] = pb.Trigger.VCSChangesAuthor
 	}
 
-	events := []sdk.Event{}
+	events := []sdk.EventNotif{}
 
 	for t, notif := range userNotifs.Notifications {
 		if ShouldSendUserNotification(notif, pb, previous) {
@@ -82,12 +82,7 @@ func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, eventAction
 				}
 				//Finally deduplicate everyone
 				removeDuplicates(&jn.Recipients)
-
-				event, err := getEvent(pb, jn, params)
-				if err != nil {
-					log.Critical("notification[Jabber].SendPipelineBuild> error getting jabber/email notification %s", err.Error())
-				}
-				events = append(events, event)
+				events = append(events, getEvent(pb, jn, params))
 			case sdk.EmailUserNotification:
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
@@ -122,13 +117,7 @@ func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, eventAction
 				}
 				//Finally deduplicate everyone
 				removeDuplicates(&jn.Recipients)
-
-				event, err := getEvent(pb, jn, params)
-				if err != nil {
-					log.Critical("notification[Email].SendPipelineBuild> error getting jabber/email notification %s", err.Error())
-				}
-
-				events = append(events, event)
+				events = append(events, getEvent(pb, jn, params))
 			}
 		}
 	}
@@ -180,26 +169,12 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 	return false
 }
 
-func getEvent(pb *sdk.PipelineBuild, notif *sdk.JabberEmailUserNotificationSettings, params map[string]string) (sdk.Event, error) {
-
-	payload, err := json.Marshal(notif.Template)
-	if err != nil {
-		log.Critical("getEvent> error while converting payload: %s", err)
-		return sdk.Event{}, err
+func getEvent(pb *sdk.PipelineBuild, notif *sdk.JabberEmailUserNotificationSettings, params map[string]string) sdk.EventNotif {
+	return sdk.EventNotif{
+		Recipients: notif.Recipients,
+		Subject:    notif.Template.Subject,
+		Body:       notif.Template.Body,
 	}
-
-	n := sdk.Event{
-		DateEvent:   time.Now().Unix(),
-		EventSource: sdk.UserEvent,
-		EventType:   fmt.Sprintf("%T", notif.Template),
-		Payload:     payload,
-		Destination: "jabber",
-	}
-	for _, r := range notif.Recipients {
-		n.Recipients = append(n.Recipients, r)
-	}
-
-	return n, nil
 }
 
 //UserNotificationInput is a way to parse notification

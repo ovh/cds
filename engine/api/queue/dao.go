@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -48,7 +47,6 @@ func InsertActionBuild(db database.QueryExecuter, b *sdk.ActionBuild) error {
 		return err
 	}
 
-	event.PublishActionBuild(b, sdk.CreateEvent)
 	return nil
 }
 

@@ -388,5 +388,7 @@ func newActionBuild(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 			a.Name, pb.Pipeline.Name, b.PipelineBuildID, err)
 	}
 
+	// TODO YESNAULT event.PublishActionBuild(pb, b)
+
 	return &b, nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -34,6 +35,7 @@ import (
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk"
 )
 
 var startupTime time.Time
@@ -89,6 +91,7 @@ var mainCmd = &cobra.Command{
 				<-c
 				log.Warning("Cleanup SQL connections\n")
 				db.Close()
+				event.Publish(sdk.EventEngine{Message: "shutdown"})
 				event.Close()
 				os.Exit(0)
 			}()
@@ -191,6 +194,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		log.Notice("Listening on :%s\n", viper.GetString("listen_port"))
+		event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", viper.GetString("listen_port"))})
 		if err := s.ListenAndServe(); err != nil {
 			log.Fatalf("Cannot start cds-server: %s\n", err)
 		}

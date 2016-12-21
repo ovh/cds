@@ -17,11 +17,6 @@ var producer sarama.SyncProducer
 var hookKafkaEnabled bool
 var topic string
 
-// Routine initializes and run event routine dequeue
-func Routine() {
-	kafkaRoutine()
-}
-
 // Close close event system
 func Close() {
 	closeKafka()
@@ -91,7 +86,7 @@ func sendOnKafkaTopic(event *sdk.Event) error {
 	if err != nil {
 		return err
 	}
-	//log.Debug("Event %+v sent to topic %s partition %d offset %d", event, topic, partition, offset)
-	log.Debug("Event sent to topic %s partition %d offset %d", topic, partition, offset)
+	log.Debug("Event %+v sent to topic %s partition %d offset %d", event, topic, partition, offset)
+	//log.Debug("Event sent to topic %s partition %d offset %d", topic, partition, offset)
 	return nil
 }

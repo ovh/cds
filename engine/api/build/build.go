@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -141,8 +140,7 @@ func UpdateActionBuildStatus(db *sql.Tx, build *sdk.ActionBuild, status sdk.Stat
 	}
 
 	build.Status = status
-
-	event.PublishActionBuild(build, sdk.UpdateEvent)
+	// TODO yesnault event.PublishActionBuild(pb, build)
 
 	if status == sdk.StatusFail || status == sdk.StatusDisabled || status == sdk.StatusSkipped {
 		var log string
@@ -342,9 +340,9 @@ func TakeActionBuild(db *sql.DB, buildID string, worker *sdk.Worker) (sdk.Action
 	var b sdk.ActionBuild
 	var argsJSON string
 
-	tx, err := db.Begin()
-	if err != nil {
-		return b, err
+	tx, errDB := db.Begin()
+	if errDB != nil {
+		return b, errDB
 	}
 	defer tx.Rollback()
 
@@ -359,14 +357,12 @@ func TakeActionBuild(db *sql.DB, buildID string, worker *sdk.Worker) (sdk.Action
 			 WHERE action_build.id = $1 FOR UPDATE`
 
 	var sStatus string
-	err = tx.QueryRow(query, buildID).Scan(&b.ID, &b.PipelineActionID, &argsJSON, &sStatus, &b.PipelineBuildID, &b.BuildNumber)
-	b.Status = sdk.StatusFromString(sStatus)
-	if err != nil {
+	if err := tx.QueryRow(query, buildID).Scan(&b.ID, &b.PipelineActionID, &argsJSON, &sStatus, &b.PipelineBuildID, &b.BuildNumber); err != nil {
 		return b, err
 	}
+	b.Status = sdk.StatusFromString(sStatus)
 
-	err = json.Unmarshal([]byte(argsJSON), &b.Args)
-	if err != nil {
+	if err := json.Unmarshal([]byte(argsJSON), &b.Args); err != nil {
 		return b, err
 	}
 
