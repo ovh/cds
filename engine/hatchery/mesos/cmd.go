@@ -1,6 +1,8 @@
 package mesos
 
 import (
+	"strings"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/spf13/cobra"
@@ -24,6 +26,9 @@ func init() {
 	Cmd.Flags().StringVar(&hatcheryMesos.marathonPassword, "marathon-password", "", "marathon-password")
 	viper.BindPFlag("marathon-password", Cmd.Flags().Lookup("marathon-password"))
 
+	Cmd.Flags().StringVar(&hatcheryMesos.marathonLabelsString, "marathon-labels", "", "marathon-labels")
+	viper.BindPFlag("marathon-labels", Cmd.Flags().Lookup("marathon-labels"))
+
 	Cmd.Flags().IntVar(&hatcheryMesos.defaultMemory, "worker-memory", 1024, "Worker default memory")
 	viper.BindPFlag("worker-memory", Cmd.Flags().Lookup("worker-memory"))
 }
@@ -45,6 +50,7 @@ $ hatchery mesos --api=https://<api.domain> --token=<token>
 		hatchery.Born(hatcheryMesos, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
+		hatcheryMesos.token = viper.GetString("token")
 
 		hatcheryMesos.marathonHost = viper.GetString("marathon-host")
 		if hatcheryMesos.marathonHost == "" {
@@ -70,5 +76,22 @@ $ hatchery mesos --api=https://<api.domain> --token=<token>
 		if hatcheryMesos.marathonPassword == "" {
 			sdk.Exit("flag or environmnent variable marathon-password not provided, aborting\n")
 		}
+
+		hatcheryMesos.marathonLabelsString = viper.GetString("marathon-labels")
+		hatcheryMesos.marathonLabels = map[string]string{}
+		if hatcheryMesos.marathonLabelsString != "" {
+			array := strings.Split(hatcheryMesos.marathonLabelsString, ",")
+			for _, s := range array {
+				if !strings.Contains(s, "=") {
+					continue
+				}
+				tuple := strings.Split(s, "=")
+				if len(tuple) != 2 {
+					sdk.Exit("malformatted flag or environmnent variable marathon-labels")
+				}
+				hatcheryMesos.marathonLabels[tuple[0]] = tuple[1]
+			}
+		}
+
 	},
 }

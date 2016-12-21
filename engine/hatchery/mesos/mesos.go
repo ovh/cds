@@ -13,6 +13,10 @@ import (
 
 	"github.com/docker/docker/pkg/namesgenerator"
 
+	"encoding/json"
+
+	"io"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -22,16 +26,16 @@ import (
 var hatcheryMesos *HatcheryMesos
 
 type marathonPOSTAppParams struct {
-	DockerImage   string
-	APIEndpoint   string
-	WorkerKey     string
-	WorkerName    string
-	WorkerModelID int64
-	HatcheryID    int64
-
-	MarathonID    string
-	MarathonVHOST string
-	Memory        int
+	DockerImage    string
+	APIEndpoint    string
+	WorkerKey      string
+	WorkerName     string
+	WorkerModelID  int64
+	HatcheryID     int64
+	MarathonID     string
+	MarathonVHOST  string
+	MarathonLabels string
+	Memory         int
 }
 
 const marathonPOSTAppTemplate = `
@@ -45,7 +49,7 @@ const marathonPOSTAppTemplate = `
 				},
         "type": "DOCKER"
     },
-		"cmd": "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker",
+		"cmd": "rm -f worker && curl https://dl.plik.ovh/file/8i0E2L0bkoh3tEla/ncCdbAA3saiGlaE9/worker -o worker &&  chmod +x worker && exec ./worker",
 		"cpus": 0.5,
     "env": {
         "CDS_API": "{{.APIEndpoint}}",
@@ -57,8 +61,9 @@ const marathonPOSTAppTemplate = `
     },
     "id": "{{.MarathonID}}/{{.WorkerName}}",
     "instances": 1,
-		"ports": [],
-		"mem": {{.Memory}}
+	"ports": [],
+	"mem": {{.Memory}},
+	"labels": {{.MarathonLabels}}
 }
 `
 
@@ -66,11 +71,15 @@ const marathonPOSTAppTemplate = `
 type HatcheryMesos struct {
 	hatch *sdk.Hatchery
 
-	marathonHost     string
-	marathonID       string
-	marathonVHOST    string
-	marathonUser     string
-	marathonPassword string
+	token string
+
+	marathonHost         string
+	marathonID           string
+	marathonVHOST        string
+	marathonUser         string
+	marathonPassword     string
+	marathonLabelsString string
+	marathonLabels       map[string]string
 
 	defaultMemory int
 }
@@ -174,7 +183,6 @@ func (m *HatcheryMesos) WorkerStarted(model *sdk.Model) int {
 
 // Init only starts killing routine of worker not registered
 func (m *HatcheryMesos) Init() error {
-
 	// Register without declaring model
 	name, err := os.Hostname()
 	if err != nil {
@@ -195,12 +203,43 @@ func (m *HatcheryMesos) Init() error {
 	return nil
 }
 
-func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64, req []sdk.Requirement) error {
+func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memory int) (io.Reader, error) {
 	tmpl, err := template.New("marathonPOST").Parse(marathonPOSTAppTemplate)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	m.marathonLabels["hatchery"] = fmt.Sprintf("%d", hatcheryID)
+
+	labels, err := json.Marshal(m.marathonLabels)
+	if err != nil {
+		log.Critical("spawnMesosDockerWorker> Invalid labels : %s", err)
+		return nil, err
+	}
+
+	params := marathonPOSTAppParams{
+		DockerImage:    model.Image,
+		APIEndpoint:    sdk.Host,
+		WorkerKey:      m.token,
+		WorkerName:     fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)),
+		WorkerModelID:  model.ID,
+		HatcheryID:     hatcheryID,
+		MarathonID:     m.marathonID,
+		MarathonVHOST:  m.marathonVHOST,
+		Memory:         memory * 110 / 100,
+		MarathonLabels: string(labels),
+	}
+
+	buffer := &bytes.Buffer{}
+	if err := tmpl.Execute(buffer, params); err != nil {
+		log.Critical("Unable to execute marathon template : %s", err)
+		return nil, err
+	}
+
+	return buffer, nil
+}
+
+func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64, req []sdk.Requirement) error {
 	// Estimate needed memory, we will set 110% of required memory
 	memory := m.defaultMemory
 	//Check if there is a memory requirement
@@ -215,61 +254,34 @@ func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int6
 		}
 	}
 
-	for {
-		params := marathonPOSTAppParams{
-			DockerImage:   model.Image,
-			APIEndpoint:   sdk.Host,
-			WorkerKey:     viper.GetString("token"),
-			WorkerName:    fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)),
-			WorkerModelID: model.ID,
-			HatcheryID:    hatcheryID,
-			MarathonID:    hatcheryMesos.marathonID,
-			MarathonVHOST: hatcheryMesos.marathonVHOST,
-			Memory:        memory * 110 / 100,
-		}
-
-		var buffer bytes.Buffer
-		if err = tmpl.Execute(&buffer, params); err != nil {
-			return err
-		}
-
-		req, err := http.NewRequest("POST", hatcheryMesos.marathonHost+"/v2/apps", &buffer)
-		if err != nil {
-			return err
-		}
-
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", "CDS-HATCHERY/1.0")
-		req.SetBasicAuth(hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword)
-
-		resp, err := hatchery.Client.Do(req)
-		if err != nil {
-			return err
-		}
-
-		if resp.StatusCode < 300 {
-			resp.Body.Close()
-			//time.Sleep(1 * time.Second) // Given time to mesos to start the worker
-			return nil
-		}
-
-		log.Warning("STATUS: %s\n", resp.Status)
-
-		if resp.StatusCode >= 400 {
-			resp.Body.Close()
-			return fmt.Errorf("%s", resp.Status)
-		}
-		resp.Body.Close()
+	buffer, err := m.marathonConfig(model, hatcheryID, memory)
+	r, err := http.NewRequest("POST", hatcheryMesos.marathonHost+"/v2/apps", buffer)
+	if err != nil {
+		return err
 	}
 
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("User-Agent", "CDS-HATCHERY/1.0")
+	r.SetBasicAuth(hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword)
+
+	resp, err := hatchery.Client.Do(r)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		resp.Body.Close()
+		return fmt.Errorf("%s", resp.Status)
+	}
+
+	return nil
 }
 
 func startKillAwolWorkerRoutine() {
-
 	go func() {
 		for {
 			time.Sleep(10 * time.Second)
-
 			if err := killDisabledWorkers(); err != nil {
 				log.Warning("Cannot kill awol workers: %s\n", err)
 			}
