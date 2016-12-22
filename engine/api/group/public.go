@@ -4,10 +4,23 @@ import (
 	"database/sql"
 
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/log"
 )
 
 // SharedInfraGroup is the name of the builtin group used to share infrastructure between projects
 const SharedInfraGroup = "shared.infra"
+
+// Initialize some stuff
+func Initialize(db *sql.DB) error {
+	//Load the famous sharedInfraGroup
+	sharedInfraGroup, errLoad := LoadGroup(db, SharedInfraGroup)
+	if errLoad != nil {
+		log.Critical("group.init> Cannot load shared infra group: %s\n", errLoad)
+		return errLoad
+	}
+	permission.SharedInfraGroupID = sharedInfraGroup.ID
+	return nil
+}
 
 // CreateDefaultGlobalGroup creates a group 'public' where every user will be
 func CreateDefaultGlobalGroup(db *sql.DB) error {

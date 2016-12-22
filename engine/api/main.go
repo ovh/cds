@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/notification"
@@ -110,6 +111,10 @@ var mainCmd = &cobra.Command{
 
 		baseURL = viper.GetString("base_url")
 		notification.Initialize(viper.GetString("notifs_urls"), viper.GetString("notifs_key"), baseURL)
+
+		if err := group.Initialize(db); err != nil {
+			log.Critical("Cannot initialize groups: %s\n", err)
+		}
 
 		//Initialize secret driver
 		secretBackend := viper.GetString("secret_backend")
