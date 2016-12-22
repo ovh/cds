@@ -379,9 +379,9 @@ checkImage:
 	}
 
 	//Pull the service image
-checkLink:
 	for _, i := range links {
 		var imageFound2 bool
+	checkLink:
 		for _, img := range images {
 			for _, t := range img.RepoTags {
 				if i == t {
