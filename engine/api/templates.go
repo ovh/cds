@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -313,6 +314,13 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	proj, err := project.LoadProject(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("applyTemplatesHandler> Cannot load project %s: %s\n", projectKey, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	// Load groups on the project
+	if err := group.LoadGroupByProject(db, proj); err != nil {
+		log.Warning("applyTemplatesHandler> Cannot load project groups %s: %s\n", projectKey, err)
 		WriteError(w, r, err)
 		return
 	}
