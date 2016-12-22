@@ -207,7 +207,7 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 		if stashUser.Username == "" {
 			newStashUser, err := s.client.Users.FindByEmail(sc.Author.Email)
 			if err != nil {
-				log.Warning("Unable to get stash user %s : %s", sc.Author.Email, err)
+				log.Debug("Unable to get stash user %s : %s", sc.Author.Email, err)
 				continue
 			} else {
 				cache.Set(stashUserKey, newStashUser)
@@ -262,7 +262,7 @@ func (s *StashClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	if stashUser.Username == "" {
 		newStashUser, err := s.client.Users.FindByEmail(stashCommit.Author.Email)
 		if err != nil {
-			log.Warning("Unable to get stash user %s : %s", stashCommit.Author.Email, err)
+			log.Debug("Unable to get stash user %s : %s", stashCommit.Author.Email, err)
 		} else {
 			cache.Set(stashUserKey, newStashUser)
 			stashUser = *newStashUser

@@ -67,14 +67,9 @@ func hatcheryRoutine(h Interface, provision int) error {
 		log.Debug("hatcheryRoutine> err while GetWorkerModelStatus:%e\n", err)
 		return err
 	}
-
-	log.Debug("hatcheryRoutine> len(wms)=%d\n", len(wms))
-
 	for _, ms := range wms {
 		// Provisionning
 		ms.WantedCount += int64(provision)
-
-		log.Debug("hatcheryRoutine> ms.CurrentCount=%d ms.WantedCount=%d\n", ms.CurrentCount, ms.WantedCount)
 
 		if ms.CurrentCount == ms.WantedCount {
 			// ok, do nothing
