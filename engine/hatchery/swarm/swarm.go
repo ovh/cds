@@ -26,7 +26,7 @@ type HatcherySwarm struct {
 	onlyWithServiceReq bool
 	maxContainers      int
 	defaultMemory      int
-	workerTtl          int
+	workerTTL          int
 }
 
 //Init connect the hatchery to the docker api
@@ -240,7 +240,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 		"CDS_KEY" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
-		"CDS_TTL" + "=" + strconv.Itoa(h.workerTtl),
+		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
 	}
 
 	//labels are used to make container cleanup easier
@@ -347,28 +347,61 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 
 	log.Notice("CanSpawn> %s need %v", model.Name, links)
 
-	//Pull the worker image
-	opts := docker.PullImageOptions{
-		Repository:   model.Image,
-		OutputStream: nil,
+	images, err := h.dockerClient.ListImages(docker.ListImagesOptions{})
+	if err != nil {
+		log.Warning("Unable to get images : %s", err)
 	}
-	auth := docker.AuthConfiguration{}
-	log.Notice("CanSpawn> pulling image %s", model.Image)
-	if err := h.dockerClient.PullImage(opts, auth); err != nil {
-		log.Warning("Unable to pull image %s : %s", model.Image, err)
-		return false
+
+	var imageFound bool
+
+checkImage:
+	for _, img := range images {
+		for _, t := range img.RepoTags {
+			if model.Image == t {
+				imageFound = true
+				break checkImage
+			}
+		}
+	}
+
+	if !imageFound {
+		//Pull the worker image
+		opts := docker.PullImageOptions{
+			Repository:   model.Image,
+			OutputStream: nil,
+		}
+		auth := docker.AuthConfiguration{}
+		log.Notice("CanSpawn> pulling image %s", model.Image)
+		if err := h.dockerClient.PullImage(opts, auth); err != nil {
+			log.Warning("Unable to pull image %s : %s", model.Image, err)
+			return false
+		}
 	}
 
 	//Pull the service image
 	for _, i := range links {
-		opts := docker.PullImageOptions{
-			Repository:   i,
-			OutputStream: nil,
+		var imageFound2 bool
+	checkLink:
+		for _, img := range images {
+			for _, t := range img.RepoTags {
+				if i == t {
+					imageFound2 = true
+					break checkLink
+				}
+			}
 		}
-		log.Notice("CanSpawn> pulling image %s", i)
-		if err := h.dockerClient.PullImage(opts, auth); err != nil {
-			log.Warning("Unable to pull image %s : %s", i, err)
-			return false
+
+		if !imageFound2 {
+			opts := docker.PullImageOptions{
+				Repository:   i,
+				OutputStream: nil,
+			}
+			auth := docker.AuthConfiguration{}
+			log.Notice("CanSpawn> pulling image %s", i)
+			if err := h.dockerClient.PullImage(opts, auth); err != nil {
+				log.Warning("Unable to pull image %s : %s", i, err)
+				return false
+			}
 		}
 	}
 

@@ -166,7 +166,6 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 func hearbeat(m Interface, token string) {
 	for {
 		time.Sleep(5 * time.Second)
-		log.Debug("m.Hatchery().ID:%d", m.Hatchery().ID)
 		if m.Hatchery().ID == 0 {
 			log.Notice("Disconnected from CDS engine, trying to register...\n")
 			if err := Register(m.Hatchery(), token); err != nil {
@@ -182,6 +181,5 @@ func hearbeat(m Interface, token string) {
 			m.Hatchery().ID = 0
 			continue
 		}
-		log.Info("heartbeat> done")
 	}
 }
