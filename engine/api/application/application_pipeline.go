@@ -306,7 +306,7 @@ func GetAllPipelineParam(db database.Querier, applicationID, pipelineID int64) (
 }
 
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
-func LoadCDTree(db *sql.DB, projectkey, appName string, user *sdk.User) (*[]sdk.CDPipeline, error) {
+func LoadCDTree(db *sql.DB, projectkey, appName string, user *sdk.User) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
 
 	// Select root trigger element + non triggered pipeline
@@ -422,7 +422,7 @@ func LoadCDTree(db *sql.DB, projectkey, appName string, user *sdk.User) (*[]sdk.
 			cdTrees = append(cdTrees, root)
 		}
 	}
-	return &cdTrees, nil
+	return cdTrees, nil
 }
 
 func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
@@ -437,7 +437,8 @@ func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
 			srcEnv.name as srcEnvName, destEnv.name as destEnvName,
 			srcProj.id as srcProjID, srcProj.projectkey as srcProjKey, srcProj.name as srcProjName,
 			destProj.id as destProjID, destProj.projectkey as destProjKey, destProj.name as destProjName,
-			ptp.name as paramName, ptp.type as paramType, ptp.value as paramValue, ptp.description as paramDescription
+			ptp.name as paramName, ptp.type as paramType, ptp.value as paramValue, ptp.description as paramDescription,
+			pre.parameter as prerequisiteName, pre.expected_value as prerequisiteValue
 		FROM pipeline_trigger as pt
 		JOIN pipeline srcPip ON srcPip.id = src_pipeline_id
 		JOIN pipeline destPip ON destPip.id = dest_pipeline_id
@@ -448,6 +449,7 @@ func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
 		JOIN project as srcProj ON srcProj.id = srcApp.project_id
 		JOIN project as destProj ON destProj.id = destApp.project_id
 		LEFT JOIN pipeline_trigger_parameter AS ptp ON ptp.pipeline_trigger_id = pt.id
+		LEFT JOIN pipeline_trigger_prerequisite pre ON pre.pipeline_trigger_id = pt.id
 		WHERE pt.src_application_id = $1 AND pt.src_pipeline_id = $2 AND COALESCE(pt.src_environment_id,1) = $3
 		UNION
 			SELECT pt.id, pt.src_application_id, pt.dest_application_id, pt.src_pipeline_id, COALESCE(pt.src_environment_id,1), pt.dest_pipeline_id, COALESCE(pt.dest_environment_id,1), pt.manual,
@@ -456,7 +458,8 @@ func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
 			srcEnv.name as srcEnvName, destEnv.name as destEnvName,
 			srcProj.id as srcProjID, srcProj.projectkey as srcProjKey, srcProj.name as srcProjName,
 			destProj.id as destProjID, destProj.projectkey as destProjKey, destProj.name as destProjName,
-			ptp.name as paramName, ptp.type as paramType, ptp.value as paramValue, ptp.description as paramDescription
+			ptp.name as paramName, ptp.type as paramType, ptp.value as paramValue, ptp.description as paramDescription,
+			pre.parameter as prerequisiteName, pre.expected_value as prerequisiteValue
 			FROM parent pr, pipeline_trigger pt
 			JOIN pipeline srcPip ON srcPip.id = src_pipeline_id
 			JOIN pipeline destPip ON destPip.id = dest_pipeline_id
@@ -467,6 +470,7 @@ func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
 			JOIN project as srcProj ON srcProj.id = srcApp.project_id
 			JOIN project as destProj ON destProj.id = destApp.project_id
 			LEFT JOIN pipeline_trigger_parameter AS ptp ON ptp.pipeline_trigger_id = pt.id
+			LEFT JOIN pipeline_trigger_prerequisite pre ON pre.pipeline_trigger_id = pt.id
 			WHERE pt.src_pipeline_id = pr.dest_pipeline_id AND COALESCE(pt.src_environment_id,1) = COALESCE(pr.dest_environment_id,1)
 	)
 	SELECT id,
@@ -480,6 +484,10 @@ func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
 		COALESCE(
 			json_agg(json_build_object('name', paramName, 'type', paramType, 'value', paramValue, 'description', paramDescription ))
 			FILTER (WHERE paramName IS NOT NULL), '[]'
+		),
+		COALESCE(
+			json_agg(json_build_object('parameter', prerequisiteName, 'expected_value', prerequisiteValue))
+			FILTER (WHERE prerequisiteName IS NOT NULL), '[]'
 		)
 	FROM parent
 	GROUP BY
@@ -491,17 +499,17 @@ func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
 		manual, srcpipname, destpipname, srcpiptype, destpiptype
 	ORDER BY srcEnvName;
 	`
-	rows, err := db.Query(query, parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
-	if err != nil {
-		return err
+	rows, errQuery := db.Query(query, parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
+	if errQuery != nil {
+		return errQuery
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var child sdk.CDPipeline
 		var srcType, destType string
-		var params string
-		err = rows.Scan(&child.Trigger.ID,
+		var params, prerequisites string
+		if err := rows.Scan(&child.Trigger.ID,
 			&child.Trigger.SrcApplication.ID, &child.Trigger.DestApplication.ID,
 			&child.Trigger.SrcPipeline.ID, &child.Trigger.SrcEnvironment.ID, &child.Trigger.DestPipeline.ID, &child.Trigger.DestEnvironment.ID,
 			&child.Trigger.Manual,
@@ -510,8 +518,7 @@ func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
 			&child.Trigger.SrcEnvironment.Name, &child.Trigger.DestEnvironment.Name,
 			&child.Trigger.SrcProject.ID, &child.Trigger.SrcProject.Key, &child.Trigger.SrcProject.Name,
 			&child.Trigger.DestProject.ID, &child.Trigger.DestProject.Key, &child.Trigger.DestProject.Name,
-			&params)
-		if err != nil {
+			&params, &prerequisites); err != nil {
 			return err
 		}
 
@@ -523,10 +530,14 @@ func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
 			child.Application = child.Trigger.DestApplication
 			child.Pipeline = child.Trigger.DestPipeline
 			child.Environment = child.Trigger.DestEnvironment
-			err := json.Unmarshal([]byte(params), &child.Trigger.Parameters)
-			if err != nil {
+			if err := json.Unmarshal([]byte(params), &child.Trigger.Parameters); err != nil {
 				return err
 			}
+
+			if err := json.Unmarshal([]byte(prerequisites), &child.Trigger.Prerequisites); err != nil {
+				return err
+			}
+
 			listTrigger = append(listTrigger, child)
 		}
 	}
