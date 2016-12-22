@@ -277,11 +277,16 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 	}
 
 	//Instanciate a new worker
+	var hatcheryID int64
+	if h != nil {
+		hatcheryID = h.ID
+	}
+
 	w := &sdk.Worker{
 		ID:         id,
 		Name:       name,
 		Model:      modelID,
-		HatcheryID: h.ID,
+		HatcheryID: hatcheryID,
 		Status:     sdk.StatusWaiting,
 		GroupID:    t.GroupID,
 	}
