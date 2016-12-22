@@ -306,7 +306,7 @@ func GetAllPipelineParam(db database.Querier, applicationID, pipelineID int64) (
 }
 
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
-func LoadCDTree(db *sql.DB, projectkey, appName string, user *sdk.User) (*[]sdk.CDPipeline, error) {
+func LoadCDTree(db *sql.DB, projectkey, appName string, user *sdk.User) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
 
 	// Select root trigger element + non triggered pipeline
@@ -422,7 +422,7 @@ func LoadCDTree(db *sql.DB, projectkey, appName string, user *sdk.User) (*[]sdk.
 			cdTrees = append(cdTrees, root)
 		}
 	}
-	return &cdTrees, nil
+	return cdTrees, nil
 }
 
 func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {

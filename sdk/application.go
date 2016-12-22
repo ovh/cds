@@ -28,7 +28,7 @@ type Application struct {
 	RepositoryFullname  string                `json:"repository_fullname,omitempty"`
 	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty"`
 	Hooks               []Hook                `json:"hooks,omitempty"`
-	Workflows           *[]CDPipeline         `json:"workflows,omitempty"`
+	Workflows           []CDPipeline         `json:"workflows,omitempty"`
 }
 
 // ApplicationPipeline Represent the link between an application and a pipeline
