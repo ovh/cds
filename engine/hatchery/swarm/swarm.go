@@ -357,11 +357,12 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 		for _, t := range img.RepoTags {
 			if model.Image == t {
 				imageFound = true
-				break
+				goto pullImage
 			}
 		}
 	}
 
+pullImage:
 	if !imageFound {
 		//Pull the worker image
 		opts := docker.PullImageOptions{
@@ -383,11 +384,11 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 			for _, t := range img.RepoTags {
 				if i == t {
 					imageFound2 = true
-					break
+					goto pullLink
 				}
 			}
 		}
-
+	pullLink:
 		if !imageFound2 {
 			opts := docker.PullImageOptions{
 				Repository:   i,
