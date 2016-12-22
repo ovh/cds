@@ -1,7 +1,6 @@
 package swarm
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -27,6 +26,7 @@ type HatcherySwarm struct {
 	onlyWithServiceReq bool
 	maxContainers      int
 	defaultMemory      int
+	workerTtl          int
 }
 
 //Init connect the hatchery to the docker api
@@ -240,6 +240,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 		"CDS_KEY" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
+		"CDS_TTL" + "=" + strconv.Itoa(h.workerTtl),
 	}
 
 	//labels are used to make container cleanup easier
@@ -285,7 +286,7 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 		//Moaaaaar memory
 		memory = memory * 110 / 100
 	}
-	log.Debug("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", name, image, network, networkAlias, memory)
+	log.Notice("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", name, image, network, networkAlias, memory)
 	opts := docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
@@ -304,8 +305,6 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 			},
 		},
 	}
-	b, _ := json.Marshal(opts)
-	log.Debug("createAndStartContainer> %s", string(b))
 
 	c, err := h.dockerClient.CreateContainer(opts)
 	if err != nil {
@@ -322,7 +321,6 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 
 // CanSpawn checks if the model can be spawned by this hatchery
 func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
-	log.Debug("CanSpawn> Checking %s %v", model.Name, req)
 	if model.Type != sdk.Docker {
 		return false
 	}
