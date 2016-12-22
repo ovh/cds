@@ -15,8 +15,8 @@ import (
 
 // InsertHatchery registers in database new hatchery
 func InsertHatchery(db *sql.DB, h *sdk.Hatchery) error {
-
-	tx, err := db.Begin()
+	dbmap := database.DBMap(db)
+	tx, err := dbmap.Begin()
 	if err != nil {
 		return err
 	}
@@ -38,22 +38,16 @@ func InsertHatchery(db *sql.DB, h *sdk.Hatchery) error {
 		return tx.Commit()
 	}
 
-	query = `INSERT INTO worker_model (type, name, image, group_id) VALUES ($1,$2, $3,$4) RETURNING id`
-	err = tx.QueryRow(query, string(sdk.HostProcess), h.Model.Name, h.Model.Image, h.GroupID).Scan(&h.Model.ID)
-	if err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
-		return sdk.ErrModelNameExist
-	}
-	if err != nil {
-		return err
-	}
+	//only local hatcheries declare model on registration
+	h.Model.CreatedBy = sdk.User{Username: h.Name}
+	h.Model.Type = string(sdk.HostProcess)
+	h.Model.GroupID = h.GroupID
+	h.Model.OwnerID = h.ID
 
-	for _, c := range h.Model.Capabilities {
-		query = `INSERT INTO worker_capability (worker_model_id, type, name, argument) VALUES ($1, $2, $3, $4)`
-		_, err = tx.Exec(query, h.Model.ID, string(c.Type), c.Name, c.Value)
-		if err != nil {
-			log.Warning("Cannot insert capability: %s\n", err)
-			return err
-		}
+	if err := worker.InsertWorkerModel(tx, &h.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
+		return sdk.ErrModelNameExist
+	} else if err != nil {
+		return err
 	}
 
 	query = `INSERT INTO hatchery_model (hatchery_id, worker_model_id) VALUES ($1, $2)`
