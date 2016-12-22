@@ -27,6 +27,16 @@ func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions
 			Name:              opts.ApplicationName,
 			ApplicationGroups: proj.ProjectGroups,
 		}
+
+		//Keep the application variables
+		for k, v := range opts.ApplicationVariables {
+			app.Variable = append(app.Variable, sdk.Variable{
+				Name:  k,
+				Type:  sdk.StringVariable,
+				Value: v,
+			})
+		}
+
 	} else {
 		//Get the template
 		sdktmpl, err := templateextension.LoadByName(db, opts.TemplateName)
