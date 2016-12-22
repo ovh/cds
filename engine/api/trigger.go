@@ -376,7 +376,7 @@ func getTriggersAsSourceHandler(w http.ResponseWriter, r *http.Request, db *sql.
 
 	if err := r.ParseForm(); err != nil {
 		log.Warning("getTriggersAsSourceHandler> Cannot parse form: %s\n", err)
-		WriteError(w, r, sdk.ErrUnknownError)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	env := r.Form.Get("env")
