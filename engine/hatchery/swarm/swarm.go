@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"bytes"
+
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/ovh/cds/engine/log"
@@ -124,6 +126,27 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 				Signal: docker.SIGKILL,
 			}); err != nil {
 				log.Warning("Unable to kill container %s", err)
+
+				if log.IsDebug() {
+					buffer := new(bytes.Buffer)
+
+					err := h.dockerClient.Logs(docker.LogsOptions{
+						Container:    id,
+						Stderr:       true,
+						Stdout:       true,
+						ErrorStream:  buffer,
+						OutputStream: buffer,
+					})
+
+					if err != nil {
+						log.Warning("Unable to get logs for container %s", id)
+					} else {
+						log.Debug("***** Container %s logs : ")
+						log.Debug("%s", buffer.String())
+						log.Debug("**************************")
+					}
+				}
+
 				continue
 			}
 

@@ -24,7 +24,8 @@ func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions
 
 	if opts.TemplateName == templateextension.EmptyTemplate.Name {
 		app = &sdk.Application{
-			Name: opts.ApplicationName,
+			Name:              opts.ApplicationName,
+			ApplicationGroups: proj.ProjectGroups,
 		}
 	} else {
 		//Get the template
