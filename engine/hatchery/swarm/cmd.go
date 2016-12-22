@@ -48,7 +48,7 @@ $ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> -
 		hatcherySwarm.onlyWithServiceReq = viper.GetBool("only-with-service-req")
 		hatcherySwarm.maxContainers = viper.GetInt("max-containers")
 		hatcherySwarm.defaultMemory = viper.GetInt("worker-memory")
-		hatcherySwarm.workerTtl = viper.GetInt("worker-ttl")
+		hatcherySwarm.workerTTL = viper.GetInt("worker-ttl")
 
 		if os.Getenv("DOCKER_HOST") == "" {
 			sdk.Exit("Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
