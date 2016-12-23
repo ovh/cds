@@ -1,6 +1,6 @@
 -- +migrate Up
 
-DELETE TABLE  "user_notification";
+DROP TABLE  "user_notification";
 
 -- +migrate Down
 

@@ -194,7 +194,7 @@ func checkQueue() {
 	for i := range queue {
 		requirementsOK := true
 		// Check requirement
-		log.Notice("checkQueue> Checking requirements for action %s", queue[i].ID)
+		log.Notice("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].ActionName)
 		for _, r := range queue[i].Requirements {
 			ok, err := checkRequirement(r)
 			if err != nil {

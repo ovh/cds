@@ -248,10 +248,14 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 	}
 
 	//Load Model
-	m, errM := LoadWorkerModelByID(database.DBMap(db), modelID)
-	if errM != nil {
-		log.Warning("RegisterWorker> Cannot load model: %s\n", errM)
-		return nil, errM
+	var m *sdk.Model
+	if modelID != 0 {
+		var errM error
+		m, errM = LoadWorkerModelByID(database.DBMap(db), modelID)
+		if errM != nil {
+			log.Warning("RegisterWorker> Cannot load model: %s\n", errM)
+			return nil, errM
+		}
 	}
 
 	//Load the famous sharedInfraGroup
@@ -264,9 +268,11 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 	//If worker model is public (sharedInfraGroup) it can be ran by every one
 	//If worker is public it can run every model
 	//Private worker for a group cannot run a private model for another group
-	if t.GroupID != sharedInfraGroup.ID && t.GroupID != m.GroupID && m.GroupID != sharedInfraGroup.ID {
-		log.Warning("RegisterWorker> worker %s (%d) cannot be spawned as %s (%d)", name, t.GroupID, m.Name, m.GroupID)
-		return nil, sdk.ErrForbidden
+	if m != nil {
+		if t.GroupID != sharedInfraGroup.ID && t.GroupID != m.GroupID && m.GroupID != sharedInfraGroup.ID {
+			log.Warning("RegisterWorker> worker %s (%d) cannot be spawned as %s (%d)", name, t.GroupID, m.Name, m.GroupID)
+			return nil, sdk.ErrForbidden
+		}
 	}
 
 	//generate an ID
@@ -277,11 +283,16 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 	}
 
 	//Instanciate a new worker
+	var hatcheryID int64
+	if h != nil {
+		hatcheryID = h.ID
+	}
+
 	w := &sdk.Worker{
 		ID:         id,
 		Name:       name,
 		Model:      modelID,
-		HatcheryID: h.ID,
+		HatcheryID: hatcheryID,
 		Status:     sdk.StatusWaiting,
 		GroupID:    t.GroupID,
 	}

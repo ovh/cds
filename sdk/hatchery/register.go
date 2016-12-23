@@ -67,14 +67,9 @@ func hatcheryRoutine(h Interface, provision int) error {
 		log.Debug("hatcheryRoutine> err while GetWorkerModelStatus:%e\n", err)
 		return err
 	}
-
-	log.Debug("hatcheryRoutine> len(wms)=%d\n", len(wms))
-
 	for _, ms := range wms {
 		// Provisionning
 		ms.WantedCount += int64(provision)
-
-		log.Debug("hatcheryRoutine> ms.CurrentCount=%d ms.WantedCount=%d\n", ms.CurrentCount, ms.WantedCount)
 
 		if ms.CurrentCount == ms.WantedCount {
 			// ok, do nothing
@@ -171,7 +166,6 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 func hearbeat(m Interface, token string) {
 	for {
 		time.Sleep(5 * time.Second)
-		log.Debug("m.Hatchery().ID:%d", m.Hatchery().ID)
 		if m.Hatchery().ID == 0 {
 			log.Notice("Disconnected from CDS engine, trying to register...\n")
 			if err := Register(m.Hatchery(), token); err != nil {
@@ -187,6 +181,5 @@ func hearbeat(m Interface, token string) {
 			m.Hatchery().ID = 0
 			continue
 		}
-		log.Info("heartbeat> done")
 	}
 }

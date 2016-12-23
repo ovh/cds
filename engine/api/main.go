@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -112,6 +113,10 @@ var mainCmd = &cobra.Command{
 		}
 		router.init()
 		baseURL = viper.GetString("base_url")
+
+		if err := group.Initialize(db); err != nil {
+			log.Critical("Cannot initialize groups: %s\n", err)
+		}
 
 		//Initialize secret driver
 		secretBackend := viper.GetString("secret_backend")

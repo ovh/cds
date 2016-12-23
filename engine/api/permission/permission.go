@@ -8,14 +8,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// PermissionRead  read permission on the resource
-const PermissionRead = 4
+const (
+	// PermissionRead  read permission on the resource
+	PermissionRead = 4
+	// PermissionReadExecute  read & execute permission on the resource
+	PermissionReadExecute = 5
+	// PermissionReadWriteExecute read/execute/write permission on the resource
+	PermissionReadWriteExecute = 7
+)
 
-// PermissionReadExecute  read & execute permission on the resource
-const PermissionReadExecute = 5
-
-// PermissionReadWriteExecute read/execute/write permission on the resource
-const PermissionReadWriteExecute = 7
+var (
+	// SharedInfraGroupID must be init from elsewhere with group.SharedInfraGroup
+	SharedInfraGroupID int64
+)
 
 // ApplicationPermission  Get the permission for the given application
 func ApplicationPermission(applicationID int64, user *sdk.User) int {
@@ -88,6 +93,9 @@ func AccessToApplication(applicationID int64, user *sdk.User, access int) bool {
 	}
 
 	for _, g := range user.Groups {
+		if g.ID == SharedInfraGroupID {
+			return true
+		}
 		for _, ag := range g.ApplicationGroups {
 			if ag.Application.ID == applicationID && ag.Permission >= access {
 				return true
@@ -104,6 +112,9 @@ func AccessToPipeline(environmentID, pipelineID int64, user *sdk.User, access in
 	}
 
 	for _, g := range user.Groups {
+		if g.ID == SharedInfraGroupID {
+			return true
+		}
 		for _, pg := range g.PipelineGroups {
 			if pg.Pipeline.ID == pipelineID && pg.Permission >= access {
 				if environmentID != sdk.DefaultEnv.ID {
@@ -123,6 +134,9 @@ func AccessToEnvironment(envID int64, user *sdk.User, access int) bool {
 	}
 
 	for _, g := range user.Groups {
+		if g.ID == SharedInfraGroupID {
+			return true
+		}
 		for _, eg := range g.EnvironmentGroups {
 			if eg.Environment.ID == envID && eg.Permission >= access {
 				return true

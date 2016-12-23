@@ -20,6 +20,9 @@ func init() {
 
 	Cmd.Flags().IntVar(&hatcherySwarm.defaultMemory, "worker-memory", 1024, "Worker default memory")
 	viper.BindPFlag("worker-memory", Cmd.Flags().Lookup("worker-memory"))
+
+	Cmd.Flags().IntVar(&hatcherySwarm.defaultMemory, "worker-ttl", 1, "Worker TTL (hours)")
+	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
 }
 
 // Cmd configures comamnd for HatcherySwarm
@@ -35,7 +38,7 @@ You should export DOCKER_TLS_VERIFY and DOCKER_CERT_PATH
 $ cds generate token --group shared.infra --expiration persistent
 2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4
 
-$ hatchery swarm --api=https://<api.domain> --token=<token> --basedir=/tmp
+$ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> --token=<token> 
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -45,6 +48,7 @@ $ hatchery swarm --api=https://<api.domain> --token=<token> --basedir=/tmp
 		hatcherySwarm.onlyWithServiceReq = viper.GetBool("only-with-service-req")
 		hatcherySwarm.maxContainers = viper.GetInt("max-containers")
 		hatcherySwarm.defaultMemory = viper.GetInt("worker-memory")
+		hatcherySwarm.workerTTL = viper.GetInt("worker-ttl")
 
 		if os.Getenv("DOCKER_HOST") == "" {
 			sdk.Exit("Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")

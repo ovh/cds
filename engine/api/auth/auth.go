@@ -11,6 +11,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
@@ -222,6 +224,33 @@ func checkWorkerAuth(db *sql.DB, auth string, ctx *context.Context) error {
 		return fmt.Errorf("cannot load group permissions: %s", err)
 	}
 	ctx.User.Groups = append(ctx.User.Groups, *g)
+
+	if w.Model != 0 {
+		//Load model
+		m, err := worker.LoadWorkerModelByID(database.DBMap(db), w.Model)
+		if err != nil {
+			return fmt.Errorf("cannot load worker: %s", err)
+		}
+		//Load the famous sharedInfraGroup
+		sharedInfraGroup, errLoad := group.LoadGroup(db, group.SharedInfraGroup)
+		if errLoad != nil {
+			log.Warning("checkWorkerAuth> Cannot load shared infra group: %s\n", errLoad)
+			return errLoad
+		}
+
+		//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
+		if m.GroupID == sharedInfraGroup.ID {
+			ctx.User.Groups = append(ctx.User.Groups, *sharedInfraGroup)
+		} else {
+			modelGroup, errLoad2 := user.LoadGroupPermissions(db, m.GroupID)
+			if errLoad2 != nil {
+				log.Warning("checkWorkerAuth> Cannot load group: %s\n", errLoad2)
+				return errLoad2
+			}
+			//Anyway, add the group of the model as a group of the user
+			ctx.User.Groups = append(ctx.User.Groups, *modelGroup)
+		}
+	}
 
 	ctx.Worker = *w
 	if putWorkerInCache {
