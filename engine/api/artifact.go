@@ -54,21 +54,21 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 	if fileName == "" {
 		log.Warning("uploadArtifactHandler> %s header is not set", sdk.ArtifactFileName)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	p, err := pipeline.LoadPipeline(db, project, pipelineName, false)
-	if err != nil {
-		log.Warning("uploadArtifactHandler> cannot load pipeline %s-%s: %s\n", project, pipelineName, err)
-		w.WriteHeader(http.StatusBadRequest)
+	p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
+	if errP != nil {
+		log.Warning("uploadArtifactHandler> cannot load pipeline %s-%s: %s\n", project, pipelineName, errP)
+		WriteError(w, r, errP)
 		return
 	}
 
-	a, err := application.LoadApplicationByName(db, project, appName)
-	if err != nil {
-		log.Warning("uploadArtifactHandler> cannot load application %s-%s: %s\n", project, appName, err)
-		w.WriteHeader(http.StatusBadRequest)
+	a, errA := application.LoadApplicationByName(db, project, appName)
+	if errA != nil {
+		log.Warning("uploadArtifactHandler> cannot load application %s-%s: %s\n", project, appName, errA)
+		WriteError(w, r, errA)
 		return
 	}
 
@@ -76,10 +76,11 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	if envName == "" || envName == sdk.DefaultEnv.Name {
 		env = &sdk.DefaultEnv
 	} else {
-		env, err = environment.LoadEnvironmentByName(db, project, envName)
-		if err != nil {
-			log.Warning("uploadArtifactHandler> Cannot load environment %s: %s\n", envName, err)
-			w.WriteHeader(http.StatusNotFound)
+		var errE error
+		env, errE = environment.LoadEnvironmentByName(db, project, envName)
+		if errE != nil {
+			log.Warning("uploadArtifactHandler> Cannot load environment %s: %s\n", envName, errE)
+			WriteError(w, r, errE)
 			return
 		}
 	}
@@ -90,17 +91,17 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		return
 	}
 
-	buildNumber, err := strconv.Atoi(buildNumberString)
-	if err != nil {
-		log.Warning("uploadArtifactHandler> BuildNumber must be an integer: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+	buildNumber, errI := strconv.Atoi(buildNumberString)
+	if errI != nil {
+		log.Warning("uploadArtifactHandler> BuildNumber must be an integer: %s\n", errI)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	hash, err := generateHash()
+	hash, errG := generateHash()
 	if err != nil {
-		log.Warning("uploadArtifactHandler> Could not generate hash: %s\n", err)
-		WriteError(w, r, err)
+		log.Warning("uploadArtifactHandler> Could not generate hash: %s\n", errG)
+		WriteError(w, r, errG)
 		return
 	}
 
@@ -134,13 +135,13 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		file, err := files[i].Open()
 		if err != nil {
 			log.Warning("uploadArtifactHandler> cannot open file: %s\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			WriteError(w, r, err)
 			return
 		}
-		err = artifact.SaveFile(db, p, a, art, file, env)
-		if err != nil {
+
+		if err := artifact.SaveFile(db, p, a, art, file, env); err != nil {
 			log.Warning("uploadArtifactHandler> cannot save file: %s\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			WriteError(w, r, err)
 			file.Close()
 			return
 		}
@@ -150,31 +151,12 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	vars := mux.Vars(r)
-	project := vars["key"]
-	pipelineName := vars["permPipelineKey"]
-	appName := vars["permApplicationName"]
 	artifactIDS := vars["id"]
 
-	// Load pipeline
-	_, err := pipeline.LoadPipeline(db, project, pipelineName, false)
-	if err != nil {
-		log.Warning("DownloadArtifactHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Load application
-	_, err = application.LoadApplicationByName(db, project, appName)
-	if err != nil {
-		log.Warning("DownloadArtifactHandler> Cannot load application %s: %s\n", appName, err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	artifactID, err := strconv.Atoi(artifactIDS)
-	if err != nil {
-		log.Warning("DownloadArtifactHandler> Cannot convert '%s' into int: %s\n", artifactIDS, err)
-		w.WriteHeader(http.StatusBadRequest)
+	artifactID, errAtoi := strconv.Atoi(artifactIDS)
+	if errAtoi != nil {
+		log.Warning("DownloadArtifactHandler> Cannot convert '%s' into int: %s\n", artifactIDS, errAtoi)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -182,19 +164,20 @@ func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	art, err := artifact.LoadArtifact(db, int64(artifactID))
 	if err != nil {
 		log.Warning("downloadArtifactHandler> Cannot load artifact %d: %s\n", artifactID, err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, err)
 		return
 	}
 
 	log.Info("downloadArtifactHandler: Serving %+v\n", art)
-	err = artifact.StreamFile(w, *art)
-	if err != nil {
-		log.Warning("downloadArtifactHandler: Cannot stream artifact %s-%s-%s-%s-%s file: %s\n", art.Project, art.Application, art.Environment, art.Pipeline, art.Tag, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+
 	w.Header().Add("Content-Type", "application/octet-stream")
 	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
+
+	if err = artifact.StreamFile(w, *art); err != nil {
+		log.Warning("downloadArtifactHandler: Cannot stream artifact %s-%s-%s-%s-%s file: %s\n", art.Project, art.Application, art.Environment, art.Pipeline, art.Tag, err)
+		WriteError(w, r, err)
+		return
+	}
 }
 
 func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
@@ -207,18 +190,18 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	envName := r.FormValue("envName")
 
 	// Load pipeline
-	p, err := pipeline.LoadPipeline(db, project, pipelineName, false)
-	if err != nil {
-		log.Warning("listArtifactsBuildHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusBadRequest)
+	p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
+	if errP != nil {
+		log.Warning("listArtifactsBuildHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
+		WriteError(w, r, errP)
 		return
 	}
 
 	// Load application
-	a, err := application.LoadApplicationByName(db, project, appName)
-	if err != nil {
-		log.Warning("listArtifactsBuildHandler> Cannot load application %s: %s\n", appName, err)
-		w.WriteHeader(http.StatusBadRequest)
+	a, errA := application.LoadApplicationByName(db, project, appName)
+	if errA != nil {
+		log.Warning("listArtifactsBuildHandler> Cannot load application %s: %s\n", appName, errA)
+		WriteError(w, r, errA)
 		return
 	}
 
@@ -226,10 +209,11 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	if envName == "" || envName == sdk.DefaultEnv.Name {
 		env = &sdk.DefaultEnv
 	} else {
-		env, err = environment.LoadEnvironmentByName(db, project, envName)
-		if err != nil {
-			log.Warning("listArtifactsBuildHandler> Cannot load environment %s: %s\n", envName, err)
-			w.WriteHeader(http.StatusNotFound)
+		var errE error
+		env, errE = environment.LoadEnvironmentByName(db, project, envName)
+		if errE != nil {
+			log.Warning("listArtifactsBuildHandler> Cannot load environment %s: %s\n", envName, errE)
+			WriteError(w, r, errE)
 			return
 		}
 	}
@@ -240,17 +224,17 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 		return
 	}
 
-	buildNumber, err := strconv.ParseInt(buildNumberString, 10, 64)
-	if err != nil {
-		log.Warning("listArtifactsBuildHandler> BuildNumber must be an integer: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+	buildNumber, errI := strconv.ParseInt(buildNumberString, 10, 64)
+	if errI != nil {
+		log.Warning("listArtifactsBuildHandler> BuildNumber must be an integer: %s\n", errI)
+		WriteError(w, r, errI)
 		return
 	}
 
-	art, err := artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
-	if err != nil {
-		log.Warning("listArtifactsBuildHandler> Cannot load artifacts: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	art, errArt := artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
+	if errArt != nil {
+		log.Warning("listArtifactsBuildHandler> Cannot load artifacts: %s\n", errArt)
+		WriteError(w, r, errArt)
 		return
 	}
 
@@ -267,18 +251,18 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	envName := r.FormValue("envName")
 
 	// Load pipeline
-	p, err := pipeline.LoadPipeline(db, project, pipelineName, false)
-	if err != nil {
-		log.Warning("listArtifactsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		w.WriteHeader(http.StatusBadRequest)
+	p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
+	if errP != nil {
+		log.Warning("listArtifactsHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
+		WriteError(w, r, errP)
 		return
 	}
 
 	// Load application
-	a, err := application.LoadApplicationByName(db, project, appName)
-	if err != nil {
-		log.Warning("listArtifactsHandler> Cannot load application %s: %s\n", appName, err)
-		w.WriteHeader(http.StatusBadRequest)
+	a, errA := application.LoadApplicationByName(db, project, appName)
+	if errA != nil {
+		log.Warning("listArtifactsHandler> Cannot load application %s: %s\n", appName, errA)
+		WriteError(w, r, errA)
 		return
 	}
 
@@ -286,10 +270,11 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	if envName == "" || envName == sdk.DefaultEnv.Name || p.Type == sdk.BuildPipeline {
 		env = &sdk.DefaultEnv
 	} else {
-		env, err = environment.LoadEnvironmentByName(db, project, envName)
-		if err != nil {
-			log.Warning("listArtifactsHandler> Cannot load environment %s: %s\n", envName, err)
-			w.WriteHeader(http.StatusNotFound)
+		var errE error
+		env, errE = environment.LoadEnvironmentByName(db, project, envName)
+		if errE != nil {
+			log.Warning("listArtifactsHandler> Cannot load environment %s: %s\n", envName, errE)
+			WriteError(w, r, errE)
 			return
 		}
 	}
@@ -300,16 +285,16 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		return
 	}
 
-	art, err := artifact.LoadArtifacts(db, p.ID, a.ID, env.ID, tag)
-	if err != nil {
-		log.Warning("listArtifactsHandler> Cannot load artifacts: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	art, errArt := artifact.LoadArtifacts(db, p.ID, a.ID, env.ID, tag)
+	if errArt != nil {
+		log.Warning("listArtifactsHandler> Cannot load artifacts: %s\n", errArt)
+		WriteError(w, r, errArt)
 		return
 	}
 
 	if len(art) == 0 {
 		log.Warning("listArtifactHandler> %s-%s-%s-%s/%s: not found\n", project, appName, env.Name, pipelineName, tag)
-		w.WriteHeader(http.StatusNotFound)
+		WriteError(w, r, sdk.ErrNotFound)
 		return
 	}
 
