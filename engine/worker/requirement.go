@@ -102,7 +102,8 @@ func checkNetworkAccessRequirement(r sdk.Requirement) (bool, error) {
 
 func checkServiceRequirement(r sdk.Requirement) (bool, error) {
 	if _, err := net.LookupIP(r.Name); err != nil {
-		return false, err
+		log.Printf("Error checking requirement : %s\n", err)
+		return false, nil
 	}
 
 	return true, nil

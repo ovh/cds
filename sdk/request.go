@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -113,6 +114,10 @@ func readConfig() error {
 		}
 	}
 
+	if val := os.Getenv("CDS_VERBOSE"); val == "true" {
+		verbose = true
+	}
+
 	if val := os.Getenv("CDS_USER"); val != "" {
 		user = val
 	}
@@ -186,7 +191,9 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 	}
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "Response Body: %s\n", body)
+		if len(body) > 0 {
+			log.Printf("Response Body: %s\n", body)
+		}
 	}
 
 	if err := DecodeError(body); err != nil {
@@ -204,6 +211,10 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)
+	}
+
+	if verbose {
+		log.Printf("Call %s %s%s\n", method, Host, path)
 	}
 
 	for i := 0; i < 10; i++ {
@@ -323,10 +334,10 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 	defer resp.Body.Close()
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "Response Status: %s\n", resp.Status)
-		fmt.Fprintf(os.Stderr, "Request path: %s\n", Host+path)
-		fmt.Fprintf(os.Stderr, "Request Headers: %s\n", req.Header)
-		fmt.Fprintf(os.Stderr, "Response Headers: %s\n", resp.Header)
+		log.Printf("Response Status: %s\n", resp.Status)
+		log.Printf("Request path: %s\n", Host+path)
+		log.Printf("Request Headers: %s\n", req.Header)
+		log.Printf("Response Headers: %s\n", resp.Header)
 	}
 
 	var respBody []byte
@@ -336,7 +347,9 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 	}
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "Response Body: %s\n", body)
+		if len(body.Bytes()) > 0 {
+			log.Printf("Response Body: %s\n", body.String())
+		}
 	}
 
 	return respBody, resp.StatusCode, nil
@@ -376,10 +389,10 @@ func Upload(method string, path string, body io.ReadCloser, mods ...RequestModif
 	defer resp.Body.Close()
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "Response Status: %s\n", resp.Status)
-		fmt.Fprintf(os.Stderr, "Request path: %s\n", Host+path)
-		fmt.Fprintf(os.Stderr, "Request Headers: %s\n", req.Header)
-		fmt.Fprintf(os.Stderr, "Response Headers: %s\n", resp.Header)
+		log.Printf("Response Status: %s\n", resp.Status)
+		log.Printf("Request path: %s\n", Host+path)
+		log.Printf("Request Headers: %s\n", req.Header)
+		log.Printf("Response Headers: %s\n", resp.Header)
 	}
 
 	var respBody []byte
@@ -389,7 +402,9 @@ func Upload(method string, path string, body io.ReadCloser, mods ...RequestModif
 	}
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "Response Body: %s\n", body)
+		if len(respBody) > 0 {
+			log.Printf("Response Body: %s\n", respBody)
+		}
 	}
 
 	return respBody, resp.StatusCode, nil

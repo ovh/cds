@@ -144,7 +144,7 @@ func ListArtifacts(project string, application string, pipeline string, tag stri
 	tag = strings.Replace(tag, "/", "-", -1)
 	tag = url.QueryEscape(tag)
 
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/artifact/%s?envName=%s", project, application, pipeline, tag, env)
+	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/artifact/%s?envName=%s", project, application, pipeline, tag, url.QueryEscape(env))
 	data, code, err := Request("GET", uri, nil)
 	if err != nil {
 		return nil, err
