@@ -277,7 +277,7 @@ func (h *HatcherySwarm) createNetwork(name string) error {
 //shortcut to create+start(=run) a container
 func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAlias string, cmd, env []string, labels map[string]string, memory int64) error {
 	//Memory is set to 1GB by default
-	if memory == 0 {
+	if memory <= 4 {
 		memory = 1024
 	} else {
 		//Moaaaaar memory
