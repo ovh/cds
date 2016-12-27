@@ -84,6 +84,8 @@ func hatcheryRoutine(h Interface, provision int) error {
 			continue
 		}
 
+		log.Debug("hatcheryRoutine> CurrentCount=%d WantedCount=%d BuildingCount=%d Requirements=%v", ms.CurrentCount, ms.WantedCount, ms.BuildingCount, ms.Requirements)
+
 		if ms.CurrentCount < ms.WantedCount {
 			diff := ms.WantedCount - ms.CurrentCount
 			// Check the number of worker started by hatchery
