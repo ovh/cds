@@ -157,8 +157,8 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 				if err != nil {
 					log.Warning("Unable to get logs for container %s", ID)
 				} else {
-					log.Debug("***** Container %s logs : ")
-					log.Debug("%s", buffer.String())
+					log.Debug("***** Container %s logs : ", ID)
+					log.Debug(" * %s", buffer.String())
 					log.Debug("**************************")
 				}
 			}
@@ -219,7 +219,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 				"service_name":   serviceName,
 			}
 			//Start the services
-			if err := h.createAndStartContainer(serviceName, img, network, name, []string{}, env, labels, 0); err != nil {
+			if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, 0); err != nil {
 				log.Warning("SpawnWorker>Unable to start required container: %s\n", err)
 				return err
 			}
