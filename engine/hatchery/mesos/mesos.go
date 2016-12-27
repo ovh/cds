@@ -240,7 +240,12 @@ func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int6
 	// Estimate needed memory, we will set 110% of required memory
 	memory := m.defaultMemory
 	//Check if there is a memory requirement
+	//if there is a service requirement: exit
 	for _, r := range req {
+		if r.Name == sdk.ServiceRequirement {
+			return fmt.Errorf("Service requirement not supported")
+		}
+
 		if r.Type == sdk.MemoryRequirement {
 			var err error
 			memory, err = strconv.Atoi(r.Value)
