@@ -9,9 +9,9 @@ import (
 // and kill all workers with status Waiting
 func killWorker(h Interface, model *sdk.Model) error {
 
-	workers, err := sdk.GetWorkers()
-	if err != nil {
-		return err
+	workers, errW := sdk.GetWorkers()
+	if errW != nil {
+		return errW
 	}
 
 	// Get list of workers for this model
@@ -27,13 +27,13 @@ func killWorker(h Interface, model *sdk.Model) error {
 
 		// If worker is not currently executing an action
 		if worker.Status != sdk.StatusBuilding {
-			// then disable him
-			if err = sdk.DisableWorker(worker.ID); err != nil {
+			if err := sdk.DisableWorker(worker.ID); err != nil {
 				return err
 			}
 			log.Notice("KillWorker> Disabled %s\n", worker.Name)
 			return h.KillWorker(worker)
 		}
+		log.Notice("KillWorker> Cannot kill building worker %s\n", worker.Name)
 	}
 
 	return nil
