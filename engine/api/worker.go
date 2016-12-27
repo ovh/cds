@@ -9,7 +9,10 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"time"
+
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
@@ -119,10 +122,44 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		return
 	}
 
-	if wor.Status != sdk.StatusWaiting {
+	if wor.Status == sdk.StatusBuilding {
 		log.Warning("disableWorkerHandler> Cannot disable a worker with status %s\n", wor.Status)
 		WriteError(w, r, sdk.ErrForbidden)
 		return
+	}
+
+	if wor.Status == sdk.StatusChecking {
+		log.Warning("disableWorkerHandler> Next time, we will see %d %s at status waiting, we will kill it\n", wor.ID, wor.Name)
+		go func(w *sdk.Worker) {
+			for {
+				var attempts int
+				time.Sleep(500 * time.Millisecond)
+				db := database.DB()
+				if db != nil {
+					attempts++
+					w1, err := worker.LoadWorker(db, w.ID)
+					if err != nil {
+						log.Warning("disableWorkerHandler> Error getting worker %d", w.ID)
+						return
+					}
+					//Give up is worker is building
+					if w1.Status == sdk.StatusBuilding {
+						return
+					}
+					if w1.Status == sdk.StatusWaiting {
+						if err := worker.UpdateWorkerStatus(tx, id, sdk.StatusDisabled); err != nil {
+							log.Warning("disableWorkerHandler> Error disabling worker %d", w.ID)
+							return
+						}
+						return
+					}
+					if attempts > 100 {
+						log.Critical("disableWorkerHandler> Unable to disabled worker %d %s", w.ID, w.Name)
+						return
+					}
+				}
+			}
+		}(wor)
 	}
 
 	if wor.HatcheryID == 0 {

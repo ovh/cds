@@ -26,7 +26,7 @@ func killWorker(h Interface, model *sdk.Model) error {
 		}
 
 		// If worker is not currently executing an action
-		if worker.Status == sdk.StatusWaiting {
+		if worker.Status != sdk.StatusBuilding {
 			// then disable him
 			if err = sdk.DisableWorker(worker.ID); err != nil {
 				return err
