@@ -113,6 +113,7 @@ func hatcheryRoutine(h Interface, provision int) error {
 			log.Notice("I got to kill %d %s worker !\n", diff, ms.ModelName)
 
 			if err := killWorker(h, m); err != nil {
+				log.Warning("hatcheryRoutine> Unable to kill worker %s", ms.ModelName)
 				return err
 			}
 			continue

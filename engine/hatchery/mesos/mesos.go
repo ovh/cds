@@ -98,7 +98,7 @@ func (m *HatcheryMesos) Hatchery() *sdk.Hatchery {
 // KillWorker deletes an application on mesos via marathon
 func (m *HatcheryMesos) KillWorker(worker sdk.Worker) error {
 	appID := path.Join(hatcheryMesos.marathonID, worker.Name)
-	log.Notice("killMesosWorker> Killing %s\n", appID)
+	log.Notice("KillWorker> Killing %s\n", appID)
 	return deleteApp(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, appID)
 }
 
