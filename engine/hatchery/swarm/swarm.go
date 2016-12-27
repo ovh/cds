@@ -1,13 +1,12 @@
 package swarm
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"bytes"
 
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/fsouza/go-dockerclient"
@@ -126,27 +125,6 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 				Signal: docker.SIGKILL,
 			}); err != nil {
 				log.Warning("Unable to kill container %s", err)
-
-				if log.IsDebug() {
-					buffer := new(bytes.Buffer)
-
-					err := h.dockerClient.Logs(docker.LogsOptions{
-						Container:    id,
-						Stderr:       true,
-						Stdout:       true,
-						ErrorStream:  buffer,
-						OutputStream: buffer,
-					})
-
-					if err != nil {
-						log.Warning("Unable to get logs for container %s", id)
-					} else {
-						log.Debug("***** Container %s logs : ")
-						log.Debug("%s", buffer.String())
-						log.Debug("**************************")
-					}
-				}
-
 				continue
 			}
 
@@ -165,6 +143,25 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			Signal: docker.SIGKILL,
 		}); err != nil {
 			log.Warning("Unable to kill container %s", err)
+			if log.IsDebug() {
+				buffer := new(bytes.Buffer)
+
+				err := h.dockerClient.Logs(docker.LogsOptions{
+					Container:    ID,
+					Stderr:       true,
+					Stdout:       true,
+					ErrorStream:  buffer,
+					OutputStream: buffer,
+				})
+
+				if err != nil {
+					log.Warning("Unable to get logs for container %s", ID)
+				} else {
+					log.Debug("***** Container %s logs : ")
+					log.Debug("%s", buffer.String())
+					log.Debug("**************************")
+				}
+			}
 		}
 
 		if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
@@ -406,6 +403,7 @@ checkImage:
 	}
 
 	//Ready to spawn
+	log.Notice("CanSpawn> %s can be spawned", model.Name)
 	return true
 }
 
