@@ -80,8 +80,8 @@ $ CDS_OPENSTACK_USER=<user> CDS_OPENSTACK_TENANT=<tenant> CDS_OPENSTACK_AUTH_END
 		}
 
 		var err error
-		if viper.GetString("openstack_ip_range") != "" {
-			hatcheryOpenStack.ips, err = IPinRanges(viper.GetString("openstack_ip_range"))
+		if viper.GetString("openstack-ip-range") != "" {
+			hatcheryOpenStack.ips, err = IPinRanges(viper.GetString("openstack-ip-range"))
 			if err != nil {
 				sdk.Exit("flag or environmnent variable openstack-ip-range error: %s\n", err)
 			}
