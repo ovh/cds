@@ -21,7 +21,7 @@ func (g gorpLogger) Printf(format string, v ...interface{}) {
 func DBMap(db *sql.DB) *gorp.DbMap {
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
 
-	if viper.GetBool("GORP_TRACE") {
+	if viper.GetBool("gorp_trace") {
 		dbmap.TraceOn("[GORP]     Query>", gorpLogger{})
 	}
 

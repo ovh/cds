@@ -199,7 +199,9 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 			return nil, errjson
 		}
 
-		log.Println("Getting templates list : OK")
+		if verbose {
+			log.Println("Getting templates list : OK")
+		}
 
 		var found bool
 		for _, t := range tmpls {
@@ -213,7 +215,9 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 			return nil, fmt.Errorf("Template %s not found", name)
 		}
 
-		log.Printf("Found template at %s\n", path)
+		if verbose {
+			log.Printf("Found template at %s\n", path)
+		}
 
 	}
 	btes, code, err := UploadMultiPart(method, path, body, SetHeader("uploadfile", filePath), SetHeader("Content-Type", writer.FormDataContentType()))
