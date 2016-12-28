@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -185,6 +186,10 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 		method = "PUT"
 		path = "/template/"
 
+		if verbose {
+			log.Println("Getting templates list")
+		}
+
 		btes, _, errrequest := Request("GET", "/template", nil)
 		if errrequest != nil {
 			return nil, errrequest
@@ -193,6 +198,8 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 		if errjson := json.Unmarshal(btes, &tmpls); errjson != nil {
 			return nil, errjson
 		}
+
+		log.Println("Getting templates list : OK")
 
 		var found bool
 		for _, t := range tmpls {
@@ -205,6 +212,9 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 		if !found {
 			return nil, fmt.Errorf("Template %s not found", name)
 		}
+
+		log.Printf("Found template at %s\n", path)
+
 	}
 	btes, code, err := UploadMultiPart(method, path, body, SetHeader("uploadfile", filePath), SetHeader("Content-Type", writer.FormDataContentType()))
 	if err != nil {
