@@ -208,8 +208,21 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 			tuple := strings.Split(r.Value, " ")
 			img := tuple[0]
 			env := []string{}
+			serviceMemory := int64(1024)
 			if len(tuple) > 1 {
 				env = append(env, tuple[1:]...)
+			}
+			//option for power user : set the service memory with CDS_SERVICE_MEMORY=1024
+			for _, e := range env {
+				if strings.HasPrefix(e, "CDS_SERVICE_MEMORY=") {
+					m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
+					i, err := strconv.Atoi(m)
+					if err != nil {
+						log.Warning("SpawnWorker> Unable to parse service option %s : %s", e, err)
+						continue
+					}
+					serviceMemory = int64(i)
+				}
 			}
 			serviceName := r.Name + "-" + name
 
@@ -219,7 +232,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 				"service_name":   serviceName,
 			}
 			//Start the services
-			if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, 0); err != nil {
+			if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, serviceMemory); err != nil {
 				log.Warning("SpawnWorker>Unable to start required container: %s\n", err)
 				return err
 			}
