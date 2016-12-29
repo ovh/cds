@@ -106,19 +106,23 @@ func (m *HatcheryMesos) KillWorker(worker sdk.Worker) error {
 }
 
 // CanSpawn return wether or not hatchery can spawn model
-// requirements are not supported
+// requirements services are not supported
 func (m *HatcheryMesos) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 	if model.Type != sdk.Docker {
 		return false
 	}
-	if len(req) > 0 {
-		return false
+	//Service requirement are not supported
+	for _, r := range req {
+		if r.Type == sdk.ServiceRequirement {
+			return false
+		}
 	}
+
 	return true
 }
 
 // SpawnWorker creates an application on mesos via marathon
-// requirements are not supported
+// requirements services are not supported
 func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
 	if model.Type != sdk.Docker {
 		return fmt.Errorf("Model not handled")
