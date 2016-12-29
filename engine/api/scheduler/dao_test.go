@@ -3,11 +3,13 @@ package scheduler
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadAllPipelineScheduler(t *testing.T) {
@@ -48,7 +50,20 @@ func TestInsert(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s := &sdk.PipelineScheduler{}
+	//Insert Application
+	app := &sdk.Application{
+		Name: "TEST_APP",
+	}
+	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
+	if err := application.InsertApplication(db, proj, app); err != nil {
+		t.Fatal(err)
+	}
+
+	s := &sdk.PipelineScheduler{
+		ApplicationID: app.ID,
+		EnvironmentID: sdk.DefaultEnv.ID,
+		PipelineID:    pip.ID,
+	}
 	if err := Insert(db, s); err != nil {
 		t.Fatal(err)
 	}

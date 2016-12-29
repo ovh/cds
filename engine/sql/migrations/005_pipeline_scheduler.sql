@@ -5,7 +5,7 @@ CREATE TABLE pipeline_scheduler (
         application_id BIGINT NOT NULL,
         pipeline_id BIGINT NOT NULL,
         environment_id BIGINT NOT NULL,
-        args JSONB NOT NULL,
+        args JSONB,
         crontab TEXT NOT NULL
 );
 

@@ -27,7 +27,7 @@ func LoadAll(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, error) {
 //Insert a pipeline scheduler
 func Insert(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	ds := database.PipelineScheduler(*s)
-	if err := db.Insert(ds); err != nil {
+	if err := db.Insert(&ds); err != nil {
 		log.Warning("Insert> Unable to insert pipeline scheduler : %T %s", err, err)
 		return err
 	}
@@ -38,7 +38,7 @@ func Insert(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 //Update a pipeline scheduler
 func Update(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	ds := database.PipelineScheduler(*s)
-	if n, err := db.Update(ds); err != nil {
+	if n, err := db.Update(&ds); err != nil {
 		log.Warning("Update> Unable to update pipeline scheduler : %T %s", err, err)
 		return err
 	} else if n == 0 {
@@ -51,7 +51,7 @@ func Update(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 //Delete a pipeline scheduler
 func Delete(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	ds := database.PipelineScheduler(*s)
-	if n, err := db.Delete(ds); err != nil {
+	if n, err := db.Delete(&ds); err != nil {
 		log.Warning("Delete> Unable to delete pipeline scheduler : %T %s", err, err)
 		return err
 	} else if n == 0 {
