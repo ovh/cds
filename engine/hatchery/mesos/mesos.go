@@ -57,7 +57,7 @@ const marathonPOSTAppTemplate = `
         "CDS_MODEL": "{{.WorkerModelID}}",
         "CDS_HATCHERY": "{{.HatcheryID}}",
         "CDS_SINGLE_USE": "1",
-		"CDS_TTL" : {{.WorkerTTL}}
+		"CDS_TTL" : "{{.WorkerTTL}}"
     },
     "id": "{{.MarathonID}}/{{.WorkerName}}",
     "instances": 1,
