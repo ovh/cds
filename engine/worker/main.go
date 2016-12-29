@@ -140,7 +140,7 @@ func init() {
 	flags.String("basedir", "", "Worker working directory")
 	viper.BindPFlag("basedir", flags.Lookup("basedir"))
 
-	flags.Int("ttl", 12, "Worker time to live (hours)")
+	flags.Int("ttl", 30, "Worker time to live (minutes)")
 	viper.BindPFlag("ttl", flags.Lookup("ttl"))
 
 	mainCmd.AddCommand(cmdExport)
@@ -167,7 +167,8 @@ func queuePolling() {
 		}
 
 		//We we've done nothing until ttl is over, let's exit
-		if nbActionsDone == 0 && startTimestamp.Add(time.Duration(viper.GetInt("ttl"))*time.Hour).Before(time.Now()) {
+		if nbActionsDone == 0 && startTimestamp.Add(time.Duration(viper.GetInt("ttl"))*time.Minute).Before(time.Now()) {
+			unregister()
 			os.Exit(0)
 		}
 

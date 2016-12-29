@@ -1,7 +1,6 @@
 package swarm
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"strconv"
@@ -143,25 +142,6 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			Signal: docker.SIGKILL,
 		}); err != nil {
 			log.Warning("Unable to kill container %s", err)
-			if log.IsDebug() {
-				buffer := new(bytes.Buffer)
-
-				err := h.dockerClient.Logs(docker.LogsOptions{
-					Container:    ID,
-					Stderr:       true,
-					Stdout:       true,
-					ErrorStream:  buffer,
-					OutputStream: buffer,
-				})
-
-				if err != nil {
-					log.Warning("Unable to get logs for container %s", ID)
-				} else {
-					log.Debug("***** Container %s logs : ", ID)
-					log.Debug(" * %s", buffer.String())
-					log.Debug("**************************")
-				}
-			}
 		}
 
 		if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{

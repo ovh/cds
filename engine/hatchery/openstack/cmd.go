@@ -30,6 +30,9 @@ func init() {
 
 	Cmd.Flags().String("openstack-ip-range", "Ext-Net", "")
 	viper.BindPFlag("openstack-ip-range", Cmd.Flags().Lookup("openstack-ip-range"))
+
+	Cmd.Flags().IntVar(&hatcheryOpenStack.workerTTL, "worker-ttl", 30, "Worker TTL (minutes)")
+	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
 }
 
 // Cmd configures comamnd for HatcheryCloud

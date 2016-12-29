@@ -31,6 +31,9 @@ func init() {
 
 	Cmd.Flags().IntVar(&hatcheryMesos.defaultMemory, "worker-memory", 1024, "Worker default memory")
 	viper.BindPFlag("worker-memory", Cmd.Flags().Lookup("worker-memory"))
+
+	Cmd.Flags().IntVar(&hatcheryMesos.workerTTL, "worker-ttl", 10, "Worker TTL (minutes)")
+	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
 }
 
 // Cmd configures comamnd for HatcheryLocal

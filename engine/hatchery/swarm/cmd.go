@@ -21,7 +21,7 @@ func init() {
 	Cmd.Flags().IntVar(&hatcherySwarm.defaultMemory, "worker-memory", 1024, "Worker default memory")
 	viper.BindPFlag("worker-memory", Cmd.Flags().Lookup("worker-memory"))
 
-	Cmd.Flags().IntVar(&hatcherySwarm.defaultMemory, "worker-ttl", 1, "Worker TTL (hours)")
+	Cmd.Flags().IntVar(&hatcherySwarm.workerTTL, "worker-ttl", 10, "Worker TTL (minutes)")
 	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
 }
 

@@ -24,6 +24,7 @@ func Test_marathonConfig(t *testing.T) {
 		marathonLabels: map[string]string{
 			"blabla": "blabla",
 		},
+		workerTTL: 100,
 	}
 
 	r, err := m.marathonConfig(&sdk.Model{ID: 1, Name: "model"}, 1, 64)
@@ -34,8 +35,8 @@ func Test_marathonConfig(t *testing.T) {
 
 	t.Logf("%s", b)
 
-	config := map[string]string{}
-	expected := map[string]string{}
+	config := map[string]interface{}{}
+	expected := map[string]interface{}{}
 	json.Unmarshal(b, &config)
 	json.Unmarshal([]byte(`	{
 		    "container": {
@@ -55,7 +56,8 @@ func Test_marathonConfig(t *testing.T) {
 		        "CDS_NAME": "model-silly-einstein",
 		        "CDS_MODEL": "1",
 		        "CDS_HATCHERY": "1",
-		        "CDS_SINGLE_USE": "1"
+		        "CDS_SINGLE_USE": "1",
+				"CDS_TTL" : 10
 		    },
 		    "id": "marathonID/model-silly-einstein",
 		    "instances": 1,
@@ -65,6 +67,7 @@ func Test_marathonConfig(t *testing.T) {
 		}
 `), &expected)
 
-	assert.True(t, reflect.DeepEqual(expected, config))
+	assert.True(t, reflect.DeepEqual(expected["container"], config["container"]))
+	assert.True(t, reflect.DeepEqual(expected["labels"], config["labels"]))
 
 }
