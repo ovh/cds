@@ -38,8 +38,8 @@ func server() (int, error) {
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         "127.0.0.1:0",
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 6 * time.Minute,
+		ReadTimeout:  6 * time.Minute,
 	}
 
 	go func() {
