@@ -38,13 +38,14 @@ type HatcheryCloud struct {
 	networks  []Network
 
 	// User provided parameters
-	address  string
-	user     string
-	password string
-	endpoint string
-	tenant   string
-	region   string
-	network  string
+	address   string
+	user      string
+	password  string
+	endpoint  string
+	tenant    string
+	region    string
+	network   string
+	workerTTL int
 }
 
 // ID returns hatchery id
@@ -362,7 +363,7 @@ cd $HOME
 # Download and start worker with curl
 curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 0 -C - >> /tmp/user_data 2>&1
 chmod +x worker
-CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --single-use && exit 0
+CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --single-use --ttl={{.TTL}} && exit 0
 `
 	var udata = udataBegin + string(udataModel) + udataEnd
 
@@ -376,12 +377,14 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Key      string
 		Model    int64
 		Hatchery int64
+		TTL      int
 	}{
 		API:      viper.GetString("api"),
 		Name:     name,
 		Key:      viper.GetString("token"),
 		Model:    model.ID,
 		Hatchery: h.hatch.ID,
+		TTL:      h.workerTTL,
 	}
 	var buffer bytes.Buffer
 	if err = tmpl.Execute(&buffer, udataParam); err != nil {

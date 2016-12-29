@@ -34,6 +34,7 @@ type marathonPOSTAppParams struct {
 	MarathonVHOST  string
 	MarathonLabels string
 	Memory         int
+	WorkerTTL      int
 }
 
 const marathonPOSTAppTemplate = `
@@ -55,7 +56,8 @@ const marathonPOSTAppTemplate = `
         "CDS_NAME": "{{.WorkerName}}",
         "CDS_MODEL": "{{.WorkerModelID}}",
         "CDS_HATCHERY": "{{.HatcheryID}}",
-        "CDS_SINGLE_USE": "1"
+        "CDS_SINGLE_USE": "1",
+		"CDS_TTL" : {{.WorkerTTL}}
     },
     "id": "{{.MarathonID}}/{{.WorkerName}}",
     "instances": 1,
@@ -80,6 +82,7 @@ type HatcheryMesos struct {
 	marathonLabels       map[string]string
 
 	defaultMemory int
+	workerTTL     int
 }
 
 // ID must returns hatchery id
@@ -225,6 +228,7 @@ func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memor
 		MarathonVHOST:  m.marathonVHOST,
 		Memory:         memory * 110 / 100,
 		MarathonLabels: string(labels),
+		WorkerTTL:      m.workerTTL,
 	}
 
 	buffer := &bytes.Buffer{}
