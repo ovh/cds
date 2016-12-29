@@ -61,7 +61,7 @@ func importNew(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline) 
 	for i, s := range pip.Stages {
 		log.Debug("pipeline.importNew> Creating stage %s on pipeline %s", s.Name, pip.Name)
 		//Set default build order
-		s.BuildOrder = i
+		s.BuildOrder = i + 1
 		//Default is enabled
 		s.Enabled = true
 		//Set relation with pipeline
