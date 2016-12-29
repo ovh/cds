@@ -57,7 +57,7 @@ func Test_marathonConfig(t *testing.T) {
 		        "CDS_MODEL": "1",
 		        "CDS_HATCHERY": "1",
 		        "CDS_SINGLE_USE": "1",
-				"CDS_TTL" : 10
+				"CDS_TTL" : "10"
 		    },
 		    "id": "marathonID/model-silly-einstein",
 		    "instances": 1,
