@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func TestLoadAllPipelineScheduler(t *testing.T) {
+func TestLoadAll(t *testing.T) {
 	if testwithdb.DBDriver == "" {
 		t.SkipNow()
 		return
