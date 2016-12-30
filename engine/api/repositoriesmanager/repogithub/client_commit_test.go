@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	_ "github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/stretchr/testify/assert"
 )
 
