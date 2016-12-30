@@ -12,7 +12,9 @@ CREATE TABLE pipeline_scheduler (
 CREATE TABLE pipeline_scheduler_execution (
     id BIGSERIAL PRIMARY KEY,
     pipeline_scheduler_id BIGINT NOT NULL, 
-    date_execution TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP
+    date_execution TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
+    executed BOOLEAN NOT NULL DEFAULT FALSE,
+    pipeline_build_version BIGINT
 );
 
 SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_APPLICATION', 'pipeline_scheduler', 'application', 'application_id', 'id');
