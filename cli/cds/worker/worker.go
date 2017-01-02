@@ -5,6 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"strings"
+
 	"github.com/ovh/cds/cli/cds/worker/model"
 	"github.com/ovh/cds/sdk"
 )
@@ -13,6 +15,7 @@ func init() {
 	Cmd.AddCommand(model.Cmd)
 	Cmd.AddCommand(statusCmd)
 	Cmd.AddCommand(listCmd)
+	Cmd.AddCommand(killCmd)
 }
 
 // Cmd worker
@@ -61,4 +64,34 @@ func workerList(cmd *cobra.Command, args []string) {
 	for _, w := range workers {
 		fmt.Printf("- %-30s %s\n", w.Name, w.Status)
 	}
+}
+
+var killCmd = &cobra.Command{
+	Use:   "disable",
+	Short: "cds worker disable <name or id> [<name or id>]...",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			sdk.Exit("Wrong usage: %s\n", cmd.Short)
+		}
+
+		workers, err := sdk.GetWorkers()
+		if err != nil {
+			sdk.Exit("Error: Cannot get worker (%s)\n", err)
+		}
+
+		for _, id := range args {
+			for _, w := range workers {
+				if w.ID == id || strings.ToLower(w.Name) == strings.ToLower(id) {
+					fmt.Printf(" - Disabling worker %s [status %s]... ", w.Name, w.Status)
+					if err := sdk.DisableWorker(w.ID); err != nil {
+						fmt.Printf("Error disabling worker %s : %s\n", w.ID, err)
+					} else {
+						fmt.Printf("Done\n")
+					}
+				}
+			}
+
+		}
+
+	},
 }
