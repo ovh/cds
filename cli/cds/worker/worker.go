@@ -2,10 +2,11 @@ package worker
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
-	"strings"
+	"os"
 
 	"github.com/ovh/cds/cli/cds/worker/model"
 	"github.com/ovh/cds/sdk"
@@ -79,19 +80,26 @@ var killCmd = &cobra.Command{
 			sdk.Exit("Error: Cannot get worker (%s)\n", err)
 		}
 
+		var exitCode int
 		for _, id := range args {
+			var found bool
 			for _, w := range workers {
 				if w.ID == id || strings.ToLower(w.Name) == strings.ToLower(id) {
+					found = true
 					fmt.Printf(" - Disabling worker %s [status %s]... ", w.Name, w.Status)
 					if err := sdk.DisableWorker(w.ID); err != nil {
 						fmt.Printf("Error disabling worker %s : %s\n", w.ID, err)
+						exitCode++
 					} else {
 						fmt.Printf("Done\n")
 					}
 				}
 			}
-
+			if !found {
+				fmt.Printf(" - Worker %s not found\n", id)
+				exitCode++
+			}
 		}
-
+		os.Exit(exitCode)
 	},
 }
