@@ -2,11 +2,10 @@ package worker
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-
-	"os"
 
 	"github.com/ovh/cds/cli/cds/worker/model"
 	"github.com/ovh/cds/sdk"
