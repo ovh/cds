@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 )
@@ -41,8 +42,8 @@ func (p *PipelineScheduler) PreDelete(s gorp.SqlExecutor) error {
 	return nil
 }
 
-//PostSelect is a DB Hook to get all data from DB
-func (p *PipelineScheduler) PostSelect(s gorp.SqlExecutor) error {
+//PostGet is a DB Hook to get all data from DB
+func (p *PipelineScheduler) PostGet(s gorp.SqlExecutor) error {
 	//Load created_by
 	p.Args = []sdk.Parameter{}
 	str, errSelect := s.SelectNullStr("select args from pipeline_scheduler where id = $1", &p.ID)

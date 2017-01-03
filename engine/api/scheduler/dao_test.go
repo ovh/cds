@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"reflect"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -23,6 +25,8 @@ func TestLoadAll(t *testing.T) {
 	schedulers, err := LoadAll(db)
 	assert.NoError(t, err)
 	assert.NotNil(t, schedulers)
+
+	t.Logf("%v", schedulers)
 }
 
 func TestInsert(t *testing.T) {
@@ -63,8 +67,32 @@ func TestInsert(t *testing.T) {
 		ApplicationID: app.ID,
 		EnvironmentID: sdk.DefaultEnv.ID,
 		PipelineID:    pip.ID,
+		Crontab:       "@hourly",
+		Disabled:      false,
+		Args: []sdk.Parameter{
+			{
+				Name:  "p1",
+				Type:  sdk.StringParameter,
+				Value: "v1",
+			},
+			{
+				Name:  "p2",
+				Type:  sdk.StringParameter,
+				Value: "v2",
+			},
+		},
 	}
 	if err := Insert(db, s); err != nil {
 		t.Fatal(err)
 	}
+
+	loaded, err := Load(db, s.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("%v", s)
+	t.Logf("%v", loaded)
+
+	assert.True(t, reflect.DeepEqual(s, loaded))
 }

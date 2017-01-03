@@ -6,13 +6,15 @@ CREATE TABLE pipeline_scheduler (
         pipeline_id BIGINT NOT NULL,
         environment_id BIGINT NOT NULL,
         args JSONB,
-        crontab TEXT NOT NULL
+        crontab TEXT NOT NULL,
+        disable BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE pipeline_scheduler_execution (
     id BIGSERIAL PRIMARY KEY,
     pipeline_scheduler_id BIGINT NOT NULL, 
-    date_execution TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
+    execution_planned_date TIMESTAMP WITH TIME ZONE,
+    execution_date TIMESTAMP WITH TIME ZONE,
     executed BOOLEAN NOT NULL DEFAULT FALSE,
     pipeline_build_version BIGINT
 );
@@ -24,6 +26,5 @@ SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_EXECUTION_PIPELINE_SCHEDULER', 
 
 -- +migrate Down
 
-DROP TABLE pipeline_scheduler;
-
 DROP TABLE pipeline_scheduler_execution;
+DROP TABLE pipeline_scheduler;
