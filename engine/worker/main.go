@@ -168,6 +168,7 @@ func queuePolling() {
 
 		//We we've done nothing until ttl is over, let's exit
 		if nbActionsDone == 0 && startTimestamp.Add(time.Duration(viper.GetInt("ttl"))*time.Minute).Before(time.Now()) {
+			log.Notice("Time to exit.")
 			unregister()
 			os.Exit(0)
 		}
