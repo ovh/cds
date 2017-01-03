@@ -7,7 +7,10 @@ import (
 
 	"encoding/json"
 
+	"sync"
+
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -77,60 +80,119 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 		return nil, errLoad
 	}
 
-	log.Debug("LoadWorkerModelStatusForGroup for group %d, %d", groupID, sharedInfraGroup.ID)
-
-	query := `
-		SELECT  worker_model.id, 
-				worker_model.name, 
-				worker_model.group_id,
-				COALESCE(waiting.count, 0) as waiting, 
-				COALESCE(building.count,0) as building 
-		FROM worker_model
-		LEFT JOIN LATERAL (
-				SELECT model, COUNT(worker.id) as count FROM worker
-				WHERE (worker.status = $3 OR worker.status = $4)
-				AND (
-					worker.group_id = $1
-					OR 
-					$1 = $2
-				)
-				AND worker.model = worker_model.id
-				GROUP BY model
-		) AS waiting ON waiting.model = worker_model.id
-		LEFT JOIN LATERAL (
-				SELECT model, COUNT(worker.id) as count FROM worker
-				WHERE worker.status = $5
-				AND (
-					worker.group_id = $1
-					OR 
-					$1 = $2
-				)
-				AND worker.model = worker_model.id
-				GROUP BY model
-		) AS building ON building.model = worker_model.id
-		WHERE (
-			worker_model.group_id IN ($1, $2)
-			OR
-			$1 = $2
-		)
-		ORDER BY worker_model.name ASC
-		`
-	rows, err := db.Query(query, groupID, sharedInfraGroup.ID, sdk.StatusWaiting.String(), sdk.StatusChecking.String(), sdk.StatusBuilding.String())
+	//Load worker models
+	models, err := LoadWorkerModelsByGroup(database.DBMap(db), groupID)
 	if err != nil {
-		log.Warning("LoadWorkerModelStatusForGroup> Error : %s", err)
 		return nil, err
 	}
-	defer rows.Close()
+	mapModels := map[int64]sdk.Model{}
+	for i, m := range models {
+		mapModels[m.ID] = models[i]
+	}
 
-	var status []sdk.ModelStatus
-	for rows.Next() {
-		var ms sdk.ModelStatus
-		err := rows.Scan(&ms.ModelID, &ms.ModelName, &ms.ModelGroupID, &ms.CurrentCount, &ms.BuildingCount)
+	log.Debug("LoadWorkerModelStatusForGroup for group %d, %d", groupID, sharedInfraGroup.ID)
+
+	waitingQuery := `SELECT model, COUNT(worker.id) as count FROM worker, worker_model
+		WHERE (worker.status = $3 OR worker.status = $4)
+		AND (
+			worker.group_id = $1
+			OR 
+			$1 = $2
+		)
+		AND worker.model = worker_model.id
+		GROUP BY model`
+
+	buildingQuery := `SELECT model, COUNT(worker.id) as count FROM worker, worker_model
+		WHERE worker.status = $3
+		AND (
+			worker.group_id = $1
+			OR 
+			$1 = $2
+		)
+		AND worker.model = worker_model.id
+		GROUP BY model`
+
+	type modelCount struct {
+		model  int64
+		count  int64
+		status string
+	}
+
+	load := func(c chan modelCount, query string, status string, args ...interface{}) error {
+		rows, err := db.Query(query, args...)
 		if err != nil {
 			log.Warning("LoadWorkerModelStatusForGroup> Error : %s", err)
-			return nil, err
+			return err
 		}
-		status = append(status, ms)
+		defer rows.Close()
+
+		for rows.Next() {
+			var model int64
+			var count int64
+			err := rows.Scan(&model, &count)
+			if err != nil {
+				log.Warning("LoadWorkerModelStatusForGroup> Error : %s", err)
+				return err
+			}
+			log.Debug("[%s] %d %d", status, model, count)
+			c <- modelCount{model, count, status}
+		}
+		return nil
+	}
+
+	chanModelCount := make(chan modelCount, 1)
+	chanError := make(chan error)
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		if err := load(chanModelCount, waitingQuery, "waiting", groupID, sharedInfraGroup.ID, sdk.StatusWaiting.String(), sdk.StatusChecking.String()); err != nil {
+			chanError <- err
+		}
+		wg.Done()
+	}()
+	go func() {
+		if err := load(chanModelCount, buildingQuery, "building", groupID, sharedInfraGroup.ID, sdk.StatusBuilding.String()); err != nil {
+			chanError <- err
+		}
+		wg.Done()
+	}()
+	go func() {
+		wg.Wait()
+		close(chanModelCount)
+	}()
+	go func() {
+		err := <-chanError
+		log.Critical("LoadWorkerModelStatusForGroup> Error : %s", err)
+	}()
+
+	mapModelStatus := map[int64]*sdk.ModelStatus{}
+
+	for _, m := range mapModels {
+		if mapModelStatus[m.ID] == nil {
+			mapModelStatus[m.ID] = new(sdk.ModelStatus)
+		}
+		ms := mapModelStatus[m.ID]
+		ms.ModelID = m.ID
+		ms.ModelGroupID = m.GroupID
+		ms.ModelName = m.Name
+	}
+
+	for {
+		mc, more := <-chanModelCount
+		if !more {
+			break
+		}
+		ms := mapModelStatus[mc.model]
+		if mc.status == "waiting" {
+			ms.CurrentCount = mc.count
+		} else {
+			ms.BuildingCount = mc.count
+		}
+	}
+
+	var status []sdk.ModelStatus
+	for _, v := range mapModelStatus {
+		status = append(status, *v)
 	}
 	return status, nil
 }
@@ -280,6 +342,8 @@ func EstimateWorkerModelNeeds(db *sql.DB, uid int64, workerModelStatus ModelStat
 							ms[i].Requirements = append(ms[i].Requirements, ac.Action.Requirements[j])
 						}
 					}
+
+					log.Debug("Model %s can run action %d : %d", ms[i].ModelName, ac.Action.ID, ms[i].WantedCount)
 				}
 			} // !range models
 		} // !range loopModels
