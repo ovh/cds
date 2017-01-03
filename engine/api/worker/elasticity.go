@@ -2,12 +2,10 @@ package worker
 
 import (
 	"database/sql"
-	"fmt"
-	"time"
-
 	"encoding/json"
-
+	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/database"
@@ -81,9 +79,9 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	}
 
 	//Load worker models
-	models, err := LoadWorkerModelsByGroup(database.DBMap(db), groupID)
-	if err != nil {
-		return nil, err
+	models, errM := LoadWorkerModelsByGroup(database.DBMap(db), groupID)
+	if errM != nil {
+		return nil, errM
 	}
 	mapModels := map[int64]sdk.Model{}
 	for i, m := range models {
@@ -129,8 +127,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 		for rows.Next() {
 			var model int64
 			var count int64
-			err := rows.Scan(&model, &count)
-			if err != nil {
+			if err := rows.Scan(&model, &count); err != nil {
 				log.Warning("LoadWorkerModelStatusForGroup> Error : %s", err)
 				return err
 			}
