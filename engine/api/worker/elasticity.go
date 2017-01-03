@@ -79,7 +79,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	}
 
 	//Load worker models
-	models, errM := LoadWorkerModelsByGroup(database.DBMap(db), groupID)
+	models, errM := LoadWorkerModelsUsableOnGroup(database.DBMap(db), groupID, sharedInfraGroup.ID)
 	if errM != nil {
 		return nil, errM
 	}
@@ -93,9 +93,9 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	waitingQuery := `SELECT model, COUNT(worker.id) as count FROM worker, worker_model
 		WHERE (worker.status = $3 OR worker.status = $4)
 		AND (
-			worker.group_id = $1
+			worker_model.group_id = $1
 			OR 
-			$1 = $2
+			worker_model.group_id = $2
 		)
 		AND worker.model = worker_model.id
 		GROUP BY model`
@@ -103,9 +103,9 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	buildingQuery := `SELECT model, COUNT(worker.id) as count FROM worker, worker_model
 		WHERE worker.status = $3
 		AND (
-			worker.group_id = $1
+			worker_model.group_id = $1
 			OR 
-			$1 = $2
+			worker_model.group_id = $2
 		)
 		AND worker.model = worker_model.id
 		GROUP BY model`
@@ -169,9 +169,20 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 			mapModelStatus[m.ID] = new(sdk.ModelStatus)
 		}
 		ms := mapModelStatus[m.ID]
-		ms.ModelID = m.ID
-		ms.ModelGroupID = m.GroupID
-		ms.ModelName = m.Name
+		//If model status has not been found, load the model
+		if ms == nil {
+			wm, err := LoadWorkerModelByID(database.DBMap(db), m.ID)
+			if err != nil {
+				return nil, err
+			}
+			ms.ModelID = wm.ID
+			ms.ModelGroupID = wm.GroupID
+			ms.ModelName = wm.Name
+		} else {
+			ms.ModelID = m.ID
+			ms.ModelGroupID = m.GroupID
+			ms.ModelName = m.Name
+		}
 	}
 
 	for {
