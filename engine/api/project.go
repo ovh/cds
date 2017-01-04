@@ -301,13 +301,11 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 		switch v.Type {
 		case sdk.KeyVariable:
 			errVar = project.AddKeyPairToProject(tx, p, v.Name)
-			break
 		default:
 			errVar = project.InsertVariableInProject(tx, p, v)
-			break
 		}
 		if errVar != nil {
-			log.Warning("InsertUserInGroup: Cannot add variable %s in project %s:  %s\n", v.Name, p.Name, errVar)
+			log.Warning("addProject: Cannot add variable %s in project %s:  %s\n", v.Name, p.Name, errVar)
 			WriteError(w, r, errVar)
 			return
 		}
