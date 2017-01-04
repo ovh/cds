@@ -71,6 +71,7 @@ func LoadWorkerModelStatusForAdminUser(db *sql.DB, userID int64) ([]sdk.ModelSta
 
 //LoadWorkerModelStatusForGroup lods worker model status for group
 func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus, error) {
+	defer logTime("LoadWorkerModelStatusForGroup", time.Now())
 	//Load SharedInfraGroup
 	sharedInfraGroup, errLoad := group.LoadGroup(db, group.SharedInfraGroup)
 	if errLoad != nil {
@@ -96,6 +97,8 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 			worker_model.group_id = $1
 			OR 
 			worker_model.group_id = $2
+			OR
+			$1 = $2
 		)
 		AND worker.model = worker_model.id
 		GROUP BY model`
@@ -106,6 +109,8 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 			worker_model.group_id = $1
 			OR 
 			worker_model.group_id = $2
+			OR
+			$1 = $2
 		)
 		AND worker.model = worker_model.id
 		GROUP BY model`
