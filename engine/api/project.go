@@ -29,19 +29,19 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	includeEnvironment := r.FormValue("environment")
 	applicationStatus := r.FormValue("applicationStatus")
 
-	projects, err := project.LoadProjects(db, c.User)
-	if err != nil {
-		log.Warning("GetProjects: Cannot load project from db: %s\n", err)
-		WriteError(w, r, err)
+	projects, errProj := project.LoadProjects(db, c.User)
+	if errProj != nil {
+		log.Warning("GetProjects: Cannot load project from db: %s\n", errProj)
+		WriteError(w, r, errProj)
 		return
 	}
 
 	if includeApplication == "true" {
 		for _, p := range projects {
-			applications, err := application.LoadApplications(db, p.Key, includePipeline == "true", c.User)
-			if err != nil {
-				log.Warning("GetProjects: Cannot load applications for projects %s : %s\n", p.Key, err)
-				WriteError(w, r, err)
+			applications, errApp := application.LoadApplications(db, p.Key, includePipeline == "true", c.User)
+			if errApp != nil {
+				log.Warning("GetProjects: Cannot load applications for projects %s : %s\n", p.Key, errApp)
+				WriteError(w, r, errApp)
 				return
 			}
 			p.Applications = append(p.Applications, applications...)
@@ -50,10 +50,10 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 
 	if includeEnvironment == "true" {
 		for _, p := range projects {
-			envs, err := environment.LoadEnvironments(db, p.Key, true, c.User)
-			if err != nil {
-				log.Warning("GetProjects: Cannot load environments for projects %s : %s\n", p.Key, err)
-				WriteError(w, r, err)
+			envs, errEnv := environment.LoadEnvironments(db, p.Key, true, c.User)
+			if errEnv != nil {
+				log.Warning("GetProjects: Cannot load environments for projects %s : %s\n", p.Key, errEnv)
+				WriteError(w, r, errEnv)
 				return
 			}
 			p.Environments = append(p.Environments, envs...)
@@ -63,10 +63,11 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	if applicationStatus == "true" {
 		for projectIndex := range projects {
 			for appIndex := range projects[projectIndex].Applications {
-				projects[projectIndex].Applications[appIndex].PipelinesBuild, err = pipeline.GetAllLastBuildByApplication(db, projects[projectIndex].Applications[appIndex].ID, "")
-				if err != nil {
-					log.Warning("GetProjects: Cannot load app status: %s\n", err)
-					WriteError(w, r, err)
+				var errBuild error
+				projects[projectIndex].Applications[appIndex].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, projects[projectIndex].Applications[appIndex].ID, "")
+				if errBuild != nil {
+					log.Warning("GetProjects: Cannot load app status: %s\n", errBuild)
+					WriteError(w, r, errBuild)
 					return
 				}
 			}
@@ -82,14 +83,14 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	key := vars["permProjectKey"]
 
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	proj := &sdk.Project{}
-	if json.Unmarshal(data, proj); err != nil {
+	if err := json.Unmarshal(data, proj); err != nil {
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
@@ -108,17 +109,17 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	}
 
 	// Check is project exist
-	p, err := project.LoadProject(db, key, c.User)
-	if err != nil {
-		log.Warning("updateProject: Cannot load project from db: %s\n", err)
-		WriteError(w, r, err)
+	p, errProj := project.LoadProject(db, key, c.User)
+	if errProj != nil {
+		log.Warning("updateProject: Cannot load project from db: %s\n", errProj)
+		WriteError(w, r, errProj)
 		return
 	}
 
-	lastModified, err := project.UpdateProjectDB(db, key, proj.Name)
-	if err != nil {
-		log.Warning("updateProject: Cannot update project %s : %s\n", key, err)
-		WriteError(w, r, err)
+	lastModified, errUp := project.UpdateProjectDB(db, key, proj.Name)
+	if errUp != nil {
+		log.Warning("updateProject: Cannot update project %s : %s\n", key, errUp)
+		WriteError(w, r, errUp)
 		return
 	}
 
@@ -137,41 +138,41 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	applicationStatus := r.FormValue("applicationStatus")
 
 	historyLength := 0
-	var err error
+
 	if historyLengthString != "" {
-		historyLength, err = strconv.Atoi(historyLengthString)
-		if err != nil {
-			log.Warning("getProject: applicationHistory must be an integer: %s\n", err)
-			WriteError(w, r, err)
+		var errAtoi error
+		historyLength, errAtoi = strconv.Atoi(historyLengthString)
+		if errAtoi != nil {
+			log.Warning("getProject: applicationHistory must be an integer: %s\n", errAtoi)
+			WriteError(w, r, errAtoi)
 			return
 		}
 	}
 
-	p, err := project.LoadProject(db, key, c.User, project.WithVariables(), project.WithApplications(historyLength))
-	if err != nil {
-		log.Warning("getProject: Cannot load project from db: %s\n", err)
-		WriteError(w, r, err)
+	p, errProj := project.LoadProject(db, key, c.User, project.WithVariables(), project.WithApplications(historyLength))
+	if errProj != nil {
+		log.Warning("getProject: Cannot load project from db: %s\n", errProj)
+		WriteError(w, r, errProj)
 		return
 	}
 
-	pipelines, err := pipeline.LoadPipelines(db, p.ID, false, c.User)
-	if err != nil {
-		log.Warning("getProject: Cannot load pipelines from db: %s\n", err)
-		WriteError(w, r, err)
+	pipelines, errPip := pipeline.LoadPipelines(db, p.ID, false, c.User)
+	if errPip != nil {
+		log.Warning("getProject: Cannot load pipelines from db: %s\n", errPip)
+		WriteError(w, r, errPip)
 		return
 	}
 	p.Pipelines = append(p.Pipelines, pipelines...)
 
-	envs, err := environment.LoadEnvironments(db, key, true, c.User)
-	if err != nil {
-		log.Warning("getProject: Cannot load environments from db: %s\n", err)
-		WriteError(w, r, err)
+	envs, errEnv := environment.LoadEnvironments(db, key, true, c.User)
+	if errEnv != nil {
+		log.Warning("getProject: Cannot load environments from db: %s\n", errEnv)
+		WriteError(w, r, errEnv)
 		return
 	}
 	p.Environments = append(p.Environments, envs...)
 
-	err = group.LoadGroupByProject(db, p)
-	if err != nil {
+	if err := group.LoadGroupByProject(db, p); err != nil {
 		log.Warning("getProject: Cannot load groups from db: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -186,19 +187,21 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 
 	if applicationStatus == "true" {
 		for i := range p.Applications {
-			p.Applications[i].PipelinesBuild, err = pipeline.GetAllLastBuildByApplication(db, p.Applications[i].ID, "")
-			if err != nil {
-				log.Warning("GetProject: Cannot load app status: %s\n", err)
-				WriteError(w, r, err)
+			var errBuild error
+			p.Applications[i].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, p.Applications[i].ID, "")
+			if errBuild != nil {
+				log.Warning("GetProject: Cannot load app status: %s\n", errBuild)
+				WriteError(w, r, errBuild)
 				return
 			}
 		}
 	}
 
-	p.ReposManager, err = repositoriesmanager.LoadAllForProject(db, p.Key)
-	if err != nil {
-		log.Warning("GetProject: Cannot load repos manager for project %s: %s\n", p.Key, err)
-		WriteError(w, r, err)
+	var errRepos error
+	p.ReposManager, errRepos = repositoriesmanager.LoadAllForProject(db, p.Key)
+	if errRepos != nil {
+		log.Warning("GetProject: Cannot load repos manager for project %s: %s\n", p.Key, errRepos)
+		WriteError(w, r, errRepos)
 		return
 	}
 
@@ -207,8 +210,8 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 
 func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
@@ -235,10 +238,10 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	}
 
 	// Check that project does not already exists
-	exist, err := project.Exist(db, p.Key)
-	if err != nil {
-		log.Warning("AddProject: Cannot check if project %s exist: %s\n", p.Key, err)
-		WriteError(w, r, err)
+	exist, errExist := project.Exist(db, p.Key)
+	if errExist != nil {
+		log.Warning("AddProject: Cannot check if project %s exist: %s\n", p.Key, errExist)
+		WriteError(w, r, errExist)
 		return
 	}
 
@@ -250,15 +253,15 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	}
 
 	//Create a project within a transaction
-	tx, err := db.Begin()
+	tx, errBegin := db.Begin()
 	defer tx.Rollback()
-	if err != nil {
-		log.Warning("AddProject: Cannot start transaction: %s\n", err)
-		WriteError(w, r, err)
+	if errBegin != nil {
+		log.Warning("AddProject: Cannot start transaction: %s\n", errBegin)
+		WriteError(w, r, errBegin)
 		return
 	}
 
-	if err = project.InsertProject(tx, p); err != nil {
+	if err := project.InsertProject(tx, p); err != nil {
 		log.Warning("AddProject: Cannot insert project: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -269,9 +272,9 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 		groupPermission := &p.ProjectGroups[i]
 
 		// Insert group
-		groupID, new, err := group.AddGroup(tx, &groupPermission.Group)
+		groupID, new, errGroup := group.AddGroup(tx, &groupPermission.Group)
 		if groupID == 0 {
-			WriteError(w, r, err)
+			WriteError(w, r, errGroup)
 			return
 		}
 		groupPermission.Group.ID = groupID
@@ -293,6 +296,23 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 		}
 	}
 
+	for _, v := range p.Variable {
+		var errVar error
+		switch v.Type {
+		case sdk.KeyVariable:
+			errVar = project.AddKeyPairToProject(tx, p, v.Name)
+			break
+		default:
+			errVar = project.InsertVariableInProject(tx, p, v)
+			break
+		}
+		if errVar != nil {
+			log.Warning("InsertUserInGroup: Cannot add variable %s in project %s:  %s\n", v.Name, p.Name, errVar)
+			WriteError(w, r, errVar)
+			return
+		}
+	}
+
 	if err := tx.Commit(); err != nil {
 		log.Warning("addProject: Cannot commit transaction:  %s\n", err)
 		WriteError(w, r, err)
@@ -308,19 +328,19 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	p, err := project.LoadProject(db, key, c.User)
-	if err != nil {
-		if err != sdk.ErrNoProject {
-			log.Warning("deleteProject: load project '%s' from db: %s\n", key, err)
+	p, errProj := project.LoadProject(db, key, c.User)
+	if errProj != nil {
+		if errProj != sdk.ErrNoProject {
+			log.Warning("deleteProject: load project '%s' from db: %s\n", key, errProj)
 		}
-		WriteError(w, r, err)
+		WriteError(w, r, errProj)
 		return
 	}
 
-	countPipeline, err := pipeline.CountPipelineByProject(db, p.ID)
-	if err != nil {
-		log.Warning("deleteProject: Cannot count pipeline for project %s: %s\n", p.Name, err)
-		WriteError(w, r, err)
+	countPipeline, errCount := pipeline.CountPipelineByProject(db, p.ID)
+	if errCount != nil {
+		log.Warning("deleteProject: Cannot count pipeline for project %s: %s\n", p.Name, errCount)
+		WriteError(w, r, errCount)
 		return
 	}
 	if countPipeline > 0 {
@@ -329,10 +349,10 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 		return
 	}
 
-	countApplications, err := application.CountApplicationByProject(db, p.ID)
-	if err != nil {
-		log.Warning("deleteProject: Cannot count application for project %s: %s\n", p.Name, err)
-		WriteError(w, r, err)
+	countApplications, errCountApp := application.CountApplicationByProject(db, p.ID)
+	if errCountApp != nil {
+		log.Warning("deleteProject: Cannot count application for project %s: %s\n", p.Name, errCountApp)
+		WriteError(w, r, errCountApp)
 		return
 	}
 	if countApplications > 0 {
@@ -341,22 +361,20 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 		return
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deleteProject: Cannot start transaction: %s\n", err)
-		WriteError(w, r, err)
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("deleteProject: Cannot start transaction: %s\n", errBegin)
+		WriteError(w, r, errBegin)
 		return
 	}
 	defer tx.Rollback()
 
-	err = project.DeleteProject(tx, p.Key)
-	if err != nil {
+	if err := project.DeleteProject(tx, p.Key); err != nil {
 		log.Warning("deleteProject: cannot delete project %s: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteProject: Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -374,13 +392,13 @@ func getUserLastUpdates(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		since, _ = time.Parse(time.RFC1123, sinceHeader)
 	}
 
-	lastUpdates, err := project.LastUpdates(db, c.User, since)
-	if err != nil {
-		if err == sql.ErrNoRows {
+	lastUpdates, errUp := project.LastUpdates(db, c.User, since)
+	if errUp != nil {
+		if errUp == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
-		WriteError(w, r, err)
+		WriteError(w, r, errUp)
 		return
 	}
 	if len(lastUpdates) == 0 {
