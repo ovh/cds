@@ -18,7 +18,7 @@ SELECT  ph.pipeline_id, ph.application_id, ph.environment_id, ph.pipeline_build_
 	pipeline.type,
 	ph.build_number, ph.version, ph.status,
 	ph.start, ph.done,
-	ph.manual_trigger, ph.triggered_by, ph.parent_pipeline_build_id, ph.vcs_changes_branch, ph.vcs_changes_hash, ph.vcs_changes_author,
+	ph.manual_trigger, ph.scheduled_trigger, ph.triggered_by, ph.parent_pipeline_build_id, ph.vcs_changes_branch, ph.vcs_changes_hash, ph.vcs_changes_author,
 	"user".username, pipTriggerFrom.name as pipTriggerFrom, pbTriggerFrom.version as versionTriggerFrom
 FROM pipeline_history ph
 JOIN environment ON environment.id = ph.environment_id
@@ -150,7 +150,7 @@ func insertHistory(db database.Executer, data string, pb sdk.PipelineBuild) erro
 		build_number, status,
 		data,
 		environment_id,
-		version, done, manual_trigger,
+		version, done, manual_trigger, scheduled_trigger,
 		triggered_by, parent_pipeline_build_id,
 		vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 		start, pipeline_build_id) VALUES (
@@ -161,13 +161,13 @@ func insertHistory(db database.Executer, data string, pb sdk.PipelineBuild) erro
 		$7, $8, $9,
 		$10, $11,
 		$12, $13, $14,
-		$15, $16)`
+		$15, $16, $17)`
 	_, err := db.Exec(query,
 		pb.Pipeline.ID, pb.Application.ID,
 		pb.BuildNumber, string(pb.Status),
 		data,
 		pb.Environment.ID,
-		pb.Version, pb.Done, pb.Trigger.ManualTrigger,
+		pb.Version, pb.Done, pb.Trigger.ManualTrigger, pb.Trigger.ScheduledTrigger,
 		userID, pbParentID,
 		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor,
 		pb.Start, pb.ID,

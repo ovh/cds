@@ -210,6 +210,13 @@ func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri s
 	return req
 }
 
+func AuthHeaders(t *testing.T, u *sdk.User, pass string) http.Header {
+	h := http.Header{}
+	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+pass))
+	h.Add("Authorization", auth)
+	return h
+}
+
 // AuthentifyRequest  have to be used only for tests
 func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, pass string) {
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+pass))

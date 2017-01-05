@@ -24,9 +24,12 @@ SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_PIPELINE', 'pipeline_scheduler'
 SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_ENVIRONMENT', 'pipeline_scheduler', 'environment', 'environment_id', 'id');
 SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_EXECUTION_PIPELINE_SCHEDULER', 'pipeline_scheduler_execution', 'pipeline_scheduler', 'pipeline_scheduler_id', 'id');
 
-ALTER TABLE pipeline_build ADD COLUMN ();
+ALTER TABLE pipeline_build ADD COLUMN scheduled_trigger BOOLEAN default FALSE;
+ALTER TABLE pipeline_history ADD COLUMN scheduled_trigger BOOLEAN default FALSE;
 
 -- +migrate Down
 
 DROP TABLE pipeline_scheduler_execution;
 DROP TABLE pipeline_scheduler;
+
+ALTER TABLE pipeline_build DROP COLUMN scheduled_trigger;

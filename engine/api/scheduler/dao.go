@@ -11,11 +11,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadAll retrieves all pipeline scheduler from database
-func LoadAll(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, error) {
+func loadPipelineSchedulers(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.PipelineScheduler, error) {
 	s := []database.PipelineScheduler{}
-	if _, err := db.Select(&s, "select * from pipeline_scheduler"); err != nil {
-		log.Warning("LoadAll> Unable to load pipeline scheduler : %T %s", err, err)
+	if _, err := db.Select(&s, query, args...); err != nil {
+		log.Warning("loadPipelineScheduler> Unable to load pipeline scheduler : %T %s", err, err)
 		return nil, err
 	}
 	ps := []sdk.PipelineScheduler{}
@@ -26,6 +25,11 @@ func LoadAll(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, error) {
 		ps = append(ps, sdk.PipelineScheduler(s[i]))
 	}
 	return ps, nil
+}
+
+// LoadAll retrieves all pipeline scheduler from database
+func LoadAll(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, error) {
+	return loadPipelineSchedulers(db, "select * from pipeline_scheduler")
 }
 
 //Insert a pipeline scheduler
@@ -116,7 +120,7 @@ func DeleteExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 //LoadExecutions loads all pipeline execution
 func LoadExecutions(db gorp.SqlExecutor, schedulerID int64) ([]sdk.PipelineSchedulerExecution, error) {
 	as := []database.PipelineSchedulerExecution{}
-	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution pipeline_scheduler_id = $1", schedulerID); err != nil {
+	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where pipeline_scheduler_id = $1", schedulerID); err != nil {
 		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
 		return nil, err
 	}
@@ -192,4 +196,24 @@ func LoadUnscheduledPipelines(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, err
 func LockPipelineExecutions(db gorp.SqlExecutor) error {
 	_, err := db.Exec("LOCK TABLE pipeline_scheduler_execution IN ACCESS EXCLUSIVE MODE NOWAIT")
 	return err
+}
+
+//GetByApplication get all pipeline schedulers for an application
+func GetByApplication(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.PipelineScheduler, error) {
+	return loadPipelineSchedulers(db, "select * from pipeline_scheduler where application_id = $1", app.ID)
+}
+
+//GetByPipeline get all pipeline schedulers for a pipeline
+func GetByPipeline(db gorp.SqlExecutor, pip *sdk.Pipeline) ([]sdk.PipelineScheduler, error) {
+	return loadPipelineSchedulers(db, "select * from pipeline_scheduler where pipeline_id = $1", pip.ID)
+}
+
+//GetByApplicationPipeline get all pipeline schedulers for a application/pipeline
+func GetByApplicationPipeline(db gorp.SqlExecutor, app *sdk.Application, pip *sdk.Pipeline) ([]sdk.PipelineScheduler, error) {
+	return loadPipelineSchedulers(db, "select * from pipeline_scheduler where application_id = $1 and pipeline_id = $2", app.ID, pip.ID)
+}
+
+//GetByApplicationPipelineEnv get all pipeline schedulers for a application/pipeline
+func GetByApplicationPipelineEnv(db gorp.SqlExecutor, app *sdk.Application, pip *sdk.Pipeline, env sdk.Environment) ([]sdk.PipelineScheduler, error) {
+	return loadPipelineSchedulers(db, "select * from pipeline_scheduler where application_id = $1 and pipeline_id = $2 and environment_id = $3", app.ID, pip.ID, env.ID)
 }

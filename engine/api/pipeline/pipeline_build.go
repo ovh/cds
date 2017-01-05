@@ -29,7 +29,7 @@ SELECT  pb.pipeline_id, pb.application_id, pb.environment_id, pb.id, project.id 
 	pipeline.type,
 	pb.build_number, pb.version, pb.status,
 	pb.start, pb.done,
-	pb.manual_trigger, pb.triggered_by, pb.parent_pipeline_build_id, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author,
+	pb.manual_trigger, pb.scheduled_trigger, pb.triggered_by, pb.parent_pipeline_build_id, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author,
 	"user".username, pipTriggerFrom.name as pipTriggerFrom, pbTriggerFrom.version as versionTriggerFrom
 FROM pipeline_build pb
 JOIN environment ON environment.id = pb.environment_id
@@ -68,7 +68,7 @@ project.id as projectID, project.projectkey,
 application.id as appID, application.name,
 environment.id as envID, environment.name,
 pb.id as pbID, pb.status, pb.version,
-pb.build_number, pb.args, pb.manual_trigger,
+pb.build_number, pb.args, pb.manual_trigger, pb.scheduled_trigger,
 pb.triggered_by, pb.parent_pipeline_build_id,
 pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author,
 pipeline.id as pipID, pipeline.name, pipeline.type,
@@ -431,7 +431,7 @@ SELECT DISTINCT ON (project.projectkey, application.name, pb.application_id, pb.
 	pipeline.type,
 	pb.build_number, pb.version, pb.status, pb.args,
 	pb.start, pb.done,
-	pb.manual_trigger, pb.triggered_by, pb.parent_pipeline_build_id, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author,
+	pb.manual_trigger, pb.scheduled_trigger, pb.triggered_by, pb.parent_pipeline_build_id, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author,
 	"user".username, pipTriggerFrom.name as pipTriggerFrom, pbTriggerFrom.version as versionTriggerFrom
 FROM pipeline_build pb
 JOIN environment ON environment.id = pb.environment_id
@@ -455,7 +455,7 @@ LIMIT 1000`
 		p := sdk.PipelineBuild{}
 
 		var status, typePipeline, argsJSON string
-		var manual sql.NullBool
+		var manual, scheduled sql.NullBool
 		var trigBy, pPbID, version sql.NullInt64
 		var branch, hash, author, fromUser, fromPipeline sql.NullString
 
@@ -464,7 +464,7 @@ LIMIT 1000`
 			&typePipeline,
 			&p.BuildNumber, &p.Version, &status, &argsJSON,
 			&p.Start, &p.Done,
-			&manual, &trigBy, &pPbID, &branch, &hash, &author,
+			&manual, &scheduled, &trigBy, &pPbID, &branch, &hash, &author,
 			&fromUser, &fromPipeline, &version)
 		if err != nil {
 			log.Warning("LoadBuildingPipelines> Error while loading build information: %s", err)
@@ -473,7 +473,7 @@ LIMIT 1000`
 		p.Status = sdk.StatusFromString(status)
 		p.Pipeline.Type = sdk.PipelineTypeFromString(typePipeline)
 		p.Application.ProjectKey = p.Pipeline.ProjectKey
-		loadPbTrigger(&p, manual, pPbID, branch, hash, author, fromUser, fromPipeline, version)
+		loadPbTrigger(&p, manual, scheduled, pPbID, branch, hash, author, fromUser, fromPipeline, version)
 
 		if trigBy.Valid && p.Trigger.TriggeredBy != nil {
 			p.Trigger.TriggeredBy.ID = trigBy.Int64
@@ -553,7 +553,7 @@ func GetAllLastBuildByApplicationAndVersion(db database.Querier, applicationID i
 			type,
 			build_number, version, status,
 			start, done,
-			manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+			manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 			username, pipTriggerFrom, versionTriggerFrom
 		FROM (
 			(SELECT
@@ -562,7 +562,7 @@ func GetAllLastBuildByApplicationAndVersion(db database.Querier, applicationID i
 				type,
 				build_number, version, status,
 				start, done,
-				manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 				username, pipTriggerFrom, versionTriggerFrom
 			FROM load_pb
 			ORDER BY pipeline_id, environment_id, build_number DESC)
@@ -575,7 +575,7 @@ func GetAllLastBuildByApplicationAndVersion(db database.Querier, applicationID i
 				type,
 				build_number, version, status,
 				start, done,
-				manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 				username, pipTriggerFrom, versionTriggerFrom
 			FROM load_history
 			ORDER BY pipeline_id, environment_id, build_number DESC)
@@ -620,7 +620,7 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 			type,
 			build_number, version, status,
 			start, done,
-			manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+			manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 			username, pipTriggerFrom, versionTriggerFrom
 		FROM (
 			(SELECT
@@ -629,7 +629,7 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 				type,
 				build_number, version, status,
 				start, done,
-				manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 				username, pipTriggerFrom, versionTriggerFrom
 			FROM load_pb
 			ORDER BY pipeline_id, environment_id, build_number DESC)
@@ -642,7 +642,7 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 				type,
 				build_number, version, status,
 				start, done,
-				manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 				username, pipTriggerFrom, versionTriggerFrom
 			FROM load_history
 			ORDER BY pipeline_id, environment_id, build_number DESC)
@@ -695,7 +695,7 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 
 func scanPbShort(p *sdk.PipelineBuild, rows database.Scanner) error {
 	var status, typePipeline string
-	var manual sql.NullBool
+	var manual, scheduled sql.NullBool
 	var trigBy, pPbID, version sql.NullInt64
 	var branch, hash, author, fromUser, fromPipeline sql.NullString
 
@@ -704,7 +704,7 @@ func scanPbShort(p *sdk.PipelineBuild, rows database.Scanner) error {
 		&typePipeline,
 		&p.BuildNumber, &p.Version, &status,
 		&p.Start, &p.Done,
-		&manual, &trigBy, &pPbID, &branch, &hash, &author,
+		&manual, &scheduled, &trigBy, &pPbID, &branch, &hash, &author,
 		&fromUser, &fromPipeline, &version)
 	if err != nil {
 		log.Warning("scanPbShort> Error while loading build information: %s", err)
@@ -713,14 +713,18 @@ func scanPbShort(p *sdk.PipelineBuild, rows database.Scanner) error {
 	p.Status = sdk.StatusFromString(status)
 	p.Pipeline.Type = sdk.PipelineTypeFromString(typePipeline)
 	p.Application.ProjectKey = p.Pipeline.ProjectKey
-	loadPbTrigger(p, manual, pPbID, branch, hash, author, fromUser, fromPipeline, version)
+	loadPbTrigger(p, manual, scheduled, pPbID, branch, hash, author, fromUser, fromPipeline, version)
 
 	return nil
 }
 
-func loadPbTrigger(pb *sdk.PipelineBuild, manual sql.NullBool, parentID sql.NullInt64, branch, hash, author, fromUser, fromPipeline sql.NullString, version sql.NullInt64) {
+func loadPbTrigger(pb *sdk.PipelineBuild, manual, scheduled sql.NullBool, parentID sql.NullInt64, branch, hash, author, fromUser, fromPipeline sql.NullString, version sql.NullInt64) {
 	if manual.Valid {
 		pb.Trigger.ManualTrigger = manual.Bool
+	}
+
+	if scheduled.Valid {
+		pb.Trigger.ScheduledTrigger = scheduled.Bool
 	}
 
 	if fromUser.Valid {
@@ -1037,8 +1041,8 @@ func InsertPipelineBuild(tx database.QueryExecuter, project *sdk.Project, p *sdk
 }
 
 func insertPipelineBuild(db database.QueryExecuter, args string, applicationID, pipelineID int64, pb *sdk.PipelineBuild, envID int64) error {
-	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id,environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author)
-						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`
+	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id,environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, scheduled_trigger)
+						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`
 
 	var triggeredBy, parentPipelineID int64
 	if pb.Trigger.TriggeredBy != nil {
@@ -1053,7 +1057,7 @@ func insertPipelineBuild(db database.QueryExecuter, args string, applicationID, 
 		args, time.Now(), applicationID, envID, time.Now(), pb.Trigger.ManualTrigger,
 		sql.NullInt64{Int64: triggeredBy, Valid: triggeredBy != 0},
 		sql.NullInt64{Int64: parentPipelineID, Valid: parentPipelineID != 0},
-		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor)
+		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.ScheduledTrigger)
 	err := statement.Scan(&pb.ID)
 	if err != nil {
 		return fmt.Errorf("App:%d,Pip:%d,Env:%d> %s", applicationID, pipelineID, envID, err)
@@ -1488,6 +1492,7 @@ func LoadCompletePipelineBuildToArchive(db database.Querier, pipelineBuildID int
 			 pipeline.name,
 			 environment.name,
 			 pipeline_build.manual_trigger,
+			 pipeline_build.scheduled_trigger,
 			 pipeline_build.triggered_by,
 			 pipeline_build.parent_pipeline_build_id,
 			 pipeline_build.vcs_changes_branch,
@@ -1527,7 +1532,7 @@ func LoadCompletePipelineBuildToArchive(db database.Querier, pipelineBuildID int
 		var actionStart, actionDone, actionQueued pq.NullTime
 		var pipelineBuildStatus, actionBuildStatus string
 		var stage sdk.Stage
-		var manual sql.NullBool
+		var manual, scheduled sql.NullBool
 		var stageBuildOrder, stageID, actionBuildID, actionBuildPipelineActionID, trigBy, parentID sql.NullInt64
 		var stageName, actionBuildStatusTmp, actionBuildArgs, actionBuildActionName, branch, hash, author, username, trigPipname, actionBuildWorkerModelName sql.NullString
 		var version sql.NullInt64
@@ -1559,6 +1564,7 @@ func LoadCompletePipelineBuildToArchive(db database.Querier, pipelineBuildID int
 			&pb.Pipeline.Name,
 			&pb.Environment.Name,
 			&manual,
+			&scheduled,
 			&trigBy,
 			&parentID,
 			&branch,
@@ -1609,7 +1615,7 @@ func LoadCompletePipelineBuildToArchive(db database.Querier, pipelineBuildID int
 		}
 
 		pb.Trigger = sdk.PipelineBuildTrigger{}
-		loadPbTrigger(&pb, manual, parentID, branch, hash, author, username, trigPipname, version)
+		loadPbTrigger(&pb, manual, scheduled, parentID, branch, hash, author, username, trigPipname, version)
 
 		if trigBy.Valid && pb.Trigger.TriggeredBy != nil {
 			pb.Trigger.TriggeredBy.ID = trigBy.Int64
@@ -1704,6 +1710,7 @@ func SelectBuildForUpdate(db database.Querier, buildID int64) error {
 
 // LoadBuildIDsToArchive Load build to archive
 func LoadBuildIDsToArchive(db *sql.DB, hours int) ([]int64, error) {
+	log.Debug("LoadBuildIDsToArchive>...")
 	var buildIDs []int64
 	query := fmt.Sprintf(`SELECT pipeline_build.id
 		  FROM pipeline_build
@@ -1873,14 +1880,14 @@ func GetDeploymentHistory(db database.Querier, projectKey, appName string) ([]sd
 		SELECT DISTINCT ON (pipName, envName) pipName, MAX(start),
 			appName, envName,
 			pb.version, pb.status, pb.done, pb.build_number,
-			pb.manual_trigger, username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
+			pb.manual_trigger, pb.scheduled_trigger, username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
 		FROM
 		(
 			(
 				SELECT
 					appName, pipName, envName,
 					pb.version, pb.status, pb.done, pb.start, pb.build_number,
-					pb.manual_trigger, "user".username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
+					pb.manual_trigger, pb.scheduled_trigger, "user".username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
 				FROM pipeline_build pb
 				JOIN
 				    (SELECT
@@ -1904,7 +1911,7 @@ func GetDeploymentHistory(db database.Querier, projectKey, appName string) ([]sd
 				SELECT
 					appName, pipName, envName,
 					ph.version, ph.status, ph.done, ph.start, ph.build_number,
-					ph.manual_trigger, "user".username, ph.vcs_changes_branch, ph.vcs_changes_hash, ph.vcs_changes_author
+					ph.manual_trigger, pb.scheduled_trigger, "user".username, ph.vcs_changes_branch, ph.vcs_changes_hash, ph.vcs_changes_author
 				FROM pipeline_history ph
 				JOIN
 				    (SELECT
@@ -1926,7 +1933,7 @@ func GetDeploymentHistory(db database.Querier, projectKey, appName string) ([]sd
 		) pb
 		GROUP BY pipName, appName, envName,
 			pb.version, pb.status, pb.done, pb.build_number,
-			pb.manual_trigger, username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
+			pb.manual_trigger, pb.scheduled_trigger, username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
 		ORDER BY pipName ASC, envName ASC, max(start) DESC
 	`
 	rows, err := db.Query(query, projectKey, appName)
@@ -2026,7 +2033,7 @@ func GetBranchHistory(db database.Querier, projectKey, appName string, page, nbP
 					pb.application_id, pb.pipeline_id, pb.environment_id,
 					appName, pipName, envName,
 					pb.start, pb.done, pb.status, pb.version, pb.build_number,
-					pb.manual_trigger, pb.triggered_by, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
+					pb.manual_trigger, pb.scheduled_trigger, pb.triggered_by, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
 				FROM
 					pipeline_build pb
 				JOIN (
@@ -2057,7 +2064,7 @@ func GetBranchHistory(db database.Querier, projectKey, appName string, page, nbP
 					ph.application_id, ph.pipeline_id, ph.environment_id,
 					appName, pipName, envName,
 					ph.start, ph.done, ph.status, ph.version,  ph.build_number,
-					ph.manual_trigger, ph.triggered_by, ph.vcs_changes_branch, ph.vcs_changes_hash, ph.vcs_changes_author
+					ph.manual_trigger, ph.scheduled_trigger, ph.triggered_by, ph.vcs_changes_branch, ph.vcs_changes_hash, ph.vcs_changes_author
 				FROM
 					pipeline_history ph
 				JOIN (
