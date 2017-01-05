@@ -41,6 +41,7 @@ func TestLoadAction(t *testing.T) {
 	}
 
 	bar := sdk.NewAction("bar")
+	bar.Requirement("foobar", sdk.BinaryRequirement, "foobar")
 	err = InsertAction(db, bar, true)
 	if err != nil {
 		t.Fatalf("Cannot insert action bar: %s", err)
@@ -64,8 +65,8 @@ func TestLoadAction(t *testing.T) {
 		t.Fatalf("Expected action name to be 'foo', was '%s'", a2.Name)
 	}
 
-	if len(a2.Requirements) != 1 {
-		t.Fatalf("Expected 1 requirements, got %d", len(a2.Requirements))
+	if len(a2.Requirements) != 2 {
+		t.Fatalf("Expected 2 requirements, got %d", len(a2.Requirements))
 	}
 
 	if len(a2.Actions) != 1 {
