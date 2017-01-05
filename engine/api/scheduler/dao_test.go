@@ -63,6 +63,11 @@ func TestInsert(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
+	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+		t.Fatal(err)
+	}
+
 	s := &sdk.PipelineScheduler{
 		ApplicationID: app.ID,
 		EnvironmentID: sdk.DefaultEnv.ID,
@@ -95,4 +100,18 @@ func TestInsert(t *testing.T) {
 	t.Logf("%v", loaded)
 
 	assert.True(t, reflect.DeepEqual(s, loaded))
+}
+
+func TestLoadPendingExecutions(t *testing.T) {
+	if testwithdb.DBDriver == "" {
+		t.SkipNow()
+		return
+	}
+	_db, _ := testwithdb.SetupPG(t)
+	db := database.DBMap(_db)
+	pe, err := LoadPendingExecutions(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%v", pe)
 }

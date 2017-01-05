@@ -1,6 +1,8 @@
 package scheduler
 
 import (
+	"database/sql"
+
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -89,7 +91,7 @@ func InsertExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 func UpdateExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) error {
 	ds := database.PipelineSchedulerExecution(*s)
 	if n, err := db.Update(&ds); err != nil {
-		log.Warning("UpdateExecution> Unable to insert pipeline scheduler execution : %T %s", err, err)
+		log.Warning("UpdateExecution> Unable to update pipeline scheduler execution : %T %s", err, err)
 		return err
 	} else if n == 0 {
 		return sdk.ErrNotFound
@@ -98,12 +100,96 @@ func UpdateExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 	return nil
 }
 
-//LoadPendingExecutions loads all pipeline execution until a date
-func LoadPendingExecutions(db gorp.SqlExecutor, until time.Time) ([]sdk.PipelineSchedulerExecution, error) {
-	s := []database.PipelineSchedulerExecution{}
-	if _, err := db.Select(&s, "select * from pipeline_scheduler_execution where executed = false and execution_planned_date >=  now() + interval '5 second' "); err != nil {
+//DeleteExecution deletes executions
+func DeleteExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) error {
+	ds := database.PipelineSchedulerExecution(*s)
+	if n, err := db.Delete(&ds); err != nil {
+		log.Warning("DeleteExecution> Unable to delete pipeline scheduler execution : %T %s", err, err)
+		return err
+	} else if n == 0 {
+		return sdk.ErrNotFound
+	}
+	*s = sdk.PipelineSchedulerExecution(ds)
+	return nil
+}
+
+//LoadExecutions loads all pipeline execution
+func LoadExecutions(db gorp.SqlExecutor, schedulerID int64) ([]sdk.PipelineSchedulerExecution, error) {
+	as := []database.PipelineSchedulerExecution{}
+	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution pipeline_scheduler_id = $1", schedulerID); err != nil {
 		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
 		return nil, err
 	}
 	ps := []sdk.PipelineSchedulerExecution{}
+	for _, s := range as {
+		ps = append(ps, sdk.PipelineSchedulerExecution(s))
+	}
+	return ps, nil
+}
+
+//LoadLastExecution loads last pipeline execution
+func LoadLastExecution(db gorp.SqlExecutor, id int64) (*sdk.PipelineSchedulerExecution, error) {
+	as := database.PipelineSchedulerExecution{}
+	if err := db.SelectOne(&as, "select * from pipeline_scheduler_execution where pipeline_scheduler_id = $1 order by execution_planned_date desc limit 1", id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
+		return nil, err
+	}
+	ps := sdk.PipelineSchedulerExecution(as)
+	return &ps, nil
+}
+
+//LoadPastExecutions loads all pipeline execution executed prior date 't'
+func LoadPastExecutions(db gorp.SqlExecutor, t time.Time) ([]sdk.PipelineSchedulerExecution, error) {
+	as := []database.PipelineSchedulerExecution{}
+	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where executed = true and execution_date <= $1", t); err != nil {
+		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
+		return nil, err
+	}
+	ps := []sdk.PipelineSchedulerExecution{}
+	for _, s := range as {
+		ps = append(ps, sdk.PipelineSchedulerExecution(s))
+	}
+	return ps, nil
+}
+
+//LoadPendingExecutions loads all pipeline execution
+func LoadPendingExecutions(db gorp.SqlExecutor) ([]sdk.PipelineSchedulerExecution, error) {
+	as := []database.PipelineSchedulerExecution{}
+	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where executed = false and execution_planned_date <=  now()"); err != nil {
+		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
+		return nil, err
+	}
+	ps := []sdk.PipelineSchedulerExecution{}
+	for _, s := range as {
+		ps = append(ps, sdk.PipelineSchedulerExecution(s))
+	}
+	return ps, nil
+}
+
+//LoadUnscheduledPipelines loads unscheduled pipelines
+func LoadUnscheduledPipelines(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, error) {
+	ps, err := LoadAll(db)
+	res := []sdk.PipelineScheduler{}
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range ps {
+		exec, err := LoadLastExecution(db, s.ID)
+		if err != nil {
+			return nil, err
+		}
+		if exec == nil || exec.Executed {
+			res = append(res, s)
+		}
+	}
+	return ps, nil
+}
+
+//LockPipelineExecutions locks table LockPipelineExecutions
+func LockPipelineExecutions(db gorp.SqlExecutor) error {
+	_, err := db.Exec("LOCK TABLE pipeline_scheduler_execution IN ACCESS EXCLUSIVE MODE NOWAIT")
+	return err
 }

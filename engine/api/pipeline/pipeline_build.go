@@ -773,7 +773,7 @@ func GetProbableLastBuildNumber(db *sql.DB, pipID, appID, envID int64) (int64, b
 }
 
 // GetLastBuildNumber Get the last build number for the given pipeline
-func GetLastBuildNumber(tx *sql.Tx, pipelineID int64, applicationID int64, environmentID int64) (int64, bool, error) {
+func GetLastBuildNumber(tx database.QueryExecuter, pipelineID int64, applicationID int64, environmentID int64) (int64, bool, error) {
 	var lastBuildingBuildNumber int64
 	var lastFinishedBuildNumber int64
 
@@ -817,7 +817,7 @@ func GetLastBuildNumber(tx *sql.Tx, pipelineID int64, applicationID int64, envir
 }
 
 // InsertPipelineBuild insert build informations in database so Scheduler can pick it up
-func InsertPipelineBuild(tx *sql.Tx, project *sdk.Project, p *sdk.Pipeline, applicationData *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (sdk.PipelineBuild, error) {
+func InsertPipelineBuild(tx database.QueryExecuter, project *sdk.Project, p *sdk.Pipeline, applicationData *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (sdk.PipelineBuild, error) {
 	var buildNumber int64
 	var pb sdk.PipelineBuild
 	var client sdk.RepositoriesManagerClient

@@ -49,6 +49,7 @@ type PipelineBuild struct {
 
 // PipelineBuildTrigger Struct for history table
 type PipelineBuildTrigger struct {
+	ScheduledTrigger    bool           `json:"scheduled_trigger"`
 	ManualTrigger       bool           `json:"manual_trigger"`
 	TriggeredBy         *User          `json:"triggered_by"`
 	ParentPipelineBuild *PipelineBuild `json:"parent_pipeline_build"`
