@@ -209,6 +209,10 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 			}
 			var events []sdk.VCSPushEvent
 			events, delay, err = client.PushEvents(p.Application.RepositoryFullname, p.DateCreation)
+			if err != nil {
+				log.Warning("Polling> Error with PushEvents on pipeline %s for repository %s: %s\n", p.Pipeline.Name, p.Application.RepositoryFullname, err)
+				continue
+			}
 
 			if len(events) > 0 {
 				s, err := triggerPipelines(db, w.ProjectKey, rm, p, events)

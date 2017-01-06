@@ -5,16 +5,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/msg"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-)
-
-// Generic template variable
-const (
-	RepoURL string = "repo"
 )
 
 // ApplyTemplate creates an application and configure it with given template
@@ -26,15 +20,6 @@ func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions
 		app = &sdk.Application{
 			Name:              opts.ApplicationName,
 			ApplicationGroups: proj.ProjectGroups,
-		}
-
-		//Keep the application variables
-		for k, v := range opts.ApplicationVariables {
-			app.Variable = append(app.Variable, sdk.Variable{
-				Name:  k,
-				Type:  sdk.StringVariable,
-				Value: v,
-			})
 		}
 
 	} else {
@@ -55,24 +40,13 @@ func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions
 		}
 
 		// Apply the template
-		app, err = templateextension.Apply(templ, proj, opts.TemplateParams, opts.ApplicationName)
+		app, err = templateextension.Apply(db, templ, proj, opts.TemplateParams, opts.ApplicationName)
 		if err != nil {
 			log.Warning("ApplyTemplate> error applying template : %s", err)
 			return nil, err
 		}
 
 		deferFunc()
-	}
-
-	//Check reposmanager
-	if opts.RepositoriesManagerName != "" {
-		app.RepositoriesManager, err = repositoriesmanager.LoadByName(db, opts.RepositoriesManagerName)
-		if err != nil {
-			log.Warning("ApplyTemplate> error getting repositories manager %s : %s", opts.RepositoriesManagerName, err)
-			return nil, err
-		}
-
-		app.RepositoryFullname = opts.ApplicationRepositoryFullname
 	}
 
 	//Start a new transaction
@@ -138,7 +112,7 @@ func ApplyTemplateOnApplication(db *sql.DB, proj *sdk.Project, app *sdk.Applicat
 	}
 
 	// Apply the template
-	appTempl, err := templateextension.Apply(templ, proj, opts.TemplateParams, opts.ApplicationName)
+	appTempl, err := templateextension.Apply(db, templ, proj, opts.TemplateParams, opts.ApplicationName)
 	if err != nil {
 		log.Warning("ApplyTemplateOnApplication> error applying template : %s", err)
 		return nil, err

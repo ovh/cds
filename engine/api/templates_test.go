@@ -13,6 +13,8 @@ import (
 	"os"
 	"testing"
 
+	"stash.ovh.net/cds/engine/api/testwithdb"
+
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
@@ -664,11 +666,8 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Prepare the data send on applyTemplatesHandler
 	opts := sdk.ApplyTemplatesOptions{
-		ApplicationName: test.RandomString(t, 10),
-		ApplicationVariables: map[string]string{
-			"repo": "git@github.com:ovh/cds.git",
-		},
-		TemplateName: templ.Name,
+		ApplicationName: testwithdb.RandomString(t, 10),
+		TemplateName:    templ.Name,
 		TemplateParams: []sdk.TemplateParam{
 			{
 				Name:  templ.Params[0].Name,
