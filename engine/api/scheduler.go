@@ -190,11 +190,49 @@ check:
 		return
 	}
 
-	WriteJSON(w, r, s, http.StatusOK)
+	WriteJSON(w, r, s, http.StatusCreated)
 }
 
 func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	// Get args in body
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		log.Warning("addSchedulerApplicationPipelineHandler> cannot read body: %s\n", errRead)
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
 
+	// Unmarshal args
+	s := &sdk.PipelineScheduler{}
+	if err := json.Unmarshal(data, s); err != nil {
+		log.Warning("addSchedulerApplicationPipelineHandler> cannot unmarshal body:  %s\n", err)
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	//Parsing cronexpr
+	if _, err := cronexpr.Parse(s.Crontab); err != nil {
+		WriteError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
+		return
+	}
+
+	//Load the scheduler
+	sOld, err := scheduler.Load(database.DBMap(db), s.ID)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	//Update it
+	sOld.Crontab = s.Crontab
+	sOld.Disabled = s.Disabled
+	sOld.Args = s.Args
+	if err := scheduler.Update(database.DBMap(db), sOld); err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, s, http.StatusOK)
 }
 
 func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {

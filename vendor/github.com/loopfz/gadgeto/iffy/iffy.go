@@ -57,6 +57,10 @@ func NewTester(t *testing.T, r http.Handler, calls ...*Call) *Tester {
 	}
 }
 
+func (t *Tester) Reset() {
+	t.Calls = []*Call{}
+}
+
 func (t *Tester) AddCall(name, method, querystr string, body interface{}) *Call {
 	c := &Call{
 		Name:     name,
@@ -221,6 +225,12 @@ func DumpResponse(t *testing.T) Checker {
 	return func(r *http.Response, body string, respObject interface{}) error {
 		t.Log(body)
 		return nil
+	}
+}
+
+func UnmarshalResponse(i interface{}) Checker {
+	return func(r *http.Response, body string, respObject interface{}) error {
+		return json.Unmarshal([]byte(body), i)
 	}
 }
 
