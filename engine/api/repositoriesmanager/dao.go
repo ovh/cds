@@ -61,7 +61,7 @@ func LoadByID(db *sql.DB, id int64) (*sdk.RepositoriesManager, error) {
 }
 
 //LoadByName loads the specified RepositoriesManager from the database
-func LoadByName(db *sql.DB, repositoriesManagerName string) (*sdk.RepositoriesManager, error) {
+func LoadByName(db database.Querier, repositoriesManagerName string) (*sdk.RepositoriesManager, error) {
 	var rm *sdk.RepositoriesManager
 	var id int64
 	var t, name, URL, data string

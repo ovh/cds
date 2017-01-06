@@ -29,18 +29,16 @@ func runWizard() {
 
 	fmt.Printf("Application name: ")
 	appName := readline()
-	fmt.Printf("Application %s git repository: ", appName)
-	appRepo := readline()
 
 	project := choseProject(appName)
 	buildTmpl := choseBuildTemplate()
 	buildTmpl = choseBuildTemplateParameters(buildTmpl)
 
-	applyTemplate(project.Key, appName, appRepo, buildTmpl)
+	applyTemplate(project.Key, appName, buildTmpl)
 }
 
-func applyTemplate(projectKey string, name, repo string, build sdk.Template) {
-	app, err := sdk.ApplyApplicationTemplate(projectKey, name, repo, build)
+func applyTemplate(projectKey string, name string, build sdk.Template) {
+	app, err := sdk.ApplyApplicationTemplate(projectKey, name, build)
 	if err != nil {
 		sdk.Exit("Error: Cannot apply template (%s)\n", err)
 	}

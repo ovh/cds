@@ -12,14 +12,17 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
+
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/template"
-	"github.com/spf13/viper"
 )
 
 //Get returns action plugin metadata and parameters list
@@ -134,7 +137,7 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 }
 
 //Apply will call the apply function of the template and returns a fresh new application
-func Apply(templ template.Interface, proj *sdk.Project, params []sdk.TemplateParam, appName string) (*sdk.Application, error) {
+func Apply(db database.Querier, templ template.Interface, proj *sdk.Project, params []sdk.TemplateParam, appName string) (*sdk.Application, error) {
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(appName) {
 		return nil, sdk.ErrInvalidApplicationPattern
@@ -148,6 +151,40 @@ func Apply(templ template.Interface, proj *sdk.Project, params []sdk.TemplatePar
 	applyOptions := template.NewApplyOptions(proj.Key, appName, *templParameters)
 	app, err := templ.Apply(applyOptions)
 
+	// Check repo parameter
+	for _, p := range params {
+		if p.Type == sdk.RepositoryVariable {
+			repoDatas := strings.SplitN(p.Value, "##", 2)
+
+			// If repo from repository manager
+			if len(repoDatas) == 2 {
+				app.RepositoriesManager, err = repositoriesmanager.LoadByName(db, repoDatas[0])
+				if err != nil {
+					log.Warning("ApplyTemplate> error getting repositories manager %s : %s", repoDatas[0], err)
+					return nil, err
+				}
+				app.RepositoryFullname = repoDatas[1]
+
+				// overwrite application variable value with  correct URL
+				for i := range app.Variable {
+					v := &app.Variable[i]
+					if v.Name == p.Name {
+						client, errClient := repositoriesmanager.AuthorizedClient(db, proj.Key, app.RepositoriesManager.Name)
+						if errClient != nil {
+							log.Warning("ApplyTemplate> Cannot get client got %s %s : %s", proj.Key, app.RepositoriesManager.Name, errClient)
+							return nil, errClient
+						}
+						appRepo, errRepo := client.RepoByFullname(app.RepositoryFullname)
+						if errRepo != nil {
+							log.Warning("ApplyTemplate> Cannot get repo by fullname %s : %s", app.RepositoryFullname, errRepo)
+							return nil, errRepo
+						}
+						v.Value = appRepo.SSHCloneURL
+					}
+				}
+			}
+		}
+	}
 	app.Name = appName
 	app.ProjectKey = proj.Key
 
