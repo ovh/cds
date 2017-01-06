@@ -1,16 +1,15 @@
 package mesos
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"reflect"
 	"testing"
 
-	"io/ioutil"
-
-	"encoding/json"
-
-	"reflect"
-
-	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 )
 
 func Test_marathonConfig(t *testing.T) {
