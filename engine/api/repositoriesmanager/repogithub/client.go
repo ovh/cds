@@ -443,7 +443,7 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 			}
 
 			nextPage = getNextPage(headers)
-			time.Sleep(interval)
+			time.Sleep(interval * time.Second)
 		} else {
 			break
 		}
@@ -487,5 +487,5 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 		})
 	}
 
-	return res, interval, fmt.Errorf("Not implemented on stash")
+	return res, interval, nil
 }
