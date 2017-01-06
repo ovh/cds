@@ -744,10 +744,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	//Prepare the data send on applyTemplatesHandler
 	opts := sdk.ApplyTemplatesOptions{
 		ApplicationName: testwithdb.RandomString(t, 10),
-		ApplicationVariables: map[string]string{
-			"repo": "git@github.com:ovh/cds.git",
-		},
-		TemplateName: templ.Name,
+		TemplateName:    templ.Name,
 		TemplateParams: []sdk.TemplateParam{
 			{
 				Name:  templ.Params[0].Name,

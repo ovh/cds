@@ -88,17 +88,14 @@ func GetDeploymentTemplates() ([]Template, error) {
 }
 
 // ApplyApplicationTemplate creates given application and apply build template
-func ApplyApplicationTemplate(projectKey string, name, repo string, build Template) (*Application, error) {
+func ApplyApplicationTemplate(projectKey string, name string, build Template) (*Application, error) {
 
 	uri := fmt.Sprintf("/project/%s/template", projectKey)
 
 	opts := ApplyTemplatesOptions{
 		ApplicationName: name,
-		ApplicationVariables: map[string]string{
-			"repo": "git@github.com:ovh/cds.git",
-		},
-		TemplateName:   build.Name,
-		TemplateParams: build.Params,
+		TemplateName:    build.Name,
+		TemplateParams:  build.Params,
 	}
 
 	btes, _ := json.Marshal(opts)
@@ -138,12 +135,9 @@ type TemplateExtension struct {
 
 //ApplyTemplatesOptions represents arguments to create an application and all its components from templates
 type ApplyTemplatesOptions struct {
-	ApplicationName               string            `json:"name"`
-	ApplicationVariables          map[string]string `json:"application_variables"`
-	TemplateName                  string            `json:"template"`
-	TemplateParams                []TemplateParam   `json:"template_params"`
-	RepositoriesManagerName       string            `json:"repositories_manager_name"`
-	ApplicationRepositoryFullname string            `json:"repository_fullname"`
+	ApplicationName string          `json:"name"`
+	TemplateName    string          `json:"template"`
+	TemplateParams  []TemplateParam `json:"template_params"`
 }
 
 //GetName returns the name of the template extension
