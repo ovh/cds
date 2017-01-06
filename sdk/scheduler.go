@@ -6,13 +6,16 @@ import (
 
 //PipelineScheduler is a cron scheduler
 type PipelineScheduler struct {
-	ID            int64       `json:"id" db:"id"`
-	ApplicationID int64       `json:"-" db:"application_id"`
-	PipelineID    int64       `json:"-" db:"pipeline_id"`
-	EnvironmentID int64       `json:"-" db:"environment_id"`
-	Args          []Parameter `json:"args,omitempty" db:"-"`
-	Crontab       string      `json:"crontab,omitempty" db:"crontab"`
-	Disabled      bool        `json:"disable" db:"disable"`
+	ID              int64                       `json:"id" db:"id"`
+	ApplicationID   int64                       `json:"-" db:"application_id"`
+	PipelineID      int64                       `json:"-" db:"pipeline_id"`
+	EnvironmentID   int64                       `json:"-" db:"environment_id"`
+	EnvironmentName string                      `json:"environment_name" db:"-"`
+	Args            []Parameter                 `json:"args,omitempty" db:"-"`
+	Crontab         string                      `json:"crontab,omitempty" db:"crontab"`
+	Disabled        bool                        `json:"disable" db:"disable"`
+	LastExecution   *PipelineSchedulerExecution `json:"last_execution" db:"-"`
+	NextExecution   *PipelineSchedulerExecution `json:"next_execution" db:"-"`
 }
 
 //PipelineSchedulerExecution is a cron scheduler execution

@@ -19,6 +19,11 @@ func (p *PipelineScheduler) PostInsert(s gorp.SqlExecutor) error {
 		return err
 	}
 
+	p.EnvironmentName, err = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -31,6 +36,11 @@ func (p *PipelineScheduler) PostUpdate(s gorp.SqlExecutor) error {
 
 	query := "update pipeline_scheduler set args = $2 where id = $1"
 	if _, err := s.Exec(query, p.ID, btes); err != nil {
+		return err
+	}
+
+	p.EnvironmentName, err = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
+	if err != nil {
 		return err
 	}
 
@@ -55,6 +65,12 @@ func (p *PipelineScheduler) PostGet(s gorp.SqlExecutor) error {
 	}
 
 	if err := json.Unmarshal([]byte(str.String), &p.Args); err != nil {
+		return err
+	}
+
+	var err error
+	p.EnvironmentName, err = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
+	if err != nil {
 		return err
 	}
 

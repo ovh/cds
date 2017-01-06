@@ -22,7 +22,17 @@ func loadPipelineSchedulers(db gorp.SqlExecutor, query string, args ...interface
 		if err := s[i].PostGet(db); err != nil {
 			return nil, err
 		}
-		ps = append(ps, sdk.PipelineScheduler(s[i]))
+		x := sdk.PipelineScheduler(s[i])
+		var err error
+		x.LastExecution, err = LoadLastExecutedExecution(db, x.ID)
+		if err != nil {
+			return nil, err
+		}
+		x.NextExecution, err = LoadNextExecution(db, x.ID)
+		if err != nil {
+			return nil, err
+		}
+		ps = append(ps, x)
 	}
 	return ps, nil
 }
@@ -145,6 +155,34 @@ func LoadLastExecution(db gorp.SqlExecutor, id int64) (*sdk.PipelineSchedulerExe
 	return &ps, nil
 }
 
+//LoadLastExecutedExecution loads last pipeline execution
+func LoadLastExecutedExecution(db gorp.SqlExecutor, id int64) (*sdk.PipelineSchedulerExecution, error) {
+	as := database.PipelineSchedulerExecution{}
+	if err := db.SelectOne(&as, "select * from pipeline_scheduler_execution where pipeline_scheduler_id = $1 and executed = true order by execution_planned_date desc limit 1", id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
+		return nil, err
+	}
+	ps := sdk.PipelineSchedulerExecution(as)
+	return &ps, nil
+}
+
+//LoadNextExecution loads next pipeline execution
+func LoadNextExecution(db gorp.SqlExecutor, id int64) (*sdk.PipelineSchedulerExecution, error) {
+	as := database.PipelineSchedulerExecution{}
+	if err := db.SelectOne(&as, "select * from pipeline_scheduler_execution where pipeline_scheduler_id = $1 and executed = false order by execution_planned_date desc limit 1", id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
+		return nil, err
+	}
+	ps := sdk.PipelineSchedulerExecution(as)
+	return &ps, nil
+}
+
 //LoadPastExecutions loads all pipeline execution executed prior date 't'
 func LoadPastExecutions(db gorp.SqlExecutor, t time.Time) ([]sdk.PipelineSchedulerExecution, error) {
 	as := []database.PipelineSchedulerExecution{}
@@ -214,6 +252,6 @@ func GetByApplicationPipeline(db gorp.SqlExecutor, app *sdk.Application, pip *sd
 }
 
 //GetByApplicationPipelineEnv get all pipeline schedulers for a application/pipeline
-func GetByApplicationPipelineEnv(db gorp.SqlExecutor, app *sdk.Application, pip *sdk.Pipeline, env sdk.Environment) ([]sdk.PipelineScheduler, error) {
+func GetByApplicationPipelineEnv(db gorp.SqlExecutor, app *sdk.Application, pip *sdk.Pipeline, env *sdk.Environment) ([]sdk.PipelineScheduler, error) {
 	return loadPipelineSchedulers(db, "select * from pipeline_scheduler where application_id = $1 and pipeline_id = $2 and environment_id = $3", app.ID, pip.ID, env.ID)
 }

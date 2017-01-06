@@ -217,6 +217,13 @@ func ExpectStatus(st int) Checker {
 	}
 }
 
+func DumpResponse(t *testing.T) Checker {
+	return func(r *http.Response, body string, respObject interface{}) error {
+		t.Log(body)
+		return nil
+	}
+}
+
 func ExpectJSONFields(fields ...string) Checker {
 	return func(r *http.Response, body string, respObject interface{}) error {
 		m := map[string]interface{}{}
