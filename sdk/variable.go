@@ -23,12 +23,13 @@ type VariableType string
 
 // Different type of Variable
 const (
-	SecretVariable  VariableType = "password"
-	TextVariable    VariableType = "text"
-	StringVariable  VariableType = "string"
-	KeyVariable     VariableType = "key"
-	BooleanVariable VariableType = "boolean"
-	NumberVariable  VariableType = "number"
+	SecretVariable     VariableType = "password"
+	TextVariable       VariableType = "text"
+	StringVariable     VariableType = "string"
+	KeyVariable        VariableType = "key"
+	BooleanVariable    VariableType = "boolean"
+	NumberVariable     VariableType = "number"
+	RepositoryVariable VariableType = "repository"
 )
 
 var (
