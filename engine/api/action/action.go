@@ -69,6 +69,14 @@ func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
 
 	// Requirements of children are requirement of parent
 	for _, c := range a.Actions {
+		if len(c.Requirements) == 0 {
+			log.Debug("Try load children action requirement for id:%d", c.ID)
+			var errLoad error
+			c.Requirements, errLoad = LoadActionRequirements(tx, c.ID)
+			if errLoad != nil {
+				return fmt.Errorf("cannot LoadActionRequirements in InsertAction> %s", errLoad)
+			}
+		}
 		// Now for each requirement of child, check if it exists in parent
 		for _, cr := range c.Requirements {
 			found := false

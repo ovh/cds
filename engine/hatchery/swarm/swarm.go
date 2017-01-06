@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"bytes"
-
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/ovh/cds/engine/log"
@@ -126,27 +124,6 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 				Signal: docker.SIGKILL,
 			}); err != nil {
 				log.Warning("Unable to kill container %s", err)
-
-				if log.IsDebug() {
-					buffer := new(bytes.Buffer)
-
-					err := h.dockerClient.Logs(docker.LogsOptions{
-						Container:    id,
-						Stderr:       true,
-						Stdout:       true,
-						ErrorStream:  buffer,
-						OutputStream: buffer,
-					})
-
-					if err != nil {
-						log.Warning("Unable to get logs for container %s", id)
-					} else {
-						log.Debug("***** Container %s logs : ")
-						log.Debug("%s", buffer.String())
-						log.Debug("**************************")
-					}
-				}
-
 				continue
 			}
 
@@ -211,8 +188,21 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 			tuple := strings.Split(r.Value, " ")
 			img := tuple[0]
 			env := []string{}
+			serviceMemory := int64(1024)
 			if len(tuple) > 1 {
 				env = append(env, tuple[1:]...)
+			}
+			//option for power user : set the service memory with CDS_SERVICE_MEMORY=1024
+			for _, e := range env {
+				if strings.HasPrefix(e, "CDS_SERVICE_MEMORY=") {
+					m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
+					i, err := strconv.Atoi(m)
+					if err != nil {
+						log.Warning("SpawnWorker> Unable to parse service option %s : %s", e, err)
+						continue
+					}
+					serviceMemory = int64(i)
+				}
 			}
 			serviceName := r.Name + "-" + name
 
@@ -222,7 +212,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 				"service_name":   serviceName,
 			}
 			//Start the services
-			if err := h.createAndStartContainer(serviceName, img, network, name, []string{}, env, labels, 0); err != nil {
+			if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, serviceMemory); err != nil {
 				log.Warning("SpawnWorker>Unable to start required container: %s\n", err)
 				return err
 			}
@@ -241,6 +231,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
+		"CDS_SINGLE_USE=1",
 	}
 
 	//labels are used to make container cleanup easier
@@ -280,7 +271,7 @@ func (h *HatcherySwarm) createNetwork(name string) error {
 //shortcut to create+start(=run) a container
 func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAlias string, cmd, env []string, labels map[string]string, memory int64) error {
 	//Memory is set to 1GB by default
-	if memory == 0 {
+	if memory <= 4 {
 		memory = 1024
 	} else {
 		//Moaaaaar memory
@@ -406,6 +397,7 @@ checkImage:
 	}
 
 	//Ready to spawn
+	log.Notice("CanSpawn> %s can be spawned", model.Name)
 	return true
 }
 

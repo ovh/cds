@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -257,7 +258,7 @@ func RestartPipeline(key, app, pip, env string, bn int) (chan Log, error) {
 //last commit for the branch
 func GetPipelineCommits(key, app, pip, env string, bn int) ([]VCSCommit, error) {
 	commits := []VCSCommit{}
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/commits?envName=%s", key, app, pip, bn, env)
+	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/commits?envName=%s", key, app, pip, bn, url.QueryEscape(env))
 	data, code, err := Request("GET", uri, nil)
 	if err != nil {
 		return commits, err
@@ -302,7 +303,7 @@ func GetPipelineBuildHistory(key, appName, name, env string) ([]PipelineBuild, e
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/history", key, appName, name)
 	if env != "" {
-		path = fmt.Sprintf("%s?envName=%s", path, env)
+		path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
 	}
 	data, code, err := Request("GET", path, nil)
 	if err != nil {
@@ -333,7 +334,7 @@ func GetBuildLogs(key, pipelineName, env string, buildID int) ([]Log, error) {
 	}
 
 	if env != "" {
-		path = fmt.Sprintf("%s?envName=%s", path, env)
+		path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
 	}
 
 	data, _, err := Request("GET", path, nil)
@@ -364,7 +365,7 @@ func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, fo
 	}
 
 	if env != "" {
-		path = fmt.Sprintf("%s?envName=%s", path, env)
+		path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
 	}
 
 	data, _, err := Request("GET", path, nil)
@@ -387,7 +388,7 @@ func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, fo
 				path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/log?offset=%d", key, appName, pipelineName, buildID, lastID)
 			}
 			if env != "" {
-				path = fmt.Sprintf("%s&envName=%s", path, env)
+				path = fmt.Sprintf("%s&envName=%s", path, url.QueryEscape(env))
 			}
 
 			data, _, err := Request("GET", path, nil)
@@ -665,10 +666,10 @@ func GetPipelineBuildStatus(proj, app, pip, env string, buildNumber int64) (Pipe
 
 	if buildNumber == 0 {
 		uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/last?envName=%s",
-			proj, app, pip, env)
+			proj, app, pip, url.QueryEscape(env))
 	} else {
 		uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-			proj, app, pip, buildNumber, env)
+			proj, app, pip, buildNumber, url.QueryEscape(env))
 	}
 
 	data, code, err := Request("GET", uri, nil)

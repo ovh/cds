@@ -35,13 +35,18 @@ func checkRequirement(r sdk.Requirement) (bool, error) {
 }
 
 func checkPluginRequirement(r sdk.Requirement) (bool, error) {
-	if err := sdk.DownloadPlugin(r.Name, os.TempDir()); err != nil {
-		return false, err
-	}
 	pluginBinary := path.Join(os.TempDir(), r.Name)
-	if err := os.Chmod(pluginBinary, 0700); err != nil {
-		return false, err
+
+	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
+		//If the file doesn't exist. Download it.
+		if err := sdk.DownloadPlugin(r.Name, os.TempDir()); err != nil {
+			return false, err
+		}
+		if err := os.Chmod(pluginBinary, 0700); err != nil {
+			return false, err
+		}
 	}
+
 	pluginClient := plugin.NewClient(r.Name, pluginBinary, "", "", false)
 	defer pluginClient.Kill()
 
@@ -102,7 +107,8 @@ func checkNetworkAccessRequirement(r sdk.Requirement) (bool, error) {
 
 func checkServiceRequirement(r sdk.Requirement) (bool, error) {
 	if _, err := net.LookupIP(r.Name); err != nil {
-		return false, err
+		log.Printf("Error checking requirement : %s\n", err)
+		return false, nil
 	}
 
 	return true, nil

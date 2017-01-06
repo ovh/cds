@@ -34,6 +34,7 @@ type marathonPOSTAppParams struct {
 	MarathonVHOST  string
 	MarathonLabels string
 	Memory         int
+	WorkerTTL      int
 }
 
 const marathonPOSTAppTemplate = `
@@ -55,7 +56,8 @@ const marathonPOSTAppTemplate = `
         "CDS_NAME": "{{.WorkerName}}",
         "CDS_MODEL": "{{.WorkerModelID}}",
         "CDS_HATCHERY": "{{.HatcheryID}}",
-        "CDS_SINGLE_USE": "1"
+        "CDS_SINGLE_USE": "1",
+		"CDS_TTL" : "{{.WorkerTTL}}"
     },
     "id": "{{.MarathonID}}/{{.WorkerName}}",
     "instances": 1,
@@ -80,6 +82,7 @@ type HatcheryMesos struct {
 	marathonLabels       map[string]string
 
 	defaultMemory int
+	workerTTL     int
 }
 
 // ID must returns hatchery id
@@ -98,24 +101,28 @@ func (m *HatcheryMesos) Hatchery() *sdk.Hatchery {
 // KillWorker deletes an application on mesos via marathon
 func (m *HatcheryMesos) KillWorker(worker sdk.Worker) error {
 	appID := path.Join(hatcheryMesos.marathonID, worker.Name)
-	log.Notice("killMesosWorker> Killing %s\n", appID)
+	log.Notice("KillWorker> Killing %s\n", appID)
 	return deleteApp(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, appID)
 }
 
 // CanSpawn return wether or not hatchery can spawn model
-// requirements are not supported
+// requirements services are not supported
 func (m *HatcheryMesos) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 	if model.Type != sdk.Docker {
 		return false
 	}
-	if len(req) > 0 {
-		return false
+	//Service requirement are not supported
+	for _, r := range req {
+		if r.Type == sdk.ServiceRequirement {
+			return false
+		}
 	}
+
 	return true
 }
 
 // SpawnWorker creates an application on mesos via marathon
-// requirements are not supported
+// requirements services are not supported
 func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
 	if model.Type != sdk.Docker {
 		return fmt.Errorf("Model not handled")
@@ -225,6 +232,7 @@ func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memor
 		MarathonVHOST:  m.marathonVHOST,
 		Memory:         memory * 110 / 100,
 		MarathonLabels: string(labels),
+		WorkerTTL:      m.workerTTL,
 	}
 
 	buffer := &bytes.Buffer{}
@@ -240,7 +248,12 @@ func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int6
 	// Estimate needed memory, we will set 110% of required memory
 	memory := m.defaultMemory
 	//Check if there is a memory requirement
+	//if there is a service requirement: exit
 	for _, r := range req {
+		if r.Name == sdk.ServiceRequirement {
+			return fmt.Errorf("Service requirement not supported")
+		}
+
 		if r.Type == sdk.MemoryRequirement {
 			var err error
 			memory, err = strconv.Atoi(r.Value)

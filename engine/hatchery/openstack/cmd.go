@@ -30,6 +30,9 @@ func init() {
 
 	Cmd.Flags().String("openstack-ip-range", "Ext-Net", "")
 	viper.BindPFlag("openstack-ip-range", Cmd.Flags().Lookup("openstack-ip-range"))
+
+	Cmd.Flags().IntVar(&hatcheryOpenStack.workerTTL, "worker-ttl", 30, "Worker TTL (minutes)")
+	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
 }
 
 // Cmd configures comamnd for HatcheryCloud
@@ -80,8 +83,8 @@ $ CDS_OPENSTACK_USER=<user> CDS_OPENSTACK_TENANT=<tenant> CDS_OPENSTACK_AUTH_END
 		}
 
 		var err error
-		if viper.GetString("openstack_ip_range") != "" {
-			hatcheryOpenStack.ips, err = IPinRanges(viper.GetString("openstack_ip_range"))
+		if viper.GetString("openstack-ip-range") != "" {
+			hatcheryOpenStack.ips, err = IPinRanges(viper.GetString("openstack-ip-range"))
 			if err != nil {
 				sdk.Exit("flag or environmnent variable openstack-ip-range error: %s\n", err)
 			}

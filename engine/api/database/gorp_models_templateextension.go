@@ -21,9 +21,10 @@ func (t *TemplateExtension) PostInsert(s gorp.SqlExecutor) error {
 	for _, a := range t.Actions {
 		query := `insert into template_action (template_id, action_id) values ($1, 
 					(
-						select id from action where name = $2
+						select id from action where name = $2 and public = true limit 1
 					))`
 		if _, err := s.Exec(query, t.ID, a); err != nil {
+
 			return err
 		}
 	}
@@ -49,7 +50,7 @@ func (t *TemplateExtension) PostUpdate(s gorp.SqlExecutor) error {
 	for _, a := range t.Actions {
 		query := `insert into template_action (template_id, action_id) values ($1, 
 					(
-						select id from action where name = $2
+						select id from action where name = $2 and public = true limit 1
 					))`
 		if _, err := s.Exec(query, t.ID, a); err != nil {
 			return err

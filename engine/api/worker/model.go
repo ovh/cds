@@ -81,6 +81,22 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 	return &model, nil
 }
 
+// LoadWorkerModelsUsableOnGroup returns worker models for a group
+func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
+	ms := []database.WorkerModel{}
+	if _, err := db.Select(&ms, "select * from worker_model where group_id = $1 or group_id = $2 order by name", groupID, sharedinfraGroupID); err != nil {
+		return nil, err
+	}
+	models := []sdk.Model{}
+	for i := range ms {
+		if err := ms[i].PostSelect(db); err != nil {
+			return nil, err
+		}
+		models = append(models, sdk.Model(ms[i]))
+	}
+	return models, nil
+}
+
 // LoadWorkerModelsByGroup returns worker models for a group
 func LoadWorkerModelsByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Model, error) {
 	ms := []database.WorkerModel{}

@@ -28,6 +28,7 @@ const (
 	StringVariable  VariableType = "string"
 	KeyVariable     VariableType = "key"
 	BooleanVariable VariableType = "boolean"
+	NumberVariable  VariableType = "number"
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 		StringVariable,
 		KeyVariable,
 		BooleanVariable,
+		NumberVariable,
 	}
 )
 
