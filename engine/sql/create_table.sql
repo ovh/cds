@@ -43,8 +43,7 @@ CREATE TABLE IF NOT EXISTS "pipeline_stage_prerequisite" (id BIGSERIAL PRIMARY K
 CREATE TABLE IF NOT EXISTS "pipeline_parameter" (id BIGSERIAL, pipeline_id INT, name TEXT, value TEXT, type TEXT,description TEXT, PRIMARY KEY(pipeline_id, name));
 
 CREATE TABLE IF NOT EXISTS "pipeline_scheduler" (id BIGSERIAL PRIMARY KEY, application_id BIGINT NOT NULL, pipeline_id BIGINT NOT NULL, environment_id BIGINT NOT NULL, args JSONB, crontab TEXT NOT NULL, disable BOOLEAN DEFAULT FALSE);
-
-CREATE TABLE IF NOT EXISTS "pipeline_scheduler_execution"1 (id BIGSERIAL PRIMARY KEY, pipeline_scheduler_id BIGINT NOT NULL, execution_planned_date TIMESTAMP WITH TIME ZONE, execution_date TIMESTAMP WITH TIME ZONE, executed BOOLEAN NOT NULL DEFAULT FALSE, pipeline_build_version BIGINT);
+CREATE TABLE IF NOT EXISTS "pipeline_scheduler_execution" (id BIGSERIAL PRIMARY KEY, pipeline_scheduler_id BIGINT NOT NULL, execution_planned_date TIMESTAMP WITH TIME ZONE, execution_date TIMESTAMP WITH TIME ZONE, executed BOOLEAN NOT NULL DEFAULT FALSE, pipeline_build_version BIGINT);
 
 CREATE TABLE IF NOT EXISTS "pipeline_trigger" (id BIGSERIAL PRIMARY KEY, src_application_id INT, src_pipeline_id INT, src_environment_id INT, dest_application_id INT, dest_pipeline_id INT, dest_environment_id INT, manual BOOL, last_modified TIMESTAMP WITH TIME ZONE DEFAULT  LOCALTIMESTAMP);
 CREATE TABLE IF NOT EXISTS "pipeline_trigger_parameter" (id BIGSERIAL PRIMARY KEY, pipeline_trigger_id BIGINT, name TEXT, type TEXT, value TEXT, description TEXT);
