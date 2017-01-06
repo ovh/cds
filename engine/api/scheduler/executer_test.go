@@ -9,22 +9,18 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestExecuterRun(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
-	pkey := testwithdb.RandomString(t, 10)
-	proj, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	assert.NoError(t, err)
+	pkey := test.RandomString(t, 10)
+	proj, err := test.InsertTestProject(t, db, pkey, pkey)
+	test.NoError(t, err)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

@@ -12,38 +12,24 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
-	test "github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestAddTriggerHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestAddJobHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
 	pipelineKey1 := test.RandomString(t, 10)
@@ -53,8 +39,7 @@ func TestAddTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip1)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertPipeline(db, pip1))
 
 	//4. Create Pipeline 2
 	pipelineKey2 := test.RandomString(t, 10)
@@ -64,8 +49,8 @@ func TestAddTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip2)
-	assert.NoError(t, err)
+	err := pipeline.InsertPipeline(db, pip2)
+	test.NoError(t, err)
 
 	//5. Create Application
 	applicationName := test.RandomString(t, 10)
@@ -73,15 +58,15 @@ func TestAddTriggerHandler(t *testing.T) {
 		Name: applicationName,
 	}
 	err = application.InsertApplication(db, proj, app)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//6. Attach pipeline 1
 	err = application.AttachPipeline(db, app.ID, pip1.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//7. Attach pipeline 2
 	err = application.AttachPipeline(db, app.ID, pip2.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	// 8. Prepare the request
 	addTriggerRequest := sdk.PipelineTrigger{
@@ -102,10 +87,8 @@ func TestAddTriggerHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("POST", addTriggerHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("POST", uri, body)
 	test.AuthentifyRequest(t, req, u, pass)
 
@@ -117,33 +100,22 @@ func TestAddTriggerHandler(t *testing.T) {
 
 	// 10
 	ts, err := trigger.LoadTriggerByApp(db, app.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	assert.Equal(t, len(ts), 1)
 }
 
 func TestUpdateTriggerHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestUpdateTriggerHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestUpdateTriggerHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
 	pipelineKey1 := test.RandomString(t, 10)
@@ -153,8 +125,8 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip1)
-	assert.NoError(t, err)
+	err := pipeline.InsertPipeline(db, pip1)
+	test.NoError(t, err)
 
 	//4. Create Pipeline 2
 	pipelineKey2 := test.RandomString(t, 10)
@@ -165,7 +137,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	err = pipeline.InsertPipeline(db, pip2)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//5. Create Application
 	applicationName := test.RandomString(t, 10)
@@ -173,15 +145,15 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		Name: applicationName,
 	}
 	err = application.InsertApplication(db, proj, app)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//6. Attach pipeline 1
 	err = application.AttachPipeline(db, app.ID, pip1.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//7. Attach pipeline 2
 	err = application.AttachPipeline(db, app.ID, pip2.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	// 8. InsertTrigger
 	triggerData := &sdk.PipelineTrigger{
@@ -195,7 +167,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	}
 
 	err = trigger.InsertTrigger(db, triggerData)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	triggerData.Manual = true
 	jsonBody, _ := json.Marshal(triggerData)
@@ -208,10 +180,8 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("PUT", updateTriggerHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("PUT", uri, body)
 	test.AuthentifyRequest(t, req, u, pass)
 
@@ -223,34 +193,23 @@ func TestUpdateTriggerHandler(t *testing.T) {
 
 	// 10
 	ts, err := trigger.LoadTriggerByApp(db, app.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	assert.Equal(t, len(ts), 1)
 	assert.Equal(t, ts[0].Manual, true)
 }
 
 func TestRemoveTriggerHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestRemoveTriggerHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestRemoveTriggerHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
 	pipelineKey1 := test.RandomString(t, 10)
@@ -260,8 +219,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip1)
-	assert.NoError(t, err)
+	err := pipeline.InsertPipeline(db, pip1)
 
 	//4. Create Pipeline 2
 	pipelineKey2 := test.RandomString(t, 10)
@@ -272,7 +230,6 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	err = pipeline.InsertPipeline(db, pip2)
-	assert.NoError(t, err)
 
 	//5. Create Application
 	applicationName := test.RandomString(t, 10)
@@ -280,15 +237,15 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		Name: applicationName,
 	}
 	err = application.InsertApplication(db, proj, app)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//6. Attach pipeline 1
 	err = application.AttachPipeline(db, app.ID, pip1.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//7. Attach pipeline 2
 	err = application.AttachPipeline(db, app.ID, pip2.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	// 8. InsertTrigger
 	triggerData := &sdk.PipelineTrigger{
@@ -302,7 +259,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	}
 
 	err = trigger.InsertTrigger(db, triggerData)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	vars := map[string]string{
 		"key": proj.Key,
@@ -312,10 +269,8 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("DELETE", deleteTriggerHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("DELETE", uri, nil)
 	test.AuthentifyRequest(t, req, u, pass)
 
@@ -327,6 +282,6 @@ func TestRemoveTriggerHandler(t *testing.T) {
 
 	// 10
 	ts, err := trigger.LoadTriggerByApp(db, app.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	assert.Equal(t, len(ts), 0)
 }

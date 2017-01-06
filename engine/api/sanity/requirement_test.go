@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	_ "github.com/ovh/cds/engine/api/testwithdb"
+	_ "github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 )

@@ -3,47 +3,15 @@ package main
 import (
 	"testing"
 
-	"github.com/proullon/ramsql/engine/log"
-
-	_ "database/sql"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/sdk"
 )
 
-// TestUpdateProject test updating project
-/* NEED Update.....RETURNING IN RAMSQL   https://github.com/proullon/ramsql/issues/18
-func TestUpdateProject(t *testing.T) {
-	log.UseTestLogger(t)
-	db := test.Setup("TestUpdateProject", t)
-
-	p := &sdk.Project{
-		Key:  "KEY",
-		Name: "name",
-	}
-
-	project.InsertProject(db, p)
-
-	project.UpdateProjectDB(db, p.Key, "name2")
-
-	pResult, err := project.LoadProject(db, p.Key, nil)
-	if err != nil {
-		t.Fatalf("Cannot load project: %s", err)
-	}
-	if pResult.Name != "name2" {
-		t.Fatalf("Update failed, wrong name, got %s instead of name2", pResult.Name)
-	}
-}
-*/
 // TestInsertAndDelete test insert and delete project
 func TestInsertAndDelete(t *testing.T) {
-	log.UseTestLogger(t)
 	db := test.Setup("TestInsertAndDelete", t)
 
 	p := &sdk.Project{
@@ -71,42 +39,10 @@ func TestInsertAndDelete(t *testing.T) {
 		t.Fatalf("cannot insert group in project: %s", err)
 	}
 
-	// FIXME subqueries in ramsql
-	/*
-		err = project.DeleteProject(db, p.Key)
-		if err != nil {
-			t.Fatalf("Project cannot be deleted %s", err)
-		}
-
-		query := `SELECT id from project_group`
-		rows, err := db.Query(query)
-		if rows.Next() || err != nil {
-			var id int
-			rows.Scan(&id)
-			t.Fatalf("Should not have project_group : %d", id)
-		}
-
-		query = `SELECT id from pipeline`
-		rows, err = db.Query(query)
-		if rows.Next() || err != nil {
-			var id int
-			rows.Scan(&id)
-			t.Fatalf("Should not have pipeline : %d", id)
-		}
-
-		query = `SELECT id from project`
-		rows, err = db.Query(query)
-		if rows.Next() || err != nil {
-			var id int
-			rows.Scan(&id)
-			t.Fatalf("Should not have project : %d", id)
-		}
-	*/
-
 }
 
 func TestAddGroupInProject(t *testing.T) {
-	log.UseTestLogger(t)
+
 	db := test.Setup("TestAddGroupInProject", t)
 
 	groupInsert := &sdk.Group{
@@ -179,18 +115,10 @@ func TestAddGroupInProject(t *testing.T) {
 }
 
 func TestVariableInProject(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// 1. Create project
-	project1, err := testwithdb.InsertTestProject(t, db, testwithdb.RandomString(t, 10), testwithdb.RandomString(t, 10))
-	if err != nil {
-		t.Fatalf("cannot insert project1: %s", err)
-	}
+	project1 := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
 
 	// 2. Insert new variable
 	var1 := sdk.Variable{
@@ -198,7 +126,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value1",
 		Type:  "PASSWORD",
 	}
-	err = project.InsertVariableInProject(db, project1, var1)
+	err := project.InsertVariableInProject(db, project1, var1)
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}

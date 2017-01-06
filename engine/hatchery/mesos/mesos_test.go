@@ -28,7 +28,7 @@ func Test_marathonConfig(t *testing.T) {
 	}
 
 	r, err := m.marathonConfig(&sdk.Model{ID: 1, Name: "model"}, 1, 64)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	assert.NotNil(t, r)
 
 	b, err := ioutil.ReadAll(r)

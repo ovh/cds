@@ -12,21 +12,16 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
 func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
-	pkey := testwithdb.RandomString(t, 10)
-	projectFoo, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	if err != nil {
-		t.Fatalf("cannot insert project: %s", err)
-	}
+	pkey := test.RandomString(t, 10)
+	projectFoo := test.InsertTestProject(t, db, pkey, pkey)
 
 	p := &sdk.Pipeline{
 		Name:      name,
@@ -38,71 +33,43 @@ func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *s
 		Name: "App1",
 	}
 
-	err = application.InsertApplication(db, projectFoo, app)
-
-	err = pipeline.InsertPipeline(db, p)
-	if err != nil {
-		t.Fatalf("cannot insert pipeline: %s", err)
-	}
-
-	err = application.AttachPipeline(db, app.ID, p.ID)
-	if err != nil {
-		t.Fatalf("cannot attach pipeline: %s", err)
-	}
+	test.NoError(t, application.InsertApplication(db, projectFoo, app))
+	test.NoError(t, pipeline.InsertPipeline(db, p))
 
 	return projectFoo, p, app
 }
 
 func Test_runPipelineHandler(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
-	if err != nil {
-		t.FailNow()
-		return
-	}
-
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_runPipelineHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
-
+	u, pass := test.InsertAdminUser(t, db)
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, testwithdb.RandomString(t, 10), testwithdb.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := testwithdb.RandomString(t, 10)
+	pipelineKey := test.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := testwithdb.RandomString(t, 10)
+	appName := test.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	err = application.InsertApplication(db, proj, app)
+	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	err = application.AttachPipeline(db, app.ID, pip.ID)
-	assert.NoError(t, err)
+	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
 
 	//6. Prepare the run request
 	runRequest := sdk.RunRequest{}
@@ -117,10 +84,7 @@ func Test_runPipelineHandler(t *testing.T) {
 		"permPipelineKey":     pip.Name,
 	}
 	uri := router.getRoute("POST", runPipelineHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
 
 	//8. Send the request
 	req, err := http.NewRequest("POST", uri, body)
@@ -128,7 +92,7 @@ func Test_runPipelineHandler(t *testing.T) {
 		t.FailNow()
 		return
 	}
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -152,55 +116,37 @@ func Test_runPipelineHandler(t *testing.T) {
 }
 
 func Test_runPipelineWithLastParentHandler(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
-	if err != nil {
-		t.FailNow()
-		return
-	}
-
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_runPipelineHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, testwithdb.RandomString(t, 10), testwithdb.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := testwithdb.RandomString(t, 10)
+	pipelineKey := test.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := testwithdb.RandomString(t, 10)
+	appName := test.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	err = application.InsertApplication(db, proj, app)
+	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	err = application.AttachPipeline(db, app.ID, pip.ID)
-	assert.NoError(t, err)
+	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
 
 	//6. Prepare the run request
 	runRequest := sdk.RunRequest{}
@@ -215,10 +161,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		"permPipelineKey":     pip.Name,
 	}
 	uri := router.getRoute("POST", runPipelineHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
 
 	//8. Send the request
 	req, err := http.NewRequest("POST", uri, body)
@@ -226,7 +169,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		t.FailNow()
 		return
 	}
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -250,27 +193,27 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	//9. Update build status to Success
 	pb.Status = sdk.StatusSuccess
 	err = pipeline.UpdatePipelineBuildStatus(db, pb, sdk.StatusSuccess)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//10. Create another Pipeline
 	pip2 := &sdk.Pipeline{
-		Name:       testwithdb.RandomString(t, 10),
+		Name:       test.RandomString(t, 10),
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
 	err = pipeline.InsertPipeline(db, pip2)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//11. Insert another Application
 	app2 := &sdk.Application{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 	err = application.InsertApplication(db, proj, app2)
 
 	//12. Attach pipeline to application
 	err = application.AttachPipeline(db, app2.ID, pip2.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//13. Prepare the pipelne trigger
 	tigrou := sdk.PipelineTrigger{
@@ -288,7 +231,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	tx, _ := db.Begin()
 	defer tx.Rollback()
 	err = trigger.InsertTrigger(tx, &tigrou)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	tx.Commit()
 
 	//15. Prepare the run request
@@ -309,10 +252,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		"permPipelineKey":     pip2.Name,
 	}
 	uri = router.getRoute("POST", runPipelineWithLastParentHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
 
 	//17. Send the request
 	req, err = http.NewRequest("POST", uri, body)
@@ -320,7 +260,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		t.FailNow()
 		return
 	}
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//18. Do the request
 	w = httptest.NewRecorder()

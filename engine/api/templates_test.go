@@ -16,14 +16,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -32,15 +29,9 @@ const (
 )
 
 func Test_getTemplatesHandler(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_getTemplatesHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_getTemplatesHandler"}
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
@@ -48,8 +39,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -57,12 +47,10 @@ func Test_getTemplatesHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{}
 	uri := router.getRoute("GET", getTemplatesHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
-	req, err := http.NewRequest("GET", uri, nil)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("GET", uri, nil)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -74,16 +62,9 @@ func Test_getTemplatesHandler(t *testing.T) {
 }
 
 func Test_addTemplateHandler(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addTemplateHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addTemplateHandler"}
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
@@ -100,8 +81,8 @@ func Test_addTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
+	test.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -151,12 +132,10 @@ func Test_addTemplateHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{}
 	uri := router.getRoute("POST", addTemplateHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -173,12 +152,10 @@ func Test_addTemplateHandler(t *testing.T) {
 	//Prepare request
 	vars = map[string]string{}
 	uri = router.getRoute("GET", getTemplatesHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err = http.NewRequest("GET", uri, nil)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -201,16 +178,9 @@ func Test_addTemplateHandler(t *testing.T) {
 }
 
 func Test_deleteTemplateHandler(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_deleteTemplateHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_deleteTemplateHandler"}
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
@@ -227,8 +197,8 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
+	test.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -278,12 +248,10 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{}
 	uri := router.getRoute("POST", addTemplateHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -302,12 +270,10 @@ func Test_deleteTemplateHandler(t *testing.T) {
 		"id": fmt.Sprintf("%d", templ.ID),
 	}
 	uri = router.getRoute("DELETE", deleteTemplateHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err = http.NewRequest("DELETE", uri, nil)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -318,20 +284,9 @@ func Test_deleteTemplateHandler(t *testing.T) {
 }
 
 func Test_updateTemplateHandler(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addUpdateHandler"}
-	if router.mux == nil {
-		t.Fatal("Router cannot be nil")
-		return
-	}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addUpdateHandler"}
 	router.init()
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
@@ -344,8 +299,8 @@ func Test_updateTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
+	test.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -393,12 +348,10 @@ func Test_updateTemplateHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{}
 	uri := router.getRoute("POST", addTemplateHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -415,12 +368,10 @@ func Test_updateTemplateHandler(t *testing.T) {
 	//Prepare request
 	vars = map[string]string{}
 	uri = router.getRoute("GET", getTemplatesHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err = http.NewRequest("GET", uri, nil)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -469,12 +420,10 @@ func Test_updateTemplateHandler(t *testing.T) {
 		"id": fmt.Sprintf("%d", templ.ID),
 	}
 	uri = router.getRoute("PUT", updateTemplateHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err = http.NewRequest("PUT", uri, bodyBuf)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -494,20 +443,9 @@ func Test_updateTemplateHandler(t *testing.T) {
 }
 
 func Test_getBuildTemplatesHandler(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_getBuildTemplatesHandler"}
-	if router.mux == nil {
-		t.Fatal("Router cannot be nil")
-		return
-	}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_getBuildTemplatesHandler"}
 	router.init()
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
@@ -520,8 +458,8 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
+	test.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -569,12 +507,10 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{}
 	uri := router.getRoute("POST", addTemplateHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -591,12 +527,10 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	//Prepare request
 	vars = map[string]string{}
 	uri = router.getRoute("GET", getBuildTemplatesHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err = http.NewRequest("GET", uri, nil)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -620,20 +554,9 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 }
 
 func Test_applyTemplatesHandler(t *testing.T) {
-	/*
-	* TEST SETUP
-	 */
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	log.SetLevel(log.DebugLevel)
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
-
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_applyTemplatesHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_applyTemplatesHandler"}
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
@@ -654,8 +577,8 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	 */
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
+	test.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -705,12 +628,10 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{}
 	uri := router.getRoute("POST", addTemplateHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -728,8 +649,8 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	 */
 
 	//Insert a new project
-	pKey := testwithdb.RandomString(t, 10)
-	p, _ := testwithdb.InsertTestProject(t, db, pKey, pKey)
+	pKey := test.RandomString(t, 10)
+	p := test.InsertTestProject(t, db, pKey, pKey)
 	//Insert a Production environment
 	environment.InsertEnvironment(db, &sdk.Environment{
 		ProjectKey: pKey,
@@ -743,7 +664,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Prepare the data send on applyTemplatesHandler
 	opts := sdk.ApplyTemplatesOptions{
-		ApplicationName: testwithdb.RandomString(t, 10),
+		ApplicationName: test.RandomString(t, 10),
 		ApplicationVariables: map[string]string{
 			"repo": "git@github.com:ovh/cds.git",
 		},
@@ -768,12 +689,10 @@ func Test_applyTemplatesHandler(t *testing.T) {
 		"permProjectKey": pKey,
 	}
 	uri = router.getRoute("POST", applyTemplateHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err = http.NewRequest("POST", uri, bodyBuf)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -795,13 +714,11 @@ func Test_applyTemplatesHandler(t *testing.T) {
 		"permApplicationName": opts.ApplicationName,
 	}
 	uri = router.getRoute("POST", applyTemplateOnApplicationHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	bodyBuf = bytes.NewBuffer(btes)
 	req, err = http.NewRequest("POST", uri, bodyBuf)
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -822,14 +739,12 @@ func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
 	//Load the gitclone public action
 	//Prepare request
 	uri := router.getRoute("POST", importActionHandler, nil)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, _ := http.NewRequest("POST", uri, nil)
 	req.Form = url.Values{}
 	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds-contrib/master/actions/cds-git-clone.hcl")
-	testwithdb.AuthentifyRequest(t, req, u, pass)
+	test.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w := httptest.NewRecorder()

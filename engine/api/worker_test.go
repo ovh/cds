@@ -7,24 +7,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_workerCheckingHandler(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	dbmap := database.DBMap(db)
 
 	//1. Load all workers and hatcheries
@@ -94,16 +87,14 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_workerCheckingHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_workerCheckingHandler"}
 	router.init()
 
 	//Prepare request
 	uri := router.getRoute("POST", workerCheckingHandler, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -122,12 +113,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 }
 
 func Test_workerWaitingHandler(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	dbmap := database.DBMap(db)
 
 	//1. Load all workers and hatcheries
@@ -199,16 +185,14 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	worker.SetStatus(db, workr.ID, sdk.StatusBuilding)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_workerWaitingHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_workerWaitingHandler"}
 	router.init()
 
 	//Prepare request
 	uri := router.getRoute("POST", workerWaitingHandler, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()

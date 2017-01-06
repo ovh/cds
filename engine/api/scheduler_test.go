@@ -5,33 +5,23 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
-	db := database.DB()
-	if db == nil {
-		t.FailNow()
-	}
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler"}
 	router.init()
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -39,9 +29,8 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	//Prepare data
 
 	//Insert Project
-	pkey := testwithdb.RandomString(t, 10)
-	proj, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	assert.NoError(t, err)
+	pkey := test.RandomString(t, 10)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -98,7 +87,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		"permPipelineKey":     pip.Name,
 	}
 	route := router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
-	headers := testwithdb.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_getSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200))
+	headers := test.AuthHeaders(t, u, pass)
+	tester.AddCall("Test_getSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1))
 	tester.Run()
 }

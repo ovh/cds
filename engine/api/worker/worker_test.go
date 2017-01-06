@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
-	_ "github.com/ovh/cds/engine/api/testwithdb"
+	_ "github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 

@@ -8,7 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -29,7 +29,7 @@ func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
 
 func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 	g := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
 	if err := group.InsertGroup(db, g); err != nil {
@@ -63,11 +63,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 	deleteAllWorkerModel(t, db)
 
@@ -84,7 +80,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	m2, err := LoadWorkerModelsByGroup(db, g.ID)
 	assert.EqualValues(t, []sdk.Model{*m}, m2)
 
-	u, _, _ := testwithdb.InsertLambaUser(t, db, g)
+	u, _ := test.InsertLambaUser(t, db, g)
 
 	m3, err := LoadWorkerModelsByUser(db, u.ID)
 	assert.EqualValues(t, []sdk.Model{*m}, m3)
@@ -92,11 +88,7 @@ func TestInsertWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModel(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 	deleteAllWorkerModel(t, db)
 
@@ -107,7 +99,7 @@ func TestLoadWorkerModel(t *testing.T) {
 	insertWorkerModel(t, db, "Foo", g.ID)
 
 	m, err := LoadWorkerModelByName(db, "Foo")
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -122,11 +114,7 @@ func TestLoadWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModels(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 	deleteAllWorkerModel(t, db)
 
@@ -152,11 +140,7 @@ func TestLoadWorkerModels(t *testing.T) {
 }
 
 func TestLoadWorkerModelCapabilities(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 	deleteAllWorkerModel(t, db)
 
@@ -171,11 +155,7 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 }
 
 func TestUpdateWorkerModel(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 	deleteAllWorkerModel(t, db)
 
@@ -194,7 +174,7 @@ func TestUpdateWorkerModel(t *testing.T) {
 	}
 
 	m3, err := LoadWorkerModelByName(db, "lol")
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}

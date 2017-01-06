@@ -11,23 +11,16 @@ import (
 
 	"fmt"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_DeleteAllWorkerModel(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Loading all models
 	dbmap := database.DBMap(db)
@@ -52,13 +45,11 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 		t.FailNow()
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
 	router.init()
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -83,10 +74,9 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -100,17 +90,12 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	db := database.DB()
-	if db == nil {
-		t.FailNow()
-	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
 	router.init()
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -135,10 +120,9 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -162,7 +146,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -187,7 +171,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -200,7 +184,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	//SendBadRequest
 
 	//Prepare request
-	req = testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, "blabla")
+	req = test.NewAuthentifiedRequest(t, u, pass, "POST", uri, "blabla")
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -218,18 +202,16 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 		t.FailNow()
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
 	router.init()
 
 	//Create group
 	g := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass, err := testwithdb.InsertLambaUser(t, db, g)
-	assert.NoError(t, err)
+	u, pass := test.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -249,10 +231,9 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -270,18 +251,16 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 		t.FailNow()
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
 	router.init()
 
 	//Create group
 	g := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass, err := testwithdb.InsertLambaUser(t, db, g)
-	assert.NoError(t, err)
+	u, pass := test.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -305,10 +284,9 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -326,18 +304,17 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		t.FailNow()
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
 	router.init()
 
 	//Create group
 	g := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
 	//Create group
 	g1 := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
 	if err := group.InsertGroup(db, g1); err != nil {
@@ -345,8 +322,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass, err := testwithdb.InsertLambaUser(t, db, g)
-	assert.NoError(t, err)
+	u, pass := test.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -370,10 +346,9 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -391,18 +366,16 @@ func Test_updateWorkerModel(t *testing.T) {
 		t.FailNow()
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_updateWorkerModel"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_updateWorkerModel"}
 	router.init()
 
 	//Create group
 	g := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass, err := testwithdb.InsertLambaUser(t, db, g)
-	assert.NoError(t, err)
+	u, pass := test.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -426,10 +399,9 @@ func Test_updateWorkerModel(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -462,10 +434,9 @@ func Test_updateWorkerModel(t *testing.T) {
 		"permModelID": fmt.Sprintf("%d", model.ID),
 	}
 	uri = router.getRoute("PUT", updateWorkerModel, vars)
-	if uri == "" {
-		t.FailNow()
-	}
-	req = testwithdb.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
+	test.NotEmpty(t, uri)
+
+	req = test.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -484,18 +455,16 @@ func Test_deleteWorkerModel(t *testing.T) {
 		t.FailNow()
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_deleteWorkerModel"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_deleteWorkerModel"}
 	router.init()
 
 	//Create group
 	g := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass, err := testwithdb.InsertLambaUser(t, db, g)
-	assert.NoError(t, err)
+	u, pass := test.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -519,10 +488,9 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -539,10 +507,9 @@ func Test_deleteWorkerModel(t *testing.T) {
 		"permModelID": fmt.Sprintf("%d", model.ID),
 	}
 	uri = router.getRoute("DELETE", deleteWorkerModel, vars)
-	if uri == "" {
-		t.FailNow()
-	}
-	req = testwithdb.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
+	test.NotEmpty(t, uri)
+
+	req = test.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -561,13 +528,11 @@ func Test_getWorkerModel(t *testing.T) {
 		t.FailNow()
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
 	router.init()
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -592,10 +557,9 @@ func Test_getWorkerModel(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -607,11 +571,9 @@ func Test_getWorkerModel(t *testing.T) {
 
 	//Prepare request
 	uri = router.getRoute("GET", getWorkerModels, nil)
-	if uri == "" {
-		t.FailNow()
-	}
+	test.NotEmpty(t, uri)
 
-	req = testwithdb.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?name=Test1", nil)
+	req = test.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?name=Test1", nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -630,13 +592,11 @@ func Test_getWorkerModels(t *testing.T) {
 		t.FailNow()
 	}
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
 	router.init()
 
 	//Create admin user
-	u, pass, err := testwithdb.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -661,10 +621,9 @@ func Test_getWorkerModels(t *testing.T) {
 
 	//Prepare request
 	uri := router.getRoute("POST", addWorkerModel, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	test.NotEmpty(t, uri)
+
+	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -676,10 +635,9 @@ func Test_getWorkerModels(t *testing.T) {
 
 	//Prepare request
 	uri = router.getRoute("GET", getWorkerModels, nil)
-	if uri == "" {
-		t.FailNow()
-	}
-	req = testwithdb.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	test.NotEmpty(t, uri)
+
+	req = test.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()

@@ -9,37 +9,29 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestLoadAll(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	schedulers, err := LoadAll(db)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	assert.NotNil(t, schedulers)
 
 	t.Logf("%v", schedulers)
 }
 
 func TestInsert(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
-	pkey := testwithdb.RandomString(t, 10)
-	proj, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	assert.NoError(t, err)
+	pkey := test.RandomString(t, 10)
+	proj, err := test.InsertTestProject(t, db, pkey, pkey)
+	test.NoError(t, err)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -102,17 +94,13 @@ func TestInsert(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
-	pkey := testwithdb.RandomString(t, 10)
-	proj, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	assert.NoError(t, err)
+	pkey := test.RandomString(t, 10)
+	proj, err := test.InsertTestProject(t, db, pkey, pkey)
+	test.NoError(t, err)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -183,11 +171,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestLoadPendingExecutions(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 	pe, err := LoadPendingExecutions(db)
 	if err != nil {
@@ -197,17 +181,13 @@ func TestLoadPendingExecutions(t *testing.T) {
 }
 
 func TestGetByApplication(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
-	pkey := testwithdb.RandomString(t, 10)
-	proj, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	assert.NoError(t, err)
+	pkey := test.RandomString(t, 10)
+	proj, err := test.InsertTestProject(t, db, pkey, pkey)
+	test.NoError(t, err)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -266,17 +246,13 @@ func TestGetByApplication(t *testing.T) {
 }
 
 func TestGetByPipeline(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
-	pkey := testwithdb.RandomString(t, 10)
-	proj, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	assert.NoError(t, err)
+	pkey := test.RandomString(t, 10)
+	proj, err := test.InsertTestProject(t, db, pkey, pkey)
+	test.NoError(t, err)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -335,17 +311,13 @@ func TestGetByPipeline(t *testing.T) {
 }
 
 func TestGetByApplicationPipeline(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
-	pkey := testwithdb.RandomString(t, 10)
-	proj, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	assert.NoError(t, err)
+	pkey := test.RandomString(t, 10)
+	proj, err := test.InsertTestProject(t, db, pkey, pkey)
+	test.NoError(t, err)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -404,17 +376,13 @@ func TestGetByApplicationPipeline(t *testing.T) {
 }
 
 func TestGetByApplicationPipelineEnv(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	_db, _ := testwithdb.SetupPG(t)
+	_db, _ := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
-	pkey := testwithdb.RandomString(t, 10)
-	proj, err := testwithdb.InsertTestProject(t, db, pkey, pkey)
-	assert.NoError(t, err)
+	pkey := test.RandomString(t, 10)
+	proj, err := test.InsertTestProject(t, db, pkey, pkey)
+	test.NoError(t, err)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
