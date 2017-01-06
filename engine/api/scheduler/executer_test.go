@@ -14,13 +14,12 @@ import (
 )
 
 func TestExecuterRun(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
 	pkey := test.RandomString(t, 10)
-	proj, err := test.InsertTestProject(t, db, pkey, pkey)
-	test.NoError(t, err)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

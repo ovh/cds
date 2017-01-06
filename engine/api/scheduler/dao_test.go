@@ -14,7 +14,7 @@ import (
 )
 
 func TestLoadAll(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	schedulers, err := LoadAll(db)
@@ -25,13 +25,12 @@ func TestLoadAll(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
 	pkey := test.RandomString(t, 10)
-	proj, err := test.InsertTestProject(t, db, pkey, pkey)
-	test.NoError(t, err)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -94,13 +93,12 @@ func TestInsert(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
 	pkey := test.RandomString(t, 10)
-	proj, err := test.InsertTestProject(t, db, pkey, pkey)
-	test.NoError(t, err)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -171,7 +169,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestLoadPendingExecutions(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 	pe, err := LoadPendingExecutions(db)
 	if err != nil {
@@ -181,13 +179,12 @@ func TestLoadPendingExecutions(t *testing.T) {
 }
 
 func TestGetByApplication(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
 	pkey := test.RandomString(t, 10)
-	proj, err := test.InsertTestProject(t, db, pkey, pkey)
-	test.NoError(t, err)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -246,13 +243,12 @@ func TestGetByApplication(t *testing.T) {
 }
 
 func TestGetByPipeline(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
 	pkey := test.RandomString(t, 10)
-	proj, err := test.InsertTestProject(t, db, pkey, pkey)
-	test.NoError(t, err)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -311,13 +307,12 @@ func TestGetByPipeline(t *testing.T) {
 }
 
 func TestGetByApplicationPipeline(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
 	pkey := test.RandomString(t, 10)
-	proj, err := test.InsertTestProject(t, db, pkey, pkey)
-	test.NoError(t, err)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -376,13 +371,12 @@ func TestGetByApplicationPipeline(t *testing.T) {
 }
 
 func TestGetByApplicationPipelineEnv(t *testing.T) {
-	_db, _ := test.SetupPG(t)
+	_db := test.SetupPG(t)
 	db := database.DBMap(_db)
 
 	//Insert Project
 	pkey := test.RandomString(t, 10)
-	proj, err := test.InsertTestProject(t, db, pkey, pkey)
-	test.NoError(t, err)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
