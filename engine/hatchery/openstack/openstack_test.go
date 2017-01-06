@@ -9,8 +9,10 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gorilla/mux"
-	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 func TestCreateServer(t *testing.T) {
