@@ -318,3 +318,8 @@ func (s *StashClient) DeleteHook(repo, url string) error {
 func (s *StashClient) PushEvents(repo string, dateRef time.Time) ([]sdk.VCSPushEvent, time.Duration, error) {
 	return nil, 0.0, fmt.Errorf("Not implemented on stash")
 }
+
+//SetStatus set build status on stash
+func (s *StashClient) SetStatus(event sdk.Event) error {
+	return fmt.Errorf("Not yet implemented on stash")
+}
