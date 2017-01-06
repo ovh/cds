@@ -427,7 +427,7 @@ func TestGetByApplicationPipelineEnv(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actuals, err := GetByApplicationPipelineEnv(db, app, pip, sdk.DefaultEnv)
+	actuals, err := GetByApplicationPipelineEnv(db, app, pip, &sdk.DefaultEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
