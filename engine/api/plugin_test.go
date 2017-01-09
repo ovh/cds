@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const dummyBinaryFile = "https://dl.plik.ovh/file/CBMJpObJqIDeb3s1/6poL7tm37ELrNrdf/dummy"
+const dummyBinaryFile = "https://dl.plik.ovh/file/cMG2Mda94p6b3aej/CdJscEKa16o5NnHt/dummy"
 
 func postFile(t *testing.T,
 	db *sql.DB,
