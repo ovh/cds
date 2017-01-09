@@ -33,3 +33,4 @@ DROP TABLE pipeline_scheduler_execution;
 DROP TABLE pipeline_scheduler;
 
 ALTER TABLE pipeline_build DROP COLUMN scheduled_trigger;
+ALTER TABLE pipeline_history DROP COLUMN scheduled_trigger;

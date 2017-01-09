@@ -2,10 +2,10 @@ package scheduler
 
 import (
 	"database/sql"
-
 	"time"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
