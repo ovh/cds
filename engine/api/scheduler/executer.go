@@ -45,7 +45,7 @@ func ExecuterRun() ([]sdk.PipelineSchedulerExecution, error) {
 	//Load pending executions
 	exs, err := LoadPendingExecutions(tx)
 	if err != nil {
-		log.Warning("ExecuterRun> %s", err)
+		log.Warning("ExecuterRun> Unable to load pending execution : %s", err)
 		return nil, err
 	}
 

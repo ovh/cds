@@ -12,13 +12,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+//Scheduler is the goroutine which compute date of next execution for pipeline scheduler
 func Scheduler() {
 	for {
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 		SchedulerRun()
 	}
 }
 
+//SchedulerRun is the core function of Scheduler goroutine
 func SchedulerRun() ([]sdk.PipelineSchedulerExecution, error) {
 	_db := database.DB()
 	if _db == nil {
@@ -27,6 +29,7 @@ func SchedulerRun() ([]sdk.PipelineSchedulerExecution, error) {
 	db := database.DBMap(_db)
 	tx, err := db.Begin()
 	if err != nil {
+		log.Warning("SchedulerRun> Unable to start a transaction : %s", err)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -39,6 +42,7 @@ func SchedulerRun() ([]sdk.PipelineSchedulerExecution, error) {
 	//Load unscheduled pipelines
 	ps, err := LoadUnscheduledPipelines(tx)
 	if err != nil {
+		log.Warning("SchedulerRun> Unable to load unscheduled pipelines : %s", err)
 		return nil, err
 	}
 
@@ -58,12 +62,14 @@ func SchedulerRun() ([]sdk.PipelineSchedulerExecution, error) {
 		}
 		//Insert it
 		if err := InsertExecution(tx, e); err != nil {
+			log.Warning("SchedulerRun> Unable to insert an execution : %s", err)
 			return nil, err
 		}
 		execs = append(execs, *e)
 	}
 
 	if err := tx.Commit(); err != nil {
+		log.Warning("SchedulerRun> Unable to commit a transaction : %s", err)
 		return nil, err
 	}
 

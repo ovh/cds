@@ -26,6 +26,7 @@ func CleanerRun(delay time.Duration) ([]sdk.PipelineSchedulerExecution, error) {
 	db := database.DBMap(_db)
 	tx, err := db.Begin()
 	if err != nil {
+		log.Warning("CleanerRun> Unable to start a transaction : %s", err)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -50,6 +51,7 @@ func CleanerRun(delay time.Duration) ([]sdk.PipelineSchedulerExecution, error) {
 	}
 
 	if err := tx.Commit(); err != nil {
+		log.Warning("CleanerRun> Unable to commit a transaction : %s", err)
 		return nil, err
 	}
 
