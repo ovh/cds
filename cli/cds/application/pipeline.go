@@ -2,34 +2,57 @@ package application
 
 import (
 	"fmt"
+	"os"
+
 	"gopkg.in/yaml.v2"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
 )
 
-var applicationPipelineCmd = &cobra.Command{
-	Use:     "pipeline",
-	Short:   "",
-	Long:    ``,
-	Aliases: []string{"p"},
-}
+var (
+	applicationPipelineCmd = &cobra.Command{
+		Use:     "pipeline",
+		Short:   "",
+		Long:    ``,
+		Aliases: []string{"p"},
+	}
 
-func init() {
-	applicationPipelineCmd.AddCommand(cmdApplicationShowPipeline())
-	applicationPipelineCmd.AddCommand(cmdApplicationAddPipeline())
-	applicationPipelineCmd.AddCommand(cmdApplicationRemovePipeline())
-}
-
-func cmdApplicationShowPipeline() *cobra.Command {
-	cmd := &cobra.Command{
+	cmdApplicationShowPipeline = &cobra.Command{
 		Use:   "show",
 		Short: "cds application pipeline show <projectKey> <applicationName>",
 		Long:  ``,
 		Run:   showPipelineInApplication,
 	}
-	return cmd
+	cmdApplicationShowPipelineDetails bool
+
+	cmdApplicationAddPipeline = &cobra.Command{
+		Use:     "add",
+		Short:   "cds application pipeline add <projectKey> <applicationName> <pipelineName> [-p <pipelineParam>=<value>]",
+		Long:    ``,
+		Aliases: []string{"attach"},
+		Run:     addApplicationPipeline,
+	}
+	cmdApplicationAddPipelineParams []string
+
+	cmdApplicationRemovePipeline = &cobra.Command{
+		Use:   "remove",
+		Short: "cds application pipeline remove <projectKey> <applicationName> <pipelineName>",
+		Long:  ``,
+		Run:   removeApplicationPipeline,
+	}
+)
+
+func init() {
+	applicationPipelineCmd.AddCommand(cmdApplicationShowPipeline)
+	applicationPipelineCmd.AddCommand(cmdApplicationAddPipeline)
+	applicationPipelineCmd.AddCommand(cmdApplicationRemovePipeline)
+
+	cmdApplicationAddPipeline.Flags().StringSliceVarP(&cmdApplicationAddPipelineParams, "parameter", "p", nil, "Pipeline parameters")
+	cmdApplicationShowPipeline.Flags().BoolVarP(&cmdApplicationShowPipelineDetails, "details", "", false, "Show pipeline details")
+
 }
 
 func showPipelineInApplication(cmd *cobra.Command, args []string) {
@@ -44,26 +67,29 @@ func showPipelineInApplication(cmd *cobra.Command, args []string) {
 		sdk.Exit("Error: cannot show pipelines for application %s (%s)\n", appName, err)
 	}
 
-	data, err := yaml.Marshal(pipelines)
-	if err != nil {
-		sdk.Exit("Error: cannot format output (%s)\n", err)
+	if cmdApplicationShowPipelineDetails {
+		data, err := yaml.Marshal(pipelines)
+		if err != nil {
+			sdk.Exit("Error: cannot format output (%s)\n", err)
+		}
+		fmt.Println(string(data))
+		return
 	}
 
-	fmt.Println(string(data))
-}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Pipeline", "Parameters"})
+	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
 
-var cmdApplicationAddPipelineParams []string
-
-func cmdApplicationAddPipeline() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "add",
-		Short:   "cds application pipeline add <projectKey> <applicationName> <pipelineName> [-p <pipelineParam>=<value>]",
-		Long:    ``,
-		Aliases: []string{"attach"},
-		Run:     addApplicationPipeline,
+	for i := range pipelines {
+		param, err := yaml.Marshal(pipelines[i].Parameter)
+		if err != nil {
+			sdk.Exit("Error: cannot format output (%s)\n", err)
+		}
+		table.Append([]string{pipelines[i].Name, string(param)})
 	}
-	cmd.Flags().StringSliceVarP(&cmdApplicationAddPipelineParams, "parameter", "p", nil, "Pipeline parameters")
-	return cmd
+	table.Render()
+
 }
 
 func addApplicationPipeline(cmd *cobra.Command, args []string) {
@@ -95,16 +121,6 @@ func addApplicationPipeline(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println("OK")
-}
-
-func cmdApplicationRemovePipeline() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "remove",
-		Short: "cds application pipeline remove <projectKey> <applicationName> <pipelineName>",
-		Long:  ``,
-		Run:   removeApplicationPipeline,
-	}
-	return cmd
 }
 
 func removeApplicationPipeline(cmd *cobra.Command, args []string) {

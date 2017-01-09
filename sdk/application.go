@@ -379,22 +379,29 @@ func AddGroupInApplication(projectKey, appName, groupName string, permission int
 func ListApplicationPipeline(projectKey, appName string) ([]Pipeline, error) {
 	var pipelines []Pipeline
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline", projectKey, appName)
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return pipelines, err
+	data, code, errReq := Request("GET", path, nil)
+	if errReq != nil {
+		return nil, errReq
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return pipelines, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return pipelines, e
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
-	err = json.Unmarshal(data, &pipelines)
-	if err != nil {
-		return pipelines, err
+	if e := DecodeError(data); e != nil {
+		return nil, e
+	}
+
+	if err := json.Unmarshal(data, &pipelines); err != nil {
+		return nil, err
+	}
+
+	for i, pip := range pipelines {
+		pip2, err := GetPipeline(projectKey, pip.Name)
+		if err != nil {
+			return nil, err
+		}
+		pipelines[i] = *pip2
 	}
 
 	return pipelines, nil
