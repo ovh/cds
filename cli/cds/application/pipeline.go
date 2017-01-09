@@ -22,7 +22,7 @@ var (
 
 	cmdApplicationShowPipeline = &cobra.Command{
 		Use:   "show",
-		Short: "cds application pipeline show <projectKey> <applicationName>",
+		Short: "cds application pipeline show <projectKey> <applicationName> [--details]",
 		Long:  ``,
 		Run:   showPipelineInApplication,
 	}
@@ -49,10 +49,23 @@ func init() {
 	applicationPipelineCmd.AddCommand(cmdApplicationShowPipeline)
 	applicationPipelineCmd.AddCommand(cmdApplicationAddPipeline)
 	applicationPipelineCmd.AddCommand(cmdApplicationRemovePipeline)
+	applicationPipelineCmd.AddCommand(cmdApplicationPipelineScheduler)
+
+	cmdApplicationPipelineScheduler.AddCommand(cmdApplicationPipelineSchedulerList)
+	cmdApplicationPipelineScheduler.AddCommand(cmdApplicationPipelineSchedulerAdd)
+	cmdApplicationPipelineScheduler.AddCommand(cmdApplicationPipelineSchedulerUpdate)
+	cmdApplicationPipelineScheduler.AddCommand(cmdApplicationPipelineSchedulerDelete)
 
 	cmdApplicationAddPipeline.Flags().StringSliceVarP(&cmdApplicationAddPipelineParams, "parameter", "p", nil, "Pipeline parameters")
 	cmdApplicationShowPipeline.Flags().BoolVarP(&cmdApplicationShowPipelineDetails, "details", "", false, "Show pipeline details")
 
+	cmdApplicationPipelineSchedulerAdd.Flags().StringSliceVarP(&cmdApplicationAddPipelineParams, "parameter", "p", nil, "Pipeline parameters")
+	cmdApplicationPipelineSchedulerAdd.Flags().StringVarP(&cmdApplicationPipelineSchedulerAddEnv, "environment", "e", "", "Set environment")
+
+	cmdApplicationPipelineSchedulerUpdate.Flags().StringVarP(&cmdApplicationPipelineSchedulerAddEnv, "environment", "e", "", "Set environment")
+	cmdApplicationPipelineSchedulerUpdate.Flags().StringSliceVarP(&cmdApplicationAddPipelineParams, "parameter", "p", nil, "Pipeline parameters")
+	cmdApplicationPipelineSchedulerUpdate.Flags().StringVarP(&cmdApplicationPipelineSchedulerUpdateCronExpr, "cron", "c", "", "Set cron expr")
+	cmdApplicationPipelineSchedulerUpdate.Flags().StringVarP(&cmdApplicationPipelineSchedulerUpdateDisable, "disable", "", "", "Disable scheduler")
 }
 
 func showPipelineInApplication(cmd *cobra.Command, args []string) {
@@ -110,13 +123,35 @@ func addApplicationPipeline(cmd *cobra.Command, args []string) {
 		params = append(params, p)
 	}
 
-	err := sdk.AddApplicationPipeline(projectKey, appName, pipelineName)
-	if err != nil {
+	pip, errPip := sdk.GetPipeline(projectKey, pipelineName)
+	if errPip != nil {
+		sdk.Exit("Error: cannot add pipeline %s in application %s (%s)\n", pipelineName, appName, errPip)
+	}
+
+	//Check that all pipeline parameter are set
+	var checkParams = true
+	for _, p := range pip.Parameter {
+		var found bool
+		for _, sp := range params {
+			if p.Name == sp.Name {
+				found = true
+				continue
+			}
+		}
+		if !found {
+			checkParams = false
+			fmt.Printf(" - Missing Pipeline Parameters : %s : %s\n", p.Name, p.Description)
+		}
+	}
+	if !checkParams {
+		sdk.Exit("Error: cannot add pipeline %s in application %s: missing parameter(s)\n", pipelineName, appName)
+	}
+
+	if err := sdk.AddApplicationPipeline(projectKey, appName, pipelineName); err != nil {
 		sdk.Exit("Error: cannot add pipeline %s in application %s (%s)\n", pipelineName, appName, err)
 	}
 
-	err = sdk.UpdateApplicationPipeline(projectKey, appName, pipelineName, params)
-	if err != nil {
+	if err := sdk.UpdateApplicationPipeline(projectKey, appName, pipelineName, params); err != nil {
 		sdk.Exit("Error: cannot add pipeline %s in application %s (%s)\n", pipelineName, appName, err)
 	}
 
@@ -131,8 +166,7 @@ func removeApplicationPipeline(cmd *cobra.Command, args []string) {
 	appName := args[1]
 	pipelineName := args[2]
 
-	err := sdk.RemoveApplicationPipeline(projectKey, appName, pipelineName)
-	if err != nil {
+	if err := sdk.RemoveApplicationPipeline(projectKey, appName, pipelineName); err != nil {
 		sdk.Exit("Error: cannot remove pipeline %s from project %s (%s)\n", pipelineName, projectKey, err)
 	}
 	fmt.Println("OK")

@@ -276,7 +276,6 @@ func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *htt
 			WriteError(w, r, sdk.ErrForbidden)
 			return
 		}
-
 	}
 
 	//Load notifs

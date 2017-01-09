@@ -14,7 +14,7 @@ import (
 
 func Scheduler() {
 	for {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 		SchedulerRun()
 	}
 }
@@ -50,12 +50,10 @@ func SchedulerRun() ([]sdk.PipelineSchedulerExecution, error) {
 			continue
 		}
 
-		log.Debug("SchedulerRun> Computing pipeline scheduler %d : %s", ps[i].ID, ps[i].Crontab)
-
 		//Compute a new execution
 		e, err := Next(tx, &ps[i])
 		if err != nil {
-			log.Warning("SchedulerRun> %s", err)
+			//Nothing to compute
 			continue
 		}
 		//Insert it
@@ -93,7 +91,6 @@ func Next(db gorp.SqlExecutor, s *sdk.PipelineScheduler) (*sdk.PipelineScheduler
 	}
 
 	if !exec.Executed {
-		log.Warning("scheduler.Next> Last execution of %d was not executed (%v). Nothing to do...", s.ID, exec)
 		return nil, fmt.Errorf("Last execution %d not ran", s.ID)
 	}
 	nextTime := cronExpr.Next(*exec.ExecutionDate)

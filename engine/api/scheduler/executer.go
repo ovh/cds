@@ -18,7 +18,7 @@ import (
 //Executer is the goroutine which run the pipelines
 func Executer() {
 	for {
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(5 * time.Second)
 		ExecuterRun()
 	}
 }
@@ -32,6 +32,7 @@ func ExecuterRun() ([]sdk.PipelineSchedulerExecution, error) {
 	db := database.DBMap(_db)
 	tx, err := db.Begin()
 	if err != nil {
+		log.Warning("ExecuterRun> %s", err)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -44,6 +45,7 @@ func ExecuterRun() ([]sdk.PipelineSchedulerExecution, error) {
 	//Load pending executions
 	exs, err := LoadPendingExecutions(tx)
 	if err != nil {
+		log.Warning("ExecuterRun> %s", err)
 		return nil, err
 	}
 
@@ -56,6 +58,7 @@ func ExecuterRun() ([]sdk.PipelineSchedulerExecution, error) {
 
 	//Commit
 	if err := tx.Commit(); err != nil {
+		log.Warning("ExecuterRun> %s", err)
 		return nil, err
 	}
 

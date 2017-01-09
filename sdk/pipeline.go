@@ -136,7 +136,6 @@ func ListPipelines(projectKey string) ([]Pipeline, error) {
 
 // GetPipeline retrieves pipeline definition from CDS
 func GetPipeline(key, name string) (*Pipeline, error) {
-
 	path := fmt.Sprintf("/project/%s/pipeline/%s", key, name)
 	data, _, err := Request("GET", path, nil)
 	if err != nil {
@@ -155,7 +154,6 @@ func GetPipeline(key, name string) (*Pipeline, error) {
 
 // AddPipeline creates a new empty pipeline
 func AddPipeline(name string, projectKey string, pipelineType PipelineType, params []Parameter) error {
-
 	p := Pipeline{
 		Name:       name,
 		ProjectKey: projectKey,
