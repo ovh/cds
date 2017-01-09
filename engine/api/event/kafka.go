@@ -8,57 +8,40 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 var producer sarama.SyncProducer
-var hookKafkaEnabled bool
-var topic string
 
 // Close close event system
 func Close() {
 	closeKafka()
 }
 
-func kafkaRoutine() {
+func kafkaRoutine() bool {
 	if viper.GetString("event_kafka_broker_addresses") == "" ||
 		viper.GetString("event_kafka_user") == "" ||
 		viper.GetString("event_kafka_password") == "" ||
 		viper.GetString("event_kafka_topic") == "" {
 		log.Debug("initKafka> No Kafka configured")
-		return
+		return false
 	}
 
-	var config = sarama.NewConfig()
-	config.Net.TLS.Enable = true
-	config.Net.SASL.Enable = true
-	config.Net.SASL.User = viper.GetString("event_kafka_user")
-	config.Net.SASL.Password = viper.GetString("event_kafka_password")
-	config.ClientID = viper.GetString("event_kafka_user")
-	config.Producer.Return.Successes = true
+	var errI error
+	producer, errI = initProducer(
+		viper.GetString("event_kafka_broker_addresses"),
+		viper.GetString("event_kafka_user"),
+		viper.GetString("event_kafka_password"),
+		viper.GetString("event_kafka_topic"),
+		log.Info)
 
-	topic = viper.GetString("event_kafka_topic")
-
-	var err error
-	producer, err = sarama.NewSyncProducer(strings.Split(viper.GetString("event_kafka_broker_addresses"), ","), config)
-	if err != nil {
-		log.Warning("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", err.Error(), viper.GetString("event_kafka_broker_addresses"), viper.GetString("event_kafka_user"))
-	} else {
-		hookKafkaEnabled = true
-		log.Debug("initKafka> Kafka used at %s on topic:%s", viper.GetString("event_kafka_broker_addresses"), topic)
+	if errI != nil {
+		log.Warning("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", errI.Error(), viper.GetString("event_kafka_broker_addresses"), viper.GetString("event_kafka_user"))
+		return false
 	}
 
-	for {
-		e := sdk.Event{}
-		cache.Dequeue("events", &e)
-		if e.EventType != "" {
-			if err := sendOnKafkaTopic(&e); err != nil {
-				log.Warning("Error while send message on kafka: %s", err)
-			}
-		}
-	}
+	return true
 }
 
 // closeKafka closes producer
@@ -70,23 +53,38 @@ func closeKafka() {
 	}
 }
 
-// sendOnKafkaTopic send a hook on a topic kafka
-func sendOnKafkaTopic(event *sdk.Event) error {
-	if !hookKafkaEnabled {
-		return fmt.Errorf("sendOnKafkaTopic: Kafka not initialized")
+// initProducer initializes kafka producer
+// producer could be nil
+func initProducer(brokerAddresses, user, password, topic string, InfoLogFunc func(string, ...interface{})) (sarama.SyncProducer, error) {
+	var config = sarama.NewConfig()
+	config.Net.TLS.Enable = true
+	config.Net.SASL.Enable = true
+	config.Net.SASL.User = user
+	config.Net.SASL.Password = password
+	config.ClientID = user
+	config.Producer.Return.Successes = true
+
+	producer, errp := sarama.NewSyncProducer(strings.Split(brokerAddresses, ","), config)
+	if errp != nil {
+		return nil, fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", errp.Error(), brokerAddresses, user)
 	}
 
-	data, err := json.Marshal(event)
-	if err != nil {
-		return err
+	InfoLogFunc("initKafka> Kafka used at %s on topic:%s", brokerAddresses, topic)
+	return producer, nil
+}
+
+// sendOnKafkaTopic send a hook on a topic kafka
+func sendOnKafkaTopic(producer sarama.SyncProducer, topic string, event *sdk.Event, DebugLogFunc func(string, ...interface{})) error {
+	data, errm := json.Marshal(event)
+	if errm != nil {
+		return errm
 	}
 
 	msg := &sarama.ProducerMessage{Topic: topic, Value: sarama.ByteEncoder(data)}
-	partition, offset, err := producer.SendMessage(msg)
-	if err != nil {
-		return err
+	partition, offset, errs := producer.SendMessage(msg)
+	if errs != nil {
+		return errs
 	}
-	log.Debug("Event %+v sent to topic %s partition %d offset %d", event, topic, partition, offset)
-	//log.Debug("Event sent to topic %s partition %d offset %d", topic, partition, offset)
+	DebugLogFunc("Event %+v sent to topic %s partition %d offset %d", event, topic, partition, offset)
 	return nil
 }

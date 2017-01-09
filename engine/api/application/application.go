@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -17,55 +16,6 @@ import (
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
-
-// CreateFromWizard  Create an application, add its variables and add project's groups access
-func CreateFromWizard(db database.QueryExecuter, app *sdk.Application, p *sdk.Project) error {
-	err := InsertApplication(db, p, app)
-	if err != nil {
-		log.Warning("CreateFromWizard: Cannot add application %s in project %s: %s \n", app.Name, p.Name, err)
-		return err
-	}
-	// Add Groups
-	err = group.InsertGroupsInApplication(db, p.ProjectGroups, app.ID)
-	if err != nil {
-		log.Warning("CreateFromWizard> Cannot add groups on application: %s\n", err)
-		return err
-	}
-
-	// Add variable
-	for _, v := range app.Variable {
-		variable := sdk.Variable{
-			Name:  v.Name,
-			Type:  v.Type,
-			Value: v.Value,
-		}
-		err = InsertVariable(db, app, variable)
-		if err != nil {
-			log.Warning("CreateFromWizard: Cannot add variable  %s in application %s: %s \n", v.Name, app.Name, err)
-			return err
-		}
-	}
-
-	if app.RepositoriesManager != nil && app.RepositoryFullname != "" {
-		client, err := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name)
-		if err != nil {
-			return err
-		}
-
-		if _, err = client.RepoByFullname(app.RepositoryFullname); err != nil {
-			log.Warning("CreateFromWizard> Cannot get repo: %s", err)
-			return err
-		}
-
-		//Attach the application to the repositories manager
-		if err := repositoriesmanager.InsertForApplication(db, app, p.Key); err != nil {
-			log.Warning("CreateFromWizard> Cannot attach application: %s", err)
-			return err
-		}
-	}
-
-	return nil
-}
 
 // LoadApplicationsRequestAdmin defines the query to load all applications in a project with its activity
 const LoadApplicationsRequestAdmin = `
@@ -269,9 +219,9 @@ func LoadApplicationByID(db database.Querier, applicationID int64) (*sdk.Applica
 }
 
 func loadDependencies(db database.Querier, app *sdk.Application, fargs ...FuncArg) error {
-	variables, err := GetAllVariableByID(db, app.ID, fargs...)
-	if err != nil {
-		return err
+	variables, errVariable := GetAllVariableByID(db, app.ID, fargs...)
+	if errVariable != nil {
+		return errVariable
 	}
 	app.Variable = variables
 
@@ -295,8 +245,7 @@ func InsertApplication(db database.QueryExecuter, project *sdk.Project, app *sdk
 	}
 
 	query := `INSERT INTO application (name, project_id) VALUES($1, $2) RETURNING id`
-	err := db.QueryRow(query, app.Name, project.ID).Scan(&app.ID)
-	if err != nil {
+	if err := db.QueryRow(query, app.Name, project.ID).Scan(&app.ID); err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
 			return sdk.ErrApplicationExist
 		}
@@ -308,7 +257,7 @@ func InsertApplication(db database.QueryExecuter, project *sdk.Project, app *sdk
 		SET last_modified = current_timestamp
 		WHERE id=$1
 	`
-	_, err = db.Exec(query, project.ID)
+	_, err := db.Exec(query, project.ID)
 	return err
 }
 

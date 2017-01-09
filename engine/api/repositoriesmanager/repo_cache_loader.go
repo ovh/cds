@@ -67,11 +67,13 @@ func RepositoriesCacheLoader(delay int) {
 						}
 						go func(projectKey, rmName string) {
 							wg.Add(1)
-							var repos []sdk.VCSRepo
 							cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
 							log.Info("RepositoriesCacheLoader> Loading repos for %s on %s", projectKey, rmName)
-							repos, err = client.Repos()
-							cache.SetWithTTL(cacheKey, &repos, 0)
+							repos, errr := client.Repos()
+							if errr != nil {
+								log.Warning("RepositoriesCacheLoader> Error on loading repos for %s on %s, err:%s", projectKey, rmName, errr)
+								cache.SetWithTTL(cacheKey, &repos, 0)
+							}
 							wg.Done()
 						}(projectKey, rmName)
 						time.Sleep(120 * time.Second)

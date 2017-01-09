@@ -16,7 +16,6 @@ import (
 // Publish sends a event to a queue
 //func Publish(event sdk.Event, eventType string) {
 func Publish(payload interface{}) {
-
 	event := sdk.Event{
 		Timestamp: time.Now(),
 		Hostname:  hostname,
@@ -27,6 +26,9 @@ func Publish(payload interface{}) {
 
 	log.Debug("Publish> new event %+v", event)
 	cache.Enqueue("events", event)
+
+	// send to cache for cds repositories manager
+	cache.Enqueue("events_repositoriesmanager", event)
 }
 
 // PublishActionBuild sends a actionBuild event
@@ -44,8 +46,8 @@ func PublishActionBuild(pb *sdk.PipelineBuild, ab *sdk.ActionBuild) {
 		ProjectKey:      pb.Pipeline.ProjectKey,
 		ApplicationName: pb.Application.Name,
 		EnvironmentName: pb.Environment.Name,
-		BranchName:      getParamValue(".git.hash", pb),
-		Hash:            getParamValue(".git.hash", pb),
+		BranchName:      pb.Trigger.VCSChangesBranch,
+		Hash:            pb.Trigger.VCSChangesHash,
 	}
 
 	Publish(e)
@@ -58,31 +60,26 @@ func PublishPipelineBuild(db database.QueryExecuter, pb *sdk.PipelineBuild, prev
 		Publish(event)
 	}
 
+	rmn := ""
+	if pb.Application.RepositoriesManager != nil {
+		rmn = pb.Application.RepositoriesManager.Name
+	}
+
 	e := sdk.EventPipelineBuild{
-		Version:         pb.Version,
-		BuildNumber:     pb.BuildNumber,
-		Status:          pb.Status,
-		Start:           pb.Start.Unix(),
-		Done:            pb.Done.Unix(),
-		PipelineName:    pb.Pipeline.Name,
-		PipelineType:    pb.Pipeline.Type,
-		ProjectKey:      pb.Pipeline.ProjectKey,
-		ApplicationName: pb.Application.Name,
-		EnvironmentName: pb.Environment.Name,
-		BranchName:      getParamValue(".git.branch", pb),
-		Hash:            getParamValue(".git.hash", pb),
+		Version:     pb.Version,
+		BuildNumber: pb.BuildNumber,
+		Status:      pb.Status,
+		Start:       pb.Start.Unix(),
+		Done:        pb.Done.Unix(),
+		RepositoryManagerName: rmn,
+		PipelineName:          pb.Pipeline.Name,
+		PipelineType:          pb.Pipeline.Type,
+		ProjectKey:            pb.Pipeline.ProjectKey,
+		ApplicationName:       pb.Application.Name,
+		EnvironmentName:       pb.Environment.Name,
+		BranchName:            pb.Trigger.VCSChangesBranch,
+		Hash:                  pb.Trigger.VCSChangesHash,
 	}
 
 	Publish(e)
-}
-
-func getParamValue(paramName string, pb *sdk.PipelineBuild) string {
-	branch := ""
-	for _, param := range pb.Parameters {
-		if param.Name == paramName {
-			branch = param.Value
-			break
-		}
-	}
-	return branch
 }
