@@ -236,5 +236,32 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 }
 
 func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	// Get args in body
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		log.Warning("addSchedulerApplicationPipelineHandler> cannot read body: %s\n", errRead)
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
 
+	// Unmarshal args
+	s := &sdk.PipelineScheduler{}
+	if err := json.Unmarshal(data, s); err != nil {
+		log.Warning("addSchedulerApplicationPipelineHandler> cannot unmarshal body:  %s\n", err)
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	//Load the scheduler
+	sOld, err := scheduler.Load(database.DBMap(db), s.ID)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	//Delete all the things
+	if err := scheduler.Delete(database.DBMap(db), sOld); err != nil {
+		WriteError(w, r, err)
+		return
+	}
 }

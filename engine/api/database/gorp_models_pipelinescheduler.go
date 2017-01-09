@@ -49,6 +49,9 @@ func (p *PipelineScheduler) PostUpdate(s gorp.SqlExecutor) error {
 
 //PreDelete is a DB Hook on PipelineScheduler to store params as JSON in DB
 func (p *PipelineScheduler) PreDelete(s gorp.SqlExecutor) error {
+	if _, err := s.Exec("delete from pipeline_scheduler_execution where pipeline_scheduler_id = $1", p.ID); err != nil {
+		return err
+	}
 	return nil
 }
 
