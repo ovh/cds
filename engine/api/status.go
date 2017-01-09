@@ -80,10 +80,11 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 }
 
 func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	project := r.FormValue("project")
 	application := r.FormValue("application")
 	pipeline := r.FormValue("pipeline")
 
-	exec, err := polling.LoadExecutions(db, application, pipeline)
+	exec, err := polling.LoadExecutions(db, project, application, pipeline)
 	if err != nil {
 		log.Warning("Error %s\n", err)
 		WriteError(w, r, err)
