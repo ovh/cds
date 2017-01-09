@@ -179,13 +179,18 @@ var mainCmd = &cobra.Command{
 		go hatchery.Heartbeat()
 		go log.RemovalRoutine()
 		go auditCleanerRoutine()
-		go repositoriesmanager.RepositoriesCacheLoader(30)
 		go stats.StartRoutine()
 		go action.RequirementsCacheLoader(5)
 		go worker.ModelCapabilititiesCacheLoader(5)
 		go hookRecoverer()
-		go polling.Initialize()
-		go polling.ExecutionCleaner()
+
+		if !viper.GetBool("no_repo_cache_loader") {
+			go repositoriesmanager.RepositoriesCacheLoader(30)
+		}
+		if !viper.GetBool("no_repo_polling") {
+			go polling.Initialize()
+			go polling.ExecutionCleaner()
+		}
 
 		s := &http.Server{
 			Addr:           ":" + viper.GetString("listen_port"),
@@ -548,6 +553,12 @@ func init() {
 
 	flags.Int("session-ttl", 60, "Session Time to Live (minutes)")
 	viper.BindPFlag("session_ttl", flags.Lookup("session-ttl"))
+
+	flags.Bool("no-repo-polling", false, "Disable repositories manager polling")
+	viper.BindPFlag("no_repo_polling", flags.Lookup("no-repo-polling"))
+
+	flags.Bool("no-repo-cache-loader", false, "Disable repositories cache loader")
+	viper.BindPFlag("no_repo_cache_loader", flags.Lookup("no-repo-cache-loader"))
 
 	mainCmd.AddCommand(database.DBCmd)
 
