@@ -6,9 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/gorhill/cronexpr"
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
@@ -28,18 +27,18 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	pipelineName := vars["permPipelineKey"]
 
 	///Load application
-	app, err := application.LoadApplicationByName(db, key, appName)
-	if err != nil {
-		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
-		WriteError(w, r, err)
+	app, errA := application.LoadApplicationByName(db, key, appName)
+	if errA != nil {
+		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
+		WriteError(w, r, errA)
 		return
 	}
 
 	//Load pipeline
-	pip, err := pipeline.LoadPipeline(db, key, pipelineName, false)
-	if err != nil {
-		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		WriteError(w, r, err)
+	pip, errP := pipeline.LoadPipeline(db, key, pipelineName, false)
+	if errP != nil {
+		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
+		WriteError(w, r, errP)
 		return
 	}
 
@@ -52,6 +51,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	envName := r.Form.Get("envName")
 	var env *sdk.Environment
 	if envName != "" {
+		var err error
 		env, err = environment.LoadEnvironmentByName(db, key, envName)
 		if err != nil {
 			WriteError(w, r, err)
@@ -62,6 +62,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	//Load schedulers
 	var schedulers []sdk.PipelineScheduler
 	if env == nil {
+		var err error
 		schedulers, err = scheduler.GetByApplicationPipeline(database.DBMap(db), app, pip)
 		if err != nil {
 			log.Warning("getSchedulerApplicationPipelineHandler> cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers: %s\n", err)
@@ -69,6 +70,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	} else {
+		var err error
 		schedulers, err = scheduler.GetByApplicationPipelineEnv(database.DBMap(db), app, pip, env)
 		if err != nil {
 			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
@@ -87,18 +89,18 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	pipelineName := vars["permPipelineKey"]
 
 	///Load application
-	app, err := application.LoadApplicationByName(db, key, appName)
-	if err != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
-		WriteError(w, r, err)
+	app, errA := application.LoadApplicationByName(db, key, appName)
+	if errA != nil {
+		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
+		WriteError(w, r, errA)
 		return
 	}
 
 	//Load pipeline
-	pip, err := pipeline.LoadPipeline(db, key, pipelineName, false)
-	if err != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		WriteError(w, r, err)
+	pip, errP := pipeline.LoadPipeline(db, key, pipelineName, false)
+	if errP != nil {
+		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
+		WriteError(w, r, errP)
 		return
 	}
 
@@ -111,6 +113,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	envName := r.Form.Get("envName")
 	var env *sdk.Environment
 	if envName != "" {
+		var err error
 		env, err = environment.LoadEnvironmentByName(db, key, envName)
 		if err != nil {
 			WriteError(w, r, err)
@@ -129,6 +132,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	//Load schedulers
 	var schedulers []sdk.PipelineScheduler
 	if env == nil {
+		var err error
 		env = &sdk.DefaultEnv
 		schedulers, err = scheduler.GetByApplicationPipeline(database.DBMap(db), app, pip)
 		if err != nil {
@@ -137,6 +141,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	} else {
+		var err error
 		schedulers, err = scheduler.GetByApplicationPipelineEnv(database.DBMap(db), app, pip, env)
 		if err != nil {
 			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)

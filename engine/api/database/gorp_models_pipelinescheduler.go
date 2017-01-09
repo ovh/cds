@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/sdk"
 )
 

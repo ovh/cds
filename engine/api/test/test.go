@@ -117,11 +117,9 @@ func InsertTestProject(t *testing.T, db database.QueryExecuter, key, name string
 	eg, _ := group.LoadGroup(db, g.Name)
 	if eg != nil {
 		g = *eg
-	} else {
-		if err := group.InsertGroup(db, &g); err != nil {
-			t.Fatalf("Cannot insert group : %s", err)
-			return nil
-		}
+	} else if err := group.InsertGroup(db, &g); err != nil {
+		t.Fatalf("Cannot insert group : %s", err)
+		return nil
 	}
 
 	if err := project.InsertProject(db, &proj); err != nil {

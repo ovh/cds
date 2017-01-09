@@ -129,9 +129,9 @@ func applicationPipelineSchedulerUpdate(cmd *cobra.Command, args []string) {
 	projectKey := args[0]
 	appName := args[1]
 	pipelineName := args[2]
-	IDs := args[3]
+	ids := args[3]
 
-	ID, err := strconv.ParseInt(IDs, 10, 64)
+	id, err := strconv.ParseInt(ids, 10, 64)
 	if err != nil {
 		sdk.Exit("Error: invalid parameter ID : %s", err)
 	}
@@ -153,14 +153,14 @@ func applicationPipelineSchedulerUpdate(cmd *cobra.Command, args []string) {
 
 	var s *sdk.PipelineScheduler
 	for i := range ps {
-		if ps[i].ID == ID {
+		if ps[i].ID == id {
 			s = &ps[i]
 			break
 		}
 	}
 
 	if s == nil {
-		sdk.Exit("Error: Unable to find pipeline scheduler with id %d", ID)
+		sdk.Exit("Error: Unable to find pipeline scheduler with id %d", id)
 	}
 
 	if cmdApplicationPipelineSchedulerUpdateCronExpr != "" {
@@ -182,7 +182,7 @@ func applicationPipelineSchedulerUpdate(cmd *cobra.Command, args []string) {
 	}
 
 	if _, err := sdk.UpdatePipelineScheduler(projectKey, appName, pipelineName, s); err != nil {
-		sdk.Exit("Error: Unable to update pipeline scheduler with id %d", ID)
+		sdk.Exit("Error: Unable to update pipeline scheduler with id %d", id)
 	}
 
 	fmt.Println("OK")

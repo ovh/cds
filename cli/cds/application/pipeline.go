@@ -14,15 +14,13 @@ import (
 var (
 	applicationPipelineCmd = &cobra.Command{
 		Use:     "pipeline",
-		Short:   "",
-		Long:    ``,
+		Short:   "cds application pipeline",
 		Aliases: []string{"p"},
 	}
 
 	cmdApplicationShowPipeline = &cobra.Command{
 		Use:   "show",
 		Short: "cds application pipeline show <projectKey> <applicationName> [--details]",
-		Long:  ``,
 		Run:   showPipelineInApplication,
 	}
 	cmdApplicationShowPipelineDetails bool
@@ -30,7 +28,6 @@ var (
 	cmdApplicationAddPipeline = &cobra.Command{
 		Use:     "add",
 		Short:   "cds application pipeline add <projectKey> <applicationName> <pipelineName> [-p <pipelineParam>=<value>]",
-		Long:    ``,
 		Aliases: []string{"attach"},
 		Run:     addApplicationPipeline,
 	}
@@ -39,7 +36,6 @@ var (
 	cmdApplicationRemovePipeline = &cobra.Command{
 		Use:   "remove",
 		Short: "cds application pipeline remove <projectKey> <applicationName> <pipelineName>",
-		Long:  ``,
 		Run:   removeApplicationPipeline,
 	}
 )
