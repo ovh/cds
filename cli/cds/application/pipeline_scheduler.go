@@ -113,8 +113,7 @@ func applicationPipelineSchedulerAdd(cmd *cobra.Command, args []string) {
 		params = append(params, p)
 	}
 
-	_, err := sdk.AddPipelineScheduler(projectKey, appName, pipelineName, cronExpr, cmdApplicationPipelineSchedulerAddEnv, params)
-	if err != nil {
+	if _, err := sdk.AddPipelineScheduler(projectKey, appName, pipelineName, cronExpr, cmdApplicationPipelineSchedulerAddEnv, params); err != nil {
 		sdk.Exit("Error: cannot add pipeline scheduler : %s\n", err)
 	}
 

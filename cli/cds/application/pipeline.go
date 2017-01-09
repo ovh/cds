@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
 )
