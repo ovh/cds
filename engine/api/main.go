@@ -193,7 +193,7 @@ var mainCmd = &cobra.Command{
 			go polling.ExecutionCleaner()
 		}
 
-		go scheduler.Initialize(10 * time.Minute)
+		go scheduler.Initialize(10)
 
 		s := &http.Server{
 			Addr:           ":" + viper.GetString("listen_port"),

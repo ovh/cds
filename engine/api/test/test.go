@@ -67,7 +67,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *sql.DB {
 		t.Skip("This is should be run with a database")
 		return nil
 	}
-	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=3000", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode)
+	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=5000", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode)
 
 	db, err := sql.Open(DBDriver, dsn)
 	if err != nil {
