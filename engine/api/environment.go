@@ -3,13 +3,10 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"io/ioutil"
-
-	"fmt"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
@@ -563,8 +560,6 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 		WriteError(w, r, err)
 		return
 	}
-
-	fmt.Println(envPost)
 
 	for _, e := range envs {
 		if e.Name == envPost.Name {
