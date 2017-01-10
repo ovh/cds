@@ -247,7 +247,7 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 	var pbI, stageI, abI int
 	var pbStatus, pbArgs, pipType, stageName string
 	var stageID int64
-	var manual sql.NullBool
+	var manual, scheduled sql.NullBool
 	var trigBy, parentID, abID sql.NullInt64
 	var branch, hash, author, actionName, abStatus sql.NullString
 	for rows.Next() {
@@ -255,7 +255,7 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 			&pb.Application.ID, &pb.Application.Name,
 			&pb.Environment.ID, &pb.Environment.Name,
 			&pb.ID, &pbStatus, &pb.Version,
-			&pb.BuildNumber, &pbArgs, &manual,
+			&pb.BuildNumber, &pbArgs, &manual, &scheduled,
 			&trigBy, &parentID,
 			&branch, &hash, &author,
 			&pb.Pipeline.ID, &pb.Pipeline.Name, &pipType,
@@ -273,12 +273,16 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 			pb.Trigger.ManualTrigger = manual.Bool
 			pb.Trigger.VCSChangesBranch = branch.String
 		}
+		if scheduled.Valid {
+			pb.Trigger.ScheduledTrigger = scheduled.Bool
+		}
 		// moar info on automatic trigger
 		if manual.Valid && trigBy.Valid && parentID.Valid && branch.Valid && hash.Valid && author.Valid {
 			pb.Trigger.TriggeredBy = &sdk.User{ID: trigBy.Int64}
 			pb.Trigger.ParentPipelineBuild = &sdk.PipelineBuild{ID: parentID.Int64}
 			pb.Trigger.VCSChangesHash = hash.String
 			pb.Trigger.VCSChangesAuthor = author.String
+			pb.Trigger.ManualTrigger = manual.Bool
 		}
 
 		// If there is no pb in pbs, we obviously got the first
