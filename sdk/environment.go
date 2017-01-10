@@ -133,6 +133,27 @@ func DeleteEnvironment(pk, name string) error {
 	return nil
 }
 
+// CloneEnvironment clone the given environment in CDS
+func CloneEnvironment(pk, name, new string) (*Environment, error) {
+	var e = Environment{Name: new}
+	b, err := json.Marshal(e)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/project/%s/environment/%s/clone", pk, name)
+	data, _, err := Request("POST", path, b)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(data, &e); err != nil {
+		return nil, err
+	}
+
+	return &e, nil
+}
+
 // ShowEnvironmentVariable  show variables for an environment
 func ShowEnvironmentVariable(projectKey, envName string) ([]Variable, error) {
 
@@ -264,7 +285,6 @@ func RemoveEnvironmentVariable(projectKey, envName, varName string) error {
 
 // RemoveGroupFromEnvironment  call api to remove a group from the given environment
 func RemoveGroupFromEnvironment(projectKey, envName, groupName string) error {
-
 	path := fmt.Sprintf("/project/%s/environment/%s/group/%s", projectKey, envName, groupName)
 	data, code, err := Request("DELETE", path, nil)
 	if err != nil {

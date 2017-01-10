@@ -9,6 +9,8 @@ import (
 
 	"io/ioutil"
 
+	"fmt"
+
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
@@ -524,14 +526,14 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 
 	env, errEnv := environment.LoadEnvironmentByName(db, projectKey, environmentName)
 	if errEnv != nil {
-		log.Warning("updateEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
+		log.Warning("cloneEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
 		WriteError(w, r, errEnv)
 		return
 	}
 
 	p, errProj := project.LoadProject(db, projectKey, c.User)
 	if errProj != nil {
-		log.Warning("updateEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
+		log.Warning("cloneEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
 		WriteError(w, r, errProj)
 		return
 	}
@@ -549,7 +551,30 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 		return
 	}
 
-	envPost.ProjectID = env.ProjectID
+	//Check if the new environment has a name
+	if envPost.Name == "" {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	//Load all environments to check if there is another environment with the same name
+	envs, err := environment.LoadEnvironments(db, projectKey, false, c.User)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	fmt.Println(envPost)
+
+	for _, e := range envs {
+		if e.Name == envPost.Name {
+			WriteError(w, r, sdk.ErrConflict)
+			return
+		}
+	}
+
+	//Set all the data of the environment we want to clone
+	envPost.ProjectID = p.ID
 	envPost.ProjectKey = p.Key
 	envPost.Variable = env.Variable
 	envPost.EnvironmentGroups = env.EnvironmentGroups
@@ -557,6 +582,7 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 
 	tx, err := db.Begin()
 	if err != nil {
+		log.Warning("cloneEnvironmentHandler> Unable to start a transaction: %s", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -565,6 +591,7 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 
 	//Insert environment
 	if err := environment.InsertEnvironment(tx, &envPost); err != nil {
+		log.Warning("cloneEnvironmentHandler> Unable to insert environment %s: %s", envPost.Name, err)
 		WriteError(w, r, err)
 		return
 	}
@@ -572,6 +599,7 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	//Insert variables
 	for _, v := range envPost.Variable {
 		if environment.InsertVariable(tx, envPost.ID, &v); err != nil {
+			log.Warning("cloneEnvironmentHandler> Unable to insert variable: %s", err)
 			WriteError(w, r, err)
 			return
 		}
@@ -580,6 +608,7 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	//Insert environment
 	for _, e := range envPost.EnvironmentGroups {
 		if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
+			log.Warning("cloneEnvironmentHandler> Unable to insert group in environment: %s", err)
 			WriteError(w, r, err)
 			return
 		}

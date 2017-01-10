@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/loopfz/gadgeto/iffy"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -280,15 +281,27 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Preproduction",
 	}
-	if err := environment.InsertEnvironment(db, &env); err != nil {
-		t.Fail()
-		return
+	test.NoError(t, environment.InsertEnvironment(db, &env))
+
+	v := &sdk.Variable{
+		Name:  "var1",
+		Type:  sdk.StringVariable,
+		Value: "val1",
 	}
+	test.NoError(t, environment.InsertVariable(db, env.ID, v))
 
 	vars := map[string]string{
 		"key": proj.Key,
 		"permEnvironmentName": env.Name,
 	}
 
-	uri := router.getRoute("GET", getEnvironmentHandler, vars)
+	envPost := sdk.Environment{
+		Name: "Production2",
+	}
+
+	uri := router.getRoute("POST", cloneEnvironmentHandler, vars)
+	tester := iffy.NewTester(t, router.mux)
+	headers := test.AuthHeaders(t, u, pass)
+	tester.AddCall("Test_cloneEnvironmentHandler", "POST", uri, &envPost).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t))
+	tester.Run()
 }
