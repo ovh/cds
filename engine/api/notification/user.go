@@ -117,7 +117,7 @@ func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, previous *s
 				}
 				//Finally deduplicate everyone
 				removeDuplicates(&jn.Recipients)
-				events = append(events, getEvent(pb, jn, params))
+				go SendMailNotif(getEvent(pb, jn, params))
 			}
 		}
 	}
