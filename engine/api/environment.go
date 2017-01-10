@@ -609,10 +609,28 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 		}
 	}
 
+	//Update the poroject
+	lastModified, errDate := project.UpdateProjectDB(tx, projectKey, p.Name)
+	if errDate != nil {
+		log.Warning("cloneEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
+		WriteError(w, r, errDate)
+		return
+	}
+	p.LastModified = lastModified.Unix()
+
 	if err := tx.Commit(); err != nil {
 		WriteError(w, r, err)
 		return
 	}
 
-	WriteJSON(w, r, envPost, http.StatusCreated)
+	//return the project wil all environment
+	var errEnvs error
+	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
+	if errEnvs != nil {
+		log.Warning("cloneEnvironmentHandler> Cannot load environments: %s\n", errEnvs)
+		WriteError(w, r, errEnvs)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
 }

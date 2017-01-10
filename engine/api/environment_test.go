@@ -302,6 +302,6 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	uri := router.getRoute("POST", cloneEnvironmentHandler, vars)
 	tester := iffy.NewTester(t, router.mux)
 	headers := test.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_cloneEnvironmentHandler", "POST", uri, &envPost).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t))
+	tester.AddCall("Test_cloneEnvironmentHandler", "POST", uri, &envPost).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
 }

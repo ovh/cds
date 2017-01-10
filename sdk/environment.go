@@ -142,16 +142,11 @@ func CloneEnvironment(pk, name, new string) (*Environment, error) {
 	}
 
 	path := fmt.Sprintf("/project/%s/environment/%s/clone", pk, name)
-	data, _, err := Request("POST", path, b)
-	if err != nil {
+	if _, _, err := Request("POST", path, b); err != nil {
 		return nil, err
 	}
 
-	if err := json.Unmarshal(data, &e); err != nil {
-		return nil, err
-	}
-
-	return &e, nil
+	return GetEnvironment(pk, new)
 }
 
 // ShowEnvironmentVariable  show variables for an environment
