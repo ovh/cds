@@ -586,8 +586,7 @@ func cloneApplication(db database.QueryExecuter, project *sdk.Project, newApp *s
 			t.DestApplication = *newApp
 		}
 		t.SrcApplication = *newApp
-		err = trigger.InsertTrigger(db, &t)
-		if err != nil {
+		if err := trigger.InsertTrigger(db, &t); err != nil {
 			return err
 		}
 	}
