@@ -6,26 +6,20 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/proullon/ramsql/engine/log"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/testwithdb"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
 // TestVerifyUserToken test token verification when OK
 func TestVerifyUserToken(t *testing.T) {
-	log.UseTestLogger(t)
 	db := test.Setup("TestVerifyUserToken", t)
-
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -65,9 +59,7 @@ func TestVerifyUserToken(t *testing.T) {
 
 // TestWrongTokenUser  test token verificaiton when token is wrong
 func TestWrongTokenUser(t *testing.T) {
-	log.UseTestLogger(t)
 	db := test.Setup("TestWrongTokenUser", t)
-
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -101,9 +93,7 @@ func TestWrongTokenUser(t *testing.T) {
 
 // TestVerifyResetExpired test validating reset token when time expired
 func TestVerifyResetExpired(t *testing.T) {
-	log.UseTestLogger(t)
 	db := test.Setup("TestVerifyResetExpired", t)
-
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -142,9 +132,7 @@ func TestVerifyResetExpired(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestVerifyAlreadyDone(t *testing.T) {
-	log.UseTestLogger(t)
 	db := test.Setup("TestVerifyAlreadyDone", t)
-
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -183,9 +171,7 @@ func TestVerifyAlreadyDone(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestLoadUserWithGroup(t *testing.T) {
-	log.UseTestLogger(t)
 	db := test.Setup("TestLoadUserWithGroup", t)
-
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -270,36 +256,26 @@ func TestLoadUserWithGroup(t *testing.T) {
 }
 
 func Test_getUserGroupsHandler(t *testing.T) {
-	if testwithdb.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := testwithdb.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local", TTL: 30})
-	router = &Router{authDriver, mux.NewRouter(), "/Test_getUserGroupsHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_getUserGroupsHandler"}
 	router.init()
 
 	g1 := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
 	g2 := &sdk.Group{
-		Name: testwithdb.RandomString(t, 10),
+		Name: test.RandomString(t, 10),
 	}
 
-	u, pass, err := testwithdb.InsertLambaUser(t, db, g1, g2)
-	assert.NoError(t, err)
+	u, pass := test.InsertLambaUser(t, db, g1, g2)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
 	uri := router.getRoute("GET", getUserGroupsHandler, map[string]string{"name": u.Username})
-	if uri == "" {
-		t.Fatal("Route not found")
-	}
-
-	req := testwithdb.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	test.NotEmpty(t, uri)
+	req := test.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()

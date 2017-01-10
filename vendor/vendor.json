@@ -247,6 +247,12 @@
 			"revisionTime": "2016-11-13T21:19:33Z"
 		},
 		{
+			"checksumSHA1": "5DBIm/bJOKLR3CbQH6wIELQDLlQ=",
+			"path": "github.com/gorhill/cronexpr",
+			"revision": "d520615e531a6bf3fb69406b9eba718261285ec8",
+			"revisionTime": "2016-12-05T14:13:22Z"
+		},
+		{
 			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
 			"path": "github.com/gorilla/context",
 			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
@@ -389,6 +395,12 @@
 			"path": "github.com/lib/pq/oid",
 			"revision": "ae8357db35d721c58dcdc911318b55bef6b1b001",
 			"revisionTime": "2016-10-14T01:16:34Z"
+		},
+		{
+			"checksumSHA1": "iyFSUMrZGEpdu39oEaPHZR+CTdM=",
+			"path": "github.com/loopfz/gadgeto/iffy",
+			"revision": "71c262d4e980e61bfed04e5dfb0b01d43b75444a",
+			"revisionTime": "2017-01-04T14:52:18Z"
 		},
 		{
 			"checksumSHA1": "S6PDDQMYaKwLDIP/NsRYb4FRAqQ=",

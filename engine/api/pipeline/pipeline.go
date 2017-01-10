@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/ovh/cds/engine/api/build"
@@ -69,29 +68,16 @@ func LoadPipeline(db database.Querier, projectKey, name string, deep bool) (*sdk
 	p.ProjectKey = projectKey
 
 	if deep {
-		// load pipeline actions by stage
-		err = LoadPipelineStage(db, &p)
-		if err != nil {
-			return nil, fmt.Errorf("cannot loadPipelineStage> %s", err)
+		if err := loadPipelineDependencies(db, &p); err != nil {
+			return nil, err
 		}
-
-		err = LoadGroupByPipeline(db, &p)
-		if err != nil {
-			return nil, fmt.Errorf("cannot loadGroupByPipeline> %s", err)
-		}
-
-		parameters, err := GetAllParametersInPipeline(db, p.ID)
-		if err != nil {
-			return nil, fmt.Errorf("cannot GetAllParametersInpipeline> %s", err)
-		}
-		p.Parameter = parameters
-		//cache.Set(k, p)
 	}
+
 	return &p, nil
 }
 
 // LoadPipelineByID loads a pipeline from database
-func LoadPipelineByID(db database.Querier, pipelineID int64) (*sdk.Pipeline, error) {
+func LoadPipelineByID(db database.Querier, pipelineID int64, deep bool) (*sdk.Pipeline, error) {
 	var p sdk.Pipeline
 	var pType string
 	query := `SELECT pipeline.name, pipeline.type, project.projectKey FROM pipeline
@@ -108,7 +94,30 @@ func LoadPipelineByID(db database.Querier, pipelineID int64) (*sdk.Pipeline, err
 
 	p.Type = sdk.PipelineTypeFromString(pType)
 	p.ID = pipelineID
+
+	if deep {
+		if err := loadPipelineDependencies(db, &p); err != nil {
+			return nil, err
+		}
+	}
+
 	return &p, nil
+}
+
+func loadPipelineDependencies(db database.Querier, p *sdk.Pipeline) error {
+	if err := LoadPipelineStage(db, p); err != nil {
+		return err
+	}
+	if err := LoadGroupByPipeline(db, p); err != nil {
+		return err
+	}
+
+	parameters, err := GetAllParametersInPipeline(db, p.ID)
+	if err != nil {
+		return err
+	}
+	p.Parameter = parameters
+	return nil
 }
 
 // DeletePipeline remove given pipeline and all history from database

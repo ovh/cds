@@ -11,37 +11,23 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
-	test "github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestAddEnvironmentHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestAddEnvironmentHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestAddEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Prepare the request
 	addEnvRequest := sdk.Environment{
@@ -55,10 +41,8 @@ func TestAddEnvironmentHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("POST", addEnvironmentHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("POST", uri, body)
 	test.AuthentifyRequest(t, req, u, pass)
 
@@ -81,28 +65,17 @@ func TestAddEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateEnvironmentHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestUpdateEnvironmentHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestUpdateEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create env
 	env := sdk.Environment{
@@ -126,10 +99,8 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("PUT", updateEnvironmentHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("PUT", uri, body)
 	test.AuthentifyRequest(t, req, u, pass)
 
@@ -152,28 +123,17 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 }
 
 func TestDeleteEnvironmentHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create env
 	env := sdk.Environment{
@@ -191,10 +151,8 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("DELETE", deleteEnvironmentHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
+	test.NotEmpty(t, uri)
+
 	req, err := http.NewRequest("DELETE", uri, nil)
 	test.AuthentifyRequest(t, req, u, pass)
 
@@ -216,28 +174,17 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 }
 
 func TestGetEnvironmentsHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create env
 	env := sdk.Environment{
@@ -254,11 +201,9 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("GET", getEnvironmentsHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
-	req, err := http.NewRequest("GET", uri, nil)
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("GET", uri, nil)
 	test.AuthentifyRequest(t, req, u, pass)
 
 	//4. Do the request
@@ -273,28 +218,17 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 }
 
 func TestGetEnvironmentHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create env
 	env := sdk.Environment{
@@ -312,11 +246,9 @@ func TestGetEnvironmentHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("GET", getEnvironmentHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
-	req, err := http.NewRequest("GET", uri, nil)
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("GET", uri, nil)
 	test.AuthentifyRequest(t, req, u, pass)
 
 	//4. Do the request

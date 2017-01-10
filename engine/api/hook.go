@@ -259,7 +259,7 @@ func processHook(h hook.ReceivedHook) error {
 		found = true
 
 		// create pipeline object
-		p, err := pipeline.LoadPipelineByID(tx, hooks[i].Pipeline.ID)
+		p, err := pipeline.LoadPipelineByID(tx, hooks[i].Pipeline.ID, true)
 		if err != nil {
 			log.Warning("processHook> Cannot load pipeline: %s\n", err)
 			return err

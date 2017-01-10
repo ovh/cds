@@ -27,6 +27,8 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 
 	dbmap.AddTableWithName(TemplateExtension{}, "template").SetKeys(true, "id")
 	dbmap.AddTableWithName(WorkerModel{}, "worker_model").SetKeys(true, "id")
+	dbmap.AddTableWithName(PipelineScheduler{}, "pipeline_scheduler").SetKeys(true, "id")
+	dbmap.AddTableWithName(PipelineSchedulerExecution{}, "pipeline_scheduler_execution").SetKeys(true, "id")
 
 	return dbmap
 }
@@ -36,3 +38,9 @@ type TemplateExtension sdk.TemplateExtension
 
 //WorkerModel is a gorp wrapper around sdk.Model
 type WorkerModel sdk.Model
+
+//PipelineScheduler is a gorp wrapper around sdk.PipelineScheduler
+type PipelineScheduler sdk.PipelineScheduler
+
+//PipelineSchedulerExecution is a gorp wrapper around sdk.PipelineSchedulerExecution
+type PipelineSchedulerExecution sdk.PipelineSchedulerExecution

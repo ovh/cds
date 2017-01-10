@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	test "github.com/ovh/cds/engine/api/testwithdb"
+	test "github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -80,18 +80,12 @@ func deleteAll(t *testing.T, db *sql.DB, key string) error {
 	return nil
 }
 func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *sql.DB, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment)) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t, bootstrap.InitiliazeDB)
-	assert.NoError(t, err)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	_ = deleteAll(t, db, "TEST_APP_PIPELINE_NOTIF")
 
 	//Insert Project
-	proj, err := test.InsertTestProject(t, db, "TEST_APP_PIPELINE_NOTIF", "TEST_APP_PIPELINE_NOTIF")
-	assert.NoError(t, err)
+	proj := test.InsertTestProject(t, db, "TEST_APP_PIPELINE_NOTIF", "TEST_APP_PIPELINE_NOTIF")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -101,8 +95,8 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *s
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.InsertPipeline(db, pip)
-	assert.NoError(t, err)
+	err := pipeline.InsertPipeline(db, pip)
+	test.NoError(t, err)
 
 	//Insert Application
 	app := &sdk.Application{
@@ -115,41 +109,41 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *s
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
 	err = application.AttachPipeline(db, app.ID, pip.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	f(t, db, proj, pip, app, env)
 
 	t.Logf("Detach Pipeline %s on Application %s", pip.Name, app.Name)
 	tx, err := db.Begin()
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	err = application.RemovePipeline(tx, proj.Key, app.Name, pip.Name)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	err = tx.Commit()
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	err = application.DeleteAllApplicationPipeline(db, app.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	err = environment.DeleteAllEnvironment(db, proj.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//Delete application
 	t.Logf("Delete Application %s for Project %s", app.Name, proj.Name)
 	tx, err = db.Begin()
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	err = application.DeleteApplication(tx, app.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	err = tx.Commit()
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
 	err = pipeline.DeletePipeline(db, pip.ID, 1)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	//Delete Project
 	err = test.DeleteTestProject(t, db, "TEST_APP_PIPELINE_NOTIF")
-	assert.NoError(t, err)
+	test.NoError(t, err)
 }
 
 func testCheckUserNotificationSettings(t *testing.T, n1, n2 map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings) {
@@ -182,7 +176,7 @@ func Test_LoadEmptyApplicationPipelineNotif(t *testing.T) {
 	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *sql.DB, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
 		t.Logf("Load Application Pipeline Notif %s %s", app.Name, env.Name)
 		notif, err := notification.LoadUserNotificationSettings(db, app.ID, pip.ID, env.ID)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		assert.Nil(t, notif)
 	})
 }
@@ -227,11 +221,11 @@ func Test_InsertAndLoadApplicationPipelineNotif(t *testing.T) {
 		}
 
 		err := notification.InsertOrUpdateUserNotificationSettings(db, app.ID, pip.ID, env.ID, &notif)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 		t.Logf("Load Application Pipeline Notif %s %s", app.Name, env.Name)
 		notif1, err := notification.LoadUserNotificationSettings(db, app.ID, pip.ID, env.ID)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		assert.NotNil(t, notif1)
 
 		testCheckUserNotificationSettings(t, notif.Notifications, notif1.Notifications)
@@ -250,7 +244,7 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsEmptyUserNotificat
 			})
 		http.Handle("/test1/", router)
 
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -298,7 +292,7 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotifi
 		}
 
 		err := notification.InsertOrUpdateUserNotificationSettings(db, app.ID, pip.ID, env.ID, &notif)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 		url := fmt.Sprintf("/test2/project/%s/application/%s/pipeline/%s/notification", proj.Key, app.Name, pip.Name)
 		req, err := http.NewRequest("GET", url, nil)
@@ -310,14 +304,14 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotifi
 			})
 		http.Handle("/test2/", router)
 
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, 200, w.Code)
 
 		notif1, err := notification.ParseUserNotification(w.Body.Bytes())
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		assert.Equal(t, notif.ApplicationPipelineID, notif1.ApplicationPipelineID)
 		assert.Equal(t, notif.Environment.ID, notif1.Environment.ID)
 
@@ -336,13 +330,13 @@ func Test_getNotificationTypeHandler(t *testing.T) {
 		})
 	http.Handle("/test3/", router)
 
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
 	var s = []string{}
 	err = json.Unmarshal(w.Body.Bytes(), &s)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	assert.Equal(t, 200, w.Code)
 }
 
@@ -385,7 +379,7 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 		}
 
 		err := notification.InsertOrUpdateUserNotificationSettings(db, app.ID, pip.ID, env.ID, &notif)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 		notif = sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
@@ -406,12 +400,12 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 		}
 
 		b, err := json.Marshal(notif)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		body := bytes.NewBuffer(b)
 
 		url := fmt.Sprintf("/test4/project/%s/application/%s/pipeline/%s/notification", proj.Key, app.Name, pip.Name)
 		req, err := http.NewRequest("POST", url, body)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 		router := mux.NewRouter()
 		router.HandleFunc("/test4/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification",
@@ -421,14 +415,14 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 
 		http.Handle("/test4/", router)
 
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, 200, w.Code)
 
 		notif1, err := notification.ParseUserNotification(w.Body.Bytes())
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		assert.Equal(t, notif.ApplicationPipelineID, notif1.ApplicationPipelineID)
 		assert.Equal(t, notif.Environment.ID, notif1.Environment.ID)
 
@@ -556,10 +550,10 @@ func Test_SendPipeline(t *testing.T) {
 			},
 		}
 		err := notification.InsertOrUpdateUserNotificationSettings(db, app.ID, pip.ID, env.ID, &notif)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 		tx, err := db.Begin()
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 		params := []sdk.Parameter{}
 		trigger := sdk.PipelineBuildTrigger{}
@@ -571,7 +565,7 @@ func Test_SendPipeline(t *testing.T) {
 					decoder := json.NewDecoder(r.Body)
 					var n sdk.Notif
 					err = decoder.Decode(&n)
-					assert.NoError(t, err)
+					test.NoError(t, err)
 					assert.Equal(t, "CDS TEST_APP_PIPELINE_NOTIF/TEST_APP TEST_PIPELINE Building", n.Title)
 					assert.Equal(t, "\nDetails : http://localhost:9000/#/project/TEST_APP_PIPELINE_NOTIF/application/TEST_APP/pipeline/TEST_PIPELINE/build/1?env=NoEnv&tab=detail", n.Message)
 				}
@@ -586,13 +580,13 @@ func Test_SendPipeline(t *testing.T) {
 		t.Log("Insert PipelineBuild")
 
 		pb, err := pipeline.InsertPipelineBuild(tx, proj, pip, app, params, params, env, -1, trigger)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 		err = tx.Commit()
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 		err = pipeline.DeletePipelineBuild(db, pb.ID)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 
 	})
 }

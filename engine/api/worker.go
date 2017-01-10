@@ -129,7 +129,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	}
 
 	if wor.Status == sdk.StatusChecking {
-		log.Warning("disableWorkerHandler> Next time, we will see %d %s at status waiting, we will kill it\n", wor.ID, wor.Name)
+		log.Warning("disableWorkerHandler> Next time, we will see (%s) %s at status waiting, we will kill it\n", wor.ID, wor.Name)
 		go func(w *sdk.Worker) {
 			for {
 				var attempts int

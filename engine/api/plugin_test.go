@@ -20,11 +20,10 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/proullon/ramsql/engine/log"
 	"github.com/stretchr/testify/assert"
 )
 
-const dummyBinaryFile = "https://dl.plik.ovh/file/CBMJpObJqIDeb3s1/6poL7tm37ELrNrdf/dummy"
+const dummyBinaryFile = "https://dl.plik.ovh/file/cMG2Mda94p6b3aej/CdJscEKa16o5NnHt/dummy"
 
 func postFile(t *testing.T,
 	db *sql.DB,
@@ -98,7 +97,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 	t.Logf("Downloading file %s", url)
 
 	resp, err := http.Get(url)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	if err != nil {
 		t.Fail()
 		return "", nil, err
@@ -106,7 +105,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	if err != nil {
 		t.Fail()
 		return "", nil, err
@@ -114,7 +113,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 
 	path := path.Join(os.TempDir(), name)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0744)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	if err != nil {
 		t.Fail()
 		return "", nil, err
@@ -122,7 +121,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 
 	t.Logf("Writing file  to %s", path)
 	_, err = io.Copy(f, bytes.NewBuffer(data))
-	assert.NoError(t, err)
+	test.NoError(t, err)
 	if err != nil {
 		t.Fail()
 		return "", nil, err
@@ -136,7 +135,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 
 func TestAddPluginHandlerSuccess(t *testing.T) {
 	db := test.Setup("TestAddPluginHandlerSuccess", t)
-	log.UseTestLogger(t)
+
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
 		t.Fail()
@@ -188,7 +187,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 
 func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 	db := test.Setup("TestAddPluginHandlerFailWithInvalidPlugin", t)
-	log.UseTestLogger(t)
+
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
 		t.Fail()
@@ -219,7 +218,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 
 func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 	db := test.Setup("TestAddPluginHandlerFailWithConflict", t)
-	log.UseTestLogger(t)
+
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
 		t.Fail()
@@ -258,7 +257,7 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	t.Skip()
 	db := test.Setup("TestUpdatePluginHandlerSuccess", t)
-	log.UseTestLogger(t)
+
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
 		t.Fail()
@@ -313,7 +312,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	//Skip it because ramsql
 
 	db := test.Setup("TestDeletePluginHandlerSuccess", t)
-	log.UseTestLogger(t)
+
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
 		t.Fail()

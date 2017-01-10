@@ -49,6 +49,7 @@ type PipelineBuild struct {
 
 // PipelineBuildTrigger Struct for history table
 type PipelineBuildTrigger struct {
+	ScheduledTrigger    bool           `json:"scheduled_trigger"`
 	ManualTrigger       bool           `json:"manual_trigger"`
 	TriggeredBy         *User          `json:"triggered_by"`
 	ParentPipelineBuild *PipelineBuild `json:"parent_pipeline_build"`
@@ -135,7 +136,6 @@ func ListPipelines(projectKey string) ([]Pipeline, error) {
 
 // GetPipeline retrieves pipeline definition from CDS
 func GetPipeline(key, name string) (*Pipeline, error) {
-
 	path := fmt.Sprintf("/project/%s/pipeline/%s", key, name)
 	data, _, err := Request("GET", path, nil)
 	if err != nil {
@@ -154,7 +154,6 @@ func GetPipeline(key, name string) (*Pipeline, error) {
 
 // AddPipeline creates a new empty pipeline
 func AddPipeline(name string, projectKey string, pipelineType PipelineType, params []Parameter) error {
-
 	p := Pipeline{
 		Name:       name,
 		ProjectKey: projectKey,

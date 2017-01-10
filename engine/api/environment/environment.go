@@ -70,6 +70,21 @@ func LoadEnvironments(db database.Querier, projectKey string, loadDeps bool, use
 	return envs, nil
 }
 
+// LoadEnvironmentByID load the given environment
+func LoadEnvironmentByID(db database.Querier, ID int64) (*sdk.Environment, error) {
+	var env sdk.Environment
+	query := `SELECT environment.id, environment.name
+		  	FROM environment
+		 	WHERE id = $1`
+	if err := db.QueryRow(query, ID).Scan(&env.ID, &env.Name); err != nil {
+		if err == sql.ErrNoRows {
+			return &env, sdk.ErrNoEnvironment
+		}
+		return &env, err
+	}
+	return &env, loadDependencies(db, &env)
+}
+
 // LoadEnvironmentByName load the given environment
 func LoadEnvironmentByName(db database.Querier, projectKey, envName string) (*sdk.Environment, error) {
 	var env sdk.Environment

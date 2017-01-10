@@ -90,6 +90,13 @@ select create_foreign_key('FK_PIPELINE_STAGE_PREREQUISITE_PIPELINE_STAGE', 'pipe
 -- PIPELINE PARAMETER
 select create_foreign_key('FK_PIPELINE_PARAMETER_PIPELINE', 'pipeline_parameter', 'pipeline', 'pipeline_id', 'id');
 
+-- PIPELINE SCHEDULER
+SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_APPLICATION', 'pipeline_scheduler', 'application', 'application_id', 'id');
+SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_PIPELINE', 'pipeline_scheduler', 'pipeline', 'pipeline_id', 'id');
+SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_ENVIRONMENT', 'pipeline_scheduler', 'environment', 'environment_id', 'id');
+SELECT create_foreign_key('FK_PIPELINE_SCHEDULER_EXECUTION_PIPELINE_SCHEDULER', 'pipeline_scheduler_execution', 'pipeline_scheduler', 'pipeline_scheduler_id', 'id');
+
+
 -- PIPELINE TRIGGER
 select create_foreign_key('FK_PIPELINE_TRIGGER_SRC_APPLICATION', 'pipeline_trigger', 'application', 'src_application_id', 'id');
 select create_foreign_key('FK_PIPELINE_TRIGGER_DEST_APPLICATION', 'pipeline_trigger', 'application', 'dest_application_id', 'id');

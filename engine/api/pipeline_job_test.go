@@ -12,37 +12,23 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/testwithdb"
-	test "github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestAddJobHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestAddJobHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline
 	pipelineKey := test.RandomString(t, 10)
@@ -52,8 +38,7 @@ func TestAddJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -62,8 +47,7 @@ func TestAddJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	err = pipeline.InsertStage(db, stage)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertStage(db, stage))
 	assert.NotZero(t, stage.ID)
 
 	// 5. Prepare the request
@@ -84,11 +68,9 @@ func TestAddJobHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("POST", addJobToStageHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
-	req, err := http.NewRequest("POST", uri, body)
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("POST", uri, body)
 	test.AuthentifyRequest(t, req, u, pass)
 
 	//6. Do the request
@@ -105,28 +87,17 @@ func TestAddJobHandler(t *testing.T) {
 }
 
 func TestUpdateJobHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestUpdateJobHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestUpdateJobHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline
 	pipelineKey := test.RandomString(t, 10)
@@ -136,8 +107,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -146,8 +116,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	err = pipeline.InsertStage(db, stage)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertStage(db, stage))
 
 	//5. Prepare the request
 	job := &sdk.Job{
@@ -157,8 +126,7 @@ func TestUpdateJobHandler(t *testing.T) {
 			Name: "myJob",
 		},
 	}
-	err = pipeline.InsertJob(db, job, stage.ID, pip)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertJob(db, job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -183,11 +151,9 @@ func TestUpdateJobHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("PUT", updateJobHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
-	req, err := http.NewRequest("PUT", uri, body)
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("PUT", uri, body)
 	test.AuthentifyRequest(t, req, u, pass)
 
 	//7. Do the request
@@ -204,28 +170,17 @@ func TestUpdateJobHandler(t *testing.T) {
 }
 
 func TestDeleteJobHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestDeleteJobHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestDeleteJobHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := testwithdb.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline
 	pipelineKey := test.RandomString(t, 10)
@@ -235,8 +190,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -245,8 +199,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	err = pipeline.InsertStage(db, stage)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertStage(db, stage))
 
 	//5. Prepare the request
 	job := &sdk.Job{
@@ -256,8 +209,7 @@ func TestDeleteJobHandler(t *testing.T) {
 			Name: "myJob",
 		},
 	}
-	err = pipeline.InsertJob(db, job, stage.ID, pip)
-	assert.NoError(t, err)
+	test.NoError(t, pipeline.InsertJob(db, job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -269,11 +221,9 @@ func TestDeleteJobHandler(t *testing.T) {
 	}
 
 	uri := router.getRoute("DELETE", deleteJobHandler, vars)
-	if uri == "" {
-		t.Fail()
-		return
-	}
-	req, err := http.NewRequest("DELETE", uri, nil)
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("DELETE", uri, nil)
 	test.AuthentifyRequest(t, req, u, pass)
 
 	//7. Do the request
