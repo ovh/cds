@@ -5,6 +5,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/msg"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/log"
@@ -78,6 +79,14 @@ func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions
 		close(msgChan)
 		return msgList, err
 	}
+
+	lastModified, errProj := project.UpdateProjectDB(tx, proj.Key, proj.Name)
+	if errProj != nil {
+		log.Warning("ApplyTemplate> cannot update project last modified date : %s", errProj)
+		close(msgChan)
+		return msgList, errProj
+	}
+	proj.LastModified = lastModified.Unix()
 
 	close(msgChan)
 	<-done
