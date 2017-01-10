@@ -3,11 +3,10 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"io/ioutil"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
@@ -509,6 +508,126 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
 	if errEnvs != nil {
 		log.Warning("updateEnvironmentHandler> Cannot load environments: %s\n", errEnvs)
+		WriteError(w, r, errEnvs)
+		return
+	}
+
+	WriteJSON(w, r, p, http.StatusOK)
+}
+
+func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	// Get pipeline and action name in URL
+	vars := mux.Vars(r)
+	projectKey := vars["key"]
+	environmentName := vars["permEnvironmentName"]
+
+	env, errEnv := environment.LoadEnvironmentByName(db, projectKey, environmentName)
+	if errEnv != nil {
+		log.Warning("cloneEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
+		WriteError(w, r, errEnv)
+		return
+	}
+
+	p, errProj := project.LoadProject(db, projectKey, c.User)
+	if errProj != nil {
+		log.Warning("cloneEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
+		WriteError(w, r, errProj)
+		return
+	}
+
+	var envPost sdk.Environment
+	// Get body
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	if err := json.Unmarshal(data, &envPost); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	//Check if the new environment has a name
+	if envPost.Name == "" {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	//Load all environments to check if there is another environment with the same name
+	envs, err := environment.LoadEnvironments(db, projectKey, false, c.User)
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	for _, e := range envs {
+		if e.Name == envPost.Name {
+			WriteError(w, r, sdk.ErrConflict)
+			return
+		}
+	}
+
+	//Set all the data of the environment we want to clone
+	envPost.ProjectID = p.ID
+	envPost.ProjectKey = p.Key
+	envPost.Variable = env.Variable
+	envPost.EnvironmentGroups = env.EnvironmentGroups
+	envPost.Permission = env.Permission
+
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("cloneEnvironmentHandler> Unable to start a transaction: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	defer tx.Rollback()
+
+	//Insert environment
+	if err := environment.InsertEnvironment(tx, &envPost); err != nil {
+		log.Warning("cloneEnvironmentHandler> Unable to insert environment %s: %s", envPost.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	//Insert variables
+	for _, v := range envPost.Variable {
+		if environment.InsertVariable(tx, envPost.ID, &v); err != nil {
+			log.Warning("cloneEnvironmentHandler> Unable to insert variable: %s", err)
+			WriteError(w, r, err)
+			return
+		}
+	}
+
+	//Insert environment
+	for _, e := range envPost.EnvironmentGroups {
+		if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
+			log.Warning("cloneEnvironmentHandler> Unable to insert group in environment: %s", err)
+			WriteError(w, r, err)
+			return
+		}
+	}
+
+	//Update the poroject
+	lastModified, errDate := project.UpdateProjectDB(tx, projectKey, p.Name)
+	if errDate != nil {
+		log.Warning("cloneEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
+		WriteError(w, r, errDate)
+		return
+	}
+	p.LastModified = lastModified.Unix()
+
+	if err := tx.Commit(); err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	//return the project wil all environment
+	var errEnvs error
+	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
+	if errEnvs != nil {
+		log.Warning("cloneEnvironmentHandler> Cannot load environments: %s\n", errEnvs)
 		WriteError(w, r, errEnvs)
 		return
 	}
