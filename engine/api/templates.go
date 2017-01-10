@@ -372,7 +372,15 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		return
 	}
 
-	WriteJSON(w, r, msgList, http.StatusOK)
+	apps, errApp := application.LoadApplications(db, proj.Key, false, c.User)
+	if errApp != nil {
+		log.Warning("applyTemplatesHandler> Cannot load applications: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	proj.Applications = apps
+
+	WriteJSON(w, r, proj, http.StatusOK)
 }
 
 func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
