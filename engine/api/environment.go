@@ -515,3 +515,80 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 
 	WriteJSON(w, r, p, http.StatusOK)
 }
+
+func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	// Get pipeline and action name in URL
+	vars := mux.Vars(r)
+	projectKey := vars["key"]
+	environmentName := vars["permEnvironmentName"]
+
+	env, errEnv := environment.LoadEnvironmentByName(db, projectKey, environmentName)
+	if errEnv != nil {
+		log.Warning("updateEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
+		WriteError(w, r, errEnv)
+		return
+	}
+
+	p, errProj := project.LoadProject(db, projectKey, c.User)
+	if errProj != nil {
+		log.Warning("updateEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
+		WriteError(w, r, errProj)
+		return
+	}
+
+	var envPost sdk.Environment
+	// Get body
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	if err := json.Unmarshal(data, &envPost); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	envPost.ProjectID = env.ProjectID
+	envPost.ProjectKey = p.Key
+	envPost.Variable = env.Variable
+	envPost.EnvironmentGroups = env.EnvironmentGroups
+	envPost.Permission = env.Permission
+
+	tx, err := db.Begin()
+	if err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	defer tx.Rollback()
+
+	//Insert environment
+	if err := environment.InsertEnvironment(tx, &envPost); err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	//Insert variables
+	for _, v := range envPost.Variable {
+		if environment.InsertVariable(tx, envPost.ID, &v); err != nil {
+			WriteError(w, r, err)
+			return
+		}
+	}
+
+	//Insert environment
+	for _, e := range envPost.EnvironmentGroups {
+		if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
+			WriteError(w, r, err)
+			return
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, envPost, http.StatusCreated)
+}

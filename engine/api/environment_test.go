@@ -261,3 +261,34 @@ func TestGetEnvironmentHandler(t *testing.T) {
 	json.Unmarshal(res, &envResults)
 	assert.Equal(t, envResults.Name, "Preproduction")
 }
+
+func Test_cloneEnvironmentHandler(t *testing.T) {
+	db := test.SetupPG(t)
+
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_cloneEnvironmentHandler"}
+	router.init()
+
+	//1. Create admin user
+	u, pass := test.InsertAdminUser(t, db)
+
+	//2. Create project
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
+
+	//3. Create env
+	env := sdk.Environment{
+		ProjectID: proj.ID,
+		Name:      "Preproduction",
+	}
+	if err := environment.InsertEnvironment(db, &env); err != nil {
+		t.Fail()
+		return
+	}
+
+	vars := map[string]string{
+		"key": proj.Key,
+		"permEnvironmentName": env.Name,
+	}
+
+	uri := router.getRoute("GET", getEnvironmentHandler, vars)
+}
