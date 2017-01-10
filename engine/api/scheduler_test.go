@@ -1,195 +1,286 @@
 package main
 
 import (
-	_ "testing"
+	"testing"
 
-	_ "github.com/proullon/ramsql/engine/log"
+	"github.com/gorilla/mux"
+	"github.com/loopfz/gadgeto/iffy"
 
-	_ "github.com/ovh/cds/engine/api/action"
-	_ "github.com/ovh/cds/engine/api/pipeline"
-	_ "github.com/ovh/cds/engine/api/project"
-	_ "github.com/ovh/cds/engine/api/scheduler"
-	_ "github.com/ovh/cds/engine/api/test"
-	_ "github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/scheduler"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 )
 
-// FIXME ramsql subqueries
-/*
-func TestPipelineScheduler(t *testing.T) {
+func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
+	db := test.SetupPG(t)
 
-	log.SetLevel(log.InfoLevel)
-	db := test.Setup("TestPipelineScheduler", t)
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler"}
+	router.init()
 
-	// 1. Insert project
-	myProject := &sdk.Project{
-		Name: "Foo",
-		Key:  "FOO",
-	}
-	err := project.InsertProject(db, myProject)
-	if err != nil {
-		t.Fatalf("Cannot insert project: %s\n", err)
-	}
+	//Create admin user
+	u, pass := test.InsertAdminUser(t, db)
 
-	// 2. Insert pipeline
-	myPipeline := &sdk.Pipeline{
-		Name:      "BAR",
-		ProjectID: myProject.ID,
-	}
-	err = pipeline.InsertPipeline(db, myPipeline)
-	if err != nil {
-		t.Fatalf("Cannot insert pipeline: %s\n", err)
-	}
+	//Create a fancy httptester
+	tester := iffy.NewTester(t, router.mux)
 
-	// 3. Create 3 actions
-	actionData := &sdk.Action{
-		Name: "Action1",
+	//Insert Project
+	pkey := test.RandomString(t, 10)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
+
+	//Insert Pipeline
+	pip := &sdk.Pipeline{
+		Name:       pkey + "_PIP",
+		Type:       sdk.BuildPipeline,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
 	}
-	err = action.InsertAction(db, actionData)
-	if err != nil {
-		t.Fatalf("Cannot insert action1: %s", err)
+	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
+	if err := pipeline.InsertPipeline(db, pip); err != nil {
+		t.Fatal(err)
 	}
 
-	actionData = &sdk.Action{
-		Name: "Action2",
+	//Insert Application
+	app := &sdk.Application{
+		Name: "TEST_APP",
 	}
-	err = action.InsertAction(db, actionData)
-	if err != nil {
-		t.Fatalf("Cannot insert action2: %s", err)
-	}
-
-	actionData = &sdk.Action{
-		Name: "Action3",
-	}
-	err = action.InsertAction(db, actionData)
-	if err != nil {
-		t.Fatalf("Cannot insert action3: %s", err)
+	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
+	if err := application.InsertApplication(db, proj, app); err != nil {
+		t.Fatal(err)
 	}
 
-	// 4. Add 2 stages
-	stage1 := &sdk.Stage{
-		ID:         0,
-		PipelineID: myPipeline.ID,
-		Name:       "Stage 1",
-		BuildOrder: 1,
-		Enabled:    true,
-	}
-	err = pipeline.InsertStage(db, stage1)
-	if err != nil {
-		t.Fatalf("Cannot insert stage 1: %s", err)
-	}
-	if stage1.ID == 0 {
-		t.Fatalf("Stage.ID cannot be 0")
+	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
+	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+		t.Fatal(err)
 	}
 
-	stage2 := &sdk.Stage{
-		ID:         0,
-		PipelineID: myPipeline.ID,
-		Name:       "Stage 2",
-		BuildOrder: 2,
-		Enabled:    true,
+	s := &sdk.PipelineScheduler{
+		ApplicationID: app.ID,
+		EnvironmentID: sdk.DefaultEnv.ID,
+		PipelineID:    pip.ID,
+		Crontab:       "@hourly",
+		Disabled:      false,
+		Args: []sdk.Parameter{
+			{
+				Name:  "p1",
+				Type:  sdk.StringParameter,
+				Value: "v1",
+			},
+			{
+				Name:  "p2",
+				Type:  sdk.StringParameter,
+				Value: "v2",
+			},
+		},
 	}
-	err = pipeline.InsertStage(db, stage2)
-	if err != nil {
-		t.Fatalf("Cannot insert stage 2: %s", err)
-	}
-	if stage2.ID == 0 {
-		t.Fatalf("Stage.ID cannot be 0")
-	}
-
-	// 5. Add Action to pipeline
-
-	// add action 1 in stage 1
-	err = pipeline.InsertPipelineAction(db, myProject.Key, myPipeline.Name, "Action1", "[{\"name\":\"yo\",\"value\":\"lol\"}]", stage1.ID)
-	if err != nil {
-		t.Fatalf("cannot insert pipeline action 1: %s", err)
-	}
-
-	err = pipeline.InsertPipelineAction(db, myProject.Key, myPipeline.Name, "Action2", "[{\"name\":\"yo\",\"value\":\"lol\"}]", stage1.ID)
-	if err != nil {
-		t.Fatalf("cannot insert pipeline action 2: %s", err)
+	if err := scheduler.Insert(database.DBMap(db), s); err != nil {
+		t.Fatal(err)
 	}
 
-	err = pipeline.InsertPipelineAction(db, myProject.Key, myPipeline.Name, "Action3", "[{\"name\":\"yo\",\"value\":\"lol\"}]", stage2.ID)
-	if err != nil {
-		t.Fatalf("cannot insert pipeline action 3: %s", err)
-	}
+	scheduler.SchedulerRun()
+	scheduler.ExecuterRun()
 
-	// 6. Create Pipeline Build
-
-	if err != nil {
-		t.Fatalf("Cannot load pipeline: %s", err)
+	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+		"permPipelineKey":     pip.Name,
 	}
-	pb, err := pipeline.InsertPipelineBuild(db, myPipeline, []string{})
-	if err != nil {
-		t.Fatalf("cannot insert pipeline build: %s\n", err)
-	}
-
-	// 7. Run scheduler => should schedule the 2 actions of stage 1
-	log.Critical("1st wave")
-	pipelineBuilds, err := pipeline.LoadBuildingPipelines(db)
-	if err != nil {
-		t.Fatalf("cannot load pipelines builds: %s\n", err)
-
-	}
-	for i := range pipelineBuilds {
-		scheduler.PipelineScheduler(db, pipelineBuilds[i])
-	}
-
-	builds, err := build.LoadBuildByPipelineBuildID(db, pb.ID)
-	if err != nil {
-		t.Fatalf("cannot load builds: %s\n", err)
-	}
-	if len(builds) != 2 {
-		t.Fatalf("Should have 2 actions, got %d\n", len(builds))
-	}
-	if builds[0].PipelineActionID == builds[1].PipelineActionID {
-		t.Fatalf("Should not schedule the same action twice")
-	}
-	if !(builds[0].Status == builds[1].Status && builds[0].Status == sdk.StatusWaiting) {
-		t.Fatalf("Action should be StatusWaiting")
-	}
-
-	// 8. Update action_build status
-	err = build.UpdateActionBuildStatus(db, builds[0], sdk.StatusBuilding)
-	if err != nil {
-		t.Fatalf("cannot update build[0] status : %s\n", err)
-	}
-	err = build.UpdateActionBuildStatus(db, builds[0], sdk.StatusSuccess)
-	if err != nil {
-		t.Fatalf("cannot update build[0] status : %s\n", err)
-	}
-	err = build.UpdateActionBuildStatus(db, builds[1], sdk.StatusBuilding)
-	if err != nil {
-		t.Fatalf("cannot update build[0] status : %s\n", err)
-	}
-	err = build.UpdateActionBuildStatus(db, builds[1], sdk.StatusSuccess)
-	if err != nil {
-		t.Fatalf("cannot update build[1] status : %s\n", err)
-	}
-
-	// FIXME RAMSQL PB ?
-	/*
-		// 9. Run scheduler => should schedule the action of stage 2
-		pipelineBuilds, err = pipeline.LoadBuildingPipelines(db)
-		if err != nil {
-			t.Fatalf("cannot load pipelines builds: %s\n", err)
-
-		}
-
-		for i := range pipelineBuilds {
-			scheduler.PipelineScheduler(db, pipelineBuilds[i])
-		}
-
-		log.Warning("2nd wave")
-
-		// 10.
-
-		builds, err = build.LoadBuildByPipelineBuildID(db, pb.ID)
-		if err != nil {
-			t.Fatalf("cannot load builds: %s\n", err)
-		}
-		if len(builds) != 3 {
-			t.Fatalf("Should have 3 actions, got %d\n", len(builds))
-		}
+	route := router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
+	headers := test.AuthHeaders(t, u, pass)
+	tester.AddCall("Test_getSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
+	tester.Run()
 }
-*/
+
+func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
+	db := test.SetupPG(t)
+
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addSchedulerApplicationPipelineHandler"}
+	router.init()
+
+	//Create admin user
+	u, pass := test.InsertAdminUser(t, db)
+
+	//Create a fancy httptester
+	tester := iffy.NewTester(t, router.mux)
+
+	//Insert Project
+	pkey := test.RandomString(t, 10)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
+
+	//Insert Pipeline
+	pip := &sdk.Pipeline{
+		Name:       pkey + "_PIP",
+		Type:       sdk.BuildPipeline,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+
+	if err := pipeline.InsertPipeline(db, pip); err != nil {
+		t.Fatal(err)
+	}
+
+	//Insert Application
+	app := &sdk.Application{
+		Name: "TEST_APP",
+	}
+
+	if err := application.InsertApplication(db, proj, app); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	s := &sdk.PipelineScheduler{
+		Crontab: "@hourly",
+	}
+
+	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+		"permPipelineKey":     pip.Name,
+	}
+	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
+	headers := test.AuthHeaders(t, u, pass)
+	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t))
+	tester.Run()
+	tester.Reset()
+
+	scheduler.SchedulerRun()
+	scheduler.ExecuterRun()
+
+	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
+	tester.AddCall("Test_getSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
+	tester.Run()
+}
+
+func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
+	db := test.SetupPG(t)
+
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_updatechedulerApplicationPipelineHandler"}
+	router.init()
+
+	//Create admin user
+	u, pass := test.InsertAdminUser(t, db)
+
+	//Create a fancy httptester
+	tester := iffy.NewTester(t, router.mux)
+
+	//Insert Project
+	pkey := test.RandomString(t, 10)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
+
+	//Insert Pipeline
+	pip := &sdk.Pipeline{
+		Name:       pkey + "_PIP",
+		Type:       sdk.BuildPipeline,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+
+	if err := pipeline.InsertPipeline(db, pip); err != nil {
+		t.Fatal(err)
+	}
+
+	//Insert Application
+	app := &sdk.Application{
+		Name: "TEST_APP",
+	}
+
+	if err := application.InsertApplication(db, proj, app); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	s := &sdk.PipelineScheduler{
+		Crontab: "@hourly",
+	}
+
+	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+		"permPipelineKey":     pip.Name,
+	}
+	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
+	headers := test.AuthHeaders(t, u, pass)
+	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(&s))
+	route = router.getRoute("PUT", updateSchedulerApplicationPipelineHandler, vars)
+	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "PUT", route, s).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
+	tester.Run()
+	tester.Reset()
+
+	scheduler.SchedulerRun()
+	scheduler.ExecuterRun()
+
+	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
+	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
+	tester.Run()
+}
+
+func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
+	db := test.SetupPG(t)
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_deleteSchedulerApplicationPipelineHandler"}
+	router.init()
+
+	//Create admin user
+	u, pass := test.InsertAdminUser(t, db)
+
+	//Create a fancy httptester
+	tester := iffy.NewTester(t, router.mux)
+
+	//Insert Project
+	pkey := test.RandomString(t, 10)
+	proj := test.InsertTestProject(t, db, pkey, pkey)
+
+	//Insert Pipeline
+	pip := &sdk.Pipeline{
+		Name:       pkey + "_PIP",
+		Type:       sdk.BuildPipeline,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+
+	if err := pipeline.InsertPipeline(db, pip); err != nil {
+		t.Fatal(err)
+	}
+
+	//Insert Application
+	app := &sdk.Application{
+		Name: "TEST_APP",
+	}
+
+	if err := application.InsertApplication(db, proj, app); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	s := &sdk.PipelineScheduler{
+		Crontab: "@hourly",
+	}
+
+	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+		"permPipelineKey":     pip.Name,
+	}
+	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
+	headers := test.AuthHeaders(t, u, pass)
+	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(&s))
+	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "DELETE", route, s).Headers(headers).Checkers(iffy.ExpectStatus(200))
+
+	tester.Run()
+	tester.Reset()
+
+	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
+	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(0), iffy.DumpResponse(t))
+	tester.Run()
+}

@@ -111,7 +111,7 @@ func loadprojectwithvariablesandappsandacitvities(db database.Querier, key strin
 			envName, pipName, type,
 			build_number, version, status,
 			start, done,
-			manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+			manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 			username, pipTriggerFrom, versionTriggerFrom
 		FROM load_apps
 		LEFT JOIN LATERAL (
@@ -119,7 +119,7 @@ func loadprojectwithvariablesandappsandacitvities(db database.Querier, key strin
 				application_id, environment_id as envID, pipeline_id, id as pbid, envName, pipName, type,
 				build_number, version, status,
 				start, done,
-				manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
 				username, pipTriggerFrom, versionTriggerFrom
 			  FROM ( (%s)  UNION (%s) ) as pb
 			  ORDER BY start DESC
@@ -134,7 +134,7 @@ func loadprojectwithvariablesandappsandacitvities(db database.Querier, key strin
 			NULL as envName, NULL as pipName, NULL as type,
 			NULL as build_number, NULL as version, NULL as status,
 			NULL as start, NULL as done,
-			NULL as manual_trigger, NULL as triggered_by, NULL as parent_pipeline_build_id, NULL as vcs_changes_branch, NULL as vcs_changes_hash, NULL as vcs_changes_author,
+			NULL as manual_trigger, NULL as scheduled_trigger, NULL as triggered_by, NULL as parent_pipeline_build_id, NULL as vcs_changes_branch, NULL as vcs_changes_hash, NULL as vcs_changes_author,
 			NULL as username, NULL as pipTriggerFrom, NULL as versionTriggerFrom
 		FROM load_vars
 	) as p
@@ -174,7 +174,7 @@ func loadprojectwithvariablesandappsandacitvities(db database.Querier, key strin
 	var varname, appname, value, typ, envName, pipName, typePip, status, branch, hash, author, username, pipTriggerFrom sql.NullString
 	var varid, appid, envID, pipID, pbID, buildNumber, triggeredBy, parentPbID, version, versionTriggerFrom sql.NullInt64
 	var start, done pq.NullTime
-	var manualTrigger sql.NullBool
+	var manualTrigger, scheduledTrigger sql.NullBool
 	var currentApp int
 	var lastModified time.Time
 	var appLastModified time.Time
@@ -185,7 +185,7 @@ func loadprojectwithvariablesandappsandacitvities(db database.Querier, key strin
 			&envName, &pipName, &typePip,
 			&buildNumber, &version, &status,
 			&start, &done,
-			&manualTrigger, &triggeredBy, &parentPbID, &branch, &hash, &author,
+			&manualTrigger, &scheduledTrigger, &triggeredBy, &parentPbID, &branch, &hash, &author,
 			&username, &pipTriggerFrom, &versionTriggerFrom)
 		if err != nil {
 			return nil, err
@@ -244,6 +244,10 @@ func loadprojectwithvariablesandappsandacitvities(db database.Querier, key strin
 
 				if manualTrigger.Valid {
 					pb.Trigger.ManualTrigger = manualTrigger.Bool
+				}
+
+				if scheduledTrigger.Valid {
+					pb.Trigger.ScheduledTrigger = scheduledTrigger.Bool
 				}
 
 				if branch.Valid {

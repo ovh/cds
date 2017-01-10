@@ -175,16 +175,18 @@ func LoadApplicationByName(db database.Querier, projectKey, appName string, farg
 }
 
 // LoadApplicationByID load the given application
-func LoadApplicationByID(db database.Querier, applicationID int64) (*sdk.Application, error) {
+func LoadApplicationByID(db database.Querier, applicationID int64, fargs ...FuncArg) (*sdk.Application, error) {
 	var app sdk.Application
 	query := `
 			SELECT
 					application.id, application.name, application.last_modified, application.repo_fullname,
 					repositories_manager.id as rmid,  repositories_manager.name as rmname,
 					repositories_manager.type as rmType, repositories_manager.url as rmurl,
-					repositories_manager.data as rmdata
+					repositories_manager.data as rmdata,
+					project.projectkey
 		  FROM application
-			LEFT OUTER JOIN repositories_manager on repositories_manager.id = application.repositories_manager_id
+		  JOIN project ON project.ID = application.project_id
+		  LEFT OUTER JOIN repositories_manager on repositories_manager.id = application.repositories_manager_id
 		  WHERE application.id = $1
 		  ORDER by application.name`
 
@@ -193,8 +195,7 @@ func LoadApplicationByID(db database.Querier, applicationID int64) (*sdk.Applica
 	var rmType, rmName, rmURL, rmData, repoFullname sql.NullString
 	var rm *sdk.RepositoriesManager
 	var lastModified time.Time
-	err := db.QueryRow(query, applicationID).Scan(&app.ID, &app.Name, &lastModified, &repoFullname, &rmID, &rmName, &rmType, &rmURL, &rmData)
-	if err != nil {
+	if err := db.QueryRow(query, applicationID).Scan(&app.ID, &app.Name, &lastModified, &repoFullname, &rmID, &rmName, &rmType, &rmURL, &rmData, &app.ProjectKey); err != nil {
 		if err == sql.ErrNoRows {
 			return &app, sdk.ErrApplicationNotFound
 		}
@@ -203,6 +204,7 @@ func LoadApplicationByID(db database.Querier, applicationID int64) (*sdk.Applica
 	app.LastModified = lastModified.Unix()
 	//check data for repositories_manager
 	if rmID.Valid && rmType.Valid && rmName.Valid && rmURL.Valid {
+		var err error
 		rm, err = repositoriesmanager.New(sdk.RepositoriesManagerType(rmType.String), rmID.Int64, rmName.String, rmURL.String, map[string]string{}, rmData.String)
 		if err != nil {
 			log.Warning("LoadApplications> Error loading repositories manager %s", err)
@@ -214,8 +216,7 @@ func LoadApplicationByID(db database.Querier, applicationID int64) (*sdk.Applica
 	}
 	app.RepositoriesManager = rm
 
-	err = loadDependencies(db, &app)
-	return &app, err
+	return &app, loadDependencies(db, &app, fargs...)
 }
 
 func loadDependencies(db database.Querier, app *sdk.Application, fargs ...FuncArg) error {

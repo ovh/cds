@@ -31,6 +31,7 @@ import (
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
+	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/stats"
@@ -182,14 +183,24 @@ var mainCmd = &cobra.Command{
 		go hatchery.Heartbeat()
 		go log.RemovalRoutine()
 		go auditCleanerRoutine()
+
 		go repositoriesmanager.RepositoriesCacheLoader(30)
 		go repositoriesmanager.ReceiveEvents()
+
 		go stats.StartRoutine()
 		go action.RequirementsCacheLoader(5)
 		go worker.ModelCapabilititiesCacheLoader(5)
 		go hookRecoverer()
-		go polling.Initialize()
-		go polling.ExecutionCleaner()
+
+		if !viper.GetBool("no_repo_cache_loader") {
+			go repositoriesmanager.RepositoriesCacheLoader(30)
+		}
+		if !viper.GetBool("no_repo_polling") {
+			go polling.Initialize()
+			go polling.ExecutionCleaner()
+		}
+
+		go scheduler.Initialize(10)
 
 		s := &http.Server{
 			Addr:           ":" + viper.GetString("listen_port"),
@@ -284,6 +295,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline", GET(getPipelinesInApplicationHandler), PUT(updatePipelinesToApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}", POST(attachPipelineToApplicationHandler), PUT(updatePipelineToApplicationHandler), DELETE(removePipelineFromApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification", GET(getUserNotificationApplicationPipelineHandler), PUT(updateUserNotificationApplicationPipelineHandler), DELETE(deleteUserNotificationApplicationPipelineHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler", GET(getSchedulerApplicationPipelineHandler), POST(addSchedulerApplicationPipelineHandler), PUT(updateSchedulerApplicationPipelineHandler), DELETE(deleteSchedulerApplicationPipelineHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/tree", GET(getApplicationTreeHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/variable", GET(getVariablesInApplicationHandler), PUT(updateVariablesInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/variable/audit", GET(getVariablesAuditInApplicationHandler))
@@ -332,6 +344,7 @@ func (router *Router) init() {
 	// Environment
 	router.Handle("/project/{permProjectKey}/environment", GET(getEnvironmentsHandler), POST(addEnvironmentHandler), PUT(updateEnvironmentsHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}", GET(getEnvironmentHandler), PUT(updateEnvironmentHandler), DELETE(deleteEnvironmentHandler))
+	router.Handle("/project/{key}/environment/{permEnvironmentName}/clone", POST(cloneEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit", GET(getEnvironmentsAuditHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit/{auditID}", PUT(restoreEnvironmentAuditHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/group", POST(addGroupInEnvironmentHandler))
@@ -562,6 +575,12 @@ func init() {
 
 	flags.String("event-kafka-password", "", "Ex: --kafka-password=your-kafka-password")
 	viper.BindPFlag("event_kafka_password", flags.Lookup("event-kafka-password"))
+
+	flags.Bool("no-repo-polling", false, "Disable repositories manager polling")
+	viper.BindPFlag("no_repo_polling", flags.Lookup("no-repo-polling"))
+
+	flags.Bool("no-repo-cache-loader", false, "Disable repositories cache loader")
+	viper.BindPFlag("no_repo_cache_loader", flags.Lookup("no-repo-cache-loader"))
 
 	mainCmd.AddCommand(database.DBCmd)
 

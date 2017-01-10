@@ -48,6 +48,7 @@ func NewWorker(key string) *Worker {
 //WorkerExecution represents a worker execution for a poller instance
 type WorkerExecution struct {
 	ID          int64              `json:"id"`
+	Project     string             `json:"project"`
 	Application string             `json:"application"`
 	Pipeline    string             `json:"pipeline"`
 	Execution   time.Time          `json:"execution"`
@@ -58,7 +59,11 @@ type WorkerExecution struct {
 func isWorkerRunning(key string) bool {
 	RunningPollers.mutex.RLock()
 	defer RunningPollers.mutex.RUnlock()
-	return RunningPollers.Workers[key] != nil
+
+	b := (RunningPollers.Workers[key] != nil)
+	cache.Set("reposmanager:polling:"+key, b)
+
+	return b
 }
 
 //Initialize all existing pollers (one poller per project)
@@ -89,6 +94,7 @@ func Initialize() {
 
 			case w := <-endPollerChan:
 				RunningPollers.mutex.Lock()
+				log.Debug("Polling> End : %s", w.ProjectKey)
 				delete(RunningPollers.Workers, w.ProjectKey)
 				RunningPollers.mutex.Unlock()
 			}
@@ -238,7 +244,7 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 		time.Sleep(time.Duration(r.Float64()*10) * time.Second)
 	}
 
-	log.Debug("Polling> End\n")
+	log.Warning("Polling> End (appID=%s pipID=%d)", appID, pipID)
 	quit <- true
 }
 
@@ -412,7 +418,7 @@ func ExecutionCleaner() {
 			continue
 		}
 
-		execs, _ := LoadExecutions(db, "", "")
+		execs, _ := LoadExecutions(db, "", "", "")
 
 		for i := range execs {
 			fiveDaysAgo := time.Now().Add(-5 * 24 * time.Hour)
@@ -425,11 +431,13 @@ func ExecutionCleaner() {
 }
 
 //LoadExecutions returns all executions in database
-func LoadExecutions(db database.QueryExecuter, application, pipeline string) ([]WorkerExecution, error) {
+func LoadExecutions(db database.QueryExecuter, project, application, pipeline string) ([]WorkerExecution, error) {
 	query := `
-		select poller_execution.id, application.name, pipeline.name, poller_execution.execution_date, poller_execution.status, poller_execution.data
-		from poller_execution, application, pipeline
+		select poller_execution.id, project.projectkey, application.name, pipeline.name, poller_execution.execution_date, poller_execution.status, poller_execution.data
+		from poller_execution, application, pipeline, project
 		where poller_execution.application_id = application.id
+		and project.id = application.project_id
+		and project.id = pipeline.project_id
 		and poller_execution.pipeline_id = pipeline.id
 		order by poller_execution.execution_date desc
 	`
@@ -447,7 +455,7 @@ func LoadExecutions(db database.QueryExecuter, application, pipeline string) ([]
 		var e WorkerExecution
 		var j sql.NullString
 
-		if err := rows.Scan(&e.ID, &e.Application, &e.Pipeline, &e.Execution, &e.Status, &j); err != nil {
+		if err := rows.Scan(&e.ID, &e.Project, &e.Application, &e.Pipeline, &e.Execution, &e.Status, &j); err != nil {
 			return nil, err
 		}
 		if j.Valid {
@@ -455,6 +463,9 @@ func LoadExecutions(db database.QueryExecuter, application, pipeline string) ([]
 			json.Unmarshal(b, &e.Events)
 		}
 		var ok = true
+		if project != "" && project != e.Project {
+			ok = false
+		}
 		if application != "" && application != e.Application {
 			ok = false
 		}

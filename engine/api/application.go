@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/notification"
@@ -455,36 +456,56 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	projectData, err := project.LoadProject(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("cloneApplicationHandler> Cannot load %s: %s\n", projectKey, err)
+	projectData, errProj := project.LoadProject(db, projectKey, c.User)
+	if errProj != nil {
+		log.Warning("cloneApplicationHandler> Cannot load %s: %s\n", projectKey, errProj)
 		WriteError(w, r, sdk.ErrNoProject)
 		return
 	}
 
 	var newApp sdk.Application
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
-	err = json.Unmarshal(data, &newApp)
-	if err != nil {
+	if err := json.Unmarshal(data, &newApp); err != nil {
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	appToClone, err := application.LoadApplicationByName(db, projectKey, applicationName)
-	if err != nil {
-		log.Warning("cloneApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
-		WriteError(w, r, sdk.ErrApplicationNotFound)
+	appToClone, errApp := application.LoadApplicationByName(db, projectKey, applicationName)
+	if errApp != nil {
+		log.Warning("cloneApplicationHandler> Cannot load application %s: %s\n", applicationName, errApp)
+		WriteError(w, r, errApp)
 		return
 	}
 
-	err = cloneApplication(db, projectData, &newApp, appToClone)
-	if err != nil {
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("cloneApplicationHandler> Cannot start transaction : %s\n", errBegin)
+		WriteError(w, r, errBegin)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := cloneApplication(tx, projectData, &newApp, appToClone); err != nil {
 		log.Warning("cloneApplicationHandler> Cannot insert new application %s: %s\n", newApp.Name, err)
+		WriteError(w, r, err)
+		return
+	}
+
+	lastModified, errLM := project.UpdateProjectDB(tx, projectData.Key, projectData.Name)
+	if errLM != nil {
+		log.Warning("cloneApplicationHandler> Cannot update project last modified date: %s\n", errLM)
+		WriteError(w, r, errLM)
+		return
+	}
+	projectData.LastModified = lastModified.Unix()
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("cloneApplicationHandler> Cannot commit transaction : %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -492,28 +513,22 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
 
+	WriteJSON(w, r, newApp, http.StatusOK)
+
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(db *sql.DB, project *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
+func cloneApplication(db database.QueryExecuter, project *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
 	newApp.Pipelines = appToClone.Pipelines
 	newApp.ApplicationGroups = appToClone.ApplicationGroups
 
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
 	// Create Application
-	err = application.InsertApplication(tx, project, newApp)
-	if err != nil {
+	if err := application.InsertApplication(db, project, newApp); err != nil {
 		return err
 	}
 
 	// Insert Permission
-	err = group.InsertGroupsInApplication(tx, newApp.ApplicationGroups, newApp.ID)
-	if err != nil {
+	if err := group.InsertGroupsInApplication(db, newApp.ApplicationGroups, newApp.ID); err != nil {
 		return err
 	}
 
@@ -535,32 +550,31 @@ func cloneApplication(db *sql.DB, project *sdk.Project, newApp *sdk.Application,
 
 	// Insert variable
 	for _, v := range newApp.Variable {
+		var errVar error
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			err = application.AddKeyPairToApplication(tx, newApp, v.Name)
+			errVar = application.AddKeyPairToApplication(db, newApp, v.Name)
 		} else {
-			err = application.InsertVariable(tx, newApp, v)
+			errVar = application.InsertVariable(db, newApp, v)
 		}
-		if err != nil {
-			return err
+		if errVar != nil {
+			return errVar
 		}
 	}
 
 	// Attach pipeline + Set pipeline parameters
 	for _, appPip := range newApp.Pipelines {
-		err = application.AttachPipeline(tx, newApp.ID, appPip.Pipeline.ID)
-		if err != nil {
+		if err := application.AttachPipeline(db, newApp.ID, appPip.Pipeline.ID); err != nil {
 			return err
 		}
 
-		err = application.UpdatePipelineApplication(tx, newApp, appPip.Pipeline.ID, appPip.Parameters)
-		if err != nil {
+		if err := application.UpdatePipelineApplication(db, newApp, appPip.Pipeline.ID, appPip.Parameters); err != nil {
 			return err
 		}
 	}
 
 	// Load trigger to clone
-	triggers, err := trigger.LoadTriggerByApp(tx, appToClone.ID)
+	triggers, err := trigger.LoadTriggerByApp(db, appToClone.ID)
 	if err != nil {
 		return err
 	}
@@ -572,13 +586,11 @@ func cloneApplication(db *sql.DB, project *sdk.Project, newApp *sdk.Application,
 			t.DestApplication = *newApp
 		}
 		t.SrcApplication = *newApp
-		err = trigger.InsertTrigger(tx, &t)
-		if err != nil {
+		if err := trigger.InsertTrigger(db, &t); err != nil {
 			return err
 		}
 	}
-
-	return tx.Commit()
+	return nil
 }
 
 func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {

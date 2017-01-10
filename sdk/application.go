@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 // Repository structs contains all needed information about a single repository
@@ -379,22 +380,29 @@ func AddGroupInApplication(projectKey, appName, groupName string, permission int
 func ListApplicationPipeline(projectKey, appName string) ([]Pipeline, error) {
 	var pipelines []Pipeline
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline", projectKey, appName)
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return pipelines, err
+	data, code, errReq := Request("GET", path, nil)
+	if errReq != nil {
+		return nil, errReq
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return pipelines, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return pipelines, e
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
-	err = json.Unmarshal(data, &pipelines)
-	if err != nil {
-		return pipelines, err
+	if e := DecodeError(data); e != nil {
+		return nil, e
+	}
+
+	if err := json.Unmarshal(data, &pipelines); err != nil {
+		return nil, err
+	}
+
+	for i, pip := range pipelines {
+		pip2, err := GetPipeline(projectKey, pip.Name)
+		if err != nil {
+			return nil, err
+		}
+		pipelines[i] = *pip2
 	}
 
 	return pipelines, nil
@@ -464,6 +472,118 @@ func RemoveApplicationPipeline(projectKey, appName, pipelineName string) error {
 	e := DecodeError(data)
 	if e != nil {
 		return e
+	}
+
+	return nil
+}
+
+//GetPipelineScheduler returns all pipeline scheduler
+func GetPipelineScheduler(projectKey, appName, pipelineName string) ([]PipelineScheduler, error) {
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
+	data, code, err := Request("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
+	}
+
+	if err := DecodeError(data); err != nil {
+		return nil, err
+	}
+
+	ps := []PipelineScheduler{}
+	if err := json.Unmarshal(data, &ps); err != nil {
+		return nil, err
+	}
+
+	return ps, nil
+}
+
+//AddPipelineScheduler add a pipeline scheduler
+func AddPipelineScheduler(projectKey, appName, pipelineName, cronExpr, envName string, params []Parameter) (*PipelineScheduler, error) {
+	s := PipelineScheduler{
+		Crontab: cronExpr,
+		Args:    params,
+	}
+
+	b, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
+	if envName != "" {
+		path = path + url.QueryEscape("?envName="+envName)
+	}
+	data, code, err := Request("POST", path, b)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := DecodeError(data); err != nil {
+		return nil, err
+	}
+
+	if code != http.StatusCreated && code != http.StatusOK {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
+	}
+
+	if err := json.Unmarshal(data, &s); err != nil {
+		return nil, err
+	}
+
+	return &s, nil
+}
+
+//UpdatePipelineScheduler update a pipeline scheduler
+func UpdatePipelineScheduler(projectKey, appName, pipelineName string, s *PipelineScheduler) (*PipelineScheduler, error) {
+	b, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
+	data, code, err := Request("PUT", path, b)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := DecodeError(data); err != nil {
+		return nil, err
+	}
+
+	if code != http.StatusCreated && code != http.StatusOK {
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
+	}
+
+	if err := json.Unmarshal(data, s); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+//DeletePipelineScheduler update a pipeline scheduler
+func DeletePipelineScheduler(projectKey, appName, pipelineName string, s *PipelineScheduler) error {
+	b, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
+	data, code, err := Request("DELETE", path, b)
+	if err != nil {
+		return err
+	}
+
+	if err := DecodeError(data); err != nil {
+		return err
+	}
+
+	if code != http.StatusOK {
+		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	return nil

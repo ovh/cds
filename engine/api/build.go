@@ -705,8 +705,6 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 		WriteError(w, r, err)
 		return
 	}
-
-	log.Notice("addBuildVariableHandler> Build variable %s added\n", v.Name)
 }
 
 func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
