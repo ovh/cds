@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -184,9 +183,9 @@ func LoadNextExecution(db gorp.SqlExecutor, id int64) (*sdk.PipelineSchedulerExe
 }
 
 //LoadPastExecutions loads all pipeline execution executed prior date 't'
-func LoadPastExecutions(db gorp.SqlExecutor, t time.Time) ([]sdk.PipelineSchedulerExecution, error) {
+func LoadPastExecutions(db gorp.SqlExecutor, id int64) ([]sdk.PipelineSchedulerExecution, error) {
 	as := []database.PipelineSchedulerExecution{}
-	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where executed = true and execution_date <= $1", t); err != nil {
+	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where pipeline_scheduler_id = $1 and executed = true order by execution_date asc", id); err != nil {
 		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
 		return nil, err
 	}

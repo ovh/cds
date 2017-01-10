@@ -2,7 +2,6 @@ package repositoriesmanager
 
 import (
 	"database/sql"
-	"sync"
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -47,7 +46,6 @@ func RepositoriesCacheLoader(delay int) {
 					p.ID = id
 					projects = append(projects, p)
 				}
-				wg := &sync.WaitGroup{}
 				for _, proj := range projects {
 					projectKey := proj.Key
 					rms, err := LoadAllForProject(db, projectKey)
@@ -65,19 +63,18 @@ func RepositoriesCacheLoader(delay int) {
 						if client == nil {
 							continue
 						}
-						go func(projectKey, rmName string) {
-							wg.Add(1)
-							var repos []sdk.VCSRepo
-							cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
-							log.Info("RepositoriesCacheLoader> Loading repos for %s on %s", projectKey, rmName)
-							repos, err = client.Repos()
-							cache.SetWithTTL(cacheKey, &repos, 0)
-							wg.Done()
-						}(projectKey, rmName)
-						time.Sleep(120 * time.Second)
+						var repos []sdk.VCSRepo
+						cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
+						log.Info("RepositoriesCacheLoader> Loading repos for %s on %s", projectKey, rmName)
+						repos, err = client.Repos()
+						if err != nil {
+							log.Warning("RepositoriesCacheLoader> Unable to get repos : %s", err)
+							continue
+						}
+						cache.SetWithTTL(cacheKey, &repos, 0)
+						time.Sleep(10 * time.Millisecond)
 					}
 				}
-				wg.Wait()
 				cache.Delete(loaderKey)
 			}
 		}

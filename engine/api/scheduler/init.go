@@ -1,10 +1,8 @@
 package scheduler
 
-import "time"
-
 //Initialize starts the 3 goroutines for pipeline schedulers
-func Initialize(cleanerDelay time.Duration) {
-	go Cleaner(cleanerDelay)
+func Initialize(nbExecToKeep int) {
+	go Cleaner(nbExecToKeep)
 	go Executer()
 	go Scheduler()
 }

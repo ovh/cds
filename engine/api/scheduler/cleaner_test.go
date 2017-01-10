@@ -9,7 +9,7 @@ import (
 func TestCleanerRun(t *testing.T) {
 	test.SetupPG(t)
 
-	exs, err := CleanerRun(0)
+	exs, err := CleanerRun(2)
 	test.NoError(t, err)
 	t.Logf("Has deleted %v", exs)
 }
