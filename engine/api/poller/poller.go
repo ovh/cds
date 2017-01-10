@@ -134,7 +134,7 @@ func loadPollersByQUery(db database.Querier, query string, args ...interface{}) 
 			log.Warning("loadPollersByQuery> error loading application %d : %s", applicationID, err)
 			return nil, err
 		}
-		pip, err := pipeline.LoadPipelineByID(db, pipelineID)
+		pip, err := pipeline.LoadPipelineByID(db, pipelineID, true)
 		if err != nil {
 			log.Warning("loadPollersByQuery> error loading pipeline %d : %s", pipelineID, err)
 			return nil, err

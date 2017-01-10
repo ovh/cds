@@ -12,37 +12,24 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	test "github.com/ovh/cds/engine/api/testwithdb"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestGetApplicationWithTriggersHandler(t *testing.T) {
-	if test.DBDriver == "" {
-		t.SkipNow()
-		return
-	}
-	db, err := test.SetupPG(t)
-	assert.NoError(t, err)
+	db := test.SetupPG(t)
 
-	authDriver, _ := auth.GetDriver("local", nil, sessionstore.Options{Mode: "local"})
-	router = &Router{authDriver, mux.NewRouter(), "/TestGetApplicationHandler"}
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestGetApplicationHandler"}
 	router.init()
 
 	//1. Create admin user
-	u, pass, err := test.InsertAdminUser(t, db)
-	assert.NoError(t, err)
+	u, pass := test.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj, _ := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
-	assert.NotNil(t, proj)
-	if proj == nil {
-		t.Fail()
-		return
-	}
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
 	pipelineKey := test.RandomString(t, 10)
@@ -52,8 +39,9 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip1)
-	assert.NoError(t, err)
+	if err := pipeline.InsertPipeline(db, pip1); err != nil {
+		t.Fatal(err)
+	}
 
 	//4. Create Pipeline 2
 	pipelineKey = test.RandomString(t, 10)
@@ -63,8 +51,9 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip2)
-	assert.NoError(t, err)
+	if err := pipeline.InsertPipeline(db, pip2); err != nil {
+		t.Fatal(err)
+	}
 
 	//5. Create Pipeline 3
 	pipelineKey = test.RandomString(t, 10)
@@ -74,24 +63,30 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip3)
-	assert.NoError(t, err)
-
+	if err := pipeline.InsertPipeline(db, pip3); err != nil {
+		t.Fatal(err)
+	}
 	// 6. Create application
 	appName := test.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	err = application.InsertApplication(db, proj, app)
-	assert.NoError(t, err)
+	if err := application.InsertApplication(db, proj, app); err != nil {
+		t.Fatal(err)
+	}
 
 	// 7. Attach pipeline to application
-	err = application.AttachPipeline(db, app.ID, pip1.ID)
-	assert.NoError(t, err)
-	err = application.AttachPipeline(db, app.ID, pip2.ID)
-	assert.NoError(t, err)
-	err = application.AttachPipeline(db, app.ID, pip3.ID)
-	assert.NoError(t, err)
+	if err := application.AttachPipeline(db, app.ID, pip1.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := application.AttachPipeline(db, app.ID, pip2.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := application.AttachPipeline(db, app.ID, pip3.ID); err != nil {
+		t.Fatal(err)
+	}
 
 	// 8. Create Trigger between pip1 and pip2
 	t1 := &sdk.PipelineTrigger{
@@ -102,8 +97,9 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		DestApplication: *app,
 		DestPipeline:    *pip2,
 	}
-	err = trigger.InsertTrigger(db, t1)
-	assert.NoError(t, err)
+	if err := trigger.InsertTrigger(db, t1); err != nil {
+		t.Fatal(err)
+	}
 
 	// 8. Create Trigger between pip2 and pip3
 	t2 := &sdk.PipelineTrigger{
@@ -114,8 +110,9 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		DestApplication: *app,
 		DestPipeline:    *pip3,
 	}
-	err = trigger.InsertTrigger(db, t2)
-	assert.NoError(t, err)
+	if err := trigger.InsertTrigger(db, t2); err != nil {
+		t.Fatal(err)
+	}
 
 	// 9. Prepare the request
 	vars := map[string]string{
@@ -124,11 +121,9 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	}
 
 	uri := fmt.Sprintf("%s?withTriggers=true", router.getRoute("GET", getApplicationHandler, vars))
-	if uri == "" {
-		t.Fail()
-		return
-	}
-	req, err := http.NewRequest("GET", uri, nil)
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("GET", uri, nil)
 	test.AuthentifyRequest(t, req, u, pass)
 
 	//10. Do the request

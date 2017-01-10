@@ -1,9 +1,8 @@
 package queue
 
 import (
-	"database/sql"
-
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -12,7 +11,7 @@ import (
 )
 
 // RunPipeline  the given pipeline with the given parameters
-func RunPipeline(db *sql.Tx, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
+func RunPipeline(db database.QueryExecuter, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
 	// Load pipeline + Args
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {

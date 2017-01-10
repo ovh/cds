@@ -9,8 +9,10 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gorilla/mux"
-	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 func TestCreateServer(t *testing.T) {
@@ -24,7 +26,7 @@ func TestCreateServer(t *testing.T) {
 	router := mux.NewRouter()
 	router.HandleFunc("/TestCreateServer/servers", func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
-		assert.NoError(t, err)
+		test.NoError(t, err)
 		assert.NotNil(t, body)
 		t.Log(string(body))
 
@@ -45,7 +47,7 @@ func TestCreateServer(t *testing.T) {
 	}
 
 	err := createServer(s.URL+"/TestCreateServer", "", "test", "image", "flavor", "network", "192.168.0.1", "blabla\blabla", p)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	assert.NotZero(t, w.Code)
 

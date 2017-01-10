@@ -274,13 +274,6 @@ func UpdatePipelineApplicationString(db database.QueryExecuter, app *sdk.Applica
 // GetAllPipelineParam Get all the pipeline parameters
 //func GetAllPipelineParam(db database.Querier, applicationID, pipelineID int64, fargs ...FuncArg) ([]sdk.Parameter, error) {
 func GetAllPipelineParam(db database.Querier, applicationID, pipelineID int64) ([]sdk.Parameter, error) {
-	/*
-		c := structarg{}
-		for _, f := range fargs {
-			f(&c)
-		}
-	*/
-
 	var params []sdk.Parameter
 	query := `SELECT args FROM application_pipeline WHERE application_id=$1 AND pipeline_id=$2`
 
@@ -294,14 +287,6 @@ func GetAllPipelineParam(db database.Querier, applicationID, pipelineID int64) (
 	if err != nil {
 		return nil, err
 	}
-	/*
-		for i := range params {
-			if params[i].Type == sdk.PasswordParameter && c.clearsecret == false {
-				params[i].Value = sdk.PasswordPlaceholder
-			}
-		}
-	*/
-
 	return params, nil
 }
 
