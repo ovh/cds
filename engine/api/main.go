@@ -187,10 +187,14 @@ var mainCmd = &cobra.Command{
 
 		if !viper.GetBool("no_repo_cache_loader") {
 			go repositoriesmanager.RepositoriesCacheLoader(30)
+		} else {
+			log.Warning("⚠ Repositories cache loader is disabled")
 		}
 		if !viper.GetBool("no_repo_polling") {
 			go polling.Initialize()
 			go polling.ExecutionCleaner()
+		} else {
+			log.Warning("⚠ Repositories polling is disabled")
 		}
 
 		go scheduler.Initialize(10)
