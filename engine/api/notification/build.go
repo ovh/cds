@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -13,9 +12,6 @@ func SendActionBuild(db database.QueryExecuter, ab *sdk.ActionBuild, event sdk.N
 	if !notifON {
 		return
 	}
-
-	log.Debug("notification.SendActionBuild> pb:%d ab:%d event:%s status:%s notifType:%s",
-		ab.PipelineBuildID, ab.ID, event, status, sdk.ActionBuildNotif)
 
 	n := &sdk.Notif{
 		DateNotif:   time.Now().Unix(),

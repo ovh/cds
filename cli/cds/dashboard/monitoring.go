@@ -144,7 +144,7 @@ func (ui *Termui) drawMonitoringPipelines() {
 			for _, ab := range s.ActionBuilds {
 				if acount < 5 {
 					w := ui.actions[acount][pbsI]
-					newActionWidget(ab.ActionName, string(ab.Status), w)
+					newActionWidget(ab.Job.Action.Name, string(ab.Status), w)
 					acount++
 				}
 			}

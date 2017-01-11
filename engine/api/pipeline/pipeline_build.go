@@ -5,10 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
-
-	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/build"
@@ -315,18 +312,21 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 			stageI++
 			abI = 0
 		}
-		// if there is no action build in stage, add a new one
-		if len(pbs[pbI].Stages[stageI].ActionBuilds) == 0 && abID.Valid {
-			ab := sdk.ActionBuild{ID: abID.Int64, ActionName: actionName.String, Status: sdk.StatusFromString(abStatus.String)}
-			pbs[pbI].Stages[stageI].ActionBuilds = append(pbs[pbI].Stages[stageI].ActionBuilds, ab)
-			abI = 0
-		}
-		// if abID differs from the last one, append a new ActionBuild
-		if abID.Valid && pbs[pbI].Stages[stageI].ActionBuilds[abI].ID != abID.Int64 {
-			ab := sdk.ActionBuild{ID: abID.Int64, ActionName: actionName.String, Status: sdk.StatusFromString(abStatus.String)}
-			pbs[pbI].Stages[stageI].ActionBuilds = append(pbs[pbI].Stages[stageI].ActionBuilds, ab)
-			abI++
-		}
+		// TODO PIPELINEBUILD
+		/*
+			// if there is no action build in stage, add a new one
+			if len(pbs[pbI].Stages[stageI].ActionBuilds) == 0 && abID.Valid {
+				ab := sdk.ActionBuild{ID: abID.Int64, ActionName: actionName.String, Status: sdk.StatusFromString(abStatus.String)}
+				pbs[pbI].Stages[stageI].ActionBuilds = append(pbs[pbI].Stages[stageI].ActionBuilds, ab)
+				abI = 0
+			}
+			// if abID differs from the last one, append a new ActionBuild
+			if abID.Valid && pbs[pbI].Stages[stageI].ActionBuilds[abI].ID != abID.Int64 {
+				ab := sdk.ActionBuild{ID: abID.Int64, ActionName: actionName.String, Status: sdk.StatusFromString(abStatus.String)}
+				pbs[pbI].Stages[stageI].ActionBuilds = append(pbs[pbI].Stages[stageI].ActionBuilds, ab)
+				abI++
+			}
+		*/
 	}
 	return pbs, nil
 }
@@ -432,7 +432,8 @@ SELECT DISTINCT ON (project.projectkey, application.name, pb.application_id, pb.
 	pb.build_number, pb.version, pb.status, pb.args,
 	pb.start, pb.done,
 	pb.manual_trigger, pb.scheduled_trigger, pb.triggered_by, pb.parent_pipeline_build_id, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author,
-	"user".username, pipTriggerFrom.name as pipTriggerFrom, pbTriggerFrom.version as versionTriggerFrom
+	"user".username, pipTriggerFrom.name as pipTriggerFrom, pbTriggerFrom.version as versionTriggerFrom,
+	pb.stages
 FROM pipeline_build pb
 JOIN environment ON environment.id = pb.environment_id
 JOIN application ON application.id = pb.application_id
@@ -454,7 +455,7 @@ LIMIT 1000`
 	for rows.Next() {
 		p := sdk.PipelineBuild{}
 
-		var status, typePipeline, argsJSON string
+		var status, typePipeline, argsJSON, stages string
 		var manual, scheduled sql.NullBool
 		var trigBy, pPbID, version sql.NullInt64
 		var branch, hash, author, fromUser, fromPipeline sql.NullString
@@ -465,7 +466,7 @@ LIMIT 1000`
 			&p.BuildNumber, &p.Version, &status, &argsJSON,
 			&p.Start, &p.Done,
 			&manual, &scheduled, &trigBy, &pPbID, &branch, &hash, &author,
-			&fromUser, &fromPipeline, &version)
+			&fromUser, &fromPipeline, &version, &stages)
 		if err != nil {
 			log.Warning("LoadBuildingPipelines> Error while loading build information: %s", err)
 			return nil, err
@@ -474,6 +475,10 @@ LIMIT 1000`
 		p.Pipeline.Type = sdk.PipelineTypeFromString(typePipeline)
 		p.Application.ProjectKey = p.Pipeline.ProjectKey
 		loadPbTrigger(&p, manual, scheduled, pPbID, branch, hash, author, fromUser, fromPipeline, version)
+
+		if err := json.Unmarshal([]byte(stages), &p.Stages); err != nil {
+			return nil, err
+		}
 
 		if trigBy.Valid && p.Trigger.TriggeredBy != nil {
 			p.Trigger.TriggeredBy.ID = trigBy.Int64
@@ -495,6 +500,17 @@ LIMIT 1000`
 	}
 
 	return pip, nil
+}
+
+// UpdatePipelineBuildStatusAndStage Update pipeline build status + stage
+func UpdatePipelineBuildStatusAndStage(db database.Executer, pb sdk.PipelineBuild) error {
+	stagesB, errStage := json.Marshal(pb.Stages)
+	if errStage != nil {
+		return errStage
+	}
+	query := `UPDATE pipeline_build set status = $1, stages = $2 WHERE id = $3`
+	_, err := db.Exec(query, pb.Status.String(), string(stagesB), pb.ID)
+	return err
 }
 
 // UpdatePipelineBuildStatus Update status of pipeline_build
@@ -547,7 +563,7 @@ func GetAllLastBuildByApplicationAndVersion(db database.Querier, applicationID i
 	pb := []sdk.PipelineBuild{}
 
 	query := `
-		WITH load_pb AS (%s), load_history AS (%s)
+		WITH load_pb AS (%s)
 		SELECT 	distinct on(pipeline_id, environment_id) pipeline_id, application_id, environment_id, 0, project_id,
 			envName, appName, pipName, projectkey,
 			type,
@@ -566,19 +582,6 @@ func GetAllLastBuildByApplicationAndVersion(db database.Querier, applicationID i
 				username, pipTriggerFrom, versionTriggerFrom
 			FROM load_pb
 			ORDER BY pipeline_id, environment_id, build_number DESC)
-
-			UNION
-
-			(SELECT
-				distinct on (pipeline_id, environment_id) pipeline_id, environment_id, application_id, project_id,
-				envName, appName, pipName, projectkey,
-				type,
-				build_number, version, status,
-				start, done,
-				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
-				username, pipTriggerFrom, versionTriggerFrom
-			FROM load_history
-			ORDER BY pipeline_id, environment_id, build_number DESC)
 		) as pb
 		ORDER BY pipeline_id, environment_id, build_number DESC
 		LIMIT 100
@@ -588,10 +591,6 @@ func GetAllLastBuildByApplicationAndVersion(db database.Querier, applicationID i
 		fmt.Sprintf(LoadPipelineBuildRequest,
 			"",
 			"pb.application_id = $1 AND pb.vcs_changes_branch = $2 AND pb.version = $3",
-			"LIMIT 100"),
-		fmt.Sprintf(LoadPipelineHistoryRequest,
-			"",
-			"ph.application_id = $1  AND ph.vcs_changes_branch = $2 AND ph.version = $3",
 			"LIMIT 100"))
 	rows, err := db.Query(query, applicationID, branchName, version)
 
@@ -614,7 +613,7 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 	pb := []sdk.PipelineBuild{}
 
 	query := `
-		WITH load_pb AS (%s), load_history AS (%s)
+		WITH load_pb AS (%s)
 		SELECT 	distinct on(pipeline_id, environment_id) pipeline_id, application_id, environment_id, 0, project_id,
 			envName, appName, pipName, projectkey,
 			type,
@@ -633,19 +632,6 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 				username, pipTriggerFrom, versionTriggerFrom
 			FROM load_pb
 			ORDER BY pipeline_id, environment_id, build_number DESC)
-
-			UNION
-
-			(SELECT
-				distinct on (pipeline_id, environment_id) pipeline_id, environment_id, application_id, project_id,
-				envName, appName, pipName, projectkey,
-				type,
-				build_number, version, status,
-				start, done,
-				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
-				username, pipTriggerFrom, versionTriggerFrom
-			FROM load_history
-			ORDER BY pipeline_id, environment_id, build_number DESC)
 		) as pb
 		ORDER BY pipeline_id, environment_id, build_number DESC
 		LIMIT 100
@@ -658,10 +644,6 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 			fmt.Sprintf(LoadPipelineBuildRequest,
 				"",
 				"pb.application_id = $1",
-				"LIMIT 100"),
-			fmt.Sprintf(LoadPipelineHistoryRequest,
-				"",
-				"ph.application_id = $1",
 				"LIMIT 100"))
 		rows, err = db.Query(query, applicationID)
 	} else {
@@ -669,10 +651,6 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 			fmt.Sprintf(LoadPipelineBuildRequest,
 				"",
 				"pb.application_id = $1 AND pb.vcs_changes_branch = $2",
-				"LIMIT 100"),
-			fmt.Sprintf(LoadPipelineHistoryRequest,
-				"",
-				"ph.application_id = $1  AND ph.vcs_changes_branch = $2",
 				"LIMIT 100"))
 		rows, err = db.Query(query, applicationID, branchName)
 	}
@@ -995,7 +973,24 @@ func InsertPipelineBuild(tx database.QueryExecuter, project *sdk.Project, p *sdk
 		return pb, err
 	}
 
-	err = insertPipelineBuild(tx, string(argsJSON), applicationData.ID, p.ID, &pb, env.ID)
+	if err := LoadPipelineStage(tx, p); err != nil {
+		return pb, err
+	}
+
+	// Init Action build
+	for stageIndex := range p.Stages {
+		stage := &p.Stages[stageIndex]
+		if stageIndex == 0 {
+			stage.Status = sdk.StatusWaiting
+		}
+	}
+
+	stages, errJSON := json.Marshal(p.Stages)
+	if errJSON != nil {
+		return pb, errJSON
+	}
+
+	err = insertPipelineBuild(tx, string(argsJSON), applicationData.ID, p.ID, &pb, env.ID, string(stages))
 	if err != nil {
 		log.Warning("InsertPipelineBuild> Cannot insert pipeline build: %s\n", err)
 		return pb, err
@@ -1040,9 +1035,9 @@ func InsertPipelineBuild(tx database.QueryExecuter, project *sdk.Project, p *sdk
 	return pb, nil
 }
 
-func insertPipelineBuild(db database.QueryExecuter, args string, applicationID, pipelineID int64, pb *sdk.PipelineBuild, envID int64) error {
-	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id,environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, scheduled_trigger)
-						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`
+func insertPipelineBuild(db database.QueryExecuter, args string, applicationID, pipelineID int64, pb *sdk.PipelineBuild, envID int64, stages string) error {
+	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id,environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, scheduled_trigger, stages)
+						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`
 
 	var triggeredBy, parentPipelineID int64
 	if pb.Trigger.TriggeredBy != nil {
@@ -1057,7 +1052,7 @@ func insertPipelineBuild(db database.QueryExecuter, args string, applicationID, 
 		args, time.Now(), applicationID, envID, time.Now(), pb.Trigger.ManualTrigger,
 		sql.NullInt64{Int64: triggeredBy, Valid: triggeredBy != 0},
 		sql.NullInt64{Int64: parentPipelineID, Valid: parentPipelineID != 0},
-		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.ScheduledTrigger)
+		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.ScheduledTrigger, stages)
 	err := statement.Scan(&pb.ID)
 	if err != nil {
 		return fmt.Errorf("App:%d,Pip:%d,Env:%d> %s", applicationID, pipelineID, envID, err)
@@ -1171,10 +1166,13 @@ func LoadPipelineBuildHistoryByApplicationAndPipeline(db database.Querier, appli
 		}
 
 		if c.loadstages {
-			err := loadStageAndActionBuilds(db, &pb)
-			if err != nil {
-				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load stages from pipeline build %d: %s", pb.ID, err)
-			}
+			// TODO PIPELINEBUILD
+			/*
+				err := loadStageAndActionBuilds(db, &pb)
+				if err != nil {
+					return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load stages from pipeline build %d: %s", pb.ID, err)
+				}
+			*/
 		}
 
 		if c.loadparameters {
@@ -1193,67 +1191,7 @@ func LoadPipelineBuildHistoryByApplicationAndPipeline(db database.Querier, appli
 		pbs = append(pbs, pb)
 	}
 	rows.Close()
-
-	if len(pbs) < limit {
-
-		if c.loadstages || c.loadparameters {
-			// Load all pipeline history
-			phs, err := SelectBuildsInHistory(db, pipelineID, applicationID, environmentID, limit, status)
-			if err != nil {
-				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplication> Cannot load pipeline history with stages: %s", err)
-			}
-			pbs = append(pbs, phs...)
-
-		} else {
-			if status == "" && branchName == "" {
-				query = fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.application_id= $1 AND ph.pipeline_id = $2 AND ph.environment_id = $3", "LIMIT $4")
-				rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit)
-			} else if status != "" && branchName == "" {
-				query = fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.application_id= $1 AND ph.pipeline_id = $2 AND ph.environment_id = $3 AND ph.status = $5", "LIMIT $4")
-				rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, status)
-			} else if status == "" && branchName != "" {
-				query = fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.application_id= $1 AND ph.pipeline_id = $2 AND ph.environment_id = $3 ph.vcs_changes_branch = $5", "LIMIT $4")
-				rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, branchName)
-			} else {
-				query = fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.application_id= $1 AND ph.pipeline_id = $2 AND ph.environment_id = $3 AND ph.status = $5 AND ph.vcs_changes_branch = $6", "LIMIT $4")
-				rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, status, branchName)
-			}
-			if err != nil {
-				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplication> Cannot load pipeline history: %s", err)
-			}
-
-			for rows.Next() {
-				var pb sdk.PipelineBuild
-				err = scanPbShort(&pb, rows)
-				if err != nil {
-					rows.Close()
-					return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplication> Cannot read db result when loading pipeline build: %s", err)
-				}
-				pbs = append(pbs, pb)
-			}
-			rows.Close()
-		}
-	}
-
 	return pbs, nil
-}
-
-// LoadPipelineHistoryBuild retrieves informations about a specific build in pipeline_history
-func LoadPipelineHistoryBuild(db database.Querier, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64) (sdk.PipelineBuild, error) {
-	var pb sdk.PipelineBuild
-
-	query := fmt.Sprintf(LoadPipelineHistoryRequest, "", "ph.pipeline_id = $1 AND ph.build_number = $2 AND ph.application_id= $3 AND ph.environment_id = $4", "LIMIT 1")
-	rows, err := db.Query(query, pipelineID, buildNumber, applicationID, environmentID)
-	if err != nil {
-		return pb, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		err = scanPbShort(&pb, rows)
-		return pb, err
-	}
-	return pb, sdk.ErrNoPipelineBuild
 }
 
 // LoadPipelineBuild retrieves informations about a specific build
@@ -1333,94 +1271,98 @@ func StopPipelineBuild(db *sql.DB, pbID int64) error {
 
 // RestartPipelineBuild restarts failed actions build
 func RestartPipelineBuild(db *sql.DB, pb sdk.PipelineBuild) error {
-	var actionBuilds []sdk.ActionBuild
-	var err error
-	if pb.Status == sdk.StatusSuccess {
-		actionBuilds, err = loadActionBuildsByStagePosition(db, pb.ID, 1)
-	} else {
-		actionBuilds, err = loadAllActionBuilds(db, pb.ID)
-	}
-	if err != nil {
-		return fmt.Errorf("RestartPipelineBuild> Cannot load action builds for pipeline ID %d : %s", pb.ID, err)
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("RestartPipelineBuild> Cannot start tx: %s", err)
-	}
-	defer tx.Rollback()
-
-	for _, ab := range actionBuilds {
-		if ab.Status != sdk.StatusDisabled && ab.Status != sdk.StatusSkipped && (ab.Status == sdk.StatusFail || pb.Status == sdk.StatusSuccess) {
-			log.Notice("RestartPipelineBuild: Action %s: restarting\n", ab.ActionName)
-			err = RestartActionBuild(tx, ab.ID)
-			if err != nil {
-				return err
-			}
+	// TODO PIPELINEBUILD
+	/*
+		var actionBuilds []sdk.ActionBuild
+		var err error
+		if pb.Status == sdk.StatusSuccess {
+			actionBuilds, err = loadActionBuildsByStagePosition(db, pb.ID, 1)
+		} else {
+			actionBuilds, err = loadAllActionBuilds(db, pb.ID)
 		}
-	}
-
-	if pb.Status == sdk.StatusSuccess {
-		// Select other actions build
-		actionBuildIDs := []int64{}
-		query := `SELECT action_build.id FROM action_build
-			  JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
-			  JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
-	 		  WHERE action_build.pipeline_build_id = $1 and pipeline_stage.build_order > 1
-	 		  	AND action_build.status not in ($2, $3)`
-		rows, err := tx.Query(query, pb.ID, sdk.StatusDisabled.String(), sdk.StatusSkipped.String())
 		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var abID int64
-			err = rows.Scan(&abID)
-			if err != nil {
-				return err
-			}
-			actionBuildIDs = append(actionBuildIDs, abID)
+			return fmt.Errorf("RestartPipelineBuild> Cannot load action builds for pipeline ID %d : %s", pb.ID, err)
 		}
 
-		for _, id := range actionBuildIDs {
-			err := build.DeleteBuildLogs(tx, id)
-			if err != nil {
-				return err
-			}
-			queryDelete := `DELETE FROM action_build WHERE id = $1`
-			_, err = tx.Exec(queryDelete, id)
-			if err != nil {
-				log.Warning("RestartPipelineBuild> Cannot remove action builds %d: %s\n", id, err)
-				return err
-			}
-		}
-
-		// Delete test results
-		err = build.DeletePipelineTestResults(db, pb.ID)
+		tx, err := db.Begin()
 		if err != nil {
-			return err
+			return fmt.Errorf("RestartPipelineBuild> Cannot start tx: %s", err)
+		}
+		defer tx.Rollback()
+
+		for _, ab := range actionBuilds {
+			if ab.Status != sdk.StatusDisabled && ab.Status != sdk.StatusSkipped && (ab.Status == sdk.StatusFail || pb.Status == sdk.StatusSuccess) {
+				log.Notice("RestartPipelineBuild: Action %s: restarting\n", ab.ActionName)
+				err = RestartActionBuild(tx, ab.ID)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
-		// Update start time
-		queryUpdateStart := `UPDATE pipeline_build set start = current_timestamp WHERE id = $1`
-		_, err = tx.Exec(queryUpdateStart, pb.ID)
+		if pb.Status == sdk.StatusSuccess {
+			// Select other actions build
+			actionBuildIDs := []int64{}
+			query := `SELECT action_build.id FROM action_build
+				  JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
+				  JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
+		 		  WHERE action_build.pipeline_build_id = $1 and pipeline_stage.build_order > 1
+		 		  	AND action_build.status not in ($2, $3)`
+			rows, err := tx.Query(query, pb.ID, sdk.StatusDisabled.String(), sdk.StatusSkipped.String())
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+
+			for rows.Next() {
+				var abID int64
+				err = rows.Scan(&abID)
+				if err != nil {
+					return err
+				}
+				actionBuildIDs = append(actionBuildIDs, abID)
+			}
+
+			for _, id := range actionBuildIDs {
+				err := build.DeleteBuildLogs(tx, id)
+				if err != nil {
+					return err
+				}
+				queryDelete := `DELETE FROM action_build WHERE id = $1`
+				_, err = tx.Exec(queryDelete, id)
+				if err != nil {
+					log.Warning("RestartPipelineBuild> Cannot remove action builds %d: %s\n", id, err)
+					return err
+				}
+			}
+
+			// Delete test results
+			err = build.DeletePipelineTestResults(db, pb.ID)
+			if err != nil {
+				return err
+			}
+
+			// Update start time
+			queryUpdateStart := `UPDATE pipeline_build set start = current_timestamp WHERE id = $1`
+			_, err = tx.Exec(queryUpdateStart, pb.ID)
+			if err != nil {
+				return err
+			}
+
+		}
+
+		err = UpdatePipelineBuildStatus(tx, pb, sdk.StatusBuilding)
 		if err != nil {
-			return err
+			return fmt.Errorf("RestartPipelineBuild> UpdatePipelineBuildStatus> %s", err)
 		}
 
-	}
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("RestartPipelineBuild> Cannot commit tx: %s", err)
+		}
 
-	err = UpdatePipelineBuildStatus(tx, pb, sdk.StatusBuilding)
-	if err != nil {
-		return fmt.Errorf("RestartPipelineBuild> UpdatePipelineBuildStatus> %s", err)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return fmt.Errorf("RestartPipelineBuild> Cannot commit tx: %s", err)
-	}
-
+		return nil
+	*/
 	return nil
 }
 
@@ -1461,243 +1403,6 @@ func RestartActionBuild(db *sql.Tx, actionBuildID int64) error {
 	return nil
 }
 
-// LoadCompletePipelineBuildToArchive Load all information about a build
-func LoadCompletePipelineBuildToArchive(db database.Querier, pipelineBuildID int64) (sdk.PipelineBuild, error) {
-	var pb sdk.PipelineBuild
-
-	query := `SELECT
-			 pipeline_build.id,
-			 pipeline_build.status,
-			 pipeline_build.version,
-			 pipeline_build.build_number,
-			 pipeline_build.args,
-			 pipeline_build.start,
-			 pipeline_build.done,
-			 pipeline_build.pipeline_id,
-			 pipeline_build.application_id,
-			 pipeline_build.environment_id,
-			 action_build.id,
-			 action_build.pipeline_action_id,
-			 action_build.args,
-			 action_build.status,
-			 action_build.queued,
-			 action_build.start,
-			 action_build.done,
-			 action_build.worker_model_name,
-			 action.name,
-			 pipeline_stage.id,
-			 pipeline_stage.name,
-			 pipeline_stage.build_order,
-			 application.name,
-			 pipeline.name,
-			 environment.name,
-			 pipeline_build.manual_trigger,
-			 pipeline_build.scheduled_trigger,
-			 pipeline_build.triggered_by,
-			 pipeline_build.parent_pipeline_build_id,
-			 pipeline_build.vcs_changes_branch,
-			 pipeline_build.vcs_changes_hash,
-			 pipeline_build.vcs_changes_author,
-			 "user".username,
-			 triggeredFromPip.name as trigPipName,
-			 triggeredFromPb.version as versionTriggerFrom
-		FROM pipeline_build
-		JOIN application ON application.id = pipeline_build.application_id
-		JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
-		JOIN environment ON environment.id = pipeline_build.environment_id
-		LEFT JOIN action_build ON action_build.pipeline_build_id = pipeline_build.id
-		LEFT JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
-		LEFT JOIN action ON action.id = pipeline_action.action_id
-		LEFT JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
-		LEFT JOIN "user" ON "user".id = triggered_by
-		LEFT JOIN (
-			SELECT id, version, pipeline_id FROM pipeline_build
-			UNION
-			SELECT pipeline_build_id, version, pipeline_id FROM pipeline_history
-		) as triggeredFromPb ON triggeredFromPb.id = pipeline_build.parent_pipeline_build_id
-		LEFT JOIN pipeline triggeredFromPip ON triggeredFromPip.id = triggeredFromPb.pipeline_id
-	 	WHERE pipeline_build.id = $1 AND (pipeline_build.status = $2 OR pipeline_build.status = $3)`
-
-	rows, err := db.Query(query, pipelineBuildID, string(sdk.StatusSuccess), string(sdk.StatusFail))
-	if err != nil {
-		log.Warning("LoadCompletePipelineBuildToArchive> Error querying : %s", err)
-		return pb, err
-	}
-	defer rows.Close()
-
-	var pbDone pq.NullTime
-	for rows.Next() {
-		var actionBuild sdk.ActionBuild
-		var pbArgs, abArgs string
-		var actionStart, actionDone, actionQueued pq.NullTime
-		var pipelineBuildStatus, actionBuildStatus string
-		var stage sdk.Stage
-		var manual, scheduled sql.NullBool
-		var stageBuildOrder, stageID, actionBuildID, actionBuildPipelineActionID, trigBy, parentID sql.NullInt64
-		var stageName, actionBuildStatusTmp, actionBuildArgs, actionBuildActionName, branch, hash, author, username, trigPipname, actionBuildWorkerModelName sql.NullString
-		var version sql.NullInt64
-
-		err = rows.Scan(
-			&pb.ID,
-			&pipelineBuildStatus,
-			&pb.Version,
-			&pb.BuildNumber,
-			&pbArgs,
-			&pb.Start,
-			&pbDone,
-			&pb.Pipeline.ID,
-			&pb.Application.ID,
-			&pb.Environment.ID,
-			&actionBuildID,
-			&actionBuildPipelineActionID,
-			&actionBuildArgs,
-			&actionBuildStatusTmp,
-			&actionQueued,
-			&actionStart,
-			&actionDone,
-			&actionBuildWorkerModelName,
-			&actionBuildActionName,
-			&stageID,
-			&stageName,
-			&stageBuildOrder,
-			&pb.Application.Name,
-			&pb.Pipeline.Name,
-			&pb.Environment.Name,
-			&manual,
-			&scheduled,
-			&trigBy,
-			&parentID,
-			&branch,
-			&hash,
-			&author,
-			&username,
-			&trigPipname,
-			&version,
-		)
-		if err != nil {
-			log.Warning("LoadCompletePipelineBuildToArchive> Error scanning : %s", err)
-			return pb, err
-		}
-
-		if pbDone.Valid {
-			pb.Done = pbDone.Time
-		}
-
-		if actionBuildID.Valid {
-			actionBuild.ID = actionBuildID.Int64
-			actionBuild.PipelineActionID = actionBuildPipelineActionID.Int64
-			actionBuild.ActionName = actionBuildActionName.String
-			actionBuild.Queued = actionQueued.Time
-			actionBuildStatus = actionBuildStatusTmp.String
-			abArgs = actionBuildArgs.String
-		}
-
-		if stageID.Valid {
-			stage.ID = stageID.Int64
-			stage.Name = stageName.String
-			stage.BuildOrder = int(stageBuildOrder.Int64)
-		}
-
-		//Skipped and disabled action :
-		if actionStart.Valid {
-			actionBuild.Start = actionStart.Time
-		} else {
-			actionBuild.Start = pb.Start
-		}
-		if actionDone.Valid {
-			actionBuild.Done = actionDone.Time
-		} else {
-			actionBuild.Done = pb.Done
-		}
-
-		if actionBuildWorkerModelName.Valid {
-			actionBuild.Model = actionBuildWorkerModelName.String
-		}
-
-		pb.Trigger = sdk.PipelineBuildTrigger{}
-		loadPbTrigger(&pb, manual, scheduled, parentID, branch, hash, author, username, trigPipname, version)
-
-		if trigBy.Valid && pb.Trigger.TriggeredBy != nil {
-			pb.Trigger.TriggeredBy.ID = trigBy.Int64
-		}
-
-		if actionBuildID.Valid {
-			actionBuild.Status = sdk.StatusFromString(actionBuildStatus)
-		}
-
-		pb.Status = sdk.StatusFromString(pipelineBuildStatus)
-
-		if err = json.Unmarshal([]byte(pbArgs), &pb.Parameters); err != nil {
-			log.Warning("LoadCompletePipelineBuildToArchive> Error unmarshalling : %s", err)
-			return pb, err
-		}
-
-		if actionBuildID.Valid {
-			if err = json.Unmarshal([]byte(abArgs), &actionBuild.Args); err != nil {
-				var oa []string
-				err = json.Unmarshal([]byte(abArgs), &oa)
-				if err != nil {
-					log.Warning("LoadCompletePipelineBuildToArchive> Error unmarshalling : %s", err)
-					return pb, err
-				}
-				for _, op := range oa {
-					t := strings.SplitN(op, "=", 2)
-					p := sdk.Parameter{
-						Name:  t[0],
-						Type:  sdk.StringParameter,
-						Value: t[1],
-					}
-					actionBuild.Args = append(actionBuild.Args, p)
-				}
-			}
-		}
-
-		// Add stage and action to result
-		stageAttached := false
-		if actionBuildID.Valid {
-			for i := range pb.Stages {
-				s := &pb.Stages[i]
-				if stage.BuildOrder == s.BuildOrder {
-					stageAttached = true
-					s.ActionBuilds = append(s.ActionBuilds, actionBuild)
-				}
-			}
-		}
-
-		if stageID.Valid && !stageAttached {
-			stage.ActionBuilds = append(stage.ActionBuilds, actionBuild)
-			pb.Stages = append(pb.Stages, stage)
-		}
-	}
-
-	for _, stage := range pb.Stages {
-		for i := range stage.ActionBuilds {
-			actionBuild := &stage.ActionBuilds[i]
-			// add logs
-			var logs sql.NullString
-			queryLog := `
-			SELECT string_agg(log,'')
-			FROM (
-				SELECT '[' || timestamp || ']' || ' ' || value as log
-				FROM build_log
-				WHERE action_build_id = $1
-				ORDER BY build_log.id ASC
-			     ) sub
-			`
-			if err := db.QueryRow(queryLog, actionBuild.ID).Scan(&logs); err != nil {
-				if err != sql.ErrNoRows {
-					log.Warning("LoadCompletePipelineBuildToArchive> Error querying build_log : %s", err)
-					return pb, err
-				}
-			} else if logs.Valid {
-				actionBuild.Logs = logs.String
-			}
-		}
-	}
-
-	return pb, nil
-}
-
 // SelectBuildForUpdate  Select a build and lock a build
 func SelectBuildForUpdate(db database.Querier, buildID int64) error {
 	var id int64
@@ -1706,30 +1411,6 @@ func SelectBuildForUpdate(db database.Querier, buildID int64) error {
 	          WHERE id = $1 AND status = $2
 						FOR UPDATE NOWAIT`
 	return db.QueryRow(query, buildID, sdk.StatusBuilding.String()).Scan(&id)
-}
-
-// LoadBuildIDsToArchive Load build to archive
-func LoadBuildIDsToArchive(db *sql.DB, hours int) ([]int64, error) {
-	log.Debug("LoadBuildIDsToArchive>...")
-	var buildIDs []int64
-	query := fmt.Sprintf(`SELECT pipeline_build.id
-		  FROM pipeline_build
-		  WHERE pipeline_build.done < NOW() - INTERVAL '%d hours'
-		  AND (status = $1 OR status = $2)`, hours)
-
-	rows, err := db.Query(query, string(sdk.StatusSuccess), string(sdk.StatusFail))
-	if err != nil {
-		return buildIDs, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			return buildIDs, err
-		}
-		buildIDs = append(buildIDs, id)
-	}
-	return buildIDs, nil
 }
 
 // DeletePipelineBuildArtifact Delete artifact for the current build

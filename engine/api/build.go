@@ -137,43 +137,18 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	}
 	defer tx.Rollback()
 
-	result, err := pipeline.SelectBuildInHistory(db, p.ID, a.ID, buildNumber, env.ID)
-	if err != nil && err != sql.ErrNoRows {
-		log.Warning("deleteBuildHandler> Cannot check build history %s: %s\n", buildNumberS, err)
+	// Delete from pipeline_build
+	result, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
+	if err != nil {
+		log.Warning("deleteBuildHandler> %s ! Cannot load pipeline build to delete %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, projectKey, appName, pipelineName, env.Name, buildNumber, err)
 		WriteError(w, r, err)
 		return
 	}
-	if err == nil {
-		// Delete from history
-		err = pipeline.DeletePipelineBuildArtifact(tx, result.ID)
-		if err != nil {
-			log.Warning("deleteBuildHandler> %s ! Cannot delete pipeline build artifact [%d] : %s\n", c.User.Username, result.ID, err)
-			WriteError(w, r, err)
-			return
-		}
-
-		// Delete history
-		queryDeletePipelineHistory := `DELETE FROM pipeline_history WHERE pipeline_build_id = $1`
-		_, err = tx.Exec(queryDeletePipelineHistory, result.ID)
-		if err != nil {
-			log.Warning("deleteBuildHandler> %s ! Cannot delete pipeline history [%s]: %s\n", c.User.Username, result.ID, err)
-			WriteError(w, r, err)
-			return
-		}
-	} else {
-		// Delete from pipeline_build
-		result, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
-		if err != nil {
-			log.Warning("deleteBuildHandler> %s ! Cannot load pipeline build to delete %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, projectKey, appName, pipelineName, env.Name, buildNumber, err)
-			WriteError(w, r, err)
-			return
-		}
-		err = pipeline.DeletePipelineBuild(tx, result.ID)
-		if err != nil {
-			log.Warning("deleteBuildHandler> Cannot delete pipeline build [%d]: %s\n", result.ID, err)
-			WriteError(w, r, err)
-			return
-		}
+	err = pipeline.DeletePipelineBuild(tx, result.ID)
+	if err != nil {
+		log.Warning("deleteBuildHandler> Cannot delete pipeline build [%d]: %s\n", result.ID, err)
+		WriteError(w, r, err)
+		return
 	}
 
 	err = tx.Commit()
@@ -233,29 +208,15 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	// if buildNumber is 'last' fetch last build number
 	var buildNumber int64
 	var result sdk.PipelineBuild
-	inHistory := false
+
 	if buildNumberS == "last" {
-		lastBuildNumber, history, err := pipeline.GetProbableLastBuildNumber(db, p.ID, a.ID, env.ID)
+		lastBuildNumber, _, err := pipeline.GetProbableLastBuildNumber(db, p.ID, a.ID, env.ID)
 		if err != nil {
 			log.Warning("getBuildStateHandler> Cannot load last pipeline build for %s-%s-%s: %s\n", a.Name, pipelineName, env.Name, err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		buildNumber = lastBuildNumber
-		if history {
-			inHistory = true
-			result, err = pipeline.SelectBuildInHistory(db, p.ID, a.ID, buildNumber, env.ID)
-			if err != nil {
-				log.Warning("getBuildStateHandler> Cannot load last pipeline build from history for %s: %s\n", pipelineName, err)
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
-			for _, s := range result.Stages {
-				for _, a := range s.ActionBuilds {
-					a.Logs = ""
-				}
-			}
-		}
 	} else {
 		buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
 		if err != nil {
@@ -263,69 +224,52 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-
-		result, err = pipeline.SelectBuildInHistory(db, p.ID, a.ID, buildNumber, env.ID)
-		if err != nil && err != sql.ErrNoRows {
-			log.Warning("getBuildStateHandler> Cannot check build history %s: %s\n", buildNumberS, err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		if err == nil {
-			inHistory = true
-		}
-		for _, s := range result.Stages {
-			for _, a := range s.ActionBuilds {
-				a.Logs = ""
-			}
-		}
-
 	}
 
-	if !inHistory {
-		// load pipeline stage
-		stages, err := pipeline.LoadStages(db, p.ID)
-		if err != nil {
-			log.Warning("getBuildStateHandler> Cannot load pipeline stages: %s\n", err)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
+	// load pipeline stage
+	stages, err := pipeline.LoadStages(db, p.ID)
+	if err != nil {
+		log.Warning("getBuildStateHandler> Cannot load pipeline stages: %s\n", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
-		// load pipeline_build.id
-		pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
-		if err != nil {
-			log.Warning("getBuildStateHandler> %s! Cannot load last pipeline build for %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, projectKey, appName, pipelineName, env.Name, buildNumber, err)
-			WriteError(w, r, err)
-			return
-		}
+	// load pipeline_build.id
+	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
+	if err != nil {
+		log.Warning("getBuildStateHandler> %s! Cannot load last pipeline build for %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, projectKey, appName, pipelineName, env.Name, buildNumber, err)
+		WriteError(w, r, err)
+		return
+	}
 
-		// load actions status for build
-		actionsBuilds, err := build.LoadBuildByPipelineBuildID(db, pb.ID)
-		if err != nil {
-			log.Warning("getBuildStateHandler> Cannot load pipeline build action: %s\n", err)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
+	// load actions status for build
+	actionsBuilds, err := build.LoadBuildByPipelineBuildID(db, pb.ID)
+	if err != nil {
+		log.Warning("getBuildStateHandler> Cannot load pipeline build action: %s\n", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
-		for index := range actionsBuilds {
-			// attach log to actionsBuild
-			actionData := &actionsBuilds[index]
+	for index := range actionsBuilds {
+		// attach log to actionsBuild
+		actionData := &actionsBuilds[index]
 
-			// attach actionBuild to stage
-			for indexStage := range stages {
-				stage := &stages[indexStage]
-				if stage.ID == actionData.PipelineStageID {
-					stage.ActionBuilds = append(stage.ActionBuilds, *actionData)
-				}
+		// attach actionBuild to stage
+		for indexStage := range stages {
+			stage := &stages[indexStage]
+			if stage.ID == actionData.PipelineStageID {
+				stage.ActionBuilds = append(stage.ActionBuilds, *actionData)
 			}
 		}
-
-		result.Stages = stages
-		result.Status = pb.Status
-		result.Version = pb.Version
-		result.Done = pb.Done
-		result.Start = pb.Start
-		result.Trigger = pb.Trigger
 	}
+
+	result.Stages = stages
+	result.Status = pb.Status
+	result.Version = pb.Version
+	result.Done = pb.Done
+	result.Start = pb.Start
+	result.Trigger = pb.Trigger
+
 	result.Environment = *env
 	result.Application = *a
 	result.Pipeline = *p
@@ -564,6 +508,7 @@ func loadActionBuildSecrets(db *sql.DB, abID int64) ([]sdk.Variable, error) {
 }
 
 func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	// TODO pipelinebuild
 	if c.Worker.ID != "" {
 		// Load calling worker
 		caller, errW := worker.LoadWorker(db, c.Worker.ID)
@@ -776,18 +721,8 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
 	if err != nil {
 		log.Warning("addBuiltTestResultsHandler> Cannot loadpipelinebuild for %s/%s[%s] %d: %s\n", a.Name, p.Name, envName, buildNumber, err)
-		if err != sdk.ErrNoPipelineBuild {
-			log.Warning("addBuildTestResultsHandler> Cannot load pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-
-		pb, err = pipeline.LoadPipelineHistoryBuild(db, p.ID, a.ID, buildNumber, env.ID)
-		if err != nil {
-			log.Warning("addBuildTestResultsHandler> Cannot load pipeline build from history: %s\n", err)
-			WriteError(w, r, sdk.ErrNoPipelineBuild)
-			return
-		}
+		WriteError(w, r, err)
+		return
 	}
 
 	// Get body
@@ -918,18 +853,9 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	// load pipeline_build.id
 	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
 	if err != nil {
-		if err != sdk.ErrNoPipelineBuild {
-			log.Warning("getBuildTestResultsHandler> Cannot load pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-
-		pb, err = pipeline.LoadPipelineHistoryBuild(db, p.ID, a.ID, buildNumber, env.ID)
-		if err != nil {
-			log.Warning("getBuildTestResultsHandler> Cannot load pipeline build from history: %s\n", err)
-			WriteError(w, r, sdk.ErrNoPipelineBuild)
-			return
-		}
+		log.Warning("getBuildTestResultsHandler> Cannot load pipeline build: %s\n", err)
+		WriteError(w, r, err)
+		return
 	}
 
 	tests, err := build.LoadTestResults(db, pb.ID)

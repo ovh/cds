@@ -140,13 +140,13 @@ func formatActionBuild(ab sdk.ActionBuild) string {
 
 	switch ab.Status {
 	case sdk.StatusSuccess:
-		return green("[%s]", ab.ActionName)
+		return green("[%s]", ab.Job.Action.Name)
 	case sdk.StatusFail:
-		return red("[%s]", ab.ActionName)
+		return red("[%s]", ab.Job.Action.Name)
 	case sdk.StatusBuilding:
-		return blue("[%s]", ab.ActionName)
+		return blue("[%s]", ab.Job.Action.Name)
 	case sdk.StatusWaiting:
-		return yellow("[%s]", ab.ActionName)
+		return yellow("[%s]", ab.Job.Action.Name)
 	default:
 		return ""
 	}

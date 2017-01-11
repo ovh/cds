@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
@@ -172,7 +171,6 @@ var mainCmd = &cobra.Command{
 
 		cache.Initialize(viper.GetString("cache"), viper.GetString("redis_host"), viper.GetString("redis_password"), viper.GetInt("cache_ttl"))
 
-		go archivist.Archive(viper.GetInt("interval_archive_seconds"), viper.GetInt("archived_build_hours"))
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller()
 		//go pipeline.HistoryCleaningRoutine(db)
@@ -497,12 +495,6 @@ func init() {
 	viper.BindPFlag("smtp_user", flags.Lookup("smtp-user"))
 	viper.BindPFlag("smtp_password", flags.Lookup("smtp-password"))
 	viper.BindPFlag("smtp_from", flags.Lookup("smtp-from"))
-
-	flags.Int("interval-archive-seconds", 3600, "Interval of archive routine, in seconds")
-	viper.BindPFlag("interval_archive_seconds", flags.Lookup("interval-archive-seconds"))
-
-	flags.Int("archived-build-hours", 24, "After n hours, build is archived")
-	viper.BindPFlag("archived_build_hours", flags.Lookup("archived-build-hours"))
 
 	flags.String("download-directory", "/app", "Directory prefix for cds binaries")
 	viper.BindPFlag("download_directory", flags.Lookup("download-directory"))

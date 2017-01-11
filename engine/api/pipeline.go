@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
@@ -334,19 +333,9 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 		}
 		pb, err := pipeline.LoadPipelineBuild(db, request.ParentPipelineID, request.ParentApplicationID, request.ParentBuildNumber, envID)
 		if err != nil {
-			if err != sdk.ErrNoPipelineBuild {
-				log.Warning("runPipelineHandler> Cannot load parent pipeline build: %s\n", err)
-				WriteError(w, r, err)
-				return
-			}
-			log.Notice("Loading parent pipeline build %d from history", request.ParentPipelineID)
-			pb, err = pipeline.LoadPipelineHistoryBuild(db, request.ParentPipelineID, request.ParentApplicationID, request.ParentBuildNumber, envID)
-			if err != nil {
-				log.Warning("runPipelineHandler> Cannot load parent pipeline build from history: %s\n", err)
-				WriteError(w, r, err)
-				return
-			}
-
+			log.Warning("runPipelineHandler> Cannot load parent pipeline build: %s\n", err)
+			WriteError(w, r, err)
+			return
 		}
 		parentParams, err := queue.ParentBuildInfos(pb)
 		if err != nil {
@@ -575,16 +564,6 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 		return
 	}
 	defer tx.Rollback()
-
-	// For each pipeline build, archive it to get out of relationnal
-	for _, id := range ids {
-		err = archivist.ArchiveBuild(tx, id)
-		if err != nil {
-			log.Warning("deletePipelineActionHandler> cannot archive pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-	}
 
 	err = pipeline.DeletePipelineAction(tx, pipelineActionID)
 	if err != nil {

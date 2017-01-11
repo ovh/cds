@@ -106,32 +106,16 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	var pipelinelogs []sdk.Log
 	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
 	if err != nil {
-		if err != sdk.ErrNoPipelineBuild {
-			log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
+		log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
 
-		ph, err := pipeline.SelectBuildInHistory(db, p.ID, a.ID, buildNumber, env.ID)
-		if err != nil {
-			log.Warning("getBuildLogsHandler> Cannot load pipeline build from history: %s\n", err)
-			WriteError(w, r, sdk.ErrNoPipelineBuild)
-			return
-		}
-
-		for _, stage := range ph.Stages {
-			for _, ab := range stage.ActionBuilds {
-				l := sdk.NewLog(ph.ID, "", ab.Logs)
-				pipelinelogs = append(pipelinelogs, *l)
-			}
-		}
-	} else {
-		pipelinelogs, err = build.LoadPipelineBuildLogs(db, pb.ID, offset)
-		if err != nil {
-			log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
+	pipelinelogs, err = build.LoadPipelineBuildLogs(db, pb.ID, offset)
+	if err != nil {
+		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", err)
+		WriteError(w, r, err)
+		return
 	}
 
 	// add pipeline result
@@ -231,32 +215,17 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	var pipelinelogs sdk.BuildState
 	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
 	if err != nil {
-		if err != sdk.ErrNoPipelineBuild {
-			log.Warning("getActionBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-		ph, err := pipeline.SelectBuildInHistory(db, p.ID, a.ID, buildNumber, env.ID)
-		if err != nil {
-			log.Warning("getActionBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
-			WriteError(w, r, sdk.ErrNoPipelineBuild)
-			return
-		}
-		for _, stage := range ph.Stages {
-			for _, ab := range stage.ActionBuilds {
-				if ab.PipelineActionID == actionID {
-					pipelinelogs.Logs = []sdk.Log{sdk.Log{Value: ab.Logs}}
-				}
-			}
-		}
-		pipelinelogs.Status = sdk.StatusSuccess
-	} else {
-		pipelinelogs, err = build.LoadPipelineActionBuildLogs(db, pb.ID, actionID, offset)
-		if err != nil {
-			log.Warning("getActionBuildLogsHandler> Cannot load pipeline build logs: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
+		log.Warning("getActionBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
+		WriteError(w, r, err)
+		return
+
+	}
+
+	pipelinelogs, err = build.LoadPipelineActionBuildLogs(db, pb.ID, actionID, offset)
+	if err != nil {
+		log.Warning("getActionBuildLogsHandler> Cannot load pipeline build logs: %s\n", err)
+		WriteError(w, r, err)
+		return
 	}
 
 	WriteJSON(w, r, pipelinelogs, http.StatusOK)

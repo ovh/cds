@@ -12,7 +12,7 @@ import (
 
 // RunPipeline  the given pipeline with the given parameters
 func RunPipeline(db database.QueryExecuter, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
-	// Load pipeline + Args
+	// Load pipeline + Args + stage + action
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		log.Warning("scheduler.Run> Cannot load pipeline %s: %s\n", pipelineName, err)

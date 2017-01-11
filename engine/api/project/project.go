@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -82,208 +81,19 @@ func LoadProjectByGroup(db database.Querier, group *sdk.Group) error {
 	return nil
 }
 
-// LoadProjectAndPipelineByPipelineActionID load project and pipeline by pipeline_action_id
-func LoadProjectAndPipelineByPipelineActionID(db database.Querier, pipelineActionID int64) (sdk.Project, sdk.Pipeline, error) {
-	query := `SELECT project.id, project.projectKey, project.last_modified, pipeline.id, pipeline.name
+// LoadProjectByPipelineActionID load project and pipeline by pipeline_action_id
+func LoadProjectByPipelineActionID(db database.Querier, pipelineActionID int64) (sdk.Project, error) {
+	query := `SELECT project.id, project.projectKey, project.last_modified
 		  FROM pipeline_action
 		  JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
 		  JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
 		  JOIN project ON project.id = pipeline.project_id
 	          WHERE pipeline_action.id = $1`
 	var proj sdk.Project
-	var pip sdk.Pipeline
 	var lastModified time.Time
-	err := db.QueryRow(query, pipelineActionID).Scan(&proj.ID, &proj.Key, &lastModified, &pip.ID, &pip.Name)
+	err := db.QueryRow(query, pipelineActionID).Scan(&proj.ID, &proj.Key, &lastModified)
 	proj.LastModified = lastModified.Unix()
-	return proj, pip, err
-}
-
-func loadprojectwithvariablesandappsandacitvities(db database.Querier, key string, limit int, user *sdk.User) (*sdk.Project, error) {
-	query := `
-	WITH load_apps AS (%s), load_vars AS (%s)
-	SELECT *
-	FROM (
-		SELECT
-			projid, projname, projlast_modified,
-			NULL as varid, NULL as var_name, NULL as var_value, NULL as var_type,
-			appid as appid, appname, applast_modified,
-			envID, pipeline_id, pbid,
-			envName, pipName, type,
-			build_number, version, status,
-			start, done,
-			manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
-			username, pipTriggerFrom, versionTriggerFrom
-		FROM load_apps
-		LEFT JOIN LATERAL (
-			SELECT
-				application_id, environment_id as envID, pipeline_id, id as pbid, envName, pipName, type,
-				build_number, version, status,
-				start, done,
-				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
-				username, pipTriggerFrom, versionTriggerFrom
-			  FROM ( (%s)  UNION (%s) ) as pb
-			  ORDER BY start DESC
-			  LIMIT $2
-		) as pbh ON pbh.application_id = appid
-	UNION
-		SELECT
-			projid, projname, projlast_modified,
-			varid, var_name, var_value, var_type,
-			NULL as appid, NULL as appname, current_timestamp as applast_modified,
-			NULL as environment_id, NULL as pipeline_id, NULL as pbid,
-			NULL as envName, NULL as pipName, NULL as type,
-			NULL as build_number, NULL as version, NULL as status,
-			NULL as start, NULL as done,
-			NULL as manual_trigger, NULL as scheduled_trigger, NULL as triggered_by, NULL as parent_pipeline_build_id, NULL as vcs_changes_branch, NULL as vcs_changes_hash, NULL as vcs_changes_author,
-			NULL as username, NULL as pipTriggerFrom, NULL as versionTriggerFrom
-		FROM load_vars
-	) as p
-	ORDER BY appname ASC, varid ASC, start DESC
-	`
-
-	var rows *sql.Rows
-	var err error
-	if user.Admin {
-		query = fmt.Sprintf(query,
-			application.LoadApplicationsRequestAdmin,
-			loadProjectWithVariablesQuery,
-			fmt.Sprintf(pipeline.LoadPipelineBuildRequest, "", "pb.application_id = appid AND project.projectkey = $1", "LIMIT $2"),
-			fmt.Sprintf(pipeline.LoadPipelineHistoryRequest, "", "ph.application_id = appid AND project.projectkey = $1", "LIMIT $2"),
-		)
-		rows, err = db.Query(query, key, limit)
-	} else {
-		// $2 = user.ID in LoadApplicationsRequestNormalUser
-		query = fmt.Sprintf(query,
-			application.LoadApplicationsRequestNormalUser,
-			loadProjectWithVariablesQuery,
-			fmt.Sprintf(pipeline.LoadPipelineBuildRequest, "", "pb.application_id = appid AND project.projectkey = $1", "LIMIT $3"),
-			fmt.Sprintf(pipeline.LoadPipelineHistoryRequest, "", "ph.application_id = appid AND project.projectkey = $1", "LIMIT $3"),
-		)
-		rows, err = db.Query(query, key, user.ID, limit)
-	}
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoProject
-		}
-		return nil, err
-	}
-	defer rows.Close()
-
-	p := &sdk.Project{Key: key}
-	var varname, appname, value, typ, envName, pipName, typePip, status, branch, hash, author, username, pipTriggerFrom sql.NullString
-	var varid, appid, envID, pipID, pbID, buildNumber, triggeredBy, parentPbID, version, versionTriggerFrom sql.NullInt64
-	var start, done pq.NullTime
-	var manualTrigger, scheduledTrigger sql.NullBool
-	var currentApp int
-	var lastModified time.Time
-	var appLastModified time.Time
-	var apps []sdk.Application
-	for rows.Next() {
-		err = rows.Scan(&p.ID, &p.Name, &lastModified, &varid, &varname, &value, &typ, &appid, &appname, &appLastModified,
-			&envID, &pipID, &pbID,
-			&envName, &pipName, &typePip,
-			&buildNumber, &version, &status,
-			&start, &done,
-			&manualTrigger, &scheduledTrigger, &triggeredBy, &parentPbID, &branch, &hash, &author,
-			&username, &pipTriggerFrom, &versionTriggerFrom)
-		if err != nil {
-			return nil, err
-		}
-		p.LastModified = lastModified.Unix()
-		if varid.Valid && varname.Valid && typ.Valid {
-			par := sdk.Variable{
-				ID:   varid.Int64,
-				Name: varname.String,
-				Type: sdk.VariableTypeFromString(typ.String),
-			}
-
-			if sdk.NeedPlaceholder(par.Type) {
-				par.Value = sdk.PasswordPlaceholder
-			} else if value.Valid {
-				par.Value = value.String
-			}
-
-			p.Variable = append(p.Variable, par)
-		}
-
-		if appid.Valid && appname.Valid {
-			// Ah, we switched to another app
-			if len(apps) == 0 || appid.Int64 != apps[currentApp].ID {
-				if len(apps) != 0 {
-					currentApp++
-				}
-
-				app := sdk.Application{
-					ID:           appid.Int64,
-					Name:         appname.String,
-					LastModified: appLastModified.Unix(),
-				}
-				apps = append(apps, app)
-			}
-
-			if pbID.Valid && start.Valid && done.Valid && buildNumber.Valid && version.Valid && status.Valid {
-				var pb sdk.PipelineBuild
-				pb.ID = pbID.Int64
-
-				if envName.Valid && envID.Valid {
-					pb.Environment.Name = envName.String
-					pb.Environment.ID = envID.Int64
-				}
-				if pipName.Valid && typePip.Valid && pipID.Valid {
-					pb.Pipeline.Name = pipName.String
-					pb.Pipeline.Type = sdk.PipelineTypeFromString(typePip.String)
-					pb.Pipeline.ID = pipID.Int64
-				}
-
-				pb.BuildNumber = buildNumber.Int64
-				pb.Version = version.Int64
-				pb.Status = sdk.StatusFromString(status.String)
-				pb.Start = start.Time
-				pb.Done = done.Time
-
-				if manualTrigger.Valid {
-					pb.Trigger.ManualTrigger = manualTrigger.Bool
-				}
-
-				if scheduledTrigger.Valid {
-					pb.Trigger.ScheduledTrigger = scheduledTrigger.Bool
-				}
-
-				if branch.Valid {
-					pb.Trigger.VCSChangesBranch = branch.String
-				}
-
-				if hash.Valid && author.Valid {
-					pb.Trigger.VCSChangesHash = hash.String
-					pb.Trigger.VCSChangesAuthor = author.String
-				}
-
-				if username.Valid && triggeredBy.Valid {
-					pb.Trigger.TriggeredBy = &sdk.User{
-						Username: username.String,
-						ID:       triggeredBy.Int64,
-					}
-				}
-
-				if pipTriggerFrom.Valid && versionTriggerFrom.Valid && parentPbID.Valid {
-					pb.Trigger.ParentPipelineBuild = &sdk.PipelineBuild{
-						Pipeline: sdk.Pipeline{
-							Name: pipTriggerFrom.String,
-						},
-						ID:      parentPbID.Int64,
-						Version: versionTriggerFrom.Int64,
-					}
-				}
-
-				apps[currentApp].PipelinesBuild = append(apps[currentApp].PipelinesBuild, pb)
-			}
-		}
-	}
-
-	p.Applications = apps
-
-	return p, nil
+	return proj, err
 }
 
 func loadprojectwithvariablesandapps(db database.Querier, key string, user *sdk.User) (*sdk.Project, error) {
@@ -462,12 +272,7 @@ func LoadProject(db database.Querier, key string, user *sdk.User, mods ...Mod) (
 	var err error
 
 	if c.loadvariables && c.loadapps {
-		if c.historylength > 0 {
-			p, err = loadprojectwithvariablesandappsandacitvities(db, key, c.historylength, user)
-		} else {
-			p, err = loadprojectwithvariablesandapps(db, key, user)
-		}
-
+		p, err = loadprojectwithvariablesandapps(db, key, user)
 	} else if c.loadvariables {
 		p, err = loadprojectwithvariables(db, key)
 	} else {

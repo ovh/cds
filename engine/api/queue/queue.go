@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -73,131 +72,156 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 	// OH! AN EMPTY PIPELINE
 	if len(pb.Pipeline.Stages) == 0 {
 		// Pipeline is done
-		pipelineBuildEnd(tx, pb)
-		return
+		pb.Status = sdk.StatusSuccess
 	}
 
-	var runningStage = -1
-	var doneStage = 0
-	for stageIndex, s := range pb.Pipeline.Stages {
-		// Need len(s.Actions) on Success to go to next stage, count them
-		var numberOfActionSuccess int
+	// Browse Stage
+	for stageIndex := range pb.Stages {
+		stage := &pb.Stages[stageIndex]
 
-		// browse all actions in the current stage
-		for _, a := range s.Actions {
-			// get action status
-			status, errActionStatus := pipeline.LoadActionStatus(tx, a.PipelineActionID, pb.ID)
-			if errActionStatus != nil && errActionStatus != sql.ErrNoRows {
-				log.Warning("queue.RunActions> Cannot load action %s with pipelineBuildID %d: %s\n", a.Name, pb.ID, errActionStatus)
+		if stage.Status == sdk.StatusWaiting {
+			addJobsToQueue(tx, stage, pb)
+			break;
+		}
+
+		if stage.Status == sdk.StatusBuilding {
+			end, errSync := syncPipelineBuildJob(tx, stage)
+			if errSync != nil {
+				log.Warning("queue.RunActions> Cannot sync building jobs on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, err)
 				return
 			}
-
-			//Check stage prerequisites
-			prerequisitesOK, err := pipeline.CheckPrerequisites(s, pb)
-			if err != nil {
-				log.Warning("queue.RunActions> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d): %s\n", s.Name, s.ID, pb.Pipeline.Name, pb.ID, err)
-				return
-			}
-			//If stage is disabled, we have to disable all actions
-			if !s.Enabled || !prerequisitesOK {
-				//newActionBuild, and set it to disabled
-				if errActionStatus != nil && errActionStatus == sql.ErrNoRows && (runningStage == -1 || stageIndex == runningStage) {
-					var actionBuild *sdk.ActionBuild
-					actionBuild, err = newActionBuild(tx, a, pb, s.ID)
-					if err != nil {
-						log.Warning("queue.RunActions> Cannot schedule action: %s\n", err)
-						return
-					}
-					runningStage = stageIndex
-
-					if !s.Enabled {
-						status = sdk.StatusDisabled
-					} else {
-						status = sdk.StatusSkipped
-					}
-
-					log.Debug("queue.RunActions> Disable action %d %s (status=%s)", actionBuild.ID, actionBuild.ActionName, status)
-					if err := build.UpdateActionBuildStatus(tx, actionBuild, status); err != nil {
-						log.Warning("queue.RunActions> Cannot disable action %s with pipelineBuildID %d: %s\n", a.Name, pb.ID, err)
-					}
-
-					continue
-				}
-				numberOfActionSuccess++
-			} else {
-				// If no row, action should be scheduled if current stage is running
-				if errActionStatus != nil && errActionStatus == sql.ErrNoRows {
-					if runningStage == -1 || stageIndex == runningStage {
-						_, err = newActionBuild(tx, a, pb, s.ID)
-						if err != nil {
-							log.Warning("queue.RunActions> Cannot schedule action: %s\n", err)
-							return
-						}
-						runningStage = stageIndex
-						continue
-					}
-				}
-				if status == sdk.StatusSuccess || status == sdk.StatusDisabled {
-					numberOfActionSuccess++
-				}
-
-				//condition de sortie
-				if status == sdk.StatusFail {
-					if err := pipeline.UpdatePipelineBuildStatus(tx, pb, status); err != nil {
-						log.Warning("queue.RunActions> Cannot update pipeline status: %s\n", err)
-					} else {
-						err = tx.Commit()
-						if err != nil {
-							log.Warning("queue.RunActions> Cannot commit tx on pb %d: %s\n", pb.ID, err)
-						}
-					}
+			if end {
+				// Remove pipeline build job
+				if err := pipeline.DeletePipelineBuildJob(tx, pb.ID); err != nil {
+					log.Warning("queue.RunActions> Cannot remove pipeline build jobs for pipeline build %d: %s\n", pb.ID, err)
 					return
 				}
 
-			}
-			if status == sdk.StatusBuilding || status == sdk.StatusWaiting {
-				runningStage = stageIndex
-			}
-		}
-		// If all action are done or skipped AND previous stage is done, then current stage is done
-		if numberOfActionSuccess == len(s.Actions) && doneStage == stageIndex {
-			doneStage = stageIndex + 1
-			log.Debug("queue.RunActions> Stage #%d is DONE\n", doneStage)
-		}
-
-		// If all actions in stage are OK or skipped
-		if numberOfActionSuccess == len(s.Actions) { // Then go to next stage !
-			// But if current stage is the last one...
-			if doneStage == len(pb.Pipeline.Stages) { // Oh wait there is no next stage
-				pipelineBuildEnd(tx, pb)
-				return
+				if stage.Status == sdk.StatusFail {
+					pb.Status = sdk.StatusFail
+					break
+				}
+				if stageIndex == len(pb.Stages)-1 {
+					pb.Status = sdk.StatusSuccess
+					break
+				}
+				if stageIndex != len(pb.Stages)-1{
+					// Prepare scheduling next stage
+					pb.Stages[stageIndex+1].Status = sdk.StatusWaiting
+					continue
+				}
 			}
 		}
 	}
 
-	err = tx.Commit()
+	if err := pipeline.UpdatePipelineBuildStatusAndStage(tx, pb); err != nil {
+		log.Warning("RunActions> Cannot update UpdatePipelineBuildStatusAndStage on pb %d: %s\n", pb.ID, err)
+	}
+
+	// If pipeline build succeed, run trigger
+	if pb.Status == sdk.StatusSuccess {
+		pipelineBuildEnd(tx, pb)
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("RunActions> Cannot commit tx on pb %d: %s\n", pb.ID, err)
+	}
+}
+
+func addJobsToQueue(tx database.QueryExecuter, stage *sdk.Stage, pb *sdk.PipelineBuild) error {
+	//Check stage prerequisites
+	prerequisitesOK, err := pipeline.CheckPrerequisites(stage, pb)
 	if err != nil {
-		log.Warning("queue.RunActions>Cannot commit transaction: %s", err)
+		log.Warning("addJobsToQueue> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, err)
 		return
 	}
-	return
+	stage.Status = sdk.StatusBuilding
 
+	for _, job := range stage.Jobs {
+		pbJobParams, errParam := getPipelineBuildJobParameters(tx, job.Action, pb)
+		if errParam != nil {
+			log.Warning("addJobsToQueue> Cannot get action build parameters for pipeline build %d: %s\n", pb.ID, err)
+			return
+		}
+		pbJob := &sdk.PipelineBuildJob{
+			PipelineBuildID: pb.ID,
+			Parameters:      pbJobParams,
+			Job:             job,
+			Queued:          time.Now(),
+			Status:          sdk.StatusWaiting,
+		}
+
+		if !stage.Enabled {
+			pbJob.Status = sdk.StatusDisabled
+		} else if !prerequisitesOK {
+			pbJob.Status = sdk.StatusSkipped
+		}
+		if err := pipeline.InsertPipelineBuildJob(tx, pbJob); err != nil {
+			log.Warning("addJobToQueue> Cannot insert job in queue for pipeline build %d: %s\n", pb.ID, err)
+			return
+		}
+		stage.PipelineBuildJobs = append(stage.PipelineBuildJobs, pbJob)
+	}
+	return nil
+}
+
+func syncPipelineBuildJob(db database.QueryExecuter, stage *sdk.Stage) (bool, error) {
+	stageEnd := true
+	finalStatus := sdk.StatusBuilding
+
+	// browse all running jobs
+	for indexJob := range stage.PipelineBuildJobs {
+		pbJob := &stage.PipelineBuildJobs[indexJob]
+		// If job is runnning, sync it
+		if (pbJob.Status == sdk.StatusBuilding || pbJob.Status == sdk.StatusWaiting) {
+			pbJobDB, errJob := pipeline.GetPipelineBuildJob(db, pbJob.ID)
+			if errJob != nil {
+				return stageEnd, finalStatus, errJob
+			}
+
+			if pbJobDB.Status == sdk.StatusBuilding || pbJobDB.Status == sdk.StatusWaiting {
+				stageEnd = false
+			}
+
+			// If already sync
+			if pbJobDB.Status == pbJob.Status {
+				continue
+			}
+
+			pbJob.Status = pbJobDB.Status
+			pbJob.Start = pbJobDB.Start
+			pbJob.Done = pbJobDB.Done
+			pbJob.Model = pbJobDB.Model
+		}
+	}
+
+	if stageEnd {
+		// Determine final stage status
+		for _, buildJob := range stage.PipelineBuildJobs {
+			switch buildJob.Status {
+			case sdk.StatusDisabled:
+				if finalStatus == sdk.StatusBuilding {
+					finalStatus = sdk.StatusDisabled
+				}
+			case sdk.StatusSkipped:
+				if finalStatus == sdk.StatusBuilding || finalStatus == sdk.StatusDisabled {
+					finalStatus = sdk.StatusSkipped
+				}
+			case sdk.StatusFail:
+				finalStatus = sdk.StatusFail
+			case sdk.StatusSuccess:
+				if finalStatus != sdk.StatusFail {
+					finalStatus = sdk.StatusSuccess
+				}
+			}
+		}
+
+	}
+	stage.Status = finalStatus
+	return stageEnd, nil
 }
 
 func pipelineBuildEnd(tx *sql.Tx, pb sdk.PipelineBuild) {
-	log.Debug("pipelineBuildEnd> Updating pipeline build %d status to Success", pb.ID)
-
-	if err := pipeline.UpdatePipelineBuildStatus(tx, pb, sdk.StatusSuccess); err != nil {
-		log.Warning("pipelineBuildEnd> Cannot update pipeline status: %s\n", err)
-		return
-	}
-	defer func() {
-		err := tx.Commit()
-		if err != nil {
-			log.Warning("pipelineBuildEnd> Cannot commit tx on pb %d: %s\n", pb.ID, err)
-		}
-	}()
-
 	// run trigger
 	triggers, err := trigger.LoadAutomaticTriggersAsSource(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if err != nil {
@@ -264,7 +288,6 @@ func pipelineBuildEnd(tx *sql.Tx, pb sdk.PipelineBuild) {
 			continue
 		}
 	}
-
 }
 
 // ParentBuildInfos fetch parent build data and injects them as {{.cds.parent.*}} parameters
@@ -302,48 +325,37 @@ func ParentBuildInfos(pb sdk.PipelineBuild) ([]sdk.Parameter, error) {
 	return params, nil
 }
 
-func newActionBuild(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuild, stageID int64) (*sdk.ActionBuild, error) {
-	log.Info("newActionBuild> Starting action %s for pipeline %s #%d\n", a.Name,
-		pb.Pipeline.Name, pb.BuildNumber)
-
-	pipelineActionArgs, err := loadPipelineActionArguments(db, a.PipelineActionID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		log.Debug("newActionBuild> err loadPipelineActionArguments: %s", err)
-		return nil, err
-	}
+func getPipelineBuildJobParameters(db database.QueryExecuter, j sdk.Job, pb sdk.PipelineBuild) ([]sdk.Parameter, error) {
 
 	// Get project and pipeline Information
-	projectData, pipelineData, err := project.LoadProjectAndPipelineByPipelineActionID(db, a.PipelineActionID)
+	projectData, err := project.LoadProjectByPipelineActionID(db, j.PipelineActionID)
 	if err != nil {
-		log.Debug("newActionBuild> err LoadProjectAndPipelineByPipelineActionID: %s", err)
+		log.Debug("getActionBuildParameters> err LoadProjectAndPipelineByPipelineActionID: %s", err)
 		return nil, err
 	}
 
 	// Load project Variables
 	projectVariables, err := project.GetAllVariableInProject(db, projectData.ID)
 	if err != nil {
-		log.Debug("newActionBuild> err GetAllVariableInProject: %s", err)
+		log.Debug("getActionBuildParameters> err GetAllVariableInProject: %s", err)
 		return nil, err
 	}
 	// Load application Variables
 	appVariables, err := application.GetAllVariableByID(db, pb.Application.ID)
 	if err != nil {
-		log.Debug("newActionBuild> err GetAllVariableByID for app ID: %s", err)
+		log.Debug("getActionBuildParameters> err GetAllVariableByID for app ID: %s", err)
 		return nil, err
 	}
 	// Load environment Variables
 	envVariables, err := environment.GetAllVariableByID(db, pb.Environment.ID)
 	if err != nil {
-		log.Debug("newActionBuild> err GetAllVariableByID for env ID : %s", err)
+		log.Debug("getActionBuildParameters> err GetAllVariableByID for env ID : %s", err)
 		return nil, err
 	}
 
-	pipelineParameters, err := pipeline.GetAllParametersInPipeline(db, pipelineData.ID)
+	pipelineParameters, err := pipeline.GetAllParametersInPipeline(db, pb.Pipeline.ID)
 	if err != nil {
-		log.Debug("newActionBuild> err GetAllParametersInPipeline: %s", err)
+		log.Debug("getActionBuildParameters> err GetAllParametersInPipeline: %s", err)
 		return nil, err
 	}
 
@@ -360,33 +372,7 @@ func newActionBuild(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 		appVariables,
 		envVariables,
 		pipelineParameters,
-		pipelineActionArgs,
-		pb.Parameters, a)
+		pb.Parameters, j.Action)
 
-	if err != nil {
-		log.Debug("newActionBuild> err ProcessActionBuildVariables: %s", err)
-		return nil, err
-	}
-
-	b := sdk.ActionBuild{
-		PipelineBuildID:  pb.ID,
-		PipelineID:       pb.Pipeline.ID,
-		PipelineActionID: a.PipelineActionID,
-		Args:             params,
-		ActionName:       a.Name,
-		Status:           sdk.StatusWaiting,
-	}
-
-	if !a.Enabled {
-		b.Status = sdk.StatusDisabled
-		b.Done = time.Now()
-	}
-
-	if err := InsertActionBuild(db, &b); err != nil {
-		log.Debug("newActionBuild> err InsertBuild: %s", err)
-		return nil, fmt.Errorf("Cannot push action %s for pipeline %s #%d in build queue: %s\n",
-			a.Name, pb.Pipeline.Name, b.PipelineBuildID, err)
-	}
-
-	return &b, nil
+	return params, nil
 }

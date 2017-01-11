@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -310,16 +309,6 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		return
 	}
 	defer tx.Rollback()
-
-	// For each pipeline build, archive it to get out of relationnal
-	for _, id := range ids {
-		err = archivist.ArchiveBuild(tx, id)
-		if err != nil {
-			log.Warning("deleteJobHandler> cannot archive pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-	}
 
 	if err := pipeline.DeleteJob(tx, jobToDelete, c.User.ID); err != nil {
 		log.Warning("deleteJobHandler> Cannot delete pipeline action: %s", err)
