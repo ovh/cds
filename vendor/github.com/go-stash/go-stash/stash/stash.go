@@ -63,6 +63,8 @@ func (c *Client) GetFullApiUrl(api string) string {
 		url = fmt.Sprintf("%s/rest/ssh/1.0", c.ApiUrl)
 	case "core":
 		url = fmt.Sprintf("%s/rest/api/1.0", c.ApiUrl)
+	case "build-status":
+		url = fmt.Sprintf("%s/rest/build-status/1.0", c.ApiUrl)
 	}
 
 	return url

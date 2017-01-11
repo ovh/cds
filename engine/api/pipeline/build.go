@@ -1,4 +1,4 @@
-package build
+package pipeline
 
 import (
 	"database/sql"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -17,6 +18,186 @@ var (
 	// ErrAlreadyTaken Action already taken by a worker
 	ErrAlreadyTaken = fmt.Errorf("cds: action already taken")
 )
+
+// LoadBuildByPipelineBuildID Load all actions_build by pipeline ID
+func LoadBuildByPipelineBuildID(db *sql.DB, pipelineBuildID int64) ([]sdk.ActionBuild, error) {
+
+	query := `SELECT
+			action_build.id,
+			action_build.pipeline_action_id,
+			action_build.args,
+			action_build.status,
+			action_build.pipeline_build_id,
+			action_build.queued,
+			action_build.start,
+			action_build.done ,
+			pipeline_action.pipeline_stage_id,
+			action.name, action.id
+		   FROM action_build
+		   JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
+		   JOIN action ON action.id = pipeline_action.action_id
+		   WHERE pipeline_build_id = $1
+		   ORDER BY action.name,action_build.pipeline_action_id`
+	builds := []sdk.ActionBuild{}
+
+	rows, err := db.Query(query, pipelineBuildID)
+	if err != nil {
+		return builds, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var b sdk.ActionBuild
+		var argsJSON string
+		var done interface{}
+		var sStatus string
+		var actionID int64
+		err = rows.Scan(&b.ID, &b.PipelineActionID, &argsJSON, &sStatus, &b.PipelineBuildID, &b.Queued, &b.Start, &done, &b.PipelineStageID, &b.ActionName, &actionID)
+		b.Status = sdk.StatusFromString(sStatus)
+		if err != nil {
+			return nil, err
+		}
+		if done != nil {
+			b.Done = done.(time.Time)
+		}
+
+		if b.Status == sdk.StatusWaiting {
+			requirements, err := action.LoadActionRequirements(db, actionID)
+			if err != nil {
+				return nil, err
+			}
+			b.Requirements = requirements
+		}
+
+		err = json.Unmarshal([]byte(argsJSON), &b.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		builds = append(builds, b)
+	}
+	return builds, nil
+}
+
+// LoadActionBuild Load an action_build by ID
+func LoadActionBuild(db *sql.DB, id string) (sdk.ActionBuild, error) {
+	query := `SELECT id, pipeline_action_id, args, status, pipeline_build_id FROM action_build WHERE id = $1`
+	var b sdk.ActionBuild
+	var argsJSON, sStatus string
+
+	err := db.QueryRow(query, id).Scan(&b.ID, &b.PipelineActionID, &argsJSON, &sStatus, &b.PipelineBuildID)
+	b.Status = sdk.StatusFromString(sStatus)
+	if err != nil {
+		return b, err
+	}
+
+	err = json.Unmarshal([]byte(argsJSON), &b.Args)
+	if err != nil {
+		return b, err
+	}
+
+	return b, nil
+}
+
+// UpdateActionBuildStatus Update status of an action_build
+func UpdateActionBuildStatus(db *sql.Tx, ab *sdk.ActionBuild, status sdk.Status) error {
+	var query string
+	log.Debug("UpdateActionBuildStatus> Updating action_build %d to %s\n", ab.ID, status)
+
+	query = `SELECT status FROM action_build WHERE id = $1 FOR UPDATE`
+	var currentStatus string
+	if err := db.QueryRow(query, ab.ID).Scan(&currentStatus); err != nil {
+		return err
+	}
+
+	var errExec error
+	switch status {
+	case sdk.StatusBuilding:
+		if currentStatus != sdk.StatusWaiting.String() {
+			return fmt.Errorf("Cannot update status of ActionBuild %d to %s, expected current status %s, got %s",
+				ab.ID, status, sdk.StatusWaiting, currentStatus)
+		}
+
+		query = `UPDATE action_build SET status = $1, start = $2 WHERE id = $3`
+		_, errExec = db.Exec(query, status.String(), time.Now(), ab.ID)
+		break
+
+	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped:
+		if currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
+			log.Info("Status is %, cannot update %d to %s", currentStatus, ab.ID, status)
+			// too late, Nate
+			return nil
+		}
+
+		query = `UPDATE action_build SET status = $1, done = $2 WHERE id = $3`
+		_, errExec = db.Exec(query, status.String(), time.Now(), ab.ID)
+	default:
+		errExec = fmt.Errorf("Cannot update ActionBuild %d to status %v", ab.ID, status.String())
+	}
+
+	if errExec != nil {
+		return errExec
+	}
+
+	ab.Status = status
+
+	pb, errLoad := LoadPipelineBuildByID(db, ab.PipelineBuildID)
+	if errLoad != nil {
+		return errLoad
+	}
+
+	event.PublishActionBuild(&pb, ab)
+
+	if status == sdk.StatusFail || status == sdk.StatusDisabled || status == sdk.StatusSkipped {
+		var log string
+		switch status {
+		case sdk.StatusFail:
+			log = fmt.Sprintf("Action finished with status: %s\n", status)
+		case sdk.StatusDisabled:
+			log = fmt.Sprintf("Action disabled\n")
+		case sdk.StatusSkipped:
+			log = fmt.Sprintf("Action skipped\n")
+		}
+		return InsertLog(db, ab.ID, "SYSTEM", log)
+	}
+
+	return nil
+}
+
+// LoadWaitingQueue Load Waiting action_build
+func LoadWaitingQueue(db *sql.DB) ([]sdk.ActionBuild, error) {
+	query := `SELECT action_build.id,
+			 action_build.pipeline_action_id,
+			 action.id,
+			 action.name,
+			 action_build.args,
+			 action_build.status, action_build.pipeline_build_id,
+			 pipeline_build.pipeline_id,
+			 pipeline_build.build_number
+		  FROM action_build
+		  JOIN pipeline_build ON pipeline_build.id = action_build.pipeline_build_id
+		  JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
+		  JOIN action ON action.id = pipeline_action.action_id
+		  WHERE action_build.status = $1
+		  ORDER BY pipeline_build.id,action.name,action_build.pipeline_action_id
+			LIMIT 100`
+	var queue []sdk.ActionBuild
+
+	rows, err := db.Query(query, sdk.StatusWaiting.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		b, err := loadQueue(db, rows)
+		if err != nil {
+			return nil, err
+		}
+		queue = append(queue, b)
+	}
+
+	return queue, nil
+}
 
 // LoadGroupWaitingQueue loads action build in queue accessbible to given group
 func LoadGroupWaitingQueue(db *sql.DB, groupID int64) ([]sdk.ActionBuild, error) {
@@ -38,7 +219,7 @@ func LoadGroupWaitingQueue(db *sql.DB, groupID int64) ([]sdk.ActionBuild, error)
 		  JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
 			JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
 			WHERE action_build.status = $1
-			AND ( 
+			AND (
 					(
 						pipeline_group.group_id = $2
 						AND
@@ -164,9 +345,9 @@ func TakeActionBuild(db *sql.DB, buildID string, worker *sdk.Worker) (sdk.Action
 	var b sdk.ActionBuild
 	var argsJSON string
 
-	tx, err := db.Begin()
-	if err != nil {
-		return b, err
+	tx, errDB := db.Begin()
+	if errDB != nil {
+		return b, errDB
 	}
 	defer tx.Rollback()
 
@@ -181,14 +362,12 @@ func TakeActionBuild(db *sql.DB, buildID string, worker *sdk.Worker) (sdk.Action
 			 WHERE action_build.id = $1 FOR UPDATE`
 
 	var sStatus string
-	err = tx.QueryRow(query, buildID).Scan(&b.ID, &b.PipelineActionID, &argsJSON, &sStatus, &b.PipelineBuildID, &b.BuildNumber)
-	b.Status = sdk.StatusFromString(sStatus)
-	if err != nil {
+	if err := tx.QueryRow(query, buildID).Scan(&b.ID, &b.PipelineActionID, &argsJSON, &sStatus, &b.PipelineBuildID, &b.BuildNumber); err != nil {
 		return b, err
 	}
+	b.Status = sdk.StatusFromString(sStatus)
 
-	err = json.Unmarshal([]byte(argsJSON), &b.Args)
-	if err != nil {
+	if err := json.Unmarshal([]byte(argsJSON), &b.Args); err != nil {
 		return b, err
 	}
 
@@ -218,15 +397,13 @@ func DeleteActionBuild(db database.QueryExecuter, pipelineActionIDs []int64) err
 		}
 
 		for _, abID := range actionBuildIDs {
-			err := DeleteBuildLogs(db, abID)
-			if err != nil {
+			if err := DeleteBuildLogs(db, abID); err != nil {
 				return err
 			}
 		}
 
 		queryDelete := `DELETE FROM action_build WHERE pipeline_action_id = $1`
-		_, err = db.Exec(queryDelete, id)
-		if err != nil {
+		if _, err := db.Exec(queryDelete, id); err != nil {
 			log.Warning("DeleteActionBuild> Cannot remove action builds for PipelineAction %d\n", id)
 			return err
 		}

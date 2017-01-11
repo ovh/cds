@@ -2,20 +2,21 @@ package queue
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/trigger"
+	"github.com/ovh/cds/engine/api/application"
+	"fmt"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/event"
 )
 
 // Pipelines is a goroutine responsible for pushing actions of a building pipeline in queue, in the wanted order
@@ -90,6 +91,7 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 				log.Warning("queue.RunActions> Cannot sync building jobs on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, err)
 				return
 			}
+
 			if end {
 				// Remove pipeline build job
 				if err := pipeline.DeletePipelineBuildJob(tx, pb.ID); err != nil {
@@ -160,6 +162,7 @@ func addJobsToQueue(tx database.QueryExecuter, stage *sdk.Stage, pb *sdk.Pipelin
 			log.Warning("addJobToQueue> Cannot insert job in queue for pipeline build %d: %s\n", pb.ID, err)
 			return
 		}
+		event.PublishActionBuild(&pb, pbJob)
 		stage.PipelineBuildJobs = append(stage.PipelineBuildJobs, pbJob)
 	}
 	return nil
@@ -373,6 +376,5 @@ func getPipelineBuildJobParameters(db database.QueryExecuter, j sdk.Job, pb sdk.
 		envVariables,
 		pipelineParameters,
 		pb.Parameters, j.Action)
-
 	return params, nil
 }

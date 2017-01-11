@@ -489,3 +489,8 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 
 	return res, interval, nil
 }
+
+//SetStatus set build status on github
+func (g *GithubClient) SetStatus(event sdk.Event) error {
+	return fmt.Errorf("Not yet implemented on github")
+}

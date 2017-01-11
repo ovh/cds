@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/internal"
 	"github.com/ovh/cds/engine/api/mail"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -65,9 +64,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 
 	//Check smtp
 	output = append(output, fmt.Sprintf("SMTP: %s", mail.Status))
-
-	// Check notif
-	output = append(output, notification.Status()...)
 
 	// Check database
 	output = append(output, database.Status())

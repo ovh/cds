@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
-	"time"
+	//	"time"
+
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/permission"
@@ -13,31 +14,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// SendPipeline sends a pipeline notification at end of build
-func SendPipeline(db database.QueryExecuter, pb *sdk.PipelineBuild, event sdk.NotifEventType, status sdk.Status, previous *sdk.PipelineBuild) {
-	log.Debug("notification.SendPipelineBuild> pb:%d event:%s status:%s", pb.ID, event, status)
-
-	//Send PipelineBuildNotif
-	n := &sdk.Notif{
-		DateNotif: time.Now().Unix(),
-		Build:     pb,
-		Event:     event,
-		Status:    status,
-		NotifType: sdk.PipelineBuildNotif,
-	}
-
-	go post(n)
-
-	//Send UserNotif
+// GetUserEvents returns event from user notification
+func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) []sdk.EventNotif {
 	//Load notif
-	userNotifs, err := LoadUserNotificationSettings(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
-	if err != nil {
-		log.Critical("notification.SendPipelineBuild> error while loading user notification settings : %s", err)
-		return
+	userNotifs, errLoad := LoadUserNotificationSettings(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
+	if errLoad != nil {
+		log.Critical("notification.GetUserEvents> error while loading user notification settings: %s", errLoad)
+		return nil
 	}
 	if userNotifs == nil {
-		log.Debug("notification.SendPipelineBuild> no user notification on pipeline %d, app %d, env %d", pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
-		return
+		log.Debug("notification.GetUserEvents> no user notification on pipeline %d, app %d, env %d", pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
+		return nil
 	}
 
 	//Compute notification
@@ -45,9 +32,9 @@ func SendPipeline(db database.QueryExecuter, pb *sdk.PipelineBuild, event sdk.No
 	for _, p := range pb.Parameters {
 		params[p.Name] = p.Value
 	}
-	params["cds.status"] = n.Status.String()
+	params["cds.status"] = pb.Status.String()
 	//Set PipelineBuild UI URL
-	params["cds.buildURL"] = fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s&tab=detail", baseURL, pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
+	params["cds.buildURL"] = fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s&tab=detail", viper.GetString("base_url"), pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
 	//find author (triggeredBy user or changes author)
 	if pb.Trigger.TriggeredBy != nil {
 		params["cds.author"] = pb.Trigger.TriggeredBy.Username
@@ -55,20 +42,21 @@ func SendPipeline(db database.QueryExecuter, pb *sdk.PipelineBuild, event sdk.No
 		params["cds.author"] = pb.Trigger.VCSChangesAuthor
 	}
 
+	events := []sdk.EventNotif{}
+
 	for t, notif := range userNotifs.Notifications {
 		if ShouldSendUserNotification(notif, pb, previous) {
 			switch t {
 			case sdk.JabberUserNotification:
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
-					log.Critical("notification.SendPipelineBuild> cannot deal with %s", notif)
+					log.Critical("notification.GetUserEvents> cannot deal with %s", notif)
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, err := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
-					if err != nil {
-						log.Critical("notification[Jabber].SendPipelineBuild> error while loading permission :%s", err.Error())
-						return
+					u, errPerm := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
+					if errPerm != nil {
+						log.Critical("notification[Jabber].SendPipelineBuild> error while loading permission:%s", errPerm.Error())
 					}
 					for i := range u {
 						jn.Recipients = append(jn.Recipients, u[i].Username)
@@ -76,10 +64,9 @@ func SendPipeline(db database.QueryExecuter, pb *sdk.PipelineBuild, event sdk.No
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, err := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
-					if err != nil {
-						log.Critical("notification[Jabber].SendPipelineBuild> error while loading permission :%s", err.Error())
-						return
+					u, errEnv := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
+					if errEnv != nil {
+						log.Critical("notification[Jabber].SendPipelineBuild> error while loading permission:%s", errEnv.Error())
 					}
 					for i := range u {
 						jn.Recipients = append(jn.Recipients, u[i].Username)
@@ -95,26 +82,18 @@ func SendPipeline(db database.QueryExecuter, pb *sdk.PipelineBuild, event sdk.No
 				}
 				//Finally deduplicate everyone
 				removeDuplicates(&jn.Recipients)
-
-				notif, err := jabberEmailNotif(pb, jn, params)
-				if err != nil {
-					log.Critical("notification[Jabber].SendPipelineBuild> error getting jabber/email notification %s", err.Error())
-				}
-
-				log.Notice("Notification[Jabber]> Send jabber notif '%s'", notif.Title)
-				go post(&notif)
-
+				events = append(events, getEvent(pb, jn, params))
 			case sdk.EmailUserNotification:
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
-					log.Critical("notification.SendPipelineBuild> cannot deal with %s", notif)
+					log.Critical("notification.GetUserEvents> cannot deal with %s", notif)
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, err := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
-					if err != nil {
-						log.Critical("notification[Email].SendPipelineBuild> error while loading permission :%s", err.Error())
-						return
+					u, errEnv := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
+					if errEnv != nil {
+						log.Critical("notification[Email].SendPipelineBuild> error while loading permission:%s", errEnv.Error())
+						return nil
 					}
 					for i := range u {
 						jn.Recipients = append(jn.Recipients, u[i].Email)
@@ -138,17 +117,11 @@ func SendPipeline(db database.QueryExecuter, pb *sdk.PipelineBuild, event sdk.No
 				}
 				//Finally deduplicate everyone
 				removeDuplicates(&jn.Recipients)
-
-				notif, err := jabberEmailNotif(pb, jn, params)
-				if err != nil {
-					log.Critical("notification[Email].SendPipelineBuild> error getting jabber/email notification %s", err.Error())
-				}
-
-				log.Notice("Notification[Email]> Send mail notif '%s'", notif.Title)
-				go SendMailNotif(&notif)
+				go SendMailNotif(getEvent(pb, jn, params))
 			}
 		}
 	}
+	return events
 }
 
 func removeDuplicates(xs *[]string) {
@@ -196,30 +169,12 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 	return false
 }
 
-func jabberEmailNotif(pb *sdk.PipelineBuild, notif *sdk.JabberEmailUserNotificationSettings, params map[string]string) (sdk.Notif, error) {
-	title := notif.Template.Subject
-	message := notif.Template.Body
-	for k, value := range params {
-		key := "{{." + k + "}}"
-		title = strings.Replace(title, key, value, -1)
-		message = strings.Replace(message, key, value, -1)
+func getEvent(pb *sdk.PipelineBuild, notif *sdk.JabberEmailUserNotificationSettings, params map[string]string) sdk.EventNotif {
+	return sdk.EventNotif{
+		Recipients: notif.Recipients,
+		Subject:    notif.Template.Subject,
+		Body:       notif.Template.Body,
 	}
-
-	n := sdk.Notif{
-		DateNotif:   time.Now().Unix(),
-		Status:      pb.Status,
-		NotifType:   sdk.UserNotif,
-		Destination: "jabber",
-		Title:       title,
-		Message:     message,
-	}
-	for _, r := range notif.Recipients {
-		n.Recipients = append(n.Recipients, r)
-	}
-
-	log.Debug("notification.jabberEmailNotif> send [%s]%s to (%s)", n.Title, n.Message, strings.Join(n.Recipients, ","))
-
-	return n, nil
 }
 
 //UserNotificationInput is a way to parse notification
@@ -248,8 +203,9 @@ func ParseUserNotification(body []byte) (*sdk.UserNotification, error) {
 		Pipeline:              input.Pipeline,
 	}
 
-	notif1.Notifications, err = ParseUserNotificationSettings(settingsBody)
-	return notif1, nil
+	var errParse error
+	notif1.Notifications, errParse = ParseUserNotificationSettings(settingsBody)
+	return notif1, errParse
 }
 
 //ParseUserNotificationSettings transforms json to UserNotificationSettings map
@@ -268,25 +224,11 @@ func ParseUserNotificationSettings(settings []byte) (map[sdk.UserNotificationSet
 				var x sdk.JabberEmailUserNotificationSettings
 				tmp, err := json.Marshal(v)
 				if err != nil {
-					log.Warning("ParseUserNotificationSettings> unable to parse JabberEmailUserNotificationSettings : %s", err)
+					log.Warning("ParseUserNotificationSettings> unable to parse JabberEmailUserNotificationSettings: %s", err)
 					return nil, sdk.ErrParseUserNotification
 				}
 				if err := json.Unmarshal(tmp, &x); err != nil {
-					log.Warning("ParseUserNotificationSettings> unable to parse JabberEmailUserNotificationSettings : %s", err)
-					return nil, sdk.ErrParseUserNotification
-				}
-				notifications[sdk.UserNotificationSettingsType(k)] = &x
-			}
-		case string(sdk.TATUserNotification):
-			if v != nil {
-				var x sdk.TATUserNotificationSettings
-				tmp, err := json.Marshal(v)
-				if err != nil {
-					log.Warning("ParseUserNotificationSettings> unable to parse TATUserNotificationSettings : %s", err)
-					return nil, sdk.ErrParseUserNotification
-				}
-				if err := json.Unmarshal(tmp, &x); err != nil {
-					log.Warning("ParseUserNotificationSettings> unable to parse TATUserNotificationSettings : %s", err)
+					log.Warning("ParseUserNotificationSettings> unable to parse JabberEmailUserNotificationSettings: %s", err)
 					return nil, sdk.ErrParseUserNotification
 				}
 				notifications[sdk.UserNotificationSettingsType(k)] = &x
@@ -387,7 +329,7 @@ func DeleteNotification(db database.QueryExecuter, appID, pipID, envID int64) er
 //InsertOrUpdateUserNotificationSettings insert or update value in application_pipeline_notif
 func InsertOrUpdateUserNotificationSettings(db database.QueryExecuter, appID, pipID, envID int64, notif *sdk.UserNotification) error {
 	query := `
-		SELECT 	count(1) 
+		SELECT 	count(1)
 		FROM  	application_pipeline_notif
 		JOIN 	application_pipeline ON application_pipeline.id = application_pipeline_notif.application_pipeline_id
 		WHERE 	application_pipeline.application_id = $1
@@ -397,13 +339,13 @@ func InsertOrUpdateUserNotificationSettings(db database.QueryExecuter, appID, pi
 
 	var nb int
 	if err := db.QueryRow(query, appID, pipID, envID).Scan(&nb); err != nil {
-		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error counting application_pipeline_notif %d %d %d : %s", appID, pipID, envID, err)
+		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error counting application_pipeline_notif %d %d %d: %s", appID, pipID, envID, err)
 		return err
 	}
 	var appPipelineID int64
 	if nb == 0 {
 		query = `
-			INSERT INTO application_pipeline_notif (application_pipeline_id, environment_id) 
+			INSERT INTO application_pipeline_notif (application_pipeline_id, environment_id)
 			VALUES (
 				(
 				SELECT 	application_pipeline.id
@@ -411,11 +353,11 @@ func InsertOrUpdateUserNotificationSettings(db database.QueryExecuter, appID, pi
 				WHERE 	application_pipeline.application_id = $1
 				AND		application_pipeline.pipeline_id = $2
 				),$3
-			) 
+			)
 			RETURNING application_pipeline_id
 		`
 		if err := db.QueryRow(query, appID, pipID, envID).Scan(&appPipelineID); err != nil {
-			log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error inserting application_pipeline_notif %d %d %d : %s", appID, pipID, envID, err)
+			log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error inserting application_pipeline_notif %d %d %d: %s", appID, pipID, envID, err)
 			return err
 		}
 	}
@@ -427,13 +369,13 @@ func InsertOrUpdateUserNotificationSettings(db database.QueryExecuter, appID, pi
 
 	bytes, err := json.Marshal(notif.Notifications)
 	if err != nil {
-		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error marshalling notifications settings : %s", err)
+		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error marshalling notifications settings: %s", err)
 		return err
 	}
 
 	//Update settings
 	query = `
-		UPDATE 	application_pipeline_notif SET settings = $4 
+		UPDATE 	application_pipeline_notif SET settings = $4
 		FROM 	application_pipeline
 		WHERE 	application_pipeline.application_id = $1
 		AND		application_pipeline.pipeline_id = $2
@@ -442,7 +384,7 @@ func InsertOrUpdateUserNotificationSettings(db database.QueryExecuter, appID, pi
 	`
 	res, err := db.Exec(query, appID, pipID, envID, string(bytes))
 	if err != nil {
-		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error updating notifications settings %d %d %d : %s", appID, pipID, envID, err)
+		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error updating notifications settings %d %d %d: %s", appID, pipID, envID, err)
 		return err
 	}
 	if i, _ := res.RowsAffected(); i != 1 {

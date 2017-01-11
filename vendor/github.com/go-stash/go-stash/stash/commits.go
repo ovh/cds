@@ -1,6 +1,7 @@
 package stash
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 )
@@ -28,6 +29,14 @@ type CommitResource struct {
 	client *Client
 }
 
+type Status struct {
+	Description string `json:"description"`
+	Key         string `json:"key"`
+	Name        string `json:"name"`
+	State       string `json:"state"`
+	URL         string `json:"url"`
+}
+
 //Get commit data for commit hash
 func (r *CommitResource) Get(project, slug, commitId string) (*Commit, error) {
 	commit := Commit{}
@@ -39,6 +48,16 @@ func (r *CommitResource) Get(project, slug, commitId string) (*Commit, error) {
 	}
 
 	return &commit, nil
+}
+
+// SetStatus set a build status.
+// doc: https://developer.atlassian.com/bitbucket/server/docs/latest/how-tos/updating-build-status-for-commits.html
+func (r *CommitResource) SetStatus(sha1 string, status Status) error {
+	values, err := json.Marshal(status)
+	if err != nil {
+		return err
+	}
+	return r.client.do("POST", "build-status", fmt.Sprintf("/commits/%s", sha1), nil, values, nil)
 }
 
 //GetBetween returns commit data from a given starting commit, between two commits

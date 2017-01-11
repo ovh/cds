@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/loopfz/gadgeto/iffy"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -260,4 +261,47 @@ func TestGetEnvironmentHandler(t *testing.T) {
 	envResults := sdk.Environment{}
 	json.Unmarshal(res, &envResults)
 	assert.Equal(t, envResults.Name, "Preproduction")
+}
+
+func Test_cloneEnvironmentHandler(t *testing.T) {
+	db := test.SetupPG(t)
+
+	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_cloneEnvironmentHandler"}
+	router.init()
+
+	//1. Create admin user
+	u, pass := test.InsertAdminUser(t, db)
+
+	//2. Create project
+	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	test.NotNil(t, proj)
+
+	//3. Create env
+	env := sdk.Environment{
+		ProjectID: proj.ID,
+		Name:      "Preproduction",
+	}
+	test.NoError(t, environment.InsertEnvironment(db, &env))
+
+	v := &sdk.Variable{
+		Name:  "var1",
+		Type:  sdk.StringVariable,
+		Value: "val1",
+	}
+	test.NoError(t, environment.InsertVariable(db, env.ID, v))
+
+	vars := map[string]string{
+		"key": proj.Key,
+		"permEnvironmentName": env.Name,
+	}
+
+	envPost := sdk.Environment{
+		Name: "Production2",
+	}
+
+	uri := router.getRoute("POST", cloneEnvironmentHandler, vars)
+	tester := iffy.NewTester(t, router.mux)
+	headers := test.AuthHeaders(t, u, pass)
+	tester.AddCall("Test_cloneEnvironmentHandler", "POST", uri, &envPost).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
+	tester.Run()
 }

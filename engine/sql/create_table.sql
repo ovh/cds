@@ -76,7 +76,6 @@ CREATE TABLE IF NOT EXISTS "token" (group_id INT, token TEXT, expiration INT, cr
 
 CREATE TABLE IF NOT EXISTS "user" (id BIGSERIAL PRIMARY KEY, username TEXT, admin BOOL, data TEXT, auth TEXT, created TIMESTAMP WITH TIME ZONE, origin TEXT);
 CREATE TABLE IF NOT EXISTS "user_key" (user_id INT, user_key TEXT, expiry INT DEFAULT 0);
-CREATE TABLE IF NOT EXISTS "user_notification" (id BIGSERIAL PRIMARY KEY, type TEXT, content JSONB, status TEXT, creation_date INT);
 
 CREATE TABLE IF NOT EXISTS "warning" (id BIGSERIAL PRIMARY KEY, project_id BIGINT, app_id BIGINT, pip_id BIGINT, env_id BIGINT, action_id BIGINT, warning_id BIGINT, message_param JSONB);
 

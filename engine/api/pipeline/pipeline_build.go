@@ -8,10 +8,9 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/notification"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/log"
@@ -96,6 +95,30 @@ func WithParameters() FuncArg {
 	return func(args *structarg) {
 		args.loadparameters = true
 	}
+}
+
+// LoadPipelineBuildByID look for a pipeline build by pipelineBuildID
+func LoadPipelineBuildByID(tx *sql.Tx, pipelineBuildID int64) (sdk.PipelineBuild, error) {
+	var pb sdk.PipelineBuild
+
+	query := fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.id= $1", "")
+	row := tx.QueryRow(query, pipelineBuildID)
+	if err := scanPbShort(&pb, row); err != nil {
+		return pb, err
+	}
+
+	queryParams := "SELECT args FROM pipeline_build WHERE id =$1"
+	var params sql.NullString
+
+	if err := tx.QueryRow(queryParams, pipelineBuildID).Scan(&params); err != nil {
+		return pb, fmt.Errorf("LoadPipelineBuildByID> Cannot load pipeline build parameters for pb.ID:%d: %s", pipelineBuildID, err)
+	}
+	if params.Valid {
+		if err := json.Unmarshal([]byte(params.String), &pb.Parameters); err != nil {
+			return pb, fmt.Errorf("LoadPipelineBuildByID> Cannot unmarshal pipeline build parameters: %s", err)
+		}
+	}
+	return pb, nil
 }
 
 // LoadPipelineBuildByHash look for a pipeline build triggered by a change with given hash
@@ -244,7 +267,7 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 	var pbI, stageI, abI int
 	var pbStatus, pbArgs, pipType, stageName string
 	var stageID int64
-	var manual sql.NullBool
+	var manual, scheduled sql.NullBool
 	var trigBy, parentID, abID sql.NullInt64
 	var branch, hash, author, actionName, abStatus sql.NullString
 	for rows.Next() {
@@ -252,7 +275,7 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 			&pb.Application.ID, &pb.Application.Name,
 			&pb.Environment.ID, &pb.Environment.Name,
 			&pb.ID, &pbStatus, &pb.Version,
-			&pb.BuildNumber, &pbArgs, &manual,
+			&pb.BuildNumber, &pbArgs, &manual, &scheduled,
 			&trigBy, &parentID,
 			&branch, &hash, &author,
 			&pb.Pipeline.ID, &pb.Pipeline.Name, &pipType,
@@ -270,12 +293,16 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 			pb.Trigger.ManualTrigger = manual.Bool
 			pb.Trigger.VCSChangesBranch = branch.String
 		}
+		if scheduled.Valid {
+			pb.Trigger.ScheduledTrigger = scheduled.Bool
+		}
 		// moar info on automatic trigger
 		if manual.Valid && trigBy.Valid && parentID.Valid && branch.Valid && hash.Valid && author.Valid {
 			pb.Trigger.TriggeredBy = &sdk.User{ID: trigBy.Int64}
 			pb.Trigger.ParentPipelineBuild = &sdk.PipelineBuild{ID: parentID.Int64}
 			pb.Trigger.VCSChangesHash = hash.String
 			pb.Trigger.VCSChangesAuthor = author.String
+			pb.Trigger.ManualTrigger = manual.Bool
 		}
 
 		// If there is no pb in pbs, we obviously got the first
@@ -312,8 +339,8 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 			stageI++
 			abI = 0
 		}
-		// TODO PIPELINEBUILD
-		/*
+
+
 			// if there is no action build in stage, add a new one
 			if len(pbs[pbI].Stages[stageI].ActionBuilds) == 0 && abID.Valid {
 				ab := sdk.ActionBuild{ID: abID.Int64, ActionName: actionName.String, Status: sdk.StatusFromString(abStatus.String)}
@@ -326,7 +353,7 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 				pbs[pbI].Stages[stageI].ActionBuilds = append(pbs[pbI].Stages[stageI].ActionBuilds, ab)
 				abI++
 			}
-		*/
+
 	}
 	return pbs, nil
 }
@@ -334,17 +361,16 @@ func scanPbWithStagesAndActions(rows *sql.Rows) ([]sdk.PipelineBuild, error) {
 // InsertBuildVariable adds a variable exported in user scripts and forwarded by building worker
 func InsertBuildVariable(db *sql.DB, pbID int64, v sdk.Variable) error {
 
-	tx, err := db.Begin()
-	if err != nil {
-		return err
+	tx, errDb := db.Begin()
+	if errDb != nil {
+		return errDb
 	}
 	defer tx.Rollback()
 
 	// Load args from pipeline build and lock it
 	query := `SELECT args FROM pipeline_build WHERE id = $1 FOR UPDATE`
 	var argsJSON string
-	err = tx.QueryRow(query, pbID).Scan(&argsJSON)
-	if err != nil {
+	if err := tx.QueryRow(query, pbID).Scan(&argsJSON); err != nil {
 		return err
 	}
 
@@ -362,33 +388,30 @@ func InsertBuildVariable(db *sql.DB, pbID int64, v sdk.Variable) error {
 	})
 
 	// Update pb in database
-	data, err := json.Marshal(params)
-	if err != nil {
-		return err
+	data, errJson := json.Marshal(params)
+	if errJson != nil {
+		return errJson
 	}
 
 	query = `UPDATE pipeline_build SET args = $1 WHERE id = $2`
-	_, err = tx.Exec(query, string(data), pbID)
-	if err != nil {
+	if _, err := tx.Exec(query, string(data), pbID); err != nil {
 		return err
 	}
 
 	// now load all related action build
 	query = `SELECT id, args FROM action_build WHERE pipeline_build_id = $1 FOR UPDATE`
-	rows, err := tx.Query(query, pbID)
-	if err != nil {
-		return err
+	rows, errQuery := tx.Query(query, pbID)
+	if errQuery != nil {
+		return errQuery
 	}
 	defer rows.Close()
 	var abs []sdk.ActionBuild
 	for rows.Next() {
 		var ab sdk.ActionBuild
-		err = rows.Scan(&ab.ID, &argsJSON)
-		if err != nil {
+		if err := rows.Scan(&ab.ID, &argsJSON); err != nil {
 			return err
 		}
-		err = json.Unmarshal([]byte(argsJSON), &ab.Args)
-		if err != nil {
+		if err := json.Unmarshal([]byte(argsJSON), &ab.Args); err != nil {
 			return err
 		}
 		abs = append(abs, ab)
@@ -403,19 +426,17 @@ func InsertBuildVariable(db *sql.DB, pbID int64, v sdk.Variable) error {
 			Value: v.Value,
 		})
 
-		data, err := json.Marshal(ab.Args)
-		if err != nil {
-			return err
+		data, errMarshal := json.Marshal(ab.Args)
+		if errMarshal != nil {
+			return errMarshal
 		}
 
-		_, err = tx.Exec(query, string(data), ab.ID)
-		if err != nil {
+		if _, err := tx.Exec(query, string(data), ab.ID); err != nil {
 			return err
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 
@@ -552,9 +573,7 @@ func UpdatePipelineBuildStatus(db database.QueryExecuter, pb sdk.PipelineBuild, 
 
 	k := cache.Key("application", pb.Application.ProjectKey, "*")
 	cache.DeleteAll(k)
-
-	notification.SendPipeline(db, &pb, sdk.UpdateNotifEvent, status, previous)
-
+	event.PublishPipelineBuild(db, &pb, previous)
 	return nil
 }
 
@@ -671,13 +690,13 @@ func GetAllLastBuildByApplication(db database.Querier, applicationID int64, bran
 	return pb, nil
 }
 
-func scanPbShort(p *sdk.PipelineBuild, rows database.Scanner) error {
+func scanPbShort(p *sdk.PipelineBuild, row database.Scanner) error {
 	var status, typePipeline string
 	var manual, scheduled sql.NullBool
 	var trigBy, pPbID, version sql.NullInt64
 	var branch, hash, author, fromUser, fromPipeline sql.NullString
 
-	err := rows.Scan(&p.Pipeline.ID, &p.Application.ID, &p.Environment.ID, &p.ID, &p.Pipeline.ProjectID,
+	err := row.Scan(&p.Pipeline.ID, &p.Application.ID, &p.Environment.ID, &p.ID, &p.Pipeline.ProjectID,
 		&p.Environment.Name, &p.Application.Name, &p.Pipeline.Name, &p.Pipeline.ProjectKey,
 		&typePipeline,
 		&p.BuildNumber, &p.Version, &status,
@@ -1030,8 +1049,7 @@ func InsertPipelineBuild(tx database.QueryExecuter, project *sdk.Project, p *sdk
 		}
 	}
 
-	notification.SendPipeline(tx, &pb, sdk.CreateNotifEvent, sdk.StatusBuilding, previous)
-
+	event.PublishPipelineBuild(tx, &pb, previous)
 	return pb, nil
 }
 
@@ -1131,7 +1149,7 @@ func LoadPipelineBuildHistoryByApplicationAndPipeline(db database.Querier, appli
 	pbs := []sdk.PipelineBuild{}
 	var query string
 	var rows *sql.Rows
-	var err error
+	var errQuery error
 
 	c := structarg{}
 	for _, f := range args {
@@ -1141,49 +1159,42 @@ func LoadPipelineBuildHistoryByApplicationAndPipeline(db database.Querier, appli
 	// Load history from pipeline build
 	if status == "" && branchName == "" {
 		query = fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.application_id= $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3", "LIMIT $4")
-		rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit)
+		rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit)
 	} else if status != "" && branchName == "" {
 		query = fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.application_id= $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3 AND pb.status = $5", "LIMIT $4")
-		rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, status)
+		rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, status)
 	} else if status == "" && branchName != "" {
 		query = fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.application_id= $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3 AND pb.vcs_changes_branch = $5", "LIMIT $4")
-		rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, branchName)
+		rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, branchName)
 	} else {
 		query = fmt.Sprintf(LoadPipelineBuildRequest, "", "pb.application_id= $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3 AND pb.status = $5 AND pb.vcs_changes_branch = $6", "LIMIT $4")
-		rows, err = db.Query(query, applicationID, pipelineID, environmentID, limit, status, branchName)
+		rows, errQuery = db.Query(query, applicationID, pipelineID, environmentID, limit, status, branchName)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load pipeline build: %s", err)
+	if errQuery != nil {
+		return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load pipeline build: %s", errQuery)
 	}
 
 	for rows.Next() {
 		var pb sdk.PipelineBuild
-		err = scanPbShort(&pb, rows)
-		if err != nil {
+		if err := scanPbShort(&pb, rows); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot read db result when loading pipeline build: %s", err)
 		}
 
 		if c.loadstages {
-			// TODO PIPELINEBUILD
-			/*
-				err := loadStageAndActionBuilds(db, &pb)
-				if err != nil {
-					return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load stages from pipeline build %d: %s", pb.ID, err)
-				}
-			*/
+			if err := loadStageAndActionBuilds(db, &pb); err != nil {
+				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load stages from pipeline build %d: %s", pb.ID, err)
+			}
 		}
 
 		if c.loadparameters {
 			queryParams := `SELECT args FROM pipeline_build WHERE id = $1`
 			var params string
-			err = db.QueryRow(queryParams, pb.ID).Scan(&params)
-			if err != nil {
+			if err := db.QueryRow(queryParams, pb.ID).Scan(&params); err != nil {
 				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot load pipeline build parameters: %s", err)
 			}
-			err = json.Unmarshal([]byte(params), &pb.Parameters)
-			if err != nil {
+			if err := json.Unmarshal([]byte(params), &pb.Parameters); err != nil {
 				return nil, fmt.Errorf("LoadPipelineBuildHistoryByApplicationAndPipeline> Cannot unmarshal pipeline build parameters: %s", err)
 			}
 		}
@@ -1269,100 +1280,94 @@ func StopPipelineBuild(db *sql.DB, pbID int64) error {
 	return nil
 }
 
-// RestartPipelineBuild restarts failed actions build
 func RestartPipelineBuild(db *sql.DB, pb sdk.PipelineBuild) error {
-	// TODO PIPELINEBUILD
-	/*
-		var actionBuilds []sdk.ActionBuild
-		var err error
-		if pb.Status == sdk.StatusSuccess {
-			actionBuilds, err = loadActionBuildsByStagePosition(db, pb.ID, 1)
-		} else {
-			actionBuilds, err = loadAllActionBuilds(db, pb.ID)
-		}
-		if err != nil {
-			return fmt.Errorf("RestartPipelineBuild> Cannot load action builds for pipeline ID %d : %s", pb.ID, err)
-		}
+	var actionBuilds []sdk.ActionBuild
+	var err error
+	if pb.Status == sdk.StatusSuccess {
+		actionBuilds, err = loadActionBuildsByStagePosition(db, pb.ID, 1)
+	} else {
+		actionBuilds, err = loadAllActionBuilds(db, pb.ID)
+	}
+	if err != nil {
+		return fmt.Errorf("RestartPipelineBuild> Cannot load action builds for pipeline ID %d : %s", pb.ID, err)
+	}
 
-		tx, err := db.Begin()
-		if err != nil {
-			return fmt.Errorf("RestartPipelineBuild> Cannot start tx: %s", err)
-		}
-		defer tx.Rollback()
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("RestartPipelineBuild> Cannot start tx: %s", err)
+	}
+	defer tx.Rollback()
 
-		for _, ab := range actionBuilds {
-			if ab.Status != sdk.StatusDisabled && ab.Status != sdk.StatusSkipped && (ab.Status == sdk.StatusFail || pb.Status == sdk.StatusSuccess) {
-				log.Notice("RestartPipelineBuild: Action %s: restarting\n", ab.ActionName)
-				err = RestartActionBuild(tx, ab.ID)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		if pb.Status == sdk.StatusSuccess {
-			// Select other actions build
-			actionBuildIDs := []int64{}
-			query := `SELECT action_build.id FROM action_build
-				  JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
-				  JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
-		 		  WHERE action_build.pipeline_build_id = $1 and pipeline_stage.build_order > 1
-		 		  	AND action_build.status not in ($2, $3)`
-			rows, err := tx.Query(query, pb.ID, sdk.StatusDisabled.String(), sdk.StatusSkipped.String())
+	for _, ab := range actionBuilds {
+		if ab.Status != sdk.StatusDisabled && ab.Status != sdk.StatusSkipped && (ab.Status == sdk.StatusFail || pb.Status == sdk.StatusSuccess) {
+			log.Notice("RestartPipelineBuild: Action %s: restarting\n", ab.ActionName)
+			err = RestartActionBuild(tx, ab.ID)
 			if err != nil {
 				return err
 			}
-			defer rows.Close()
+		}
+	}
 
-			for rows.Next() {
-				var abID int64
-				err = rows.Scan(&abID)
-				if err != nil {
-					return err
-				}
-				actionBuildIDs = append(actionBuildIDs, abID)
-			}
+	if pb.Status == sdk.StatusSuccess {
+		// Select other actions build
+		actionBuildIDs := []int64{}
+		query := `SELECT action_build.id FROM action_build
+			  JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
+			  JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
+	 		  WHERE action_build.pipeline_build_id = $1 and pipeline_stage.build_order > 1
+	 		  	AND action_build.status not in ($2, $3)`
+		rows, err := tx.Query(query, pb.ID, sdk.StatusDisabled.String(), sdk.StatusSkipped.String())
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
 
-			for _, id := range actionBuildIDs {
-				err := build.DeleteBuildLogs(tx, id)
-				if err != nil {
-					return err
-				}
-				queryDelete := `DELETE FROM action_build WHERE id = $1`
-				_, err = tx.Exec(queryDelete, id)
-				if err != nil {
-					log.Warning("RestartPipelineBuild> Cannot remove action builds %d: %s\n", id, err)
-					return err
-				}
-			}
-
-			// Delete test results
-			err = build.DeletePipelineTestResults(db, pb.ID)
+		for rows.Next() {
+			var abID int64
+			err = rows.Scan(&abID)
 			if err != nil {
 				return err
 			}
+			actionBuildIDs = append(actionBuildIDs, abID)
+		}
 
-			// Update start time
-			queryUpdateStart := `UPDATE pipeline_build set start = current_timestamp WHERE id = $1`
-			_, err = tx.Exec(queryUpdateStart, pb.ID)
-			if err != nil {
+		for _, id := range actionBuildIDs {
+			if err := DeleteBuildLogs(tx, id); err != nil {
 				return err
 			}
-
+			queryDelete := `DELETE FROM action_build WHERE id = $1`
+			_, err = tx.Exec(queryDelete, id)
+			if err != nil {
+				log.Warning("RestartPipelineBuild> Cannot remove action builds %d: %s\n", id, err)
+				return err
+			}
 		}
 
-		err = UpdatePipelineBuildStatus(tx, pb, sdk.StatusBuilding)
+		// Delete test results
+		err = DeletePipelineTestResults(db, pb.ID)
 		if err != nil {
-			return fmt.Errorf("RestartPipelineBuild> UpdatePipelineBuildStatus> %s", err)
+			return err
 		}
 
-		err = tx.Commit()
+		// Update start time
+		queryUpdateStart := `UPDATE pipeline_build set start = current_timestamp WHERE id = $1`
+		_, err = tx.Exec(queryUpdateStart, pb.ID)
 		if err != nil {
-			return fmt.Errorf("RestartPipelineBuild> Cannot commit tx: %s", err)
+			return err
 		}
 
-		return nil
-	*/
+	}
+
+	err = UpdatePipelineBuildStatus(tx, pb, sdk.StatusBuilding)
+	if err != nil {
+		return fmt.Errorf("RestartPipelineBuild> UpdatePipelineBuildStatus> %s", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("RestartPipelineBuild> Cannot commit tx: %s", err)
+	}
+
 	return nil
 }
 
@@ -1448,14 +1453,13 @@ func DeletePipelineBuildArtifact(db database.QueryExecuter, pipelineBuildID int6
 
 // DeletePipelineBuild deletes a pipeline build and generated artifacts
 func DeletePipelineBuild(db database.QueryExecuter, pipelineBuildID int64) error {
-	err := DeletePipelineBuildArtifact(db, pipelineBuildID)
-	if err != nil {
+
+	if err := DeletePipelineBuildArtifact(db, pipelineBuildID); err != nil {
 		return err
 	}
 
 	// Then delete pipeline build data
-	err = build.DeleteBuild(db, pipelineBuildID)
-	if err != nil {
+	if err := DeleteBuild(db, pipelineBuildID); err != nil {
 		return err
 	}
 

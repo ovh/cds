@@ -4,8 +4,7 @@ import (
 	"testing"
 
 	_ "github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/build"
-	_ "github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/pipeline"
 	_ "github.com/ovh/cds/engine/api/project"
 	_ "github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/test"
@@ -15,8 +14,7 @@ import (
 func TestInsertLog(t *testing.T) {
 	db := test.Setup("InsertLog", t)
 
-	err := build.InsertLog(db, 3, "1", "hello world")
-	if err != nil {
+	if err := pipeline.InsertLog(db, 3, "1", "hello world"); err != nil {
 		t.Fatalf("Cannot insert log: %s", err)
 	}
 }
@@ -24,18 +22,18 @@ func TestInsertLog(t *testing.T) {
 func TestLoadLogs(t *testing.T) {
 	db := test.Setup("LoadLog", t)
 
-	build.InsertLog(db, 3, "1", "foo 2")
-	build.InsertLog(db, 3, "1", "foo 3")
-	build.InsertLog(db, 2, "1", "foo 1")
-	build.InsertLog(db, 2, "1", "foo 2")
-	build.InsertLog(db, 3, "1", "foo 4")
+	pipeline.InsertLog(db, 3, "1", "foo 2")
+	pipeline.InsertLog(db, 3, "1", "foo 3")
+	pipeline.InsertLog(db, 2, "1", "foo 1")
+	pipeline.InsertLog(db, 2, "1", "foo 2")
+	pipeline.InsertLog(db, 3, "1", "foo 4")
 
-	build.InsertLog(db, 3, "2", "foo 5")
-	build.InsertLog(db, 3, "2", "foo 6")
-	build.InsertLog(db, 3, "2", "foo 7")
-	build.InsertLog(db, 3, "2", "foo 8")
+	pipeline.InsertLog(db, 3, "2", "foo 5")
+	pipeline.InsertLog(db, 3, "2", "foo 6")
+	pipeline.InsertLog(db, 3, "2", "foo 7")
+	pipeline.InsertLog(db, 3, "2", "foo 8")
 
-	logs, err := build.LoadLogs(db, 3, 0, 0)
+	logs, err := pipeline.LoadLogs(db, 3, 0, 0)
 	if err != nil {
 		t.Fatalf("Cannot load logs: %s", err)
 	}
@@ -139,7 +137,7 @@ func TestLoadPipelineBuildLogs(t *testing.T) {
 		t.Fatalf("expected build id to bet not 0")
 	}
 
-	err = build.InsertLog(db, buildData.ID, a.Name, "1")
+	err = pipeline.InsertLog(db, buildData.ID, a.Name, "1")
 	if err != nil {
 		t.Fatalf("cannot insert log for build %d with action %s: %s", buildData.ID, a.Name, err)
 	}
@@ -154,7 +152,7 @@ func TestLoadPipelineBuildLogs(t *testing.T) {
 		t.Fatalf("expected build id to bet not 0")
 	}
 
-	err = build.InsertLog(db, buildData.ID, b.Name, "2")
+	err = pipeline.InsertLog(db, buildData.ID, b.Name, "2")
 	if err != nil {
 		t.Fatalf("cannot insert log for build %d with action %s: %s", buildData.ID, b.Name, err)
 	}
@@ -169,13 +167,13 @@ func TestLoadPipelineBuildLogs(t *testing.T) {
 		t.Fatalf("expected build id to bet not 0")
 	}
 
-	err = build.InsertLog(db, buildData.ID, c.Name, "3")
+	err = pipeline.InsertLog(db, buildData.ID, c.Name, "3")
 	if err != nil {
 		t.Fatalf("cannot insert log for build %d with action %s: %s", buildData.ID, c.Name, err)
 	}
 
 	// 6- Load logs
-	logs, err := build.LoadPipelineBuildLogs(db, pb.ID, 0)
+	logs, err := pipeline.LoadPipelineBuildLogs(db, pb.ID, 0)
 	if err != nil {
 		t.Fatalf("cannot load pipeline build logs: %s", err)
 	}

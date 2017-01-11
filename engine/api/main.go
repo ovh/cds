@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,10 +21,10 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/queue"
@@ -35,6 +36,7 @@ import (
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk"
 )
 
 var startupTime time.Time
@@ -90,6 +92,8 @@ var mainCmd = &cobra.Command{
 				<-c
 				log.Warning("Cleanup SQL connections\n")
 				db.Close()
+				event.Publish(sdk.EventEngine{Message: "shutdown"})
+				event.Close()
 				os.Exit(0)
 			}()
 		}
@@ -108,9 +112,7 @@ var mainCmd = &cobra.Command{
 			mux: mux.NewRouter(),
 		}
 		router.init()
-
 		baseURL = viper.GetString("base_url")
-		notification.Initialize(viper.GetString("notifs_urls"), viper.GetString("notifs_key"), baseURL)
 
 		if err := group.Initialize(db); err != nil {
 			log.Critical("Cannot initialize groups: %s\n", err)
@@ -171,6 +173,7 @@ var mainCmd = &cobra.Command{
 
 		cache.Initialize(viper.GetString("cache"), viper.GetString("redis_host"), viper.GetString("redis_password"), viper.GetInt("cache_ttl"))
 
+		go event.Routine()
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller()
 		//go pipeline.HistoryCleaningRoutine(db)
@@ -178,6 +181,10 @@ var mainCmd = &cobra.Command{
 		go hatchery.Heartbeat()
 		go log.RemovalRoutine()
 		go auditCleanerRoutine()
+
+		go repositoriesmanager.RepositoriesCacheLoader(30)
+		go repositoriesmanager.ReceiveEvents()
+
 		go stats.StartRoutine()
 		go action.RequirementsCacheLoader(5)
 		go worker.ModelCapabilititiesCacheLoader(5)
@@ -202,6 +209,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		log.Notice("Listening on :%s\n", viper.GetString("listen_port"))
+		event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", viper.GetString("listen_port"))})
 		if err := s.ListenAndServe(); err != nil {
 			log.Fatalf("Cannot start cds-server: %s\n", err)
 		}
@@ -260,9 +268,6 @@ func (router *Router) init() {
 	router.Handle("/mon/building/{hash}", GET(getPipelineBuildingCommit))
 	router.Handle("/mon/warning", GET(getUserWarnings))
 	router.Handle("/mon/lastupdates", GET(getUserLastUpdates))
-
-	// Notif builtin from worker
-	router.Handle("/notif/{actionBuildId}", POST(notifHandler))
 
 	// Project
 	router.Handle("/project", GET(getProjects), POST(addProject))
@@ -337,6 +342,7 @@ func (router *Router) init() {
 	// Environment
 	router.Handle("/project/{permProjectKey}/environment", GET(getEnvironmentsHandler), POST(addEnvironmentHandler), PUT(updateEnvironmentsHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}", GET(getEnvironmentHandler), PUT(updateEnvironmentHandler), DELETE(deleteEnvironmentHandler))
+	router.Handle("/project/{key}/environment/{permEnvironmentName}/clone", POST(cloneEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit", GET(getEnvironmentsAuditHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit/{auditID}", PUT(restoreEnvironmentAuditHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/group", POST(addGroupInEnvironmentHandler))
@@ -549,6 +555,18 @@ func init() {
 
 	flags.Int("session-ttl", 60, "Session Time to Live (minutes)")
 	viper.BindPFlag("session_ttl", flags.Lookup("session-ttl"))
+
+	flags.String("event-kafka-broker-addresses", "", "Ex: --event-kafka-broker-addresses=host:port,host2:port2")
+	viper.BindPFlag("event_kafka_broker_addresses", flags.Lookup("event-kafka-broker-addresses"))
+
+	flags.String("event-kafka-topic", "", "Ex: --kafka-topic=your-kafka-topic")
+	viper.BindPFlag("event_kafka_topic", flags.Lookup("event-kafka-topic"))
+
+	flags.String("event-kafka-user", "", "Ex: --kafka-user=your-kafka-user")
+	viper.BindPFlag("event_kafka_user", flags.Lookup("event-kafka-user"))
+
+	flags.String("event-kafka-password", "", "Ex: --kafka-password=your-kafka-password")
+	viper.BindPFlag("event_kafka_password", flags.Lookup("event-kafka-password"))
 
 	flags.Bool("no-repo-polling", false, "Disable repositories manager polling")
 	viper.BindPFlag("no_repo_polling", flags.Lookup("no-repo-polling"))

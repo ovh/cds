@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
@@ -106,12 +105,12 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	var pipelinelogs []sdk.Log
 	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
 	if err != nil {
-		log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
-		WriteError(w, r, err)
-		return
+			log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
+			WriteError(w, r, err)
+			return
 	}
 
-	pipelinelogs, err = build.LoadPipelineBuildLogs(db, pb.ID, offset)
+	pipelinelogs, err = pipeline.LoadPipelineBuildLogs(db, pb.ID, offset)
 	if err != nil {
 		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", err)
 		WriteError(w, r, err)
@@ -215,13 +214,14 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	var pipelinelogs sdk.BuildState
 	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
 	if err != nil {
-		log.Warning("getActionBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
-		WriteError(w, r, err)
-		return
+
+			log.Warning("getActionBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
+			WriteError(w, r, err)
+			return
+
 
 	}
-
-	pipelinelogs, err = build.LoadPipelineActionBuildLogs(db, pb.ID, actionID, offset)
+	pipelinelogs, err = pipeline.LoadPipelineActionBuildLogs(db, pb.ID, actionID, offset)
 	if err != nil {
 		log.Warning("getActionBuildLogsHandler> Cannot load pipeline build logs: %s\n", err)
 		WriteError(w, r, err)
@@ -238,7 +238,7 @@ func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	id := vars["id"]
 
 	// Load Queue
-	_, err := build.LoadActionBuild(db, id)
+	_, err := pipeline.LoadActionBuild(db, id)
 	if err != nil {
 		log.Warning("addBuildLogHandler> Cannot load build %s from db: %s\n", id, err)
 		WriteError(w, r, err)
@@ -264,7 +264,7 @@ func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	}
 
 	for i := range logs {
-		err = build.InsertLog(db, logs[i].ActionBuildID, logs[i].Step, logs[i].Value)
+		err = pipeline.InsertLog(db, logs[i].ActionBuildID, logs[i].Step, logs[i].Value)
 		if err != nil {
 			log.Warning("addBuildLogHandler> Cannot insert log line:  %s\n", err)
 			WriteError(w, r, err)

@@ -14,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/notification"
@@ -79,6 +80,7 @@ func deleteAll(t *testing.T, db *sql.DB, key string) error {
 	t.Logf("All deleted")
 	return nil
 }
+
 func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *sql.DB, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment)) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
@@ -209,13 +211,6 @@ func Test_InsertAndLoadApplicationPipelineNotif(t *testing.T) {
 						Body:    "body_",
 					},
 				},
-				sdk.TATUserNotification: &sdk.TATUserNotificationSettings{
-					OnSuccess: "on_success__",
-					OnStart:   true,
-					OnFailure: "on_failure__",
-					Topics:    []string{"1", "2"},
-					Template:  "template",
-				},
 			},
 			Environment: *env,
 		}
@@ -280,13 +275,6 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotifi
 						Subject: "subject_",
 						Body:    "body_",
 					},
-				},
-				sdk.TATUserNotification: &sdk.TATUserNotificationSettings{
-					OnSuccess: "on_success__",
-					OnStart:   true,
-					OnFailure: "on_failure__",
-					Topics:    []string{"1", "2"},
-					Template:  "template",
 				},
 			},
 		}
@@ -367,13 +355,6 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 						Subject: "subject_",
 						Body:    "body_",
 					},
-				},
-				sdk.TATUserNotification: &sdk.TATUserNotificationSettings{
-					OnSuccess: "on_success__",
-					OnStart:   true,
-					OnFailure: "on_failure__",
-					Topics:    []string{"1", "2"},
-					Template:  "template",
 				},
 			},
 		}
@@ -558,32 +539,15 @@ func Test_SendPipeline(t *testing.T) {
 		params := []sdk.Parameter{}
 		trigger := sdk.PipelineBuildTrigger{}
 
-		//mock cds2xmpp server
-		server := httptest.NewServer(http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path == "/jabber/build" {
-					decoder := json.NewDecoder(r.Body)
-					var n sdk.Notif
-					err = decoder.Decode(&n)
-					test.NoError(t, err)
-					assert.Equal(t, "CDS TEST_APP_PIPELINE_NOTIF/TEST_APP TEST_PIPELINE Building", n.Title)
-					assert.Equal(t, "\nDetails : http://localhost:9000/#/project/TEST_APP_PIPELINE_NOTIF/application/TEST_APP/pipeline/TEST_PIPELINE/build/1?env=NoEnv&tab=detail", n.Message)
-				}
-				w.WriteHeader(200)
-			},
-		))
-		defer server.Close()
-
-		//Initialize notification sender...
-		notification.Initialize("jabber:"+server.URL, "jabber", "http://localhost:9000")
-
-		t.Log("Insert PipelineBuild")
-
 		pb, err := pipeline.InsertPipelineBuild(tx, proj, pip, app, params, params, env, -1, trigger)
 		test.NoError(t, err)
 
 		err = tx.Commit()
 		test.NoError(t, err)
+
+		var event sdk.Event
+		cache.Dequeue("events", event)
+		assert.Equal(t, event.EventType, "sdk.EventPipelineBuild", nil)
 
 		err = pipeline.DeletePipelineBuild(db, pb.ID)
 		test.NoError(t, err)

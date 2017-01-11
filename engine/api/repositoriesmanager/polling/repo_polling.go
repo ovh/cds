@@ -94,7 +94,7 @@ func Initialize() {
 
 			case w := <-endPollerChan:
 				RunningPollers.mutex.Lock()
-				log.Warning("Polling> End : %s", w.ProjectKey)
+				log.Debug("Polling> End : %s", w.ProjectKey)
 				delete(RunningPollers.Workers, w.ProjectKey)
 				RunningPollers.mutex.Unlock()
 			}

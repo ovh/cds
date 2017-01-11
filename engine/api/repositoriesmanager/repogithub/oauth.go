@@ -28,8 +28,7 @@ var (
 func generateHash() (string, error) {
 	size := 128
 	bs := make([]byte, size)
-	_, err := rand.Read(bs)
-	if err != nil {
+	if _, err := rand.Read(bs); err != nil {
 		log.Critical("generateID: rand.Read failed: %s\n", err)
 		return "", err
 	}
