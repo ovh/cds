@@ -225,6 +225,10 @@ func (router *Router) init() {
 	router.Handle("/action/{actionName}/using", NeedAdmin(true), GET(getPipelinesUsingActionHandler))
 	router.Handle("/action/{actionID}/audit", NeedAdmin(true), GET(getActionAuditHandler))
 
+	// Admin
+	router.Handle("/admin/warning", NeedAdmin(true), DELETE(adminTruncateWarningsHandler))
+	router.Handle("/admin/maintenance", NeedAdmin(true), POST(postAdminMaintenanceHandler), GET(getAdminMaintenanceHandler), DELETE(deleteAdminMaintenanceHandler))
+
 	// Action plugin
 	router.Handle("/plugin", NeedAdmin(true), POST(addPluginHandler), PUT(updatePluginHandler))
 	router.Handle("/plugin/{name}", NeedAdmin(true), DELETE(deletePluginHandler))
