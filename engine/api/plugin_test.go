@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 
 	"github.com/gorilla/mux"
+	"github.com/ovh/cds/engine/api/actionplugin"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
@@ -147,6 +148,11 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
 
+	u, _ := test.InsertAdminUser(t, db)
+	if err := actionplugin.Delete(db, "dummy", u.ID); err != nil {
+		t.Log(err)
+	}
+
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
@@ -167,7 +173,6 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 			t.Fail()
 			return
 		}
-		assert.Equal(t, int64(1), a.ID)
 		assert.Equal(t, "dummy", a.Name)
 		assert.Equal(t, sdk.PluginAction, a.Type)
 		assert.Equal(t, "This is a dummy plugin", a.Description)
@@ -199,6 +204,9 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
 
+	u, _ := test.InsertAdminUser(t, db)
+	actionplugin.Delete(db, "dummy", u.ID)
+
 	path, delete, err := downloadFile(t, "dummy1", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
@@ -229,6 +237,9 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 	}()
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
+
+	u, _ := test.InsertAdminUser(t, db)
+	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
@@ -269,6 +280,9 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	}()
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
+
+	u, _ := test.InsertAdminUser(t, db)
+	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
@@ -321,6 +335,9 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	}()
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
+
+	u, _ := test.InsertAdminUser(t, db)
+	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {

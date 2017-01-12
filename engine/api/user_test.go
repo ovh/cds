@@ -35,6 +35,8 @@ func TestVerifyUserToken(t *testing.T) {
 		HashedTokenVerify: hashedToken,
 	}
 
+	user.DeleteUserWithDependenciesByName(db, u.Username)
+
 	err = user.InsertUser(db, u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
@@ -75,6 +77,8 @@ func TestWrongTokenUser(t *testing.T) {
 		HashedTokenVerify: hashedToken,
 	}
 
+	user.DeleteUserWithDependenciesByName(db, u.Username)
+
 	err = user.InsertUser(db, u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
@@ -110,6 +114,8 @@ func TestVerifyResetExpired(t *testing.T) {
 		DateReset:         1,
 		EmailVerified:     true,
 	}
+
+	user.DeleteUserWithDependenciesByName(db, u.Username)
 
 	err = user.InsertUser(db, u, a)
 	if err != nil {
@@ -150,6 +156,8 @@ func TestVerifyAlreadyDone(t *testing.T) {
 		EmailVerified:     true,
 	}
 
+	user.DeleteUserWithDependenciesByName(db, u.Username)
+
 	err = user.InsertUser(db, u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
@@ -177,6 +185,8 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Email:    "foo.bar@ovh.com",
 		Fullname: "foo bar",
 	}
+
+	user.DeleteUserWithDependenciesByName(db, u.Username)
 
 	err := user.InsertUser(db, u, nil)
 	if err != nil {
