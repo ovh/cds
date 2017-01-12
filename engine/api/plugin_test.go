@@ -266,7 +266,6 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 }
 
 func TestUpdatePluginHandlerSuccess(t *testing.T) {
-	t.Skip()
 	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
