@@ -19,7 +19,7 @@ import (
 
 // TestVerifyUserToken test token verification when OK
 func TestVerifyUserToken(t *testing.T) {
-	db := test.Setup("TestVerifyUserToken", t)
+	db := test.SetupPG(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -59,7 +59,7 @@ func TestVerifyUserToken(t *testing.T) {
 
 // TestWrongTokenUser  test token verificaiton when token is wrong
 func TestWrongTokenUser(t *testing.T) {
-	db := test.Setup("TestWrongTokenUser", t)
+	db := test.SetupPG(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -93,7 +93,7 @@ func TestWrongTokenUser(t *testing.T) {
 
 // TestVerifyResetExpired test validating reset token when time expired
 func TestVerifyResetExpired(t *testing.T) {
-	db := test.Setup("TestVerifyResetExpired", t)
+	db := test.SetupPG(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -132,7 +132,7 @@ func TestVerifyResetExpired(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestVerifyAlreadyDone(t *testing.T) {
-	db := test.Setup("TestVerifyAlreadyDone", t)
+	db := test.SetupPG(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -171,7 +171,7 @@ func TestVerifyAlreadyDone(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestLoadUserWithGroup(t *testing.T) {
-	db := test.Setup("TestLoadUserWithGroup", t)
+	db := test.SetupPG(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",

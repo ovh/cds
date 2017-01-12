@@ -494,36 +494,6 @@
 			"revisionTime": "2016-06-15T09:26:46Z"
 		},
 		{
-			"checksumSHA1": "d5iTAc1bZtWdpTBfmbeFWzAKJ64=",
-			"path": "github.com/proullon/ramsql/driver",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
-			"checksumSHA1": "kt7Yj0P7P6XYUDcjQi7HW+GvjmE=",
-			"path": "github.com/proullon/ramsql/engine",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
-			"checksumSHA1": "RJE6dMW7lbSwHZyuIF3JkkMfAfs=",
-			"path": "github.com/proullon/ramsql/engine/log",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
-			"checksumSHA1": "7qZknEk70u3MLsJi3v+LdUSMbD0=",
-			"path": "github.com/proullon/ramsql/engine/parser",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
-			"checksumSHA1": "j/OBxY0CFSWqXRDRhYq4vddT6fM=",
-			"path": "github.com/proullon/ramsql/engine/protocol",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
 			"checksumSHA1": "Y1gIGoR8z/lDf2j+vcH1eKZGDSk=",
 			"path": "github.com/rubenv/sql-migrate",
 			"revision": "6f4757563362064790a6687a6b60f182062c8634",

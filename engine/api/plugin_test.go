@@ -134,7 +134,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 }
 
 func TestAddPluginHandlerSuccess(t *testing.T) {
-	db := test.Setup("TestAddPluginHandlerSuccess", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -186,7 +186,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 }
 
 func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
-	db := test.Setup("TestAddPluginHandlerFailWithInvalidPlugin", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -217,7 +217,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 }
 
 func TestAddPluginHandlerFailWithConflict(t *testing.T) {
-	db := test.Setup("TestAddPluginHandlerFailWithConflict", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -256,7 +256,7 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 
 func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	t.Skip()
-	db := test.Setup("TestUpdatePluginHandlerSuccess", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -308,10 +308,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 }
 
 func TestDeletePluginHandlerSuccess(t *testing.T) {
-	t.Skip()
-	//Skip it because ramsql
-
-	db := test.Setup("TestDeletePluginHandlerSuccess", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
