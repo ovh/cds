@@ -1,11 +1,10 @@
 package maintenance
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
-
-	"encoding/json"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
