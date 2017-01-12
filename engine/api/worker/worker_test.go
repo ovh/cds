@@ -9,7 +9,7 @@ import (
 )
 
 func TestInsertWorker(t *testing.T) {
-	db := test.Setup("InsertWorker", t)
+	db := test.SetupPG(t)
 
 	w := &sdk.Worker{
 		ID:   "foofoo",
@@ -24,7 +24,7 @@ func TestInsertWorker(t *testing.T) {
 }
 
 func TestDeletetWorker(t *testing.T) {
-	db := test.Setup("DeleteWorker", t)
+	db := test.SetupPG(t)
 
 	w := &sdk.Worker{
 		ID:   "foofoo",
@@ -43,7 +43,7 @@ func TestDeletetWorker(t *testing.T) {
 }
 
 func TestLoadWorkers(t *testing.T) {
-	db := test.Setup("LoadWorkers", t)
+	db := test.SetupPG(t)
 
 	w := &sdk.Worker{ID: "foo", Name: "aa.bar.io"}
 	if err := InsertWorker(db, w, 0); err != nil {

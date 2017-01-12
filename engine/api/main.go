@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-	_ "github.com/proullon/ramsql/driver"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
