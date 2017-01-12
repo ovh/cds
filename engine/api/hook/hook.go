@@ -179,10 +179,11 @@ func LoadPipelineHooks(db *sql.DB, pipelineID int64, applicationID int64) ([]sdk
 		var h sdk.Hook
 		h.Pipeline.ID = pipelineID
 		h.ApplicationID = applicationID
-		err = rows.Scan(&h.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.UID)
-		if err != nil {
+		if err = rows.Scan(&h.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.UID); err != nil {
 			return nil, err
 		}
+		link := viper.GetString("api_url") + HookLink
+		h.Link = fmt.Sprintf(link, h.UID, h.Project, h.Repository)
 		hooks = append(hooks, h)
 	}
 
