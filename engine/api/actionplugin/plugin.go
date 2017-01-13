@@ -183,11 +183,27 @@ func Update(db *sql.DB, ap *sdk.ActionPlugin, params *plugin.Parameters, userID 
 
 //Delete action in database
 func Delete(db *sql.DB, name string, userID int64) error {
-	//a, err := action.LoadPublicAction(db, name, action.WithClearPasswords())
-	a, err := action.LoadPublicAction(db, name)
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	a, err := action.LoadPublicAction(tx, name)
 	if err != nil {
 		log.Warning("plugin.Delete> Action: Cannot get action %s: %s\n", name, err)
 		return err
 	}
-	return action.DeleteAction(db, a.ID, userID)
+
+	query := "DELETE FROM plugin WHERE name = $1"
+	if _, err := tx.Exec(query, a.Name); err != nil {
+		return err
+	}
+
+	if err := action.DeleteAction(tx, a.ID, userID); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+
 }

@@ -132,7 +132,7 @@ On a brand new database run the following command:
 
 ```shell
     $ cd $GOPATH/src/github/ovh/cds
-    $ engine/api/api database create --db-host <host> --db-host <port> --db-password <password> --db-name <database>
+    $ engine/api/api database upgrade --db-host <host> --db-host <port> --db-password <password> --db-name <database> --limit 0
 ```
 
 ### Upgrade

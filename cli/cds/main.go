@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 
 	"github.com/ovh/cds/cli/cds/action"
+	"github.com/ovh/cds/cli/cds/admin"
 	"github.com/ovh/cds/cli/cds/application"
 	"github.com/ovh/cds/cli/cds/artifact"
 	"github.com/ovh/cds/cli/cds/dashboard"
@@ -108,6 +109,7 @@ func main() {
 	rootCmd.AddCommand(plugin.Cmd())
 	rootCmd.AddCommand(template.Cmd())
 	rootCmd.AddCommand(generate.Cmd())
+	rootCmd.AddCommand(admin.Cmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

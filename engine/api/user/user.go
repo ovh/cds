@@ -211,6 +211,15 @@ func UpdateUserAndAuth(db *sql.DB, u sdk.User) error {
 	return err
 }
 
+// DeleteUserWithDependenciesByName Delete user and all his dependencies
+func DeleteUserWithDependenciesByName(db database.QueryExecuter, s string) error {
+	u, err := LoadUserWithoutAuth(db, s)
+	if err != nil {
+		return err
+	}
+	return DeleteUserWithDependencies(db, u)
+}
+
 // DeleteUserWithDependencies Delete user and all his dependencies
 func DeleteUserWithDependencies(db database.Executer, u *sdk.User) error {
 
