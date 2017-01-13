@@ -213,7 +213,7 @@ func UpdateUserAndAuth(db gorp.SqlExecutor, u sdk.User) error {
 }
 
 // DeleteUserWithDependenciesByName Delete user and all his dependencies
-func DeleteUserWithDependenciesByName(db database.QueryExecuter, s string) error {
+func DeleteUserWithDependenciesByName(db gorp.SqlExecutor, s string) error {
 	u, err := LoadUserWithoutAuth(db, s)
 	if err != nil {
 		return err
@@ -222,7 +222,7 @@ func DeleteUserWithDependenciesByName(db database.QueryExecuter, s string) error
 }
 
 // DeleteUserWithDependencies Delete user and all his dependencies
-func DeleteUserWithDependencies(db database.Executer, u *sdk.User) error {
+func DeleteUserWithDependencies(db gorp.SqlExecutor, u *sdk.User) error {
 
 	err := deleteUserFromUserGroup(db, u)
 	if err != nil {
