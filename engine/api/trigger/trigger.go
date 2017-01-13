@@ -140,8 +140,7 @@ func InsertTriggerPrerequisite(db database.Executer, triggerID int64, paramName,
 }
 
 // UpdateTrigger update trigger data
-func UpdateTrigger(db database.QueryExecuter, t sdk.PipelineTrigger) error {
-
+func UpdateTrigger(db database.QueryExecuter, t *sdk.PipelineTrigger) error {
 	var srcEnvID sql.NullInt64
 	if t.SrcEnvironment.ID != 0 {
 		srcEnvID.Valid = true
@@ -155,8 +154,8 @@ func UpdateTrigger(db database.QueryExecuter, t sdk.PipelineTrigger) error {
 	}
 
 	// Check we are not creating an infinite loop first
-	if err := isTriggerLoopFree(db, &t, []parent{parent{AppID: t.SrcApplication.ID, PipID: t.SrcPipeline.ID, EnvID: t.SrcEnvironment.ID}}); err != nil {
-		log.Warning("InsertTrigger: Infinite trigger loop found for trigger %s/%s/%s[%s] %s/%s/%s[%s]\n",
+	if err := isTriggerLoopFree(db, t, []parent{parent{AppID: t.SrcApplication.ID, PipID: t.SrcPipeline.ID, EnvID: t.SrcEnvironment.ID}}); err != nil {
+		log.Warning("UpdateTrigger: Infinite trigger loop found for trigger %s/%s/%s[%s] %s/%s/%s[%s]\n",
 			t.SrcProject.Name, t.SrcApplication.Name, t.SrcPipeline.Name, t.SrcEnvironment.Name, t.DestProject.Name, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
 		return err
 	}
@@ -437,7 +436,7 @@ func LoadTriggerByApp(db database.Querier, appID int64) ([]sdk.PipelineTrigger, 
 }
 
 // LoadTrigger load the given trigger
-func LoadTrigger(db *sql.DB, triggerID int64) (*sdk.PipelineTrigger, error) {
+func LoadTrigger(db database.Querier, triggerID int64) (*sdk.PipelineTrigger, error) {
 	query := `
 	SELECT pipeline_trigger.id,
 	src_application_id, src_app.name,

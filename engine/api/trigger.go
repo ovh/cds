@@ -330,6 +330,13 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		return
 	}
 
+	if t.SrcApplication.ID == 0 || t.DestApplication.ID == 0 ||
+		t.SrcPipeline.ID == 0 || t.DestPipeline.ID == 0 {
+		log.Warning("updateTriggerHandler> IDs should not be zero\n")
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
 		log.Warning("updateTriggerHandler> cannot start transaction: %s\n", errBegin)
@@ -339,7 +346,7 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	defer tx.Rollback()
 
 	t.ID = triggerID
-	if err := trigger.UpdateTrigger(tx, t); err != nil {
+	if err := trigger.UpdateTrigger(tx, &t); err != nil {
 		log.Warning("updateTriggerHandler> cannot update trigger: %s\n", err)
 		WriteError(w, r, err)
 		return
