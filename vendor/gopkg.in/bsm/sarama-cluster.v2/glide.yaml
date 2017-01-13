@@ -1,0 +1,4 @@
+package: github.com/bsm/sarama-cluster
+import:
+- package: github.com/Shopify/sarama
+  version: ^1.9.0
