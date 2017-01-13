@@ -53,7 +53,7 @@ func LoadPipelineBuildID(db gorp.SqlExecutor, applicationID, pipelineID, environ
 	var pbID int64
 	query := `SELECT id
 	          FROM pipeline_build
-	          WHERE application_id = $1, pipeline_id = $2, environment_id = $3, build_number = $4`
+	          WHERE application_id = $1 AND pipeline_id = $2 AND environment_id = $3 AND build_number = $4`
 	if err := db.QueryRow(query, applicationID, pipelineID, environmentID, buildNumber).Scan(&pbID); err != nil {
 		return 0, err
 	}

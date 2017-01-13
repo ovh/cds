@@ -232,23 +232,6 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 
 func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
-	// Get action name in URL
-	vars := mux.Vars(r)
-	idString := vars["id"]
-
-	// Load Queue
-	id, errInt := strconv.ParseInt(idString, 10, 64)
-	if errInt != nil {
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
-	}
-	_, err := pipeline.GetPipelineBuildJob(db, id)
-	if err != nil {
-		log.Warning("addBuildLogHandler> Cannot load build %s from db: %s\n", id, err)
-		WriteError(w, r, err)
-		return
-	}
-
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
