@@ -126,9 +126,9 @@ func pipelineJoinedActionAppend(cmd *cobra.Command, args []string) {
 	var joinedAction sdk.Action
 	var stage int
 	for _, s := range p.Stages {
-		for _, a := range s.Actions {
-			if a.Name == joinedActionName {
-				joinedAction = a
+		for _, j := range s.Jobs {
+			if j.Action.Name == joinedActionName {
+				joinedAction = j.Action
 				stage = s.BuildOrder
 				break
 			}

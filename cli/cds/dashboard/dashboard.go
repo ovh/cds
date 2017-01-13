@@ -78,8 +78,8 @@ func (ui *Termui) showDashboard() {
 	ui.updateProjects()
 }
 
-func (ui *Termui) updateLogs(index int, height int, ab sdk.ActionBuild) {
-	// TODO PIPELINEBUILD
+func (ui *Termui) updateLogs(index int, height int, pbJob sdk.PipelineBuildJob) {
+	//TODO pipelinebuild
 	/*
 		ui.logs[index].Height = height
 		ui.logs[index].Border = true
@@ -159,7 +159,7 @@ func (ui *Termui) updateLogs(index int, height int, ab sdk.ActionBuild) {
 			ui.logs[index].BorderFg = termui.ColorYellow
 			ui.logs[index].BorderLabelFg = termui.ColorYellow
 		}
-	*/
+		*/
 }
 
 func (ui *Termui) getLogs(proj, app, env, pip string) {
@@ -173,22 +173,22 @@ func (ui *Termui) getLogs(proj, app, env, pip string) {
 	}
 
 	// Get all logs data
-	var abs []sdk.ActionBuild
+	var pbJobs []sdk.PipelineBuildJob
 	for _, s := range state.Stages {
-		for _, ab := range s.ActionBuilds {
-			abs = append(abs, ab)
+		for _, pbj := range s.PipelineBuildJobs {
+			pbJobs = append(pbJobs, pbj)
 		}
 	}
 
-	if len(abs) == 0 {
+	if len(pbJobs) == 0 {
 		return
 	}
 
-	logParHeight := (termui.TermHeight() - 3) / len(abs)
+	logParHeight := (termui.TermHeight() - 3) / len(pbJobs)
 	var logCount int
-	for i := range abs {
+	for i := range pbJobs {
 		logCount++
-		ui.updateLogs(i, logParHeight, abs[i])
+		ui.updateLogs(i, logParHeight, pbJobs[i])
 	}
 	for i := logCount; i < 5; i++ {
 		ui.logs[i].Text = ""
