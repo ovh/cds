@@ -87,7 +87,7 @@ func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Retrieve build info
 	var proj, app, pip, bnS, env string
-	for _, p := range ab.Args {
+	for _, p := range pbJob.Parameters {
 		switch p.Name {
 		case "cds.pipeline":
 			pip = p.Value

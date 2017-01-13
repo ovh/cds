@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/go-gorp/gorp"
 )
 
 //DBDriver is exported for testing purpose
@@ -62,7 +63,7 @@ func Setup(testname string, t *testing.T) *sql.DB {
 }
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *sql.DB {
+func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	if DBDriver == "" {
 		t.Skip("This is should be run with a database")
 		return nil
@@ -99,11 +100,11 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *sql.DB {
 		}
 	}
 
-	return db
+	return database.DBMap(db)
 }
 
 // InsertTestProject create a test project
-func InsertTestProject(t *testing.T, db gorp.SqlExecutor, key, name string) *sdk.Project {
+func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string) *sdk.Project {
 	proj := sdk.Project{
 		Key:  key,
 		Name: name,
@@ -158,7 +159,7 @@ func RandomString(t *testing.T, strlen int) string {
 }
 
 // InsertAdminUser have to be used only for tests
-func InsertAdminUser(t *testing.T, db *sql.DB) (*sdk.User, string) {
+func InsertAdminUser(t *testing.T, db *gorp.DbMap) (*sdk.User, string) {
 	s := RandomString(t, 10)
 	password, hash, _ := user.GeneratePassword()
 	u := &sdk.User{

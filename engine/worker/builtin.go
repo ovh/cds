@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-func runBuiltin(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
+func runBuiltin(a *sdk.Action, actionBuild sdk.PipelineBuildJob) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail}
 	switch a.Name {
 	case sdk.ArtifactUpload:
@@ -27,7 +27,7 @@ func runBuiltin(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	return res
 }
 
-func runPlugin(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
+func runPlugin(a *sdk.Action, actionBuild sdk.PipelineBuildJob) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail}
 	//For the moment we consider that plugin name = action name = plugin binary file name
 	pluginName := a.Name
@@ -57,7 +57,7 @@ func runPlugin(a *sdk.Action, actionBuild sdk.ActionBuild) sdk.Result {
 	for _, p := range a.Parameters {
 		pluginArgs.Data[p.Name] = p.Value
 	}
-	for _, p := range actionBuild.Args {
+	for _, p := range actionBuild.Parameters {
 		pluginArgs.Data[p.Name] = p.Value
 	}
 

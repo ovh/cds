@@ -382,6 +382,13 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		return
 	}
 
+	pb, errPb := pipeline.LoadPipelineBuildByID(db, pbJob.PipelineBuildID)
+	if errPb != nil {
+		log.Warning("takeActionBuildHandler> Cannot get pipeline build: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
 	if err := tx.Commit(); err != nil {
 		log.Info("takeActionBuildHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, errBegin)
@@ -391,6 +398,8 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	pbji := worker.PipelineBuildJobInfo{}
 	pbji.PipelineBuildJob = *pbJob
 	pbji.Secrets = secrets
+	pbji.PipelineID = pb.Pipeline.ID
+	pbji.BuildNumber = pb.BuildNumber
 	WriteJSON(w, r, pbji, http.StatusOK)
 }
 

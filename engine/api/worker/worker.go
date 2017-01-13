@@ -21,6 +21,8 @@ import (
 type PipelineBuildJobInfo struct {
 	PipelineBuildJob sdk.PipelineBuildJob
 	Secrets          []sdk.Variable
+	PipelineID	 int64
+	BuildNumber      int64
 }
 
 // ErrNoWorker means the given worker ID is not found

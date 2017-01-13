@@ -30,7 +30,7 @@ var (
 	// port of variable exporter HTTP server
 	exportport int
 	// current actionBuild is here to allow var export
-	ab             sdk.ActionBuild
+	pbJob             sdk.PipelineBuildJob
 	buildVariables []sdk.Variable
 	// Git ssh configuration
 	pkey           string
@@ -196,8 +196,8 @@ func checkQueue() {
 	for i := range queue {
 		requirementsOK := true
 		// Check requirement
-		log.Notice("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].ActionName)
-		for _, r := range queue[i].Requirements {
+		log.Notice("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)
+		for _, r := range queue[i].Job.Action.Requirements {
 			ok, err := checkRequirement(r)
 			if err != nil {
 				postCheckRequirementError(&r, err)
@@ -225,7 +225,7 @@ func postCheckRequirementError(r *sdk.Requirement, err error) {
 	sdk.Request("POST", "/queue/requirements/errors", btes)
 }
 
-func takeAction(b sdk.ActionBuild) {
+func takeAction(b sdk.PipelineBuildJob) {
 	nbActionsDone++
 
 	gitssh = ""
@@ -233,24 +233,23 @@ func takeAction(b sdk.ActionBuild) {
 	path := fmt.Sprintf("/queue/%d/take", b.ID)
 	data, code, err := sdk.Request("POST", path, nil)
 	if err != nil {
-		log.Notice("takeAction> Cannot take action %d:%s\n", b.PipelineActionID, err)
+		log.Notice("takeAction> Cannot take action %d:%s\n", b.Job.PipelineActionID, err)
 		return
 	}
 	if code != http.StatusOK {
 		return
 	}
 
-	abi := worker.ActionBuildInfo{}
-	err = json.Unmarshal([]byte(data), &abi)
+	pbji := worker.PipelineBuildJobInfo{}
+	err = json.Unmarshal([]byte(data), &pbji)
 	if err != nil {
 		log.Notice("takeAction> Cannot unmarshal action: %s\n", err)
 		return
 	}
 
 	// Reset build variables
-	ab = abi.ActionBuild
 	buildVariables = nil
-	res := run(abi.Action, abi.ActionBuild, abi.Secrets)
+	res := run(&pbji)
 	// Give time to buffered logs to be sent
 	time.Sleep(3 * time.Second)
 
