@@ -140,7 +140,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 					attempts++
 					w1, err := worker.LoadWorker(db, w.ID)
 					if err != nil {
-						log.Warning("disableWorkerHandler> Error getting worker %d", w.ID)
+						log.Warning("disableWorkerHandler> Error getting worker %s", w.ID)
 						return
 					}
 					//Give up is worker is building
@@ -149,13 +149,13 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 					}
 					if w1.Status == sdk.StatusWaiting {
 						if err := worker.UpdateWorkerStatus(tx, id, sdk.StatusDisabled); err != nil {
-							log.Warning("disableWorkerHandler> Error disabling worker %d", w.ID)
+							log.Warning("disableWorkerHandler> Error disabling worker %s", w.ID)
 							return
 						}
 						return
 					}
 					if attempts > 100 {
-						log.Critical("disableWorkerHandler> Unable to disabled worker %d %s", w.ID, w.Name)
+						log.Critical("disableWorkerHandler> Unable to disabled worker %s %s", w.ID, w.Name)
 						return
 					}
 				}

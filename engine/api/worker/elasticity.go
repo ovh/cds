@@ -170,14 +170,16 @@ func LoadWorkerModelStatusForGroup(db *gorp.DbMap, groupID int64) ([]sdk.ModelSt
 	mapModelStatus := map[int64]*sdk.ModelStatus{}
 
 	for _, m := range mapModels {
-		if mapModelStatus[m.ID] == nil {
-			mapModelStatus[m.ID] = new(sdk.ModelStatus)
-		}
-		ms := mapModelStatus[m.ID]
+		ms, ok := mapModelStatus[m.ID]
 		//If model status has not been found, load the model
-		if ms == nil {
+
+		if !ok || ms == nil {
+			mapModelStatus[m.ID] = new(sdk.ModelStatus)
+			ms = mapModelStatus[m.ID]
 			wm, err := LoadWorkerModelByID(db, m.ID)
+
 			if err != nil {
+				log.Warning("LoadWorkerModelStatusForGroup> Unable to load worker model %d", m.ID)
 				return nil, err
 			}
 			ms.ModelID = wm.ID
@@ -195,7 +197,11 @@ func LoadWorkerModelStatusForGroup(db *gorp.DbMap, groupID int64) ([]sdk.ModelSt
 		if !more {
 			break
 		}
-		ms := mapModelStatus[mc.model]
+		ms, ok := mapModelStatus[mc.model]
+		if !ok || ms == nil {
+			log.Warning("LoadWorkerModelStatusForGroup> Unable to find model %d in mapModelStatus %v", mc.model, mapModelStatus)
+			continue
+		}
 		if mc.status == "waiting" {
 			ms.CurrentCount = mc.count
 		} else {

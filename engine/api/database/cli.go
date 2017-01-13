@@ -3,7 +3,6 @@ package database
 import (
 	"fmt"
 	"os"
-	"path"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -15,17 +14,11 @@ import (
 	"database/sql"
 )
 
+//DBCmd is the root command for database management
 var DBCmd = &cobra.Command{
 	Use:   "database",
 	Short: "Manage CDS database",
 	Long:  "Manage CDS database",
-}
-
-var createCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create schema",
-	Long:  "",
-	Run:   createCmdFunc,
 }
 
 var upgradeCmd = &cobra.Command{
@@ -50,128 +43,31 @@ var statusCmd = &cobra.Command{
 }
 
 var (
-	sqlMigrateDir, sqlDir string
-	sqlMigrateDryRun      bool
-	sqlMigrateLimit       int
+	sqlMigrateDir    string
+	sqlMigrateDryRun bool
+	sqlMigrateLimit  int
 )
 
 func init() {
-	DBCmd.AddCommand(createCmd)
 	DBCmd.AddCommand(upgradeCmd)
 	DBCmd.AddCommand(downgradeCmd)
 	DBCmd.AddCommand(statusCmd)
 
-	createCmd.Flags().StringVarP(&sqlDir, "sql-dir", "", "./engine/sql", "CDS SQL directory")
-	createCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql/migrations", "CDS SQL Migration directory")
-
-	upgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql/migrations", "CDS SQL Migration directory")
+	upgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	upgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run upgrade")
 	upgradeCmd.Flags().IntVarP(&sqlMigrateLimit, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
 
-	downgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql/migrations", "CDS SQL Migration directory")
+	downgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	downgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run downgrade")
 	downgradeCmd.Flags().IntVarP(&sqlMigrateLimit, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
 
-	statusCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql/migrations", "CDS SQL Migration directory")
+	statusCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 }
 
 type statusRow struct {
 	Id        string
 	Migrated  bool
 	AppliedAt time.Time
-}
-
-func createCmdFunc(cmd *cobra.Command, args []string) {
-	db, err := Init()
-	if err != nil {
-		sdk.Exit("Error: %s\n", err)
-	}
-	//Check if schema is empty
-	rows, err := db.Query("SELECT tablename FROM pg_catalog.pg_tables WHERE tableowner like $1", dbUser+"%")
-
-	if err != nil {
-		sdk.Exit("Error: %s\n", err)
-	}
-	defer rows.Close()
-
-	if err := rows.Err(); err != nil {
-		sdk.Exit("Error: %s\n", err)
-	}
-	//if schema is not empty: exit
-	if rows.Next() {
-		sdk.Exit("Database schema %s is not empty. Abort.\n", dbUser)
-	}
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		sdk.Exit("Error: %s\n", err)
-	}
-	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
-	//Lock DB
-	if err := lockMigrate(db, hostname); err != nil {
-		sdk.Exit("Unable to lock database: %s\n", err)
-	}
-
-	defer unlockMigrate(db, hostname)
-
-	//Create table
-	var createTable = path.Join(sqlDir, "create_table.sql")
-	fmt.Printf(" >> Executing %s\n", createTable)
-	if err = InitSchemas(db, createTable); err != nil {
-		sdk.Exit("Error initializing schema: %s", err)
-	}
-
-	//Create funcs
-	var createFunc = path.Join(sqlDir, "create_func.sql")
-	fmt.Printf(" >> Executing %s\n", createFunc)
-	if err = InitSchemas(db, createFunc); err != nil {
-		sdk.Exit("Error initializing schema: %s", err)
-	}
-
-	//Create foreign_keys
-	var createForeignKeys = path.Join(sqlDir, "create_foreign-key.sql")
-	fmt.Printf(" >> Executing %s\n", createForeignKeys)
-	if err = InitSchemas(db, createForeignKeys); err != nil {
-		sdk.Exit("Error initializing schema: %s", err)
-	}
-
-	//Create index
-	var createIndex = path.Join(sqlDir, "create_index.sql")
-	fmt.Printf(" >> Executing %s\n ", createIndex)
-	if err = InitSchemas(db, createIndex); err != nil {
-		sdk.Exit("Error initializing schema: %s", err)
-	}
-
-	//Mark migrations as applied
-	source := migrate.FileMigrationSource{
-		Dir: sqlMigrateDir,
-	}
-
-	planned, dbMap, err := migrate.PlanMigration(db, "postgres", source, migrate.Up, 0)
-	if err != nil {
-		sdk.Exit("Error: %s\n", err)
-	}
-
-	trans, err := dbMap.Begin()
-	if err != nil {
-		sdk.Exit("Error: %s\n", err)
-	}
-
-	for _, m := range planned {
-		fmt.Printf(">> Mark %s as applied\n ", m.Id)
-		err = trans.Insert(&migrate.MigrationRecord{
-			Id:        m.Id,
-			AppliedAt: time.Now(),
-		})
-		if err != nil {
-			trans.Rollback()
-			sdk.Exit("Error: %s\n", err)
-		}
-	}
-
-	if err := trans.Commit(); err != nil {
-		sdk.Exit("Error: %s\n", err)
-	}
 }
 
 func upgradeCmdFunc(cmd *cobra.Command, args []string) {

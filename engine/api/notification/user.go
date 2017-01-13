@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/spf13/viper"
@@ -11,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
 )
 
 // GetUserEvents returns event from user notification
@@ -170,11 +170,24 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 }
 
 func getEvent(pb *sdk.PipelineBuild, notif *sdk.JabberEmailUserNotificationSettings, params map[string]string) sdk.EventNotif {
-	return sdk.EventNotif{
-		Recipients: notif.Recipients,
-		Subject:    notif.Template.Subject,
-		Body:       notif.Template.Body,
+
+	subject := notif.Template.Subject
+	body := notif.Template.Body
+	for k, value := range params {
+		key := "{{." + k + "}}"
+		subject = strings.Replace(subject, key, value, -1)
+		body = strings.Replace(body, key, value, -1)
 	}
+
+	e := sdk.EventNotif{
+		Subject: subject,
+		Body:    body,
+	}
+	for _, r := range notif.Recipients {
+		e.Recipients = append(e.Recipients, r)
+	}
+
+	return e
 }
 
 //UserNotificationInput is a way to parse notification

@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 
 	"github.com/gorilla/mux"
+	"github.com/ovh/cds/engine/api/actionplugin"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
@@ -134,7 +135,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 }
 
 func TestAddPluginHandlerSuccess(t *testing.T) {
-	db := test.Setup("TestAddPluginHandlerSuccess", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -146,6 +147,11 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 	}()
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
+
+	u, _ := test.InsertAdminUser(t, db)
+	if err := actionplugin.Delete(db, "dummy", u.ID); err != nil {
+		t.Log(err)
+	}
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
@@ -167,7 +173,6 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 			t.Fail()
 			return
 		}
-		assert.Equal(t, int64(1), a.ID)
 		assert.Equal(t, "dummy", a.Name)
 		assert.Equal(t, sdk.PluginAction, a.Type)
 		assert.Equal(t, "This is a dummy plugin", a.Description)
@@ -186,7 +191,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 }
 
 func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
-	db := test.Setup("TestAddPluginHandlerFailWithInvalidPlugin", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -198,6 +203,9 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 	}()
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
+
+	u, _ := test.InsertAdminUser(t, db)
+	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy1", dummyBinaryFile)
 	if delete != nil {
@@ -217,7 +225,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 }
 
 func TestAddPluginHandlerFailWithConflict(t *testing.T) {
-	db := test.Setup("TestAddPluginHandlerFailWithConflict", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -229,6 +237,9 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 	}()
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
+
+	u, _ := test.InsertAdminUser(t, db)
+	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
@@ -255,8 +266,7 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 }
 
 func TestUpdatePluginHandlerSuccess(t *testing.T) {
-	t.Skip()
-	db := test.Setup("TestUpdatePluginHandlerSuccess", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -269,6 +279,9 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	}()
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
+
+	u, _ := test.InsertAdminUser(t, db)
+	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {
@@ -308,10 +321,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 }
 
 func TestDeletePluginHandlerSuccess(t *testing.T) {
-	t.Skip()
-	//Skip it because ramsql
-
-	db := test.Setup("TestDeletePluginHandlerSuccess", t)
+	db := test.SetupPG(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -324,6 +334,9 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	}()
 
 	objectstore.Initialize("filesystem", "", "", "", basedir)
+
+	u, _ := test.InsertAdminUser(t, db)
+	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
 	if delete != nil {

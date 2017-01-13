@@ -107,13 +107,14 @@ func DisableWorker(workerID string) error {
 }
 
 // AddWorkerModel registers a new worker model available
-func AddWorkerModel(name string, t string, img string) (*Model, error) {
+func AddWorkerModel(name string, t string, img string, groupID int64) (*Model, error) {
 	uri := fmt.Sprintf("/worker/model")
 
 	m := Model{
-		Name:  name,
-		Type:  t,
-		Image: img,
+		Name:    name,
+		Type:    t,
+		Image:   img,
+		GroupID: groupID,
 	}
 	data, err := json.Marshal(m)
 	if err != nil {

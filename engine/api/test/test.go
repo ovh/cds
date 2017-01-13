@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"path"
 	"syscall"
 	"testing"
 	"time"
@@ -45,22 +44,6 @@ func init() {
 }
 
 type bootstrap func(db *sql.DB) error
-
-// Setup setup db for test
-func Setup(testname string, t *testing.T) *sql.DB {
-	db, err := sql.Open("ramsql", testname)
-	if err != nil {
-		t.Fatalf("Cannot open conn to ramsql: %s\n", err)
-	}
-
-	sqlfile := path.Join(os.Getenv("GOPATH"), "src", "github.com", "ovh", "cds", "engine", "sql", "create_table.sql")
-
-	if err = database.InitSchemas(db, sqlfile); err != nil {
-		t.Fatalf("Cannot setup database schemas: %s", err)
-	}
-
-	return db
-}
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {

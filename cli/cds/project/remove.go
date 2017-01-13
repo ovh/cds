@@ -19,7 +19,7 @@ func cmdProjectRemove() *cobra.Command {
 		Aliases: []string{"delete", "rm", "del"},
 	}
 
-	cmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "delete project and everything in it")
+	cmd.Flags().BoolVarP(&forceDelete, "force", "", false, "delete project and everything in it")
 	return cmd
 }
 

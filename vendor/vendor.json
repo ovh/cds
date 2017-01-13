@@ -23,6 +23,12 @@
 			"revisionTime": "2016-06-21T21:14:38Z"
 		},
 		{
+			"checksumSHA1": "kTlNdyZIhQxOA+kQKpoQaptbNhE=",
+			"path": "github.com/Shopify/sarama",
+			"revision": "0fb560e5f7fbcaee2f75e3c34174320709f69944",
+			"revisionTime": "2016-12-20T18:06:09Z"
+		},
+		{
 			"checksumSHA1": "htjvdG/znrHmFYRQBqA2vHrJsF4=",
 			"path": "github.com/Sirupsen/logrus",
 			"revision": "f3cfb454f4c209e6668c95216c4744b8fddb2356",
@@ -221,6 +227,12 @@
 			"path": "github.com/fatih/color",
 			"revision": "a360acfe359f146180cfc1c6ea6f4397f5c133ec",
 			"revisionTime": "2016-10-18T20:13:48Z"
+		},
+		{
+			"checksumSHA1": "40Ns85VYa4smQPcewZ7SOdfLnKU=",
+			"path": "github.com/fatih/structs",
+			"revision": "a720dfa8df582c51dee1b36feabb906bde1588bd",
+			"revisionTime": "2017-01-03T08:10:50Z"
 		},
 		{
 			"checksumSHA1": "nmc2qcdbg17Ny8tHeEDQuphV6jA=",
@@ -494,36 +506,6 @@
 			"revisionTime": "2016-06-15T09:26:46Z"
 		},
 		{
-			"checksumSHA1": "d5iTAc1bZtWdpTBfmbeFWzAKJ64=",
-			"path": "github.com/proullon/ramsql/driver",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
-			"checksumSHA1": "kt7Yj0P7P6XYUDcjQi7HW+GvjmE=",
-			"path": "github.com/proullon/ramsql/engine",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
-			"checksumSHA1": "RJE6dMW7lbSwHZyuIF3JkkMfAfs=",
-			"path": "github.com/proullon/ramsql/engine/log",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
-			"checksumSHA1": "7qZknEk70u3MLsJi3v+LdUSMbD0=",
-			"path": "github.com/proullon/ramsql/engine/parser",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
-			"checksumSHA1": "j/OBxY0CFSWqXRDRhYq4vddT6fM=",
-			"path": "github.com/proullon/ramsql/engine/protocol",
-			"revision": "9a6c6594dd2545d546171e9eeacdcd456b1f247c",
-			"revisionTime": "2016-08-29T05:01:19Z"
-		},
-		{
 			"checksumSHA1": "Y1gIGoR8z/lDf2j+vcH1eKZGDSk=",
 			"path": "github.com/rubenv/sql-migrate",
 			"revision": "6f4757563362064790a6687a6b60f182062c8634",
@@ -732,6 +714,12 @@
 			"path": "gopkg.in/bsm/ratelimit.v1",
 			"revision": "db14e161995a5177acef654cb0dd785e8ee8bc22",
 			"revisionTime": "2016-02-20T15:49:07Z"
+		},
+		{
+			"checksumSHA1": "fSKiuYwYAeGqX699l5ZAaBvtghk=",
+			"path": "gopkg.in/bsm/sarama-cluster.v2",
+			"revision": "737c8daca929f8d033f9b3adc78a840ca6977ac0",
+			"revisionTime": "2017-01-12T09:35:06Z"
 		},
 		{
 			"checksumSHA1": "UCRz3lI2KcVOjUbjxeMAasufews=",

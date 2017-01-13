@@ -267,7 +267,7 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 
 func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
-	workerModelIDs := vars["id"]
+	workerModelIDs := vars["permModelID"]
 
 	workerModelID, errParse := strconv.ParseInt(workerModelIDs, 10, 64)
 	if errParse != nil {
@@ -328,7 +328,7 @@ func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
-	workerModelIDs := vars["id"]
+	workerModelIDs := vars["permModelID"]
 	capaName := vars["capa"]
 
 	workerModelID, err := strconv.ParseInt(workerModelIDs, 10, 64)
@@ -388,7 +388,7 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
-	workerModelIDs := vars["id"]
+	workerModelIDs := vars["permModelID"]
 	capaName := vars["capa"]
 
 	workerModelID, err := strconv.ParseInt(workerModelIDs, 10, 64)

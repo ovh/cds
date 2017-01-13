@@ -14,12 +14,13 @@ var (
 	imageP                 string
 	openstackFlavorP       string
 	openstackUserDataFileP string
+	groupName              string
 )
 
 func cmdWorkerModelAdd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
-		Short: "cds worker model add <name> <type>",
+		Short: "cds worker model add <name> <type> --group <group>",
 		Long: `
 		Available model type :
 		- Docker images ("docker")
@@ -31,6 +32,7 @@ func cmdWorkerModelAdd() *cobra.Command {
 	cmd.Flags().StringVar(&imageP, "image", "", "Image value (docker or openstack)")
 	cmd.Flags().StringVar(&openstackFlavorP, "flavor", "", "Flavor value (openstack)")
 	cmd.Flags().StringVar(&openstackUserDataFileP, "userdata", "", "Path to UserData file (openstack)")
+	cmd.Flags().StringVar(&groupName, "group", "", "Group name")
 
 	return cmd
 }
@@ -82,8 +84,16 @@ func addWorkerModel(cmd *cobra.Command, args []string) {
 		sdk.Exit("Unknown worker type: %s\n", modelType)
 	}
 
-	_, err := sdk.AddWorkerModel(name, t, image)
+	if groupName == "" {
+		sdk.Exit("Wrong usage : Missing group\n")
+	}
+
+	g, err := sdk.GetGroup(groupName)
 	if err != nil {
+		sdk.Exit("Error : Unable to get group %s : %s\n", groupName, err)
+	}
+
+	if _, err := sdk.AddWorkerModel(name, t, image, g.ID); err != nil {
 		sdk.Exit("Error: cannot add worker model (%s)\n", err)
 	}
 }

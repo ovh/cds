@@ -10,6 +10,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
+
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
@@ -28,8 +30,17 @@ func Pipelines() {
 	for {
 		time.Sleep(2 * time.Second)
 
+
+		//Check if CDS is in maintenance mode
+		var m bool
+		cache.Get("maintenance", &m)
+		if m {
+			log.Warning("⚠ CDS maintenance in ON")
+			time.Sleep(30 * time.Second)
+		}
+
 		db := database.DBMap(database.DB())
-		if db != nil {
+		if db != nil && !m {
 			pipelines, err := pipeline.LoadBuildingPipelines(db)
 			if err != nil {
 				log.Warning("queue.Pipelines> Cannot load building pipelines: %s\n", err)

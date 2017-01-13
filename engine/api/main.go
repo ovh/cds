@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-	_ "github.com/proullon/ramsql/driver"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -191,10 +190,14 @@ var mainCmd = &cobra.Command{
 
 		if !viper.GetBool("no_repo_cache_loader") {
 			go repositoriesmanager.RepositoriesCacheLoader(30)
+		} else {
+			log.Warning("⚠ Repositories cache loader is disabled")
 		}
 		if !viper.GetBool("no_repo_polling") {
 			go polling.Initialize()
 			go polling.ExecutionCleaner()
+		} else {
+			log.Warning("⚠ Repositories polling is disabled")
 		}
 
 		go scheduler.Initialize(10)
@@ -225,6 +228,10 @@ func (router *Router) init() {
 	router.Handle("/action/{permActionName}", GET(getActionHandler), POST(addActionHandler), PUT(updateActionHandler), DELETE(deleteActionHandler))
 	router.Handle("/action/{actionName}/using", NeedAdmin(true), GET(getPipelinesUsingActionHandler))
 	router.Handle("/action/{actionID}/audit", NeedAdmin(true), GET(getActionAuditHandler))
+
+	// Admin
+	router.Handle("/admin/warning", NeedAdmin(true), DELETE(adminTruncateWarningsHandler))
+	router.Handle("/admin/maintenance", NeedAdmin(true), POST(postAdminMaintenanceHandler), GET(getAdminMaintenanceHandler), DELETE(deleteAdminMaintenanceHandler))
 
 	// Action plugin
 	router.Handle("/plugin", NeedAdmin(true), POST(addPluginHandler), PUT(updatePluginHandler))
