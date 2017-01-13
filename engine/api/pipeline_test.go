@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
+func insertTestPipeline(db gorp.SqlExecutor, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
 	pkey := test.RandomString(t, 10)
 	projectFoo := test.InsertTestProject(t, db, pkey, pkey)
 

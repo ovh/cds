@@ -2,10 +2,11 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
@@ -16,16 +17,15 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/log"
-
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
-func getError(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	WriteError(w, r, sdk.ErrInvalidProjectKey)
 }
 
-func getVersionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	s := struct {
 		Version string `json:"version"`
@@ -36,7 +36,7 @@ func getVersionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	WriteJSON(w, r, s, http.StatusOK)
 }
 
-func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	var output []string
 
 	// TODO: CHECK IF USER IS ADMIN
@@ -75,7 +75,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	WriteJSON(w, r, output, status)
 }
 
-func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	project := r.FormValue("project")
 	application := r.FormValue("application")
 	pipeline := r.FormValue("pipeline")
@@ -91,7 +91,7 @@ func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	return
 }
 
-func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	if c.User == nil {
 		WriteError(w, r, sdk.ErrForbidden)
 		return

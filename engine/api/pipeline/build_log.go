@@ -1,9 +1,10 @@
 package pipeline
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
@@ -19,7 +20,7 @@ func InsertLog(db database.Executer, actionBuildID int64, step string, value str
 }
 
 // LoadLogs retrieves build logs from databse given an offset and a size
-func LoadLogs(db *sql.DB, actionBuildID int64, tail int64, start int64) ([]sdk.Log, error) {
+func LoadLogs(db gorp.SqlExecutor, actionBuildID int64, tail int64, start int64) ([]sdk.Log, error) {
 	query := `SELECT * FROM build_log WHERE action_build_id = $1`
 	var logs []sdk.Log
 
@@ -52,43 +53,33 @@ func LoadLogs(db *sql.DB, actionBuildID int64, tail int64, start int64) ([]sdk.L
 }
 
 // LoadPipelineActionBuildLogs Load log for the given pipeline action
-func LoadPipelineActionBuildLogs(db *sql.DB, pipelineBuildID, pipelineActionID int64, offset int64) (sdk.BuildState, error) {
+func LoadPipelineActionBuildLogs(db gorp.SqlExecutor, pipelineBuildID, pipelineActionID int64, offset int64) (sdk.BuildState, error) {
 	buildLogResult := sdk.BuildState{}
 
 	// load all build id for pipeline build
-	query := `SELECT id, status FROM action_build WHERE pipeline_build_id = $1 AND pipeline_action_id=$2`
-	rows, err := db.Query(query, pipelineBuildID, pipelineActionID)
-	if err != nil {
-		return buildLogResult, err
+	pbJobs, errJobs := GetPipelineBuildJobByPipelineBuildID(db, pipelineBuildID)
+	if errJobs != nil {
+		return buildLogResult, errJobs
 	}
-	defer rows.Close()
 
-	var actionBuilds []sdk.ActionBuild
-	for rows.Next() {
-		var b sdk.ActionBuild
-		var sStatus string
-		err = rows.Scan(&b.ID, &sStatus)
-		b.Status = sdk.StatusFromString(sStatus)
-		if err != nil {
-			return buildLogResult, err
+	var pbJob *sdk.PipelineBuildJob
+	for _, j := range pbJobs {
+		if j.Job.PipelineActionID == pipelineActionID {
+			*pbJob = j
+			break
 		}
-		actionBuilds = append(actionBuilds, b)
 	}
 
-	pipelinelogs := []sdk.Log{}
-	for _, build := range actionBuilds {
-
-		logs, err := LoadLogs(db, build.ID, 0, offset)
-		if err != nil {
-			return buildLogResult, err
-		}
-		pipelinelogs = append(pipelinelogs, logs...)
+	if pbJob == nil {
+		return buildLogResult , sdk.ErrNotFound
 	}
 
-	buildLogResult.Logs = pipelinelogs
-	if len(actionBuilds) == 1 {
-		buildLogResult.Status = actionBuilds[0].Status
+	var errLog error
+	buildLogResult.Logs, errLog = LoadLogs(db, pbJob.ID, 0, offset)
+	if errLog != nil {
+		return buildLogResult, errLog
 	}
+	buildLogResult.Status = sdk.StatusFromString(pbJob.Status)
 
 	return buildLogResult, nil
 }
@@ -101,7 +92,7 @@ func DeleteBuildLogs(db database.Executer, actionBuildID int64) error {
 }
 
 // LoadPipelineBuildLogs Load pipeline build logs by pipeline ID
-func LoadPipelineBuildLogs(db *sql.DB, pipelineBuildID int64, offset int64) ([]sdk.Log, error) {
+func LoadPipelineBuildLogs(db gorp.SqlExecutor, pipelineBuildID int64, offset int64) ([]sdk.Log, error) {
 
 	// load all build id for pipeline build
 	query := `SELECT id FROM action_build WHERE pipeline_build_id = $1`

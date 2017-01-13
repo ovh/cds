@@ -6,10 +6,11 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/sdk"
+	"github.com/go-gorp/gorp"
 )
 
 // CreateBuiltinActions add builtin actions in database if needed
-func CreateBuiltinActions(db *sql.DB) error {
+func CreateBuiltinActions(db *gorp.DbMap) error {
 	// ----------------------------------- Script ---------------------------
 	script := sdk.NewAction(sdk.ScriptAction)
 	script.Type = sdk.BuiltinAction
@@ -79,7 +80,7 @@ Parse given file to extract Unit Test results.`
 }
 
 // checkBuiltinAction add builtin actions in database if needed
-func checkBuiltinAction(db *sql.DB, a *sdk.Action) error {
+func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	var name string
 	query := `SELECT action.name FROM action WHERE action.name = $1`
 
@@ -99,7 +100,7 @@ func checkBuiltinAction(db *sql.DB, a *sdk.Action) error {
 	return nil
 }
 
-func createBuiltinAction(db *sql.DB, a *sdk.Action) error {
+func createBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -115,6 +116,6 @@ func createBuiltinAction(db *sql.DB, a *sdk.Action) error {
 }
 
 // CreateBuiltinEnvironments creates default environment if needed
-func CreateBuiltinEnvironments(db *sql.DB) error {
+func CreateBuiltinEnvironments(db gorp.SqlExecutor) error {
 	return environment.CheckDefaultEnv(db)
 }

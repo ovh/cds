@@ -21,9 +21,10 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/go-gorp/gorp"
 )
 
-func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	includePipeline := r.FormValue("pipeline")
 	includeApplication := r.FormValue("application")
 	includeEnvironment := r.FormValue("environment")
@@ -64,7 +65,7 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 		for projectIndex := range projects {
 			for appIndex := range projects[projectIndex].Applications {
 				var errBuild error
-				projects[projectIndex].Applications[appIndex].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, projects[projectIndex].Applications[appIndex].ID, "")
+				projects[projectIndex].Applications[appIndex].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, projects[projectIndex].Applications[appIndex].ID, "",0)
 				if errBuild != nil {
 					log.Warning("GetProjects: Cannot load app status: %s\n", errBuild)
 					WriteError(w, r, errBuild)
@@ -77,7 +78,7 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	WriteJSON(w, r, projects, http.StatusOK)
 }
 
-func updateProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -129,7 +130,7 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -188,7 +189,7 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	if applicationStatus == "true" {
 		for i := range p.Applications {
 			var errBuild error
-			p.Applications[i].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, p.Applications[i].ID, "")
+			p.Applications[i].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, p.Applications[i].ID, "",0)
 			if errBuild != nil {
 				log.Warning("GetProject: Cannot load app status: %s\n", errBuild)
 				WriteError(w, r, errBuild)
@@ -208,7 +209,7 @@ func getProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
@@ -321,7 +322,7 @@ func addProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.C
 	log.Notice("addProject> Project %s created\n", p.Name)
 }
 
-func deleteProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -383,7 +384,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	return
 }
 
-func getUserLastUpdates(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getUserLastUpdates(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	sinceHeader := r.Header.Get("If-Modified-Since")
 	since := time.Unix(0, 0)
 	if sinceHeader != "" {

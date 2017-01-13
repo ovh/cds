@@ -19,7 +19,7 @@ func Heartbeat() {
 	for {
 		time.Sleep(10 * time.Second)
 		if db := database.DB(); db != nil {
-			w, err := LoadDeadWorkers(db, WorkerHeartbeatTimeout)
+			w, err := LoadDeadWorkers(database.DBMap(db), WorkerHeartbeatTimeout)
 			if err != nil {
 				log.Warning("WorkerHeartbeat> Cannot load dead workers: %s\n", err)
 				time.Sleep(10 * time.Second)
@@ -28,7 +28,7 @@ func Heartbeat() {
 
 			for i := range w {
 				log.Info("WorkerHeartbeat> Delete worker %s[%s]\n", w[i].Name, w[i].ID)
-				if err = DeleteWorker(db, w[i].ID); err != nil {
+				if err = DeleteWorker(database.DBMap(db), w[i].ID); err != nil {
 					log.Warning("WorkerHeartbeat> Cannot delete worker %s: %s\n", w[i].ID, err)
 					continue
 				}

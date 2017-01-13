@@ -1,12 +1,12 @@
 package pipeline
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/go-gorp/gorp"
 )
 
 // AWOLPipelineKiller will search in database for actions :
@@ -18,7 +18,7 @@ func AWOLPipelineKiller() {
 
 	for {
 		time.Sleep(1 * time.Minute)
-		db := database.DB()
+		db := database.DBMap(database.DB())
 
 		if db != nil {
 			ids, err := loadAWOLActionBuild(db)
@@ -37,8 +37,8 @@ func AWOLPipelineKiller() {
 	}
 }
 
-func killAWOLAction(db *sql.DB, actionBuildID int64) error {
-	log.Warning("killAWOLAction> Killing action_build %d\n", actionBuildID)
+func killAWOLAction(db *gorp.DbMap, pbJobID int64) error {
+	log.Warning("killAWOLAction> Killing pipeline_job_build %d\n", pbJobID)
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -46,13 +46,18 @@ func killAWOLAction(db *sql.DB, actionBuildID int64) error {
 	}
 	defer tx.Rollback()
 
-	InsertLog(tx, actionBuildID, "SYSTEM", "Killed (Reason: Timeout)\n")
-	if err := UpdateActionBuildStatus(tx, &sdk.ActionBuild{ID: actionBuildID}, sdk.StatusFail); err != nil {
+	InsertLog(tx, pbJobID, "SYSTEM", "Killed (Reason: Timeout)\n")
+	pbJob, errJob := GetPipelineBuildJob(tx, pbJobID)
+	if errJob != nil {
+		return errJob
+	}
+
+	if err := UpdatePipelineBuildJobStatus(tx, pbJob, sdk.StatusFail); err != nil {
 		return err
 	}
 
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE action_build_id = $2`
-	_, err = tx.Exec(query, string(sdk.StatusDisabled), actionBuildID)
+	_, err = tx.Exec(query, string(sdk.StatusDisabled), pbJobID)
 	if err != nil {
 		return err
 	}
@@ -65,7 +70,7 @@ func killAWOLAction(db *sql.DB, actionBuildID int64) error {
 // WHERE action_build status is building, obviously
 // WHERE action_build was started at least 15 minutes ago
 // WHERE LAAAAAAAAAAAAAAST logs are older than 15 minutes OR no logs at all
-func loadAWOLActionBuild(db *sql.DB) ([]int64, error) {
+func loadAWOLActionBuild(db gorp.SqlExecutor) ([]int64, error) {
 	query := `
 		SELECT action_build.id FROM action_build
 		LEFT OUTER JOIN build_log ON build_log.action_build_id = action_build.id

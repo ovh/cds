@@ -103,7 +103,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *sql.DB {
 }
 
 // InsertTestProject create a test project
-func InsertTestProject(t *testing.T, db database.QueryExecuter, key, name string) *sdk.Project {
+func InsertTestProject(t *testing.T, db gorp.SqlExecutor, key, name string) *sdk.Project {
 	proj := sdk.Project{
 		Key:  key,
 		Name: name,
@@ -141,7 +141,7 @@ func InsertTestProject(t *testing.T, db database.QueryExecuter, key, name string
 }
 
 // DeleteTestProject delete a test project
-func DeleteTestProject(t *testing.T, db database.QueryExecuter, key string) error {
+func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, key string) error {
 	t.Logf("Delete Project %s", key)
 	return project.DeleteProject(db, key)
 }
@@ -177,7 +177,7 @@ func InsertAdminUser(t *testing.T, db *sql.DB) (*sdk.User, string) {
 }
 
 // InsertLambaUser have to be used only for tests
-func InsertLambaUser(t *testing.T, db database.QueryExecuter, groups ...*sdk.Group) (*sdk.User, string) {
+func InsertLambaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
 	s := RandomString(t, 10)
 	password, hash, _ := user.GeneratePassword()
 	u := &sdk.User{

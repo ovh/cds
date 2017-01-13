@@ -17,7 +17,7 @@ func Heartbeat() {
 	defer log.Fatalf("Goroutine of hatchery.Heartbeat exited - Exit CDS Engine")
 
 	for {
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db != nil {
 			w, err := LoadDeadHatcheries(db, HatcheryHeartbeatTimeout)
 			if err != nil {

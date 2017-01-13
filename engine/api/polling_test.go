@@ -24,7 +24,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func testfindLinkedProject(t *testing.T, db *sql.DB) (*sdk.Project, *sdk.RepositoriesManager) {
+func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sdk.RepositoriesManager) {
 	query := `
 		select 	project.ID, repositories_manager_project.id_repositories_manager
 		from 	project, repositories_manager_project

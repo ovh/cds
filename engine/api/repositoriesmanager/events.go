@@ -3,19 +3,21 @@ package repositoriesmanager
 import (
 	"fmt"
 
+	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+
 )
 
 //ReceiveEvents has to be launched as a goroutine.
 func ReceiveEvents() {
 
 	for {
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db != nil {
 			e := sdk.Event{}
 			cache.Dequeue("events_repositoriesmanager", &e)
@@ -26,7 +28,7 @@ func ReceiveEvents() {
 	}
 }
 
-func processEvent(db database.Querier, event sdk.Event) error {
+func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
 	log.Debug("repositoriesmanager>processEvent> receive: type:%s all: %+v", event.EventType, event)
 
 	var eventpb sdk.EventPipelineBuild

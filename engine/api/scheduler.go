@@ -1,17 +1,16 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorhill/cronexpr"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -20,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -63,7 +62,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	var schedulers []sdk.PipelineScheduler
 	if env == nil {
 		var err error
-		schedulers, err = scheduler.GetByApplicationPipeline(database.DBMap(db), app, pip)
+		schedulers, err = scheduler.GetByApplicationPipeline(db, app, pip)
 		if err != nil {
 			log.Warning("getSchedulerApplicationPipelineHandler> cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers: %s\n", err)
 			WriteError(w, r, err)
@@ -71,7 +70,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 		}
 	} else {
 		var err error
-		schedulers, err = scheduler.GetByApplicationPipelineEnv(database.DBMap(db), app, pip, env)
+		schedulers, err = scheduler.GetByApplicationPipelineEnv(db, app, pip, env)
 		if err != nil {
 			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
 			WriteError(w, r, err)
@@ -82,7 +81,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	WriteJSON(w, r, schedulers, http.StatusOK)
 }
 
-func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -134,7 +133,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	if env == nil {
 		var err error
 		env = &sdk.DefaultEnv
-		schedulers, err = scheduler.GetByApplicationPipeline(database.DBMap(db), app, pip)
+		schedulers, err = scheduler.GetByApplicationPipeline(db, app, pip)
 		if err != nil {
 			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
 			WriteError(w, r, err)
@@ -142,7 +141,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 		}
 	} else {
 		var err error
-		schedulers, err = scheduler.GetByApplicationPipelineEnv(database.DBMap(db), app, pip, env)
+		schedulers, err = scheduler.GetByApplicationPipelineEnv(db, app, pip, env)
 		if err != nil {
 			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
 			WriteError(w, r, err)
@@ -199,7 +198,7 @@ check:
 	s.PipelineID = pip.ID
 	s.EnvironmentID = env.ID
 
-	if err := scheduler.Insert(database.DBMap(db), s); err != nil {
+	if err := scheduler.Insert(db, s); err != nil {
 		log.Warning("addSchedulerApplicationPipelineHandler> cannot insert scheduler : %s", err)
 		WriteError(w, r, err)
 		return
@@ -208,7 +207,7 @@ check:
 	WriteJSON(w, r, s, http.StatusCreated)
 }
 
-func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
@@ -257,7 +256,7 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	//Load the scheduler
-	sOld, err := scheduler.Load(database.DBMap(db), s.ID)
+	sOld, err := scheduler.Load(db, s.ID)
 	if err != nil {
 		log.Warning("updateSchedulerApplicationPipelineHandler> %s", err)
 		WriteError(w, r, err)
@@ -273,7 +272,7 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 		sOld.EnvironmentID = env.ID
 	}
 
-	if err := scheduler.Update(database.DBMap(db), sOld); err != nil {
+	if err := scheduler.Update(db, sOld); err != nil {
 		log.Warning("updateSchedulerApplicationPipelineHandler> %s", err)
 		WriteError(w, r, err)
 		return
@@ -282,7 +281,7 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	WriteJSON(w, r, s, http.StatusOK)
 }
 
-func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get args in body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
@@ -300,14 +299,14 @@ func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	//Load the scheduler
-	sOld, err := scheduler.Load(database.DBMap(db), s.ID)
+	sOld, err := scheduler.Load(db, s.ID)
 	if err != nil {
 		WriteError(w, r, err)
 		return
 	}
 
 	//Delete all the things
-	if err := scheduler.Delete(database.DBMap(db), sOld); err != nil {
+	if err := scheduler.Delete(db, sOld); err != nil {
 		WriteError(w, r, err)
 		return
 	}

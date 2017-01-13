@@ -1,12 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/context"
@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getVariablesAuditInProjectnHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getVariablesAuditInProjectnHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
@@ -30,7 +30,7 @@ func getVariablesAuditInProjectnHandler(w http.ResponseWriter, r *http.Request, 
 	WriteJSON(w, r, audits, http.StatusOK)
 }
 
-func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	auditIDString := vars["auditID"]
@@ -111,7 +111,7 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-func getVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -126,7 +126,7 @@ func getVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *sq
 	WriteJSON(w, r, p.Variable, http.StatusOK)
 }
 
-func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -179,7 +179,7 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -305,7 +305,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 	w.WriteHeader(http.StatusOK)
 }
 
-func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -382,7 +382,7 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -405,7 +405,7 @@ func getVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql
 	WriteJSON(w, r, v, http.StatusOK)
 }
 
-func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)

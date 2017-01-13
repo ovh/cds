@@ -1,14 +1,14 @@
 package worker
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -30,7 +30,7 @@ func logTime(name string, then time.Time) {
 }
 
 //LoadWorkerModelStatusForAdminUser lods worker model status for group
-func LoadWorkerModelStatusForAdminUser(db *sql.DB, userID int64) ([]sdk.ModelStatus, error) {
+func LoadWorkerModelStatusForAdminUser(db *gorp.DbMap, userID int64) ([]sdk.ModelStatus, error) {
 	query := `
 		SELECT  worker_model.id, 
 				worker_model.name, 
@@ -70,7 +70,7 @@ func LoadWorkerModelStatusForAdminUser(db *sql.DB, userID int64) ([]sdk.ModelSta
 }
 
 //LoadWorkerModelStatusForGroup lods worker model status for group
-func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus, error) {
+func LoadWorkerModelStatusForGroup(db *gorp.DbMap, groupID int64) ([]sdk.ModelStatus, error) {
 	defer logTime("LoadWorkerModelStatusForGroup", time.Now())
 	//Load SharedInfraGroup
 	sharedInfraGroup, errLoad := group.LoadGroup(db, group.SharedInfraGroup)
@@ -80,7 +80,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	}
 
 	//Load worker models
-	models, errM := LoadWorkerModelsUsableOnGroup(database.DBMap(db), groupID, sharedInfraGroup.ID)
+	models, errM := LoadWorkerModelsUsableOnGroup(db, groupID, sharedInfraGroup.ID)
 	if errM != nil {
 		return nil, errM
 	}
@@ -176,7 +176,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 		ms := mapModelStatus[m.ID]
 		//If model status has not been found, load the model
 		if ms == nil {
-			wm, err := LoadWorkerModelByID(database.DBMap(db), m.ID)
+			wm, err := LoadWorkerModelByID(db, m.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -217,7 +217,7 @@ type ActionCount struct {
 }
 
 //LoadGroupActionCount counts waiting action for group
-func LoadGroupActionCount(db *sql.DB, groupID int64) ([]ActionCount, error) {
+func LoadGroupActionCount(db gorp.SqlExecutor, groupID int64) ([]ActionCount, error) {
 
 	log.Debug("LoadGroupActionCount> Counting pending action for group %d", groupID)
 
@@ -260,7 +260,7 @@ func LoadGroupActionCount(db *sql.DB, groupID int64) ([]ActionCount, error) {
 }
 
 //LoadAllActionCount counts all waiting actions
-func LoadAllActionCount(db *sql.DB, userID int64) ([]ActionCount, error) {
+func LoadAllActionCount(db gorp.SqlExecutor, userID int64) ([]ActionCount, error) {
 	acs := []ActionCount{}
 	query := `
 	SELECT COUNT(action_build.id), pipeline_action.action_id
@@ -294,13 +294,13 @@ func LoadAllActionCount(db *sql.DB, userID int64) ([]ActionCount, error) {
 }
 
 //ModelStatusFunc ...
-type ModelStatusFunc func(*sql.DB, int64) ([]sdk.ModelStatus, error)
+type ModelStatusFunc func(*gorp.DbMap, int64) ([]sdk.ModelStatus, error)
 
 //ActionCountFunc ...
-type ActionCountFunc func(*sql.DB, int64) ([]ActionCount, error)
+type ActionCountFunc func(gorp.SqlExecutor, int64) ([]ActionCount, error)
 
 // EstimateWorkerModelNeeds returns for each worker model the needs of instances
-func EstimateWorkerModelNeeds(db *sql.DB, uid int64, workerModelStatus ModelStatusFunc, actionCount ActionCountFunc) ([]sdk.ModelStatus, error) {
+func EstimateWorkerModelNeeds(db *gorp.DbMap, uid int64, workerModelStatus ModelStatusFunc, actionCount ActionCountFunc) ([]sdk.ModelStatus, error) {
 	defer logTime("EstimateWorkerModelNeeds", time.Now())
 
 	// Load models stats

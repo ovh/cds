@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -12,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -83,7 +83,7 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 	return ap, params, content, deferFunc, nil
 }
 
-func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	tmpls, err := templateextension.All(db)
 	if err != nil {
 		log.Warning("getTemplatesHandler>%T %s", err, err)
@@ -93,7 +93,7 @@ func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	WriteJSON(w, r, tmpls, http.StatusOK)
 }
 
-func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	//Upload file and get as a template object
 	templ, params, file, deferFunc, err := fileUploadAndGetTemplate(w, r)
 	if deferFunc != nil {
@@ -144,7 +144,7 @@ func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	WriteJSON(w, r, templ, http.StatusOK)
 }
 
-func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get id from URL
 	vars := mux.Vars(r)
 	sid := vars["id"]
@@ -248,7 +248,7 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	WriteJSON(w, r, templ2, http.StatusOK)
 }
 
-func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get id from URL
 	vars := mux.Vars(r)
 	sid := vars["id"]
@@ -288,7 +288,7 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	w.WriteHeader(http.StatusOK)
 }
 
-func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	tpl, err := templateextension.LoadByType(db, "BUILD")
 	if err != nil {
 		WriteError(w, r, err)
@@ -297,7 +297,7 @@ func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	WriteJSON(w, r, tpl, http.StatusOK)
 }
 
-func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	tpl, err := templateextension.LoadByType(db, "DEPLOY")
 	if err != nil {
 		WriteError(w, r, err)
@@ -306,7 +306,7 @@ func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	WriteJSON(w, r, tpl, http.StatusOK)
 }
 
-func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
@@ -383,7 +383,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	WriteJSON(w, r, proj, http.StatusOK)
 }
 
-func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]

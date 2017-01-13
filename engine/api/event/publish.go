@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/fatih/structs"
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -32,15 +32,15 @@ func Publish(payload interface{}) {
 }
 
 // PublishActionBuild sends a actionBuild event
-func PublishActionBuild(pb *sdk.PipelineBuild, ab *sdk.PipelineBuildJob) {
+func PublishActionBuild(pb *sdk.PipelineBuild, pbJob *sdk.PipelineBuildJob) {
 	e := sdk.EventJob{
 		Version:         pb.Version,
-		JobName:         ab.Job.Action.Name,
-		Status:          ab.Status,
-		Queued:          ab.Queued.Unix(),
-		Start:           ab.Start.Unix(),
-		Done:            ab.Done.Unix(),
-		Model:           ab.Model,
+		JobName:         pbJob.Job.Action.Name,
+		Status:          sdk.StatusFromString(pbJob.Status),
+		Queued:          pbJob.Queued.Unix(),
+		Start:           pbJob.Start.Unix(),
+		Done:            pbJob.Done.Unix(),
+		Model:           pbJob.Model,
 		PipelineName:    pb.Pipeline.Name,
 		PipelineType:    pb.Pipeline.Type,
 		ProjectKey:      pb.Pipeline.ProjectKey,
@@ -54,7 +54,7 @@ func PublishActionBuild(pb *sdk.PipelineBuild, ab *sdk.PipelineBuildJob) {
 }
 
 // PublishPipelineBuild sends a pipelineBuild event
-func PublishPipelineBuild(db database.QueryExecuter, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) {
+func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) {
 	// get and send all user notifications
 	for _, event := range notification.GetUserEvents(db, pb, previous) {
 		Publish(event)

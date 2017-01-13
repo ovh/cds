@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
@@ -15,7 +16,7 @@ import (
 )
 
 // LoadEnvironments load all environment from the given project
-func LoadEnvironments(db database.Querier, projectKey string, loadDeps bool, user *sdk.User) ([]sdk.Environment, error) {
+func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, user *sdk.User) ([]sdk.Environment, error) {
 	envs := []sdk.Environment{}
 
 	var rows *sql.Rows
@@ -71,7 +72,7 @@ func LoadEnvironments(db database.Querier, projectKey string, loadDeps bool, use
 }
 
 // LoadEnvironmentByID load the given environment
-func LoadEnvironmentByID(db database.Querier, ID int64) (*sdk.Environment, error) {
+func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error) {
 	var env sdk.Environment
 	query := `SELECT environment.id, environment.name
 		  	FROM environment
@@ -86,7 +87,7 @@ func LoadEnvironmentByID(db database.Querier, ID int64) (*sdk.Environment, error
 }
 
 // LoadEnvironmentByName load the given environment
-func LoadEnvironmentByName(db database.Querier, projectKey, envName string) (*sdk.Environment, error) {
+func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sdk.Environment, error) {
 	var env sdk.Environment
 	query := `SELECT environment.id, environment.name
 		  FROM environment
@@ -102,7 +103,7 @@ func LoadEnvironmentByName(db database.Querier, projectKey, envName string) (*sd
 }
 
 //Exists checks if an environment already exists on the project
-func Exists(db database.Querier, projectKey, envName string) (bool, error) {
+func Exists(db gorp.SqlExecutor, projectKey, envName string) (bool, error) {
 	var n int
 	query := `SELECT count(1)
 		  FROM environment
@@ -115,7 +116,7 @@ func Exists(db database.Querier, projectKey, envName string) (bool, error) {
 }
 
 // CheckDefaultEnv create default env if not exists
-func CheckDefaultEnv(db database.Querier) error {
+func CheckDefaultEnv(db gorp.SqlExecutor) error {
 	var env sdk.Environment
 	query := `SELECT environment.id, environment.name FROM environment WHERE environment.id = $1`
 	err := db.QueryRow(query, sdk.DefaultEnv.ID).Scan(&env.ID, &env.Name)
@@ -136,7 +137,7 @@ func CheckDefaultEnv(db database.Querier) error {
 	return nil
 }
 
-func loadDependencies(db database.Querier, env *sdk.Environment) error {
+func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 	variables, err := GetAllVariableByID(db, env.ID)
 	if err != nil {
 		return err
@@ -146,7 +147,7 @@ func loadDependencies(db database.Querier, env *sdk.Environment) error {
 }
 
 // InsertEnvironment Insert new environment
-func InsertEnvironment(db database.Querier, env *sdk.Environment) error {
+func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 	query := `INSERT INTO environment (name, project_id) VALUES($1, $2) RETURNING id, last_modified`
 
 	if env.Name == "" {
@@ -169,7 +170,7 @@ func InsertEnvironment(db database.Querier, env *sdk.Environment) error {
 }
 
 // UpdateEnvironment Update an environment
-func UpdateEnvironment(db database.QueryExecuter, environment *sdk.Environment) error {
+func UpdateEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
 	var lastModified time.Time
 	query := `UPDATE environment SET name=$1, last_modified=current_timestamp WHERE id=$2 RETURNING last_modified`
 	err := db.QueryRow(query, environment.Name, environment.ID).Scan(&lastModified)
@@ -181,7 +182,7 @@ func UpdateEnvironment(db database.QueryExecuter, environment *sdk.Environment) 
 }
 
 // DeleteEnvironment Delete the given environment
-func DeleteEnvironment(db *sql.Tx, environmentID int64) error {
+func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 
 	// Delete variables
 	err := DeleteAllVariable(db, environmentID)
@@ -309,7 +310,7 @@ func DeleteAllEnvironment(db database.Executer, projectID int64) error {
 	return nil
 }
 
-func loadGroupByEnvironment(db database.Querier, environment *sdk.Environment) error {
+func loadGroupByEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
 	query := `SELECT "group".id, "group".name, environment_group.role FROM "group"
 	 		  JOIN environment_group ON environment_group.group_id = "group".id
 	 		  WHERE environment_group.environment_id = $1 ORDER BY "group".name ASC`
@@ -336,7 +337,7 @@ func loadGroupByEnvironment(db database.Querier, environment *sdk.Environment) e
 }
 
 // LoadEnvironmentByGroup loads all environments where group has access
-func LoadEnvironmentByGroup(db database.Querier, group *sdk.Group) error {
+func LoadEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `SELECT project.projectKey,
 			 environment.id,
 	                 environment.name,
@@ -368,7 +369,7 @@ func LoadEnvironmentByGroup(db database.Querier, group *sdk.Group) error {
 }
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
-func AddKeyPairToEnvironment(db database.QueryExecuter, envID int64, keyname string) error {
+func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string) error {
 	pub, priv, errGenerate := keys.Generatekeypair(keyname)
 	if errGenerate != nil {
 		return errGenerate

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
@@ -11,14 +13,10 @@ import (
 )
 
 // DeletePipelineActionByStage Delete all action from a stage
-func DeletePipelineActionByStage(db database.QueryExecuter, stageID int64, userID int64) error {
+func DeletePipelineActionByStage(db gorp.SqlExecutor, stageID int64, userID int64) error {
 	pipelineActionsID, errSelect := selectAllPipelineActionID(db, stageID)
 	if errSelect != nil {
 		return errSelect
-	}
-
-	if err := DeleteActionBuild(db, pipelineActionsID); err != nil {
-		return err
 	}
 
 	// For all pipeline_action in stage
@@ -50,7 +48,7 @@ func DeletePipelineActionByStage(db database.QueryExecuter, stageID int64, userI
 	return nil
 }
 
-func selectAllPipelineActionID(db database.QueryExecuter, pipelineStageID int64) ([]int64, error) {
+func selectAllPipelineActionID(db gorp.SqlExecutor, pipelineStageID int64) ([]int64, error) {
 	var pipelineActionIDs []int64
 	query := `SELECT id FROM "pipeline_action"
 	 		  WHERE pipeline_stage_id = $1`
@@ -73,7 +71,7 @@ func selectAllPipelineActionID(db database.QueryExecuter, pipelineStageID int64)
 
 //InsertPipelineJob insert data in pipeline_action table
 // DEPRECATED
-func InsertPipelineJob(db database.QueryExecuter, pip *sdk.Pipeline, s *sdk.Stage, a *sdk.Action) error {
+func InsertPipelineJob(db gorp.SqlExecutor, pip *sdk.Pipeline, s *sdk.Stage, a *sdk.Action) error {
 	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, args, enabled) VALUES ($1, $2, $3, $4) RETURNING id`
 	args, err := json.Marshal(a.Parameters)
 	if err != nil {
@@ -86,7 +84,7 @@ func InsertPipelineJob(db database.QueryExecuter, pip *sdk.Pipeline, s *sdk.Stag
 }
 
 // InsertPipelineAction insert an action in a pipeline
-func InsertPipelineAction(db database.QueryExecuter, projectKey, pipelineName string, actionID int64, args string, stageID int64) (int64, error) {
+func InsertPipelineAction(db gorp.SqlExecutor, projectKey, pipelineName string, actionID int64, args string, stageID int64) (int64, error) {
 	p, err := LoadPipeline(db, projectKey, pipelineName, true)
 	if err != nil {
 		return 0, fmt.Errorf("Cannot LoadPipeline> %s", err)
@@ -128,7 +126,7 @@ func InsertPipelineAction(db database.QueryExecuter, projectKey, pipelineName st
 }
 
 // InsertJob  Insert a new Job ( pipeline_action + joinedAction )
-func InsertJob(db database.QueryExecuter, job *sdk.Job, stageID int64, pip *sdk.Pipeline) error {
+func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeline) error {
 	// Insert Joined Action
 	job.Action.Type = sdk.JoinedAction
 	job.Action.Enabled = true
@@ -170,7 +168,7 @@ func InsertJob(db database.QueryExecuter, job *sdk.Job, stageID int64, pip *sdk.
 }
 
 // UpdateJob  updates the job by actionData.PipelineActionID and actionData.ID
-func UpdateJob(db database.QueryExecuter, job *sdk.Job, userID int64) error {
+func UpdateJob(db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
 	clearJoinedAction, err := action.LoadActionByID(db, job.Action.ID)
 	if err != nil {
 		return err
@@ -189,7 +187,7 @@ func UpdateJob(db database.QueryExecuter, job *sdk.Job, userID int64) error {
 }
 
 // DeleteJob Delete a job ( action + pipeline_action )
-func DeleteJob(db database.QueryExecuter, job sdk.Job, userID int64) error {
+func DeleteJob(db gorp.SqlExecutor, job sdk.Job, userID int64) error {
 	return action.DeleteAction(db, job.Action.ID, userID)
 }
 
@@ -206,7 +204,7 @@ func UpdatePipelineAction(db database.Executer, action sdk.Action, args string) 
 }
 
 // DeletePipelineAction Delete an action in a pipeline
-func DeletePipelineAction(db database.QueryExecuter, pipelineActionID int64) error {
+func DeletePipelineAction(db gorp.SqlExecutor, pipelineActionID int64) error {
 
 	// Delete pipelineAction by buildOrder
 	query := `DELETE FROM pipeline_action WHERE id = $1`

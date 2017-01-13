@@ -3,13 +3,16 @@ package artifact
 import (
 	"database/sql"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+
 )
 
 // CreateBuiltinArtifactActions  Create Action BuiltinArtifact
-func CreateBuiltinArtifactActions(db *sql.DB) error {
+func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	var name string
 	query := `SELECT action.name FROM action where action.name = $1`
 
@@ -36,7 +39,7 @@ func CreateBuiltinArtifactActions(db *sql.DB) error {
 	return nil
 }
 
-func createBuiltinArtifactUploadAction(db *sql.DB) error {
+func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
 	upload := sdk.NewAction(sdk.ArtifactUpload)
 	upload.Type = sdk.BuiltinAction
 	upload.Parameter(sdk.Parameter{
@@ -69,7 +72,7 @@ func createBuiltinArtifactUploadAction(db *sql.DB) error {
 	return tx.Commit()
 }
 
-func createBuiltinArtifactDownloadAction(db *sql.DB) error {
+func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 	dl := sdk.NewAction(sdk.ArtifactDownload)
 	dl.Type = sdk.BuiltinAction
 	dl.Parameter(sdk.Parameter{

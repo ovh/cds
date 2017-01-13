@@ -23,7 +23,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func deleteUser(t *testing.T, db *sql.DB, u *sdk.User, g *sdk.Group) error {
+func deleteUser(t *testing.T, db gorp.SqlExecutor, u *sdk.User, g *sdk.Group) error {
 	var err error
 	u, err = user.LoadUserWithoutAuth(db, u.Username)
 	if err != nil {

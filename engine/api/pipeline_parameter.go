@@ -1,20 +1,21 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+
 )
 
-func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -38,7 +39,7 @@ func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *
 
 }
 
-func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -87,7 +88,7 @@ func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 // Deprecated
-func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -211,7 +212,7 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	WriteJSON(w, r, append(added, updated...), http.StatusOK)
 }
 
-func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -285,7 +286,7 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	vars := mux.Vars(r)
 	key := vars["key"]

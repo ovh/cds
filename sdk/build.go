@@ -8,15 +8,17 @@ import (
 
 // ActionBuild represents an action to be run
 type PipelineBuildJob struct {
-	ID              int64       `json:"id"`
-	Job             Job         `json:"job"`
-	Parameters      []Parameter `json:"parameters,omitempty"`
-	Status          Status      `json:"status"`
-	Queued          time.Time   `json:"queued,omitempty"`
-	Start           time.Time   `json:"start,omitempty"`
-	Done            time.Time   `json:"done,omitempty"`
-	Model           string      `json:"model,omitempty"`
-	PipelineBuildID int64       `json:"pipeline_build_id,omitempty"`
+	ID              int64       `json:"id" db:"id"`
+	Job             Job         `json:"job" db:"-"`
+	JobJSON         []byte      `json:"-" db:"job"`
+	Parameters      []Parameter `json:"parameters,omitempty" db:"-"`
+	ParametersJSON  []byte      `json:"-,omitempty" db:"parameters"`
+	Status          string      `json:"status"  db:"status"`
+	Queued          time.Time   `json:"queued,omitempty" db:"queued"`
+	Start           time.Time   `json:"start,omitempty" db:"start"`
+	Done            time.Time   `json:"done,omitempty" db:"done"`
+	Model           int64      `json:"model,omitempty" db:"model"`
+	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
 }
 
 // BuildState define struct returned when looking for build state informations

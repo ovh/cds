@@ -3,9 +3,10 @@ package worker
 import (
 	"crypto/rand"
 	"crypto/sha512"
-	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
@@ -14,7 +15,7 @@ import (
 
 // LoadUserKey retrieves a user key in database
 // /!\ DEPRECATED
-func LoadUserKey(db *sql.DB, key string) (int64, sdk.Expiration, error) {
+func LoadUserKey(db gorp.SqlExecutor, key string) (int64, sdk.Expiration, error) {
 	query := `SELECT user_id, expiry FROM user_key WHERE user_key = $1`
 
 	hasher := sha512.New()
@@ -47,7 +48,7 @@ func DeleteUserKey(db database.Executer, key string) error {
 
 // InsertUserKey inserts a new user key in database
 // /!\ DEPRECATED
-func InsertUserKey(db *sql.DB, userID int64, key string, e sdk.Expiration) error {
+func InsertUserKey(db gorp.SqlExecutor, userID int64, key string, e sdk.Expiration) error {
 	query := `INSERT INTO user_key (user_id, user_key, expiry) VALUES ($1, $2, $3)`
 
 	hasher := sha512.New()

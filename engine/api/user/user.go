@@ -1,11 +1,12 @@
 package user
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"regexp"
 	"time"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
@@ -56,7 +57,7 @@ func IsValidEmail(email string) bool {
 }
 
 // LoadUserWithoutAuthByID load user information without secret
-func LoadUserWithoutAuthByID(db *sql.DB, userID int64) (*sdk.User, error) {
+func LoadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, error) {
 	query := `SELECT username, admin, data, origin FROM "user" WHERE id = $1`
 
 	var jsonUser []byte
@@ -80,7 +81,7 @@ func LoadUserWithoutAuthByID(db *sql.DB, userID int64) (*sdk.User, error) {
 }
 
 // LoadUserWithoutAuth load user without auth information
-func LoadUserWithoutAuth(db database.Querier, name string) (*sdk.User, error) {
+func LoadUserWithoutAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	query := `SELECT id, admin, data, origin FROM "user" WHERE username = $1`
 
 	var jsonUser []byte
@@ -105,7 +106,7 @@ func LoadUserWithoutAuth(db database.Querier, name string) (*sdk.User, error) {
 }
 
 // LoadUserAndAuth Load user with auth information
-func LoadUserAndAuth(db *sql.DB, name string) (*sdk.User, error) {
+func LoadUserAndAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	query := `SELECT id, admin, data, auth, origin FROM "user" WHERE username = $1`
 
 	var jsonUser []byte
@@ -138,7 +139,7 @@ func LoadUserAndAuth(db *sql.DB, name string) (*sdk.User, error) {
 }
 
 // FindUserIDByName retrieves only user ID in database
-func FindUserIDByName(db *sql.DB, name string) (int64, error) {
+func FindUserIDByName(db gorp.SqlExecutor, name string) (int64, error) {
 	query := `SELECT id FROM "user" WHERE username = $1`
 
 	var id int64
@@ -150,7 +151,7 @@ func FindUserIDByName(db *sql.DB, name string) (int64, error) {
 }
 
 // LoadUsers load all users from database
-func LoadUsers(db *sql.DB) ([]*sdk.User, error) {
+func LoadUsers(db gorp.SqlExecutor) ([]*sdk.User, error) {
 	users := []*sdk.User{}
 
 	query := `SELECT "user".username, "user".data, origin FROM "user" WHERE 1 = 1 ORDER BY "user".username`
@@ -184,7 +185,7 @@ func LoadUsers(db *sql.DB) ([]*sdk.User, error) {
 }
 
 // CountUser Count user table
-func CountUser(db *sql.DB) (int64, error) {
+func CountUser(db gorp.SqlExecutor) (int64, error) {
 	query := `SELECT count(id) FROM "user" WHERE 1 = 1`
 
 	var countResult int64
@@ -196,7 +197,7 @@ func CountUser(db *sql.DB) (int64, error) {
 }
 
 // UpdateUser update given user
-func UpdateUser(db *sql.DB, u sdk.User) error {
+func UpdateUser(db gorp.SqlExecutor, u sdk.User) error {
 	query := `UPDATE "user" SET username=$1, admin=$2, data=$3 WHERE id=$4`
 	u.Groups = nil
 	_, err := db.Exec(query, u.Username, u.Admin, u.JSON(), u.ID)
@@ -204,7 +205,7 @@ func UpdateUser(db *sql.DB, u sdk.User) error {
 }
 
 // UpdateUserAndAuth update given user
-func UpdateUserAndAuth(db *sql.DB, u sdk.User) error {
+func UpdateUserAndAuth(db gorp.SqlExecutor, u sdk.User) error {
 	query := `UPDATE "user" SET username=$1, admin=$2, data=$3, auth=$4 WHERE id=$5`
 	u.Groups = nil
 	_, err := db.Exec(query, u.Username, u.Admin, u.JSON(), u.Auth.JSON(), u.ID)
@@ -253,14 +254,14 @@ func deleteUser(db database.Executer, u *sdk.User) error {
 }
 
 // InsertUser Insert new user
-func InsertUser(db database.QueryExecuter, u *sdk.User, a *sdk.Auth) error {
+func InsertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
 	query := `INSERT INTO "user" (username, admin, data, auth, created, origin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`
 	err := db.QueryRow(query, u.Username, u.Admin, u.JSON(), a.JSON(), time.Now(), u.Origin).Scan(&u.ID)
 	return err
 }
 
 // LoadUserPermissions retrieves all group memberships
-func LoadUserPermissions(db *sql.DB, user *sdk.User) error {
+func LoadUserPermissions(db gorp.SqlExecutor, user *sdk.User) error {
 	user.Groups = nil
 	query := `SELECT "group".id, "group".name, "group_user".group_admin FROM "group"
 	 		  JOIN group_user ON group_user.group_id = "group".id
@@ -310,7 +311,7 @@ func LoadUserPermissions(db *sql.DB, user *sdk.User) error {
 }
 
 // LoadGroupPermissions retrieves all group memberships
-func LoadGroupPermissions(db *sql.DB, groupID int64) (*sdk.Group, error) {
+func LoadGroupPermissions(db gorp.SqlExecutor, groupID int64) (*sdk.Group, error) {
 	query := `SELECT "group".name FROM "group" WHERE "group".id = $1`
 
 	group := &sdk.Group{ID: groupID}

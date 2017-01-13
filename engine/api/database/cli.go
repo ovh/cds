@@ -1,7 +1,6 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"path"
@@ -13,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"database/sql"
 )
 
 var DBCmd = &cobra.Command{
@@ -86,7 +86,6 @@ func createCmdFunc(cmd *cobra.Command, args []string) {
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
-
 	//Check if schema is empty
 	rows, err := db.Query("SELECT tablename FROM pg_catalog.pg_tables WHERE tableowner like $1", dbUser+"%")
 

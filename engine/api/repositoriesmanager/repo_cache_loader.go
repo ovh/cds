@@ -14,7 +14,7 @@ import (
 //for all projects and start preloading repositories
 func RepositoriesCacheLoader(delay int) {
 	for {
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db != nil {
 			var mayIWork string
 			loaderKey := cache.Key("reposmanager", "loading")

@@ -1,17 +1,17 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/log"
-
 	"github.com/ovh/cds/sdk"
 )
 
-func getStats(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getStats(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	var st sdk.Stats
 	var err error
 
@@ -91,7 +91,7 @@ func getStats(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Con
 	WriteJSON(w, r, st, http.StatusOK)
 }
 
-func getNewPipelines(db *sql.DB, fromWeek, toWeek int) (int64, error) {
+func getNewPipelines(db *gorp.DbMap, fromWeek, toWeek int) (int64, error) {
 	query := `SELECT COUNT(id) FROM "pipeline" WHERE created > NOW() - INTERVAL '%d weeks' AND created < NOW() - INTERVAL '%d weeks'`
 	var n int64
 
@@ -103,7 +103,7 @@ func getNewPipelines(db *sql.DB, fromWeek, toWeek int) (int64, error) {
 	return n, nil
 }
 
-func getNewApplications(db *sql.DB, fromWeek, toWeek int) (int64, error) {
+func getNewApplications(db *gorp.DbMap, fromWeek, toWeek int) (int64, error) {
 	query := `SELECT COUNT(id) FROM "application" WHERE created > NOW() - INTERVAL '%d weeks' AND created < NOW() - INTERVAL '%d weeks'`
 	var n int64
 
@@ -115,7 +115,7 @@ func getNewApplications(db *sql.DB, fromWeek, toWeek int) (int64, error) {
 	return n, nil
 }
 
-func getNewProjects(db *sql.DB, fromWeek, toWeek int) (int64, error) {
+func getNewProjects(db *gorp.DbMap, fromWeek, toWeek int) (int64, error) {
 	query := `SELECT COUNT(id) FROM "project" WHERE created > NOW() - INTERVAL '%d weeks' AND created < NOW() - INTERVAL '%d weeks'`
 	var n int64
 
@@ -127,7 +127,7 @@ func getNewProjects(db *sql.DB, fromWeek, toWeek int) (int64, error) {
 	return n, nil
 }
 
-func getNewUsers(db *sql.DB, fromWeek, toWeek int) (int64, error) {
+func getNewUsers(db *gorp.DbMap, fromWeek, toWeek int) (int64, error) {
 	query := `SELECT COUNT(username) FROM "user" WHERE created > NOW() - INTERVAL '%d weeks' AND created < NOW() - INTERVAL '%d weeks'`
 	var n int64
 
@@ -139,7 +139,7 @@ func getNewUsers(db *sql.DB, fromWeek, toWeek int) (int64, error) {
 	return n, nil
 }
 
-func getPeriodTotalPipelinesByType(db *sql.DB, toWeek int) (build, test, deploy int64, err error) {
+func getPeriodTotalPipelinesByType(db *gorp.DbMap, toWeek int) (build, test, deploy int64, err error) {
 	query := `SELECT COUNT(id) FROM pipeline WHERE created < NOW() - INTERVAL '%d weeks' AND type = $1`
 
 	err = db.QueryRow(fmt.Sprintf(query, toWeek), string(sdk.BuildPipeline)).Scan(&build)
@@ -159,7 +159,7 @@ func getPeriodTotalPipelinesByType(db *sql.DB, toWeek int) (build, test, deploy 
 	return
 }
 
-func initHistory(db *sql.DB) ([]sdk.Week, error) {
+func initHistory(db *gorp.DbMap) ([]sdk.Week, error) {
 	var sts []sdk.Week
 	var st sdk.Week
 

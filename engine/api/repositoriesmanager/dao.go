@@ -6,14 +6,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 //LoadAll Load all RepositoriesManager from the database
-func LoadAll(db *sql.DB) ([]sdk.RepositoriesManager, error) {
+func LoadAll(db gorp.SqlExecutor) ([]sdk.RepositoriesManager, error) {
 	rms := []sdk.RepositoriesManager{}
 	query := `SELECT id, type, name, url, data FROM repositories_manager`
 	rows, err := db.Query(query)
@@ -42,7 +43,7 @@ func LoadAll(db *sql.DB) ([]sdk.RepositoriesManager, error) {
 }
 
 //LoadByID loads the specified RepositoriesManager from the database
-func LoadByID(db *sql.DB, id int64) (*sdk.RepositoriesManager, error) {
+func LoadByID(db gorp.SqlExecutor, id int64) (*sdk.RepositoriesManager, error) {
 	var rm *sdk.RepositoriesManager
 	var rmid int64
 	var t, name, URL, data string
@@ -61,7 +62,7 @@ func LoadByID(db *sql.DB, id int64) (*sdk.RepositoriesManager, error) {
 }
 
 //LoadByName loads the specified RepositoriesManager from the database
-func LoadByName(db database.Querier, repositoriesManagerName string) (*sdk.RepositoriesManager, error) {
+func LoadByName(db gorp.SqlExecutor, repositoriesManagerName string) (*sdk.RepositoriesManager, error) {
 	var rm *sdk.RepositoriesManager
 	var id int64
 	var t, name, URL, data string
@@ -80,7 +81,7 @@ func LoadByName(db database.Querier, repositoriesManagerName string) (*sdk.Repos
 }
 
 //LoadForProject load the specified repositorymanager for the project
-func LoadForProject(db database.Querier, projectkey, repositoriesManagerName string) (*sdk.RepositoriesManager, error) {
+func LoadForProject(db gorp.SqlExecutor, projectkey, repositoriesManagerName string) (*sdk.RepositoriesManager, error) {
 	query := `SELECT 	repositories_manager.id,
 										repositories_manager.type,
 										repositories_manager.name,
@@ -107,7 +108,7 @@ func LoadForProject(db database.Querier, projectkey, repositoriesManagerName str
 }
 
 //LoadAllForProject Load RepositoriesManager for a project from the database
-func LoadAllForProject(db *sql.DB, projectkey string) ([]sdk.RepositoriesManager, error) {
+func LoadAllForProject(db gorp.SqlExecutor, projectkey string) ([]sdk.RepositoriesManager, error) {
 	rms := []sdk.RepositoriesManager{}
 	query := `SELECT repositories_manager.id,
 			 repositories_manager.type,
@@ -148,7 +149,7 @@ func LoadAllForProject(db *sql.DB, projectkey string) ([]sdk.RepositoriesManager
 
 //Insert insert a new InsertRepositoriesManager in database
 //FIXME: Invalid name: it can only contain lowercase letters, numbers, dots or dashes, and run between 1 and 99 characters long not valid
-func Insert(db *sql.DB, rm *sdk.RepositoriesManager) error {
+func Insert(db gorp.SqlExecutor, rm *sdk.RepositoriesManager) error {
 	query := `INSERT INTO repositories_manager (type, name, url, data) VALUES ($1, $2, $3, $4) RETURNING id`
 	err := db.QueryRow(query, string(rm.Type), rm.Name, rm.URL, rm.Consumer.Data()).Scan(&rm.ID)
 	if err != nil && strings.Contains(err.Error(), "repositories_manager_name_key") {
@@ -161,7 +162,7 @@ func Insert(db *sql.DB, rm *sdk.RepositoriesManager) error {
 }
 
 //Update update repositories_manager url and data only
-func Update(db *sql.DB, rm *sdk.RepositoriesManager) error {
+func Update(db gorp.SqlExecutor, rm *sdk.RepositoriesManager) error {
 	query := `UPDATE 	repositories_manager
 						SET			url = $1,
 						 				data = 	$2
@@ -174,7 +175,7 @@ func Update(db *sql.DB, rm *sdk.RepositoriesManager) error {
 }
 
 //InsertForProject associates a repositories manager with a project
-func InsertForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, projectKey string) (time.Time, error) {
+func InsertForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, projectKey string) (time.Time, error) {
 	var lastModified time.Time
 	query := `INSERT INTO
 							repositories_manager_project (id_repositories_manager, id_project)
@@ -201,7 +202,7 @@ func InsertForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, pr
 
 //DeleteForProject removes association between  a repositories manager and a project
 //it deletes the corresponding line in repositories_manager_project
-func DeleteForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, project *sdk.Project) error {
+func DeleteForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, project *sdk.Project) error {
 	query := `DELETE 	FROM  repositories_manager_project
 						WHERE 	id_repositories_manager = $1
 						AND 		id_project IN (
@@ -227,7 +228,7 @@ func DeleteForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, pr
 }
 
 //SaveDataForProject updates the jsonb value computed at the end the oauth process
-func SaveDataForProject(db *sql.DB, rm *sdk.RepositoriesManager, projectKey string, data map[string]string) error {
+func SaveDataForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, projectKey string, data map[string]string) error {
 	query := `UPDATE 	repositories_manager_project
 						SET 		data = $1
 						WHERE 	id_repositories_manager = $2
@@ -253,7 +254,7 @@ func SaveDataForProject(db *sql.DB, rm *sdk.RepositoriesManager, projectKey stri
 }
 
 //AuthorizedClient returns instance of client with the granted token
-func AuthorizedClient(db database.Querier, projectKey, rmName string) (sdk.RepositoriesManagerClient, error) {
+func AuthorizedClient(db gorp.SqlExecutor, projectKey, rmName string) (sdk.RepositoriesManagerClient, error) {
 
 	rm, err := LoadForProject(db, projectKey, rmName)
 	if err != nil {
@@ -286,7 +287,7 @@ func AuthorizedClient(db database.Querier, projectKey, rmName string) (sdk.Repos
 }
 
 //InsertForApplication associates a repositories manager with an application
-func InsertForApplication(db database.QueryExecuter, app *sdk.Application, projectKey string) error {
+func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey string) error {
 	query := `UPDATE application
 						SET
 							repositories_manager_id =  $1,
@@ -311,7 +312,7 @@ func InsertForApplication(db database.QueryExecuter, app *sdk.Application, proje
 
 //DeleteForApplication removes association between  a repositories manager and an application
 //it deletes the corresponding line in repositories_manager_project
-func DeleteForApplication(db database.QueryExecuter, projectKey string, app *sdk.Application) error {
+func DeleteForApplication(db gorp.SqlExecutor, projectKey string, app *sdk.Application) error {
 	query := `UPDATE application
 						SET
 							repositories_manager_id =  NULL,
@@ -334,7 +335,7 @@ func DeleteForApplication(db database.QueryExecuter, projectKey string, app *sdk
 }
 
 //CheckApplicationIsAttached check if the application is properly attached
-func CheckApplicationIsAttached(db database.Querier, rmName, projectKey, applicationName string) (bool, error) {
+func CheckApplicationIsAttached(db gorp.SqlExecutor, rmName, projectKey, applicationName string) (bool, error) {
 	query := ` SELECT 1
 						 FROM 	application
 						 JOIN	  project ON application.project_id = project.id

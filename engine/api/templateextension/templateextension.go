@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/database"
@@ -23,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/template"
+
 )
 
 //Get returns action plugin metadata and parameters list
@@ -137,7 +139,7 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 }
 
 //Apply will call the apply function of the template and returns a fresh new application
-func Apply(db database.Querier, templ template.Interface, proj *sdk.Project, params []sdk.TemplateParam, appName string) (*sdk.Application, error) {
+func Apply(db gorp.SqlExecutor, templ template.Interface, proj *sdk.Project, params []sdk.TemplateParam, appName string) (*sdk.Application, error) {
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(appName) {
 		return nil, sdk.ErrInvalidApplicationPattern
@@ -192,8 +194,7 @@ func Apply(db database.Querier, templ template.Interface, proj *sdk.Project, par
 }
 
 //All returns all template extensions
-func All(db *sql.DB) ([]sdk.TemplateExtension, error) {
-	dbmap := database.DBMap(db)
+func All(dbmap *gorp.DbMap) ([]sdk.TemplateExtension, error) {
 	tmpls := []database.TemplateExtension{}
 	_, err := dbmap.Select(&tmpls, "select * from template order by id")
 	if err != nil {
@@ -225,10 +226,7 @@ func All(db *sql.DB) ([]sdk.TemplateExtension, error) {
 }
 
 //LoadByID returns a templateextension from its ID
-func LoadByID(db *sql.DB, id int64) (*sdk.TemplateExtension, error) {
-	//Get the database map
-	dbmap := database.DBMap(db)
-
+func LoadByID(dbmap *gorp.DbMap, id int64) (*sdk.TemplateExtension, error) {
 	//Find it
 	templ := database.TemplateExtension{}
 	if err := dbmap.SelectOne(&templ, "select * from template where id = $1", id); err != nil {
@@ -244,10 +242,9 @@ func LoadByID(db *sql.DB, id int64) (*sdk.TemplateExtension, error) {
 }
 
 //Insert inserts a new template
-func Insert(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
+func Insert(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
 	templ := database.TemplateExtension(*sdktmpl)
 	//Get the database map
-	dbmap := database.DBMap(db)
 	if err := dbmap.Insert(&templ); err != nil {
 		return err
 	}
@@ -258,10 +255,9 @@ func Insert(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
 }
 
 //Update updates the provided template given it ID
-func Update(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
+func Update(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
 	templ := database.TemplateExtension(*sdktmpl)
 	//Get the database map
-	dbmap := database.DBMap(db)
 	_, err := dbmap.Update(&templ)
 	sdktmpl.Actions = templ.Actions
 	sdktmpl.Params = templ.Params
@@ -269,10 +265,9 @@ func Update(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
 }
 
 //Delete deletes the provided template given it ID
-func Delete(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
+func Delete(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
 	templ := database.TemplateExtension(*sdktmpl)
 	//Get the database map
-	dbmap := database.DBMap(db)
 	n, err := dbmap.Delete(&templ)
 	if n == 0 {
 		return sdk.ErrNotFound
@@ -281,10 +276,9 @@ func Delete(db *sql.DB, sdktmpl *sdk.TemplateExtension) error {
 }
 
 //LoadByName returns a templateextension from its name
-func LoadByName(db *sql.DB, name string) (*sdk.TemplateExtension, error) {
+func LoadByName(dbmap gorp.SqlExecutor, name string) (*sdk.TemplateExtension, error) {
 	log.Debug("Loading template %s", name)
 	// Get template from DB
-	dbmap := database.DBMap(db)
 	tmpl := database.TemplateExtension{}
 	if err := dbmap.SelectOne(&tmpl, "select * from template where name = $1", name); err != nil {
 		if err == sql.ErrNoRows {
@@ -307,14 +301,13 @@ var EmptyTemplate = sdk.Template{
 }
 
 //LoadByType returns list of templates by type
-func LoadByType(db *sql.DB, t string) ([]sdk.Template, error) {
+func LoadByType(dbmap *gorp.DbMap, t string) ([]sdk.Template, error) {
 	var tpl []sdk.Template
 	tpl = []sdk.Template{
 		EmptyTemplate,
 	}
 
 	tplFromDB := []sdk.TemplateExtension{}
-	dbmap := database.DBMap(db)
 	if _, err := dbmap.Select(&tplFromDB, "select * from template where type = $1 order by name", t); err != nil {
 		log.Warning("getTypedTemplatesHandler> Error : %s", err)
 		return nil, err

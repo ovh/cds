@@ -73,7 +73,6 @@ var mainCmd = &cobra.Command{
 		if err != nil {
 			log.Warning("Cannot connect to database: %s\n", err)
 		}
-
 		if db != nil {
 			if viper.GetBool("db_logging") {
 				log.UseDatabaseLogger(db)
@@ -114,7 +113,7 @@ var mainCmd = &cobra.Command{
 		router.init()
 		baseURL = viper.GetString("base_url")
 
-		if err := group.Initialize(db); err != nil {
+		if err := group.Initialize(database.DBMap(db)); err != nil {
 			log.Critical("Cannot initialize groups: %s\n", err)
 		}
 
@@ -287,7 +286,6 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/clone", POST(cloneApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/group", POST(addGroupInApplicationHandler), PUT(updateGroupsInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/group/{group}", PUT(updateGroupRoleOnApplicationHandler), DELETE(deleteGroupFromApplicationHandler))
-	router.Handle("/project/{key}/application/{permApplicationName}/history", GET(getApplicationHistoryHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/history/branch", GET(getPipelineBuildBranchHistoryHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/history/env/deploy", GET(getApplicationDeployHistoryHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline", GET(getPipelinesInApplicationHandler), PUT(updatePipelinesToApplicationHandler))

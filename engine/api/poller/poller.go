@@ -1,6 +1,8 @@
 package poller
 
 import (
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -62,7 +64,7 @@ func UpdatePoller(db database.Executer, poller *sdk.RepositoryPoller) error {
 }
 
 //LoadEnabledPollers load all RepositoryPoller
-func LoadEnabledPollers(db database.Querier) ([]sdk.RepositoryPoller, error) {
+func LoadEnabledPollers(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
 	query := `
         SELECT application_id, pipeline_id, name, enabled, date_creation
         FROM poller
@@ -72,7 +74,7 @@ func LoadEnabledPollers(db database.Querier) ([]sdk.RepositoryPoller, error) {
 }
 
 //LoadEnabledPollersByProject load all RepositoryPoller for a project
-func LoadEnabledPollersByProject(db database.Querier, projKey string) ([]sdk.RepositoryPoller, error) {
+func LoadEnabledPollersByProject(db gorp.SqlExecutor, projKey string) ([]sdk.RepositoryPoller, error) {
 	query := `
         SELECT poller.application_id, poller.pipeline_id, poller.name, poller.enabled, poller.date_creation
         FROM poller, application, project
@@ -85,7 +87,7 @@ func LoadEnabledPollersByProject(db database.Querier, projKey string) ([]sdk.Rep
 }
 
 //LoadPollersByApplication loads all pollers for an application
-func LoadPollersByApplication(db database.Querier, applicationID int64) ([]sdk.RepositoryPoller, error) {
+func LoadPollersByApplication(db gorp.SqlExecutor, applicationID int64) ([]sdk.RepositoryPoller, error) {
 	query := `
         SELECT application_id, pipeline_id, name, enabled, date_creation
         FROM poller
@@ -95,7 +97,7 @@ func LoadPollersByApplication(db database.Querier, applicationID int64) ([]sdk.R
 }
 
 //LoadPollerByApplicationAndPipeline loads all pollers for an application/pipeline
-func LoadPollerByApplicationAndPipeline(db database.Querier, applicationID, pipelineID int64) (*sdk.RepositoryPoller, error) {
+func LoadPollerByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID int64) (*sdk.RepositoryPoller, error) {
 	query := `
         SELECT application_id, pipeline_id, name, enabled, date_creation
         FROM poller
@@ -113,7 +115,7 @@ func LoadPollerByApplicationAndPipeline(db database.Querier, applicationID, pipe
 	return &res[0], nil
 }
 
-func loadPollersByQUery(db database.Querier, query string, args ...interface{}) ([]sdk.RepositoryPoller, error) {
+func loadPollersByQUery(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.RepositoryPoller, error) {
 	pollers := []sdk.RepositoryPoller{}
 	rows, err := db.Query(query, args...)
 	if err != nil {

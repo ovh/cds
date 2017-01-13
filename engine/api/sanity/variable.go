@@ -6,7 +6,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/log"
@@ -84,7 +83,7 @@ func loadUsedVariables(tx gorp.SqlExecutor, a *sdk.Action) ([]string, []string, 
 }
 
 // For each project variable used, check it's present in project variables
-func checkProjectVariables(db database.Querier, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
+func checkProjectVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	var err error
@@ -121,7 +120,7 @@ func checkProjectVariables(db database.Querier, vars []string, p *sdk.Project, p
 }
 
 // For each application variable used, check it's present in application where pipeline is used
-func checkApplicationVariables(db database.Querier, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
+func checkApplicationVariables(db gorp.SqlExecutor, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	// Load all application where pipeline is attached
@@ -174,7 +173,7 @@ func checkApplicationVariables(db database.Querier, vars []string, project *sdk.
 // For each environment variable used:
 // Add a warning for each variable if pipeline type is BuildPipeline
 // Add a warning for each variable used but not presend in environment variables
-func checkEnvironmentVariables(db database.Querier, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
+func checkEnvironmentVariables(db gorp.SqlExecutor, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	// If it's a build pipeline, it cannot use environment variables at all

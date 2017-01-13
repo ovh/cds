@@ -6,15 +6,16 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+
 )
 
 // LoadApplicationsRequestAdmin defines the query to load all applications in a project with its activity
@@ -46,7 +47,7 @@ ORDER BY application.name ASC
 `
 
 // LoadApplications load all application from the given project
-func LoadApplications(db database.Querier, projectKey string, allpipelines bool, user *sdk.User) ([]sdk.Application, error) {
+func LoadApplications(db gorp.SqlExecutor, projectKey string, allpipelines bool, user *sdk.User) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
 	var err error
 	var rows *sql.Rows
@@ -112,7 +113,7 @@ func LoadApplications(db database.Querier, projectKey string, allpipelines bool,
 }
 
 // CountApplicationByProject Count the number of applications in the given project
-func CountApplicationByProject(db database.Querier, projectID int64) (int, error) {
+func CountApplicationByProject(db gorp.SqlExecutor, projectID int64) (int, error) {
 	var count int
 	query := `SELECT COUNT(application.id)
 		  FROM application
@@ -122,7 +123,7 @@ func CountApplicationByProject(db database.Querier, projectID int64) (int, error
 }
 
 // LoadApplicationByName load the given application
-func LoadApplicationByName(db database.Querier, projectKey, appName string, fargs ...FuncArg) (*sdk.Application, error) {
+func LoadApplicationByName(db gorp.SqlExecutor, projectKey, appName string, fargs ...FuncArg) (*sdk.Application, error) {
 	var app sdk.Application
 
 	var k = cache.Key("application", projectKey, appName)
@@ -175,7 +176,7 @@ func LoadApplicationByName(db database.Querier, projectKey, appName string, farg
 }
 
 // LoadApplicationByID load the given application
-func LoadApplicationByID(db database.Querier, applicationID int64, fargs ...FuncArg) (*sdk.Application, error) {
+func LoadApplicationByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncArg) (*sdk.Application, error) {
 	var app sdk.Application
 	query := `
 			SELECT
@@ -219,7 +220,7 @@ func LoadApplicationByID(db database.Querier, applicationID int64, fargs ...Func
 	return &app, loadDependencies(db, &app, fargs...)
 }
 
-func loadDependencies(db database.Querier, app *sdk.Application, fargs ...FuncArg) error {
+func loadDependencies(db gorp.SqlExecutor, app *sdk.Application, fargs ...FuncArg) error {
 	variables, errVariable := GetAllVariableByID(db, app.ID, fargs...)
 	if errVariable != nil {
 		return errVariable
@@ -240,7 +241,7 @@ func loadDependencies(db database.Querier, app *sdk.Application, fargs ...FuncAr
 }
 
 // InsertApplication Insert new application
-func InsertApplication(db database.QueryExecuter, project *sdk.Project, app *sdk.Application) error {
+func InsertApplication(db gorp.SqlExecutor, project *sdk.Project, app *sdk.Application) error {
 	if app.Name == "" {
 		return sdk.ErrInvalidName
 	}
@@ -263,7 +264,7 @@ func InsertApplication(db database.QueryExecuter, project *sdk.Project, app *sdk
 }
 
 // UpdateApplication Update an application
-func UpdateApplication(db database.QueryExecuter, application *sdk.Application) error {
+func UpdateApplication(db gorp.SqlExecutor, application *sdk.Application) error {
 	query := `UPDATE application SET name=$1, last_modified=current_timestamp WHERE id=$2`
 	_, err := db.Exec(query, application.Name, application.ID)
 	if err != nil {
@@ -288,7 +289,7 @@ func UpdateApplication(db database.QueryExecuter, application *sdk.Application) 
 }
 
 // UpdateLastModified Update last_modified column in application table
-func UpdateLastModified(db database.QueryExecuter, app *sdk.Application) error {
+func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application) error {
 	query := `
 		UPDATE application SET last_modified=current_timestamp WHERE id = $1 RETURNING last_modified
 	`
@@ -301,7 +302,7 @@ func UpdateLastModified(db database.QueryExecuter, app *sdk.Application) error {
 }
 
 // DeleteApplication Delete the given application
-func DeleteApplication(db *sql.Tx, applicationID int64) error {
+func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 
 	// Delete variables
 	err := DeleteAllVariable(db, applicationID)
@@ -343,7 +344,7 @@ func DeleteApplication(db *sql.Tx, applicationID int64) error {
 	}
 	rows.Close()
 	for _, id := range ids {
-		err = pipeline.DeletePipelineBuild(db, id)
+		err = pipeline.DeletePipelineBuildByID(db, id)
 		if err != nil {
 			return fmt.Errorf("DeleteApplication> Cannot delete pb %d> %s", id, err)
 		}
@@ -400,7 +401,7 @@ func DeleteApplication(db *sql.Tx, applicationID int64) error {
 }
 
 // LoadGroupByApplication loads all the groups on the given application
-func LoadGroupByApplication(db database.Querier, application *sdk.Application) error {
+func LoadGroupByApplication(db gorp.SqlExecutor, application *sdk.Application) error {
 	application.ApplicationGroups = []sdk.GroupPermission{}
 	query := `SELECT "group".id, "group".name, application_group.role FROM "group"
 	 		  JOIN application_group ON application_group.group_id = "group".id
@@ -428,7 +429,7 @@ func LoadGroupByApplication(db database.Querier, application *sdk.Application) e
 }
 
 // LoadApplicationByPipeline Load application where pipeline is attached
-func LoadApplicationByPipeline(db database.Querier, pipelineID int64) ([]sdk.Application, error) {
+func LoadApplicationByPipeline(db gorp.SqlExecutor, pipelineID int64) ([]sdk.Application, error) {
 	applications := []sdk.Application{}
 	query := `SELECT application.id, application.name, application.last_modified
 		 FROM application
@@ -454,7 +455,7 @@ func LoadApplicationByPipeline(db database.Querier, pipelineID int64) ([]sdk.App
 }
 
 // LoadApplicationByGroup loads all applications where group has access
-func LoadApplicationByGroup(db database.Querier, group *sdk.Group) error {
+func LoadApplicationByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `SELECT project.projectKey,
 	                 application.name,
 	                 application.id,
@@ -489,7 +490,7 @@ func LoadApplicationByGroup(db database.Querier, group *sdk.Group) error {
 }
 
 // PipelineAttached checks wether a pipeline is attached to given application
-func PipelineAttached(db *sql.DB, appID, pipID int64) (bool, error) {
+func PipelineAttached(db gorp.SqlExecutor, appID, pipID int64) (bool, error) {
 	query := `SELECT id FROM application_pipeline WHERE application_id= $1 AND pipeline_id = $2`
 	var id int64
 
@@ -505,7 +506,7 @@ func PipelineAttached(db *sql.DB, appID, pipID int64) (bool, error) {
 }
 
 // AddKeyPairToApplication generate a ssh key pair and add them as application variables
-func AddKeyPairToApplication(db database.QueryExecuter, app *sdk.Application, keyname string) error {
+func AddKeyPairToApplication(db gorp.SqlExecutor, app *sdk.Application, keyname string) error {
 	pub, priv, errGenerate := keys.Generatekeypair(keyname)
 	if errGenerate != nil {
 		return errGenerate

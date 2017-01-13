@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -53,7 +55,7 @@ func DeleteGroupAndDependencies(db database.Executer, group *sdk.Group) error {
 }
 
 // AddGroup creates a new group in database
-func AddGroup(db database.QueryExecuter, group *sdk.Group) (int64, bool, error) {
+func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	// check projectKey pattern
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(group.Name) {
@@ -91,7 +93,7 @@ func AddGroup(db database.QueryExecuter, group *sdk.Group) (int64, bool, error) 
 }
 
 // LoadGroup retrieves group informations from database
-func LoadGroup(db database.Querier, name string) (*sdk.Group, error) {
+func LoadGroup(db gorp.SqlExecutor, name string) (*sdk.Group, error) {
 	query := `SELECT "group".id FROM "group" WHERE "group".name = $1`
 	var groupID int64
 	err := db.QueryRow(query, name).Scan(&groupID)
@@ -108,7 +110,7 @@ func LoadGroup(db database.Querier, name string) (*sdk.Group, error) {
 }
 
 // LoadGroupByID retrieves group informations from database
-func LoadGroupByID(db database.Querier, id int64) (*sdk.Group, error) {
+func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
 	query := `SELECT "group".id FROM "group" WHERE "group".id = $1`
 	var name string
 	if err := db.QueryRow(query, name).Scan(&id); err != nil {
@@ -124,7 +126,7 @@ func LoadGroupByID(db database.Querier, id int64) (*sdk.Group, error) {
 }
 
 // LoadUserGroup retrieves all group users from database
-func LoadUserGroup(db *sql.DB, group *sdk.Group) error {
+func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `SELECT "user".username, "group_user".group_admin FROM "user"
 	 		  JOIN group_user ON group_user.user_id = "user".id
 	 		  WHERE group_user.group_id = $1 ORDER BY "user".username ASC`
@@ -152,7 +154,7 @@ func LoadUserGroup(db *sql.DB, group *sdk.Group) error {
 }
 
 // LoadGroups load all groups from database
-func LoadGroups(db *sql.DB) ([]sdk.Group, error) {
+func LoadGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 	groups := []sdk.Group{}
 
 	query := `SELECT * FROM "group"`
@@ -176,7 +178,7 @@ func LoadGroups(db *sql.DB) ([]sdk.Group, error) {
 }
 
 //LoadGroupByUser return group list from database
-func LoadGroupByUser(db database.Querier, userID int64) ([]sdk.Group, error) {
+func LoadGroupByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Group, error) {
 	groups := []sdk.Group{}
 
 	query := `
@@ -205,7 +207,7 @@ func LoadGroupByUser(db database.Querier, userID int64) ([]sdk.Group, error) {
 }
 
 //LoadGroupByAdmin return group list from database
-func LoadGroupByAdmin(db database.Querier, userID int64) ([]sdk.Group, error) {
+func LoadGroupByAdmin(db gorp.SqlExecutor, userID int64) ([]sdk.Group, error) {
 	groups := []sdk.Group{}
 
 	query := `
@@ -236,7 +238,7 @@ func LoadGroupByAdmin(db database.Querier, userID int64) ([]sdk.Group, error) {
 
 // LoadPublicGroups returns public groups,
 // actually it returns shared.infra group only because public group are not supported
-func LoadPublicGroups(db database.Querier) ([]sdk.Group, error) {
+func LoadPublicGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 	groups := []sdk.Group{}
 	//This query should have to be fixed with a new public column
 	query := `
@@ -264,7 +266,7 @@ func LoadPublicGroups(db database.Querier) ([]sdk.Group, error) {
 }
 
 // CheckUserInGroup verivies that user is in given group
-func CheckUserInGroup(db *sql.DB, groupID, userID int64) (bool, error) {
+func CheckUserInGroup(db gorp.SqlExecutor, groupID, userID int64) (bool, error) {
 	query := `SELECT COUNT(user_id) FROM group_user WHERE group_id = $1 AND user_id = $2`
 
 	var nb int64
@@ -281,7 +283,7 @@ func CheckUserInGroup(db *sql.DB, groupID, userID int64) (bool, error) {
 }
 
 // DeleteUserFromGroup remove user from group
-func DeleteUserFromGroup(db *sql.DB, groupID, userID int64) error {
+func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
 
 	// Check if there are admin left
 	var isAdm bool
@@ -334,14 +336,14 @@ func UpdateGroup(db database.Executer, g *sdk.Group, oldName string) error {
 }
 
 // InsertGroup insert given group into given database
-func InsertGroup(db database.QueryExecuter, g *sdk.Group) error {
+func InsertGroup(db gorp.SqlExecutor, g *sdk.Group) error {
 	query := `INSERT INTO "group" (name) VALUES($1) RETURNING id`
 	err := db.QueryRow(query, g.Name).Scan(&g.ID)
 	return err
 }
 
 // LoadGroupByProject retrieves all groups related to project
-func LoadGroupByProject(db database.Querier, project *sdk.Project) error {
+func LoadGroupByProject(db gorp.SqlExecutor, project *sdk.Project) error {
 	query := `SELECT "group".id,"group".name,project_group.role FROM "group"
 	 		  JOIN project_group ON project_group.group_id = "group".id
 	 		  WHERE project_group.project_id = $1 ORDER BY "group".name ASC`
@@ -394,7 +396,7 @@ func SetUserGroupAdmin(db database.Executer, groupID int64, userID int64) error 
 }
 
 // RemoveUserGroupAdmin remove the privilege to perform operations on given group
-func RemoveUserGroupAdmin(db *sql.DB, groupID int64, userID int64) error {
+func RemoveUserGroupAdmin(db gorp.SqlExecutor, groupID int64, userID int64) error {
 	query := `UPDATE "group_user" SET group_admin = false WHERE group_id = $1 AND user_id = $2`
 	if _, err := db.Exec(query, groupID, userID); err != nil {
 		return err

@@ -2,21 +2,22 @@ package queue
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/engine/api/trigger"
-	"github.com/ovh/cds/engine/api/application"
-	"fmt"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/event"
 )
 
 // Pipelines is a goroutine responsible for pushing actions of a building pipeline in queue, in the wanted order
@@ -27,7 +28,7 @@ func Pipelines() {
 	for {
 		time.Sleep(2 * time.Second)
 
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db != nil {
 			pipelines, err := pipeline.LoadBuildingPipelines(db)
 			if err != nil {
@@ -45,7 +46,7 @@ func Pipelines() {
 }
 
 // RunActions Schedule action for the given Build
-func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
+func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("queue.RunActions> cannot start tx for pb %d: %s\n", pb.ID, err)
@@ -82,7 +83,7 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 
 		if stage.Status == sdk.StatusWaiting {
 			addJobsToQueue(tx, stage, pb)
-			break;
+			break
 		}
 
 		if stage.Status == sdk.StatusBuilding {
@@ -107,7 +108,7 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 					pb.Status = sdk.StatusSuccess
 					break
 				}
-				if stageIndex != len(pb.Stages)-1{
+				if stageIndex != len(pb.Stages)-1 {
 					// Prepare scheduling next stage
 					pb.Stages[stageIndex+1].Status = sdk.StatusWaiting
 					continue
@@ -116,7 +117,7 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 		}
 	}
 
-	if err := pipeline.UpdatePipelineBuildStatusAndStage(tx, pb); err != nil {
+	if err := pipeline.UpdatePipelineBuildStatusAndStage(tx, &pb); err != nil {
 		log.Warning("RunActions> Cannot update UpdatePipelineBuildStatusAndStage on pb %d: %s\n", pb.ID, err)
 	}
 
@@ -130,45 +131,45 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 	}
 }
 
-func addJobsToQueue(tx database.QueryExecuter, stage *sdk.Stage, pb *sdk.PipelineBuild) error {
+func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb sdk.PipelineBuild) error {
 	//Check stage prerequisites
-	prerequisitesOK, err := pipeline.CheckPrerequisites(stage, pb)
+	prerequisitesOK, err := pipeline.CheckPrerequisites(*stage, pb)
 	if err != nil {
 		log.Warning("addJobsToQueue> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, err)
-		return
+		return err
 	}
 	stage.Status = sdk.StatusBuilding
 
 	for _, job := range stage.Jobs {
-		pbJobParams, errParam := getPipelineBuildJobParameters(tx, job.Action, pb)
+		pbJobParams, errParam := getPipelineBuildJobParameters(tx, job, pb)
 		if errParam != nil {
 			log.Warning("addJobsToQueue> Cannot get action build parameters for pipeline build %d: %s\n", pb.ID, err)
-			return
+			return errParam
 		}
-		pbJob := &sdk.PipelineBuildJob{
+		pbJob := sdk.PipelineBuildJob{
 			PipelineBuildID: pb.ID,
 			Parameters:      pbJobParams,
 			Job:             job,
 			Queued:          time.Now(),
-			Status:          sdk.StatusWaiting,
+			Status:          sdk.StatusWaiting.String(),
 		}
 
 		if !stage.Enabled {
-			pbJob.Status = sdk.StatusDisabled
+			pbJob.Status = sdk.StatusDisabled.String()
 		} else if !prerequisitesOK {
-			pbJob.Status = sdk.StatusSkipped
+			pbJob.Status = sdk.StatusSkipped.String()
 		}
-		if err := pipeline.InsertPipelineBuildJob(tx, pbJob); err != nil {
+		if err := pipeline.InsertPipelineBuildJob(tx, &pbJob); err != nil {
 			log.Warning("addJobToQueue> Cannot insert job in queue for pipeline build %d: %s\n", pb.ID, err)
-			return
+			return err
 		}
-		event.PublishActionBuild(&pb, pbJob)
+		event.PublishActionBuild(&pb, &pbJob)
 		stage.PipelineBuildJobs = append(stage.PipelineBuildJobs, pbJob)
 	}
 	return nil
 }
 
-func syncPipelineBuildJob(db database.QueryExecuter, stage *sdk.Stage) (bool, error) {
+func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	stageEnd := true
 	finalStatus := sdk.StatusBuilding
 
@@ -176,13 +177,13 @@ func syncPipelineBuildJob(db database.QueryExecuter, stage *sdk.Stage) (bool, er
 	for indexJob := range stage.PipelineBuildJobs {
 		pbJob := &stage.PipelineBuildJobs[indexJob]
 		// If job is runnning, sync it
-		if (pbJob.Status == sdk.StatusBuilding || pbJob.Status == sdk.StatusWaiting) {
+		if pbJob.Status == sdk.StatusBuilding.String() || pbJob.Status == sdk.StatusWaiting.String() {
 			pbJobDB, errJob := pipeline.GetPipelineBuildJob(db, pbJob.ID)
 			if errJob != nil {
-				return stageEnd, finalStatus, errJob
+				return stageEnd, errJob
 			}
 
-			if pbJobDB.Status == sdk.StatusBuilding || pbJobDB.Status == sdk.StatusWaiting {
+			if pbJobDB.Status == sdk.StatusBuilding.String() || pbJobDB.Status == sdk.StatusWaiting.String() {
 				stageEnd = false
 			}
 
@@ -202,17 +203,17 @@ func syncPipelineBuildJob(db database.QueryExecuter, stage *sdk.Stage) (bool, er
 		// Determine final stage status
 		for _, buildJob := range stage.PipelineBuildJobs {
 			switch buildJob.Status {
-			case sdk.StatusDisabled:
+			case sdk.StatusDisabled.String():
 				if finalStatus == sdk.StatusBuilding {
 					finalStatus = sdk.StatusDisabled
 				}
-			case sdk.StatusSkipped:
+			case sdk.StatusSkipped.String():
 				if finalStatus == sdk.StatusBuilding || finalStatus == sdk.StatusDisabled {
 					finalStatus = sdk.StatusSkipped
 				}
-			case sdk.StatusFail:
+			case sdk.StatusFail.String():
 				finalStatus = sdk.StatusFail
-			case sdk.StatusSuccess:
+			case sdk.StatusSuccess.String():
 				if finalStatus != sdk.StatusFail {
 					finalStatus = sdk.StatusSuccess
 				}
@@ -224,7 +225,7 @@ func syncPipelineBuildJob(db database.QueryExecuter, stage *sdk.Stage) (bool, er
 	return stageEnd, nil
 }
 
-func pipelineBuildEnd(tx *sql.Tx, pb sdk.PipelineBuild) {
+func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) {
 	// run trigger
 	triggers, err := trigger.LoadAutomaticTriggersAsSource(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if err != nil {
@@ -260,7 +261,7 @@ func pipelineBuildEnd(tx *sql.Tx, pb sdk.PipelineBuild) {
 
 		parameters := t.Parameters
 		// Add parent build info
-		parentParams, err := ParentBuildInfos(pb)
+		parentParams, err := ParentBuildInfos(&pb)
 		if err != nil {
 			log.Warning("pipelineBuildEnd> Cannot create parent build infos: %s\n", err)
 			continue
@@ -294,7 +295,7 @@ func pipelineBuildEnd(tx *sql.Tx, pb sdk.PipelineBuild) {
 }
 
 // ParentBuildInfos fetch parent build data and injects them as {{.cds.parent.*}} parameters
-func ParentBuildInfos(pb sdk.PipelineBuild) ([]sdk.Parameter, error) {
+func ParentBuildInfos(pb *sdk.PipelineBuild) ([]sdk.Parameter, error) {
 	var params []sdk.Parameter
 
 	p := sdk.Parameter{
@@ -328,7 +329,7 @@ func ParentBuildInfos(pb sdk.PipelineBuild) ([]sdk.Parameter, error) {
 	return params, nil
 }
 
-func getPipelineBuildJobParameters(db database.QueryExecuter, j sdk.Job, pb sdk.PipelineBuild) ([]sdk.Parameter, error) {
+func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb sdk.PipelineBuild) ([]sdk.Parameter, error) {
 
 	// Get project and pipeline Information
 	projectData, err := project.LoadProjectByPipelineActionID(db, j.PipelineActionID)

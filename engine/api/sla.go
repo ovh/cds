@@ -1,15 +1,15 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/context"
 )
 
-func slaHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func slaHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	date := vars["date"]
 

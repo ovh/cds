@@ -1,65 +1,283 @@
 package pipeline
 
 import (
+	"fmt"
+	"time"
+
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"encoding/json"
-	"github.com/lib/pq"
-	"database/sql"
+)
+
+var (
+	// ErrAlreadyTaken Action already taken by a worker
+	ErrAlreadyTaken = fmt.Errorf("cds: action already taken")
 )
 
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build
-func DeletePipelineBuildJob(db database.Executer, pipelineBuildID int64) error {
+func DeletePipelineBuildJob(db gorp.SqlExecutor, pipelineBuildID int64) error {
 	query := "DELETE FROM pipeline_build_job WHERE pipeline_build_id = $1"
 	_, err := db.Exec(query, pipelineBuildID)
 	return err
 }
 
 // InsertPipelineBuildJob Insert a new job in the queue
-func InsertPipelineBuildJob(db database.QueryExecuter, pbJob *sdk.PipelineBuildJob) error {
-	params, errparams := json.Marshal(pbJob.Parameters)
-	if errparams != nil {
-		return errparams
+func InsertPipelineBuildJob(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJob) error {
+	dbmodel := database.PipelineBuildJob(*pbJob)
+	if err := db.Insert(&dbmodel); err != nil {
+		return err
 	}
-	job, errjob := json.Marshal(pbJob.Job)
-	if errjob != nil {
-		return errjob
+	*pbJob = sdk.PipelineBuildJob(dbmodel)
+	return nil
+}
+
+// GetPipelineBuildJobByPipelineBuildID Get all pipeline build job for the given pipeline build
+func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, pbID int64) ([]sdk.PipelineBuildJob, error) {
+	var pbJobsGorp []database.PipelineBuildJob
+	query := `
+		SELECT *
+		FROM pipeline_build_job
+		WHERE pipeline_build_id = ?
+	`
+	if _, err := db.Select(&pbJobsGorp, query, pbID); err != nil {
+		return nil, err
 	}
-	query := `INSERT INTO pipeline_build_job
-		(pipeline_build_id, parameters, job, status, queued, )
-		VALUES ($1, p2, $3, $4, $5) RETURNING id`
-	return db.QueryRow(query, pbJob.PipelineBuildID, params, job, pbJob.Status, pbJob.Queued).Scan(&pbJob.ID)
+
+	var pbJobs []sdk.PipelineBuildJob
+	for i := range pbJobsGorp {
+		if err := pbJobsGorp[i].PostSelect(db); err != nil {
+			return nil, err
+		}
+		pbJobs = append(pbJobs, sdk.PipelineBuildJob(pbJobsGorp[i]))
+	}
+	return pbJobs, nil
 }
 
 // GetPipelineBuildJob Get pipeline build job
-func GetPipelineBuildJob(db database.QueryExecuter, id int64) (*sdk.PipelineBuildJob, error) {
-	query := `
-		SELECT id, job, parameters, status, queued, start, done, model, pipeline_build_id
+func GetPipelineBuildJob(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, error) {
+	var pbJobGorp database.PipelineBuildJob
+	if err := db.SelectOne(&pbJobGorp, `
+		SELECT *
 		FROM pipeline_build_job
-		WHERE id = $1
-	`
-	var pbJob sdk.PipelineBuildJob
-	var start, done pq.NullTime
-	var model sql.NullString
-	var job, params, status string
-	if err := db.QueryRow(query, id).Scan(&pbJob.ID, &job, &params, &status, &pbJob.Queued, &start, &done, &model, &pbJob.PipelineBuildID); err != nil {
+		WHERE id = ?
+	`, id); err != nil {
 		return nil, err
 	}
-	if start.Valid {
-		pbJob.Start = start.Time
+	var pbJob *sdk.PipelineBuildJob
+	*pbJob = sdk.PipelineBuildJob(pbJobGorp)
+	return pbJob, nil
+}
+
+// LoadWaitingQueue Load Waiting pipeline_build_job
+func LoadWaitingQueue(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, error) {
+	var pbJobsGorp []database.PipelineBuildJob
+	if _, err := db.Select(&pbJobsGorp, `
+		SELECT * FROM pipeline_build_job
+		WHERE status = ? ORDER BY pipeline_build_id ASC, pipeline_build_job.id ASC
+	`, sdk.StatusWaiting.String()); err != nil {
+		return nil, err
 	}
-	if done.Valid {
-		pbJob.Done = done.Time
+	var pbJobs []sdk.PipelineBuildJob
+	for _, j := range pbJobsGorp {
+		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
 	}
-	if model.Valid {
-		pbJob.Model = model.String
+	return pbJobs, nil
+}
+
+// LoadGroupWaitingQueue loads pipeline_build_job in queue accessbible to given group
+func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBuildJob, error) {
+	var pbJobsGorp []database.PipelineBuildJob
+	if _, err := db.Select(&pbJobsGorp, `
+		SELECT pipeline_build_job.* FROM pipeline_build_job
+		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
+		JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
+		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
+		WHERE pipeline_build_job.status = $1 AND
+		(
+			(
+				pipeline_group.group_id = $2
+				AND
+				pipeline_group.role > 4
+			)
+			OR $2 = (SELECT id FROM "group" WHERE name = $3)
+
+		)
+		 ORDER BY pipeline_build_job.pipeline_build_id ASC, pipeline_build_job.id ASC
+	`, sdk.StatusWaiting.String(), groupID, group.SharedInfraGroup); err != nil {
+		return nil, err
+	}
+	var pbJobs []sdk.PipelineBuildJob
+	for _, j := range pbJobsGorp {
+		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
+	}
+	return pbJobs, nil
+}
+
+// LoadUserWaitingQueue loads action build in queue where user has access
+func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuildJob, error) {
+	var pbJobsGorp []database.PipelineBuildJob
+
+	// If related user is admin, returns everything
+	if u.Admin {
+		return LoadWaitingQueue(db)
 	}
 
-	if err := json.Unmarshal([]byte(job), &pbJob.Job); err != nil {
+	// If user is in no group, don't bother
+	if len(u.Groups) == 0 {
+		log.Warning("LoadUserWaitingQueue> User %s is in no groups, let it go\n", u.Username)
+		return nil, nil
+	}
+
+	if _, err := db.Select(&pbJobsGorp, `
+		SELECT pipeline_build_job.* FROM pipeline_build_job
+		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
+		JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
+		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
+		JOIN group_user ON group_user.group_id = pipeline_group.group_id
+		WHERE pipeline_build_job.status = $1 AND group_user.user_id = $2
+		ORDER BY pipeline_build_job.pipeline_build_id ASC, pipeline_build_job.id ASC
+	`, sdk.StatusWaiting.String(), u.ID); err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(params), &pbJob.Parameters); err != nil {
+	var pbJobs []sdk.PipelineBuildJob
+	for _, j := range pbJobsGorp {
+		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
+	}
+	return pbJobs, nil
+}
+
+// TakeActionBuild Take an action build for update
+func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, worker *sdk.Worker) (*sdk.PipelineBuildJob, error) {
+	var pbJobGorp database.PipelineBuildJob
+	if err := db.SelectOne(&pbJobGorp, `
+		SELECT *
+		FROM pipeline_build_job
+		WHERE id = ? FOR UPDATE
+	`, pbJobID); err != nil {
 		return nil, err
 	}
-	return &pbJob, nil
+
+	if pbJobGorp.Status != sdk.StatusWaiting.String() {
+		return nil, ErrAlreadyTaken
+	}
+
+	pbJobGorp.Model = worker.Model
+	pbJobGorp.Status = sdk.StatusBuilding.String()
+	if _, err := db.Update(&pbJobGorp); err != nil {
+		log.Warning("Cannot update model on action_build : %s", err)
+		return nil, err
+	}
+	var pbJob *sdk.PipelineBuildJob
+	*pbJob = sdk.PipelineBuildJob(pbJobGorp)
+	return pbJob, nil
+}
+
+// UpdatePipelineBuildJob Update pipeline build job
+func UpdatePipelineBuildJob(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJob) error {
+	// Update pipeline build job
+	pbJobGorp := database.PipelineBuildJob(*pbJob)
+	_, errUpdate := db.Update(pbJobGorp)
+	return errUpdate
+}
+
+// UpdatePipelineBuildJobStatus Update status of an pipeline_build_job
+func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJob, status sdk.Status) error {
+	var query string
+	query = `SELECT status FROM pipeline_build_job WHERE id = $1 FOR UPDATE`
+	var currentStatus string
+	if err := db.QueryRow(query, pbJob.ID).Scan(&currentStatus); err != nil {
+		return err
+	}
+
+	var errExec error
+	switch status {
+	case sdk.StatusBuilding:
+		if currentStatus != sdk.StatusWaiting.String() {
+			return fmt.Errorf("Cannot update status of PipelineBuildJob %d to %s, expected current status %s, got %s",
+				pbJob.ID, status, sdk.StatusWaiting, currentStatus)
+		}
+		pbJob.Start = time.Now()
+		pbJob.Status = status.String()
+
+	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped:
+		if currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
+			log.Info("Status is %, cannot update %d to %s", currentStatus, pbJob.ID, status)
+			// too late, Nate
+			return nil
+		}
+		pbJob.Done = time.Now()
+		pbJob.Status = status.String()
+	default:
+		errExec = fmt.Errorf("Cannot update PipelineBuildJob %d to status %v", pbJob.ID, status.String())
+	}
+
+	if errExec != nil {
+		return errExec
+	}
+
+	if err := UpdatePipelineBuildJob(db, pbJob); err != nil {
+		return err
+	}
+
+	pb, errLoad := LoadPipelineBuildByID(db, pbJob.PipelineBuildID)
+	if errLoad != nil {
+		return errLoad
+	}
+
+	event.PublishActionBuild(pb, pbJob)
+
+	if status == sdk.StatusFail || status == sdk.StatusDisabled || status == sdk.StatusSkipped {
+		var log string
+		switch status {
+		case sdk.StatusFail:
+			log = fmt.Sprintf("Action finished with status: %s\n", status)
+		case sdk.StatusDisabled:
+			log = fmt.Sprintf("Action disabled\n")
+		case sdk.StatusSkipped:
+			log = fmt.Sprintf("Action skipped\n")
+		}
+		return InsertLog(db, pbJob.ID, "SYSTEM", log)
+	}
+	return nil
+}
+
+// RestartPipelineBuildJob destroy pipeline build job data and queue it up again
+func RestartPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64) error {
+	var plholder int64
+
+	// Select for update to prevent unwanted update
+	query := `SELECT id FROM pipeline_build_job WHERE id = $1 FOR UPDATE`
+	err := db.QueryRow(query, pbJobID).Scan(&plholder)
+	if err != nil {
+		return fmt.Errorf("RestartPipelineBuildJob> Cannot get pipeline build job %d: %s", pbJobID, err)
+	}
+
+	// Delete previous build logs
+	query = `DELETE FROM build_log WHERE action_build_id = $1`
+	_, err = db.Exec(query, pbJobID)
+	if err != nil {
+		return err
+	}
+
+	// Update status to Waiting
+	query = `UPDATE pipeline_build_job SET status = $1 WHERE id = $2`
+	res, err := db.Exec(query, sdk.StatusWaiting.String(), pbJobID)
+	if err != nil {
+		return err
+	}
+
+	aff, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if aff != 1 {
+		return fmt.Errorf("RestartPipelineBuildJob> could not restart ab %d: %d rows affected", pbJobID, aff)
+	}
+
+	return nil
 }

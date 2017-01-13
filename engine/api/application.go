@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,12 +8,12 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/notification"
@@ -26,9 +25,10 @@ import (
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+
 )
 
-func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
@@ -42,7 +42,7 @@ func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 	WriteJSON(w, r, applications, http.StatusOK)
 }
 
-func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -58,7 +58,7 @@ func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	WriteJSON(w, r, tree, http.StatusOK)
 }
 
-func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -107,7 +107,7 @@ func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request
 
 }
 
-func getApplicationDeployHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationDeployHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -124,29 +124,7 @@ func getApplicationDeployHistoryHandler(w http.ResponseWriter, r *http.Request, 
 
 }
 
-func getApplicationHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	applicationName := vars["permApplicationName"]
-
-	application, err := application.LoadApplicationByName(db, projectKey, applicationName)
-	if err != nil {
-		log.Warning("getApplicationHistoryHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
-		WriteError(w, r, sdk.ErrApplicationNotFound)
-		return
-	}
-
-	pbs, err := pipeline.LoadPipelineBuildHistoryByApplication(db, application.ID, 50)
-	if err != nil {
-		log.Warning("getApplicationHistoryHandler: Cannot load history: %s\n", err)
-		WriteError(w, r, sdk.ErrUnknownError)
-		return
-	}
-
-	WriteJSON(w, r, pbs, http.StatusOK)
-}
-
-func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
@@ -171,7 +149,7 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 
 }
 
-func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
@@ -262,7 +240,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 		if version == 0 {
 			var errBuilds error
-			pipelineBuilds, errBuilds = pipeline.GetAllLastBuildByApplication(db, app.ID, branchName)
+			pipelineBuilds, errBuilds = pipeline.GetAllLastBuildByApplication(db, app.ID, branchName, 0)
 			if errBuilds != nil {
 				log.Warning("getApplicationHandler: Cannot load app status: %s\n", errBuilds)
 				WriteError(w, r, errBuilds)
@@ -275,7 +253,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 				return
 			}
 			var errPipBuilds error
-			pipelineBuilds, errPipBuilds = pipeline.GetAllLastBuildByApplicationAndVersion(db, app.ID, branchName, version)
+			pipelineBuilds, errPipBuilds = pipeline.GetAllLastBuildByApplication(db, app.ID, branchName, version)
 			if errPipBuilds != nil {
 				log.Warning("getApplicationHandler: Cannot load app status by version: %s\n", errPipBuilds)
 				WriteError(w, r, errPipBuilds)
@@ -290,7 +268,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
-func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
@@ -329,7 +307,7 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *sql
 	WriteJSON(w, r, branches, http.StatusOK)
 }
 
-func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -403,7 +381,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	w.WriteHeader(http.StatusOK)
 }
 
-func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -450,7 +428,7 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	w.WriteHeader(http.StatusOK)
 }
 
-func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -518,7 +496,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(db database.QueryExecuter, project *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
+func cloneApplication(db gorp.SqlExecutor, project *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
 	newApp.Pipelines = appToClone.Pipelines
 	newApp.ApplicationGroups = appToClone.ApplicationGroups
 
@@ -593,7 +571,7 @@ func cloneApplication(db database.QueryExecuter, project *sdk.Project, newApp *s
 	return nil
 }
 
-func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]

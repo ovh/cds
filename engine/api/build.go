@@ -1,16 +1,15 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/context"
@@ -24,7 +23,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -78,7 +77,7 @@ func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db
 
 }
 
-func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -136,22 +135,13 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	}
 	defer tx.Rollback()
 
-	// Delete from pipeline_build
-	result, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
-	if err != nil {
-		log.Warning("deleteBuildHandler> %s ! Cannot load pipeline build to delete %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, projectKey, appName, pipelineName, env.Name, buildNumber, err)
-		WriteError(w, r, err)
-		return
-	}
-	err = pipeline.DeletePipelineBuild(tx, result.ID)
-	if err != nil {
-		log.Warning("deleteBuildHandler> Cannot delete pipeline build [%d]: %s\n", result.ID, err)
+	if err := pipeline.DeletePipelineBuild(tx, p.ID, a.ID, buildNumber, env.ID); err != nil {
+		log.Warning("deleteBuildHandler> Cannot delete pipeline build: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteBuildHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -160,7 +150,7 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	w.WriteHeader(http.StatusOK)
 }
 
-func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -206,10 +196,8 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 
 	// if buildNumber is 'last' fetch last build number
 	var buildNumber int64
-	var result sdk.PipelineBuild
-
 	if buildNumberS == "last" {
-		lastBuildNumber, _, err := pipeline.GetProbableLastBuildNumber(db, p.ID, a.ID, env.ID)
+		lastBuildNumber, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
 		if err != nil {
 			log.Warning("getBuildStateHandler> Cannot load last pipeline build for %s-%s-%s: %s\n", a.Name, pipelineName, env.Name, err)
 			w.WriteHeader(http.StatusNotFound)
@@ -225,60 +213,26 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		}
 	}
 
-	// load pipeline stage
-	stages, err := pipeline.LoadStages(db, p.ID)
-	if err != nil {
-		log.Warning("getBuildStateHandler> Cannot load pipeline stages: %s\n", err)
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
 	// load pipeline_build.id
-	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
+	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
 	if err != nil {
 		log.Warning("getBuildStateHandler> %s! Cannot load last pipeline build for %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, projectKey, appName, pipelineName, env.Name, buildNumber, err)
 		WriteError(w, r, err)
 		return
 	}
 
+	for index := range pb.Stages {
+		stage := &pb.Stages[index]
+		for indexPbJob := range stage.PipelineBuildJobs {
+			_ = &stage.PipelineBuildJobs[indexPbJob]
 
-		// load actions status for build
-		actionsBuilds, err := pipeline.LoadBuildByPipelineBuildID(db, pb.ID)
-		if err != nil {
-			log.Warning("getBuildStateHandler> Cannot load pipeline build action: %s\n", err)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-
-	for index := range actionsBuilds {
-		// attach log to actionsBuild
-		actionData := &actionsBuilds[index]
-
-		// attach actionBuild to stage
-		for indexStage := range stages {
-			stage := &stages[indexStage]
-			if stage.ID == actionData.PipelineStageID {
-				stage.ActionBuilds = append(stage.ActionBuilds, *actionData)
-			}
+			// TODO GET LOGS
 		}
 	}
 
-	result.Stages = stages
-	result.Status = pb.Status
-	result.Version = pb.Version
-	result.Done = pb.Done
-	result.Start = pb.Start
-	result.Trigger = pb.Trigger
-
-	result.Environment = *env
-	result.Application = *a
-	result.Pipeline = *p
-	result.BuildNumber = buildNumber
-
 	if withArtifacts == "true" {
 		var errLoadArtifact error
-		result.Artifacts, errLoadArtifact = artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
+		pb.Artifacts, errLoadArtifact = artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
 		if errLoadArtifact != nil {
 			log.Warning("getBuildStateHandler> Cannot load artifacts: %s", errLoadArtifact)
 			WriteError(w, r, errLoadArtifact)
@@ -287,45 +241,36 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	}
 
 	if withTests == "true" {
-		tests, errLoadTests := pipeline.LoadTestResults(db, result.ID)
+		tests, errLoadTests := pipeline.LoadTestResults(db, pb.ID)
 		if errLoadTests != nil {
 			log.Warning("getBuildStateHandler> Cannot load tests: %s", errLoadTests)
 			WriteError(w, r, errLoadTests)
 			return
 		}
 		if len(tests.TestSuites) > 0 {
-			result.Tests = &tests
+			pb.Tests = &tests
 		}
 	}
 
-	WriteJSON(w, r, result, http.StatusOK)
+	WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get action name in URL
 	vars := mux.Vars(r)
-	id := vars["id"]
+	idString := vars["id"]
 
-	/*
-		workerID, err := worker.FindBuildingWorker(db, id)
-		if err != nil {
-			log.Warning("addQueueResultHandler> Could not load worker building %s: %s\n", id, err)
-			WriteError(w, r, sdk.ErrForbidden)
-			return
-		}
-
-		if c.Worker.ID != workerID {
-			log.Warning("addQueueResultHandler> Worker %s is not supposed to be building %s\n", c.Worker.ID, id)
-			WriteError(w, r, sdk.ErrForbidden)
-			return
-		}
-	*/
+	id, errInt :=strconv.ParseInt(idString, 10, 64)
+	if errInt != nil {
+		WriteError(w, r, sdk.ErrInvalidID)
+		return
+	}
 
 	// Load Build
-	b, err := pipeline.LoadActionBuild(db, id)
-	if err != nil {
-		log.Warning("addQueueResultHandler> Cannot load queue from db: %s\n", err)
+	pbJob, errJob := pipeline.GetPipelineBuildJob(db, id)
+	if errJob != nil {
+		log.Warning("addQueueResultHandler> Cannot load queue from db: %s\n", errJob)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -364,7 +309,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 	// Update action status
 	log.Debug("Updating %s to %s in queue\n", id, res.Status)
-	err = pipeline.UpdateActionBuildStatus(tx, &b, res.Status)
+	err = pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, res.Status)
 	if err != nil {
 		log.Warning("addQueueResultHandler> Cannot update %s status: %s\n", id, err)
 		WriteError(w, r, err)
@@ -380,67 +325,76 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 }
 
-func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get action name in URL
 	vars := mux.Vars(r)
-	id := vars["id"]
+	idString := vars["id"]
 
 	// Load worker
 	caller, err := worker.LoadWorker(db, c.Worker.ID)
 	if err != nil {
 		log.Warning("takeActionBuildHandler> cannot load calling worker: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, err)
 		return
 	}
 	if caller.Status != sdk.StatusChecking {
 		log.Info("takeActionBuildHandler> worker %s is not available to for build (status = %s)\n", caller.ID, caller.Status)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	// update database
-	ab, err := pipeline.TakeActionBuild(db, id, caller)
-	if err != nil {
-		if err != pipeline.ErrAlreadyTaken {
-			log.Warning("takeActionBuildHandler> Cannot give ActionBuild %s: %s\n", id, err)
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Info("takeActionBuildHandler> Cannot start transaction: %s\n", errBegin)
+		WriteError(w, r, errBegin)
+		return
+	}
+	defer tx.Rollback()
+
+	// Take job
+	id, errInt := strconv.ParseInt(idString, 10, 64)
+	if errInt != nil {
+		WriteError(w, r, sdk.ErrInvalidID)
+		return
+	}
+	pbJob, errTake := pipeline.TakeActionBuild(tx, id, caller)
+	if errTake != nil {
+		if errTake != pipeline.ErrAlreadyTaken {
+			log.Warning("takeActionBuildHandler> Cannot give ActionBuild %s: %s\n", "github.com/go-gorp/gorp", err)
 		}
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, errTake)
 		return
 	}
 
-	// Update worker status to "building"
-	err = worker.SetToBuilding(db, c.Worker.ID, ab.ID)
-	if err != nil {
+	if err := worker.SetToBuilding(tx, c.Worker.ID, pbJob.ID); err != nil {
 		log.Warning("takeActionBuildHandler> Cannot update worker status: %s\n", err)
-		// We want the worker to run the task anyway now
-	}
-
-	log.Debug("Updated %s (PipelineAction %d) to %s\n", id, ab.PipelineActionID, sdk.StatusBuilding)
-
-	// load action and return it to worker
-	a, err := action.LoadActionByPipelineActionID(db, ab.PipelineActionID)
-	if err != nil {
-		log.Warning("takeActionBuildHandler> Cannot load action from  PipelineActionID %d: %s\n", ab.PipelineActionID, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
-	secrets, err := loadActionBuildSecrets(db, ab.ID)
+	log.Debug("Updated %s (PipelineAction %d) to %s\n", id, pbJob.Job.PipelineActionID, sdk.StatusBuilding)
+
+	secrets, err := loadActionBuildSecrets(db, pbJob.Job.Action.ID)
 	if err != nil {
 		log.Warning("takeActionBuildHandler> Cannot load action build secrets: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	abi := worker.ActionBuildInfo{}
-	abi.ActionBuild = ab
-	abi.Action = *a
-	abi.Secrets = secrets
-	WriteJSON(w, r, abi, http.StatusOK)
+	if err := tx.Commit(); err != nil {
+		log.Info("takeActionBuildHandler> Cannot commit transaction: %s\n", err)
+		WriteError(w, r, errBegin)
+		return
+	}
+
+	pbji := worker.PipelineBuildJobInfo{}
+	pbji.PipelineBuildJob = *pbJob
+	pbji.Secrets = secrets
+	WriteJSON(w, r, pbji, http.StatusOK)
 }
 
-func loadActionBuildSecrets(db *sql.DB, abID int64) ([]sdk.Variable, error) {
+func loadActionBuildSecrets(db *gorp.DbMap, abID int64) ([]sdk.Variable, error) {
 
 	query := `SELECT pipeline.project_id, pipeline_build.application_id, pipeline_build.environment_id
 	FROM pipeline_build JOIN action_build ON action_build.pipeline_build_id = pipeline_build.id
@@ -508,8 +462,7 @@ func loadActionBuildSecrets(db *sql.DB, abID int64) ([]sdk.Variable, error) {
 	return secrets, nil
 }
 
-func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	// TODO pipelinebuild
+func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	if c.Worker.ID != "" {
 		// Load calling worker
 		caller, errW := worker.LoadWorker(db, c.Worker.ID)
@@ -525,7 +478,7 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 		}
 	}
 
-	var queue []sdk.ActionBuild
+	var queue []sdk.PipelineBuildJob
 	var errQ error
 	switch c.Agent {
 	case sdk.HatcheryAgent, sdk.WorkerAgent:
@@ -541,15 +494,15 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	}
 
 	if log.IsDebug() {
-		for _, a := range queue {
-			log.Debug("getQueueHandler> ActionBuild : %d %s [%s]", a.ID, a.ActionName, a.Status)
+		for _, pbJob := range queue {
+			log.Debug("getQueueHandler> PipelineBuildJob : %d %s [%s]", pbJob.ID, pbJob.Job.Action.Name, pbJob.Status)
 		}
 	}
 
 	WriteJSON(w, r, queue, http.StatusOK)
 }
 
-func requirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func requirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("requirementsErrorHandler> %s\n", err)
@@ -570,7 +523,7 @@ func requirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	}
 }
 
-func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -624,7 +577,7 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	}
 
 	// load pipeline_build.id
-	pb, errPB := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
+	pbID, errPB := pipeline.LoadPipelineBuildID(db, a.ID, p.ID, env.ID, buildNumber)
 	if errPB != nil {
 		log.Warning("addBuildVariableHandler> Cannot load pipeline build %d: %s\n", buildNumber, errPB)
 		WriteError(w, r, errPB)
@@ -647,14 +600,28 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 		return
 	}
 
-	if err := pipeline.InsertBuildVariable(db, pb.ID, v); err != nil {
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("addBuildVariableHandler> Cannot start transaction: %s\n", errBegin)
+		WriteError(w, r, errBegin)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := pipeline.InsertBuildVariable(tx, pbID, v); err != nil {
 		log.Warning("addBuildVariableHandler> Cannot add build variable: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("addBuildVariableHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 }
 
-func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -699,27 +666,15 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 		return
 	}
 
-	// if buildNumber is 'last' fetch last build number
-	var buildNumber int64
-	if buildNumberS == "last" {
-		bn, _, err := pipeline.GetProbableLastBuildNumber(db, p.ID, a.ID, env.ID)
-		if err != nil {
-			log.Warning("addBuildTestResultsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
-			WriteError(w, r, sdk.ErrNoPipelineBuild)
-			return
-		}
-		buildNumber = bn
-	} else {
-		buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
-		if err != nil {
-			log.Warning("addBuildTestResultsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
-			WriteError(w, r, err)
-			return
-		}
+	buildNumber, err := strconv.ParseInt(buildNumberS, 10, 64)
+	if err != nil {
+		log.Warning("addBuildTestResultsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
+		WriteError(w, r, err)
+		return
 	}
 
 	// load pipeline_build.id
-	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
+	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
 	if err != nil {
 		log.Warning("addBuiltTestResultsHandler> Cannot loadpipelinebuild for %s/%s[%s] %d: %s\n", a.Name, p.Name, envName, buildNumber, err)
 		WriteError(w, r, err)
@@ -785,7 +740,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	stats.TestEvent(db, p.ProjectID, a.ID, tests)
 }
 
-func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -834,7 +789,7 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	// if buildNumber is 'last' fetch last build number
 	var buildNumber int64
 	if buildNumberS == "last" {
-		bn, _, err := pipeline.GetProbableLastBuildNumber(db, p.ID, a.ID, env.ID)
+		bn, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
 		if err != nil {
 			log.Warning("getBuildTestResultsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
 			WriteError(w, r, sdk.ErrNoPipelineBuild)
@@ -851,7 +806,7 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	}
 
 	// load pipeline_build.id
-	pb, err := pipeline.LoadPipelineBuild(db, p.ID, a.ID, buildNumber, env.ID)
+	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
 	if err != nil {
 		log.Warning("getBuildTestResultsHandler> Cannot load pipeline build: %s\n", err)
 		WriteError(w, r, err)

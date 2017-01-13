@@ -8,14 +8,16 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/spf13/viper"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/spf13/viper"
+
 )
 
 //ReceivedHook is a temporary struct to manage received hook
@@ -35,7 +37,7 @@ type ReceivedHook struct {
 const HookLink = "/hook?uid=%s&project=%s&name=%s&branch=${refChange.name}&hash=${refChange.toHash}&message=${refChange.type}&author=${user.name}"
 
 // InsertReceivedHook insert raw data received from public handler in database
-func InsertReceivedHook(db *sql.DB, link string, data string) error {
+func InsertReceivedHook(db gorp.SqlExecutor, link string, data string) error {
 	query := `INSERT INTO received_hook (link, data) VALUES ($1, $2)`
 
 	_, err := db.Exec(query, link, data)
@@ -47,7 +49,7 @@ func InsertReceivedHook(db *sql.DB, link string, data string) error {
 }
 
 // UpdateHook update the given hook
-func UpdateHook(db *sql.DB, h sdk.Hook) error {
+func UpdateHook(db gorp.SqlExecutor, h sdk.Hook) error {
 	query := `UPDATE hook set pipeline_id=$1, kind=$2, host=$3, project=$4, repository=$5, application_id=$6, enabled=$7 WHERE id=$8`
 
 	res, err := db.Exec(query, h.Pipeline.ID, h.Kind, h.Host, h.Project, h.Repository, h.ApplicationID, h.Enabled, h.ID)
@@ -65,7 +67,7 @@ func UpdateHook(db *sql.DB, h sdk.Hook) error {
 }
 
 // InsertHook add link between git repository and pipeline in database
-func InsertHook(db database.QueryExecuter, h *sdk.Hook) error {
+func InsertHook(db gorp.SqlExecutor, h *sdk.Hook) error {
 	query := `INSERT INTO hook (pipeline_id, kind, host, project, repository, application_id,enabled, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 
 	// Generate UID
@@ -84,7 +86,7 @@ func InsertHook(db database.QueryExecuter, h *sdk.Hook) error {
 }
 
 // LoadHook loads a single hook
-func LoadHook(db *sql.DB, id int64) (sdk.Hook, error) {
+func LoadHook(db gorp.SqlExecutor, id int64) (sdk.Hook, error) {
 	h := sdk.Hook{ID: id}
 	query := `SELECT application_id, pipeline_id, kind, host, project, repository FROM hook WHERE id = $1`
 
@@ -97,7 +99,7 @@ func LoadHook(db *sql.DB, id int64) (sdk.Hook, error) {
 }
 
 //FindHook loads a hook from its attributes
-func FindHook(db database.Querier, applicationID, pipelineID int64, kind, host, project, repository string) (sdk.Hook, error) {
+func FindHook(db gorp.SqlExecutor, applicationID, pipelineID int64, kind, host, project, repository string) (sdk.Hook, error) {
 	h := sdk.Hook{}
 	query := `SELECT 	id, application_id, pipeline_id, kind, host, project, repository, uid
 						FROM 		hook
@@ -116,7 +118,7 @@ func FindHook(db database.Querier, applicationID, pipelineID int64, kind, host, 
 }
 
 // DeleteHook removes hook from database
-func DeleteHook(db database.QueryExecuter, id int64) error {
+func DeleteHook(db gorp.SqlExecutor, id int64) error {
 	query := `DELETE FROM hook WHERE id = $1`
 
 	res, err := db.Exec(query, id)
@@ -135,7 +137,7 @@ func DeleteHook(db database.QueryExecuter, id int64) error {
 }
 
 // LoadApplicationHooks will load all hooks related to given application
-func LoadApplicationHooks(db database.Querier, applicationID int64) ([]sdk.Hook, error) {
+func LoadApplicationHooks(db gorp.SqlExecutor, applicationID int64) ([]sdk.Hook, error) {
 	hooks := []sdk.Hook{}
 	query := `SELECT hook.id, hook.kind, hook.host, hook.project, hook.repository, hook.enabled, hook.uid, pipeline.id, pipeline.name
 		  FROM hook
@@ -165,7 +167,7 @@ func LoadApplicationHooks(db database.Querier, applicationID int64) ([]sdk.Hook,
 }
 
 // LoadPipelineHooks will load all hooks related to given pipeline
-func LoadPipelineHooks(db *sql.DB, pipelineID int64, applicationID int64) ([]sdk.Hook, error) {
+func LoadPipelineHooks(db gorp.SqlExecutor, pipelineID int64, applicationID int64) ([]sdk.Hook, error) {
 	query := `SELECT id, kind, host, project, repository, uid FROM hook WHERE pipeline_id = $1 AND application_id= $2`
 
 	rows, err := db.Query(query, pipelineID, applicationID)
@@ -190,7 +192,7 @@ func LoadPipelineHooks(db *sql.DB, pipelineID int64, applicationID int64) ([]sdk
 }
 
 // LoadHooks related to given repository
-func LoadHooks(db *sql.DB, project string, repository string) ([]sdk.Hook, error) {
+func LoadHooks(db gorp.SqlExecutor, project string, repository string) ([]sdk.Hook, error) {
 	query := `SELECT id, pipeline_id, application_id, kind, host, enabled, uid FROM hook WHERE project = $1 AND repository = $2`
 
 	rows, err := db.Query(query, project, repository)
@@ -231,7 +233,7 @@ func generateHash() (string, error) {
 
 // DeleteBranchBuilds deletes all builds related to given branch in given applications
 // in pipeline_build and pipeline_history
-func DeleteBranchBuilds(db *sql.DB, hooks []sdk.Hook, branch string) error {
+func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) error {
 
 	for i := range hooks {
 		err := deleteBranchBuilds(db, hooks[i].ApplicationID, branch)
@@ -242,7 +244,7 @@ func DeleteBranchBuilds(db *sql.DB, hooks []sdk.Hook, branch string) error {
 	return nil
 }
 
-func deleteBranchBuilds(db *sql.DB, appID int64, branch string) error {
+func deleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
 	var artIDs []int64
 
 	// Remove artifact and builds from history
@@ -313,13 +315,11 @@ func deleteBranchBuilds(db *sql.DB, appID int64, branch string) error {
 
 	for rows.Next() {
 		var id int64
-		err = rows.Scan(&id)
-		if err != nil {
+		if err := rows.Scan(&id); err != nil {
 			return err
 		}
 
-		err = pipeline.DeletePipelineBuild(db, id)
-		if err != nil {
+		if err := pipeline.DeletePipelineBuildByID(db, id); err != nil {
 			log.Warning("deleteBranchBuilds> Cannot delete PipelineBuild %d: %s\n", id, err)
 		}
 	}
@@ -329,7 +329,7 @@ func deleteBranchBuilds(db *sql.DB, appID int64, branch string) error {
 }
 
 // CreateHook in CDS db + repo manager webhook
-func CreateHook(tx database.QueryExecuter, projectKey string, rm *sdk.RepositoriesManager, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
+func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
 	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name)
 	if err != nil {
 		log.Warning("addHookOnRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rm.Name, err)

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
@@ -37,7 +39,7 @@ func ModelCapabilititiesCacheLoader(delay time.Duration) {
 }
 
 //GetModelCapabilities load model capabilities from cache
-func GetModelCapabilities(db database.Querier, modelID int64) ([]sdk.Requirement, error) {
+func GetModelCapabilities(db gorp.SqlExecutor, modelID int64) ([]sdk.Requirement, error) {
 	modelKey := cache.Key("worker", "modelcapabilitites", fmt.Sprintf("%d", modelID))
 	req := []sdk.Requirement{}
 	//if we didn't got any data, try to load from DB

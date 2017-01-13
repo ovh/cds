@@ -1,11 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -90,7 +90,7 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	WriteJSON(w, r, pipelineData, http.StatusCreated)
 }
 
-func getStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -120,7 +120,7 @@ func getStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	WriteJSON(w, r, s, http.StatusOK)
 }
 
-func moveStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func moveStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -192,7 +192,7 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
-func updateStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -283,7 +283,7 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
-func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)

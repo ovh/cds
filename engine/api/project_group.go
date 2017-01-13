@@ -1,11 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func deleteGroupFromProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteGroupFromProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -75,7 +75,7 @@ func deleteGroupFromProjectHandler(w http.ResponseWriter, r *http.Request, db *s
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -177,7 +177,7 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 }
 
 // Deprecated
-func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -263,7 +263,7 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 }
 
-func addGroupInProject(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)

@@ -6,9 +6,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+
 )
 
 // InsertTriggerParameter insert given parameter in database
@@ -23,7 +26,7 @@ func InsertTriggerParameter(db database.Executer, triggerID int64, p sdk.Paramet
 }
 
 // InsertTrigger adds a new trigger in database
-func InsertTrigger(tx database.QueryExecuter, t *sdk.PipelineTrigger) error {
+func InsertTrigger(tx gorp.SqlExecutor, t *sdk.PipelineTrigger) error {
 	query := `INSERT INTO pipeline_trigger (src_application_id, src_pipeline_id, src_environment_id,
 	dest_application_id, dest_pipeline_id, dest_environment_id, manual) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 
@@ -80,7 +83,7 @@ type parent struct {
 	EnvID int64
 }
 
-func isTriggerLoopFree(tx database.Querier, t *sdk.PipelineTrigger, parents []parent) error {
+func isTriggerLoopFree(tx gorp.SqlExecutor, t *sdk.PipelineTrigger, parents []parent) error {
 
 	// First, check yourself
 	for _, p := range parents {
@@ -126,7 +129,7 @@ func InsertTriggerPrerequisite(db database.Executer, triggerID int64, paramName,
 }
 
 // UpdateTrigger update trigger data
-func UpdateTrigger(db database.QueryExecuter, t sdk.PipelineTrigger) error {
+func UpdateTrigger(db gorp.SqlExecutor, t sdk.PipelineTrigger) error {
 
 	var srcEnvID sql.NullInt64
 	if t.SrcEnvironment.ID != 0 {
@@ -184,7 +187,7 @@ func UpdateTrigger(db database.QueryExecuter, t sdk.PipelineTrigger) error {
 }
 
 // LoadTriggersAsSource will only retrieves from database triggers where given pipeline is the source
-func LoadTriggersAsSource(db database.Querier, appID, pipelineID, envID int64) ([]sdk.PipelineTrigger, error) {
+func LoadTriggersAsSource(db gorp.SqlExecutor, appID, pipelineID, envID int64) ([]sdk.PipelineTrigger, error) {
 	query := `
 	SELECT pipeline_trigger.id,
 	src_application_id, src_app.name,
@@ -249,8 +252,8 @@ func LoadTriggersAsSource(db database.Querier, appID, pipelineID, envID int64) (
 }
 
 // LoadAutomaticTriggersAsSource will only retrieves from database triggers where given pipeline is the source
-//func LoadAutomaticTriggersAsSource(db database.Querier, appID, pipelineID, envID int64, mods ...mod) ([]sdk.PipelineTrigger, error) {
-func LoadAutomaticTriggersAsSource(db database.Querier, appID, pipelineID, envID int64) ([]sdk.PipelineTrigger, error) {
+//func LoadAutomaticTriggersAsSource(db gorp.SqlExecutor, appID, pipelineID, envID int64, mods ...mod) ([]sdk.PipelineTrigger, error) {
+func LoadAutomaticTriggersAsSource(db gorp.SqlExecutor, appID, pipelineID, envID int64) ([]sdk.PipelineTrigger, error) {
 	query := `
 	SELECT pipeline_trigger.id,
 	src_application_id, src_app.name,
@@ -315,7 +318,7 @@ func LoadAutomaticTriggersAsSource(db database.Querier, appID, pipelineID, envID
 }
 
 // LoadTriggersByAppAndPipeline Load triggers for the given app and pipeline
-func LoadTriggersByAppAndPipeline(db database.Querier, appID int64, pipID int64) ([]sdk.PipelineTrigger, error) {
+func LoadTriggersByAppAndPipeline(db gorp.SqlExecutor, appID int64, pipID int64) ([]sdk.PipelineTrigger, error) {
 	query := `
 	SELECT pipeline_trigger.id,
 	src_application_id, src_app.name,
@@ -369,7 +372,7 @@ func LoadTriggersByAppAndPipeline(db database.Querier, appID int64, pipID int64)
 }
 
 // LoadTriggerByApp Load trigger where given app is source
-func LoadTriggerByApp(db database.Querier, appID int64) ([]sdk.PipelineTrigger, error) {
+func LoadTriggerByApp(db gorp.SqlExecutor, appID int64) ([]sdk.PipelineTrigger, error) {
 	query := `
 	SELECT pipeline_trigger.id,
 	src_application_id, src_app.name,
@@ -423,7 +426,7 @@ func LoadTriggerByApp(db database.Querier, appID int64) ([]sdk.PipelineTrigger, 
 }
 
 // LoadTrigger load the given trigger
-func LoadTrigger(db *sql.DB, triggerID int64) (*sdk.PipelineTrigger, error) {
+func LoadTrigger(db gorp.SqlExecutor, triggerID int64) (*sdk.PipelineTrigger, error) {
 	query := `
 	SELECT pipeline_trigger.id,
 	src_application_id, src_app.name,
@@ -463,8 +466,8 @@ func LoadTrigger(db *sql.DB, triggerID int64) (*sdk.PipelineTrigger, error) {
 }
 
 // LoadTriggers loads all triggers from database where given pipeline-env tuple is either triggering or triggered
-//func LoadTriggers(db *sql.DB, appID, pipelineID, envID int64, mods ...mod) ([]sdk.PipelineTrigger, error) {
-func LoadTriggers(db *sql.DB, appID, pipelineID, envID int64) ([]sdk.PipelineTrigger, error) {
+//func LoadTriggers(db gorp.SqlExecutor, appID, pipelineID, envID int64, mods ...mod) ([]sdk.PipelineTrigger, error) {
+func LoadTriggers(db gorp.SqlExecutor, appID, pipelineID, envID int64) ([]sdk.PipelineTrigger, error) {
 	query := `
 	SELECT pipeline_trigger.id,
 	src_application_id, src_app.name,
@@ -516,7 +519,7 @@ func LoadTriggers(db *sql.DB, appID, pipelineID, envID int64) ([]sdk.PipelineTri
 	return triggers, nil
 }
 
-func loadTrigger(db database.Querier, s database.Scanner, subqueries bool) (sdk.PipelineTrigger, error) {
+func loadTrigger(db gorp.SqlExecutor, s database.Scanner, subqueries bool) (sdk.PipelineTrigger, error) {
 	var t sdk.PipelineTrigger
 	var srcEnvName, destEnvName sql.NullString
 	var srcEnvID, destEnvID sql.NullInt64
@@ -574,7 +577,7 @@ func loadTrigger(db database.Querier, s database.Scanner, subqueries bool) (sdk.
 	return t, nil
 }
 
-func loadTriggerPrerequisites(db database.Querier, triggerID int64) ([]sdk.Prerequisite, error) {
+func loadTriggerPrerequisites(db gorp.SqlExecutor, triggerID int64) ([]sdk.Prerequisite, error) {
 	query := `SELECT parameter, expected_value FROM pipeline_trigger_prerequisite WHERE pipeline_trigger_id = $1`
 
 	rows, err := db.Query(query, triggerID)
@@ -596,7 +599,7 @@ func loadTriggerPrerequisites(db database.Querier, triggerID int64) ([]sdk.Prere
 	return prereq, nil
 }
 
-func loadTriggerParameters(db database.Querier, triggerID int64) ([]sdk.Parameter, error) {
+func loadTriggerParameters(db gorp.SqlExecutor, triggerID int64) ([]sdk.Parameter, error) {
 	query := `SELECT name, type, value, description FROM pipeline_trigger_parameter WHERE pipeline_trigger_id = $1`
 
 	rows, err := db.Query(query, triggerID)
@@ -623,7 +626,7 @@ func loadTriggerParameters(db database.Querier, triggerID int64) ([]sdk.Paramete
 }
 
 // DeleteApplicationPipelineTriggers removes from database all triggers linked to a pipeline in a specific app
-func DeleteApplicationPipelineTriggers(db database.Executer, proj, app, pip string) error {
+func DeleteApplicationPipelineTriggers(db gorp.SqlExecutor, proj, app, pip string) error {
 	// Delete parameters
 	query := `DELETE FROM pipeline_trigger_parameter WHERE pipeline_trigger_id IN (
 			SELECT pipeline_trigger.id FROM pipeline_trigger
@@ -679,7 +682,7 @@ func DeleteApplicationPipelineTriggers(db database.Executer, proj, app, pip stri
 }
 
 // DeletePipelineTriggers removes from database all triggers where given pipeline is present
-func DeletePipelineTriggers(db database.Executer, pipelineID int64) error {
+func DeletePipelineTriggers(db gorp.SqlExecutor, pipelineID int64) error {
 
 	// Delete parameters
 	query := `DELETE FROM pipeline_trigger_parameter WHERE pipeline_trigger_id IN (
@@ -710,7 +713,7 @@ func DeletePipelineTriggers(db database.Executer, pipelineID int64) error {
 }
 
 // DeleteApplicationTriggers removes from database all triggers where given application is present
-func DeleteApplicationTriggers(db database.Executer, appID int64) error {
+func DeleteApplicationTriggers(db gorp.SqlExecutor, appID int64) error {
 
 	// Delete parameters
 	query := `DELETE FROM pipeline_trigger_parameter WHERE pipeline_trigger_id IN (
@@ -873,7 +876,7 @@ func CheckPrerequisites(t sdk.PipelineTrigger, pb sdk.PipelineBuild) (bool, erro
 }
 
 //Exists checks if trigger exists
-func Exists(db database.Querier, applicationSource, pipelineSource, EnvSource, applicationDest, pipelineDest, EnvDest int64) (bool, error) {
+func Exists(db gorp.SqlExecutor, applicationSource, pipelineSource, EnvSource, applicationDest, pipelineDest, EnvDest int64) (bool, error) {
 	query := `SELECT COUNT(1) FROM pipeline_trigger
 			  WHERE src_application_id = $1
 			  AND src_pipeline_id = $2

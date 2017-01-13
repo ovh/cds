@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
@@ -47,7 +47,7 @@ func WithApplications(historylength int) Mod {
 }
 
 // LoadProjectByGroup loads all projects where group has access
-func LoadProjectByGroup(db database.Querier, group *sdk.Group) error {
+func LoadProjectByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `
 		SELECT project.projectKey, project.name, project.last_modified, project_group.role
 		FROM project
@@ -82,7 +82,7 @@ func LoadProjectByGroup(db database.Querier, group *sdk.Group) error {
 }
 
 // LoadProjectByPipelineActionID load project and pipeline by pipeline_action_id
-func LoadProjectByPipelineActionID(db database.Querier, pipelineActionID int64) (sdk.Project, error) {
+func LoadProjectByPipelineActionID(db gorp.SqlExecutor, pipelineActionID int64) (sdk.Project, error) {
 	query := `SELECT project.id, project.projectKey, project.last_modified
 		  FROM pipeline_action
 		  JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
@@ -96,7 +96,7 @@ func LoadProjectByPipelineActionID(db database.Querier, pipelineActionID int64) 
 	return proj, err
 }
 
-func loadprojectwithvariablesandapps(db database.Querier, key string, user *sdk.User) (*sdk.Project, error) {
+func loadprojectwithvariablesandapps(db gorp.SqlExecutor, key string, user *sdk.User) (*sdk.Project, error) {
 	query := `
 	WITH load_apps AS (%s), load_vars AS (%s)
 	SELECT *
@@ -198,7 +198,7 @@ const loadProjectWithVariablesQuery = `
 	WHERE project.projectkey = $1
 `
 
-func loadprojectwithvariables(db database.Querier, key string) (*sdk.Project, error) {
+func loadprojectwithvariables(db gorp.SqlExecutor, key string) (*sdk.Project, error) {
 	query := loadProjectWithVariablesQuery
 
 	rows, err := db.Query(query, key)
@@ -240,7 +240,7 @@ func loadprojectwithvariables(db database.Querier, key string) (*sdk.Project, er
 	return p, nil
 }
 
-func loadproject(db database.Querier, key string) (*sdk.Project, error) {
+func loadproject(db gorp.SqlExecutor, key string) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.last_modified FROM project WHERE project.projectKey = $1`
 	var name string
 	var id int64
@@ -262,7 +262,7 @@ func loadproject(db database.Querier, key string) (*sdk.Project, error) {
 }
 
 // LoadProject loads an project from database
-func LoadProject(db database.Querier, key string, user *sdk.User, mods ...Mod) (*sdk.Project, error) {
+func LoadProject(db gorp.SqlExecutor, key string, user *sdk.User, mods ...Mod) (*sdk.Project, error) {
 	var c funcpar
 	for _, f := range mods {
 		f(&c)
@@ -297,7 +297,7 @@ func LoadProject(db database.Querier, key string, user *sdk.User, mods ...Mod) (
 }
 
 // LoadProjectByPipelineID loads an project from pipeline iD
-func LoadProjectByPipelineID(db database.Querier, pipelineID int64) (*sdk.Project, error) {
+func LoadProjectByPipelineID(db gorp.SqlExecutor, pipelineID int64) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
 	          FROM project
 	          JOIN pipeline ON pipeline.project_id = projecT.id
@@ -316,7 +316,7 @@ func LoadProjectByPipelineID(db database.Querier, pipelineID int64) (*sdk.Projec
 }
 
 // Exist checks whether a project exists or not
-func Exist(db database.Querier, projectKey string) (bool, error) {
+func Exist(db gorp.SqlExecutor, projectKey string) (bool, error) {
 	query := `SELECT COUNT(id) FROM project WHERE project.projectKey = $1`
 
 	var nb int64
@@ -331,7 +331,7 @@ func Exist(db database.Querier, projectKey string) (bool, error) {
 }
 
 // LoadAllProjects load all projects from database
-func LoadAllProjects(db database.Querier) ([]*sdk.Project, error) {
+func LoadAllProjects(db gorp.SqlExecutor) ([]*sdk.Project, error) {
 	projects := []*sdk.Project{}
 
 	var query string
@@ -363,7 +363,7 @@ func LoadAllProjects(db database.Querier) ([]*sdk.Project, error) {
 }
 
 // LoadProjects load all projects from database
-func LoadProjects(db database.Querier, user *sdk.User) ([]*sdk.Project, error) {
+func LoadProjects(db gorp.SqlExecutor, user *sdk.User) ([]*sdk.Project, error) {
 	if user.Admin {
 		return LoadAllProjects(db)
 	}
@@ -398,7 +398,7 @@ func LoadProjects(db database.Querier, user *sdk.User) ([]*sdk.Project, error) {
 }
 
 // InsertProject insert given project into given database
-func InsertProject(db database.QueryExecuter, p *sdk.Project) error {
+func InsertProject(db gorp.SqlExecutor, p *sdk.Project) error {
 	if p.Name == "" {
 		return sdk.ErrInvalidName
 	}
@@ -408,7 +408,7 @@ func InsertProject(db database.QueryExecuter, p *sdk.Project) error {
 }
 
 // UpdateProjectDB set new project name in database
-func UpdateProjectDB(db database.Querier, projectKey, projectName string) (time.Time, error) {
+func UpdateProjectDB(db gorp.SqlExecutor, projectKey, projectName string) (time.Time, error) {
 	var lastModified time.Time
 	query := `UPDATE project SET name=$1, last_modified=current_timestamp WHERE projectKey=$2 RETURNING last_modified`
 	err := db.QueryRow(query, projectName, projectKey).Scan(&lastModified)
@@ -417,7 +417,7 @@ func UpdateProjectDB(db database.Querier, projectKey, projectName string) (time.
 
 // DeleteProject removes given project from database (project and project_group table)
 // DeleteProject also removes all pipelines inside project (pipeline and pipeline_group table).
-func DeleteProject(db database.QueryExecuter, key string) error {
+func DeleteProject(db gorp.SqlExecutor, key string) error {
 	var projectID int64
 	query := `SELECT id FROM project WHERE projectKey = $1`
 	err := db.QueryRow(query, key).Scan(&projectID)
@@ -456,7 +456,7 @@ func DeleteProject(db database.QueryExecuter, key string) error {
 }
 
 //LastUpdates returns projects and application last update
-func LastUpdates(db database.Querier, user *sdk.User, since time.Time) ([]sdk.ProjectLastUpdates, error) {
+func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.ProjectLastUpdates, error) {
 	query := `
 		SELECT 	project.projectkey, project.last_modified, apps.name, apps.last_modified, pipelines.name, pipelines.last_modified
 		FROM 	project
@@ -637,7 +637,7 @@ func LastUpdates(db database.Querier, user *sdk.User, since time.Time) ([]sdk.Pr
 }
 
 // AddKeyPairToProject generate a ssh key pair and add them as project variables
-func AddKeyPairToProject(db database.QueryExecuter, proj *sdk.Project, keyname string) error {
+func AddKeyPairToProject(db gorp.SqlExecutor, proj *sdk.Project, keyname string) error {
 
 	pub, priv, errGenerate := keys.Generatekeypair(keyname)
 	if errGenerate != nil {

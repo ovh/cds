@@ -166,7 +166,7 @@ func DeleteWorkerModel(db gorp.SqlExecutor, ID int64) error {
 }
 
 // LoadWorkerModelCapabilities retrieves capabilities of given worker model
-func LoadWorkerModelCapabilities(db database.Querier, workerID int64) ([]sdk.Requirement, error) {
+func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Requirement, error) {
 	defer logTime("LoadWorkerModelCapabilities", time.Now())
 	query := `SELECT name, type, argument FROM worker_capability WHERE worker_model_id = $1 ORDER BY name`
 
@@ -233,10 +233,10 @@ func UpdateWorkerModelCapability(db database.Executer, capa sdk.Requirement, mod
 	return nil
 }
 
-func modelCanRun(db *sql.DB, name string, req []sdk.Requirement, capa []sdk.Requirement) bool {
+func modelCanRun(db *gorp.DbMap, name string, req []sdk.Requirement, capa []sdk.Requirement) bool {
 	defer logTime("compareRequirements", time.Now())
 
-	m, err := LoadWorkerModelByName(database.DBMap(db), name)
+	m, err := LoadWorkerModelByName(db, name)
 	if err != nil {
 		log.Warning("modelCanRun> Unable to load model %s", name)
 		return false

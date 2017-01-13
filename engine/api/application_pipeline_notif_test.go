@@ -24,7 +24,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func deleteAll(t *testing.T, db *sql.DB, key string) error {
+func deleteAll(t *testing.T, db gorp.SqlExecutor, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
 	proj, err := project.LoadProject(db, key, &sdk.User{Admin: true})
@@ -81,7 +81,7 @@ func deleteAll(t *testing.T, db *sql.DB, key string) error {
 	return nil
 }
 
-func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *sql.DB, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment)) {
+func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, gorp.SqlExecutor, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment)) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	_ = deleteAll(t, db, "TEST_APP_PIPELINE_NOTIF")
@@ -175,7 +175,7 @@ func testCheckUserNotificationSettings(t *testing.T, n1, n2 map[sdk.UserNotifica
 }
 
 func Test_LoadEmptyApplicationPipelineNotif(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *sql.DB, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
 		t.Logf("Load Application Pipeline Notif %s %s", app.Name, env.Name)
 		notif, err := notification.LoadUserNotificationSettings(db, app.ID, pip.ID, env.ID)
 		test.NoError(t, err)
@@ -184,7 +184,7 @@ func Test_LoadEmptyApplicationPipelineNotif(t *testing.T) {
 }
 
 func Test_InsertAndLoadApplicationPipelineNotif(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *sql.DB, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
 		notif := sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
 				sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{
@@ -228,7 +228,7 @@ func Test_InsertAndLoadApplicationPipelineNotif(t *testing.T) {
 }
 
 func Test_getUserNotificationApplicationPipelineHandlerReturnsEmptyUserNotification(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *sql.DB, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
 		url := fmt.Sprintf("/test1/project/%s/application/%s/pipeline/%s/notification", proj.Key, app.Name, pip.Name)
 		req, err := http.NewRequest("GET", url, nil)
 
@@ -249,7 +249,7 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsEmptyUserNotificat
 }
 
 func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotification(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *sql.DB, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
 		notif := sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
 				sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{
@@ -329,7 +329,7 @@ func Test_getNotificationTypeHandler(t *testing.T) {
 }
 
 func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *sql.DB, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
 		notif := sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
 				sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{
@@ -513,7 +513,7 @@ func Test_ShouldNotSendUserNotificationOnSuccessNever(t *testing.T) {
 }
 
 func Test_SendPipeline(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *sql.DB, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment) {
 		notif := sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
 				sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{

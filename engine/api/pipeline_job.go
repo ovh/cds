@@ -1,12 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -110,7 +110,7 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	WriteJSON(w, r, pip, http.StatusOK)
 }
 
-func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
@@ -170,7 +170,7 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	found := false
 	for _, s := range pipelineData.Stages {
 		if s.ID == stageID {
-			for _, j := range s.Actions {
+			for _, j := range s.Jobs {
 				if j.PipelineActionID == jobID {
 					found = true
 					break
@@ -220,7 +220,7 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
-func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
