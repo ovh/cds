@@ -6,10 +6,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/log"
 )
 
 func adminTruncateWarningsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
 	if _, err := db.Exec("truncate warning"); err != nil {
+		log.Warning("adminTruncateWarningsHandler> Unable to truncate warning : %s", err)
 		WriteError(w, r, err)
 	}
 }
