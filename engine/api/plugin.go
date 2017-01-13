@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/plugin"
-
 )
 
 func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.ActionPlugin, *plugin.Parameters, io.ReadCloser, func(), error) {

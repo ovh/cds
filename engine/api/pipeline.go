@@ -435,7 +435,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return
 	}
 
-	var pipelineAction sdk.Action
+	var job sdk.Job
 
 	// Get args in body
 	data, err := ioutil.ReadAll(r.Body)
@@ -445,22 +445,15 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return
 	}
 
-	err = json.Unmarshal(data, &pipelineAction)
+	err = json.Unmarshal(data, &job)
 	if err != nil {
 		log.Warning("updatePipelineActionHandler>Cannot unmarshal request: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	if pipelineActionID != pipelineAction.PipelineActionID {
+	if pipelineActionID != job.PipelineActionID {
 		log.Warning("updatePipelineActionHandler>Pipeline action does not match: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	args, err := json.Marshal(pipelineAction.Parameters)
-	if err != nil {
-		log.Warning("updatePipelineActionHandler>Cannot marshal parameters: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -480,7 +473,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 	defer tx.Rollback()
 
-	err = pipeline.UpdatePipelineAction(tx, pipelineAction, string(args))
+	err = pipeline.UpdatePipelineAction(tx, job)
 	if err != nil {
 		log.Warning("updatePipelineActionHandler> Cannot update in database: %s\n", err)
 		WriteError(w, r, err)
@@ -529,32 +522,6 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 
 	log.Notice("deletePipelineActionHandler> Deleting action %d in %s/%s\n", pipelineActionID, vars["key"], vars["permPipelineKey"])
-
-	// Select all pipeline build where given pipelineAction has been run
-	query := `SELECT pipeline_build.id FROM pipeline_build
-						JOIN action_build ON action_build.pipeline_build_id = pipeline_build.id
-						WHERE action_build.pipeline_action_id = $1`
-	var ids []int64
-	rows, err := db.Query(query, pipelineActionID)
-	if err != nil {
-		log.Warning("deletePipelineActionHandler> cannot retrieves pipeline build: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	for rows.Next() {
-		var id int64
-		err = rows.Scan(&id)
-		if err != nil {
-			rows.Close()
-			log.Warning("deletePipelineActionHandler> cannot retrieves pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-		ids = append(ids, id)
-	}
-	rows.Close()
-	log.Notice("deletePipelineActionHandler> Got %d PipelineBuild to archive\n", len(ids))
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -1367,7 +1334,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return
 	}
 
-	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID,env.ID , buildNumber )
+	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID, env.ID, buildNumber)
 	if err != nil {
 		errFinal := err
 		if err == sdk.ErrNoPipelineBuild {

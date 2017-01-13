@@ -3,10 +3,10 @@ package worker
 import (
 	"database/sql"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/sdk"
-	"github.com/go-gorp/gorp"
 )
 
 // CreateBuiltinActions add builtin actions in database if needed

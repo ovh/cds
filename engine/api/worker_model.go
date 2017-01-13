@@ -471,7 +471,7 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 		query := `
 		select model, sum(used)
 		from (
-			select worker_model_name as model, count(action_build.id) as used from action_build group by worker_model_name
+			select worker_model_name as model, count(pipeline_build_job.id) as used from pipeline_build_job group by worker_model_name
 			union
 			select m.model as model, count(1) as used
 			from (
@@ -479,8 +479,8 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 				from
 				(
 					select stages->'builds' as builds
-					from pipeline_history h, jsonb_array_elements(h.data->'stages') stages
-					where jsonb_typeof(h.data->'stages') = 'array'
+					from pipeline_build h, jsonb_array_elements(h.stages) stages
+					where jsonb_typeof(h.stages) = 'array'
 				) b
 			) m
 			group by m.model

@@ -8,7 +8,6 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
 )
 
 // CreateBuiltinArtifactActions  Create Action BuiltinArtifact

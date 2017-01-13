@@ -8,16 +8,14 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/spf13/viper"
 	"github.com/go-gorp/gorp"
+	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
 )
 
 //ReceivedHook is a temporary struct to manage received hook
@@ -232,8 +230,7 @@ func generateHash() (string, error) {
 	return string(token), nil
 }
 
-// DeleteBranchBuilds deletes all builds related to given branch in given applications
-// in pipeline_build and pipeline_history
+// DeleteBranchBuilds deletes all builds related to given branch in given applications in pipeline_build
 func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) error {
 
 	for i := range hooks {
@@ -246,69 +243,9 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) er
 }
 
 func deleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
-	var artIDs []int64
-
-	// Remove artifact and builds from history
-	query := `SELECT build_number, pipeline_id, environment_id
-		FROM pipeline_history WHERE vcs_changes_branch = $1 AND application_id = $2`
-	rows, err := db.Query(query, branch, appID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	var pbs []sdk.PipelineBuild
-	for rows.Next() {
-		var pb sdk.PipelineBuild
-		err = rows.Scan(&pb.BuildNumber, &pb.Pipeline.ID, &pb.Environment.ID)
-		if err != nil {
-			return err
-		}
-		pbs = append(pbs, pb)
-	}
-	rows.Close()
-
-	// For each pipeline build in history, load and delete related artifacts
-	query = `SELECT id FROM artifact
-	WHERE build_number = $1
-	AND application_id = $2
-	AND pipeline_id = $3
-	AND environment_id = $4`
-	for _, pb := range pbs {
-		rows, err := db.Query(query, pb.BuildNumber, appID, pb.Pipeline.ID, pb.Environment.ID)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-		for rows.Next() {
-			var id int64
-			err = rows.Scan(&id)
-			if err != nil {
-				return err
-			}
-			artIDs = append(artIDs, id)
-		}
-		rows.Close()
-	}
-
-	// Delete all related artifacts
-	for _, id := range artIDs {
-		err := artifact.DeleteArtifact(db, id)
-		if err != nil {
-			log.Warning("deleteBranchBuilds> Cannot delete artifact %d: %s\n", id, err)
-		}
-	}
-
-	// Now delete in pipeline_history
-	query = `DELETE FROM pipeline_history WHERE vcs_changes_branch = $1 AND application_id = $2`
-	_, err = db.Query(query, branch, appID)
-	if err != nil {
-		return err
-	}
-
 	// Now select all related build in pipeline build
-	query = `SELECT id	FROM pipeline_build WHERE vcs_changes_branch = $1 AND application_id = $2`
-	rows, err = db.Query(query, branch, appID)
+	query := `SELECT id FROM pipeline_build WHERE vcs_changes_branch = $1 AND application_id = $2`
+	rows, err := db.Query(query, branch, appID)
 	if err != nil {
 		return err
 	}

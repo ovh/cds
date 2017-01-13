@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
@@ -21,7 +22,6 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/go-gorp/gorp"
 )
 
 func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
@@ -65,7 +65,7 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		for projectIndex := range projects {
 			for appIndex := range projects[projectIndex].Applications {
 				var errBuild error
-				projects[projectIndex].Applications[appIndex].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, projects[projectIndex].Applications[appIndex].ID, "",0)
+				projects[projectIndex].Applications[appIndex].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, projects[projectIndex].Applications[appIndex].ID, "", 0)
 				if errBuild != nil {
 					log.Warning("GetProjects: Cannot load app status: %s\n", errBuild)
 					WriteError(w, r, errBuild)
@@ -189,7 +189,7 @@ func getProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 	if applicationStatus == "true" {
 		for i := range p.Applications {
 			var errBuild error
-			p.Applications[i].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, p.Applications[i].ID, "",0)
+			p.Applications[i].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, p.Applications[i].ID, "", 0)
 			if errBuild != nil {
 				log.Warning("GetProject: Cannot load app status: %s\n", errBuild)
 				WriteError(w, r, errBuild)

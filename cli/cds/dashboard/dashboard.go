@@ -159,7 +159,7 @@ func (ui *Termui) updateLogs(index int, height int, pbJob sdk.PipelineBuildJob) 
 			ui.logs[index].BorderFg = termui.ColorYellow
 			ui.logs[index].BorderLabelFg = termui.ColorYellow
 		}
-		*/
+	*/
 }
 
 func (ui *Termui) getLogs(proj, app, env, pip string) {

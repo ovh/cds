@@ -9,12 +9,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
-	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk"
 )
 
 const (
@@ -37,7 +37,6 @@ const (
 		LEFT JOIN "user" ON "user".id = pb.triggered_by
 	`
 )
-
 
 // SelectBuildForUpdate  Select a build and lock a build
 func SelectBuildForUpdate(db gorp.SqlExecutor, buildID int64) error {
@@ -143,10 +142,8 @@ func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, a
 		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.build_number = $4
 	`
 	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
-
 	var row sdk.PipelineBuildDbResult
-	_, err := db.Select(&row, query, applicationID, pipelineID, environmentID, buildNumber)
-	if err != nil {
+	if err := db.SelectOne(&row, query, applicationID, pipelineID, environmentID, buildNumber); err != nil {
 		return nil, err
 	}
 	return scanPipelineBuild(row)
@@ -183,16 +180,16 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 	var rows []sdk.PipelineBuildDbResult
 	var errQuery error
 	if status == "" && branchName == "" {
-		query = fmt.Sprintf(query, "")
+		query = fmt.Sprintf(query, "LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit)
 	} else if status != "" && branchName == "" {
-		query = fmt.Sprintf(query, " AND pb.status = $5")
+		query = fmt.Sprintf(query, " AND pb.status = $5 LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, status)
 	} else if status == "" && branchName != "" {
-		query = fmt.Sprintf(query, " AND pb.vcs_changes_branch = $5")
+		query = fmt.Sprintf(query, " AND pb.vcs_changes_branch = $5  LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, branchName)
 	} else {
-		query = fmt.Sprintf(query, " AND pb.status = $5 AND pb.vcs_changes_branch = $6")
+		query = fmt.Sprintf(query, " AND pb.status = $5 AND pb.vcs_changes_branch = $6  LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, status, branchName)
 	}
 	if errQuery != nil {
@@ -216,8 +213,7 @@ func LoadPipelineBuildByID(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuild, e
 	`
 	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
 	var row sdk.PipelineBuildDbResult
-	_, err := db.Select(&row, query, id)
-	if err != nil {
+	if err := db.SelectOne(&row, query, id);  err != nil {
 		return nil, err
 	}
 	return scanPipelineBuild(row)
@@ -271,23 +267,36 @@ func scanPipelineBuild(pbResult sdk.PipelineBuildDbResult) (*sdk.PipelineBuild, 
 		Version:     pbResult.Version,
 		Status:      sdk.StatusFromString(pbResult.Status),
 		Start:       pbResult.Start,
-		Done:        pbResult.Done,
 		Trigger: sdk.PipelineBuildTrigger{
 			ManualTrigger: pbResult.ManualTrigger,
-			TriggeredBy: &sdk.User{
-				ID:       pbResult.TriggeredBy,
-				Username: pbResult.Username,
-			},
-			VCSChangesBranch: pbResult.VCSChangesBranch,
-			VCSChangesAuthor: pbResult.VCSChangesAuthor,
-			VCSChangesHash:   pbResult.VCSChangesHash,
 		},
 	}
 
-	if err := json.Unmarshal([]byte(pbResult.Args), pb.Parameters); err != nil {
+	if pbResult.Done.Valid {
+		pb.Done = pbResult.Done.Time
+	}
+	if pbResult.TriggeredBy.Valid && pbResult.Username.Valid {
+		pb.Trigger.TriggeredBy = &sdk.User{
+			ID:       pbResult.TriggeredBy.Int64,
+			Username: pbResult.Username.String,
+		}
+	}
+	if pbResult.VCSChangesAuthor.Valid {
+		pb.Trigger.VCSChangesAuthor = pbResult.VCSChangesAuthor.String
+	}
+	if pbResult.VCSChangesBranch.Valid {
+		pb.Trigger.VCSChangesBranch = pbResult.VCSChangesBranch.String
+	}
+	if pbResult.VCSChangesHash.Valid {
+		pb.Trigger.VCSChangesHash = pbResult.VCSChangesHash.String
+	}
+
+	if err := json.Unmarshal([]byte(pbResult.Args), &pb.Parameters); err != nil {
+		log.Warning("scanPipelineBuild> Unable to Unmarshal parameter %s", pbResult.Args)
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(pbResult.Stages), pb.Stages); err != nil {
+	if err := json.Unmarshal([]byte(pbResult.Stages), &pb.Stages); err != nil {
+		log.Warning("scanPipelineBuild> Unable to Unmarshal stages %s", pbResult.Stages)
 		return nil, err
 	}
 
@@ -342,7 +351,7 @@ func GetLastBuildNumberInTx(db *gorp.DbMap, pipID, appID, envID int64) (int64, e
 	}
 	defer tx.Rollback()
 
-	lastBuildNumber, errBN := GetLastBuildNumber(tx,  pipID, appID, envID)
+	lastBuildNumber, errBN := GetLastBuildNumber(tx, pipID, appID, envID)
 	if errBN != nil {
 		return 0, errBN
 	}
@@ -354,7 +363,7 @@ func GetLastBuildNumberInTx(db *gorp.DbMap, pipID, appID, envID int64) (int64, e
 }
 
 // GetLastBuildNumber Get the last build number
-func GetLastBuildNumber(db gorp.SqlExecutor,pipID, appID, envID int64 ) (int64, error) {
+func GetLastBuildNumber(db gorp.SqlExecutor, pipID, appID, envID int64) (int64, error) {
 	var lastBuildNumber int64
 	query := `SELECT build_number FROM pipeline_build WHERE pipeline_id = $1 AND application_id = $2 AND environment_id = $3 ORDER BY build_number DESC LIMIT 1 FOR UPDATE`
 	if err := db.QueryRow(query, pipID, appID, envID).Scan(&lastBuildNumber); err != nil && err != sql.ErrNoRows {
@@ -639,7 +648,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	var previous *sdk.PipelineBuild
 	history, err := LoadPipelineBuildsByApplicationAndPipeline(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch)
 	if err != nil {
-		log.Critical("InsertPipelineBuild> error while loading previous pipeline build")
+		log.Critical("InsertPipelineBuild> error while loading previous pipeline build: %s", err)
 	}
 	//Be sure to get the previous one
 	if len(history) == 2 {
@@ -916,7 +925,7 @@ func GetVersions(db gorp.SqlExecutor, app *sdk.Application, branchName string) (
 	return versions, nil
 }
 
-func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, branchName string, version int)([]sdk.PipelineBuild, error) {
+func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, branchName string, version int) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.id IN (
 			select max(id)
@@ -1008,14 +1017,7 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 					AND				pipeline_id = $2
 					AND				application_id = $3
 					AND 			environment_id = $4
-					UNION ALL (
-						SELECT    pipeline_build_id as id, pipeline_id, build_number, vcs_changes_branch, vcs_changes_hash
-						FROM      pipeline_history
-						WHERE 		build_number = $1
-						AND				pipeline_id = $2
-						AND				application_id = $3
-						AND 			environment_id = $4
-					)
+
 				) AS current_pipeline
 			LEFT OUTER JOIN (
 					SELECT    id, pipeline_id, build_number, vcs_changes_branch, vcs_changes_hash
@@ -1024,14 +1026,7 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 					AND				pipeline_id = $2
 					AND				application_id = $3
 					AND 			environment_id = $4
-					UNION ALL (
-						SELECT    pipeline_build_id as id, pipeline_id, build_number, vcs_changes_branch, vcs_changes_hash
-						FROM      pipeline_history
-						WHERE     build_number < $1
-						AND				pipeline_id = $2
-						AND				application_id = $3
-						AND 			environment_id = $4
-					)
+
 					ORDER BY  build_number DESC
 				) AS previous_pipeline ON (
 					previous_pipeline.pipeline_id = current_pipeline.pipeline_id AND previous_pipeline.vcs_changes_branch = current_pipeline.vcs_changes_branch
@@ -1079,14 +1074,11 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 
 // StopPipelineBuild fails all currently building actions
 func StopPipelineBuild(db gorp.SqlExecutor, pbID int64) error {
-	query := `UPDATE action_build SET status = $1, done = now() WHERE pipeline_build_id = $2 AND status IN ( $3, $4 )`
-	_, err := db.Exec(query, string(sdk.StatusFail), pbID, string(sdk.StatusBuilding), string(sdk.StatusWaiting))
-	if err != nil {
+
+	if err := StopBuildingPipelineBuildJob(db, pbID); err != nil {
 		return err
 	}
-
 	// TODO: Add log to inform user
-
 	return nil
 }
 
@@ -1129,7 +1121,7 @@ func RestartPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 	} else {
 		for i := range pb.Stages {
 			stage := &pb.Stages[i]
-			if (stage.Status != sdk.StatusFail) {
+			if stage.Status != sdk.StatusFail {
 				continue
 			}
 			stage.Status = sdk.StatusWaiting

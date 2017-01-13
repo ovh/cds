@@ -10,8 +10,8 @@ import (
 	"github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/sdk"
 	"database/sql"
+	"github.com/ovh/cds/sdk"
 )
 
 //DBCmd is the root command for database management

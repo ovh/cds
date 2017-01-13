@@ -276,32 +276,6 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		return
 	}
 
-	// Select all pipeline build where given pipelineAction has been run
-	query := `SELECT pipeline_build.id FROM pipeline_build
-						JOIN action_build ON action_build.pipeline_build_id = pipeline_build.id
-						WHERE action_build.pipeline_action_id = $1`
-	var ids []int64
-	rows, err := db.Query(query, jobID)
-	if err != nil {
-		log.Warning("deleteJobHandler> cannot retrieves pipeline build: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	for rows.Next() {
-		var id int64
-		err = rows.Scan(&id)
-		if err != nil {
-			rows.Close()
-			log.Warning("deleteJobHandler> cannot retrieves pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-		ids = append(ids, id)
-	}
-	rows.Close()
-	log.Notice("deleteJobHandler> Got %d PipelineBuild to archive\n", len(ids))
-
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deleteJobHandler> Cannot begin transaction: %s\n", err)

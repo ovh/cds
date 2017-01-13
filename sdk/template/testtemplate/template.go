@@ -133,15 +133,14 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 												docker build -t cds/{{.cds.app.name}}-{{.cds.version}} .
 												docker push cds/{{.cds.app.name}}-{{.cds.version}}`,
 												[]sdk.Requirement{
-												{
-													Name:  "docker",
-													Type:  sdk.BinaryRequirement,
-													Value: "docker",
-												},
-											}),
+													{
+														Name:  "docker",
+														Type:  sdk.BinaryRequirement,
+														Value: "docker",
+													},
+												}),
 										},
 									},
-
 								},
 							},
 						},

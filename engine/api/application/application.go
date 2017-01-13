@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/lib/pq"
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
 )
 
 // LoadApplicationsRequestAdmin defines the query to load all applications in a project with its activity
@@ -355,14 +354,6 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	_, err = db.Exec(query, applicationID)
 	if err != nil {
 		log.Warning("DeleteApplication> Cannot delete old artifacts: %s\n", err)
-		return err
-	}
-
-	// Delete pipeline history
-	query = `DELETE FROM pipeline_history WHERE application_id = $1`
-	_, err = db.Exec(query, applicationID)
-	if err != nil {
-		log.Warning("DeleteApplication> Cannot delete pipeline history: %s\n", err)
 		return err
 	}
 

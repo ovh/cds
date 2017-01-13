@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
 )
 
 //ReceiveEvents has to be launched as a goroutine.

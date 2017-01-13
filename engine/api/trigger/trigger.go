@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
 )
 
 // InsertTriggerParameter insert given parameter in database

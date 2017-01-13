@@ -30,7 +30,6 @@ func Pipelines() {
 	for {
 		time.Sleep(2 * time.Second)
 
-
 		//Check if CDS is in maintenance mode
 		var m bool
 		cache.Get("maintenance", &m)
@@ -93,7 +92,9 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 		stage := &pb.Stages[stageIndex]
 
 		if stage.Status == sdk.StatusWaiting {
-			addJobsToQueue(tx, stage, pb)
+			if err := addJobsToQueue(tx, stage, pb); err != nil {
+				log.Warning("queue.RunActions> Cannot add job to queue: %s", err)
+			}
 			break
 		}
 
@@ -163,6 +164,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb sdk.PipelineBuild)
 			Job:             job,
 			Queued:          time.Now(),
 			Status:          sdk.StatusWaiting.String(),
+			Start: 		 time.Now(),
 		}
 
 		if !stage.Enabled {
@@ -207,6 +209,8 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 			pbJob.Start = pbJobDB.Start
 			pbJob.Done = pbJobDB.Done
 			pbJob.Model = pbJobDB.Model
+
+			log.Warning("Job status: %s",  pbJob.Status)
 		}
 	}
 
@@ -233,6 +237,8 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 
 	}
 	stage.Status = finalStatus
+	log.Warning("Stage status: %s",  stage.Status.String())
+	log.Warning("End? %s", stageEnd)
 	return stageEnd, nil
 }
 

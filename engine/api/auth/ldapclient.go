@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/ldap.v2"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
@@ -19,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/go-gorp/gorp"
 )
 
 const errUserNotFound = "user not found"

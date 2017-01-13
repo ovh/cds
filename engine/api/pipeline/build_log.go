@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -71,7 +70,7 @@ func LoadPipelineActionBuildLogs(db gorp.SqlExecutor, pipelineBuildID, pipelineA
 	}
 
 	if pbJob == nil {
-		return buildLogResult , sdk.ErrNotFound
+		return buildLogResult, sdk.ErrNotFound
 	}
 
 	var errLog error
@@ -95,28 +94,14 @@ func DeleteBuildLogs(db database.Executer, actionBuildID int64) error {
 func LoadPipelineBuildLogs(db gorp.SqlExecutor, pipelineBuildID int64, offset int64) ([]sdk.Log, error) {
 
 	// load all build id for pipeline build
-	query := `SELECT id FROM action_build WHERE pipeline_build_id = $1`
-	rows, err := db.Query(query, pipelineBuildID)
-	if err != nil {
-		return nil, err
+	pbJobs, errPb := GetPipelineBuildJobByPipelineBuildID(db, pipelineBuildID)
+	if errPb != nil {
+		return nil, errPb
 	}
-	defer rows.Close()
-
-	var actionBuildIDs []int
-	for rows.Next() {
-		var id int
-		err = rows.Scan(&id)
-		if err != nil {
-			return nil, err
-		}
-		actionBuildIDs = append(actionBuildIDs, id)
-	}
-
-	log.Debug("getBuildLogsHandler> ids: %v\n", actionBuildIDs)
 
 	var pipelinelogs []sdk.Log
-	for _, id := range actionBuildIDs {
-		logs, err := LoadLogs(db, int64(id), 0, offset)
+	for _, pbJob := range pbJobs {
+		logs, err := LoadLogs(db, pbJob.ID, 0, offset)
 		if err != nil {
 			return nil, err
 		}

@@ -30,7 +30,7 @@ var (
 	// port of variable exporter HTTP server
 	exportport int
 	// current actionBuild is here to allow var export
-	pbJob             sdk.PipelineBuildJob
+	pbJob          sdk.PipelineBuildJob
 	buildVariables []sdk.Variable
 	// Git ssh configuration
 	pkey           string

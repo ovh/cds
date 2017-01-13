@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/sdk"
 )
 
 // ProcessActionVariables replaces all placeholders inside action recursively using

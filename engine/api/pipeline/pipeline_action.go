@@ -192,10 +192,10 @@ func DeleteJob(db gorp.SqlExecutor, job sdk.Job, userID int64) error {
 }
 
 // UpdatePipelineAction Update an action in a pipeline
-func UpdatePipelineAction(db database.Executer, action sdk.Action, args string) error {
-	query := `UPDATE pipeline_action set action_id=$1, args=$2, pipeline_stage_id=$3, enabled=$5  WHERE id=$4`
+func UpdatePipelineAction(db database.Executer, job sdk.Job) error {
+	query := `UPDATE pipeline_action set action_id=$1, pipeline_stage_id=$2, enabled=$4  WHERE id=$3`
 
-	_, err := db.Exec(query, action.ID, args, action.PipelineStageID, action.PipelineActionID, action.Enabled)
+	_, err := db.Exec(query, job.Action.ID, job.PipelineStageID, job.PipelineActionID, job.Enabled)
 	if err != nil {
 		return err
 	}

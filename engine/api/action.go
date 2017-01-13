@@ -8,11 +8,11 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/go-gorp/gorp"
 )
 
 func getActionsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {

@@ -21,7 +21,7 @@ import (
 type PipelineBuildJobInfo struct {
 	PipelineBuildJob sdk.PipelineBuildJob
 	Secrets          []sdk.Variable
-	PipelineID	 int64
+	PipelineID       int64
 	BuildNumber      int64
 }
 
@@ -420,13 +420,4 @@ func UpdateWorkerStatus(db gorp.SqlExecutor, workerID string, status sdk.Status)
 	}
 
 	return nil
-}
-
-// FindBuildingWorker retrieves in database the worker building given actionBuildID
-func FindBuildingWorker(db gorp.SqlExecutor, actionBuildID string) (string, error) {
-	query := `SELECT id FROM worker WHERE action_build_id = $1`
-
-	var id string
-	err := db.QueryRow(query, actionBuildID).Scan(&id)
-	return id, err
 }

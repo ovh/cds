@@ -3,7 +3,6 @@ package environment
 import (
 	"github.com/go-gorp/gorp"
 
-
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"

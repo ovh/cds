@@ -305,22 +305,7 @@ func DeleteAction(db gorp.SqlExecutor, actionID, userID int64) error {
 		return err
 	}
 
-	query := `DELETE FROM build_log WHERE action_build_id IN
-	(SELECT id FROM action_build WHERE pipeline_action_id IN
-		(SELECT id FROM pipeline_action WHERE action_id = $1)
-	)`
-
-	if _, err := db.Exec(query, actionID); err != nil {
-		return err
-	}
-
-	query = `DELETE FROM action_build WHERE pipeline_action_id IN
-		(SELECT id FROM pipeline_action WHERE action_id = $1)`
-	if _, err := db.Exec(query, actionID); err != nil {
-		return err
-	}
-
-	query = `DELETE FROM pipeline_action WHERE action_id = $1`
+	query := `DELETE FROM pipeline_action WHERE action_id = $1`
 	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}

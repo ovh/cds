@@ -8,8 +8,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/action"
+	"database/sql"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -224,77 +225,64 @@ type ActionCount struct {
 
 //LoadGroupActionCount counts waiting action for group
 func LoadGroupActionCount(db gorp.SqlExecutor, groupID int64) ([]ActionCount, error) {
-
 	log.Debug("LoadGroupActionCount> Counting pending action for group %d", groupID)
-
-	acs := []ActionCount{}
-	query := `
-	SELECT COUNT(action_build.id), pipeline_action.action_id
-	FROM action_build
-	JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
-  	JOIN pipeline_build ON pipeline_build.id = action_build.pipeline_build_id
-  	JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
-	JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
-	WHERE action_build.status = $1 
-	AND (
-		pipeline_group.group_id = $2
-		OR
-		(select id from "group" where name = $3) = $2
-	)
-	GROUP BY pipeline_action.action_id
-	LIMIT 1000
-	`
-
-	rows, err := db.Query(query, string(sdk.StatusWaiting), groupID, group.SharedInfraGroup)
-	if err != nil {
-		return nil, err
+	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJobForGroup(db, groupID)
+	if errJobs != nil {
+		if errJobs == sql.ErrNoRows {
+			return nil, nil
+		}
+		log.Warning("LoadGroupActionCount> Cannot get waiting pipeline job for group:", errJobs)
+		return nil, errJobs
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		ac := ActionCount{}
-		if err := rows.Scan(&ac.Count, &ac.Action.ID); err != nil {
-			return nil, err
+	mapAction := map[int64]ActionCount{}
+	for _, pbJob := range pbJobs {
+		if _, ok := mapAction[pbJob.Job.Action.ID]; ok {
+			ac := mapAction[pbJob.Job.Action.ID]
+			ac.Count++
+			mapAction[pbJob.Job.Action.ID] = ac
+		} else {
+			mapAction[pbJob.Job.Action.ID] = ActionCount{
+				Action: pbJob.Job.Action,
+				Count:  1,
+			}
 		}
-		ac.Action.Requirements, err = action.GetRequirements(db, ac.Action.ID)
-		if err != nil {
-			return nil, err
-		}
-		acs = append(acs, ac)
+	}
+	var acs []ActionCount
+	for _, value := range mapAction {
+		acs = append(acs, value)
 	}
 	return acs, nil
 }
 
 //LoadAllActionCount counts all waiting actions
 func LoadAllActionCount(db gorp.SqlExecutor, userID int64) ([]ActionCount, error) {
-	acs := []ActionCount{}
-	query := `
-	SELECT COUNT(action_build.id), pipeline_action.action_id
-	FROM action_build
-	JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
-  	JOIN pipeline_build ON pipeline_build.id = action_build.pipeline_build_id
-  	JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
-	WHERE action_build.status = $1 
-	GROUP BY pipeline_action.action_id
-	LIMIT 1000
-	`
-
-	rows, err := db.Query(query, string(sdk.StatusWaiting))
-	if err != nil {
-		return nil, err
+	log.Debug("LoadGroupActionCount> Counting pending action")
+	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJob(db)
+	if errJobs != nil {
+		if errJobs == sql.ErrNoRows {
+			return nil, nil
+		}
+		log.Warning("LoadGroupActionCount> Cannot get waiting pipeline job:", errJobs)
+		return nil, errJobs
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		ac := ActionCount{}
-		if err := rows.Scan(&ac.Count, &ac.Action.ID); err != nil {
-			return nil, err
+	mapAction := map[int64]ActionCount{}
+	for _, pbJob := range pbJobs {
+		if _, ok := mapAction[pbJob.Job.Action.ID]; ok {
+			ac := mapAction[pbJob.Job.Action.ID]
+			ac.Count++
+			mapAction[pbJob.Job.Action.ID] = ac
+		} else {
+			mapAction[pbJob.Job.Action.ID] = ActionCount{
+				Action: pbJob.Job.Action,
+				Count:  1,
+			}
 		}
-		ac.Action.Requirements, err = action.GetRequirements(db, ac.Action.ID)
-		if err != nil {
-			return nil, err
-		}
-		acs = append(acs, ac)
+	}
+	var acs []ActionCount
+	for _, value := range mapAction {
+		acs = append(acs, value)
 	}
 	return acs, nil
 }

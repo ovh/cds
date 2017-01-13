@@ -199,17 +199,9 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 		return err
 	}
 
-	// Delete history
-	query = `DELETE FROM pipeline_history where environment_id = $1`
-	_, err = db.Exec(query, environmentID)
-	if err != nil {
-		log.Warning("DeleteEnvironment> Cannot delete environment related history: %s\n", err)
-		return err
-	}
-
 	// Delete builds
 	query = `DELETE FROM build_log where action_build_id IN (
-			SELECT id FROM action_build WHERE pipeline_build_id IN (
+			SELECT id FROM pipeline_build_job WHERE pipeline_build_id IN (
 					SELECT id FROM pipeline_build WHERE environment_id = $1
 			))`
 	_, err = db.Exec(query, environmentID)
@@ -218,7 +210,7 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 		return err
 	}
 
-	query = `DELETE FROM action_build WHERE pipeline_build_id
+	query = `DELETE FROM pipeline_build_job WHERE pipeline_build_id
 			IN (SELECT id FROM pipeline_build WHERE environment_id = $1)`
 	_, err = db.Exec(query, environmentID)
 	if err != nil {

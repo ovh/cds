@@ -8,14 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lib/pq"
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
 )
 
 var (
@@ -267,9 +266,9 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 	//load job
 	for id := range mapStages {
 		for index := range mapActionsStages[id] {
-			job := sdk.Job {
-				Enabled: mapActionsStages[id][index].Enabled,
-				PipelineStageID: id,
+			job := sdk.Job{
+				Enabled:          mapActionsStages[id][index].Enabled,
+				PipelineStageID:  id,
 				PipelineActionID: mapActionsStages[id][index].PipelineActionID,
 			}
 

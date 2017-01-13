@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"database/sql"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
@@ -18,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"database/sql"
 )
 
 // DeleteUserHandler removes a user

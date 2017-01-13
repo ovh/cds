@@ -199,7 +199,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	if buildNumberS == "last" {
 		lastBuildNumber, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
 		if err != nil {
-			log.Warning("getBuildStateHandler> Cannot load last pipeline build for %s-%s-%s: %s\n", a.Name, pipelineName, env.Name, err)
+			log.Warning("getBuildStateHandler> Cannot load last pipeline build number for %s-%s-%s: %s\n", a.Name, pipelineName, env.Name, err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -261,7 +261,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	idString := vars["id"]
 
-	id, errInt :=strconv.ParseInt(idString, 10, 64)
+	id, errInt := strconv.ParseInt(idString, 10, 64)
 	if errInt != nil {
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
@@ -311,7 +311,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	log.Debug("Updating %s to %s in queue\n", id, res.Status)
 	err = pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, res.Status)
 	if err != nil {
-		log.Warning("addQueueResultHandler> Cannot update %s status: %s\n", id, err)
+		log.Warning("addQueueResultHandler> Cannot update %d status: %s\n", id, err)
 		WriteError(w, r, err)
 		return
 	}
@@ -375,17 +375,17 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 
 	log.Debug("Updated %s (PipelineAction %d) to %s\n", id, pbJob.Job.PipelineActionID, sdk.StatusBuilding)
 
-	secrets, err := loadActionBuildSecrets(db, pbJob.Job.Action.ID)
-	if err != nil {
-		log.Warning("takeActionBuildHandler> Cannot load action build secrets: %s\n", err)
-		WriteError(w, r, err)
+	secrets, errSecret := loadActionBuildSecrets(db, pbJob.ID)
+	if errSecret != nil {
+		log.Warning("takeActionBuildHandler> Cannot load action build secrets: %s\n", errSecret)
+		WriteError(w, r, errSecret)
 		return
 	}
 
 	pb, errPb := pipeline.LoadPipelineBuildByID(db, pbJob.PipelineBuildID)
 	if errPb != nil {
-		log.Warning("takeActionBuildHandler> Cannot get pipeline build: %s\n", err)
-		WriteError(w, r, err)
+		log.Warning("takeActionBuildHandler> Cannot get pipeline build: %s\n", errPb)
+		WriteError(w, r, errPb)
 		return
 	}
 
@@ -403,16 +403,17 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	WriteJSON(w, r, pbji, http.StatusOK)
 }
 
-func loadActionBuildSecrets(db *gorp.DbMap, abID int64) ([]sdk.Variable, error) {
+func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, error) {
 
 	query := `SELECT pipeline.project_id, pipeline_build.application_id, pipeline_build.environment_id
-	FROM pipeline_build JOIN action_build ON action_build.pipeline_build_id = pipeline_build.id
+	FROM pipeline_build
+	JOIN pipeline_build_job ON pipeline_build_job.pipeline_build_id = pipeline_build.id
 	JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
-	WHERE action_build.id = $1`
+	WHERE pipeline_build_job.id = $1`
 
 	var projectID, appID, envID int64
 	var secrets []sdk.Variable
-	err := db.QueryRow(query, abID).Scan(&projectID, &appID, &envID)
+	err := db.QueryRow(query, pbJobID).Scan(&projectID, &appID, &envID)
 	if err != nil {
 		return nil, err
 	}

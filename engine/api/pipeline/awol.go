@@ -3,10 +3,10 @@ package pipeline
 import (
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/go-gorp/gorp"
 )
 
 // AWOLPipelineKiller will search in database for actions :
@@ -72,11 +72,11 @@ func killAWOLAction(db *gorp.DbMap, pbJobID int64) error {
 // WHERE LAAAAAAAAAAAAAAST logs are older than 15 minutes OR no logs at all
 func loadAWOLActionBuild(db gorp.SqlExecutor) ([]int64, error) {
 	query := `
-		SELECT action_build.id FROM action_build
-		LEFT OUTER JOIN build_log ON build_log.action_build_id = action_build.id
+		SELECT pipeline_build_job.id FROM pipeline_build_job
+		LEFT OUTER JOIN build_log ON build_log.action_build_id = pipeline_build_job.id
 		WHERE status = 'Building'
-		AND action_build.start < NOW() - INTERVAL '15 minutes'
-		GROUP BY action_build.id
+		AND pipeline_build_job.start < NOW() - INTERVAL '15 minutes'
+		GROUP BY pipeline_build_job.id
 		HAVING MAX(build_log.timestamp) < NOW() - INTERVAL '15 minutes' OR MAX(build_log.timestamp) IS NULL
 		`
 	var ids []int64
