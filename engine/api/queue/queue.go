@@ -82,7 +82,7 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 	}
 
 	// OH! AN EMPTY PIPELINE
-	if len(pb.Pipeline.Stages) == 0 {
+	if len(pb.Stages) == 0 {
 		// Pipeline is done
 		pb.Status = sdk.StatusSuccess
 	}
@@ -237,8 +237,6 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 
 	}
 	stage.Status = finalStatus
-	log.Warning("Stage status: %s",  stage.Status.String())
-	log.Warning("End? %s", stageEnd)
 	return stageEnd, nil
 }
 
