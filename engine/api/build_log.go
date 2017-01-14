@@ -134,10 +134,10 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 	buildNumberS := vars["build"]
-	actionIDString := vars["actionID"]
+	pipelineActionIDString := vars["actionID"]
 	appName := vars["permApplicationName"]
 
-	actionID, err := strconv.ParseInt(actionIDString, 10, 64)
+	pipelineActionID, err := strconv.ParseInt(pipelineActionIDString, 10, 64)
 	if err != nil {
 		log.Warning("getActionBuildLogsHandler> actionID should be an integer : %s\n", err)
 		WriteError(w, r, err)
@@ -145,8 +145,7 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	// Get offset
-	err = r.ParseForm()
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
 		log.Warning("getActionBuildLogsHandler> cannot parse form: %s\n", err)
 		WriteError(w, r, err)
 		return
@@ -212,7 +211,7 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 
 	// load pipeline_build.id
 	var pipelinelogs sdk.BuildState
-	pbID, err := pipeline.LoadPipelineBuildID(db, a.ID, p.ID, env.ID, buildNumber)
+	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
 	if err != nil {
 
 		log.Warning("getActionBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
@@ -220,7 +219,7 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return
 
 	}
-	pipelinelogs, err = pipeline.LoadPipelineActionBuildLogs(db, pbID, actionID, offset)
+	pipelinelogs, err = pipeline.LoadPipelineActionBuildLogs(db, pb, pipelineActionID, offset)
 	if err != nil {
 		log.Warning("getActionBuildLogsHandler> Cannot load pipeline build logs: %s\n", err)
 		WriteError(w, r, err)

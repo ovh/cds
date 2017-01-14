@@ -42,7 +42,7 @@ func LoadLogs(db gorp.SqlExecutor, actionBuildID int64, tail int64, start int64)
 
 	for rows.Next() {
 		var l sdk.Log
-		err = rows.Scan(&l.ID, &l.ActionBuildID, &l.Timestamp, &l.Step, &l.Value)
+		err = rows.Scan(&l.ID, &l.ActionBuildID, &l.Timestamp, &l.Step, &l.Value, &l.PipelineBuildID)
 		if err != nil {
 			return nil, err
 		}
@@ -53,33 +53,32 @@ func LoadLogs(db gorp.SqlExecutor, actionBuildID int64, tail int64, start int64)
 }
 
 // LoadPipelineActionBuildLogs Load log for the given pipeline action
-func LoadPipelineActionBuildLogs(db gorp.SqlExecutor, pipelineBuildID, pipelineActionID int64, offset int64) (sdk.BuildState, error) {
+func LoadPipelineActionBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBuild, pipelineActionID int64, offset int64) (sdk.BuildState, error) {
 	buildLogResult := sdk.BuildState{}
 
-	// load all build id for pipeline build
-	pbJobs, errJobs := GetPipelineBuildJobByPipelineBuildID(db, pipelineBuildID)
-	if errJobs != nil {
-		return buildLogResult, errJobs
-	}
-
-	var pbJob *sdk.PipelineBuildJob
-	for _, j := range pbJobs {
-		if j.Job.PipelineActionID == pipelineActionID {
-			*pbJob = j
-			break
+	// Found pipelien buid job from pipelineActionID
+	var currentPbJob *sdk.PipelineBuildJob
+	for _, s := range pipelineBuild.Stages {
+		for _, pbJob := range s.PipelineBuildJobs {
+			if pbJob.Job.PipelineActionID == pipelineActionID {
+				currentPbJob = &pbJob
+				break
+			}
 		}
+
 	}
 
-	if pbJob == nil {
+	if currentPbJob == nil {
 		return buildLogResult, sdk.ErrNotFound
 	}
 
+	// Get the logs for the given pbJob
 	var errLog error
-	buildLogResult.Logs, errLog = LoadLogs(db, pbJob.ID, 0, offset)
+	buildLogResult.Logs, errLog = LoadLogs(db, currentPbJob.ID, 0, offset)
 	if errLog != nil {
 		return buildLogResult, errLog
 	}
-	buildLogResult.Status = sdk.StatusFromString(pbJob.Status)
+	buildLogResult.Status = sdk.StatusFromString(currentPbJob.Status)
 
 	return buildLogResult, nil
 }
