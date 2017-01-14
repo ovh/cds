@@ -60,7 +60,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob) sdk.
 
 	if tag == "" {
 		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("tag variable is empty. aborting\n"))
+		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("tag variable is empty. aborting\n"), pbJob.PipelineBuildID)
 		return res
 	}
 	tag = strings.Replace(tag, "/", "-", -1)
@@ -70,29 +70,29 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob) sdk.
 	filesPath, err := filepath.Glob(filePattern)
 	if err != nil {
 		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("cannot perform globbing of pattern '%s': %s\n", filePattern, err))
+		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("cannot perform globbing of pattern '%s': %s\n", filePattern, err), pbJob.PipelineBuildID)
 		return res
 	}
 
 	if len(filesPath) == 0 {
 		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("Pattern '%s' matched no file\n", filePattern))
+		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("Pattern '%s' matched no file\n", filePattern), pbJob.PipelineBuildID)
 		return res
 	}
 
 	buildNumber, errBN := strconv.Atoi(buildNumberString)
 	if errBN != nil {
 		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("BuilNumber is not an integer %s\n", errBN))
+		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("BuilNumber is not an integer %s\n", errBN), pbJob.PipelineBuildID)
 		return res
 	}
 
 	for _, filePath := range filesPath {
 		filename := filepath.Base(filePath)
-		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("Uploading '%s' into %s-%s-%s/%s...\n", filename, project, application, pipeline, tag))
+		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("Uploading '%s' into %s-%s-%s/%s...\n", filename, project, application, pipeline, tag), pbJob.PipelineBuildID)
 		if err := sdk.UploadArtifact(project, pipeline, application, tag, filePath, buildNumber, environment); err != nil {
 			res.Status = sdk.StatusFail
-			sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("Error while uploading artefact: %s\n", err))
+			sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("Error while uploading artefact: %s\n", err), pbJob.PipelineBuildID)
 			return res
 		}
 	}
@@ -151,13 +151,13 @@ func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob) sdk.Result {
 	}
 
 	if !enabled {
-		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("Artifact Download is disabled. return\n"))
+		sendLog(pbJob.ID, sdk.ArtifactUpload, fmt.Sprintf("Artifact Download is disabled. return\n"), pbJob.PipelineBuildID)
 		return res
 	}
 
 	if tag == "" {
 		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.ArtifactDownload, fmt.Sprintf("tag variable is empty. aborting\n"))
+		sendLog(pbJob.ID, sdk.ArtifactDownload, fmt.Sprintf("tag variable is empty. aborting\n"), pbJob.PipelineBuildID)
 		return res
 	}
 	tag = strings.Replace(tag, "/", "-", -1)
@@ -165,16 +165,16 @@ func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob) sdk.Result {
 
 	if pipeline == "" {
 		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.ArtifactDownload, fmt.Sprintf("pipeline variable is empty. aborting\n"))
+		sendLog(pbJob.ID, sdk.ArtifactDownload, fmt.Sprintf("pipeline variable is empty. aborting\n"), pbJob.PipelineBuildID)
 		return res
 	}
 
-	sendLog(pbJob.ID, sdk.ArtifactDownload, fmt.Sprintf("Downloading artifacts from %s-%s-%s/%s into '%s'...\n", project, application, pipeline, tag, filePath))
+	sendLog(pbJob.ID, sdk.ArtifactDownload, fmt.Sprintf("Downloading artifacts from %s-%s-%s/%s into '%s'...\n", project, application, pipeline, tag, filePath), pbJob.PipelineBuildID)
 	err := sdk.DownloadArtifacts(project, application, pipeline, tag, filePath, environment)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		log.Warning("Cannot download artifacts: %s\n", err)
-		sendLog(pbJob.ID, sdk.ArtifactDownload, fmt.Sprintf("%s\n", err))
+		sendLog(pbJob.ID, sdk.ArtifactDownload, fmt.Sprintf("%s\n", err), pbJob.PipelineBuildID)
 		return res
 	}
 

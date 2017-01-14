@@ -9,6 +9,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+
+type awolPipelineBuildJob struct {
+	pipelineBuildJobID int64
+	pieplineBuildID int64
+}
 // AWOLPipelineKiller will search in database for actions :
 // - Having building status
 // - Without any logs ouput in the last 15 minutes
@@ -21,15 +26,15 @@ func AWOLPipelineKiller() {
 		db := database.DBMap(database.DB())
 
 		if db != nil {
-			ids, err := loadAWOLActionBuild(db)
+			pbJobDatas, err := loadAWOLActionBuild(db)
 			if err != nil {
 				log.Warning("AWOLPipelineKiller> Cannot load awol building actions: %s\n", err)
 			}
 
-			for _, id := range ids {
-				err = killAWOLAction(db, id)
+			for _, data := range pbJobDatas {
+				err = killAWOLAction(db, data)
 				if err != nil {
-					log.Warning("AWOLPipelineKiller> Cannot kill action build %d: %s\n", id, err)
+					log.Warning("AWOLPipelineKiller> Cannot kill action build %d: %s\n", data.pipelineBuildJobID, err)
 					time.Sleep(1 * time.Second) // Do not spam an unavailable database
 				}
 			}
@@ -37,8 +42,8 @@ func AWOLPipelineKiller() {
 	}
 }
 
-func killAWOLAction(db *gorp.DbMap, pbJobID int64) error {
-	log.Warning("killAWOLAction> Killing pipeline_job_build %d\n", pbJobID)
+func killAWOLAction(db *gorp.DbMap, pbJobData awolPipelineBuildJob) error {
+	log.Warning("killAWOLAction> Killing pipeline_job_build %d\n", pbJobData.pipelineBuildJobID)
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -46,8 +51,8 @@ func killAWOLAction(db *gorp.DbMap, pbJobID int64) error {
 	}
 	defer tx.Rollback()
 
-	InsertLog(tx, pbJobID, "SYSTEM", "Killed (Reason: Timeout)\n")
-	pbJob, errJob := GetPipelineBuildJob(tx, pbJobID)
+	InsertLog(tx, pbJobData.pipelineBuildJobID, "SYSTEM", "Killed (Reason: Timeout)\n", pbJobData.pieplineBuildID)
+	pbJob, errJob := GetPipelineBuildJob(tx, pbJobData.pipelineBuildJobID)
 	if errJob != nil {
 		return errJob
 	}
@@ -57,7 +62,7 @@ func killAWOLAction(db *gorp.DbMap, pbJobID int64) error {
 	}
 
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE action_build_id = $2`
-	_, err = tx.Exec(query, string(sdk.StatusDisabled), pbJobID)
+	_, err = tx.Exec(query, string(sdk.StatusDisabled), pbJobData.pipelineBuildJobID)
 	if err != nil {
 		return err
 	}
@@ -70,18 +75,16 @@ func killAWOLAction(db *gorp.DbMap, pbJobID int64) error {
 // WHERE action_build status is building, obviously
 // WHERE action_build was started at least 15 minutes ago
 // WHERE LAAAAAAAAAAAAAAST logs are older than 15 minutes OR no logs at all
-func loadAWOLActionBuild(db gorp.SqlExecutor) ([]int64, error) {
+func loadAWOLActionBuild(db gorp.SqlExecutor) ([]awolPipelineBuildJob, error) {
 	query := `
-		SELECT pipeline_build_job.id FROM pipeline_build_job
+		SELECT pipeline_build_job.id, pipeline_build_job.pipeline_build_id FROM pipeline_build_job
 		LEFT OUTER JOIN build_log ON build_log.action_build_id = pipeline_build_job.id
 		WHERE status = 'Building'
 		AND pipeline_build_job.start < NOW() - INTERVAL '15 minutes'
-		GROUP BY pipeline_build_job.id
+		GROUP BY pipeline_build_job.id, pipeline_build_job.pipeline_build_id
 		HAVING MAX(build_log.timestamp) < NOW() - INTERVAL '15 minutes' OR MAX(build_log.timestamp) IS NULL
 		`
-	var ids []int64
-	var tmp int64
-
+	var datas []awolPipelineBuildJob
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -89,12 +92,13 @@ func loadAWOLActionBuild(db gorp.SqlExecutor) ([]int64, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&tmp)
+		var d awolPipelineBuildJob
+		err := rows.Scan(&d.pipelineBuildJobID, &d.pieplineBuildID)
 		if err != nil {
 			return nil, err
 		}
-		ids = append(ids, tmp)
+		datas = append(datas, d)
 	}
 
-	return ids, nil
+	return datas, nil
 }

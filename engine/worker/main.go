@@ -270,7 +270,7 @@ func takeAction(b sdk.PipelineBuildJob) {
 			break
 		}
 		if err == nil && code < 300 {
-			sendLog(b.ID, "SYSTEM", "BuildResult sent.\n")
+			sendLog(b.ID, "SYSTEM", "BuildResult sent.\n", pbji.PipelineBuildJob.PipelineBuildID)
 			fmt.Printf("BuildResult sent.\n")
 			break
 		}

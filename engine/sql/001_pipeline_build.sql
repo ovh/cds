@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS "pipeline_build_job" (
     model BIGINT
 );
 
+ALTER TABLE build_log ADD COLUMN pipeline_build_id BIGINT;
+select create_foreign_key('FK_BUILD_LOG_PIPELINE_BUILD', 'build_log', 'pipeline_build', 'pipeline_build_id', 'id');
+
 -- +migrate Down
 ALTER table pipeline_history_old RENAME TO pipeline_history;
 
@@ -34,3 +37,5 @@ select create_foreign_key('FK_BUILD_LOG_ACTION_BUILD', 'build_log', 'action_buil
 ALTER TABLE pipeline_build DROP COLUMN stages;
 
 DROP TABLE IF EXISTS pipeline_build_job;
+
+ALTER TABLE build_log DROP COLUMN pipeline_build_id;

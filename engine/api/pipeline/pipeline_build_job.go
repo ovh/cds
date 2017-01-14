@@ -294,7 +294,7 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 		case sdk.StatusSkipped:
 			log = fmt.Sprintf("Action skipped\n")
 		}
-		return InsertLog(db, pbJob.ID, "SYSTEM", log)
+		return InsertLog(db, pbJob.ID, "SYSTEM", log, pbJob.PipelineBuildID)
 	}
 	return nil
 }

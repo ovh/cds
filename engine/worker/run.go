@@ -118,7 +118,7 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob) sdk.Result {
 	for i, child := range a.Actions {
 		if !child.Enabled {
 			childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
-			sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Step %s is disabled\n", name, childName))
+			sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Step %s is disabled\n", name, childName),pipBuildJob.PipelineBuildID)
 			nbDisabledChildren++
 			continue
 		}
@@ -129,9 +129,9 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob) sdk.Result {
 			if !doNotRunChildrenAnymore {
 				childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
 				log.Printf("Running %s\n", childName)
-				sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Starting step %s...\n", name, childName))
+				sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Starting step %s...\n", name, childName), pipBuildJob.PipelineBuildID)
 				r = startAction(&child, pipBuildJob)
-				sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Step %s finished (status: %s)\n", name, childName, r.Status))
+				sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Step %s finished (status: %s)\n", name, childName, r.Status), pipBuildJob.PipelineBuildID)
 				if r.Status != sdk.StatusSuccess {
 					log.Printf("Stopping %s at step %s", a.Name, childName)
 					doNotRunChildrenAnymore = true
@@ -148,7 +148,7 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob) sdk.Result {
 	for i, child := range finalActions {
 		childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
 		log.Printf("Running final action : %s\n", childName)
-		sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Starting final step %s...\n", name, childName))
+		sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Starting final step %s...\n", name, childName),pipBuildJob.PipelineBuildID)
 		finalActionResult := startAction(&child, pipBuildJob)
 		//If action is success or disabled we consider final action status
 		if r.Status == sdk.StatusSuccess || r.Status == sdk.StatusDisabled {
@@ -158,7 +158,7 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob) sdk.Result {
 			log.Printf("Stoping %s at final step %s", a.Name, childName)
 			return r
 		}
-		sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Final step %s finished (status: %s)\n", name, childName, finalActionResult.Status))
+		sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Final step %s finished (status: %s)\n", name, childName, finalActionResult.Status), pipBuildJob.PipelineBuildID)
 	}
 
 	return r
@@ -166,14 +166,14 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob) sdk.Result {
 
 var logsecrets []sdk.Variable
 
-func sendLog(buildid int64, step string, value string) error {
+func sendLog(buildid int64, step string, value string, pipelineBuildID int64) error {
 	for i := range logsecrets {
 		if len(logsecrets[i].Value) >= 6 {
 			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
 		}
 	}
 
-	l := sdk.NewLog(buildid, step, value)
+	l := sdk.NewLog(buildid, step, value, pipelineBuildID)
 	logChan <- *l
 	return nil
 }
@@ -325,7 +325,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 			case <-doneChan:
 				return
 			case <-time.After(12 * time.Hour):
-				sendLog(pbji.PipelineBuildJob.ID, "SYSTEM", fmt.Sprintf("Error: Action %s running for 12 hour on worker %s, aborting", pbji.PipelineBuildJob.Job.Action.Name, name))
+				sendLog(pbji.PipelineBuildJob.ID, "SYSTEM", fmt.Sprintf("Error: Action %s running for 12 hour on worker %s, aborting", pbji.PipelineBuildJob.Job.Action.Name, name), pbji.PipelineBuildJob.PipelineBuildID)
 				path := fmt.Sprintf("/queue/%d/result", pbji.PipelineBuildJob.ID)
 				body, _ := json.Marshal(sdk.Result{Status: sdk.StatusFail})
 				sdk.Request("POST", path, body)
@@ -339,7 +339,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	wd := workingDirectory(basedir, pbji)
 	err = setupBuildDirectory(wd)
 	if err != nil {
-		sendLog(pbji.PipelineBuildJob.ID, "SYSTEM", fmt.Sprintf("Error: cannot setup working directory (%s)", err))
+		sendLog(pbji.PipelineBuildJob.ID, "SYSTEM", fmt.Sprintf("Error: cannot setup working directory (%s)", err), pbji.PipelineBuildJob.PipelineBuildID)
 		time.Sleep(5 * time.Second)
 		return sdk.Result{Status: sdk.StatusFail}
 	}
@@ -347,7 +347,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	// Setup user ssh keys
 	err = setupSSHKey(pbji.Secrets, path.Join(wd, ".ssh"))
 	if err != nil {
-		sendLog(pbji.PipelineBuildJob.ID, "SYSTEM", fmt.Sprintf("Error: cannot setup ssh key (%s)", err))
+		sendLog(pbji.PipelineBuildJob.ID, "SYSTEM", fmt.Sprintf("Error: cannot setup ssh key (%s)", err), pbji.PipelineBuildJob.PipelineBuildID)
 		time.Sleep(5 * time.Second)
 		return sdk.Result{Status: sdk.StatusFail}
 	}
@@ -362,7 +362,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 		fmt.Printf("Cannot remove build directory: %s\n", err)
 	}
 
-	sendLog(pbji.PipelineBuildJob.ID, "SYSTEM", "Done.\n")
+	sendLog(pbji.PipelineBuildJob.ID, "SYSTEM", "Done.\n", pbji.PipelineBuildJob.PipelineBuildID)
 	fmt.Printf("Run> Done.\n")
 	return res
 }

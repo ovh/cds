@@ -120,7 +120,7 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	// add pipeline result
 	// Important for cli to known that build is finished
 	if pb.Status.String() == sdk.StatusFail.String() || pb.Status.String() == sdk.StatusSuccess.String() {
-		l := sdk.NewLog(0, "SYSTEM", fmt.Sprintf("Build finished with status: %s\n", pb.Status))
+		l := sdk.NewLog(0, "SYSTEM", fmt.Sprintf("Build finished with status: %s\n", pb.Status), pb.ID)
 		pipelinelogs = append(pipelinelogs, *l)
 	}
 
@@ -243,16 +243,14 @@ func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	// Unmarshal into results
 	var logs []sdk.Log
 
-	err = json.Unmarshal([]byte(data), &logs)
-	if err != nil {
+	if err := json.Unmarshal([]byte(data), &logs); err != nil {
 		log.Warning("addBuildLogHandler> Cannot unmarshal Result: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
 	for i := range logs {
-		err = pipeline.InsertLog(db, logs[i].ActionBuildID, logs[i].Step, logs[i].Value)
-		if err != nil {
+		if err := pipeline.InsertLog(db, logs[i].ActionBuildID, logs[i].Step, logs[i].Value, logs[i].PipelineBuildID); err != nil {
 			log.Warning("addBuildLogHandler> Cannot insert log line:  %s\n", err)
 			WriteError(w, r, err)
 			return
