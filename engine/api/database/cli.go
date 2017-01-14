@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
-	"database/sql"
 	"github.com/ovh/cds/sdk"
 )
 

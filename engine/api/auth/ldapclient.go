@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"gopkg.in/ldap.v2"
 
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"

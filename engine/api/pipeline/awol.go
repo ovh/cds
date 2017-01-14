@@ -9,11 +9,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-
 type awolPipelineBuildJob struct {
 	pipelineBuildJobID int64
-	pieplineBuildID int64
+	pieplineBuildID    int64
 }
+
 // AWOLPipelineKiller will search in database for actions :
 // - Having building status
 // - Without any logs ouput in the last 15 minutes

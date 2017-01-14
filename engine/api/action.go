@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/log"

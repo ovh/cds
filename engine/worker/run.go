@@ -118,7 +118,7 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob) sdk.Result {
 	for i, child := range a.Actions {
 		if !child.Enabled {
 			childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
-			sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Step %s is disabled\n", name, childName),pipBuildJob.PipelineBuildID)
+			sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Step %s is disabled\n", name, childName), pipBuildJob.PipelineBuildID)
 			nbDisabledChildren++
 			continue
 		}
@@ -148,7 +148,7 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob) sdk.Result {
 	for i, child := range finalActions {
 		childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
 		log.Printf("Running final action : %s\n", childName)
-		sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Starting final step %s...\n", name, childName),pipBuildJob.PipelineBuildID)
+		sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Starting final step %s...\n", name, childName), pipBuildJob.PipelineBuildID)
 		finalActionResult := startAction(&child, pipBuildJob)
 		//If action is success or disabled we consider final action status
 		if r.Status == sdk.StatusSuccess || r.Status == sdk.StatusDisabled {

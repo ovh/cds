@@ -213,7 +213,7 @@ func LoadPipelineBuildByID(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuild, e
 	`
 	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
 	var row sdk.PipelineBuildDbResult
-	if err := db.SelectOne(&row, query, id);  err != nil {
+	if err := db.SelectOne(&row, query, id); err != nil {
 		return nil, err
 	}
 	return scanPipelineBuild(row)

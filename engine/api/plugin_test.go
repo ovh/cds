@@ -15,13 +15,13 @@ import (
 
 	"github.com/ovh/cds/sdk"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/actionplugin"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/stretchr/testify/assert"
-	"github.com/go-gorp/gorp"
 )
 
 const dummyBinaryFile = "https://dl.plik.ovh/file/cMG2Mda94p6b3aej/CdJscEKa16o5NnHt/dummy"
