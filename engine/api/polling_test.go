@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/gorilla/mux"

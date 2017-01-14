@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -22,17 +21,18 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/go-gorp/gorp"
 )
 
 const dummyBinaryFile = "https://dl.plik.ovh/file/cMG2Mda94p6b3aej/CdJscEKa16o5NnHt/dummy"
 
 func postFile(t *testing.T,
-	db *sql.DB,
+	db *gorp.DbMap,
 	filename string,
 	targetURL string,
 	method string,
-	handler func(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context),
-	check func(*testing.T, *sql.DB, *httptest.ResponseRecorder)) {
+	handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context),
+	check func(*testing.T, *gorp.DbMap, *httptest.ResponseRecorder)) {
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
@@ -162,7 +162,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 		return
 	}
 
-	postFile(t, db, path, "/plugin_test/TestAddPluginHandlerSuccess", "POST", addPluginHandler, func(t *testing.T, db *sql.DB, resp *httptest.ResponseRecorder) {
+	postFile(t, db, path, "/plugin_test/TestAddPluginHandlerSuccess", "POST", addPluginHandler, func(t *testing.T, db *gorp.DbMap, resp *httptest.ResponseRecorder) {
 		t.Logf("Code status : %d", resp.Code)
 		assert.Equal(t, 201, resp.Code)
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -216,7 +216,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 		return
 	}
 
-	postFile(t, db, path, "/plugin_test/TestAddPluginHandlerFailWithInvalidPlugin", "POST", addPluginHandler, func(t *testing.T, db *sql.DB, resp *httptest.ResponseRecorder) {
+	postFile(t, db, path, "/plugin_test/TestAddPluginHandlerFailWithInvalidPlugin", "POST", addPluginHandler, func(t *testing.T, db *gorp.DbMap, resp *httptest.ResponseRecorder) {
 		body, _ := ioutil.ReadAll(resp.Body)
 		t.Logf("Code status : %d", resp.Code)
 		t.Logf("Response : %s", string(body))
@@ -250,13 +250,13 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 		return
 	}
 
-	postFile(t, db, path, "/plugin_test/TestAddPluginHandlerFailWithConflict", "POST", addPluginHandler, func(t *testing.T, db *sql.DB, resp *httptest.ResponseRecorder) {
+	postFile(t, db, path, "/plugin_test/TestAddPluginHandlerFailWithConflict", "POST", addPluginHandler, func(t *testing.T, db *gorp.DbMap, resp *httptest.ResponseRecorder) {
 		body, _ := ioutil.ReadAll(resp.Body)
 		t.Logf("Code status : %d", resp.Code)
 		t.Logf("Response : %s", string(body))
 		assert.Equal(t, 201, resp.Code)
 
-		postFile(t, db, path, "/plugin_test/TestAddPluginHandlerFailWithConflictBis", "POST", addPluginHandler, func(t *testing.T, db *sql.DB, resp *httptest.ResponseRecorder) {
+		postFile(t, db, path, "/plugin_test/TestAddPluginHandlerFailWithConflictBis", "POST", addPluginHandler, func(t *testing.T, db *gorp.DbMap, resp *httptest.ResponseRecorder) {
 			body, _ := ioutil.ReadAll(resp.Body)
 			t.Logf("Code status : %d", resp.Code)
 			t.Logf("Response : %s", string(body))
@@ -293,7 +293,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	}
 
 	//First create the action
-	postFile(t, db, path, "/plugin_test/TestUpdatePluginHandlerSuccess_POST", "POST", addPluginHandler, func(t *testing.T, db *sql.DB, resp *httptest.ResponseRecorder) {
+	postFile(t, db, path, "/plugin_test/TestUpdatePluginHandlerSuccess_POST", "POST", addPluginHandler, func(t *testing.T, db *gorp.DbMap, resp *httptest.ResponseRecorder) {
 		t.Logf("Code status : %d", resp.Code)
 		assert.Equal(t, 201, resp.Code)
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -305,7 +305,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 			return
 		}
 		//Then update the action
-		postFile(t, db, path, "/plugin_test/TestUpdatePluginHandlerSuccess_PUT", "PUT", updatePluginHandler, func(t *testing.T, db *sql.DB, resp *httptest.ResponseRecorder) {
+		postFile(t, db, path, "/plugin_test/TestUpdatePluginHandlerSuccess_PUT", "PUT", updatePluginHandler, func(t *testing.T, db *gorp.DbMap, resp *httptest.ResponseRecorder) {
 			t.Logf("Code status : %d", resp.Code)
 			assert.Equal(t, 200, resp.Code)
 			body, _ := ioutil.ReadAll(resp.Body)
@@ -348,7 +348,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	}
 
 	//First create the action
-	postFile(t, db, path, "/plugin_test/TestDeletePluginHandlerSuccess_POST", "POST", addPluginHandler, func(t *testing.T, db *sql.DB, resp *httptest.ResponseRecorder) {
+	postFile(t, db, path, "/plugin_test/TestDeletePluginHandlerSuccess_POST", "POST", addPluginHandler, func(t *testing.T, db *gorp.DbMap, resp *httptest.ResponseRecorder) {
 		t.Logf("Code status : %d", resp.Code)
 		assert.Equal(t, 201, resp.Code)
 		body, _ := ioutil.ReadAll(resp.Body)

@@ -23,15 +23,14 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Loading all models
-	dbmap := database.DBMap(db)
-	models, err := worker.LoadWorkerModels(dbmap)
+	models, err := worker.LoadWorkerModels(db)
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(dbmap, m.ID); err != nil {
+		if err := worker.DeleteWorkerModel(db, m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -40,7 +39,7 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 
 func Test_addWorkerModelAsAdmin(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		t.FailNow()
 	}
@@ -89,7 +88,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 
 func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 
 	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
 	router.init()
@@ -197,7 +196,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 
 func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		t.FailNow()
 	}
@@ -246,7 +245,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 
 func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		t.FailNow()
 	}
@@ -299,7 +298,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 
 func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		t.FailNow()
 	}
@@ -361,7 +360,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 
 func Test_updateWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		t.FailNow()
 	}
@@ -450,7 +449,7 @@ func Test_updateWorkerModel(t *testing.T) {
 
 func Test_deleteWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		t.FailNow()
 	}
@@ -523,7 +522,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 func Test_getWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		t.FailNow()
 	}
@@ -587,7 +586,7 @@ func Test_getWorkerModel(t *testing.T) {
 
 func Test_getWorkerModels(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		t.FailNow()
 	}

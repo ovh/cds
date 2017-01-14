@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/test"
@@ -18,7 +17,6 @@ import (
 
 func Test_workerCheckingHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	dbmap := database.DBMap(db)
 
 	//1. Load all workers and hatcheries
 	workers, err := worker.LoadWorkers(db)
@@ -47,7 +45,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(dbmap, "Test1")
+	model, _ := worker.LoadWorkerModelByName(db, "Test1")
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -63,7 +61,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(dbmap, model); err != nil {
+		if err := worker.InsertWorkerModel(db, model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -114,7 +112,6 @@ func Test_workerCheckingHandler(t *testing.T) {
 
 func Test_workerWaitingHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	dbmap := database.DBMap(db)
 
 	//1. Load all workers and hatcheries
 	workers, err := worker.LoadWorkers(db)
@@ -143,7 +140,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(dbmap, "Test1")
+	model, _ := worker.LoadWorkerModelByName(db, "Test1")
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -159,7 +156,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(dbmap, model); err != nil {
+		if err := worker.InsertWorkerModel(db, model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}

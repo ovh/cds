@@ -53,7 +53,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 	assert.Equal(t, len(pip.Stages[0].Prerequisites), len(loadedPip.Stages[0].Prerequisites))
-	assert.Equal(t, len(pip.Stages[0].Actions), len(loadedPip.Stages[0].Actions))
+	assert.Equal(t, len(pip.Stages[0].Jobs), len(loadedPip.Stages[0].Jobs))
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -114,9 +114,9 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
-	assert.Equal(t, 1, len(loadedPip.Stages[0].Actions))
-	assert.Equal(t, script.Name, loadedPip.Stages[0].Actions[0].Name)
-	assert.Equal(t, true, loadedPip.Stages[0].Actions[0].Enabled)
+	assert.Equal(t, 1, len(loadedPip.Stages[0].Jobs))
+	assert.Equal(t, script.Name, loadedPip.Stages[0].Jobs[0].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[0].Jobs[0].Enabled)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -199,18 +199,18 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
-	assert.Equal(t, 0, len(loadedPip.Stages[0].Actions))
+	assert.Equal(t, 0, len(loadedPip.Stages[0].Jobs))
 
 	assert.Equal(t, pip.Stages[1].Name, loadedPip.Stages[1].Name)
 	assert.Equal(t, pip.Stages[1].Enabled, loadedPip.Stages[1].Enabled)
 	assert.Equal(t, 0, len(loadedPip.Stages[1].Prerequisites))
-	assert.Equal(t, 2, len(loadedPip.Stages[1].Actions))
+	assert.Equal(t, 2, len(loadedPip.Stages[1].Jobs))
 
-	assert.Equal(t, script.Name, loadedPip.Stages[1].Actions[0].Name)
-	assert.Equal(t, true, loadedPip.Stages[1].Actions[0].Enabled)
+	assert.Equal(t, script.Name, loadedPip.Stages[1].Jobs[0].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[1].Jobs[0].Enabled)
 
-	assert.Equal(t, script.Name, loadedPip.Stages[1].Actions[1].Name)
-	assert.Equal(t, true, loadedPip.Stages[1].Actions[1].Enabled)
+	assert.Equal(t, script.Name, loadedPip.Stages[1].Jobs[1].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[1].Jobs[1].Enabled)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -303,19 +303,19 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 
 	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
-	assert.Equal(t, 1, len(loadedPip.Stages[0].Actions))
+	assert.Equal(t, 1, len(loadedPip.Stages[0].Jobs))
 
 	assert.Equal(t, pip.Stages[1].Name, loadedPip.Stages[1].Name)
 	assert.Equal(t, pip.Stages[1].Enabled, loadedPip.Stages[1].Enabled)
 
 	assert.Equal(t, 2, len(loadedPip.Stages[1].Prerequisites))
-	assert.Equal(t, 1, len(loadedPip.Stages[1].Actions))
+	assert.Equal(t, 1, len(loadedPip.Stages[1].Jobs))
 
-	assert.Equal(t, script.Name, loadedPip.Stages[0].Actions[0].Name)
-	assert.Equal(t, true, loadedPip.Stages[0].Actions[0].Enabled)
+	assert.Equal(t, script.Name, loadedPip.Stages[0].Jobs[0].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[0].Jobs[0].Enabled)
 
-	assert.Equal(t, script1.Name, loadedPip.Stages[1].Actions[0].Name)
-	assert.Equal(t, true, loadedPip.Stages[1].Actions[0].Enabled)
+	assert.Equal(t, script1.Name, loadedPip.Stages[1].Jobs[0].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[1].Jobs[0].Enabled)
 
 	assert.Equal(t, 2, len(loadedPip.Stages[1].Prerequisites))
 
