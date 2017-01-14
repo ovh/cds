@@ -218,6 +218,9 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, worker *sdk.Worker) (*s
 		return nil, err
 	}
 
+	if err := pbJobGorp.PostSelect(db); err != nil {
+		return nil, err
+	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
 	return &pbJob, nil
 }
