@@ -530,6 +530,7 @@ func Test_SendPipeline(t *testing.T) {
 				},
 			},
 		}
+		cache.Initialize("local", "", "", 5)
 		err := notification.InsertOrUpdateUserNotificationSettings(db, app.ID, pip.ID, env.ID, &notif)
 		test.NoError(t, err)
 
@@ -545,8 +546,10 @@ func Test_SendPipeline(t *testing.T) {
 		err = tx.Commit()
 		test.NoError(t, err)
 
-		var event sdk.Event
-		cache.Dequeue("events", event)
+		var event *sdk.Event
+		cache.Dequeue("events", &event)
+		assert.Equal(t, event.EventType, "sdk.EventNotif", nil)
+		cache.Dequeue("events", &event)
 		assert.Equal(t, event.EventType, "sdk.EventPipelineBuild", nil)
 
 		err = pipeline.DeletePipelineBuild(db, pb.ID)
