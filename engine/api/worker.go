@@ -210,7 +210,7 @@ func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 
 	if wk.Status != sdk.StatusWaiting {
-		log.Warning("workerCheckingHandler> Worker %s cannot be Checking. Current status: %s", wk.Name, wk.Status)
+		log.Info("workerCheckingHandler> Worker %s cannot be Checking. Current status: %s", wk.Name, wk.Status)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
