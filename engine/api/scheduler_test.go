@@ -7,6 +7,7 @@ import (
 	"github.com/loopfz/gadgeto/iffy"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
@@ -17,7 +18,7 @@ import (
 func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler"}
 	router.init()
 
 	//Create admin user
@@ -96,7 +97,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_addSchedulerApplicationPipelineHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addSchedulerApplicationPipelineHandler"}
 	router.init()
 
 	//Create admin user
@@ -160,7 +161,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_updatechedulerApplicationPipelineHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updatechedulerApplicationPipelineHandler"}
 	router.init()
 
 	//Create admin user
@@ -225,7 +226,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 
 func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t)
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_deleteSchedulerApplicationPipelineHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteSchedulerApplicationPipelineHandler"}
 	router.init()
 
 	//Create admin user

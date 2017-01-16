@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/loopfz/gadgeto/iffy"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -20,7 +21,7 @@ import (
 func TestAddEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestAddEnvironmentHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -68,7 +69,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 func TestUpdateEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestUpdateEnvironmentHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -126,7 +127,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 func TestDeleteEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -177,7 +178,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 func TestGetEnvironmentsHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -221,7 +222,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 func TestGetEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -266,7 +267,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 func Test_cloneEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_cloneEnvironmentHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_cloneEnvironmentHandler"}
 	router.init()
 
 	//1. Create admin user
