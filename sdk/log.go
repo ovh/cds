@@ -12,10 +12,11 @@ type Log struct {
 	Timestamp       time.Time `json:"timestamp"`
 	Step            string    `json:"step"`
 	Value           string    `json:"value"`
+	StepOrder       int       `json:"step_order"`
 }
 
 // NewLog returns a log struct
-func NewLog(buildid int64, step string, value string, pipelineBuildID int64) *Log {
+func NewLog(buildid int64, step string, value string, pipelineBuildID int64, stepOrder int) *Log {
 	l := &Log{
 		ActionBuildID:   buildid,
 		Step:            step,

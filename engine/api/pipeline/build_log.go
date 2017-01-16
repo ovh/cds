@@ -41,7 +41,7 @@ func LoadLogs(db gorp.SqlExecutor, actionBuildID int64, tail int64, start int64)
 
 	for rows.Next() {
 		var l sdk.Log
-		err = rows.Scan(&l.ID, &l.ActionBuildID, &l.Timestamp, &l.Step, &l.Value, &l.PipelineBuildID)
+		err = rows.Scan(&l.ID, &l.ActionBuildID, &l.Timestamp, &l.Step, &l.Value, &l.PipelineBuildID, &l.StepOrder)
 		if err != nil {
 			return nil, err
 		}

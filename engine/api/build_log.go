@@ -120,7 +120,7 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	// add pipeline result
 	// Important for cli to known that build is finished
 	if pb.Status.String() == sdk.StatusFail.String() || pb.Status.String() == sdk.StatusSuccess.String() {
-		l := sdk.NewLog(0, "SYSTEM", fmt.Sprintf("Build finished with status: %s\n", pb.Status), pb.ID)
+		l := sdk.NewLog(0, "SYSTEM", fmt.Sprintf("Build finished with status: %s\n", pb.Status), pb.ID, 0)
 		pipelinelogs = append(pipelinelogs, *l)
 	}
 
