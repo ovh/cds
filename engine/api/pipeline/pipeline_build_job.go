@@ -286,19 +286,6 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 	}
 
 	event.PublishActionBuild(pb, pbJob)
-
-	if status == sdk.StatusFail || status == sdk.StatusDisabled || status == sdk.StatusSkipped {
-		var log string
-		switch status {
-		case sdk.StatusFail:
-			log = fmt.Sprintf("Action finished with status: %s\n", status)
-		case sdk.StatusDisabled:
-			log = fmt.Sprintf("Action disabled\n")
-		case sdk.StatusSkipped:
-			log = fmt.Sprintf("Action skipped\n")
-		}
-		return InsertLog(db, pbJob.ID, "SYSTEM", log, pbJob.PipelineBuildID)
-	}
 	return nil
 }
 

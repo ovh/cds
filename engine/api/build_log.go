@@ -249,7 +249,7 @@ func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 
 	for i := range logs {
-		if err := pipeline.InsertLog(db, logs[i].ActionBuildID, logs[i].Step, logs[i].Value, logs[i].PipelineBuildID); err != nil {
+		if err := pipeline.InsertLog(db, logs[i].ActionBuildID, logs[i].Step, logs[i].Value, logs[i].PipelineBuildID, logs[i].StepOrder); err != nil {
 			log.Warning("addBuildLogHandler> Cannot insert log line:  %s\n", err)
 			WriteError(w, r, err)
 			return

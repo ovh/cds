@@ -11,10 +11,10 @@ import (
 )
 
 // InsertLog insert build log into database
-func InsertLog(db database.Executer, actionBuildID int64, step string, value string, pbID int64) error {
-	query := `INSERT INTO build_log (action_build_id, timestamp, step, value, pipeline_build_id) VALUES ($1, $2, $3, $4, $5)`
+func InsertLog(db database.Executer, actionBuildID int64, step string, value string, pbID int64, stepOrder int) error {
+	query := `INSERT INTO build_log (action_build_id, timestamp, step, value, pipeline_build_id, step_order) VALUES ($1, $2, $3, $4, $5, $6)`
 
-	_, err := db.Exec(query, actionBuildID, time.Now(), step, value, pbID)
+	_, err := db.Exec(query, actionBuildID, time.Now(), step, value, pbID, stepOrder)
 	return err
 }
 

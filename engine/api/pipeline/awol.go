@@ -51,7 +51,7 @@ func killAWOLAction(db *gorp.DbMap, pbJobData awolPipelineBuildJob) error {
 	}
 	defer tx.Rollback()
 
-	InsertLog(tx, pbJobData.pipelineBuildJobID, "SYSTEM", "Killed (Reason: Timeout)\n", pbJobData.pieplineBuildID)
+	InsertLog(tx, pbJobData.pipelineBuildJobID, "SYSTEM", "Killed (Reason: Timeout)\n", pbJobData.pieplineBuildID, 0)
 	pbJob, errJob := GetPipelineBuildJob(tx, pbJobData.pipelineBuildJobID)
 	if errJob != nil {
 		return errJob
