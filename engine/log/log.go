@@ -6,13 +6,11 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
-	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database"
-
 	"github.com/spf13/viper"
+
+	"github.com/ovh/cds/engine/api/database"
 )
 
 func init() {
@@ -35,7 +33,6 @@ const (
 var (
 	logger Logger
 	level  Level
-	mu     sync.Mutex
 )
 
 // Logger defines the logs levels used by RamSQL engine
@@ -62,16 +59,17 @@ func Initialize() {
 	}
 }
 
+// SetLogger override private logger reference
+func SetLogger(l Logger) {
+	logger = l
+}
+
 // SetLevel controls the categories of logs written
 func SetLevel(lvl Level) {
-	mu.Lock()
 	level = lvl
-	mu.Unlock()
 }
 
 func lvl() Level {
-	mu.Lock()
-	defer mu.Unlock()
 	return level
 }
 
@@ -110,16 +108,12 @@ func Warning(format string, values ...interface{}) {
 
 // Critical prints error informations
 func Critical(format string, values ...interface{}) {
-	mu.Lock()
 	logger.Logf("[CRITICAL] "+format, values...)
-	mu.Unlock()
 }
 
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
-	mu.Lock()
 	logger.Logf("[FATAL] "+format, values...)
-	mu.Unlock()
 	os.Exit(1)
 }
 
@@ -130,16 +124,6 @@ type BaseLogger struct {
 // Logf logs on stdout
 func (l BaseLogger) Logf(fmt string, values ...interface{}) {
 	log.Printf(fmt, values...)
-}
-
-// TestLogger uses *testing.T as a backend for RamSQL logs
-type TestLogger struct {
-	t *testing.T
-}
-
-// Logf logs in testing log buffer
-func (l TestLogger) Logf(fmt string, values ...interface{}) {
-	l.t.Logf(fmt, values...)
 }
 
 // DatabaseLogger logs in database
@@ -156,7 +140,6 @@ type dblog struct {
 
 // Logf insert log into "system_log" table
 func (l DatabaseLogger) Logf(format string, values ...interface{}) {
-
 	go func() {
 		line := fmt.Sprintf(format, values...)
 		logged := time.Now()
@@ -186,11 +169,9 @@ func (l DatabaseLogger) logger() {
 
 // UseDatabaseLogger should be used only with proper database
 func UseDatabaseLogger(db *sql.DB) {
-	mu.Lock()
 	l := DatabaseLogger{db: db, logChan: make(chan dblog)}
 	go l.logger()
 	logger = l
-	mu.Unlock()
 }
 
 // RemovalRoutine removes logs older than 1 day from database
