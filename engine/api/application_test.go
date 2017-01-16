@@ -150,8 +150,19 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		case pip2.Name:
 			checkPip2 = true
 			assert.Equal(t, len(ap.Triggers), 2)
-			assert.Equal(t, ap.Triggers[0].ID, t1.ID)
-			assert.Equal(t, ap.Triggers[1].ID, t2.ID)
+			var t1Found, t2Found bool
+			for _, t := range ap.Triggers {
+				if t.ID == t1.ID {
+					t1Found = true
+					continue
+				}
+				if t.ID == t2.ID {
+					t2Found = true
+					continue
+				}
+			}
+			assert.True(t, t1Found, "Trigger %d not found", t1.ID)
+			assert.True(t, t2Found, "Trigger %d not found", t2.ID)
 		case pip3.Name:
 			checkPip3 = true
 			assert.Equal(t, len(ap.Triggers), 1)
