@@ -195,13 +195,16 @@ func TestLoadUserWithGroup(t *testing.T) {
 	}
 
 	project1 := &sdk.Project{
-		Key:  "foo",
+		Key:  test.RandomString(t, 10),
 		Name: "foo",
 	}
 	project2 := &sdk.Project{
-		Key:  "bar",
+		Key:  test.RandomString(t, 10),
 		Name: "bar",
 	}
+
+	project.DeleteProject(db, project1.Key)
+	project.DeleteProject(db, project2.Key)
 
 	err = project.InsertProject(db, project1)
 	if err != nil {
@@ -224,7 +227,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 	}
 
 	groupInsert := &sdk.Group{
-		Name: "GroupeFoo",
+		Name: test.RandomString(t, 10),
 	}
 
 	err = group.InsertGroup(db, groupInsert)
