@@ -43,9 +43,10 @@ var statusCmd = &cobra.Command{
 }
 
 var (
-	sqlMigrateDir    string
-	sqlMigrateDryRun bool
-	sqlMigrateLimit  int
+	sqlMigrateDir       string
+	sqlMigrateDryRun    bool
+	sqlMigrateLimitUp   int
+	sqlMigrateLimitDown int
 )
 
 func init() {
@@ -55,11 +56,11 @@ func init() {
 
 	upgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	upgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run upgrade")
-	upgradeCmd.Flags().IntVarP(&sqlMigrateLimit, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
+	upgradeCmd.Flags().IntVarP(&sqlMigrateLimitUp, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
 
 	downgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	downgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run downgrade")
-	downgradeCmd.Flags().IntVarP(&sqlMigrateLimit, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
+	downgradeCmd.Flags().IntVarP(&sqlMigrateLimitDown, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
 
 	statusCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 }
@@ -71,13 +72,13 @@ type statusRow struct {
 }
 
 func upgradeCmdFunc(cmd *cobra.Command, args []string) {
-	if err := ApplyMigrations(migrate.Up, sqlMigrateDryRun, sqlMigrateLimit); err != nil {
+	if err := ApplyMigrations(migrate.Up, sqlMigrateDryRun, sqlMigrateLimitUp); err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
 }
 
 func downgradeCmdFunc(cmd *cobra.Command, args []string) {
-	if err := ApplyMigrations(migrate.Down, sqlMigrateDryRun, sqlMigrateLimit); err != nil {
+	if err := ApplyMigrations(migrate.Down, sqlMigrateDryRun, sqlMigrateLimitDown); err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
 }

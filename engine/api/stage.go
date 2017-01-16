@@ -146,6 +146,7 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	if stageData.BuildOrder < 1 {
 		log.Warning("moveStageHandler> Build Order must be greater than 0")
 		WriteError(w, r, sdk.ErrWrongRequest)
+		return
 	}
 
 	// Check if pipeline exist
