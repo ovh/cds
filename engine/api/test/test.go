@@ -21,25 +21,29 @@ import (
 )
 
 //DBDriver is exported for testing purpose
-var DBDriver string
-var dbUser string
-var dbPassword string
-var dbName string
-var dbHost string
-var dbPort string
-var dbSSLMode string
+var (
+	DBDriver   string
+	dbUser     string
+	dbPassword string
+	dbName     string
+	dbHost     string
+	dbPort     string
+	dbSSLMode  string
+)
 
 func init() {
-	flag.StringVar(&DBDriver, "dbDriver", "", "driver")
-	flag.StringVar(&dbUser, "dbUser", "cds", "user")
-	flag.StringVar(&dbPassword, "dbPassword", "cds", "password")
-	flag.StringVar(&dbName, "dbName", "cds", "database name")
-	flag.StringVar(&dbHost, "dbHost", "localhost", "host")
-	flag.StringVar(&dbPort, "dbPort", "15432", "port")
-	flag.StringVar(&dbSSLMode, "sslMode", "disable", "ssl mode")
-	flag.Parse()
+	if flag.Lookup("dbDriver") == nil {
+		flag.StringVar(&DBDriver, "dbDriver", "", "driver")
+		flag.StringVar(&dbUser, "dbUser", "cds", "user")
+		flag.StringVar(&dbPassword, "dbPassword", "cds", "password")
+		flag.StringVar(&dbName, "dbName", "cds", "database name")
+		flag.StringVar(&dbHost, "dbHost", "localhost", "host")
+		flag.StringVar(&dbPort, "dbPort", "15432", "port")
+		flag.StringVar(&dbSSLMode, "sslMode", "disable", "ssl mode")
+		flag.Parse()
 
-	log.SetLevel(log.DebugLevel)
+		log.SetLevel(log.DebugLevel)
+	}
 }
 
 type bootstrap func(db *sql.DB) error

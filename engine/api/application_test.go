@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -21,7 +22,7 @@ import (
 func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestGetApplicationHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationHandler"}
 	router.init()
 
 	//1. Create admin user

@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -15,7 +16,7 @@ import (
 func Test_getPublicGroups(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_getPublicGroups"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getPublicGroups"}
 	router.init()
 
 	//Create group

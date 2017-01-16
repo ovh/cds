@@ -10,7 +10,7 @@ import (
 )
 
 func adminTruncateWarningsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	if _, err := db.Exec("truncate warning"); err != nil {
+	if _, err := db.Exec("delete from warning"); err != nil {
 		log.Warning("adminTruncateWarningsHandler> Unable to truncate warning : %s", err)
 		WriteError(w, r, err)
 	}
