@@ -44,8 +44,16 @@ func InsertTrigger(tx gorp.SqlExecutor, t *sdk.PipelineTrigger) error {
 	// Check we are not creating an infinite loop first
 	err := isTriggerLoopFree(tx, t, []parent{parent{AppID: t.SrcApplication.ID, PipID: t.SrcPipeline.ID, EnvID: t.SrcEnvironment.ID}})
 	if err != nil {
-		log.Warning("InsertTrigger: Infinite trigger loop found for trigger %s/%s/%s[%s] %s/%s/%s[%s]\n",
-			t.SrcProject.Name, t.SrcApplication.Name, t.SrcPipeline.Name, t.SrcEnvironment.Name, t.DestProject.Name, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
+		log.Warning("InsertTrigger: Infinite trigger loop found for trigger %s(%d)/%s(%d)/%s(%d)[%s(%d)] %s(%d)/%s(%d)/%s(%d)[%s(%d)]\n",
+			t.SrcProject.Name, t.SrcProject.ID,
+			t.SrcApplication.Name, t.SrcApplication.ID,
+			t.SrcPipeline.Name, t.SrcPipeline.ID,
+			t.SrcEnvironment.Name, t.SrcEnvironment.ID,
+			t.DestProject.Name, t.DestProject.ID,
+			t.DestApplication.Name, t.DestApplication.ID,
+			t.DestPipeline.Name, t.DestPipeline.ID,
+			t.DestEnvironment.Name, t.DestEnvironment.ID,
+		)
 		return err
 	}
 
@@ -83,13 +91,19 @@ type parent struct {
 }
 
 func isTriggerLoopFree(tx gorp.SqlExecutor, t *sdk.PipelineTrigger, parents []parent) error {
-
 	// First, check yourself
 	for _, p := range parents {
 		if t.DestApplication.ID == p.AppID &&
 			t.DestPipeline.ID == p.PipID &&
 			t.DestEnvironment.ID == p.EnvID {
-			log.Warning("isTriggerLoopFree: Infinite trigger loop found!\n")
+			log.Warning("isTriggerLoopFree: Infinite trigger loop found !\n")
+			log.Warning("isTriggerLoopFree: Infinite trigger loop found for trigger %s(%d)/%s(%d)[%s(%d)] (%d)/(%d)[(%d)]\n",
+				t.DestApplication.Name, t.DestApplication.ID,
+				t.DestPipeline.Name, t.DestPipeline.ID,
+				t.DestEnvironment.Name, t.DestEnvironment.ID,
+				p.AppID,
+				p.PipID,
+				p.EnvID)
 			return sdk.ErrInfiniteTriggerLoop
 		}
 	}
@@ -128,8 +142,7 @@ func InsertTriggerPrerequisite(db database.Executer, triggerID int64, paramName,
 }
 
 // UpdateTrigger update trigger data
-func UpdateTrigger(db gorp.SqlExecutor, t sdk.PipelineTrigger) error {
-
+func UpdateTrigger(db gorp.SqlExecutor, t *sdk.PipelineTrigger) error {
 	var srcEnvID sql.NullInt64
 	if t.SrcEnvironment.ID != 0 {
 		srcEnvID.Valid = true
@@ -143,8 +156,8 @@ func UpdateTrigger(db gorp.SqlExecutor, t sdk.PipelineTrigger) error {
 	}
 
 	// Check we are not creating an infinite loop first
-	if err := isTriggerLoopFree(db, &t, []parent{parent{AppID: t.SrcApplication.ID, PipID: t.SrcPipeline.ID, EnvID: t.SrcEnvironment.ID}}); err != nil {
-		log.Warning("InsertTrigger: Infinite trigger loop found for trigger %s/%s/%s[%s] %s/%s/%s[%s]\n",
+	if err := isTriggerLoopFree(db, t, []parent{parent{AppID: t.SrcApplication.ID, PipID: t.SrcPipeline.ID, EnvID: t.SrcEnvironment.ID}}); err != nil {
+		log.Warning("UpdateTrigger: Infinite trigger loop found for trigger %s/%s/%s[%s] %s/%s/%s[%s]\n",
 			t.SrcProject.Name, t.SrcApplication.Name, t.SrcPipeline.Name, t.SrcEnvironment.Name, t.DestProject.Name, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
 		return err
 	}
