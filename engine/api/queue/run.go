@@ -71,5 +71,5 @@ func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, p
 		return nil, err
 	}
 
-	return &pb, nil
+	return pb, nil
 }
