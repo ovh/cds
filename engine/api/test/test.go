@@ -61,7 +61,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 
 	log.SetLogger(t)
 	if DBDriver == "" {
-		t.Skip("This is should be run with a database")
+		t.Skip("This should be run with a database")
 		return nil
 	}
 	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=5000", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode)
