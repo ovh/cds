@@ -2,8 +2,6 @@ package keys
 
 import (
 	"testing"
-
-	_ "github.com/ovh/cds/engine/api/test"
 )
 
 func TestGenerateKeyPair(t *testing.T) {

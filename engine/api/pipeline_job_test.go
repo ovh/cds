@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -20,7 +21,7 @@ import (
 func TestAddJobHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -89,7 +90,7 @@ func TestAddJobHandler(t *testing.T) {
 func TestUpdateJobHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestUpdateJobHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateJobHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -172,7 +173,7 @@ func TestUpdateJobHandler(t *testing.T) {
 func TestDeleteJobHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestDeleteJobHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteJobHandler"}
 	router.init()
 
 	//1. Create admin user
