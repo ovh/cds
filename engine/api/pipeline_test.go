@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -42,7 +43,7 @@ func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project
 func Test_runPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -118,7 +119,7 @@ func Test_runPipelineHandler(t *testing.T) {
 func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
 	router.init()
 
 	//1. Create admin user

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -21,7 +22,7 @@ import (
 func TestAddTriggerHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -107,7 +108,7 @@ func TestAddTriggerHandler(t *testing.T) {
 func TestUpdateTriggerHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestUpdateTriggerHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateTriggerHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -201,7 +202,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 func TestRemoveTriggerHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestRemoveTriggerHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestRemoveTriggerHandler"}
 	router.init()
 
 	//1. Create admin user

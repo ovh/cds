@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -268,7 +269,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 func Test_getUserGroupsHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_getUserGroupsHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserGroupsHandler"}
 	router.init()
 
 	g1 := &sdk.Group{

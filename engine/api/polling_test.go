@@ -10,17 +10,18 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
-	test "github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -175,7 +176,7 @@ func TestAddPollerOnLinkedApplications(t *testing.T) {
 func TestAddPollerHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestAddPollerHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddPollerHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -246,7 +247,7 @@ func TestAddPollerHandler(t *testing.T) {
 func TestUpdatePollerHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestUpdatePollerHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdatePollerHandler"}
 	router.init()
 
 	//1. Crerouter.ate admin user
@@ -338,7 +339,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 
 func TestGetApplicationPollersHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestGetApplicationPollersHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationPollersHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -430,7 +431,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 func TestGetPollersHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler"}
 	router.init()
 
 	//1. Create admin user
@@ -521,7 +522,7 @@ func TestGetPollersHandler(t *testing.T) {
 func TestDeletePollerHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler"}
 	router.init()
 
 	//1. Create admin user

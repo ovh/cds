@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
@@ -85,7 +86,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_workerCheckingHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerCheckingHandler"}
 	router.init()
 
 	//Prepare request
@@ -182,7 +183,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	worker.SetStatus(db, workr.ID, sdk.StatusBuilding)
 
-	router = &Router{test.LocalAuth(t), mux.NewRouter(), "/Test_workerWaitingHandler"}
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerWaitingHandler"}
 	router.init()
 
 	//Prepare request

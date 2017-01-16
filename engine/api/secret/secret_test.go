@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 

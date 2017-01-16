@@ -4,20 +4,24 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
-	_ "github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestInsertWorker(t *testing.T) {
 	db := test.SetupPG(t)
 
+	workers, err := LoadWorkers(db)
+	test.NoError(t, err)
+	for _, w := range workers {
+		DeleteWorker(db, w.ID)
+	}
+
 	w := &sdk.Worker{
 		ID:   "foofoo",
 		Name: "foo.bar.io",
 	}
 
-	err := InsertWorker(db, w, 0)
-	if err != nil {
+	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 
@@ -26,18 +30,22 @@ func TestInsertWorker(t *testing.T) {
 func TestDeletetWorker(t *testing.T) {
 	db := test.SetupPG(t)
 
+	workers, err := LoadWorkers(db)
+	test.NoError(t, err)
+	for _, w := range workers {
+		DeleteWorker(db, w.ID)
+	}
+
 	w := &sdk.Worker{
-		ID:   "foofoo",
+		ID:   "foofoo_to_delete",
 		Name: "foo.bar.io",
 	}
 
-	err := InsertWorker(db, w, 0)
-	if err != nil {
+	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 
-	err = DeleteWorker(db, w.ID)
-	if err != nil {
+	if err = DeleteWorker(db, w.ID); err != nil {
 		t.Fatalf("Cannot delete worker: %s", err)
 	}
 }
@@ -45,24 +53,30 @@ func TestDeletetWorker(t *testing.T) {
 func TestLoadWorkers(t *testing.T) {
 	db := test.SetupPG(t)
 
-	w := &sdk.Worker{ID: "foo", Name: "aa.bar.io"}
+	workers, err := LoadWorkers(db)
+	test.NoError(t, err)
+	for _, w := range workers {
+		DeleteWorker(db, w.ID)
+	}
+
+	w := &sdk.Worker{ID: "foo1", Name: "aa.bar.io"}
 	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
-	w = &sdk.Worker{ID: "foo", Name: "zz.bar.io"}
+	w = &sdk.Worker{ID: "foo2", Name: "zz.bar.io"}
 	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
-	w = &sdk.Worker{ID: "foo", Name: "bb.bar.io"}
+	w = &sdk.Worker{ID: "foo3", Name: "bb.bar.io"}
 	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
-	w = &sdk.Worker{ID: "foo", Name: "aa.car.io"}
+	w = &sdk.Worker{ID: "foo4", Name: "aa.car.io"}
 	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 
-	workers, err := LoadWorkers(db)
+	workers, err = LoadWorkers(db)
 	if err != nil {
 		t.Fatalf("Cannot load workers: %s", err)
 	}
