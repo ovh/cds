@@ -573,7 +573,7 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 			return
 		}
 		if caller.Status != sdk.StatusChecking {
-			log.Warning("getQueueHandler> worker %s is not available to build (status = %s)\n", caller.ID, caller.Status)
+			log.Info("getQueueHandler> worker %s is not available to build (status = %s)\n", caller.ID, caller.Status)
 			WriteError(w, r, sdk.ErrInvalidID)
 			return
 		}
