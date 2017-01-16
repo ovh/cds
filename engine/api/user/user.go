@@ -229,24 +229,12 @@ func DeleteUserWithDependencies(db database.Executer, u *sdk.User) error {
 		return err
 	}
 
-	err = deleteUserKey(db, u)
-	if err != nil {
-		log.Warning("DeleteUserWithDependencies>Cannot remove user key: %s", err)
-		return err
-	}
-
 	err = deleteUser(db, u)
 	if err != nil {
 		log.Warning("DeleteUserWithDependencies> User cannot be removed from user table: %s", err)
 		return err
 	}
 	return nil
-}
-
-func deleteUserKey(db database.Executer, u *sdk.User) error {
-	query := `DELETE FROM "user_key" WHERE user_id=$1`
-	_, err := db.Exec(query, u.ID)
-	return err
 }
 
 func deleteUserFromUserGroup(db database.Executer, u *sdk.User) error {

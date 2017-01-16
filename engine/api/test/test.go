@@ -46,6 +46,8 @@ type bootstrap func(db *sql.DB) error
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *sql.DB {
+	log.SetLogger(t)
+
 	if DBDriver == "" {
 		t.Skip("This is should be run with a database")
 		return nil

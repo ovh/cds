@@ -312,13 +312,6 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 		return nil, err
 	}
 
-	if t.Expiration == sdk.Session {
-		if err := DeleteUserKey(tx, key); err != nil {
-			log.Warning("registerWorker> Cannot remove single use key: %s\n", err)
-			return nil, err
-		}
-	}
-
 	//If the worker is registered for a model and it gave us BinaryCapabilities...
 	if len(binaryCapabilities) > 0 && modelID != 0 {
 		go func() {
