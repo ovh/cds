@@ -29,14 +29,13 @@ func ReceiveEvents() {
 func processEvent(db database.Querier, event sdk.Event) error {
 	log.Debug("repositoriesmanager>processEvent> receive: type:%s all: %+v", event.EventType, event)
 
+	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
+		return nil
+	}
+
 	var eventpb sdk.EventPipelineBuild
-	if event.EventType == fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
-		if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-			log.Warning("Error during consumption: %s", err)
-			return nil
-		}
-	} else {
-		// skip all event != eventPipelineBuild
+	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
+		log.Warning("Error during consumption: %s", err)
 		return nil
 	}
 

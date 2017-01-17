@@ -173,7 +173,19 @@ var mainCmd = &cobra.Command{
 
 		cache.Initialize(viper.GetString("cache"), viper.GetString("redis_host"), viper.GetString("redis_password"), viper.GetInt("cache_ttl"))
 
-		go event.Routine()
+		kafkaOptions := event.KafkaConfig{
+			Enabled:         viper.GetBool("event_kafka_enabled"),
+			BrokerAddresses: viper.GetString("event_kafka_broker_addresses"),
+			User:            viper.GetString("event_kafka_user"),
+			Password:        viper.GetString("event_kafka_password"),
+			Topic:           viper.GetString("event_kafka_topic"),
+		}
+		if err := event.Initialize(kafkaOptions); err != nil {
+			log.Warning("⚠ Error while initialize event system")
+		} else {
+			go event.DequeueEvent()
+		}
+
 		go archivist.Archive(viper.GetInt("interval_archive_seconds"), viper.GetInt("archived_build_hours"))
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller()
@@ -564,6 +576,9 @@ func init() {
 
 	flags.Int("session-ttl", 60, "Session Time to Live (minutes)")
 	viper.BindPFlag("session_ttl", flags.Lookup("session-ttl"))
+
+	flags.Bool("event-kafka-enabled", false, "Enable Event over Kafka")
+	viper.BindPFlag("event_kafka_enabled", flags.Lookup("event-kafka-enabled"))
 
 	flags.String("event-kafka-broker-addresses", "", "Ex: --event-kafka-broker-addresses=host:port,host2:port2")
 	viper.BindPFlag("event_kafka_broker_addresses", flags.Lookup("event-kafka-broker-addresses"))

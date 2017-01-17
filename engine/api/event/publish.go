@@ -40,7 +40,7 @@ func PublishActionBuild(pb *sdk.PipelineBuild, ab *sdk.ActionBuild) {
 		Queued:          ab.Queued.Unix(),
 		Start:           ab.Start.Unix(),
 		Done:            ab.Done.Unix(),
-		Model:           ab.Model,
+		ModelName:       ab.Model,
 		PipelineName:    pb.Pipeline.Name,
 		PipelineType:    pb.Pipeline.Type,
 		ProjectKey:      pb.Pipeline.ProjectKey,

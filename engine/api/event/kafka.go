@@ -14,77 +14,83 @@ import (
 
 var producer sarama.SyncProducer
 
-// Close close event system
-func Close() {
-	closeKafka()
+// KafkaClient enbeddes the Kafka connecion
+type KafkaClient struct {
+	options  KafkaConfig
+	producer sarama.SyncProducer
 }
 
-func kafkaRoutine() bool {
-	if viper.GetString("event_kafka_broker_addresses") == "" ||
-		viper.GetString("event_kafka_user") == "" ||
-		viper.GetString("event_kafka_password") == "" ||
-		viper.GetString("event_kafka_topic") == "" {
-		log.Debug("initKafka> No Kafka configured")
-		return false
-	}
-
-	var errI error
-	producer, errI = initProducer(
-		viper.GetString("event_kafka_broker_addresses"),
-		viper.GetString("event_kafka_user"),
-		viper.GetString("event_kafka_password"),
-		viper.GetString("event_kafka_topic"),
-		log.Info)
-
-	if errI != nil {
-		log.Warning("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", errI.Error(), viper.GetString("event_kafka_broker_addresses"), viper.GetString("event_kafka_user"))
-		return false
-	}
-
-	return true
+// KafkaConfig handles all config to connect to Kafka
+type KafkaConfig struct {
+	Enabled         bool
+	BrokerAddresses string
+	User            string
+	Password        string
+	Topic           string
 }
 
-// closeKafka closes producer
-func closeKafka() {
-	if producer != nil {
-		if err := producer.Close(); err != nil {
+// initialize returns broker, isInit and err if
+func (c *KafkaClient) initialize(options interface{}) (Broker, error) {
+	conf, ok := options.(KafkaConfig)
+	if !ok {
+		return nil, fmt.Errorf("Invalid Kafka Initialization")
+	}
+
+	if conf.BrokerAddresses == "" ||
+		conf.User == "" ||
+		conf.Password == "" ||
+		conf.Topic == "" {
+		return nil, fmt.Errorf("initKafka> Invalid Kafka Configuration")
+	}
+
+	if err := c.initProducer(); err != nil {
+		return nil, fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", err.Error(), viper.GetString("event_kafka_broker_addresses"), viper.GetString("event_kafka_user"))
+	}
+
+	return c, nil
+}
+
+// close closes producer
+func (c *KafkaClient) close() {
+	if c.producer != nil {
+		if err := c.producer.Close(); err != nil {
 			log.Warning("closeKafka> Error while closing kafka producer:%s", err.Error())
 		}
 	}
 }
 
 // initProducer initializes kafka producer
-// producer could be nil
-func initProducer(brokerAddresses, user, password, topic string, InfoLogFunc func(string, ...interface{})) (sarama.SyncProducer, error) {
+func (c *KafkaClient) initProducer() error {
 	var config = sarama.NewConfig()
 	config.Net.TLS.Enable = true
 	config.Net.SASL.Enable = true
-	config.Net.SASL.User = user
-	config.Net.SASL.Password = password
-	config.ClientID = user
+	config.Net.SASL.User = c.options.User
+	config.Net.SASL.Password = c.options.Password
+	config.ClientID = c.options.User
 	config.Producer.Return.Successes = true
 
-	producer, errp := sarama.NewSyncProducer(strings.Split(brokerAddresses, ","), config)
+	producer, errp := sarama.NewSyncProducer(strings.Split(c.options.BrokerAddresses, ","), config)
 	if errp != nil {
-		return nil, fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", errp.Error(), brokerAddresses, user)
+		return fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", errp.Error(), c.options.BrokerAddresses, c.options.User)
 	}
 
-	InfoLogFunc("initKafka> Kafka used at %s on topic:%s", brokerAddresses, topic)
-	return producer, nil
+	log.Info("initKafka> Kafka used at %s on topic:%s", c.options.BrokerAddresses, c.options.Topic)
+	c.producer = producer
+	return nil
 }
 
 // sendOnKafkaTopic send a hook on a topic kafka
-func sendOnKafkaTopic(producer sarama.SyncProducer, topic string, event *sdk.Event, DebugLogFunc func(string, ...interface{})) error {
+func (c *KafkaClient) sendEvent(event *sdk.Event) error {
 	data, errm := json.Marshal(event)
 	if errm != nil {
 		return errm
 	}
 
-	msg := &sarama.ProducerMessage{Topic: topic, Value: sarama.ByteEncoder(data)}
-	partition, offset, errs := producer.SendMessage(msg)
+	msg := &sarama.ProducerMessage{Topic: c.options.Topic, Value: sarama.ByteEncoder(data)}
+	partition, offset, errs := c.producer.SendMessage(msg)
 	if errs != nil {
 		return errs
 	}
-	DebugLogFunc("Event %+v sent to topic %s partition %d offset %d", event, topic, partition, offset)
+	log.Debug("Event %+v sent to topic %s partition %d offset %d", event, c.options.Topic, partition, offset)
 	return nil
 }
