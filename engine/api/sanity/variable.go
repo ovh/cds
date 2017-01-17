@@ -1,9 +1,9 @@
 package sanity
 
 import (
-	"fmt"
 	"regexp"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
@@ -12,7 +12,7 @@ import (
 )
 
 //checkGitVariables needs full loaded project, pipeline
-func checkGitVariables(db database.Querier, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) []sdk.Warning {
+func checkGitVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) []sdk.Warning {
 	var warnings []sdk.Warning
 
 	var foundGitURLVar bool
@@ -25,8 +25,6 @@ func checkGitVariables(db database.Querier, vars []string, p *sdk.Project, pip *
 	//Usage of git.url should be considered only for linked application
 	//Usage of git.url should be considered with keys
 	if foundGitURLVar {
-		fmt.Println("foundGitURLVar")
-
 		//Check key at project level
 		var hasKey bool
 		for _, v := range p.Variable {
@@ -37,15 +35,11 @@ func checkGitVariables(db database.Querier, vars []string, p *sdk.Project, pip *
 		}
 		//Check key at application level
 		if !hasKey {
-			fmt.Println("foundGitURLVar")
 		loopApp:
 			for _, a := range p.Applications {
-				fmt.Println("Check app ", a.Name)
 				ok, _ := application.IsAttached(db, p.ID, a.ID, pip.Name)
 				if ok {
-					fmt.Println("App is attached to ", a.Name, pip.Name)
 					for _, v := range a.Variable {
-						fmt.Println("Checkin Key", v.Name)
 						if v.Type == sdk.KeyVariable {
 							hasKey = true
 							break loopApp
@@ -56,7 +50,6 @@ func checkGitVariables(db database.Querier, vars []string, p *sdk.Project, pip *
 		}
 
 		if !hasKey {
-			fmt.Println("There is no key")
 			w := sdk.Warning{
 				ID: GitURLWithoutKey,
 				MessageParam: map[string]string{
