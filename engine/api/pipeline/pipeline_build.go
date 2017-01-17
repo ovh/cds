@@ -88,7 +88,7 @@ func LoadBuildingPipelines(db gorp.SqlExecutor) ([]sdk.PipelineBuild, error) {
 // less than a minute ago
 func LoadRecentPipelineBuild(db gorp.SqlExecutor, args ...FuncArg) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
-		WHERE pb.status = $1 OR (pb.status != $1 AND pb.done > NOW() - INTERVAL '1 minutes')
+		WHERE pb.status = $1 OR (pb.status != $1 AND pb.done > NOW() -  INTERVAL '1 minutes')
 		ORDER by pb.id ASC
 	`
 	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
