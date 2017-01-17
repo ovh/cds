@@ -31,6 +31,8 @@ const (
 	IncompatibleBinaryAndModelRequirements
 	IncompatibleServiceAndModelRequirements
 	IncompatibleMemoryAndModelRequirements
+	GitURLWithoutLinkedRepository
+	GitURLWithoutKey
 )
 
 var messageAmericanEnglish = map[int64]string{
@@ -45,6 +47,8 @@ var messageAmericanEnglish = map[int64]string{
 	IncompatibleBinaryAndModelRequirements:  `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} does not have the binary '{{index . "BinaryRequirement"}}' capability`,
 	IncompatibleServiceAndModelRequirements: `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} cannot be linked to service '{{index . "ServiceRequirement"}}'`,
 	IncompatibleMemoryAndModelRequirements:  `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} cannot handle memory requirement`,
+	GitURLWithoutLinkedRepository:           `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} is used but one one more applications are linked to any repository. Git clone will failed`,
+	GitURLWithoutKey:                        `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} is used but no ssh key were found. Git clone will failed`,
 }
 
 func processWarning(w *sdk.Warning, acceptedlanguage string) error {
@@ -366,10 +370,7 @@ func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, a
 	}
 	warnings = append(warnings, w...)
 
-	pvars, avars, evars, badvars, err := loadUsedVariables(tx, a)
-	if err != nil {
-		return nil, fmt.Errorf("CheckAction> loadUsedVariables> %s", err)
-	}
+	pvars, avars, evars, gitvars, badvars := loadUsedVariables(a)
 
 	// Add warning for all badly formatted variables
 	for _, v := range badvars {
@@ -403,6 +404,9 @@ func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, a
 	if err != nil {
 		return nil, fmt.Errorf("CheckAction> checkApplicationVariables> %s", err)
 	}
+	warnings = append(warnings, w...)
+
+	warnings = checkGitVariables(tx, gitvars, project, pip, a)
 	warnings = append(warnings, w...)
 
 	return warnings, nil

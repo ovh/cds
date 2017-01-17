@@ -935,8 +935,8 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	w.WriteHeader(http.StatusOK)
 }
 
-func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
-
+//Actually this handler take a sdk.action in payload but should take a sdk.job payload
+func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -965,7 +965,7 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		return
 	}
 
-	proj, err := project.LoadProject(db, projectKey, c.User)
+	proj, err := project.LoadProject(db, projectKey, c.User, project.WithVariables(), project.WithApplications(1))
 	if err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, err)
 		WriteError(w, r, sdk.ErrNoProject)
@@ -1039,7 +1039,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
 
-	proj, err := project.LoadProject(db, key, c.User)
+	proj, err := project.LoadProject(db, key, c.User, project.WithVariables(), project.WithApplications(1))
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot load project %s: %s\n", key, err)
 		WriteError(w, r, sdk.ErrNoProject)

@@ -1,9 +1,8 @@
 package sanity
 
 import (
+	"fmt"
 	"regexp"
-
-	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -12,17 +11,122 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadUsedVariables(tx gorp.SqlExecutor, a *sdk.Action) ([]string, []string, []string, []string, error) {
-	projectVarReg := regexp.MustCompile(`{{\.cds\.proj\.(.*?)}}`)
-	appVarReg := regexp.MustCompile(`{{\.cds\.app\.(.*?)}}`)
-	envVarReg := regexp.MustCompile(`{{\.cds\.env\.(.*?)}}`)
-	badVarReg := regexp.MustCompile(`{{cds.*}}`)
-	var pvars, avars, evars, badvars []string
-	var pmap, amap, emap, badmap map[string]int
-	pmap = make(map[string]int)
-	amap = make(map[string]int)
-	emap = make(map[string]int)
-	badmap = make(map[string]int)
+//checkGitVariables needs full loaded project, pipeline
+func checkGitVariables(db database.Querier, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) []sdk.Warning {
+	var warnings []sdk.Warning
+
+	var foundGitURLVar bool
+	for _, v := range vars {
+		if v == "url" {
+			foundGitURLVar = true
+		}
+	}
+
+	//Usage of git.url should be considered only for linked application
+	//Usage of git.url should be considered with keys
+	if foundGitURLVar {
+		fmt.Println("foundGitURLVar")
+
+		//Check key at project level
+		var hasKey bool
+		for _, v := range p.Variable {
+			if v.Type == sdk.KeyVariable {
+				hasKey = true
+				break
+			}
+		}
+		//Check key at application level
+		if !hasKey {
+			fmt.Println("foundGitURLVar")
+		loopApp:
+			for _, a := range p.Applications {
+				fmt.Println("Check app ", a.Name)
+				ok, _ := application.IsAttached(db, p.ID, a.ID, pip.Name)
+				if ok {
+					fmt.Println("App is attached to ", a.Name, pip.Name)
+					for _, v := range a.Variable {
+						fmt.Println("Checkin Key", v.Name)
+						if v.Type == sdk.KeyVariable {
+							hasKey = true
+							break loopApp
+						}
+					}
+				}
+			}
+		}
+
+		if !hasKey {
+			fmt.Println("There is no key")
+			w := sdk.Warning{
+				ID: GitURLWithoutKey,
+				MessageParam: map[string]string{
+					"ActionName":   a.Name,
+					"PipelineName": pip.Name,
+					"ProjectKey":   p.Key,
+				},
+			}
+			w.Action.ID = a.ID
+			warnings = append(warnings, w)
+		}
+
+		if len(p.ReposManager) == 0 {
+			w := sdk.Warning{
+				ID: GitURLWithoutLinkedRepository,
+				MessageParam: map[string]string{
+					"ActionName":   a.Name,
+					"PipelineName": pip.Name,
+					"ProjectKey":   p.Key,
+				},
+			}
+			w.Action.ID = a.ID
+			warnings = append(warnings, w)
+		} else {
+			for _, a := range p.Applications {
+				ok, _ := application.IsAttached(db, p.ID, a.ID, pip.Name)
+				if ok {
+					if a.RepositoriesManager == nil || a.RepositoryFullname == "" {
+						w := sdk.Warning{
+							ID: GitURLWithoutLinkedRepository,
+							MessageParam: map[string]string{
+								"ActionName":   a.Name,
+								"PipelineName": pip.Name,
+								"ProjectKey":   p.Key,
+							},
+						}
+						w.Action.ID = a.ID
+						warnings = append(warnings, w)
+					}
+				}
+			}
+		}
+	}
+
+	return warnings
+}
+
+// loadUsedVariables browse all parameters of an action and returns
+// - project variables used in this actions and all its children
+// - application variables used in this actions and all its children
+// - environment variables used in this actions and all its children
+// - git variables used in this actions and all its children
+// - mal formated variables used in this actions and all its children
+
+var (
+	projectVarReg = regexp.MustCompile(`{{\.cds\.proj\.(.*?)}}`)
+	appVarReg     = regexp.MustCompile(`{{\.cds\.app\.(.*?)}}`)
+	envVarReg     = regexp.MustCompile(`{{\.cds\.env\.(.*?)}}`)
+	gitVarReg     = regexp.MustCompile(`{{\.git\.(.*?)}}`)
+	badVarReg     = regexp.MustCompile(`({{cds.*}})|({{ .?cds.*}})|({{git.*}})|({{ .?git.*}})`)
+)
+
+func loadUsedVariables(a *sdk.Action) ([]string, []string, []string, []string, []string) {
+	var pvars, avars, evars, gitvars, badvars []string
+
+	pmap := make(map[string]int)
+	amap := make(map[string]int)
+	emap := make(map[string]int)
+	gitmap := make(map[string]int)
+	badmap := make(map[string]int)
 
 	for _, p := range a.Parameters {
 		allloc := projectVarReg.FindAllIndex([]byte(p.Value), -1)
@@ -40,6 +144,11 @@ func loadUsedVariables(tx gorp.SqlExecutor, a *sdk.Action) ([]string, []string, 
 			match := p.Value[loc[0]+len("{{.cds.env.") : loc[1]-2]
 			emap[match] = 1
 		}
+		allloc = gitVarReg.FindAllIndex([]byte(p.Value), -1)
+		for _, loc := range allloc {
+			match := p.Value[loc[0]+len("{{.git.") : loc[1]-2]
+			gitmap[match] = 1
+		}
 		allloc = badVarReg.FindAllIndex([]byte(p.Value), -1)
 		for _, loc := range allloc {
 			match := p.Value[loc[0]:loc[1]]
@@ -48,10 +157,7 @@ func loadUsedVariables(tx gorp.SqlExecutor, a *sdk.Action) ([]string, []string, 
 	}
 
 	for _, child := range a.Actions {
-		cpvars, cavars, cevars, cbadvars, err := loadUsedVariables(tx, &child)
-		if err != nil {
-			return nil, nil, nil, nil, err
-		}
+		cpvars, cavars, cevars, cgitvars, cbadvars := loadUsedVariables(&child)
 		for _, v := range cpvars {
 			pmap[v] = 1
 		}
@@ -63,6 +169,9 @@ func loadUsedVariables(tx gorp.SqlExecutor, a *sdk.Action) ([]string, []string, 
 		}
 		for _, v := range cbadvars {
 			badmap[v] = 1
+		}
+		for _, v := range cgitvars {
+			gitmap[v] = 1
 		}
 	}
 
@@ -78,8 +187,11 @@ func loadUsedVariables(tx gorp.SqlExecutor, a *sdk.Action) ([]string, []string, 
 	for key := range badmap {
 		badvars = append(badvars, key)
 	}
+	for key := range gitmap {
+		gitvars = append(gitvars, key)
+	}
 
-	return pvars, avars, evars, badvars, nil
+	return pvars, avars, evars, gitvars, badvars
 }
 
 // For each project variable used, check it's present in project variables
@@ -147,7 +259,6 @@ func checkApplicationVariables(db gorp.SqlExecutor, vars []string, project *sdk.
 			}
 
 			if !found {
-				log.Warning("Variable %s was not found in application %s/%s !\n", m, project.Key, app.Name)
 				w := sdk.Warning{
 					ID: ApplicationVariableDoesNotExist,
 					MessageParam: map[string]string{
