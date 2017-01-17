@@ -19,6 +19,7 @@ func checkGitVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, pip *
 	for _, v := range vars {
 		if v == "url" {
 			foundGitURLVar = true
+			break
 		}
 	}
 
@@ -109,7 +110,7 @@ var (
 	appVarReg     = regexp.MustCompile(`{{\.cds\.app\.(.*?)}}`)
 	envVarReg     = regexp.MustCompile(`{{\.cds\.env\.(.*?)}}`)
 	gitVarReg     = regexp.MustCompile(`{{\.git\.(.*?)}}`)
-	badVarReg     = regexp.MustCompile(`({{cds.*}})|({{ .?cds.*}})|({{git.*}})|({{ .?git.*}})`)
+	badVarReg     = regexp.MustCompile(`({{cds.*}})|({{ .*}})|({{.* }})`)
 )
 
 func loadUsedVariables(a *sdk.Action) ([]string, []string, []string, []string, []string) {

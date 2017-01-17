@@ -11,6 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
@@ -357,10 +358,18 @@ func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, a
 		return nil, err
 	}
 
+	for _, app := range project.Applications {
+		app.Variable, err = application.GetAllVariable(tx, project.Key, app.Name)
+		if err != nil {
+			log.Warning("CheckAction> Unable to load application variable : %s", err)
+			return nil, err
+		}
+	}
+
 	// Load registered worker model
 	wms, err := worker.LoadWorkerModels(tx)
 	if err != nil {
-		log.Warning("CheckActionRequirements> Cannot LoadWorkerModels")
+		log.Warning("CheckAction> Cannot LoadWorkerModels")
 		return nil, err
 	}
 
