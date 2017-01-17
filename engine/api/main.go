@@ -81,6 +81,16 @@ var mainCmd = &cobra.Command{
 				log.Critical("Cannot setup databases: %s\n", err)
 			}
 
+			if err = bootstrap.MigratePipelineBuild(db); err != nil {
+				log.Critical("Cannot migrate pipeline build: %s\n", err)
+				os.Exit(1)
+			}
+
+			if err := bootstrap.MigratePipelineHistory(db); err != nil {
+				log.Critical("Cannot migrate pipeline history: %s\n", err)
+				os.Exit(1)
+			}
+
 			// Gracefully shutdown sql connections
 			c := make(chan os.Signal, 1)
 			signal.Notify(c, os.Interrupt)

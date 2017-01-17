@@ -86,3 +86,13 @@ func NewStringParameter(s string) (Parameter, error) {
 
 	return p, nil
 }
+
+// AddParameter append a parameter in a parameter array
+func AddParameter(array *[]Parameter, name string, parameterType ParameterType, value string) {
+	params := append(*array, Parameter{
+		Name:  name,
+		Value: value,
+		Type:  parameterType,
+	})
+	*array = params
+}

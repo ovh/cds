@@ -88,7 +88,7 @@ func LoadBuildingPipelines(db gorp.SqlExecutor) ([]sdk.PipelineBuild, error) {
 // less than a minute ago
 func LoadRecentPipelineBuild(db gorp.SqlExecutor, args ...FuncArg) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
-		WHERE pb.status = $1 OR (pb.status != $1 AND pb.done > NOW() - INTERVAL '1 minutes')
+		WHERE pb.status = $1 OR (pb.status != $1 AND pb.done > NOW() -  INTERVAL '1 minutes')
 		ORDER by pb.id ASC
 	`
 	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
@@ -428,15 +428,20 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 }
 
 // InsertPipelineBuild insert build informations in database so Scheduler can pick it up
-func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipeline, applicationData *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (sdk.PipelineBuild, error) {
+func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipeline, app *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (*sdk.PipelineBuild, error) {
 	var buildNumber int64
 	var pb sdk.PipelineBuild
 	var client sdk.RepositoriesManagerClient
 
+	//Initialize client for repository manager
+	if app.RepositoriesManager != nil && app.RepositoryFullname != "" {
+		client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, app.RepositoriesManager.Name)
+	}
+
 	// Load last finished build
-	buildNumber, err := GetLastBuildNumber(tx, p.ID, applicationData.ID, env.ID)
+	buildNumber, err := GetLastBuildNumber(tx, p.ID, app.ID, env.ID)
 	if err != nil && err != sql.ErrNoRows {
-		return pb, err
+		return nil, err
 	}
 	pb.BuildNumber = buildNumber + 1
 
@@ -449,89 +454,51 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	pb.Version = version
 	if pb.Version <= 0 ||
 		trigger.ParentPipelineBuild == nil ||
-		(applicationData.ID != trigger.ParentPipelineBuild.Application.ID && p.Type == sdk.BuildPipeline) {
-		log.Debug("InsertPipelineBuild: Set version to buildnumber (provided: %d), has parent (%t), appID (%d)", version, trigger.ParentPipelineBuild != nil, applicationData.ID)
+		(app.ID != trigger.ParentPipelineBuild.Application.ID && p.Type == sdk.BuildPipeline) {
+		log.Debug("InsertPipelineBuild: Set version to buildnumber (provided: %d), has parent (%t), appID (%d)", version, trigger.ParentPipelineBuild != nil, app.ID)
 		pb.Version = pb.BuildNumber
 	}
+	sdk.AddParameter(&params, "cds.pipeline", sdk.StringParameter, p.Name)
+	sdk.AddParameter(&params, "cds.project", sdk.StringParameter, p.ProjectKey)
+	sdk.AddParameter(&params, "cds.application", sdk.StringParameter, app.Name)
+	sdk.AddParameter(&params, "cds.environment", sdk.StringParameter, env.Name)
+	sdk.AddParameter(&params, "cds.buildNumber", sdk.StringParameter, strconv.FormatInt(pb.BuildNumber, 10))
+	sdk.AddParameter(&params, "cds.version", sdk.StringParameter, strconv.FormatInt(pb.Version, 10))
 
-	params = append(params, sdk.Parameter{
-		Name:  "cds.pipeline",
-		Value: p.Name,
-		Type:  sdk.StringParameter,
-	})
-	params = append(params, sdk.Parameter{
-		Name:  "cds.project",
-		Value: p.ProjectKey,
-		Type:  sdk.StringParameter,
-	})
-	params = append(params, sdk.Parameter{
-		Name:  "cds.application",
-		Value: applicationData.Name,
-		Type:  sdk.StringParameter,
-	})
-	params = append(params, sdk.Parameter{
-		Name:  "cds.environment",
-		Value: env.Name,
-		Type:  sdk.StringParameter,
-	})
-	params = append(params, sdk.Parameter{
-		Name:  "cds.buildNumber",
-		Value: strconv.FormatInt(pb.BuildNumber, 10),
-		Type:  sdk.StringParameter,
-	})
-	params = append(params, sdk.Parameter{
-		Name:  "cds.version",
-		Value: strconv.FormatInt(pb.Version, 10),
-		Type:  sdk.StringParameter,
-	})
-	if pb.Trigger.TriggeredBy != nil {
-		//Load user information to store them as args
-		params = append(params, sdk.Parameter{
-			Name:  "cds.triggered_by.username",
-			Value: pb.Trigger.TriggeredBy.Username,
-			Type:  sdk.StringParameter,
-		})
-		params = append(params, sdk.Parameter{
-			Name:  "cds.triggered_by.fullname",
-			Value: pb.Trigger.TriggeredBy.Fullname,
-			Type:  sdk.StringParameter,
-		})
-		params = append(params, sdk.Parameter{
-			Name:  "cds.triggered_by.email",
-			Value: pb.Trigger.TriggeredBy.Email,
-			Type:  sdk.StringParameter,
-		})
+	if client != nil {
+		repo, err := client.RepoByFullname(app.RepositoryFullname)
+		if err != nil {
+			log.Warning("InsertPipelineBuild> Unable to get repository %s from %s : %s", app.RepositoriesManager.Name, app.RepositoryFullname, err)
+			return nil, err
+		}
+		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
+		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
 	}
 
+	if pb.Trigger.TriggeredBy != nil {
+		//Load user information to store them as args
+		sdk.AddParameter(&params, "cds.triggered_by.username", sdk.StringParameter, pb.Trigger.TriggeredBy.Username)
+		sdk.AddParameter(&params, "cds.triggered_by.fullname", sdk.StringParameter, pb.Trigger.TriggeredBy.Fullname)
+		sdk.AddParameter(&params, "cds.triggered_by.email", sdk.StringParameter, pb.Trigger.TriggeredBy.Email)
+	}
+
+	//Set git.Branch and git.Hash
 	if pb.Trigger.VCSChangesBranch != "" {
-		// child inherit git.branch from parent
-		params = append(params, sdk.Parameter{
-			Name:  "git.branch",
-			Value: pb.Trigger.VCSChangesBranch,
-			Type:  sdk.StringParameter,
-		})
-		// child inherit git.hash from parent
-		params = append(params, sdk.Parameter{
-			Name:  "git.hash",
-			Value: pb.Trigger.VCSChangesHash,
-			Type:  sdk.StringParameter,
-		})
+		sdk.AddParameter(&params, "git.branch", sdk.StringParameter, pb.Trigger.VCSChangesBranch)
+		sdk.AddParameter(&params, "git.hash", sdk.StringParameter, pb.Trigger.VCSChangesHash)
 	} else {
 		//We consider default branch is master
 		defautlBranch := "master"
 		lastGitHash := map[string]string{}
-		if applicationData.RepositoriesManager != nil && applicationData.RepositoryFullname != "" {
-			client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, applicationData.RepositoriesManager.Name)
-			if client != nil {
-				branches, _ := client.Branches(applicationData.RepositoryFullname)
-				for _, b := range branches {
-					//If application is linked to a repository manager, we try to found de default branch
-					if b.Default {
-						defautlBranch = b.DisplayID
-					}
-					//And we store LatestCommit for each branches
-					lastGitHash[b.DisplayID] = b.LatestCommit
+		if client != nil {
+			branches, _ := client.Branches(app.RepositoryFullname)
+			for _, b := range branches {
+				//If application is linked to a repository manager, we try to found de default branch
+				if b.Default {
+					defautlBranch = b.DisplayID
 				}
+				//And we store LatestCommit for each branches
+				lastGitHash[b.DisplayID] = b.LatestCommit
 			}
 		}
 
@@ -553,41 +520,40 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 		if !found {
 			//If git.branch was not found is pipeline parameters, we set de previously found defaultBranch
-			params = append(params, sdk.Parameter{
-				Name:  "git.branch",
-				Value: defautlBranch,
-				Type:  sdk.StringParameter,
-			})
+			sdk.AddParameter(&params, "git.branch", sdk.StringParameter, defautlBranch)
 			pb.Trigger.VCSChangesBranch = defautlBranch
 
 			//And we try to put the lastestCommit for this branch
 			if lastGitHash[defautlBranch] != "" {
-				params = append(params, sdk.Parameter{
-					Name:  "git.hash",
-					Value: lastGitHash[defautlBranch],
-					Type:  sdk.StringParameter,
-				})
+				sdk.AddParameter(&params, "git.hash", sdk.StringParameter, lastGitHash[defautlBranch])
 				pb.Trigger.VCSChangesHash = lastGitHash[defautlBranch]
 			}
 		} else {
 			//If git.branch was found but git.hash wasn't found in pipeline parameters
 			//we try to found the LatestCommit
 			if !hashFound && lastGitHash[pb.Trigger.VCSChangesBranch] != "" {
-				params = append(params, sdk.Parameter{
-					Name:  "git.hash",
-					Value: lastGitHash[pb.Trigger.VCSChangesBranch],
-					Type:  sdk.StringParameter,
-				})
+				sdk.AddParameter(&params, "git.hash", sdk.StringParameter, lastGitHash[pb.Trigger.VCSChangesBranch])
 				pb.Trigger.VCSChangesHash = lastGitHash[pb.Trigger.VCSChangesBranch]
 			}
 		}
+	}
+
+	//Retreive commit information
+	if client != nil && pb.Trigger.VCSChangesHash != "" {
+		commit, err := client.Commit(app.RepositoryFullname, pb.Trigger.VCSChangesHash)
+		if err != nil {
+			log.Warning("InsertPipelineBuild> Cannot get commit: %s\n", err)
+			return nil, err
+		}
+		sdk.AddParameter(&params, "git.author", sdk.StringParameter, commit.Author.Name)
+		sdk.AddParameter(&params, "git.message", sdk.StringParameter, commit.Message)
 	}
 
 	// Process Pipeline Argument
 	mapVar, err := ProcessPipelineBuildVariables(p.Parameter, applicationPipelineArgs, params)
 	if err != nil {
 		log.Warning("InsertPipelineBuild> Cannot process args: %s\n", err)
-		return pb, err
+		return nil, err
 	}
 
 	// sdk.Build should have sdk.Variable instead of []string
@@ -599,11 +565,11 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	argsJSON, err := json.Marshal(argsFinal)
 	if err != nil {
 		log.Warning("InsertPipelineBuild> Cannot marshal build parameters: %s\n", err)
-		return pb, err
+		return nil, err
 	}
 
 	if err := LoadPipelineStage(tx, p); err != nil {
-		return pb, err
+		return nil, err
 	}
 
 	// Init Action build
@@ -616,23 +582,23 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 	stages, errJSON := json.Marshal(p.Stages)
 	if errJSON != nil {
-		return pb, errJSON
+		return nil, errJSON
 	}
 
-	err = insertPipelineBuild(tx, string(argsJSON), applicationData.ID, p.ID, &pb, env.ID, string(stages))
+	err = insertPipelineBuild(tx, string(argsJSON), app.ID, p.ID, &pb, env.ID, string(stages))
 	if err != nil {
 		log.Warning("InsertPipelineBuild> Cannot insert pipeline build: %s\n", err)
-		return pb, err
+		return nil, err
 	}
 
 	pb.Status = sdk.StatusBuilding
 	pb.Pipeline = *p
 	pb.Parameters = params
-	pb.Application = *applicationData
+	pb.Application = *app
 	pb.Environment = *env
 
 	// Update stats
-	stats.PipelineEvent(tx, p.Type, project.ID, applicationData.ID)
+	stats.PipelineEvent(tx, p.Type, project.ID, app.ID)
 
 	//Send notification
 	//Load previous pipeline (some app, pip, env and branch)
@@ -660,7 +626,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	}
 
 	event.PublishPipelineBuild(tx, &pb, previous)
-	return pb, nil
+	return &pb, nil
 }
 
 func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipelineID int64, pb *sdk.PipelineBuild, envID int64, stages string) error {
