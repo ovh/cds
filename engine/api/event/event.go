@@ -19,6 +19,7 @@ var brokers []Broker
 type Broker interface {
 	initialize(options interface{}) (Broker, error)
 	sendEvent(event *sdk.Event) error
+	status() string
 	close()
 }
 
@@ -70,4 +71,18 @@ func Close() {
 	for _, b := range brokers {
 		b.close()
 	}
+}
+
+// Status returns Event status
+func Status() string {
+	o := ""
+	for _, b := range brokers {
+		o += b.status() + " "
+	}
+
+	if o == "" {
+		o = "⚠ "
+	}
+
+	return o
 }

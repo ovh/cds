@@ -181,7 +181,7 @@ var mainCmd = &cobra.Command{
 			Topic:           viper.GetString("event_kafka_topic"),
 		}
 		if err := event.Initialize(kafkaOptions); err != nil {
-			log.Warning("⚠ Error while initialize event system")
+			log.Warning("⚠ Error while initializing event system: %s", err)
 		} else {
 			go event.DequeueEvent()
 		}

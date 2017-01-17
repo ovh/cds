@@ -42,6 +42,7 @@ func (c *KafkaClient) initialize(options interface{}) (Broker, error) {
 		conf.Topic == "" {
 		return nil, fmt.Errorf("initKafka> Invalid Kafka Configuration")
 	}
+	c.options = conf
 
 	if err := c.initProducer(); err != nil {
 		return nil, fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", err.Error(), viper.GetString("event_kafka_broker_addresses"), viper.GetString("event_kafka_user"))
@@ -93,4 +94,9 @@ func (c *KafkaClient) sendEvent(event *sdk.Event) error {
 	}
 	log.Debug("Event %+v sent to topic %s partition %d offset %d", event, c.options.Topic, partition, offset)
 	return nil
+}
+
+// status: here, if c is initialized, Kafka is ok
+func (c *KafkaClient) status() string {
+	return "Kafka: OK"
 }
