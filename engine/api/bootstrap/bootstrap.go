@@ -2,12 +2,12 @@ package bootstrap
 
 import (
 	"database/sql"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"encoding/json"
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -49,7 +49,7 @@ func MigratePipelineBuild(db *sql.DB) error {
 	`
 
 	rows, errQ := dbGorp.Query(query)
-	if errQ != nil  {
+	if errQ != nil {
 		log.Critical("Cannot query pipeline build: %s", errQ)
 		return errQ
 	}
