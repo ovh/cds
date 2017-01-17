@@ -36,6 +36,7 @@ type EventPipelineBuild struct {
 	BranchName            string       `json:"branchName,omitempty"`
 	Hash                  string       `json:"hash,omitempty"`
 	RepositoryManagerName string       `json:"repositoryManagerName,omitempty"`
+	RepositoryFullname    string       `json:"repositoryFullname,omitempty"`
 }
 
 // EventJob contains event data for a job

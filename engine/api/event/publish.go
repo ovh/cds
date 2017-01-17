@@ -61,8 +61,10 @@ func PublishPipelineBuild(db database.QueryExecuter, pb *sdk.PipelineBuild, prev
 	}
 
 	rmn := ""
+	rfn := ""
 	if pb.Application.RepositoriesManager != nil {
 		rmn = pb.Application.RepositoriesManager.Name
+		rfn = pb.Application.RepositoryFullname
 	}
 
 	e := sdk.EventPipelineBuild{
@@ -72,6 +74,7 @@ func PublishPipelineBuild(db database.QueryExecuter, pb *sdk.PipelineBuild, prev
 		Start:       pb.Start.Unix(),
 		Done:        pb.Done.Unix(),
 		RepositoryManagerName: rmn,
+		RepositoryFullname:    rfn,
 		PipelineName:          pb.Pipeline.Name,
 		PipelineType:          pb.Pipeline.Type,
 		ProjectKey:            pb.Pipeline.ProjectKey,
