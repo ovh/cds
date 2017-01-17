@@ -523,12 +523,6 @@ func init() {
 	flags.String("keys-directory", "/app/keys", "Directory keys for repositories managers")
 	viper.BindPFlag("keys_directory", flags.Lookup("keys-directory"))
 
-	flags.String("notifs-urls", "", "URLs of CDS Notifications: tat:http://<cds2tat>>,stash:http://<cds2stash>,jabber:http://<cds2xmpp>")
-	viper.BindPFlag("notifs_urls", flags.Lookup("notifs-urls"))
-
-	flags.String("notifs-key", "", "Key of CDS Notifications. Use Key of your deployed CDS Notifications microservices")
-	viper.BindPFlag("notifs_key", flags.Lookup("notifs-key"))
-
 	flags.Bool("ldap-enable", false, "Enable LDAP Auth mode : true|false")
 	viper.BindPFlag("ldap_enable", flags.Lookup("ldap-enable"))
 
