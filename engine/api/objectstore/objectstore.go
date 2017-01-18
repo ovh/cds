@@ -91,7 +91,7 @@ func DeleteTemplateExtension(tmpl sdk.TemplateExtension) error {
 }
 
 // Driver allows artifact to be stored and retrieve the same way to any backend
-// - Openstack ObjectStore
+// - Openstack / Swift
 // - Filesystem
 type Driver interface {
 	Status() string
@@ -101,23 +101,66 @@ type Driver interface {
 }
 
 // Initialize setup wanted ObjectStore driver
-func Initialize(mode, address, user, password, basedir string) error {
+func Initialize(cfg Config) error {
 	var err error
-	storage, err = New(mode, address, user, password, basedir)
+	storage, err = New(cfg)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
+// Kind will define const defining all supported objecstore drivers
+type Kind int
+
+// These are the defined objecstore drivers
+const (
+	Openstack Kind = iota
+	Filesystem
+	Swift
+)
+
+//TODO Use github.com/graymeta/stow
+
+// Config represents all the configuration for all objecstore drivers
+type Config struct {
+	Kind    Kind
+	Options ConfigOptions
+}
+
+// ConfigOptions is used by Config
+type ConfigOptions struct {
+	Openstack  ConfigOptionsOpenstack
+	Filesystem struct {
+		Basedir string
+	}
+}
+
+// ConfigOptionsOpenstack is used by ConfigOptions
+type ConfigOptionsOpenstack struct {
+	Address  string
+	Username string
+	Password string
+	Tenant   string
+	Region   string
+}
+
+// ConfigOptionsFilesystem is used by ConfigOptions
+type ConfigOptionsFilesystem struct {
+	Basedir string
+}
+
 // New initialise a new ArtifactStorage
-func New(mode, address, user, password, basedir string) (Driver, error) {
-	switch mode {
-	case "openstack":
-		return NewOpenstackStore(address, user, password)
-	case "filesystem":
-		return NewFilesystemStore(basedir)
+func New(cfg Config) (Driver, error) {
+	switch cfg.Kind {
+	case Openstack:
+		return NewOpenstackStore(cfg.Options.Openstack.Address,
+			cfg.Options.Openstack.Username,
+			cfg.Options.Openstack.Password,
+			cfg.Options.Openstack.Tenant,
+			cfg.Options.Openstack.Region)
+	case Filesystem:
+		return NewFilesystemStore(cfg.Options.Filesystem.Basedir)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}
