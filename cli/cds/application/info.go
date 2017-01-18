@@ -12,7 +12,7 @@ import (
 
 func applicationShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "show",
+		Use:     "info",
 		Short:   "cds application info <projectKey> <applicationName>",
 		Long:    ``,
 		Aliases: []string{"describe", "show"},

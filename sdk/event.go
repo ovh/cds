@@ -36,6 +36,7 @@ type EventPipelineBuild struct {
 	BranchName            string       `json:"branchName,omitempty"`
 	Hash                  string       `json:"hash,omitempty"`
 	RepositoryManagerName string       `json:"repositoryManagerName,omitempty"`
+	RepositoryFullname    string       `json:"repositoryFullname,omitempty"`
 }
 
 // EventJob contains event data for a job
@@ -46,7 +47,7 @@ type EventJob struct {
 	Queued          int64        `json:"queued,omitempty"`
 	Start           int64        `json:"start,omitempty"`
 	Done            int64        `json:"done,omitempty"`
-	Model           string       `json:"model,omitempty"`
+	ModelName       string       `json:"modelName,omitempty"`
 	PipelineName    string       `json:"pipelineName,omitempty"`
 	PipelineType    PipelineType `json:"type,omitempty"`
 	ProjectKey      string       `json:"projectKey,omitempty"`

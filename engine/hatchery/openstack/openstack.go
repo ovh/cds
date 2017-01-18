@@ -101,7 +101,7 @@ func (h *HatcheryCloud) Init() error {
 	}
 	go h.refreshTokenRoutine()
 
-	log.Notice("NewOpenstackStore> Got token %dchar at %s\n", len(h.token.ID), h.endpoint)
+	log.Debug("NewOpenstackStore> Got token %dchar at %s\n", len(h.token.ID), h.endpoint)
 
 	h.images, err = getImages(h.endpoint, h.token.ID)
 	if err != nil {

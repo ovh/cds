@@ -59,12 +59,33 @@ var mainCmd = &cobra.Command{
 			log.Fatalf("SMTP configuration error: %s\n", err)
 		}
 
-		if err := objectstore.Initialize(
-			viper.GetString("artifact_mode"),
-			viper.GetString("artifact_address"),
-			viper.GetString("artifact_user"),
-			viper.GetString("artifact_password"),
-			viper.GetString("artifact_basedir")); err != nil {
+		var objectstoreKind objectstore.Kind
+		switch viper.GetString("artifact_mode") {
+		case "openstack", "swift":
+			objectstoreKind = objectstore.Openstack
+		case "filesystem":
+			objectstoreKind = objectstore.Filesystem
+		default:
+			log.Fatalf("Unsupported objectore mode : %s", viper.GetString("artifact_mode"))
+		}
+
+		cfg := objectstore.Config{
+			Kind: objectstoreKind,
+			Options: objectstore.ConfigOptions{
+				Openstack: objectstore.ConfigOptionsOpenstack{
+					Address:  viper.GetString("artifact_address"),
+					Username: viper.GetString("artifact_user"),
+					Password: viper.GetString("artifact_password"),
+					Tenant:   viper.GetString("artifact_tenant"),
+					Region:   viper.GetString("artifact_region"),
+				},
+				Filesystem: objectstore.ConfigOptionsFilesystem{
+					Basedir: viper.GetString("artifact_basedir"),
+				},
+			},
+		}
+
+		if err := objectstore.Initialize(cfg); err != nil {
 			log.Fatalf("Cannot initialize storage: %s\n", err)
 		}
 
@@ -181,7 +202,19 @@ var mainCmd = &cobra.Command{
 
 		cache.Initialize(viper.GetString("cache"), viper.GetString("redis_host"), viper.GetString("redis_password"), viper.GetInt("cache_ttl"))
 
-		go event.Routine()
+		kafkaOptions := event.KafkaConfig{
+			Enabled:         viper.GetBool("event_kafka_enabled"),
+			BrokerAddresses: viper.GetString("event_kafka_broker_addresses"),
+			User:            viper.GetString("event_kafka_user"),
+			Password:        viper.GetString("event_kafka_password"),
+			Topic:           viper.GetString("event_kafka_topic"),
+		}
+		if err := event.Initialize(kafkaOptions); err != nil {
+			log.Warning("⚠ Error while initializing event system: %s", err)
+		} else {
+			go event.DequeueEvent()
+		}
+
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller()
 		//go pipeline.HistoryCleaningRoutine(db)
@@ -495,11 +528,15 @@ func init() {
 	flags.String("artifact-address", "", "Artifact Adress: used with --artifact-mode=openstask")
 	flags.String("artifact-user", "", "Artifact User: used with --artifact-mode=openstask")
 	flags.String("artifact-password", "", "Artifact Password: used with --artifact-mode=openstask")
+	flags.String("artifact-tenant", "", "Artifact Tenant: used with --artifact-mode=openstask")
+	flags.String("artifact-region", "", "Artifact Region: used with --artifact-mode=openstask")
 	flags.String("artifact-basedir", "/tmp", "Artifact Basedir: used with --artifact-mode=filesystem")
 	viper.BindPFlag("artifact_mode", flags.Lookup("artifact-mode"))
 	viper.BindPFlag("artifact_address", flags.Lookup("artifact-address"))
 	viper.BindPFlag("artifact_user", flags.Lookup("artifact-user"))
 	viper.BindPFlag("artifact_password", flags.Lookup("artifact-password"))
+	viper.BindPFlag("artifact_tenant", flags.Lookup("artifact-tenant"))
+	viper.BindPFlag("artifact_region", flags.Lookup("artifact-region"))
 	viper.BindPFlag("artifact_basedir", flags.Lookup("artifact-basedir"))
 
 	flags.Bool("no-smtp", true, "No SMTP mode: true or false")
@@ -522,12 +559,6 @@ func init() {
 
 	flags.String("keys-directory", "/app/keys", "Directory keys for repositories managers")
 	viper.BindPFlag("keys_directory", flags.Lookup("keys-directory"))
-
-	flags.String("notifs-urls", "", "URLs of CDS Notifications: tat:http://<cds2tat>>,stash:http://<cds2stash>,jabber:http://<cds2xmpp>")
-	viper.BindPFlag("notifs_urls", flags.Lookup("notifs-urls"))
-
-	flags.String("notifs-key", "", "Key of CDS Notifications. Use Key of your deployed CDS Notifications microservices")
-	viper.BindPFlag("notifs_key", flags.Lookup("notifs-key"))
 
 	flags.Bool("ldap-enable", false, "Enable LDAP Auth mode : true|false")
 	viper.BindPFlag("ldap_enable", flags.Lookup("ldap-enable"))
@@ -570,6 +601,9 @@ func init() {
 
 	flags.Int("session-ttl", 60, "Session Time to Live (minutes)")
 	viper.BindPFlag("session_ttl", flags.Lookup("session-ttl"))
+
+	flags.Bool("event-kafka-enabled", false, "Enable Event over Kafka")
+	viper.BindPFlag("event_kafka_enabled", flags.Lookup("event-kafka-enabled"))
 
 	flags.String("event-kafka-broker-addresses", "", "Ex: --event-kafka-broker-addresses=host:port,host2:port2")
 	viper.BindPFlag("event_kafka_broker_addresses", flags.Lookup("event-kafka-broker-addresses"))
