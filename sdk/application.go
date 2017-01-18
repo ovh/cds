@@ -572,7 +572,7 @@ func DeletePipelineScheduler(projectKey, appName, pipelineName string, s *Pipeli
 		return err
 	}
 
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler/%d", projectKey, appName, pipelineName, s.ID)
 	data, code, err := Request("DELETE", path, b)
 	if err != nil {
 		return err
