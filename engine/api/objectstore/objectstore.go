@@ -131,9 +131,7 @@ type Config struct {
 // ConfigOptions is used by Config
 type ConfigOptions struct {
 	Openstack  ConfigOptionsOpenstack
-	Filesystem struct {
-		Basedir string
-	}
+	Filesystem ConfigOptionsFilesystem
 }
 
 // ConfigOptionsOpenstack is used by ConfigOptions
