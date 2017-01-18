@@ -72,6 +72,9 @@ func GetWaitingPipelineBuildJob(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, er
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
+		if err := j.PostSelect(db); err != nil {
+			return nil, err
+		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
 	}
 	return pbJobs, nil
@@ -81,7 +84,7 @@ func GetWaitingPipelineBuildJob(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, er
 func GetWaitingPipelineBuildJobForGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBuildJob, error) {
 	var pbJobsGorp []database.PipelineBuildJob
 	query := `
-		SELECT pipeline_build_job.*
+		SELECT distinct pipeline_build_job.*
 		FROM pipeline_build_job
 		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
 		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline_build.id
@@ -99,6 +102,9 @@ func GetWaitingPipelineBuildJobForGroup(db gorp.SqlExecutor, groupID int64) ([]s
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
+		if err := j.PostSelect(db); err != nil {
+			return nil, err
+		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
 	}
 	return pbJobs, nil
@@ -122,13 +128,16 @@ func GetPipelineBuildJob(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, 
 func LoadWaitingQueue(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, error) {
 	var pbJobsGorp []database.PipelineBuildJob
 	if _, err := db.Select(&pbJobsGorp, `
-		SELECT * FROM pipeline_build_job
-		WHERE status = ? ORDER BY pipeline_build_id ASC, pipeline_build_job.id ASC
+		SELECT distinct pipeline_build_job.* FROM pipeline_build_job
+		WHERE status = $1 ORDER BY pipeline_build_id ASC, pipeline_build_job.id ASC
 	`, sdk.StatusWaiting.String()); err != nil {
 		return nil, err
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
+		if err := j.PostSelect(db); err != nil {
+			return nil, err
+		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
 	}
 	return pbJobs, nil
@@ -138,7 +147,7 @@ func LoadWaitingQueue(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, error) {
 func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBuildJob, error) {
 	var pbJobsGorp []database.PipelineBuildJob
 	if _, err := db.Select(&pbJobsGorp, `
-		SELECT pipeline_build_job.* FROM pipeline_build_job
+		SELECT distinct pipeline_build_job.* FROM pipeline_build_job
 		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
 		JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
 		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
@@ -158,6 +167,9 @@ func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBu
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
+		if err := j.PostSelect(db); err != nil {
+			return nil, err
+		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
 	}
 	return pbJobs, nil
@@ -179,7 +191,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 	}
 
 	if _, err := db.Select(&pbJobsGorp, `
-		SELECT pipeline_build_job.* FROM pipeline_build_job
+		SELECT distinct pipeline_build_job.* FROM pipeline_build_job
 		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
 		JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
 		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
@@ -191,13 +203,16 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
+		if err := j.PostSelect(db); err != nil {
+			return nil, err
+		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
 	}
 	return pbJobs, nil
 }
 
 // TakeActionBuild Take an action build for update
-func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, worker *sdk.Worker) (*sdk.PipelineBuildJob, error) {
+func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string) (*sdk.PipelineBuildJob, error) {
 	var pbJobGorp database.PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
@@ -211,7 +226,7 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, worker *sdk.Worker) (*s
 		return nil, ErrAlreadyTaken
 	}
 
-	pbJobGorp.Model = worker.Model
+	pbJobGorp.Model = model
 	pbJobGorp.Status = sdk.StatusBuilding.String()
 	if _, err := db.Update(&pbJobGorp); err != nil {
 		log.Warning("Cannot update model on pipeline build job : %s", err)

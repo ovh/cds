@@ -339,7 +339,7 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		return
 	}
 	if caller.Status != sdk.StatusChecking {
-		log.Info("takeActionBuildHandler> worker %s is not available to for build (status = %s)\n", caller.ID, caller.Status)
+		log.Warning("takeActionBuildHandler> worker %s is not available to for build (status = %s)\n", caller.ID, caller.Status)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
@@ -358,7 +358,18 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
-	pbJob, errTake := pipeline.TakeActionBuild(tx, id, caller)
+
+	workerModel := caller.Name
+	if caller.Model != 0 {
+		wm, errModel := worker.LoadWorkerModelByID(db, caller.Model)
+		if errModel != nil {
+			WriteError(w, r, sdk.ErrNoWorkerModel)
+			return
+		}
+		workerModel = wm.Name
+	}
+
+	pbJob, errTake := pipeline.TakeActionBuild(tx, id, workerModel)
 	if errTake != nil {
 		if errTake != pipeline.ErrAlreadyTaken {
 			log.Warning("takeActionBuildHandler> Cannot give ActionBuild %s: %s\n", "github.com/go-gorp/gorp", err)
@@ -481,9 +492,9 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 			WriteError(w, r, errW)
 			return
 		}
-		if caller.Status != sdk.StatusChecking {
+		if caller.Status != sdk.StatusWaiting {
 			log.Info("getQueueHandler> worker %s is not available to build (status = %s)\n", caller.ID, caller.Status)
-			WriteError(w, r, sdk.ErrInvalidID)
+			WriteError(w, r, sdk.ErrInvalidWorkerStatus)
 			return
 		}
 	}

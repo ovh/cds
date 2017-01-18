@@ -46,7 +46,7 @@ type EventJob struct {
 	Queued          int64        `json:"queued,omitempty"`
 	Start           int64        `json:"start,omitempty"`
 	Done            int64        `json:"done,omitempty"`
-	Model           int64        `json:"model,omitempty"`
+	Model           string       `json:"model,omitempty"`
 	PipelineName    string       `json:"pipelineName,omitempty"`
 	PipelineType    PipelineType `json:"type,omitempty"`
 	ProjectKey      string       `json:"projectKey,omitempty"`

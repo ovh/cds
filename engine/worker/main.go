@@ -180,8 +180,6 @@ func queuePolling() {
 }
 
 func checkQueue() {
-	//Set the status to checking to avoid beeing killed while checking queue, actions and requirements
-	sdk.SetWorkerStatus(sdk.StatusChecking)
 	defer sdk.SetWorkerStatus(sdk.StatusWaiting)
 
 	queue, err := sdk.GetBuildQueue()
@@ -195,6 +193,9 @@ func checkQueue() {
 	log.Notice("checkQueue> %d Actions in queue", len(queue))
 
 	for i := range queue {
+		//Set the status to checking to avoid beeing killed while checking queue, actions and requirements
+		sdk.SetWorkerStatus(sdk.StatusChecking)
+
 		requirementsOK := true
 		// Check requirement
 		log.Notice("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)
@@ -212,7 +213,7 @@ func checkQueue() {
 		}
 
 		if requirementsOK {
-			log.Notice("checkQueue> Taking action %s", queue[i].ID)
+			log.Notice("checkQueue> Taking action %d", queue[i].ID)
 			takeAction(queue[i])
 		}
 	}
@@ -234,7 +235,7 @@ func takeAction(b sdk.PipelineBuildJob) {
 	path := fmt.Sprintf("/queue/%d/take", b.ID)
 	data, code, err := sdk.Request("POST", path, nil)
 	if err != nil {
-		log.Notice("takeAction> Cannot take action %d:%s\n", b.Job.PipelineActionID, err)
+		log.Notice("takeAction> Cannot take action %d : %s\n", b.Job.PipelineActionID, err)
 		return
 	}
 	if code != http.StatusOK {
