@@ -14,12 +14,15 @@ type OpenstackStore struct {
 	address  string
 	user     string
 	password string
+	tenant   string
+	region   string
 	token    *Token
 	endpoint string
 }
 
 // NewOpenstackStore create a new ObjectStore with openstack driver and check configuration
-func NewOpenstackStore(address, user, password string) (*OpenstackStore, error) {
+func NewOpenstackStore(address, user, password, tenant, region string) (*OpenstackStore, error) {
+	log.Notice("Objectstore> Initialize Swift(Openstack) driver on address: %s, tenant: %s, region: %s", address, tenant, region)
 	if address == "" {
 		return nil, fmt.Errorf("artifact storage is openstack, but flag --artifact_address is not provided")
 	}
@@ -32,20 +35,26 @@ func NewOpenstackStore(address, user, password string) (*OpenstackStore, error) 
 		return nil, fmt.Errorf("artifact storage is openstack, but flag --artifact_password is not provided")
 	}
 
+	if tenant == "" {
+		return nil, fmt.Errorf("artifact storage is openstack, but flag --artifact_tenant is not provided")
+	}
+
 	ops := &OpenstackStore{
 		address:  address,
 		user:     user,
 		password: password,
+		tenant:   tenant,
+		region:   region,
 	}
 
 	var err error
-	ops.token, ops.endpoint, err = getToken(user, password, address, "T_cds")
+	ops.token, ops.endpoint, err = getToken(user, password, address, tenant, region)
 	if err != nil {
 		return nil, err
 	}
 	go ops.refreshTokenRoutine()
 
-	log.Notice("NewOpenstackStore> Got token %dchar at %s\n", len(ops.token.ID), ops.endpoint)
+	log.Debug("NewOpenstackStore> Got token %dchar at %s\n", len(ops.token.ID), ops.endpoint)
 	return ops, nil
 }
 
