@@ -22,6 +22,7 @@ func NewLog(buildid int64, step string, value string, pipelineBuildID int64, ste
 		Step:            step,
 		Value:           value,
 		PipelineBuildID: pipelineBuildID,
+		StepOrder:       stepOrder,
 	}
 
 	return l
