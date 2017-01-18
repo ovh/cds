@@ -378,7 +378,8 @@ func (router *Router) init() {
 
 	// DEPRECATED
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{pipelineActionID}", PUT(updatePipelineActionHandler), DELETE(deletePipelineActionHandler))
-	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined", POST(addJoinedActionToPipelineHandler))
+
+	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined", POST(addJobToPipelineHandler))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined/{actionID}", GET(getJoinedAction), PUT(updateJoinedAction), DELETE(deleteJoinedAction))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined/{actionID}/audit", GET(getJoinedActionAudithandler))
 
