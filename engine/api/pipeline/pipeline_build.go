@@ -1922,7 +1922,7 @@ func GetDeploymentHistory(db database.Querier, projectKey, appName string) ([]sd
 				SELECT
 					appName, pipName, envName,
 					ph.version, ph.status, ph.done, ph.start, ph.build_number,
-					ph.manual_trigger, pb.scheduled_trigger, "user".username, ph.vcs_changes_branch, ph.vcs_changes_hash, ph.vcs_changes_author
+					ph.manual_trigger, ph.scheduled_trigger, "user".username, ph.vcs_changes_branch, ph.vcs_changes_hash, ph.vcs_changes_author
 				FROM pipeline_history ph
 				JOIN
 				    (SELECT

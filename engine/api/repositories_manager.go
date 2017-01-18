@@ -635,9 +635,9 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
 	rmName := vars["name"]
-	hookIdString := vars["hookId"]
+	hookIDString := vars["hookId"]
 
-	hookId, err := strconv.ParseInt(hookIdString, 10, 64)
+	hookID, err := strconv.ParseInt(hookIDString, 10, 64)
 	if err != nil {
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
@@ -645,47 +645,14 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	app, err := application.LoadApplicationByName(db, projectKey, appName)
 	if err != nil {
-		WriteError(w, r, sdk.ErrApplicationNotFound)
-		return
-	}
-
-	h, err := hook.LoadHook(db, hookId)
-	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot load hook %d: %s", hookId, err)
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Application not found %s", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	b, e := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
-	if e != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s): %s", rmName, projectKey, appName, e)
-		WriteError(w, r, e)
-		return
-	}
-
-	if !b {
-		WriteError(w, r, sdk.ErrNoReposManagerClientAuth)
-		return
-	}
-
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
+	h, err := hook.LoadHook(db, hookID)
 	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		WriteError(w, r, sdk.ErrNoReposManagerClientAuth)
-		return
-	}
-
-	t := strings.Split(app.RepositoryFullname, "/")
-	if len(t) != 2 {
-		WriteError(w, r, sdk.ErrRepoNotFound)
-		return
-	}
-
-	s := viper.GetString("api_url") + hook.HookLink
-	link := fmt.Sprintf(s, h.UID, t[0], t[1])
-
-	if err = client.DeleteHook(app.RepositoryFullname, link); err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash: %s", err)
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot load hook %d: %s", hookID, err)
 		WriteError(w, r, err)
 		return
 	}
@@ -723,8 +690,43 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	WriteJSON(w, r, app, http.StatusOK)
+	b, e := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
+	if e != nil {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s): %s", rmName, projectKey, appName, e)
+		WriteError(w, r, e)
+		return
+	}
 
+	if !b {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Applicaiton %s is not attached to any repository", appName)
+		WriteError(w, r, sdk.ErrNoReposManagerClientAuth)
+		return
+	}
+
+	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
+	if err != nil {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
+		WriteError(w, r, sdk.ErrNoReposManagerClientAuth)
+		return
+	}
+
+	t := strings.Split(app.RepositoryFullname, "/")
+	if len(t) != 2 {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Application %s repository fullname is not valid %s", app.Name, app.RepositoryFullname)
+		WriteError(w, r, sdk.ErrRepoNotFound)
+		return
+	}
+
+	s := viper.GetString("api_url") + hook.HookLink
+	link := fmt.Sprintf(s, h.UID, t[0], t[1])
+
+	if err := client.DeleteHook(app.RepositoryFullname, link); err != nil {
+		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash: %s", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	WriteJSON(w, r, app, http.StatusOK)
 }
 
 func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
