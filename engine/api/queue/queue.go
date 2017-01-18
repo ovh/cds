@@ -101,7 +101,7 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 		if stage.Status == sdk.StatusBuilding {
 			end, errSync := syncPipelineBuildJob(tx, stage)
 			if errSync != nil {
-				log.Warning("queue.RunActions> Cannot sync building jobs on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, err)
+				log.Warning("queue.RunActions> Cannot sync building jobs on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, errSync)
 				return
 			}
 
@@ -179,6 +179,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb sdk.PipelineBuild)
 		event.PublishActionBuild(&pb, &pbJob)
 		stage.PipelineBuildJobs = append(stage.PipelineBuildJobs, pbJob)
 	}
+
 	return nil
 }
 
@@ -214,7 +215,11 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 		}
 	}
 
-	if stageEnd {
+	if stageEnd || len(stage.PipelineBuildJobs) == 0{
+		if len(stage.PipelineBuildJobs) == 0 {
+			finalStatus = sdk.StatusSuccess
+			stageEnd = true
+		}
 		// Determine final stage status
 		for _, buildJob := range stage.PipelineBuildJobs {
 			switch buildJob.Status {
