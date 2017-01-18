@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gorhill/cronexpr"
 	"github.com/gorilla/mux"
@@ -283,24 +284,17 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 }
 
 func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-	// Get args in body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> cannot read body: %s\n", errRead)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
-	}
+	vars := mux.Vars(r)
+	idString := vars["id"]
 
-	// Unmarshal args
-	s := &sdk.PipelineScheduler{}
-	if err := json.Unmarshal(data, s); err != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> cannot unmarshal body:  %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
+	id, errInt := strconv.ParseInt(idString, 10, 64)
+	if errInt != nil {
+		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
 	//Load the scheduler
-	sOld, err := scheduler.Load(database.DBMap(db), s.ID)
+	sOld, err := scheduler.Load(database.DBMap(db), id)
 	if err != nil {
 		WriteError(w, r, err)
 		return
