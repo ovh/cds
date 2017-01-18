@@ -6,7 +6,7 @@ import "github.com/spf13/cobra"
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reposmanager",
-		Short: "List, add or remove repositories Manager (admin only)",
+		Short: "CDS Admin Repositories Manager (admin only)",
 		Long:  ``,
 	}
 

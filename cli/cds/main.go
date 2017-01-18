@@ -20,10 +20,7 @@ import (
 	"github.com/ovh/cds/cli/cds/internal"
 	"github.com/ovh/cds/cli/cds/login"
 	"github.com/ovh/cds/cli/cds/pipeline"
-	"github.com/ovh/cds/cli/cds/plugin"
 	"github.com/ovh/cds/cli/cds/project"
-	"github.com/ovh/cds/cli/cds/repositoriesmanager"
-	"github.com/ovh/cds/cli/cds/template"
 	"github.com/ovh/cds/cli/cds/track"
 	"github.com/ovh/cds/cli/cds/trigger"
 	"github.com/ovh/cds/cli/cds/update"
@@ -105,9 +102,6 @@ func main() {
 	rootCmd.AddCommand(dashboard.Cmd)
 	rootCmd.AddCommand(wizard.Cmd)
 	rootCmd.AddCommand(track.Cmd)
-	rootCmd.AddCommand(repositoriesmanager.Cmd())
-	rootCmd.AddCommand(plugin.Cmd())
-	rootCmd.AddCommand(template.Cmd())
 	rootCmd.AddCommand(generate.Cmd())
 	rootCmd.AddCommand(admin.Cmd())
 
