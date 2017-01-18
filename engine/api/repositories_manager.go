@@ -720,7 +720,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	s := viper.GetString("api_url") + hook.HookLink
 	link := fmt.Sprintf(s, h.UID, t[0], t[1])
 
-	if err = client.DeleteHook(app.RepositoryFullname, link); err != nil {
+	if err := client.DeleteHook(app.RepositoryFullname, link); err != nil {
 		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash: %s", err)
 		WriteError(w, r, err)
 		return
