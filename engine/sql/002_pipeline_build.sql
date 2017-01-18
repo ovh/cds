@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "pipeline_build_job" (
     queued TIMESTAMP WITH TIME ZONE,
     start TIMESTAMP WITH TIME ZONE,
     done TIMESTAMP WITH TIME ZONE,
-    model BIGINT
+    model TEXT
 );
 
 ALTER TABLE build_log ADD COLUMN pipeline_build_id BIGINT;

@@ -212,7 +212,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 }
 
 // TakeActionBuild Take an action build for update
-func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, worker *sdk.Worker) (*sdk.PipelineBuildJob, error) {
+func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string) (*sdk.PipelineBuildJob, error) {
 	var pbJobGorp database.PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
@@ -226,7 +226,7 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, worker *sdk.Worker) (*s
 		return nil, ErrAlreadyTaken
 	}
 
-	pbJobGorp.Model = worker.Model
+	pbJobGorp.Model = model
 	pbJobGorp.Status = sdk.StatusBuilding.String()
 	if _, err := db.Update(&pbJobGorp); err != nil {
 		log.Warning("Cannot update model on pipeline build job : %s", err)

@@ -230,6 +230,10 @@ func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return
 	}
 
+	if wk.Status == sdk.StatusWaiting {
+		return
+	}
+
 	if wk.Status != sdk.StatusChecking && wk.Status != sdk.StatusBuilding {
 		log.Warning("workerWaitingHandler> Worker %s cannot be Waiting. Current status: %s", wk.Name, wk.Status)
 		WriteError(w, r, sdk.ErrWrongRequest)

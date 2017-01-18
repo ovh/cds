@@ -160,7 +160,7 @@ func MigratePipelineHistory(_db *sql.DB) error {
 							ID:              int64(bString["id"].(float64)),
 							Parameters:      parameters,
 							PipelineBuildID: pb.ID,
-							Model:           0,
+							Model:           "",
 							Status:          bString["status"].(string),
 							Job: sdk.Job{
 								Action: sdk.Action{

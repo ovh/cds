@@ -210,12 +210,10 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 			pbJob.Start = pbJobDB.Start
 			pbJob.Done = pbJobDB.Done
 			pbJob.Model = pbJobDB.Model
-
-			log.Warning("Job status: %s", pbJob.Status)
 		}
 	}
 
-	if stageEnd || len(stage.PipelineBuildJobs) == 0{
+	if stageEnd || len(stage.PipelineBuildJobs) == 0 {
 		if len(stage.PipelineBuildJobs) == 0 {
 			finalStatus = sdk.StatusSuccess
 			stageEnd = true

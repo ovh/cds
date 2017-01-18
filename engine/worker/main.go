@@ -179,8 +179,6 @@ func queuePolling() {
 }
 
 func checkQueue() {
-	//Set the status to checking to avoid beeing killed while checking queue, actions and requirements
-	sdk.SetWorkerStatus(sdk.StatusChecking)
 	defer sdk.SetWorkerStatus(sdk.StatusWaiting)
 
 	queue, err := sdk.GetBuildQueue()
@@ -194,6 +192,9 @@ func checkQueue() {
 	log.Notice("checkQueue> %d Actions in queue", len(queue))
 
 	for i := range queue {
+		//Set the status to checking to avoid beeing killed while checking queue, actions and requirements
+		sdk.SetWorkerStatus(sdk.StatusChecking)
+
 		requirementsOK := true
 		// Check requirement
 		log.Notice("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)

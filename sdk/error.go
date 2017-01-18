@@ -92,6 +92,7 @@ var (
 	ErrNoParentBuildFound                    = &Error{ID: 78, Status: http.StatusNotFound}
 	ErrParameterExists                       = &Error{ID: 79, Status: http.StatusConflict}
 	ErrNoHatchery                            = &Error{ID: 80, Status: http.StatusNotFound}
+	ErrInvalidWorkerStatus                   = &Error{ID: 81, Status: http.StatusNotFound}
 )
 
 // SupportedLanguages on API errors
@@ -183,6 +184,7 @@ You can safely use them in a String or Text parameter`,
 	ErrNoParentBuildFound.ID:                    "no parent build found",
 	ErrParameterExists.ID:                       "parameter already exists",
 	ErrNoHatchery.ID:                            "No hatchery found",
+	ErrInvalidWorkerStatus.ID:                   "Worker status is invalid",
 }
 
 var errorsFrench = map[int]string{
@@ -268,6 +270,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrNoParentBuildFound.ID:                    "aucun build parent n'a pu être trouvé",
 	ErrParameterExists.ID:                       "le paramètre existe déjà",
 	ErrNoHatchery.ID:                            "La hatchery n'existe pas",
+	ErrInvalidWorkerStatus.ID:                   "Le status du worker est incorrect",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)
