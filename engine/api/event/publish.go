@@ -40,7 +40,7 @@ func PublishActionBuild(pb *sdk.PipelineBuild, pbJob *sdk.PipelineBuildJob) {
 		Queued:          pbJob.Queued.Unix(),
 		Start:           pbJob.Start.Unix(),
 		Done:            pbJob.Done.Unix(),
-		Model:           pbJob.Model,
+		ModelName:       pbJob.Model,
 		PipelineName:    pb.Pipeline.Name,
 		PipelineType:    pb.Pipeline.Type,
 		ProjectKey:      pb.Pipeline.ProjectKey,
@@ -61,8 +61,10 @@ func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *
 	}
 
 	rmn := ""
+	rfn := ""
 	if pb.Application.RepositoriesManager != nil {
 		rmn = pb.Application.RepositoriesManager.Name
+		rfn = pb.Application.RepositoryFullname
 	}
 
 	e := sdk.EventPipelineBuild{
@@ -72,6 +74,7 @@ func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *
 		Start:       pb.Start.Unix(),
 		Done:        pb.Done.Unix(),
 		RepositoryManagerName: rmn,
+		RepositoryFullname:    rfn,
 		PipelineName:          pb.Pipeline.Name,
 		PipelineType:          pb.Pipeline.Type,
 		ProjectKey:            pb.Pipeline.ProjectKey,

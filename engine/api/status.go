@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/internal"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -52,6 +53,9 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 
 	// Check vault
 	output = append(output, fmt.Sprintf("Secret Backend: %s", secret.Status()))
+
+	// Check Event
+	output = append(output, fmt.Sprintf("Event: %s", event.Status()))
 
 	// Check redis
 	output = append(output, fmt.Sprintf("Cache: %s", cache.Status))
