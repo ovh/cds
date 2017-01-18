@@ -77,7 +77,15 @@ func Test_addTemplateHandler(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	objectstore.Initialize("filesystem", "", "", "", tmpDir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: tmpDir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	defer os.RemoveAll(tmpDir)
 
@@ -193,7 +201,15 @@ func Test_deleteTemplateHandler(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	objectstore.Initialize("filesystem", "", "", "", tmpDir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: tmpDir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	defer os.RemoveAll(tmpDir)
 
@@ -295,8 +311,15 @@ func Test_updateTemplateHandler(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	objectstore.Initialize("filesystem", "", "", "", tmpDir)
-
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: tmpDir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
@@ -454,7 +477,15 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	objectstore.Initialize("filesystem", "", "", "", tmpDir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: tmpDir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	defer os.RemoveAll(tmpDir)
 
@@ -569,7 +600,15 @@ func Test_applyTemplatesHandler(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	objectstore.Initialize("filesystem", "", "", "", tmpDir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: tmpDir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	defer os.RemoveAll(tmpDir)
 

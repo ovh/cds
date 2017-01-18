@@ -17,7 +17,7 @@ func (ops *OpenstackStore) refreshTokenRoutine() {
 	for {
 		time.Sleep(20 * time.Hour)
 
-		tk, endpoint, err := getToken(ops.user, ops.password, ops.address, "T_cds")
+		tk, endpoint, err := getToken(ops.user, ops.password, ops.address, ops.tenant, ops.region)
 		if err != nil {
 			log.Critical("refreshTokenRoutine> Cannot refresh token: %s\n", err)
 			continue
@@ -210,7 +210,7 @@ func createContainer(token string, url string, account string) error {
 	return nil
 }
 
-func getToken(user string, password string, url string, project string) (*Token, string, error) {
+func getToken(user, password, url, project, region string) (*Token, string, error) {
 	var endpoint string
 
 	a := auth{}
@@ -258,13 +258,13 @@ func getToken(user string, password string, url string, project string) (*Token,
 	}
 
 	for _, sc := range authRet.Access.ServiceCatalog {
-		log.Notice("OpenStack> Looking for service 'swift' (got %s)\n", sc.Name)
+		log.Debug("OpenStack> Looking for service 'swift' (got %s)\n", sc.Name)
 		if sc.Name == "swift" {
-			log.Notice("OpenStack> Found swift !\n")
+			log.Debug("OpenStack> Found swift !\n")
 			for _, e := range sc.Endpoints {
-				log.Notice("OpenStack> Looking for region P19 service 'swift' (got %s)\n", e.Region)
-				if e.Region == "P19" {
-					log.Warning("OpenStack> Got Swift in P19 !\n")
+				log.Debug("OpenStack> Looking for region %s service 'swift' (got %s)\n", region, e.Region)
+				if e.Region == region {
+					log.Debug("OpenStack> Got Swift in %s !\n", region)
 					endpoint = sc.Endpoints[0].PublicURL
 				}
 			}

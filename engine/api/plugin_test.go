@@ -146,7 +146,15 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 		os.RemoveAll(basedir)
 	}()
 
-	objectstore.Initialize("filesystem", "", "", "", basedir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: basedir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	u, _ := test.InsertAdminUser(t, db)
 	if err := actionplugin.Delete(db, "dummy", u.ID); err != nil {
@@ -202,7 +210,15 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 		os.RemoveAll(basedir)
 	}()
 
-	objectstore.Initialize("filesystem", "", "", "", basedir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: basedir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	u, _ := test.InsertAdminUser(t, db)
 	actionplugin.Delete(db, "dummy", u.ID)
@@ -236,7 +252,15 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 		os.RemoveAll(basedir)
 	}()
 
-	objectstore.Initialize("filesystem", "", "", "", basedir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: basedir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	u, _ := test.InsertAdminUser(t, db)
 	actionplugin.Delete(db, "dummy", u.ID)
@@ -278,7 +302,15 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 		os.RemoveAll(basedir)
 	}()
 
-	objectstore.Initialize("filesystem", "", "", "", basedir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: basedir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	u, _ := test.InsertAdminUser(t, db)
 	actionplugin.Delete(db, "dummy", u.ID)
@@ -333,7 +365,15 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 		os.RemoveAll(basedir)
 	}()
 
-	objectstore.Initialize("filesystem", "", "", "", basedir)
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: basedir,
+			},
+		},
+	}
+	objectstore.Initialize(cfg)
 
 	u, _ := test.InsertAdminUser(t, db)
 	actionplugin.Delete(db, "dummy", u.ID)
