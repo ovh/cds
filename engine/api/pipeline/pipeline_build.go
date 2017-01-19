@@ -557,6 +557,17 @@ func UpdatePipelineBuildStatus(db database.QueryExecuter, pb sdk.PipelineBuild, 
 
 	k := cache.Key("application", pb.Application.ProjectKey, "*")
 	cache.DeleteAll(k)
+
+	// Load repositorie manager if necessary
+	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
+		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID)
+		if errl != nil {
+			log.Critical("UpdatePipelineBuildStatus> error while loading repoManger for appID %s err:%s", pb.Application.ID, errl)
+		}
+		pb.Application.RepositoryFullname = rfn
+		pb.Application.RepositoriesManager = rm
+	}
+
 	event.PublishPipelineBuild(db, &pb, previous)
 	return nil
 }

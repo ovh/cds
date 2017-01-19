@@ -35,8 +35,8 @@ func processEvent(db database.Querier, event sdk.Event) error {
 
 	var eventpb sdk.EventPipelineBuild
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		log.Warning("Error during consumption: %s", err)
-		return nil
+		log.Critical("Error during consumption: %s", err)
+		return err
 	}
 
 	if eventpb.RepositoryManagerName == "" {
