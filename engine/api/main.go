@@ -135,7 +135,7 @@ var mainCmd = &cobra.Command{
 		router.init()
 		baseURL = viper.GetString("base_url")
 
-		if err := group.Initialize(db); err != nil {
+		if err := group.Initialize(db, viper.GetString("default_group")); err != nil {
 			log.Critical("Cannot initialize groups: %s\n", err)
 		}
 
@@ -623,6 +623,9 @@ func init() {
 
 	flags.Bool("no-repo-cache-loader", false, "Disable repositories cache loader")
 	viper.BindPFlag("no_repo_cache_loader", flags.Lookup("no-repo-cache-loader"))
+
+	flags.String("default-group", "", "Default group for new users")
+	viper.BindPFlag("default_group", flags.Lookup("default-group"))
 
 	mainCmd.AddCommand(database.DBCmd)
 
