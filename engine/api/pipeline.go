@@ -935,7 +935,6 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	w.WriteHeader(http.StatusOK)
 }
 
-//Actually this handler take a sdk.action in payload but should take a sdk.job payload
 func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -943,83 +942,71 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	pipelineName := vars["permPipelineKey"]
 	stageIDString := vars["stageID"]
 
-	stageID, err := strconv.ParseInt(stageIDString, 10, 60)
-	if err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Stage ID must be an int: %s\n", err)
+	stageID, errInt := strconv.ParseInt(stageIDString, 10, 60)
+	if errInt != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Stage ID must be an int: %s\n", errInt)
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
 	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot read body: %s\n", err)
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot read body: %s\n", errRead)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	a, err := sdk.NewAction("").FromJSON(data)
-	if err != nil {
+	var job sdk.Job
+	if err := json.Unmarshal(data, &job); err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot unmarshall body: %s\n", err)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	proj, err := project.LoadProject(db, projectKey, c.User, project.WithVariables(), project.WithApplications(1))
-	if err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, err)
-		WriteError(w, r, sdk.ErrNoProject)
+	proj, errP := project.LoadProject(db, projectKey, c.User, project.WithVariables(), project.WithApplications(1))
+	if errP != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, errP)
+		WriteError(w, r, errP)
 		return
 	}
 
-	pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s: %s\n", pipelineName, projectKey, err)
-		WriteError(w, r, sdk.ErrPipelineNotFound)
+	pip, errPip := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	if errPip != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s: %s\n", pipelineName, projectKey, errPip)
+		WriteError(w, r, errPip)
 		return
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		WriteError(w, r, err)
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		WriteError(w, r, errBegin)
 		return
 	}
 	defer tx.Rollback()
 
-	// Insert joined action
-	a.Type = sdk.JoinedAction
-	a.Enabled = true
-	if err := action.InsertAction(tx, a, false); err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot insert action: %s\n", err)
+
+	if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot insert job: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	// then attach it to pipeline
-	pipelineActionID, err := pipeline.InsertPipelineAction(tx, projectKey, pipelineName, a.ID, "[]", stageID)
-	if err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot insert in database: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-	a.PipelineActionID = pipelineActionID
 
-	warnings, err := sanity.CheckAction(tx, proj, pip, a.ID)
-	if err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot check action %d requirements: %s\n", a.ID, err)
-		WriteError(w, r, err)
+	warnings, errC := sanity.CheckAction(tx, proj, pip, job.Action.ID)
+	if errC != nil {
+		log.Warning("addActionToPipelineHandler> Cannot check action %d requirements: %s\n", job.Action.ID, errC)
+		WriteError(w, r, errC)
 		return
 	}
 
-	err = sanity.InsertActionWarnings(tx, proj.ID, pip.ID, a.ID, warnings)
-	if err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot insert warning for action %d: %s\n", a.ID, err)
+	if err := sanity.InsertActionWarnings(tx, proj.ID, pip.ID, job.Action.ID, warnings); err != nil {
+		log.Warning("addActionToPipelineHandler> Cannot insert warning for action %d: %s\n", job.Action.ID, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -1027,7 +1014,7 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.Delete(cache.Key("pipeline", projectKey, pipelineName))
 
-	WriteJSON(w, r, a, http.StatusOK)
+	WriteJSON(w, r, job, http.StatusOK)
 }
 
 func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
@@ -1067,6 +1054,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
+
 
 	a, err := sdk.NewAction("").FromJSON(data)
 	if err != nil {

@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -69,67 +68,12 @@ func selectAllPipelineActionID(db gorp.SqlExecutor, pipelineStageID int64) ([]in
 	return pipelineActionIDs, nil
 }
 
-//InsertPipelineJob insert data in pipeline_action table
-// DEPRECATED
-func InsertPipelineJob(db gorp.SqlExecutor, pip *sdk.Pipeline, s *sdk.Stage, a *sdk.Action) error {
-	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, args, enabled) VALUES ($1, $2, $3, $4) RETURNING id`
-	args, err := json.Marshal(a.Parameters)
-	if err != nil {
-		return err
-	}
-	if err := db.QueryRow(query, s.ID, a.ID, string(args), a.Enabled).Scan(&a.PipelineActionID); err != nil {
-		return err
-	}
-	return nil
-}
-
-// InsertPipelineAction insert an action in a pipeline
-func InsertPipelineAction(db gorp.SqlExecutor, projectKey, pipelineName string, actionID int64, args string, stageID int64) (int64, error) {
-	p, err := LoadPipeline(db, projectKey, pipelineName, true)
-	if err != nil {
-		return 0, fmt.Errorf("Cannot LoadPipeline> %s", err)
-	}
-
-	var stage *sdk.Stage
-	//Create stage if stageID == 0
-	if stageID == 0 {
-		stage = &sdk.Stage{
-			Name:       fmt.Sprintf("Stage %d", len(p.Stages)+1),
-			PipelineID: p.ID,
-			BuildOrder: len(p.Stages) + 1,
-			Enabled:    true,
-		}
-		if err := InsertStage(db, stage); err != nil {
-			return 0, fmt.Errorf("Cannot InsertStage on pipeline %d> %s", p.ID, err)
-		}
-		stageID = stage.ID
-	} else {
-		//Else load the stage
-		stage, err = LoadStage(db, p.ID, stageID)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	//Reload action
-	a, err := action.LoadActionByID(db, actionID)
-	if err != nil {
-		return 0, err
-	}
-
-	//Insert in pipeline_action table
-	if err := InsertPipelineJob(db, p, stage, a); err != nil {
-		return 0, err
-	}
-
-	return a.PipelineActionID, UpdatePipelineLastModified(db, p)
-}
-
 // InsertJob  Insert a new Job ( pipeline_action + joinedAction )
 func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeline) error {
 	// Insert Joined Action
 	job.Action.Type = sdk.JoinedAction
 	job.Action.Enabled = true
+	job.Enabled = true
 	log.Debug("InsertJob> Insert Action %s on pipeline %s with %d children", job.Action.Name, pip.Name, len(job.Action.Actions))
 	if err := action.InsertAction(db, &job.Action, false); err != nil {
 		return err
