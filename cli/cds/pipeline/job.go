@@ -11,7 +11,7 @@ import (
 
 func pipelineJoinedCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "joined",
+		Use:   "job",
 		Short: "",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -19,41 +19,40 @@ func pipelineJoinedCmd() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(pipelineJoinedActionCmd())
+	cmd.AddCommand(pipelineJobCmd())
 	return cmd
 }
 
 var cmdJoinedActionAddParams []string
 var cmdJoinedActionAddStageNumber string
 
-func pipelineJoinedActionCmd() *cobra.Command {
+func pipelineJobCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "action",
-		Short: "cds pipeline joined action {add | append | remove}",
+		Use:   "job",
+		Short: "cds pipeline job {add | append | remove}",
 	}
 
 	addCmd := &cobra.Command{
 		Use:   "add",
-		Short: "cds pipeline joined action add <projectKey> <pipelineName> <joinedActionName> [-p <paramName>]",
+		Short: "cds pipeline job add <projectKey> <pipelineName> <jobName>",
 		Long:  ``,
-		Run:   pipelineJoinedActionAdd,
+		Run:   pipelineJobAdd,
 	}
-	addCmd.Flags().StringSliceVarP(&cmdJoinedActionAddParams, "parameter", "p", nil, "Action parameters")
 	addCmd.Flags().StringVarP(&cmdJoinedActionAddStageNumber, "stage", "", "0", "Stage number")
 
 	appendCmd := &cobra.Command{
 		Use:   "append",
-		Short: "cds pipeline joined action append <projectKey> <pipelineName> <joinedActinName> <actionName> [-p <paramName>]",
+		Short: "cds pipeline job append <projectKey> <pipelineName> <jobName> <actionName> [-p <paramName>]",
 		Long:  ``,
-		Run:   pipelineJoinedActionAppend,
+		Run:   pipelineJobAppend,
 	}
 	appendCmd.Flags().StringSliceVarP(&cmdJoinedActionAddParams, "parameter", "p", nil, "Action parameters")
 
 	removeCmd := &cobra.Command{
 		Use:   "remove",
-		Short: "cds pipeline joined action remove <projectKey> <pipelineName> <joinedActionName>",
+		Short: "cds pipeline job remove <projectKey> <pipelineName> <jobName>",
 		Long:  ``,
-		Run:   pipelineJoinedActionRemove,
+		Run:   pipelineJobRemove,
 	}
 
 	cmd.AddCommand(addCmd)
@@ -62,7 +61,7 @@ func pipelineJoinedActionCmd() *cobra.Command {
 	return cmd
 }
 
-func pipelineJoinedActionAdd(cmd *cobra.Command, args []string) {
+func pipelineJobAdd(cmd *cobra.Command, args []string) {
 
 	if len(args) != 3 {
 		sdk.Exit("Wrong usage. See %s\n", cmd.Short)
@@ -70,13 +69,9 @@ func pipelineJoinedActionAdd(cmd *cobra.Command, args []string) {
 
 	projectKey := args[0]
 	pipelineName := args[1]
-	joinedActionName := args[2]
+	jobName := args[2]
 
-	a := sdk.NewAction(joinedActionName)
-
-	for _, p := range cmdJoinedActionAddParams {
-		a.Parameter(sdk.Parameter{Name: p, Type: sdk.StringParameter})
-	}
+	a := sdk.NewAction(jobName)
 
 	stage, err := strconv.ParseInt(cmdJoinedActionAddStageNumber, 10, 32)
 	if err != nil {
@@ -95,13 +90,19 @@ func pipelineJoinedActionAdd(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	err = sdk.AddJoinedAction(projectKey, pipelineName, pipelineStageID, a)
+	job := &sdk.Job {
+		PipelineStageID: pipelineStageID,
+		Enabled: true,
+		Action: *a,
+	}
+
+	err = sdk.AddJob(projectKey, pipelineName, job)
 	if err != nil {
-		sdk.Exit("Error: cannot create joined action %s (%s)\n", joinedActionName, err)
+		sdk.Exit("Error: cannot create joined action %s (%s)\n", jobName, err)
 	}
 }
 
-func pipelineJoinedActionAppend(cmd *cobra.Command, args []string) {
+func pipelineJobAppend(cmd *cobra.Command, args []string) {
 
 	if len(args) != 4 {
 		sdk.Exit("Wrong usage. See %s\n", cmd.Short)
@@ -109,7 +110,7 @@ func pipelineJoinedActionAppend(cmd *cobra.Command, args []string) {
 
 	projectKey := args[0]
 	pipelineName := args[1]
-	joinedActionName := args[2]
+	jobName := args[2]
 	actionName := args[3]
 
 	p, err := sdk.GetPipeline(projectKey, pipelineName)
@@ -123,22 +124,19 @@ func pipelineJoinedActionAppend(cmd *cobra.Command, args []string) {
 	}
 
 	// Find joined action
-	var joinedAction sdk.Action
+	var job *sdk.Job
 	var stage int
 	for _, s := range p.Stages {
 		for _, j := range s.Jobs {
-			if j.Action.Name == joinedActionName {
-				joinedAction = j.Action
+			if j.Action.Name == jobName {
+				job = &j
 				stage = s.BuildOrder
 				break
 			}
 		}
-		if joinedAction.Name != "" {
-			break
+		if job.Action.Name != "" {
+			sdk.Exit("Error: job %s not found in %s/%s\n", jobName, projectKey, pipelineName)
 		}
-	}
-	if joinedAction.Name == "" {
-		sdk.Exit("Error: joined action %s not found in %s/%s\n", joinedActionName, projectKey, pipelineName)
 	}
 
 	for _, p := range cmdJoinedActionAddParams {
@@ -159,15 +157,15 @@ func pipelineJoinedActionAppend(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	joinedAction.Actions = append(joinedAction.Actions, child)
+	job.Action.Actions = append(job.Action.Actions, child)
 
-	err = sdk.UpdateJoinedAction(projectKey, pipelineName, stage, joinedAction)
+	err = sdk.UpdateJoinedAction(projectKey, pipelineName, stage, job)
 	if err != nil {
 		sdk.Exit("Error: cannot update joined action (%s)\n", err)
 	}
 }
 
-func pipelineJoinedActionRemove(cmd *cobra.Command, args []string) {
+func pipelineJobRemove(cmd *cobra.Command, args []string) {
 
 	if len(args) != 3 {
 		sdk.Exit("Wrong usage. See %s\n", cmd.Short)

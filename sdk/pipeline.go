@@ -227,22 +227,22 @@ func MoveActionInPipeline(projectKey, pipelineName string, actionPipelineID int6
 		return err
 	}
 	var stageID int64
-	var action Action
+	var job *Job
 	for _, stage := range pipeline.Stages {
 		if stage.BuildOrder == newOrder {
 			stageID = stage.ID
 		}
 		for _, jobInStage := range stage.Jobs {
 			if jobInStage.PipelineActionID == actionPipelineID {
-				action = jobInStage.Action
+				job = &jobInStage
 			}
 		}
 	}
 
-	if stageID != 0 && action.ID != 0 {
-		action.PipelineStageID = stageID
+	if stageID != 0 && job != nil {
+		job.PipelineStageID = stageID
 
-		data, err := json.Marshal(action)
+		data, err := json.Marshal(job)
 		if err != nil {
 			return err
 		}

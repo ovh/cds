@@ -182,8 +182,8 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 	defer rows.Close()
 
 	mapStages := map[int64]*sdk.Stage{}
-	mapAllActions := map[int64]*sdk.Action{}
-	mapActionsStages := map[int64][]sdk.Action{}
+	mapAllActions := map[int64]*sdk.Job{}
+	mapActionsStages := map[int64][]sdk.Job{}
 	mapArgs := map[int64][]string{}
 	stagesPtr := []*sdk.Stage{}
 
@@ -241,18 +241,22 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 
 		//Get actions
 		if pipelineActionID.Valid && actionID.Valid && actionEnabled.Valid && actionLastModified.Valid {
-			var a *sdk.Action
-			a = mapAllActions[pipelineActionID.Int64]
 
-			if a == nil {
-				a = &sdk.Action{
+			var j *sdk.Job
+			j = mapAllActions[pipelineActionID.Int64]
+
+			if j == nil {
+				j = &sdk.Job{
+					PipelineStageID: stageID,
 					PipelineActionID: pipelineActionID.Int64,
-					ID:               actionID.Int64,
-					Enabled:          actionEnabled.Bool,
-					LastModified:     actionLastModified.Time.Unix(),
+					LastModified: actionLastModified.Time.Unix(),
+					Enabled: actionEnabled.Bool,
+					Action: sdk.Action{
+						ID: actionID.Int64,
+					},
 				}
-				mapAllActions[pipelineActionID.Int64] = a
-				mapActionsStages[stageID] = append(mapActionsStages[stageID], *a)
+				mapAllActions[pipelineActionID.Int64] = j
+				mapActionsStages[stageID] = append(mapActionsStages[stageID], *j)
 
 				if actionArgs.Valid {
 					mapArgs[stageID] = append(mapArgs[stageID], actionArgs.String)
@@ -266,16 +270,14 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 	//load job
 	for id := range mapStages {
 		for index := range mapActionsStages[id] {
-			job := sdk.Job{
-				Enabled:          mapActionsStages[id][index].Enabled,
-				PipelineStageID:  id,
-				PipelineActionID: mapActionsStages[id][index].PipelineActionID,
-			}
+			job := mapActionsStages[id][index]
+
 
 			var a *sdk.Action
-			a, err = action.LoadActionByID(db, mapActionsStages[id][index].ID)
+			a, err = action.LoadActionByID(db, mapActionsStages[id][index].Action.ID)
+			log.Warning(">>>>%s", a.Type)
 			if err != nil {
-				return fmt.Errorf("loadPipelineStage> cannot action.LoadActionByID %d > %s", mapActionsStages[id][index].ID, err)
+				return fmt.Errorf("loadPipelineStage> cannot action.LoadActionByID %d > %s", mapActionsStages[id][index].Action.ID, err)
 			}
 			var pipelineActionParameter []sdk.Parameter
 			var isUpdated bool
@@ -292,7 +294,6 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 			}
 
 			job.Action = *a
-			job.LastModified = a.LastModified
 
 			// Insert job also
 			mapStages[id].Jobs = append(mapStages[id].Jobs, job)

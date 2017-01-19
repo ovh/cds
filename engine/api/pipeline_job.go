@@ -132,7 +132,6 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	}
 
 	var job sdk.Job
-
 	// Get args in body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
