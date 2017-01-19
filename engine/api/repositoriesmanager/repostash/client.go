@@ -353,7 +353,7 @@ func (s *StashClient) SetStatus(event sdk.Event) error {
 	)
 
 	// project/CDS/application/cds2tat/pipeline/monPipeline/build/855?env=monEnvi
-	url := fmt.Sprintf("#/%s/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
+	url := fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
 		viper.GetString("base_url"),
 		cdsProject,
 		cdsApplication,
