@@ -13,7 +13,7 @@ import (
 var (
 	rootCmd = &cobra.Command{
 		Use:   "maintenance",
-		Short: "CDS Admin Maintenance Management",
+		Short: "CDS Admin Maintenance Management (admin only)",
 	}
 
 	enableCmd = &cobra.Command{

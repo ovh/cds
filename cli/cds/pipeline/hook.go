@@ -130,6 +130,9 @@ func deletePipelineHook(cmd *cobra.Command, args []string) {
 
 	//If the application is attached to a repositories manager, parameter <host>/<project>/<slug> aren't taken in account
 	if a.RepositoriesManager != nil {
+		if len(args) != 4 {
+			sdk.Exit("Wrong usage: See %s\n", cmd.Short)
+		}
 
 		hookIDString := args[3]
 		hookID, err := strconv.ParseInt(hookIDString, 10, 64)

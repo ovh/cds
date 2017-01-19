@@ -47,7 +47,7 @@ On this application, you just have to set up *OAuth Incoming Authentication* :
 With CDS CLI run :
 
  ```
- $ cds reposmanager add STASH mystash.mynetwork.net http://mystash.mynetwork.net key=privatekey
+ $ cds admin reposmanager add STASH mystash.mynetwork.net http://mystash.mynetwork.net key=privatekey
  ```
 
 And follow instructions.
@@ -58,7 +58,7 @@ Restart CDS.
 
 Now check everything is OK with :
  ```
- $ cds reposmanager list
+ $ cds admin reposmanager list
  ```
 
 
@@ -72,7 +72,7 @@ On the next page Github give you a **Client ID** and a **Client Secret**
 With CDS CLI run :
 
  ```
- $ cds reposmanager add GITHUB github.com http://github.com client-id=<your_client_id> client-secret=client-secret
+ $ cds admin reposmanager add GITHUB github.com http://github.com client-id=<your_client_id> client-secret=client-secret
  ```
 
 And follow instructions.
@@ -83,5 +83,5 @@ Restart CDS.
 
 Now check everything is OK with :
  ```
- $ cds reposmanager list
+ $ cds admin reposmanager list
  ```

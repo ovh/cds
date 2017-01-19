@@ -12,7 +12,7 @@ import (
 var (
 	rootCmd = &cobra.Command{
 		Use:   "warning",
-		Short: "CDS Admin Warning Management",
+		Short: "CDS Admin Warning Management (admin only)",
 	}
 
 	truncateCmd = &cobra.Command{

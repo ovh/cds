@@ -9,9 +9,31 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
+
+var defaultGroupID int64
+
+// Initialize initializes sharedInfraGroup and Default Group
+func Initialize(db *gorp.DbMap, defaultGroupName string) error {
+	//Load the famous sharedInfraGroup
+	sharedInfraGroup, errlg := LoadGroup(db, SharedInfraGroup)
+	if errlg != nil {
+		log.Critical("group.Initialize> Cannot load shared infra group: %s\n", errlg)
+		return errlg
+	}
+	permission.SharedInfraGroupID = sharedInfraGroup.ID
+
+	g, errld := LoadGroup(db, defaultGroupName)
+	if errld != nil {
+		log.Critical("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
+		return errld
+	}
+	defaultGroupID = g.ID
+	return nil
+}
 
 // DeleteGroupAndDependencies deletes group and all subsequent group_project, pipeline_project
 func DeleteGroupAndDependencies(db database.Executer, group *sdk.Group) error {
@@ -310,10 +332,22 @@ func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
 }
 
 // InsertUserInGroup insert user in group
-func InsertUserInGroup(db database.Executer, groupID, userID int64, admin bool) error {
+func InsertUserInGroup(db database.QueryExecuter, groupID, userID int64, admin bool) error {
 	query := `INSERT INTO group_user (group_id,user_id,group_admin) VALUES($1,$2,$3)`
 	_, err := db.Exec(query, groupID, userID, admin)
 	return err
+}
+
+// CheckUserInDefaultGroup insert user in default group
+func CheckUserInDefaultGroup(db gorp.SqlExecutor, userID int64) error {
+	inGroup, err := CheckUserInGroup(db, defaultGroupID, userID)
+	if err != nil {
+		return err
+	}
+	if !inGroup {
+		return InsertUserInGroup(db, defaultGroupID, userID, false)
+	}
+	return nil
 }
 
 // DeleteGroupUserByGroup Delete all user from a group
