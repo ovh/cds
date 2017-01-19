@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -275,7 +276,13 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
 	headers := test.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(&s))
-	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "DELETE", route, s).Headers(headers).Checkers(iffy.ExpectStatus(200))
+
+	tester.Run()
+	tester.Reset()
+
+	vars["id"] = strconv.FormatInt(s.ID, 10)
+	route = router.getRoute("DELETE", deleteSchedulerApplicationPipelineHandler, vars)
+	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "DELETE", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200))
 
 	tester.Run()
 	tester.Reset()

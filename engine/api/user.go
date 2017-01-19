@@ -412,15 +412,14 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 // LoginUser take user credentials and creates a auth token
 func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	data, errr := ioutil.ReadAll(r.Body)
+	if errr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	loginUserRequest := sdk.UserLoginRequest{}
-	err = json.Unmarshal(data, &loginUserRequest)
-	if err != nil {
+	if err := json.Unmarshal(data, &loginUserRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -432,9 +431,9 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	}
 
 	// Authentify user through authDriver
-	authOK, err := router.authDriver.Authentify(loginUserRequest.Username, loginUserRequest.Password)
-	if err != nil {
-		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, err)
+	authOK, erra := router.authDriver.Authentify(loginUserRequest.Username, loginUserRequest.Password)
+	if erra != nil {
+		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, erra)
 		WriteError(w, r, sdk.ErrInvalidUser)
 		return
 	}
@@ -444,14 +443,14 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 		return
 	}
 	// Load user
-	u, err := user.LoadUserWithoutAuth(db, loginUserRequest.Username)
-	if err != nil && err == sql.ErrNoRows {
-		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, err)
+	u, errl := user.LoadUserWithoutAuth(db, loginUserRequest.Username)
+	if errl != nil && errl == sql.ErrNoRows {
+		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, errl)
 		WriteError(w, r, sdk.ErrInvalidUser)
 		return
 	}
-	if err != nil {
-		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, err)
+	if errl != nil {
+		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, errl)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -461,20 +460,25 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 		User: *u,
 	}
 
+	if err := group.CheckUserInDefaultGroup(db, u.ID); err != nil {
+		log.Warning("Auth> Error while check user in default group:%s\n", err)
+	}
+
 	// If "session" mode is activated, generate a new session
 	if _, local := router.authDriver.(*auth.LocalClient); !local || localCLientAuthMode != auth.LocalClientBasicAuthMode {
 		var sessionKey sessionstore.SessionKey
+		var errs error
 		if !logFromCLI {
 			//Standard login, new session
-			sessionKey, err = auth.NewSession(router.authDriver, u)
-			if err != nil {
-				log.Critical("Auth> Error while creating new session: %s\n", err)
+			sessionKey, errs = auth.NewSession(router.authDriver, u)
+			if errs != nil {
+				log.Critical("Auth> Error while creating new session: %s\n", errs)
 			}
 		} else {
 			//CLI login, generate user key as persistent session
-			sessionKey, err = auth.NewPersistentSession(db, router.authDriver, u)
-			if err != nil {
-				log.Critical("Auth> Error while creating new session: %s\n", err)
+			sessionKey, errs = auth.NewPersistentSession(db, router.authDriver, u)
+			if errs != nil {
+				log.Critical("Auth> Error while creating new session: %s\n", errs)
 			}
 		}
 

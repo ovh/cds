@@ -143,7 +143,7 @@ var mainCmd = &cobra.Command{
 		router.init()
 		baseURL = viper.GetString("base_url")
 
-		if err := group.Initialize(database.DBMap(db)); err != nil {
+		if err := group.Initialize(database.DBMap(db), viper.GetString("default_group")); err != nil {
 			log.Critical("Cannot initialize groups: %s\n", err)
 		}
 
@@ -341,7 +341,8 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline", GET(getPipelinesInApplicationHandler), PUT(updatePipelinesToApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}", POST(attachPipelineToApplicationHandler), PUT(updatePipelineToApplicationHandler), DELETE(removePipelineFromApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification", GET(getUserNotificationApplicationPipelineHandler), PUT(updateUserNotificationApplicationPipelineHandler), DELETE(deleteUserNotificationApplicationPipelineHandler))
-	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler", GET(getSchedulerApplicationPipelineHandler), POST(addSchedulerApplicationPipelineHandler), PUT(updateSchedulerApplicationPipelineHandler), DELETE(deleteSchedulerApplicationPipelineHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler", GET(getSchedulerApplicationPipelineHandler), POST(addSchedulerApplicationPipelineHandler), PUT(updateSchedulerApplicationPipelineHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler/{id}", DELETE(deleteSchedulerApplicationPipelineHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/tree", GET(getApplicationTreeHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/variable", GET(getVariablesInApplicationHandler), PUT(updateVariablesInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/variable/audit", GET(getVariablesAuditInApplicationHandler))
@@ -622,6 +623,9 @@ func init() {
 
 	flags.Bool("no-repo-cache-loader", false, "Disable repositories cache loader")
 	viper.BindPFlag("no_repo_cache_loader", flags.Lookup("no-repo-cache-loader"))
+
+	flags.String("default-group", "", "Default group for new users")
+	viper.BindPFlag("default_group", flags.Lookup("default-group"))
 
 	mainCmd.AddCommand(database.DBCmd)
 

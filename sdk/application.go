@@ -567,13 +567,8 @@ func UpdatePipelineScheduler(projectKey, appName, pipelineName string, s *Pipeli
 
 //DeletePipelineScheduler update a pipeline scheduler
 func DeletePipelineScheduler(projectKey, appName, pipelineName string, s *PipelineScheduler) error {
-	b, err := json.Marshal(s)
-	if err != nil {
-		return err
-	}
-
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
-	data, code, err := Request("DELETE", path, b)
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler/%d", projectKey, appName, pipelineName, s.ID)
+	data, code, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}

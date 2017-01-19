@@ -6,23 +6,10 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/log"
 )
 
 // SharedInfraGroup is the name of the builtin group used to share infrastructure between projects
 const SharedInfraGroup = "shared.infra"
-
-// Initialize some stuff
-func Initialize(db gorp.SqlExecutor) error {
-	//Load the famous sharedInfraGroup
-	sharedInfraGroup, errLoad := LoadGroup(db, SharedInfraGroup)
-	if errLoad != nil {
-		log.Critical("group.init> Cannot load shared infra group: %s\n", errLoad)
-		return errLoad
-	}
-	permission.SharedInfraGroupID = sharedInfraGroup.ID
-	return nil
-}
 
 // CreateDefaultGlobalGroup creates a group 'public' where every user will be
 func CreateDefaultGlobalGroup(db *gorp.DbMap) error {
@@ -60,7 +47,7 @@ func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 	return nil
 }
 
-// AddGlobalGroupTopipeline add global group access to given pipeline
+// AddGlobalGroupToPipeline add global group access to given pipeline
 func AddGlobalGroupToPipeline(tx gorp.SqlExecutor, pipID int64) error {
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
