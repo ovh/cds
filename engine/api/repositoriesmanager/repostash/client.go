@@ -335,7 +335,7 @@ func (s *StashClient) SetStatus(event sdk.Event) error {
 
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
 		log.Warning("Error during consumption: %s", err)
-		return nil
+		return err
 	}
 
 	log.Debug("Process event:%+v", event)
