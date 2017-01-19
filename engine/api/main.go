@@ -422,6 +422,7 @@ func (router *Router) init() {
 	router.Handle("/queue/{id}/take", POST(takeActionBuildHandler))
 	router.Handle("/queue/{id}/result", POST(addQueueResultHandler))
 	router.Handle("/build/{id}/log", POST(addBuildLogHandler))
+	router.Handle("/build/{id}/step", POST(updateStepStatusHandler))
 
 	router.Handle("/variable/type", GET(getVariableTypeHandler))
 	router.Handle("/parameter/type", GET(getParameterTypeHandler))

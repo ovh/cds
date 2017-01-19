@@ -161,10 +161,12 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb sdk.PipelineBuild)
 		pbJob := sdk.PipelineBuildJob{
 			PipelineBuildID: pb.ID,
 			Parameters:      pbJobParams,
-			Job:             job,
-			Queued:          time.Now(),
-			Status:          sdk.StatusWaiting.String(),
-			Start:           time.Now(),
+			Job: sdk.ExecutedJob{
+				Job: job,
+			},
+			Queued: time.Now(),
+			Status: sdk.StatusWaiting.String(),
+			Start:  time.Now(),
 		}
 
 		if !stage.Enabled {
@@ -210,6 +212,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 			pbJob.Start = pbJobDB.Start
 			pbJob.Done = pbJobDB.Done
 			pbJob.Model = pbJobDB.Model
+			pbJob.Job = pbJobDB.Job
 		}
 	}
 

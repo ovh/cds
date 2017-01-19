@@ -9,7 +9,7 @@ import (
 // ActionBuild represents an action to be run
 type PipelineBuildJob struct {
 	ID              int64       `json:"id" db:"id"`
-	Job             Job         `json:"job" db:"-"`
+	Job             ExecutedJob `json:"job" db:"-"`
 	JobJSON         []byte      `json:"-" db:"job"`
 	Parameters      []Parameter `json:"parameters,omitempty" db:"-"`
 	ParametersJSON  []byte      `json:"-,omitempty" db:"parameters"`
@@ -19,6 +19,16 @@ type PipelineBuildJob struct {
 	Done            time.Time   `json:"done,omitempty" db:"done"`
 	Model           string      `json:"model,omitempty" db:"model"`
 	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
+}
+
+type ExecutedJob struct {
+	Job
+	StepStatus []StepStatus `json:"step_status" db:"-"`
+}
+
+type StepStatus struct {
+	StepOrder int    `json:"step_order" db:"-"`
+	Status    string `json:"status" db:"-"`
 }
 
 // BuildState define struct returned when looking for build state informations

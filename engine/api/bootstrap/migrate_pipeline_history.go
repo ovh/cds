@@ -156,23 +156,26 @@ func MigratePipelineHistory(_db *sql.DB) error {
 							continue rowsLoop
 						}
 
+						j := sdk.Job{
+							Action: sdk.Action{
+								Name: bString["action_name"].(string),
+							},
+							Enabled:          true,
+							PipelineActionID: int64(bString["pipeline_action_id"].(float64)),
+						}
 						pbJob := sdk.PipelineBuildJob{
 							ID:              int64(bString["id"].(float64)),
 							Parameters:      parameters,
 							PipelineBuildID: pb.ID,
 							Model:           "",
 							Status:          bString["status"].(string),
-							Job: sdk.Job{
-								Action: sdk.Action{
-									Name: bString["action_name"].(string),
-								},
-								Enabled:          true,
-								PipelineActionID: int64(bString["pipeline_action_id"].(float64)),
+							Job: sdk.ExecutedJob{
+								Job: j,
 							},
 							Start: start,
 							Done:  done,
 						}
-						stageToUpdate.Jobs = append(stageToUpdate.Jobs, pbJob.Job)
+						stageToUpdate.Jobs = append(stageToUpdate.Jobs, j)
 						stageToUpdate.PipelineBuildJobs = append(stageToUpdate.PipelineBuildJobs, pbJob)
 					}
 				}

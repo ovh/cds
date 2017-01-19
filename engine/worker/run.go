@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -128,6 +129,12 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 		currentStep = i
 		if !child.Enabled {
 			childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
+
+			// Update step status and continue
+			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusDisabled.String()); err != nil {
+				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+			}
+
 			sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Step %s is disabled\n", name, childName), pipBuildJob.PipelineBuildID, currentStep)
 			nbDisabledChildren++
 			continue
@@ -136,10 +143,26 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 		if !doNotRunChildrenAnymore {
 			childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
 			log.Printf("Running %s\n", childName)
+
+			// Update step status
+			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusBuilding.String()); err != nil {
+				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+			}
+
 			r = startAction(&child, pipBuildJob, currentStep)
 			if r.Status != sdk.StatusSuccess {
+				// Update step status
+				if err := updateStepStatus(pipBuildJob.ID, currentStep, r.Status.String()); err != nil {
+					log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+				}
+
 				log.Printf("Stopping %s at step %s", a.Name, childName)
 				doNotRunChildrenAnymore = true
+			}
+
+			// Update step status
+			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusSuccess.String()); err != nil {
+				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 		}
 	}
@@ -165,6 +188,27 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 	}
 
 	return r
+}
+
+func updateStepStatus(pbJobID int64, stepOrder int, status string) error {
+	step := sdk.StepStatus{
+		StepOrder: stepOrder,
+		Status:    status,
+	}
+	body, errM := json.Marshal(step)
+	if errM != nil {
+		return errM
+	}
+
+	path := fmt.Sprintf("/build/%d/step", pbJobID)
+	_, code, errReq := sdk.Request("POST", path, body)
+	if errReq != nil {
+		return errReq
+	}
+	if code != http.StatusOK {
+		return fmt.Errorf("Wrong http code %d", code)
+	}
+	return nil
 }
 
 var logsecrets []sdk.Variable

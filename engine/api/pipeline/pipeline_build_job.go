@@ -120,6 +120,9 @@ func GetPipelineBuildJob(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, 
 	`, id); err != nil {
 		return nil, err
 	}
+	if err := pbJobGorp.PostSelect(db); err != nil {
+		return nil, err
+	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
 	return &pbJob, nil
 }

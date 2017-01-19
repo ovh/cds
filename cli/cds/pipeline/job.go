@@ -90,10 +90,10 @@ func pipelineJobAdd(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	job := &sdk.Job {
+	job := &sdk.Job{
 		PipelineStageID: pipelineStageID,
-		Enabled: true,
-		Action: *a,
+		Enabled:         true,
+		Action:          *a,
 	}
 
 	err = sdk.AddJob(projectKey, pipelineName, job)

@@ -185,7 +185,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		Action: sdk.Action{
 			Name: "NewAction1",
 		},
-		Enabled:  true,
+		Enabled: true,
 	}
 	errJob := pipeline.InsertJob(db, job, stage1.ID, pip)
 	test.NoError(t, errJob)
@@ -284,7 +284,6 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
-
 	//Insert Stage
 	stage1 := &sdk.Stage{
 		Name:       "stage_Test_1",
@@ -320,7 +319,6 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	test.NoError(t, errJob2)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
-
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
