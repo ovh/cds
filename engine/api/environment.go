@@ -188,8 +188,8 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 					}
 				}
 				if varEnv.Value == "" {
-					errMsg := fmt.Sprintf("Variable %s on environment %s cannot be empty", varEnv.Name, env.Name)
-					log.Warning("updateEnvironmentsHandler> %s\n", errMsg)
+					errMsg := fmt.Sprintf("Variable %s on environment %s on project %s cannot be empty", varEnv.Name, env.Name, key)
+					log.Warning("updateEnvironmentsHandler> %s (%s)\n", errMsg, c.User.Username)
 					WriteError(w, r, fmt.Errorf("%s", errMsg))
 					return
 				}
