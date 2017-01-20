@@ -58,6 +58,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 
 	// Check Event
 	output = append(output, fmt.Sprintf("Event: %s", event.Status()))
+	log.Info("Status> Event: %s", event.Status())
 
 	// Check redis
 	output = append(output, fmt.Sprintf("Cache: %s", cache.Status))
@@ -74,10 +75,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	//Check smtp
 	output = append(output, fmt.Sprintf("SMTP: %s", mail.Status))
 	log.Info("Status> SMTP: %s", mail.Status)
-
-	// Check notif
-	output = append(output, notification.Status()...)
-	log.Info("Status> Notifications %v", notification.Status())
 
 	// Check database
 	output = append(output, database.Status())
