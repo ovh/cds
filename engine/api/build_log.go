@@ -19,6 +19,121 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+	// Get pipeline and action name in URL
+	vars := mux.Vars(r)
+	projectKey := vars["key"]
+	pipelineName := vars["permPipelineKey"]
+	buildNumberS := vars["build"]
+	appName := vars["permApplicationName"]
+	pipelineActionIDString := vars["actionID"]
+	stepOrderString := vars["stepOrder"]
+
+	stepOrder, errInt := strconv.Atoi(stepOrderString)
+	if errInt != nil {
+		WriteError(w, r, sdk.ErrInvalidID)
+		return
+	}
+
+	pipelineActionID, errPA := strconv.ParseInt(pipelineActionIDString, 10, 64)
+	if errPA != nil {
+		WriteError(w, r, sdk.ErrInvalidID)
+		return
+	}
+
+
+	// Get offset
+	if err := r.ParseForm(); err != nil {
+		log.Warning("getStepBuildLogsHandler> cannot parse form: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	offsetS := r.FormValue("offset")
+	var offset int64
+	if offsetS != "" {
+		var errParse error
+		offset, errParse = strconv.ParseInt(offsetS, 10, 64)
+		if errParse != nil {
+			log.Warning("getStepBuildLogsHandler> Cannot parse offset %s: %s\n", offsetS, errParse)
+			WriteError(w, r, errParse)
+			return
+		}
+	}
+
+	var env *sdk.Environment
+	envName := r.FormValue("envName")
+	if envName == "" || envName == sdk.DefaultEnv.Name {
+		env = &sdk.DefaultEnv
+	} else {
+		var errEnv error
+		env, errEnv = environment.LoadEnvironmentByName(db, projectKey, envName)
+		if errEnv != nil {
+			log.Warning("getStepBuildLogsHandler> Cannot load environment %s: %s\n", envName, errEnv)
+			WriteError(w, r, sdk.ErrUnknownEnv)
+			return
+		}
+
+	}
+
+	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+		log.Warning("getStepBuildLogsHandler> No enought right on this environment %s: \n", envName)
+		WriteError(w, r, sdk.ErrForbidden)
+		return
+	}
+
+
+	// Check that pipeline exists
+	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	if err != nil {
+		log.Warning("getStepBuildLogsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
+		WriteError(w, r, sdk.ErrPipelineNotFound)
+		return
+	}
+
+	// Check that application exists
+	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	if err != nil {
+		log.Warning("getStepBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
+		WriteError(w, r, sdk.ErrApplicationNotFound)
+		return
+	}
+
+	// if buildNumber is 'last' fetch last build number
+	var buildNumber int64
+	if buildNumberS == "last" {
+		bn, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
+		if err != nil {
+			log.Warning("getStepBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
+			WriteError(w, r, err)
+			return
+		}
+		buildNumber = bn
+	} else {
+		buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
+		if err != nil {
+			log.Warning("getStepBuildLogsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
+			WriteError(w, r, err)
+			return
+		}
+	}
+
+	// load pipeline_build.id
+	var pipelinelogs []sdk.Log
+	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
+	if err != nil {
+		log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	pipelinelogs, err = pipeline.LoadPipelineStepBuildLogs(db, pb, pipelineActionID, stepOrder, offset)
+	if err != nil {
+		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+}
 func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get pipeline and action name in URL
