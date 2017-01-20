@@ -76,16 +76,6 @@ func main() {
 			return
 		}
 
-		//Do not check warning on user command
-		if cmd == user.Cmd {
-			return
-		}
-
-		//Manage warnings
-		if internal.NoWarnings {
-			return
-		}
-
 		//Set http client
 		c := &http.Client{
 			Transport: &http.Transport{
@@ -93,7 +83,11 @@ func main() {
 			}}
 		sdk.SetHTTPClient(c)
 
-		displayWarnings()
+		//Manage warnings
+		if !internal.NoWarnings && cmd != user.Cmd {
+			displayWarnings()
+		}
+
 	}
 
 	rootCmd.AddCommand(login.Cmd)
