@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 
@@ -52,6 +54,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&internal.ConfigFile, "file", "f", "", "set configuration file")
 	rootCmd.PersistentFlags().BoolVarP(&internal.Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&internal.NoWarnings, "no-warnings", "w", false, "do not display warnings")
+	rootCmd.PersistentFlags().BoolVarP(&internal.InsecureSkipVerifyTLS, "insecure", "k", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		//ConfigFile default file
@@ -73,16 +76,18 @@ func main() {
 			return
 		}
 
-		//Do not check warning on user command
-		if cmd == user.Cmd {
-			return
-		}
+		//Set http client
+		c := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: internal.InsecureSkipVerifyTLS},
+			}}
+		sdk.SetHTTPClient(c)
 
 		//Manage warnings
-		if internal.NoWarnings {
-			return
+		if !internal.NoWarnings && cmd != user.Cmd {
+			displayWarnings()
 		}
-		displayWarnings()
+
 	}
 
 	rootCmd.AddCommand(login.Cmd)
