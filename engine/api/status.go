@@ -58,6 +58,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 
 	// Check Event
 	output = append(output, fmt.Sprintf("Event: %s", event.Status()))
+	log.Info("Status> Event: %s", event.Status())
 
 	// Check redis
 	output = append(output, fmt.Sprintf("Cache: %s", cache.Status))
