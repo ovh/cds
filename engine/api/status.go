@@ -75,10 +75,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	output = append(output, fmt.Sprintf("SMTP: %s", mail.Status))
 	log.Info("Status> SMTP: %s", mail.Status)
 
-	// Check notif
-	output = append(output, notification.Status()...)
-	log.Info("Status> Notifications %v", notification.Status())
-
 	// Check database
 	output = append(output, database.Status())
 	log.Info("Status> %s", database.Status())
