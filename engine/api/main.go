@@ -229,6 +229,7 @@ var mainCmd = &cobra.Command{
 		} else {
 			log.Warning("⚠ Repositories cache loader is disabled")
 		}
+
 		if !viper.GetBool("no_repo_polling") {
 			go polling.Initialize()
 			go polling.ExecutionCleaner()
@@ -238,6 +239,8 @@ var mainCmd = &cobra.Command{
 
 		if !viper.GetBool("no_scheduler") {
 			go scheduler.Initialize(10)
+		} else {
+			log.Warning("⚠ Cron Scheduler is disabled")
 		}
 
 		s := &http.Server{
