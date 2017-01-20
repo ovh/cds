@@ -30,10 +30,10 @@ func ExecuterRun() ([]sdk.PipelineSchedulerExecution, error) {
 		return nil, fmt.Errorf("Database is unavailable")
 	}
 	db := database.DBMap(_db)
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("ExecuterRun> %s", err)
-		return nil, err
+	tx, errb := db.Begin()
+	if errb != nil {
+		log.Warning("ExecuterRun> %s", errb)
+		return nil, errb
 	}
 	defer tx.Rollback()
 

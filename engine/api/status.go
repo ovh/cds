@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
+	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/log"
 
@@ -55,6 +56,10 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *contex
 	// Check vault
 	output = append(output, fmt.Sprintf("Secret Backend: %s", secret.Status()))
 	log.Info("Status> Secret Backend: %s", secret.Status())
+
+	// Check Scheduler
+	output = append(output, fmt.Sprintf("Scheduler: %s", scheduler.Status()))
+	log.Info("Status> Scheduler: %s", scheduler.Status())
 
 	// Check Event
 	output = append(output, fmt.Sprintf("Event: %s", event.Status()))
