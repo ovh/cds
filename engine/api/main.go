@@ -236,7 +236,9 @@ var mainCmd = &cobra.Command{
 			log.Warning("⚠ Repositories polling is disabled")
 		}
 
-		go scheduler.Initialize(10)
+		if !viper.GetBool("no_scheduler") {
+			go scheduler.Initialize(10)
+		}
 
 		s := &http.Server{
 			Addr:           ":" + viper.GetString("listen_port"),
@@ -617,6 +619,9 @@ func init() {
 
 	flags.String("event-kafka-password", "", "Ex: --kafka-password=your-kafka-password")
 	viper.BindPFlag("event_kafka_password", flags.Lookup("event-kafka-password"))
+
+	flags.Bool("no-scheduler", false, "Disable CDS Scheduler (crontab)")
+	viper.BindPFlag("no_scheduler", flags.Lookup("no-scheduler"))
 
 	flags.Bool("no-repo-polling", false, "Disable repositories manager polling")
 	viper.BindPFlag("no_repo_polling", flags.Lookup("no-repo-polling"))
