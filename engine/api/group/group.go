@@ -24,12 +24,15 @@ func Initialize(db *sql.DB, defaultGroupName string) error {
 	}
 	permission.SharedInfraGroupID = sharedInfraGroup.ID
 
-	g, errld := LoadGroup(db, defaultGroupName)
-	if errld != nil {
-		log.Critical("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
-		return errld
+	if defaultGroupName != "" {
+		g, errld := LoadGroup(db, defaultGroupName)
+		if errld != nil {
+			log.Critical("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
+			return errld
+		}
+		defaultGroupID = g.ID
 	}
-	defaultGroupID = g.ID
+
 	return nil
 }
 
@@ -338,6 +341,9 @@ func InsertUserInGroup(db database.QueryExecuter, groupID, userID int64, admin b
 
 // CheckUserInDefaultGroup insert user in default group
 func CheckUserInDefaultGroup(db database.QueryExecuter, userID int64) error {
+	if defaultGroupID < 1 {
+		return nil
+	}
 	inGroup, err := CheckUserInGroup(db, defaultGroupID, userID)
 	if err != nil {
 		return err
