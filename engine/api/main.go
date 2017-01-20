@@ -216,7 +216,6 @@ var mainCmd = &cobra.Command{
 		go log.RemovalRoutine()
 		go auditCleanerRoutine()
 
-		go repositoriesmanager.RepositoriesCacheLoader(30)
 		go repositoriesmanager.ReceiveEvents()
 
 		go stats.StartRoutine()
