@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -185,6 +186,12 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 						log.Warning("UpdateEnvironments> Previous value of %s/%s.%s not found, set to empty\n", key, env.Name, varEnv.Name)
 						varEnv.Value = ""
 					}
+				}
+				if varEnv.Value == "" {
+					errMsg := fmt.Sprintf("Variable %s on environment %s on project %s cannot be empty", varEnv.Name, env.Name, key)
+					log.Warning("updateEnvironmentsHandler> %s (%s)\n", errMsg, c.User.Username)
+					WriteError(w, r, sdk.NewError(sdk.ErrInvalidSecretValue, fmt.Errorf("%s", errMsg)))
+					return
 				}
 				err = environment.InsertVariable(tx, env.ID, varEnv)
 				if err != nil {

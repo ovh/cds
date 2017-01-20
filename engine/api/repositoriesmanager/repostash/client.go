@@ -329,14 +329,13 @@ func (s *StashClient) SetStatus(event sdk.Event) error {
 	log.Debug("process> receive: type:%s all: %+v", event.EventType, event)
 	var eventpb sdk.EventPipelineBuild
 
-	if event.EventType == fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
-		if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-			log.Warning("Error during consumption: %s", err)
-			return nil
-		}
-	} else {
-		// skip all event != eventPipelineBuild
+	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
 		return nil
+	}
+
+	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
+		log.Warning("Error during consumption: %s", err)
+		return err
 	}
 
 	log.Debug("Process event:%+v", event)
@@ -354,7 +353,7 @@ func (s *StashClient) SetStatus(event sdk.Event) error {
 	)
 
 	// project/CDS/application/cds2tat/pipeline/monPipeline/build/855?env=monEnvi
-	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
+	url := fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
 		viper.GetString("base_url"),
 		cdsProject,
 		cdsApplication,

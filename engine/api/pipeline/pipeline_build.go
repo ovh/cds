@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/cache"
 )
 
 const (
@@ -311,7 +312,50 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	}
 	query := `UPDATE pipeline_build set status = $1, stages = $2 WHERE id = $3`
 	_, err := db.Exec(query, pb.Status.String(), string(stagesB), pb.ID)
-	return err
+	if err != nil {
+		return err
+	}
+	//Send notification
+	//Load previous pipeline (some app, pip, env and branch)
+	//Load branch
+	branch := ""
+	params := pb.Parameters
+	for _, param := range params {
+		if param.Name == ".git.branch" {
+			branch = param.Value
+			break
+		}
+	}
+	//Get the history
+	var previous *sdk.PipelineBuild
+	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch)
+	if err != nil {
+		log.Critical("UpdatePipelineBuildStatusAndStage> error while loading previous pipeline build")
+	}
+	//Be sure to get the previous one
+	if len(history) == 2 {
+		for i := range history {
+			if previous == nil || previous.BuildNumber > history[i].BuildNumber {
+				previous = &history[i]
+			}
+		}
+	}
+
+	k := cache.Key("application", pb.Application.ProjectKey, "*")
+	cache.DeleteAll(k)
+
+	// Load repositorie manager if necessary
+	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
+		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID)
+		if errl != nil {
+			log.Critical("UpdatePipelineBuildStatus> error while loading repoManger for appID %s err:%s", pb.Application.ID, errl)
+		}
+		pb.Application.RepositoryFullname = rfn
+		pb.Application.RepositoriesManager = rm
+	}
+
+	event.PublishPipelineBuild(db, pb, previous)
+	return nil
 }
 
 // DeletePipelineBuild Delete a pipeline build
