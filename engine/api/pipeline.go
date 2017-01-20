@@ -1636,16 +1636,16 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 	//buildNumber, pipelineID, applicationID, environmentID
 	cur, prev, err := pipeline.CurrentAndPreviousPipelineBuildNumberAndHash(db, int64(buildNumber), pip.ID, application.ID, env.ID)
 
-	if prev == nil {
-		log.Info("getPipelineBuildCommitsHandler> No previous build was found for branch %s", cur.Branch)
-	} else {
-		log.Info("getPipelineBuildCommitsHandler> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
-	}
-
 	if err != nil {
 		log.Warning("getPipelineBuildCommitsHandler> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", buildNumber, pip.ID, application.ID, env.ID, err)
 		WriteError(w, r, err)
 		return
+	}
+
+	if prev == nil {
+		log.Info("getPipelineBuildCommitsHandler> No previous build was found for branch %s", cur.Branch)
+	} else {
+		log.Info("getPipelineBuildCommitsHandler> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
 	}
 
 	//If there is not difference between the previous build and the current build
