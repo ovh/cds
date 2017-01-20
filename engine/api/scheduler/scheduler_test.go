@@ -7,9 +7,9 @@ import (
 )
 
 func TestSchedulerRun(t *testing.T) {
-	exs, err := SchedulerRun()
+	exs, status, err := Run()
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%s: %s", status, err)
 	}
 	t.Logf("Has prepare %v", exs)
 }

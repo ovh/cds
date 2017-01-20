@@ -81,7 +81,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	scheduler.SchedulerRun()
+	scheduler.Run()
 	scheduler.ExecuterRun()
 
 	vars := map[string]string{
@@ -151,7 +151,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester.Run()
 	tester.Reset()
 
-	scheduler.SchedulerRun()
+	scheduler.Run()
 	scheduler.ExecuterRun()
 
 	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
@@ -217,7 +217,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester.Run()
 	tester.Reset()
 
-	scheduler.SchedulerRun()
+	scheduler.Run()
 	scheduler.ExecuterRun()
 
 	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
