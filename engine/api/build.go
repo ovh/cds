@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
@@ -299,7 +298,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 		}
 
 		// load actions status for build
-		actionsBuilds, err := build.LoadBuildByPipelineBuildID(db, pb.ID)
+		actionsBuilds, err := pipeline.LoadBuildByPipelineBuildID(db, pb.ID)
 		if err != nil {
 			log.Warning("getBuildStateHandler> Cannot load pipeline build action: %s\n", err)
 			w.WriteHeader(http.StatusNotFound)
@@ -342,7 +341,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	}
 
 	if withTests == "true" {
-		tests, errLoadTests := build.LoadTestResults(db, result.ID)
+		tests, errLoadTests := pipeline.LoadTestResults(db, result.ID)
 		if errLoadTests != nil {
 			log.Warning("getBuildStateHandler> Cannot load tests: %s", errLoadTests)
 			WriteError(w, r, errLoadTests)
@@ -378,7 +377,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	*/
 
 	// Load Build
-	b, err := build.LoadActionBuild(db, id)
+	b, err := pipeline.LoadActionBuild(db, id)
 	if err != nil {
 		log.Warning("addQueueResultHandler> Cannot load queue from db: %s\n", err)
 		w.WriteHeader(http.StatusNotFound)
@@ -419,7 +418,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 
 	// Update action status
 	log.Debug("Updating %s to %s in queue\n", id, res.Status)
-	err = build.UpdateActionBuildStatus(tx, &b, res.Status)
+	err = pipeline.UpdateActionBuildStatus(tx, &b, res.Status)
 	if err != nil {
 		log.Warning("addQueueResultHandler> Cannot update %s status: %s\n", id, err)
 		WriteError(w, r, err)
@@ -455,9 +454,9 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 	}
 
 	// update database
-	ab, err := build.TakeActionBuild(db, id, caller)
+	ab, err := pipeline.TakeActionBuild(db, id, caller)
 	if err != nil {
-		if err != build.ErrAlreadyTaken {
+		if err != pipeline.ErrAlreadyTaken {
 			log.Warning("takeActionBuildHandler> Cannot give ActionBuild %s: %s\n", id, err)
 		}
 		w.WriteHeader(http.StatusBadRequest)
@@ -583,9 +582,9 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	var errQ error
 	switch c.Agent {
 	case sdk.HatcheryAgent, sdk.WorkerAgent:
-		queue, errQ = build.LoadGroupWaitingQueue(db, c.Worker.GroupID)
+		queue, errQ = pipeline.LoadGroupWaitingQueue(db, c.Worker.GroupID)
 	default:
-		queue, errQ = build.LoadUserWaitingQueue(db, c.User)
+		queue, errQ = pipeline.LoadUserWaitingQueue(db, c.User)
 	}
 
 	if errQ != nil {
@@ -808,7 +807,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	}
 
 	// Load existing and merge
-	tests, err := build.LoadTestResults(db, pb.ID)
+	tests, err := pipeline.LoadTestResults(db, pb.ID)
 	if err != nil {
 		log.Warning("addBuildTestResultsHandler> Cannot load test results: %s\n", err)
 		WriteError(w, r, err)
@@ -841,8 +840,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 		tests.TotalSkipped += ts.Skip
 	}
 
-	err = build.UpdateTestResults(db, pb.ID, tests)
-	if err != nil {
+	if err := pipeline.UpdateTestResults(db, pb.ID, tests); err != nil {
 		log.Warning("addBuildTestsResultsHandler> Cannot insert tests results: %s\n", err)
 		WriteError(w, r, err)
 	}
@@ -932,7 +930,7 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *sql.
 		}
 	}
 
-	tests, err := build.LoadTestResults(db, pb.ID)
+	tests, err := pipeline.LoadTestResults(db, pb.ID)
 	if err != nil {
 		log.Warning("getBuildTestResultsHandler> Cannot load test results: %s\n", err)
 		WriteError(w, r, err)

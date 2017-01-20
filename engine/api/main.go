@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,10 +21,10 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/queue"
@@ -35,6 +36,7 @@ import (
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk"
 )
 
 var startupTime time.Time
@@ -111,6 +113,8 @@ var mainCmd = &cobra.Command{
 				<-c
 				log.Warning("Cleanup SQL connections\n")
 				db.Close()
+				event.Publish(sdk.EventEngine{Message: "shutdown"})
+				event.Close()
 				os.Exit(0)
 			}()
 		}
@@ -129,9 +133,7 @@ var mainCmd = &cobra.Command{
 			mux: mux.NewRouter(),
 		}
 		router.init()
-
 		baseURL = viper.GetString("base_url")
-		notification.Initialize(viper.GetString("notifs_urls"), viper.GetString("notifs_key"), baseURL)
 
 		if err := group.Initialize(db, viper.GetString("default_group")); err != nil {
 			log.Critical("Cannot initialize groups: %s\n", err)
@@ -192,6 +194,19 @@ var mainCmd = &cobra.Command{
 
 		cache.Initialize(viper.GetString("cache"), viper.GetString("redis_host"), viper.GetString("redis_password"), viper.GetInt("cache_ttl"))
 
+		kafkaOptions := event.KafkaConfig{
+			Enabled:         viper.GetBool("event_kafka_enabled"),
+			BrokerAddresses: viper.GetString("event_kafka_broker_addresses"),
+			User:            viper.GetString("event_kafka_user"),
+			Password:        viper.GetString("event_kafka_password"),
+			Topic:           viper.GetString("event_kafka_topic"),
+		}
+		if err := event.Initialize(kafkaOptions); err != nil {
+			log.Warning("⚠ Error while initializing event system: %s", err)
+		} else {
+			go event.DequeueEvent()
+		}
+
 		go archivist.Archive(viper.GetInt("interval_archive_seconds"), viper.GetInt("archived_build_hours"))
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller()
@@ -200,6 +215,10 @@ var mainCmd = &cobra.Command{
 		go hatchery.Heartbeat()
 		go log.RemovalRoutine()
 		go auditCleanerRoutine()
+
+		go repositoriesmanager.RepositoriesCacheLoader(30)
+		go repositoriesmanager.ReceiveEvents()
+
 		go stats.StartRoutine()
 		go action.RequirementsCacheLoader(5)
 		go worker.ModelCapabilititiesCacheLoader(5)
@@ -228,6 +247,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		log.Notice("Listening on :%s\n", viper.GetString("listen_port"))
+		event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", viper.GetString("listen_port"))})
 		if err := s.ListenAndServe(); err != nil {
 			log.Fatalf("Cannot start cds-server: %s\n", err)
 		}
@@ -290,9 +310,6 @@ func (router *Router) init() {
 	router.Handle("/mon/building/{hash}", GET(getPipelineBuildingCommit))
 	router.Handle("/mon/warning", GET(getUserWarnings))
 	router.Handle("/mon/lastupdates", GET(getUserLastUpdates))
-
-	// Notif builtin from worker
-	router.Handle("/notif/{actionBuildId}", POST(notifHandler))
 
 	// Project
 	router.Handle("/project", GET(getProjects), POST(addProject))
@@ -544,12 +561,6 @@ func init() {
 	flags.String("keys-directory", "/app/keys", "Directory keys for repositories managers")
 	viper.BindPFlag("keys_directory", flags.Lookup("keys-directory"))
 
-	flags.String("notifs-urls", "", "URLs of CDS Notifications: tat:http://<cds2tat>>,stash:http://<cds2stash>,jabber:http://<cds2xmpp>")
-	viper.BindPFlag("notifs_urls", flags.Lookup("notifs-urls"))
-
-	flags.String("notifs-key", "", "Key of CDS Notifications. Use Key of your deployed CDS Notifications microservices")
-	viper.BindPFlag("notifs_key", flags.Lookup("notifs-key"))
-
 	flags.Bool("ldap-enable", false, "Enable LDAP Auth mode : true|false")
 	viper.BindPFlag("ldap_enable", flags.Lookup("ldap-enable"))
 
@@ -591,6 +602,21 @@ func init() {
 
 	flags.Int("session-ttl", 60, "Session Time to Live (minutes)")
 	viper.BindPFlag("session_ttl", flags.Lookup("session-ttl"))
+
+	flags.Bool("event-kafka-enabled", false, "Enable Event over Kafka")
+	viper.BindPFlag("event_kafka_enabled", flags.Lookup("event-kafka-enabled"))
+
+	flags.String("event-kafka-broker-addresses", "", "Ex: --event-kafka-broker-addresses=host:port,host2:port2")
+	viper.BindPFlag("event_kafka_broker_addresses", flags.Lookup("event-kafka-broker-addresses"))
+
+	flags.String("event-kafka-topic", "", "Ex: --kafka-topic=your-kafka-topic")
+	viper.BindPFlag("event_kafka_topic", flags.Lookup("event-kafka-topic"))
+
+	flags.String("event-kafka-user", "", "Ex: --kafka-user=your-kafka-user")
+	viper.BindPFlag("event_kafka_user", flags.Lookup("event-kafka-user"))
+
+	flags.String("event-kafka-password", "", "Ex: --kafka-password=your-kafka-password")
+	viper.BindPFlag("event_kafka_password", flags.Lookup("event-kafka-password"))
 
 	flags.Bool("no-repo-polling", false, "Disable repositories manager polling")
 	viper.BindPFlag("no_repo_polling", flags.Lookup("no-repo-polling"))

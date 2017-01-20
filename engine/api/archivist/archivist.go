@@ -8,7 +8,6 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
@@ -97,7 +96,7 @@ func ArchiveBuild(db database.QueryExecuter, id int64) error {
 		return fmt.Errorf("cannot archive build: %s", err)
 	}
 
-	if err := build.DeleteBuild(db, id); err != nil {
+	if err := pipeline.DeleteBuild(db, id); err != nil {
 		return fmt.Errorf("cannot delete build: %s", err)
 	}
 

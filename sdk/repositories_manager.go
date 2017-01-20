@@ -283,6 +283,9 @@ type RepositoriesManagerClient interface {
 
 	//Events
 	PushEvents(repo string, dateRef time.Time) ([]VCSPushEvent, time.Duration, error)
+
+	// Set build status on repository
+	SetStatus(event Event) error
 }
 
 //VCSRepo represents data about repository even on stash, or github, etc...

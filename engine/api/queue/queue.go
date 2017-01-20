@@ -9,10 +9,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/build"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -102,9 +103,9 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 			}
 
 			//Check stage prerequisites
-			prerequisitesOK, err := pipeline.CheckPrerequisites(s, pb)
-			if err != nil {
-				log.Warning("queue.RunActions> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d): %s\n", s.Name, s.ID, pb.Pipeline.Name, pb.ID, err)
+			prerequisitesOK, errc := pipeline.CheckPrerequisites(s, pb)
+			if errc != nil {
+				log.Warning("queue.RunActions> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d): %s\n", s.Name, s.ID, pb.Pipeline.Name, pb.ID, errc)
 				return
 			}
 			//If stage is disabled, we have to disable all actions
@@ -126,7 +127,7 @@ func RunActions(db *sql.DB, pb sdk.PipelineBuild) {
 					}
 
 					log.Debug("queue.RunActions> Disable action %d %s (status=%s)", actionBuild.ID, actionBuild.ActionName, status)
-					if err := build.UpdateActionBuildStatus(tx, actionBuild, status); err != nil {
+					if err := pipeline.UpdateActionBuildStatus(tx, actionBuild, status); err != nil {
 						log.Warning("queue.RunActions> Cannot disable action %s with pipelineBuildID %d: %s\n", a.Name, pb.ID, err)
 					}
 
@@ -377,7 +378,7 @@ func newActionBuild(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 		return nil, err
 	}
 
-	b := sdk.ActionBuild{
+	ab := sdk.ActionBuild{
 		PipelineBuildID:  pb.ID,
 		PipelineID:       pb.Pipeline.ID,
 		PipelineActionID: a.PipelineActionID,
@@ -387,15 +388,17 @@ func newActionBuild(db database.QueryExecuter, a sdk.Action, pb sdk.PipelineBuil
 	}
 
 	if !a.Enabled {
-		b.Status = sdk.StatusDisabled
-		b.Done = time.Now()
+		ab.Status = sdk.StatusDisabled
+		ab.Done = time.Now()
 	}
 
-	if err := InsertActionBuild(db, &b); err != nil {
+	if err := InsertActionBuild(db, &ab); err != nil {
 		log.Debug("newActionBuild> err InsertBuild: %s", err)
 		return nil, fmt.Errorf("Cannot push action %s for pipeline %s #%d in build queue: %s\n",
-			a.Name, pb.Pipeline.Name, b.PipelineBuildID, err)
+			a.Name, pb.Pipeline.Name, ab.PipelineBuildID, err)
 	}
 
-	return &b, nil
+	event.PublishActionBuild(&pb, &ab)
+
+	return &ab, nil
 }

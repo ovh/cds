@@ -98,6 +98,7 @@ func (s *LocalStore) Dequeue(queueName string, value interface{}) {
 			time.Sleep(500 * time.Millisecond)
 			e := l.Back()
 			if e != nil {
+				l.Remove(e)
 				elemChan <- e
 				return
 			}

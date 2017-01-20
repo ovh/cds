@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -47,9 +46,8 @@ func killAWOLAction(db *sql.DB, actionBuildID int64) error {
 	}
 	defer tx.Rollback()
 
-	build.InsertLog(tx, actionBuildID, "SYSTEM", "Killed (Reason: Timeout)\n")
-	err = build.UpdateActionBuildStatus(tx, &sdk.ActionBuild{ID: actionBuildID}, sdk.StatusFail)
-	if err != nil {
+	InsertLog(tx, actionBuildID, "SYSTEM", "Killed (Reason: Timeout)\n")
+	if err := UpdateActionBuildStatus(tx, &sdk.ActionBuild{ID: actionBuildID}, sdk.StatusFail); err != nil {
 		return err
 	}
 

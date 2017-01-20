@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/ovh/cds/engine/api/build"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -122,45 +121,41 @@ func loadPipelineDependencies(db database.Querier, p *sdk.Pipeline) error {
 
 // DeletePipeline remove given pipeline and all history from database
 func DeletePipeline(db database.QueryExecuter, pipelineID int64, userID int64) error {
-	err := DeleteAllStage(db, pipelineID, userID)
-	if err != nil {
+
+	if err := DeleteAllStage(db, pipelineID, userID); err != nil {
 		return err
 	}
 
 	// Update project
 	query := `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE id in (
 			SELECT project_id from pipeline WHERE id = $1
 		)
 	`
-	_, err = db.Exec(query, pipelineID)
-	if err != nil {
+
+	if _, err := db.Exec(query, pipelineID); err != nil {
 		return err
 	}
 
 	// Delete pipeline groups
 	query = `DELETE FROM pipeline_group WHERE pipeline_id = $1`
-	_, err = db.Exec(query, pipelineID)
-	if err != nil {
+	if _, err := db.Exec(query, pipelineID); err != nil {
 		return err
 	}
 
-	err = DeleteAllParameterFromPipeline(db, pipelineID)
-	if err != nil {
+	if err := DeleteAllParameterFromPipeline(db, pipelineID); err != nil {
 		return err
 	}
 
 	// Delete triggers
-	err = trigger.DeletePipelineTriggers(db, pipelineID)
-	if err != nil {
+	if err := trigger.DeletePipelineTriggers(db, pipelineID); err != nil {
 		return err
 	}
 
 	// Delete test results
-	err = build.DeletePipelineTestResults(db, pipelineID)
-	if err != nil {
+	if err := DeletePipelineTestResults(db, pipelineID); err != nil {
 		return err
 	}
 
@@ -195,8 +190,7 @@ func DeletePipeline(db database.QueryExecuter, pipelineID int64, userID int64) e
 
 	// Delete histoy
 	query = `DELETE FROM pipeline_history WHERE pipeline_id = $1`
-	_, err = db.Exec(query, pipelineID)
-	if err != nil {
+	if _, err := db.Exec(query, pipelineID); err != nil {
 		return err
 	}
 
@@ -211,8 +205,7 @@ func DeletePipeline(db database.QueryExecuter, pipelineID int64, userID int64) e
 
 	// Delete pipeline
 	query = `DELETE FROM pipeline WHERE id = $1`
-	_, err = db.Exec(query, pipelineID)
-	if err != nil {
+	if _, err := db.Exec(query, pipelineID); err != nil {
 		return err
 	}
 
@@ -347,7 +340,7 @@ func LoadGroupByPipeline(db database.Querier, pipeline *sdk.Pipeline) error {
 func UpdatePipeline(db database.Executer, p *sdk.Pipeline) error {
 	// Update project
 	query := `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE id IN (SELECT project_id from pipeline WHERE id = $1)
 	`

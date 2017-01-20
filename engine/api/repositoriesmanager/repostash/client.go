@@ -2,15 +2,15 @@ package repostash
 
 import (
 	"fmt"
+	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
-
 	"github.com/go-stash/go-stash/stash"
-
-	"net/http"
-	"net/url"
+	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/log"
@@ -284,7 +284,7 @@ func (s *StashClient) CreateHook(repo, url string) error {
 	if len(t) != 2 {
 		return fmt.Errorf("fullname %s must be <project>/<slug>", repo)
 	}
-	log.Notice("CreateHook> Ask Stash to create Hook on %s/%s (%s) : %s", t[0], t[1], stashHookKey, url)
+	log.Notice("CreateHook> Ask Stash to create Hook on %s/%s (%s): %s", t[0], t[1], stashHookKey, url)
 	h, err := s.client.Hooks.CreateHook(t[0], t[1], stashHookKey, "POST", url, branchFilter, tagFilter, userFilter)
 	if err != nil {
 		if strings.Contains(err.Error(), "Unauthorized") {
@@ -303,8 +303,7 @@ func (s *StashClient) DeleteHook(repo, url string) error {
 		return fmt.Errorf("fullname %s must be <project>/<slug>", repo)
 	}
 	log.Notice("DeleteHook> Ask Stash to delete Hook on %s/%s (%s) : %s", t[0], t[1], stashHookKey, url)
-	err := s.client.Hooks.DeleteHook(t[0], t[1], stashHookKey, url)
-	if err != nil {
+	if err := s.client.Hooks.DeleteHook(t[0], t[1], stashHookKey, url); err != nil {
 		if strings.Contains(err.Error(), "Unauthorized") {
 			return sdk.ErrNoReposManagerClientAuth
 		}
@@ -317,4 +316,78 @@ func (s *StashClient) DeleteHook(repo, url string) error {
 //PushEvents is not implemented
 func (s *StashClient) PushEvents(repo string, dateRef time.Time) ([]sdk.VCSPushEvent, time.Duration, error) {
 	return nil, 0.0, fmt.Errorf("Not implemented on stash")
+}
+
+const (
+	inProgress = "INPROGRESS"
+	successful = "SUCCESSFUL"
+	failed     = "FAILED"
+)
+
+//SetStatus set build status on stash
+func (s *StashClient) SetStatus(event sdk.Event) error {
+	log.Debug("process> receive: type:%s all: %+v", event.EventType, event)
+	var eventpb sdk.EventPipelineBuild
+
+	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
+		return nil
+	}
+
+	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
+		log.Warning("Error during consumption: %s", err)
+		return err
+	}
+
+	log.Debug("Process event:%+v", event)
+
+	cdsProject := eventpb.ProjectKey
+	cdsApplication := eventpb.ApplicationName
+	cdsPipelineName := eventpb.PipelineName
+	cdsBuildNumber := eventpb.BuildNumber
+	cdsEnvironmentName := eventpb.EnvironmentName
+
+	key := fmt.Sprintf("%s-%s-%s",
+		cdsProject,
+		cdsApplication,
+		cdsPipelineName,
+	)
+
+	// project/CDS/application/cds2tat/pipeline/monPipeline/build/855?env=monEnvi
+	url := fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
+		viper.GetString("base_url"),
+		cdsProject,
+		cdsApplication,
+		cdsPipelineName,
+		cdsBuildNumber,
+		url.QueryEscape(cdsEnvironmentName),
+	)
+
+	status := stash.Status{
+		Key:   key,
+		Name:  fmt.Sprintf("%s%d", key, cdsBuildNumber),
+		State: getBitbucketStateFromStatus(eventpb.Status),
+		URL:   url,
+	}
+
+	log.Debug("SetStatus> hash:%s status:%+v", eventpb.Hash, status)
+	if err := s.client.Commits.SetStatus(eventpb.Hash, status); err != nil {
+		return fmt.Errorf("SetStatus> err on bitbucket: %ss", err)
+	}
+
+	return nil
+}
+
+func getBitbucketStateFromStatus(status sdk.Status) string {
+	switch status {
+	case sdk.StatusSuccess:
+		return successful
+	case sdk.StatusWaiting:
+		return inProgress
+	case sdk.StatusBuilding:
+		return inProgress
+	case sdk.StatusFail:
+		return failed
+	default:
+		return failed
+	}
 }

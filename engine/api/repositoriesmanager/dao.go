@@ -189,7 +189,7 @@ func InsertForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, pr
 	}
 	// Update project
 	query = `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE projectkey = $1 RETURNING last_modified
 	`
@@ -214,7 +214,7 @@ func DeleteForProject(db database.QueryExecuter, rm *sdk.RepositoriesManager, pr
 	}
 	// Update project
 	query = `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE projectkey = $1 RETURNING last_modified
 	`
@@ -242,7 +242,7 @@ func SaveDataForProject(db *sql.DB, rm *sdk.RepositoriesManager, projectKey stri
 	}
 	// Update project
 	query = `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE projectkey = $1
 	`
@@ -352,4 +352,41 @@ func CheckApplicationIsAttached(db database.Querier, rmName, projectKey, applica
 	}
 
 	return true, nil
+}
+
+// LoadFromApplicationByID returns repositoryFullname, repoManager for an application
+func LoadFromApplicationByID(db database.Querier, applicationID int64) (string, *sdk.RepositoriesManager, error) {
+	query := `
+			SELECT
+					application.repo_fullname,
+					repositories_manager.id as rmid,  repositories_manager.name as rmname,
+					repositories_manager.type as rmType, repositories_manager.url as rmurl,
+					repositories_manager.data as rmdata
+		  FROM application
+		  JOIN project ON project.ID = application.project_id
+		  LEFT OUTER JOIN repositories_manager on repositories_manager.id = application.repositories_manager_id
+		  WHERE application.id = $1`
+
+	var rmID sql.NullInt64
+	var rmType, rmName, rmURL, rmData, repoFullname sql.NullString
+	var rm *sdk.RepositoriesManager
+	if err := db.QueryRow(query, applicationID).Scan(&repoFullname, &rmID, &rmName, &rmType, &rmURL, &rmData); err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil, sdk.ErrApplicationNotFound
+		}
+		return "", nil, err
+	}
+	rfn := ""
+	if rmID.Valid && rmType.Valid && rmName.Valid && rmURL.Valid {
+		var err error
+		rm, err = New(sdk.RepositoriesManagerType(rmType.String), rmID.Int64, rmName.String, rmURL.String, map[string]string{}, rmData.String)
+		if err != nil {
+			log.Warning("LoadApplications> Error loading repositories manager %s", err)
+		}
+		if repoFullname.Valid {
+			rfn = repoFullname.String
+		}
+	}
+
+	return rfn, rm, nil
 }
