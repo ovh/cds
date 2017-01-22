@@ -95,7 +95,7 @@ func main() {
 	rootCmd.AddCommand(application.Cmd())
 	rootCmd.AddCommand(artifact.Cmd)
 	rootCmd.AddCommand(environment.Cmd())
-	rootCmd.AddCommand(statusCmd())
+	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(pipeline.Cmd())
 	rootCmd.AddCommand(project.Cmd)
 	rootCmd.AddCommand(group.Cmd)
