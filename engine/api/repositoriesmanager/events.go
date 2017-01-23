@@ -21,7 +21,7 @@ func ReceiveEvents() {
 			e := sdk.Event{}
 			cache.Dequeue("events_repositoriesmanager", &e)
 			if err := processEvent(db, e); err != nil {
-				log.Critical("ReceiveEvents> err while processing:%s", err)
+				log.Critical("ReceiveEvents> err while processing %s : %v", err, e)
 			}
 		}
 	}
