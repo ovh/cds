@@ -213,13 +213,12 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	var pipelinelogs sdk.BuildState
 	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
 	if err != nil {
-
 		log.Warning("getActionBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
 		WriteError(w, r, err)
 		return
-
 	}
 	pipelinelogs, err = pipeline.LoadPipelineActionBuildLogs(db, pb, pipelineActionID, offset)
+
 	if err != nil {
 		log.Warning("getActionBuildLogsHandler> Cannot load pipeline build logs: %s\n", err)
 		WriteError(w, r, err)

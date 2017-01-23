@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
 	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -40,37 +41,53 @@ func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	var output []string
 
-	// TODO: CHECK IF USER IS ADMIN
-
 	// Version
 	output = append(output, fmt.Sprintf("Version: %s", internal.VERSION))
+	log.Info("Status> Version: %s", internal.VERSION)
 
 	// Uptime
 	output = append(output, fmt.Sprintf("Uptime: %s", time.Since(startupTime)))
+	log.Info("Status> Uptime: %s", time.Since(startupTime))
 
 	//Nb Panics
 	output = append(output, fmt.Sprintf("Nb of Panics: %d", nbPanic))
+	log.Info("Status> Nb of Panics: %d", nbPanic)
 
 	// Check vault
 	output = append(output, fmt.Sprintf("Secret Backend: %s", secret.Status()))
+	log.Info("Status> Secret Backend: %s", secret.Status())
+
+	// Check Scheduler
+	output = append(output, fmt.Sprintf("Scheduler: %s", scheduler.Status()))
+	log.Info("Status> Scheduler: %s", scheduler.Status())
+
+	// Check Event
+	output = append(output, fmt.Sprintf("Event: %s", event.Status()))
+	log.Info("Status> Event: %s", event.Status())
 
 	// Check Event
 	output = append(output, fmt.Sprintf("Event: %s", event.Status()))
 
 	// Check redis
 	output = append(output, fmt.Sprintf("Cache: %s", cache.Status))
+	log.Info("Status> Cache: %s", cache.Status)
 
 	// Check session-store
 	output = append(output, fmt.Sprintf("Session-Store: %s", sessionstore.Status))
+	log.Info("Status> Session-Store: %s", sessionstore.Status)
 
 	// Check object-store
 	output = append(output, fmt.Sprintf("Object-Store: %s", objectstore.Status()))
+	log.Info("Status> Object-Store: %s", objectstore.Status())
 
 	//Check smtp
 	output = append(output, fmt.Sprintf("SMTP: %s", mail.Status))
 
+	log.Info("Status> SMTP: %s", mail.Status)
+
 	// Check database
 	output = append(output, database.Status())
+	log.Info("Status> %s", database.Status())
 
 	var status = http.StatusOK
 	if panicked {

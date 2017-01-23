@@ -26,12 +26,15 @@ func Initialize(db *gorp.DbMap, defaultGroupName string) error {
 	}
 	permission.SharedInfraGroupID = sharedInfraGroup.ID
 
-	g, errld := LoadGroup(db, defaultGroupName)
-	if errld != nil {
-		log.Critical("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
-		return errld
+	if defaultGroupName != "" {
+		g, errld := LoadGroup(db, defaultGroupName)
+		if errld != nil {
+			log.Critical("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
+			return errld
+		}
+		defaultGroupID = g.ID
 	}
-	defaultGroupID = g.ID
+
 	return nil
 }
 
