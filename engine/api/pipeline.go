@@ -985,13 +985,11 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	defer tx.Rollback()
 
-
 	if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot insert job: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
-
 
 	warnings, errC := sanity.CheckAction(tx, proj, pip, job.Action.ID)
 	if errC != nil {
@@ -1054,7 +1052,6 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
-
 
 	a, err := sdk.NewAction("").FromJSON(data)
 	if err != nil {

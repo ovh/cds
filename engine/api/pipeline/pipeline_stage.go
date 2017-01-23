@@ -247,10 +247,10 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 
 			if j == nil {
 				j = &sdk.Job{
-					PipelineStageID: stageID,
+					PipelineStageID:  stageID,
 					PipelineActionID: pipelineActionID.Int64,
-					LastModified: actionLastModified.Time.Unix(),
-					Enabled: actionEnabled.Bool,
+					LastModified:     actionLastModified.Time.Unix(),
+					Enabled:          actionEnabled.Bool,
 					Action: sdk.Action{
 						ID: actionID.Int64,
 					},
@@ -271,7 +271,6 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 	for id := range mapStages {
 		for index := range mapActionsStages[id] {
 			job := mapActionsStages[id][index]
-
 
 			var a *sdk.Action
 			a, err = action.LoadActionByID(db, mapActionsStages[id][index].Action.ID)

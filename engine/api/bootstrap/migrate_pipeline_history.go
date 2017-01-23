@@ -3,12 +3,14 @@ package bootstrap
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/go-gorp/gorp"
 )
 
 func MigratePipelineHistory(_db *sql.DB) error {
@@ -48,7 +50,6 @@ func MigratePipelineHistory(_db *sql.DB) error {
 			continue
 		}
 
-	rowsLoop:
 		for rowsSelectCriteria.Next() {
 			var pbHistoryID int64
 			if err := rowsSelectCriteria.Scan(&pbHistoryID); err != nil {
@@ -65,22 +66,9 @@ func MigratePipelineHistory(_db *sql.DB) error {
 				continue
 			}
 
-			pb, args, parentID, userID, stagesJSONByte, errGetPB := getPipelineBuild(tx, pbHistoryID)
-
-
-
-			queryInsert := `INSERT INTO pipeline_build (id, pipeline_id, build_number, version, status, args, start,
-			application_id,environment_id, done, manual_trigger, triggered_by,
-			parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
-			scheduled_trigger, stages)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`
-			var errInsert error
-			_, errInsert := db.Exec(queryInsert, pb.ID, pb.Pipeline.ID, pb.BuildNumber, pb.Version, pb.Status.String(), args, pb.Start,
-				pb.Application.ID, pb.Environment.ID, pb.Done, pb.Trigger.ManualTrigger, userID,
-				parentID, pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor,
-				pb.Trigger.ScheduledTrigger, stagesJSONByte)
-			if errInsert != nil {
-				log.Critical("MigratePipelineHistory>  Cannot insert pipeline build: %s", err)
+			errGetPB := createAndInsert(tx, pbHistoryID)
+			if errGetPB != nil {
+				log.Critical("MigratePipelineHistory>  Erreur creating pipeline builds: %s", errGetPB)
 				tx.Rollback()
 				continue
 			}
@@ -100,20 +88,20 @@ func MigratePipelineHistory(_db *sql.DB) error {
 	return nil
 }
 
-func getPipelineBuild(db gorp.SqlExecutor, pbHistoryID int64) (*sdk.PipelineBuild, []byte, sql.NullInt64, sql.NullInt64,[]byte,  error) {
+func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 	// Get json DATA
 	queryForUpdate := `SELECT data FROM pipeline_history_old WHERE pipeline_build_id = $1 FOR UPDATE NOWAIT`
 	var data string
 	if err := db.QueryRow(queryForUpdate, pbHistoryID).Scan(&data); err != nil {
 		log.Critical("MigratePipelineHistory>  Cannot select data from  pipeline history %d: %s", pbHistoryID, err)
-		return nil, nil, nil, nil, nil, err
+		return err
 	}
 
 	// Unmarshal in pipeline BUILD struct
 	var pb sdk.PipelineBuild
 	if err := json.Unmarshal([]byte(data), &pb); err != nil {
 		log.Critical("MigratePipelineHistory>  Cannot unmarshal pipeline History %d: %s", pbHistoryID, err)
-		return nil, nil, nil, nil, nil, err
+		return err
 	}
 
 	// Check if pipeline build already exist
@@ -121,10 +109,10 @@ func getPipelineBuild(db gorp.SqlExecutor, pbHistoryID int64) (*sdk.PipelineBuil
 	var nb int
 	if err := db.QueryRow(queryCount, pb.ID).Scan(&nb); err != nil {
 		log.Critical("MigratePipelineHistory>  Cannot count pipeline build %d: %s", pbHistoryID, err)
-		return nil, nil, nil, nil, nil, err
+		return err
 	}
 	if nb != 0 {
-		return nil, nil, nil, nil, nil, nil
+		return nil
 	}
 
 	// Start rebuilding stages struct
@@ -132,12 +120,12 @@ func getPipelineBuild(db gorp.SqlExecutor, pbHistoryID int64) (*sdk.PipelineBuil
 	var mapPB map[string]interface{}
 	if err := json.Unmarshal([]byte(data), &mapPB); err != nil {
 		log.Critical("MigratePipelineHistory>  Cannot unmarshal mapStringInterface pipeline History %d: %s", pbHistoryID, err)
-		return nil, nil, nil, nil, nil, err
+		return err
 	}
 
 	if _, ok := mapPB["stages"]; !ok {
 		log.Critical("MigratePipelineHistory>  No stages on pipeline build %d", pb.ID)
-		return nil, nil, nil, nil, nil, nil
+		return nil
 	}
 
 	// Get stages
@@ -160,7 +148,7 @@ func getPipelineBuild(db gorp.SqlExecutor, pbHistoryID int64) (*sdk.PipelineBuil
 
 			if stageToUpdate == nil {
 				log.Critical("MigratePipelineHistory>  Cannot get stage to update %d", pb.ID)
-				return nil, nil, nil, nil, nil, nil
+				return fmt.Errorf("Cannot get stage to update %d", pb.ID)
 			}
 
 			for _, buildString := range stageString["builds"].([]interface{}) {
@@ -177,12 +165,12 @@ func getPipelineBuild(db gorp.SqlExecutor, pbHistoryID int64) (*sdk.PipelineBuil
 				parameterJSON, errJSON := json.Marshal(bString["args"])
 				if errJSON != nil {
 					log.Critical("MigratePipelineHistory>  Cannot marshall parameters: %s", errJSON)
-					return nil, nil, nil, nil, nil,errJSON
+					return errJSON
 				}
 				var parameters []sdk.Parameter
 				if errParam := json.Unmarshal([]byte(parameterJSON), &parameters); errParam != nil {
 					log.Critical("MigratePipelineHistory>  Cannot unmarshall parameters: %s", errParam)
-					return nil, nil, nil, nil, nil , errParam
+					return errParam
 				}
 
 				pbJob := sdk.PipelineBuildJob{
@@ -212,21 +200,24 @@ func getPipelineBuild(db gorp.SqlExecutor, pbHistoryID int64) (*sdk.PipelineBuil
 	args, errArgs := json.Marshal(pb.Parameters)
 	if errArgs != nil {
 		log.Critical("MigratePipelineHistory>  Cannot Marshal pb parameter: %s", errArgs)
-		return nil, nil, nil, nil, nil, errArgs
+		return errArgs
 	}
 
-	parentID := sql.NullInt64 {
+	parentID := sql.NullInt64{
 		Valid: false,
 	}
 	if pb.PreviousPipelineBuild != nil {
 		parentID.Int64 = pb.PreviousPipelineBuild.ID
 		parentID.Valid = true
+		if err := createAndInsert(db, pb.PreviousPipelineBuild.ID); err != nil {
+			return fmt.Errorf("Cannot get parent pipeline %d: %s", pb.PreviousPipelineBuild.ID, err)
+		}
 	}
-	userID := sql.NullInt64 {
+	userID := sql.NullInt64{
 		Valid: false,
 	}
 	if pb.Trigger.TriggeredBy != nil {
-		userID.Int64 =  pb.Trigger.TriggeredBy.ID
+		userID.Int64 = pb.Trigger.TriggeredBy.ID
 		userID.Valid = true
 	}
 
@@ -246,7 +237,25 @@ func getPipelineBuild(db gorp.SqlExecutor, pbHistoryID int64) (*sdk.PipelineBuil
 	stagesJSONByte, errSJSON := json.Marshal(pb.Stages)
 	if errSJSON != nil {
 		log.Critical("MigratePipelineHistory>  Cannot Marshal pb stages: %s", errSJSON)
-		return nil, nil, nil, nil, nil, errSJSON
+		return errSJSON
 	}
-	return &pb, args, parentID, userID, stagesJSONByte, nil
+	return insertPipelineBuild(db, &pb, args, parentID, userID, stagesJSONByte)
+}
+
+func insertPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, args []byte, parentID sql.NullInt64, userID sql.NullInt64, stagesJSONByte []byte) error {
+	queryInsert := `INSERT INTO pipeline_build (id, pipeline_id, build_number, version, status, args, start,
+			application_id,environment_id, done, manual_trigger, triggered_by,
+			parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
+			scheduled_trigger, stages)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`
+	var errInsert error
+	_, errInsert = db.Exec(queryInsert, pb.ID, pb.Pipeline.ID, pb.BuildNumber, pb.Version, pb.Status.String(), string(args), pb.Start,
+		pb.Application.ID, pb.Environment.ID, pb.Done, pb.Trigger.ManualTrigger, userID,
+		parentID, pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor,
+		pb.Trigger.ScheduledTrigger, string(stagesJSONByte))
+	if errInsert != nil {
+		log.Critical("MigratePipelineHistory>  Cannot insert pipeline build: %s", errInsert)
+		return errInsert
+	}
+	return nil
 }
