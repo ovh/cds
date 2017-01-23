@@ -275,7 +275,6 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 
 			var a *sdk.Action
 			a, err = action.LoadActionByID(db, mapActionsStages[id][index].Action.ID)
-			log.Warning(">>>>%s", a.Type)
 			if err != nil {
 				return fmt.Errorf("loadPipelineStage> cannot action.LoadActionByID %d > %s", mapActionsStages[id][index].Action.ID, err)
 			}
