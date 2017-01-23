@@ -57,8 +57,6 @@ func MigratePipelineHistory(_db *sql.DB) error {
 				continue
 			}
 
-			log.Notice("Pipeline History: migrating %d", pbHistoryID)
-
 			// Begin working on 1 pipHistory
 			tx, errBegin := db.Begin()
 			if errBegin != nil {
@@ -209,6 +207,7 @@ func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 	if pb.PreviousPipelineBuild != nil {
 		parentID.Int64 = pb.PreviousPipelineBuild.ID
 		parentID.Valid = true
+		log.Notice("Getting parent %d for %d", pb.PreviousPipelineBuild.ID, pb.ID)
 		if err := createAndInsert(db, pb.PreviousPipelineBuild.ID); err != nil {
 			return fmt.Errorf("Cannot get parent pipeline %d: %s", pb.PreviousPipelineBuild.ID, err)
 		}
@@ -254,7 +253,7 @@ func insertPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, args []byte
 		parentID, pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor,
 		pb.Trigger.ScheduledTrigger, string(stagesJSONByte))
 	if errInsert != nil {
-		log.Critical("MigratePipelineHistory>  Cannot insert pipeline build: %s", errInsert)
+		log.Critical("MigratePipelineHistory>  Cannot insert pipeline build (parent %s): %s", parentID, errInsert)
 		return errInsert
 	}
 	return nil
