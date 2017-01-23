@@ -79,6 +79,7 @@ func MigratePipelineBuild(db *sql.DB) error {
 			continue
 		}
 
+		log.Notice("Working with: %d", pipID)
 		p := sdk.Pipeline{
 			ID: pipID,
 		}
@@ -115,6 +116,8 @@ func MigratePipelineBuild(db *sql.DB) error {
 			log.Critical("Cannot commit transaction", err)
 			continue
 		}
+
+		log.Notice("End working with: %d", pipID)
 	}
 	log.Notice("End migrate pipeline build")
 	return nil
