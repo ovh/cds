@@ -1,6 +1,7 @@
 package hatchery
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -30,13 +31,15 @@ var (
 )
 
 // Born creates hatchery
-func Born(h Interface, api, token string, provision int, requestSecondsTimeout int) {
+func Born(h Interface, api, token string, provision int, requestSecondsTimeout int, insecureSkipVerifyTLS bool) {
 	Client = &http.Client{
 		Transport: &httpcontrol.Transport{
-			RequestTimeout: time.Duration(requestSecondsTimeout) * time.Second,
-			MaxTries:       5,
+			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
+			MaxTries:        5,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
 		},
 	}
+
 	sdk.SetHTTPClient(Client)
 	// No user / password, only token used for auth hatchery
 	sdk.Options(api, "", "", token)
