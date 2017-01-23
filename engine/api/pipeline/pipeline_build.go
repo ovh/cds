@@ -354,7 +354,19 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 		pb.Application.RepositoriesManager = rm
 	}
 
-	if pb.Status != newStatus{
+	if pb.Status != newStatus {
+
+		query := `
+			SELECT projectkey FROM project
+			JOIN application ON application.project_id = project.id
+			WHERE application.id = $1
+		`
+		var key string
+		if err := db.QueryRow(query, pb.Application.ID).Scan(&key); err != nil {
+			log.Critical("UpdatePipelineBuildStatus> error while loading project key from appID %d err %s", pb.Application.ID, err)
+		}
+		pb.Pipeline.ProjectKey = key
+
 		event.PublishPipelineBuild(db, pb, previous)
 	}
 
