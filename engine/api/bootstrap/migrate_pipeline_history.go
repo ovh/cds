@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
 )
 
 func MigratePipelineHistory(_db *sql.DB) error {
@@ -93,7 +92,7 @@ func MigratePipelineHistory(_db *sql.DB) error {
 			}
 
 			pbHistoryMigrated++
-			if pbHistoryMigrated % 200 == 0 {
+			if pbHistoryMigrated%200 == 0 {
 				log.Notice("Migration %d", pbHistoryMigrated)
 			}
 		}
@@ -216,7 +215,7 @@ func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 	parentID := sql.NullInt64{
 		Valid: false,
 	}
-	if pb.PreviousPipelineBuild != nil &&  pb.PreviousPipelineBuild.ID != 0{
+	if pb.PreviousPipelineBuild != nil && pb.PreviousPipelineBuild.ID != 0 {
 		parentID.Int64 = pb.PreviousPipelineBuild.ID
 		parentID.Valid = true
 		log.Notice("Getting parent %d for %d", pb.PreviousPipelineBuild.ID, pb.ID)
@@ -227,7 +226,7 @@ func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 	userID := sql.NullInt64{
 		Valid: false,
 	}
-	if pb.Trigger.TriggeredBy != nil && pb.Trigger.TriggeredBy.ID != 0{
+	if pb.Trigger.TriggeredBy != nil && pb.Trigger.TriggeredBy.ID != 0 {
 		userID.Int64 = pb.Trigger.TriggeredBy.ID
 		userID.Valid = true
 	}

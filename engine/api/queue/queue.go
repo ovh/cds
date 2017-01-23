@@ -94,6 +94,7 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 		if stage.Status == sdk.StatusWaiting {
 			if err := addJobsToQueue(tx, stage, pb); err != nil {
 				log.Warning("queue.RunActions> Cannot add job to queue: %s", err)
+				return
 			}
 			break
 		}
