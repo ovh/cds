@@ -10,12 +10,12 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/engine/api/cache"
 )
 
 const (

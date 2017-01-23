@@ -41,7 +41,6 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return
 	}
 
-
 	// Get offset
 	if err := r.ParseForm(); err != nil {
 		log.Warning("getStepBuildLogsHandler> cannot parse form: %s\n", err)
@@ -81,7 +80,6 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return
 	}
 
-
 	// Check that pipeline exists
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
@@ -118,20 +116,21 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	// load pipeline_build.id
-	var pipelinelogs []sdk.Log
-	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
-	if err != nil {
-		log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
-		WriteError(w, r, err)
+	pb, errPB := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
+	if errPB != nil {
+		log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", errPB)
+		WriteError(w, r, errPB)
 		return
 	}
 
-	pipelinelogs, err = pipeline.LoadPipelineStepBuildLogs(db, pb, pipelineActionID, stepOrder, offset)
-	if err != nil {
-		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", err)
-		WriteError(w, r, err)
+	result, errLog := pipeline.LoadPipelineStepBuildLogs(db, pb, pipelineActionID, stepOrder, offset)
+	if errLog != nil {
+		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", errLog)
+		WriteError(w, r, errLog)
 		return
 	}
+
+	WriteJSON(w, r, result, http.StatusOK)
 
 }
 func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
