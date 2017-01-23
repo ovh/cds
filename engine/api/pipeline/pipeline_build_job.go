@@ -43,7 +43,7 @@ func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, pbID int64) ([]sd
 	query := `
 		SELECT *
 		FROM pipeline_build_job
-		WHERE pipeline_build_id = ?
+		WHERE pipeline_build_id = $1
 	`
 	if _, err := db.Select(&pbJobsGorp, query, pbID); err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func GetWaitingPipelineBuildJob(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, er
 	query := `
 		SELECT *
 		FROM pipeline_build_job
-		WHERE status = ?
+		WHERE status = $1
 	`
 	if _, err := db.Select(&pbJobsGorp, query, sdk.StatusWaiting.String()); err != nil {
 		return nil, err

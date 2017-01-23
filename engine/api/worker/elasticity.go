@@ -231,7 +231,7 @@ func LoadGroupActionCount(db gorp.SqlExecutor, groupID int64) ([]ActionCount, er
 		if errJobs == sql.ErrNoRows {
 			return nil, nil
 		}
-		log.Warning("LoadGroupActionCount> Cannot get waiting pipeline job for group:", errJobs)
+		log.Warning("LoadGroupActionCount> Cannot get waiting pipeline job for group: %s", errJobs)
 		return nil, errJobs
 	}
 
@@ -257,13 +257,13 @@ func LoadGroupActionCount(db gorp.SqlExecutor, groupID int64) ([]ActionCount, er
 
 //LoadAllActionCount counts all waiting actions
 func LoadAllActionCount(db gorp.SqlExecutor, userID int64) ([]ActionCount, error) {
-	log.Debug("LoadGroupActionCount> Counting pending action")
+	log.Debug("LoadAllActionCount> Counting pending action")
 	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJob(db)
 	if errJobs != nil {
 		if errJobs == sql.ErrNoRows {
 			return nil, nil
 		}
-		log.Warning("LoadGroupActionCount> Cannot get waiting pipeline job:", errJobs)
+		log.Warning("LoadAllActionCount> Cannot get waiting pipeline job: %s", errJobs)
 		return nil, errJobs
 	}
 
@@ -312,7 +312,7 @@ func EstimateWorkerModelNeeds(db *gorp.DbMap, uid int64, workerModelStatus Model
 	// Load actions in queue grouped by action (same requirement, same worker model)
 	acs, errActionCount := actionCount(db, uid)
 	if errActionCount != nil {
-		log.Warning("EstimateWorkerModelsNeeds> Cannot LoadActionCount : %s\n", uid, errActionCount)
+		log.Warning("EstimateWorkerModelsNeeds> Cannot LoadActionCount %d: %s\n", uid, errActionCount)
 		return nil, errActionCount
 	}
 
