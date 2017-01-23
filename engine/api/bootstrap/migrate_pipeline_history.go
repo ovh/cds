@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+
 )
 
 func MigratePipelineHistory(_db *sql.DB) error {
@@ -27,6 +29,8 @@ func MigratePipelineHistory(_db *sql.DB) error {
 		log.Critical("MigratePipelineHistory>  Cannot select distinct pipeline history")
 		return errDistinct
 	}
+
+	pbHistoryMigrated := 0
 	defer rows.Close()
 	for rows.Next() {
 		var appID, pipID, envID int64
@@ -41,7 +45,7 @@ func MigratePipelineHistory(_db *sql.DB) error {
 			SELECT pipeline_build_id FROM pipeline_history_old
 			WHERE application_id = $1 AND pipeline_id = $2 AND environment_id = $3 AND vcs_changes_branch = $4
 			ORDER BY version DESC
-			LIMIT 10
+			LIMIT 5
 		`
 
 		rowsSelectCriteria, errCriteria := db.Query(querySelectByCriteria, appID, pipID, envID, branchName)
@@ -88,12 +92,15 @@ func MigratePipelineHistory(_db *sql.DB) error {
 				continue
 			}
 
-			log.Notice("Pipeline History: end migrating %d", pbHistoryID)
-
+			pbHistoryMigrated++
+			if pbHistoryMigrated % 200 == 0 {
+				log.Notice("Migration %d", pbHistoryMigrated)
+			}
 		}
 		rowsSelectCriteria.Close()
 
 	}
+	log.Notice("END MIGRATE Pipeline History")
 	return nil
 }
 
@@ -102,6 +109,11 @@ func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 	queryForUpdate := `SELECT data FROM pipeline_history_old WHERE pipeline_build_id = $1 FOR UPDATE NOWAIT`
 	var data string
 	if err := db.QueryRow(queryForUpdate, pbHistoryID).Scan(&data); err != nil {
+		pqerr, ok := err.(*pq.Error)
+		// Cannot get lock (FOR UPDATE NOWAIT), someone else is on it
+		if ok && pqerr.Code == "55P03" {
+			return nil
+		}
 		log.Critical("MigratePipelineHistory>  Cannot select data from  pipeline history %d: %s", pbHistoryID, err)
 		return err
 	}
