@@ -55,6 +55,8 @@ func MigratePipelineHistory(_db *sql.DB) error {
 				continue
 			}
 
+			log.Notice("Pipeline History: migrating %d", pbHistoryID)
+
 			// Begin working on 1 pipHistory
 			tx, errBegin := db.Begin()
 			if errBegin != nil {
@@ -238,6 +240,8 @@ func MigratePipelineHistory(_db *sql.DB) error {
 				tx.Rollback()
 				continue
 			}
+
+			log.Notice("Pipeline History: end migrating %d", pbHistoryID)
 
 		}
 		rowsSelectCriteria.Close()
