@@ -27,7 +27,7 @@ func MigratePipelineHistory(_db *sql.DB) error {
 	defer rows.Close()
 	for rows.Next() {
 		var appID, pipID, envID int64
-		var branchName string
+		var branchName sql.NullString
 		if err := rows.Scan(&appID, &pipID, &envID, &branchName); err != nil {
 			log.Critical("MigratePipelineHistory>  Cannot get rows for distinct pipeline history: %s", err)
 			continue
@@ -186,9 +186,12 @@ func MigratePipelineHistory(_db *sql.DB) error {
 				tx.Rollback()
 				continue
 			}
-			var parentID int64
+			parentID := sql.NullInt64 {
+				Valid: false,
+			}
 			if pb.PreviousPipelineBuild != nil {
-				parentID = pb.PreviousPipelineBuild.ID
+				parentID.Int64 = pb.PreviousPipelineBuild.ID
+				parentID.Valid = true
 			}
 			var userID int64
 			if pb.Trigger.TriggeredBy != nil {
