@@ -57,6 +57,17 @@ func MigratePipelineHistory(_db *sql.DB) error {
 				continue
 			}
 
+			// Check if pipeline build already exist
+			queryCount := "SELECT count(1) FROM pipeline_build where id = $1"
+			var nb int
+			if err := db.QueryRow(queryCount, pbHistoryID).Scan(&nb); err != nil {
+				log.Critical("MigratePipelineHistory>  Cannot count pipeline build %d: %s", pbHistoryID, err)
+				return err
+			}
+			if nb != 0 {
+				continue
+			}
+
 			// Begin working on 1 pipHistory
 			tx, errBegin := db.Begin()
 			if errBegin != nil {
@@ -100,17 +111,6 @@ func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 	if err := json.Unmarshal([]byte(data), &pb); err != nil {
 		log.Critical("MigratePipelineHistory>  Cannot unmarshal pipeline History %d: %s", pbHistoryID, err)
 		return err
-	}
-
-	// Check if pipeline build already exist
-	queryCount := "SELECT count(1) FROM pipeline_build where id = $1"
-	var nb int
-	if err := db.QueryRow(queryCount, pb.ID).Scan(&nb); err != nil {
-		log.Critical("MigratePipelineHistory>  Cannot count pipeline build %d: %s", pbHistoryID, err)
-		return err
-	}
-	if nb != 0 {
-		return nil
 	}
 
 	// Start rebuilding stages struct
@@ -204,7 +204,7 @@ func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 	parentID := sql.NullInt64{
 		Valid: false,
 	}
-	if pb.PreviousPipelineBuild != nil {
+	if pb.PreviousPipelineBuild != nil &&  pb.PreviousPipelineBuild.ID != 0{
 		parentID.Int64 = pb.PreviousPipelineBuild.ID
 		parentID.Valid = true
 		log.Notice("Getting parent %d for %d", pb.PreviousPipelineBuild.ID, pb.ID)
@@ -215,7 +215,7 @@ func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 	userID := sql.NullInt64{
 		Valid: false,
 	}
-	if pb.Trigger.TriggeredBy != nil {
+	if pb.Trigger.TriggeredBy != nil && pb.Trigger.TriggeredBy.ID != 0{
 		userID.Int64 = pb.Trigger.TriggeredBy.ID
 		userID.Valid = true
 	}
