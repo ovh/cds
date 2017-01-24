@@ -398,7 +398,7 @@ func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
 		WHERE id = $1
 	`
 
-	_, errDelete := db.Query(query, pbID)
+	_, errDelete := db.Exec(query, pbID)
 	return errDelete
 }
 
