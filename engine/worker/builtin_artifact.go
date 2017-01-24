@@ -52,7 +52,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob) sdk.
 			fmt.Printf("runArtifactUpload: cds.environment=%s\n", p.Value)
 			environment = p.Value
 			break
-		case "buildNumber":
+		case "cds.buildNumber":
 			fmt.Printf("runArtifactUpload: buildNumber=%s\n", p.Value)
 			buildNumberString = p.Value
 		}
