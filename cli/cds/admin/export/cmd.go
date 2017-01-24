@@ -1,11 +1,15 @@
 package export
 
-import "github.com/spf13/cobra"
-import "github.com/ovh/cds/sdk"
-import "gopkg.in/yaml.v2"
-import "fmt"
-import "io/ioutil"
-import "os"
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
+
+	"github.com/ovh/cds/sdk"
+)
 
 var (
 	rootCmd = &cobra.Command{

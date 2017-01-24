@@ -3,14 +3,13 @@ package importer
 import (
 	"encoding/json"
 	"fmt"
-
 	"io/ioutil"
-
 	"strings"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+
+	"github.com/ovh/cds/sdk"
 )
 
 var (
