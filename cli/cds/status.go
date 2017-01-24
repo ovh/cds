@@ -86,7 +86,7 @@ func processStatusLine(lines []string) {
 			strings.HasPrefix(l, "Nb of Panics: 0") ||
 			strings.HasPrefix(l, "Secret Backend") ||
 			strings.Contains(l, "OK")) {
-			return
+			continue
 		}
 		for _, ex := range execMsg {
 			execCmd(ex)
