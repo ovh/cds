@@ -388,6 +388,11 @@ func DeletePipelineBuild(db gorp.SqlExecutor, applicationID, pipelineID, environ
 
 // DeletePipelineBuildByID  Delete pipeline build by his ID
 func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
+	queryDeleteLog := "DELETE FROM build_log where pipeline_build_id = $1"
+	if _, errDeleteLog := db.Exec(queryDeleteLog, pbID); errDeleteLog != nil {
+		return errDeleteLog
+	}
+
 	query := `
 		DELETE FROM pipeline_build
 		WHERE id = $1
