@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
@@ -88,7 +89,7 @@ func TestInsertWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModel(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 	deleteAllWorkerModel(t, db)
 
@@ -140,7 +141,7 @@ func TestLoadWorkerModels(t *testing.T) {
 }
 
 func TestLoadWorkerModelCapabilities(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 	deleteAllWorkerModel(t, db)
 
