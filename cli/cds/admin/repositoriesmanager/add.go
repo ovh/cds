@@ -21,6 +21,13 @@ func addReposManagerCmd() *cobra.Command {
 }
 
 func addReposManager(cmd *cobra.Command, args []string) {
+	if ok, err := sdk.IsAdmin(); !ok {
+		if err != nil {
+			fmt.Printf("Error : %v\n", err)
+		}
+		sdk.Exit("You are not allowed to run this command")
+	}
+
 	options := map[string]string{}
 	if len(args) < 3 {
 		cmd.Help()

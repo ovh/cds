@@ -20,6 +20,13 @@ func listReposManagerCmd() *cobra.Command {
 }
 
 func listReposManager(cmd *cobra.Command, args []string) {
+	if ok, err := sdk.IsAdmin(); !ok {
+		if err != nil {
+			fmt.Printf("Error : %v\n", err)
+		}
+		sdk.Exit("You are not allowed to run this command")
+	}
+
 	rms, err := sdk.GetReposManager()
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)

@@ -32,8 +32,8 @@ func workercmd() *cobra.Command {
 		Run:   worker,
 	}
 
-	cmd.Flags().StringVarP(&groupname, "group", "g", "", "Group permissions for new token [session|daily|persistent]")
-	cmd.Flags().StringVarP(&expiration, "expiration", "e", "", "Expiration value for newly created token")
+	cmd.Flags().StringVarP(&groupname, "group", "g", "", "Group permissions for new token")
+	cmd.Flags().StringVarP(&expiration, "expiration", "e", "", "Expiration value for newly created token [session|daily|persistent]")
 	return cmd
 }
 
