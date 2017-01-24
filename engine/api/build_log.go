@@ -110,7 +110,7 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return
 	}
 
-	pipelinelogs, err = pipeline.LoadPipelineBuildLogs(db, pb.ID, offset)
+	pipelinelogs, err = pipeline.LoadPipelineBuildLogs(db, pb, offset)
 	if err != nil {
 		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", err)
 		WriteError(w, r, err)
