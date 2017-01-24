@@ -81,6 +81,9 @@ func main() {
 			sdk.Exit("Config error %s", err)
 		}
 
+		//Just one try
+		sdk.SetRetry(1)
+
 		//Set http client
 		c := &http.Client{
 			Transport: &http.Transport{

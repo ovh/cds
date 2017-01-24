@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/cli/cds/admin/plugin"
 	"github.com/ovh/cds/cli/cds/admin/repositoriesmanager"
 	"github.com/ovh/cds/cli/cds/admin/template"
+	"github.com/ovh/cds/cli/cds/admin/user"
 	"github.com/ovh/cds/cli/cds/admin/warning"
 )
 
@@ -26,6 +27,7 @@ func init() {
 	rootCmd.AddCommand(plugin.Cmd())
 	rootCmd.AddCommand(repositoriesmanager.Cmd())
 	rootCmd.AddCommand(template.Cmd())
+	rootCmd.AddCommand(user.Cmd())
 	rootCmd.AddCommand(warning.Cmd())
 }
 
