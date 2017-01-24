@@ -87,7 +87,7 @@ func GetWaitingPipelineBuildJobForGroup(db gorp.SqlExecutor, groupID int64) ([]s
 		SELECT distinct pipeline_build_job.*
 		FROM pipeline_build_job
 		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
-		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline_build.id
+		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline_build.pipeline_id
 		WHERE pipeline_build_job.status = $1
 		AND (
 			pipeline_group.group_id = $2
@@ -149,8 +149,7 @@ func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBu
 	if _, err := db.Select(&pbJobsGorp, `
 		SELECT distinct pipeline_build_job.* FROM pipeline_build_job
 		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
-		JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
-		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
+		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline_build.pipeline_id
 		WHERE pipeline_build_job.status = $1 AND
 		(
 			(
@@ -193,8 +192,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 	if _, err := db.Select(&pbJobsGorp, `
 		SELECT distinct pipeline_build_job.* FROM pipeline_build_job
 		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
-		JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
-		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
+		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline_build.pipeline_id
 		JOIN group_user ON group_user.group_id = pipeline_group.group_id
 		WHERE pipeline_build_job.status = $1 AND group_user.user_id = $2
 		ORDER BY pipeline_build_job.pipeline_build_id ASC, pipeline_build_job.id ASC

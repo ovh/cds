@@ -25,7 +25,7 @@ func MigratePipelineHistory(_db *sql.DB) error {
 	`
 	rows, errDistinct := db.Query(queryDistinct)
 	if errDistinct != nil {
-		log.Critical("MigratePipelineHistory>  Cannot select distinct pipeline history")
+		log.Critical("MigratePipelineHistory>  Cannot select distinct pipeline history: %s", errDistinct)
 		return errDistinct
 	}
 
