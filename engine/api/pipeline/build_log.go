@@ -94,21 +94,13 @@ func DeleteBuildLogs(db database.Executer, actionBuildID int64) error {
 func LoadPipelineBuildLogs(db gorp.SqlExecutor, pipelineBuildID int64, offset int64) ([]sdk.Log, error) {
 
 	// load all build id for pipeline build
-	query := `SELECT id FROM action_build WHERE pipeline_build_id = $1`
-	rows, err := db.Query(query, pipelineBuildID)
-	if err != nil {
-		return nil, err
+	pbJobs, errG := GetPipelineBuildJobByPipelineBuildID(db, pipelineBuildID)
+	if errG != nil {
+		return nil, errG
 	}
-	defer rows.Close()
-
-	var actionBuildIDs []int
-	for rows.Next() {
-		var id int
-		err = rows.Scan(&id)
-		if err != nil {
-			return nil, err
-		}
-		actionBuildIDs = append(actionBuildIDs, id)
+	var actionBuildIDs []int64
+	for _, pbJ := range pbJobs {
+		actionBuildIDs = append(actionBuildIDs, pbJ.ID)
 	}
 
 	log.Debug("getBuildLogsHandler> ids: %v\n", actionBuildIDs)
