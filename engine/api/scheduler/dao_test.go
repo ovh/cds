@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestLoadAll(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 
 	schedulers, err := LoadAll(db)
@@ -25,7 +26,7 @@ func TestLoadAll(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 
 	//Insert Project
@@ -93,7 +94,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 
 	//Insert Project
@@ -169,7 +170,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestLoadPendingExecutions(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 	pe, err := LoadPendingExecutions(db)
 	if err != nil {
@@ -179,7 +180,7 @@ func TestLoadPendingExecutions(t *testing.T) {
 }
 
 func TestGetByApplication(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 
 	//Insert Project
@@ -243,7 +244,7 @@ func TestGetByApplication(t *testing.T) {
 }
 
 func TestGetByPipeline(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 
 	//Insert Project
@@ -307,7 +308,7 @@ func TestGetByPipeline(t *testing.T) {
 }
 
 func TestGetByApplicationPipeline(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 
 	//Insert Project
@@ -371,7 +372,7 @@ func TestGetByApplicationPipeline(t *testing.T) {
 }
 
 func TestGetByApplicationPipelineEnv(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 
 	//Insert Project

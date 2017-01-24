@@ -14,7 +14,7 @@ import (
 )
 
 func TestExecuterRun(t *testing.T) {
-	_db := test.SetupPG(t)
+	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	db := database.DBMap(_db)
 
 	//Insert Project
