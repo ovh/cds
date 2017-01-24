@@ -1153,10 +1153,11 @@ func RestartPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 			stage.Status = sdk.StatusWaiting
 			// Delete logs
 			for _, pbJob := range stage.PipelineBuildJobs {
-				if err := DeleteBuildLogs(db, pbJob.ID); err != nil {
-					return err
+				if pbJob.Status == sdk.StatusFail.String() {
+					if err := DeleteBuildLogs(db, pbJob.ID); err != nil {
+						return err
+					}
 				}
-
 			}
 			stage.PipelineBuildJobs = nil
 		}
