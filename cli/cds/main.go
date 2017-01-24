@@ -76,6 +76,11 @@ func main() {
 			return
 		}
 
+		//Read the config file
+		if err := sdk.ReadConfig(); err != nil {
+			sdk.Exit("Config error %s", err)
+		}
+
 		//Set http client
 		c := &http.Client{
 			Transport: &http.Transport{

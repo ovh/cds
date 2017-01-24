@@ -91,7 +91,8 @@ func initRequest(req *http.Request) {
 	req.Header.Add(RequestedWithHeader, RequestedWithValue)
 }
 
-func readConfig() error {
+//ReadConfig read the specified config file
+func ReadConfig() error {
 	if skipReadConfig {
 		return nil
 	}
@@ -207,7 +208,7 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 func Stream(method string, path string, args []byte, mods ...RequestModifier) (io.ReadCloser, int, error) {
 	var savederror error
 
-	err := readConfig()
+	err := ReadConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)
@@ -304,7 +305,7 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 		log.Printf("Starting UploadMultiPart %s %s", method, path)
 	}
 
-	if err := readConfig(); err != nil {
+	if err := ReadConfig(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)
 	}
@@ -362,7 +363,7 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 // Upload upload content in given io.Reader to given HTTP endpoint
 func Upload(method string, path string, body io.ReadCloser, mods ...RequestModifier) ([]byte, int, error) {
 
-	err := readConfig()
+	err := ReadConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)
