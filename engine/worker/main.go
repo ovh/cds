@@ -248,6 +248,7 @@ func takeAction(b sdk.PipelineBuildJob) {
 		return
 	}
 
+	pbJob = pbji.PipelineBuildJob
 	// Reset build variables
 	buildVariables = nil
 	res := run(&pbji)
