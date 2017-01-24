@@ -193,9 +193,8 @@ func LoadGroups(db *sql.DB) ([]sdk.Group, error) {
 		if err := rows.Scan(&id, &name); err != nil {
 			return nil, err
 		}
-		g := sdk.NewGroup(name)
-		g.ID = id
-		groups = append(groups, *g)
+		g := sdk.Group{ID: id, Name: name}
+		groups = append(groups, g)
 	}
 	return groups, nil
 }
@@ -222,9 +221,8 @@ func LoadGroupByUser(db database.Querier, userID int64) ([]sdk.Group, error) {
 		if err := rows.Scan(&id, &name); err != nil {
 			return nil, err
 		}
-		g := sdk.NewGroup(name)
-		g.ID = id
-		groups = append(groups, *g)
+		g := sdk.Group{ID: id, Name: name}
+		groups = append(groups, g)
 	}
 	return groups, nil
 }
@@ -252,9 +250,8 @@ func LoadGroupByAdmin(db database.Querier, userID int64) ([]sdk.Group, error) {
 		if err := rows.Scan(&id, &name); err != nil {
 			return nil, err
 		}
-		g := sdk.NewGroup(name)
-		g.ID = id
-		groups = append(groups, *g)
+		g := sdk.Group{ID: id, Name: name}
+		groups = append(groups, g)
 	}
 	return groups, nil
 }
@@ -281,9 +278,8 @@ func LoadPublicGroups(db database.Querier) ([]sdk.Group, error) {
 		if err := rows.Scan(&id, &name); err != nil {
 			return nil, err
 		}
-		g := sdk.NewGroup(name)
-		g.ID = id
-		groups = append(groups, *g)
+		g := sdk.Group{ID: id, Name: name}
+		groups = append(groups, g)
 	}
 	return groups, nil
 }

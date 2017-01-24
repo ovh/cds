@@ -214,9 +214,9 @@ func addGroupHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 		return
 	}
 
-	g, err := sdk.NewGroup("").FromJSON(data)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	g := &sdk.Group{}
+	if err := json.Unmarshal(data, g); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
