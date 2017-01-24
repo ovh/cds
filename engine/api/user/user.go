@@ -307,7 +307,9 @@ func LoadUserPermissions(db *sql.DB, user *sdk.User) error {
 		}
 
 		if admin {
-			group.Admins = append(group.Admins, *user)
+			usr := *user
+			usr.Groups = nil
+			group.Admins = append(group.Admins, usr)
 		}
 
 		user.Groups = append(user.Groups, group)
