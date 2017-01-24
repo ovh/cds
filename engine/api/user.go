@@ -522,9 +522,8 @@ func importUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 			}
 			u.ID = oldU.ID
 			u.Auth = sdk.Auth{
-				EmailVerified:  true,
-				DateReset:      0,
-				HashedPassword: hashedToken,
+				EmailVerified: true,
+				DateReset:     0,
 			}
 			if err := user.UpdateUserAndAuth(db, u); err != nil {
 				errors[u.Username] = err.Error()
