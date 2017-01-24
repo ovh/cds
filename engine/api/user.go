@@ -515,7 +515,20 @@ func importUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 			DateReset:      0,
 			HashedPassword: hashedToken,
 		}); err != nil {
-			errors[u.Username] = err.Error()
+			oldU, err := user.LoadUserWithoutAuth(db, u.Username)
+			if err != nil {
+				errors[u.Username] = err.Error()
+				continue
+			}
+			u.ID = oldU.ID
+			u.Auth = sdk.Auth{
+				EmailVerified:  true,
+				DateReset:      0,
+				HashedPassword: hashedToken,
+			}
+			if err := user.UpdateUserAndAuth(db, u); err != nil {
+				errors[u.Username] = err.Error()
+			}
 		}
 	}
 
