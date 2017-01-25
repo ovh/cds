@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,7 +11,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"database/sql"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
@@ -488,7 +488,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	WriteJSON(w, r, response, http.StatusOK)
 }
 
-func importUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func importUsersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get body
 	data, errr := ioutil.ReadAll(r.Body)
 	if errr != nil {
