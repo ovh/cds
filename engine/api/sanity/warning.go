@@ -14,18 +14,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// CheckApplication checks all application variables
-func CheckApplication(db *gorp.DbMap, project *sdk.Project, app *sdk.Application) error {
-	return nil
-}
-
-func checkApplicationVariable(project *sdk.Project, app *sdk.Application, variable *sdk.Variable) []sdk.Warning {
-	return nil
-}
-
 // CheckProjectPipelines checks all pipelines in project
 func CheckProjectPipelines(db *gorp.DbMap, project *sdk.Project) error {
-
 	// Load all pipelines
 	pips, err := pipeline.LoadPipelines(db, project.ID, true, &sdk.User{Admin: true})
 	if err != nil {

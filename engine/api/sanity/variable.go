@@ -120,6 +120,12 @@ type usedVariablesResponse struct {
 }
 
 func loadUsedVariablesFromValue(value string, responseChan chan<- usedVariablesResponse) {
+	log.Debug("loadUsedVariablesFromValue> checking \"%s\"", value)
+	if value == "" {
+		responseChan <- usedVariablesResponse{}
+		return
+	}
+
 	var pvars, avars, evars, gitvars, badvars []string
 
 	pmap := make(map[string]uint8)
@@ -200,6 +206,8 @@ func loadUsedVariablesFromValue(value string, responseChan chan<- usedVariablesR
 		badvars: badvars,
 		gitvars: gitvars,
 	}
+
+	log.Debug("loadUsedVariablesFromValue> value \"%s\" checked", value)
 }
 
 func loadUsedVariables(a *sdk.Action) ([]string, []string, []string, []string, []string) {
@@ -233,6 +241,7 @@ func loadUsedVariables(a *sdk.Action) ([]string, []string, []string, []string, [
 			}
 			if !ok {
 				done <- true
+				return
 			}
 		}
 	}()
@@ -272,6 +281,7 @@ func loadUsedVariables(a *sdk.Action) ([]string, []string, []string, []string, [
 			}
 			if !ok {
 				childDone <- true
+				return
 			}
 		}
 	}()
