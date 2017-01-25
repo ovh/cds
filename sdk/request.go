@@ -26,6 +26,7 @@ var (
 	token          string
 	hash           string
 	skipReadConfig bool
+	retry          int
 	// AuthHeader is used as HTTP header
 	AuthHeader = "X_AUTH_HEADER"
 	// RequestedWithHeader is used as HTTP header
@@ -67,11 +68,16 @@ func SetAgent(a Agent) {
 	agent = a
 }
 
+//SetRetry initialize number of http retry
+func SetRetry(n int) {
+	retry = n
+}
+
 // If CDS_SKIP_VERIFY is present, use a specific http client
 // with TLS InsecureSkipVerify enabled
 func init() {
 	agent = SDKAgent
-
+	retry = 10
 	skip := os.Getenv("CDS_SKIP_VERIFY")
 	if skip != "" {
 		tr := &http.Transport{
@@ -218,7 +224,7 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		log.Printf("Call %s %s%s\n", method, Host, path)
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < retry; i++ {
 		var req *http.Request
 		if args != nil {
 			req, err = http.NewRequest(method, Host+path, bytes.NewReader(args))
@@ -295,7 +301,7 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		}
 	}
 
-	return nil, 0, fmt.Errorf("x10: %s", savederror)
+	return nil, 0, fmt.Errorf("x%d: %s", retry, savederror)
 }
 
 // UploadMultiPart upload multipart
