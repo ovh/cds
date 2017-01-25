@@ -283,8 +283,6 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		stage := &pb.Stages[index]
 		for indexPbJob := range stage.PipelineBuildJobs {
 			_ = &stage.PipelineBuildJobs[indexPbJob]
-
-			// TODO GET LOGS
 		}
 	}
 

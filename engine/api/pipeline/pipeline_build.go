@@ -236,6 +236,9 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 	var rows []sdk.PipelineBuildDbResult
 	_, err := db.Select(&rows, query, pbID)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return pbs, nil
+		}
 		return nil, err
 	}
 
@@ -305,13 +308,13 @@ func scanPipelineBuild(pbResult sdk.PipelineBuildDbResult) (*sdk.PipelineBuild, 
 }
 
 // UpdatePipelineBuildStatusAndStage Update pipeline build status + stage
-func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
+func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuild, newStatus sdk.Status) error {
 	stagesB, errStage := json.Marshal(pb.Stages)
 	if errStage != nil {
 		return errStage
 	}
 	query := `UPDATE pipeline_build set status = $1, stages = $2 WHERE id = $3`
-	_, err := db.Exec(query, pb.Status.String(), string(stagesB), pb.ID)
+	_, err := db.Exec(query, newStatus.String(), string(stagesB), pb.ID)
 	if err != nil {
 		return err
 	}
@@ -354,7 +357,23 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 		pb.Application.RepositoriesManager = rm
 	}
 
-	event.PublishPipelineBuild(db, pb, previous)
+	if pb.Status != newStatus {
+
+		query := `
+			SELECT projectkey FROM project
+			JOIN application ON application.project_id = project.id
+			WHERE application.id = $1
+		`
+		var key string
+		if err := db.QueryRow(query, pb.Application.ID).Scan(&key); err != nil {
+			log.Critical("UpdatePipelineBuildStatus> error while loading project key from appID %d err %s", pb.Application.ID, err)
+		}
+		pb.Pipeline.ProjectKey = key
+
+		event.PublishPipelineBuild(db, pb, previous)
+	}
+
+	pb.Status = newStatus
 	return nil
 }
 
@@ -372,12 +391,17 @@ func DeletePipelineBuild(db gorp.SqlExecutor, applicationID, pipelineID, environ
 
 // DeletePipelineBuildByID  Delete pipeline build by his ID
 func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
+	queryDeleteLog := "DELETE FROM build_log where pipeline_build_id = $1"
+	if _, errDeleteLog := db.Exec(queryDeleteLog, pbID); errDeleteLog != nil {
+		return errDeleteLog
+	}
+
 	query := `
 		DELETE FROM pipeline_build
 		WHERE id = $1
 	`
 
-	_, errDelete := db.Query(query, pbID)
+	_, errDelete := db.Exec(query, pbID)
 	return errDelete
 }
 
@@ -1137,19 +1161,18 @@ func RestartPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 			stage.Status = sdk.StatusWaiting
 			// Delete logs
 			for _, pbJob := range stage.PipelineBuildJobs {
-				if err := DeleteBuildLogs(db, pbJob.ID); err != nil {
-					return err
+				if pbJob.Status == sdk.StatusFail.String() {
+					if err := DeleteBuildLogs(db, pbJob.ID); err != nil {
+						return err
+					}
 				}
-
 			}
 			stage.PipelineBuildJobs = nil
 		}
 		pb.Done = time.Time{}
 	}
 
-	pb.Status = sdk.StatusBuilding
-
-	if err := UpdatePipelineBuildStatusAndStage(db, pb); err != nil {
+	if err := UpdatePipelineBuildStatusAndStage(db, pb, sdk.StatusBuilding); err != nil {
 		return err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -163,17 +164,20 @@ func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineB
 }
 
 // LoadPipelineBuildLogs Load pipeline build logs by pipeline ID
-func LoadPipelineBuildLogs(db gorp.SqlExecutor, pipelineBuildID int64, offset int64) ([]sdk.Log, error) {
+func LoadPipelineBuildLogs(db gorp.SqlExecutor, pb *sdk.PipelineBuild, offset int64) ([]sdk.Log, error) {
 
-	// load all build id for pipeline build
-	pbJobs, errPb := GetPipelineBuildJobByPipelineBuildID(db, pipelineBuildID)
-	if errPb != nil {
-		return nil, errPb
+	var actionBuildIDs []int64
+	for _, s := range pb.Stages {
+		for _, pbj := range s.PipelineBuildJobs {
+			actionBuildIDs = append(actionBuildIDs, pbj.ID)
+		}
 	}
 
+	log.Debug("getBuildLogsHandler> ids: %v\n", actionBuildIDs)
+
 	var pipelinelogs []sdk.Log
-	for _, pbJob := range pbJobs {
-		logs, err := LoadLogs(db, pbJob.ID, 0, offset)
+	for _, id := range actionBuildIDs {
+		logs, err := LoadLogs(db, int64(id), 0, offset)
 		if err != nil {
 			return nil, err
 		}

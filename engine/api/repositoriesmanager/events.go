@@ -21,7 +21,7 @@ func ReceiveEvents() {
 			e := sdk.Event{}
 			cache.Dequeue("events_repositoriesmanager", &e)
 			if err := processEvent(db, e); err != nil {
-				log.Critical("ReceiveEvents> err while processing:%s", err)
+				log.Critical("ReceiveEvents> err while processing %s : %v", err, e)
 			}
 		}
 	}
@@ -48,7 +48,7 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
 
 	c, erra := AuthorizedClient(db, eventpb.ProjectKey, eventpb.RepositoryManagerName)
 	if erra != nil {
-		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient > err:%s", erra)
+		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, erra)
 	}
 
 	if err := c.SetStatus(event); err != nil {

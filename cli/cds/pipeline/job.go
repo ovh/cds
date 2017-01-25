@@ -124,19 +124,20 @@ func pipelineJobAppend(cmd *cobra.Command, args []string) {
 	}
 
 	// Find joined action
-	var job *sdk.Job
-	var stage int
+	var job sdk.Job
+	var stage int64
+
 	for _, s := range p.Stages {
 		for _, j := range s.Jobs {
 			if j.Action.Name == jobName {
-				job = &j
-				stage = s.BuildOrder
+				job = j
+				stage = s.ID
 				break
 			}
 		}
-		if job.Action.Name != "" {
-			sdk.Exit("Error: job %s not found in %s/%s\n", jobName, projectKey, pipelineName)
-		}
+	}
+	if job.Action.Name == "" {
+		sdk.Exit("Error: job %s not found in %s/%s\n", jobName, projectKey, pipelineName)
 	}
 
 	for _, p := range cmdJoinedActionAddParams {
@@ -159,7 +160,7 @@ func pipelineJobAppend(cmd *cobra.Command, args []string) {
 
 	job.Action.Actions = append(job.Action.Actions, child)
 
-	err = sdk.UpdateJoinedAction(projectKey, pipelineName, stage, job)
+	err = sdk.UpdateJoinedAction(projectKey, pipelineName, stage, &job)
 	if err != nil {
 		sdk.Exit("Error: cannot update joined action (%s)\n", err)
 	}

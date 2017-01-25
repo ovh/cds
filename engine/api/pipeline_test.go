@@ -192,8 +192,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	assert.Equal(t, "NoEnv", pb.Environment.Name)
 
 	//9. Update build status to Success
-	pb.Status = sdk.StatusSuccess
-	err = pipeline.UpdatePipelineBuildStatusAndStage(db, &pb)
+	err = pipeline.UpdatePipelineBuildStatusAndStage(db, &pb, sdk.StatusSuccess)
 	test.NoError(t, err)
 
 	//10. Create another Pipeline

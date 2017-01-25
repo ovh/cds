@@ -81,10 +81,12 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 		return
 	}
 
+	pbNewStatus := sdk.StatusBuilding
+
 	// OH! AN EMPTY PIPELINE
 	if len(pb.Stages) == 0 {
 		// Pipeline is done
-		pb.Status = sdk.StatusSuccess
+		pbNewStatus = sdk.StatusSuccess
 	}
 
 	// Browse Stage
@@ -94,6 +96,7 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 		if stage.Status == sdk.StatusWaiting {
 			if err := addJobsToQueue(tx, stage, pb); err != nil {
 				log.Warning("queue.RunActions> Cannot add job to queue: %s", err)
+				return
 			}
 			break
 		}
@@ -113,11 +116,11 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 				}
 
 				if stage.Status == sdk.StatusFail {
-					pb.Status = sdk.StatusFail
+					pbNewStatus = sdk.StatusFail
 					break
 				}
 				if stageIndex == len(pb.Stages)-1 {
-					pb.Status = sdk.StatusSuccess
+					pbNewStatus = sdk.StatusSuccess
 					break
 				}
 				if stageIndex != len(pb.Stages)-1 {
@@ -129,7 +132,7 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 		}
 	}
 
-	if err := pipeline.UpdatePipelineBuildStatusAndStage(tx, &pb); err != nil {
+	if err := pipeline.UpdatePipelineBuildStatusAndStage(tx, &pb, pbNewStatus); err != nil {
 		log.Warning("RunActions> Cannot update UpdatePipelineBuildStatusAndStage on pb %d: %s\n", pb.ID, err)
 	}
 

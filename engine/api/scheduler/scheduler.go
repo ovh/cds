@@ -12,38 +12,43 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var schedulerStatus = "Not Running"
+
 //Scheduler is the goroutine which compute date of next execution for pipeline scheduler
 func Scheduler() {
 	for {
 		time.Sleep(2 * time.Second)
-		SchedulerRun()
+		_, status, err := Run()
+
+		if err != nil {
+			log.Critical("%s: %s", status, err)
+		}
+		schedulerStatus = status
 	}
 }
 
-//SchedulerRun is the core function of Scheduler goroutine
-func SchedulerRun() ([]sdk.PipelineSchedulerExecution, error) {
+//Run is the core function of Scheduler goroutine
+func Run() ([]sdk.PipelineSchedulerExecution, string, error) {
 	_db := database.DB()
 	if _db == nil {
-		return nil, fmt.Errorf("Database is unavailable")
+		return nil, "Database is unavailable", fmt.Errorf("datase.DB failed")
 	}
 	db := database.DBMap(_db)
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("SchedulerRun> Unable to start a transaction : %s", err)
-		return nil, err
+		return nil, "Run> Unable to start a transaction", err
 	}
 	defer tx.Rollback()
 
 	//Starting with exclusive lock on the table
 	if err := LockPipelineExecutions(tx); err != nil {
-		return nil, err
+		return nil, "OK", nil
 	}
 
 	//Load unscheduled pipelines
 	ps, err := LoadUnscheduledPipelines(tx)
 	if err != nil {
-		log.Warning("SchedulerRun> Unable to load unscheduled pipelines : %s", err)
-		return nil, err
+		return nil, "Run> Unable to load unscheduled pipelines : %s", err
 	}
 
 	execs := []sdk.PipelineSchedulerExecution{}
@@ -62,18 +67,16 @@ func SchedulerRun() ([]sdk.PipelineSchedulerExecution, error) {
 		}
 		//Insert it
 		if err := InsertExecution(tx, e); err != nil {
-			log.Warning("SchedulerRun> Unable to insert an execution : %s", err)
-			return nil, err
+			return nil, "Run> Unable to insert an execution : %s", err
 		}
 		execs = append(execs, *e)
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("SchedulerRun> Unable to commit a transaction : %s", err)
-		return nil, err
+		return nil, "Run> Unable to commit a transaction : %s", err
 	}
 
-	return execs, nil
+	return execs, "OK", nil
 }
 
 //Next Compute the next PipelineSchedulerExecution
@@ -106,4 +109,12 @@ func Next(db gorp.SqlExecutor, s *sdk.PipelineScheduler) (*sdk.PipelineScheduler
 		Executed:             false,
 	}
 	return e, nil
+}
+
+// Status returns Event status
+func Status() string {
+	if schedulerStatus != "OK" {
+		return "⚠ " + schedulerStatus
+	}
+	return schedulerStatus
 }

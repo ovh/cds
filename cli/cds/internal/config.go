@@ -21,4 +21,7 @@ var (
 
 	// NoWarnings set to True wont display warnings
 	NoWarnings bool
+
+	// InsecureSkipVerifyTLS to set sdk "CDS_SKIP_VERIFY" viper variable
+	InsecureSkipVerifyTLS bool
 )

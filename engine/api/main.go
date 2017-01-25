@@ -107,10 +107,7 @@ var mainCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			if err := bootstrap.MigratePipelineHistory(db); err != nil {
-				log.Critical("Cannot migrate pipeline history: %s\n", err)
-				os.Exit(1)
-			}
+			go bootstrap.MigratePipelineHistory(db)
 
 			// Gracefully shutdown sql connections
 			c := make(chan os.Signal, 1)
@@ -223,7 +220,6 @@ var mainCmd = &cobra.Command{
 		go log.RemovalRoutine()
 		go auditCleanerRoutine()
 
-		go repositoriesmanager.RepositoriesCacheLoader(30)
 		go repositoriesmanager.ReceiveEvents()
 
 		go stats.StartRoutine()
@@ -236,6 +232,7 @@ var mainCmd = &cobra.Command{
 		} else {
 			log.Warning("⚠ Repositories cache loader is disabled")
 		}
+
 		if !viper.GetBool("no_repo_polling") {
 			go polling.Initialize()
 			go polling.ExecutionCleaner()
@@ -243,7 +240,11 @@ var mainCmd = &cobra.Command{
 			log.Warning("⚠ Repositories polling is disabled")
 		}
 
-		go scheduler.Initialize(10)
+		if !viper.GetBool("no_scheduler") {
+			go scheduler.Initialize(10)
+		} else {
+			log.Warning("⚠ Cron Scheduler is disabled")
+		}
 
 		s := &http.Server{
 			Addr:           ":" + viper.GetString("listen_port"),
@@ -620,6 +621,9 @@ func init() {
 
 	flags.String("event-kafka-password", "", "Ex: --kafka-password=your-kafka-password")
 	viper.BindPFlag("event_kafka_password", flags.Lookup("event-kafka-password"))
+
+	flags.Bool("no-scheduler", false, "Disable CDS Scheduler (crontab)")
+	viper.BindPFlag("no_scheduler", flags.Lookup("no-scheduler"))
 
 	flags.Bool("no-repo-polling", false, "Disable repositories manager polling")
 	viper.BindPFlag("no_repo_polling", flags.Lookup("no-repo-polling"))

@@ -336,7 +336,7 @@ func AddJob(projectKey, pipelineName string, j *Job) error {
 }
 
 // UpdateJoinedAction update given joined action in given pipeline stage
-func UpdateJoinedAction(projectKey, pipelineName string, stage int, j *Job) error {
+func UpdateJoinedAction(projectKey, pipelineName string, stage int64, j *Job) error {
 	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/job/%d", projectKey, pipelineName, stage, j.PipelineActionID)
 
 	data, err := json.Marshal(j)

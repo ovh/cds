@@ -304,23 +304,20 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application) error {
 func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 
 	// Delete variables
-	err := DeleteAllVariable(db, applicationID)
-	if err != nil {
+	if err := DeleteAllVariable(db, applicationID); err != nil {
 		log.Warning("DeleteApplication> Cannot delete application variable: %s\n", err)
 		return err
 	}
 
 	// Delete groups
 	query := `DELETE FROM application_group WHERE application_id = $1`
-	_, err = db.Exec(query, applicationID)
-	if err != nil {
+	if _, err := db.Exec(query, applicationID); err != nil {
 		log.Warning("DeleteApplication> Cannot delete application gorup: %s\n", err)
 		return err
 	}
 
 	// Delete application_pipeline
-	err = DeleteAllApplicationPipeline(db, applicationID)
-	if err != nil {
+	if err := DeleteAllApplicationPipeline(db, applicationID); err != nil {
 		log.Warning("DeleteApplication> Cannot delete application pipeline: %s\n", err)
 		return err
 	}
@@ -332,48 +329,42 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	if err != nil {
 		return fmt.Errorf("DeleteApplication> Cannot select application pipeline build> %s\n", err)
 	}
-	defer rows.Close()
 	var id int64
 	for rows.Next() {
-		err = rows.Scan(&id)
-		if err != nil {
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
 			return err
 		}
 		ids = append(ids, id)
 	}
 	rows.Close()
 	for _, id := range ids {
-		err = pipeline.DeletePipelineBuildByID(db, id)
-		if err != nil {
+		if err := pipeline.DeletePipelineBuildByID(db, id); err != nil {
 			return fmt.Errorf("DeleteApplication> Cannot delete pb %d> %s", id, err)
 		}
 	}
 
 	// Delete application artifact left
 	query = `DELETE FROM artifact WHERE application_id = $1`
-	_, err = db.Exec(query, applicationID)
-	if err != nil {
+	if _, err = db.Exec(query, applicationID); err != nil {
 		log.Warning("DeleteApplication> Cannot delete old artifacts: %s\n", err)
 		return err
 	}
 
 	// Delete hook
 	query = `DELETE FROM hook WHERE application_id = $1`
-	_, err = db.Exec(query, applicationID)
-	if err != nil {
+	if _, err := db.Exec(query, applicationID); err != nil {
 		log.Warning("DeleteApplication> Cannot delete hook: %s\n", err)
 		return err
 	}
 
 	// Delete triggers
-	err = trigger.DeleteApplicationTriggers(db, applicationID)
-	if err != nil {
+	if err := trigger.DeleteApplicationTriggers(db, applicationID); err != nil {
 		return err
 	}
 
 	query = `DELETE FROM application WHERE id=$1`
-	_, err = db.Exec(query, applicationID)
-	if err != nil {
+	if _, err := db.Exec(query, applicationID); err != nil {
 		log.Warning("DeleteApplication> Cannot delete application: %s\n", err)
 		return err
 	}
@@ -387,8 +378,7 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 		)
 	`
 	_, err = db.Exec(query, applicationID)
-
-	return nil
+	return err
 }
 
 // LoadGroupByApplication loads all the groups on the given application

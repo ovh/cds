@@ -98,5 +98,5 @@ func (c *KafkaClient) sendEvent(event *sdk.Event) error {
 
 // status: here, if c is initialized, Kafka is ok
 func (c *KafkaClient) status() string {
-	return "Kafka: OK"
+	return "Kafka OK"
 }
