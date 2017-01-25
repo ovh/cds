@@ -415,7 +415,7 @@ func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, a
 	}
 	warnings = append(warnings, w...)
 
-	warnings = checkGitVariables(tx, gitvars, project, pip, a)
+	w = checkGitVariables(tx, gitvars, project, pip, a)
 	warnings = append(warnings, w...)
 
 	return warnings, nil
