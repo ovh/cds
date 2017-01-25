@@ -90,4 +90,8 @@ func addFlags() {
 
 	rootCmd.PersistentFlags().Int("max-worker", 10, "Maximum allowed simultaenous workers")
 	viper.BindPFlag("max-worker", rootCmd.PersistentFlags().Lookup("max-worker"))
+
+	rootCmd.PersistentFlags().BoolP("insecure", "k", false, `(SSL) This option explicitly allows hatchery to perform "insecure" SSL connections on CDS API.`)
+	viper.BindPFlag("insecure", rootCmd.PersistentFlags().Lookup("insecure"))
+
 }

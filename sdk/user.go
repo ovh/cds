@@ -8,14 +8,14 @@ import (
 
 // User represent a CDS user.
 type User struct {
-	ID       int64   `json:"id"`
-	Username string  `json:"username"`
-	Fullname string  `json:"fullname"`
-	Email    string  `json:"email"`
-	Admin    bool    `json:"admin"`
-	Auth     Auth    `json:"-"`
-	Groups   []Group `json:"groups"`
-	Origin   string  `json:"-"`
+	ID       int64   `json:"id" yaml:"-"`
+	Username string  `json:"username" yaml:"username"`
+	Fullname string  `json:"fullname" yaml:"fullname,omitempty"`
+	Email    string  `json:"email" yaml:"email,omitempty"`
+	Admin    bool    `json:"admin" yaml:"admin,omitempty"`
+	Auth     Auth    `json:"-" yaml:"-"`
+	Groups   []Group `json:"groups" yaml:"-"`
+	Origin   string  `json:"origin" yaml:"origin,omitempty"`
 }
 
 // UserAPIRequest  request for rest API
@@ -145,7 +145,7 @@ func AddUser(name, fname, email, callback string) error {
 
 }
 
-func updateUser(username string, user User) error {
+func updateUser(username string, user *User) error {
 	data, err := json.Marshal(user)
 	if err != nil {
 		return err
@@ -257,21 +257,24 @@ func ResetUser(name, email, callback string) error {
 }
 
 // GetUser return the given user
-func GetUser(username string) (User, error) {
-	var user User
-	url := fmt.Sprintf("/user/%s", username)
-	data, code, err := Request("GET", url, nil)
-	if err != nil {
-		return user, err
+func GetUser(username string) (*User, error) {
+	if username == "" {
+		return nil, ErrInvalidUsername
+	}
+
+	user := &User{}
+
+	data, code, errR := Request("GET", fmt.Sprintf("/user/%s", username), nil)
+	if errR != nil {
+		return nil, errR
 	}
 
 	if code != http.StatusOK {
-		return user, fmt.Errorf("Error [%d]: %s", code, data)
+		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
-	err = json.Unmarshal(data, &user)
-	if err != nil {
-		return user, err
+	if err := json.Unmarshal(data, user); err != nil {
+		return nil, err
 	}
 	return user, nil
 }
@@ -297,65 +300,16 @@ func ListUsers() ([]User, error) {
 	return users, nil
 }
 
-// Expiration defines how worker key should expire
-type Expiration int
-
-// Worker key expiry options
-const (
-	_ Expiration = iota
-	Session
-	Daily
-	Persistent
-)
-
-func (e Expiration) String() string {
-	switch e {
-	case Session:
-		return "session"
-	case Daily:
-		return "daily"
-	case Persistent:
-		return "persistent"
-	default:
-		return "sessions"
-	}
+// Me returns user instance for connected user
+func Me() (*User, error) {
+	return GetUser(user)
 }
 
-// ExpirationFromString returns a typed Expiration from a string
-func ExpirationFromString(s string) (Expiration, error) {
-	switch s {
-	case "session":
-		return Session, nil
-	case "daily":
-		return Daily, nil
-	case "persistent":
-		return Persistent, nil
-	}
-
-	return Expiration(0), fmt.Errorf("invalid expiration format (%s)",
-		[]Expiration{Session, Daily, Persistent})
-}
-
-// GenerateWorkerToken creates a key tied to calling user that allow registering workers
-func GenerateWorkerToken(group string, e Expiration) (string, error) {
-
-	path := fmt.Sprintf("/group/%s/token/%s", group, e)
-	data, code, err := Request("POST", path, nil)
+// IsAdmin checks if user is admin
+func IsAdmin() (bool, error) {
+	me, err := Me()
 	if err != nil {
-		return "", err
+		return false, err
 	}
-	if code > 300 {
-		return "", fmt.Errorf("HTTP %d", code)
-	}
-
-	s := struct {
-		Key string `json:"key"`
-	}{}
-
-	err = json.Unmarshal(data, &s)
-	if err != nil {
-		return "", err
-	}
-
-	return s.Key, nil
+	return me.Admin, nil
 }

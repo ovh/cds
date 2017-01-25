@@ -41,6 +41,12 @@
 			"revisionTime": "2015-01-07T20:56:47Z"
 		},
 		{
+			"checksumSHA1": "+D61wl+LRZs+8zSrbXAu62G3NfE=",
+			"path": "github.com/briandowns/spinner",
+			"revision": "cd65e8bd7da20cdcee450f7cbdd9cc04f78bc02f",
+			"revisionTime": "2016-11-21T17:29:28Z"
+		},
+		{
 			"checksumSHA1": "BJXHEdzHxRPmVnt6GFaPpwgns2c=",
 			"path": "github.com/coreos/go-etcd/etcd",
 			"revision": "003851be7bb0694fe3cc457a49529a19388ee7cf",
@@ -278,7 +284,6 @@
 		},
 		{
 			"checksumSHA1": "P/YMhqTnQl9HbvyC72rBhe/N32I=",
-			"origin": "github.com/ovh/cds/vendor/github.com/golang/snappy",
 			"path": "github.com/golang/snappy",
 			"revision": "7db9049039a047d955fe8c19b83c8ff5abd765c7",
 			"revisionTime": "2017-01-19T01:47:23Z"
@@ -306,6 +311,12 @@
 			"path": "github.com/gorilla/mux",
 			"revision": "757bef944d0f21880861c2dd9c871ca543023cba",
 			"revisionTime": "2016-09-20T23:08:13Z"
+		},
+		{
+			"checksumSHA1": "x01z+Unn0xyLwqgn8fz5jpuNeAE=",
+			"path": "github.com/gosuri/uilive",
+			"revision": "efb88ccd059957c48f24f9d351d33a0eb00ede41",
+			"revisionTime": "2016-02-02T01:18:46Z"
 		},
 		{
 			"checksumSHA1": "Uzyon2091lmwacNsl1hCytjhHtg=",

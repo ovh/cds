@@ -292,8 +292,7 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 // DeleteVariable Delete a variable from the given pipeline
 func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variableName string) error {
 	query := `DELETE FROM application_variable
-	          USING application
-						WHERE application.id = $1 AND application_variable.var_name = $2`
+		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
 	result, err := db.Exec(query, app.ID, variableName)
 	if err != nil {
 		return err

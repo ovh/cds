@@ -20,6 +20,13 @@ var (
 		Use:   "enable",
 		Short: "cds admin maintenance enable",
 		Run: func(cmd *cobra.Command, args []string) {
+			if ok, err := sdk.IsAdmin(); !ok {
+				if err != nil {
+					fmt.Printf("Error : %v\n", err)
+				}
+				sdk.Exit("You are not allowed to run this command")
+			}
+
 			if confirm || cli.AskForConfirmation("Do you really want to enable maintenance mode ?") {
 				_, _, err := sdk.Request("POST", "/admin/maintenance", nil)
 				if err != nil {
@@ -36,6 +43,13 @@ var (
 		Use:   "disable",
 		Short: "cds admin maintenance disable",
 		Run: func(cmd *cobra.Command, args []string) {
+			if ok, err := sdk.IsAdmin(); !ok {
+				if err != nil {
+					fmt.Printf("Error : %v\n", err)
+				}
+				sdk.Exit("You are not allowed to run this command")
+			}
+
 			if confirm || cli.AskForConfirmation("Do you really want to disable maintenance mode ?") {
 				_, _, err := sdk.Request("DELETE", "/admin/maintenance", nil)
 				if err != nil {
@@ -52,6 +66,13 @@ var (
 		Use:   "check",
 		Short: "cds admin maintenance check",
 		Run: func(cmd *cobra.Command, args []string) {
+			if ok, err := sdk.IsAdmin(); !ok {
+				if err != nil {
+					fmt.Printf("Error : %v\n", err)
+				}
+				sdk.Exit("You are not allowed to run this command")
+			}
+
 			data, _, err := sdk.Request("GET", "/admin/maintenance", nil)
 			if err != nil {
 				sdk.Exit("Error: %s\n", err)

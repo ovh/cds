@@ -54,7 +54,6 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 }
 
 // GetUserHandler returns a specific user's information
@@ -65,14 +64,14 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	u, err := user.LoadUserWithoutAuth(db, username)
 	if err != nil {
 		fmt.Printf("getUserHandler: Cannot load user from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
 	err = user.LoadUserPermissions(db, u)
 	if err != nil {
 		fmt.Printf("getUserHandler: Cannot get user group and project from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -128,39 +127,37 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	userDB, err := user.LoadUserWithoutAuth(db, username)
 	if err != nil {
 		fmt.Printf("getUserHandler: Cannot load user from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	var userBody sdk.User
 	err = json.Unmarshal(data, &userBody)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 	userBody.ID = userDB.ID
 
 	if !user.IsValidEmail(userBody.Email) {
 		log.Warning("updateUserHandler: Email address %s is not valid", userBody.Email)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	err = user.UpdateUser(db, userBody)
 	if err != nil {
 		log.Warning("updateUserHandler: Cannot update user table: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-
 }
 
 // GetUsers fetches all users from databases
@@ -168,7 +165,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context
 	users, err := user.LoadUsers(db)
 	if err != nil {
 		log.Warning("GetUsers: Cannot load user from db: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteError(w, r, err)
 		return
 	}
 
@@ -264,7 +261,7 @@ func AddUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.
 		}
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	WriteJSON(w, r, u, http.StatusCreated)
 }
 
 // ResetUser deletes auth secret, generates new ones and send them via email
@@ -324,8 +321,7 @@ func ResetUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	go mail.SendMailVerifyToken(userDb.Email, userDb.Username, tokenVerify, resetUserRequest.Callback)
 
 	log.Warning("POST /user/%s/reset: User reset OK\n", userDb.Username)
-	w.WriteHeader(http.StatusCreated)
-
+	WriteJSON(w, r, userDb, http.StatusCreated)
 }
 
 //AuthModeHandler returns the auth mode : local ok ldap
@@ -414,13 +410,13 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	// Get body
 	data, errr := ioutil.ReadAll(r.Body)
 	if errr != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
 	loginUserRequest := sdk.UserLoginRequest{}
 	if err := json.Unmarshal(data, &loginUserRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -451,7 +447,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	}
 	if errl != nil {
 		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, errl)
-		w.WriteHeader(http.StatusBadRequest)
+		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
@@ -490,4 +486,51 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 
 	response.User.Auth = sdk.Auth{}
 	WriteJSON(w, r, response, http.StatusOK)
+}
+
+func importUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+	// Get body
+	data, errr := ioutil.ReadAll(r.Body)
+	if errr != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	var users = []sdk.User{}
+	if err := json.Unmarshal(data, &users); err != nil {
+		WriteError(w, r, sdk.ErrWrongRequest)
+		return
+	}
+
+	_, hashedToken, err := user.GeneratePassword()
+	if err != nil {
+		log.Warning("Error while generate Token Verify for new user %s \n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	errors := map[string]string{}
+	for _, u := range users {
+		if err := user.InsertUser(db, &u, &sdk.Auth{
+			EmailVerified:  true,
+			DateReset:      0,
+			HashedPassword: hashedToken,
+		}); err != nil {
+			oldU, err := user.LoadUserWithoutAuth(db, u.Username)
+			if err != nil {
+				errors[u.Username] = err.Error()
+				continue
+			}
+			u.ID = oldU.ID
+			u.Auth = sdk.Auth{
+				EmailVerified: true,
+				DateReset:     0,
+			}
+			if err := user.UpdateUserAndAuth(db, u); err != nil {
+				errors[u.Username] = err.Error()
+			}
+		}
+	}
+
+	WriteJSON(w, r, errors, http.StatusOK)
 }

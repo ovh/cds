@@ -1,6 +1,8 @@
 package user
 
 import (
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -154,7 +156,7 @@ func FindUserIDByName(db gorp.SqlExecutor, name string) (int64, error) {
 func LoadUsers(db gorp.SqlExecutor) ([]*sdk.User, error) {
 	users := []*sdk.User{}
 
-	query := `SELECT "user".username, "user".data, origin FROM "user" WHERE 1 = 1 ORDER BY "user".username`
+	query := `SELECT "user".username, "user".data, origin, admin FROM "user" ORDER BY "user".username`
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -163,13 +165,19 @@ func LoadUsers(db gorp.SqlExecutor) ([]*sdk.User, error) {
 
 	for rows.Next() {
 		var username, data, origin string
-		err := rows.Scan(&username, &data, &origin)
+		var adminSQL sql.NullBool
+		err := rows.Scan(&username, &data, &origin, &adminSQL)
 		if err != nil {
 			return nil, err
 		}
 
-		uTemp, err := sdk.NewUser(username).FromJSON([]byte(data))
-		if err != nil {
+		var admin bool
+		if adminSQL.Valid {
+			admin = adminSQL.Bool
+		}
+
+		uTemp := &sdk.User{}
+		if err := json.Unmarshal([]byte(data), uTemp); err != nil {
 			return nil, err
 		}
 
@@ -177,6 +185,8 @@ func LoadUsers(db gorp.SqlExecutor) ([]*sdk.User, error) {
 			Username: username,
 			Fullname: uTemp.Fullname,
 			Origin:   origin,
+			Email:    uTemp.Email,
+			Admin:    admin,
 		}
 
 		users = append(users, u)
@@ -299,7 +309,9 @@ func LoadUserPermissions(db gorp.SqlExecutor, user *sdk.User) error {
 		}
 
 		if admin {
-			group.Admins = append(group.Admins, *user)
+			usr := *user
+			usr.Groups = nil
+			group.Admins = append(group.Admins, usr)
 		}
 
 		user.Groups = append(user.Groups, group)

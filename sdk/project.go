@@ -10,17 +10,17 @@ import (
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID            int64                 `json:"-"`
-	Key           string                `json:"key"`
-	Name          string                `json:"name"`
-	Pipelines     []Pipeline            `json:"pipelines,omitempty"`
-	Applications  []Application         `json:"applications,omitempty"`
-	ProjectGroups []GroupPermission     `json:"groups,omitempty"`
-	Variable      []Variable            `json:"variables,omitempty"`
-	Environments  []Environment         `json:"environments,omitempty"`
-	Permission    int                   `json:"permission"`
-	LastModified  int64                 `json:"last_modified"`
-	ReposManager  []RepositoriesManager `json:"repositories_manager"`
+	ID            int64                 `json:"-" yaml:"-"`
+	Key           string                `json:"key" yaml:"key"`
+	Name          string                `json:"name" yaml:"name"`
+	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty"`
+	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty"`
+	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty"`
+	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty"`
+	Permission    int                   `json:"permission"  yaml:"-"`
+	LastModified  int64                 `json:"last_modified"  yaml:"-"`
+	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-"`
 }
 
 //ProjectLastUpdates update times of project, application and pipelines
@@ -407,7 +407,7 @@ func WithEverything() Mod {
 
 // ListProject returns all available project to caller
 func ListProject(mods ...Mod) ([]Project, error) {
-	uri := "/project?gzip=true&application=true"
+	uri := "/project?application=true"
 	for _, m := range mods {
 		uri = m(uri)
 	}

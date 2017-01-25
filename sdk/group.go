@@ -8,21 +8,21 @@ import (
 
 // Group represent a group of user.
 type Group struct {
-	ID                int64              `json:"id"`
-	Name              string             `json:"name"`
-	Admins            []User             `json:"admins,omitempty"`
-	Users             []User             `json:"users,omitempty"`
-	ProjectGroups     []ProjectGroup     `json:"projects,omitempty"`
-	PipelineGroups    []PipelineGroup    `json:"pipelines,omitempty"`
-	ApplicationGroups []ApplicationGroup `json:"applications,omitempty"`
-	EnvironmentGroups []EnvironmentGroup `json:"environments,omitempty"`
+	ID                int64              `json:"id" yaml:"-"`
+	Name              string             `json:"name" yaml:"name"`
+	Admins            []User             `json:"admins,omitempty" yaml:"admin,omitempty"`
+	Users             []User             `json:"users,omitempty" yaml:"users,omitempty"`
+	ProjectGroups     []ProjectGroup     `json:"projects,omitempty" yaml:"-"`
+	PipelineGroups    []PipelineGroup    `json:"pipelines,omitempty" yaml:"-"`
+	ApplicationGroups []ApplicationGroup `json:"applications,omitempty" yaml:"-"`
+	EnvironmentGroups []EnvironmentGroup `json:"environments,omitempty" yaml:"-"`
 }
 
 // GroupPermission represent a group and his role in the project
 type GroupPermission struct {
 	Group      Group `json:"group"`
 	Permission int   `json:"permission"`
-	Recursive  bool  `json:"recursive,omitempty"`
+	Recursive  bool  `json:"recursive,omitempty" yaml:"-"`
 }
 
 // EnvironmentGroup represent a link with a pipeline
@@ -49,26 +49,6 @@ type ProjectGroup struct {
 	Permission int     `json:"permission"`
 }
 
-// NewGroup instanciate a new Group
-func NewGroup(name string) *Group {
-	g := &Group{
-		Name: name,
-	}
-	return g
-}
-
-// JSON return the marshalled string of Group object
-func (p *Group) JSON() string {
-
-	data, err := json.Marshal(p)
-	if err != nil {
-		fmt.Printf("Group.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
 // FromJSON unmarshal given json data into Group object
 func (p *Group) FromJSON(data []byte) (*Group, error) {
 	return p, json.Unmarshal(data, &p)
@@ -77,7 +57,7 @@ func (p *Group) FromJSON(data []byte) (*Group, error) {
 // AddGroup creates a new group
 func AddGroup(name string) error {
 
-	a := NewGroup(name)
+	a := Group{Name: name}
 
 	data, err := json.MarshalIndent(a, " ", " ")
 	if err != nil {
@@ -151,7 +131,6 @@ func RemoveGroup(name string) error {
 
 // ListGroups returns all available group to caller
 func ListGroups() ([]Group, error) {
-
 	data, code, err := Request("GET", "/group", nil)
 	if err != nil {
 		return nil, err
@@ -162,9 +141,16 @@ func ListGroups() ([]Group, error) {
 	}
 
 	var groups []Group
-	err = json.Unmarshal(data, &groups)
-	if err != nil {
+	if err := json.Unmarshal(data, &groups); err != nil {
 		return nil, err
+	}
+
+	for i := range groups {
+		var err error
+		groups[i], err = GetGroup(groups[i].Name)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return groups, nil

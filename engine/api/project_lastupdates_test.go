@@ -57,7 +57,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 	}
 
 	//Create a group
-	g := sdk.NewGroup("testgroup")
+	g := &sdk.Group{Name: "testgroup"}
 
 	//Delete user and group
 	deleteUser(t, db, u, g)
@@ -155,7 +155,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	}
 
 	//Create a group
-	g := sdk.NewGroup("testgroup")
+	g := &sdk.Group{Name: "testgroup"}
 
 	//Delete user and group
 	deleteUser(t, db, u, g)
@@ -265,7 +265,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 	}
 
 	//Create a group
-	g := sdk.NewGroup("testgroup")
+	g := &sdk.Group{Name: "testgroup"}
 
 	//Delete user and group
 	deleteUser(t, db, u, g)
@@ -392,7 +392,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	}
 
 	//Create a group
-	g := sdk.NewGroup("testgroup")
+	g := &sdk.Group{Name: "testgroup"}
 
 	//Delete user and group
 	deleteUser(t, db, u, g)
@@ -512,7 +512,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 	}
 
 	//Create a group
-	g := sdk.NewGroup("testgroup")
+	g := &sdk.Group{Name: "testgroup"}
 
 	//Delete user and group
 	deleteUser(t, db, u, g)

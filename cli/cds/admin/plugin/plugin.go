@@ -27,6 +27,13 @@ var addPluginCmd = &cobra.Command{
 	Use:   "add",
 	Short: "cds plugin add <file>",
 	Run: func(cmd *cobra.Command, args []string) {
+		if ok, err := sdk.IsAdmin(); !ok {
+			if err != nil {
+				fmt.Printf("Error : %v\n", err)
+			}
+			sdk.Exit("You are not allowed to run this command")
+		}
+
 		if len(args) != 1 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
 		}
@@ -48,6 +55,13 @@ var updatePluginCmd = &cobra.Command{
 	Use:   "update",
 	Short: "cds plugin update <file>",
 	Run: func(cmd *cobra.Command, args []string) {
+		if ok, err := sdk.IsAdmin(); !ok {
+			if err != nil {
+				fmt.Printf("Error : %v\n", err)
+			}
+			sdk.Exit("You are not allowed to run this command")
+		}
+
 		if len(args) != 1 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
 		}
@@ -69,6 +83,13 @@ var deletePluginCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "cds plugin delete <name>",
 	Run: func(cmd *cobra.Command, args []string) {
+		if ok, err := sdk.IsAdmin(); !ok {
+			if err != nil {
+				fmt.Printf("Error : %v\n", err)
+			}
+			sdk.Exit("You are not allowed to run this command")
+		}
+
 		if len(args) != 1 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
 		}
@@ -83,6 +104,13 @@ var downloadPluginCmd = &cobra.Command{
 	Use:   "download",
 	Short: "cds plugin download <name>",
 	Run: func(cmd *cobra.Command, args []string) {
+		if ok, err := sdk.IsAdmin(); !ok {
+			if err != nil {
+				fmt.Printf("Error : %v\n", err)
+			}
+			sdk.Exit("You are not allowed to run this command")
+		}
+
 		if len(args) != 1 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
 		}

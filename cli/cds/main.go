@@ -76,6 +76,11 @@ func main() {
 			return
 		}
 
+		//Read the config file
+		if err := sdk.ReadConfig(); err != nil {
+			sdk.Exit("Config error %s", err)
+		}
+
 		//Set http client
 		c := &http.Client{
 			Transport: &http.Transport{
@@ -95,7 +100,7 @@ func main() {
 	rootCmd.AddCommand(application.Cmd())
 	rootCmd.AddCommand(artifact.Cmd)
 	rootCmd.AddCommand(environment.Cmd())
-	rootCmd.AddCommand(statusCmd())
+	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(pipeline.Cmd())
 	rootCmd.AddCommand(project.Cmd)
 	rootCmd.AddCommand(group.Cmd)

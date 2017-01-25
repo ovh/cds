@@ -42,7 +42,7 @@ $ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> -
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Born(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"))
+		hatchery.Born(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		hatcherySwarm.onlyWithServiceReq = viper.GetBool("only-with-service-req")
