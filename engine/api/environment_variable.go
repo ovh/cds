@@ -9,6 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
@@ -316,6 +317,20 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	apps, errApps := application.LoadApplications(db, p.Key, false, true, c.User)
+	if errApps != nil {
+		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
+		WriteError(w, r, errApps)
+		return
+	}
+	for _, a := range apps {
+		if err := sanity.CheckApplication(db, p, &a); err != nil {
+			log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+	}
+
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
@@ -410,6 +425,20 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 		log.Warning("addVariableInEnvironmentHandler: Cannot load environments: %s\n", errEnvs)
 		WriteError(w, r, errEnvs)
 		return
+	}
+
+	apps, errApps := application.LoadApplications(db, p.Key, false, true, c.User)
+	if errApps != nil {
+		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
+		WriteError(w, r, errApps)
+		return
+	}
+	for _, a := range apps {
+		if err := sanity.CheckApplication(db, p, &a); err != nil {
+			log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
 	}
 
 	WriteJSON(w, r, p, http.StatusOK)

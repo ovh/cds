@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/notification"
@@ -22,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -31,7 +33,7 @@ func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
-	applications, err := application.LoadApplications(db, projectKey, false, c.User)
+	applications, err := application.LoadApplications(db, projectKey, false, false, c.User)
 	if err != nil {
 		log.Warning("getApplicationsHandler: Cannot load applications from db: %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -440,6 +442,14 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return
 	}
 
+	envs, errE := environment.LoadEnvironments(db, projectKey, true, c.User)
+	if errProj != nil {
+		log.Warning("cloneApplicationHandler> Cannot load Environments %s: %s\n", projectKey, errProj)
+		WriteError(w, r, errE)
+		return
+	}
+	projectData.Environments = envs
+
 	var newApp sdk.Application
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
@@ -567,6 +577,12 @@ func cloneApplication(db gorp.SqlExecutor, project *sdk.Project, newApp *sdk.App
 			return err
 		}
 	}
+
+	if err := sanity.CheckApplication(db, project, newApp); err != nil {
+		log.Warning("cloneApplication> Cannot check application sanity: %s\n", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -575,6 +591,10 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
+
+	p, err := project.LoadProject(db, projectKey, c.User)
+	envs, err := environment.LoadEnvironments(db, projectKey, true, c.User)
+	p.Environments = envs
 
 	app, err := application.LoadApplicationByName(db, projectKey, applicationName)
 	if err != nil {
@@ -616,15 +636,19 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 	defer tx.Rollback()
 
-	err = application.UpdateApplication(tx, app)
-	if err != nil {
+	if err := application.UpdateApplication(tx, app); err != nil {
 		log.Warning("updateApplicationHandler> Cannot delete application %s: %s\n", applicationName, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := sanity.CheckApplication(tx, p, app); err != nil {
+		log.Warning("updateApplicationHandler: Cannot check application sanity: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateApplicationHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return

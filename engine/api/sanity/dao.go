@@ -122,22 +122,22 @@ func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warni
 	       max(pipeline_group.role) as pipPerm,
 	       max(environment_group.role) as envPerm
 	FROM warning
-	LEFT JOIN action ON action.id = warning.action_id
 	JOIN project ON project.id = warning.project_id
-	LEFT JOIN pipeline_action ON pipeline_action.action_id = warning.action_id
-	LEFT JOIN application ON application.id = warning.app_id
-	LEFT JOIN pipeline as pip ON pip.id = warning.pip_id
-	LEFT JOIN environment as env ON env.id = warning.env_id
-	JOIN project_group on  project_group.project_id = warning.project_id
+    JOIN project_group on  project_group.project_id = warning.project_id
 	JOIN group_user guproj ON guproj.group_id = project_group.group_id AND guproj.user_id = $1
-	LEFT JOIN application_group on application_group.application_id = warning.app_id
-	LEFT JOIN group_user guapp ON guapp.group_id = application_group.group_id AND guapp.user_id = $1
-	LEFT JOIN pipeline_group on pipeline_group.pipeline_id = warning.pip_id
-	LEFT JOIN group_user gupip ON gupip.group_id = pipeline_group.group_id AND gupip.user_id = $1
-	LEFT JOIN environment_group ON environment_group.environment_id = warning.env_id
-	LEFT JOIN group_user guenv ON guenv.group_id = environment_group.group_id AND guenv.user_id = $1
+    LEFT OUTER JOIN action ON action.id = warning.action_id
+	LEFT OUTER JOIN pipeline_action ON pipeline_action.action_id = warning.action_id
+	LEFT OUTER JOIN application ON application.id = warning.app_id
+	LEFT OUTER JOIN pipeline as pip ON pip.id = warning.pip_id
+	LEFT OUTER JOIN environment as env ON env.id = warning.env_id
+	LEFT OUTER JOIN application_group on application_group.application_id = warning.app_id
+	LEFT OUTER JOIN group_user guapp ON guapp.group_id = application_group.group_id AND guapp.user_id = $1
+	LEFT OUTER JOIN pipeline_group on pipeline_group.pipeline_id = warning.pip_id
+	LEFT OUTER JOIN group_user gupip ON gupip.group_id = pipeline_group.group_id AND gupip.user_id = $1
+	LEFT OUTER JOIN environment_group ON environment_group.environment_id = warning.env_id
+	LEFT OUTER JOIN group_user guenv ON guenv.group_id = environment_group.group_id AND guenv.user_id = $1
 	GROUP BY warning.id, warning_id, warning.project_id, warning.pip_id, warning.app_id, warning.env_id, warning.action_id,
-	      projKey, pipeline_action.pipeline_stage_id, projName, appName, pipName, envName, actionName
+	      projKey, pipeline_action.pipeline_stage_id, projName, appName, pipName, envName, actionName;
 	`
 
 	var warnings []sdk.Warning
@@ -220,7 +220,6 @@ func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warni
 
 // InsertActionWarnings in database
 func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, actionID int64, warnings []sdk.Warning) error {
-
 	query := `DELETE FROM warning WHERE action_id = $1`
 	_, err := tx.Exec(query, actionID)
 	if err != nil {
@@ -250,6 +249,37 @@ func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, acti
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// DeleteAllApplicationWarnings deletes all warnings for application only (ie. not related to an action)
+func DeleteAllApplicationWarnings(tx gorp.SqlExecutor, projectID, appID int64) error {
+	query := `DELETE FROM warning WHERE app_id = $1 and action_id is null`
+	if _, err := tx.Exec(query, appID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// InsertApplicationWarning in database
+func InsertApplicationWarning(tx gorp.SqlExecutor, projectID, appID int64, w *sdk.Warning) error {
+	query := `INSERT INTO warning (project_id, app_id, warning_id, message_param) VALUES ($1, $2, $3, $4)`
+	if w.Project.ID == 0 {
+		w.Project.ID = projectID
+	}
+	if w.Application.ID == 0 {
+		w.Application.ID = appID
+	}
+
+	mParam, errJSON := json.Marshal(w.MessageParam)
+	if errJSON != nil {
+		return errJSON
+	}
+
+	if _, err := tx.Exec(query, projectID, appID, w.ID, string(mParam)); err != nil {
+		return err
 	}
 
 	return nil

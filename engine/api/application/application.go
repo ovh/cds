@@ -46,7 +46,7 @@ ORDER BY application.name ASC
 `
 
 // LoadApplications load all application from the given project
-func LoadApplications(db gorp.SqlExecutor, projectKey string, allpipelines bool, user *sdk.User) ([]sdk.Application, error) {
+func LoadApplications(db gorp.SqlExecutor, projectKey string, withPipelines, withVariables bool, user *sdk.User) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
 	var err error
 	var rows *sql.Rows
@@ -99,7 +99,17 @@ func LoadApplications(db gorp.SqlExecutor, projectKey string, allpipelines bool,
 		apps = append(apps, app)
 	}
 
-	if allpipelines {
+	if withVariables {
+		for i := range apps {
+			var errV error
+			apps[i].Variable, errV = GetAllVariableByID(db, apps[i].ID)
+			if errV != nil {
+				return apps, errV
+			}
+		}
+	}
+
+	if withPipelines {
 		for i := range apps {
 			pipelines, err := GetAllPipelinesByID(db, apps[i].ID)
 			if err != nil && err != sdk.ErrNoAttachedPipeline {

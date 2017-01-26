@@ -326,7 +326,7 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	if groupProject.Recursive {
 
 		// apply on application
-		applications, err := application.LoadApplications(tx, p.Key, false, c.User)
+		applications, err := application.LoadApplications(tx, p.Key, false, false, c.User)
 		if err != nil {
 			log.Warning("AddGroupInProject: Cannot load applications for project %s:  %s\n", p.Name, err)
 			WriteError(w, r, err)

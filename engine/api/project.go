@@ -39,7 +39,7 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 
 	if includeApplication == "true" {
 		for _, p := range projects {
-			applications, errApp := application.LoadApplications(db, p.Key, includePipeline == "true", c.User)
+			applications, errApp := application.LoadApplications(db, p.Key, includePipeline == "true", false, c.User)
 			if errApp != nil {
 				log.Warning("GetProjects: Cannot load applications for projects %s : %s\n", p.Key, errApp)
 				WriteError(w, r, errApp)

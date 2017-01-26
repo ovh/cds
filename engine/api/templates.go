@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
@@ -318,6 +319,13 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return
 	}
 
+	proj.Environments, err = environment.LoadEnvironments(db, projectKey, true, c.User)
+	if err != nil {
+		log.Warning("applyTemplatesHandler: Cannot load environments: %s\n", projectKey, err)
+		WriteError(w, r, err)
+		return
+	}
+
 	// Load groups on the project
 	if err := group.LoadGroupByProject(db, proj); err != nil {
 		log.Warning("applyTemplatesHandler> Cannot load project groups %s: %s\n", projectKey, err)
@@ -372,13 +380,21 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return
 	}
 
-	apps, errApp := application.LoadApplications(db, proj.Key, false, c.User)
+	apps, errApp := application.LoadApplications(db, proj.Key, false, true, c.User)
 	if errApp != nil {
 		log.Warning("applyTemplatesHandler> Cannot load applications: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 	proj.Applications = apps
+
+	for _, a := range apps {
+		if err := sanity.CheckApplication(db, proj, &a); err != nil {
+			log.Warning("applyTemplatesHandler> Cannot check application sanity: %s\n", err)
+			WriteError(w, r, err)
+			return
+		}
+	}
 
 	WriteJSON(w, r, proj, http.StatusOK)
 }
