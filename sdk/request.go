@@ -26,6 +26,7 @@ var (
 	token          string
 	hash           string
 	skipReadConfig bool
+	retry          int
 	// AuthHeader is used as HTTP header
 	AuthHeader = "X_AUTH_HEADER"
 	// RequestedWithHeader is used as HTTP header
@@ -67,11 +68,16 @@ func SetAgent(a Agent) {
 	agent = a
 }
 
+//SetRetry initialize number of http retry
+func SetRetry(n int) {
+	retry = n
+}
+
 // If CDS_SKIP_VERIFY is present, use a specific http client
 // with TLS InsecureSkipVerify enabled
 func init() {
 	agent = SDKAgent
-
+	retry = 10
 	skip := os.Getenv("CDS_SKIP_VERIFY")
 	if skip != "" {
 		tr := &http.Transport{
@@ -91,7 +97,8 @@ func initRequest(req *http.Request) {
 	req.Header.Add(RequestedWithHeader, RequestedWithValue)
 }
 
-func readConfig() error {
+//ReadConfig read the specified config file
+func ReadConfig() error {
 	if skipReadConfig {
 		return nil
 	}
@@ -207,7 +214,7 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 func Stream(method string, path string, args []byte, mods ...RequestModifier) (io.ReadCloser, int, error) {
 	var savederror error
 
-	err := readConfig()
+	err := ReadConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)
@@ -217,7 +224,7 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		log.Printf("Call %s %s%s\n", method, Host, path)
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < retry; i++ {
 		var req *http.Request
 		if args != nil {
 			req, err = http.NewRequest(method, Host+path, bytes.NewReader(args))
@@ -294,7 +301,7 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		}
 	}
 
-	return nil, 0, fmt.Errorf("x10: %s", savederror)
+	return nil, 0, fmt.Errorf("x%d: %s", retry, savederror)
 }
 
 // UploadMultiPart upload multipart
@@ -304,7 +311,7 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 		log.Printf("Starting UploadMultiPart %s %s", method, path)
 	}
 
-	if err := readConfig(); err != nil {
+	if err := ReadConfig(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)
 	}
@@ -362,7 +369,7 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 // Upload upload content in given io.Reader to given HTTP endpoint
 func Upload(method string, path string, body io.ReadCloser, mods ...RequestModifier) ([]byte, int, error) {
 
-	err := readConfig()
+	err := ReadConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)

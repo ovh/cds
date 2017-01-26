@@ -23,6 +23,7 @@ select create_index('pipeline_build_job','IDX_PIPELINE_BUILD_JOB', 'pipeline_bui
 
 ALTER TABLE build_log ADD COLUMN pipeline_build_id BIGINT;
 select create_foreign_key('FK_BUILD_LOG_PIPELINE_BUILD', 'build_log', 'pipeline_build', 'pipeline_build_id', 'id');
+select create_index('build_log','IDX_BUILD_LOG_PIPELINE_BUILD', 'pipeline_build_id');
 
 -- +migrate Down
 ALTER table pipeline_history_old RENAME TO pipeline_history;

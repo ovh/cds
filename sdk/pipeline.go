@@ -206,9 +206,9 @@ func AddPipeline(name string, projectKey string, pipelineType PipelineType, para
 	return nil
 }
 
-// DeletePipelineAction delete the given action from the given pipeline
-func DeletePipelineAction(projectKey string, pipelineName string, actionPipelineID int64) error {
-	path := fmt.Sprintf("/project/%s/pipeline/%s/action/%d", projectKey, pipelineName, actionPipelineID)
+// DeleteJob delete the given job from the given pipeline
+func DeleteJob(projectKey string, pipelineName string, jobID int64) error {
+	path := fmt.Sprintf("/project/%s/pipeline/%s/action/%d", projectKey, pipelineName, jobID)
 	data, code, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err

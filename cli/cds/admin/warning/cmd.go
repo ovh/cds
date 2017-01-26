@@ -19,6 +19,13 @@ var (
 		Use:   "truncate",
 		Short: "cds admin warning truncate",
 		Run: func(cmd *cobra.Command, args []string) {
+			if ok, err := sdk.IsAdmin(); !ok {
+				if err != nil {
+					fmt.Printf("Error : %v\n", err)
+				}
+				sdk.Exit("You are not allowed to run this command")
+			}
+
 			if confirm || cli.AskForConfirmation("Do you really want to truncate all warnings ?") {
 				_, _, err := sdk.Request("DELETE", "/admin/warning", nil)
 				if err != nil {

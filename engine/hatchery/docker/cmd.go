@@ -39,6 +39,6 @@ $ hatchery docker --api=https://<api.domain> --token=<token>
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		hatcheryDocker.addhost = viper.GetString("docker-add-host")
-		hatchery.Born(hatcheryDocker, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"))
+		hatchery.Born(hatcheryDocker, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
 	},
 }

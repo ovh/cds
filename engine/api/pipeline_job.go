@@ -224,17 +224,9 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
-	stageIDString := vars["stageID"]
 	jobIDString := vars["jobID"]
 
 	jobID, err := strconv.ParseInt(jobIDString, 10, 64)
-	if err != nil {
-		log.Warning("deleteJobHandler>ID is not a int: %s\n", err)
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
-	}
-
-	stageID, err := strconv.ParseInt(stageIDString, 10, 64)
 	if err != nil {
 		log.Warning("deleteJobHandler>ID is not a int: %s\n", err)
 		WriteError(w, r, sdk.ErrInvalidID)
@@ -257,14 +249,13 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	// check if job is in the current pipeline
 	found := false
 	var jobToDelete sdk.Job
+stageLoop:
 	for _, s := range pipelineData.Stages {
-		if s.ID == stageID {
-			for _, j := range s.Jobs {
-				if j.PipelineActionID == jobID {
-					jobToDelete = j
-					found = true
-					break
-				}
+		for _, j := range s.Jobs {
+			if j.PipelineActionID == jobID {
+				jobToDelete = j
+				found = true
+				break stageLoop
 			}
 		}
 	}

@@ -724,14 +724,6 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		}
 	}
 
-	for _, param := range p.Parameter {
-		if err := pipeline.InsertParameterInPipeline(tx, p.ID, &param); err != nil {
-			log.Warning("addPipelineHandler> Cannot add parameter %s: %s\n", param.Name, err)
-			WriteError(w, r, err)
-			return
-		}
-	}
-
 	for _, app := range p.AttachedApplication {
 		if err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 			log.Warning("addPipelineHandler> Cannot attach pipeline %d to %d: %s\n", app.ID, p.ID, err)

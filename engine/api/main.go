@@ -380,7 +380,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job/{jobID}", PUT(updateJobHandler), DELETE(deleteJobHandler))
 
 	// DEPRECATED
-	router.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{pipelineActionID}", PUT(updatePipelineActionHandler), DELETE(deletePipelineActionHandler))
+	router.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{jobID}", PUT(updatePipelineActionHandler), DELETE(deleteJobHandler))
 
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined", POST(addJobToPipelineHandler))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined/{actionID}", GET(getJoinedAction), PUT(updateJoinedAction), DELETE(deleteJoinedAction))
@@ -468,6 +468,7 @@ func (router *Router) init() {
 	router.Handle("/user", GET(GetUsers))
 	router.Handle("/user/signup", Auth(false), POST(AddUser))
 	router.Handle("/user/group", Auth(true), GET(getUserGroupsHandler))
+	router.Handle("/user/import", NeedAdmin(true), POST(importUsersHandler))
 	router.Handle("/user/{name}", NeedAdmin(true), GET(GetUserHandler), PUT(UpdateUserHandler), DELETE(DeleteUserHandler))
 	router.Handle("/user/{name}/confirm/{token}", Auth(false), GET(ConfirmUser))
 	router.Handle("/user/{name}/reset", Auth(false), POST(ResetUser))

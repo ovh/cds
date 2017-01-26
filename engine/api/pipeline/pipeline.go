@@ -367,7 +367,17 @@ func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 		return sdk.ErrInvalidProject
 	}
 
-	return db.QueryRow(query, p.Name, p.ProjectID, string(p.Type)).Scan(&p.ID)
+	if err := db.QueryRow(query, p.Name, p.ProjectID, string(p.Type)).Scan(&p.ID); err != nil {
+		return err
+	}
+
+	for i := range p.Parameter {
+		if err := InsertParameterInPipeline(db, p.ID, &p.Parameter[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ExistPipeline Check if the given pipeline exist in database

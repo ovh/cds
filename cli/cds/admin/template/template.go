@@ -28,8 +28,15 @@ func Cmd() *cobra.Command {
 
 var addTemplateCmd = &cobra.Command{
 	Use:   "add",
-	Short: "cds templates add <file>",
+	Short: "cds admin templates add <file>",
 	Run: func(cmd *cobra.Command, args []string) {
+		if ok, err := sdk.IsAdmin(); !ok {
+			if err != nil {
+				fmt.Printf("Error : %v\n", err)
+			}
+			sdk.Exit("You are not allowed to run this command")
+		}
+
 		if len(args) != 1 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
 		}
@@ -49,8 +56,15 @@ var addTemplateCmd = &cobra.Command{
 
 var updateTemplateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "cds templates update <name> <file>",
+	Short: "cds admin templates update <name> <file>",
 	Run: func(cmd *cobra.Command, args []string) {
+		if ok, err := sdk.IsAdmin(); !ok {
+			if err != nil {
+				fmt.Printf("Error : %v\n", err)
+			}
+			sdk.Exit("You are not allowed to run this command")
+		}
+
 		if len(args) != 2 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
 		}
@@ -70,8 +84,15 @@ var updateTemplateCmd = &cobra.Command{
 
 var deleteTemplateCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "cds templates delete <name>",
+	Short: "cds admin templates delete <name>",
 	Run: func(cmd *cobra.Command, args []string) {
+		if ok, err := sdk.IsAdmin(); !ok {
+			if err != nil {
+				fmt.Printf("Error : %v\n", err)
+			}
+			sdk.Exit("You are not allowed to run this command")
+		}
+
 		if len(args) != 1 {
 			sdk.Exit("Wrong usage: %s\n", cmd.Short)
 		}
@@ -84,8 +105,15 @@ var deleteTemplateCmd = &cobra.Command{
 
 var listTemplateCmd = &cobra.Command{
 	Use:   "list",
-	Short: "cds templates list",
+	Short: "cds admin templates list",
 	Run: func(cmd *cobra.Command, args []string) {
+		if ok, err := sdk.IsAdmin(); !ok {
+			if err != nil {
+				fmt.Printf("Error : %v\n", err)
+			}
+			sdk.Exit("You are not allowed to run this command")
+		}
+
 		tmpls, err := sdk.ListTemplates()
 		if err != nil {
 			sdk.Exit("Error: cannot list templates: %s\n", err)

@@ -335,8 +335,7 @@ func UpdateVariable(db database.Executer, envID int64, variable sdk.Variable) er
 // DeleteVariable Delete a variable from the given pipeline
 func DeleteVariable(db database.Executer, envID int64, variableName string) error {
 	query := `DELETE FROM environment_variable
-	          USING environment
-	          WHERE environment.id = $1 AND environment_variable.name = $2`
+	          WHERE environment_variable.environment_id = $1 AND environment_variable.name = $2`
 	result, err := db.Exec(query, envID, variableName)
 	rowAffected, err := result.RowsAffected()
 	if err != nil {
