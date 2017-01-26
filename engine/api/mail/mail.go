@@ -33,12 +33,20 @@ Regards,
 CDS Team
 `
 
-//Status is used by status handler
-var Status = "Unknown"
+// Status verification of smtp configuration, returns OK or KO
+func Status() string {
+	if err := CheckMailConfiguration(); err != nil {
+		return fmt.Sprintf("KO %s", err)
+	}
 
-// CheckMailConfiguration verification of smtp configuration
+	if _, err := smtpClient(); err != nil {
+		return fmt.Sprintf("KO (%s)", err)
+	}
+	return "OK"
+}
+
+//CheckMailConfiguration verification of smtp configuration
 func CheckMailConfiguration() error {
-
 	smtpUser = viper.GetString("smtp_user")
 	smtpPassword = viper.GetString("smtp_password")
 
@@ -58,13 +66,6 @@ func CheckMailConfiguration() error {
 	}
 
 	smtpTLS = viper.GetBool("smtp_tls")
-
-	if _, err := smtpClient(); err != nil {
-		Status = fmt.Sprintf("KO (%s)", err)
-	} else {
-		Status = "OK"
-
-	}
 
 	return nil
 }
