@@ -1,7 +1,7 @@
 package template
 
 import (
-	"database/sql"
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/msg"
@@ -13,7 +13,7 @@ import (
 )
 
 // ApplyTemplate creates an application and configure it with given template
-func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]msg.Message, error) {
+func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]msg.Message, error) {
 	var app *sdk.Application
 	var err error
 
@@ -103,7 +103,7 @@ func ApplyTemplate(db *sql.DB, proj *sdk.Project, opts sdk.ApplyTemplatesOptions
 }
 
 // ApplyTemplateOnApplication configure an application it with given template
-func ApplyTemplateOnApplication(db *sql.DB, proj *sdk.Project, app *sdk.Application, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]msg.Message, error) {
+func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Application, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]msg.Message, error) {
 	//Get the template
 	sdktmpl, err := templateextension.LoadByName(db, opts.TemplateName)
 	if err != nil {

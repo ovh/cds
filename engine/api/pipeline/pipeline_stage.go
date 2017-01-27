@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -23,7 +23,7 @@ var (
 )
 
 // LoadStage Get a stage from its ID and pipeline ID
-func LoadStage(db database.Querier, pipelineID int64, stageID int64) (*sdk.Stage, error) {
+func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage, error) {
 	query := `
 		SELECT pipeline_stage.id, pipeline_stage.pipeline_id, pipeline_stage.name, pipeline_stage.build_order, pipeline_stage.enabled, pipeline_stage_prerequisite.parameter, pipeline_stage_prerequisite.expected_value
 		FROM pipeline_stage
@@ -60,7 +60,7 @@ func LoadStage(db database.Querier, pipelineID int64, stageID int64) (*sdk.Stage
 }
 
 // InsertStage insert given stage into given database
-func InsertStage(db database.QueryExecuter, s *sdk.Stage) error {
+func InsertStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	s.Enabled = true
 	query := `INSERT INTO "pipeline_stage" (pipeline_id, name, build_order, enabled) VALUES($1,$2,$3,$4) RETURNING id`
 
@@ -71,7 +71,7 @@ func InsertStage(db database.QueryExecuter, s *sdk.Stage) error {
 }
 
 // InsertStagePrequisites insert prequisite for given stage in database
-func InsertStagePrequisites(db database.QueryExecuter, s *sdk.Stage) error {
+func InsertStagePrequisites(db gorp.SqlExecutor, s *sdk.Stage) error {
 	if len(s.Prerequisites) > 0 {
 		query := "INSERT INTO \"pipeline_stage_prerequisite\"  (pipeline_stage_id, parameter, expected_value) VALUES "
 		args := []interface{}{s.ID}
@@ -92,7 +92,7 @@ func InsertStagePrequisites(db database.QueryExecuter, s *sdk.Stage) error {
 }
 
 // LoadStages Get all stages for the given pipeline
-func LoadStages(db *sql.DB, pipelineID int64) ([]sdk.Stage, error) {
+func LoadStages(db gorp.SqlExecutor, pipelineID int64) ([]sdk.Stage, error) {
 	var stages []sdk.Stage
 
 	query := `
@@ -145,7 +145,7 @@ func LoadStages(db *sql.DB, pipelineID int64) ([]sdk.Stage, error) {
 	return stages, nil
 }
 
-func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) error {
+func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) error {
 	p.Stages = []sdk.Stage{}
 	c := structarg{}
 	for _, f := range args {
@@ -182,8 +182,8 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 	defer rows.Close()
 
 	mapStages := map[int64]*sdk.Stage{}
-	mapAllActions := map[int64]*sdk.Action{}
-	mapActionsStages := map[int64][]sdk.Action{}
+	mapAllActions := map[int64]*sdk.Job{}
+	mapActionsStages := map[int64][]sdk.Job{}
 	mapArgs := map[int64][]string{}
 	stagesPtr := []*sdk.Stage{}
 
@@ -241,18 +241,20 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 
 		//Get actions
 		if pipelineActionID.Valid && actionID.Valid && actionEnabled.Valid && actionLastModified.Valid {
-			var a *sdk.Action
-			a = mapAllActions[pipelineActionID.Int64]
+			j := mapAllActions[pipelineActionID.Int64]
 
-			if a == nil {
-				a = &sdk.Action{
+			if j == nil {
+				j = &sdk.Job{
+					PipelineStageID:  stageID,
 					PipelineActionID: pipelineActionID.Int64,
-					ID:               actionID.Int64,
-					Enabled:          actionEnabled.Bool,
 					LastModified:     actionLastModified.Time.Unix(),
+					Enabled:          actionEnabled.Bool,
+					Action: sdk.Action{
+						ID: actionID.Int64,
+					},
 				}
-				mapAllActions[pipelineActionID.Int64] = a
-				mapActionsStages[stageID] = append(mapActionsStages[stageID], *a)
+				mapAllActions[pipelineActionID.Int64] = j
+				mapActionsStages[stageID] = append(mapActionsStages[stageID], *j)
 
 				if actionArgs.Valid {
 					mapArgs[stageID] = append(mapArgs[stageID], actionArgs.String)
@@ -263,18 +265,16 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 		}
 	}
 
-	//load Pipeline Actions
+	//load job
 	for id := range mapStages {
 		for index := range mapActionsStages[id] {
-			var a *sdk.Action
-			a, err = action.LoadActionByID(db, mapActionsStages[id][index].ID)
-			if err != nil {
-				return fmt.Errorf("loadPipelineStage> cannot action.LoadActionByID %d > %s", mapActionsStages[id][index].ID, err)
-			}
-			a.Enabled = mapActionsStages[id][index].Enabled
-			a.PipelineStageID = id
-			a.PipelineActionID = mapActionsStages[id][index].PipelineActionID
+			job := mapActionsStages[id][index]
 
+			var a *sdk.Action
+			a, err = action.LoadActionByID(db, mapActionsStages[id][index].Action.ID)
+			if err != nil {
+				return fmt.Errorf("loadPipelineStage> cannot action.LoadActionByID %d > %s", mapActionsStages[id][index].Action.ID, err)
+			}
 			var pipelineActionParameter []sdk.Parameter
 			var isUpdated bool
 			err = json.Unmarshal([]byte(mapArgs[id][index]), &pipelineActionParameter)
@@ -288,17 +288,11 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 					pipelineActionParameter = append(pipelineActionParameter, a.Parameters[i])
 				}
 			}
-			a.Parameters = pipelineActionParameter
-			mapStages[id].Actions = append(mapStages[id].Actions, *a)
+
+			job.Action = *a
 
 			// Insert job also
-			mapStages[id].Jobs = append(mapStages[id].Jobs, sdk.Job{
-				PipelineActionID: a.PipelineActionID,
-				Enabled:          a.Enabled,
-				LastModified:     a.LastModified,
-				PipelineStageID:  a.PipelineStageID,
-				Action:           *a,
-			})
+			mapStages[id].Jobs = append(mapStages[id].Jobs, job)
 		}
 	}
 	for _, s := range stagesPtr {
@@ -309,7 +303,7 @@ func LoadPipelineStage(db database.Querier, p *sdk.Pipeline, args ...FuncArg) er
 }
 
 // UpdateStage update Stage and all its prequisites
-func UpdateStage(db database.QueryExecuter, s *sdk.Stage) error {
+func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	query := `UPDATE pipeline_stage SET name=$1, build_order=$2, enabled=$3 WHERE id=$4`
 	_, err := db.Exec(query, s.Name, s.BuildOrder, s.Enabled, s.ID)
 	if err != nil {
@@ -329,7 +323,7 @@ func UpdateStage(db database.QueryExecuter, s *sdk.Stage) error {
 }
 
 // DeleteStageByID Delete stage with associated pipeline action
-func DeleteStageByID(tx database.QueryExecuter, s *sdk.Stage, userID int64) error {
+func DeleteStageByID(tx gorp.SqlExecutor, s *sdk.Stage, userID int64) error {
 
 	nbOfStages, err := CountStageByPipelineID(tx, s.PipelineID)
 	if err != nil {
@@ -349,7 +343,7 @@ func DeleteStageByID(tx database.QueryExecuter, s *sdk.Stage, userID int64) erro
 	return moveDownStages(tx, s.PipelineID, s.BuildOrder, nbOfStages)
 }
 
-func deleteStageByID(tx database.Executer, s *sdk.Stage) error {
+func deleteStageByID(tx gorp.SqlExecutor, s *sdk.Stage) error {
 	//Delete stage prequisites
 	if err := deleteStagePrerequisites(tx, s.ID); err != nil {
 		return err
@@ -366,7 +360,7 @@ func deleteStageByID(tx database.Executer, s *sdk.Stage) error {
 }
 
 // CountStageByPipelineID Count the number of stages for the given pipeline
-func CountStageByPipelineID(db database.Querier, pipelineID int64) (int, error) {
+func CountStageByPipelineID(db gorp.SqlExecutor, pipelineID int64) (int, error) {
 	var countStages int
 	query := `SELECT count(id) FROM "pipeline_stage"
 	 		  WHERE pipeline_id = $1`
@@ -374,7 +368,7 @@ func CountStageByPipelineID(db database.Querier, pipelineID int64) (int, error) 
 	return countStages, err
 }
 
-func seleteAllStageID(db database.QueryExecuter, pipelineID int64) ([]int64, error) {
+func seleteAllStageID(db gorp.SqlExecutor, pipelineID int64) ([]int64, error) {
 	var stageIDs []int64
 	query := `SELECT id FROM "pipeline_stage"
 	 		  WHERE pipeline_id = $1`
@@ -396,7 +390,7 @@ func seleteAllStageID(db database.QueryExecuter, pipelineID int64) ([]int64, err
 	return stageIDs, nil
 }
 
-func deleteStagePrerequisites(db database.Executer, stageID int64) error {
+func deleteStagePrerequisites(db gorp.SqlExecutor, stageID int64) error {
 	log.Debug("deleteStagePrerequisites> delete prequisites for stage %d ", stageID)
 	//Delete stage prequisites
 	queryDelete := `DELETE FROM pipeline_stage_prerequisite WHERE pipeline_stage_id = $1`
@@ -405,7 +399,7 @@ func deleteStagePrerequisites(db database.Executer, stageID int64) error {
 }
 
 // DeleteAllStage  Delete all stages from pipeline ID
-func DeleteAllStage(db database.QueryExecuter, pipelineID int64, userID int64) error {
+func DeleteAllStage(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 	stageIDs, err := seleteAllStageID(db, pipelineID)
 	if err != nil {
 		return err
@@ -428,7 +422,7 @@ func DeleteAllStage(db database.QueryExecuter, pipelineID int64, userID int64) e
 }
 
 // MoveStage Move a stage
-func MoveStage(db *sql.DB, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
+func MoveStage(db *gorp.DbMap, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -457,7 +451,7 @@ func MoveStage(db *sql.DB, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pip
 	return tx.Commit()
 }
 
-func moveUpStages(db database.Executer, pipelineID int64, oldPosition, newPosition int) error {
+func moveUpStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosition int) error {
 	query := `UPDATE pipeline_stage
 		  SET build_order=build_order+1
 		  WHERE build_order < $1
@@ -467,7 +461,7 @@ func moveUpStages(db database.Executer, pipelineID int64, oldPosition, newPositi
 	return err
 }
 
-func moveDownStages(db database.Executer, pipelineID int64, oldPosition, newPosition int) error {
+func moveDownStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosition int) error {
 	query := `UPDATE pipeline_stage
 		  SET build_order=build_order-1
 		  WHERE build_order <= $1

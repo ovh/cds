@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // Exists check if an action with same name already exists in database
-func Exists(db database.Querier, name string) (bool, error) {
+func Exists(db gorp.SqlExecutor, name string) (bool, error) {
 	query := `SELECT * FROM action WHERE action.name = $1`
 	rows, err := db.Query(query, name)
 	if err != nil {
@@ -27,7 +29,7 @@ func Exists(db database.Querier, name string) (bool, error) {
 }
 
 // InsertAction insert given action into given database
-func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
+func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 	ok, errLoop := isTreeLoopFree(tx, a, nil)
 	if errLoop != nil {
 		return errLoop
@@ -108,7 +110,7 @@ func InsertAction(tx database.QueryExecuter, a *sdk.Action, public bool) error {
 }
 
 // LoadPipelineActionByID retrieves and action by its id but check project and pipeline
-func LoadPipelineActionByID(db database.Querier, project, pip string, actionID int64) (*sdk.Action, error) {
+func LoadPipelineActionByID(db gorp.SqlExecutor, project, pip string, actionID int64) (*sdk.Action, error) {
 	query := `
 	SELECT action.id, action.name, action.description, action.type, action.last_modified, action.enabled
 	FROM action
@@ -121,20 +123,20 @@ func LoadPipelineActionByID(db database.Querier, project, pip string, actionID i
 }
 
 // LoadPublicAction load an action from database
-func LoadPublicAction(db database.Querier, name string) (*sdk.Action, error) {
+func LoadPublicAction(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
 	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE action.name = $1 AND public = true`
 	return loadAction(db, db.QueryRow(query, name))
 }
 
 // LoadActionByID retrieves in database the action with given id
-func LoadActionByID(db database.Querier, actionID int64) (*sdk.Action, error) {
+func LoadActionByID(db gorp.SqlExecutor, actionID int64) (*sdk.Action, error) {
 	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE action.id = $1`
 	//return loadAction(db, db.QueryRow(query, actionID), args...)
 	return loadAction(db, db.QueryRow(query, actionID))
 }
 
 // LoadActionByPipelineActionID load an action from database
-func LoadActionByPipelineActionID(db database.Querier, pipelineActionID int64) (*sdk.Action, error) {
+func LoadActionByPipelineActionID(db gorp.SqlExecutor, pipelineActionID int64) (*sdk.Action, error) {
 	query := `SELECT action.id, action.name, action.description, action.type, action.last_modified, action.enabled
 	          FROM action
 	          JOIN pipeline_action ON pipeline_action.action_id = action.id
@@ -145,7 +147,7 @@ func LoadActionByPipelineActionID(db database.Querier, pipelineActionID int64) (
 }
 
 // LoadActions load all actions from database
-func LoadActions(db *sql.DB) ([]sdk.Action, error) {
+func LoadActions(db gorp.SqlExecutor) ([]sdk.Action, error) {
 	var acts []sdk.Action
 
 	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE public = true ORDER BY name`
@@ -165,7 +167,7 @@ func LoadActions(db *sql.DB) ([]sdk.Action, error) {
 	return acts, nil
 }
 
-func loadAction(db database.Querier, s database.Scanner) (*sdk.Action, error) {
+func loadAction(db gorp.SqlExecutor, s database.Scanner) (*sdk.Action, error) {
 	a := &sdk.Action{}
 
 	var lastModified time.Time
@@ -221,7 +223,7 @@ func loadAction(db database.Querier, s database.Scanner) (*sdk.Action, error) {
 }
 
 // UpdateActionDB  Update an action
-func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) error {
+func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	ok, errLoop := isTreeLoopFree(db, a, nil)
 	if errLoop != nil {
 		return errLoop
@@ -293,7 +295,7 @@ func UpdateActionDB(db database.QueryExecuter, a *sdk.Action, userID int64) erro
 }
 
 // DeleteAction remove action from database
-func DeleteAction(db database.QueryExecuter, actionID, userID int64) error {
+func DeleteAction(db gorp.SqlExecutor, actionID, userID int64) error {
 
 	if err := insertAudit(db, actionID, userID, "Action delete"); err != nil {
 		return err
@@ -303,22 +305,7 @@ func DeleteAction(db database.QueryExecuter, actionID, userID int64) error {
 		return err
 	}
 
-	query := `DELETE FROM build_log WHERE action_build_id IN
-	(SELECT id FROM action_build WHERE pipeline_action_id IN
-		(SELECT id FROM pipeline_action WHERE action_id = $1)
-	)`
-
-	if _, err := db.Exec(query, actionID); err != nil {
-		return err
-	}
-
-	query = `DELETE FROM action_build WHERE pipeline_action_id IN
-		(SELECT id FROM pipeline_action WHERE action_id = $1)`
-	if _, err := db.Exec(query, actionID); err != nil {
-		return err
-	}
-
-	query = `DELETE FROM pipeline_action WHERE action_id = $1`
+	query := `DELETE FROM pipeline_action WHERE action_id = $1`
 	if _, err := db.Exec(query, actionID); err != nil {
 		return err
 	}
@@ -341,7 +328,7 @@ func DeleteAction(db database.QueryExecuter, actionID, userID int64) error {
 }
 
 // Used checks if action is used in another action or in a pipeline
-func Used(db *sql.DB, actionID int64) (bool, error) {
+func Used(db gorp.SqlExecutor, actionID int64) (bool, error) {
 	var count int
 
 	query := `SELECT COUNT(id) FROM pipeline_action WHERE pipeline_action.action_id = $1`
@@ -360,7 +347,7 @@ func Used(db *sql.DB, actionID int64) (bool, error) {
 	return count > 0, nil
 }
 
-func isTreeLoopFree(db database.Querier, a *sdk.Action, parents []int64) (bool, error) {
+func isTreeLoopFree(db gorp.SqlExecutor, a *sdk.Action, parents []int64) (bool, error) {
 	var err error
 
 	// First, check yourself
@@ -398,7 +385,7 @@ func isTreeLoopFree(db database.Querier, a *sdk.Action, parents []int64) (bool, 
 	return true, nil
 }
 
-func insertAudit(db database.QueryExecuter, actionID, userID int64, change string) error {
+func insertAudit(db gorp.SqlExecutor, actionID, userID int64, change string) error {
 	a, errLoad := LoadActionByID(db, actionID)
 	if errLoad != nil {
 		return errLoad

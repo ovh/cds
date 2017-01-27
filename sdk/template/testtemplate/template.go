@@ -75,38 +75,44 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 							Name:       "Build",
 							BuildOrder: 0,
 							Enabled:    true,
-							Actions: []sdk.Action{ //Jobs
+							Jobs: []sdk.Job{ //Jobs
 								{
-									Name: "Compile", //First job : compile
-									Actions: []sdk.Action{
-										sdk.Action{
-											Name: "CDS_GitClone",
-										},
-										sdk.NewActionScript("cd {{.cds.app.name}} && make", []sdk.Requirement{
-											{
-												Name:  "make",
-												Type:  sdk.BinaryRequirement,
-												Value: "make",
+									Action: sdk.Action{
+										Name: "Compile", //First job : compile
+										Actions: []sdk.Action{
+											sdk.Action{
+												Name: "CDS_GitClone",
 											},
-										}),
-										sdk.NewActionArtifactUpload("{{.cds.app.name}}", "{{.cds.version}}"),
+											sdk.NewActionScript("cd {{.cds.app.name}} && make", []sdk.Requirement{
+												{
+													Name:  "make",
+													Type:  sdk.BinaryRequirement,
+													Value: "make",
+												},
+											}),
+											sdk.NewActionArtifactUpload("{{.cds.app.name}}", "{{.cds.version}}"),
+										},
 									},
+									Enabled: true,
 								},
 								{
-									Name: "Test", //Second job : test
-									Actions: []sdk.Action{
-										sdk.Action{
-											Name: "CDS_GitClone",
-										},
-										sdk.NewActionScript("cd {{.cds.app.name}} && make test", []sdk.Requirement{
-											{
-												Name:  "make",
-												Type:  sdk.BinaryRequirement,
-												Value: "make",
+									Action: sdk.Action{
+										Name: "Test", //Second job : test
+										Actions: []sdk.Action{
+											sdk.Action{
+												Name: "CDS_GitClone",
 											},
-										}),
-										sdk.NewActionJUnit("*.xml"),
+											sdk.NewActionScript("cd {{.cds.app.name}} && make test", []sdk.Requirement{
+												{
+													Name:  "make",
+													Type:  sdk.BinaryRequirement,
+													Value: "make",
+												},
+											}),
+											sdk.NewActionJUnit("*.xml"),
+										},
 									},
+									Enabled: true,
 								},
 							},
 						},
@@ -114,23 +120,26 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 							Name:       "Package",
 							BuildOrder: 1,
 							Enabled:    true,
-							Actions: []sdk.Action{ //Jobs
+							Jobs: []sdk.Job{ //Jobs
 								{
-									Name: "Docker package",
-									Actions: []sdk.Action{
-										sdk.Action{
-											Name: "CDS_GitClone",
-										},
-										sdk.NewActionScript(`
-cd {{.cds.app.name}} 
-docker build -t cds/{{.cds.app.name}}-{{.cds.version}} . 
-docker push cds/{{.cds.app.name}}-{{.cds.version}}`, []sdk.Requirement{
-											{
-												Name:  "docker",
-												Type:  sdk.BinaryRequirement,
-												Value: "docker",
+									Action: sdk.Action{
+										Name: "Docker package",
+										Actions: []sdk.Action{
+											sdk.Action{
+												Name: "CDS_GitClone",
 											},
-										}),
+											sdk.NewActionScript(`
+												cd {{.cds.app.name}}
+												docker build -t cds/{{.cds.app.name}}-{{.cds.version}} .
+												docker push cds/{{.cds.app.name}}-{{.cds.version}}`,
+												[]sdk.Requirement{
+													{
+														Name:  "docker",
+														Type:  sdk.BinaryRequirement,
+														Value: "docker",
+													},
+												}),
+										},
 									},
 								},
 							},

@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -19,7 +21,7 @@ func StartRoutine() {
 
 			time.Sleep(2 * time.Second)
 
-			db := database.DB()
+			db := database.DBMap(database.DB())
 			if db != nil {
 				err := createTodaysRow(db)
 				if err != nil {
@@ -40,7 +42,7 @@ func StartRoutine() {
 	}()
 }
 
-func updateWorkerStats(db *sql.DB) error {
+func updateWorkerStats(db gorp.SqlExecutor) error {
 	query := `UPDATE stats
 	SET max_building_worker = (SELECT COUNT(id) FROM worker WHERE status = $1)
 	WHERE day = current_date
@@ -62,7 +64,7 @@ func updateWorkerStats(db *sql.DB) error {
 	return nil
 }
 
-func updatePipelineStats(db *sql.DB) error {
+func updatePipelineStats(db gorp.SqlExecutor) error {
 	query := `UPDATE stats
 	SET max_building_pipeline = (SELECT COUNT(id) FROM pipeline_build WHERE status = $1)
 	WHERE day = current_date
@@ -84,7 +86,7 @@ func updatePipelineStats(db *sql.DB) error {
 	return nil
 }
 
-func createTodaysRow(db *sql.DB) error {
+func createTodaysRow(db gorp.SqlExecutor) error {
 	query := `SELECT day FROM stats WHERE day = current_date`
 	var day time.Time
 

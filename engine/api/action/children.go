@@ -3,11 +3,13 @@ package action
 import (
 	"fmt"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
-func insertEdge(db database.QueryExecuter, parentID, childID int64, execOrder int, final, enabled bool) (int64, error) {
+func insertEdge(db gorp.SqlExecutor, parentID, childID int64, execOrder int, final, enabled bool) (int64, error) {
 	query := `INSERT INTO action_edge (parent_id, child_id, exec_order, final, enabled) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
 	var id int64
@@ -19,7 +21,7 @@ func insertEdge(db database.QueryExecuter, parentID, childID int64, execOrder in
 	return id, nil
 }
 
-func insertActionChild(db database.QueryExecuter, actionID int64, child sdk.Action, execOrder int) error {
+func insertActionChild(db gorp.SqlExecutor, actionID int64, child sdk.Action, execOrder int) error {
 	if child.ID == 0 {
 		return fmt.Errorf("insertActionChild: child action has no id")
 	}
@@ -58,7 +60,7 @@ func insertChildActionParameter(db database.Executer, edgeID, parentID, childID 
 }
 
 // loadActionChildren loads all children actions from given action
-func loadActionChildren(db database.Querier, actionID int64) ([]sdk.Action, error) {
+func loadActionChildren(db gorp.SqlExecutor, actionID int64) ([]sdk.Action, error) {
 	var children []sdk.Action
 	var edgeIDs []int64
 	var childrenIDs []int64
@@ -115,8 +117,8 @@ func loadActionChildren(db database.Querier, actionID int64) ([]sdk.Action, erro
 	return children, nil
 }
 
-//func loadChildActionParameterValue(db database.Querier, edgeID int64, args ...LoadActionFuncArg) ([]sdk.Parameter, error) {
-func loadChildActionParameterValue(db database.Querier, edgeID int64) ([]sdk.Parameter, error) {
+//func loadChildActionParameterValue(db gorp.SqlExecutor, edgeID int64, args ...LoadActionFuncArg) ([]sdk.Parameter, error) {
+func loadChildActionParameterValue(db gorp.SqlExecutor, edgeID int64) ([]sdk.Parameter, error) {
 	var params []sdk.Parameter
 
 	query := `SELECT name, type, value, description FROM action_edge_parameter
@@ -161,7 +163,7 @@ func replaceChildActionParameters(a *sdk.Action, params []sdk.Parameter) {
 }
 
 // deleteActionChildren delete all action of a given action in database
-func deleteActionChildren(db database.Executer, actionID int64) error {
+func deleteActionChildren(db gorp.SqlExecutor, actionID int64) error {
 	query := `DELETE FROM action_edge_parameter WHERE action_edge_id IN (select id FROM action_edge WHERE parent_id = $1)`
 	_, err := db.Exec(query, actionID)
 	if err != nil {

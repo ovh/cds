@@ -1,15 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -17,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -111,7 +110,7 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	WriteJSON(w, r, pip, http.StatusOK)
 }
 
-func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
@@ -133,7 +132,6 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	}
 
 	var job sdk.Job
-
 	// Get args in body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -171,7 +169,7 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	found := false
 	for _, s := range pipelineData.Stages {
 		if s.ID == stageID {
-			for _, j := range s.Actions {
+			for _, j := range s.Jobs {
 				if j.PipelineActionID == jobID {
 					found = true
 					break
@@ -221,22 +219,14 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
-func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
-	stageIDString := vars["stageID"]
 	jobIDString := vars["jobID"]
 
 	jobID, err := strconv.ParseInt(jobIDString, 10, 64)
-	if err != nil {
-		log.Warning("deleteJobHandler>ID is not a int: %s\n", err)
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
-	}
-
-	stageID, err := strconv.ParseInt(stageIDString, 10, 64)
 	if err != nil {
 		log.Warning("deleteJobHandler>ID is not a int: %s\n", err)
 		WriteError(w, r, sdk.ErrInvalidID)
@@ -259,14 +249,13 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	// check if job is in the current pipeline
 	found := false
 	var jobToDelete sdk.Job
+stageLoop:
 	for _, s := range pipelineData.Stages {
-		if s.ID == stageID {
-			for _, j := range s.Jobs {
-				if j.PipelineActionID == jobID {
-					jobToDelete = j
-					found = true
-					break
-				}
+		for _, j := range s.Jobs {
+			if j.PipelineActionID == jobID {
+				jobToDelete = j
+				found = true
+				break stageLoop
 			}
 		}
 	}
@@ -277,32 +266,6 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		return
 	}
 
-	// Select all pipeline build where given pipelineAction has been run
-	query := `SELECT pipeline_build.id FROM pipeline_build
-						JOIN action_build ON action_build.pipeline_build_id = pipeline_build.id
-						WHERE action_build.pipeline_action_id = $1`
-	var ids []int64
-	rows, err := db.Query(query, jobID)
-	if err != nil {
-		log.Warning("deleteJobHandler> cannot retrieves pipeline build: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	for rows.Next() {
-		var id int64
-		err = rows.Scan(&id)
-		if err != nil {
-			rows.Close()
-			log.Warning("deleteJobHandler> cannot retrieves pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-		ids = append(ids, id)
-	}
-	rows.Close()
-	log.Notice("deleteJobHandler> Got %d PipelineBuild to archive\n", len(ids))
-
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deleteJobHandler> Cannot begin transaction: %s\n", err)
@@ -310,16 +273,6 @@ func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 		return
 	}
 	defer tx.Rollback()
-
-	// For each pipeline build, archive it to get out of relationnal
-	for _, id := range ids {
-		err = archivist.ArchiveBuild(tx, id)
-		if err != nil {
-			log.Warning("deleteJobHandler> cannot archive pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-	}
 
 	if err := pipeline.DeleteJob(tx, jobToDelete, c.User.ID); err != nil {
 		log.Warning("deleteJobHandler> Cannot delete pipeline action: %s", err)

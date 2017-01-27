@@ -1,11 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
@@ -15,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	appName := r.FormValue("appName")

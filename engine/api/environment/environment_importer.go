@@ -1,7 +1,8 @@
 package environment
 
 import (
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"
@@ -9,7 +10,7 @@ import (
 )
 
 //Import import or reuser the provided environment
-func Import(db database.QueryExecuter, proj *sdk.Project, env *sdk.Environment, msgChan chan<- msg.Message) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgChan chan<- msg.Message) error {
 	exists, err := Exists(db, proj.Key, env.Name)
 	if err != nil {
 		return err

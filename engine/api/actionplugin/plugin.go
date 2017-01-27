@@ -2,11 +2,12 @@ package actionplugin
 
 import (
 	"crypto/md5"
-	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/log"
@@ -116,33 +117,26 @@ func actionPluginToAction(ap *sdk.ActionPlugin, params *plugin.Parameters) (*sdk
 }
 
 //Insert create action in database
-func Insert(db *sql.DB, ap *sdk.ActionPlugin, params *plugin.Parameters) (*sdk.Action, error) {
+func Insert(db gorp.SqlExecutor, ap *sdk.ActionPlugin, params *plugin.Parameters) (*sdk.Action, error) {
 	a, err := actionPluginToAction(ap, params)
 	if err != nil {
 		return nil, err
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	if err = action.InsertAction(tx, a, true); err != nil {
+	if err = action.InsertAction(db, a, true); err != nil {
 		log.Warning("plugin.Insert> Action: Cannot insert action: %s\n", err)
 		return nil, err
 	}
 
 	query := `INSERT INTO plugin (name, size, perm, md5sum, object_path) VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	if err = tx.QueryRow(query, ap.Name, ap.Size, ap.Perm, ap.MD5sum, ap.ObjectPath).Scan(&ap.ID); err != nil {
+	if err = db.QueryRow(query, ap.Name, ap.Size, ap.Perm, ap.MD5sum, ap.ObjectPath).Scan(&ap.ID); err != nil {
 		return nil, err
 	}
-
-	return a, tx.Commit()
+	return a, nil
 }
 
 //Update action in database
-func Update(db *sql.DB, ap *sdk.ActionPlugin, params *plugin.Parameters, userID int64) (*sdk.Action, error) {
+func Update(db gorp.SqlExecutor, ap *sdk.ActionPlugin, params *plugin.Parameters, userID int64) (*sdk.Action, error) {
 	a, err := actionPluginToAction(ap, params)
 	if err != nil {
 		return nil, err
@@ -155,34 +149,24 @@ func Update(db *sql.DB, ap *sdk.ActionPlugin, params *plugin.Parameters, userID 
 	}
 	a.ID = oldA.ID
 
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	if err := action.UpdateActionDB(tx, a, userID); err != nil {
+	if err := action.UpdateActionDB(db, a, userID); err != nil {
 		return nil, err
 	}
 
 	query := "DELETE FROM plugin WHERE name = $1"
-	if _, err := tx.Exec(query, a.Name); err != nil {
+	if _, err := db.Exec(query, a.Name); err != nil {
 		return nil, err
 	}
 
 	query = `INSERT INTO plugin (name, size, perm, md5sum, object_path) VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	if err = tx.QueryRow(query, ap.Name, ap.Size, ap.Perm, ap.MD5sum, ap.ObjectPath).Scan(&ap.ID); err != nil {
-		return nil, err
-	}
-
-	if err := tx.Commit(); err != nil {
+	if err = db.QueryRow(query, ap.Name, ap.Size, ap.Perm, ap.MD5sum, ap.ObjectPath).Scan(&ap.ID); err != nil {
 		return nil, err
 	}
 	return a, nil
 }
 
 //Delete action in database
-func Delete(db *sql.DB, name string, userID int64) error {
+func Delete(db *gorp.DbMap, name string, userID int64) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -190,6 +174,7 @@ func Delete(db *sql.DB, name string, userID int64) error {
 	defer tx.Rollback()
 
 	a, err := action.LoadPublicAction(tx, name)
+
 	if err != nil {
 		log.Warning("plugin.Delete> Action: Cannot get action %s: %s\n", name, err)
 		return err

@@ -6,14 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -48,7 +47,7 @@ func WithApplications(historylength int) Mod {
 }
 
 // LoadProjectByGroup loads all projects where group has access
-func LoadProjectByGroup(db database.Querier, group *sdk.Group) error {
+func LoadProjectByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `
 		SELECT project.projectKey, project.name, project.last_modified, project_group.role
 		FROM project
@@ -82,211 +81,22 @@ func LoadProjectByGroup(db database.Querier, group *sdk.Group) error {
 	return nil
 }
 
-// LoadProjectAndPipelineByPipelineActionID load project and pipeline by pipeline_action_id
-func LoadProjectAndPipelineByPipelineActionID(db database.Querier, pipelineActionID int64) (sdk.Project, sdk.Pipeline, error) {
-	query := `SELECT project.id, project.projectKey, project.last_modified, pipeline.id, pipeline.name
+// LoadProjectByPipelineActionID load project and pipeline by pipeline_action_id
+func LoadProjectByPipelineActionID(db gorp.SqlExecutor, pipelineActionID int64) (sdk.Project, error) {
+	query := `SELECT project.id, project.projectKey, project.last_modified
 		  FROM pipeline_action
 		  JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
 		  JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
 		  JOIN project ON project.id = pipeline.project_id
 	          WHERE pipeline_action.id = $1`
 	var proj sdk.Project
-	var pip sdk.Pipeline
 	var lastModified time.Time
-	err := db.QueryRow(query, pipelineActionID).Scan(&proj.ID, &proj.Key, &lastModified, &pip.ID, &pip.Name)
+	err := db.QueryRow(query, pipelineActionID).Scan(&proj.ID, &proj.Key, &lastModified)
 	proj.LastModified = lastModified.Unix()
-	return proj, pip, err
+	return proj, err
 }
 
-func loadprojectwithvariablesandappsandacitvities(db database.Querier, key string, limit int, user *sdk.User) (*sdk.Project, error) {
-	query := `
-	WITH load_apps AS (%s), load_vars AS (%s)
-	SELECT *
-	FROM (
-		SELECT
-			projid, projname, projlast_modified,
-			NULL as varid, NULL as var_name, NULL as var_value, NULL as var_type,
-			appid as appid, appname, applast_modified,
-			envID, pipeline_id, pbid,
-			envName, pipName, type,
-			build_number, version, status,
-			start, done,
-			manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
-			username, pipTriggerFrom, versionTriggerFrom
-		FROM load_apps
-		LEFT JOIN LATERAL (
-			SELECT
-				application_id, environment_id as envID, pipeline_id, id as pbid, envName, pipName, type,
-				build_number, version, status,
-				start, done,
-				manual_trigger, scheduled_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author,
-				username, pipTriggerFrom, versionTriggerFrom
-			  FROM ( (%s)  UNION (%s) ) as pb
-			  ORDER BY start DESC
-			  LIMIT $2
-		) as pbh ON pbh.application_id = appid
-	UNION
-		SELECT
-			projid, projname, projlast_modified,
-			varid, var_name, var_value, var_type,
-			NULL as appid, NULL as appname, current_timestamp as applast_modified,
-			NULL as environment_id, NULL as pipeline_id, NULL as pbid,
-			NULL as envName, NULL as pipName, NULL as type,
-			NULL as build_number, NULL as version, NULL as status,
-			NULL as start, NULL as done,
-			NULL as manual_trigger, NULL as scheduled_trigger, NULL as triggered_by, NULL as parent_pipeline_build_id, NULL as vcs_changes_branch, NULL as vcs_changes_hash, NULL as vcs_changes_author,
-			NULL as username, NULL as pipTriggerFrom, NULL as versionTriggerFrom
-		FROM load_vars
-	) as p
-	ORDER BY appname ASC, varid ASC, start DESC
-	`
-
-	var rows *sql.Rows
-	var err error
-	if user.Admin {
-		query = fmt.Sprintf(query,
-			application.LoadApplicationsRequestAdmin,
-			loadProjectWithVariablesQuery,
-			fmt.Sprintf(pipeline.LoadPipelineBuildRequest, "", "pb.application_id = appid AND project.projectkey = $1", "LIMIT $2"),
-			fmt.Sprintf(pipeline.LoadPipelineHistoryRequest, "", "ph.application_id = appid AND project.projectkey = $1", "LIMIT $2"),
-		)
-		rows, err = db.Query(query, key, limit)
-	} else {
-		// $2 = user.ID in LoadApplicationsRequestNormalUser
-		query = fmt.Sprintf(query,
-			application.LoadApplicationsRequestNormalUser,
-			loadProjectWithVariablesQuery,
-			fmt.Sprintf(pipeline.LoadPipelineBuildRequest, "", "pb.application_id = appid AND project.projectkey = $1", "LIMIT $3"),
-			fmt.Sprintf(pipeline.LoadPipelineHistoryRequest, "", "ph.application_id = appid AND project.projectkey = $1", "LIMIT $3"),
-		)
-		rows, err = db.Query(query, key, user.ID, limit)
-	}
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoProject
-		}
-		return nil, err
-	}
-	defer rows.Close()
-
-	p := &sdk.Project{Key: key}
-	var varname, appname, value, typ, envName, pipName, typePip, status, branch, hash, author, username, pipTriggerFrom sql.NullString
-	var varid, appid, envID, pipID, pbID, buildNumber, triggeredBy, parentPbID, version, versionTriggerFrom sql.NullInt64
-	var start, done pq.NullTime
-	var manualTrigger, scheduledTrigger sql.NullBool
-	var currentApp int
-	var lastModified time.Time
-	var appLastModified time.Time
-	var apps []sdk.Application
-	for rows.Next() {
-		err = rows.Scan(&p.ID, &p.Name, &lastModified, &varid, &varname, &value, &typ, &appid, &appname, &appLastModified,
-			&envID, &pipID, &pbID,
-			&envName, &pipName, &typePip,
-			&buildNumber, &version, &status,
-			&start, &done,
-			&manualTrigger, &scheduledTrigger, &triggeredBy, &parentPbID, &branch, &hash, &author,
-			&username, &pipTriggerFrom, &versionTriggerFrom)
-		if err != nil {
-			return nil, err
-		}
-		p.LastModified = lastModified.Unix()
-		if varid.Valid && varname.Valid && typ.Valid {
-			par := sdk.Variable{
-				ID:   varid.Int64,
-				Name: varname.String,
-				Type: sdk.VariableTypeFromString(typ.String),
-			}
-
-			if sdk.NeedPlaceholder(par.Type) {
-				par.Value = sdk.PasswordPlaceholder
-			} else if value.Valid {
-				par.Value = value.String
-			}
-
-			p.Variable = append(p.Variable, par)
-		}
-
-		if appid.Valid && appname.Valid {
-			// Ah, we switched to another app
-			if len(apps) == 0 || appid.Int64 != apps[currentApp].ID {
-				if len(apps) != 0 {
-					currentApp++
-				}
-
-				app := sdk.Application{
-					ID:           appid.Int64,
-					Name:         appname.String,
-					LastModified: appLastModified.Unix(),
-				}
-				apps = append(apps, app)
-			}
-
-			if pbID.Valid && start.Valid && done.Valid && buildNumber.Valid && version.Valid && status.Valid {
-				var pb sdk.PipelineBuild
-				pb.ID = pbID.Int64
-
-				if envName.Valid && envID.Valid {
-					pb.Environment.Name = envName.String
-					pb.Environment.ID = envID.Int64
-				}
-				if pipName.Valid && typePip.Valid && pipID.Valid {
-					pb.Pipeline.Name = pipName.String
-					pb.Pipeline.Type = sdk.PipelineTypeFromString(typePip.String)
-					pb.Pipeline.ID = pipID.Int64
-				}
-
-				pb.BuildNumber = buildNumber.Int64
-				pb.Version = version.Int64
-				pb.Status = sdk.StatusFromString(status.String)
-				pb.Start = start.Time
-				pb.Done = done.Time
-
-				if manualTrigger.Valid {
-					pb.Trigger.ManualTrigger = manualTrigger.Bool
-				}
-
-				if scheduledTrigger.Valid {
-					pb.Trigger.ScheduledTrigger = scheduledTrigger.Bool
-				}
-
-				if branch.Valid {
-					pb.Trigger.VCSChangesBranch = branch.String
-				}
-
-				if hash.Valid && author.Valid {
-					pb.Trigger.VCSChangesHash = hash.String
-					pb.Trigger.VCSChangesAuthor = author.String
-				}
-
-				if username.Valid && triggeredBy.Valid {
-					pb.Trigger.TriggeredBy = &sdk.User{
-						Username: username.String,
-						ID:       triggeredBy.Int64,
-					}
-				}
-
-				if pipTriggerFrom.Valid && versionTriggerFrom.Valid && parentPbID.Valid {
-					pb.Trigger.ParentPipelineBuild = &sdk.PipelineBuild{
-						Pipeline: sdk.Pipeline{
-							Name: pipTriggerFrom.String,
-						},
-						ID:      parentPbID.Int64,
-						Version: versionTriggerFrom.Int64,
-					}
-				}
-
-				apps[currentApp].PipelinesBuild = append(apps[currentApp].PipelinesBuild, pb)
-			}
-		}
-	}
-
-	p.Applications = apps
-
-	return p, nil
-}
-
-func loadprojectwithvariablesandapps(db database.Querier, key string, user *sdk.User) (*sdk.Project, error) {
+func loadprojectwithvariablesandapps(db gorp.SqlExecutor, key string, user *sdk.User) (*sdk.Project, error) {
 	query := `
 	WITH load_apps AS (%s), load_vars AS (%s)
 	SELECT *
@@ -388,7 +198,7 @@ const loadProjectWithVariablesQuery = `
 	WHERE project.projectkey = $1
 `
 
-func loadprojectwithvariables(db database.Querier, key string) (*sdk.Project, error) {
+func loadprojectwithvariables(db gorp.SqlExecutor, key string) (*sdk.Project, error) {
 	query := loadProjectWithVariablesQuery
 
 	rows, err := db.Query(query, key)
@@ -430,7 +240,7 @@ func loadprojectwithvariables(db database.Querier, key string) (*sdk.Project, er
 	return p, nil
 }
 
-func loadproject(db database.Querier, key string) (*sdk.Project, error) {
+func loadproject(db gorp.SqlExecutor, key string) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.last_modified FROM project WHERE project.projectKey = $1`
 	var name string
 	var id int64
@@ -452,7 +262,7 @@ func loadproject(db database.Querier, key string) (*sdk.Project, error) {
 }
 
 // LoadProject loads an project from database
-func LoadProject(db database.Querier, key string, user *sdk.User, mods ...Mod) (*sdk.Project, error) {
+func LoadProject(db gorp.SqlExecutor, key string, user *sdk.User, mods ...Mod) (*sdk.Project, error) {
 	var c funcpar
 	for _, f := range mods {
 		f(&c)
@@ -462,12 +272,7 @@ func LoadProject(db database.Querier, key string, user *sdk.User, mods ...Mod) (
 	var err error
 
 	if c.loadvariables && c.loadapps {
-		if c.historylength > 0 {
-			p, err = loadprojectwithvariablesandappsandacitvities(db, key, c.historylength, user)
-		} else {
-			p, err = loadprojectwithvariablesandapps(db, key, user)
-		}
-
+		p, err = loadprojectwithvariablesandapps(db, key, user)
 	} else if c.loadvariables {
 		p, err = loadprojectwithvariables(db, key)
 	} else {
@@ -492,7 +297,7 @@ func LoadProject(db database.Querier, key string, user *sdk.User, mods ...Mod) (
 }
 
 // LoadProjectByPipelineID loads an project from pipeline iD
-func LoadProjectByPipelineID(db database.Querier, pipelineID int64) (*sdk.Project, error) {
+func LoadProjectByPipelineID(db gorp.SqlExecutor, pipelineID int64) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
 	          FROM project
 	          JOIN pipeline ON pipeline.project_id = projecT.id
@@ -511,7 +316,7 @@ func LoadProjectByPipelineID(db database.Querier, pipelineID int64) (*sdk.Projec
 }
 
 // Exist checks whether a project exists or not
-func Exist(db database.Querier, projectKey string) (bool, error) {
+func Exist(db gorp.SqlExecutor, projectKey string) (bool, error) {
 	query := `SELECT COUNT(id) FROM project WHERE project.projectKey = $1`
 
 	var nb int64
@@ -526,7 +331,7 @@ func Exist(db database.Querier, projectKey string) (bool, error) {
 }
 
 // LoadAllProjects load all projects from database
-func LoadAllProjects(db database.Querier) ([]*sdk.Project, error) {
+func LoadAllProjects(db gorp.SqlExecutor) ([]*sdk.Project, error) {
 	projects := []*sdk.Project{}
 
 	var query string
@@ -558,7 +363,7 @@ func LoadAllProjects(db database.Querier) ([]*sdk.Project, error) {
 }
 
 // LoadProjects load all projects from database
-func LoadProjects(db database.Querier, user *sdk.User) ([]*sdk.Project, error) {
+func LoadProjects(db gorp.SqlExecutor, user *sdk.User) ([]*sdk.Project, error) {
 	if user.Admin {
 		return LoadAllProjects(db)
 	}
@@ -593,7 +398,7 @@ func LoadProjects(db database.Querier, user *sdk.User) ([]*sdk.Project, error) {
 }
 
 // InsertProject insert given project into given database
-func InsertProject(db database.QueryExecuter, p *sdk.Project) error {
+func InsertProject(db gorp.SqlExecutor, p *sdk.Project) error {
 	if p.Name == "" {
 		return sdk.ErrInvalidName
 	}
@@ -603,7 +408,7 @@ func InsertProject(db database.QueryExecuter, p *sdk.Project) error {
 }
 
 // UpdateProjectDB set new project name in database
-func UpdateProjectDB(db database.Querier, projectKey, projectName string) (time.Time, error) {
+func UpdateProjectDB(db gorp.SqlExecutor, projectKey, projectName string) (time.Time, error) {
 	var lastModified time.Time
 	query := `UPDATE project SET name=$1, last_modified=current_timestamp WHERE projectKey=$2 RETURNING last_modified`
 	err := db.QueryRow(query, projectName, projectKey).Scan(&lastModified)
@@ -612,7 +417,7 @@ func UpdateProjectDB(db database.Querier, projectKey, projectName string) (time.
 
 // DeleteProject removes given project from database (project and project_group table)
 // DeleteProject also removes all pipelines inside project (pipeline and pipeline_group table).
-func DeleteProject(db database.QueryExecuter, key string) error {
+func DeleteProject(db gorp.SqlExecutor, key string) error {
 	var projectID int64
 	query := `SELECT id FROM project WHERE projectKey = $1`
 	err := db.QueryRow(query, key).Scan(&projectID)
@@ -651,7 +456,7 @@ func DeleteProject(db database.QueryExecuter, key string) error {
 }
 
 //LastUpdates returns projects and application last update
-func LastUpdates(db database.Querier, user *sdk.User, since time.Time) ([]sdk.ProjectLastUpdates, error) {
+func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.ProjectLastUpdates, error) {
 	query := `
 		SELECT 	project.projectkey, project.last_modified, apps.name, apps.last_modified, pipelines.name, pipelines.last_modified
 		FROM 	project
@@ -832,7 +637,7 @@ func LastUpdates(db database.Querier, user *sdk.User, since time.Time) ([]sdk.Pr
 }
 
 // AddKeyPairToProject generate a ssh key pair and add them as project variables
-func AddKeyPairToProject(db database.QueryExecuter, proj *sdk.Project, keyname string) error {
+func AddKeyPairToProject(db gorp.SqlExecutor, proj *sdk.Project, keyname string) error {
 
 	pub, priv, errGenerate := keys.Generatekeypair(keyname)
 	if errGenerate != nil {

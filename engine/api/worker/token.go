@@ -3,10 +3,11 @@ package worker
 import (
 	"crypto/rand"
 	"crypto/sha512"
-	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"time"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -39,7 +40,7 @@ func GenerateToken() (string, error) {
 }
 
 // InsertToken inserts a new token in database
-func InsertToken(db *sql.DB, groupID int64, token string, e sdk.Expiration) error {
+func InsertToken(db gorp.SqlExecutor, groupID int64, token string, e sdk.Expiration) error {
 	query := `INSERT INTO token (group_id, token, expiration, created) VALUES ($1, $2, $3, current_timestamp)`
 
 	hasher := sha512.New()
@@ -54,7 +55,7 @@ func InsertToken(db *sql.DB, groupID int64, token string, e sdk.Expiration) erro
 }
 
 // LoadToken fetch token infos from database
-func LoadToken(db *sql.DB, token string) (Token, error) {
+func LoadToken(db gorp.SqlExecutor, token string) (Token, error) {
 	query := `SELECT group_id, expiration, created FROM token
 		WHERE token = $1`
 

@@ -1,9 +1,8 @@
 package pipeline
 
 import (
-	"time"
+	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"
@@ -11,7 +10,7 @@ import (
 )
 
 //Import insert the pipeline in the project of check if the template is the same as existing
-func Import(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- msg.Message) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- msg.Message) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
@@ -40,7 +39,7 @@ func Import(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline, msg
 	return nil
 }
 
-func importNew(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline) error {
+func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline) error {
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
 	if err := InsertPipeline(db, pip); err != nil {
@@ -71,16 +70,10 @@ func importNew(db database.QueryExecuter, proj *sdk.Project, pip *sdk.Pipeline) 
 			return err
 		}
 		//Insert stage's Jobs
-		for _, jobAction := range s.Actions {
-			job := &sdk.Job{
-				PipelineStageID: s.ID,
-				Action:          jobAction,
-				Enabled:         true,
-				LastModified:    time.Now().Unix(),
-			}
-
-			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", job.Action.Name, s.Name, pip.Name)
-			if err := InsertJob(db, job, s.ID, pip); err != nil {
+		for _, jobAction := range s.Jobs {
+			jobAction.PipelineStageID = s.ID
+			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
+			if err := InsertJob(db, &jobAction, s.ID, pip); err != nil {
 				return err
 			}
 		}

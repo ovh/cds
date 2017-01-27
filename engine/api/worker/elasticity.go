@@ -1,15 +1,16 @@
 package worker
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
+	"database/sql"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -30,7 +31,7 @@ func logTime(name string, then time.Time) {
 }
 
 //LoadWorkerModelStatusForAdminUser lods worker model status for group
-func LoadWorkerModelStatusForAdminUser(db *sql.DB, userID int64) ([]sdk.ModelStatus, error) {
+func LoadWorkerModelStatusForAdminUser(db *gorp.DbMap, userID int64) ([]sdk.ModelStatus, error) {
 	query := `
 		SELECT  worker_model.id, 
 				worker_model.name, 
@@ -70,7 +71,7 @@ func LoadWorkerModelStatusForAdminUser(db *sql.DB, userID int64) ([]sdk.ModelSta
 }
 
 //LoadWorkerModelStatusForGroup lods worker model status for group
-func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus, error) {
+func LoadWorkerModelStatusForGroup(db *gorp.DbMap, groupID int64) ([]sdk.ModelStatus, error) {
 	defer logTime("LoadWorkerModelStatusForGroup", time.Now())
 	//Load SharedInfraGroup
 	sharedInfraGroup, errLoad := group.LoadGroup(db, group.SharedInfraGroup)
@@ -80,7 +81,7 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	}
 
 	//Load worker models
-	models, errM := LoadWorkerModelsUsableOnGroup(database.DBMap(db), groupID, sharedInfraGroup.ID)
+	models, errM := LoadWorkerModelsUsableOnGroup(db, groupID, sharedInfraGroup.ID)
 	if errM != nil {
 		return nil, errM
 	}
@@ -172,10 +173,12 @@ func LoadWorkerModelStatusForGroup(db *sql.DB, groupID int64) ([]sdk.ModelStatus
 	for _, m := range mapModels {
 		ms, ok := mapModelStatus[m.ID]
 		//If model status has not been found, load the model
+
 		if !ok || ms == nil {
 			mapModelStatus[m.ID] = new(sdk.ModelStatus)
 			ms = mapModelStatus[m.ID]
-			wm, err := LoadWorkerModelByID(database.DBMap(db), m.ID)
+			wm, err := LoadWorkerModelByID(db, m.ID)
+
 			if err != nil {
 				log.Warning("LoadWorkerModelStatusForGroup> Unable to load worker model %d", m.ID)
 				return nil, err
@@ -221,90 +224,77 @@ type ActionCount struct {
 }
 
 //LoadGroupActionCount counts waiting action for group
-func LoadGroupActionCount(db *sql.DB, groupID int64) ([]ActionCount, error) {
-
+func LoadGroupActionCount(db gorp.SqlExecutor, groupID int64) ([]ActionCount, error) {
 	log.Debug("LoadGroupActionCount> Counting pending action for group %d", groupID)
-
-	acs := []ActionCount{}
-	query := `
-	SELECT COUNT(action_build.id), pipeline_action.action_id
-	FROM action_build
-	JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
-  	JOIN pipeline_build ON pipeline_build.id = action_build.pipeline_build_id
-  	JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
-	JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
-	WHERE action_build.status = $1 
-	AND (
-		pipeline_group.group_id = $2
-		OR
-		(select id from "group" where name = $3) = $2
-	)
-	GROUP BY pipeline_action.action_id
-	LIMIT 1000
-	`
-
-	rows, err := db.Query(query, string(sdk.StatusWaiting), groupID, group.SharedInfraGroup)
-	if err != nil {
-		return nil, err
+	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJobForGroup(db, groupID)
+	if errJobs != nil {
+		if errJobs == sql.ErrNoRows {
+			return nil, nil
+		}
+		log.Warning("LoadGroupActionCount> Cannot get waiting pipeline job for group: %s", errJobs)
+		return nil, errJobs
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		ac := ActionCount{}
-		if err := rows.Scan(&ac.Count, &ac.Action.ID); err != nil {
-			return nil, err
+	mapAction := map[int64]ActionCount{}
+	for _, pbJob := range pbJobs {
+		if _, ok := mapAction[pbJob.Job.Action.ID]; ok {
+			ac := mapAction[pbJob.Job.Action.ID]
+			ac.Count++
+			mapAction[pbJob.Job.Action.ID] = ac
+		} else {
+			mapAction[pbJob.Job.Action.ID] = ActionCount{
+				Action: pbJob.Job.Action,
+				Count:  1,
+			}
 		}
-		ac.Action.Requirements, err = action.GetRequirements(db, ac.Action.ID)
-		if err != nil {
-			return nil, err
-		}
-		acs = append(acs, ac)
+	}
+	var acs []ActionCount
+	for _, value := range mapAction {
+		acs = append(acs, value)
 	}
 	return acs, nil
 }
 
 //LoadAllActionCount counts all waiting actions
-func LoadAllActionCount(db *sql.DB, userID int64) ([]ActionCount, error) {
-	acs := []ActionCount{}
-	query := `
-	SELECT COUNT(action_build.id), pipeline_action.action_id
-	FROM action_build
-	JOIN pipeline_action ON pipeline_action.id = action_build.pipeline_action_id
-  	JOIN pipeline_build ON pipeline_build.id = action_build.pipeline_build_id
-  	JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
-	WHERE action_build.status = $1 
-	GROUP BY pipeline_action.action_id
-	LIMIT 1000
-	`
-
-	rows, err := db.Query(query, string(sdk.StatusWaiting))
-	if err != nil {
-		return nil, err
+func LoadAllActionCount(db gorp.SqlExecutor, userID int64) ([]ActionCount, error) {
+	log.Debug("LoadAllActionCount> Counting pending action")
+	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJob(db)
+	if errJobs != nil {
+		if errJobs == sql.ErrNoRows {
+			return nil, nil
+		}
+		log.Warning("LoadAllActionCount> Cannot get waiting pipeline job: %s", errJobs)
+		return nil, errJobs
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		ac := ActionCount{}
-		if err := rows.Scan(&ac.Count, &ac.Action.ID); err != nil {
-			return nil, err
+	mapAction := map[int64]ActionCount{}
+	for _, pbJob := range pbJobs {
+		if _, ok := mapAction[pbJob.Job.Action.ID]; ok {
+			ac := mapAction[pbJob.Job.Action.ID]
+			ac.Count++
+			mapAction[pbJob.Job.Action.ID] = ac
+		} else {
+			mapAction[pbJob.Job.Action.ID] = ActionCount{
+				Action: pbJob.Job.Action,
+				Count:  1,
+			}
 		}
-		ac.Action.Requirements, err = action.GetRequirements(db, ac.Action.ID)
-		if err != nil {
-			return nil, err
-		}
-		acs = append(acs, ac)
+	}
+	var acs []ActionCount
+	for _, value := range mapAction {
+		acs = append(acs, value)
 	}
 	return acs, nil
 }
 
 //ModelStatusFunc ...
-type ModelStatusFunc func(*sql.DB, int64) ([]sdk.ModelStatus, error)
+type ModelStatusFunc func(*gorp.DbMap, int64) ([]sdk.ModelStatus, error)
 
 //ActionCountFunc ...
-type ActionCountFunc func(*sql.DB, int64) ([]ActionCount, error)
+type ActionCountFunc func(gorp.SqlExecutor, int64) ([]ActionCount, error)
 
 // EstimateWorkerModelNeeds returns for each worker model the needs of instances
-func EstimateWorkerModelNeeds(db *sql.DB, uid int64, workerModelStatus ModelStatusFunc, actionCount ActionCountFunc) ([]sdk.ModelStatus, error) {
+func EstimateWorkerModelNeeds(db *gorp.DbMap, uid int64, workerModelStatus ModelStatusFunc, actionCount ActionCountFunc) ([]sdk.ModelStatus, error) {
 	defer logTime("EstimateWorkerModelNeeds", time.Now())
 
 	// Load models stats
@@ -322,7 +312,7 @@ func EstimateWorkerModelNeeds(db *sql.DB, uid int64, workerModelStatus ModelStat
 	// Load actions in queue grouped by action (same requirement, same worker model)
 	acs, errActionCount := actionCount(db, uid)
 	if errActionCount != nil {
-		log.Warning("EstimateWorkerModelsNeeds> Cannot LoadActionCount : %s\n", uid, errActionCount)
+		log.Warning("EstimateWorkerModelsNeeds> Cannot LoadActionCount %d: %s\n", uid, errActionCount)
 		return nil, errActionCount
 	}
 

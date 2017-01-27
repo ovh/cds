@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
@@ -14,7 +16,7 @@ import (
 func RequirementsCacheLoader(delay time.Duration) {
 	for {
 		time.Sleep(delay * time.Second)
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db != nil {
 			var mayIWork string
 			loaderKey := cache.Key("action", "requirements", "loading")
@@ -36,7 +38,7 @@ func RequirementsCacheLoader(delay time.Duration) {
 }
 
 //GetRequirements load action capabilities from cache
-func GetRequirements(db database.Querier, id int64) ([]sdk.Requirement, error) {
+func GetRequirements(db gorp.SqlExecutor, id int64) ([]sdk.Requirement, error) {
 	k := cache.Key("action", "requirements", fmt.Sprintf("%d", id))
 	req := []sdk.Requirement{}
 	//if we didn't got any data, try to load from DB

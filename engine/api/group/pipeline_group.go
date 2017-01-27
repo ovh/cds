@@ -1,12 +1,14 @@
 package group
 
 import (
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadAllPipelineGroupByRole load all group for the given pipeline and role
-func LoadAllPipelineGroupByRole(db database.Querier, pipelineID int64, role int) ([]sdk.GroupPermission, error) {
+func LoadAllPipelineGroupByRole(db gorp.SqlExecutor, pipelineID int64, role int) ([]sdk.GroupPermission, error) {
 	groupsPermission := []sdk.GroupPermission{}
 	query := `
 		SELECT pipeline_group.group_id, pipeline_group.role
@@ -67,7 +69,7 @@ func DeleteAllGroupFromPipeline(db database.Executer, pipelineID int64) error {
 }
 
 // CheckGroupInPipeline checks if group has access to pipeline
-func CheckGroupInPipeline(db database.Querier, pipelineID, groupID int64) (bool, error) {
+func CheckGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) (bool, error) {
 	query := `SELECT COUNT(group_id) FROM pipeline_group WHERE pipeline_id = $1 AND group_id = $2`
 
 	var nb int64

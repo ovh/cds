@@ -1,11 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/context"
@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func registerHatchery(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -54,7 +54,7 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	WriteJSON(w, r, hatch, http.StatusOK)
 }
 
-func refreshHatcheryHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func refreshHatcheryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	hatcheryID := vars["id"]
 

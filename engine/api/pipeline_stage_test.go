@@ -53,7 +53,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 	assert.Equal(t, len(pip.Stages[0].Prerequisites), len(loadedPip.Stages[0].Prerequisites))
-	assert.Equal(t, len(pip.Stages[0].Actions), len(loadedPip.Stages[0].Actions))
+	assert.Equal(t, len(pip.Stages[0].Jobs), len(loadedPip.Stages[0].Jobs))
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -97,11 +97,18 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	test.NoError(t, pipeline.InsertStage(db, stage))
 
 	//Insert Action
-	script, err := action.LoadPublicAction(db, "Script")
 	t.Logf("Insert Action script on Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	actionID, err := pipeline.InsertPipelineAction(db, proj.Key, pip.Name, script.ID, "[]", stage.ID)
-	test.NoError(t, err)
-	assert.NotZero(t, actionID)
+
+	job := &sdk.Job{
+		Action: sdk.Action{
+			Name: "NewAction",
+		},
+		Enabled: true,
+	}
+	errJob := pipeline.InsertJob(db, job, stage.ID, pip)
+	test.NoError(t, errJob)
+	assert.NotZero(t, job.PipelineActionID)
+	assert.NotZero(t, job.Action.ID)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -114,9 +121,9 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
-	assert.Equal(t, 1, len(loadedPip.Stages[0].Actions))
-	assert.Equal(t, script.Name, loadedPip.Stages[0].Actions[0].Name)
-	assert.Equal(t, true, loadedPip.Stages[0].Actions[0].Enabled)
+	assert.Equal(t, 1, len(loadedPip.Stages[0].Jobs))
+	assert.Equal(t, job.Action.Name, loadedPip.Stages[0].Jobs[0].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[0].Jobs[0].Enabled)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -173,18 +180,28 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	test.NoError(t, pipeline.InsertStage(db, stage1))
 
 	//Insert Action
-	script, err := action.LoadPublicAction(db, "Script")
 	t.Logf("Insert Action script on Stage %s for Pipeline %s of Project %s", stage1.Name, pip.Name, proj.Name)
-	actionID, err := pipeline.InsertPipelineAction(db, proj.Key, pip.Name, script.ID, "[]", stage1.ID)
-	test.NoError(t, err)
-	assert.NotZero(t, actionID)
+	job := &sdk.Job{
+		Action: sdk.Action{
+			Name: "NewAction1",
+		},
+		Enabled: true,
+	}
+	errJob := pipeline.InsertJob(db, job, stage1.ID, pip)
+	test.NoError(t, errJob)
+	assert.NotZero(t, job.PipelineActionID)
+	assert.NotZero(t, job.Action.ID)
 
-	//Insert Action
-	script, err = action.LoadPublicAction(db, "Script")
-	t.Logf("Insert Action script on Stage %s for Pipeline %s of Project %s", stage1.Name, pip.Name, proj.Name)
-	actionID, err = pipeline.InsertPipelineAction(db, proj.Key, pip.Name, script.ID, "[]", stage1.ID)
-	test.NoError(t, err)
-	assert.NotZero(t, actionID)
+	job2 := &sdk.Job{
+		Action: sdk.Action{
+			Name: "NewAction2",
+		},
+		Enabled: true,
+	}
+	errJob2 := pipeline.InsertJob(db, job2, stage1.ID, pip)
+	test.NoError(t, errJob2)
+	assert.NotZero(t, job2.PipelineActionID)
+	assert.NotZero(t, job2.Action.ID)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -199,18 +216,18 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
-	assert.Equal(t, 0, len(loadedPip.Stages[0].Actions))
+	assert.Equal(t, 0, len(loadedPip.Stages[0].Jobs))
 
 	assert.Equal(t, pip.Stages[1].Name, loadedPip.Stages[1].Name)
 	assert.Equal(t, pip.Stages[1].Enabled, loadedPip.Stages[1].Enabled)
 	assert.Equal(t, 0, len(loadedPip.Stages[1].Prerequisites))
-	assert.Equal(t, 2, len(loadedPip.Stages[1].Actions))
+	assert.Equal(t, 2, len(loadedPip.Stages[1].Jobs))
 
-	assert.Equal(t, script.Name, loadedPip.Stages[1].Actions[0].Name)
-	assert.Equal(t, true, loadedPip.Stages[1].Actions[0].Enabled)
+	assert.Equal(t, job.Action.Name, loadedPip.Stages[1].Jobs[0].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[1].Jobs[0].Enabled)
 
-	assert.Equal(t, script.Name, loadedPip.Stages[1].Actions[1].Name)
-	assert.Equal(t, true, loadedPip.Stages[1].Actions[1].Enabled)
+	assert.Equal(t, job2.Action.Name, loadedPip.Stages[1].Jobs[1].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[1].Jobs[1].Enabled)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -256,9 +273,16 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	//Insert Action
 	script, err := action.LoadPublicAction(db, "Script")
 	t.Logf("Insert Action %s(%d) on Stage %s(%d) for Pipeline %s(%d) of Project %s", script.Name, script.ID, stage.Name, stage.ID, pip.Name, pip.ID, proj.Name)
-	actionID, err := pipeline.InsertPipelineAction(db, proj.Key, pip.Name, script.ID, "[]", stage.ID)
-	test.NoError(t, err)
-	assert.NotZero(t, actionID)
+	job := &sdk.Job{
+		Action: sdk.Action{
+			Name: "NewAction1",
+		},
+		Enabled: true,
+	}
+	errJob := pipeline.InsertJob(db, job, stage.ID, pip)
+	test.NoError(t, errJob)
+	assert.NotZero(t, job.PipelineActionID)
+	assert.NotZero(t, job.Action.ID)
 
 	//Insert Stage
 	stage1 := &sdk.Stage{
@@ -285,11 +309,16 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	assert.NotZero(t, stage1.ID)
 
 	//Insert Action
-	script1, err := action.LoadPublicAction(db, "Artifact Upload")
-	t.Logf("Insert Action %s(%d) on Stage %s(%d) for Pipeline %s(%d) of Project %s", script1.Name, script1.ID, stage1.Name, stage1.ID, pip.Name, pip.ID, proj.Name)
-	actionID1, err := pipeline.InsertPipelineAction(db, proj.Key, pip.Name, script1.ID, "[]", stage1.ID)
-	test.NoError(t, err)
-	assert.NotZero(t, actionID1)
+	job1 := &sdk.Job{
+		Action: sdk.Action{
+			Name: "NewAction2",
+		},
+		Enabled: true,
+	}
+	errJob2 := pipeline.InsertJob(db, job1, stage1.ID, pip)
+	test.NoError(t, errJob2)
+	assert.NotZero(t, job.PipelineActionID)
+	assert.NotZero(t, job.Action.ID)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -303,19 +332,19 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 
 	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
-	assert.Equal(t, 1, len(loadedPip.Stages[0].Actions))
+	assert.Equal(t, 1, len(loadedPip.Stages[0].Jobs))
 
 	assert.Equal(t, pip.Stages[1].Name, loadedPip.Stages[1].Name)
 	assert.Equal(t, pip.Stages[1].Enabled, loadedPip.Stages[1].Enabled)
 
 	assert.Equal(t, 2, len(loadedPip.Stages[1].Prerequisites))
-	assert.Equal(t, 1, len(loadedPip.Stages[1].Actions))
+	assert.Equal(t, 1, len(loadedPip.Stages[1].Jobs))
 
-	assert.Equal(t, script.Name, loadedPip.Stages[0].Actions[0].Name)
-	assert.Equal(t, true, loadedPip.Stages[0].Actions[0].Enabled)
+	assert.Equal(t, job.Action.Name, loadedPip.Stages[0].Jobs[0].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[0].Jobs[0].Enabled)
 
-	assert.Equal(t, script1.Name, loadedPip.Stages[1].Actions[0].Name)
-	assert.Equal(t, true, loadedPip.Stages[1].Actions[0].Enabled)
+	assert.Equal(t, job1.Action.Name, loadedPip.Stages[1].Jobs[0].Action.Name)
+	assert.Equal(t, true, loadedPip.Stages[1].Jobs[0].Enabled)
 
 	assert.Equal(t, 2, len(loadedPip.Stages[1].Prerequisites))
 

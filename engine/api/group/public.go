@@ -3,6 +3,8 @@ package group
 import (
 	"database/sql"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/permission"
 )
 
@@ -10,7 +12,7 @@ import (
 const SharedInfraGroup = "shared.infra"
 
 // CreateDefaultGlobalGroup creates a group 'public' where every user will be
-func CreateDefaultGlobalGroup(db *sql.DB) error {
+func CreateDefaultGlobalGroup(db *gorp.DbMap) error {
 
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
@@ -27,7 +29,7 @@ func CreateDefaultGlobalGroup(db *sql.DB) error {
 }
 
 // AddAdminInGlobalGroup insert into new admin into global group as group admin
-func AddAdminInGlobalGroup(db *sql.DB, userID int64) error {
+func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
@@ -46,7 +48,7 @@ func AddAdminInGlobalGroup(db *sql.DB, userID int64) error {
 }
 
 // AddGlobalGroupToPipeline add global group access to given pipeline
-func AddGlobalGroupToPipeline(tx *sql.Tx, pipID int64) error {
+func AddGlobalGroupToPipeline(tx gorp.SqlExecutor, pipID int64) error {
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
 	err := tx.QueryRow(query, SharedInfraGroup).Scan(&id)

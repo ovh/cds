@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -49,7 +50,7 @@ func init() {
 type bootstrap func(db *sql.DB) error
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *sql.DB {
+func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	DBDriver = flag.Lookup("dbDriver").Value.String()
 	dbUser = flag.Lookup("dbUser").Value.String()
 	dbPassword = flag.Lookup("dbPassword").Value.String()
@@ -59,9 +60,8 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *sql.DB {
 	dbSSLMode = flag.Lookup("sslMode").Value.String()
 
 	log.SetLogger(t)
-
 	if DBDriver == "" {
-		t.Skip("This is should be run with a database")
+		t.Skip("This should be run with a database")
 		return nil
 	}
 	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=5000", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode)
@@ -96,11 +96,11 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *sql.DB {
 		}
 	}
 
-	return db
+	return database.DBMap(db)
 }
 
 // InsertTestProject create a test project
-func InsertTestProject(t *testing.T, db database.QueryExecuter, key, name string) *sdk.Project {
+func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string) *sdk.Project {
 	proj := sdk.Project{
 		Key:  key,
 		Name: name,
@@ -138,7 +138,7 @@ func InsertTestProject(t *testing.T, db database.QueryExecuter, key, name string
 }
 
 // DeleteTestProject delete a test project
-func DeleteTestProject(t *testing.T, db database.QueryExecuter, key string) error {
+func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, key string) error {
 	t.Logf("Delete Project %s", key)
 	return project.DeleteProject(db, key)
 }
@@ -155,7 +155,7 @@ func RandomString(t *testing.T, strlen int) string {
 }
 
 // InsertAdminUser have to be used only for tests
-func InsertAdminUser(t *testing.T, db *sql.DB) (*sdk.User, string) {
+func InsertAdminUser(t *testing.T, db *gorp.DbMap) (*sdk.User, string) {
 	s := RandomString(t, 10)
 	password, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
@@ -174,7 +174,7 @@ func InsertAdminUser(t *testing.T, db *sql.DB) (*sdk.User, string) {
 }
 
 // InsertLambaUser have to be used only for tests
-func InsertLambaUser(t *testing.T, db database.QueryExecuter, groups ...*sdk.Group) (*sdk.User, string) {
+func InsertLambaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
 	s := RandomString(t, 10)
 	password, hash, _ := user.GeneratePassword()
 	u := &sdk.User{

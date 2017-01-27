@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/test"
@@ -77,7 +76,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 			},
 		},
 	}
-	if err := scheduler.Insert(database.DBMap(db), s); err != nil {
+	if err := scheduler.Insert(db, s); err != nil {
 		t.Fatal(err)
 	}
 

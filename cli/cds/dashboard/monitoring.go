@@ -141,10 +141,10 @@ func (ui *Termui) drawMonitoringPipelines() {
 		// Update action build, so for each stage
 		for _, s := range pb.Stages {
 			// add action with its stage
-			for _, ab := range s.ActionBuilds {
+			for _, pbj := range s.PipelineBuildJobs {
 				if acount < 5 {
 					w := ui.actions[acount][pbsI]
-					newActionWidget(ab.ActionName, string(ab.Status), w)
+					newActionWidget(pbj.Job.Action.Name, pbj.Status, w)
 					acount++
 				}
 			}

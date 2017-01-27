@@ -1,12 +1,14 @@
 package group
 
 import (
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadAllApplicationGroupByRole load all group for the given application and role
-func LoadAllApplicationGroupByRole(db database.Querier, applicationID int64, role int) ([]sdk.GroupPermission, error) {
+func LoadAllApplicationGroupByRole(db gorp.SqlExecutor, applicationID int64, role int) ([]sdk.GroupPermission, error) {
 	groupsPermission := []sdk.GroupPermission{}
 	query := `
 		SELECT application_group.group_id, application_group.role
@@ -39,7 +41,7 @@ func InsertGroupsInApplication(db database.Executer, groupPermission []sdk.Group
 }
 
 // CheckGroupInApplication  Check if the group is already attached to the application
-func CheckGroupInApplication(db database.Querier, applicationID, groupID int64) (bool, error) {
+func CheckGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64) (bool, error) {
 	query := `SELECT COUNT(group_id) FROM application_group WHERE application_id = $1 AND group_id = $2`
 
 	var nb int64

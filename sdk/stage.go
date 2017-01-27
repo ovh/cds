@@ -8,16 +8,16 @@ import (
 
 // Stage Pipeline step that parallelize actions by order
 type Stage struct {
-	ID            int64          `json:"id" yaml:"pipeline_stage_id"`
-	Name          string         `json:"name"`
-	PipelineID    int64          `json:"-" yaml:"-"`
-	BuildOrder    int            `json:"build_order"`
-	Enabled       bool           `json:"enabled"`
-	Actions       []Action       `json:"actions"` // WIP: refacto to delete Actions and use Jobs
-	ActionBuilds  []ActionBuild  `json:"builds"`
-	Prerequisites []Prerequisite `json:"prerequisites"`
-	LastModified  int64          `json:"last_modified"`
-	Jobs          []Job          `json:"jobs"`
+	ID                int64              `json:"id" yaml:"pipeline_stage_id"`
+	Name              string             `json:"name"`
+	PipelineID        int64              `json:"-" yaml:"-"`
+	BuildOrder        int                `json:"build_order"`
+	Enabled           bool               `json:"enabled"`
+	PipelineBuildJobs []PipelineBuildJob `json:"builds"`
+	Prerequisites     []Prerequisite     `json:"prerequisites"`
+	LastModified      int64              `json:"last_modified"`
+	Jobs              []Job              `json:"jobs"`
+	Status            Status             `json:"status"`
 }
 
 // NewStage instanciate a new Stage

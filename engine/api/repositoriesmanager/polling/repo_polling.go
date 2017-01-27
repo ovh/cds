@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
@@ -103,7 +105,7 @@ func Initialize() {
 
 	//This go routine creates (if needed) workers for all projects
 	for {
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db == nil {
 			time.Sleep(30 * time.Second)
 			continue
@@ -132,7 +134,7 @@ func (w *Worker) Poll() (bool, chan bool, error) {
 	quit = make(chan bool)
 
 	//Check database connection
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		log.Warning("Polling> Database is unavailable")
 		return false, quit, errors.New("Database is unavailable")
@@ -174,7 +176,7 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 
 	for isWorkerRunning(w.ProjectKey) {
 		//Check database connection
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db == nil {
 			time.Sleep(60 * time.Second)
 			continue
@@ -248,7 +250,7 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 	quit <- true
 }
 
-func triggerPipelines(db *sql.DB, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, events []sdk.VCSPushEvent) (string, error) {
+func triggerPipelines(db *gorp.DbMap, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, events []sdk.VCSPushEvent) (string, error) {
 	status := ""
 	for _, event := range events {
 		projectData, err := project.LoadProjectByPipelineID(db, poller.Pipeline.ID)
@@ -296,7 +298,7 @@ func triggerPipelines(db *sql.DB, projectKey string, rm *sdk.RepositoriesManager
 }
 
 // TriggerPipeline linked to received hook
-func TriggerPipeline(tx *sql.Tx, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e sdk.VCSPushEvent, projectData *sdk.Project) (bool, error) {
+func TriggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e sdk.VCSPushEvent, projectData *sdk.Project) (bool, error) {
 	client, err := repositoriesmanager.AuthorizedClient(tx, projectData.Key, rm.Name)
 	if err != nil {
 		return false, err
@@ -375,7 +377,7 @@ func TriggerPipeline(tx *sql.Tx, rm *sdk.RepositoriesManager, poller *sdk.Reposi
 	return true, nil
 }
 
-func insertExecution(db database.QueryExecuter, app *sdk.Application, pip *sdk.Pipeline, e *WorkerExecution) error {
+func insertExecution(db gorp.SqlExecutor, app *sdk.Application, pip *sdk.Pipeline, e *WorkerExecution) error {
 	query := `
 		insert into poller_execution (application_id, pipeline_id, execution_date, status, data)
 		values($1, $2, $3, $4, $5)
@@ -388,7 +390,7 @@ func insertExecution(db database.QueryExecuter, app *sdk.Application, pip *sdk.P
 	return nil
 }
 
-func updateExecution(db database.QueryExecuter, e *WorkerExecution) error {
+func updateExecution(db gorp.SqlExecutor, e *WorkerExecution) error {
 	query := `
 		update poller_execution set status = $2, data = $3 where id = $1
 	`
@@ -399,7 +401,7 @@ func updateExecution(db database.QueryExecuter, e *WorkerExecution) error {
 	return nil
 }
 
-func deleteExecution(db database.QueryExecuter, e *WorkerExecution) error {
+func deleteExecution(db gorp.SqlExecutor, e *WorkerExecution) error {
 	query := `
 		delete from poller_execution where id = $1
 	`
@@ -412,7 +414,7 @@ func deleteExecution(db database.QueryExecuter, e *WorkerExecution) error {
 //ExecutionCleaner is  globale goroutine to remove all old polling traces
 func ExecutionCleaner() {
 	for {
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db == nil {
 			time.Sleep(30 * time.Minute)
 			continue
@@ -431,7 +433,7 @@ func ExecutionCleaner() {
 }
 
 //LoadExecutions returns all executions in database
-func LoadExecutions(db database.QueryExecuter, project, application, pipeline string) ([]WorkerExecution, error) {
+func LoadExecutions(db gorp.SqlExecutor, project, application, pipeline string) ([]WorkerExecution, error) {
 	query := `
 		select poller_execution.id, project.projectkey, application.name, pipeline.name, poller_execution.execution_date, poller_execution.status, poller_execution.data
 		from poller_execution, application, pipeline, project

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/application"
@@ -16,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addPollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -117,7 +118,7 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
-func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -195,7 +196,7 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
-func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -217,7 +218,7 @@ func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *sq
 	WriteJSON(w, r, pollers, http.StatusOK)
 }
 
-func getPollersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -249,7 +250,7 @@ func getPollersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	WriteJSON(w, r, poller, http.StatusOK)
 }
 
-func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]

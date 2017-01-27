@@ -126,27 +126,27 @@ func formatDisplay(pb sdk.PipelineBuild) {
 
 	// Format actions
 	for _, s := range pb.Stages {
-		for _, ab := range s.ActionBuilds {
-			display += " " + formatActionBuild(ab)
+		for _, pbj := range s.PipelineBuildJobs {
+			display += " " + formatActionBuild(pbj)
 		}
 	}
 }
 
-func formatActionBuild(ab sdk.ActionBuild) string {
+func formatActionBuild(pbj sdk.PipelineBuildJob) string {
 	yellow := color.New(color.FgYellow).SprintfFunc()
 	red := color.New(color.FgRed).SprintfFunc()
 	blue := color.New(color.FgBlue).SprintfFunc()
 	green := color.New(color.FgGreen).SprintfFunc()
 
-	switch ab.Status {
-	case sdk.StatusSuccess:
-		return green("[%s]", ab.ActionName)
-	case sdk.StatusFail:
-		return red("[%s]", ab.ActionName)
-	case sdk.StatusBuilding:
-		return blue("[%s]", ab.ActionName)
-	case sdk.StatusWaiting:
-		return yellow("[%s]", ab.ActionName)
+	switch pbj.Status {
+	case sdk.StatusSuccess.String():
+		return green("[%s]", pbj.Job.Action.Name)
+	case sdk.StatusFail.String():
+		return red("[%s]", pbj.Job.Action.Name)
+	case sdk.StatusBuilding.String():
+		return blue("[%s]", pbj.Job.Action.Name)
+	case sdk.StatusWaiting.String():
+		return yellow("[%s]", pbj.Job.Action.Name)
 	default:
 		return ""
 	}

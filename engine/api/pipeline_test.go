@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func insertTestPipeline(db *sql.DB, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
+func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
 	pkey := test.RandomString(t, 10)
 	projectFoo := test.InsertTestProject(t, db, pkey, pkey)
 
@@ -192,8 +192,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	assert.Equal(t, "NoEnv", pb.Environment.Name)
 
 	//9. Update build status to Success
-	pb.Status = sdk.StatusSuccess
-	err = pipeline.UpdatePipelineBuildStatus(db, pb, sdk.StatusSuccess)
+	err = pipeline.UpdatePipelineBuildStatusAndStage(db, &pb, sdk.StatusSuccess)
 	test.NoError(t, err)
 
 	//10. Create another Pipeline

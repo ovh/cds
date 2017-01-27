@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
@@ -25,7 +25,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func testfindLinkedProject(t *testing.T, db *sql.DB) (*sdk.Project, *sdk.RepositoriesManager) {
+func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sdk.RepositoriesManager) {
 	query := `
 		select 	project.ID, repositories_manager_project.id_repositories_manager
 		from 	project, repositories_manager_project

@@ -3,7 +3,8 @@ package permission
 import (
 	"database/sql"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -147,7 +148,7 @@ func AccessToEnvironment(envID int64, user *sdk.User, access int) bool {
 }
 
 // ApplicationPipelineEnvironmentUsers returns users list with expected access to application/pipeline/environment
-func ApplicationPipelineEnvironmentUsers(db database.Querier, appID, pipID, envID int64, access int) ([]sdk.User, error) {
+func ApplicationPipelineEnvironmentUsers(db gorp.SqlExecutor, appID, pipID, envID int64, access int) ([]sdk.User, error) {
 	var query string
 	var args []interface{}
 

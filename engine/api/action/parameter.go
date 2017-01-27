@@ -1,13 +1,14 @@
 package action
 
 import (
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadActionParameters retrieves given action requirements in database
-func LoadActionParameters(db database.Querier, actionID int64) ([]sdk.Parameter, error) {
+func LoadActionParameters(db gorp.SqlExecutor, actionID int64) ([]sdk.Parameter, error) {
 	var req []sdk.Parameter
 
 	query := `SELECT name, type, value, description FROM action_parameter WHERE action_id = $1 ORDER BY name`
@@ -38,7 +39,7 @@ func LoadActionParameters(db database.Querier, actionID int64) ([]sdk.Parameter,
 }
 
 // InsertActionParameter inserts given requirement in database
-func InsertActionParameter(db database.Executer, actionID int64, r sdk.Parameter) error {
+func InsertActionParameter(db gorp.SqlExecutor, actionID int64, r sdk.Parameter) error {
 	if string(r.Type) == string(sdk.SecretVariable) {
 		return sdk.ErrNoDirectSecretUse
 	}
@@ -55,7 +56,7 @@ func InsertActionParameter(db database.Executer, actionID int64, r sdk.Parameter
 }
 
 // DeleteActionParameters deletes all requirements related to given action
-func DeleteActionParameters(db database.Executer, actionID int64) error {
+func DeleteActionParameters(db gorp.SqlExecutor, actionID int64) error {
 	query := `DELETE FROM action_parameter WHERE action_id = $1`
 
 	_, err := db.Exec(query, actionID)

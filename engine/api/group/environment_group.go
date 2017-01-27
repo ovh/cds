@@ -1,12 +1,14 @@
 package group
 
 import (
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadAllEnvironmentGroupByRole load all group for the given environment and role
-func LoadAllEnvironmentGroupByRole(db database.Querier, environmentID int64, role int) ([]sdk.GroupPermission, error) {
+func LoadAllEnvironmentGroupByRole(db gorp.SqlExecutor, environmentID int64, role int) ([]sdk.GroupPermission, error) {
 	groupsPermission := []sdk.GroupPermission{}
 	query := `
 		SELECT environment_group.group_id, environment_group.role
@@ -28,7 +30,7 @@ func LoadAllEnvironmentGroupByRole(db database.Querier, environmentID int64, rol
 }
 
 // IsInEnvironment checks wether groups already has permissions on environment or not
-func IsInEnvironment(db database.Querier, environmentID, groupID int64) (bool, error) {
+func IsInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64) (bool, error) {
 	query := `SELECT COUNT(id) FROM environment_group
 	WHERE environment_id = $1 AND group_id = $2`
 	var count int64

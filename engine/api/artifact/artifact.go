@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/log"
@@ -13,7 +15,7 @@ import (
 )
 
 // LoadArtifactByHash retrieves an artiface using its download hash
-func LoadArtifactByHash(db *sql.DB, hash string) (*sdk.Artifact, error) {
+func LoadArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.Artifact, error) {
 	art := &sdk.Artifact{}
 	query := `SELECT artifact.id, artifact.name, artifact.tag, 
 		  pipeline.name, project.projectKey, application.name, environment.name,
@@ -47,7 +49,7 @@ func LoadArtifactByHash(db *sql.DB, hash string) (*sdk.Artifact, error) {
 }
 
 // LoadArtifactsByBuildNumber Load artifact by pipeline ID and buildNUmber
-func LoadArtifactsByBuildNumber(db *sql.DB, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64) ([]sdk.Artifact, error) {
+func LoadArtifactsByBuildNumber(db gorp.SqlExecutor, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64) ([]sdk.Artifact, error) {
 	query := `SELECT id, name, tag, download_hash, size, perm, md5sum, object_path
 	          FROM "artifact"
 	          WHERE build_number = $1 AND pipeline_id = $2 AND application_id = $3 AND environment_id = $4
@@ -86,7 +88,7 @@ func LoadArtifactsByBuildNumber(db *sql.DB, pipelineID int64, applicationID int6
 }
 
 // LoadArtifacts Load artifact by pipeline ID
-func LoadArtifacts(db *sql.DB, pipelineID int64, applicationID int64, environmentID int64, tag string) ([]sdk.Artifact, error) {
+func LoadArtifacts(db gorp.SqlExecutor, pipelineID int64, applicationID int64, environmentID int64, tag string) ([]sdk.Artifact, error) {
 	query := `SELECT id, name, download_hash, size, perm, md5sum, object_path
 		FROM "artifact" 
 		WHERE tag = $1 
@@ -127,7 +129,7 @@ func LoadArtifacts(db *sql.DB, pipelineID int64, applicationID int64, environmen
 }
 
 // LoadArtifact Load artifact by ID
-func LoadArtifact(db *sql.DB, id int64) (*sdk.Artifact, error) {
+func LoadArtifact(db gorp.SqlExecutor, id int64) (*sdk.Artifact, error) {
 	query := `SELECT 
 			artifact.name, artifact.tag, artifact.download_hash, artifact.size, artifact.perm, artifact.md5sum, artifact.object_path, 
 			pipeline.name, project.projectKey, application.name, environment.name FROM artifact
@@ -160,7 +162,7 @@ func LoadArtifact(db *sql.DB, id int64) (*sdk.Artifact, error) {
 // DeleteArtifact lock the artifact in database,
 // then remove the actual object using storage driver,
 // finally remove artifact from database if actual delete is performed
-func DeleteArtifact(db database.QueryExecuter, id int64) error {
+func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
 
 	query := `SELECT artifact.name, artifact.tag, pipeline.name, project.projectKey, application.name, environment.name FROM artifact
 						JOIN pipeline ON artifact.pipeline_id = pipeline.id
@@ -210,7 +212,7 @@ func insertArtifact(db database.Executer, pipelineID, applicationID int64, envir
 }
 
 // SaveFile Insert file in db and write it in data directory
-func SaveFile(db *sql.DB, p *sdk.Pipeline, a *sdk.Application, art sdk.Artifact, content io.ReadCloser, e *sdk.Environment) error {
+func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artifact, content io.ReadCloser, e *sdk.Environment) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err

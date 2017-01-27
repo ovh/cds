@@ -3,6 +3,8 @@ package pipeline
 import (
 	"fmt"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -12,7 +14,7 @@ import (
 type FuncArg func(args *structarg)
 
 // CheckParameterInPipeline check if the parameter is already in the pipeline or not
-func CheckParameterInPipeline(db database.Querier, pipelineID int64, paramName string) (bool, error) {
+func CheckParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, paramName string) (bool, error) {
 	query := `SELECT COUNT(id) FROM pipeline_parameter WHERE pipeline_id = $1 AND name = $2`
 
 	var nb int64
@@ -27,7 +29,7 @@ func CheckParameterInPipeline(db database.Querier, pipelineID int64, paramName s
 }
 
 // GetAllParametersInPipeline Get all parameters for the given pipeline
-func GetAllParametersInPipeline(db database.Querier, pipelineID int64 /*, args ...FuncArg*/) ([]sdk.Parameter, error) {
+func GetAllParametersInPipeline(db gorp.SqlExecutor, pipelineID int64 /*, args ...FuncArg*/) ([]sdk.Parameter, error) {
 	/*
 			c := structarg{}
 		for _, f := range args {
@@ -59,7 +61,7 @@ func GetAllParametersInPipeline(db database.Querier, pipelineID int64 /*, args .
 }
 
 // InsertParameterInPipeline Insert a new parameter in the given pipeline
-func InsertParameterInPipeline(db database.QueryExecuter, pipelineID int64, param *sdk.Parameter) error {
+func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk.Parameter) error {
 
 	if string(param.Type) == string(sdk.SecretVariable) {
 		return sdk.ErrNoDirectSecretUse
@@ -164,7 +166,7 @@ func DeleteParameterFromPipeline(db database.Executer, pipelineID int64, paramNa
 }
 
 // DeleteAllParameterFromPipeline Delete all parameters from the given pipeline
-func DeleteAllParameterFromPipeline(db database.Executer, pipelineID int64) error {
+func DeleteAllParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64) error {
 	query := `DELETE FROM pipeline_parameter WHERE pipeline_id=$1`
 	_, err := db.Exec(query, pipelineID)
 	return err
