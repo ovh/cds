@@ -2,6 +2,7 @@ package group
 
 import (
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -53,6 +54,7 @@ func InsertGroupsInEnvironment(db database.Executer, groupPermission []sdk.Group
 	for _, g := range groupPermission {
 		err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission)
 		if err != nil {
+			log.Warning("InsertGroupsInEnvironment> unable to insert group %d %s on env %d", g.Group.ID, g.Group.Name, envID)
 			return err
 		}
 	}
