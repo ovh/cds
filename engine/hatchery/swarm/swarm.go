@@ -345,17 +345,19 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 
 	var imageFound bool
 
-checkImage:
-	for _, img := range images {
-		for _, t := range img.RepoTags {
-			if model.Image == t {
-				imageFound = true
-				break checkImage
+	if !strings.HasSuffix(model.Image, ":latest") {
+	checkImage:
+		for _, img := range images {
+			for _, t := range img.RepoTags {
+				if model.Image == t {
+					imageFound = true
+					break checkImage
+				}
 			}
 		}
 	}
 
-	if !imageFound || strings.HasSuffix(model.Image, ":latest") {
+	if !imageFound {
 		//Pull the worker image
 		opts := docker.PullImageOptions{
 			Repository:   model.Image,
@@ -372,17 +374,20 @@ checkImage:
 	//Pull the service image
 	for _, i := range links {
 		var imageFound2 bool
-	checkLink:
-		for _, img := range images {
-			for _, t := range img.RepoTags {
-				if i == t {
-					imageFound2 = true
-					break checkLink
+
+		if !strings.HasSuffix(i, ":latest") {
+		checkLink:
+			for _, img := range images {
+				for _, t := range img.RepoTags {
+					if i == t {
+						imageFound2 = true
+						break checkLink
+					}
 				}
 			}
 		}
 
-		if !imageFound2 || strings.HasSuffix(model.Image, ":latest") {
+		if !imageFound2 {
 			opts := docker.PullImageOptions{
 				Repository:   i,
 				OutputStream: nil,
