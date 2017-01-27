@@ -25,6 +25,7 @@ var hatcheryMesos *HatcheryMesos
 
 type marathonPOSTAppParams struct {
 	DockerImage    string
+	ForcePullImage bool
 	APIEndpoint    string
 	WorkerKey      string
 	WorkerName     string
@@ -41,10 +42,10 @@ const marathonPOSTAppTemplate = `
 {
     "container": {
         "docker": {
-            "forcePullImage": false,
+            "forcePullImage": {{.ForcePullImage}},
             "image": "{{.DockerImage}}",
             "network": "BRIDGE",
-					  "portMapping": []
+            "portMapping": []
 				},
         "type": "DOCKER"
     },
@@ -57,13 +58,13 @@ const marathonPOSTAppTemplate = `
         "CDS_MODEL": "{{.WorkerModelID}}",
         "CDS_HATCHERY": "{{.HatcheryID}}",
         "CDS_SINGLE_USE": "1",
-		"CDS_TTL" : "{{.WorkerTTL}}"
+        "CDS_TTL" : "{{.WorkerTTL}}"
     },
     "id": "{{.MarathonID}}/{{.WorkerName}}",
     "instances": 1,
-	"ports": [],
-	"mem": {{.Memory}},
-	"labels": {{.MarathonLabels}}
+    "ports": [],
+    "mem": {{.Memory}},
+    "labels": {{.MarathonLabels}}
 }
 `
 
@@ -222,6 +223,7 @@ func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memor
 	}
 
 	params := marathonPOSTAppParams{
+		ForcePullImage: strings.HasSuffix(model.Image, ":latest"),
 		DockerImage:    model.Image,
 		APIEndpoint:    sdk.Host,
 		WorkerKey:      m.token,
@@ -264,10 +266,13 @@ func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int6
 		}
 	}
 
-	buffer, err := m.marathonConfig(model, hatcheryID, memory)
-	r, err := http.NewRequest("POST", hatcheryMesos.marathonHost+"/v2/apps", buffer)
-	if err != nil {
-		return err
+	buffer, errm := m.marathonConfig(model, hatcheryID, memory)
+	if errm != nil {
+		return errm
+	}
+	r, errc := http.NewRequest("POST", hatcheryMesos.marathonHost+"/v2/apps", buffer)
+	if errc != nil {
+		return errc
 	}
 
 	r.Header.Set("Content-Type", "application/json")
@@ -329,8 +334,7 @@ func killDisabledWorkers() error {
 		for _, app := range apps {
 			if strings.HasSuffix(app.ID, w.Name) {
 				log.Notice("killing disabled worker %s\n", app.ID)
-				err := deleteApp(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, app.ID)
-				if err != nil {
+				if err := deleteApp(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, app.ID); err != nil {
 					return err
 				}
 			}
