@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	
+
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 )

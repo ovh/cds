@@ -222,6 +222,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 			stageEnd = true
 		}
 		// Determine final stage status
+	finalStageLoop:
 		for _, buildJob := range stage.PipelineBuildJobs {
 			switch buildJob.Status {
 			case sdk.StatusDisabled.String():
@@ -234,6 +235,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 				}
 			case sdk.StatusFail.String():
 				finalStatus = sdk.StatusFail
+				break finalStageLoop
 			case sdk.StatusSuccess.String():
 				if finalStatus != sdk.StatusFail {
 					finalStatus = sdk.StatusSuccess
