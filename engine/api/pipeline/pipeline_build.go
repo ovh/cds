@@ -183,7 +183,7 @@ func LoadPipelineBuildByHash(db gorp.SqlExecutor, hash string) ([]sdk.PipelineBu
 	whereCondition := `
 		WHERE pb.vcs_changes_hash = $1
 `
-  
+
 	var rows []PipelineBuildDbResult
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
 	if _, errQuery := db.Select(&rows, query, hash); errQuery != nil {
@@ -278,7 +278,6 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 	}
 	return pbs, nil
 }
-
 
 func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, error) {
 	pb := sdk.PipelineBuild{
@@ -919,7 +918,6 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 	}
 	defer rows.Close()
 
-	versions := []int{}
 	for rows.Next() {
 		var pb sdk.PipelineBuild
 		var status string
