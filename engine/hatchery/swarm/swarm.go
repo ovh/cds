@@ -338,13 +338,29 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 
 	log.Notice("CanSpawn> %s need %v", model.Name, links)
 
-	images, err := h.dockerClient.ListImages(docker.ListImagesOptions{})
-	if err != nil {
-		log.Warning("Unable to get images : %s", err)
+	// If one image have a "latest" tag, we have to pull image
+	var toPull bool
+	for _, i := range links {
+		if strings.HasSuffix(i, ":latest") {
+			toPull = true
+			break
+		}
+	}
+
+	var images []docker.APIImages
+	// if we don't need to force pull links, we check if model is "latest"
+	// if model is not "latest" tag too, ListImages to get images locally
+	if !toPull || !strings.HasSuffix(model.Image, ":latest") {
+		var errl error
+		images, errl = h.dockerClient.ListImages(docker.ListImagesOptions{})
+		if errl != nil {
+			log.Warning("Unable to get images : %s", errl)
+		}
 	}
 
 	var imageFound bool
 
+	// model is not latest, check if image exists locally
 	if !strings.HasSuffix(model.Image, ":latest") {
 	checkImage:
 		for _, img := range images {
@@ -375,6 +391,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 	for _, i := range links {
 		var imageFound2 bool
 
+		// model is not latest for this link, check if image exists locally
 		if !strings.HasSuffix(i, ":latest") {
 		checkLink:
 			for _, img := range images {
