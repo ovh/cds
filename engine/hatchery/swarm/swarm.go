@@ -355,7 +355,7 @@ checkImage:
 		}
 	}
 
-	if !imageFound {
+	if !imageFound || strings.HasSuffix(model.Image, ":latest") {
 		//Pull the worker image
 		opts := docker.PullImageOptions{
 			Repository:   model.Image,
@@ -382,7 +382,7 @@ checkImage:
 			}
 		}
 
-		if !imageFound2 {
+		if !imageFound2 || strings.HasSuffix(model.Image, ":latest") {
 			opts := docker.PullImageOptions{
 				Repository:   i,
 				OutputStream: nil,
