@@ -1,13 +1,12 @@
 package environment
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 
-	"fmt"
-
-	"encoding/json"
-
 	"github.com/ovh/cds/sdk"
+
 	"github.com/spf13/cobra"
 )
 
