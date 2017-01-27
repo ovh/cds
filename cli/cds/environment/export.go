@@ -2,11 +2,10 @@ package environment
 
 import (
 	"fmt"
-
-	"github.com/spf13/cobra"
-
 	"io/ioutil"
 	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
