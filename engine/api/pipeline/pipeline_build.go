@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
@@ -18,8 +19,34 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// PipelineBuildDbResult Gorp result when select a pipeline build
+type PipelineBuildDbResult struct {
+	ID                    int64          `db:"id"`
+	ApplicationID         int64          `db:"appID"`
+	PipelineID            int64          `db:"pipID"`
+	EnvironmentID         int64          `db:"envID"`
+	ApplicatioName        string         `db:"appName"`
+	PipelineName          string         `db:"pipName"`
+	EnvironmentName       string         `db:"envName"`
+	BuildNumber           int64          `db:"build_number"`
+	Version               int64          `db:"version"`
+	Status                string         `db:"status"`
+	Args                  string         `db:"args"`
+	Stages                string         `db:"stages"`
+	Start                 time.Time      `db:"start"`
+	Done                  pq.NullTime    `db:"done"`
+	ManualTrigger         bool           `db:"manual_trigger"`
+	TriggeredBy           sql.NullInt64  `db:"triggered_by"`
+	VCSChangesBranch      sql.NullString `db:"vcs_branch"`
+	VCSChangesHash        sql.NullString `db:"vcs_hash"`
+	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
+	ParentPipelineBuildID sql.NullInt64  `db:"parent_pipeline_build"`
+	Username              sql.NullString `db:"username"`
+	ScheduledTrigger      bool           `db:"scheduled_trigger"`
+}
+
 const (
-	SELECT_PB = `
+	selectPipelineBuild = `
 		SELECT
 			pb.id as id, pb.application_id as appID, pb.pipeline_id as pipID, pb.environment_id as envID,
 			application.name as appName, pipeline.name as pipName, environment.name as envName,
@@ -67,8 +94,8 @@ func LoadBuildingPipelines(db gorp.SqlExecutor) ([]sdk.PipelineBuild, error) {
 		WHERE pb.status = $1
 		ORDER by pb.id ASC
 	`
-	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
-	var rows []sdk.PipelineBuildDbResult
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var rows []PipelineBuildDbResult
 	_, err := db.Select(&rows, query, sdk.StatusBuilding.String())
 	if err != nil {
 		return nil, err
@@ -92,8 +119,8 @@ func LoadRecentPipelineBuild(db gorp.SqlExecutor, args ...FuncArg) ([]sdk.Pipeli
 		WHERE pb.status = $1 OR (pb.status != $1 AND pb.done > NOW() -  INTERVAL '1 minutes')
 		ORDER by pb.id ASC
 	`
-	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
-	var rows []sdk.PipelineBuildDbResult
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var rows []PipelineBuildDbResult
 	_, err := db.Select(&rows, query, sdk.StatusBuilding.String())
 	if err != nil {
 		return nil, err
@@ -118,10 +145,10 @@ func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.Pipel
 		JOIN group_user ON group_user.group_id = pipeline_group.group_id
 		WHERE pb.status = $1 OR (pb.status != $1 AND pb.done > NOW() - INTERVAL '1 minutes')
 		AND group_user.user_id = $2
-		ORDER by pb.id ASC
-	`
-	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
-	var rows []sdk.PipelineBuildDbResult
+		ORDER by pb.id ASC`
+
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var rows []PipelineBuildDbResult
 	_, err := db.Select(&rows, query, sdk.StatusBuilding.String(), userID)
 	if err != nil {
 		return nil, err
@@ -141,9 +168,10 @@ func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.Pipel
 func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, buildNumber int64) (*sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.build_number = $4
-	`
-	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
-	var row sdk.PipelineBuildDbResult
+`
+
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var row PipelineBuildDbResult
 	if err := db.SelectOne(&row, query, applicationID, pipelineID, environmentID, buildNumber); err != nil {
 		return nil, err
 	}
@@ -154,9 +182,10 @@ func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, a
 func LoadPipelineBuildByHash(db gorp.SqlExecutor, hash string) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.vcs_changes_hash = $1
-	`
-	var rows []sdk.PipelineBuildDbResult
-	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
+`
+  
+	var rows []PipelineBuildDbResult
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
 	if _, errQuery := db.Select(&rows, query, hash); errQuery != nil {
 		return nil, errQuery
 	}
@@ -176,9 +205,9 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 	whereCondition := `
 		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3 %s
 	`
-	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
 
-	var rows []sdk.PipelineBuildDbResult
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var rows []PipelineBuildDbResult
 	var errQuery error
 	if status == "" && branchName == "" {
 		query = fmt.Sprintf(query, "LIMIT $4")
@@ -212,8 +241,9 @@ func LoadPipelineBuildByID(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuild, e
 	whereCondition := `
 		WHERE pb.id = $1
 	`
-	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
-	var row sdk.PipelineBuildDbResult
+
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var row PipelineBuildDbResult
 	if err := db.SelectOne(&row, query, id); err != nil {
 		return nil, err
 	}
@@ -232,8 +262,8 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 	whereCondition := `
 		WHERE pb.parent_pipeline_build_id = $1
 	`
-	query := fmt.Sprintf("%s %s", SELECT_PB, whereCondition)
-	var rows []sdk.PipelineBuildDbResult
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var rows []PipelineBuildDbResult
 	_, err := db.Select(&rows, query, pbID)
 	if err != nil {
 		return nil, err
@@ -249,7 +279,8 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 	return pbs, nil
 }
 
-func scanPipelineBuild(pbResult sdk.PipelineBuildDbResult) (*sdk.PipelineBuild, error) {
+
+func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, error) {
 	pb := sdk.PipelineBuild{
 		ID: pbResult.ID,
 		Application: sdk.Application{
@@ -311,8 +342,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 		return errStage
 	}
 	query := `UPDATE pipeline_build set status = $1, stages = $2 WHERE id = $3`
-	_, err := db.Exec(query, newStatus.String(), string(stagesB), pb.ID)
-	if err != nil {
+	if _, err := db.Exec(query, newStatus.String(), string(stagesB), pb.ID); err != nil {
 		return err
 	}
 	//Send notification
@@ -355,7 +385,6 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	}
 
 	if pb.Status != newStatus {
-
 		query := `
 			SELECT projectkey FROM project
 			JOIN application ON application.project_id = project.id
@@ -815,12 +844,11 @@ func GetBranchHistory(db gorp.SqlExecutor, projectKey, appName string, page, nbP
 		var manual sql.NullBool
 		var hash, author, username sql.NullString
 
-		err = rows.Scan(&pb.Pipeline.ID, &pb.Application.ID, &pb.Environment.ID,
+		if err := rows.Scan(&pb.Pipeline.ID, &pb.Application.ID, &pb.Environment.ID,
 			&pb.Application.Name, &pb.Pipeline.Name, &pb.Environment.Name,
 			&pb.Start, &pb.Done, &status, &pb.Version, &pb.BuildNumber,
 			&manual, &username, &pb.Trigger.VCSChangesBranch, &hash, &author,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
 
@@ -890,6 +918,8 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 		return nil, err
 	}
 	defer rows.Close()
+
+	versions := []int{}
 	for rows.Next() {
 		var pb sdk.PipelineBuild
 		var status string
@@ -965,19 +995,19 @@ func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, bran
 			GROUP BY pipeline_id, environment_id
 		) AND application_id = $1;
 	`
-	var rows []sdk.PipelineBuildDbResult
+	var rows []PipelineBuildDbResult
 	var errSelect error
 	if branchName == "" && version == 0 {
-		query := fmt.Sprintf("%s %s", SELECT_PB, fmt.Sprintf(whereCondition, ""))
+		query := fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, ""))
 		_, errSelect = db.Select(&rows, query, applicationID)
 	} else if branchName != "" && version == 0 {
-		query := fmt.Sprintf("%s %s", SELECT_PB, fmt.Sprintf(whereCondition, " AND vcs_changes_branch = $2"))
+		query := fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND vcs_changes_branch = $2"))
 		_, errSelect = db.Select(&rows, query, applicationID, branchName)
 	} else if branchName == "" && version != 0 {
-		query := fmt.Sprintf("%s %s", SELECT_PB, fmt.Sprintf(whereCondition, " AND version = $2"))
+		query := fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND version = $2"))
 		_, errSelect = db.Select(&rows, query, applicationID, version)
 	} else {
-		query := fmt.Sprintf("%s %s", SELECT_PB, fmt.Sprintf(whereCondition, " AND vcs_changes_branch = $2 AND version = $3"))
+		query := fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND vcs_changes_branch = $2 AND version = $3"))
 		_, errSelect = db.Select(&rows, query, applicationID, branchName, version)
 	}
 

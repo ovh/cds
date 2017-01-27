@@ -26,11 +26,12 @@ func Test_marathonConfig(t *testing.T) {
 		workerTTL: 100,
 	}
 
-	r, err := m.marathonConfig(&sdk.Model{ID: 1, Name: "model"}, 1, 64)
+	r, err := m.marathonConfig(&sdk.Model{ID: 1, Name: "model", Image: "my-image:latest"}, 1, 64)
 	test.NoError(t, err)
 	assert.NotNil(t, r)
 
 	b, err := ioutil.ReadAll(r)
+	test.NoError(t, err)
 
 	t.Logf("%s", b)
 
@@ -40,8 +41,8 @@ func Test_marathonConfig(t *testing.T) {
 	json.Unmarshal([]byte(`	{
 		    "container": {
 		        "docker": {
-		            "forcePullImage": false,
-		            "image": "",
+		            "forcePullImage": true,
+		            "image": "my-image:latest",
 		            "network": "BRIDGE",
 							  "portMapping": []
 						},
