@@ -32,7 +32,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	if scriptContent == "" {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("script content not provided, aborting\n")
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		return res
 	}
 
@@ -58,7 +58,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	if err != nil {
 		log.Warning("Cannot create tmp file: %s\n", err)
 		res.Reason = fmt.Sprintf("cannot create temporary file, aborting\n")
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		res.Status = sdk.StatusFail
 		return res
 	}
@@ -72,7 +72,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 			log.Warning("cannot write all script: %d/%d\n", n, len(scriptContent))
 		}
 		res.Reason = fmt.Sprintf("cannot write script in temporary file, aborting\n")
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		res.Status = sdk.StatusFail
 		return res
 	}
@@ -89,7 +89,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 		if err != nil {
 			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("cannot rename script to add powershell Extension, aborting\n")
-			sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 			return res
 		}
 		//This aims to stop a the very first error and return the right exit code
@@ -107,12 +107,12 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	if err != nil {
 		log.Warning("runScriptAction> cannot chmod script %s: %s\n", scriptPath, err)
 		res.Reason = fmt.Sprintf("cannot chmod script, aborting\n")
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		res.Status = sdk.StatusFail
 		return res
 	}
 	log.Notice("runScriptAction> %s %s", shell, strings.Trim(fmt.Sprint(opts), "[]"))
-	sendLog(pbJob.ID, sdk.ScriptAction, fmt.Sprintf("Executing %s %s", shell, strings.Trim(fmt.Sprint(opts), "[]")), pbJob.PipelineBuildID, stepOrder)
+	sendLog(pbJob.ID, fmt.Sprintf("Executing %s %s", shell, strings.Trim(fmt.Sprint(opts), "[]")), pbJob.PipelineBuildID, stepOrder, false)
 
 	cmd := exec.Command(shell, opts...)
 	res.Status = sdk.StatusUnknown
@@ -128,7 +128,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	if err != nil {
 		log.Warning("runScriptAction: Cannot get worker path: %s\n", err)
 		res.Reason = "Failure due to internal error (Worker Path)"
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		res.Status = sdk.StatusFail
 		return res
 	}
@@ -145,7 +145,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	if err != nil {
 		log.Warning("runScriptAction: Cannot get stdout pipe: %s\n", err)
 		res.Reason = "Failure due to internal error"
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		res.Status = sdk.StatusFail
 		return res
 	}
@@ -154,7 +154,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	if err != nil {
 		log.Warning("runScriptAction: Cannot get stderr pipe: %s\n", err)
 		res.Reason = "Failure due to internal error"
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		res.Status = sdk.StatusFail
 		return res
 	}
@@ -171,7 +171,8 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 				close(outchan)
 				return
 			}
-			sendLog(pbJob.ID, sdk.ScriptAction, line, pbJob.PipelineBuildID, stepOrder)
+			log.Warning(">Line: %s", line)
+			sendLog(pbJob.ID, line, pbJob.PipelineBuildID, stepOrder, false)
 		}
 	}()
 
@@ -184,14 +185,14 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 				close(errchan)
 				return
 			}
-			sendLog(pbJob.ID, sdk.ScriptAction, line, pbJob.PipelineBuildID, stepOrder)
+			sendLog(pbJob.ID, line, pbJob.PipelineBuildID, stepOrder, true)
 		}
 	}()
 
 	err = cmd.Start()
 	if err != nil {
 		res.Reason = fmt.Sprintf("%s\n", err)
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		res.Status = sdk.StatusFail
 		return res
 	}
@@ -201,7 +202,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	err = cmd.Wait()
 	if err != nil {
 		res.Reason = fmt.Sprintf("%s\n", err)
-		sendLog(pbJob.ID, sdk.ScriptAction, res.Reason, pbJob.PipelineBuildID, stepOrder)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 		res.Status = sdk.StatusFail
 		return res
 	}

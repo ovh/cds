@@ -135,7 +135,7 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 
-			sendLog(pipBuildJob.ID, childName, fmt.Sprintf("%s: Step %s is disabled\n", name, childName), pipBuildJob.PipelineBuildID, currentStep)
+			sendLog(pipBuildJob.ID, fmt.Sprintf("%s: Step %s is disabled\n", name, childName), pipBuildJob.PipelineBuildID, currentStep, true)
 			nbDisabledChildren++
 			continue
 		}
@@ -213,14 +213,17 @@ func updateStepStatus(pbJobID int64, stepOrder int, status string) error {
 
 var logsecrets []sdk.Variable
 
-func sendLog(buildid int64, step string, value string, pipelineBuildID int64, stepOrder int) error {
+func sendLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int, final bool) error {
 	for i := range logsecrets {
 		if len(logsecrets[i].Value) >= 6 {
 			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
 		}
 	}
 
-	l := sdk.NewLog(buildid, step, value, pipelineBuildID, stepOrder)
+	l := sdk.NewLog(pipJobID, value, pipelineBuildID, stepOrder)
+	if final {
+		l.Done = time.Now()
+	}
 	logChan <- *l
 	return nil
 }
@@ -236,8 +239,10 @@ func logger(inputChan chan sdk.Log) {
 			}
 			break
 		case <-time.After(1 * time.Second):
-			var logs []sdk.Log
 
+			var logs []*sdk.Log
+
+			var currentStepLog *sdk.Log
 			// While list is not empty
 			for llist.Len() > 0 {
 				// get older log line
@@ -248,7 +253,7 @@ func logger(inputChan chan sdk.Log) {
 				count := 1
 				for llist.Len() > 0 {
 					n := llist.Front().Value.(sdk.Log)
-					if n.Value != l.Value {
+					if string(n.Value) != string(l.Value) {
 						break
 					}
 					count++
@@ -257,32 +262,55 @@ func logger(inputChan chan sdk.Log) {
 
 				// and if count > 1, then add it at the beginning of the log
 				if count > 1 {
-					l.Value = fmt.Sprintf("[x%d] %s", count, l.Value)
+					l.Value = fmt.Sprintf("[x%d] %s %s", count, l.Value)
 				}
 				// and append to the logs batch
 				l.Value = strings.Trim(strings.Replace(l.Value, "\n", " ", -1), " \t\n") + "\n"
-				logs = append(logs, l)
+
+				// First log
+				if currentStepLog == nil {
+					currentStepLog = &l
+				} else {
+					// Same step : concat value
+					if l.StepOrder == currentStepLog.StepOrder {
+						currentStepLog.Value += l.Value
+						currentStepLog.LastModified = l.LastModified
+						currentStepLog.Done = l.Done
+					} else {
+						// new Step
+						logs = append(logs, currentStepLog)
+						currentStepLog = &l
+					}
+				}
+
+				fmt.Printf("Get %s\n", currentStepLog.Value)
+
+			}
+
+			// insert last step
+			if currentStepLog != nil {
+				logs = append(logs, currentStepLog)
 			}
 
 			if len(logs) == 0 {
 				continue
 			}
 
-			// Buffer log list is empty, sending batch to API
-			data, err := json.Marshal(logs)
-			if err != nil {
-				fmt.Printf("Error: cannot marshal logs: %s\n", err)
-				continue
-			}
+			for _, l := range logs {
+				// Buffer log list is empty, sending batch to API
+				data, err := json.Marshal(l)
+				if err != nil {
+					fmt.Printf("Error: cannot marshal logs: %s\n", err)
+					continue
+				}
 
-			path := fmt.Sprintf("/build/%d/log", logs[0].ActionBuildID)
-			_, _, err = sdk.Request("POST", path, data)
-			if err != nil {
-				fmt.Printf("error: cannot send logs: %s\n", err)
-				continue
+				path := fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
+				_, _, err = sdk.Request("POST", path, data)
+				if err != nil {
+					fmt.Printf("error: cannot send logs: %s\n", err)
+					continue
+				}
 			}
-
-			break
 		}
 	}
 }

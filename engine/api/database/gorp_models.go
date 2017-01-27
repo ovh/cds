@@ -30,6 +30,7 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 	dbmap.AddTableWithName(PipelineScheduler{}, "pipeline_scheduler").SetKeys(true, "id")
 	dbmap.AddTableWithName(PipelineSchedulerExecution{}, "pipeline_scheduler_execution").SetKeys(true, "id")
 	dbmap.AddTableWithName(PipelineBuildJob{}, "pipeline_build_job").SetKeys(true, "id")
+	dbmap.AddTableWithName(Log{}, "pipeline_build_log").SetKeys(true, "id")
 
 	return dbmap
 }
@@ -48,3 +49,5 @@ type PipelineSchedulerExecution sdk.PipelineSchedulerExecution
 
 // PipelineBuildJob is a gorp wrapper around sdk.PipelineBuildJob
 type PipelineBuildJob sdk.PipelineBuildJob
+
+type Log sdk.Log

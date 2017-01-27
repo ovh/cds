@@ -188,8 +188,8 @@ func createAndInsert(db gorp.SqlExecutor, pbHistoryID int64) error {
 					PipelineBuildID: pb.ID,
 					Model:           "",
 					Status:          bString["status"].(string),
-					Job: sdk.ExecutedJob {
-						Job: sdk.Job {
+					Job: sdk.ExecutedJob{
+						Job: sdk.Job{
 							Action: sdk.Action{
 								Name: bString["action_name"].(string),
 							},

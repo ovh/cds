@@ -45,7 +45,7 @@ func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, pbID int64) ([]sd
 		FROM pipeline_build_job
 		WHERE pipeline_build_id = $1
 	`
-	if _, err := db.Select(&pbJobsGorp, query, pbID); err != nil {
+	if err := db.SelectOne(&pbJobsGorp, query, pbID); err != nil {
 		return nil, err
 	}
 
@@ -317,7 +317,7 @@ func RestartPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64) error {
 	}
 
 	// Delete previous build logs
-	query = `DELETE FROM build_log WHERE action_build_id = $1`
+	query = `DELETE FROM pipeline_build_log WHERE pipeline_build_job_id = $1`
 	_, err = db.Exec(query, pbJobID)
 	if err != nil {
 		return err

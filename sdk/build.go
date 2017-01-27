@@ -24,6 +24,7 @@ type PipelineBuildJob struct {
 type ExecutedJob struct {
 	Job
 	StepStatus []StepStatus `json:"step_status" db:"-"`
+	Reason     string
 }
 
 type StepStatus struct {
@@ -33,9 +34,10 @@ type StepStatus struct {
 
 // BuildState define struct returned when looking for build state informations
 type BuildState struct {
-	Stages []Stage `json:"stages"`
-	Logs   []Log   `json:"logs"`
-	Status Status  `json:"status"`
+	Stages   []Stage `json:"stages"`
+	Logs     []Log   `json:"logs"`
+	StepLogs Log     `json:"step_logs"`
+	Status   Status  `json:"status"`
 }
 
 // Status reprensents a Build Action or Build Pipeline Status

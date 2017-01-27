@@ -57,21 +57,26 @@ func showBuildPipeline(cmd *cobra.Command, args []string) {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 27, 1, 2, ' ', 0)
-	titles := []string{"DATE", "ACTION", "LOG"}
+	titles := []string{"DATE", "JOB-STEP", "LOG"}
 	fmt.Fprintln(w, strings.Join(titles, "\t"))
 
 	for l := range logChan {
-		fmt.Fprintf(w, "%s\t%s\t%s",
-			[]byte(l.Timestamp.String())[:19],
-			l.Step,
-			l.Value,
-		)
+		if len(l.Value) > 0 {
+			valueSplitted := strings.Split(l.Value, "\n")
+			for _, v := range valueSplitted {
+				fmt.Fprintf(w, "%s\t%d-%d\t%s\n",
+					l.LastModified.String(),
+					l.PipelineBuildJobID,
+					l.StepOrder,
+					v,
+				)
+				w.Flush()
+			}
 
-		w.Flush()
-
-		// Exit 1 if pipeline fail
-		if l.ID == 0 && strings.Contains(l.Value, "status: Fail") {
-			sdk.Exit("")
+			// Exit 1 if pipeline fail
+			if l.ID == 0 && strings.Contains(l.Value, "status: Fail") {
+				sdk.Exit("")
+			}
 		}
 	}
 }
