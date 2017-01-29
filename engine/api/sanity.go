@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getUserWarnings(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func getUserWarnings(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	al := r.Header.Get("Accept-Language")
 
@@ -24,9 +24,9 @@ func getUserWarnings(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	}
 	if err != nil {
 		log.Warning("getUserWarnings> Cannot load user %d warnings: %s\n", c.User.ID, err)
-		WriteError(w, r, err)
-		return
+return err
+
 	}
 
-	WriteJSON(w, r, warnings, http.StatusOK)
+	return WriteJSON(w, r, warnings, http.StatusOK)
 }

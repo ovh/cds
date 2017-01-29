@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
@@ -24,21 +24,19 @@ func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	g, err := group.LoadGroup(db, name)
 	if err != nil {
 		log.Warning("getGroupHandler: Cannot load group from db: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	err = group.LoadUserGroup(db, g)
 	if err != nil {
 		log.Warning("getGroupHandler: Cannot load user group from db: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, g, http.StatusOK)
+	return WriteJSON(w, r, g, http.StatusOK)
 }
 
-func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
@@ -46,37 +44,32 @@ func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	g, err := group.LoadGroup(db, name)
 	if err != nil {
 		log.Warning("deleteGroupHandler: Cannot load %s: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deleteGroupHandler> cannot start transaction: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	defer tx.Rollback()
 
 	err = group.DeleteGroupAndDependencies(tx, g)
 	if err != nil {
 		log.Warning("deleteGroupHandler> cannot delete group: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Warning("deleteGroupHandler> cannot commit transaction: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
-func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
-
+func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	oldName := vars["permGroupName"]
@@ -84,65 +77,56 @@ func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	var updatedGroup sdk.Group
 	err = json.Unmarshal(data, &updatedGroup)
 	if err != nil {
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	if len(updatedGroup.Admins) == 0 {
 		log.Warning("updateGroupHandler: Cannot Delete all admins for group %s\n", updatedGroup.Name)
-		WriteError(w, r, sdk.ErrGroupNeedAdmin)
-		return
+		return sdk.ErrGroupNeedAdmin
 	}
 
 	g, err := group.LoadGroup(db, oldName)
 	if err != nil {
 		log.Warning("updateGroupHandler: Cannot load %s: %s\n", oldName, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	updatedGroup.ID = g.ID
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("updateGroupHandler: Cannot start transaction: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	defer tx.Rollback()
 
 	err = group.UpdateGroup(tx, &updatedGroup, oldName)
 	if err != nil {
 		log.Warning("updateGroupHandler: Cannot update group %s: %s\n", oldName, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	err = group.DeleteGroupUserByGroup(tx, &updatedGroup)
 	if err != nil {
 		log.Warning("updateGroupHandler: Cannot delete users in group %s: %s\n", oldName, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	for _, a := range updatedGroup.Admins {
 		u, err := user.LoadUserWithoutAuth(tx, a.Username)
 		if err != nil {
 			log.Warning("updateGroupHandler: Cannot load user(admins) %s: %s\n", a.Username, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 		err = group.InsertUserInGroup(tx, updatedGroup.ID, u.ID, true)
 		if err != nil {
 			log.Warning("updateGroupHandler: Cannot insert admin %s in group %s: %s\n", a.Username, updatedGroup.Name, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 	}
 
@@ -150,25 +134,25 @@ func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		u, err := user.LoadUserWithoutAuth(tx, a.Username)
 		if err != nil {
 			log.Warning("updateGroupHandler: Cannot load user(members) %s: %s\n", a.Username, err)
-			WriteError(w, r, err)
+			return err
 		}
 		err = group.InsertUserInGroup(tx, updatedGroup.ID, u.ID, false)
 		if err != nil {
 			log.Warning("updateGroupHandler: Cannot insert member %s in group %s: %s\n", a.Username, updatedGroup.Name, err)
-			WriteError(w, r, err)
+			return err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Warning("updateGroupHandler: Cannot commit transaction: %s\n", err)
-		WriteError(w, r, err)
+		return err
 	}
 
-	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
-func getGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func getGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	var groups []sdk.Group
 	var err error
 
@@ -181,87 +165,78 @@ func getGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 			publicGroups, errP := group.LoadPublicGroups(db)
 			if errP != nil {
 				log.Warning("GetGroups: Cannot load group from db: %s\n", errP)
-				WriteError(w, r, errP)
-				return
+				return errP
 			}
 			groups = append(groups, publicGroups...)
 		}
 	}
 	if err != nil {
 		log.Warning("GetGroups: Cannot load group from db: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, groups, http.StatusOK)
+	return WriteJSON(w, r, groups, http.StatusOK)
 }
 
-func getPublicGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func getPublicGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	groups, err := group.LoadPublicGroups(db)
 	if err != nil {
 		log.Warning("GetGroups: Cannot load group from db: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
-	WriteJSON(w, r, groups, http.StatusOK)
+	return WriteJSON(w, r, groups, http.StatusOK)
 }
 
-func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	g := &sdk.Group{}
 	if err := json.Unmarshal(data, g); err != nil {
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("addGroupHandler> cannot begin tx: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 	defer tx.Rollback()
 
 	_, _, err = group.AddGroup(tx, g)
 	if err != nil {
 		log.Warning("addGroupHandler> cannot add group: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	// Add caller into group
 	err = group.InsertUserInGroup(tx, g.ID, c.User.ID, false)
 	if err != nil {
 		log.Warning("addGroupHandler> cannot add user %s in group %s: %s\n", c.User.Username, g.Name, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 	// and set it admin
 	err = group.SetUserGroupAdmin(tx, g.ID, c.User.ID)
 	if err != nil {
 		log.Warning("addGroupHandler> cannot set user group admin: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Warning("addGroupHandler> cannot commit tx: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	fmt.Printf("POST /group: Group %s added\n", g.Name)
 	w.WriteHeader(http.StatusCreated)
+	return nil
 }
 
-func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	// Get group name in URL
 	vars := mux.Vars(r)
@@ -271,42 +246,37 @@ func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	g, err := group.LoadGroup(db, name)
 	if err != nil {
 		log.Warning("removeUserFromGroupHandler: Cannot load %s: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	userID, err := user.FindUserIDByName(db, userName)
 	if err != nil {
 		log.Warning("removeUserFromGroupHandler: Unknown user %s: %s\n", userName, err)
-		w.WriteHeader(http.StatusNotFound)
-		return
+		return sdk.ErrNotFound
 	}
 
 	userInGroup, err := group.CheckUserInGroup(db, g.ID, userID)
 	if err != nil {
 		log.Warning("removeUserFromGroupHandler: Cannot check if user %s is already in the group %s: %s\n", userName, g.Name, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	if !userInGroup {
 		log.Warning("removeUserFromGroupHandler> User %s is not in group %s\n", userName, name)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	err = group.DeleteUserFromGroup(db, g.ID, userID)
 	if err != nil {
 		log.Warning("removeUserFromGroupHandler: Cannot delete user %s from group %s:  %s\n", userName, g.Name, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	log.Notice("User %s removed from group %s\n", userName, name)
-	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
-func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	// Get group name in URL
 	vars := mux.Vars(r)
@@ -315,28 +285,24 @@ func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	var users []string
 	err = json.Unmarshal(data, &users)
 	if err != nil {
-		WriteError(w, r, err)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	g, err := group.LoadGroup(db, name)
 	if err != nil {
 		log.Warning("AddUserInGroup: Cannot load %s: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	defer tx.Rollback()
 
@@ -344,21 +310,18 @@ func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 		userID, err := user.FindUserIDByName(db, u)
 		if err != nil {
 			log.Warning("AddUserInGroup: Unknown user '%s': %s\n", u, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 		userInGroup, err := group.CheckUserInGroup(db, g.ID, userID)
 		if err != nil {
 			log.Warning("AddUserInGroup: Cannot check if user %s is already in the group %s: %s\n", u, g.Name, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 		if !userInGroup {
 			group.InsertUserInGroup(db, g.ID, userID, false)
 			if err != nil {
 				log.Warning("AddUserInGroup: Cannot add user %s in group %s:  %s\n", u, g.Name, err)
-				WriteError(w, r, err)
-				return
+				return err
 			}
 		}
 
@@ -366,14 +329,13 @@ func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 
 	err = tx.Commit()
 	if err != nil {
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
-func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
@@ -382,27 +344,25 @@ func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	g, err := group.LoadGroup(db, name)
 	if err != nil {
 		log.Warning("setUserGroupAdminHandler: Cannot load %s: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	userID, err := user.FindUserIDByName(db, userName)
 	if err != nil {
 		log.Warning("setUserGroupAdminHandler: Unknown user %s: %s\n", userName, err)
-		w.WriteHeader(http.StatusNotFound)
-		return
+		return sdk.ErrNotFound
 	}
 
 	err = group.SetUserGroupAdmin(db, g.ID, userID)
 	if err != nil {
 		log.Warning("setUserGroupAdminHandler: cannot set user group admin: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
+	return nil
 }
 
-func removeUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func removeUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
@@ -411,21 +371,20 @@ func removeUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gor
 	g, err := group.LoadGroup(db, name)
 	if err != nil {
 		log.Warning("removeUserGroupAdminHandler: Cannot load %s: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	userID, err := user.FindUserIDByName(db, userName)
 	if err != nil {
 		log.Warning("removeUserGroupAdminHandler: Unknown user %s: %s\n", userName, err)
-		w.WriteHeader(http.StatusNotFound)
-		return
+		return sdk.ErrNotFound
 	}
 
 	err = group.RemoveUserGroupAdmin(db, g.ID, userID)
 	if err != nil {
 		log.Warning("removeUserGroupAdminHandler: cannot remove user group admin privilege: %s\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
+
+	return nil
 }

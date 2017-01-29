@@ -9,10 +9,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getVariableTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
-	WriteJSON(w, r, sdk.AvailableVariableType, http.StatusOK)
+func getVariableTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return WriteJSON(w, r, sdk.AvailableVariableType, http.StatusOK)
 }
 
-func getParameterTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
-	WriteJSON(w, r, sdk.AvailableParameterType, http.StatusOK)
+func getParameterTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return WriteJSON(w, r, sdk.AvailableParameterType, http.StatusOK)
 }

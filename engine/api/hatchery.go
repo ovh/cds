@@ -15,28 +15,25 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		WriteError(w, r, sdk.ErrUnknownError)
-		return
+		return sdk.ErrUnknownError
 	}
 
 	// Unmarshal body
 	hatch := sdk.Hatchery{}
 	if err = json.Unmarshal(data, &hatch); err != nil {
 		log.Warning("registerHatchery: Cannot unmarshal data: %s\n", err)
-		WriteError(w, r, sdk.ErrUnknownError)
-		return
+		return sdk.ErrUnknownError
 	}
 
 	// Load token
 	tk, err := worker.LoadToken(db, hatch.UID)
 	if err != nil {
 		log.Warning("registerHatchery: Invalid token> %s\n", err)
-		WriteError(w, r, sdk.ErrUnauthorized)
-		return
+		return sdk.ErrUnauthorized
 	}
 	hatch.GroupID = tk.GroupID
 
@@ -45,22 +42,22 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 			log.Warning("registerHatchery> Cannot insert new hatchery: %s\n", err)
 		}
 		log.Warning("registerHatchery> Error %s", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	log.Info("registerHatchery> Welcome %d", hatch.ID)
 
-	WriteJSON(w, r, hatch, http.StatusOK)
+	return WriteJSON(w, r, hatch, http.StatusOK)
 }
 
-func refreshHatcheryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func refreshHatcheryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	hatcheryID := vars["id"]
 
 	if err := hatchery.RefreshHatchery(db, hatcheryID); err != nil {
 		log.Warning("refreshHatcheryHandler> cannot refresh last beat of %s: %s\n", hatcheryID, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+
+	return nil
 }

@@ -76,14 +76,14 @@ func (b *Broker) Start() {
 
 // This Broker method handles and HTTP request at the "/events/" URL.
 //
-func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	// Make sure that the writer supports flushing.
 	//
 	f, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	// Create a new channel, over which the broker can
@@ -146,4 +146,6 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	// Done.
 	log.Notice("Finished HTTP request at ", r.URL.Path)
+
+	return nil
 }
