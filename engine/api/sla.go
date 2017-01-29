@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 )
 
-func slaHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func slaHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	date := vars["date"]
 

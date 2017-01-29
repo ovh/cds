@@ -24,7 +24,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	includePipeline := r.FormValue("pipeline")
 	includeApplication := r.FormValue("application")
 	includeEnvironment := r.FormValue("environment")
@@ -78,7 +78,7 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	WriteJSON(w, r, projects, http.StatusOK)
 }
 
-func updateProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -130,7 +130,7 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -209,7 +209,7 @@ func getProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func addProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
@@ -322,7 +322,7 @@ func addProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 	log.Notice("addProject> Project %s created\n", p.Name)
 }
 
-func deleteProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -384,7 +384,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	return
 }
 
-func getUserLastUpdates(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getUserLastUpdates(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	sinceHeader := r.Header.Get("If-Modified-Since")
 	since := time.Unix(0, 0)
 	if sinceHeader != "" {

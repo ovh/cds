@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getVariablesAuditInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getVariablesAuditInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -33,7 +33,7 @@ func getVariablesAuditInApplicationHandler(w http.ResponseWriter, r *http.Reques
 	WriteJSON(w, r, audits, http.StatusOK)
 }
 
-func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -123,7 +123,7 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 }
 
-func getVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -146,7 +146,7 @@ func getVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 	WriteJSON(w, r, variable, http.StatusOK)
 }
 
-func getVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -161,7 +161,7 @@ func getVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	WriteJSON(w, r, variables, http.StatusOK)
 }
 
-func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -217,7 +217,7 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 }
 
 // deprecated
-func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -349,7 +349,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 }
 
-func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -437,7 +437,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
-func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]

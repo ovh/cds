@@ -76,7 +76,7 @@ func (b *Broker) Start() {
 
 // This Broker method handles and HTTP request at the "/events/" URL.
 //
-func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Make sure that the writer supports flushing.
 	//

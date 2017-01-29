@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -148,7 +148,7 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 }
 
-func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	artifactIDS := vars["id"]
 
@@ -179,7 +179,7 @@ func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 }
 
-func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -240,7 +240,7 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	WriteJSON(w, r, art, http.StatusOK)
 }
 
-func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -300,7 +300,7 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	WriteJSON(w, r, art, http.StatusOK)
 }
 
-func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 

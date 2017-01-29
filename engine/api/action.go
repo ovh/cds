@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getActionsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getActionsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	acts, err := action.LoadActions(db)
 	if err != nil {
 		log.Warning("GetActions: Cannot load action from db: %s\n", err)
@@ -26,7 +26,7 @@ func getActionsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	WriteJSON(w, r, acts, http.StatusOK)
 }
 
-func getPipelinesUsingActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelinesUsingActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get action name in URL
 	vars := mux.Vars(r)
 	name := vars["actionName"]
@@ -101,7 +101,7 @@ func getPipelinesUsingActionHandler(w http.ResponseWriter, r *http.Request, db *
 	WriteJSON(w, r, response, http.StatusOK)
 }
 
-func getActionsRequirements(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getActionsRequirements(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	req, err := action.LoadAllActionRequirements(db)
 	if err != nil {
 		log.Warning("getActionsRequirements> Cannot load action requirements: %s\n", err)
@@ -112,7 +112,7 @@ func getActionsRequirements(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	WriteJSON(w, r, req, http.StatusOK)
 }
 
-func deleteActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get action name in URL
 	vars := mux.Vars(r)
@@ -161,7 +161,7 @@ func deleteActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	log.Notice("Action %s removed.\n", name)
 }
 
-func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get action name in URL
 	vars := mux.Vars(r)
 	name := vars["permActionName"]
@@ -230,7 +230,7 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	WriteJSON(w, r, a, http.StatusOK)
 }
 
-func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
@@ -278,7 +278,7 @@ func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	w.WriteHeader(http.StatusCreated)
 }
 
-func getActionAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getActionAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get action name in URL
 	vars := mux.Vars(r)
 	actionIDString := vars["actionID"]
@@ -300,7 +300,7 @@ func getActionAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	WriteJSON(w, r, a, http.StatusOK)
 }
 
-func getActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get action name in URL
 	vars := mux.Vars(r)
 	name := vars["permActionName"]
@@ -317,7 +317,7 @@ func getActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 }
 
 // importActionHandler insert OR update an existing action.
-func importActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func importActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	var a *sdk.Action
 	var err error
 

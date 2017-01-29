@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -115,7 +115,7 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 }
 
 // DEPRECATED
-func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -207,7 +207,7 @@ func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *g
 
 }
 
-func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -287,7 +287,7 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)

@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 
@@ -172,7 +172,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	WriteJSON(w, r, t.SrcApplication, http.StatusOK)
 }
 
-func getTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	striggerID := vars["id"]
 
@@ -193,7 +193,7 @@ func getTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	WriteJSON(w, r, t, http.StatusOK)
 }
 
-func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	app := vars["permApplicationName"]
@@ -247,7 +247,7 @@ func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	WriteJSON(w, r, triggers, http.StatusOK)
 }
 
-func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	triggerIDS := vars["id"]
@@ -303,7 +303,7 @@ func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	WriteJSON(w, r, t.SrcApplication, http.StatusOK)
 }
 
-func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	triggerIDS := vars["id"]
@@ -375,7 +375,7 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	WriteJSON(w, r, t.SrcApplication, http.StatusOK)
 }
 
-func getTriggersAsSourceHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getTriggersAsSourceHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	app := vars["permApplicationName"]

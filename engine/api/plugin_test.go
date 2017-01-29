@@ -31,7 +31,7 @@ func postFile(t *testing.T,
 	filename string,
 	targetURL string,
 	method string,
-	handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context),
+	handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx),
 	check func(*testing.T, *gorp.DbMap, *httptest.ResponseRecorder)) {
 
 	bodyBuf := &bytes.Buffer{}
@@ -70,7 +70,7 @@ func postFile(t *testing.T,
 		return
 	}
 
-	c := &context.Context{
+	c := &context.Ctx{
 		User: &sdk.User{
 			ID: 1,
 		},
@@ -408,7 +408,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 			return
 		}
 
-		c := &context.Context{
+		c := &context.Ctx{
 			User: &sdk.User{
 				ID: 1,
 			},

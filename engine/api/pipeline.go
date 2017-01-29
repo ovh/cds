@@ -28,7 +28,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -140,7 +140,7 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	WriteJSON(w, r, newPb, http.StatusOK)
 }
 
-func loadDestEnvFromRunRequest(db *gorp.DbMap, c *context.Context, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
+func loadDestEnvFromRunRequest(db *gorp.DbMap, c *context.Ctx, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
 	var envDest = &sdk.DefaultEnv
 	var err error
 	if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
@@ -162,7 +162,7 @@ func loadDestEnvFromRunRequest(db *gorp.DbMap, c *context.Context, request *sdk.
 	return envDest, nil
 }
 
-func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -279,7 +279,7 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	runPipelineHandlerFunc(w, r, db, c, &request)
 }
 
-func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context, request *sdk.RunRequest) {
+func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx, request *sdk.RunRequest) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -401,7 +401,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	var request sdk.RunRequest
 
 	// Get args in body
@@ -422,7 +422,7 @@ func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 }
 
 // DEPRECATED
-func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
@@ -500,7 +500,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	w.WriteHeader(http.StatusOK)
 }
 
-func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -558,7 +558,7 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	w.WriteHeader(http.StatusOK)
 }
 
-func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -611,7 +611,7 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	WriteJSON(w, r, pipelineDB, http.StatusOK)
 }
 
-func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -633,7 +633,7 @@ func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, 
 	WriteJSON(w, r, applications, http.StatusOK)
 }
 
-func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -744,7 +744,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	w.WriteHeader(http.StatusOK)
 }
 
-func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -762,11 +762,11 @@ func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getPipelineTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelineTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	WriteJSON(w, r, sdk.AvailablePipelineType, http.StatusOK)
 }
 
-func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -792,7 +792,7 @@ func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	WriteJSON(w, r, pip, http.StatusOK)
 }
 
-func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -870,7 +870,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -927,7 +927,7 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	w.WriteHeader(http.StatusOK)
 }
 
-func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -1007,7 +1007,7 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	WriteJSON(w, r, job, http.StatusOK)
 }
 
-func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -1113,7 +1113,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	WriteJSON(w, r, a, http.StatusOK)
 }
 
-func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -1168,7 +1168,7 @@ func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 }
 
-func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	actionIDString := vars["actionID"]
@@ -1190,7 +1190,7 @@ func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *gor
 	WriteJSON(w, r, audit, http.StatusOK)
 }
 
-func getJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	actionIDString := vars["actionID"]
@@ -1214,7 +1214,7 @@ func getJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	WriteJSON(w, r, a, http.StatusOK)
 }
 
-func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	var err error
 	var pbs, recent []sdk.PipelineBuild
 
@@ -1232,7 +1232,7 @@ func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 
@@ -1245,7 +1245,7 @@ func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *gorp.
 	WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1333,7 +1333,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	cache.DeleteAll(k)
 }
 
-func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1436,7 +1436,7 @@ func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gor
 	WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1544,7 +1544,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 
 }
 
-func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]

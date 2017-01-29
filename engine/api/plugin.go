@@ -77,7 +77,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	return ap, params, content, deferFunc, nil
 }
 
-func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	//Upload file and get plugin information
 	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
@@ -138,7 +138,7 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	return
 }
 
-func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	//Upload file and get plugin information
 	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
@@ -261,7 +261,7 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return
 }
 
-func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 
@@ -285,7 +285,7 @@ func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	}
 }
 
-func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 

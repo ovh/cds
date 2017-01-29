@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -32,7 +32,7 @@ func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gor
 	WriteJSON(w, r, audits, http.StatusOK)
 }
 
-func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -135,7 +135,7 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -151,7 +151,7 @@ func getVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	WriteJSON(w, r, v, http.StatusOK)
 }
 
-func getVariablesInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getVariablesInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -167,7 +167,7 @@ func getVariablesInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db
 	WriteJSON(w, r, variables, http.StatusOK)
 }
 
-func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -233,7 +233,7 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -319,7 +319,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]

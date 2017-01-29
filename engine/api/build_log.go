@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -127,7 +127,7 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	WriteJSON(w, r, pipelinelogs, http.StatusOK)
 }
 
-func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -228,7 +228,7 @@ func getActionBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	WriteJSON(w, r, pipelinelogs, http.StatusOK)
 }
 
-func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
@@ -256,7 +256,7 @@ func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 }
 
-func setEngineLogLevel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func setEngineLogLevel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get log level in URL
 	vars := mux.Vars(r)

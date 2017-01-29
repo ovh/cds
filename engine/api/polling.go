@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -118,7 +118,7 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
-func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -196,7 +196,7 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
-func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -218,7 +218,7 @@ func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *go
 	WriteJSON(w, r, pollers, http.StatusOK)
 }
 
-func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -250,7 +250,7 @@ func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	WriteJSON(w, r, poller, http.StatusOK)
 }
 
-func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]

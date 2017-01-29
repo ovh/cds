@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -89,7 +89,7 @@ func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	WriteJSON(w, r, model, http.StatusOK)
 }
 
-func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	idString := vars["permModelID"]
 
@@ -199,7 +199,7 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}()
 }
 
-func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	workerModelIDs := vars["permModelID"]
 
@@ -227,7 +227,7 @@ func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 }
 
-func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context, name string) {
+func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx, name string) {
 	m, err := worker.LoadWorkerModelByName(db, name)
 	if err != nil {
 		if err != sdk.ErrNoWorkerModel {
@@ -240,7 +240,7 @@ func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	WriteJSON(w, r, m, http.StatusOK)
 }
 
-func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	if err := r.ParseForm(); err != nil {
 		log.Warning("getWorkerModels> cannot parse form")
 		WriteError(w, r, sdk.ErrWrongRequest)
@@ -265,7 +265,7 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	WriteJSON(w, r, models, http.StatusOK)
 }
 
-func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	workerModelIDs := vars["permModelID"]
 
@@ -318,15 +318,15 @@ func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 }
 
-func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
 }
 
-func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
 }
 
-func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	workerModelIDs := vars["permModelID"]
 	capaName := vars["capa"]
@@ -386,7 +386,7 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 }
 
-func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	workerModelIDs := vars["permModelID"]
 	capaName := vars["capa"]
@@ -421,7 +421,7 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}()
 }
 
-func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	if c.Agent == sdk.HatcheryAgent {
 		ms, err := worker.EstimateWorkerModelNeeds(db, c.User.Groups[0].ID, worker.LoadWorkerModelStatusForGroup, worker.LoadGroupActionCount)
 		if err != nil {
@@ -447,7 +447,7 @@ func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	WriteError(w, r, sdk.ErrForbidden)
 }
 
-func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	res := []struct {
 		Model string
 		Used  int
@@ -519,7 +519,7 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 	WriteJSON(w, r, res, http.StatusAccepted)
 }
 
-func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	idString := vars["permModelID"]
 

@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -106,7 +106,7 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 }
 
 // Deprecated
-func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -198,7 +198,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	w.WriteHeader(http.StatusOK)
 }
 
-func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -271,7 +271,7 @@ func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *go
 	WriteJSON(w, r, app, http.StatusOK)
 }
 
-func deleteGroupFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteGroupFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)

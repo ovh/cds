@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -54,7 +54,7 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	WriteJSON(w, r, hatch, http.StatusOK)
 }
 
-func refreshHatcheryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func refreshHatcheryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	hatcheryID := vars["id"]
 

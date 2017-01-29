@@ -22,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -62,7 +62,7 @@ func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	w.WriteHeader(http.StatusOK)
 }
 
-func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -92,7 +92,7 @@ func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.
 	WriteJSON(w, r, h, http.StatusOK)
 }
 
-func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
@@ -119,7 +119,7 @@ func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 }
 
-func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -141,7 +141,7 @@ func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	WriteJSON(w, r, hooks, http.StatusOK)
 }
 
-func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -173,7 +173,7 @@ func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context
 	WriteJSON(w, r, hooks, http.StatusOK)
 }
 
-func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	vars := mux.Vars(r)
 	idS := vars["id"]
 

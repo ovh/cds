@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getUserWarnings(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getUserWarnings(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	al := r.Header.Get("Accept-Language")
 

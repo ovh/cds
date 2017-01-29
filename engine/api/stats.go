@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getStats(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getStats(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	var st sdk.Stats
 	var err error
 

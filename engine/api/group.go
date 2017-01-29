@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
@@ -38,7 +38,7 @@ func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	WriteJSON(w, r, g, http.StatusOK)
 }
 
-func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
@@ -75,7 +75,7 @@ func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	w.WriteHeader(http.StatusOK)
 }
 
-func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get group name in URL
 	vars := mux.Vars(r)
@@ -168,7 +168,7 @@ func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	w.WriteHeader(http.StatusOK)
 }
 
-func getGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	var groups []sdk.Group
 	var err error
 
@@ -196,7 +196,7 @@ func getGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	WriteJSON(w, r, groups, http.StatusOK)
 }
 
-func getPublicGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPublicGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	groups, err := group.LoadPublicGroups(db)
 	if err != nil {
 		log.Warning("GetGroups: Cannot load group from db: %s\n", err)
@@ -206,7 +206,7 @@ func getPublicGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	WriteJSON(w, r, groups, http.StatusOK)
 }
 
-func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -261,7 +261,7 @@ func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	w.WriteHeader(http.StatusCreated)
 }
 
-func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get group name in URL
 	vars := mux.Vars(r)
@@ -306,7 +306,7 @@ func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	w.WriteHeader(http.StatusOK)
 }
 
-func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	// Get group name in URL
 	vars := mux.Vars(r)
@@ -373,7 +373,7 @@ func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	w.WriteHeader(http.StatusOK)
 }
 
-func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
@@ -402,7 +402,7 @@ func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 
 }
 
-func removeUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func removeUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]

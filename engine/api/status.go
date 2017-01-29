@@ -23,11 +23,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	WriteError(w, r, sdk.ErrInvalidProjectKey)
 }
 
-func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 
 	s := struct {
 		Version string `json:"version"`
@@ -38,7 +38,7 @@ func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	WriteJSON(w, r, s, http.StatusOK)
 }
 
-func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	var output []string
 
 	// Version
@@ -96,7 +96,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	WriteJSON(w, r, output, status)
 }
 
-func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	project := r.FormValue("project")
 	application := r.FormValue("application")
 	pipeline := r.FormValue("pipeline")
@@ -112,7 +112,7 @@ func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return
 }
 
-func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	if c.User == nil {
 		WriteError(w, r, sdk.ErrForbidden)
 		return

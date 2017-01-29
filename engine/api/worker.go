@@ -20,7 +20,7 @@ import (
 	"database/sql"
 )
 
-func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Read body
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
@@ -67,7 +67,7 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	log.Debug("New worker: [%s] - %s\n", worker.ID, worker.Name)
 }
 
-func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	workers, err := worker.LoadWorkersByModel(db, 0)
 	if err != nil {
 		log.Warning("getOrphanWorker> Cannot load workers: %s\n", err)
@@ -77,7 +77,7 @@ func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	WriteJSON(w, r, workers, http.StatusOK)
 }
 
-func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Warning("getWorkerModels> cannot parse form")
@@ -101,7 +101,7 @@ func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	WriteJSON(w, r, workers, http.StatusOK)
 }
 
-func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -187,7 +187,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 }
 
-func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	if err := worker.RefreshWorker(db, c.Worker.ID); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 		log.Warning("refreshWorkerHandler> cannot refresh last beat of %s: %s\n", c.Worker.ID, err)
 		WriteError(w, r, err)
@@ -195,7 +195,7 @@ func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 }
 
-func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	if err := worker.DeleteWorker(db, c.Worker.ID); err != nil {
 		log.Warning("unregisterWorkerHandler> cannot delete worker %s\n", err)
 		WriteError(w, r, err)
@@ -203,7 +203,7 @@ func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 }
 
-func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	wk, errW := worker.LoadWorker(db, c.Worker.ID)
 	if errW != nil {
 		WriteError(w, r, errW)
@@ -223,7 +223,7 @@ func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 }
 
-func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
 	wk, errW := worker.LoadWorker(db, c.Worker.ID)
 	if errW != nil {
 		WriteError(w, r, errW)
