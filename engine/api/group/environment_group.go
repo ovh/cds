@@ -56,7 +56,7 @@ func InsertGroupsInEnvironment(db database.Executer, groupPermission []sdk.Group
 	for _, g := range groupPermission {
 		err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission)
 		if err != nil {
-			log.Warning("InsertGroupsInEnvironment> unable to insert group %d %s on env %d", g.Group.ID, g.Group.Name, envID)
+			log.Warning("InsertGroupsInEnvironment> unable to insert group %d %s on env %d : %s", g.Group.ID, g.Group.Name, envID, err)
 			return err
 		}
 	}
