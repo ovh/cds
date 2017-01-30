@@ -66,9 +66,10 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Res
 	}
 
 	//Call the Run function on the plugin interface
-	pluginAction := plugin.Action{
-		IDActionBuild: pbJob.ID,
-		Args:          pluginArgs,
+	pluginAction := plugin.Job{
+		IDPipelineBuild:    pbJob.PipelineBuildID,
+		IDPipelineJobBuild: pbJob.ID,
+		Args:               pluginArgs,
 	}
 
 	pluginResult := _plugin.Run(pluginAction)

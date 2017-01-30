@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS "pipeline_build_job" (
     model TEXT
 );
 select create_index('pipeline_build_job','IDX_PIPELINE_BUILD_JOB', 'pipeline_build_id');
+select create_foreign_key('FK_PIPELINE_BUILD_JOB_PIPELINE_BUILD', 'pipeline_build_job', 'pipeline_build', 'pipeline_build_id', 'id');
 
 ALTER TABLE build_log ADD COLUMN pipeline_build_id BIGINT;
 select create_foreign_key('FK_BUILD_LOG_PIPELINE_BUILD', 'build_log', 'pipeline_build', 'pipeline_build_id', 'id');

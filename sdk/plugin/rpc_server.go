@@ -31,8 +31,8 @@ func (c *CDSActionRPCServer) Parameters(args interface{}, resp *Parameters) erro
 
 //Run serves rpc call to Run()
 func (c *CDSActionRPCServer) Run(args interface{}, resp *Result) error {
-	action := args.(IAction)
-	*resp = c.Impl.Run(action)
+	job := args.(IJob)
+	*resp = c.Impl.Run(job)
 	return nil
 }
 

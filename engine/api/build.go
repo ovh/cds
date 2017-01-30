@@ -185,6 +185,12 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return
 	}
 
+	pbID, errPB := pipeline.LoadPipelineBuildID(db, a.ID, p.ID, env.ID, buildNumber)
+	if errPB != nil {
+		WriteError(w, r, errPB)
+		return
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deleteBuildHandler> Cannot start transaction: %s\n", err)
@@ -193,8 +199,10 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer tx.Rollback()
 
-	if err := pipeline.DeletePipelineBuild(tx, p.ID, a.ID, buildNumber, env.ID); err != nil {
-		log.Warning("deleteBuildHandler> Cannot delete pipeline build: %s\n", err)
+
+
+	if err := pipeline.DeletePipelineBuildByID(tx, pbID); err != nil {
+		log.Warning("deleteBuildHandler> Cannot delete pipeline build %d: %s\n", pbID, err)
 		WriteError(w, r, err)
 		return
 	}
@@ -277,13 +285,6 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		log.Warning("getBuildStateHandler> %s! Cannot load last pipeline build for %s-%s-%s[%s] (buildNUmber:%d): %s\n", c.User.Username, projectKey, appName, pipelineName, env.Name, buildNumber, err)
 		WriteError(w, r, err)
 		return
-	}
-
-	for index := range pb.Stages {
-		stage := &pb.Stages[index]
-		for indexPbJob := range stage.PipelineBuildJobs {
-			_ = &stage.PipelineBuildJobs[indexPbJob]
-		}
 	}
 
 	if withArtifacts == "true" {

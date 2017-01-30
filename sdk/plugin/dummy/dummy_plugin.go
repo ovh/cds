@@ -18,7 +18,7 @@ func (d DummyPlugin) Parameters() plugin.Parameters {
 }
 
 //Run execute the action
-func (d DummyPlugin) Run(a plugin.IAction) plugin.Result {
+func (d DummyPlugin) Run(a plugin.IJob) plugin.Result {
 	err := plugin.SendLog(a, "PLUGIN", "This is a log from %s", d.Name())
 	if err != nil {
 		return plugin.Fail

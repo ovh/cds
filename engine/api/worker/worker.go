@@ -241,6 +241,7 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 	// Load token
 	t, errL := LoadToken(db, key)
 	if errL != nil {
+		log.Warning("RegisterWorker> Cannot register worker. Caused by : %s", errL)
 		return nil, errL
 	}
 

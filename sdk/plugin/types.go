@@ -7,7 +7,7 @@ import (
 func init() {
 	gob.Register(Result(""))
 	gob.Register(ParameterType(""))
-	gob.Register(Action{})
+	gob.Register(Job{})
 	gob.Register(Options{})
 	gob.Register(Arguments{})
 }
@@ -19,23 +19,26 @@ type CDSAction interface {
 	Description() string
 	Author() string
 	Parameters() Parameters
-	Run(IAction) Result
+	Run(IJob) Result
 }
 
 //IAction is the Run() input args of every plugin
-type IAction interface {
+type IJob interface {
 	ID() int64
+	PipelineBuildID() int64
 	Arguments() Arguments
 }
 
 //Action is the input of the plugin run function
-type Action struct {
-	IDActionBuild int64
-	Args          Arguments
+type Job struct {
+	IDPipelineJobBuild int64
+	IDPipelineBuild    int64
+	Args               Arguments
 }
 
-func (a Action) ID() int64            { return a.IDActionBuild }
-func (a Action) Arguments() Arguments { return a.Args }
+func (j Job) ID() int64              { return j.IDPipelineJobBuild }
+func (j Job) Arguments() Arguments   { return j.Args }
+func (j Job) PipelineBuildID() int64 { return j.IDPipelineBuild }
 
 //IOptions is
 type IOptions interface {
