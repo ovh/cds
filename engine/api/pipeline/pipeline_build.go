@@ -266,6 +266,9 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 	var rows []PipelineBuildDbResult
 	_, err := db.Select(&rows, query, pbID)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return pbs, nil
+		}
 		return nil, err
 	}
 
@@ -923,13 +926,13 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 		var pb sdk.PipelineBuild
 		var status string
 		var user sdk.User
-		var manual sql.NullBool
+		var manual, scheduledTrigger sql.NullBool
 		var hash, author, username, branch sql.NullString
 
 		err = rows.Scan(&pb.Pipeline.Name, &pb.Start,
 			&pb.Application.Name, &pb.Environment.Name,
 			&pb.Version, &status, &pb.Done, &pb.BuildNumber,
-			&manual, &username, &branch, &hash, &author)
+			&manual, &scheduledTrigger, &username, &branch, &hash, &author)
 		if err != nil {
 			return nil, err
 		}
@@ -951,6 +954,10 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 		}
 		if author.Valid {
 			pb.Trigger.VCSChangesAuthor = author.String
+		}
+
+		if scheduledTrigger.Valid {
+			pb.Trigger.ScheduledTrigger = scheduledTrigger.Bool
 		}
 
 		pbs = append(pbs, pb)
