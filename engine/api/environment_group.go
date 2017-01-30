@@ -23,11 +23,10 @@ func updateGroupRoleOnEnvironmentHandler(w http.ResponseWriter, r *http.Request,
 	envName := vars["permEnvironmentName"]
 	groupName := vars["group"]
 
-	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("updateGroupRoleOnEnvironmentHandler: Cannot read body :%s", err)
-		return sdk.ErrUnknownError
+		return sdk.ErrWrongRequest
 	}
 
 	var groupEnvironment sdk.GroupPermission
@@ -93,13 +92,13 @@ func addGroupInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	env, err := environment.LoadEnvironmentByName(db, key, envName)
 	if err != nil {
 		log.Warning("addGroupInEnvironmentHandler: Cannot load %s: %s\n", envName, err)
-		return sdk.ErrNotFound
+		return err
 	}
 
 	g, err := group.LoadGroup(db, groupPermission.Group.Name)
 	if err != nil {
 		log.Warning("addGroupInEnvironmentHandler: Cannot find %s: %s\n", groupPermission.Group.Name, err)
-		return sdk.ErrNotFound
+		return err
 	}
 
 	alreadyAdded, err := group.IsInEnvironment(db, env.ID, g.ID)
@@ -113,8 +112,7 @@ func addGroupInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 		return sdk.ErrGroupPresent
 	}
 
-	err = group.InsertGroupInEnvironment(db, env.ID, g.ID, groupPermission.Permission)
-	if err != nil {
+	if err := group.InsertGroupInEnvironment(db, env.ID, g.ID, groupPermission.Permission); err != nil {
 		log.Warning("addGroupInEnvironmentHandler: Cannot add group %s in environment %s:  %s\n", g.Name, env.Name, err)
 		return err
 	}
