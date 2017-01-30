@@ -490,7 +490,8 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 	return res, interval, nil
 }
 
-//SetStatus set build status on github
-func (g *GithubClient) SetStatus(event sdk.Event) error {
-	return fmt.Errorf("Not yet implemented on github")
+//CreateStatus Users with push access can create commit statuses for a given ref:
+//https://developer.github.com/v3/repos/statuses/#create-a-status
+func (g *GithubClient) CreateStatus(event sdk.Event) error {
+	return nil
 }

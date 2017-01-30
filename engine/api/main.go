@@ -626,6 +626,12 @@ func init() {
 	flags.Bool("no-repo-cache-loader", false, "Disable repositories cache loader")
 	viper.BindPFlag("no_repo_cache_loader", flags.Lookup("no-repo-cache-loader"))
 
+	flags.Bool("no-scheduler", false, "Disable Pipelines Schedulers")
+	viper.BindPFlag("no_scheduler", flags.Lookup("no-scheduler"))
+
+	flags.Bool("no-github-target-url", false, "Disable Target URL in Github Statuses")
+	viper.BindPFlag("no_github_target_url", flags.Lookup("no-github-target-url"))
+
 	flags.String("default-group", "", "Default group for new users")
 	viper.BindPFlag("default_group", flags.Lookup("default-group"))
 

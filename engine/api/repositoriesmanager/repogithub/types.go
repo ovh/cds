@@ -358,6 +358,45 @@ type Event struct {
 	} `json:"org"`
 }
 
+//CreateStatus represents create a Status API Payload
+type CreateStatus struct {
+	State       string `json:"state"`
+	TargetURL   string `json:"target_url"`
+	Description string `json:"description"`
+	Context     string `json:"context"`
+}
+
+//Status represents Create a Status from API
+type Status struct {
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	State       string    `json:"state"`
+	TargetURL   string    `json:"target_url"`
+	Description string    `json:"description"`
+	ID          int       `json:"id"`
+	URL         string    `json:"url"`
+	Context     string    `json:"context"`
+	Creator     struct {
+		Login             string `json:"login"`
+		ID                int    `json:"id"`
+		AvatarURL         string `json:"avatar_url"`
+		GravatarID        string `json:"gravatar_id"`
+		URL               string `json:"url"`
+		HTMLURL           string `json:"html_url"`
+		FollowersURL      string `json:"followers_url"`
+		FollowingURL      string `json:"following_url"`
+		GistsURL          string `json:"gists_url"`
+		StarredURL        string `json:"starred_url"`
+		SubscriptionsURL  string `json:"subscriptions_url"`
+		OrganizationsURL  string `json:"organizations_url"`
+		ReposURL          string `json:"repos_url"`
+		EventsURL         string `json:"events_url"`
+		ReceivedEventsURL string `json:"received_events_url"`
+		Type              string `json:"type"`
+		SiteAdmin         bool   `json:"site_admin"`
+	} `json:"creator"`
+}
+
 //RateLimit represents Rate Limit API
 type RateLimit struct {
 	Resources struct {
