@@ -4,6 +4,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -53,8 +54,8 @@ func InsertGroupInEnvironment(db database.Executer, environmentID, groupID int64
 // InsertGroupsInEnvironment Link the given groups and the given environment
 func InsertGroupsInEnvironment(db database.Executer, groupPermission []sdk.GroupPermission, envID int64) error {
 	for _, g := range groupPermission {
-		err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission)
-		if err != nil {
+		if err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission); err != nil {
+			log.Warning("InsertGroupsInEnvironment> unable to insert group %d %s on env %d : %s", g.Group.ID, g.Group.Name, envID, err)
 			return err
 		}
 	}

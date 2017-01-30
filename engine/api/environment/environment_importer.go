@@ -45,6 +45,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 		env.EnvironmentGroups = proj.ProjectGroups
 	}
 	if err := group.InsertGroupsInEnvironment(db, env.EnvironmentGroups, env.ID); err != nil {
+		log.Warning("environment.Import> unable to import groups in environment %s, %s", env.Name, err)
 		return err
 	}
 
