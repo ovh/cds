@@ -543,7 +543,15 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	applicationName := vars["permApplicationName"]
 
 	p, err := project.LoadProject(db, projectKey, c.User)
+	if err != nil {
+		log.Warning("updateApplicationHandler> Cannot load project %s: %s\n", projectKey, err)
+		return err
+	}
 	envs, err := environment.LoadEnvironments(db, projectKey, true, c.User)
+	if err != nil {
+		log.Warning("updateApplicationHandler> Cannot load environments %s: %s\n", projectKey, err)
+		return err
+	}
 	p.Environments = envs
 
 	app, err := application.LoadApplicationByName(db, projectKey, applicationName)

@@ -18,8 +18,7 @@ func processWarning(w *sdk.Warning, acceptedlanguage string) error {
 
 	// Execute template
 	t := template.Must(template.New("warning").Parse(tmplBody))
-	err := t.Execute(&buffer, w.MessageParam)
-	if err != nil {
+	if err := t.Execute(&buffer, w.MessageParam); err != nil {
 		return err
 	}
 
@@ -61,12 +60,11 @@ func LoadAllWarnings(db gorp.SqlExecutor, al string) ([]sdk.Warning, error) {
 		var appName, pipName, envName, actionName sql.NullString
 		var messageParam string
 
-		err := rows.Scan(&id, &w.ID, &messageParam,
+		if err := rows.Scan(&id, &w.ID, &messageParam,
 			&w.Project.ID, &pipID, &appID, &envID, &actionID,
 			&w.Project.Name, &appName, &pipName, &envName, &actionName,
 			&w.Project.Key, &stageID,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
 
@@ -94,13 +92,11 @@ func LoadAllWarnings(db gorp.SqlExecutor, al string) ([]sdk.Warning, error) {
 			w.Action.Name = actionName.String
 		}
 
-		err = json.Unmarshal([]byte(messageParam), &w.MessageParam)
-		if err != nil {
+		if err := json.Unmarshal([]byte(messageParam), &w.MessageParam); err != nil {
 			return nil, err
 		}
 
-		err = processWarning(&w, al)
-		if err != nil {
+		if err := processWarning(&w, al); err != nil {
 			return nil, err
 		}
 
@@ -155,12 +151,11 @@ func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warni
 		var projPerm, appPerm, pipPerm, envPerm sql.NullInt64
 		var messageParam string
 
-		err := rows.Scan(&id, &w.ID, &messageParam,
+		if err := rows.Scan(&id, &w.ID, &messageParam,
 			&w.Project.ID, &pipID, &appID, &envID, &actionID,
 			&w.Project.Name, &appName, &pipName, &envName, &actionName,
 			&w.Project.Key, &stageID,
-			&projPerm, &appPerm, &pipPerm, &envPerm)
-		if err != nil {
+			&projPerm, &appPerm, &pipPerm, &envPerm); err != nil {
 			return nil, err
 		}
 
@@ -202,13 +197,11 @@ func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warni
 			w.Action.Name = actionName.String
 		}
 
-		err = json.Unmarshal([]byte(messageParam), &w.MessageParam)
-		if err != nil {
+		if err = json.Unmarshal([]byte(messageParam), &w.MessageParam); err != nil {
 			return nil, err
 		}
 
-		err = processWarning(&w, al)
-		if err != nil {
+		if err = processWarning(&w, al); err != nil {
 			return nil, err
 		}
 
@@ -220,13 +213,11 @@ func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warni
 
 // InsertActionWarnings in database
 func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, actionID int64, warnings []sdk.Warning) error {
-	query := `DELETE FROM warning WHERE action_id = $1`
-	_, err := tx.Exec(query, actionID)
-	if err != nil {
+	if _, err := tx.Exec(`DELETE FROM warning WHERE action_id = $1`, actionID); err != nil {
 		return err
 	}
 
-	query = `INSERT INTO warning (project_id, app_id, pip_id, action_id, warning_id, message_param) VALUES ($1, $2, $3, $4, $5, $6)`
+	query := `INSERT INTO warning (project_id, app_id, pip_id, action_id, warning_id, message_param) VALUES ($1, $2, $3, $4, $5, $6)`
 	for _, w := range warnings {
 		if w.Pipeline.ID == 0 {
 			w.Pipeline.ID = pipelineID
@@ -245,8 +236,8 @@ func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, acti
 			appID.Valid = true
 			appID.Int64 = w.Application.ID
 		}
-		_, err = tx.Exec(query, projectID, appID, w.Pipeline.ID, w.Action.ID, w.ID, string(mParam))
-		if err != nil {
+
+		if _, err = tx.Exec(query, projectID, appID, w.Pipeline.ID, w.Action.ID, w.ID, string(mParam)); err != nil {
 			return err
 		}
 	}
@@ -256,8 +247,7 @@ func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, acti
 
 // DeleteAllApplicationWarnings deletes all warnings for application only (ie. not related to an action)
 func DeleteAllApplicationWarnings(tx gorp.SqlExecutor, projectID, appID int64) error {
-	query := `DELETE FROM warning WHERE app_id = $1 and action_id is null`
-	if _, err := tx.Exec(query, appID); err != nil {
+	if _, err := tx.Exec(`DELETE FROM warning WHERE app_id = $1 and action_id is null`, appID); err != nil {
 		return err
 	}
 	return nil
