@@ -578,7 +578,6 @@ func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -586,7 +585,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	project, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("AddPipeline: Cannot load %s: %s\n", key, err)
-		return sdk.ErrNoProject
+		return err
 	}
 
 	var p sdk.Pipeline
@@ -596,14 +595,12 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		return sdk.ErrWrongRequest
 	}
 
-	err = json.Unmarshal(data, &p)
-	if err != nil {
+	if err := json.Unmarshal(data, &p); err != nil {
 		return sdk.ErrWrongRequest
 	}
 
 	// check pipeline name pattern
-	regexp := regexp.MustCompile(sdk.NamePattern)
-	if !regexp.MatchString(p.Name) {
+	if regexp := regexp.MustCompile(sdk.NamePattern); !regexp.MatchString(p.Name) {
 		log.Warning("AddPipeline: Pipeline name %s do not respect pattern %s", p.Name, sdk.NamePattern)
 		return sdk.ErrInvalidPipelinePattern
 	}
