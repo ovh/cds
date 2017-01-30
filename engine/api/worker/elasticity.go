@@ -9,7 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"database/sql"
-	"github.com/ovh/cds/engine/api/group"
+
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -73,15 +73,9 @@ func LoadWorkerModelStatusForAdminUser(db *gorp.DbMap, userID int64) ([]sdk.Mode
 //LoadWorkerModelStatusForGroup lods worker model status for group
 func LoadWorkerModelStatusForGroup(db *gorp.DbMap, groupID int64) ([]sdk.ModelStatus, error) {
 	defer logTime("LoadWorkerModelStatusForGroup", time.Now())
-	//Load SharedInfraGroup
-	sharedInfraGroup, errLoad := group.LoadGroup(db, group.SharedInfraGroup)
-	if errLoad != nil {
-		log.Warning("EstimateWorkerModelsNeeds> Cannot load shared infra group: %s\n", errLoad)
-		return nil, errLoad
-	}
 
 	//Load worker models
-	models, errM := LoadWorkerModelsUsableOnGroup(db, groupID, sharedInfraGroup.ID)
+	models, errM := LoadWorkerModelsUsableOnGroup(db, groupID, sharedInfraGroupID)
 	if errM != nil {
 		return nil, errM
 	}
@@ -90,7 +84,7 @@ func LoadWorkerModelStatusForGroup(db *gorp.DbMap, groupID int64) ([]sdk.ModelSt
 		mapModels[m.ID] = models[i]
 	}
 
-	log.Debug("LoadWorkerModelStatusForGroup for group %d, %d", groupID, sharedInfraGroup.ID)
+	log.Debug("LoadWorkerModelStatusForGroup for group %d, %d", groupID, sharedInfraGroupID)
 
 	waitingQuery := `SELECT model, COUNT(worker.id) as count FROM worker, worker_model
 		WHERE (worker.status = $3 OR worker.status = $4)
@@ -148,13 +142,13 @@ func LoadWorkerModelStatusForGroup(db *gorp.DbMap, groupID int64) ([]sdk.ModelSt
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
-		if err := load(chanModelCount, waitingQuery, "waiting", groupID, sharedInfraGroup.ID, sdk.StatusWaiting.String(), sdk.StatusChecking.String()); err != nil {
+		if err := load(chanModelCount, waitingQuery, "waiting", groupID, sharedInfraGroupID, sdk.StatusWaiting.String(), sdk.StatusChecking.String()); err != nil {
 			chanError <- err
 		}
 		wg.Done()
 	}()
 	go func() {
-		if err := load(chanModelCount, buildingQuery, "building", groupID, sharedInfraGroup.ID, sdk.StatusBuilding.String()); err != nil {
+		if err := load(chanModelCount, buildingQuery, "building", groupID, sharedInfraGroupID, sdk.StatusBuilding.String()); err != nil {
 			chanError <- err
 		}
 		wg.Done()
@@ -226,7 +220,7 @@ type ActionCount struct {
 //LoadGroupActionCount counts waiting action for group
 func LoadGroupActionCount(db gorp.SqlExecutor, groupID int64) ([]ActionCount, error) {
 	log.Debug("LoadGroupActionCount> Counting pending action for group %d", groupID)
-	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJobForGroup(db, groupID)
+	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJobForGroup(db, groupID, sharedInfraGroupID)
 	if errJobs != nil {
 		if errJobs == sql.ErrNoRows {
 			return nil, nil

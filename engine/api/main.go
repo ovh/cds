@@ -205,10 +205,12 @@ var mainCmd = &cobra.Command{
 			go event.DequeueEvent()
 		}
 
+		if err := worker.Initialize(); err != nil {
+			log.Warning("⚠ Error while initializing workers routine: %s", err)
+		}
+
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller()
-		//go pipeline.HistoryCleaningRoutine(db)
-		go worker.Heartbeat()
 		go hatchery.Heartbeat()
 		go log.RemovalRoutine()
 		go auditCleanerRoutine()
@@ -217,7 +219,6 @@ var mainCmd = &cobra.Command{
 
 		go stats.StartRoutine()
 		go action.RequirementsCacheLoader(5)
-		go worker.ModelCapabilititiesCacheLoader(5)
 		go hookRecoverer()
 
 		if !viper.GetBool("no_repo_cache_loader") {
