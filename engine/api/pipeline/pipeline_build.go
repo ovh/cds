@@ -423,6 +423,10 @@ func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
 		return errDeleteLog
 	}
 
+	if err := DeletePipelineBuildJob(db, pbID); err != nil {
+		return err
+	}
+
 	query := `
 		DELETE FROM pipeline_build
 		WHERE id = $1
