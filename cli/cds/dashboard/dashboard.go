@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gizak/termui"
@@ -79,85 +78,88 @@ func (ui *Termui) showDashboard() {
 	ui.updateProjects()
 }
 
-func (ui *Termui) updateLogs(index int, height int, ab sdk.ActionBuild) {
-	ui.logs[index].Height = height
-	ui.logs[index].Border = true
+func (ui *Termui) updateLogs(index int, height int, pbJob sdk.PipelineBuildJob) {
+	//TODO pipelinebuild
+	/*
+		ui.logs[index].Height = height
+		ui.logs[index].Border = true
 
-	// If offset is not 0, then split logs
-	// Remove offset line from logs
-	if index+1 == ui.selectedLogs && ui.offset > 0 {
+		// If offset is not 0, then split logs
+		// Remove offset line from logs
+		if index+1 == ui.selectedLogs && ui.offset > 0 {
 
-		//l := strings.Split(ab.Logs, "\n")
-		l := strings.Count(ab.Logs, "\n")
-		if ui.offset > l {
-			ui.offset = l - (height - 4)
-		}
-		if ui.offset < 0 {
-			ui.offset = 0
-		}
-		var lineCount int
-		var begin, end int
-		for i := 0; i < len(ab.Logs)-1; i++ {
-			if ab.Logs[i] == '\n' {
-				lineCount++
+			//l := strings.Split(ab.Logs, "\n")
+			l := strings.Count(ab.Logs, "\n")
+			if ui.offset > l {
+				ui.offset = l - (height - 4)
 			}
-			if lineCount == ui.offset {
-				begin = i
-				continue
+			if ui.offset < 0 {
+				ui.offset = 0
 			}
-			end = i
-			if lineCount == ui.offset+height {
-				break
-			}
-
-		}
-		ui.logs[index].Text = ab.Logs[begin : end+1]
-		//ui.logs[index].Text = strings.Join(l[ui.offset:], "\n")
-
-	} else {
-		// For other log view, print last logs
-		var lineCount int
-		for i := len(ab.Logs) - 1; i > 0; i-- {
-			if ab.Logs[i] == '\n' {
-				lineCount++
-			}
-			if lineCount == height-4 {
-				ab.Logs = ab.Logs[i:]
-
-				// If offset is 0 but it's the selected log box, save offset
-				if index+1 == ui.selectedLogs {
-					ui.offset = i
+			var lineCount int
+			var begin, end int
+			for i := 0; i < len(ab.Logs)-1; i++ {
+				if ab.Logs[i] == '\n' {
+					lineCount++
 				}
-				break
+				if lineCount == ui.offset {
+					begin = i
+					continue
+				}
+				end = i
+				if lineCount == ui.offset+height {
+					break
+				}
+
 			}
+			ui.logs[index].Text = ab.Logs[begin : end+1]
+			//ui.logs[index].Text = strings.Join(l[ui.offset:], "\n")
+
+		} else {
+			// For other log view, print last logs
+			var lineCount int
+			for i := len(ab.Logs) - 1; i > 0; i-- {
+				if ab.Logs[i] == '\n' {
+					lineCount++
+				}
+				if lineCount == height-4 {
+					ab.Logs = ab.Logs[i:]
+
+					// If offset is 0 but it's the selected log box, save offset
+					if index+1 == ui.selectedLogs {
+						ui.offset = i
+					}
+					break
+				}
+			}
+			ui.logs[index].Text = ab.Logs
 		}
-		ui.logs[index].Text = ab.Logs
-	}
 
-	// Highligt action name for user
-	if index+1 == ui.selectedLogs {
-		ui.logs[index].BorderLabel = fmt.Sprintf("[%s](fg-black,bg-white) [%s] (%d lines above)", ab.ActionName, ab.Status, ui.offset)
-	} else {
-		ui.logs[index].BorderLabel = fmt.Sprintf("%s [%s]", ab.ActionName, ab.Status)
-	}
+		// Highligt action name for user
+		if index+1 == ui.selectedLogs {
+			ui.logs[index].BorderLabel = fmt.Sprintf("[%s](fg-black,bg-white) [%s] (%d lines above)", ab.ActionName, ab.Status, ui.offset)
+		} else {
+			ui.logs[index].BorderLabel = fmt.Sprintf("%s [%s]", ab.ActionName, ab.Status)
+		}
 
-	switch ab.Status {
-	case sdk.StatusSuccess:
-		ui.logs[index].BorderFg = termui.ColorGreen
-		ui.logs[index].BorderLabelFg = termui.ColorGreen
-		break
-	case sdk.StatusFail:
-		ui.logs[index].BorderFg = termui.ColorRed
-		ui.logs[index].BorderLabelFg = termui.ColorRed
-		break
-	case sdk.StatusBuilding:
-		ui.logs[index].BorderFg = termui.ColorBlue
-		ui.logs[index].BorderLabelFg = termui.ColorBlue
-		break
-	default:
-		ui.logs[index].BorderFg = termui.ColorYellow
-		ui.logs[index].BorderLabelFg = termui.ColorYellow
-	}
+		switch ab.Status {
+		case sdk.StatusSuccess:
+			ui.logs[index].BorderFg = termui.ColorGreen
+			ui.logs[index].BorderLabelFg = termui.ColorGreen
+			break
+		case sdk.StatusFail:
+			ui.logs[index].BorderFg = termui.ColorRed
+			ui.logs[index].BorderLabelFg = termui.ColorRed
+			break
+		case sdk.StatusBuilding:
+			ui.logs[index].BorderFg = termui.ColorBlue
+			ui.logs[index].BorderLabelFg = termui.ColorBlue
+			break
+		default:
+			ui.logs[index].BorderFg = termui.ColorYellow
+			ui.logs[index].BorderLabelFg = termui.ColorYellow
+		}
+	*/
 }
 
 func (ui *Termui) getLogs(proj, app, env, pip string) {
@@ -171,22 +173,22 @@ func (ui *Termui) getLogs(proj, app, env, pip string) {
 	}
 
 	// Get all logs data
-	var abs []sdk.ActionBuild
+	var pbJobs []sdk.PipelineBuildJob
 	for _, s := range state.Stages {
-		for _, ab := range s.ActionBuilds {
-			abs = append(abs, ab)
+		for _, pbj := range s.PipelineBuildJobs {
+			pbJobs = append(pbJobs, pbj)
 		}
 	}
 
-	if len(abs) == 0 {
+	if len(pbJobs) == 0 {
 		return
 	}
 
-	logParHeight := (termui.TermHeight() - 3) / len(abs)
+	logParHeight := (termui.TermHeight() - 3) / len(pbJobs)
 	var logCount int
-	for i := range abs {
+	for i := range pbJobs {
 		logCount++
-		ui.updateLogs(i, logParHeight, abs[i])
+		ui.updateLogs(i, logParHeight, pbJobs[i])
 	}
 	for i := logCount; i < 5; i++ {
 		ui.logs[i].Text = ""

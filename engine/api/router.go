@@ -2,7 +2,6 @@ package main
 
 import (
 	"compress/gzip"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -16,6 +15,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
@@ -34,7 +34,7 @@ var lastPanic *time.Time
 const nbPanicsBeforeFail = 50
 
 // Handler defines the HTTP handler used in CDS engine
-type Handler func(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context)
+type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context)
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
 type RouterConfigParam func(rc *routerConfig)
@@ -152,7 +152,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		}
 
 		//Check DB connection
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db == nil {
 			//We can handle database loss with hook.recovery
 			if req.URL.Path != "/hook" {
@@ -315,11 +315,11 @@ func Auth(v bool) RouterConfigParam {
 	return f
 }
 
-func (r *Router) checkAuthHeader(db *sql.DB, headers http.Header, c *context.Context) error {
+func (r *Router) checkAuthHeader(db *gorp.DbMap, headers http.Header, c *context.Context) error {
 	return r.authDriver.GetCheckAuthHeaderFunc(localCLientAuthMode)(db, headers, c)
 }
 
-func (r *Router) checkAuthentication(db *sql.DB, headers http.Header, c *context.Context) error {
+func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *context.Context) error {
 
 	c.Agent = sdk.Agent(headers.Get("User-Agent"))
 
@@ -332,7 +332,7 @@ func (r *Router) checkAuthentication(db *sql.DB, headers http.Header, c *context
 	}
 }
 
-func (r *Router) checkHatcheryAuth(db *sql.DB, headers http.Header, c *context.Context) error {
+func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *context.Context) error {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return fmt.Errorf("bad worker key syntax: %s", err)

@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
@@ -40,7 +41,7 @@ func WithEncryptPassword() FuncArg {
 }
 
 // CreateAudit Create variable audit for the given application
-func CreateAudit(db database.QueryExecuter, key string, app *sdk.Application, u *sdk.User) error {
+func CreateAudit(db gorp.SqlExecutor, key string, app *sdk.Application, u *sdk.User) error {
 	variables, err := GetAllVariable(db, key, app.Name, WithEncryptPassword())
 	if err != nil {
 		return err
@@ -66,7 +67,7 @@ func CreateAudit(db database.QueryExecuter, key string, app *sdk.Application, u 
 }
 
 // GetAudit retrieve the current application variable audit
-func GetAudit(db database.Querier, key, appName string, auditID int64) ([]sdk.Variable, error) {
+func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Variable, error) {
 	query := `
 		SELECT application_variable_audit.data
 		FROM application_variable_audit
@@ -97,7 +98,7 @@ func GetAudit(db database.Querier, key, appName string, auditID int64) ([]sdk.Va
 }
 
 // GetVariableAudit Get variable audit for the given application
-func GetVariableAudit(db database.Querier, key, appName string) ([]sdk.VariableAudit, error) {
+func GetVariableAudit(db gorp.SqlExecutor, key, appName string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
 		SELECT application_variable_audit.id, application_variable_audit.versionned, application_variable_audit.data, application_variable_audit.author
@@ -138,7 +139,7 @@ func GetVariableAudit(db database.Querier, key, appName string) ([]sdk.VariableA
 }
 
 // GetAllVariable Get all variable for the given application
-func GetAllVariable(db database.Querier, key, appName string, args ...FuncArg) ([]sdk.Variable, error) {
+func GetAllVariable(db gorp.SqlExecutor, key, appName string, args ...FuncArg) ([]sdk.Variable, error) {
 	c := structarg{}
 	for _, f := range args {
 		f(&c)
@@ -184,7 +185,7 @@ func GetAllVariable(db database.Querier, key, appName string, args ...FuncArg) (
 }
 
 // LoadVariable retrieve a specific variable
-func LoadVariable(db database.Querier, appID int64, varName string) (sdk.Variable, error) {
+func LoadVariable(db gorp.SqlExecutor, appID int64, varName string) (sdk.Variable, error) {
 	query := `SELECT id, var_name, var_value, var_type FROM application_variable
 			WHERE application_id = $1 AND var_name = $2`
 
@@ -201,7 +202,7 @@ func LoadVariable(db database.Querier, appID int64, varName string) (sdk.Variabl
 }
 
 // GetAllVariableByID Get all variable for the given application
-func GetAllVariableByID(db database.Querier, applicationID int64, fargs ...FuncArg) ([]sdk.Variable, error) {
+func GetAllVariableByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncArg) ([]sdk.Variable, error) {
 	c := structarg{}
 	for _, f := range fargs {
 		f(&c)
@@ -237,7 +238,7 @@ func GetAllVariableByID(db database.Querier, applicationID int64, fargs ...FuncA
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db database.QueryExecuter, app *sdk.Application, variable sdk.Variable) error {
+func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable) error {
 
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return fmt.Errorf("You try to insert a placeholder for new variable %s", variable.Name)
@@ -261,7 +262,7 @@ func InsertVariable(db database.QueryExecuter, app *sdk.Application, variable sd
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db database.QueryExecuter, app *sdk.Application, variable sdk.Variable) error {
+func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable) error {
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -289,7 +290,7 @@ func UpdateVariable(db database.QueryExecuter, app *sdk.Application, variable sd
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db database.QueryExecuter, app *sdk.Application, variableName string) error {
+func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variableName string) error {
 	query := `DELETE FROM application_variable
 		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
 	result, err := db.Exec(query, app.ID, variableName)
@@ -308,7 +309,7 @@ func DeleteVariable(db database.QueryExecuter, app *sdk.Application, variableNam
 }
 
 // DeleteAllVariable Delete all variables from the given pipeline
-func DeleteAllVariable(db database.Executer, applicationID int64) error {
+func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 	query := `DELETE FROM application_variable
 	          WHERE application_variable.application_id = $1`
 	_, err := db.Exec(query, applicationID)

@@ -11,7 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
@@ -32,6 +32,8 @@ const (
 	IncompatibleBinaryAndModelRequirements
 	IncompatibleServiceAndModelRequirements
 	IncompatibleMemoryAndModelRequirements
+	GitURLWithoutLinkedRepository
+	GitURLWithoutKey
 )
 
 var messageAmericanEnglish = map[int64]string{
@@ -46,6 +48,8 @@ var messageAmericanEnglish = map[int64]string{
 	IncompatibleBinaryAndModelRequirements:  `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} does not have the binary '{{index . "BinaryRequirement"}}' capability`,
 	IncompatibleServiceAndModelRequirements: `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} cannot be linked to service '{{index . "ServiceRequirement"}}'`,
 	IncompatibleMemoryAndModelRequirements:  `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}}: Model {{index . "ModelName"}} cannot handle memory requirement`,
+	GitURLWithoutLinkedRepository:           `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} is used but one one more applications are linked to any repository. Git clone will failed`,
+	GitURLWithoutKey:                        `Action {{index . "ActionName"}}{{if index . "PipelineName"}} in pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}{{end}} is used but no ssh key were found. Git clone will failed`,
 }
 
 func processWarning(w *sdk.Warning, acceptedlanguage string) error {
@@ -66,7 +70,7 @@ func processWarning(w *sdk.Warning, acceptedlanguage string) error {
 }
 
 // LoadAllWarnings loads all warnings existing in CDS
-func LoadAllWarnings(db *sql.DB, al string) ([]sdk.Warning, error) {
+func LoadAllWarnings(db gorp.SqlExecutor, al string) ([]sdk.Warning, error) {
 	query := `
 	SELECT distinct(warning.id), warning_id, warning.message_param, warning.project_id, warning.pip_id, warning.app_id, warning.env_id, warning.action_id,
 	       project.name as projName, application.name as appName, pip.name as pipName, env.name as envName, action.name as actionName,
@@ -148,7 +152,7 @@ func LoadAllWarnings(db *sql.DB, al string) ([]sdk.Warning, error) {
 }
 
 // LoadUserWarnings loads all warnings related to Jobs user has access to
-func LoadUserWarnings(db *sql.DB, al string, userID int64) ([]sdk.Warning, error) {
+func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warning, error) {
 	query := `
 	SELECT distinct(warning.id), warning_id, warning.message_param, warning.project_id, warning.pip_id, warning.app_id, warning.env_id, warning.action_id,
 	       project.name as projName, application.name as appName, pip.name as pipName, env.name as envName, action.name as actionName,
@@ -293,7 +297,7 @@ func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, acti
 }
 
 // CheckProjectPipelines checks all pipelines in project
-func CheckProjectPipelines(db *sql.DB, project *sdk.Project) error {
+func CheckProjectPipelines(db *gorp.DbMap, project *sdk.Project) error {
 
 	// Load all pipelines
 	pips, err := pipeline.LoadPipelines(db, project.ID, true, &sdk.User{Admin: true})
@@ -315,20 +319,20 @@ func CheckProjectPipelines(db *sql.DB, project *sdk.Project) error {
 }
 
 // CheckPipeline loads all PipelineAction and checks them all
-func CheckPipeline(db *sql.DB, project *sdk.Project, pip *sdk.Pipeline) error {
-	tx, err := database.DBMap(db).Begin()
+func CheckPipeline(db *gorp.DbMap, project *sdk.Project, pip *sdk.Pipeline) error {
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
 	for _, s := range pip.Stages {
-		for _, a := range s.Actions {
-			warnings, err := CheckAction(tx, project, pip, a.ID)
+		for _, j := range s.Jobs {
+			warnings, err := CheckAction(tx, project, pip, j.Action.ID)
 			if err != nil {
 				return err
 			}
-			err = InsertActionWarnings(tx, project.ID, pip.ID, a.ID, warnings)
+			err = InsertActionWarnings(tx, project.ID, pip.ID, j.Action.ID, warnings)
 			if err != nil {
 				return err
 			}
@@ -354,10 +358,18 @@ func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, a
 		return nil, err
 	}
 
+	for _, app := range project.Applications {
+		app.Variable, err = application.GetAllVariable(tx, project.Key, app.Name)
+		if err != nil {
+			log.Warning("CheckAction> Unable to load application variable : %s", err)
+			return nil, err
+		}
+	}
+
 	// Load registered worker model
 	wms, err := worker.LoadWorkerModels(tx)
 	if err != nil {
-		log.Warning("CheckActionRequirements> Cannot LoadWorkerModels")
+		log.Warning("CheckAction> Cannot LoadWorkerModels")
 		return nil, err
 	}
 
@@ -367,10 +379,7 @@ func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, a
 	}
 	warnings = append(warnings, w...)
 
-	pvars, avars, evars, badvars, err := loadUsedVariables(tx, a)
-	if err != nil {
-		return nil, fmt.Errorf("CheckAction> loadUsedVariables> %s", err)
-	}
+	pvars, avars, evars, gitvars, badvars := loadUsedVariables(a)
 
 	// Add warning for all badly formatted variables
 	for _, v := range badvars {
@@ -404,6 +413,9 @@ func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, a
 	if err != nil {
 		return nil, fmt.Errorf("CheckAction> checkApplicationVariables> %s", err)
 	}
+	warnings = append(warnings, w...)
+
+	w = checkGitVariables(tx, gitvars, project, pip, a)
 	warnings = append(warnings, w...)
 
 	return warnings, nil

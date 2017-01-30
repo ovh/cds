@@ -8,6 +8,8 @@ import (
 	"math"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -16,17 +18,18 @@ import (
 )
 
 // ActionBuildInfo is returned to worker in answer to takeActionBuildHandler
-type ActionBuildInfo struct {
-	ActionBuild sdk.ActionBuild
-	Action      sdk.Action
-	Secrets     []sdk.Variable
+type PipelineBuildJobInfo struct {
+	PipelineBuildJob sdk.PipelineBuildJob
+	Secrets          []sdk.Variable
+	PipelineID       int64
+	BuildNumber      int64
 }
 
 // ErrNoWorker means the given worker ID is not found
 var ErrNoWorker = fmt.Errorf("cds: no worker found")
 
 // DeleteWorker remove worker from database
-func DeleteWorker(db *sql.DB, id string) error {
+func DeleteWorker(db *gorp.DbMap, id string) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return fmt.Errorf("DeleteWorker> Cannot start tx: %s\n", err)
@@ -35,8 +38,8 @@ func DeleteWorker(db *sql.DB, id string) error {
 
 	query := `SELECT name, status, action_build_id FROM worker WHERE id = $1 FOR UPDATE`
 	var st, name string
-	var actionBuildID sql.NullInt64
-	err = tx.QueryRow(query, id).Scan(&name, &st, &actionBuildID)
+	var pbJobID sql.NullInt64
+	err = tx.QueryRow(query, id).Scan(&name, &st, &pbJobID)
 	if err != nil {
 		log.Info("DeleteWorker> Cannot lock worker: %s\n", err)
 		return nil
@@ -46,16 +49,16 @@ func DeleteWorker(db *sql.DB, id string) error {
 		// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHH
 		// Worker is awol while building !
 		// We need to restart this action before anyone notice
-		if actionBuildID.Valid == false {
+		if pbJobID.Valid == false {
 			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but action_build_id is NULL!\n", name)
 		}
 
-		log.Notice("Worker %s crashed while building %d !\n", name, actionBuildID.Int64)
-		err = pipeline.RestartActionBuild(tx, actionBuildID.Int64)
+		log.Notice("Worker %s crashed while building %d !\n", name, pbJobID.Int64)
+		err = pipeline.RestartPipelineBuildJob(tx, pbJobID.Int64)
 		if err != nil {
-			log.Critical("DeleteWorker> Cannot restart action build: %s\n", err)
+			log.Critical("DeleteWorker> Cannot restart pipeline build job: %s\n", err)
 		} else {
-			log.Notice("DeleteWorker> ActionBuild %d restarted after crash\n", actionBuildID.Int64)
+			log.Notice("DeleteWorker> PipelineBuildJob %d restarted after crash\n", pbJobID.Int64)
 		}
 	}
 
@@ -83,7 +86,7 @@ func InsertWorker(db database.Executer, w *sdk.Worker, groupID int64) error {
 }
 
 // LoadWorker retrieves worker in database
-func LoadWorker(db database.Querier, id string) (*sdk.Worker, error) {
+func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	w := &sdk.Worker{}
 	var statusS string
 	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
@@ -98,7 +101,7 @@ func LoadWorker(db database.Querier, id string) (*sdk.Worker, error) {
 }
 
 // LoadWorkersByModel load workers by model
-func LoadWorkersByModel(db database.Querier, modelID int64) ([]sdk.Worker, error) {
+func LoadWorkersByModel(db gorp.SqlExecutor, modelID int64) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
 	query := `SELECT worker.id, worker.name, worker.last_beat, worker.group_id, worker.model, worker.status, worker.hatchery_id
@@ -127,7 +130,7 @@ func LoadWorkersByModel(db database.Querier, modelID int64) ([]sdk.Worker, error
 }
 
 // LoadWorkers load all workers in db
-func LoadWorkers(db *sql.DB) ([]sdk.Worker, error) {
+func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
 	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id FROM worker WHERE 1 = 1 ORDER BY name ASC`
@@ -152,7 +155,7 @@ func LoadWorkers(db *sql.DB) ([]sdk.Worker, error) {
 }
 
 // LoadDeadWorkers load worker with refresh last beat > timeout
-func LoadDeadWorkers(db *sql.DB, timeout float64) ([]sdk.Worker, error) {
+func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
 	query := `	SELECT id, name, last_beat, group_id, model, status, hatchery_id
@@ -183,7 +186,7 @@ func LoadDeadWorkers(db *sql.DB, timeout float64) ([]sdk.Worker, error) {
 }
 
 // RefreshWorker Update worker last_beat
-func RefreshWorker(db *sql.DB, workerID string) error {
+func RefreshWorker(db gorp.SqlExecutor, workerID string) error {
 	query := `UPDATE worker SET last_beat = $1 WHERE id = $2`
 	res, err := db.Exec(query, time.Now(), workerID)
 	if err != nil {
@@ -227,7 +230,7 @@ type RegistrationForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.Hatchery, binaryCapabilities []string) (*sdk.Worker, error) {
+func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *sdk.Hatchery, binaryCapabilities []string) (*sdk.Worker, error) {
 	if name == "" {
 		return nil, fmt.Errorf("cannot register worker with empty name")
 	}
@@ -238,6 +241,7 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 	// Load token
 	t, errL := LoadToken(db, key)
 	if errL != nil {
+		log.Warning("RegisterWorker> Cannot register worker. Caused by : %s", errL)
 		return nil, errL
 	}
 
@@ -251,7 +255,7 @@ func RegisterWorker(db *sql.DB, name string, key string, modelID int64, h *sdk.H
 	var m *sdk.Model
 	if modelID != 0 {
 		var errM error
-		m, errM = LoadWorkerModelByID(database.DBMap(db), modelID)
+		m, errM = LoadWorkerModelByID(db, modelID)
 		if errM != nil {
 			log.Warning("RegisterWorker> Cannot load model: %s\n", errM)
 			return nil, errM
@@ -388,7 +392,7 @@ func SetToBuilding(db database.Executer, workerID string, actionBuildID int64) e
 }
 
 // UpdateWorkerStatus changes worker status to Disabled
-func UpdateWorkerStatus(db database.Executer, workerID string, status sdk.Status) error {
+func UpdateWorkerStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE id = $2`
 
 	res, err := db.Exec(query, status.String(), workerID)
@@ -410,13 +414,4 @@ func UpdateWorkerStatus(db database.Executer, workerID string, status sdk.Status
 	}
 
 	return nil
-}
-
-// FindBuildingWorker retrieves in database the worker building given actionBuildID
-func FindBuildingWorker(db database.Querier, actionBuildID string) (string, error) {
-	query := `SELECT id FROM worker WHERE action_build_id = $1`
-
-	var id string
-	err := db.QueryRow(query, actionBuildID).Scan(&id)
-	return id, err
 }

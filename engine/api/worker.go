@@ -1,15 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/gorilla/mux"
-
 	"time"
+
+	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
@@ -17,9 +16,11 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+
+	"database/sql"
 )
 
-func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Read body
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
@@ -66,7 +67,7 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	log.Debug("New worker: [%s] - %s\n", worker.ID, worker.Name)
 }
 
-func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	workers, err := worker.LoadWorkersByModel(db, 0)
 	if err != nil {
 		log.Warning("getOrphanWorker> Cannot load workers: %s\n", err)
@@ -76,7 +77,7 @@ func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	WriteJSON(w, r, workers, http.StatusOK)
 }
 
-func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Warning("getWorkerModels> cannot parse form")
@@ -100,7 +101,7 @@ func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	WriteJSON(w, r, workers, http.StatusOK)
 }
 
-func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -134,7 +135,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 			for {
 				var attempts int
 				time.Sleep(500 * time.Millisecond)
-				db := database.DB()
+				db := database.DBMap(database.DB())
 				if db != nil {
 					attempts++
 					w1, err := worker.LoadWorker(db, w.ID)
@@ -186,7 +187,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	}
 }
 
-func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	if err := worker.RefreshWorker(db, c.Worker.ID); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 		log.Warning("refreshWorkerHandler> cannot refresh last beat of %s: %s\n", c.Worker.ID, err)
 		WriteError(w, r, err)
@@ -194,7 +195,7 @@ func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	}
 }
 
-func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	if err := worker.DeleteWorker(db, c.Worker.ID); err != nil {
 		log.Warning("unregisterWorkerHandler> cannot delete worker %s\n", err)
 		WriteError(w, r, err)
@@ -202,7 +203,7 @@ func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	}
 }
 
-func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	wk, errW := worker.LoadWorker(db, c.Worker.ID)
 	if errW != nil {
 		WriteError(w, r, errW)
@@ -222,10 +223,14 @@ func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 }
 
-func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	wk, errW := worker.LoadWorker(db, c.Worker.ID)
 	if errW != nil {
 		WriteError(w, r, errW)
+		return
+	}
+
+	if wk.Status == sdk.StatusWaiting {
 		return
 	}
 

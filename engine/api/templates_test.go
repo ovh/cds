@@ -173,10 +173,9 @@ func Test_addTemplateHandler(t *testing.T) {
 	templs := []sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templs)
 
-	dbmap := database.DBMap(db)
 	dbtempl := database.TemplateExtension(templ)
 
-	if _, err := dbmap.Delete(&dbtempl); err != nil {
+	if _, err := db.Delete(&dbtempl); err != nil {
 		t.Fatal(err)
 	}
 
@@ -461,9 +460,8 @@ func Test_updateTemplateHandler(t *testing.T) {
 	templ = sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
-	dbmap := database.DBMap(db)
 	dbtempl := database.TemplateExtension(templ)
-	dbmap.Delete(&dbtempl)
+	db.Delete(&dbtempl)
 }
 
 func Test_getBuildTemplatesHandler(t *testing.T) {
@@ -579,9 +577,8 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	assert.Equal(t, "testtemplate", templs[1].Name)
 	assert.NotEmpty(t, templs[1].Params)
 
-	dbmap := database.DBMap(db)
 	dbtempl := database.TemplateExtension(templ)
-	dbmap.Delete(&dbtempl)
+	db.Delete(&dbtempl)
 
 }
 
@@ -767,9 +764,8 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	t.Logf("body: %s", w.Body.String())
 
-	dbmap := database.DBMap(db)
 	dbtempl := database.TemplateExtension(templ)
-	dbmap.Delete(&dbtempl)
+	db.Delete(&dbtempl)
 }
 
 func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {

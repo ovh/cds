@@ -5,13 +5,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
 // GetVariableAudit Get variable audit for the given project
-func GetVariableAudit(db database.Querier, key string) ([]sdk.VariableAudit, error) {
+func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
 		SELECT project_variable_audit.id, project_variable_audit.versionned, project_variable_audit.data, project_variable_audit.author
@@ -51,7 +53,7 @@ func GetVariableAudit(db database.Querier, key string) ([]sdk.VariableAudit, err
 }
 
 // GetAudit retrieve the current project variable audit
-func GetAudit(db database.Querier, key string, auditID int64) ([]sdk.Variable, error) {
+func GetAudit(db gorp.SqlExecutor, key string, auditID int64) ([]sdk.Variable, error) {
 	query := `
 		SELECT project_variable_audit.data
 		FROM project_variable_audit
@@ -81,7 +83,7 @@ func GetAudit(db database.Querier, key string, auditID int64) ([]sdk.Variable, e
 }
 
 // CreateAudit Create variable audit for the given project
-func CreateAudit(db database.QueryExecuter, proj *sdk.Project, u *sdk.User) error {
+func CreateAudit(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	variables, err := GetAllVariableInProject(db, proj.ID, WithEncryptPassword())
 	if err != nil {
 		return err
@@ -107,7 +109,7 @@ func CreateAudit(db database.QueryExecuter, proj *sdk.Project, u *sdk.User) erro
 }
 
 // CheckVariableInProject check if the variable is already in the project or not
-func CheckVariableInProject(db database.Querier, projectID int64, varName string) (bool, error) {
+func CheckVariableInProject(db gorp.SqlExecutor, projectID int64, varName string) (bool, error) {
 	query := `SELECT COUNT(id) FROM project_variable WHERE project_id = $1 AND var_name = $2`
 
 	var nb int64
@@ -144,7 +146,7 @@ func WithEncryptPassword() GetAllVariableFuncArg {
 }
 
 // GetAllVariableInProject Get all variable for the given project
-func GetAllVariableInProject(db database.Querier, projectID int64, args ...GetAllVariableFuncArg) ([]sdk.Variable, error) {
+func GetAllVariableInProject(db gorp.SqlExecutor, projectID int64, args ...GetAllVariableFuncArg) ([]sdk.Variable, error) {
 	c := structarg{}
 	for _, f := range args {
 		f(&c)
@@ -184,7 +186,7 @@ func GetAllVariableInProject(db database.Querier, projectID int64, args ...GetAl
 }
 
 // GetAllVariableNameInProjectByKey Get all variable for the given project
-func GetAllVariableNameInProjectByKey(db database.Querier, projectKey string) ([]string, error) {
+func GetAllVariableNameInProjectByKey(db gorp.SqlExecutor, projectKey string) ([]string, error) {
 	variables := []string{}
 	query := `SELECT project_variable.var_name
 	          FROM project_variable
@@ -208,7 +210,7 @@ func GetAllVariableNameInProjectByKey(db database.Querier, projectKey string) ([
 }
 
 // GetVariableInProject get the variable information for the given project
-func GetVariableInProject(db database.Querier, projectID int64, variableName string) (*sdk.Variable, error) {
+func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName string) (*sdk.Variable, error) {
 	variable := &sdk.Variable{}
 	query := `SELECT id, var_name, var_value, var_type FROM project_variable
 		  WHERE var_name=$1 AND project_id=$2`
@@ -228,7 +230,7 @@ func GetVariableInProject(db database.Querier, projectID int64, variableName str
 }
 
 // InsertVariableInProject Insert a new variable in the given project
-func InsertVariableInProject(db database.QueryExecuter, proj *sdk.Project, variable sdk.Variable) error {
+func InsertVariableInProject(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variable) error {
 	query := `INSERT INTO project_variable(project_id, var_name, var_value, cipher_value, var_type)
 		  VALUES($1, $2, $3, $4, $5)`
 
@@ -250,7 +252,7 @@ func InsertVariableInProject(db database.QueryExecuter, proj *sdk.Project, varia
 }
 
 // UpdateVariableInProject Update a variable in the given project
-func UpdateVariableInProject(db database.QueryExecuter, proj *sdk.Project, variable sdk.Variable) error {
+func UpdateVariableInProject(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variable) error {
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -276,7 +278,7 @@ func UpdateVariableInProject(db database.QueryExecuter, proj *sdk.Project, varia
 }
 
 // DeleteVariableFromProject Delete a variable from the given project
-func DeleteVariableFromProject(db database.QueryExecuter, proj *sdk.Project, variableName string) error {
+func DeleteVariableFromProject(db gorp.SqlExecutor, proj *sdk.Project, variableName string) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1 AND var_name=$2`
 	_, err := db.Exec(query, proj.ID, variableName)
 	if err != nil {

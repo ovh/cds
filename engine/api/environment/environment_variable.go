@@ -5,13 +5,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
 // CreateAudit Create environment variable audit for the given project
-func CreateAudit(db database.QueryExecuter, key string, env *sdk.Environment, u *sdk.User) error {
+func CreateAudit(db gorp.SqlExecutor, key string, env *sdk.Environment, u *sdk.User) error {
 
 	vars, err := GetAllVariable(db, key, env.Name, WithEncryptPassword())
 	if err != nil {
@@ -39,7 +41,7 @@ func CreateAudit(db database.QueryExecuter, key string, env *sdk.Environment, u 
 }
 
 // GetAudit retrieve the current environment variable audit
-func GetAudit(db database.Querier, auditID int64) ([]sdk.Variable, error) {
+func GetAudit(db gorp.SqlExecutor, auditID int64) ([]sdk.Variable, error) {
 	query := `
 		SELECT environment_variable_audit.data
 		FROM environment_variable_audit
@@ -66,7 +68,7 @@ func GetAudit(db database.Querier, auditID int64) ([]sdk.Variable, error) {
 }
 
 // GetEnvironmentAudit Get environment audit for the given project
-func GetEnvironmentAudit(db database.Querier, key, envName string) ([]sdk.VariableAudit, error) {
+func GetEnvironmentAudit(db gorp.SqlExecutor, key, envName string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
 		SELECT environment_variable_audit.id, environment_variable_audit.versionned, environment_variable_audit.data, environment_variable_audit.author
@@ -106,7 +108,7 @@ func GetEnvironmentAudit(db database.Querier, key, envName string) ([]sdk.Variab
 }
 
 // GetAllVariableNameByProject Get all variable from all environment
-func GetAllVariableNameByProject(db database.Querier, key string) ([]string, error) {
+func GetAllVariableNameByProject(db gorp.SqlExecutor, key string) ([]string, error) {
 	nameArray := []string{}
 	query := `
 		SELECT distinct(environment_variable.name)
@@ -154,7 +156,7 @@ func WithEncryptPassword() GetAllVariableFuncArg {
 }
 
 // GetVariable Get a variable for the given environment
-func GetVariable(db database.Querier, key, envName string, varName string, args ...GetAllVariableFuncArg) (sdk.Variable, error) {
+func GetVariable(db gorp.SqlExecutor, key, envName string, varName string, args ...GetAllVariableFuncArg) (sdk.Variable, error) {
 	v := sdk.Variable{}
 	var clearVal sql.NullString
 	var cipherVal []byte
@@ -191,7 +193,7 @@ func GetVariable(db database.Querier, key, envName string, varName string, args 
 }
 
 // GetAllVariable Get all variable for the given environment
-func GetAllVariable(db database.Querier, key, envName string, args ...GetAllVariableFuncArg) ([]sdk.Variable, error) {
+func GetAllVariable(db gorp.SqlExecutor, key, envName string, args ...GetAllVariableFuncArg) ([]sdk.Variable, error) {
 	c := structarg{}
 	for _, f := range args {
 		f(&c)
@@ -235,7 +237,7 @@ func GetAllVariable(db database.Querier, key, envName string, args ...GetAllVari
 }
 
 // GetAllVariableByID Get all variable for the given environment
-func GetAllVariableByID(db database.Querier, environmentID int64, args ...GetAllVariableFuncArg) ([]sdk.Variable, error) {
+func GetAllVariableByID(db gorp.SqlExecutor, environmentID int64, args ...GetAllVariableFuncArg) ([]sdk.Variable, error) {
 	c := structarg{}
 	for _, f := range args {
 		f(&c)
@@ -272,7 +274,7 @@ func GetAllVariableByID(db database.Querier, environmentID int64, args ...GetAll
 }
 
 // InsertVariable Insert a new variable in the given environment
-func InsertVariable(db database.QueryExecuter, environmentID int64, variable *sdk.Variable) error {
+func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Variable) error {
 	query := `INSERT INTO environment_variable(environment_id, name, value, cipher_value, type)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 
@@ -352,7 +354,7 @@ func DeleteVariable(db database.Executer, envID int64, variableName string) erro
 }
 
 // DeleteAllVariable Delete all variables from the given pipeline
-func DeleteAllVariable(db database.Executer, environmentID int64) error {
+func DeleteAllVariable(db gorp.SqlExecutor, environmentID int64) error {
 	query := `DELETE FROM environment_variable
 	          WHERE environment_variable.environment_id = $1`
 	_, err := db.Exec(query, environmentID)

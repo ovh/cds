@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // GetUserEvents returns event from user notification
-func GetUserEvents(db database.QueryExecuter, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) []sdk.EventNotif {
+func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) []sdk.EventNotif {
 	//Load notif
 	userNotifs, errLoad := LoadUserNotificationSettings(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if errLoad != nil {
@@ -256,7 +256,7 @@ func ParseUserNotificationSettings(settings []byte) (map[sdk.UserNotificationSet
 }
 
 //LoadAllUserNotificationSettings load data from application_pipeline_notif
-func LoadAllUserNotificationSettings(db database.Querier, appID int64) ([]sdk.UserNotification, error) {
+func LoadAllUserNotificationSettings(db gorp.SqlExecutor, appID int64) ([]sdk.UserNotification, error) {
 	n := []sdk.UserNotification{}
 	query := `
 		SELECT 	application_pipeline_id, environment_id, settings, pipeline.id, pipeline.name, environment.name
@@ -291,7 +291,7 @@ func LoadAllUserNotificationSettings(db database.Querier, appID int64) ([]sdk.Us
 }
 
 //LoadUserNotificationSettings load data from application_pipeline_notif
-func LoadUserNotificationSettings(db database.Querier, appID, pipID, envID int64) (*sdk.UserNotification, error) {
+func LoadUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, envID int64) (*sdk.UserNotification, error) {
 	var n = &sdk.UserNotification{}
 	var settings string
 	query := `
@@ -326,7 +326,7 @@ func LoadUserNotificationSettings(db database.Querier, appID, pipID, envID int64
 }
 
 // DeleteNotification Delete a notifications for the given application/pipeline/environment
-func DeleteNotification(db database.QueryExecuter, appID, pipID, envID int64) error {
+func DeleteNotification(db gorp.SqlExecutor, appID, pipID, envID int64) error {
 	query := `
 		DELETE FROM application_pipeline_notif
 		USING 	application_pipeline, application, pipeline
@@ -340,7 +340,7 @@ func DeleteNotification(db database.QueryExecuter, appID, pipID, envID int64) er
 }
 
 //InsertOrUpdateUserNotificationSettings insert or update value in application_pipeline_notif
-func InsertOrUpdateUserNotificationSettings(db database.QueryExecuter, appID, pipID, envID int64, notif *sdk.UserNotification) error {
+func InsertOrUpdateUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, envID int64, notif *sdk.UserNotification) error {
 	query := `
 		SELECT 	count(1)
 		FROM  	application_pipeline_notif
@@ -408,7 +408,7 @@ func InsertOrUpdateUserNotificationSettings(db database.QueryExecuter, appID, pi
 	return nil
 }
 
-func pipelineInitiator(db database.Querier, username string) (*sdk.User, error) {
+func pipelineInitiator(db gorp.SqlExecutor, username string) (*sdk.User, error) {
 	query := `
 		SELECT data FROM "user"
 		WHERE "user".username = $1

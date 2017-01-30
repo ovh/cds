@@ -1,7 +1,6 @@
 package repositoriesmanager
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
@@ -32,7 +32,7 @@ func Initialize(secretClient secretbackend.Driver, keysDirectory, uiBaseURL, api
 	uiURL = uiBaseURL
 	apiURL = apiBaseURL
 
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db != nil {
 		secrets := secretClient.GetSecrets()
 		if secrets.Err() != nil {
@@ -182,7 +182,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 }
 
 //Init initializes all repositories with secrets comming from Vault
-func initRepositoriesManager(db *sql.DB, rm *sdk.RepositoriesManager, directory string, secrets map[string]string) error {
+func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, directory string, secrets map[string]string) error {
 	if rm.Type == sdk.Stash {
 		privateKey := secrets["privatekey"]
 		if privateKey == "" {

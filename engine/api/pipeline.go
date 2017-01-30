@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,14 +8,13 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -30,7 +28,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -98,7 +96,7 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 		return
 	}
 
-	pbs, err := pipeline.LoadPipelineBuildHistoryByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 2, string(sdk.StatusSuccess), "", pipeline.WithParameters())
+	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 2, string(sdk.StatusSuccess), "")
 	if err != nil {
 		log.Warning("rollbackPipelineHandler> Cannot load pipeline build history %s", err)
 		WriteError(w, r, sdk.ErrNoPipelineBuild)
@@ -142,7 +140,7 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	WriteJSON(w, r, newPb, http.StatusOK)
 }
 
-func loadDestEnvFromRunRequest(db *sql.DB, c *context.Context, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
+func loadDestEnvFromRunRequest(db *gorp.DbMap, c *context.Context, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
 	var envDest = &sdk.DefaultEnv
 	var err error
 	if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
@@ -164,7 +162,7 @@ func loadDestEnvFromRunRequest(db *sql.DB, c *context.Context, request *sdk.RunR
 	return envDest, nil
 }
 
-func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -266,7 +264,7 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 		}
 	}
 
-	builds, err := pipeline.LoadPipelineBuildHistoryByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch)
+	builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch)
 	if err != nil {
 		log.Warning("runPipelineWithLastParentHandler> Unable to find any successfull pipeline build")
 		WriteError(w, r, sdk.ErrNoParentBuildFound)
@@ -281,7 +279,7 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	runPipelineHandlerFunc(w, r, db, c, &request)
 }
 
-func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context, request *sdk.RunRequest) {
+func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context, request *sdk.RunRequest) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -332,21 +330,11 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 		if request.ParentEnvironmentID != 0 {
 			envID = request.ParentEnvironmentID
 		}
-		pb, err := pipeline.LoadPipelineBuild(db, request.ParentPipelineID, request.ParentApplicationID, request.ParentBuildNumber, envID)
+		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentBuildNumber)
 		if err != nil {
-			if err != sdk.ErrNoPipelineBuild {
-				log.Warning("runPipelineHandler> Cannot load parent pipeline build: %s\n", err)
-				WriteError(w, r, err)
-				return
-			}
-			log.Notice("Loading parent pipeline build %d from history", request.ParentPipelineID)
-			pb, err = pipeline.LoadPipelineHistoryBuild(db, request.ParentPipelineID, request.ParentApplicationID, request.ParentBuildNumber, envID)
-			if err != nil {
-				log.Warning("runPipelineHandler> Cannot load parent pipeline build from history: %s\n", err)
-				WriteError(w, r, err)
-				return
-			}
-
+			log.Warning("runPipelineHandler> Cannot load parent pipeline build: %s\n", err)
+			WriteError(w, r, err)
+			return
 		}
 		parentParams, err := queue.ParentBuildInfos(pb)
 		if err != nil {
@@ -361,7 +349,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 		version = pb.Version
 		//}
 		//save the pointer of the parent pipeline_build for trigger struct
-		parentPipelineBuild = &pb
+		parentPipelineBuild = pb
 	}
 
 	envDest, err := loadDestEnvFromRunRequest(db, c, request, projectKey)
@@ -413,7 +401,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 	WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	var request sdk.RunRequest
 
 	// Get args in body
@@ -434,7 +422,7 @@ func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 }
 
 // DEPRECATED
-func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
@@ -447,7 +435,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 		return
 	}
 
-	var pipelineAction sdk.Action
+	var job sdk.Job
 
 	// Get args in body
 	data, err := ioutil.ReadAll(r.Body)
@@ -457,22 +445,15 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 		return
 	}
 
-	err = json.Unmarshal(data, &pipelineAction)
+	err = json.Unmarshal(data, &job)
 	if err != nil {
 		log.Warning("updatePipelineActionHandler>Cannot unmarshal request: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	if pipelineActionID != pipelineAction.PipelineActionID {
+	if pipelineActionID != job.PipelineActionID {
 		log.Warning("updatePipelineActionHandler>Pipeline action does not match: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	args, err := json.Marshal(pipelineAction.Parameters)
-	if err != nil {
-		log.Warning("updatePipelineActionHandler>Cannot marshal parameters: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -492,7 +473,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 	}
 	defer tx.Rollback()
 
-	err = pipeline.UpdatePipelineAction(tx, pipelineAction, string(args))
+	err = pipeline.UpdatePipelineAction(tx, job)
 	if err != nil {
 		log.Warning("updatePipelineActionHandler> Cannot update in database: %s\n", err)
 		WriteError(w, r, err)
@@ -519,7 +500,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 	w.WriteHeader(http.StatusOK)
 }
 
-func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -542,32 +523,6 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 
 	log.Notice("deletePipelineActionHandler> Deleting action %d in %s/%s\n", pipelineActionID, vars["key"], vars["permPipelineKey"])
 
-	// Select all pipeline build where given pipelineAction has been run
-	query := `SELECT pipeline_build.id FROM pipeline_build
-						JOIN action_build ON action_build.pipeline_build_id = pipeline_build.id
-						WHERE action_build.pipeline_action_id = $1`
-	var ids []int64
-	rows, err := db.Query(query, pipelineActionID)
-	if err != nil {
-		log.Warning("deletePipelineActionHandler> cannot retrieves pipeline build: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-
-	for rows.Next() {
-		var id int64
-		err = rows.Scan(&id)
-		if err != nil {
-			rows.Close()
-			log.Warning("deletePipelineActionHandler> cannot retrieves pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-		ids = append(ids, id)
-	}
-	rows.Close()
-	log.Notice("deletePipelineActionHandler> Got %d PipelineBuild to archive\n", len(ids))
-
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deletePipelineActionHandler> Cannot begin transaction: %s\n", err)
@@ -575,16 +530,6 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 		return
 	}
 	defer tx.Rollback()
-
-	// For each pipeline build, archive it to get out of relationnal
-	for _, id := range ids {
-		err = archivist.ArchiveBuild(tx, id)
-		if err != nil {
-			log.Warning("deletePipelineActionHandler> cannot archive pipeline build: %s\n", err)
-			WriteError(w, r, err)
-			return
-		}
-	}
 
 	err = pipeline.DeletePipelineAction(tx, pipelineActionID)
 	if err != nil {
@@ -613,7 +558,7 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *sql
 	w.WriteHeader(http.StatusOK)
 }
 
-func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -666,7 +611,7 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	WriteJSON(w, r, pipelineDB, http.StatusOK)
 }
 
-func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -688,7 +633,7 @@ func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, 
 	WriteJSON(w, r, applications, http.StatusOK)
 }
 
-func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -779,14 +724,6 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 		}
 	}
 
-	for _, param := range p.Parameter {
-		if err := pipeline.InsertParameterInPipeline(tx, p.ID, &param); err != nil {
-			log.Warning("addPipelineHandler> Cannot add parameter %s: %s\n", param.Name, err)
-			WriteError(w, r, err)
-			return
-		}
-	}
-
 	for _, app := range p.AttachedApplication {
 		if err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 			log.Warning("addPipelineHandler> Cannot attach pipeline %d to %d: %s\n", app.ID, p.ID, err)
@@ -807,7 +744,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	w.WriteHeader(http.StatusOK)
 }
 
-func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -825,11 +762,11 @@ func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getPipelineTypeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelineTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	WriteJSON(w, r, sdk.AvailablePipelineType, http.StatusOK)
 }
 
-func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -855,7 +792,7 @@ func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	WriteJSON(w, r, pip, http.StatusOK)
 }
 
-func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -872,7 +809,6 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	envName := r.Form.Get("envName")
 	limitString := r.Form.Get("limit")
 	status := r.Form.Get("status")
-	stage := r.Form.Get("stage")
 	branchName := r.Form.Get("branchName")
 
 	var limit int
@@ -924,12 +860,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 		return
 	}
 
-	args := []pipeline.FuncArg{}
-	if stage == "true" {
-		args = append(args, pipeline.WithStages())
-	}
-
-	pbs, err := pipeline.LoadPipelineBuildHistoryByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName, args...)
+	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName)
 	if err != nil {
 		log.Warning("getPipelineHistoryHandler> cannot load pipeline %s history: %s\n", p.Name, err)
 		WriteError(w, r, err)
@@ -939,7 +870,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func deletePipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -996,91 +927,76 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *sql.DB, c *conte
 	w.WriteHeader(http.StatusOK)
 }
 
-func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
-
+func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 	stageIDString := vars["stageID"]
 
-	stageID, err := strconv.ParseInt(stageIDString, 10, 60)
-	if err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Stage ID must be an int: %s\n", err)
+	stageID, errInt := strconv.ParseInt(stageIDString, 10, 60)
+	if errInt != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Stage ID must be an int: %s\n", errInt)
 		WriteError(w, r, sdk.ErrInvalidID)
 		return
 	}
 
 	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot read body: %s\n", err)
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot read body: %s\n", errRead)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	a, err := sdk.NewAction("").FromJSON(data)
-	if err != nil {
+	var job sdk.Job
+	if err := json.Unmarshal(data, &job); err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot unmarshall body: %s\n", err)
 		WriteError(w, r, sdk.ErrWrongRequest)
 		return
 	}
 
-	proj, err := project.LoadProject(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, err)
-		WriteError(w, r, sdk.ErrNoProject)
+	proj, errP := project.LoadProject(db, projectKey, c.User, project.WithVariables(), project.WithApplications(1))
+	if errP != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, errP)
+		WriteError(w, r, errP)
 		return
 	}
 
-	pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s: %s\n", pipelineName, projectKey, err)
-		WriteError(w, r, sdk.ErrPipelineNotFound)
+	pip, errPip := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	if errPip != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s: %s\n", pipelineName, projectKey, errPip)
+		WriteError(w, r, errPip)
 		return
 	}
 
-	tx, err := database.DBMap(db).Begin()
-	if err != nil {
-		WriteError(w, r, err)
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		WriteError(w, r, errBegin)
 		return
 	}
 	defer tx.Rollback()
 
-	// Insert joined action
-	a.Type = sdk.JoinedAction
-	a.Enabled = true
-	if err := action.InsertAction(tx, a, false); err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot insert action: %s\n", err)
+	if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
+		log.Warning("addJoinedActionToPipelineHandler> Cannot insert job: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
 
-	// then attach it to pipeline
-	pipelineActionID, err := pipeline.InsertPipelineAction(tx, projectKey, pipelineName, a.ID, "[]", stageID)
-	if err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot insert in database: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-	a.PipelineActionID = pipelineActionID
-
-	warnings, err := sanity.CheckAction(tx, proj, pip, a.ID)
-	if err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot check action %d requirements: %s\n", a.ID, err)
-		WriteError(w, r, err)
+	warnings, errC := sanity.CheckAction(tx, proj, pip, job.Action.ID)
+	if errC != nil {
+		log.Warning("addActionToPipelineHandler> Cannot check action %d requirements: %s\n", job.Action.ID, errC)
+		WriteError(w, r, errC)
 		return
 	}
 
-	err = sanity.InsertActionWarnings(tx, proj.ID, pip.ID, a.ID, warnings)
-	if err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot insert warning for action %d: %s\n", a.ID, err)
+	if err := sanity.InsertActionWarnings(tx, proj.ID, pip.ID, job.Action.ID, warnings); err != nil {
+		log.Warning("addActionToPipelineHandler> Cannot insert warning for action %d: %s\n", job.Action.ID, err)
 		WriteError(w, r, err)
 		return
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		WriteError(w, r, err)
 		return
 	}
@@ -1088,10 +1004,10 @@ func addJoinedActionToPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.Delete(cache.Key("pipeline", projectKey, pipelineName))
 
-	WriteJSON(w, r, a, http.StatusOK)
+	WriteJSON(w, r, job, http.StatusOK)
 }
 
-func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -1100,7 +1016,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
 
-	proj, err := project.LoadProject(db, key, c.User)
+	proj, err := project.LoadProject(db, key, c.User, project.WithVariables(), project.WithApplications(1))
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot load project %s: %s\n", key, err)
 		WriteError(w, r, sdk.ErrNoProject)
@@ -1150,7 +1066,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 		return
 	}
 
-	tx, err := database.DBMap(db).Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot begin tx: %s\n", err)
 		WriteError(w, r, err)
@@ -1197,7 +1113,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 	WriteJSON(w, r, a, http.StatusOK)
 }
 
-func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -1252,7 +1168,7 @@ func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *c
 
 }
 
-func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	actionIDString := vars["actionID"]
@@ -1274,7 +1190,7 @@ func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *sql
 	WriteJSON(w, r, audit, http.StatusOK)
 }
 
-func getJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	actionIDString := vars["actionID"]
@@ -1298,19 +1214,9 @@ func getJoinedAction(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 	WriteJSON(w, r, a, http.StatusOK)
 }
 
-func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	var err error
 	var pbs, recent []sdk.PipelineBuild
-
-	if c.User.Admin {
-	} else {
-		pbs, err = pipeline.LoadUserBuildingPipelines(db, c.User.ID)
-	}
-	if err != nil {
-		log.Warning("getBuildingPipelines> cannot load Building pipelines: %s", err)
-		WriteError(w, r, err)
-		return
-	}
 
 	if c.User.Admin {
 		recent, err = pipeline.LoadRecentPipelineBuild(db)
@@ -1326,7 +1232,7 @@ func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 
@@ -1339,7 +1245,7 @@ func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *sql.D
 	WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1405,7 +1311,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 		return
 	}
 
-	pb, err := pipeline.LoadPipelineBuild(db, pip.ID, app.ID, buildNumber, env.ID)
+	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID, env.ID, buildNumber)
 	if err != nil {
 		errFinal := err
 		if err == sdk.ErrNoPipelineBuild {
@@ -1427,7 +1333,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	cache.DeleteAll(k)
 }
 
-func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1487,7 +1393,7 @@ func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *sql
 		}
 	}
 
-	pb, err := pipeline.LoadPipelineBuild(db, pip.ID, app.ID, buildNumber, env.ID, pipeline.WithParameters())
+	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID, env.ID, buildNumber)
 	if err != nil {
 		errFinal := err
 		if err == sdk.ErrNoPipelineBuild {
@@ -1504,10 +1410,23 @@ func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *sql
 		return
 	}
 
-	err = pipeline.RestartPipelineBuild(db, pb)
-	if err != nil {
+	tx, errbegin := db.Begin()
+	if errbegin != nil {
+		log.Warning("restartPipelineBuildHandler> Cannot start transaction: %s\n", errbegin)
+		WriteError(w, r, sdk.ErrNoEnvExecution)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := pipeline.RestartPipelineBuild(tx, pb); err != nil {
 		log.Warning("restartPipelineBuildHandler> cannot restart pb: %s\n", err)
 		WriteError(w, r, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("restartPipelineBuildHandler> Cannot commit transaction: %s\n", err)
+		WriteError(w, r, sdk.ErrNoEnvExecution)
 		return
 	}
 
@@ -1517,7 +1436,7 @@ func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *sql
 	WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1574,7 +1493,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 		return
 	}
 
-	pbs, err := pipeline.LoadPipelineBuildHistoryByApplicationAndPipeline(db, application.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
+	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, application.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
 	if err != nil {
 		log.Warning("getPipelineCommitsHandler> Cannot load pipeline build %s: \n", err)
 		WriteError(w, r, err)
@@ -1625,7 +1544,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 
 }
 
-func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]

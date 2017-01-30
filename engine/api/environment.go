@@ -1,12 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/context"
@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
@@ -33,7 +33,7 @@ func getEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, 
 	WriteJSON(w, r, environments, http.StatusOK)
 }
 
-func getEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	environmentName := vars["permEnvironmentName"]
@@ -51,7 +51,7 @@ func getEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 }
 
 // Deprecated
-func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -265,7 +265,7 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	WriteJSON(w, r, projectData, http.StatusOK)
 }
 
-func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -342,7 +342,7 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	WriteJSON(w, r, projectData, http.StatusOK)
 }
 
-func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -402,7 +402,7 @@ func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -522,7 +522,7 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB
 	WriteJSON(w, r, p, http.StatusOK)
 }
 
-func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]

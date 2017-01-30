@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -22,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func receiveHook(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -62,7 +62,7 @@ func receiveHook(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 	w.WriteHeader(http.StatusOK)
 }
 
-func addHook(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -92,7 +92,7 @@ func addHook(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Cont
 	WriteJSON(w, r, h, http.StatusOK)
 }
 
-func updateHookHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
@@ -119,7 +119,7 @@ func updateHookHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 	}
 }
 
-func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -141,7 +141,7 @@ func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *sql.
 	WriteJSON(w, r, hooks, http.StatusOK)
 }
 
-func getHooks(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -173,7 +173,7 @@ func getHooks(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Con
 	WriteJSON(w, r, hooks, http.StatusOK)
 }
 
-func deleteHook(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	idS := vars["id"]
 
@@ -214,7 +214,7 @@ func hookRecoverer() {
 
 //processHook is the core function for hook processing
 func processHook(h hook.ReceivedHook) error {
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		return fmt.Errorf("database not available")
 	}
@@ -245,6 +245,9 @@ func processHook(h hook.ReceivedHook) error {
 	found := false
 	//begin a tx
 	tx, err := db.Begin()
+	if err != nil {
+
+	}
 	defer tx.Rollback()
 
 	for i := range hooks {

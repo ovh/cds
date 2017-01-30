@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database"
@@ -17,7 +18,7 @@ import (
 )
 
 //IsAttached checks if an application is attach to a pipeline given its name
-func IsAttached(db database.Querier, projectID, appID int64, pipelineName string) (bool, error) {
+func IsAttached(db gorp.SqlExecutor, projectID, appID int64, pipelineName string) (bool, error) {
 	query := `SELECT count(1) 
 		from application_pipeline, pipeline 
 		WHERE application_pipeline.pipeline_id = pipeline.id
@@ -44,7 +45,7 @@ func AttachPipeline(db database.Executer, appID, pipelineID int64) error {
 }
 
 // GetAllPipelines Get all pipelines for the given application
-func GetAllPipelines(db database.Querier, projectKey, applicationName string) ([]sdk.Pipeline, error) {
+func GetAllPipelines(db gorp.SqlExecutor, projectKey, applicationName string) ([]sdk.Pipeline, error) {
 	pipelines := []sdk.Pipeline{}
 	query := `SELECT pipeline.name
 	          FROM application_pipeline
@@ -72,7 +73,7 @@ func GetAllPipelines(db database.Querier, projectKey, applicationName string) ([
 }
 
 // GetAllPipelinesByID Get all pipelines for the given application
-func GetAllPipelinesByID(db database.Querier, applicationID int64) ([]sdk.ApplicationPipeline, error) {
+func GetAllPipelinesByID(db gorp.SqlExecutor, applicationID int64) ([]sdk.ApplicationPipeline, error) {
 	appPipelines := []sdk.ApplicationPipeline{}
 	query := `SELECT pipeline.id, pipeline.name, application_pipeline.args, pipeline.type, application_pipeline.last_modified, pipeline.last_modified
 	          FROM application_pipeline
@@ -122,7 +123,7 @@ func GetAllPipelinesByID(db database.Querier, applicationID int64) ([]sdk.Applic
 }
 
 // DeleteAllApplicationPipeline Detach all pipeline
-func DeleteAllApplicationPipeline(db database.Executer, applicationID int64) error {
+func DeleteAllApplicationPipeline(db gorp.SqlExecutor, applicationID int64) error {
 	query := `
 		DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (
 			SELECT id FROM application_pipeline WHERE application_id = $1
@@ -145,7 +146,7 @@ func DeleteAllApplicationPipeline(db database.Executer, applicationID int64) err
 }
 
 // CountPipeline Count the number of application that use the given pipeline
-func CountPipeline(db database.Querier, pipelineID int64) (bool, error) {
+func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 	query := `SELECT count(*) FROM application_pipeline WHERE pipeline_id= $1`
 	nbApp := -1
 	err := db.QueryRow(query, pipelineID).Scan(&nbApp)
@@ -153,7 +154,7 @@ func CountPipeline(db database.Querier, pipelineID int64) (bool, error) {
 }
 
 // RemovePipeline Remove a pipeline from the application
-func RemovePipeline(db *sql.Tx, key, appName, pipelineName string) error {
+func RemovePipeline(db gorp.SqlExecutor, key, appName, pipelineName string) error {
 	query := `SELECT pipeline_build.id FROM pipeline_build
 							JOIN application ON application.id = pipeline_build.application_id
 							JOIN pipeline ON pipeline.id = pipeline_build.pipeline_id
@@ -174,7 +175,7 @@ func RemovePipeline(db *sql.Tx, key, appName, pipelineName string) error {
 	}
 
 	for _, id := range pipelineBuildIDs {
-		err := pipeline.DeletePipelineBuild(db, id)
+		err := pipeline.DeletePipelineBuildByID(db, id)
 		if err != nil {
 			return fmt.Errorf("RemovePipeline> cannot delete pb %d> %s", id, err)
 		}
@@ -244,7 +245,7 @@ func RemovePipeline(db *sql.Tx, key, appName, pipelineName string) error {
 }
 
 // UpdatePipelineApplication Update arguments passed to pipeline
-func UpdatePipelineApplication(db database.QueryExecuter, app *sdk.Application, pipelineID int64, params []sdk.Parameter) error {
+func UpdatePipelineApplication(db gorp.SqlExecutor, app *sdk.Application, pipelineID int64, params []sdk.Parameter) error {
 	data, err := json.Marshal(params)
 	if err != nil {
 		log.Warning("UpdatePipelineApplication> Cannot marshal parameters:  %s \n", err)
@@ -254,7 +255,7 @@ func UpdatePipelineApplication(db database.QueryExecuter, app *sdk.Application, 
 }
 
 // UpdatePipelineApplicationString Update application pipeline parameters
-func UpdatePipelineApplicationString(db database.QueryExecuter, app *sdk.Application, pipelineID int64, data string) error {
+func UpdatePipelineApplicationString(db gorp.SqlExecutor, app *sdk.Application, pipelineID int64, data string) error {
 	query := `
 		UPDATE application_pipeline SET 
 		args = $1,
@@ -272,8 +273,8 @@ func UpdatePipelineApplicationString(db database.QueryExecuter, app *sdk.Applica
 }
 
 // GetAllPipelineParam Get all the pipeline parameters
-//func GetAllPipelineParam(db database.Querier, applicationID, pipelineID int64, fargs ...FuncArg) ([]sdk.Parameter, error) {
-func GetAllPipelineParam(db database.Querier, applicationID, pipelineID int64) ([]sdk.Parameter, error) {
+//func GetAllPipelineParam(db gorp.SqlExecutor, applicationID, pipelineID int64, fargs ...FuncArg) ([]sdk.Parameter, error) {
+func GetAllPipelineParam(db gorp.SqlExecutor, applicationID, pipelineID int64) ([]sdk.Parameter, error) {
 	var params []sdk.Parameter
 	query := `SELECT args FROM application_pipeline WHERE application_id=$1 AND pipeline_id=$2`
 
@@ -291,7 +292,7 @@ func GetAllPipelineParam(db database.Querier, applicationID, pipelineID int64) (
 }
 
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
-func LoadCDTree(db *sql.DB, projectkey, appName string, user *sdk.User) ([]sdk.CDPipeline, error) {
+func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
 
 	// Select root trigger element + non triggered pipeline
@@ -410,7 +411,7 @@ func LoadCDTree(db *sql.DB, projectkey, appName string, user *sdk.User) ([]sdk.C
 	return cdTrees, nil
 }
 
-func getChild(db *sql.DB, parent *sdk.CDPipeline, user *sdk.User) error {
+func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error {
 	listTrigger := []sdk.CDPipeline{}
 
 	query := `

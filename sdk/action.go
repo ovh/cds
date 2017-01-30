@@ -9,18 +9,16 @@ import (
 
 // Action is the base element of CDS pipeline
 type Action struct {
-	ID               int64         `json:"id" yaml:"-"`
-	Name             string        `json:"name"`
-	Type             string        `json:"type" yaml:"-"` // Source - Build - Packaging - Deployment
-	Description      string        `json:"description" yaml:"desc,omitempty"`
-	Requirements     []Requirement `json:"requirements"`
-	Parameters       []Parameter   `json:"parameters"`
-	Actions          []Action      `json:"actions" yaml:"actions,omitempty"`
-	Enabled          bool          `json:"enabled" yaml:"-"`
-	PipelineStageID  int64         `json:"pipeline_stage_id" yaml:"-"`
-	PipelineActionID int64         `json:"pipeline_action_id" yaml:"-"`
-	Final            bool          `json:"final" yaml:"-"`
-	LastModified     int64         `json:"last_modified"`
+	ID           int64         `json:"id" yaml:"-"`
+	Name         string        `json:"name"`
+	Type         string        `json:"type" yaml:"-"` // Source - Build - Packaging - Deployment
+	Description  string        `json:"description" yaml:"desc,omitempty"`
+	Requirements []Requirement `json:"requirements"`
+	Parameters   []Parameter   `json:"parameters"`
+	Actions      []Action      `json:"actions" yaml:"actions,omitempty"`
+	Enabled      bool          `json:"enabled" yaml:"-"`
+	Final        bool          `json:"final" yaml:"-"`
+	LastModified int64         `json:"last_modified"`
 }
 
 // ActionAudit Audit on action
@@ -317,10 +315,10 @@ func NewScriptAction(content string) Action {
 }
 
 // AddJoinedAction creates a joined action in given pipeline
-func AddJoinedAction(projectKey, pipelineName string, stageID int64, a *Action) error {
-	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/joined", projectKey, pipelineName, stageID)
+func AddJob(projectKey, pipelineName string, j *Job) error {
+	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/joined", projectKey, pipelineName, j.PipelineStageID)
 
-	data, err := json.Marshal(a)
+	data, err := json.Marshal(j)
 	if err != nil {
 		return err
 	}
@@ -338,10 +336,10 @@ func AddJoinedAction(projectKey, pipelineName string, stageID int64, a *Action) 
 }
 
 // UpdateJoinedAction update given joined action in given pipeline stage
-func UpdateJoinedAction(projectKey, pipelineName string, stage int, a Action) error {
-	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/joined/%d", projectKey, pipelineName, stage, a.ID)
+func UpdateJoinedAction(projectKey, pipelineName string, stage int64, j *Job) error {
+	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/job/%d", projectKey, pipelineName, stage, j.PipelineActionID)
 
-	data, err := json.Marshal(a)
+	data, err := json.Marshal(j)
 	if err != nil {
 		return err
 	}

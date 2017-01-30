@@ -178,9 +178,9 @@ func AddPipeline(name string, projectKey string, pipelineType PipelineType, para
 	return nil
 }
 
-// DeletePipelineAction delete the given action from the given pipeline
-func DeletePipelineAction(projectKey string, pipelineName string, actionPipelineID int64) error {
-	path := fmt.Sprintf("/project/%s/pipeline/%s/action/%d", projectKey, pipelineName, actionPipelineID)
+// DeleteJob delete the given job from the given pipeline
+func DeleteJob(projectKey string, pipelineName string, jobID int64) error {
+	path := fmt.Sprintf("/project/%s/pipeline/%s/action/%d", projectKey, pipelineName, jobID)
 	data, code, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
@@ -199,22 +199,22 @@ func MoveActionInPipeline(projectKey, pipelineName string, actionPipelineID int6
 		return err
 	}
 	var stageID int64
-	var action Action
+	var job *Job
 	for _, stage := range pipeline.Stages {
 		if stage.BuildOrder == newOrder {
 			stageID = stage.ID
 		}
-		for _, actionInStage := range stage.Actions {
-			if actionInStage.PipelineActionID == actionPipelineID {
-				action = actionInStage
+		for _, jobInStage := range stage.Jobs {
+			if jobInStage.PipelineActionID == actionPipelineID {
+				job = &jobInStage
 			}
 		}
 	}
 
-	if stageID != 0 && action.ID != 0 {
-		action.PipelineStageID = stageID
+	if stageID != 0 && job != nil {
+		job.PipelineStageID = stageID
 
-		data, err := json.Marshal(action)
+		data, err := json.Marshal(job)
 		if err != nil {
 			return err
 		}

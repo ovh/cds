@@ -13,7 +13,7 @@ func Cmd() *cobra.Command {
 		Aliases: []string{"p", "pip"},
 	}
 
-	cmd.AddCommand(pipelineActionCmd)
+	cmd.AddCommand(pipelineJobCmd())
 	cmd.AddCommand(pipelineAddCmd())
 	cmd.AddCommand(pipelineDeleteCmd())
 	cmd.AddCommand(pipelineGroupCmd)

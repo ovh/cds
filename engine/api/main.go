@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/archivist"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
@@ -94,7 +93,6 @@ var mainCmd = &cobra.Command{
 		if err != nil {
 			log.Warning("Cannot connect to database: %s\n", err)
 		}
-
 		if db != nil {
 			if viper.GetBool("db_logging") {
 				log.UseDatabaseLogger(db)
@@ -135,7 +133,7 @@ var mainCmd = &cobra.Command{
 		router.init()
 		baseURL = viper.GetString("base_url")
 
-		if err := group.Initialize(db, viper.GetString("default_group")); err != nil {
+		if err := group.Initialize(database.DBMap(db), viper.GetString("default_group")); err != nil {
 			log.Critical("Cannot initialize groups: %s\n", err)
 		}
 
@@ -207,7 +205,6 @@ var mainCmd = &cobra.Command{
 			go event.DequeueEvent()
 		}
 
-		go archivist.Archive(viper.GetInt("interval_archive_seconds"), viper.GetInt("archived_build_hours"))
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller()
 		//go pipeline.HistoryCleaningRoutine(db)
@@ -333,7 +330,6 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/clone", POST(cloneApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/group", POST(addGroupInApplicationHandler), PUT(updateGroupsInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/group/{group}", PUT(updateGroupRoleOnApplicationHandler), DELETE(deleteGroupFromApplicationHandler))
-	router.Handle("/project/{key}/application/{permApplicationName}/history", GET(getApplicationHistoryHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/history/branch", GET(getPipelineBuildBranchHistoryHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/history/env/deploy", GET(getApplicationDeployHistoryHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline", GET(getPipelinesInApplicationHandler), PUT(updatePipelinesToApplicationHandler))
@@ -376,8 +372,9 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job/{jobID}", PUT(updateJobHandler), DELETE(deleteJobHandler))
 
 	// DEPRECATED
-	router.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{pipelineActionID}", PUT(updatePipelineActionHandler), DELETE(deletePipelineActionHandler))
-	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined", POST(addJoinedActionToPipelineHandler))
+	router.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{jobID}", PUT(updatePipelineActionHandler), DELETE(deleteJobHandler))
+
+	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined", POST(addJobToPipelineHandler))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined/{actionID}", GET(getJoinedAction), PUT(updateJoinedAction), DELETE(deleteJoinedAction))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined/{actionID}/audit", GET(getJoinedActionAudithandler))
 
@@ -555,12 +552,6 @@ func init() {
 	viper.BindPFlag("smtp_user", flags.Lookup("smtp-user"))
 	viper.BindPFlag("smtp_password", flags.Lookup("smtp-password"))
 	viper.BindPFlag("smtp_from", flags.Lookup("smtp-from"))
-
-	flags.Int("interval-archive-seconds", 3600, "Interval of archive routine, in seconds")
-	viper.BindPFlag("interval_archive_seconds", flags.Lookup("interval-archive-seconds"))
-
-	flags.Int("archived-build-hours", 24, "After n hours, build is archived")
-	viper.BindPFlag("archived_build_hours", flags.Lookup("archived-build-hours"))
 
 	flags.String("download-directory", "/app", "Directory prefix for cds binaries")
 	viper.BindPFlag("download_directory", flags.Lookup("download-directory"))

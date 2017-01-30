@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -77,7 +77,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	return ap, params, content, deferFunc, nil
 }
 
-func addPluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	//Upload file and get plugin information
 	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
@@ -111,11 +111,25 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	}
 	ap.ObjectPath = objectPath
 
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("addPluginHandler> Cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
 	//Insert in database
-	a, err := actionplugin.Insert(db, ap, params)
+	a, err := actionplugin.Insert(tx, ap, params)
 	if err != nil {
 		log.Warning("addPluginHandler> Error while inserting action %s in database: %s\n", ap.Name, err)
 		objectstore.DeletePlugin(*ap)
+		WriteError(w, r, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("addPluginHandler> Cannot commit transaction: %s\n", err)
 		WriteError(w, r, err)
 		return
 	}
@@ -124,7 +138,7 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *con
 	return
 }
 
-func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	//Upload file and get plugin information
 	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
@@ -206,8 +220,16 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	}
 	ap.ObjectPath = objectPath
 
+	tx, err := db.Begin()
+	if err != nil {
+		log.Warning("updatePluginHandler> Cannot start transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
+	defer tx.Rollback()
+
 	//Update in database
-	a, errDB := actionplugin.Update(db, ap, params, c.User.ID)
+	a, errDB := actionplugin.Update(tx, ap, params, c.User.ID)
 	if errDB != nil {
 		log.Warning("updatePluginHandler> Error while updating action %s in database: %s\n", ap.Name, err)
 
@@ -229,12 +251,17 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 		WriteError(w, r, errDB)
 		return
 	}
+	if err := tx.Commit(); err != nil {
+		log.Warning("updatePluginHandler> Cannot commit transaction: %s\n", err)
+		WriteError(w, r, err)
+		return
+	}
 
 	WriteJSON(w, r, a, http.StatusOK)
 	return
 }
 
-func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 
@@ -258,7 +285,7 @@ func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *
 	}
 }
 
-func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 

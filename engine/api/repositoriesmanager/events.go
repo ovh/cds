@@ -3,6 +3,7 @@ package repositoriesmanager
 import (
 	"fmt"
 
+	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -15,18 +16,18 @@ import (
 func ReceiveEvents() {
 
 	for {
-		db := database.DB()
+		db := database.DBMap(database.DB())
 		if db != nil {
 			e := sdk.Event{}
 			cache.Dequeue("events_repositoriesmanager", &e)
 			if err := processEvent(db, e); err != nil {
-				log.Critical("ReceiveEvents> err while processing:%s", err)
+				log.Critical("ReceiveEvents> err while processing %s : %v", err, e)
 			}
 		}
 	}
 }
 
-func processEvent(db database.Querier, event sdk.Event) error {
+func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
 	log.Debug("repositoriesmanager>processEvent> receive: type:%s all: %+v", event.EventType, event)
 
 	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
@@ -47,7 +48,7 @@ func processEvent(db database.Querier, event sdk.Event) error {
 
 	c, erra := AuthorizedClient(db, eventpb.ProjectKey, eventpb.RepositoryManagerName)
 	if erra != nil {
-		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient > err:%s", erra)
+		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, erra)
 	}
 
 	if err := c.SetStatus(event); err != nil {

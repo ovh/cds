@@ -1,7 +1,8 @@
 package application
 
 import (
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
@@ -14,7 +15,7 @@ import (
 )
 
 //Import is able to create a new application and all its components
-func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, user *sdk.User, msgChan chan<- msg.Message) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, user *sdk.User, msgChan chan<- msg.Message) error {
 	//Save application in database
 	if err := InsertApplication(db, proj, app); err != nil {
 		return err
@@ -75,7 +76,7 @@ func Import(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, 
 }
 
 //importVariables is able to create variable on an existing application
-func importVariables(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, user *sdk.User, msgChan chan<- msg.Message) error {
+func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, user *sdk.User, msgChan chan<- msg.Message) error {
 
 	for _, newVar := range app.Variable {
 		var errCreate error
@@ -105,7 +106,7 @@ func importVariables(db database.QueryExecuter, proj *sdk.Project, app *sdk.Appl
 }
 
 //ImportPipelines is able to create pipelines on an existing application
-func ImportPipelines(db database.QueryExecuter, proj *sdk.Project, app *sdk.Application, msgChan chan<- msg.Message) error {
+func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, msgChan chan<- msg.Message) error {
 	//Import pipelines
 	for i := range app.Pipelines {
 		//Import pipeline

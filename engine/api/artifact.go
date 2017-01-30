@@ -2,12 +2,12 @@ package main
 
 import (
 	"crypto/rand"
-	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -36,7 +36,6 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	//get a ref to the parsed multipart form
 	m := r.MultipartForm
 	envName := m.Value["env"][0]
@@ -149,7 +148,7 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c
 	}
 }
 
-func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	artifactIDS := vars["id"]
 
@@ -180,7 +179,7 @@ func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *sql.DB,
 	}
 }
 
-func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -241,7 +240,7 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *sql.D
 	WriteJSON(w, r, art, http.StatusOK)
 }
 
-func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -301,7 +300,7 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 	WriteJSON(w, r, art, http.StatusOK)
 }
 
-func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 

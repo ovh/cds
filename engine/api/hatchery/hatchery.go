@@ -7,15 +7,15 @@ import (
 	"math"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // InsertHatchery registers in database new hatchery
-func InsertHatchery(db *sql.DB, h *sdk.Hatchery) error {
-	dbmap := database.DBMap(db)
+func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	tx, err := dbmap.Begin()
 	if err != nil {
 		return err
@@ -60,8 +60,7 @@ func InsertHatchery(db *sql.DB, h *sdk.Hatchery) error {
 }
 
 // DeleteHatchery removes from database given hatchery and linked model
-func DeleteHatchery(db *sql.DB, id int64, workerModelID int64) error {
-	dbmap := database.DBMap(db)
+func DeleteHatchery(dbmap *gorp.DbMap, id int64, workerModelID int64) error {
 	tx, err := dbmap.Begin()
 	if err != nil {
 		return err
@@ -91,13 +90,13 @@ func DeleteHatchery(db *sql.DB, id int64, workerModelID int64) error {
 }
 
 // Exists returns an error is hatchery with given id does not exists
-func Exists(db *sql.DB, id int64) error {
+func Exists(db gorp.SqlExecutor, id int64) error {
 	query := `SELECT id FROM hatchery WHERE id = $1`
 	return db.QueryRow(query, id).Scan(&id)
 }
 
 // LoadDeadHatcheries load hatchery with refresh last beat > timeout
-func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]sdk.Hatchery, error) {
+func LoadDeadHatcheries(db gorp.SqlExecutor, timeout float64) ([]sdk.Hatchery, error) {
 	var hatcheries []sdk.Hatchery
 	query := `	SELECT id, name, last_beat, group_id, worker_model_id
 				FROM hatchery
@@ -127,7 +126,7 @@ func LoadDeadHatcheries(db *sql.DB, timeout float64) ([]sdk.Hatchery, error) {
 }
 
 // LoadHatchery fetch hatchery info from database given UID
-func LoadHatchery(db *sql.DB, uid string) (*sdk.Hatchery, error) {
+func LoadHatchery(db gorp.SqlExecutor, uid string) (*sdk.Hatchery, error) {
 	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
 							FROM hatchery
 							LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
@@ -148,7 +147,7 @@ func LoadHatchery(db *sql.DB, uid string) (*sdk.Hatchery, error) {
 }
 
 // LoadHatcheryByID fetch hatchery info from database given ID
-func LoadHatcheryByID(db *sql.DB, id int64) (*sdk.Hatchery, error) {
+func LoadHatcheryByID(db gorp.SqlExecutor, id int64) (*sdk.Hatchery, error) {
 	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
 			FROM hatchery
 			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
@@ -172,7 +171,7 @@ func LoadHatcheryByID(db *sql.DB, id int64) (*sdk.Hatchery, error) {
 }
 
 // LoadHatcheries retrieves in database all registered hatcheries
-func LoadHatcheries(db *sql.DB) ([]sdk.Hatchery, error) {
+func LoadHatcheries(db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
 	var hatcheries []sdk.Hatchery
 
 	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
@@ -202,7 +201,7 @@ func LoadHatcheries(db *sql.DB) ([]sdk.Hatchery, error) {
 }
 
 // RefreshHatchery Update hatchery last_beat
-func RefreshHatchery(db *sql.DB, hatchID string) error {
+func RefreshHatchery(db gorp.SqlExecutor, hatchID string) error {
 	query := `UPDATE hatchery SET last_beat = NOW() WHERE id = $1`
 	res, err := db.Exec(query, hatchID)
 	if err != nil {

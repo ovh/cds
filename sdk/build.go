@@ -7,22 +7,18 @@ import (
 )
 
 // ActionBuild represents an action to be run
-type ActionBuild struct {
-	ID               int64         `json:"id"`
-	BuildNumber      int           `json:"build_number"`
-	PipelineBuildID  int64         `json:"pipeline_build_id"`
-	PipelineID       int64         `json:"pipeline_id"`
-	ActionName       string        `json:"action_name"`
-	PipelineActionID int64         `json:"pipeline_action_id"`
-	PipelineStageID  int64         `json:"-"`
-	Args             []Parameter   `json:"args"`
-	Status           Status        `json:"status"`
-	Requirements     []Requirement `json:"requirements"`
-	Queued           time.Time     `json:"queued,omitempty"`
-	Start            time.Time     `json:"start,omitempty"`
-	Done             time.Time     `json:"done,omitempty"`
-	Logs             string        `json:"logs,omitempty"`
-	Model            string        `json:"model,omitempty"`
+type PipelineBuildJob struct {
+	ID              int64       `json:"id" db:"id"`
+	Job             Job         `json:"job" db:"-"`
+	JobJSON         []byte      `json:"-" db:"job"`
+	Parameters      []Parameter `json:"parameters,omitempty" db:"-"`
+	ParametersJSON  []byte      `json:"-,omitempty" db:"parameters"`
+	Status          string      `json:"status"  db:"status"`
+	Queued          time.Time   `json:"queued,omitempty" db:"queued"`
+	Start           time.Time   `json:"start,omitempty" db:"start"`
+	Done            time.Time   `json:"done,omitempty" db:"done"`
+	Model           string      `json:"model,omitempty" db:"model"`
+	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
 }
 
 // BuildState define struct returned when looking for build state informations
@@ -77,8 +73,8 @@ const (
 )
 
 // GetBuildQueue retrieves current CDS build in queue
-func GetBuildQueue() ([]ActionBuild, error) {
-	var q []ActionBuild
+func GetBuildQueue() ([]PipelineBuildJob, error) {
+	var q []PipelineBuildJob
 
 	path := "/queue?status=all"
 

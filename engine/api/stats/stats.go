@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // TestEvent inserts in stats the max number of tests for each application and total in stats
-func TestEvent(db *sql.DB, projectID, appID int64, tests sdk.Tests) {
+func TestEvent(db gorp.SqlExecutor, projectID, appID int64, tests sdk.Tests) {
 	query := `UPDATE stats SET unit_test = unit_test + $1 WHERE day = current_date`
 
 	// Update global daily stats table
@@ -39,7 +40,7 @@ func TestEvent(db *sql.DB, projectID, appID int64, tests sdk.Tests) {
 }
 
 // PipelineEvent inserts in stats table data related to build
-func PipelineEvent(db database.QueryExecuter, t sdk.PipelineType, projectID, appID int64) {
+func PipelineEvent(db gorp.SqlExecutor, t sdk.PipelineType, projectID, appID int64) {
 
 	// Update stats table
 	query := `UPDATE stats SET %s = %s + 1
@@ -69,7 +70,7 @@ func PipelineEvent(db database.QueryExecuter, t sdk.PipelineType, projectID, app
 	}
 }
 
-func checkActivityRow(db database.QueryExecuter, projectID, appID int64) error {
+func checkActivityRow(db gorp.SqlExecutor, projectID, appID int64) error {
 	query := `SELECT day FROM activity
 	WHERE day = current_date AND project_id = $1 AND application_id = $2`
 	var d time.Time

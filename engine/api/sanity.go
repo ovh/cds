@@ -1,8 +1,9 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -10,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getUserWarnings(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getUserWarnings(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	al := r.Header.Get("Accept-Language")
 

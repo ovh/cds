@@ -10,6 +10,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-gorp/gorp"
+	"gopkg.in/ldap.v2"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
@@ -17,8 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-
-	"gopkg.in/ldap.v2"
 )
 
 const errUserNotFound = "user not found"
@@ -218,7 +219,7 @@ func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error
 }
 
 func (c *LDAPClient) searchAndInsertOrUpdateUser(username string) (*sdk.User, error) {
-	db := database.DB()
+	db := database.DBMap(database.DB())
 	if db == nil {
 		return nil, sdk.ErrServiceUnavailable
 	}
@@ -322,8 +323,8 @@ func (c *LDAPClient) AuthentifyUser(u *sdk.User, password string) (bool, error) 
 
 //GetCheckAuthHeaderFunc returns the func to heck http headers.
 //Options is a const to switch from session to basic auth or both
-func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *sql.DB, headers http.Header, ctx *context.Context) error {
-	return func(db *sql.DB, headers http.Header, ctx *context.Context) error {
+func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
+	return func(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
 		//Check if its a worker
 		if h := headers.Get(sdk.AuthHeader); h != "" {
 			if err := checkWorkerAuth(db, h, ctx); err != nil {
@@ -345,7 +346,7 @@ func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *sql.DB
 	}
 }
 
-func (c *LDAPClient) checkUserSessionAuth(db *sql.DB, headers http.Header, ctx *context.Context) error {
+func (c *LDAPClient) checkUserSessionAuth(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
 	sessionToken := headers.Get(sdk.SessionTokenHeader)
 	if sessionToken == "" {
 		return fmt.Errorf("no session header")

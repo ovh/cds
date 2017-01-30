@@ -1,8 +1,9 @@
 package application
 
 import (
-	"database/sql"
 	"regexp"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -11,7 +12,7 @@ import (
 )
 
 // TriggerPipeline linked to received hook
-func TriggerPipeline(tx *sql.Tx, h sdk.Hook, branch string, hash string, author string, p *sdk.Pipeline, projectData *sdk.Project) (bool, error) {
+func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string, author string, p *sdk.Pipeline, projectData *sdk.Project) (bool, error) {
 
 	// Create pipeline args
 	var args []sdk.Parameter

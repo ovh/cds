@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -87,7 +88,7 @@ func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Retrieve build info
 	var proj, app, pip, bnS, env string
-	for _, p := range ab.Args {
+	for _, p := range pbJob.Parameters {
 		switch p.Name {
 		case "cds.pipeline":
 			pip = p.Value
@@ -108,6 +109,7 @@ func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 		err = fmt.Errorf("HTTP %d", code)
 	}
 	if err != nil {
+		log.Critical("addBuildVarHandler> Cannot export variable: %s", err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

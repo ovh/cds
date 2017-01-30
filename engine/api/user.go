@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/auth"
@@ -21,7 +22,7 @@ import (
 )
 
 // DeleteUserHandler removes a user
-func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	username := vars["name"]
 
@@ -56,7 +57,7 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 }
 
 // GetUserHandler returns a specific user's information
-func GetUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func GetUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	username := vars["name"]
 
@@ -79,7 +80,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *conte
 }
 
 // getUserGroupsHandler returns groups of the user
-func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	log.Debug("getUserGroupsHandler> get groups for user %d", c.User.ID)
 
@@ -119,7 +120,7 @@ func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c 
 }
 
 // UpdateUserHandler modifies user informations
-func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	vars := mux.Vars(r)
 	username := vars["name"]
 
@@ -160,7 +161,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *co
 }
 
 // GetUsers fetches all users from databases
-func GetUsers(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func GetUsers(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	users, err := user.LoadUsers(db)
 	if err != nil {
 		log.Warning("GetUsers: Cannot load user from db: %s\n", err)
@@ -172,7 +173,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Con
 }
 
 // AddUser creates a new user and generate verification email
-func AddUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func AddUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	//returns forbidden if LDAP mode is activated
 	if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
 		WriteError(w, r, sdk.ErrForbidden)
@@ -264,7 +265,7 @@ func AddUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Cont
 }
 
 // ResetUser deletes auth secret, generates new ones and send them via email
-func ResetUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func ResetUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	//returns forbidden if LDAP mode is activated
 	if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
 		WriteError(w, r, sdk.ErrForbidden)
@@ -324,7 +325,7 @@ func ResetUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Co
 }
 
 //AuthModeHandler returns the auth mode : local ok ldap
-func AuthModeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func AuthModeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	mode := "local"
 	if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
 		mode = "ldap"
@@ -336,7 +337,7 @@ func AuthModeHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *cont
 }
 
 // ConfirmUser verify token send via email and mark user as verified
-func ConfirmUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	//returns forbidden if LDAP mode is activated
 	if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
 		WriteError(w, r, sdk.ErrForbidden)
@@ -405,7 +406,7 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.
 }
 
 // LoginUser take user credentials and creates a auth token
-func LoginUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get body
 	data, errr := ioutil.ReadAll(r.Body)
 	if errr != nil {
@@ -487,7 +488,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Co
 	WriteJSON(w, r, response, http.StatusOK)
 }
 
-func importUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func importUsersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 	// Get body
 	data, errr := ioutil.ReadAll(r.Body)
 	if errr != nil {

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/log"
@@ -75,7 +76,7 @@ func (b *Broker) Start() {
 
 // This Broker method handles and HTTP request at the "/events/" URL.
 //
-func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *sql.DB, c *context.Context) {
+func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
 
 	// Make sure that the writer supports flushing.
 	//

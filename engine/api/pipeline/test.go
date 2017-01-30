@@ -4,12 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadTestResults retrieves tests on a specific build in database
-func LoadTestResults(db *sql.DB, pbID int64) (sdk.Tests, error) {
+func LoadTestResults(db gorp.SqlExecutor, pbID int64) (sdk.Tests, error) {
 	query := `SELECT tests FROM pipeline_build_test WHERE pipeline_build_id = $1`
 	t := sdk.Tests{}
 	var data string
@@ -48,7 +50,7 @@ func InsertTestResults(db database.Executer, pbID int64, tests sdk.Tests) error 
 }
 
 // UpdateTestResults update test results of a specific pipeline build in database
-func UpdateTestResults(db *sql.DB, pbID int64, tests sdk.Tests) error {
+func UpdateTestResults(db *gorp.DbMap, pbID int64, tests sdk.Tests) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -87,7 +89,7 @@ func DeleteTestResults(db database.Executer, pbID int64) error {
 }
 
 // DeletePipelineTestResults removes from database test results for a specific pipeline
-func DeletePipelineTestResults(db database.Executer, pipID int64) error {
+func DeletePipelineTestResults(db gorp.SqlExecutor, pipID int64) error {
 	query := `DELETE FROM pipeline_build_test WHERE pipeline_build_id IN
 		(SELECT id FROM pipeline_build WHERE pipeline_id = $1)`
 

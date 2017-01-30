@@ -1,12 +1,14 @@
 package group
 
 import (
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadAllProjectGroupByRole load all group for the given project and role
-func LoadAllProjectGroupByRole(db database.Querier, projectID int64, role int) ([]sdk.GroupPermission, error) {
+func LoadAllProjectGroupByRole(db gorp.SqlExecutor, projectID int64, role int) ([]sdk.GroupPermission, error) {
 	groupsPermission := []sdk.GroupPermission{}
 	query := `
 		SELECT project_group.group_id, project_group.role
@@ -84,7 +86,7 @@ func deleteGroupProjectByGroup(db database.Executer, group *sdk.Group) error {
 }
 
 // CheckGroupInProject  Check if the group is already attached to the project
-func CheckGroupInProject(db database.Querier, projectID, groupID int64) (bool, error) {
+func CheckGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (bool, error) {
 	query := `SELECT COUNT(group_id) FROM project_group WHERE project_id = $1 AND group_id = $2`
 
 	var nb int64

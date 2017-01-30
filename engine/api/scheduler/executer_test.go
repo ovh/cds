@@ -7,15 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestExecuterRun(t *testing.T) {
-	_db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	db := database.DBMap(_db)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
 	pkey := test.RandomString(t, 10)
