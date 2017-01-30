@@ -107,14 +107,17 @@ func request(method string, path string, args []byte) ([]byte, int, error) {
 
 //Log a a struct to send log to CDS API
 type Log struct {
-	ActionID int64  `json:"action_build_id"`
-	Step     string `json:"step"`
-	Value    string `json:"value"`
+	ID              int64     `json:"id"`
+	ActionBuildID   int64     `json:"action_build_id"`
+	PipelineBuildID int64     `json:"pipeline_build_id"`
+	Timestamp       time.Time `json:"timestamp"`
+	Step            string    `json:"step"`
+	Value           string    `json:"value"`
 }
 
 //SendLog send logs to CDS engine for the current
-func SendLog(a IAction, step, format string, i ...interface{}) error {
-	if a == nil {
+func SendLog(j IJob, step, format string, i ...interface{}) error {
+	if j == nil {
 		//If action is nil: do nothing
 		return nil
 	}
@@ -122,9 +125,10 @@ func SendLog(a IAction, step, format string, i ...interface{}) error {
 
 	s := fmt.Sprintf(format, i...)
 	l := Log{
-		ActionID: a.ID(),
-		Step:     step,
-		Value:    s,
+		ActionBuildID:   j.ID(),
+		PipelineBuildID: j.PipelineBuildID(),
+		Step:            step,
+		Value:           s,
 	}
 	logs := []Log{l}
 	data, err := json.Marshal(logs)
@@ -132,7 +136,7 @@ func SendLog(a IAction, step, format string, i ...interface{}) error {
 		return err
 	}
 
-	path := fmt.Sprintf("/build/%d/log", logs[0].ActionID)
+	path := fmt.Sprintf("/build/%d/log", logs[0].ActionBuildID)
 	_, _, err = request("POST", path, data)
 	if err != nil {
 		return err

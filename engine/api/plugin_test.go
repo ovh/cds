@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const dummyBinaryFile = "https://dl.plik.ovh/file/cMG2Mda94p6b3aej/CdJscEKa16o5NnHt/dummy"
+const dummyBinaryFile = "https://dl.plik.ovh/file/7d0jJMNKaFEFc8OI/A5GlNec32iismk9s/dummy_plugin"
 
 func postFile(t *testing.T,
 	db *gorp.DbMap,
