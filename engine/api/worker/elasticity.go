@@ -1,14 +1,13 @@
 package worker
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"database/sql"
 
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
