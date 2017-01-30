@@ -393,6 +393,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 		}
 		pb.Pipeline.ProjectKey = key
 
+		pb.Status = newStatus
 		event.PublishPipelineBuild(db, pb, previous)
 	}
 
