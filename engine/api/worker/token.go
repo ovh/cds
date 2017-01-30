@@ -3,6 +3,7 @@ package worker
 import (
 	"crypto/rand"
 	"crypto/sha512"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"time"
@@ -55,7 +56,7 @@ func InsertToken(db gorp.SqlExecutor, groupID int64, token string, e sdk.Expirat
 }
 
 // LoadToken fetch token infos from database
-func LoadToken(db gorp.SqlExecutor, token string) (Token, error) {
+func LoadToken(db gorp.SqlExecutor, token string) (*Token, error) {
 	query := `SELECT group_id, expiration, created FROM token
 		WHERE token = $1`
 
@@ -66,11 +67,13 @@ func LoadToken(db gorp.SqlExecutor, token string) (Token, error) {
 	var exp int
 	err := db.QueryRow(query, hashed).Scan(&t.GroupID, &exp, &t.Created)
 	if err != nil {
-		return t, err
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrInvalidToken
+		}
+		return nil, err
 	}
 	t.Token = token
 	t.Expiration = sdk.Expiration(exp)
 
-	return t, nil
-
+	return &t, nil
 }

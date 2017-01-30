@@ -93,6 +93,7 @@ var (
 	ErrParameterExists                       = &Error{ID: 79, Status: http.StatusConflict}
 	ErrNoHatchery                            = &Error{ID: 80, Status: http.StatusNotFound}
 	ErrInvalidWorkerStatus                   = &Error{ID: 81, Status: http.StatusNotFound}
+	ErrInvalidToken                          = &Error{ID: 82, Status: http.StatusUnauthorized}
 )
 
 // SupportedLanguages on API errors
@@ -185,6 +186,7 @@ You can safely use them in a String or Text parameter`,
 	ErrParameterExists.ID:                       "parameter already exists",
 	ErrNoHatchery.ID:                            "No hatchery found",
 	ErrInvalidWorkerStatus.ID:                   "Worker status is invalid",
+	ErrInvalidToken.ID:                          "Invalid token",
 }
 
 var errorsFrench = map[int]string{
@@ -271,6 +273,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrParameterExists.ID:                       "le paramètre existe déjà",
 	ErrNoHatchery.ID:                            "La hatchery n'existe pas",
 	ErrInvalidWorkerStatus.ID:                   "Le status du worker est incorrect",
+	ErrInvalidToken.ID:                          "Token non valide",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)

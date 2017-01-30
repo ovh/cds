@@ -55,7 +55,7 @@ func (c *CDSActionRPC) Parameters() Parameters {
 }
 
 //Run makes rpc call to Run() on client side
-func (c *CDSActionRPC) Run(a IAction) Result {
+func (c *CDSActionRPC) Run(a IJob) Result {
 	var resp Result
 	err := c.client.Call("Plugin.Run", &a, &resp)
 	if err != nil {
