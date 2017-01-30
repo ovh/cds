@@ -403,8 +403,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	envs, errE := environment.LoadEnvironments(db, projectKey, true, c.User)
 	if errProj != nil {
 		log.Warning("cloneApplicationHandler> Cannot load Environments %s: %s\n", projectKey, errProj)
-		WriteError(w, r, errE)
-		return
+		return errE
 	}
 	projectData.Environments = envs
 
@@ -596,8 +595,7 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 
 	if err := sanity.CheckApplication(tx, p, app); err != nil {
 		log.Warning("updateApplicationHandler: Cannot check application sanity: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {

@@ -315,8 +315,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	proj.Environments, err = environment.LoadEnvironments(db, projectKey, true, c.User)
 	if err != nil {
 		log.Warning("applyTemplatesHandler: Cannot load environments: %s\n", projectKey, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	// Load groups on the project

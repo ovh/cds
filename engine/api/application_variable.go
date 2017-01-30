@@ -28,7 +28,7 @@ func getVariablesAuditInApplicationHandler(w http.ResponseWriter, r *http.Reques
 	audits, err := application.GetVariableAudit(db, key, appName)
 	if err != nil {
 		log.Warning("getVariablesAuditInApplicationHandler: Cannot get variable audit for application %s: %s\n", appName, err)
-return err
+		return err
 
 	}
 	return WriteJSON(w, r, audits, http.StatusOK)
@@ -113,8 +113,7 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	if err := sanity.CheckApplication(tx, p, app); err != nil {
 		log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
@@ -167,15 +166,13 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	p, err := project.LoadProject(db, key, c.User)
 	if err != nil {
 		log.Warning("deleteVariableInApplicationHandler: Cannot load project: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	envs, err := environment.LoadEnvironments(db, key, true, c.User)
 	if err != nil {
 		log.Warning("deleteVariableInApplicationHandler: Cannot load environments: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	p.Environments = envs
@@ -207,8 +204,7 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 
 	if err := sanity.CheckApplication(tx, p, app); err != nil {
 		log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	err = tx.Commit()
@@ -244,8 +240,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 	p.Environments, err = environment.LoadEnvironments(db, key, true, c.User)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot load environments: %s\n", key, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	// Get body
@@ -348,8 +343,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 
 	if err := sanity.CheckApplication(db, p, app); err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
@@ -371,8 +365,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	p.Environments, err = environment.LoadEnvironments(db, key, true, c.User)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot load environments: %s\n", key, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	// Get body
@@ -437,8 +430,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 
 	if err := sanity.CheckApplication(db, p, app); err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
@@ -462,8 +454,7 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 	p.Environments, err = environment.LoadEnvironments(db, key, true, c.User)
 	if err != nil {
 		log.Warning("addVariableInApplicationHandler: Cannot load environments: %s\n", key, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	// Get body
@@ -530,12 +521,10 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 
 	if err := sanity.CheckApplication(db, p, app); err != nil {
 		log.Warning("addVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 	return WriteJSON(w, r, app, http.StatusOK)
-	return nil
 }
