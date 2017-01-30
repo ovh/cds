@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -30,8 +31,7 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 	proj, errProj := project.LoadProject(db, key, c.User, project.WithApplications(1), project.WithVariables())
 	if errProj != nil {
 		log.Warning("importNewEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
-		WriteError(w, r, errProj)
-		return
+		return errProj
 	}
 
 	var payload = &exportentities.Environment{}
@@ -40,15 +40,13 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
 		log.Warning("importNewEnvironmentHandler> Unable to read body : %s\n", errRead)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	f, errF := exportentities.GetFormat(format)
 	if errF != nil {
 		log.Warning("importNewEnvironmentHandler> Unable to get format : %s\n", errF)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	var errorParse error
@@ -61,8 +59,7 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	if errorParse != nil {
 		log.Warning("importNewEnvironmentHandler> Cannot parsing: %s\n", errorParse)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	env := payload.Environment()
@@ -71,8 +68,7 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 		g, err := group.LoadGroup(db, eg.Group.Name)
 		if err != nil {
 			log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 		eg.Group = *g
 	}
@@ -83,16 +79,14 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
 		log.Warning("importNewEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
-		WriteError(w, r, errBegin)
-		return
+		return errBegin
 	}
 
 	defer tx.Rollback()
 
 	if err := environment.Import(db, proj, env, msgChan); err != nil {
 		log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	close(msgChan)
@@ -114,19 +108,17 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
 		log.Warning("importNewEnvironmentHandler> Cannot check warnings: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("importNewEnvironmentHandler> Cannot commit transaction: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, msgListString, http.StatusOK)
+	return WriteJSON(w, r, msgListString, http.StatusOK)
 }
 
-func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
-
+func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return errors.New("Not yet implemented")
 }
