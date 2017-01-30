@@ -4,8 +4,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// Context gather information about http call origin
-type Context struct {
+// Ctx gather information about http call origin
+type Ctx struct {
 	Agent  sdk.Agent
 	User   *sdk.User
 	Worker sdk.Worker

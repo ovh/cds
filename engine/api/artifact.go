@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -34,7 +34,7 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	if err != nil {
 		log.Warning("uploadArtifactHandler: Error parsing multipart form: %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+
 	}
 	//get a ref to the parsed multipart form
 	m := r.MultipartForm
@@ -53,22 +53,19 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	if fileName == "" {
 		log.Warning("uploadArtifactHandler> %s header is not set", sdk.ArtifactFileName)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
 	if errP != nil {
 		log.Warning("uploadArtifactHandler> cannot load pipeline %s-%s: %s\n", project, pipelineName, errP)
-		WriteError(w, r, errP)
-		return
+		return errP
 	}
 
 	a, errA := application.LoadApplicationByName(db, project, appName)
 	if errA != nil {
 		log.Warning("uploadArtifactHandler> cannot load application %s-%s: %s\n", project, appName, errA)
-		WriteError(w, r, errA)
-		return
+		return errA
 	}
 
 	var env *sdk.Environment
@@ -79,29 +76,26 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		env, errE = environment.LoadEnvironmentByName(db, project, envName)
 		if errE != nil {
 			log.Warning("uploadArtifactHandler> Cannot load environment %s: %s\n", envName, errE)
-			WriteError(w, r, errE)
-			return
+			return errE
 		}
 	}
 
 	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
 		log.Warning("uploadArtifactHandler> No enought right on this environment %s: \n", envName)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
+
 	}
 
 	buildNumber, errI := strconv.Atoi(buildNumberString)
 	if errI != nil {
 		log.Warning("uploadArtifactHandler> BuildNumber must be an integer: %s\n", errI)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	hash, errG := generateHash()
 	if err != nil {
 		log.Warning("uploadArtifactHandler> Could not generate hash: %s\n", errG)
-		WriteError(w, r, errG)
-		return
+		return errG
 	}
 
 	var size int64
@@ -134,37 +128,36 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		file, err := files[i].Open()
 		if err != nil {
 			log.Warning("uploadArtifactHandler> cannot open file: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 
 		if err := artifact.SaveFile(db, p, a, art, file, env); err != nil {
 			log.Warning("uploadArtifactHandler> cannot save file: %s\n", err)
-			WriteError(w, r, err)
 			file.Close()
-			return
+			return err
 		}
 		file.Close()
 	}
+	return nil
 }
 
-func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	artifactIDS := vars["id"]
 
 	artifactID, errAtoi := strconv.Atoi(artifactIDS)
 	if errAtoi != nil {
 		log.Warning("DownloadArtifactHandler> Cannot convert '%s' into int: %s\n", artifactIDS, errAtoi)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	// Load artifact
 	art, err := artifact.LoadArtifact(db, int64(artifactID))
 	if err != nil {
 		log.Warning("downloadArtifactHandler> Cannot load artifact %d: %s\n", artifactID, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	log.Info("downloadArtifactHandler: Serving %+v\n", art)
@@ -174,12 +167,12 @@ func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	if err = artifact.StreamFile(w, *art); err != nil {
 		log.Warning("downloadArtifactHandler: Cannot stream artifact %s-%s-%s-%s-%s file: %s\n", art.Project, art.Application, art.Environment, art.Pipeline, art.Tag, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+	return nil
 }
 
-func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -192,16 +185,15 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
 	if errP != nil {
 		log.Warning("listArtifactsBuildHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
-		WriteError(w, r, errP)
-		return
+		return errP
 	}
 
 	// Load application
 	a, errA := application.LoadApplicationByName(db, project, appName)
 	if errA != nil {
 		log.Warning("listArtifactsBuildHandler> Cannot load application %s: %s\n", appName, errA)
-		WriteError(w, r, errA)
-		return
+		return errA
+
 	}
 
 	var env *sdk.Environment
@@ -212,35 +204,35 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		env, errE = environment.LoadEnvironmentByName(db, project, envName)
 		if errE != nil {
 			log.Warning("listArtifactsBuildHandler> Cannot load environment %s: %s\n", envName, errE)
-			WriteError(w, r, errE)
-			return
+			return errE
+
 		}
 	}
 
 	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("listArtifactsBuildHandler> No enought right on this environment %s: \n", envName)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
+
 	}
 
 	buildNumber, errI := strconv.ParseInt(buildNumberString, 10, 64)
 	if errI != nil {
 		log.Warning("listArtifactsBuildHandler> BuildNumber must be an integer: %s\n", errI)
-		WriteError(w, r, errI)
-		return
+		return errI
+
 	}
 
 	art, errArt := artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
 	if errArt != nil {
 		log.Warning("listArtifactsBuildHandler> Cannot load artifacts: %s\n", errArt)
-		WriteError(w, r, errArt)
-		return
+		return errArt
+
 	}
 
-	WriteJSON(w, r, art, http.StatusOK)
+	return WriteJSON(w, r, art, http.StatusOK)
 }
 
-func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -253,16 +245,16 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
 	if errP != nil {
 		log.Warning("listArtifactsHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
-		WriteError(w, r, errP)
-		return
+		return errP
+
 	}
 
 	// Load application
 	a, errA := application.LoadApplicationByName(db, project, appName)
 	if errA != nil {
 		log.Warning("listArtifactsHandler> Cannot load application %s: %s\n", appName, errA)
-		WriteError(w, r, errA)
-		return
+		return errA
+
 	}
 
 	var env *sdk.Environment
@@ -273,42 +265,37 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		env, errE = environment.LoadEnvironmentByName(db, project, envName)
 		if errE != nil {
 			log.Warning("listArtifactsHandler> Cannot load environment %s: %s\n", envName, errE)
-			WriteError(w, r, errE)
-			return
+			return errE
 		}
 	}
 
 	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("listArtifactsHandler> No enought right on this environment %s: \n", envName)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
 	}
 
 	art, errArt := artifact.LoadArtifacts(db, p.ID, a.ID, env.ID, tag)
 	if errArt != nil {
 		log.Warning("listArtifactsHandler> Cannot load artifacts: %s\n", errArt)
-		WriteError(w, r, errArt)
-		return
+		return errArt
 	}
 
 	if len(art) == 0 {
 		log.Warning("listArtifactHandler> %s-%s-%s-%s/%s: not found\n", project, appName, env.Name, pipelineName, tag)
-		WriteError(w, r, sdk.ErrNotFound)
-		return
+		return sdk.ErrNotFound
 	}
 
-	WriteJSON(w, r, art, http.StatusOK)
+	return WriteJSON(w, r, art, http.StatusOK)
 }
 
-func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 
 	art, err := artifact.LoadArtifactByHash(db, hash)
 	if err != nil {
 		log.Warning("downloadArtifactDirectHandler> Could not load artifact with hash %s: %s\n", hash, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	w.Header().Add("Content-Type", "application/octet-stream")
@@ -318,9 +305,10 @@ func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *g
 	err = artifact.StreamFile(w, *art)
 	if err != nil {
 		log.Warning("downloadArtifactDirectHandler: Cannot stream artifact %s-%s-%s-%s-%s file: %s\n", art.Project, art.Application, art.Environment, art.Pipeline, art.Tag, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
+	return nil
 }
 
 func generateHash() (string, error) {

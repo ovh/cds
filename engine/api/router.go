@@ -25,16 +25,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var router *Router
-
-var panicked bool
-var nbPanic int
-var lastPanic *time.Time
+var (
+	router    *Router
+	panicked  bool
+	nbPanic   int
+	lastPanic *time.Time
+)
 
 const nbPanicsBeforeFail = 50
 
 // Handler defines the HTTP handler used in CDS engine
-type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context)
+type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
 type RouterConfigParam func(rc *routerConfig)
@@ -144,7 +145,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		w.Header().Add("Access-Control-Allow-Headers", "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id")
 		w.Header().Add("Access-Control-Expose-Headers", "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id")
 
-		c := &context.Context{}
+		c := &context.Ctx{}
 
 		if req.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
@@ -184,21 +185,29 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			}()
 
 			if req.Method == "GET" && rc.get != nil {
-				rc.get(w, req, db, c)
+				if err := rc.get(w, req, db, c); err != nil {
+					WriteError(w, req, err)
+				}
 				return
 			}
 
 			if req.Method == "POST" && rc.post != nil {
-				rc.post(w, req, db, c)
+				if err := rc.post(w, req, db, c); err != nil {
+					WriteError(w, req, err)
+				}
 				return
 			}
 			if req.Method == "PUT" && rc.put != nil {
-				rc.put(w, req, db, c)
+				if err := rc.put(w, req, db, c); err != nil {
+					WriteError(w, req, err)
+				}
 				return
 			}
 
 			if req.Method == "DELETE" && rc.deleteHandler != nil {
-				rc.deleteHandler(w, req, db, c)
+				if err := rc.deleteHandler(w, req, db, c); err != nil {
+					WriteError(w, req, err)
+				}
 				return
 			}
 			WriteError(w, req, sdk.ErrNotFound)
@@ -315,11 +324,11 @@ func Auth(v bool) RouterConfigParam {
 	return f
 }
 
-func (r *Router) checkAuthHeader(db *gorp.DbMap, headers http.Header, c *context.Context) error {
+func (r *Router) checkAuthHeader(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
 	return r.authDriver.GetCheckAuthHeaderFunc(localCLientAuthMode)(db, headers, c)
 }
 
-func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *context.Context) error {
+func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
 
 	c.Agent = sdk.Agent(headers.Get("User-Agent"))
 
@@ -332,7 +341,7 @@ func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *con
 	}
 }
 
-func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *context.Context) error {
+func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return fmt.Errorf("bad worker key syntax: %s", err)
@@ -355,17 +364,18 @@ func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *conte
 }
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
-func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) {
+func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {
 	b, e := json.Marshal(data)
 	if e != nil {
-		log.Warning("writeJSON> unable to marshal : %s", e)
-		WriteError(w, r, sdk.ErrUnknownError)
-		return
+		log.Warning("return WriteJSON> unable to marshal : %s", e)
+		return sdk.ErrUnknownError
+
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(b)
+	return nil
 }
 
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
