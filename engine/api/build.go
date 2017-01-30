@@ -221,13 +221,6 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return
 	}
 
-	for index := range pb.Stages {
-		stage := &pb.Stages[index]
-		for indexPbJob := range stage.PipelineBuildJobs {
-			_ = &stage.PipelineBuildJobs[indexPbJob]
-		}
-	}
-
 	if withArtifacts == "true" {
 		var errLoadArtifact error
 		pb.Artifacts, errLoadArtifact = artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
