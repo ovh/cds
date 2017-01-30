@@ -263,6 +263,9 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 	var rows []PipelineBuildDbResult
 	_, err := db.Select(&rows, query, pbID)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return pbs, nil
+		}
 		return nil, err
 	}
 
