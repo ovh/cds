@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// ActionBuild represents an action to be run
+// PipelineBuildJob represents an action to be run
 type PipelineBuildJob struct {
 	ID              int64       `json:"id" db:"id"`
 	Job             Job         `json:"job" db:"-"`
