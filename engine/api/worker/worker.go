@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// ActionBuildInfo is returned to worker in answer to takeActionBuildHandler
+// PipelineBuildJobInfo is returned to worker in answer to takeActionBuildHandler
 type PipelineBuildJobInfo struct {
 	PipelineBuildJob sdk.PipelineBuildJob
 	Secrets          []sdk.Variable
