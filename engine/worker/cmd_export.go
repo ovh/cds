@@ -83,8 +83,7 @@ func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 	// - add it in current building Action
 	data, err = json.Marshal(v)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		w.WriteHeader(http.StatusBadRequest)
 	}
 	// Retrieve build info
 	var proj, app, pip, bnS, env string

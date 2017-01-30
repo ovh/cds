@@ -13,15 +13,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/actionplugin"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/stretchr/testify/assert"
+	"github.com/ovh/cds/sdk"
 )
 
 const dummyBinaryFile = "https://dl.plik.ovh/file/cMG2Mda94p6b3aej/CdJscEKa16o5NnHt/dummy"
@@ -31,7 +31,7 @@ func postFile(t *testing.T,
 	filename string,
 	targetURL string,
 	method string,
-	handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context),
+	handler Handler,
 	check func(*testing.T, *gorp.DbMap, *httptest.ResponseRecorder)) {
 
 	bodyBuf := &bytes.Buffer{}
@@ -70,7 +70,7 @@ func postFile(t *testing.T,
 		return
 	}
 
-	c := &context.Context{
+	c := &context.Ctx{
 		User: &sdk.User{
 			ID: 1,
 		},
@@ -100,7 +100,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 	resp, err := http.Get(url)
 	test.NoError(t, err)
 	if err != nil {
-		t.Fail()
+		t.Skipf("Unable to download file %s", err)
 		return "", nil, err
 	}
 	defer resp.Body.Close()
@@ -408,7 +408,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 			return
 		}
 
-		c := &context.Context{
+		c := &context.Ctx{
 			User: &sdk.User{
 				ID: 1,
 			},

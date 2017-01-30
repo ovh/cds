@@ -26,7 +26,7 @@ type Driver interface {
 	Store() sessionstore.Store
 	Authentify(username, password string) (bool, error)
 	AuthentifyUser(user *sdk.User, password string) (bool, error)
-	GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, c *context.Context) error
+	GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, c *context.Ctx) error
 }
 
 //GetDriver is a factory
@@ -110,7 +110,7 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 }
 
 //CheckPersistentSession check persistent session token from CLI
-func CheckPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Context) bool {
+func CheckPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
 	if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 		if getUserPersistentSession(db, store, headers, ctx) {
 			return true
@@ -122,7 +122,7 @@ func CheckPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, heade
 	return false
 }
 
-func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Context) bool {
+func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
 	h := headers.Get(sdk.SessionTokenHeader)
 	if h != "" {
 		ok, _ := store.Exists(sessionstore.SessionKey(h))
@@ -142,7 +142,7 @@ func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, hea
 	return false
 }
 
-func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Context) bool {
+func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
 	authHeaderValue := headers.Get("Authorization")
 	if authHeaderValue == "" {
 		log.Notice("Auth> No Authorization Header\n")
@@ -190,7 +190,7 @@ func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, 
 	return false
 }
 
-func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *context.Context) error {
+func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *context.Ctx) error {
 	id, err := base64.StdEncoding.DecodeString(auth)
 	if err != nil {
 		return fmt.Errorf("bad worker key syntax: %s", err)

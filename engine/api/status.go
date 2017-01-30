@@ -23,22 +23,21 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
-	WriteError(w, r, sdk.ErrInvalidProjectKey)
+func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return sdk.ErrInvalidProjectKey
 }
 
-func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
-
+func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	s := struct {
 		Version string `json:"version"`
 	}{
 		Version: internal.VERSION,
 	}
 
-	WriteJSON(w, r, s, http.StatusOK)
+	return WriteJSON(w, r, s, http.StatusOK)
 }
 
-func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	var output []string
 
 	// Version
@@ -93,10 +92,10 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	if panicked {
 		status = http.StatusServiceUnavailable
 	}
-	WriteJSON(w, r, output, status)
+	return WriteJSON(w, r, output, status)
 }
 
-func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	project := r.FormValue("project")
 	application := r.FormValue("application")
 	pipeline := r.FormValue("pipeline")
@@ -104,18 +103,16 @@ func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	exec, err := polling.LoadExecutions(db, project, application, pipeline)
 	if err != nil {
 		log.Warning("Error %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
-	WriteJSON(w, r, exec, 200)
-	return
+	return WriteJSON(w, r, exec, 200)
 }
 
-func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	if c.User == nil {
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
 	}
 
 	message := "mail sent"
@@ -123,7 +120,7 @@ func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 		message = err.Error()
 	}
 
-	WriteJSON(w, r, map[string]string{
+	return WriteJSON(w, r, map[string]string{
 		"message": message,
 	}, http.StatusOK)
 }

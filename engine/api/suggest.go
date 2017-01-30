@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	appName := r.FormValue("appName")
@@ -27,8 +27,8 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	projectVar, err := project.GetAllVariableNameInProjectByKey(db, projectKey)
 	if err != nil {
 		log.Warning("getVariablesHandler> Cannot Load project variables: %s\n", err)
-		WriteError(w, r, err)
-		return
+return err
+
 	}
 	for i := range projectVar {
 		projectVar[i] = fmt.Sprintf("{{.cds.proj.%s}}", projectVar[i])
@@ -39,8 +39,8 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	envVarNameArray, err := environment.GetAllVariableNameByProject(db, projectKey)
 	if err != nil {
 		log.Warning("getVariablesHandler> Cannot Load env variables: %s\n", err)
-		WriteError(w, r, err)
-		return
+return err
+
 	}
 	for i := range envVarNameArray {
 		envVarNameArray[i] = fmt.Sprintf("{{.cds.env.%s}}", envVarNameArray[i])
@@ -54,14 +54,14 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		applicationData, err := application.LoadApplicationByName(db, projectKey, appName)
 		if err != nil {
 			log.Warning("getPipelineTypeHandler> Cannot Load application: %s\n", err)
-			WriteError(w, r, err)
-			return
+return err
+
 		}
 
 		if !permission.AccessToApplication(applicationData.ID, c.User, permission.PermissionRead) {
 			log.Warning("getVariablesHandler> Not allow to access to this application: %s\n", appName)
-			WriteError(w, r, sdk.ErrForbidden)
-			return
+			return sdk.ErrForbidden
+
 		}
 
 		for _, v := range applicationData.Variable {
@@ -81,8 +81,8 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		rows, err := db.Query(query, projectKey)
 		if err != nil {
 			log.Warning("getVariablesHandler> Cannot Load all applications variables: %s\n", err)
-			WriteError(w, r, err)
-			return
+return err
+
 		}
 		defer rows.Close()
 		for rows.Next() {
@@ -90,8 +90,8 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 			err := rows.Scan(&name)
 			if err != nil {
 				log.Warning("getVariablesHandler> Cannot scan results: %s\n", err)
-				WriteError(w, r, err)
-				return
+return err
+
 			}
 			appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", name))
 
@@ -125,5 +125,5 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	allVariables = append(allVariables, gitVar...)
 
 	// Check permission on application
-	WriteJSON(w, r, allVariables, http.StatusOK)
+	return WriteJSON(w, r, allVariables, http.StatusOK)
 }
