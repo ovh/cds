@@ -23,21 +23,17 @@ func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	if err != nil {
 		log.Warning("addWorkerModel> cannot read body: %s\n", err)
 		return sdk.ErrWrongRequest
-
 	}
 
 	// Unmarshal body
 	var model sdk.Model
-	err = json.Unmarshal(data, &model)
-	if err != nil {
+	if err := json.Unmarshal(data, &model); err != nil {
 		log.Warning("addWorkerModel> cannot unmarshal body data: %s\n", err)
 		return sdk.ErrWrongRequest
-
 	}
 
 	if model.Type == "" {
 		return sdk.ErrWrongRequest
-
 	}
 
 	if len(model.Name) == 0 {

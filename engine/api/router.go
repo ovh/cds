@@ -186,6 +186,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 			if req.Method == "GET" && rc.get != nil {
 				if err := rc.get(w, req, db, c); err != nil {
+					log.Debug("Error : %s %v : %T %s", req.Method, req.URL, err, err)
 					WriteError(w, req, err)
 				}
 				return
@@ -193,12 +194,14 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 			if req.Method == "POST" && rc.post != nil {
 				if err := rc.post(w, req, db, c); err != nil {
+					log.Debug("Error : %s %v : %T %s", req.Method, req.URL, err, err)
 					WriteError(w, req, err)
 				}
 				return
 			}
 			if req.Method == "PUT" && rc.put != nil {
 				if err := rc.put(w, req, db, c); err != nil {
+					log.Debug("Error : %s %v : %T %s", req.Method, req.URL, err, err)
 					WriteError(w, req, err)
 				}
 				return
@@ -206,6 +209,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 			if req.Method == "DELETE" && rc.deleteHandler != nil {
 				if err := rc.deleteHandler(w, req, db, c); err != nil {
+					log.Debug("Error : %s %v : %T %s", req.Method, req.URL, err, err)
 					WriteError(w, req, err)
 				}
 				return

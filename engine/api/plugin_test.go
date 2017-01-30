@@ -81,7 +81,9 @@ func postFile(t *testing.T,
 	router := mux.NewRouter()
 	router.HandleFunc(targetURL,
 		func(w http.ResponseWriter, r *http.Request) {
-			handler(w, r, db, c)
+			if err := handler(w, r, db, c); err != nil {
+				WriteError(w, r, err)
+			}
 			t.Logf("Headers : %v", w.Header())
 		})
 	http.Handle(targetURL, router)
