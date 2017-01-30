@@ -178,8 +178,6 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	}
 
-	return WriteJSON(w, r, model, http.StatusOK)
-
 	// Recompute warnings
 	go func() {
 		warnings, err := sanity.LoadAllWarnings(db, "")
@@ -193,7 +191,7 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		}
 	}()
 
-	return nil
+	return WriteJSON(w, r, model, http.StatusOK)
 }
 
 func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {

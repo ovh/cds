@@ -153,7 +153,6 @@ func getVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	return WriteJSON(w, r, variables, http.StatusOK)
-	return nil
 }
 
 func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -222,7 +221,6 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 	return WriteJSON(w, r, app, http.StatusOK)
-	return nil
 }
 
 // deprecated
@@ -436,7 +434,6 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 	return WriteJSON(w, r, app, http.StatusOK)
-	return nil
 }
 
 func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
