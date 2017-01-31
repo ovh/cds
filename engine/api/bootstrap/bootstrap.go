@@ -2,15 +2,12 @@ package bootstrap
 
 import (
 	"database/sql"
-	"encoding/json"
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
-	"github.com/ovh/cds/sdk"
 )
 
 //InitiliazeDB inits the database
