@@ -94,6 +94,7 @@ var (
 	ErrNoHatchery                            = &Error{ID: 80, Status: http.StatusNotFound}
 	ErrInvalidWorkerStatus                   = &Error{ID: 81, Status: http.StatusNotFound}
 	ErrInvalidToken                          = &Error{ID: 82, Status: http.StatusUnauthorized}
+	ErrAppBuildingPipelines                  = &Error{ID: 83, Status: http.StatusForbidden}
 )
 
 // SupportedLanguages on API errors
@@ -187,6 +188,7 @@ You can safely use them in a String or Text parameter`,
 	ErrNoHatchery.ID:                            "No hatchery found",
 	ErrInvalidWorkerStatus.ID:                   "Worker status is invalid",
 	ErrInvalidToken.ID:                          "Invalid token",
+	ErrAppBuildingPipelines.ID:                  "Cannot delete application, there are building pipelines",
 }
 
 var errorsFrench = map[int]string{
@@ -274,6 +276,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrNoHatchery.ID:                            "La hatchery n'existe pas",
 	ErrInvalidWorkerStatus.ID:                   "Le status du worker est incorrect",
 	ErrInvalidToken.ID:                          "Token non valide",
+	ErrAppBuildingPipelines.ID:                  "Impossible de supprimer l'application, il y a pipelines en cours",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)

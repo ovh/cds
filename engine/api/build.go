@@ -123,7 +123,13 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer tx.Rollback()
 
-	if err := pipeline.DeletePipelineBuild(tx, p.ID, a.ID, buildNumber, env.ID); err != nil {
+	pbID, errLoadPb := pipeline.LoadPipelineBuildID(db, a.ID, p.ID, env.ID, buildNumber)
+	if errLoadPb != nil {
+		log.Warning("deleteBuildHandler> Cannot load pipeline build to delete: %s\n", errLoadPb)
+		return errLoadPb
+	}
+
+	if err := pipeline.DeletePipelineBuildByID(tx, pbID); err != nil {
 		log.Warning("deleteBuildHandler> Cannot delete pipeline build: %s\n", err)
 		return err
 	}
@@ -236,7 +242,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	// Load Build
 	pbJob, errJob := pipeline.GetPipelineBuildJob(db, id)
 	if errJob != nil {
-		log.Warning("addQueueResultHandler> Cannot load queue from db: %s\n", errJob)
+		log.Warning("addQueueResultHandler> Cannot load queue (%d) from db: %s\n", id, errJob)
 		return sdk.ErrNotFound
 	}
 

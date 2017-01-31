@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -243,6 +244,29 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) er
 }
 
 func deleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
+
+	pbs, errPB := pipeline.LoadPipelineBuildByApplicationAndBranch(db, appID, branch)
+	if errPB != nil {
+		return errPB
+	}
+
+	// Disabled building worker
+	for _, pb := range pbs {
+		if pb.Status != sdk.StatusBuilding {
+			continue
+		}
+		for _, s := range pb.Stages {
+			if s.Status != sdk.StatusBuilding {
+				continue
+			}
+			for _, pbJob := range s.PipelineBuildJobs {
+				if err := worker.DisableBuildingWorker(db, pbJob.ID); err != nil {
+					log.Warning("deleteBranchBuilds> Cannot disabled worker")
+					return err
+				}
+			}
+		}
+	}
 	// Now select all related build in pipeline build
 	query := `SELECT id FROM pipeline_build WHERE vcs_changes_branch = $1 AND application_id = $2`
 	rows, err := db.Query(query, branch, appID)

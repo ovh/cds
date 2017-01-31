@@ -363,6 +363,17 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 
+	nb, errNb := pipeline.CountBuildingPipelineByApplication(db, app.ID)
+	if errNb != nil {
+		log.Warning("deleteApplicationHandler> Cannot count pipeline build for application %d: %s\n", app.ID, errNb)
+		return errNb
+	}
+
+	if nb > 0 {
+		log.Warning("deleteApplicationHandler> Cannot delete application [%d], there are building pipelines: %d\n", app.ID, nb)
+		return sdk.ErrAppBuildingPipelines
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deleteApplicationHandler> Cannot begin transaction: %s\n", err)
