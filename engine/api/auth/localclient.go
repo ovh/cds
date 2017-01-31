@@ -63,10 +63,10 @@ const (
 
 //GetCheckAuthHeaderFunc returns the func to heck http headers.
 //Options is a const to switch from session to basic auth or both
-func (c *LocalClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
+func (c *LocalClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
 	switch options {
 	case LocalClientBasicAuthMode:
-		return func(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
+		return func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
 			if h := headers.Get(sdk.AuthHeader); h != "" {
 				if err := checkWorkerAuth(db, h, ctx); err != nil {
 					return err
@@ -88,7 +88,7 @@ func (c *LocalClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.
 			return c.checkUserBasicAuth(db, h, ctx)
 		}
 	case LocalClientSessionMode:
-		return func(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
+		return func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
 			//Check if its a worker
 			if h := headers.Get(sdk.AuthHeader); h != "" {
 				if err := checkWorkerAuth(db, h, ctx); err != nil {
@@ -109,13 +109,13 @@ func (c *LocalClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.
 			return c.checkUserSessionAuth(db, headers, ctx)
 		}
 	default:
-		return func(db *gorp.DbMap, headers http.Header, c *context.Context) error {
+		return func(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
 			return fmt.Errorf("invalid authorization mechanism")
 		}
 	}
 }
 
-func (c *LocalClient) checkUserBasicAuth(db gorp.SqlExecutor, authHeaderValue string, ctx *context.Context) error {
+func (c *LocalClient) checkUserBasicAuth(db gorp.SqlExecutor, authHeaderValue string, ctx *context.Ctx) error {
 	// Split Basic and (user:pass)64
 	auth := strings.SplitN(authHeaderValue, " ", 2)
 	if len(auth) != 2 || auth[0] != "Basic" {
@@ -150,7 +150,7 @@ func (c *LocalClient) checkUserBasicAuth(db gorp.SqlExecutor, authHeaderValue st
 	return nil
 }
 
-func (c *LocalClient) checkUserSessionAuth(db gorp.SqlExecutor, headers http.Header, ctx *context.Context) error {
+func (c *LocalClient) checkUserSessionAuth(db gorp.SqlExecutor, headers http.Header, ctx *context.Ctx) error {
 	sessionToken := headers.Get(sdk.SessionTokenHeader)
 	if sessionToken == "" {
 		return fmt.Errorf("no session header")

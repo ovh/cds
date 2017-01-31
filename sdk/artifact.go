@@ -187,41 +187,44 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 func uploadArtifact(project string, pipeline string, application string, tag string, filePath string, buildNumber int, env string) error {
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s", project, application, pipeline, buildNumber, tag)
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
+	fileForMD5, errop := os.Open(filePath)
+	if errop != nil {
+		return errop
 	}
 
 	//File stat
-	stat, err := file.Stat()
-	if err != nil {
-		return err
+	stat, errst := fileForMD5.Stat()
+	if errst != nil {
+		return errst
 	}
 
 	//Compute md5sum
 	hash := md5.New()
-	if _, errcopy := io.Copy(hash, file); errcopy != nil {
+	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
 		return errcopy
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
-	file.Close()
+	fileForMD5.Close()
 
 	//Reopen the file because we already read it for md5
-	file, err = os.Open(filePath)
-	if err != nil {
-		return err
+	fileReopen, erro := os.Open(filePath)
+	if erro != nil {
+		return erro
 	}
-	defer file.Close()
+	defer fileReopen.Close()
 	_, name := filepath.Split(filePath)
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(name, filepath.Base(filePath))
-	if err != nil {
+	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
+	if errc != nil {
+		return errc
+	}
+
+	if _, err := io.Copy(part, fileReopen); err != nil {
 		return err
 	}
-	_, err = io.Copy(part, file)
 
 	writer.WriteField("env", env)
 	writer.WriteField("size", strconv.FormatInt(stat.Size(), 10))

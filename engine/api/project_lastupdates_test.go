@@ -103,7 +103,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 	url := fmt.Sprintf("/project_lastupdates_test/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 
-	c := &context.Context{
+	c := &context.Ctx{
 		User: u,
 	}
 
@@ -210,7 +210,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	url := fmt.Sprintf("/project_lastupdates_test1/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 
-	c := &context.Context{
+	c := &context.Ctx{
 		User: u,
 	}
 
@@ -330,7 +330,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 	url := fmt.Sprintf("/project_lastupdates_test2/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 
-	c := &context.Context{
+	c := &context.Ctx{
 		User: u,
 	}
 
@@ -461,7 +461,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("If-Modified-Since", since.Format(time.RFC1123))
 
-	c := &context.Context{
+	c := &context.Ctx{
 		User: u,
 	}
 
@@ -582,7 +582,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 
 	req.Header.Set("If-Modified-Since", since.Format(time.RFC1123))
 
-	c := &context.Context{
+	c := &context.Ctx{
 		User: u,
 	}
 
