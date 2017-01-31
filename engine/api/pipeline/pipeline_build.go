@@ -642,7 +642,6 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		commit, err := client.Commit(app.RepositoryFullname, pb.Trigger.VCSChangesHash)
 		if err != nil {
 			log.Warning("InsertPipelineBuild> Cannot get commit: %s\n", err)
-			return nil, err
 		}
 		sdk.AddParameter(&params, "git.author", sdk.StringParameter, commit.Author.Name)
 		sdk.AddParameter(&params, "git.message", sdk.StringParameter, commit.Message)

@@ -1488,7 +1488,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 
 	//Check it the application is attached to a repository
 	if application.RepositoriesManager == nil {
-		log.Warning("getPipelineCommitsHandler> Project not attached to a repository managers %s: \n", envName)
+		log.Warning("getPipelineCommitsHandler> Application %s/%s not attached to a repository manager", projectKey, appName)
 		WriteJSON(w, r, commits, http.StatusOK)
 		return
 	}
