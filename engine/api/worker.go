@@ -130,7 +130,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 					w1, err := worker.LoadWorker(db, w.ID)
 					if err != nil {
 						log.Warning("disableWorkerHandler> Error getting worker %s", w.ID)
-
+						return
 					}
 					//Give up is worker is building
 					if w1.Status == sdk.StatusBuilding {
