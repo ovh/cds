@@ -41,7 +41,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 	var pbJobID sql.NullInt64
 	err = tx.QueryRow(query, id).Scan(&name, &st, &pbJobID)
 	if err != nil {
-		log.Info("DeleteWorker> Cannot lock worker: %s\n", err)
+		log.Info("DeleteWorker[%d]> Cannot lock worker: %s\n", id, err)
 		return nil
 	}
 
@@ -56,9 +56,9 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		log.Notice("Worker %s crashed while building %d !\n", name, pbJobID.Int64)
 		err = pipeline.RestartPipelineBuildJob(tx, pbJobID.Int64)
 		if err != nil {
-			log.Critical("DeleteWorker> Cannot restart pipeline build job: %s\n", err)
+			log.Critical("DeleteWorker[%d]> Cannot restart pipeline build job: %s\n", id, err)
 		} else {
-			log.Notice("DeleteWorker> PipelineBuildJob %d restarted after crash\n", pbJobID.Int64)
+			log.Notice("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash\n", id, pbJobID.Int64)
 		}
 	}
 

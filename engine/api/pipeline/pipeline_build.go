@@ -404,18 +404,6 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	return nil
 }
 
-// DeletePipelineBuild Delete a pipeline build
-func DeletePipelineBuild(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, buildNumber int64) error {
-	query := `
-		DELETE FROM pipeline_build
-		WHERE application_id = $1 AND pipeline_id = $2 AND environment_id = $3
-		AND build_number = $4
-	`
-
-	_, errDelete := db.Query(query, applicationID, pipelineID, environmentID, buildNumber)
-	return errDelete
-}
-
 // DeletePipelineBuildByID  Delete pipeline build by his ID
 func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
 	queryDeleteLog := "DELETE FROM build_log where pipeline_build_id = $1"
