@@ -314,7 +314,7 @@ func NewScriptAction(content string) Action {
 	return a
 }
 
-// AddJoinedAction creates a joined action in given pipeline
+// AddJob creates a joined action in given pipeline
 func AddJob(projectKey, pipelineName string, j *Job) error {
 	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/joined", projectKey, pipelineName, j.PipelineStageID)
 

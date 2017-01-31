@@ -740,8 +740,8 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	for _, ts := range tests.TestSuites {
 		tests.Total += ts.Total
 		tests.TotalKO += ts.Failures + ts.Errors
-		tests.TotalOK += ts.Total - ts.Skip - ts.Failures - ts.Errors
-		tests.TotalSkipped += ts.Skip
+		tests.TotalOK += ts.Total - ts.Skipped - ts.Failures - ts.Errors
+		tests.TotalSkipped += ts.Skipped
 	}
 
 	if err := pipeline.UpdateTestResults(db, pb.ID, tests); err != nil {

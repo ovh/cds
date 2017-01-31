@@ -59,9 +59,9 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob) sd
 	for _, f := range files {
 		var ftests sdk.Tests
 
-		data, err := ioutil.ReadFile(f)
-		if err != nil {
-			sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, err), pbJob.PipelineBuildID)
+		data, errRead := ioutil.ReadFile(f)
+		if errRead != nil {
+			sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, errRead), pbJob.PipelineBuildID)
 			return res
 		}
 
@@ -79,30 +79,31 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob) sd
 		v.TestSuites = append(v.TestSuites, ftests.TestSuites...)
 	}
 	// update global stats
-	for _, s := range v.TestSuites {
-		v.Total += s.Total
-		v.TotalOK += (s.Total - s.Failures)
-		v.TotalKO += s.Failures
-		v.TotalSkipped += s.Skip
+	for _, ts := range v.TestSuites {
+		v.Total += ts.Total
+		v.TotalOK += (ts.Total - ts.Failures)
+		v.TotalKO += ts.Failures
+		v.TotalSkipped += ts.Skipped
 	}
 
 	res.Status = sdk.StatusSuccess
 	for _, s := range v.TestSuites {
 		if s.Failures > 0 {
-			sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parser: %s has %d failed tests", s.Name, s.Failures), pbJob.PipelineBuildID)
+			sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parser: %s has %d failed tests (failure attr)", s.Name, s.Failures), pbJob.PipelineBuildID)
 			res.Status = sdk.StatusFail
 		}
-	}
-
-	if v.Total == 0 {
-		sendLog(pbJob.ID, sdk.JUnitAction, "JUnit parser: No tests", pbJob.PipelineBuildID)
-		res.Status = sdk.StatusFail
+		for _, tc := range s.TestCases {
+			if len(tc.Failures) > 0 {
+				sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parser: %s has %d failed tests (failure element(s))", s.Name, s.Failures), pbJob.PipelineBuildID)
+				res.Status = sdk.StatusFail
+			}
+		}
 	}
 
 	data, err := json.Marshal(v)
 	if err != nil {
 		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parse: failed to send tests details: %s", err), pbJob.PipelineBuildID)
+		sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parse: failed to parse tests details: %s", err), pbJob.PipelineBuildID)
 		return res
 	}
 
