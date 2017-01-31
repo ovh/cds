@@ -246,7 +246,7 @@ func processHook(h hook.ReceivedHook) error {
 	//begin a tx
 	tx, err := db.Begin()
 	if err != nil {
-
+		return err
 	}
 	defer tx.Rollback()
 

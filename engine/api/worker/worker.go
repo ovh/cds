@@ -129,6 +129,41 @@ func LoadWorkersByModel(db gorp.SqlExecutor, modelID int64) ([]sdk.Worker, error
 	return w, nil
 }
 
+// DisableBuildingWorker Disable all workers working on given pipeline build job
+func DisableBuildingWorker(db gorp.SqlExecutor, pipJobID int64) error {
+	query := `UPDATE worker set status=$1, action_build_id = NULL where action_build_id = $2`
+	_, err := db.Exec(query, sdk.StatusDisabled.String(), pipJobID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// LoadWorkersByPipelineJobID load all workers in db by pipeline job id
+func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Worker, error) {
+	w := []sdk.Worker{}
+	var statusS string
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id FROM worker WHERE action_build_id = $1 ORDER BY name ASC`
+
+	rows, err := db.Query(query, pipJobID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var worker sdk.Worker
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID)
+		if err != nil {
+			return nil, err
+		}
+		worker.Status = sdk.StatusFromString(statusS)
+		w = append(w, worker)
+	}
+
+	return w, nil
+}
+
 // LoadWorkers load all workers in db
 func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
