@@ -242,7 +242,6 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 		//Get actions
 		if pipelineActionID.Valid && actionID.Valid && actionEnabled.Valid && actionLastModified.Valid {
 			j := mapAllActions[pipelineActionID.Int64]
-
 			if j == nil {
 				j = &sdk.Job{
 					PipelineStageID:  stageID,

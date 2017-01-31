@@ -13,15 +13,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/actionplugin"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/stretchr/testify/assert"
+	"github.com/ovh/cds/sdk"
 )
 
 const dummyBinaryFile = "https://dl.plik.ovh/file/7d0jJMNKaFEFc8OI/A5GlNec32iismk9s/dummy_plugin"
@@ -31,7 +31,7 @@ func postFile(t *testing.T,
 	filename string,
 	targetURL string,
 	method string,
-	handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context),
+	handler Handler,
 	check func(*testing.T, *gorp.DbMap, *httptest.ResponseRecorder)) {
 
 	bodyBuf := &bytes.Buffer{}
@@ -70,7 +70,7 @@ func postFile(t *testing.T,
 		return
 	}
 
-	c := &context.Context{
+	c := &context.Ctx{
 		User: &sdk.User{
 			ID: 1,
 		},
@@ -81,7 +81,9 @@ func postFile(t *testing.T,
 	router := mux.NewRouter()
 	router.HandleFunc(targetURL,
 		func(w http.ResponseWriter, r *http.Request) {
-			handler(w, r, db, c)
+			if err := handler(w, r, db, c); err != nil {
+				WriteError(w, r, err)
+			}
 			t.Logf("Headers : %v", w.Header())
 		})
 	http.Handle(targetURL, router)
@@ -100,7 +102,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 	resp, err := http.Get(url)
 	test.NoError(t, err)
 	if err != nil {
-		t.Fail()
+		t.Skipf("Unable to download file %s", err)
 		return "", nil, err
 	}
 	defer resp.Body.Close()
@@ -408,7 +410,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 			return
 		}
 
-		c := &context.Context{
+		c := &context.Ctx{
 			User: &sdk.User{
 				ID: 1,
 			},

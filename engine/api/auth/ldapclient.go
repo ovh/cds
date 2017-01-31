@@ -323,8 +323,8 @@ func (c *LDAPClient) AuthentifyUser(u *sdk.User, password string) (bool, error) 
 
 //GetCheckAuthHeaderFunc returns the func to heck http headers.
 //Options is a const to switch from session to basic auth or both
-func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
-	return func(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
+func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
+	return func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
 		//Check if its a worker
 		if h := headers.Get(sdk.AuthHeader); h != "" {
 			if err := checkWorkerAuth(db, h, ctx); err != nil {
@@ -346,7 +346,7 @@ func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.D
 	}
 }
 
-func (c *LDAPClient) checkUserSessionAuth(db *gorp.DbMap, headers http.Header, ctx *context.Context) error {
+func (c *LDAPClient) checkUserSessionAuth(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
 	sessionToken := headers.Get(sdk.SessionTokenHeader)
 	if sessionToken == "" {
 		return fmt.Errorf("no session header")

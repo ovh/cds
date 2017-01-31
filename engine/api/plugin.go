@@ -77,7 +77,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	return ap, params, content, deferFunc, nil
 }
 
-func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	//Upload file and get plugin information
 	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
@@ -85,8 +85,7 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	}
 	if err != nil {
 		log.Warning("addPluginHandler>%T %s", err, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	defer file.Close()
 
@@ -94,28 +93,24 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	conflict, err := action.Exists(db, ap.Name)
 	if err != nil {
 		log.Warning("updatePluginHandler>%T %s", err, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	if conflict {
-		WriteError(w, r, sdk.ErrConflict)
-		return
+		return sdk.ErrConflict
 	}
 
 	//Upload it to objectstore
 	objectPath, err := objectstore.StorePlugin(*ap, file)
 	if err != nil {
 		log.Warning("addPluginHandler> Error while uploading to object store %s: %s\n", ap.Name, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	ap.ObjectPath = objectPath
 
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("addPluginHandler> Cannot start transaction: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	defer tx.Rollback()
 
@@ -124,21 +119,20 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	if err != nil {
 		log.Warning("addPluginHandler> Error while inserting action %s in database: %s\n", ap.Name, err)
 		objectstore.DeletePlugin(*ap)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("addPluginHandler> Cannot commit transaction: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
-	WriteJSON(w, r, a, http.StatusCreated)
-	return
+	return WriteJSON(w, r, a, http.StatusCreated)
 }
 
-func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	//Upload file and get plugin information
 	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
@@ -147,28 +141,28 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	if err != nil {
 		log.Warning("updatePluginHandler>%T %s", err, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	// Check that action does not already exists
 	exists, err := action.Exists(db, ap.Name)
 	if err != nil {
 		log.Warning("updatePluginHandler>%T %s", err, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 	if !exists {
-		WriteError(w, r, sdk.ErrNoAction)
-		return
+		return sdk.ErrNoAction
+
 	}
 
 	//Store previous file from objectstore
 	buf, err := objectstore.FetchPlugin(*ap)
 	if err != nil {
 		log.Warning("updatePluginHandler>Unable to fetch plugin: %s", err)
-		WriteError(w, r, sdk.NewError(sdk.ErrPluginInvalid, err))
-		return
+		return sdk.NewError(sdk.ErrPluginInvalid, err)
+
 	}
 	defer buf.Close()
 
@@ -176,15 +170,15 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	btes, err := ioutil.ReadAll(buf)
 	if err != nil {
 		log.Warning("updatePluginHandler>%T %s", err, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 	//Get a dir
 	tmpDir, err := ioutil.TempDir("", "old-plugin")
 	if err != nil {
 		log.Warning("updatePluginHandler> error with tempdir %T %s", err, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 	os.MkdirAll(tmpDir, os.FileMode(0700))
 
@@ -195,8 +189,7 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	log.Debug("updatePluginHandler>store oldfile %s in case of error", tmpFile)
 	if err := ioutil.WriteFile(tmpFile, btes, os.FileMode(0600)); err != nil {
 		log.Warning("updatePluginHandler>Error writing file %s %T %s", tmpFile, err, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	defer func() {
 		log.Debug("updatePluginHandler> deleting file %s", tmpFile)
@@ -207,24 +200,24 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	objectstore.DeletePlugin(*ap)
 	if err != nil {
 		log.Warning("updatePluginHandler>Error deleting file %T %s", err, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	//Upload it to objectstore
 	objectPath, err := objectstore.StorePlugin(*ap, file)
 	if err != nil {
 		log.Warning("updatePluginHandler> Error while uploading to object store %s: %s\n", ap.Name, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 	ap.ObjectPath = objectPath
 
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("updatePluginHandler> Cannot start transaction: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 	defer tx.Rollback()
 
@@ -237,68 +230,63 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		oldFile, err := os.Open(tmpFile)
 		if err != nil {
 			log.Warning("updatePluginHandler>Error opening file %s %T %s", tmpFile, err, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 		//re-store the old plugin file
 		if _, err := objectstore.StorePlugin(*ap, oldFile); err != nil {
 			log.Warning("updatePluginHandler> Error while uploading to object store %s: %s\n", ap.Name, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 
 		log.Warning("updatePluginHandler>%T %s", errDB, errDB)
-		WriteError(w, r, errDB)
-		return
+		return errDB
 	}
 	if err := tx.Commit(); err != nil {
 		log.Warning("updatePluginHandler> Cannot commit transaction: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, a, http.StatusOK)
-	return
+	return WriteJSON(w, r, a, http.StatusOK)
 }
 
-func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	name := vars["name"]
 
 	if name == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	//Delete in database
 	if err := actionplugin.Delete(db, name, c.User.ID); err != nil {
 		log.Warning("deletePluginHandler> Error while deleting action %s in database: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	//Delete from objectstore
 	if err := objectstore.DeletePlugin(sdk.ActionPlugin{Name: name}); err != nil {
 		log.Warning("deletePluginHandler> Error while deleting action %s in objectstore: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
+	return nil
 }
 
-func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	name := vars["name"]
 
 	if name == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	f, err := objectstore.FetchPlugin(sdk.ActionPlugin{Name: name})
 	if err != nil {
 		log.Warning("downloadPluginHandler> Error while fetching plugin: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	w.Header().Add("Content-Type", "application/octet-stream")
@@ -306,7 +294,8 @@ func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	if err := objectstore.StreamFile(w, f); err != nil {
 		log.Warning("downloadPluginHandler> Error while streaming plugin %s: %s\n", name, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+
+	return nil
 }

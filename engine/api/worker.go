@@ -20,37 +20,33 @@ import (
 	"database/sql"
 )
 
-func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Read body
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	// Unmarshal body
 	params := &worker.RegistrationForm{}
 	if err := json.Unmarshal(data, params); err != nil {
 		fmt.Printf("registerWorkerHandler: Cannot unmarshal parameters: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	// Check that hatchery exists
 	var h *sdk.Hatchery
 	if params.Hatchery != 0 {
 		if err := hatchery.Exists(db, params.Hatchery); err != nil {
-			WriteError(w, r, err)
-			return
+			return err
 		}
 
 		var errH error
 		h, errH = hatchery.LoadHatcheryByID(db, params.Hatchery)
 		if errH != nil {
 			fmt.Printf("registerWorkerHandler> Unable to load hatchery: %s\n", errH)
-			WriteError(w, r, errH)
-			return
+			return errH
 		}
 	}
 
@@ -58,50 +54,46 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	worker, err := worker.RegisterWorker(db, params.Name, params.UserKey, params.Model, h, params.BinaryCapabilities)
 	if err != nil {
 		log.Warning("registerWorkerHandler: [%s] Registering failed: %s\n", params.Name, err)
-		WriteError(w, r, sdk.ErrUnauthorized)
-		return
+		return sdk.ErrUnauthorized
 	}
 
-	// Return worker info to worker itself
-	WriteJSON(w, r, worker, http.StatusOK)
 	log.Debug("New worker: [%s] - %s\n", worker.ID, worker.Name)
+
+	// Return worker info to worker itself
+	return WriteJSON(w, r, worker, http.StatusOK)
 }
 
-func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	workers, err := worker.LoadWorkersByModel(db, 0)
 	if err != nil {
 		log.Warning("getOrphanWorker> Cannot load workers: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
-	WriteJSON(w, r, workers, http.StatusOK)
+	return WriteJSON(w, r, workers, http.StatusOK)
 }
 
-func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	err := r.ParseForm()
 	if err != nil {
 		log.Warning("getWorkerModels> cannot parse form")
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	name := r.FormValue("orphan")
 	if name == "true" {
-		getOrphanWorker(w, r, db, c)
-		return
+		return getOrphanWorker(w, r, db, c)
 	}
 
 	workers, err := worker.LoadWorkers(db)
 	if err != nil {
 		log.Warning("getWorkersHandler> Cannot load workers: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, workers, http.StatusOK)
+	return WriteJSON(w, r, workers, http.StatusOK)
 }
 
-func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -109,8 +101,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("disabledWorkerHandler> Cannot start tx: %s\n", err)
-		WriteError(w, r, sdk.ErrUnknownError)
-		return
+		return sdk.ErrUnknownError
 	}
 	defer tx.Rollback()
 
@@ -119,14 +110,12 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		if err != sql.ErrNoRows {
 			log.Warning("disableWorkerHandler> Cannot load worker: %s\n", err)
 		}
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	if wor.Status == sdk.StatusBuilding {
 		log.Warning("disableWorkerHandler> Cannot disable a worker with status %s\n", wor.Status)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
 	}
 
 	if wor.Status == sdk.StatusChecking {
@@ -141,7 +130,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 					w1, err := worker.LoadWorker(db, w.ID)
 					if err != nil {
 						log.Warning("disableWorkerHandler> Error getting worker %s", w.ID)
-						return
+
 					}
 					//Give up is worker is building
 					if w1.Status == sdk.StatusBuilding {
@@ -152,7 +141,6 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 							log.Warning("disableWorkerHandler> Error disabling worker %s", w.ID)
 							return
 						}
-						return
 					}
 					if attempts > 100 {
 						log.Critical("disableWorkerHandler> Unable to disabled worker %s %s", w.ID, w.Name)
@@ -165,84 +153,81 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	if wor.HatcheryID == 0 {
 		log.Warning("disableWorkerHandler> Cannot disable a worker (%s) not started by an hatchery", wor.Name)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
 	}
 
 	if err := worker.UpdateWorkerStatus(tx, id, sdk.StatusDisabled); err != nil {
 		if err == worker.ErrNoWorker || err == sql.ErrNoRows {
 			log.Warning("disableWorkerHandler> handler %s does not exists\n", id)
-			WriteError(w, r, sdk.ErrWrongRequest)
-			return
+			return sdk.ErrWrongRequest
 		}
 		log.Warning("disableWorkerHandler> cannot update worker status : %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("disableWorkerHandler> cannot commit tx: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+
+	return nil
 }
 
-func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	if err := worker.RefreshWorker(db, c.Worker.ID); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 		log.Warning("refreshWorkerHandler> cannot refresh last beat of %s: %s\n", c.Worker.ID, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+	return nil
 }
 
-func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	if err := worker.DeleteWorker(db, c.Worker.ID); err != nil {
 		log.Warning("unregisterWorkerHandler> cannot delete worker %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+	return nil
 }
 
-func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	wk, errW := worker.LoadWorker(db, c.Worker.ID)
 	if errW != nil {
-		WriteError(w, r, errW)
-		return
+		return errW
 	}
 
 	if wk.Status != sdk.StatusWaiting {
 		log.Info("workerCheckingHandler> Worker %s cannot be Checking. Current status: %s", wk.Name, wk.Status)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	if err := worker.SetStatus(db, c.Worker.ID, sdk.StatusChecking); err != nil {
 		log.Warning("workerCheckingHandler> cannot update worker %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+
+	return nil
 }
 
-func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	wk, errW := worker.LoadWorker(db, c.Worker.ID)
 	if errW != nil {
-		WriteError(w, r, errW)
-		return
+		return errW
 	}
 
 	if wk.Status == sdk.StatusWaiting {
-		return
+		return nil
 	}
 
 	if wk.Status != sdk.StatusChecking && wk.Status != sdk.StatusBuilding {
 		log.Warning("workerWaitingHandler> Worker %s cannot be Waiting. Current status: %s", wk.Name, wk.Status)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	if err := worker.SetStatus(db, c.Worker.ID, sdk.StatusWaiting); err != nil {
 		log.Warning("workerWaitingHandler> cannot update worker %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+
+	return nil
 }
