@@ -333,7 +333,7 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	pbJob, errTake := pipeline.TakeActionBuild(tx, id, workerModel)
 	if errTake != nil {
 		if errTake != pipeline.ErrAlreadyTaken {
-			log.Warning("takeActionBuildHandler> Cannot give ActionBuild %s: %s\n", "github.com/go-gorp/gorp", err)
+			log.Warning("takeActionBuildHandler> Cannot give ActionBuild %d: %s\n", id, errTake)
 		}
 		return errTake
 	}
