@@ -125,6 +125,10 @@ func (s *RedisStore) DeleteAll(pattern string) {
 
 //Enqueue pushes to queue
 func (s *RedisStore) Enqueue(queueName string, value interface{}) {
+	if s.Client == nil {
+		log.Critical("redis> cannot get redis client")
+		return
+	}
 	b, err := json.Marshal(value)
 	if err != nil {
 		log.Warning("redis> Error queueing %s:%s", queueName, err)
@@ -136,6 +140,10 @@ func (s *RedisStore) Enqueue(queueName string, value interface{}) {
 
 //Dequeue gets from queue This is blocking while there is nothing in the queue
 func (s *RedisStore) Dequeue(queueName string, value interface{}) {
+	if s.Client == nil {
+		log.Critical("redis> cannot get redis client")
+		return
+	}
 	res, err := s.Client.BRPop(0, queueName).Result()
 	if err != nil {
 		log.Warning("redis> Error dequeueing %s:%s", queueName, err)

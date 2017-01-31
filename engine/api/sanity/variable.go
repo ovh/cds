@@ -2,6 +2,7 @@ package sanity
 
 import (
 	"regexp"
+	"sync"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/application"
@@ -113,61 +114,73 @@ var (
 	badVarReg     = regexp.MustCompile(`({{cds.*}})|({{ .*}})|({{.* }})`)
 )
 
-func loadUsedVariables(a *sdk.Action) ([]string, []string, []string, []string, []string) {
+type usedVariablesResponse struct {
+	pvars, avars, evars, gitvars, badvars []string
+}
+
+func loadUsedVariablesFromValue(value string, responseChan chan<- usedVariablesResponse) {
+	log.Debug("loadUsedVariablesFromValue> checking \"%s\"", value)
+	if value == "" {
+		responseChan <- usedVariablesResponse{}
+		return
+	}
+
 	var pvars, avars, evars, gitvars, badvars []string
 
-	pmap := make(map[string]int)
-	amap := make(map[string]int)
-	emap := make(map[string]int)
-	gitmap := make(map[string]int)
-	badmap := make(map[string]int)
+	pmap := make(map[string]uint8)
+	amap := make(map[string]uint8)
+	emap := make(map[string]uint8)
+	gitmap := make(map[string]uint8)
+	badmap := make(map[string]uint8)
 
-	for _, p := range a.Parameters {
-		allloc := projectVarReg.FindAllIndex([]byte(p.Value), -1)
+	wg := &sync.WaitGroup{}
+	wg.Add(5)
+	go func() {
+		allloc := projectVarReg.FindAllIndex([]byte(value), -1)
 		for _, loc := range allloc {
-			match := p.Value[loc[0]+len("{{.cds.proj.") : loc[1]-2]
+			match := value[loc[0]+len("{{.cds.proj.") : loc[1]-2]
 			pmap[match] = 1
 		}
-		allloc = appVarReg.FindAllIndex([]byte(p.Value), -1)
+		wg.Done()
+	}()
+
+	go func() {
+		allloc := appVarReg.FindAllIndex([]byte(value), -1)
 		for _, loc := range allloc {
-			match := p.Value[loc[0]+len("{{.cds.app.") : loc[1]-2]
+			match := value[loc[0]+len("{{.cds.app.") : loc[1]-2]
 			amap[match] = 1
 		}
-		allloc = envVarReg.FindAllIndex([]byte(p.Value), -1)
+		wg.Done()
+	}()
+
+	go func() {
+		allloc := envVarReg.FindAllIndex([]byte(value), -1)
 		for _, loc := range allloc {
-			match := p.Value[loc[0]+len("{{.cds.env.") : loc[1]-2]
+			match := value[loc[0]+len("{{.cds.env.") : loc[1]-2]
 			emap[match] = 1
 		}
-		allloc = gitVarReg.FindAllIndex([]byte(p.Value), -1)
+		wg.Done()
+	}()
+
+	go func() {
+		allloc := gitVarReg.FindAllIndex([]byte(value), -1)
 		for _, loc := range allloc {
-			match := p.Value[loc[0]+len("{{.git.") : loc[1]-2]
+			match := value[loc[0]+len("{{.git.") : loc[1]-2]
 			gitmap[match] = 1
 		}
-		allloc = badVarReg.FindAllIndex([]byte(p.Value), -1)
+		wg.Done()
+	}()
+
+	go func() {
+		allloc := badVarReg.FindAllIndex([]byte(value), -1)
 		for _, loc := range allloc {
-			match := p.Value[loc[0]:loc[1]]
+			match := value[loc[0]:loc[1]]
 			badmap[match] = 1
 		}
-	}
+		wg.Done()
+	}()
 
-	for _, child := range a.Actions {
-		cpvars, cavars, cevars, cgitvars, cbadvars := loadUsedVariables(&child)
-		for _, v := range cpvars {
-			pmap[v] = 1
-		}
-		for _, v := range cavars {
-			amap[v] = 1
-		}
-		for _, v := range cevars {
-			emap[v] = 1
-		}
-		for _, v := range cbadvars {
-			badmap[v] = 1
-		}
-		for _, v := range cgitvars {
-			gitmap[v] = 1
-		}
-	}
+	wg.Wait()
 
 	for key := range pmap {
 		pvars = append(pvars, key)
@@ -184,6 +197,147 @@ func loadUsedVariables(a *sdk.Action) ([]string, []string, []string, []string, [
 	for key := range gitmap {
 		gitvars = append(gitvars, key)
 	}
+
+	responseChan <- usedVariablesResponse{
+		pvars:   pvars,
+		avars:   avars,
+		evars:   evars,
+		badvars: badvars,
+		gitvars: gitvars,
+	}
+
+	log.Debug("loadUsedVariablesFromValue> value \"%s\" checked", value)
+}
+
+func loadUsedVariables(a *sdk.Action) ([]string, []string, []string, []string, []string) {
+	var pvars, avars, evars, gitvars, badvars []string
+
+	respChan := make(chan usedVariablesResponse, len(a.Parameters))
+	done := make(chan bool)
+	pmap := make(map[string]int)
+	amap := make(map[string]int)
+	emap := make(map[string]int)
+	gitmap := make(map[string]int)
+	badmap := make(map[string]int)
+
+	go func() {
+		for {
+			r, ok := <-respChan
+			for _, v := range r.pvars {
+				pmap[v] = 1
+			}
+			for _, v := range r.avars {
+				amap[v] = 1
+			}
+			for _, v := range r.evars {
+				emap[v] = 1
+			}
+			for _, v := range r.gitvars {
+				gitmap[v] = 1
+			}
+			for _, v := range r.badvars {
+				badmap[v] = 1
+			}
+			if !ok {
+				done <- true
+				return
+			}
+		}
+	}()
+
+	wg := &sync.WaitGroup{}
+	for i := range a.Parameters {
+		wg.Add(1)
+		go func(p *sdk.Parameter) {
+			loadUsedVariablesFromValue(p.Value, respChan)
+			wg.Done()
+		}(&a.Parameters[i])
+	}
+	wg.Wait()
+	close(respChan)
+
+	<-done
+
+	childRespChan := make(chan usedVariablesResponse, len(a.Actions))
+	childDone := make(chan bool)
+	go func() {
+		for {
+			r, ok := <-childRespChan
+			for _, v := range r.pvars {
+				pmap[v] = 1
+			}
+			for _, v := range r.avars {
+				amap[v] = 1
+			}
+			for _, v := range r.evars {
+				emap[v] = 1
+			}
+			for _, v := range r.gitvars {
+				gitmap[v] = 1
+			}
+			for _, v := range r.badvars {
+				badmap[v] = 1
+			}
+			if !ok {
+				childDone <- true
+				return
+			}
+		}
+	}()
+
+	wgc := &sync.WaitGroup{}
+	for i := range a.Actions {
+		wgc.Add(1)
+		go func(child *sdk.Action) {
+			cpvars, cavars, cevars, cgitvars, cbadvars := loadUsedVariables(child)
+			childRespChan <- usedVariablesResponse{
+				pvars:   cpvars,
+				avars:   cavars,
+				evars:   cevars,
+				gitvars: cgitvars,
+				badvars: cbadvars,
+			}
+			wgc.Done()
+		}(&a.Actions[i])
+	}
+	wgc.Wait()
+	close(childRespChan)
+
+	<-childDone
+
+	wge := &sync.WaitGroup{}
+	wge.Add(5)
+	go func() {
+		for key := range pmap {
+			pvars = append(pvars, key)
+		}
+		wge.Done()
+	}()
+	go func() {
+		for key := range amap {
+			avars = append(avars, key)
+		}
+		wge.Done()
+	}()
+	go func() {
+		for key := range emap {
+			evars = append(evars, key)
+		}
+		wge.Done()
+	}()
+	go func() {
+		for key := range badmap {
+			badvars = append(badvars, key)
+		}
+		wge.Done()
+	}()
+	go func() {
+		for key := range gitmap {
+			gitvars = append(gitvars, key)
+		}
+		wge.Done()
+	}()
+	wge.Wait()
 
 	return pvars, avars, evars, gitvars, badvars
 }

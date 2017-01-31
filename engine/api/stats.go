@@ -11,23 +11,23 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getStats(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getStats(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	var st sdk.Stats
 	var err error
 
 	st.History, err = initHistory(db)
 	if err != nil {
 		log.Warning("getStats> cannot initialize history: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	for i := range st.History {
 		n, err := getNewUsers(db, i+1, i)
 		if err != nil {
 			log.Warning("getStats> cannot getNewUsers: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 		st.History[i].NewUsers = n
 
@@ -35,60 +35,60 @@ func getStats(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context
 		n, err = getNewUsers(db, 540, i)
 		if err != nil {
 			log.Warning("getStats> cannot getPeriodTotalUsers: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 		st.History[i].Users = n
 
 		n, err = getNewProjects(db, i+1, i)
 		if err != nil {
 			log.Warning("getStats> cannot getNewProjects: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 		st.History[i].NewProjects = n
 
 		n, err = getNewProjects(db, 540, i)
 		if err != nil {
 			log.Warning("getStats> cannot getPeriodTotalUsers: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 		st.History[i].Projects = n
 
 		n, err = getNewApplications(db, i+1, i)
 		if err != nil {
 			log.Warning("getStats> cannot getNewApplications: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 		st.History[i].NewApplications = n
 
 		n, err = getNewApplications(db, 540, i)
 		if err != nil {
 			log.Warning("getStats> cannot getNewApplications: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 		st.History[i].Applications = n
 
 		n, err = getNewPipelines(db, i+1, i)
 		if err != nil {
 			log.Warning("getStats> cannot getNewPipelines: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 		st.History[i].NewPipelines = n
 
 		st.History[i].Pipelines.Build, st.History[i].Pipelines.Testing, st.History[i].Pipelines.Deploy, err = getPeriodTotalPipelinesByType(db, i)
 		if err != nil {
 			log.Warning("getStats> cannot getPeriodTotalPipelinesByType: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 	}
 
-	WriteJSON(w, r, st, http.StatusOK)
+	return WriteJSON(w, r, st, http.StatusOK)
 }
 
 func getNewPipelines(db *gorp.DbMap, fromWeek, toWeek int) (int64, error) {
@@ -156,6 +156,7 @@ func getPeriodTotalPipelinesByType(db *gorp.DbMap, toWeek int) (build, test, dep
 	if err != nil {
 		return
 	}
+
 	return
 }
 

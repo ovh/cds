@@ -22,17 +22,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	if err = r.ParseForm(); err != nil {
 		log.Warning("receiveHook> cannot parse query params: %s\n", err)
-		WriteError(w, r, err)
+		return err
 	}
 
 	rh := hook.ReceivedHook{
@@ -49,34 +49,34 @@ func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 
 	if db == nil {
 		hook.Recovery(rh, fmt.Errorf("database not available"))
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	if err := processHook(rh); err != nil {
 		hook.Recovery(rh, err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
-	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
-func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("addHook: Cannot read body: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	var h sdk.Hook
 	err = json.Unmarshal(data, &h)
 	if err != nil {
 		log.Warning("addHook: Cannot unmarshal body: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	h.Enabled = true
@@ -85,41 +85,41 @@ func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.
 	err = hook.InsertHook(db, &h)
 	if err != nil {
 		log.Warning("addHook: cannot insert hook in db: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
-	WriteJSON(w, r, h, http.StatusOK)
+	return WriteJSON(w, r, h, http.StatusOK)
 }
 
-func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("updateHookHandler: Cannot read body: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	var h sdk.Hook
 	err = json.Unmarshal(data, &h)
 	if err != nil {
 		log.Warning("updateHookHandler: Cannot unmarshal body: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	// Update hook in database
 	err = hook.UpdateHook(db, h)
 	if err != nil {
 		log.Warning("updateHookHandler: cannot update hook in db: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+
+	return nil
 }
 
-func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -127,21 +127,19 @@ func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	a, err := application.LoadApplicationByName(db, projectName, appName)
 	if err != nil {
 		log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	hooks, err := hook.LoadApplicationHooks(db, a.ID)
 	if err != nil {
 		log.Warning("getApplicationHooksHandler> cannot load hooks: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, hooks, http.StatusOK)
+	return WriteJSON(w, r, hooks, http.StatusOK)
 }
 
-func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -152,50 +150,48 @@ func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context
 		if err != sdk.ErrPipelineNotFound {
 			log.Warning("getHooks> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
 		}
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	a, err := application.LoadApplicationByName(db, projectName, appName)
 	if err != nil {
 		log.Warning("getHooks> cannot load application %s/%s: %s\n", projectName, appName, err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	hooks, err := hook.LoadPipelineHooks(db, p.ID, a.ID)
 	if err != nil {
 		log.Warning("getHooks> cannot load hooks: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, hooks, http.StatusOK)
+	return WriteJSON(w, r, hooks, http.StatusOK)
 }
 
-func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	idS := vars["id"]
 
 	id, err := strconv.ParseInt(idS, 10, 64)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	_, err = hook.LoadHook(db, id)
 	if err != nil {
 		log.Warning("deleteHook> cannot load hook: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	err = hook.DeleteHook(db, id)
 	if err != nil {
 		log.Warning("deleteHook> cannot delete hook: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
+	return nil
 }
 
 //hookRecoverer is the go-routine which catches on-error hook

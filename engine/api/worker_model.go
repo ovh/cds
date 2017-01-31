@@ -17,39 +17,35 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("addWorkerModel> cannot read body: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	// Unmarshal body
 	var model sdk.Model
-	err = json.Unmarshal(data, &model)
-	if err != nil {
+	if err := json.Unmarshal(data, &model); err != nil {
 		log.Warning("addWorkerModel> cannot unmarshal body data: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	if model.Type == "" {
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	if len(model.Name) == 0 {
 		log.Warning("addWorkerModel> model name is empty: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	if model.GroupID == 0 {
 		log.Warning("addWorkerModel> groupID should be set: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	//User must be admin of the group set in the model
@@ -66,8 +62,8 @@ func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 
 	//User should have the right permission or be admin
 	if !c.User.Admin && !ok {
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
+
 	}
 
 	model.CreatedBy = sdk.User{
@@ -82,44 +78,43 @@ func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	// Insert model in db
 	if err := worker.InsertWorkerModel(db, &model); err != nil {
 		log.Warning("addWorkerModel> cannot add worker model: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
-	WriteJSON(w, r, model, http.StatusOK)
+	return WriteJSON(w, r, model, http.StatusOK)
 }
 
-func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	idString := vars["permModelID"]
 
 	modelID, errParse := strconv.ParseInt(idString, 10, 64)
 	if errParse != nil {
 		log.Warning("updateWorkerModel> modelID must be an integer : %s\n", errParse)
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
+		return sdk.ErrInvalidID
+
 	}
 
 	old, errLoad := worker.LoadWorkerModelByID(db, modelID)
 	if errLoad != nil {
-		WriteError(w, r, errLoad)
-		return
+		return errLoad
 	}
 
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
 		log.Warning("updateWorkerModel> cannot read body: %s\n", errRead)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	// Unmarshal body
 	var model sdk.Model
 	if err := json.Unmarshal(data, &model); err != nil {
 		log.Warning("updateWorkerModel> cannot unmarshal body data: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	//If the model name has not been set, keep the old name
@@ -166,141 +161,134 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	//User should have the right permission or be admin
 	if !c.User.Admin && !ok {
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
+
 	}
 
 	if modelID != model.ID {
 		log.Warning("updateWorkerModel> wrong ID.\n")
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
+		return sdk.ErrInvalidID
+
 	}
 
 	// update model in db
 	if err := worker.UpdateWorkerModel(db, model); err != nil {
 		log.Warning("updateWorkerModel> cannot update worker model: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
+		return err
 
-	WriteJSON(w, r, model, http.StatusOK)
+	}
 
 	// Recompute warnings
 	go func() {
 		warnings, err := sanity.LoadAllWarnings(db, "")
 		if err != nil {
 			log.Warning("updateWorkerModel> cannot load warnings: %s\n", err)
-			return
+
 		}
 
 		for _, warning := range warnings {
 			sanity.CheckPipeline(db, &warning.Project, &warning.Pipeline)
 		}
 	}()
+
+	return WriteJSON(w, r, model, http.StatusOK)
 }
 
-func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	workerModelIDs := vars["permModelID"]
 
 	workerModelID, err := strconv.ParseInt(workerModelIDs, 10, 64)
 	if err != nil {
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	if err := worker.DeleteWorkerModel(tx, workerModelID); err != nil {
 		log.Warning("deleteWorkerModel: cannot delete worker model: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	if err := tx.Commit(); err != nil {
-		WriteError(w, r, err)
-		return
+		return err
 	}
+
+	return nil
 }
 
-func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context, name string) {
+func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx, name string) error {
 	m, err := worker.LoadWorkerModelByName(db, name)
 	if err != nil {
 		if err != sdk.ErrNoWorkerModel {
 			log.Warning("getWorkerModel> cannot load worker model: %s\n", err)
 		}
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, m, http.StatusOK)
+	return WriteJSON(w, r, m, http.StatusOK)
 }
 
-func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	if err := r.ParseForm(); err != nil {
 		log.Warning("getWorkerModels> cannot parse form")
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	name := r.FormValue("name")
 	if name != "" {
-		getWorkerModel(w, r, db, c, name)
-		return
+		return getWorkerModel(w, r, db, c, name)
 	}
 
 	models, err := worker.LoadWorkerModelsByUser(db, c.User.ID)
 	if err != nil {
 		log.Warning("getWorkerModels> cannot load worker models: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	log.Debug("getWorkerModels> %s", models)
 
-	WriteJSON(w, r, models, http.StatusOK)
+	return WriteJSON(w, r, models, http.StatusOK)
 }
 
-func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	workerModelIDs := vars["permModelID"]
 
 	workerModelID, errParse := strconv.ParseInt(workerModelIDs, 10, 64)
 	if errParse != nil {
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	workerModel, errLoad := worker.LoadWorkerModelByID(db, workerModelID)
 	if errLoad != nil {
-		WriteError(w, r, errLoad)
-		return
+		return errLoad
 	}
 
 	// Get body
 	data, errJSON := ioutil.ReadAll(r.Body)
 	if errJSON != nil {
 		log.Warning("addWorkerModelCapa> cannot read body: %s\n", errJSON)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	var capa sdk.Requirement
 	if err := json.Unmarshal(data, &capa); err != nil {
 		log.Warning("addWorkerModelCapa> cannot unmarshal body data: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 	workerModel.Capabilities = append(workerModel.Capabilities, capa)
 
 	if err := worker.UpdateWorkerModel(db, *workerModel); err != nil {
 		log.Warning("addWorkerModelCapa> cannot insert new worker model capa: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	// Recompute warnings
@@ -308,7 +296,7 @@ func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		warnings, err := sanity.LoadAllWarnings(db, "")
 		if err != nil {
 			log.Warning("updateWorkerModel> cannot load warnings: %s\n", err)
-			return
+
 		}
 
 		for _, warning := range warnings {
@@ -316,17 +304,18 @@ func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		}
 	}()
 
+	return nil
 }
 
-func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
-	WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
+func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
 }
 
-func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
-	WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
+func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
 }
 
-func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	workerModelIDs := vars["permModelID"]
 	capaName := vars["capa"]
@@ -334,16 +323,16 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	workerModelID, err := strconv.ParseInt(workerModelIDs, 10, 64)
 	if err != nil {
 		log.Warning("updateWorkerModelCapa> id must be a integer: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("updateWorkerModelCapa> cannot read body: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	// Unmarshal body
@@ -351,14 +340,14 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	err = json.Unmarshal(data, &capa)
 	if err != nil {
 		log.Warning("updateWorkerModelCapa> cannot unmarshal body data: %s\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	if capaName != capa.Name {
 		log.Warning("updateWorkerModelCapa> Wrong capability name\n", err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
+
 	}
 
 	err = worker.UpdateWorkerModelCapability(db, capa, workerModelID)
@@ -367,8 +356,8 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 			log.Warning("updateWorkerModelCapa> cannot update worker model capa: %s\n", err)
 		}
 		log.Warning("updateWorkerModelCapa: cannot update capability: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	// Recompute warnings
@@ -376,7 +365,7 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		warnings, err := sanity.LoadAllWarnings(db, "")
 		if err != nil {
 			log.Warning("updateWorkerModel> cannot load warnings: %s\n", err)
-			return
+
 		}
 
 		for _, warning := range warnings {
@@ -384,9 +373,10 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		}
 	}()
 
+	return nil
 }
 
-func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	workerModelIDs := vars["permModelID"]
 	capaName := vars["capa"]
@@ -394,8 +384,7 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	workerModelID, err := strconv.ParseInt(workerModelIDs, 10, 64)
 	if err != nil {
 		log.Warning("deleteWorkerModelCapa> modelID is no integer '%s': %s\n", workerModelIDs, err)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	if err := worker.DeleteWorkerModelCapability(db, workerModelID, capaName); err != nil {
@@ -403,8 +392,8 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 			log.Warning("updateWorkerModelCapa> cannot remove worker model capa: %s\n", err)
 		}
 		log.Warning("deleteWorkerModelCapa: cannot remove capability: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	// Recompute warnings
@@ -412,42 +401,40 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		warnings, err := sanity.LoadAllWarnings(db, "")
 		if err != nil {
 			log.Warning("updateWorkerModel> cannot load warnings: %s\n", err)
-			return
+
 		}
 
 		for _, warning := range warnings {
 			sanity.CheckPipeline(db, &warning.Project, &warning.Pipeline)
 		}
 	}()
+
+	return nil
 }
 
-func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	if c.Agent == sdk.HatcheryAgent {
 		ms, err := worker.EstimateWorkerModelNeeds(db, c.User.Groups[0].ID, worker.LoadWorkerModelStatusForGroup, worker.LoadGroupActionCount)
 		if err != nil {
 			log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
-		WriteJSON(w, r, ms, http.StatusOK)
-		return
+		return WriteJSON(w, r, ms, http.StatusOK)
 	}
 
 	if c.User.Admin == true {
 		ms, err := worker.EstimateWorkerModelNeeds(db, c.User.ID, worker.LoadWorkerModelStatusForAdminUser, worker.LoadAllActionCount)
 		if err != nil {
 			log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
-		WriteJSON(w, r, ms, http.StatusOK)
-		return
+		return WriteJSON(w, r, ms, http.StatusOK)
 	}
 
-	WriteError(w, r, sdk.ErrForbidden)
+	return sdk.ErrForbidden
 }
 
-func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	res := []struct {
 		Model string
 		Used  int
@@ -455,8 +442,8 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	cache.Get("stats:models", &res)
 	if len(res) > 0 {
-		WriteJSON(w, r, res, http.StatusOK)
-		return
+		return WriteJSON(w, r, res, http.StatusOK)
+
 	}
 
 	//This can be very long, so run it in a goroutine and send 202
@@ -464,7 +451,7 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 		var loading string
 		cache.Get("stats:models:loading", &loading)
 		if loading != "" {
-			return
+
 		}
 		loading = "true"
 		cache.Set("stats:models:loading", loading)
@@ -492,7 +479,6 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 		rows, err := db.Query(query)
 		if err != nil {
 			log.Warning("getWorkerModelsStatusHandler> %s", err)
-			WriteError(w, r, err)
 			return
 		}
 		defer rows.Close()
@@ -503,7 +489,6 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 			if err := rows.Scan(&model, &used); err != nil {
 				log.Warning("getWorkerModelsStatusHandler> %s", err)
-				WriteError(w, r, err)
 				return
 			}
 			res = append(res, struct {
@@ -516,31 +501,28 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 		cache.Delete("stats:models:loading")
 	}()
 
-	WriteJSON(w, r, res, http.StatusAccepted)
+	return WriteJSON(w, r, res, http.StatusAccepted)
 }
 
-func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	idString := vars["permModelID"]
 
 	modelID, errParse := strconv.ParseInt(idString, 10, 64)
 	if errParse != nil {
 		log.Warning("getWorkerModelInstances> modelID must be an integer : %s\n", errParse)
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
+		return sdk.ErrInvalidID
 	}
 
 	m, errLoad := worker.LoadWorkerModelByID(db, modelID)
 	if errLoad != nil {
-		WriteError(w, r, errLoad)
-		return
+		return errLoad
 	}
 
 	ws, errW := worker.LoadWorkersByModel(db, m.ID)
 	if errW != nil {
-		WriteError(w, r, errW)
-		return
+		return errW
 	}
 
-	WriteJSON(w, r, ws, http.StatusOK)
+	return WriteJSON(w, r, ws, http.StatusOK)
 }
