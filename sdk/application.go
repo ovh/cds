@@ -30,6 +30,7 @@ type Application struct {
 	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty"`
 	Hooks               []Hook                `json:"hooks,omitempty"`
 	Workflows           []CDPipeline          `json:"workflows,omitempty"`
+	Schedulers          []PipelineScheduler   `json:"schedulers,omitempty"`
 }
 
 // ApplicationPipeline Represent the link between an application and a pipeline
@@ -95,18 +96,58 @@ func ListApplications(key string) ([]Application, error) {
 	return applications, nil
 }
 
+var GetApplicationOptions = struct {
+	WithPollers    RequestModifier
+	WithHooks      RequestModifier
+	WithNotifs     RequestModifier
+	WithWorkflow   RequestModifier
+	WithTriggers   RequestModifier
+	WithSchedulers RequestModifier
+}{
+	WithPollers: func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withPollers", "true")
+		r.URL.RawQuery = q.Encode()
+	},
+	WithHooks: func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withHooks", "true")
+		r.URL.RawQuery = q.Encode()
+	},
+	WithNotifs: func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withNotifs", "true")
+		r.URL.RawQuery = q.Encode()
+	},
+	WithWorkflow: func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withWorkflow", "true")
+		r.URL.RawQuery = q.Encode()
+	},
+	WithTriggers: func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withTriggers", "true")
+		r.URL.RawQuery = q.Encode()
+	},
+	WithSchedulers: func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withSchedulers", "true")
+		r.URL.RawQuery = q.Encode()
+	},
+}
+
 // GetApplication retrieve the given application from CDS
-func GetApplication(pk, name string) (*Application, error) {
+func GetApplication(pk, name string, opts ...RequestModifier) (*Application, error) {
 	var a Application
 
 	path := fmt.Sprintf("/project/%s/application/%s", pk, name)
-	data, _, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal(data, &a)
-	if err != nil {
+	if err := json.Unmarshal(data, &a); err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 

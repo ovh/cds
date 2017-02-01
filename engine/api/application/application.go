@@ -46,7 +46,7 @@ ORDER BY application.name ASC
 `
 
 // LoadApplications load all application from the given project
-func LoadApplications(db gorp.SqlExecutor, projectKey string, allpipelines bool, user *sdk.User) ([]sdk.Application, error) {
+func LoadApplications(db gorp.SqlExecutor, projectKey string, withPipelines, withVariables bool, user *sdk.User) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
 	var err error
 	var rows *sql.Rows
@@ -99,7 +99,17 @@ func LoadApplications(db gorp.SqlExecutor, projectKey string, allpipelines bool,
 		apps = append(apps, app)
 	}
 
-	if allpipelines {
+	if withVariables {
+		for i := range apps {
+			var errV error
+			apps[i].Variable, errV = GetAllVariableByID(db, apps[i].ID)
+			if errV != nil {
+				return apps, errV
+			}
+		}
+	}
+
+	if withPipelines {
 		for i := range apps {
 			pipelines, err := GetAllPipelinesByID(db, apps[i].ID)
 			if err != nil && err != sdk.ErrNoAttachedPipeline {
@@ -124,7 +134,7 @@ func CountApplicationByProject(db gorp.SqlExecutor, projectID int64) (int, error
 // LoadApplicationByName load the given application
 func LoadApplicationByName(db gorp.SqlExecutor, projectKey, appName string, fargs ...FuncArg) (*sdk.Application, error) {
 	var app sdk.Application
-
+	app.ProjectKey = projectKey
 	var k = cache.Key("application", projectKey, appName)
 	//cache.Get(k, &app)
 	//FIXME Cache

@@ -1,8 +1,10 @@
 package sdk
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/lib/pq"
 	"net/http"
 	"net/url"
 	"sync"
@@ -45,6 +47,32 @@ type PipelineBuild struct {
 	Commits               []VCSCommit          `json:"commits,omitempty"`
 	Trigger               PipelineBuildTrigger `json:"trigger"`
 	PreviousPipelineBuild *PipelineBuild       `json:"previous_pipeline_build"`
+}
+
+// PipelineBuildDbResult Gorp result when select a pipeline build
+type PipelineBuildDbResult struct {
+	ID                    int64          `db:"id"`
+	ApplicationID         int64          `db:"appID"`
+	PipelineID            int64          `db:"pipID"`
+	EnvironmentID         int64          `db:"envID"`
+	ApplicatioName        string         `db:"appName"`
+	PipelineName          string         `db:"pipName"`
+	EnvironmentName       string         `db:"envName"`
+	BuildNumber           int64          `db:"build_number"`
+	Version               int64          `db:"version"`
+	Status                string         `db:"status"`
+	Args                  string         `db:"args"`
+	Stages                string         `db:"stages"`
+	Start                 time.Time      `db:"start"`
+	Done                  pq.NullTime    `db:"done"`
+	ManualTrigger         bool           `db:"manual_trigger"`
+	TriggeredBy           sql.NullInt64  `db:"triggered_by"`
+	VCSChangesBranch      sql.NullString `db:"vcs_branch"`
+	VCSChangesHash        sql.NullString `db:"vcs_hash"`
+	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
+	ParentPipelineBuildID sql.NullInt64  `db:"parent_pipeline_build"`
+	Username              sql.NullString `db:"username"`
+	ScheduledTrigger      bool           `db:"scheduled_trigger"`
 }
 
 // PipelineBuildTrigger Struct for history table

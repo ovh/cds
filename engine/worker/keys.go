@@ -18,10 +18,10 @@ else
 fi
 `
 
-// PKEY contains the environment variable containing path to specific ssh key to use
+// pKEY contains the environment variable containing path to specific ssh key to use
 const pKEY = "PKEY"
 
-// GIT_SSH is the name of the environment variable that need to be set so git use our specific key
+// GitSSH is the name of the environment variable that need to be set so git use our specific key
 const GitSSH = "GIT_SSH"
 
 func writeSSHKey(key []byte, keypath string) error {

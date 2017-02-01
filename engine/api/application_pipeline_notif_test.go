@@ -32,7 +32,7 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 		return err
 	}
 
-	apps, err := application.LoadApplications(db, key, false, &sdk.User{Admin: true})
+	apps, err := application.LoadApplications(db, key, false, false, &sdk.User{Admin: true})
 	if err != nil {
 		t.Logf("Cannot list app: %s", err)
 		return err

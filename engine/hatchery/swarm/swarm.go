@@ -123,7 +123,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 				ID:     id,
 				Signal: docker.SIGKILL,
 			}); err != nil {
-				log.Warning("Unable to kill container %s", err)
+				log.Info("Unable to kill container %s", err)
 				continue
 			}
 

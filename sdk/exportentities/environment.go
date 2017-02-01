@@ -8,15 +8,9 @@ import (
 
 // Environment is a struct to export sdk.Environment
 type Environment struct {
-	Name        string                      `json:"name" yaml:"name"`
-	Values      map[string]EnvironmentValue `json:"values" yaml:"values"`
-	Permissions map[string]int              `json:"permissions" yaml:"permissions"`
-}
-
-// EnvironmentValue is a struct to export a value of sdk.Environment
-type EnvironmentValue struct {
-	Type  string `json:"type" yaml:"type"`
-	Value string `json:"value" yaml:"value"`
+	Name        string                   `json:"name" yaml:"name"`
+	Values      map[string]VariableValue `json:"values" yaml:"values"`
+	Permissions map[string]int           `json:"permissions" yaml:"permissions"`
 }
 
 //NewEnvironment returns an Environment from an sdk.Environment pointer
@@ -26,9 +20,9 @@ func NewEnvironment(e *sdk.Environment) (env *Environment) {
 	}
 	env = new(Environment)
 	env.Name = e.Name
-	env.Values = make(map[string]EnvironmentValue, len(e.Variable))
+	env.Values = make(map[string]VariableValue, len(e.Variable))
 	for _, v := range e.Variable {
-		env.Values[v.Name] = EnvironmentValue{
+		env.Values[v.Name] = VariableValue{
 			Type:  string(v.Type),
 			Value: v.Value,
 		}
@@ -49,7 +43,7 @@ permissions = { {{ range $key, $value := .Permissions }}
 }
 
 values = { 
-{{ range $key, $value := .Values -}}
+{{ range $key, $value := .Values }}
 	"{{ $key }}" {
 		{{if eq $value.Type "text" -}} 
 		type = "{{$value.Type}}"
@@ -61,7 +55,7 @@ EOV
 		value = "{{$value.Value}}"
 		{{- end}}
 	} 
-{{- end }}
+{{ end }}
 }`
 	t := template.New("t")
 	return t.Parse(tmpl)
