@@ -220,10 +220,6 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		os.Exit(1)
 	}
 
-	if verbose {
-		log.Printf("Call %s %s%s\n", method, Host, path)
-	}
-
 	for i := 0; i < retry; i++ {
 		var req *http.Request
 		if args != nil {
@@ -239,6 +235,10 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 
 		for i := range mods {
 			mods[i](req)
+		}
+
+		if verbose {
+			log.Printf("Call %s %s\n", method, req.URL.String())
 		}
 
 		//No auth on /login route
