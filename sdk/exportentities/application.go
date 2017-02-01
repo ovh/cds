@@ -6,6 +6,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// Application represents exported sdk.Application
 type Application struct {
 	ProjectKey        string                         `json:"project_key" yaml:"project_key"`
 	Name              string                         `json:"name" yaml:"name"`
@@ -16,12 +17,14 @@ type Application struct {
 	Pipelines         map[string]ApplicationPipeline `json:"pipelines,omitempty" yaml:"pipelines,omitempty"`
 }
 
+// ApplicationPipeline represents exported sdk.ApplicationPipeline
 type ApplicationPipeline struct {
 	Parameters map[string]VariableValue              `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Triggers   map[string]ApplicationPipelineTrigger `json:"triggers,omitempty" yaml:"triggers,omitempty"`
 	Options    []ApplicationPipelineOptions          `json:"options,omitempty" yaml:"options,omitempty"`
 }
 
+// ApplicationPipelineOptions represents presence of hooks, pollers, notifications and scheduler for an tuple application pipeline environment
 type ApplicationPipelineOptions struct {
 	Environment   *string                                    `json:"environment,omitempty" yaml:"environment,omitempty"`
 	Hook          *bool                                      `json:"hook,omitempty" yaml:"hook,omitempty"`
@@ -30,13 +33,16 @@ type ApplicationPipelineOptions struct {
 	Schedulers    []ApplicationPipelineScheduler             `json:"schedulers,omitempty" yaml:"schedulers,omitempty"`
 }
 
+// ApplicationPipelineScheduler represents exported sdk.PipelineScheduler
 type ApplicationPipelineScheduler struct {
 	CronExpr   string                   `json:"cron_expr" yaml:"cron_expr"`
 	Parameters map[string]VariableValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
+// ApplicationPipelineNotification represents exported notification
 type ApplicationPipelineNotification sdk.UserNotificationSettings
 
+// ApplicationPipelineTrigger represents an exported pipeline trigger
 type ApplicationPipelineTrigger struct {
 	ProjectKey      *string     `json:"project_key" yaml:"project_key"`
 	ApplicationName *string     `json:"application_name" yaml:"application_name"`
@@ -46,11 +52,13 @@ type ApplicationPipelineTrigger struct {
 	Conditions      []Condition `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 }
 
+// Condition represents sdk.Prerequisite
 type Condition struct {
 	Variable string `json:"variable" yaml:"variable"`
 	Expected string `json:"expected" yaml:"expected"`
 }
 
+// NewApplication instanciance an exportable application from an sdk.Application
 func NewApplication(app *sdk.Application) (a *Application) {
 	a = new(Application)
 	a.ProjectKey = app.ProjectKey
@@ -124,10 +132,10 @@ func NewApplication(app *sdk.Application) (a *Application) {
 		//Hooks
 		for _, h := range app.Hooks {
 			if h.Enabled && h.Pipeline.Name == ap.Pipeline.Name {
-				if _, ok := mapEnvOpts["NoEnv"]; !ok {
-					mapEnvOpts["NoEnv"] = &ApplicationPipelineOptions{}
+				if _, ok := mapEnvOpts[sdk.DefaultEnv.Name]; !ok {
+					mapEnvOpts[sdk.DefaultEnv.Name] = &ApplicationPipelineOptions{}
 				}
-				o := mapEnvOpts["NoEnv"]
+				o := mapEnvOpts[sdk.DefaultEnv.Name]
 				if h.Enabled {
 					var ok = true
 					o.Hook = &ok
@@ -138,10 +146,10 @@ func NewApplication(app *sdk.Application) (a *Application) {
 		//Pollers
 		for _, p := range app.RepositoryPollers {
 			if p.Enabled && p.Pipeline.Name == ap.Pipeline.Name {
-				if _, ok := mapEnvOpts["NoEnv"]; !ok {
-					mapEnvOpts["NoEnv"] = &ApplicationPipelineOptions{}
+				if _, ok := mapEnvOpts[sdk.DefaultEnv.Name]; !ok {
+					mapEnvOpts[sdk.DefaultEnv.Name] = &ApplicationPipelineOptions{}
 				}
-				o := mapEnvOpts["NoEnv"]
+				o := mapEnvOpts[sdk.DefaultEnv.Name]
 				var ok = true
 				o.Polling = &ok
 			}
@@ -189,7 +197,7 @@ func NewApplication(app *sdk.Application) (a *Application) {
 		pip.Options = make([]ApplicationPipelineOptions, len(mapEnvOpts))
 		var i int
 		for k, v := range mapEnvOpts {
-			if k != "NoEnv" {
+			if k != sdk.DefaultEnv.Name {
 				s := k
 				pip.Options[i].Environment = &s
 			}

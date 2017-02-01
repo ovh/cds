@@ -96,6 +96,7 @@ func ListApplications(key string) ([]Application, error) {
 	return applications, nil
 }
 
+// GetApplicationOptions are options for GetApplication
 var GetApplicationOptions = struct {
 	WithPollers    RequestModifier
 	WithHooks      RequestModifier
