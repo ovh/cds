@@ -42,7 +42,6 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
 		log.Warning("addStageHandler> Cannot load pipeline stages: %s", err)
-
 		return err
 	}
 
@@ -175,7 +174,6 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 }
 
 func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -277,7 +275,6 @@ func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	if err != nil {
 		log.Warning("deleteStageHandler> Stage ID must be an int: %s", err)
 		return sdk.ErrInvalidID
-
 	}
 
 	// check if stage exist

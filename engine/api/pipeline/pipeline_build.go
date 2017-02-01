@@ -88,6 +88,40 @@ func LoadPipelineBuildID(db gorp.SqlExecutor, applicationID, pipelineID, environ
 	return pbID, nil
 }
 
+// CountBuildingPipelineByApplication  counts building pipeline for the given application
+func CountBuildingPipelineByApplication(db gorp.SqlExecutor, appID int64) (int, error) {
+	var nb int
+	query := `SELECT count(1) FROM pipeline_build WHERE application_id = $1 AND status = $2`
+	if err := db.QueryRow(query, appID, sdk.StatusBuilding.String()).Scan(&nb); err != nil {
+		return 0, err
+	}
+	return nb, nil
+}
+
+// LoadPipelineBuildByApplicationAndBranch loads all pipeline build for the given application on the given branch
+func LoadPipelineBuildByApplicationAndBranch(db gorp.SqlExecutor, appID int64, branch string) ([]sdk.PipelineBuild, error) {
+	whereCondition := `
+		WHERE pb.application_id AND = $1 AND pb.vcs_changes_branch = $2
+		ORDER by pb.id ASC
+	`
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+
+	var rows []PipelineBuildDbResult
+	if _, err := db.Select(&rows, query, appID, branch); err != nil {
+		return nil, err
+	}
+
+	pbs := []sdk.PipelineBuild{}
+	for _, r := range rows {
+		pb, errScan := scanPipelineBuild(r)
+		if errScan != nil {
+			return nil, errScan
+		}
+		pbs = append(pbs, *pb)
+	}
+	return pbs, nil
+}
+
 // LoadBuildingPipelines Load all building pipeline
 func LoadBuildingPipelines(db gorp.SqlExecutor) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
@@ -404,18 +438,6 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 
 	pb.Status = newStatus
 	return nil
-}
-
-// DeletePipelineBuild Delete a pipeline build
-func DeletePipelineBuild(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, buildNumber int64) error {
-	query := `
-		DELETE FROM pipeline_build
-		WHERE application_id = $1 AND pipeline_id = $2 AND environment_id = $3
-		AND build_number = $4
-	`
-
-	_, errDelete := db.Query(query, applicationID, pipelineID, environmentID, buildNumber)
-	return errDelete
 }
 
 // DeletePipelineBuildByID  Delete pipeline build by his ID
