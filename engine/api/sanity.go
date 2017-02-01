@@ -24,7 +24,7 @@ func getUserWarnings(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	}
 	if err != nil {
 		log.Warning("getUserWarnings> Cannot load user %d warnings: %s\n", c.User.ID, err)
-return err
+		return err
 
 	}
 

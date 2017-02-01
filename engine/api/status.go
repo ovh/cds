@@ -79,8 +79,8 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	output = append(output, fmt.Sprintf("Object-Store: %s", objectstore.Status()))
 	log.Info("Status> Object-Store: %s", objectstore.Status())
 
-  // Check mail
-  mailStatus := mail.Status()
+	// Check mail
+	mailStatus := mail.Status()
 	output = append(output, fmt.Sprintf("SMTP: %s", mailStatus))
 	log.Info("Status> SMTP: %s", mailStatus)
 

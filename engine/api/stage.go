@@ -40,13 +40,13 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	// Check if pipeline exist
 	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
 	if err != nil {
-return err
+		return err
 
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
 		log.Warning("addStageHandler> Cannot load pipeline stages: %s", err)
-return err
+		return err
 
 	}
 
@@ -62,13 +62,13 @@ return err
 
 	if err := pipeline.InsertStage(db, stageData); err != nil {
 		log.Warning("addStageHandler> Cannot insert stage: %s", err)
-return err
+		return err
 
 	}
 
 	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
 		log.Warning("addStageHandler> Cannot update pipeline last modified date: %s", err)
-return err
+		return err
 
 	}
 
@@ -79,7 +79,7 @@ return err
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
 		log.Warning("addStageHandler> Cannot load pipeline stages: %s", err)
-return err
+		return err
 
 	}
 
@@ -107,13 +107,13 @@ func getStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	// Check if pipeline exist
 	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
 	if err != nil {
-return err
+		return err
 
 	}
 
 	s, err := pipeline.LoadStage(db, pipelineData.ID, stageID)
 	if err != nil {
-return err
+		return err
 
 	}
 
@@ -152,7 +152,7 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	// Check if pipeline exist
 	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
 	if err != nil {
-return err
+		return err
 
 	}
 
@@ -160,7 +160,7 @@ return err
 	nbStage, err := pipeline.CountStageByPipelineID(db, pipelineData.ID)
 	if err != nil {
 		log.Warning("moveStageHandler> Cannot count stage for pipeline %s : %s", pipelineData.Name, err)
-return err
+		return err
 
 	}
 
@@ -169,20 +169,20 @@ return err
 		s, err := pipeline.LoadStage(db, pipelineData.ID, stageData.ID)
 		if err != nil {
 			log.Warning("moveStageHandler> Cannot load stage: %s", err)
-return err
+			return err
 
 		}
 
 		if err := pipeline.MoveStage(db, s, stageData.BuildOrder, pipelineData); err != nil {
 			log.Warning("moveStageHandler> Cannot move stage: %s", err)
-return err
+			return err
 
 		}
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
 		log.Warning("moveStageHandler> Cannot load stages: %s", err)
-return err
+		return err
 
 	}
 
@@ -231,7 +231,7 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	// Check if pipeline exist
 	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
 	if err != nil {
-return err
+		return err
 
 	}
 
@@ -239,7 +239,7 @@ return err
 	s, err := pipeline.LoadStage(db, pipelineData.ID, stageData.ID)
 	if err != nil {
 		log.Warning("addStageHandler> Cannot Load stage: %s", err)
-return err
+		return err
 
 	}
 	stageData.ID = s.ID
@@ -247,33 +247,33 @@ return err
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("addStageHandler> Cannot start transaction: %s", err)
-return err
+		return err
 
 	}
 	defer tx.Rollback()
 
 	if err := pipeline.UpdateStage(tx, stageData); err != nil {
 		log.Warning("addStageHandler> Cannot update stage: %s", err)
-return err
+		return err
 
 	}
 
 	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
 		log.Warning("addStageHandler> Cannot update pipeline last_modified: %s", err)
-return err
+		return err
 
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Warning("addStageHandler> Cannot commit transaction: %s", err)
-return err
+		return err
 
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
 		log.Warning("addStageHandler> Cannot load stages: %s", err)
-return err
+		return err
 
 	}
 
@@ -296,7 +296,7 @@ func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
 	if err != nil {
 		log.Warning("deleteStageHandler> Cannot load pipeline %s: %s", pipelineKey, err)
-return err
+		return err
 
 	}
 
@@ -311,39 +311,39 @@ return err
 	s, err := pipeline.LoadStage(db, pipelineData.ID, stageID)
 	if err != nil {
 		log.Warning("deleteStageHandler> Cannot Load stage: %s", err)
-return err
+		return err
 
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deleteStageHandler> Cannot start transaction: %s", err)
-return err
+		return err
 
 	}
 	defer tx.Rollback()
 
 	if err := pipeline.DeleteStageByID(tx, s, c.User.ID); err != nil {
 		log.Warning("deleteStageHandler> Cannot Delete stage: %s", err)
-return err
+		return err
 
 	}
 
 	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
 		log.Warning("deleteStageHandler> Cannot Update pipeline last_modified: %s", err)
-return err
+		return err
 
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("deleteStageHandler> Cannot commit transaction: %s", err)
-return err
+		return err
 
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
 		log.Warning("deleteStageHandler> Cannot load stages: %s", err)
-return err
+		return err
 
 	}
 

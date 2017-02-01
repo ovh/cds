@@ -52,4 +52,3 @@ type PipelineBuildJob sdk.PipelineBuildJob
 
 // Log is a gorp wrapper around sdk.Log
 type Log sdk.Log
-

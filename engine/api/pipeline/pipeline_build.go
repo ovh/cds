@@ -844,7 +844,7 @@ func GetBranchHistory(db gorp.SqlExecutor, projectKey, appName string, page, nbP
 			lastestBuild.pipeline_id, lastestBuild.application_id, lastestBuild.environment_id,
 			lastestBuild.appName, lastestBuild.pipName, lastestBuild.envName,
 			lastestBuild.start, lastestBuild.done, lastestBuild.status, lastestBuild.version, lastestBuild.build_number,
-			lastestBuild.manual_trigger, "user".username, lastestBuild.vcs_changes_branch, lastestBuild.vcs_changes_hash, lastestBuild.vcs_changes_author
+			lastestBuild.manual_trigger, lastestBuild.scheduled_trigger, "user".username, lastestBuild.vcs_changes_branch, lastestBuild.vcs_changes_hash, lastestBuild.vcs_changes_author
 		FROM lastestBuild
 		JOIN (
 			SELECT max(start) as start , application_id, pipeline_id, environment_id ,vcs_changes_branch
@@ -872,7 +872,6 @@ func GetBranchHistory(db gorp.SqlExecutor, projectKey, appName string, page, nbP
 		var user sdk.User
 		var manual, scheduledTrigger sql.NullBool
 		var hash, author, username sql.NullString
-
 
 		if err := rows.Scan(&pb.Pipeline.ID, &pb.Application.ID, &pb.Environment.ID,
 			&pb.Application.Name, &pb.Pipeline.Name, &pb.Environment.Name,

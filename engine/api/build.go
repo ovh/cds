@@ -23,36 +23,32 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) {
+func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	buildIDString := vars["id"]
 
 	buildID, errID := strconv.ParseInt(buildIDString, 10, 64)
 	if errID != nil {
 		log.Warning("updateStepStatusHandler> buildID must be an integer: %s\n", errID)
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
+		return sdk.ErrInvalidID
 	}
 
 	pbJob, errJob := pipeline.GetPipelineBuildJob(db, buildID)
 	if errJob != nil {
 		log.Warning("updateStepStatusHandler> Cannot get pipeline build job %d: %s\n", buildID, errJob)
-		WriteError(w, r, errJob)
-		return
+		return errJob
 	}
 
 	// Get body
 	data, errR := ioutil.ReadAll(r.Body)
 	if errR != nil {
 		log.Warning("updateStepStatusHandler> Cannot read body: %s\n", errR)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 	var step sdk.StepStatus
 	if err := json.Unmarshal(data, &step); err != nil {
 		log.Warning("updateStepStatusHandler> Cannot unmarshall body: %s\n", errR)
-		WriteError(w, r, sdk.ErrWrongRequest)
-		return
+		return sdk.ErrWrongRequest
 	}
 
 	found := false
@@ -71,14 +67,13 @@ func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	pbJob.JobJSON, errmarshal = json.Marshal(pbJob.Job)
 	if errmarshal != nil {
 		log.Warning("updateStepStatusHandler> Cannot marshall job: %s\n", errR)
-		WriteError(w, r, errmarshal)
-		return
+		return errmarshal
 	}
 	if err := pipeline.UpdatePipelineBuildJob(db, pbJob); err != nil {
 		log.Warning("updateStepStatusHandler> Cannot update pipeline build job: %s\n", errR)
-		WriteError(w, r, err)
-		return
+		return err
 	}
+	return nil
 }
 
 func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {

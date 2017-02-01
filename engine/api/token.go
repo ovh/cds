@@ -24,27 +24,27 @@ func generateTokenHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	exp, err := sdk.ExpirationFromString(expiration)
 	if err != nil {
 		log.Warning("generateTokenHandler> '%s' -> %s\n", expiration, err)
-return err
+		return err
 
 	}
 
 	g, err := group.LoadGroup(db, groupName)
 	if err != nil {
 		log.Warning("generateTokenHandler> cannot load group '%s': %s\n", groupName, err)
-return err
+		return err
 
 	}
 
 	tk, err := worker.GenerateToken()
 	if err != nil {
 		log.Warning("generateTokenHandler: cannot generate key: %s\n", err)
-return err
+		return err
 
 	}
 
 	if err := worker.InsertToken(db, g.ID, tk, exp); err != nil {
 		log.Warning("generateTokenHandler> cannot insert new key: %s\n", err)
-return err
+		return err
 
 	}
 

@@ -27,7 +27,7 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	projectVar, err := project.GetAllVariableNameInProjectByKey(db, projectKey)
 	if err != nil {
 		log.Warning("getVariablesHandler> Cannot Load project variables: %s\n", err)
-return err
+		return err
 
 	}
 	for i := range projectVar {
@@ -39,7 +39,7 @@ return err
 	envVarNameArray, err := environment.GetAllVariableNameByProject(db, projectKey)
 	if err != nil {
 		log.Warning("getVariablesHandler> Cannot Load env variables: %s\n", err)
-return err
+		return err
 
 	}
 	for i := range envVarNameArray {
@@ -54,7 +54,7 @@ return err
 		applicationData, err := application.LoadApplicationByName(db, projectKey, appName)
 		if err != nil {
 			log.Warning("getPipelineTypeHandler> Cannot Load application: %s\n", err)
-return err
+			return err
 
 		}
 
@@ -81,7 +81,7 @@ return err
 		rows, err := db.Query(query, projectKey)
 		if err != nil {
 			log.Warning("getVariablesHandler> Cannot Load all applications variables: %s\n", err)
-return err
+			return err
 
 		}
 		defer rows.Close()
@@ -90,7 +90,7 @@ return err
 			err := rows.Scan(&name)
 			if err != nil {
 				log.Warning("getVariablesHandler> Cannot scan results: %s\n", err)
-return err
+				return err
 
 			}
 			appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", name))
