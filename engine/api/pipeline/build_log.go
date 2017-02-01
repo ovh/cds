@@ -23,6 +23,7 @@ func InsertLog(db gorp.SqlExecutor, l *sdk.Log) error {
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}
+	*l = sdk.Log(dbmodel)
 	return nil
 }
 

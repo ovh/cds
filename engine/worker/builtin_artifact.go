@@ -61,7 +61,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 	if tag == "" {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("tag variable is empty. aborting\n")
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 	tag = strings.Replace(tag, "/", "-", -1)
@@ -72,14 +72,14 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("cannot perform globbing of pattern '%s': %s\n", filePattern, err)
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
 	if len(filesPath) == 0 {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("Pattern '%s' matched no file\n", filePattern)
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
@@ -87,7 +87,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 	if errBN != nil {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("BuilNumber is not an integer %s\n", errBN)
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
@@ -97,7 +97,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 		if err := sdk.UploadArtifact(project, pipeline, application, tag, filePath, buildNumber, environment); err != nil {
 			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
-			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
+			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 			return res
 		}
 	}
@@ -156,14 +156,14 @@ func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder in
 	}
 
 	if !enabled {
-		sendLog(pbJob.ID, fmt.Sprintf("Artifact Download is disabled. return\n"), pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, fmt.Sprintf("Artifact Download is disabled. return\n"), pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
 	if tag == "" {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("tag variable is empty. aborting\n")
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 	tag = strings.Replace(tag, "/", "-", -1)
@@ -172,7 +172,7 @@ func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder in
 	if pipeline == "" {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("pipeline variable is empty. aborting\n")
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
@@ -182,7 +182,7 @@ func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder in
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("%s\n", err)
 		log.Warning("Cannot download artifacts: %s\n", err)
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 

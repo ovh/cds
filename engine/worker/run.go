@@ -153,19 +153,14 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 
 			r = startAction(&child, pipBuildJob, currentStep)
 			if r.Status != sdk.StatusSuccess {
-				// Update step status
-				if err := updateStepStatus(pipBuildJob.ID, currentStep, r.Status.String()); err != nil {
-					log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
-				}
-
 				log.Printf("Stopping %s at step %s", a.Name, childName)
 				doNotRunChildrenAnymore = true
 			}
 
-			sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s", child.Name), pipBuildJob.PipelineBuildID, currentStep, true)
+			sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s [%s]", child.Name, r.Status.String()), pipBuildJob.PipelineBuildID, currentStep, true)
 
 			// Update step status
-			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusSuccess.String()); err != nil {
+			if err := updateStepStatus(pipBuildJob.ID, currentStep, r.Status.String()); err != nil {
 				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 		}
@@ -185,7 +180,7 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 
 		finalActionResult := startAction(&child, pipBuildJob, currentStep)
 
-		sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s", child.Name), pipBuildJob.PipelineBuildID, currentStep, true)
+		sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s [%s]", child.Name, finalActionResult.Status.String()), pipBuildJob.PipelineBuildID, currentStep, true)
 
 		//If action is success or disabled we consider final action status
 		if r.Status == sdk.StatusSuccess || r.Status == sdk.StatusDisabled {
@@ -280,17 +275,15 @@ func logger(inputChan chan sdk.Log) {
 				// First log
 				if currentStepLog == nil {
 					currentStepLog = &l
+				} else if l.StepOrder == currentStepLog.StepOrder {
+					currentStepLog.Value += l.Value
+					currentStepLog.LastModified = l.LastModified
+					currentStepLog.Done = l.Done
 				} else {
-					// Same step : concat value
-					if l.StepOrder == currentStepLog.StepOrder {
-						currentStepLog.Value += l.Value
-						currentStepLog.LastModified = l.LastModified
-						currentStepLog.Done = l.Done
-					} else {
-						// new Step
-						logs = append(logs, currentStepLog)
-						currentStepLog = &l
-					}
+					// new Step
+					logs = append(logs, currentStepLog)
+					currentStepLog = &l
+
 				}
 			}
 
@@ -312,8 +305,7 @@ func logger(inputChan chan sdk.Log) {
 				}
 
 				path := fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
-				_, _, err = sdk.Request("POST", path, data)
-				if err != nil {
+				if _, _, err := sdk.Request("POST", path, data); err != nil {
 					fmt.Printf("error: cannot send logs: %s\n", err)
 					continue
 				}

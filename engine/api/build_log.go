@@ -49,7 +49,7 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		env, errEnv = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if errEnv != nil {
 			log.Warning("getStepBuildLogsHandler> Cannot load environment %s: %s\n", envName, errEnv)
-			return sdk.ErrUnknownEnv
+			return errEnv
 		}
 
 	}
@@ -63,14 +63,14 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		log.Warning("getStepBuildLogsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		return sdk.ErrPipelineNotFound
+		return err
 	}
 
 	// Check that application exists
 	a, err := application.LoadApplicationByName(db, projectKey, appName)
 	if err != nil {
 		log.Warning("getStepBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
-		return sdk.ErrApplicationNotFound
+		return err
 	}
 
 	// if buildNumber is 'last' fetch last build number
@@ -100,7 +100,6 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	result, errLog := pipeline.LoadPipelineStepBuildLogs(db, pb, pipelineActionID, stepOrder)
 	if errLog != nil {
 		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", errLog)
-		WriteError(w, r, errLog)
 		return errLog
 	}
 
@@ -214,7 +213,7 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 	pipelineActionID, err := strconv.ParseInt(pipelineActionIDString, 10, 64)
 	if err != nil {
 		log.Warning("getPipelineBuildJobLogsHandler> actionID should be an integer : %s\n", err)
-		return err
+		return sdk.ErrInvalidID
 	}
 
 	// Check that pipeline exists

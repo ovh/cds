@@ -47,7 +47,7 @@ func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	var step sdk.StepStatus
 	if err := json.Unmarshal(data, &step); err != nil {
-		log.Warning("updateStepStatusHandler> Cannot unmarshall body: %s\n", errR)
+		log.Warning("updateStepStatusHandler> Cannot unmarshall body: %s\n", err)
 		return sdk.ErrWrongRequest
 	}
 
@@ -66,11 +66,11 @@ func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	var errmarshal error
 	pbJob.JobJSON, errmarshal = json.Marshal(pbJob.Job)
 	if errmarshal != nil {
-		log.Warning("updateStepStatusHandler> Cannot marshall job: %s\n", errR)
+		log.Warning("updateStepStatusHandler> Cannot marshall job: %s\n", errmarshal)
 		return errmarshal
 	}
 	if err := pipeline.UpdatePipelineBuildJob(db, pbJob); err != nil {
-		log.Warning("updateStepStatusHandler> Cannot update pipeline build job: %s\n", errR)
+		log.Warning("updateStepStatusHandler> Cannot update pipeline build job: %s\n", err)
 		return err
 	}
 	return nil

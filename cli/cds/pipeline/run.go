@@ -167,7 +167,7 @@ func streamResponse(ch chan sdk.Log) {
 				}
 			}
 			// Exit 1 if pipeline fail
-			if l.ID == 0 && strings.Contains(l.Value, "status: Fail") {
+			if l.ID == 0 && strings.Contains(l.Value, statusFail) {
 				sdk.Exit("")
 			}
 		}

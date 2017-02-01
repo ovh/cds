@@ -21,12 +21,14 @@ type PipelineBuildJob struct {
 	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
 }
 
+// ExecutedJob represents a running job
 type ExecutedJob struct {
 	Job
 	StepStatus []StepStatus `json:"step_status" db:"-"`
 	Reason     string
 }
 
+// StepStatus Represent a step and his status
 type StepStatus struct {
 	StepOrder int    `json:"step_order" db:"-"`
 	Status    string `json:"status" db:"-"`

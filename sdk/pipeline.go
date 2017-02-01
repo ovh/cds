@@ -431,36 +431,36 @@ func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, fo
 				for i := range logs {
 					if logs[i].ID != 0 {
 						ch <- logs[i]
+						continue
 					}
 
-					if logs[i].ID == 0 {
-						//Before closing the channel, check if we want to  follower triggers
-						if followTrigger {
-							wg := &sync.WaitGroup{}
-							//Get child triggers
-							triggers, err := GetTriggersAsSource(key, appName, pipelineName, env)
-							if err == nil && len(triggers) > 0 {
-								for _, t := range triggers {
-									//If there is any trigger, stream each of them
-									triggerCh, err := StreamPipelineBuild(t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name, 0, followTrigger)
-									if err == nil {
-										wg.Add(1)
-										go func(mainCh, triggerCh chan Log) {
-											//Get log from the trigger's channel and push it to the main channel
-											for l := range triggerCh {
-												ch <- l
-											}
-											wg.Done()
-										}(ch, triggerCh)
-									}
+					//Before closing the channel, check if we want to  follower triggers
+					if followTrigger {
+						wg := &sync.WaitGroup{}
+						//Get child triggers
+						triggers, err := GetTriggersAsSource(key, appName, pipelineName, env)
+						if err == nil && len(triggers) > 0 {
+							for _, t := range triggers {
+								//If there is any trigger, stream each of them
+								triggerCh, err := StreamPipelineBuild(t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name, 0, followTrigger)
+								if err == nil {
+									wg.Add(1)
+									go func(mainCh, triggerCh chan Log) {
+										//Get log from the trigger's channel and push it to the main channel
+										for l := range triggerCh {
+											ch <- l
+										}
+										wg.Done()
+									}(ch, triggerCh)
 								}
 							}
-							//When all of the triggers are done, close the main channel
-							wg.Wait()
 						}
-						close(ch)
-						return
+						//When all of the triggers are done, close the main channel
+						wg.Wait()
 					}
+					close(ch)
+					return
+
 				}
 			}
 			time.Sleep(1 * time.Second)

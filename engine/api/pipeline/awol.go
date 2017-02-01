@@ -71,11 +71,6 @@ func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) er
 	return tx.Commit()
 }
 
-// SELECT action_build.id
-// JOIN WITH pipeline_build_log even if there is no log !
-// WHERE action_build status is building, obviously
-// WHERE action_build was started at least 15 minutes ago
-// WHERE LAAAAAAAAAAAAAAST logs are older than 15 minutes OR no logs at all
 func loadAWOLPipelineBuildJob(db gorp.SqlExecutor) ([]awolPipelineBuildJob, error) {
 	query := `
 		SELECT pipeline_build_job.id, pipeline_build_job.pipeline_build_id FROM pipeline_build_job
