@@ -18,8 +18,8 @@ func UpdateLog(db gorp.SqlExecutor, l *sdk.Log) error {
 }
 
 // InsertLog insert build log into database
-func InsertLog(db gorp.SqlExecutor, l sdk.Log) error {
-	dbmodel := database.Log(l)
+func InsertLog(db gorp.SqlExecutor, l *sdk.Log) error {
+	dbmodel := database.Log(*l)
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}

@@ -292,9 +292,6 @@ func logger(inputChan chan sdk.Log) {
 						currentStepLog = &l
 					}
 				}
-
-				fmt.Printf("Get %s\n", currentStepLog.Value)
-
 			}
 
 			// insert last step

@@ -45,7 +45,7 @@ func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, pbID int64) ([]sd
 		FROM pipeline_build_job
 		WHERE pipeline_build_id = $1
 	`
-	if err := db.SelectOne(&pbJobsGorp, query, pbID); err != nil {
+	if _, err := db.Select(&pbJobsGorp, query, pbID); err != nil {
 		return nil, err
 	}
 

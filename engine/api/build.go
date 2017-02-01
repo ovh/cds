@@ -182,12 +182,6 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer tx.Rollback()
 
-	pbID, errLoadPb := pipeline.LoadPipelineBuildID(db, a.ID, p.ID, env.ID, buildNumber)
-	if errLoadPb != nil {
-		log.Warning("deleteBuildHandler> Cannot load pipeline build to delete: %s\n", errLoadPb)
-		return errLoadPb
-	}
-
 	if err := pipeline.DeletePipelineBuildByID(tx, pbID); err != nil {
 		log.Warning("deleteBuildHandler> Cannot delete pipeline build: %s\n", err)
 		return err
