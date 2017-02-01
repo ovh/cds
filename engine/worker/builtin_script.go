@@ -112,8 +112,6 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 		return res
 	}
 	log.Notice("runScriptAction> %s %s", shell, strings.Trim(fmt.Sprint(opts), "[]"))
-	sendLog(pbJob.ID, fmt.Sprintf("Executing %s %s", shell, strings.Trim(fmt.Sprint(opts), "[]")), pbJob.PipelineBuildID, stepOrder, false)
-
 	cmd := exec.Command(shell, opts...)
 	res.Status = sdk.StatusUnknown
 

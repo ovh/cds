@@ -1,4 +1,6 @@
 -- +migrate Up
+DROP TABLE pipeline_history_old;
+
 CREATE TABLE IF NOT EXISTS "pipeline_build_log" (
   id BIGSERIAL PRIMARY KEY,
   pipeline_build_job_id BIGINT,

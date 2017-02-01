@@ -149,6 +149,8 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 
+			sendLog(pipBuildJob.ID, fmt.Sprintf("Starting step %s", child.Name), pipBuildJob.PipelineBuildID, currentStep, false)
+
 			r = startAction(&child, pipBuildJob, currentStep)
 			if r.Status != sdk.StatusSuccess {
 				// Update step status
@@ -159,6 +161,8 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 				log.Printf("Stopping %s at step %s", a.Name, childName)
 				doNotRunChildrenAnymore = true
 			}
+
+			sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s", child.Name), pipBuildJob.PipelineBuildID, currentStep, true)
 
 			// Update step status
 			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusSuccess.String()); err != nil {
@@ -176,7 +180,13 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int) s
 		currentStep = len(noFinalActions) + i
 		childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
 		log.Printf("Running final action : %s\n", childName)
+
+		sendLog(pipBuildJob.ID, fmt.Sprintf("Starting step %s", child.Name), pipBuildJob.PipelineBuildID, currentStep, false)
+
 		finalActionResult := startAction(&child, pipBuildJob, currentStep)
+
+		sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s", child.Name), pipBuildJob.PipelineBuildID, currentStep, true)
+
 		//If action is success or disabled we consider final action status
 		if r.Status == sdk.StatusSuccess || r.Status == sdk.StatusDisabled {
 			r = finalActionResult
