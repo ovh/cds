@@ -50,7 +50,7 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Res
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Unable to init plugin %s: %s\n", pluginName, err),
 		}
-		sendLog(pbJob.ID, result.Reason, pbJob.PipelineBuildID, stepOrder, true)
+		sendLog(pbJob.ID, result.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return result
 	}
 
@@ -69,6 +69,7 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Res
 	pluginAction := plugin.Job{
 		IDPipelineBuild:    pbJob.PipelineBuildID,
 		IDPipelineJobBuild: pbJob.ID,
+		OrderStep:          stepOrder,
 		Args:               pluginArgs,
 	}
 
