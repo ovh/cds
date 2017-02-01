@@ -172,7 +172,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb sdk.PipelineBuild)
 			Start:  time.Now(),
 		}
 
-		if !stage.Enabled {
+		if !stage.Enabled || !pbJob.Job.Enabled {
 			pbJob.Status = sdk.StatusDisabled.String()
 		} else if !prerequisitesOK {
 			pbJob.Status = sdk.StatusSkipped.String()
@@ -226,6 +226,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 		}
 		// Determine final stage status
 	finalStageLoop:
+
 		for _, buildJob := range stage.PipelineBuildJobs {
 			switch buildJob.Status {
 			case sdk.StatusDisabled.String():

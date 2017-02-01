@@ -215,7 +215,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 	var rows *sql.Rows
 	var err error
 
-	if user.Admin {
+	if user == nil || user.Admin {
 		query := `SELECT id, name, project_id, type, last_modified
 			  FROM pipeline
 			  WHERE project_id = $1

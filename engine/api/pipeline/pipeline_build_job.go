@@ -250,6 +250,30 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string) (*sdk.Pip
 	return &pbJob, nil
 }
 
+// RestartPipelineBuildJob destroy pipeline build job data and queue it up again
+func RestartPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64) error {
+	var pbJobGorp database.PipelineBuildJob
+	if err := db.SelectOne(&pbJobGorp, `
+		SELECT *
+		FROM pipeline_build_job
+		WHERE id = $1 FOR UPDATE
+	`, pbJobID); err != nil {
+		return fmt.Errorf("RestartPipelineBuildJob> Cannot get pipeline build job %d: %s", pbJobID, err)
+	}
+
+	// Delete previous build logs
+	if err := DeleteBuildLogs(db, pbJobID); err != nil {
+		return err
+	}
+
+	pbJobGorp.Status = sdk.StatusWaiting.String()
+	pbJob := sdk.PipelineBuildJob(pbJobGorp)
+	if err := UpdatePipelineBuildJob(db, &pbJob); err != nil {
+		return err
+	}
+	return nil
+}
+
 // StopBuildingPipelineBuildJob Stop running pipeline build job
 func StopBuildingPipelineBuildJob(db gorp.SqlExecutor, pbID int64) error {
 	query := `UPDATE pipeline_build_job SET status = $1, done = now() WHERE pipeline_build_id = $2 AND status IN ( $3, $4 )`
@@ -311,42 +335,5 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 	}
 
 	event.PublishActionBuild(pb, pbJob)
-	return nil
-}
-
-// RestartPipelineBuildJob destroy pipeline build job data and queue it up again
-func RestartPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64) error {
-	var plholder int64
-
-	// Select for update to prevent unwanted update
-	query := `SELECT id FROM pipeline_build_job WHERE id = $1 FOR UPDATE`
-	err := db.QueryRow(query, pbJobID).Scan(&plholder)
-	if err != nil {
-		return fmt.Errorf("RestartPipelineBuildJob> Cannot get pipeline build job %d: %s", pbJobID, err)
-	}
-
-	// Delete previous build logs
-	query = `DELETE FROM pipeline_build_log WHERE pipeline_build_job_id = $1`
-	_, err = db.Exec(query, pbJobID)
-	if err != nil {
-		return err
-	}
-
-	// Update status to Waiting
-	query = `UPDATE pipeline_build_job SET status = $1 WHERE id = $2`
-	res, err := db.Exec(query, sdk.StatusWaiting.String(), pbJobID)
-	if err != nil {
-		return err
-	}
-
-	aff, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if aff != 1 {
-		return fmt.Errorf("RestartPipelineBuildJob> could not restart ab %d: %d rows affected", pbJobID, aff)
-	}
-
 	return nil
 }

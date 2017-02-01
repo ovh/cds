@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 )
 
@@ -15,23 +16,57 @@ type Tests struct {
 	TestSuites      []TestSuite `xml:"testsuite" json:"test_suites"`
 }
 
-// TestSuite defines the result of a group of tests
+// TestSuite is a single JUnit test suite which may contain many
+// testcases.
 type TestSuite struct {
-	Name     string `xml:"name,attr" json:"name"`
-	Total    int    `xml:"tests,attr" json:"total"`
-	Failures int    `xml:"failures,attr" json:"failures"`
-	Errors   int    `xml:"errors,attr" json:"errors"`
-	Skip     int    `xml:"skip,attr" json:"skipped"`
-	Tests    []Test `xml:"testcase" json:"tests"`
+	XMLName    xml.Name   `xml:"testsuite" json:"xmlName"`
+	Disabled   int        `xml:"disabled,attr,omitempty" json:"disabled"`
+	Errors     int        `xml:"errors,attr,omitempty" json:"errors"`
+	Failures   int        `xml:"failures,attr,omitempty" json:"failures"`
+	Hostname   string     `xml:"hostname,attr,omitempty" json:"hostname"`
+	ID         string     `xml:"id,attr,omitempty" json:"iIDd"`
+	Name       string     `xml:"name,attr" json:"name"`
+	Package    string     `xml:"package,attr,omitempty" json:"package"`
+	Properties []Property `xml:"properties,attr" json:"properties"`
+	Skipped    int        `xml:"skipped,attr,omitempty" json:"skipped"`
+	Total      int        `xml:"tests,attr" json:"total"`
+	TestCases  []TestCase `xml:"testcase" json:"tests"`
+	Time       string     `xml:"time,attr,omitempty" json:"time"`
+	Timestamp  string     `xml:"timestamp,attr,omitempty" json:"timestamp"`
 }
 
-// Test define a single test
-type Test struct {
-	Name    string  `xml:"name,attr" json:"name"`
-	Time    string  `xml:"time,attr" json:"time"`
-	Failure string  `xml:"failure" json:"failure"`
-	Error   string  `xml:"error" json:"error"`
-	Skip    *string `xml:"skipped" json:"skipped"`
+// Property represents a key/value pair used to define properties.
+type Property struct {
+	XMLName xml.Name `xml:"property" json:"xmlName"`
+	Name    string   `xml:"name,attr" json:"name"`
+	Value   string   `xml:"value,attr" json:"value"`
+}
+
+// TestCase is a single test case with its result.
+type TestCase struct {
+	XMLName    xml.Name    `xml:"testcase" json:"xmlName"`
+	Assertions string      `xml:"assertions,attr,omitempty" json:"assertions"`
+	Classname  string      `xml:"classname,attr,omitempty" json:"classname"`
+	Errors     []Failure   `xml:"error,omitempty" json:"errors"`
+	Failures   []Failure   `xml:"failure,omitempty" json:"failures"`
+	Name       string      `xml:"name,attr" json:"name"`
+	Skipped    int         `xml:"skipped,attr,omitempty" json:"skipped"`
+	Status     string      `xml:"status,attr,omitempty" json:"status"`
+	Systemout  InnerResult `xml:"system-out,omitempty" json:"systemout"`
+	Systemerr  InnerResult `xml:"system-err,omitempty" json:"systemerr"`
+	Time       string      `xml:"time,attr,omitempty" json:"time"`
+}
+
+// Failure contains data related to a failed test.
+type Failure struct {
+	Value   string `xml:",innerxml" json:"value"`
+	Type    string `xml:"type,attr,omitempty" json:"type"`
+	Message string `xml:"message,attr,omitempty" json:"message"`
+}
+
+// InnerResult is used by TestCase
+type InnerResult struct {
+	Value string `xml:",innerxml" json:"value"`
 }
 
 // GetTestResults retrieves tests results for a specific build

@@ -34,12 +34,8 @@ func Test_loadUsedVariables(t *testing.T) {
 			},
 			projectVars:     []string{"proj_var"},
 			applicationVars: []string{"app_var"},
-			envVars: []string{
-				"env_var",
-			},
-			gitVars: []string{
-				"git_var",
-			},
+			envVars:         []string{"env_var"},
+			gitVars:         []string{"git_var"},
 		},
 		{
 			name: "Check project, application, env and git variables recursively",

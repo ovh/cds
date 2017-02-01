@@ -61,9 +61,9 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 	for _, f := range files {
 		var ftests sdk.Tests
 
-		data, err := ioutil.ReadFile(f)
-		if err != nil {
-			res.Reason = fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, err)
+		data, errRead := ioutil.ReadFile(f)
+		if errRead != nil {
+			res.Reason = fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, errRead)
 			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, true)
 			return res
 		}
@@ -83,23 +83,28 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 		v.TestSuites = append(v.TestSuites, ftests.TestSuites...)
 	}
 	// update global stats
-	for _, s := range v.TestSuites {
-		v.Total += s.Total
-		v.TotalOK += (s.Total - s.Failures)
-		v.TotalKO += s.Failures
-		v.TotalSkipped += s.Skip
+	for _, ts := range v.TestSuites {
+		v.Total += ts.Total
+		v.TotalOK += (ts.Total - ts.Failures)
+		v.TotalKO += ts.Failures
+		v.TotalSkipped += ts.Skipped
 	}
 
 	for _, s := range v.TestSuites {
 		if s.Failures > 0 {
-			res.Reason = fmt.Sprintf("JUnit parser: %s has %d failed tests", s.Name, s.Failures)
+			res.Reason = fmt.Sprintf("JUnit parser: %s has %d failed tests (failure attr)", s.Name, s.Failures)
 			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		}
+		for _, tc := range s.TestCases {
+			if len(tc.Failures) > 0 {
+				res.Reason = fmt.Sprintf("JUnit parser: %s has %d failed tests (failure element(s))", s.Name, s.Failures)
+				sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			}
 		}
 	}
 
-	if v.Total == 0 {
-		res.Reason = "JUnit parser: No tests"
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+	if res.Status == sdk.StatusFail {
+		sendLog(pbJob.ID, "", pbJob.PipelineBuildID, stepOrder, true)
 	}
 
 	data, err := json.Marshal(v)

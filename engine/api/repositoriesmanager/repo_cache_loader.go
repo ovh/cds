@@ -68,7 +68,7 @@ func RepositoriesCacheLoader(delay int) {
 						log.Info("RepositoriesCacheLoader> Loading repos for %s on %s", projectKey, rmName)
 						repos, err = client.Repos()
 						if err != nil {
-							log.Warning("RepositoriesCacheLoader> Unable to get repos : %s", err)
+							log.Warning("RepositoriesCacheLoader> Unable to get repos %s : %s : %s", rmName, projectKey, err)
 							continue
 						}
 						cache.SetWithTTL(cacheKey, &repos, 0)

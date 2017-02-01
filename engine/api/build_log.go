@@ -20,8 +20,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-
-func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -33,32 +32,12 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	stepOrder, errInt := strconv.Atoi(stepOrderString)
 	if errInt != nil {
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
+		return sdk.ErrInvalidID
 	}
 
 	pipelineActionID, errPA := strconv.ParseInt(pipelineActionIDString, 10, 64)
 	if errPA != nil {
-		WriteError(w, r, sdk.ErrInvalidID)
-		return
-	}
-
-	// Get offset
-	if err := r.ParseForm(); err != nil {
-		log.Warning("getStepBuildLogsHandler> cannot parse form: %s\n", err)
-		WriteError(w, r, err)
-		return
-	}
-	offsetS := r.FormValue("offset")
-	var offset int64
-	if offsetS != "" {
-		var errParse error
-		offset, errParse = strconv.ParseInt(offsetS, 10, 64)
-		if errParse != nil {
-			log.Warning("getStepBuildLogsHandler> Cannot parse offset %s: %s\n", offsetS, errParse)
-			WriteError(w, r, errParse)
-			return
-		}
+		return sdk.ErrInvalidID
 	}
 
 	var env *sdk.Environment
@@ -70,32 +49,28 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		env, errEnv = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if errEnv != nil {
 			log.Warning("getStepBuildLogsHandler> Cannot load environment %s: %s\n", envName, errEnv)
-			WriteError(w, r, sdk.ErrUnknownEnv)
-			return
+			return sdk.ErrUnknownEnv
 		}
 
 	}
 
 	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getStepBuildLogsHandler> No enought right on this environment %s: \n", envName)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
 	}
 
 	// Check that pipeline exists
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		log.Warning("getStepBuildLogsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		WriteError(w, r, sdk.ErrPipelineNotFound)
-		return
+		return sdk.ErrPipelineNotFound
 	}
 
 	// Check that application exists
 	a, err := application.LoadApplicationByName(db, projectKey, appName)
 	if err != nil {
 		log.Warning("getStepBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
-		WriteError(w, r, sdk.ErrApplicationNotFound)
-		return
+		return sdk.ErrApplicationNotFound
 	}
 
 	// if buildNumber is 'last' fetch last build number
@@ -104,16 +79,14 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		bn, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
 		if err != nil {
 			log.Warning("getStepBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 		buildNumber = bn
 	} else {
 		buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
 		if err != nil {
 			log.Warning("getStepBuildLogsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 	}
 
@@ -121,21 +94,19 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	pb, errPB := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
 	if errPB != nil {
 		log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", errPB)
-		WriteError(w, r, errPB)
-		return
+		return errPB
 	}
 
-	result, errLog := pipeline.LoadPipelineStepBuildLogs(db, pb, pipelineActionID, stepOrder, offset)
+	result, errLog := pipeline.LoadPipelineStepBuildLogs(db, pb, pipelineActionID, stepOrder)
 	if errLog != nil {
 		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", errLog)
 		WriteError(w, r, errLog)
-		return
+		return errLog
 	}
 
-	WriteJSON(w, r, result, http.StatusOK)
-
+	return WriteJSON(w, r, result, http.StatusOK)
 }
-func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -147,8 +118,7 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	err := r.ParseForm()
 	if err != nil {
 		log.Warning("getBuildLogsHandler> cannot parse form: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	var env *sdk.Environment
@@ -159,32 +129,32 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if err != nil {
 			log.Warning("getBuildLogsHandler> Cannot load environment %s: %s\n", envName, err)
-			WriteError(w, r, sdk.ErrUnknownEnv)
-			return
+			return sdk.ErrUnknownEnv
+
 		}
 
 	}
 
 	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getBuildLogsHandler> No enought right on this environment %s: \n", envName)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
+
 	}
 
 	// Check that pipeline exists
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		log.Warning("getBuildLogsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		WriteError(w, r, sdk.ErrPipelineNotFound)
-		return
+		return sdk.ErrPipelineNotFound
+
 	}
 
 	// Check that application exists
 	a, err := application.LoadApplicationByName(db, projectKey, appName)
 	if err != nil {
 		log.Warning("getBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
-		WriteError(w, r, sdk.ErrApplicationNotFound)
-		return
+		return sdk.ErrApplicationNotFound
+
 	}
 
 	// if buildNumber is 'last' fetch last build number
@@ -193,16 +163,16 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		bn, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
 		if err != nil {
 			log.Warning("getBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 		buildNumber = bn
 	} else {
 		buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
 		if err != nil {
 			log.Warning("getBuildLogsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
-			WriteError(w, r, err)
-			return
+			return err
+
 		}
 	}
 
@@ -211,15 +181,15 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
 	if err != nil {
 		log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	pipelinelogs, err = pipeline.LoadPipelineBuildLogs(db, pb)
 	if err != nil {
 		log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	// add pipeline result
@@ -228,10 +198,10 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		l := sdk.NewLog(0, fmt.Sprintf("Build finished with status: %s\n", pb.Status), pb.ID, 0)
 		pipelinelogs = append(pipelinelogs, *l)
 	}
-	WriteJSON(w, r, pipelinelogs, http.StatusOK)
+	return WriteJSON(w, r, pipelinelogs, http.StatusOK)
 }
 
-func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
@@ -244,23 +214,20 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 	pipelineActionID, err := strconv.ParseInt(pipelineActionIDString, 10, 64)
 	if err != nil {
 		log.Warning("getPipelineBuildJobLogsHandler> actionID should be an integer : %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	// Check that pipeline exists
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		log.Warning("getPipelineBuildJobLogsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-		WriteError(w, r, sdk.ErrPipelineNotFound)
-		return
+		return err
 	}
 
 	a, err := application.LoadApplicationByName(db, projectKey, appName)
 	if err != nil {
 		log.Warning("getPipelineBuildJobLogsHandler> Cannot load application %s: %s\n", appName, err)
-		WriteError(w, r, sdk.ErrApplicationNotFound)
-		return
+		return err
 	}
 
 	var env *sdk.Environment
@@ -273,8 +240,7 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 
 	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getPipelineBuildJobLogsHandler> No enought right on this environment %s: \n", envName)
-		WriteError(w, r, sdk.ErrForbidden)
-		return
+		return sdk.ErrForbidden
 	}
 
 	// if buildNumber is 'last' fetch last build number
@@ -283,16 +249,14 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 		bn, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
 		if err != nil {
 			log.Warning("getPipelineBuildJobLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 		buildNumber = bn
 	} else {
 		buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
 		if err != nil {
 			log.Warning("getPipelineBuildJobLogsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 	}
 
@@ -301,26 +265,25 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, a.ID, p.ID, env.ID, buildNumber)
 	if err != nil {
 		log.Warning("getPipelineBuildJobLogsHandler> Cannot load pipeline build id: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 	pipelinelogs, err = pipeline.LoadPipelineBuildJobLogs(db, pb, pipelineActionID)
 	if err != nil {
 		log.Warning("getPipelineBuildJobLogsHandler> Cannot load pipeline build logs: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
-	WriteJSON(w, r, pipelinelogs, http.StatusOK)
+	return WriteJSON(w, r, pipelinelogs, http.StatusOK)
 }
 
-func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("addBuildLogHandler> Cannot read body: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	// Unmarshal into results
@@ -328,22 +291,20 @@ func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 	if err := json.Unmarshal([]byte(data), &logs); err != nil {
 		log.Warning("addBuildLogHandler> Cannot unmarshal Result: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
+
 	}
 
 	existingLogs, errLog := pipeline.LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
 	if errLog != nil && errLog != sql.ErrNoRows {
 		log.Warning("addBuildLogHandler> Cannot load existing logs: %s\n", err)
-		WriteError(w, r, err)
-		return
+		return err
 	}
 
 	if existingLogs == nil {
 		if err := pipeline.InsertLog(db, logs); err != nil {
 			log.Warning("addBuildLogHandler> Cannot insert log:  %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 	} else {
 		existingLogs.Value += logs.Value
@@ -351,14 +312,13 @@ func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		existingLogs.Done = logs.Done
 		if err := pipeline.UpdateLog(db, existingLogs); err != nil {
 			log.Warning("addBuildLogHandler> Cannot update log:  %s\n", err)
-			WriteError(w, r, err)
-			return
+			return err
 		}
 	}
-
+	return nil
 }
 
-func setEngineLogLevel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Context) {
+func setEngineLogLevel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	// Get log level in URL
 	vars := mux.Vars(r)
@@ -383,8 +343,8 @@ func setEngineLogLevel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	default:
 		log.Warning("setEngineLogLevel> Unknown log level %s\n", lvl)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+		return sdk.ErrWrongRequest
 
+	}
+	return nil
 }

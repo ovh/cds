@@ -26,9 +26,9 @@ func TestDummyPlugin(t *testing.T) {
 	assert.Equal(t, "value1", p.GetValue("param1"))
 
 	a := plugin.Job{
-		IDPipelineBuild: 0,
+		IDPipelineBuild:    0,
 		IDPipelineJobBuild: 0,
-		Args:          plugin.Arguments{},
+		Args:               plugin.Arguments{},
 	}
 	assert.Equal(t, "Fail", string(_plugin.Run(a)))
 

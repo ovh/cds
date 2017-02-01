@@ -106,7 +106,7 @@ func DeleteBuildLogsByPipelineBuildID(db gorp.SqlExecutor, pipID int64) error {
 	return err
 }
 
-func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBuild, pipelineActionID int64, stepOrder int, offset int64) (*sdk.BuildState, error) {
+func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBuild, pipelineActionID int64, stepOrder int) (*sdk.BuildState, error) {
 	var stepStatus string
 
 	// Found pipeline buid job from pipelineActionID

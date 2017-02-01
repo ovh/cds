@@ -26,11 +26,12 @@ func logTime(name string, then time.Time) {
 		return
 	}
 
-	log.Debug("%s took %s to execute\n", name, d)
+	log.Info("%s took %s to execute\n", name, d)
 }
 
 //LoadWorkerModelStatusForAdminUser lods worker model status for group
 func LoadWorkerModelStatusForAdminUser(db *gorp.DbMap, userID int64) ([]sdk.ModelStatus, error) {
+	defer logTime("LoadWorkerModelStatusForAdminUser", time.Now())
 	query := `
 		SELECT  worker_model.id, 
 				worker_model.name, 
@@ -218,6 +219,7 @@ type ActionCount struct {
 
 //LoadGroupActionCount counts waiting action for group
 func LoadGroupActionCount(db gorp.SqlExecutor, groupID int64) ([]ActionCount, error) {
+	defer logTime("LoadGroupActionCount", time.Now())
 	log.Debug("LoadGroupActionCount> Counting pending action for group %d", groupID)
 	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJobForGroup(db, groupID, sharedInfraGroupID)
 	if errJobs != nil {
@@ -250,6 +252,7 @@ func LoadGroupActionCount(db gorp.SqlExecutor, groupID int64) ([]ActionCount, er
 
 //LoadAllActionCount counts all waiting actions
 func LoadAllActionCount(db gorp.SqlExecutor, userID int64) ([]ActionCount, error) {
+	defer logTime("LoadAllActionCount", time.Now())
 	log.Debug("LoadAllActionCount> Counting pending action")
 	pbJobs, errJobs := pipeline.GetWaitingPipelineBuildJob(db)
 	if errJobs != nil {

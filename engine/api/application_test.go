@@ -133,11 +133,14 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
+
+	t.Log(string(res))
+
 	appResult := &sdk.Application{}
 	json.Unmarshal(res, &appResult)
 
-	assert.Equal(t, appResult.Name, appName)
-	assert.Equal(t, len(appResult.Pipelines), 3)
+	assert.Equal(t, appName, appResult.Name)
+	assert.Equal(t, 3, len(appResult.Pipelines))
 
 	checkPip1 := false
 	checkPip2 := false

@@ -264,12 +264,12 @@ func takeAction(b sdk.PipelineBuildJob) {
 	}
 
 	code = 300
-	var isThereAnyHopeLeft = 50
+	var isThereAnyHopeLeft = 10
 	for code >= 300 {
 		_, code, err = sdk.Request("POST", path, body)
-		if err == nil && code == http.StatusNotFound {
+		if code == http.StatusNotFound {
 			unregister() // well...
-			log.Notice("takeAction> Cannot send build result: ActionBuild does not exists anymore\n")
+			log.Notice("takeAction> Cannot send build result: PipelineBuildJob does not exists anymore\n")
 			break
 		}
 		if err == nil && code < 300 {

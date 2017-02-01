@@ -156,22 +156,24 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 		return nil, err
 	}
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
+	file, erro := os.Open(filePath)
+	if erro != nil {
+		return nil, erro
 	}
 	defer file.Close()
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("UploadFile", filepath.Base(filePath))
-	if err != nil {
+	part, errc := writer.CreateFormFile("UploadFile", filepath.Base(filePath))
+	if errc != nil {
+		return nil, errc
+	}
+
+	if _, err := io.Copy(part, file); err != nil {
 		return nil, err
 	}
-	_, err = io.Copy(part, file)
 
-	err = writer.Close()
-	if err != nil {
+	if err := writer.Close(); err != nil {
 		return nil, err
 	}
 	path := "/template/add"
