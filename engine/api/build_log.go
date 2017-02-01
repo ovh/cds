@@ -32,7 +32,7 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	stepOrder, errInt := strconv.Atoi(stepOrderString)
 	if errInt != nil {
-		return sdk.ErrInvalidID
+		return sdk.ErrWrongRequest
 	}
 
 	pipelineActionID, errPA := strconv.ParseInt(pipelineActionIDString, 10, 64)
