@@ -202,10 +202,6 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		log.Warning("addStageHandler> Stage ID doest not match")
 		return sdk.ErrInvalidID
 	}
-	if stageID != stageData.ID {
-		log.Warning("addStageHandler> Stage ID doest not match")
-		return sdk.ErrInvalidID
-	}
 
 	// Check if pipeline exist
 	pipelineData, err := pipeline.LoadPipeline(db, projectKey, pipelineKey, false)
