@@ -52,7 +52,7 @@ func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, pbID int64) ([]sd
 
 	var pbJobs []sdk.PipelineBuildJob
 	for i := range pbJobsGorp {
-		if err := pbJobsGorp[i].PostSelect(db); err != nil {
+		if err := pbJobsGorp[i].PostGet(db); err != nil {
 			return nil, err
 		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(pbJobsGorp[i]))
@@ -73,7 +73,7 @@ func GetWaitingPipelineBuildJob(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, er
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
-		if err := j.PostSelect(db); err != nil {
+		if err := j.PostGet(db); err != nil {
 			return nil, err
 		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
@@ -101,7 +101,7 @@ func GetWaitingPipelineBuildJobForGroup(db gorp.SqlExecutor, groupID, sharedInfr
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
-		if err := j.PostSelect(db); err != nil {
+		if err := j.PostGet(db); err != nil {
 			return nil, err
 		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
@@ -119,9 +119,6 @@ func GetPipelineBuildJob(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, 
 	`, id); err != nil {
 		return nil, err
 	}
-	if err := pbJobGorp.PostSelect(db); err != nil {
-		return nil, err
-	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
 	return &pbJob, nil
 }
@@ -137,7 +134,7 @@ func LoadWaitingQueue(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, error) {
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
-		if err := j.PostSelect(db); err != nil {
+		if err := j.PostGet(db); err != nil {
 			return nil, err
 		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
@@ -179,7 +176,7 @@ func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBu
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
-		if err := j.PostSelect(db); err != nil {
+		if err := j.PostGet(db); err != nil {
 			return nil, err
 		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
@@ -214,7 +211,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 	}
 	var pbJobs []sdk.PipelineBuildJob
 	for _, j := range pbJobsGorp {
-		if err := j.PostSelect(db); err != nil {
+		if err := j.PostGet(db); err != nil {
 			return nil, err
 		}
 		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
@@ -250,9 +247,6 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string, workerNam
 		return nil, err
 	}
 
-	if err := pbJobGorp.PostSelect(db); err != nil {
-		return nil, err
-	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
 	return &pbJob, nil
 }
