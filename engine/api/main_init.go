@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/spf13/viper"
+	
+	"github.com/ovh/cds/engine/api/database"
 )
 
 func init() {

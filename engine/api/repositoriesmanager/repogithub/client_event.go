@@ -1,17 +1,14 @@
 package repogithub
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-
-	"encoding/json"
-
-	"bytes"
-
-	"io/ioutil"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -57,7 +54,6 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 		status = "error"
 	}
 
-	// project/CDS/application/cds2tat/pipeline/monPipeline/build/855?env=monEnvi
 	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
 		viper.GetString("base_url"),
 		eventpb.ProjectKey,
