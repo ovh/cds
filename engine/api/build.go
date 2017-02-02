@@ -383,7 +383,7 @@ func takeActionBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		workerModel = wm.Name
 	}
 
-	pbJob, errTake := pipeline.TakeActionBuild(tx, id, workerModel)
+	pbJob, errTake := pipeline.TakeActionBuild(tx, id, workerModel, caller.Name)
 	if errTake != nil {
 		if errTake != pipeline.ErrAlreadyTaken {
 			log.Warning("takeActionBuildHandler> Cannot give ActionBuild %d: %s\n", id, errTake)
