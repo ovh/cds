@@ -76,7 +76,6 @@ func applicationPipelineSchedulerList(cmd *cobra.Command, args []string) {
 		var next = "unknown"
 
 		if ps[i].LastExecution != nil {
-			fmt.Println(ps[i].Timezone)
 			loc, err := time.LoadLocation(ps[i].Timezone)
 			if err != nil {
 				last = fmt.Sprintf("%v", ps[i].LastExecution.ExecutionDate)
@@ -87,7 +86,6 @@ func applicationPipelineSchedulerList(cmd *cobra.Command, args []string) {
 		}
 
 		if ps[i].NextExecution != nil {
-			fmt.Println(ps[i].Timezone)
 			loc, err := time.LoadLocation(ps[i].Timezone)
 			if err != nil {
 				next = fmt.Sprintf("%v", ps[i].NextExecution.ExecutionPlannedDate)
