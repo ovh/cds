@@ -37,8 +37,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	log.Debug("Process event:%+v", event)
 
 	//We only manage status Success and Failure
-	if eventpb.Status == sdk.StatusBuilding ||
-		eventpb.Status == sdk.StatusChecking ||
+	if eventpb.Status == sdk.StatusChecking ||
 		eventpb.Status == sdk.StatusDisabled ||
 		eventpb.Status == sdk.StatusNeverBuilt ||
 		eventpb.Status == sdk.StatusSkipped ||
@@ -48,10 +47,13 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	}
 
 	var status string
-	if eventpb.Status == sdk.StatusSuccess {
-		status = "success"
-	} else {
+	switch eventpb.Status {
+	case sdk.StatusFail:
 		status = "error"
+	case sdk.StatusSuccess:
+		status = "success"
+	default:
+		status = "pending"
 	}
 
 	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
@@ -89,8 +91,8 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	ghStatus := CreateStatus{
 		Description: desc,
 		TargetURL:   url,
-		State:       context,
-		Context:     status,
+		State:       status,
+		Context:     context,
 	}
 
 	path := fmt.Sprintf("/repos/%s/statuses/%s", eventpb.RepositoryFullname, eventpb.Hash)
@@ -116,6 +118,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	if res.StatusCode != 201 {
 		err := fmt.Errorf("Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
 		log.Warning("SetStatus> %s", err)
+		log.Warning("SetStatus> Sent data %s", b)
 		return err
 	}
 
