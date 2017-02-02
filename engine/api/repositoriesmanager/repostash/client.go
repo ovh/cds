@@ -30,8 +30,9 @@ func init() {
 
 //StashClient is a github.com/reinbach/go-stash wrapper for CDS RepositoriesManagerClient interface
 type StashClient struct {
-	url    string
-	client *stash.Client
+	url              string
+	client           *stash.Client
+	disableSetStatus bool
 }
 
 //Repos returns the list of accessible repositories
@@ -330,6 +331,11 @@ func (s *StashClient) SetStatus(event sdk.Event) error {
 	var eventpb sdk.EventPipelineBuild
 
 	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
+		return nil
+	}
+
+	if s.disableSetStatus {
+		log.Warning("⚠ Stash statuses are disabled")
 		return nil
 	}
 

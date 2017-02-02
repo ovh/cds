@@ -46,6 +46,8 @@ type GithubConsumer struct {
 	AuthorizationCallbackURL string `json:"-"`
 	WithHooks                bool   `json:"with-hooks"`
 	WithPolling              bool   `json:"with-polling"`
+	DisableSetStatus         bool   `json:"-"`
+	DisableStatusURL         bool   `json:"-"`
 }
 
 //New creates a new GithubConsumer
@@ -168,8 +170,10 @@ func (g *GithubConsumer) GetAuthorized(accessToken, accessTokenSecret string) (s
 	c := instancesAuthorizedClient[accessToken]
 	if c == nil {
 		c = &GithubClient{
-			ClientID:   g.ClientID,
-			OAuthToken: accessToken,
+			ClientID:         g.ClientID,
+			OAuthToken:       accessToken,
+			DisableSetStatus: g.DisableSetStatus,
+			DisableStatusURL: g.DisableStatusURL,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}

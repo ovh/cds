@@ -20,21 +20,30 @@ import (
 
 var (
 	initialized bool
-	uiURL       string
-	apiURL      string
+	options     InitializeOpts
 )
+
+//InitializeOpts is the struct to init the package
+type InitializeOpts struct {
+	SecretClient           secretbackend.Driver
+	KeysDirectory          string
+	UIBaseURL              string
+	APIBaseURL             string
+	DisableStashSetStatus  bool
+	DisableGithubSetStatus bool
+	DisableGithubStatusURL bool
+}
 
 //Initialize initialize private keys stored in Vault
 //CDS private keys in repositories manager have to be stored as secrets in Vault
 //For instance for a repositories manager named "github.com/ovh", the private key
 //is stored in a secret name "repositoriesmanager-secrets-github.com/ovh-privateKey"
-func Initialize(secretClient secretbackend.Driver, keysDirectory, uiBaseURL, apiBaseURL string) error {
-	uiURL = uiBaseURL
-	apiURL = apiBaseURL
+func Initialize(o InitializeOpts) error {
+	options = o
 
 	db := database.DBMap(database.DB())
 	if db != nil {
-		secrets := secretClient.GetSecrets()
+		secrets := o.SecretClient.GetSecrets()
 		if secrets.Err() != nil {
 			return secrets.Err()
 		}
@@ -57,7 +66,7 @@ func Initialize(secretClient secretbackend.Driver, keysDirectory, uiBaseURL, api
 				}
 			}
 			if found {
-				if err := initRepositoriesManager(db, &rm, keysDirectory, rmSecrets); err != nil {
+				if err := initRepositoriesManager(db, &rm, o.KeysDirectory, rmSecrets); err != nil {
 					log.Warning("RepositoriesManager> Unable init %s \n", rm.Name)
 				}
 			} else {
@@ -113,7 +122,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				return nil, fmt.Errorf("client-id args and client-secret are mandatory to connect to github : %v", args)
 			}
 
-			github = repogithub.New(args["client-id"], args["client-secret"], apiURL+"/repositories_manager/oauth2/callback")
+			github = repogithub.New(args["client-id"], args["client-secret"], options.APIBaseURL+"/repositories_manager/oauth2/callback")
 			if args["with-hooks"] != "" {
 				b, err := strconv.ParseBool(args["with-hooks"])
 				if err == nil {
@@ -135,7 +144,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				return nil, err
 			}
 
-			github = repogithub.New(data["client-id"].(string), data["client-secret"].(string), apiURL+"/repositories_manager/oauth2/callback")
+			github = repogithub.New(data["client-id"].(string), data["client-secret"].(string), options.APIBaseURL+"/repositories_manager/oauth2/callback")
 			if data["with-hooks"] != nil {
 				b, ok := data["with-hooks"].(bool)
 				if !ok {
@@ -196,6 +205,7 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 		}
 		stash := rm.Consumer.(*repostash.StashConsumer)
 		stash.PrivateRSAKey = path
+		stash.DisableSetStatus = options.DisableStashSetStatus
 		if err := Update(db, rm); err != nil {
 			return err
 		}
@@ -215,6 +225,8 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 		}
 		gh := rm.Consumer.(*repogithub.GithubConsumer)
 		gh.ClientSecret = path
+		gh.DisableSetStatus = options.DisableGithubSetStatus
+		gh.DisableStatusURL = options.DisableGithubStatusURL
 		if err := Update(db, rm); err != nil {
 			return err
 		}

@@ -16,8 +16,10 @@ import (
 
 // GithubClient is a github.com wrapper for CDS RepositoriesManagerClient interface
 type GithubClient struct {
-	ClientID   string
-	OAuthToken string
+	ClientID         string
+	OAuthToken       string
+	DisableSetStatus bool
+	DisableStatusURL bool
 }
 
 // Repos list repositories that are accessible to the authenticated user
@@ -488,9 +490,4 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 	}
 
 	return res, interval, nil
-}
-
-//SetStatus set build status on github
-func (g *GithubClient) SetStatus(event sdk.Event) error {
-	return fmt.Errorf("Not yet implemented on github")
 }

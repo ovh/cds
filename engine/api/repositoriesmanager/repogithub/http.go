@@ -3,6 +3,7 @@ package repogithub
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -116,6 +117,25 @@ func withETag(c *GithubClient, req *http.Request, path string) {
 }
 func withoutETag(c *GithubClient, req *http.Request, path string) {}
 
+func (c *GithubClient) post(path string, bodyType string, body io.Reader) (*http.Response, error) {
+	if !strings.HasPrefix(path, APIURL) {
+		path = APIURL + path
+	}
+
+	req, err := http.NewRequest(http.MethodPost, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+
+	log.Debug("Github API>> Request URL %s", req.URL.String())
+
+	return httpClient.Do(req)
+}
+
 func (c *GithubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
 	if RateLimitRemaining < 100 {
 		return 0, nil, nil, ErrorRateLimit
@@ -180,5 +200,4 @@ func (c *GithubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	c.setETag(path, res.Header)
 
 	return res.StatusCode, resBody, res.Header, nil
-
 }
