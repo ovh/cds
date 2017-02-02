@@ -134,7 +134,7 @@ func CountApplicationByProject(db gorp.SqlExecutor, projectID int64) (int, error
 // LoadApplicationByName load the given application
 func LoadApplicationByName(db gorp.SqlExecutor, projectKey, appName string, fargs ...FuncArg) (*sdk.Application, error) {
 	var app sdk.Application
-
+	app.ProjectKey = projectKey
 	var k = cache.Key("application", projectKey, appName)
 	//cache.Get(k, &app)
 	//FIXME Cache

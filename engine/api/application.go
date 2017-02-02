@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sanity"
+	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -149,6 +150,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	withNotifs := r.FormValue("withNotifs")
 	withWorkflow := r.FormValue("withWorkflow")
 	withTriggers := r.FormValue("withTriggers")
+	withSchedulers := r.FormValue("withSchedulers")
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
@@ -164,6 +166,16 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		if errPoller != nil {
 			log.Warning("getApplicationHandler: Cannot load pollers for application %s: %s\n", applicationName, errPoller)
 			return errPoller
+		}
+
+	}
+
+	if withSchedulers == "true" {
+		var errScheduler error
+		app.Schedulers, errScheduler = scheduler.GetByApplication(db, app)
+		if errScheduler != nil {
+			log.Warning("getApplicationHandler: Cannot load schedulers for application %s: %s\n", applicationName, errScheduler)
+			return errScheduler
 		}
 	}
 
@@ -415,6 +427,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	if errProj != nil {
 		log.Warning("cloneApplicationHandler> Cannot load Environments %s: %s\n", projectKey, errProj)
 		return errE
+
 	}
 	projectData.Environments = envs
 

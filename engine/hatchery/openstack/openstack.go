@@ -275,7 +275,7 @@ func (h *HatcheryCloud) WorkerStarted(model *sdk.Model) int {
 			x++
 		}
 	}
-	log.Notice("WorkerStarted> %s : %d", model.Name, x)
+	log.Info("WorkerStarted> %s : %d", model.Name, x)
 	return x
 }
 
