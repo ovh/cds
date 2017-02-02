@@ -91,8 +91,13 @@ func Next(db gorp.SqlExecutor, s *sdk.PipelineScheduler) (*sdk.PipelineScheduler
 		return nil, nil
 	}
 
+	loc, err := time.LoadLocation(s.Timezone)
+	if err != nil {
+		return nil, err
+	}
+
 	if exec == nil {
-		t := time.Now()
+		t := time.Now().In(loc)
 		exec = &sdk.PipelineSchedulerExecution{
 			Executed:      true,
 			ExecutionDate: &t,
@@ -102,7 +107,7 @@ func Next(db gorp.SqlExecutor, s *sdk.PipelineScheduler) (*sdk.PipelineScheduler
 	if !exec.Executed {
 		return nil, fmt.Errorf("Last execution %d not ran", s.ID)
 	}
-	nextTime := cronExpr.Next(*exec.ExecutionDate)
+	nextTime := cronExpr.Next(exec.ExecutionDate.In(loc))
 	e := &sdk.PipelineSchedulerExecution{
 		ExecutionPlannedDate: nextTime,
 		PipelineSchedulerID:  s.ID,

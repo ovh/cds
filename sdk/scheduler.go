@@ -13,6 +13,7 @@ type PipelineScheduler struct {
 	EnvironmentName string                      `json:"environment_name" db:"-"`
 	Args            []Parameter                 `json:"args,omitempty" db:"-"`
 	Crontab         string                      `json:"crontab,omitempty" db:"crontab"`
+	Timezone        string                      `json:"timezone" db:"timezone"`
 	Disabled        bool                        `json:"disable" db:"disable"`
 	LastExecution   *PipelineSchedulerExecution `json:"last_execution" db:"-"`
 	NextExecution   *PipelineSchedulerExecution `json:"next_execution" db:"-"`

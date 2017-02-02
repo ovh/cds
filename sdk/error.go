@@ -95,6 +95,7 @@ var (
 	ErrInvalidWorkerStatus                   = &Error{ID: 81, Status: http.StatusNotFound}
 	ErrInvalidToken                          = &Error{ID: 82, Status: http.StatusUnauthorized}
 	ErrAppBuildingPipelines                  = &Error{ID: 83, Status: http.StatusForbidden}
+	ErrInvalidTimezone                       = &Error{ID: 84, Status: http.StatusBadGateway}
 )
 
 // SupportedLanguages on API errors
@@ -189,6 +190,7 @@ You can safely use them in a String or Text parameter`,
 	ErrInvalidWorkerStatus.ID:                   "Worker status is invalid",
 	ErrInvalidToken.ID:                          "Invalid token",
 	ErrAppBuildingPipelines.ID:                  "Cannot delete application, there are building pipelines",
+	ErrInvalidTimezone.ID:                       "Invalid timezone",
 }
 
 var errorsFrench = map[int]string{
@@ -277,6 +279,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrInvalidWorkerStatus.ID:                   "Le status du worker est incorrect",
 	ErrInvalidToken.ID:                          "Token non valide",
 	ErrAppBuildingPipelines.ID:                  "Impossible de supprimer l'application, il y a pipelines en cours",
+	ErrInvalidTimezone.ID:                       "Fuseau horaire invalide",
 }
 
 var matcher = language.NewMatcher(SupportedLanguages)

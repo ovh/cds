@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorhill/cronexpr"
@@ -164,6 +165,14 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 		log.Warning("addSchedulerApplicationPipelineHandler> cannot unmarshal body:  %s\n", err)
 		return sdk.ErrWrongRequest
 
+	}
+
+	//Check timezone
+	if s.Timezone != "" {
+		if _, err := time.LoadLocation(s.Timezone); err != nil {
+			log.Warning("addSchedulerApplicationPipelineHandler> invalid timezone %s  %s\n", s.Timezone, err)
+			return sdk.ErrInvalidTimezone
+		}
 	}
 
 	//Parsing cronexpr

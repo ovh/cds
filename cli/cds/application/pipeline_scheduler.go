@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -75,11 +76,23 @@ func applicationPipelineSchedulerList(cmd *cobra.Command, args []string) {
 		var next = "unknown"
 
 		if ps[i].LastExecution != nil {
-			last = fmt.Sprintf("%v", ps[i].LastExecution.ExecutionDate)
+			loc, err := time.LoadLocation(ps[i].Timezone)
+			if err != nil {
+				last = fmt.Sprintf("%v", ps[i].LastExecution.ExecutionDate)
+			} else {
+				t := ps[i].LastExecution.ExecutionDate.In(loc)
+				last = fmt.Sprintf("%v", t)
+			}
 		}
 
 		if ps[i].NextExecution != nil {
-			next = fmt.Sprintf("%v", ps[i].NextExecution.ExecutionPlannedDate)
+			loc, err := time.LoadLocation(ps[i].Timezone)
+			if err != nil {
+				next = fmt.Sprintf("%v", ps[i].NextExecution.ExecutionPlannedDate)
+			} else {
+				t := ps[i].NextExecution.ExecutionPlannedDate.In(loc)
+				next = fmt.Sprintf("%v", t)
+			}
 		}
 
 		table.Append([]string{
