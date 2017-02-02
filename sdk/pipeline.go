@@ -431,8 +431,8 @@ func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, fo
 				currentStep = totalStepsReturn - 1
 
 				for i := range logs {
+					ch <- logs[i]
 					if logs[i].ID != 0 {
-						ch <- logs[i]
 						continue
 					}
 
