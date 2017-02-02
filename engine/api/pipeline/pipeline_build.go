@@ -27,6 +27,7 @@ type PipelineBuildDbResult struct {
 	EnvironmentID         int64          `db:"envID"`
 	ApplicatioName        string         `db:"appName"`
 	PipelineName          string         `db:"pipName"`
+	PipelineType          string         `db:"pipType"`
 	EnvironmentName       string         `db:"envName"`
 	BuildNumber           int64          `db:"build_number"`
 	Version               int64          `db:"version"`
@@ -49,7 +50,7 @@ const (
 	selectPipelineBuild = `
 		SELECT
 			pb.id as id, pb.application_id as appID, pb.pipeline_id as pipID, pb.environment_id as envID,
-			application.name as appName, pipeline.name as pipName, environment.name as envName,
+			application.name as appName, pipeline.name as pipName, pipeline.type as pipType, environment.name as envName,
 			pb.build_number as build_number, pb.version as version, pb.status as status,
 			pb.args as args, pb.stages as stages,
 			pb.start as start, pb.done as done,
@@ -326,6 +327,7 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 		Pipeline: sdk.Pipeline{
 			ID:   pbResult.PipelineID,
 			Name: pbResult.PipelineName,
+			Type: sdk.PipelineType(pbResult.PipelineType),
 		},
 		Environment: sdk.Environment{
 			ID:   pbResult.EnvironmentID,
