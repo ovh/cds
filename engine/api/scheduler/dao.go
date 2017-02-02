@@ -43,6 +43,9 @@ func LoadAll(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, error) {
 
 //Insert a pipeline scheduler
 func Insert(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
+	if s.Timezone == "" {
+		s.Timezone = "UTC"
+	}
 	ds := database.PipelineScheduler(*s)
 	if err := db.Insert(&ds); err != nil {
 		log.Warning("Insert> Unable to insert pipeline scheduler : %T %s", err, err)
