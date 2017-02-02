@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/test"
@@ -110,6 +111,15 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	pkey := test.RandomString(t, 10)
 	proj := test.InsertTestProject(t, db, pkey, pkey)
 
+	env := &sdk.Environment{
+		Name:      pkey + "-env",
+		ProjectID: proj.ID,
+	}
+
+	if err := environment.InsertEnvironment(db, env); err != nil {
+		t.Fatal(err)
+	}
+
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
 		Name:       pkey + "_PIP",
@@ -146,7 +156,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	}
 	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
 	headers := test.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t))
+	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "POST", route+"?envName="+env.Name, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t))
 	tester.Run()
 	tester.Reset()
 
@@ -154,7 +164,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	scheduler.ExecuterRun()
 
 	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
-	tester.AddCall("Test_getSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
+	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
 	tester.Run()
 }
 
