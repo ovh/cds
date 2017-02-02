@@ -25,7 +25,7 @@ type PipelineBuildJob struct {
 type ExecutedJob struct {
 	Job
 	StepStatus []StepStatus `json:"step_status" db:"-"`
-	Reason     string
+	Reason     string       `json:"reason" db:"-"`
 }
 
 // StepStatus Represent a step and his status
