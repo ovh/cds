@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob) sdk.Result {
+func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	var res sdk.Result
 	res.Status = sdk.StatusFail
 
@@ -45,13 +45,15 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob) sd
 	}
 
 	if p == "" {
-		sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("UnitTest parser: path not provided"), pbJob.PipelineBuildID)
+		res.Reason = fmt.Sprintf("UnitTest parser: path not provided")
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
 	files, err := filepath.Glob(p)
 	if err != nil {
-		sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("UnitTest parser: Cannot find requested files, invalid pattern"), pbJob.PipelineBuildID)
+		res.Reason = fmt.Sprintf("UnitTest parser: Cannot find requested files, invalid pattern")
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
@@ -61,13 +63,15 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob) sd
 
 		data, errRead := ioutil.ReadFile(f)
 		if errRead != nil {
-			sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, errRead), pbJob.PipelineBuildID)
+			res.Reason = fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, errRead)
+			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 			return res
 		}
 
 		err = xml.Unmarshal([]byte(data), &v)
 		if err != nil {
-			sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("UnitTest parser: cannot interpret file %s (%s)", f, err), pbJob.PipelineBuildID)
+			res.Reason = fmt.Sprintf("UnitTest parser: cannot interpret file %s (%s)", f, err)
+			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 			return res
 		}
 
@@ -86,24 +90,27 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob) sd
 		v.TotalSkipped += ts.Skipped
 	}
 
-	res.Status = sdk.StatusSuccess
 	for _, s := range v.TestSuites {
 		if s.Failures > 0 {
-			sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parser: %s has %d failed tests (failure attr)", s.Name, s.Failures), pbJob.PipelineBuildID)
-			res.Status = sdk.StatusFail
+			res.Reason = fmt.Sprintf("JUnit parser: %s has %d failed tests (failure attr)", s.Name, s.Failures)
+			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		}
 		for _, tc := range s.TestCases {
 			if len(tc.Failures) > 0 {
-				sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parser: %s has %d failed tests (failure element(s))", s.Name, s.Failures), pbJob.PipelineBuildID)
-				res.Status = sdk.StatusFail
+				res.Reason = fmt.Sprintf("JUnit parser: %s has %d failed tests (failure element(s))", s.Name, s.Failures)
+				sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 			}
 		}
 	}
 
+	if res.Status == sdk.StatusFail {
+		sendLog(pbJob.ID, "", pbJob.PipelineBuildID, stepOrder, false)
+	}
+
 	data, err := json.Marshal(v)
 	if err != nil {
-		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parse: failed to parse tests details: %s", err), pbJob.PipelineBuildID)
+		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
@@ -113,11 +120,11 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob) sd
 		err = fmt.Errorf("HTTP %d", code)
 	}
 	if err != nil {
-		res.Status = sdk.StatusFail
-		sendLog(pbJob.ID, sdk.JUnitAction, fmt.Sprintf("JUnit parse: failed to send tests details: %s", err), pbJob.PipelineBuildID)
+		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
-
+	res.Status = sdk.StatusSuccess
 	return res
 }
 

@@ -105,18 +105,20 @@ func request(method string, path string, args []byte) ([]byte, int, error) {
 	return body, code, nil
 }
 
-//Log a a struct to send log to CDS API
+// Log struct holds a single line of build log
 type Log struct {
-	ID              int64     `json:"id"`
-	ActionBuildID   int64     `json:"action_build_id"`
-	PipelineBuildID int64     `json:"pipeline_build_id"`
-	Timestamp       time.Time `json:"timestamp"`
-	Step            string    `json:"step"`
-	Value           string    `json:"value"`
+	ID                 int64     `json:"id"`
+	PipelineBuildJobID int64     `json:"pipeline_build_job_id"`
+	PipelineBuildID    int64     `json:"pipeline_build_id"`
+	Start              time.Time `json:"start"`
+	LastModified       time.Time `json:"last_modified"`
+	Done               time.Time `json:"done"`
+	StepOrder          int       `json:"step_order"`
+	Value              string    `json:"value"`
 }
 
 //SendLog send logs to CDS engine for the current
-func SendLog(j IJob, step, format string, i ...interface{}) error {
+func SendLog(j IJob, format string, i ...interface{}) error {
 	if j == nil {
 		//If action is nil: do nothing
 		return nil
@@ -125,18 +127,21 @@ func SendLog(j IJob, step, format string, i ...interface{}) error {
 
 	s := fmt.Sprintf(format, i...)
 	l := Log{
-		ActionBuildID:   j.ID(),
-		PipelineBuildID: j.PipelineBuildID(),
-		Step:            step,
-		Value:           s,
+		PipelineBuildJobID: j.ID(),
+		PipelineBuildID:    j.PipelineBuildID(),
+		Start:              time.Now(),
+		StepOrder:          j.StepOrder(),
+		Value:              s,
+		LastModified:       time.Now(),
 	}
+
 	logs := []Log{l}
 	data, err := json.Marshal(logs)
 	if err != nil {
 		return err
 	}
 
-	path := fmt.Sprintf("/build/%d/log", logs[0].ActionBuildID)
+	path := fmt.Sprintf("/build/%d/log", j.ID())
 	_, _, err = request("POST", path, data)
 	if err != nil {
 		return err

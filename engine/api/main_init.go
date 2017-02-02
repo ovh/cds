@@ -143,9 +143,6 @@ func init() {
 	flags.Bool("no-repo-cache-loader", false, "Disable repositories cache loader")
 	viper.BindPFlag("no_repo_cache_loader", flags.Lookup("no-repo-cache-loader"))
 
-	flags.Bool("no-scheduler", false, "Disable Pipelines Schedulers")
-	viper.BindPFlag("no_scheduler", flags.Lookup("no-scheduler"))
-
 	flags.Bool("no-stash_status", false, "Disable Stash Statuses")
 	viper.BindPFlag("no_stash_status", flags.Lookup("no-stash-status"))
 

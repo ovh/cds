@@ -26,6 +26,7 @@ type CDSAction interface {
 type IJob interface {
 	ID() int64
 	PipelineBuildID() int64
+	StepOrder() int
 	Arguments() Arguments
 }
 
@@ -34,11 +35,13 @@ type Job struct {
 	IDPipelineJobBuild int64
 	IDPipelineBuild    int64
 	Args               Arguments
+	OrderStep          int
 }
 
 func (j Job) ID() int64              { return j.IDPipelineJobBuild }
 func (j Job) Arguments() Arguments   { return j.Args }
 func (j Job) PipelineBuildID() int64 { return j.IDPipelineBuild }
+func (j Job) StepOrder() int         { return j.OrderStep }
 
 //IOptions is
 type IOptions interface {

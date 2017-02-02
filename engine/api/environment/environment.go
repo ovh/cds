@@ -200,10 +200,9 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 	}
 
 	// Delete builds
-	query = `DELETE FROM build_log where action_build_id IN (
-			SELECT id FROM pipeline_build_job WHERE pipeline_build_id IN (
-					SELECT id FROM pipeline_build WHERE environment_id = $1
-			))`
+	query = `DELETE FROM pipeline_build_log where pipeline_build_id IN (
+			SELECT id FROM pipeline_build WHERE environment_id = $1
+		)`
 	_, err = db.Exec(query, environmentID)
 	if err != nil {
 		log.Warning("DeleteEnvironment> Cannot delete environment related builds: %s\n", err)

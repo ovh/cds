@@ -9,25 +9,25 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-func runBuiltin(a *sdk.Action, pbJob sdk.PipelineBuildJob) sdk.Result {
+func runBuiltin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail}
 	switch a.Name {
 	case sdk.ArtifactUpload:
 		filePattern, tag := getArtifactParams(a)
-		return runArtifactUpload(filePattern, tag, pbJob)
+		return runArtifactUpload(filePattern, tag, pbJob, stepOrder)
 	case sdk.ArtifactDownload:
-		return runArtifactDownload(a, pbJob)
+		return runArtifactDownload(a, pbJob, stepOrder)
 	case sdk.ScriptAction:
-		return runScriptAction(a, pbJob)
+		return runScriptAction(a, pbJob, stepOrder)
 	case sdk.JUnitAction:
-		return runParseJunitTestResultAction(a, pbJob)
+		return runParseJunitTestResultAction(a, pbJob, stepOrder)
 	}
 
-	sendLog(pbJob.ID, name, fmt.Sprintf("Unknown builtin step: %s\n", name), pbJob.PipelineBuildID)
+	res.Reason = fmt.Sprintf("Unknown builtin step: %s\n", name)
 	return res
 }
 
-func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob) sdk.Result {
+func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail}
 	//For the moment we consider that plugin name = action name = plugin binary file name
 	pluginName := a.Name
@@ -46,8 +46,12 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob) sdk.Result {
 	//Get the plugin interface
 	_plugin, err := pluginClient.Instance()
 	if err != nil {
-		sendLog(pbJob.ID, "PLUGIN", fmt.Sprintf("Unable to init plugin %s: %s\n", pluginName, err), pbJob.PipelineBuildID)
-		return sdk.Result{Status: sdk.StatusFail}
+		result := sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("Unable to init plugin %s: %s\n", pluginName, err),
+		}
+		sendLog(pbJob.ID, result.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		return result
 	}
 
 	//Manage all parameters
@@ -65,12 +69,11 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob) sdk.Result {
 	pluginAction := plugin.Job{
 		IDPipelineBuild:    pbJob.PipelineBuildID,
 		IDPipelineJobBuild: pbJob.ID,
+		OrderStep:          stepOrder,
 		Args:               pluginArgs,
 	}
 
-	sendLog(pbJob.ID, "PLUGIN", fmt.Sprintf("Starting plugin: %s\n", pluginName), pbJob.PipelineBuildID)
 	pluginResult := _plugin.Run(pluginAction)
-	sendLog(pbJob.ID, "PLUGIN", fmt.Sprintf("Plugin %s finished with status: %s\n", pluginName, pluginResult), pbJob.PipelineBuildID)
 
 	if pluginResult == plugin.Success {
 		res.Status = sdk.StatusSuccess

@@ -6,21 +6,25 @@ import (
 
 // Log struct holds a single line of build log
 type Log struct {
-	ID              int64     `json:"id"`
-	ActionBuildID   int64     `json:"action_build_id"`
-	PipelineBuildID int64     `json:"pipeline_build_id"`
-	Timestamp       time.Time `json:"timestamp"`
-	Step            string    `json:"step"`
-	Value           string    `json:"value"`
+	ID                 int64     `json:"id" db:"id"`
+	PipelineBuildJobID int64     `json:"pipeline_build_job_id" db:"pipeline_build_job_id"`
+	PipelineBuildID    int64     `json:"pipeline_build_id" db:"pipeline_build_id"`
+	Start              time.Time `json:"start" db:"start"`
+	LastModified       time.Time `json:"last_modified" db:"last_modified"`
+	Done               time.Time `json:"done" db:"done"`
+	StepOrder          int       `json:"step_order" db:"step_order"`
+	Value              string    `json:"value" db:"value"`
 }
 
 // NewLog returns a log struct
-func NewLog(buildid int64, step string, value string, pipelineBuildID int64) *Log {
+func NewLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int) *Log {
 	l := &Log{
-		ActionBuildID:   buildid,
-		Step:            step,
-		Value:           value,
-		PipelineBuildID: pipelineBuildID,
+		PipelineBuildJobID: pipJobID,
+		PipelineBuildID:    pipelineBuildID,
+		Start:              time.Now(),
+		StepOrder:          stepOrder,
+		Value:              value,
+		LastModified:       time.Now(),
 	}
 
 	return l
