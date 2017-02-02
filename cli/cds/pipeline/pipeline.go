@@ -4,6 +4,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	statusFail = "status: Fail"
+)
+
 // Cmd for pipeline operation
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{

@@ -23,6 +23,59 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	vars := mux.Vars(r)
+	buildIDString := vars["id"]
+
+	buildID, errID := strconv.ParseInt(buildIDString, 10, 64)
+	if errID != nil {
+		log.Warning("updateStepStatusHandler> buildID must be an integer: %s\n", errID)
+		return sdk.ErrInvalidID
+	}
+
+	pbJob, errJob := pipeline.GetPipelineBuildJob(db, buildID)
+	if errJob != nil {
+		log.Warning("updateStepStatusHandler> Cannot get pipeline build job %d: %s\n", buildID, errJob)
+		return errJob
+	}
+
+	// Get body
+	data, errR := ioutil.ReadAll(r.Body)
+	if errR != nil {
+		log.Warning("updateStepStatusHandler> Cannot read body: %s\n", errR)
+		return sdk.ErrWrongRequest
+	}
+	var step sdk.StepStatus
+	if err := json.Unmarshal(data, &step); err != nil {
+		log.Warning("updateStepStatusHandler> Cannot unmarshall body: %s\n", err)
+		return sdk.ErrWrongRequest
+	}
+
+	found := false
+	for i := range pbJob.Job.StepStatus {
+		jobStep := &pbJob.Job.StepStatus[i]
+		if step.StepOrder == jobStep.StepOrder {
+			jobStep.Status = step.Status
+			found = true
+		}
+	}
+	if !found {
+		pbJob.Job.StepStatus = append(pbJob.Job.StepStatus, step)
+	}
+
+	var errmarshal error
+	pbJob.JobJSON, errmarshal = json.Marshal(pbJob.Job)
+	if errmarshal != nil {
+		log.Warning("updateStepStatusHandler> Cannot marshall job: %s\n", errmarshal)
+		return errmarshal
+	}
+	if err := pipeline.UpdatePipelineBuildJob(db, pbJob); err != nil {
+		log.Warning("updateStepStatusHandler> Cannot update pipeline build job: %s\n", err)
+		return err
+	}
+	return nil
+}
+
 func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -116,18 +169,18 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return sdk.ErrWrongRequest
 	}
 
+	pbID, errPB := pipeline.LoadPipelineBuildID(db, a.ID, p.ID, env.ID, buildNumber)
+	if errPB != nil {
+		log.Warning("deleteBuildHandler> Cannot load pipeline build: %s", errPB)
+		return errPB
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("deleteBuildHandler> Cannot start transaction: %s\n", err)
 		return err
 	}
 	defer tx.Rollback()
-
-	pbID, errLoadPb := pipeline.LoadPipelineBuildID(db, a.ID, p.ID, env.ID, buildNumber)
-	if errLoadPb != nil {
-		log.Warning("deleteBuildHandler> Cannot load pipeline build to delete: %s\n", errLoadPb)
-		return errLoadPb
-	}
 
 	if err := pipeline.DeletePipelineBuildByID(tx, pbID); err != nil {
 		log.Warning("deleteBuildHandler> Cannot delete pipeline build: %s\n", err)

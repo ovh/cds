@@ -31,6 +31,7 @@ var (
 	exportport int
 	// current actionBuild is here to allow var export
 	pbJob          sdk.PipelineBuildJob
+	currentStep    int
 	buildVariables []sdk.Variable
 	// Git ssh configuration
 	pkey           string
@@ -272,7 +273,6 @@ func takeAction(b sdk.PipelineBuildJob) {
 			break
 		}
 		if err == nil && code < 300 {
-			sendLog(b.ID, "SYSTEM", "BuildResult sent.\n", pbji.PipelineBuildJob.PipelineBuildID)
 			fmt.Printf("BuildResult sent.\n")
 			break
 		}

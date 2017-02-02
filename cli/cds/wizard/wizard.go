@@ -69,9 +69,9 @@ func applyTemplate(projectKey string, name string, build sdk.Template) {
 			fmt.Fprintln(w, strings.Join(titles, "\t"))
 
 			for l := range ch {
-				fmt.Fprintf(w, "%s\t%s\t%s",
-					[]byte(l.Timestamp.String())[:19],
-					l.Step,
+				fmt.Fprintf(w, "%s\t%d\t%s",
+					[]byte(l.LastModified.String())[:19],
+					l.StepOrder,
 					l.Value,
 				)
 				w.Flush()

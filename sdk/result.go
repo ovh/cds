@@ -6,4 +6,5 @@ type Result struct {
 	BuildID int64  `json:"build_id" yaml:"build"`
 	Status  Status `json:"status"`
 	Version int64  `json:"version"`
+	Reason  string `json:"reason"`
 }

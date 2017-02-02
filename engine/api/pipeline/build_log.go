@@ -1,9 +1,6 @@
 package pipeline
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
@@ -11,49 +8,62 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// InsertLog insert build log into database
-func InsertLog(db database.Executer, actionBuildID int64, step string, value string, pbID int64) error {
-	query := `INSERT INTO build_log (action_build_id, timestamp, step, value, pipeline_build_id) VALUES ($1, $2, $3, $4, $5)`
+// UpdateLog Update a pipeline build step log
+func UpdateLog(db gorp.SqlExecutor, l *sdk.Log) error {
+	dbmodel := database.Log(*l)
+	if _, err := db.Update(&dbmodel); err != nil {
+		return err
+	}
+	return nil
+}
 
-	_, err := db.Exec(query, actionBuildID, time.Now(), step, value, pbID)
-	return err
+// InsertLog insert build log into database
+func InsertLog(db gorp.SqlExecutor, l *sdk.Log) error {
+	dbmodel := database.Log(*l)
+	if err := db.Insert(&dbmodel); err != nil {
+		return err
+	}
+	*l = sdk.Log(dbmodel)
+	return nil
+}
+
+// LoadStepLogs load log for the given pipeline build job at the given step
+func LoadStepLogs(db gorp.SqlExecutor, pipJobID int64, stepOrder int) (*sdk.Log, error) {
+	var logGorp database.Log
+	query := `
+		SELECT *
+		FROM pipeline_build_log
+		WHERE pipeline_build_job_id = $1 AND step_order = $2
+	`
+	if err := db.SelectOne(&logGorp, query, pipJobID, stepOrder); err != nil {
+		return nil, err
+	}
+	l := sdk.Log(logGorp)
+	return &l, nil
 }
 
 // LoadLogs retrieves build logs from databse given an offset and a size
-func LoadLogs(db gorp.SqlExecutor, actionBuildID int64, tail int64, start int64) ([]sdk.Log, error) {
-	query := `SELECT * FROM build_log WHERE action_build_id = $1`
-	var logs []sdk.Log
-
-	if start > 0 {
-		query = fmt.Sprintf("%s AND id > %d", query, start)
-	}
-
-	query = fmt.Sprintf("%s ORDER BY id", query)
-	if tail == 0 {
-		tail = 5000
-	}
-	query = fmt.Sprintf("%s LIMIT %d", query, tail)
-
-	rows, err := db.Query(query, actionBuildID)
-	if err != nil {
+func LoadLogs(db gorp.SqlExecutor, pipelineJobID int64) ([]sdk.Log, error) {
+	var logGorp []database.Log
+	query := `
+		SELECT *
+		FROM pipeline_build_log
+		WHERE pipeline_build_job_id = $1
+		ORDER BY id
+	`
+	if _, err := db.Select(&logGorp, query, pipelineJobID); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var l sdk.Log
-		err = rows.Scan(&l.ID, &l.ActionBuildID, &l.Timestamp, &l.Step, &l.Value, &l.PipelineBuildID)
-		if err != nil {
-			return nil, err
-		}
-		logs = append(logs, l)
+	var logs []sdk.Log
+	for _, l := range logGorp {
+		newLog := sdk.Log(l)
+		logs = append(logs, newLog)
 	}
-
 	return logs, nil
 }
 
-// LoadPipelineActionBuildLogs Load log for the given pipeline action
-func LoadPipelineActionBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBuild, pipelineActionID int64, offset int64) (sdk.BuildState, error) {
+// LoadPipelineBuildJobLogs Load log for the given pipeline action
+func LoadPipelineBuildJobLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBuild, pipelineActionID int64) (sdk.BuildState, error) {
 	buildLogResult := sdk.BuildState{}
 
 	// Found pipelien buid job from pipelineActionID
@@ -74,7 +84,7 @@ func LoadPipelineActionBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.Pipelin
 
 	// Get the logs for the given pbJob
 	var errLog error
-	buildLogResult.Logs, errLog = LoadLogs(db, currentPbJob.ID, 0, offset)
+	buildLogResult.Logs, errLog = LoadLogs(db, currentPbJob.ID)
 	if errLog != nil {
 		return buildLogResult, errLog
 	}
@@ -84,27 +94,76 @@ func LoadPipelineActionBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.Pipelin
 }
 
 // DeleteBuildLogs delete build log
-func DeleteBuildLogs(db database.Executer, actionBuildID int64) error {
-	query := `DELETE FROM build_log WHERE action_build_id = $1`
-	_, err := db.Exec(query, actionBuildID)
+func DeleteBuildLogs(db gorp.SqlExecutor, pipJobID int64) error {
+	query := `DELETE FROM pipeline_build_log WHERE pipeline_build_job_id = $1`
+	_, err := db.Exec(query, pipJobID)
 	return err
 }
 
-// LoadPipelineBuildLogs Load pipeline build logs by pipeline ID
-func LoadPipelineBuildLogs(db gorp.SqlExecutor, pb *sdk.PipelineBuild, offset int64) ([]sdk.Log, error) {
+// DeleteBuildLogsByPipelineBuildID Delete all log from the given build
+func DeleteBuildLogsByPipelineBuildID(db gorp.SqlExecutor, pipID int64) error {
+	query := `DELETE FROM pipeline_build_log WHERE pipeline_build_id = $1`
+	_, err := db.Exec(query, pipID)
+	return err
+}
 
-	var actionBuildIDs []int64
+func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBuild, pipelineActionID int64, stepOrder int) (*sdk.BuildState, error) {
+	var stepStatus string
+
+	// Found pipeline buid job from pipelineActionID
+	var currentPbJob *sdk.PipelineBuildJob
+	for _, s := range pipelineBuild.Stages {
+		for _, pbJob := range s.PipelineBuildJobs {
+			if pbJob.Job.PipelineActionID == pipelineActionID {
+				currentPbJob = &pbJob
+				for _, step := range pbJob.Job.StepStatus {
+					if step.StepOrder == stepOrder {
+						stepStatus = step.Status
+						break
+					}
+				}
+				break
+			}
+		}
+
+	}
+
+	if currentPbJob == nil {
+		return nil, sdk.ErrNotFound
+	}
+
+	if stepStatus == "" {
+		return nil, sdk.ErrNotFound
+	}
+
+	// Get the logs for the given pbJob
+	logs, errLog := LoadStepLogs(db, currentPbJob.ID, stepOrder)
+	if errLog != nil {
+		return nil, errLog
+	}
+
+	result := &sdk.BuildState{
+		Status:   sdk.StatusFromString(stepStatus),
+		StepLogs: *logs,
+	}
+	return result, nil
+}
+
+// LoadPipelineBuildLogs Load pipeline build logs by pipeline ID
+func LoadPipelineBuildLogs(db gorp.SqlExecutor, pb *sdk.PipelineBuild) ([]sdk.Log, error) {
+
+	var pipJobIDs []int64
 	for _, s := range pb.Stages {
 		for _, pbj := range s.PipelineBuildJobs {
-			actionBuildIDs = append(actionBuildIDs, pbj.ID)
+			pipJobIDs = append(pipJobIDs, pbj.ID)
 		}
 	}
 
-	log.Debug("getBuildLogsHandler> ids: %v\n", actionBuildIDs)
+	log.Debug("getBuildLogsHandler> ids: %v\n", pipJobIDs)
 
 	var pipelinelogs []sdk.Log
-	for _, id := range actionBuildIDs {
-		logs, err := LoadLogs(db, int64(id), 0, offset)
+	for _, id := range pipJobIDs {
+		logs, err := LoadLogs(db, int64(id))
 		if err != nil {
 			return nil, err
 		}

@@ -442,9 +442,8 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 
 // DeletePipelineBuildByID  Delete pipeline build by his ID
 func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
-	queryDeleteLog := "DELETE FROM build_log where pipeline_build_id = $1"
-	if _, errDeleteLog := db.Exec(queryDeleteLog, pbID); errDeleteLog != nil {
-		return errDeleteLog
+	if err := DeleteBuildLogsByPipelineBuildID(db, pbID); err != nil {
+		return err
 	}
 
 	if err := DeletePipelineBuildJob(db, pbID); err != nil {
@@ -669,6 +668,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		} else {
 			sdk.AddParameter(&params, "git.author", sdk.StringParameter, commit.Author.Name)
 			sdk.AddParameter(&params, "git.message", sdk.StringParameter, commit.Message)
+			pb.Trigger.VCSChangesAuthor = commit.Author.Name
 		}
 	}
 
@@ -844,7 +844,7 @@ func GetBranchHistory(db gorp.SqlExecutor, projectKey, appName string, page, nbP
 			lastestBuild.pipeline_id, lastestBuild.application_id, lastestBuild.environment_id,
 			lastestBuild.appName, lastestBuild.pipName, lastestBuild.envName,
 			lastestBuild.start, lastestBuild.done, lastestBuild.status, lastestBuild.version, lastestBuild.build_number,
-			lastestBuild.manual_trigger, "user".username, lastestBuild.vcs_changes_branch, lastestBuild.vcs_changes_hash, lastestBuild.vcs_changes_author
+			lastestBuild.manual_trigger, lastestBuild.scheduled_trigger, "user".username, lastestBuild.vcs_changes_branch, lastestBuild.vcs_changes_hash, lastestBuild.vcs_changes_author
 		FROM lastestBuild
 		JOIN (
 			SELECT max(start) as start , application_id, pipeline_id, environment_id ,vcs_changes_branch
@@ -870,13 +870,13 @@ func GetBranchHistory(db gorp.SqlExecutor, projectKey, appName string, page, nbP
 		var pb sdk.PipelineBuild
 		var status string
 		var user sdk.User
-		var manual sql.NullBool
+		var manual, scheduledTrigger sql.NullBool
 		var hash, author, username sql.NullString
 
 		if err := rows.Scan(&pb.Pipeline.ID, &pb.Application.ID, &pb.Environment.ID,
 			&pb.Application.Name, &pb.Pipeline.Name, &pb.Environment.Name,
 			&pb.Start, &pb.Done, &status, &pb.Version, &pb.BuildNumber,
-			&manual, &username, &pb.Trigger.VCSChangesBranch, &hash, &author,
+			&manual, &scheduledTrigger, &username, &pb.Trigger.VCSChangesBranch, &hash, &author,
 		); err != nil {
 			return nil, err
 		}
@@ -896,6 +896,9 @@ func GetBranchHistory(db gorp.SqlExecutor, projectKey, appName string, page, nbP
 		}
 		if author.Valid {
 			pb.Trigger.VCSChangesAuthor = author.String
+		}
+		if scheduledTrigger.Valid {
+			pb.Trigger.ScheduledTrigger = scheduledTrigger.Bool
 		}
 		pbs = append(pbs, pb)
 	}
