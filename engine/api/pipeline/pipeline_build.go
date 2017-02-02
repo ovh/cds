@@ -50,7 +50,7 @@ const (
 	selectPipelineBuild = `
 		SELECT
 			pb.id as id, pb.application_id as appID, pb.pipeline_id as pipID, pb.environment_id as envID,
-			application.name as appName, pipeline.name as pipName, pipeline.type as pipType,e nvironment.name as envName,
+			application.name as appName, pipeline.name as pipName, pipeline.type as pipType, environment.name as envName,
 			pb.build_number as build_number, pb.version as version, pb.status as status,
 			pb.args as args, pb.stages as stages,
 			pb.start as start, pb.done as done,
