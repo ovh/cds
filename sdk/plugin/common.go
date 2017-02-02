@@ -135,8 +135,7 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 		LastModified:       time.Now(),
 	}
 
-	logs := []Log{l}
-	data, err := json.Marshal(logs)
+	data, err := json.Marshal(l)
 	if err != nil {
 		return err
 	}
