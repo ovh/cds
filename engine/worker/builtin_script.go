@@ -169,7 +169,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 				close(outchan)
 				return
 			}
-			log.Warning(">Line: %s", line)
+			log.Info(">Line: %s", line)
 			sendLog(pbJob.ID, line, pbJob.PipelineBuildID, stepOrder, false)
 		}
 	}()

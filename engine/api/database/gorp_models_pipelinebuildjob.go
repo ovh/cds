@@ -24,8 +24,8 @@ func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
 	return nil
 }
 
-//PostSelect is a DB Hook on PipelineBuildJob to get jobs and params as from JSON in DB
-func (p *PipelineBuildJob) PostSelect(s gorp.SqlExecutor) error {
+//PostGet is a DB Hook on PipelineBuildJob to get jobs and params as from JSON in DB
+func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 	if err := json.Unmarshal(p.JobJSON, &p.Job); err != nil {
 		return err
 	}
