@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/spf13/viper"
-	
+
 	"github.com/ovh/cds/engine/api/database"
 )
 
@@ -147,7 +147,7 @@ func init() {
 	flags.Bool("no-stash_status", false, "Disable Stash Statuses")
 	viper.BindPFlag("no_stash_status", flags.Lookup("no-stash-status"))
 
-	flags.Bool("no-gitgub-status", false, "Disable Github Statuses")
+	flags.Bool("no-github-status", false, "Disable Github Statuses")
 	viper.BindPFlag("no_github_status", flags.Lookup("no-github-status"))
 
 	flags.Bool("no-github-status-url", false, "Disable Target URL in Github Statuses")
