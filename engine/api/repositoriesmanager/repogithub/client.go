@@ -16,8 +16,10 @@ import (
 
 // GithubClient is a github.com wrapper for CDS RepositoriesManagerClient interface
 type GithubClient struct {
-	ClientID   string
-	OAuthToken string
+	ClientID         string
+	OAuthToken       string
+	DisableSetStatus bool
+	DisableStatusURL bool
 }
 
 // Repos list repositories that are accessible to the authenticated user
@@ -488,10 +490,4 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 	}
 
 	return res, interval, nil
-}
-
-//CreateStatus Users with push access can create commit statuses for a given ref:
-//https://developer.github.com/v3/repos/statuses/#create-a-status
-func (g *GithubClient) CreateStatus(event sdk.Event) error {
-	return nil
 }

@@ -7,17 +7,28 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 
+	"encoding/json"
+
+	"bytes"
+
+	"io/ioutil"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
-//SetStatus set build status on github
+//SetStatus Users with push access can create commit statuses for a given ref:
+//https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *GithubClient) SetStatus(event sdk.Event) error {
-
 	log.Debug("github.SetStatus> receive: type:%s all: %+v", event.EventType, event)
 	var eventpb sdk.EventPipelineBuild
 
 	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
+		return nil
+	}
+
+	if g.DisableSetStatus {
+		log.Warning("⚠ Github statuses are disabled")
 		return nil
 	}
 
@@ -57,7 +68,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	)
 
 	//CDS can avoid sending github targer url in status, if it's disable
-	if viper.GetBool("no_github_target_url") {
+	if g.DisableStatusURL {
 		url = ""
 	}
 
@@ -85,6 +96,39 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 		State:       context,
 		Context:     status,
 	}
+
+	path := fmt.Sprintf("/repos/%s/statuses/%s", eventpb.RepositoryFullname, eventpb.Hash)
+
+	b, err := json.Marshal(ghStatus)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer(b)
+
+	res, err := g.post(path, "application/json", buf)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 201 {
+		err := fmt.Errorf("Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
+		log.Warning("SetStatus> %s", err)
+		return err
+	}
+
+	s := &Status{}
+	if err := json.Unmarshal(body, s); err != nil {
+		return err
+	}
+
+	log.Info("SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
 
 	return nil
 }

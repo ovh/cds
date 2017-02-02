@@ -14,10 +14,11 @@ import (
 
 //StashConsumer embeds a stash oauth1 consumer
 type StashConsumer struct {
-	URL           string `json:"-"`
-	ConsumerKey   string `json:"consumer_key"`
-	PrivateRSAKey string `json:"private_rsa_key"`
-	consumer      *oauth1.Consumer
+	URL              string `json:"-"`
+	ConsumerKey      string `json:"consumer_key"`
+	PrivateRSAKey    string `json:"private_rsa_key"`
+	DisableSetStatus bool   `json:"-"`
+	consumer         *oauth1.Consumer
 }
 
 //New creates a new StashConsumer
@@ -102,7 +103,9 @@ func (s *StashConsumer) GetAuthorized(accessToken, accessTokenSecret string) (sd
 		accessTokenSecret,
 		s.PrivateRSAKey,
 	)
-	return &StashClient{url: s.URL, client: client}, nil
+	c := &StashClient{url: s.URL, client: client}
+	c.disableSetStatus = s.DisableSetStatus
+	return c, nil
 }
 
 //HooksSupported returns true if the driver technically support hook
