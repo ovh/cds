@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-
-	"time"
 
 	"github.com/ovh/cds/sdk"
 )
