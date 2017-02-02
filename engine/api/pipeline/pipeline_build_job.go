@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -222,7 +223,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 }
 
 // TakeActionBuild Take an action build for update
-func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string) (*sdk.PipelineBuildJob, error) {
+func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string, workerName string) (*sdk.PipelineBuildJob, error) {
 	var pbJobGorp database.PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
@@ -237,6 +238,12 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string) (*sdk.Pip
 	}
 
 	pbJobGorp.Model = model
+	pbJobGorp.Job.WorkerName = workerName
+	var errMarshal error
+	pbJobGorp.JobJSON, errMarshal = json.Marshal(pbJobGorp.Job)
+	if errMarshal != nil {
+		return nil, errMarshal
+	}
 	pbJobGorp.Status = sdk.StatusBuilding.String()
 	if _, err := db.Update(&pbJobGorp); err != nil {
 		log.Warning("Cannot update model on pipeline build job : %s", err)

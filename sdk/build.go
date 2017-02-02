@@ -26,6 +26,7 @@ type ExecutedJob struct {
 	Job
 	StepStatus []StepStatus `json:"step_status" db:"-"`
 	Reason     string       `json:"reason" db:"-"`
+	WorkerName string       `json:"worker_name" db:"-"`
 }
 
 // StepStatus Represent a step and his status
