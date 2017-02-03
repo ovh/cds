@@ -78,6 +78,9 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	}
 	database.Set(db)
 
+	db.SetMaxOpenConns(100)
+	db.SetMaxIdleConns(20)
+
 	// Gracefully shutdown sql connections
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

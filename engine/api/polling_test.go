@@ -238,10 +238,10 @@ func TestAddPollerHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
-	popol2 := &sdk.RepositoryPoller{}
+	popol2 := &sdk.Application{}
 	json.Unmarshal(res, &popol2)
-	assert.Equal(t, popol.Enabled, popol2.Enabled)
-	assert.NotZero(t, popol2.Name)
+	assert.Equal(t, popol.Enabled, popol2.RepositoryPollers[0].Enabled)
+	assert.NotZero(t, popol2.RepositoryPollers[0].Name)
 }
 
 func TestUpdatePollerHandler(t *testing.T) {
@@ -401,10 +401,11 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
-	popol2 := &sdk.RepositoryPoller{}
-	json.Unmarshal(res, &popol2)
-	assert.Equal(t, popol.Enabled, popol2.Enabled)
-	assert.NotZero(t, popol2.Name)
+	t.Logf("%s", res)
+	popol2 := &sdk.Application{}
+	test.NoError(t, json.Unmarshal(res, &popol2))
+	assert.Equal(t, popol.Enabled, popol2.RepositoryPollers[0].Enabled)
+	assert.NotZero(t, popol2.RepositoryPollers[0].Name)
 
 	t.Logf("Poller : %s", string(res))
 
@@ -418,14 +419,16 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)
-	pollers := []sdk.RepositoryPoller{}
-	json.Unmarshal(res, &pollers)
+	t.Logf("%s", res)
 
-	assert.Equal(t, 1, len(pollers))
-	assert.Equal(t, popol.Name, pollers[0].Name)
-	assert.Equal(t, popol.Enabled, pollers[0].Enabled)
-	assert.Equal(t, popol.Application.Name, pollers[0].Application.Name)
-	assert.Equal(t, popol.Pipeline.Name, pollers[0].Pipeline.Name)
+	a := []sdk.RepositoryPoller{}
+	test.NoError(t, json.Unmarshal(res, &a))
+
+	assert.Equal(t, 1, len(a))
+	assert.Equal(t, popol.Name, a[0].Name)
+	assert.Equal(t, popol.Enabled, a[0].Enabled)
+	assert.Equal(t, popol.Application.Name, a[0].Application.Name)
+	assert.Equal(t, popol.Pipeline.Name, a[0].Pipeline.Name)
 }
 
 func TestGetPollersHandler(t *testing.T) {
@@ -585,10 +588,10 @@ func TestDeletePollerHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
-	popol2 := &sdk.RepositoryPoller{}
+	popol2 := &sdk.Application{}
 	json.Unmarshal(res, &popol2)
-	assert.Equal(t, popol.Enabled, popol2.Enabled)
-	assert.NotZero(t, popol2.Name)
+	assert.Equal(t, popol.Enabled, popol2.RepositoryPollers[0].Enabled)
+	assert.NotZero(t, popol2.RepositoryPollers[0].Name)
 
 	t.Logf("Poller : %s", string(res))
 

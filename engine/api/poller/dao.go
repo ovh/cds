@@ -17,7 +17,7 @@ func InsertPoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	poller.DateCreation = time.Now()
 	dbPoller := database.RepositoryPoller(*poller)
 
-	if err := db.Insert(dbPoller); err != nil {
+	if err := db.Insert(&dbPoller); err != nil {
 		log.Warning("InsertPoller> Error :%s", err)
 		return err
 	}
@@ -31,7 +31,7 @@ func InsertPoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 //DeletePoller delete a poller from DB
 func DeletePoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	dbPoller := database.RepositoryPoller(*poller)
-	if _, err := db.Delete(dbPoller); err != nil {
+	if _, err := db.Delete(&dbPoller); err != nil {
 		log.Warning("DeletePoller> Error :%s", err)
 		return err
 	}
@@ -70,9 +70,9 @@ func LoadEnabledPollers(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
 		return nil, err
 	}
 
-	pollers := make([]sdk.RepositoryPoller, len(dbPollers))
-	for i, p := range dbPollers {
-		pollers[i] = sdk.RepositoryPoller(p)
+	pollers, err := unwrapPollers(db, dbPollers)
+	if err != nil {
+		return nil, err
 	}
 
 	return pollers, nil
@@ -93,9 +93,9 @@ func LoadEnabledPollersByProject(db gorp.SqlExecutor, projKey string) ([]sdk.Rep
 		return nil, err
 	}
 
-	pollers := make([]sdk.RepositoryPoller, len(dbPollers))
-	for i, p := range dbPollers {
-		pollers[i] = sdk.RepositoryPoller(p)
+	pollers, err := unwrapPollers(db, dbPollers)
+	if err != nil {
+		return nil, err
 	}
 
 	return pollers, nil
@@ -113,15 +113,15 @@ func LoadPollersByApplication(db gorp.SqlExecutor, applicationID int64) ([]sdk.R
 		return nil, err
 	}
 
-	pollers := make([]sdk.RepositoryPoller, len(dbPollers))
-	for i, p := range dbPollers {
-		pollers[i] = sdk.RepositoryPoller(p)
+	pollers, err := unwrapPollers(db, dbPollers)
+	if err != nil {
+		return nil, err
 	}
 
 	return pollers, nil
 }
 
-//LoadPollerByApplicationAndPipeline loads all pollers for an application/pipeline
+//LoadPollerByApplicationAndPipeline loads the poller for an application/pipeline
 func LoadPollerByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID int64) (*sdk.RepositoryPoller, error) {
 	query := `
         SELECT application_id, pipeline_id, name, enabled, date_creation
@@ -129,46 +129,47 @@ func LoadPollerByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipe
         WHERE application_id = $1
 		AND pipeline_id = $2
     `
-	res, err := loadPollersByQUery(db, query, applicationID, pipelineID)
-	if err != nil {
-		log.Warning("LoadPollerByApplicationAndPipeline> Error :%s", err)
+	dbPoller := database.RepositoryPoller{}
+	if err := db.SelectOne(&dbPoller, query, applicationID, pipelineID); err != nil {
 		return nil, err
 	}
-	if len(res) == 0 {
-		return nil, sdk.ErrNotFound
+
+	p, err := unwrapPoller(db, dbPoller)
+	if err != nil {
+		return nil, err
 	}
-	return &res[0], nil
+	return &p, nil
 }
 
-func loadPollersByQUery(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.RepositoryPoller, error) {
-	pollers := []sdk.RepositoryPoller{}
-	rows, err := db.Query(query, args...)
+func postGet(db gorp.SqlExecutor, p *sdk.RepositoryPoller) error {
+	app, err := application.LoadApplicationByID(db, p.ApplicationID)
 	if err != nil {
-		log.Warning("loadPollersByQuery> error querying poller : %s", err)
-		return nil, err
+		log.Warning("postGet> error loading application %d : %s", p.ApplicationID, err)
+		return err
 	}
-	defer rows.Close()
+	pip, err := pipeline.LoadPipelineByID(db, p.PipelineID, true)
+	if err != nil {
+		log.Warning("postGet> error loading pipeline %d : %s", p.PipelineID, err)
+		return err
+	}
+	p.Application = *app
+	p.Pipeline = *pip
+	return nil
+}
 
-	for rows.Next() {
-		var applicationID, pipelineID int64
-		poller := sdk.RepositoryPoller{}
-		if err := rows.Scan(&applicationID, &pipelineID, &poller.Name, &poller.Enabled, &poller.DateCreation); err != nil {
-			log.Warning("loadPollersByQuery> error scanning poller : %s", err)
-			return nil, err
-		}
-		app, err := application.LoadApplicationByID(db, applicationID)
+func unwrapPollers(db gorp.SqlExecutor, dbPollers []database.RepositoryPoller) ([]sdk.RepositoryPoller, error) {
+	pollers := make([]sdk.RepositoryPoller, len(dbPollers))
+	for i, p := range dbPollers {
+		pl, err := unwrapPoller(db, p)
 		if err != nil {
-			log.Warning("loadPollersByQuery> error loading application %d : %s", applicationID, err)
 			return nil, err
 		}
-		pip, err := pipeline.LoadPipelineByID(db, pipelineID, true)
-		if err != nil {
-			log.Warning("loadPollersByQuery> error loading pipeline %d : %s", pipelineID, err)
-			return nil, err
-		}
-		poller.Application = *app
-		poller.Pipeline = *pip
-		pollers = append(pollers, poller)
+		pollers[i] = pl
 	}
 	return pollers, nil
+}
+
+func unwrapPoller(db gorp.SqlExecutor, dbPoller database.RepositoryPoller) (sdk.RepositoryPoller, error) {
+	p := sdk.RepositoryPoller(dbPoller)
+	return p, postGet(db, &p)
 }
