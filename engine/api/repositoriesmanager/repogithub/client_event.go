@@ -56,7 +56,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 		status = "pending"
 	}
 
-	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
+	url := fmt.Sprintf("%s#/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
 		viper.GetString("base_url"),
 		eventpb.ProjectKey,
 		eventpb.ApplicationName,

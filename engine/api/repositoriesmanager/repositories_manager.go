@@ -41,8 +41,7 @@ type InitializeOpts struct {
 func Initialize(o InitializeOpts) error {
 	options = o
 
-	db := database.DBMap(database.DB())
-	if db != nil {
+	if db := database.DBMap(database.DB()); db != nil {
 		secrets := o.SecretClient.GetSecrets()
 		if secrets.Err() != nil {
 			return secrets.Err()
@@ -102,6 +101,12 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 			}
 			stash = repostash.New(URL, data["consumer_key"].(string), data["private_rsa_key"].(string))
 		}
+		stash.DisableSetStatus = options.DisableStashSetStatus
+
+		if stash.DisableSetStatus {
+			log.Warning("RepositoriesManager> ⚠ Stash Statuses are disabled")
+		}
+
 		rm := sdk.RepositoriesManager{
 			ID:               id,
 			Consumer:         stash,
@@ -162,6 +167,17 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 			}
 		}
 
+		github.DisableSetStatus = options.DisableGithubSetStatus
+		github.DisableStatusURL = options.DisableGithubStatusURL
+
+		if github.DisableSetStatus {
+			log.Warning("RepositoriesManager> ⚠ Github Statuses are disabled")
+		}
+
+		if github.DisableStatusURL {
+			log.Warning("RepositoriesManager> ⚠ Github Statuses URL are disabled")
+		}
+
 		if withHook == nil {
 			log.Debug("with hooks : default\n")
 			b := github.HooksSupported()
@@ -205,7 +221,6 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 		}
 		stash := rm.Consumer.(*repostash.StashConsumer)
 		stash.PrivateRSAKey = path
-		stash.DisableSetStatus = options.DisableStashSetStatus
 		if err := Update(db, rm); err != nil {
 			return err
 		}
@@ -225,8 +240,6 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 		}
 		gh := rm.Consumer.(*repogithub.GithubConsumer)
 		gh.ClientSecret = path
-		gh.DisableSetStatus = options.DisableGithubSetStatus
-		gh.DisableStatusURL = options.DisableGithubStatusURL
 		if err := Update(db, rm); err != nil {
 			return err
 		}
