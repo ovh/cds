@@ -14,17 +14,27 @@ import (
 
 //ReceiveEvents has to be launched as a goroutine.
 func ReceiveEvents() {
-
 	for {
+		e := sdk.Event{}
+		cache.Dequeue("events_repositoriesmanager", &e)
 		db := database.DBMap(database.DB())
 		if db != nil {
-			e := sdk.Event{}
-			cache.Dequeue("events_repositoriesmanager", &e)
 			if err := processEvent(db, e); err != nil {
 				log.Critical("ReceiveEvents> err while processing %s : %v", err, e)
+				retryEvent(&e)
 			}
+			continue
 		}
+		retryEvent(&e)
 	}
+}
+
+func retryEvent(e *sdk.Event) {
+	e.Attempts++
+	if e.Attempts >= 10 {
+		log.Critical("ReceiveEvents> Aborting event processing %v", e)
+	}
+	cache.Enqueue("events_repositoriesmanager", e)
 }
 
 func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
@@ -52,10 +62,11 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
 	}
 
 	if err := c.SetStatus(event); err != nil {
+		retryEvent(&event)
 		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > err:%s", err)
 	}
 
-	// TODO check replay event
+	retryEvent(&event)
 
 	return nil
 }

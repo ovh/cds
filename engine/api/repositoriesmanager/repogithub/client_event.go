@@ -73,20 +73,20 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	var desc string
 	switch eventpb.PipelineType {
 	case sdk.BuildPipeline:
-		desc = fmt.Sprintf("Build pipeline %s on %s: %s", eventpb.PipelineName, eventpb.ApplicationName, eventpb.Status.String())
+		desc = fmt.Sprintf("Build pipeline %s: %s", eventpb.PipelineName, eventpb.Status.String())
 	case sdk.TestingPipeline:
-		desc = fmt.Sprintf("Testing pipeline %s on %s %s: %s", eventpb.PipelineName, eventpb.ApplicationName, eventpb.EnvironmentName, eventpb.Status.String())
+		desc = fmt.Sprintf("Testing pipeline %s: %s", eventpb.PipelineName, eventpb.Status.String())
 		if eventpb.Status == sdk.StatusFail {
 			status = "failure"
 		}
 	case sdk.DeploymentPipeline:
-		desc = fmt.Sprintf("Deployment pipeline %s on %s %s: %s", eventpb.PipelineName, eventpb.ApplicationName, eventpb.EnvironmentName, eventpb.Status.String())
+		desc = fmt.Sprintf("Deployment pipeline %s: %s", eventpb.PipelineName, eventpb.Status.String())
 	default:
 		log.Warning("Unrecognized pipeline type : %v", eventpb.PipelineType)
 		return nil
 	}
 
-	var context = fmt.Sprintf("continuous-delivery/cds/%s/%s/%s/%s", eventpb.ProjectKey, eventpb.ApplicationName, eventpb.PipelineName, eventpb.EnvironmentName)
+	var context = fmt.Sprintf("continuous-delivery/CDS/%s", eventpb.PipelineName)
 
 	ghStatus := CreateStatus{
 		Description: desc,
