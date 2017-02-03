@@ -87,6 +87,10 @@ func (g *GithubClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 		return sdk.VCSRepo{}, err
 	}
 
+	if repo.ID == nil {
+		return sdk.VCSRepo{}, err
+	}
+
 	r := sdk.VCSRepo{
 		ID:           strconv.Itoa(*repo.ID),
 		Name:         *repo.Name,
