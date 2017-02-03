@@ -20,7 +20,7 @@ func Test_computeStats(t *testing.T) {
 		totalOK, totalKO, total int
 	}{
 		{
-			name:    "success testcase",
+			name:    "success",
 			status:  sdk.StatusSuccess,
 			totalOK: 1,
 			totalKO: 0,
@@ -45,7 +45,7 @@ func Test_computeStats(t *testing.T) {
 			},
 		},
 		{
-			name:    "Test with a simple failed testcase",
+			name:    "failed",
 			status:  sdk.StatusFail,
 			totalOK: 0,
 			totalKO: 1, // sum of failure + errors on testsuite attribute. So 1+1
@@ -75,7 +75,7 @@ func Test_computeStats(t *testing.T) {
 			},
 		},
 		{
-			name:    "Test with a malformed testcase",
+			name:    "malformed",
 			status:  sdk.StatusFail,
 			totalOK: 0,
 			totalKO: 2, // sum of failure + errors on testsuite attribute. So 1+1
@@ -108,7 +108,7 @@ func Test_computeStats(t *testing.T) {
 			},
 		},
 		{
-			name:    "Test with a malformed x2 testcase ",
+			name:    "malformedBis",
 			status:  sdk.StatusFail,
 			totalOK: 0,
 			totalKO: 2,
