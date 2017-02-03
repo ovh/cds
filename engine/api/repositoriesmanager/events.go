@@ -2,11 +2,10 @@ package repositoriesmanager
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
-
-	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
