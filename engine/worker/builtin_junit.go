@@ -82,34 +82,16 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 
 		v.TestSuites = append(v.TestSuites, ftests.TestSuites...)
 	}
-	// update global stats
-	for _, ts := range v.TestSuites {
-		v.Total += ts.Total
-		v.TotalOK += (ts.Total - ts.Failures)
-		v.TotalKO += ts.Failures
-		v.TotalSkipped += ts.Skipped
-	}
 
-	for _, s := range v.TestSuites {
-		if s.Failures > 0 {
-			res.Reason = fmt.Sprintf("JUnit parser: %s has %d failed tests (failure attr)", s.Name, s.Failures)
-			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
-		}
-		for _, tc := range s.TestCases {
-			if len(tc.Failures) > 0 {
-				res.Reason = fmt.Sprintf("JUnit parser: %s has %d failed tests (failure element(s))", s.Name, s.Failures)
-				sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
-			}
-		}
-	}
-
-	if res.Status == sdk.StatusFail {
-		sendLog(pbJob.ID, "", pbJob.PipelineBuildID, stepOrder, false)
+	reasons := computeStats(&res, &v)
+	for _, r := range reasons {
+		sendLog(pbJob.ID, r, pbJob.PipelineBuildID, stepOrder, false)
 	}
 
 	data, err := json.Marshal(v)
 	if err != nil {
 		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+		res.Status = sdk.StatusFail
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
@@ -119,13 +101,84 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 	if err == nil && code > 300 {
 		err = fmt.Errorf("HTTP %d", code)
 	}
+
 	if err != nil {
 		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+		res.Status = sdk.StatusFail
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
-	res.Status = sdk.StatusSuccess
+
 	return res
+}
+
+// computeStats computes failures / errors on testSuites,
+// set result.Status and return a list of log to send to API
+func computeStats(res *sdk.Result, v *sdk.Tests) []string {
+	// update global stats
+	for _, ts := range v.TestSuites {
+		v.Total += ts.Total
+		v.TotalOK += (ts.Total - ts.Failures - ts.Errors)
+		v.TotalKO += ts.Failures + ts.Errors
+		v.TotalSkipped += ts.Skipped
+	}
+
+	var nbOK, nbKO int
+
+	reasons := []string{}
+
+	for _, ts := range v.TestSuites {
+		var nbKOTC, nbFailures, nbErrors int
+		for _, tc := range ts.TestCases {
+			if len(tc.Failures) > 0 {
+				reasons = append(reasons, fmt.Sprintf("JUnit parser: testcase %s has %d failure(s)", tc.Name, len(tc.Failures)))
+				nbFailures += len(tc.Failures)
+			}
+			if len(tc.Errors) > 0 {
+				reasons = append(reasons, fmt.Sprintf("JUnit parser: testcase %s has %d error(s)", tc.Name, len(tc.Errors)))
+				nbErrors += len(tc.Errors)
+			}
+			if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
+				nbKOTC++
+			}
+		}
+		nbOK += len(ts.TestCases) - nbKOTC
+		nbKO += nbKOTC
+		if ts.Failures > nbFailures {
+			nbFailures = ts.Failures
+		}
+		if ts.Errors > nbErrors {
+			nbErrors = ts.Errors
+		}
+
+		if nbFailures > 0 {
+			reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d failure(s)", ts.Name, nbFailures))
+		}
+		if nbErrors > 0 {
+			reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d error(s)", ts.Name, nbErrors))
+		}
+		if nbKOTC > 0 {
+			reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d test(s) failed", ts.Name, nbKOTC))
+		}
+	}
+
+	if nbKO > v.TotalKO {
+		v.TotalKO = nbKO
+	}
+
+	if nbOK > v.TotalOK {
+		v.TotalOK = nbOK
+	}
+
+	if v.TotalKO+v.TotalOK > v.Total {
+		v.Total = v.TotalKO + v.TotalOK
+	}
+
+	res.Status = sdk.StatusFail
+	if v.TotalKO == 0 {
+		res.Status = sdk.StatusSuccess
+	}
+	return reasons
 }
 
 func parseNoseTests(data []byte) (sdk.TestSuite, bool) {
