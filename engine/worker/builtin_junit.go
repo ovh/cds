@@ -170,8 +170,8 @@ func computeStats(res *sdk.Result, v *sdk.Tests) []string {
 		v.TotalOK = nbOK
 	}
 
-	if nbOK+nbKO > v.Total {
-		v.Total = nbOK + nbKO
+	if v.TotalKO+v.TotalOK > v.Total {
+		v.Total = v.TotalKO + v.TotalOK
 	}
 
 	res.Status = sdk.StatusFail
