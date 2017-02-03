@@ -151,6 +151,7 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 	data, err := json.Marshal(v)
 	if err != nil {
 		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+		res.Status = sdk.StatusFail
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
@@ -160,8 +161,10 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 	if err == nil && code > 300 {
 		err = fmt.Errorf("HTTP %d", code)
 	}
+
 	if err != nil {
 		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+		res.Status = sdk.StatusFail
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
