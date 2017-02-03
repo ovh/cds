@@ -1,6 +1,8 @@
 package poller
 
 import (
+	"time"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -11,27 +13,25 @@ import (
 )
 
 //InsertPoller insert or update a new poller in DB
-func InsertPoller(db database.Executer, poller *sdk.RepositoryPoller) error {
-	query := `
-        INSERT INTO poller (application_id, pipeline_id, name, enabled, date_creation)
-        VALUES ($1, $2, $3, $4, now())
-		RETURNING application_id, pipeline_id
-    `
-	if _, err := db.Exec(query, poller.Application.ID, poller.Pipeline.ID, poller.Name, poller.Enabled); err != nil {
+func InsertPoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
+	poller.DateCreation = time.Now()
+	dbPoller := database.RepositoryPoller(*poller)
+
+	if err := db.Insert(dbPoller); err != nil {
 		log.Warning("InsertPoller> Error :%s", err)
 		return err
 	}
+
+	newPoller := sdk.RepositoryPoller(dbPoller)
+	*poller = newPoller
+
 	return nil
 }
 
 //DeletePoller delete a poller from DB
-func DeletePoller(db database.Executer, poller *sdk.RepositoryPoller) error {
-	query := `
-        DELETE FROM poller
-        WHERE application_id = $1
-        AND pipeline_id = $2
-    `
-	if _, err := db.Exec(query, poller.Application.ID, poller.Pipeline.ID); err != nil {
+func DeletePoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
+	dbPoller := database.RepositoryPoller(*poller)
+	if _, err := db.Delete(dbPoller); err != nil {
 		log.Warning("DeletePoller> Error :%s", err)
 		return err
 	}
@@ -39,7 +39,7 @@ func DeletePoller(db database.Executer, poller *sdk.RepositoryPoller) error {
 }
 
 // DeleteAllPollers  Delete all the poller of the given application
-func DeleteAllPollers(db database.Executer, appID int64) error {
+func DeleteAllPollers(db gorp.SqlExecutor, appID int64) error {
 	query := "DELETE FROM poller WHERE application_id = $1"
 	if _, err := db.Exec(query, appID); err != nil {
 		log.Warning("DeleteAllPoller> Error :%s", err)
@@ -49,7 +49,7 @@ func DeleteAllPollers(db database.Executer, appID int64) error {
 }
 
 //UpdatePoller update the poller
-func UpdatePoller(db database.Executer, poller *sdk.RepositoryPoller) error {
+func UpdatePoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	query := `
         UPDATE  poller 
         SET enabled = $3, name = $4
@@ -65,12 +65,17 @@ func UpdatePoller(db database.Executer, poller *sdk.RepositoryPoller) error {
 
 //LoadEnabledPollers load all RepositoryPoller
 func LoadEnabledPollers(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
-	query := `
-        SELECT application_id, pipeline_id, name, enabled, date_creation
-        FROM poller
-        WHERE enabled = true
-    `
-	return loadPollersByQUery(db, query)
+	dbPollers := []database.RepositoryPoller{}
+	if _, err := db.Select(&dbPollers, "SELECT * FROM poller WHERE enabled = true"); err != nil {
+		return nil, err
+	}
+
+	pollers := make([]sdk.RepositoryPoller, len(dbPollers))
+	for i, p := range dbPollers {
+		pollers[i] = sdk.RepositoryPoller(p)
+	}
+
+	return pollers, nil
 }
 
 //LoadEnabledPollersByProject load all RepositoryPoller for a project
@@ -83,7 +88,17 @@ func LoadEnabledPollersByProject(db gorp.SqlExecutor, projKey string) ([]sdk.Rep
 		and project.projectkey = $1
 		AND enabled = true
     `
-	return loadPollersByQUery(db, query, projKey)
+	dbPollers := []database.RepositoryPoller{}
+	if _, err := db.Select(&dbPollers, query, projKey); err != nil {
+		return nil, err
+	}
+
+	pollers := make([]sdk.RepositoryPoller, len(dbPollers))
+	for i, p := range dbPollers {
+		pollers[i] = sdk.RepositoryPoller(p)
+	}
+
+	return pollers, nil
 }
 
 //LoadPollersByApplication loads all pollers for an application
@@ -93,7 +108,17 @@ func LoadPollersByApplication(db gorp.SqlExecutor, applicationID int64) ([]sdk.R
         FROM poller
         WHERE application_id = $1
     `
-	return loadPollersByQUery(db, query, applicationID)
+	dbPollers := []database.RepositoryPoller{}
+	if _, err := db.Select(&dbPollers, query, applicationID); err != nil {
+		return nil, err
+	}
+
+	pollers := make([]sdk.RepositoryPoller, len(dbPollers))
+	for i, p := range dbPollers {
+		pollers[i] = sdk.RepositoryPoller(p)
+	}
+
+	return pollers, nil
 }
 
 //LoadPollerByApplicationAndPipeline loads all pollers for an application/pipeline
