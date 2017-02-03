@@ -108,7 +108,7 @@ func Test_computeStats(t *testing.T) {
 			},
 		},
 		{
-			name:    "Test with a malformed testcase x2",
+			name:    "Test with a malformed x2 testcase ",
 			status:  sdk.StatusFail,
 			totalOK: 0,
 			totalKO: 2,
