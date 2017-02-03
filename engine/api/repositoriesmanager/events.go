@@ -2,6 +2,7 @@ package repositoriesmanager
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
@@ -33,7 +34,9 @@ func retryEvent(e *sdk.Event) {
 	e.Attempts++
 	if e.Attempts >= 10 {
 		log.Critical("ReceiveEvents> Aborting event processing %v", e)
+		return
 	}
+	time.Sleep(5 * time.Second)
 	cache.Enqueue("events_repositoriesmanager", e)
 }
 
