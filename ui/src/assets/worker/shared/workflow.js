@@ -56,8 +56,11 @@ function callAPI(user, api) {
         var c = call[k];
         var url = '/project/' + c.key + '/application/' + c.appName +
             '?applicationStatus=true&branchName=' + c.branch + '&version=' + c.version;
-        httpCallSharedWorker(url, api, user, c);
+        httpCallSharedWorker(url, api, user, c, k, postCall);
     }
+}
+
+function postCall(k, response) {
 }
 
 /**

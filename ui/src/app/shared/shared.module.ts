@@ -30,6 +30,8 @@ import {MomentModule} from 'angular2-moment';
 import {CodemirrorModule} from 'ng2-codemirror-typescript/Codemirror';
 import {GroupFormComponent} from './group/form/group.form.component';
 import {MarkdownModule} from 'angular2-markdown';
+import {HistoryComponent} from './history/history.component';
+import {StatusIconComponent} from './status/status.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -40,6 +42,7 @@ import {MarkdownModule} from 'angular2-markdown';
         CutPipe,
         DeleteButtonComponent,
         GroupFormComponent,
+        HistoryComponent,
         NgForNumber,
         ParameterListComponent,
         ParameterFormComponent,
@@ -50,6 +53,7 @@ import {MarkdownModule} from 'angular2-markdown';
         PrerequisitesFormComponent,
         RequirementsListComponent,
         RequirementsFormComponent,
+        StatusIconComponent,
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
@@ -72,6 +76,7 @@ import {MarkdownModule} from 'angular2-markdown';
         DeleteButtonComponent,
         FormsModule,
         GroupFormComponent,
+        HistoryComponent,
         MarkdownModule,
         MomentModule,
         NgForNumber,
@@ -85,6 +90,7 @@ import {MarkdownModule} from 'angular2-markdown';
         PrerequisiteComponent,
         PrerequisitesFormComponent,
         ReactiveFormsModule,
+        StatusIconComponent,
         TranslateModule,
         VariableComponent,
         VariableFormComponent,

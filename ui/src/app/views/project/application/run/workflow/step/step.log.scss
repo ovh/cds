@@ -11,11 +11,10 @@ $squareSize: 32px;
     height: $squareSize;
     padding-top: 4px;
     padding-left: 8px;
-
-    .icon {
-      padding-top: 2px;
-    }
-
+    color: white;
+  }
+  .status.icon {
+      padding-top: 6px;
   }
 
   .title {
@@ -37,7 +36,7 @@ $squareSize: 32px;
   pre {
     font-size: 0.8em;
     line-height: 1.1em;
-    height: 300px;
+    max-height: 300px;
     overflow-y: auto;
   }
 }

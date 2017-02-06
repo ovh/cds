@@ -11,14 +11,7 @@
                                     <div class="job ui segment pointing"
                                          [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
                                          (click)="selectedJob(j, stage)">
-                                        <div class="ui small active inline blue loader" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Building'">
-                                            <span class="">99</span>
-                                        </div>
-                                        <i class="check green icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Success'"></i>
-                                        <i class="remove red icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Fail'"></i>
-                                        <i class="ban grey icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Disabled'"></i>
-                                        <i class="ban grey icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Skipped'"></i>
-                                        <i class="wait orange icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Waiting'"></i>
+                                        <app-status-icon [status]="mapJobStatus[j.pipeline_action_id]"></app-status-icon>
                                         {{j.action.name}}
                                     </div>
                                 </li>
