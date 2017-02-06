@@ -1,0 +1,40 @@
+@import '../../../common';
+
+$navbarColor: #344860;
+
+.ui.menu {
+  background-color: $navbarColor;
+
+  img {
+    height: 50px;
+  }
+
+  sm-dropdown {
+    padding-top: 5px;
+    min-width:50px;
+  }
+
+  sm-dropdown.item {
+    padding: 0px;
+    border: none;
+  }
+  sm-dropdown.item:before {
+    width: 0px;
+  }
+
+  sm-select.item {
+    padding: 0px;
+    border: none;
+  }
+  sm-select.item:before {
+    width: 0px;
+  }
+
+  .dropdown.item {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    border: none;
+  }
+}
+
+

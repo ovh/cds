@@ -1,0 +1,111 @@
+@import '../../../../../../common';
+
+ul {
+  list-style: none;
+
+  li.stage {
+    width: 25%;
+    float: left;
+    position: relative;
+
+
+    .stageItem {
+      width: 60%;
+      margin-left: auto;
+      margin-right: auto;
+
+      ul {
+        list-style: none;
+        padding: 0px;
+        position: relative;
+
+        li {
+          margin-bottom: 10px;
+          margin-top: 10px;
+          padding-top: 5px;
+          padding-bottom: 5px;
+          position: relative;
+
+          .newspaper .icon {
+            float: right;
+          }
+        }
+
+        li:first-child::before {
+          width: 50%;
+          left: -50%;
+        }
+        li:first-child::after {
+          width: 50%;
+          right: -50%;
+        }
+
+        li::before {
+          content : '';
+          top: -42px;
+          border-bottom: 4px solid $cds_color_teal;
+          border-left: 4px solid $cds_color_teal;
+          position: absolute;
+          width: 40px;
+          left: -40px;
+          height: calc(100% + 14px);
+        }
+        li::after {
+          content : '';
+          top: -42px;
+          border-bottom: 4px solid $cds_color_teal;
+          border-right: 4px solid $cds_color_teal;
+          position: absolute;
+          width: 40px;
+          right: -40px;
+          height: calc(100% + 14px);
+        }
+      }
+      .ui.segment {
+        height: 50px;
+        .ui.loader {
+          padding-top: 3px;
+        }
+      }
+
+      .job.ui.segment.active {
+        border: 2px solid $cds_color_teal;
+      }
+    }
+  }
+}
+
+ul {
+  li.stage:first-child {
+    .stageItem {
+      ul {
+        li::before {
+          border: 0 none
+        }
+      }
+    }
+  }
+
+  li.stage {
+    .stageItem {
+      ul {
+        li:first-child::after {
+          border-right: 0 none;
+        }
+        li:first-child::before {
+          border-left: 0 none;
+        }
+      }
+    }
+  }
+
+  li.stage:last-child {
+    .stageItem {
+      ul {
+        li::after {
+          border: 0 none
+        }
+      }
+    }
+  }
+}

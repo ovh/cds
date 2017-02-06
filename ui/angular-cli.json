@@ -1,0 +1,87 @@
+{
+  "project": {
+    "version": "1.0.0-beta.30",
+    "name": "ui-ng2"
+  },
+  "apps": [
+    {
+      "root": "src",
+      "outDir": "dist",
+      "assets": [
+        "assets",
+        "favicon.ico"
+      ],
+      "index": "index.html",
+      "main": "main.ts",
+      "polyfills": "polyfills.ts",
+      "test": "test.ts",
+      "tsconfig": "tsconfig.json",
+      "prefix": "app",
+      "styles": [
+        "../node_modules/codemirror/lib/codemirror.css",
+        "../node_modules/semantic-ui/dist/semantic.css",
+        "../node_modules/angular2-toaster/toaster.css",
+        "../node_modules/font-awesome/css/font-awesome.css",
+        "styles.scss"
+      ],
+      "scripts": [
+        "../node_modules/jquery/dist/jquery.js",
+        "../node_modules/semantic-ui/dist/semantic.js",
+        "../node_modules/lodash/lodash.min.js",
+        "../node_modules/moment/min/moment.min.js",
+        "../node_modules/codemirror/lib/codemirror.js",
+        "../node_modules/codemirror/mode/shell/shell.js",
+        "../node_modules/codemirror/addon/mode/simple.js",
+        "../node_modules/codemirror/mode/dockerfile/dockerfile.js",
+        "../node_modules/codemirror/mode/perl/perl.js",
+        "../node_modules/codemirror/mode/htmlmixed/htmlmixed.js",
+        "../node_modules/codemirror/mode/clike/clike.js",
+        "../node_modules/codemirror/mode/css/css.js",
+        "../node_modules/codemirror/mode/powershell/powershell.js",
+        "../node_modules/codemirror/mode/python/python.js",
+        "../node_modules/ansi_up/ansi_up.js"
+      ],
+      "environments": {
+        "source": "environments/environment.ts",
+        "dev": "environments/environment.dev.ts",
+        "prod": "environments/environment.prod.ts"
+      }
+    }
+  ],
+  "e2e": {
+    "protractor": {
+      "config": "./protractor.conf.js"
+    }
+  },
+  "lint": [
+    {
+      "files": "src/**/*.ts",
+      "project": "src/tsconfig.json"
+    },
+    {
+      "files": "e2e/**/*.ts",
+      "project": "e2e/tsconfig.json"
+    }
+  ],
+  "test": {
+    "karma": {
+      "config": "./karma.conf.js"
+    }
+  },
+  "defaults": {
+    "styleExt": "scss",
+    "prefixInterfaces": false,
+    "inline": {
+      "style": false,
+      "template": false
+    },
+    "spec": {
+      "class": false,
+      "component": true,
+      "directive": true,
+      "module": false,
+      "pipe": true,
+      "service": true
+    }
+  }
+}

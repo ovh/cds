@@ -1,0 +1,103 @@
+/* tslint:disable:no-unused-variable */
+
+import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import { TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import {RouterTestingModule} from '@angular/router/testing';
+import {MockBackend} from '@angular/http/testing';
+import {XHRBackend, Response, ResponseOptions} from '@angular/http';
+import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
+import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
+import {ProjectStore} from '../../../../../../service/project/project.store';
+import {ProjectService} from '../../../../../../service/project/project.service';
+import {SharedModule} from '../../../../../../shared/shared.module';
+import {ToasterService} from 'angular2-toaster/angular2-toaster';
+import {Project} from '../../../../../../model/project.model';
+import {TranslateParser} from 'ng2-translate';
+import {ProjectModule} from '../../../../project.module';
+import {ProjectRepoManagerComponent} from './project.repomanager.list.component';
+import {RepositoriesManager} from '../../../../../../model/repositories.model';
+import {Observable} from 'rxjs';
+import {ToastService} from '../../../../../../shared/toast/ToastService';
+
+describe('CDS: Project RepoManager List Component', () => {
+
+    let injector: Injector;
+    let backend: MockBackend;
+    let projectStore: ProjectStore;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            declarations: [
+            ],
+            providers: [
+                { provide: XHRBackend, useClass: MockBackend },
+                TranslateLoader,
+                RepoManagerService,
+                ProjectStore,
+                ProjectService,
+                ToasterService,
+                TranslateService,
+                TranslateParser,
+                { provide: ToastService, useClass: MockToast}
+            ],
+            imports : [
+                ProjectModule,
+                SharedModule,
+                RouterTestingModule.withRoutes([]),
+
+            ],
+            schemas: [
+                CUSTOM_ELEMENTS_SCHEMA
+            ]
+        });
+        injector = getTestBed();
+        backend = injector.get(XHRBackend);
+        projectStore = injector.get(ProjectStore);
+
+    });
+
+    afterEach(() => {
+        injector = undefined;
+        backend = undefined;
+        projectStore = undefined;
+    });
+
+
+    it('it should delete a repo manager', fakeAsync( () => {
+        // Create Project RepoManager Form Component
+        let fixture = TestBed.createComponent(ProjectRepoManagerComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
+
+        let p: Project = new Project();
+        p.key = 'key1';
+        fixture.componentInstance.project = p;
+
+        let reposMans = new Array<RepositoriesManager>();
+        let r: RepositoriesManager = { type: 'stash', id: 1, url: 'foo.bar', name : 'stash'};
+        reposMans.push(r);
+        fixture.componentInstance.reposmanagers = reposMans;
+
+        fixture.detectChanges();
+        tick(250);
+
+        spyOn(projectStore, 'disconnectRepoManager').and.callFake(() => {
+            return Observable.of(p);
+        });
+
+        let compiled = fixture.debugElement.nativeElement;
+        compiled.querySelector('.ui.red.button').click();
+        fixture.detectChanges();
+        tick(50);
+        compiled.querySelector('.ui.red.button.active').click();
+
+        expect(projectStore.disconnectRepoManager).toHaveBeenCalledWith('key1', 'stash');
+    }));
+});
+
+class MockToast {
+    success(title: string, msg: string) {
+
+    }
+}
+

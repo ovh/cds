@@ -1,0 +1,52 @@
+<div id="PipelineRunWorfklow">
+    <div class="ui grid">
+        <div class="row">
+            <div class="column">
+                <ul *ngIf="currentBuild">
+                    <li *ngFor="let stage of currentBuild.stages" class="stage">
+                        <div class="stageItem">
+                            {{stage.name}}
+                            <ul>
+                                <li *ngFor="let j of stage.jobs">
+                                    <div class="job ui segment pointing"
+                                         [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
+                                         (click)="selectedJob(j, stage)">
+                                        <div class="ui small active inline blue loader" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Building'">
+                                            <span class="">99</span>
+                                        </div>
+                                        <i class="check green icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Success'"></i>
+                                        <i class="remove red icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Fail'"></i>
+                                        <i class="ban grey icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Disabled'"></i>
+                                        <i class="ban grey icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Skipped'"></i>
+                                        <i class="wait orange icon" *ngIf="mapJobStatus[j.pipeline_action_id] === 'Waiting'"></i>
+                                        {{j.action.name}}
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="column">
+                <div class="log" *ngIf="selectedPipJob">
+                    <ul>
+                        <li *ngFor="let step of selectedPipJob.job.action.actions; let i = index">
+                            <app-step-log
+                                    [application]="application"
+                            [pipeline]="pipeline"
+                            [project]="project"
+                            [pipelineBuild]="currentBuild"
+                            [jobID]="selectedPipJob.job.pipeline_action_id"
+                            [step]="step"
+                            [stepOrder]="i"
+                            [stepStatus]="mapStepStatus[selectedPipJob.job.pipeline_action_id + '-' + i]"
+                            ></app-step-log>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

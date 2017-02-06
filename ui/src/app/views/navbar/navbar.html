@@ -1,0 +1,39 @@
+<div class="ui inverted fixed menu navbar" *ngIf="ready">
+    <img src="assets/images/cds.png" class="item">
+    <sm-select
+            placeholder="{{'navbar_projects_placeholder' | translate}}"
+            class="search item"
+            [model]="selectedProject.name"
+            (onChange)="navigateToProject($event)">
+        <option *ngFor="let project of navProjects" [value]="project.key">{{project.name}}</option>
+    </sm-select>
+    <sm-select
+            placeholder="{{'navbar_applications_placeholder' | translate}}"
+            (onChange)="navigateToApplication($event)"
+            class="search item">
+        <option *ngFor="let app of navRecentApp" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
+    </sm-select>
+
+
+    <div class="right menu">
+        <div class="item link">
+            <a href="#" [routerLink]="['/project']"><i class="plus circle icon"></i>{{ 'project_create' | translate }}</a>
+        </div>
+        <sm-dropdown icon="settings">
+            <sm-item>{{ 'navbar_actions' | translate }}</sm-item>
+            <sm-item>{{ 'navbar_users' | translate }}</sm-item>
+            <sm-item>{{ 'navbar_groups' | translate }}</sm-item>
+            <sm-item>{{ 'navbar_workers' | translate }}</sm-item>
+        </sm-dropdown>
+        <sm-dropdown icon="help circle outline">
+            <sm-item>{{ 'navbar_feedback' | translate }}</sm-item>
+            <sm-item>{{ 'navbar_download' | translate }}</sm-item>
+            <sm-item>{{ 'navbar_documentation' | translate }}</sm-item>
+        </sm-dropdown>
+        <div class="item link">
+            <a routerLink="/account/login" routerLinkActive="active">
+                <i class="fa fa-sign-out"></i>
+            </a>
+        </div>
+    </div>
+</div>

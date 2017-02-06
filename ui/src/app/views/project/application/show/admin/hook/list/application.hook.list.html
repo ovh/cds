@@ -1,0 +1,50 @@
+<div id="appHookList">
+    <table class="ui fixed single line celled table">
+        <thead>
+        <tr>
+            <th class="seven wide">{{ 'common_pipeline' | translate }}</th>
+            <th class="six wide">{{ 'common_url' | translate }}</th>
+            <th class="one wide">{{ 'common_enable' | translate }}</th>
+            <th class="two wide"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let h of getDataForCurrentPage()">
+            <td>
+                {{h.pipeline.name}}
+            </td>
+            <td>
+                {{h.url}}
+            </td>
+            <td>
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" name="public" [(ngModel)]="h.enabled" [disabled]="loading">
+                    <label>
+                        <span *ngIf="h.enabled">{{ 'common_yes' | translate }}</span>
+                        <span *ngIf="!h.enabled">{{ 'common_no' | translate }}</span>
+                    </label>
+                </div>
+            </td>
+            <td class="center">
+                <app-delete-button [loading]="loading" (event)="deleteHook(h)"></app-delete-button>
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="4">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="deleteHook($event, true)" #deleteHookWarning></app-warning-modal>
+</div>

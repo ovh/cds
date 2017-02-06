@@ -1,0 +1,82 @@
+<form class="ui form">
+    <div class="field">
+        <div class="fields">
+            <div class="six wide inline field">
+                <label>{{'common_name' | translate}}</label>
+                <input type="text" name="stageName" [(ngModel)]="editableStage.name" (keydown)="editableStage.hasChanged = true">
+            </div>
+            <div class="six wide inline field">
+                <label>{{ 'stage_order' | translate }}</label>
+                <input type="number" name="order" [(ngModel)]="editableStage.build_order" (keydown)="editableStage.hasChanged = true">
+            </div>
+            <div class="four wide right aligned field">
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" name="enabled" [(ngModel)]="editableStage.enabled" (change)="editableStage.hasChanged = true">
+                    <label>{{ 'common_enable' | translate }}</label>
+                </div>
+            </div>
+            <div class="four wide right aligned link field">
+                <a class="pointing" (click)="prerequisiteModal.show({inverted: true})">
+                    {{ editableStage.prerequisites.length + ' '}}
+                    <span *ngIf="editableStage.prerequisites.length > 1">{{ 'prerequisite_title_s' | translate}}</span>
+                    <span *ngIf="editableStage.prerequisites.length < 2">{{ 'prerequisite_title' | translate}}</span>
+                </a>
+                <sm-modal class="large" title="{{ 'prerequisite_title' | translate }}" #prerequisiteModal>
+                    <modal-content>
+                        <div>
+                            <app-prerequisites-list *ngIf="editableStage.prerequisites && editableStage.prerequisites.length > 0"
+                                                    [prerequisites]="editableStage.prerequisites"
+                                                    (event)="prerequisiteEvent($event)"></app-prerequisites-list>
+                        </div>
+                        <div class="prerequisiteForm">
+                            <app-prerequisites-form [prerequisites]="availablePrerequisites"
+                                                    (event)="prerequisiteEvent($event)"></app-prerequisites-form>
+                        </div>
+                    </modal-content>
+                    <modal-actions>
+                        <button class="ui grey button" (click)="prerequisiteModal.hide()">{{ 'common_close' | translate }}</button>
+                    </modal-actions>
+                </sm-modal>
+            </div>
+        </div>
+    </div>
+    <div class="right aligned field">
+        <div class="ui green button" *ngIf="editableStage.hasChanged" (click)="stageEvent('update')"><i class="save icon"></i>{{ 'btn_save'
+            | translate }}
+        </div>
+        <app-delete-button *ngIf="!editableStage.hasChanged" (event)="stageEvent('delete')"></app-delete-button>
+    </div>
+</form>
+
+<h2>{{ 'stage_jobs_title' | translate}}</h2>
+<div class="ui grid">
+    <div class="three wide column">
+        <div class="ui vertical steps">
+
+                <div class="step" *ngFor="let job of editableStage.jobs"
+                     [class.active]="selectedJob?.pipeline_action_id === job.pipeline_action_id">
+                    <div class="content">
+                        <a class="title pointing" (click)="selectedJob = job">{{job.action.name}}</a>
+                        <div class="description">
+                            <pre>{{job.action.description}}</pre>
+                        </div>
+                    </div>
+                </div>
+
+            <div class="step">
+                <div class="content">
+                    <div class="title">
+                        <a class="pointing" (click)="addJob()">
+                            <i class="plus green circle icon"></i>{{ 'step_add_job' | translate }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="thirteen wide stretched column">
+        <app-action *ngIf="selectedJob" [project]="project" [action]="selectedJob.action" (actionEvent)="jobEvent($event)"></app-action>
+    </div>
+</div>
+
+

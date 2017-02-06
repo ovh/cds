@@ -1,0 +1,41 @@
+<div class="prerequisites">
+    <table class="ui fixed celled table">
+        <thead>
+        <tr>
+            <th class="six wide">{{ 'prerequisite_parameter_name' | translate }}</th>
+            <th class="six wide">{{ 'prerequisite_value' | translate }}</th>
+            <th class="four wide"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let p of getDataForCurrentPage()">
+            <td>
+                {{p.parameter}}
+            </td>
+            <td>
+                <div class="ui form">
+                    <input [(ngModel)]="p.expected_value" name="value" (keydown)="update(p)">
+                </div>
+            </td>
+            <td class="center">
+                <app-delete-button (event)="remove(p)"></app-delete-button>
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="4">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+</div>

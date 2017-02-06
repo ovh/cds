@@ -1,0 +1,14 @@
+<!-- Password -->
+<div class="ui fluid input" *ngIf="type === 'password'">
+    <input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
+</div>
+
+<!-- Text -->
+<div class="ui form" *ngIf="type === 'text'">
+    <textarea [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value)}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
+</div>
+
+<!-- String -->
+<div class="ui fluid input" *ngIf="type === 'string'">
+    <input [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+</div>
