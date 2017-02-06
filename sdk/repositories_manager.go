@@ -40,6 +40,18 @@ type RepositoryPoller struct {
 	DateCreation  time.Time   `json:"date_creation" db:"date_creation"`
 }
 
+//RepositoryPollerExecution is a polling execution
+type RepositoryPollerExecution struct {
+	ID                    int64            `json:"id" db:"id"`
+	ApplicationID         int64            `json:"-" db:"application_id"`
+	PipelineID            int64            `json:"-" db:"pipeline_id"`
+	ExecutionPlannedDate  time.Time        `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
+	ExecutionDate         *time.Time       `json:"execution_date" db:"execution_date"`
+	Executed              bool             `json:"executed" db:"executed"`
+	PipelineBuildVersions map[string]int64 `json:"pipeline_build_version" db:"pipeline_build_version"`
+	PushEvents            []VCSPushEvent   `json:"push_events" db:"-"`
+}
+
 //RepositoriesManagerDriver is the consumer interface
 type RepositoriesManagerDriver interface {
 	AuthorizeRedirect() (string, string, error)

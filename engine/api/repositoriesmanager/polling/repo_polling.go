@@ -4,19 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/rand"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -248,133 +243,6 @@ func (w *Worker) poll(rm *sdk.RepositoriesManager, appID, pipID int64, quit chan
 
 	log.Warning("Polling> End (appID=%s pipID=%d)", appID, pipID)
 	quit <- true
-}
-
-func triggerPipelines(db *gorp.DbMap, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, events []sdk.VCSPushEvent) (string, error) {
-	status := ""
-	for _, event := range events {
-		projectData, err := project.LoadProjectByPipelineID(db, poller.Pipeline.ID)
-		if err != nil {
-			log.Warning("Polling.triggerPipelines> Cannot load project for pipeline %s: %s\n", poller.Pipeline.Name, err)
-			return "Error", err
-		}
-
-		projectsVar, err := project.GetAllVariableInProject(db, projectData.ID)
-		if err != nil {
-			log.Warning("Polling.triggerPipelines> Cannot load project variable: %s\n", err)
-			return "Error", err
-		}
-		projectData.Variable = projectsVar
-
-		//begin a tx
-		tx, err := db.Begin()
-		if err != nil {
-			return "Error", err
-		}
-
-		ok, err := TriggerPipeline(tx, rm, poller, event, projectData)
-		if err != nil {
-			log.Warning("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
-			tx.Rollback()
-			return "Error", err
-		}
-
-		// commit the tx
-		if err := tx.Commit(); err != nil {
-			log.Critical("Polling.triggerPipelines> Cannot commit tx; %s\n", err)
-			return "Error", err
-		}
-
-		if ok {
-			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s", projectKey, poller.Application.RepositoryFullname, event.Branch)
-			status = fmt.Sprintf("%s Pipeline %s triggered on %s (%s)", status, poller.Pipeline.Name, event.Branch.DisplayID, event.Commit.Hash)
-		} else {
-			log.Info("Polling.triggerPipelines> Did not trigger %s/%s/%s\n", projectKey, poller.Application.RepositoryFullname, event.Branch.ID)
-			status = fmt.Sprintf("%s Pipeline %s skipped on %s (%s)", status, poller.Pipeline.Name, event.Branch.DisplayID, event.Commit.Hash)
-		}
-	}
-
-	return status, nil
-}
-
-// TriggerPipeline linked to received hook
-func TriggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e sdk.VCSPushEvent, projectData *sdk.Project) (bool, error) {
-	client, err := repositoriesmanager.AuthorizedClient(tx, projectData.Key, rm.Name)
-	if err != nil {
-		return false, err
-	}
-	// Create pipeline args
-	var args []sdk.Parameter
-	args = append(args, sdk.Parameter{
-		Name:  "git.branch",
-		Value: e.Branch.ID,
-	})
-	args = append(args, sdk.Parameter{
-		Name:  "git.hash",
-		Value: e.Commit.Hash,
-	})
-	args = append(args, sdk.Parameter{
-		Name:  "git.author",
-		Value: e.Commit.Author.Name,
-	})
-	args = append(args, sdk.Parameter{
-		Name:  "git.repository",
-		Value: poller.Application.RepositoryFullname,
-	})
-	args = append(args, sdk.Parameter{
-		Name:  "git.project",
-		Value: strings.Split(poller.Application.RepositoryFullname, "/")[0],
-	})
-	repo, _ := client.RepoByFullname(poller.Application.RepositoryFullname)
-	if repo.SSHCloneURL != "" {
-		args = append(args, sdk.Parameter{
-			Name:  "git.url",
-			Value: repo.SSHCloneURL,
-		})
-	}
-
-	// Load pipeline Argument
-	parameters, err := pipeline.GetAllParametersInPipeline(tx, poller.Pipeline.ID)
-	if err != nil {
-		return false, err
-	}
-	poller.Pipeline.Parameter = parameters
-
-	applicationPipelineArgs, err := application.GetAllPipelineParam(tx, poller.Application.ID, poller.Pipeline.ID)
-	if err != nil {
-		return false, err
-	}
-
-	trigger := sdk.PipelineBuildTrigger{
-		ManualTrigger:    false,
-		VCSChangesBranch: e.Branch.ID,
-		VCSChangesHash:   e.Commit.Hash,
-		VCSChangesAuthor: e.Commit.Author.DisplayName,
-	}
-
-	// Get commit message to check if we have to skip the build
-	match, err := regexp.Match(".*\\[ci skip\\].*|.*\\[cd skip\\].*", []byte(e.Commit.Message))
-	if err != nil {
-		log.Warning("polling> Cannot check %s/%s for commit %s by %s : %s (%s)\n", projectData.Key, poller.Application.Name, trigger.VCSChangesHash, trigger.VCSChangesAuthor, e.Commit.Message, err)
-	}
-	if match {
-		log.Debug("polling> Skipping build of %s/%s for commit %s by %s\n", projectData.Key, poller.Application.Name, trigger.VCSChangesHash, trigger.VCSChangesAuthor)
-		return false, nil
-	}
-
-	if b, err := pipeline.BuildExists(tx, poller.Application.ID, poller.Pipeline.ID, sdk.DefaultEnv.ID, &trigger); err != nil || b {
-		if err != nil {
-			log.Warning("Polling> Error checking existing build : %s", err)
-		}
-		return false, nil
-	}
-
-	_, err = pipeline.InsertPipelineBuild(tx, projectData, &poller.Pipeline, &poller.Application, applicationPipelineArgs, args, &sdk.DefaultEnv, 0, trigger)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 func insertExecution(db gorp.SqlExecutor, app *sdk.Application, pip *sdk.Pipeline, e *WorkerExecution) error {

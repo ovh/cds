@@ -51,7 +51,6 @@ func (router *Router) init() {
 
 	// Overall health
 	router.Handle("/mon/status", Auth(false), GET(statusHandler))
-	router.Handle("/mon/status/polling", Auth(false), GET(pollinStatusHandler))
 	router.Handle("/mon/smtp/ping", Auth(true), GET(smtpPingHandler))
 	router.Handle("/mon/log/{level}", Auth(false), POST(setEngineLogLevel))
 	router.Handle("/mon/sla/{date}", POST(slaHandler))

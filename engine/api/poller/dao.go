@@ -12,8 +12,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//InsertPoller insert or update a new poller in DB
-func InsertPoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
+//Insert insert or update a new poller in DB
+func Insert(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	poller.DateCreation = time.Now()
 	dbPoller := database.RepositoryPoller(*poller)
 
@@ -28,8 +28,8 @@ func InsertPoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	return nil
 }
 
-//DeletePoller delete a poller from DB
-func DeletePoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
+//Delete delete a poller from DB
+func Delete(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	dbPoller := database.RepositoryPoller(*poller)
 	if _, err := db.Delete(&dbPoller); err != nil {
 		log.Warning("DeletePoller> Error :%s", err)
@@ -38,8 +38,8 @@ func DeletePoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	return nil
 }
 
-// DeleteAllPollers  Delete all the poller of the given application
-func DeleteAllPollers(db gorp.SqlExecutor, appID int64) error {
+// DeleteAll  Delete all the poller of the given application
+func DeleteAll(db gorp.SqlExecutor, appID int64) error {
 	query := "DELETE FROM poller WHERE application_id = $1"
 	if _, err := db.Exec(query, appID); err != nil {
 		log.Warning("DeleteAllPoller> Error :%s", err)
@@ -48,8 +48,8 @@ func DeleteAllPollers(db gorp.SqlExecutor, appID int64) error {
 	return nil
 }
 
-//UpdatePoller update the poller
-func UpdatePoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
+//Update update the poller
+func Update(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	query := `
         UPDATE  poller 
         SET enabled = $3, name = $4
@@ -63,8 +63,23 @@ func UpdatePoller(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	return nil
 }
 
-//LoadEnabledPollers load all RepositoryPoller
-func LoadEnabledPollers(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
+// LoadAll retrieves all poller from database
+func LoadAll(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
+	dbPollers := []database.RepositoryPoller{}
+	if _, err := db.Select(&dbPollers, "SELECT * FROM poller"); err != nil {
+		return nil, err
+	}
+
+	pollers, err := unwrapPollers(db, dbPollers)
+	if err != nil {
+		return nil, err
+	}
+
+	return pollers, nil
+}
+
+//LoadEnabled load all RepositoryPoller
+func LoadEnabled(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
 	dbPollers := []database.RepositoryPoller{}
 	if _, err := db.Select(&dbPollers, "SELECT * FROM poller WHERE enabled = true"); err != nil {
 		return nil, err
@@ -78,8 +93,8 @@ func LoadEnabledPollers(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
 	return pollers, nil
 }
 
-//LoadEnabledPollersByProject load all RepositoryPoller for a project
-func LoadEnabledPollersByProject(db gorp.SqlExecutor, projKey string) ([]sdk.RepositoryPoller, error) {
+//LoadEnabledByProject load all RepositoryPoller for a project
+func LoadEnabledByProject(db gorp.SqlExecutor, projKey string) ([]sdk.RepositoryPoller, error) {
 	query := `
         SELECT poller.application_id, poller.pipeline_id, poller.name, poller.enabled, poller.date_creation
         FROM poller, application, project
@@ -101,8 +116,8 @@ func LoadEnabledPollersByProject(db gorp.SqlExecutor, projKey string) ([]sdk.Rep
 	return pollers, nil
 }
 
-//LoadPollersByApplication loads all pollers for an application
-func LoadPollersByApplication(db gorp.SqlExecutor, applicationID int64) ([]sdk.RepositoryPoller, error) {
+//LoadByApplication loads all pollers for an application
+func LoadByApplication(db gorp.SqlExecutor, applicationID int64) ([]sdk.RepositoryPoller, error) {
 	query := `
         SELECT application_id, pipeline_id, name, enabled, date_creation
         FROM poller
@@ -121,8 +136,8 @@ func LoadPollersByApplication(db gorp.SqlExecutor, applicationID int64) ([]sdk.R
 	return pollers, nil
 }
 
-//LoadPollerByApplicationAndPipeline loads the poller for an application/pipeline
-func LoadPollerByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID int64) (*sdk.RepositoryPoller, error) {
+//LoadByApplicationAndPipeline loads the poller for an application/pipeline
+func LoadByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID int64) (*sdk.RepositoryPoller, error) {
 	query := `
         SELECT application_id, pipeline_id, name, enabled, date_creation
         FROM poller

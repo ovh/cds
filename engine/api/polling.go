@@ -183,7 +183,6 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	if err != nil {
 		log.Warning("deleteHook> cannot load pollers: %s\n", err)
 		return err
-
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)

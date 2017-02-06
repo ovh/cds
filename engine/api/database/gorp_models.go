@@ -32,6 +32,7 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 	dbmap.AddTableWithName(PipelineBuildJob{}, "pipeline_build_job").SetKeys(true, "id")
 	dbmap.AddTableWithName(Log{}, "pipeline_build_log").SetKeys(true, "id")
 	dbmap.AddTableWithName(RepositoryPoller{}, "poller").SetKeys(false, "application_id", "pipeline_id")
+	dbmap.AddTableWithName(RepositoryPollerExecution{}, "poller_execution").SetKeys(true, "id")
 
 	return dbmap
 }
@@ -56,3 +57,6 @@ type Log sdk.Log
 
 // RepositoryPoller is a gorp wrapper around sdk.RepositoryPoller
 type RepositoryPoller sdk.RepositoryPoller
+
+// RepositoryPollerExecution is a gorp wrapper around sdk.RepositoryPollerExecution
+type RepositoryPollerExecution sdk.RepositoryPollerExecution

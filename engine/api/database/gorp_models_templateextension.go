@@ -70,5 +70,4 @@ func (t *TemplateExtension) PreDelete(s gorp.SqlExecutor) error {
 		return err
 	}
 	return nil
-
 }
