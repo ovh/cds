@@ -7,8 +7,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"sync"
-
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -33,46 +31,47 @@ func ExecuterRun() ([]sdk.RepositoryPollerExecution, error) {
 		return nil, fmt.Errorf("Database is unavailable")
 	}
 	db := database.DBMap(_db)
-	tx, errb := db.Begin()
-	if errb != nil {
-		log.Warning("poller.ExecuterRun> %s", errb)
-		return nil, errb
-	}
-	defer tx.Rollback()
-
-	//Starting with exclusive lock on the table
-	if err := LockPollerExecutions(tx); err != nil {
-		return nil, err
-	}
 
 	//Load pending executions
-	exs, err := LoadPendingExecutions(tx)
+	exs, err := LoadPendingExecutions(db)
 	if err != nil {
 		log.Warning("poller.ExecuterRun> Unable to load pending execution : %s", err)
 		return nil, err
 	}
 
 	//Process all
-	wg := &sync.WaitGroup{}
-	wg.Add(len(exs))
 	for i := range exs {
-		go func(tx gorp.SqlExecutor, e *sdk.RepositoryPollerExecution) {
-			defer wg.Done()
-			p, err := LoadByApplicationAndPipeline(tx, e.ApplicationID, e.PipelineID)
-			if err != nil {
-				log.Critical("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, err)
-			}
-			if err := executerProcess(tx, p, e); err != nil {
-				log.Critical("poller.ExecuterRun> Unable to process %v : %s", e, err)
-			}
-		}(tx, &exs[i])
-	}
-	wg.Wait()
+		tx, errb := db.Begin()
+		if errb != nil {
+			log.Warning("poller.ExecuterRun> %s", errb)
+			return nil, errb
+		}
 
-	//Commit
-	if err := tx.Commit(); err != nil {
-		log.Warning("poller.ExecuterRun> %s", err)
-		return nil, err
+		e := &exs[i]
+		//Starting with exclusive lock on the table
+		if err := LockPollerExecution(tx, e.ID); err != nil {
+			tx.Rollback()
+			continue
+		}
+
+		p, err := LoadByApplicationAndPipeline(tx, e.ApplicationID, e.PipelineID)
+		if err != nil {
+			log.Critical("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, err)
+			tx.Rollback()
+			continue
+		}
+		if err := executerProcess(tx, p, e); err != nil {
+			log.Critical("poller.ExecuterRun> Unable to process %v : %s", e, err)
+			tx.Rollback()
+			continue
+		}
+
+		//Commit
+		if err := tx.Commit(); err != nil {
+			log.Warning("poller.ExecuterRun> %s", err)
+			return nil, err
+		}
+
 	}
 
 	return exs, nil

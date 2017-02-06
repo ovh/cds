@@ -28,7 +28,7 @@ func Insert(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	return nil
 }
 
-//Delete delete a poller from DB
+//Delete delete a poller from DBscheduler
 func Delete(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	dbPoller := database.RepositoryPoller(*poller)
 	if _, err := db.Delete(&dbPoller); err != nil {
