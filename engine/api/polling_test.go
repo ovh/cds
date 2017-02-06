@@ -309,14 +309,14 @@ func TestUpdatePollerHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
-	popol2 := &sdk.RepositoryPoller{}
+	popol2 := &sdk.Application{}
 	json.Unmarshal(res, &popol2)
-	assert.Equal(t, popol.Enabled, popol2.Enabled)
-	assert.NotZero(t, popol2.Name)
+	assert.Equal(t, popol.Enabled, popol2.RepositoryPollers[0].Enabled)
+	assert.NotZero(t, popol2.RepositoryPollers[0].Name)
 
 	//9. Update the poller
-	popol2.Enabled = false
-	jsonBody, _ = json.Marshal(popol2)
+	popol2.RepositoryPollers[0].Enabled = false
+	jsonBody, _ = json.Marshal(popol2.RepositoryPollers[0])
 	body = bytes.NewBuffer(jsonBody)
 
 	uri = router.getRoute("PUT", updatePollerHandler, vars)
@@ -331,10 +331,10 @@ func TestUpdatePollerHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)
-	popol3 := &sdk.RepositoryPoller{}
+	popol3 := &sdk.Application{}
 	json.Unmarshal(res, &popol3)
-	assert.NotEqual(t, popol.Enabled, popol3.Enabled)
-	assert.NotZero(t, popol3.Name)
+	assert.NotEqual(t, popol.Enabled, popol3.RepositoryPollers[0].Enabled)
+	assert.NotZero(t, popol3.RepositoryPollers[0].Name)
 }
 
 func TestGetApplicationPollersHandler(t *testing.T) {
@@ -496,10 +496,10 @@ func TestGetPollersHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
-	popol2 := &sdk.RepositoryPoller{}
+	popol2 := &sdk.Application{}
 	json.Unmarshal(res, &popol2)
-	assert.Equal(t, popol.Enabled, popol2.Enabled)
-	assert.NotZero(t, popol2.Name)
+	assert.Equal(t, popol.Enabled, popol2.RepositoryPollers[0].Enabled)
+	assert.NotZero(t, popol2.RepositoryPollers[0].Name)
 
 	t.Logf("Poller : %s", string(res))
 
