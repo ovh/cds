@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -17,10 +16,8 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
@@ -59,118 +56,6 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 	}
 
 	return proj, rm
-}
-
-func TestAddPollerOnLinkedApplications(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	query := `
-		select 	project.ID, application.ID, repositories_manager.id
-		from 	project, application, repositories_manager_project, repositories_manager
-		where 	project.id = application.project_id
-		and 	project.id = repositories_manager_project.id_project
-		and 	repositories_manager.id = repositories_manager_project.id_repositories_manager
-		and 	application.repositories_manager_id = repositories_manager_project.id_repositories_manager
-		and 	application.repo_fullname is not null
-	`
-
-	rows, err := db.Query(query)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var projectID, applicationID int64
-		var rmID int64
-		if err := rows.Scan(&projectID, &applicationID, &rmID); err != nil {
-			t.Error(err.Error())
-			return
-		}
-
-		rm, err := repositoriesmanager.LoadByID(db, rmID)
-		if err != nil {
-			t.Error(err.Error())
-			return
-		}
-
-		projs, err := project.LoadAllProjects(db)
-		if err != nil {
-			t.Error(err.Error())
-			return
-		}
-		var proj *sdk.Project
-		for _, p := range projs {
-			if p.ID == projectID {
-				proj = p
-				break
-			}
-		}
-
-		pollers, err := poller.LoadPollersByApplication(db, applicationID)
-		if err != nil {
-			t.Error(err.Error())
-			return
-		}
-
-		if len(pollers) == 0 {
-			app, err := application.LoadApplicationByID(db, applicationID)
-			if err != nil {
-				t.Error(err.Error())
-				return
-			}
-
-			pips, err := application.GetAllPipelinesByID(db, applicationID)
-			if err != nil {
-				t.Error(err.Error())
-				return
-			}
-
-			if len(pips) == 0 {
-				t.Fail()
-				return
-			}
-
-			p := &sdk.RepositoryPoller{
-				Application: *app,
-				Pipeline:    pips[0].Pipeline,
-				Enabled:     true,
-				Name:        rm.Name,
-			}
-
-			if err := poller.InsertPoller(db, p); err != nil {
-				t.Error(err)
-				return
-			}
-		}
-
-		if rm.PollingSupported {
-			c1 := make(chan bool, 1)
-			go func() {
-				time.Sleep(time.Second * 120)
-				c1 <- true
-			}()
-
-			t.Logf("Testing poller on %s", rm.Name)
-			w := polling.NewWorker(proj.Key)
-			polling.RunningPollers.Workers[proj.Key] = w
-			_, quit, err := w.Poll()
-			if err != nil {
-				t.Error(err)
-			}
-			test.NoError(t, err)
-			select {
-			case <-quit:
-				t.Logf("Polling is over")
-				t.Fail()
-				return
-			case <-c1:
-				return
-			}
-		}
-	}
-
 }
 
 func TestAddPollerHandler(t *testing.T) {

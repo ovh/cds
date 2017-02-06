@@ -25,9 +25,9 @@ import (
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -231,8 +231,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		if !viper.GetBool("no_repo_polling") {
-			go polling.Initialize()
-			go polling.ExecutionCleaner()
+			go poller.Initialize(10)
 		} else {
 			log.Warning("⚠ Repositories polling is disabled")
 		}

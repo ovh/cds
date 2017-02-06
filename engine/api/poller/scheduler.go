@@ -18,7 +18,7 @@ var (
 func Scheduler() {
 	for {
 		time.Sleep(2 * time.Second)
-		_, status, err := Run()
+		_, status, err := SchedulerRun()
 
 		if err != nil {
 			log.Critical("%s: %s", status, err)
@@ -27,8 +27,8 @@ func Scheduler() {
 	}
 }
 
-//Run is the core function of Scheduler goroutine
-func Run() ([]sdk.RepositoryPollerExecution, string, error) {
+//SchedulerRun is the core function of Scheduler goroutine
+func SchedulerRun() ([]sdk.RepositoryPollerExecution, string, error) {
 	_db := database.DB()
 	if _db == nil {
 		return nil, "Database is unavailable", fmt.Errorf("datase.DB failed")

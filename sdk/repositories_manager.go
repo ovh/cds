@@ -48,8 +48,9 @@ type RepositoryPollerExecution struct {
 	ExecutionPlannedDate  time.Time        `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
 	ExecutionDate         *time.Time       `json:"execution_date" db:"execution_date"`
 	Executed              bool             `json:"executed" db:"executed"`
-	PipelineBuildVersions map[string]int64 `json:"pipeline_build_version" db:"pipeline_build_version"`
+	PipelineBuildVersions map[string]int64 `json:"pipeline_build_version" db:"-"`
 	PushEvents            []VCSPushEvent   `json:"push_events" db:"-"`
+	Error                 string           `json:"error" db:"error"`
 }
 
 //RepositoriesManagerDriver is the consumer interface

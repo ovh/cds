@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+
+	"sync"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -32,7 +35,7 @@ func ExecuterRun() ([]sdk.RepositoryPollerExecution, error) {
 	db := database.DBMap(_db)
 	tx, errb := db.Begin()
 	if errb != nil {
-		log.Warning("poller.ExecuterRUn> %s", errb)
+		log.Warning("poller.ExecuterRun> %s", errb)
 		return nil, errb
 	}
 	defer tx.Rollback()
@@ -45,25 +48,30 @@ func ExecuterRun() ([]sdk.RepositoryPollerExecution, error) {
 	//Load pending executions
 	exs, err := LoadPendingExecutions(tx)
 	if err != nil {
-		log.Warning("poller.ExecuterRUn> Unable to load pending execution : %s", err)
+		log.Warning("poller.ExecuterRun> Unable to load pending execution : %s", err)
 		return nil, err
 	}
 
 	//Process all
+	wg := &sync.WaitGroup{}
+	wg.Add(len(exs))
 	for i := range exs {
-		p, err := LoadByApplicationAndPipeline(tx, exs[i].ApplicationID, exs[i].PipelineID)
-		if err != nil {
-			log.Warning("poller.ExecuterRUn> Unable to load poller appID=%d pipID=%d: %s", exs[i].ApplicationID, exs[i].PipelineID, err)
-			return nil, err
-		}
-		if err := executerProcess(tx, p, &exs[i]); err != nil {
-			log.Critical("poller.ExecuterRUn> Unable to process %v : %s", exs[i], err)
-		}
+		go func(tx gorp.SqlExecutor, e *sdk.RepositoryPollerExecution) {
+			defer wg.Done()
+			p, err := LoadByApplicationAndPipeline(tx, e.ApplicationID, e.PipelineID)
+			if err != nil {
+				log.Critical("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, err)
+			}
+			if err := executerProcess(tx, p, e); err != nil {
+				log.Critical("poller.ExecuterRun> Unable to process %v : %s", e, err)
+			}
+		}(tx, &exs[i])
 	}
+	wg.Wait()
 
 	//Commit
 	if err := tx.Commit(); err != nil {
-		log.Warning("poller.ExecuterRUn> %s", err)
+		log.Warning("poller.ExecuterRun> %s", err)
 		return nil, err
 	}
 
@@ -71,6 +79,10 @@ func ExecuterRun() ([]sdk.RepositoryPollerExecution, error) {
 }
 
 func executerProcess(db gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) error {
+	t := time.Now()
+	e.ExecutionDate = &t
+	e.Executed = true
+
 	projectKey := p.Application.ProjectKey
 	rm := p.Application.RepositoriesManager
 
@@ -86,7 +98,7 @@ func executerProcess(db gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 	e.PushEvents, pollingDelay, err = client.PushEvents(p.Application.RepositoryFullname, p.DateCreation)
 	if err != nil {
 		log.Warning("Polling> Error with PushEvents on pipeline %s for repository %s: %s\n", p.Pipeline.Name, p.Application.RepositoryFullname, err)
-		return err
+		e.Error = err.Error()
 	}
 
 	if len(e.PushEvents) > 0 {
@@ -97,7 +109,6 @@ func executerProcess(db gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 	}
 
 	if err := UpdateExecution(db, e); err != nil {
-
 		return err
 	}
 

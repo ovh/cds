@@ -162,7 +162,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	if withPollers == "true" {
 		var errPoller error
-		app.RepositoryPollers, errPoller = poller.LoadPollersByApplication(db, app.ID)
+		app.RepositoryPollers, errPoller = poller.LoadByApplication(db, app.ID)
 		if errPoller != nil {
 			log.Warning("getApplicationHandler: Cannot load pollers for application %s: %s\n", applicationName, errPoller)
 			return errPoller
