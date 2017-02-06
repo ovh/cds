@@ -1,4 +1,5 @@
 *.swp
+.idea
 .DS_Store
 cli/cds/cds
 engine/api/api
@@ -6,4 +7,11 @@ engine/api/.secrets
 engine/hatchery/hatchery
 engine/worker/worker
 *.out
-*.html
+
+# UI
+ui/node_modules
+ui/coverage
+ui/tests
+ui/typings
+ui/src/app/**/*.js
+ui/semantic

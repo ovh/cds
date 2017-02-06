@@ -1,0 +1,34 @@
+<div class="filter ui form">
+    <div class="inline fields">
+        <div class="four wide field">
+            <label>{{ 'application_workflow_orientation_title' | translate }}</label>
+            <sm-select class="search" [(model)]="workflowOrientation">
+                <option value="vertical">{{ 'workflow_orientation_vertical' | translate }}</option>
+                <option value="horizontal">{{ 'workflow_orientation_horizontal' | translate }}</option>
+                <option value="hierarchical">{{ 'workflow_orientation_tree' | translate }}</option>
+
+            </sm-select>
+        </div>
+        <div class="four wide field" *ngIf="branches && branches.length > 0">
+            <label>{{ 'application_workflow_branch_title' | translate }}</label>
+            <sm-select [(model)]="applicationFilter.branch" (modelChange)="changeBranch()" class="search">
+                <option *ngFor="let branch of branches" value="{{branch}}">{{ branch}}</option>
+            </sm-select>
+        </div>
+        <div class="four wide right floated field cdsVersion" *ngIf="branches && branches.length > 0">
+            <label>{{ 'application_workflow_version_title' | translate }}</label>
+            <sm-select [(model)]="applicationFilter.version" (modelChange)="changeVersion()">
+                <option *ngFor="let v of versions" value="{{v}}">{{ v }}</option>
+            </sm-select>
+        </div>
+    </div>
+</div>
+<div class="workflow">
+    <div class="tree"
+         [class.horizontal]="workflowOrientation === 'horizontal'"
+         [class.vertical]="workflowOrientation === 'vertical'"
+         [class.hierarchical]="workflowOrientation === 'hierarchical'">
+        <app-application-tree-workflow *ngIf="application.workflows" [project]="project" [application]="application" [workflowItems]="application.workflows" [orientation]="workflowOrientation" [applicationFilter]="applicationFilter"></app-application-tree-workflow>
+    </div>
+</div>
+

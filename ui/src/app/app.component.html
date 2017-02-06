@@ -1,0 +1,20 @@
+<div id="AppComponent">
+    <div id="navbar" [class.connected]="isConnected">
+        <app-navbar></app-navbar>
+    </div>
+    <div class="page" [class.connected]="isConnected">
+        <div class="content" [class.connected]="isConnected">
+            <toaster-container></toaster-container>
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+

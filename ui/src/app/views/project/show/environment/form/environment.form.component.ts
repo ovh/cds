@@ -1,0 +1,35 @@
+import {Component, Input} from '@angular/core';
+import {Environment} from '../../../../../model/environment.model';
+import {ProjectStore} from '../../../../../service/project/project.store';
+import {Project} from '../../../../../model/project.model';
+import {ToastService} from '../../../../../shared/toast/ToastService';
+import {TranslateService} from 'ng2-translate';
+
+@Component({
+    selector: 'app-environment-form',
+    templateUrl: './environment.form.html',
+    styleUrls: ['./environment.form.scss']
+})
+export class ProjectEnvironmentFormComponent {
+
+    @Input() project: Project;
+
+    newEnvironment: Environment = new Environment();
+    loading = false;
+
+    constructor(private _projectStore: ProjectStore, private _toast: ToastService, private _translate: TranslateService) { }
+
+
+    createEnv(): void {
+        if (this.newEnvironment.name !== '') {
+            this.loading = true;
+            this._projectStore.addProjectEnvironment(this.project.key, this.newEnvironment).subscribe(() => {
+                this._toast.success('', this._translate.instant('environment_created'));
+                this.loading = false;
+                this.newEnvironment = new Environment();
+            }, () => {
+                this.loading = false;
+            });
+        }
+    }
+}

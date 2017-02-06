@@ -1,0 +1,40 @@
+<div id="ApplicationAdmin">
+    <h3>{{ 'application_rename_title' | translate }}</h3>
+    <form class="ui form" (ngSubmit)="onSubmitApplicationUpdate()" #applicationUpdateFrom="ngForm">
+        <div class="fields">
+            <div class="six wide field">
+                <input type="text" name="formApplicationUpdateName" [(ngModel)]="newName" required #formApplicationUpdateName="ngModel"
+                       pattern="[a-zA-Z0-9._-]*"
+                       [disabled]="loading"
+                >
+                <div *ngIf="!formApplicationUpdateName.valid && !formApplicationUpdateName.pristine"
+                     class="ui error message">
+                    <p>{{'application_update_name_error' | translate}}</p>
+                </div>
+            </div>
+            <div class="two wide center field">
+                <button class="ui green button" [class.loading]="loading" name="updateNameButton">{{ 'btn_rename' | translate }}
+                </button>
+                <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitApplicationUpdate(true)" #updateWarning></app-warning-modal>
+            </div>
+        </div>
+    </form>
+    <div class="applicationRepo">
+        <h3>{{ 'application_repo_title' | translate }}</h3>
+        <app-application-repo [project]="project" [application]="application"></app-application-repo>
+    </div>
+
+    <div class="poller">
+        <h3 *ngIf="application.pollers && application.pollers.length > 0">{{ 'application_poller_list_title' | translate }}</h3>
+        <app-application-poller-list *ngIf="application.pollers && application.pollers.length > 0" [project]="project" [application]="application"></app-application-poller-list>
+        <h3 *ngIf="application.repositories_manager">{{ 'application_poller_form_title' | translate }}</h3>
+        <app-application-poller-form *ngIf="application.repositories_manager" [project]="project"
+                                     [application]="application"></app-application-poller-form>
+    </div>
+    <div class="hook">
+        <h3 *ngIf="application.hooks && application.hooks.length > 0">{{ 'application_hook_list_title' | translate }}</h3>
+        <app-application-hook-list *ngIf="application.hooks && application.hooks.length > 0" [project]="project" [application]="application"></app-application-hook-list>
+        <h3 *ngIf="application.repositories_manager">{{ 'application_hook_form_title' | translate }}</h3>
+        <app-application-hook-form *ngIf="application.repositories_manager" [project]="project" [application]="application"></app-application-hook-form>
+    </div>
+</div>

@@ -1,0 +1,28 @@
+<div id="loginComponent">
+    <img id ="logo" class="ui centered image" src="assets/images/cds.png">
+    <div class="ui two column centered grid">
+        <div class="column">
+            <h3 class="ui top block attached header">
+                {{ 'account_login_title' | translate }}
+            </h3>
+            <div class="ui bottom attached segment">
+                <form class="ui form" (ngSubmit)="signIn()" #loginForm="ngForm">
+                    <div class="field">
+                        <label>{{ 'user_label_username' | translate }}</label>
+                        <input type="text" [(ngModel)]="user.username" name="username">
+                    </div>
+                    <div class="field">
+                        <label>{{ 'user_label_password' | translate }}</label>
+                        <input type="password" [(ngModel)]="user.password" name="password">
+                    </div>
+                    <button id="loginButton" class="ui button green" type="submit">{{ 'account_login_btn_connect' | translate }}</button>
+
+                    <button class="ui button teal right floated" type="button" (click)="navigateToSignUp()">{{ 'account_btn_signup' | translate}}
+                    </button>
+                    <button class="ui button teal right floated" type="button" (click)="navigateToPassword()">{{ 'account_btn_password' | translate }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

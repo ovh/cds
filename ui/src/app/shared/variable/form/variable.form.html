@@ -1,0 +1,21 @@
+<form class="ui form" (ngSubmit)="create()">
+    <div class="fields">
+        <div class="five wide field">
+            <label>{{'variable_name' | translate}}</label>
+            <input class="ui input" type="text" name="name" [(ngModel)]="newVariable.name" [disabled]="loading">
+        </div>
+        <div class="three wide field">
+            <label>{{'variable_type' | translate}}</label>
+            <sm-select class="fluid search" [disabled]="loading" name="type" [(model)]="newVariable.type">
+                <option *ngFor="let type of variableTypes" [value]="type">{{type}}</option>
+            </sm-select>
+        </div>
+        <div class="five wide field">
+            <label>{{'variable_value' | translate}}</label>
+            <app-variable-value [type]="newVariable.type" [(value)]="newVariable.value" [disabled]="loading" (valueUpdated)="newVariable.value = $event" ></app-variable-value>
+        </div>
+        <div class="three wide center field">
+            <button class="ui green button" [class.loading]="loading" [class.disabled]="loading"><i class="save icon"></i>{{ 'btn_save' | translate}}</button>
+        </div>
+    </div>
+</form>

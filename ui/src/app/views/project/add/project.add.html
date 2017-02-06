@@ -1,0 +1,66 @@
+<div id="AddProject">
+    <form class="ui form" (ngSubmit)="createProject()">
+        <h2>{{ 'project_create' | translate }}</h2>
+        <div class="ui two column centered grid">
+            <div class="column">
+                <div class="field">
+                    <label>{{ 'project_name' | translate }}</label>
+                    <input type="text" name="projectname" [(ngModel)]="project.name" (keyup)="generateKey($event.target.value)">
+                </div>
+                <div class="ui error message" *ngIf="nameError">
+                    {{ 'project_name_error' | translate }}
+                </div>
+                <div class="field">
+                    <label>{{ 'project_key' | translate }}</label>
+                    <input type="text" name="projectkey" [(ngModel)]="project.key">
+                </div>
+                <div class="ui error message" *ngIf="keyError">
+                    {{ 'project_key_error' | translate }}
+                </div>
+                <div class="field">
+                    <div class="ui checkbox">
+                        <input type="checkbox" name="sshkey" [(ngModel)]="addSshKey">
+                        <label>{{ 'project_add_ssh_key' | translate }}</label>
+                    </div>
+                </div>
+                <div class="field" *ngIf="addSshKey">
+                    <label>{{ 'wizard_ssh_key_name' | translate }}</label>
+                    <input type="text" name="keyname" [(ngModel)]="sshKeyVar.name">
+                </div>
+                <div class="ui error message" *ngIf="sshError">
+                    {{ 'project_ssh_error' | translate }}
+                </div>
+            </div>
+            <div class="row" *ngIf="project.groups && project.groups.length > 0">
+                <div class="column">
+                    <h3>{{ 'project_permission_list_title' | translate }}</h3>
+                    <app-permission-list [permissions]="project.groups" mode="form"
+                                         (event)="permissionManagement($event)"></app-permission-list>
+                    <div class="ui error message" *ngIf="groupError">
+                        {{ 'project_groups_error' | translate }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="column">
+                    <h3>{{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="modalCreateGroup.show()">{{ 'project_permission_form_wizard_new' | translate }}</a></h3>
+                    <app-permission-form (createGroupPermissionEvent)="permissionManagement($event)" buttonType="button" #permForm></app-permission-form>
+                </div>
+            </div>
+            <div class="row">
+                <div class="right aligned column">
+                    <button class="ui green button" [class.loading]="loading"><i class="save icon"></i>{{ 'btn_create' | translate }}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<sm-modal title="{{ 'group_create_title' | translate}}" class="fluid" #createGroupModal>
+    <modal-content>
+        <app-group-form mode="nonform" [group]="newGroup"></app-group-form>
+    </modal-content>
+    <modal-actions>
+        <div class="ui grey button" (click)="modalCreateGroup.hide()">{{ 'btn_cancel' | translate }}</div>
+        <div class="ui green button" (click)="createGroup()">{{ 'btn_create' | translate }}</div>
+    </modal-actions>
+</sm-modal>

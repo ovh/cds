@@ -1,0 +1,15 @@
+<div class="ui grid">
+    <div class="three wide column">
+        <div class="ui vertical steps">
+            <div class="step" *ngFor="let e of project.environments; let i = index"
+                 [class.active]="selectedEnvIndex === i">
+                <div class="content">
+                    <a class="title pointing" (click)="selectedEnvIndex = i">{{e.name}}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="thirteen wide stretched column">
+        <app-environment [environment]="project.environments[selectedEnvIndex]" [project]="project"></app-environment>
+    </div>
+</div>
