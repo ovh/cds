@@ -1,5 +1,5 @@
 -- +migrate Up
-DROP TABLE "poller_execution" RENAME TO "poller_execution_old";
+ALTER TABLE "poller_execution" RENAME TO "poller_execution_old";
 ALTER TABLE "poller_execution_old" DROP CONSTRAINT IF EXISTS "fk_poller_execution_application";
 ALTER TABLE "poller_execution_old" DROP CONSTRAINT IF EXISTS "fk_poller_execution_pipeline";
 
