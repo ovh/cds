@@ -146,10 +146,8 @@ func LoadByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID
 		return nil, err
 	}
 
-	p, err := unwrapPoller(db, dbPoller)
-	if err != nil {
-		return nil, err
-	}
+	p := sdk.RepositoryPoller(dbPoller)
+
 	return &p, nil
 }
 
