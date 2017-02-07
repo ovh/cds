@@ -85,5 +85,5 @@ func TestExecuterRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("Has run %v", exs)
-	assert.True(t, len(exs) > 1)
+	assert.True(t, len(exs) >= 1)
 }
