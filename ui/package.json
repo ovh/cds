@@ -27,6 +27,7 @@
     "codemirror": "^5.22.0",
     "core-js": "^2.4.1",
     "dragula": "^3.7.2",
+    "duration-js": "^3.9.2",
     "font-awesome": "^4.6.3",
     "immutable": "^3.8.1",
     "lodash": "~4.17.2",

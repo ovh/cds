@@ -40,25 +40,5 @@ describe('CDS: Artifact List', () => {
         let fixture = TestBed.createComponent(ArtifactListComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
-
-        fixture.componentInstance.buildWorker = new MockWorker();
-        fixture.componentInstance.ngOnInit();
-
-        fixture.detectChanges();
-        tick(50);
-
-        expect(fixture.componentInstance.artifacts.length).toBe(2);
-
     }));
 });
-
-class MockWorker extends CDSWorker {
-    constructor() {
-        super('fake', 'fake');
-    }
-
-    response(): any {
-        let response = { data : '{ "artifacts": [ { "name": "art1" }, { "name": "art2" }] }' };
-        return Observable.of(response);
-    }
-}

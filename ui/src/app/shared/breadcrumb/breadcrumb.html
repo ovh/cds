@@ -8,7 +8,10 @@
 
     <i *ngIf="pipeline" class="right chevron icon divider"></i>
     <i *ngIf="pipeline" class="sitemap icon"></i>
-    <a class="section" [class.active]="pipeline && !action" (click)="navigateToPipeline()">{{ pipeline?.name}}</a>
+    <a class="section" [class.active]="pipeline && !action && !version" (click)="navigateToPipeline()">{{ pipeline?.name}}</a>
+
+    <i *ngIf="application && pipeline && version && version > 0" class="right chevron icon divider"></i>
+    <div *ngIf="application && pipeline && version && version > 0" class="section active">{{ 'v' + version}}</div>
 
     <i *ngIf="action" class="right chevron icon divider"></i>
     <div class="section">{{ action?.name}}</div>

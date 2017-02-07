@@ -15,6 +15,7 @@ export class BreadcrumbComponent {
     @Input() application: Application;
     @Input() pipeline: Pipeline;
     @Input() action: Action;
+    @Input() version = 0;
 
     constructor(private _router: Router) { }
 
@@ -27,6 +28,11 @@ export class BreadcrumbComponent {
     }
 
     navigateToPipeline(): void {
-        this._router.navigate(['project', this.project.key, 'pipeline', this.pipeline.name]);
+        if (this.application) {
+            this._router.navigate(['project', this.project.key, 'pipeline', this.pipeline.name]);
+        } else {
+            this._router.navigate(['project', this.project.key, 'pipeline', this.pipeline.name]);
+        }
+
     }
 }

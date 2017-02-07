@@ -9,6 +9,8 @@ import {AuthentificationStore} from '../../../../service/auth/authentification.s
 import {CDSWorker} from '../../../../shared/worker/worker';
 import {ApplicationPipelineService} from '../../../../service/application/pipeline/application.pipeline.service';
 
+declare var Duration: any;
+
 @Component({
     selector: 'app-pipeline-build',
     templateUrl: './pipeline.build.html',
@@ -25,6 +27,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     envName: string;
     selectedTab: string;
     currentBuild: PipelineBuild;
+    duration: string;
 
     // Allow angular update from work started outside angular context
     zone: NgZone;
@@ -76,6 +79,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
 
             if (buildNumber && this.envName) {
                 this.currentBuildNumber = Number(buildNumber);
+
                 if (this.workerSubscription) {
                     this.workerSubscription.unsubscribe();
                 }
@@ -95,6 +99,11 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                         let build: PipelineBuild = JSON.parse(msg.data);
                         this.zone.run(() => {
                             this.currentBuild = build;
+
+                            if (this.currentBuild.status !== 'Building') {
+                                this.duration = (new Duration((new Date(this.currentBuild.done)).getTime() - new Date(this.currentBuild.start).getTime())).toString();
+                            }
+
                             if (build.artifacts) {
                                 if (build.artifacts.length !== this.nbArtifacts) {
                                     this.nbArtifacts = build.artifacts.length;
