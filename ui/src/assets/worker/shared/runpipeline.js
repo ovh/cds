@@ -52,7 +52,14 @@ function callAPI(user, api) {
     for(var k in call){
         var c = call[k];
         var url = '/project/' + c.key+ '/application/' + c.appName +'/pipeline/' + c.pipName + '/build/' + c.buildNumber + '?withArtifacts=true&withTests=true&envName=' + c.envName;
-        httpCallSharedWorker(url, api, user, c);
+        httpCallSharedWorker(url, api, user, c, k, postCall);
+    }
+}
+
+function postCall(k, response) {
+    var jsonLogs = JSON.parse(response);
+    if (jsonLogs.status !== 'Building') {
+        delete call[k];
     }
 }
 

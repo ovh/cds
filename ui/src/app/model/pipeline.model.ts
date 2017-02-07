@@ -120,8 +120,9 @@ export interface Log {
     value: string;
 }
 
-export interface PipelineBuildTrigger {
+export class PipelineBuildTrigger {
     manual_trigger: boolean;
+    scheduled_trigger: boolean;
     triggered_by: User;
     parent_pipeline_build: PipelineBuild;
     vcs_branch: string;

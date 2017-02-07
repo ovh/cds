@@ -20,7 +20,14 @@ function loadBuild (user, api) {
     if (user && api) {
         setInterval(function () {
             var url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '?withArtifacts=true&withTests=true&envName=' + envName;
-            postMessage(httpCall(url, api, user));
+            var response = httpCall(url, api, user);
+
+            postMessage(response);
+
+            var jsonPb = JSON.parse(response);
+            if (jsonPb.status !== 'Building') {
+                close();
+            }
         }, 2000);
     }
 }

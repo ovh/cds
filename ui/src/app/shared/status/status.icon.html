@@ -1,0 +1,10 @@
+<ng-container [ngSwitch]="status">
+    <div class="ui small active inline blue loader" *ngSwitchCase="'Building'">
+        <span class="">99</span>
+    </div>
+    <i class="check green icon" *ngSwitchCase="'Success'"></i>
+    <i class="remove red icon" *ngSwitchCase="'Fail'"></i>
+    <i class="ban grey icon" *ngSwitchCase="'Disabled'"></i>
+    <i class="ban grey icon" *ngSwitchCase="'Skipped'"></i>
+    <i class="wait orange icon" *ngSwitchCase="'Waiting'"></i>
+</ng-container>

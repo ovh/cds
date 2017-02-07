@@ -57,17 +57,16 @@ function callAPI(user, api) {
         var url = '/project/' + c.key + '/application/' + c.appName +
             '/pipeline/' + c.pipName +'/build/' + c.buildNumber +
             '/action/' + c.jobID + '/step/' + c.stepOrder + '/log';
-        var stepLogs = httpCall(url, api, user);
-        // for each subscription, give response
-        c.ports.forEach(function (p) {
-            ports[p-1].postMessage(stepLogs);
-        });
 
-        var jsonLogs = JSON.parse(stepLogs);
-        if (jsonLogs.status !== 'Building') {
-            // stop call
-            delete call[k];
-        }
+        httpCallSharedWorker(url, api, user, c, k, postCall);
+    }
+}
+
+function postCall(k, response) {
+    var jsonLogs = JSON.parse(response);
+    if (jsonLogs.status !== 'Building') {
+        // stop call
+        delete call[k];
     }
 }
 
