@@ -338,7 +338,8 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 		Status:      sdk.StatusFromString(pbResult.Status),
 		Start:       pbResult.Start,
 		Trigger: sdk.PipelineBuildTrigger{
-			ManualTrigger: pbResult.ManualTrigger,
+			ManualTrigger:    pbResult.ManualTrigger,
+			ScheduledTrigger: pbResult.ScheduledTrigger,
 		},
 	}
 
