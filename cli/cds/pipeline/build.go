@@ -55,6 +55,6 @@ func buildPipeline(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("Tests results:\n")
 	for _, s := range t.TestSuites {
-		fmt.Printf("%s: %d Total, %d Failures\n", s.Name, s.Total, s.Failures)
+		fmt.Printf("%s: %d Total, %d Failures, %d Errors\n", s.Name, s.Total, s.Failures, s.Errors)
 	}
 }
