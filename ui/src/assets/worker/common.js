@@ -13,7 +13,7 @@ function httpCall (path, host, user) {
     }
 }
 
-function httpCallSharedWorker (path, host, user, caller) {
+function httpCallSharedWorker (path, host, user, caller, k, callback) {
     if (host !== apiTestEnv) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', host + path, false, null, null);
@@ -26,6 +26,7 @@ function httpCallSharedWorker (path, host, user, caller) {
                     caller.ports.forEach(function (p) {
                         ports[p-1].postMessage(xhr.responseText);
                     });
+                    callback(k, xhr.responseText);
                 }
             }
         };

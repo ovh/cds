@@ -1,24 +1,9 @@
 <div class="log" *ngIf="currentStatus">
     <div class="logHeader pointing" (click)="toggleLogs()">
-        <div class="status"
-             [class.success]="currentStatus === 'Success'"
-             [class.fail]="currentStatus === 'Fail'"
-             [class.building]="currentStatus === 'Building'"
-             [class.disabled]="currentStatus === 'Disabled'"
-             [class.waiting]="currentStatus === 'Waiting'">
-            <div class="ui small blue active inline white loader" *ngIf="currentStatus === 'Building'">
-            </div>
-            <i class="check green icon" *ngIf="currentStatus === 'Success'"></i>
-            <i class="remove red icon" *ngIf="currentStatus === 'Fail'"></i>
-            <i class="ban white icon" *ngIf="currentStatus === 'Disabled'"></i>
-            <i class="wait white icon" *ngIf="currentStatus === 'Waiting'"></i>
+        <div class="status" [class.icon]="currentStatus !== 'Building'">
+            <app-status-icon [status]="currentStatus"></app-status-icon>
         </div>
-        <div class="title"
-             [class.success]="currentStatus === 'Success'"
-             [class.fail]="currentStatus === 'Fail'"
-             [class.building]="currentStatus === 'Building'"
-             [class.disabled]="currentStatus === 'Disabled'"
-             [class.waiting]="currentStatus === 'Waiting'">
+        <div class="title">
             {{step.name}}
         </div>
     </div>
