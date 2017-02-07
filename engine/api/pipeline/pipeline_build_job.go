@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
@@ -28,7 +27,7 @@ func DeletePipelineBuildJob(db gorp.SqlExecutor, pipelineBuildID int64) error {
 
 // InsertPipelineBuildJob Insert a new job in the queue
 func InsertPipelineBuildJob(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJob) error {
-	dbmodel := database.PipelineBuildJob(*pbJob)
+	dbmodel := PipelineBuildJob(*pbJob)
 	dbmodel.JobJSON = []byte("[]")
 	dbmodel.ParametersJSON = []byte("[]")
 	if err := db.Insert(&dbmodel); err != nil {
@@ -40,7 +39,7 @@ func InsertPipelineBuildJob(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJob) er
 
 // GetPipelineBuildJobByPipelineBuildID Get all pipeline build job for the given pipeline build
 func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, pbID int64) ([]sdk.PipelineBuildJob, error) {
-	var pbJobsGorp []database.PipelineBuildJob
+	var pbJobsGorp []PipelineBuildJob
 	query := `
 		SELECT *
 		FROM pipeline_build_job
@@ -62,7 +61,7 @@ func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, pbID int64) ([]sd
 
 // GetWaitingPipelineBuildJob Get waiting pipeline build job
 func GetWaitingPipelineBuildJob(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, error) {
-	var pbJobsGorp []database.PipelineBuildJob
+	var pbJobsGorp []PipelineBuildJob
 	query := `
 		SELECT *
 		FROM pipeline_build_job
@@ -83,7 +82,7 @@ func GetWaitingPipelineBuildJob(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, er
 
 // GetWaitingPipelineBuildJobForGroup Get waiting pipeline build job for the given group
 func GetWaitingPipelineBuildJobForGroup(db gorp.SqlExecutor, groupID, sharedInfraGroupID int64) ([]sdk.PipelineBuildJob, error) {
-	var pbJobsGorp []database.PipelineBuildJob
+	var pbJobsGorp []PipelineBuildJob
 	query := `
 		SELECT distinct pipeline_build_job.*
 		FROM pipeline_build_job
@@ -111,7 +110,7 @@ func GetWaitingPipelineBuildJobForGroup(db gorp.SqlExecutor, groupID, sharedInfr
 
 // GetPipelineBuildJob Get pipeline build job
 func GetPipelineBuildJob(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, error) {
-	var pbJobGorp database.PipelineBuildJob
+	var pbJobGorp PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
 		FROM pipeline_build_job
@@ -125,7 +124,7 @@ func GetPipelineBuildJob(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, 
 
 // LoadWaitingQueue Load Waiting pipeline_build_job
 func LoadWaitingQueue(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, error) {
-	var pbJobsGorp []database.PipelineBuildJob
+	var pbJobsGorp []PipelineBuildJob
 	if _, err := db.Select(&pbJobsGorp, `
 		SELECT distinct pipeline_build_job.* FROM pipeline_build_job
 		WHERE status = $1 ORDER BY pipeline_build_id ASC, pipeline_build_job.id ASC
@@ -155,7 +154,7 @@ func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBu
 		sharedInfraGroupID = g.ID
 	}
 
-	var pbJobsGorp []database.PipelineBuildJob
+	var pbJobsGorp []PipelineBuildJob
 	if _, err := db.Select(&pbJobsGorp, `
 		SELECT distinct pipeline_build_job.* FROM pipeline_build_job
 		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
@@ -186,7 +185,7 @@ func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBu
 
 // LoadUserWaitingQueue loads action build in queue where user has access
 func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuildJob, error) {
-	var pbJobsGorp []database.PipelineBuildJob
+	var pbJobsGorp []PipelineBuildJob
 
 	// If related user is admin, returns everything
 	if u.Admin {
@@ -221,7 +220,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 
 // TakeActionBuild Take an action build for update
 func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string, workerName string) (*sdk.PipelineBuildJob, error) {
-	var pbJobGorp database.PipelineBuildJob
+	var pbJobGorp PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
 		FROM pipeline_build_job
@@ -253,7 +252,7 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string, workerNam
 
 // RestartPipelineBuildJob destroy pipeline build job data and queue it up again
 func RestartPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64) error {
-	var pbJobGorp database.PipelineBuildJob
+	var pbJobGorp PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
 		FROM pipeline_build_job
@@ -288,7 +287,7 @@ func StopBuildingPipelineBuildJob(db gorp.SqlExecutor, pbID int64) error {
 // UpdatePipelineBuildJob Update pipeline build job
 func UpdatePipelineBuildJob(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJob) error {
 	// Update pipeline build job
-	pbJobGorp := database.PipelineBuildJob(*pbJob)
+	pbJobGorp := PipelineBuildJob(*pbJob)
 	_, errUpdate := db.Update(&pbJobGorp)
 	return errUpdate
 }

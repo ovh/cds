@@ -407,7 +407,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	}
 
 	// Authentify user through authDriver
-	authOK, erra := router.authDriver.Authentify(loginUserRequest.Username, loginUserRequest.Password)
+	authOK, erra := router.authDriver.Authentify(db, loginUserRequest.Username, loginUserRequest.Password)
 	if erra != nil {
 		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, erra)
 		return sdk.ErrInvalidUser

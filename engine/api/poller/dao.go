@@ -5,17 +5,14 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
-//Insert insert or update a new poller in DB
+//Insert insert a new poller in DB
 func Insert(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	poller.DateCreation = time.Now()
-	dbPoller := database.RepositoryPoller(*poller)
+	dbPoller := RepositoryPoller(*poller)
 
 	if err := db.Insert(&dbPoller); err != nil {
 		log.Warning("InsertPoller> Error :%s", err)
@@ -28,9 +25,9 @@ func Insert(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	return nil
 }
 
-//Delete delete a poller from DBscheduler
+//Delete delete a poller from DBpoller
 func Delete(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
-	dbPoller := database.RepositoryPoller(*poller)
+	dbPoller := RepositoryPoller(*poller)
 	if _, err := db.Delete(&dbPoller); err != nil {
 		log.Warning("DeletePoller> Error :%s", err)
 		return err
@@ -65,7 +62,7 @@ func Update(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 
 // LoadAll retrieves all poller from database
 func LoadAll(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
-	dbPollers := []database.RepositoryPoller{}
+	dbPollers := []RepositoryPoller{}
 	if _, err := db.Select(&dbPollers, "SELECT * FROM poller"); err != nil {
 		return nil, err
 	}
@@ -80,7 +77,7 @@ func LoadAll(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
 
 //LoadEnabled load all RepositoryPoller
 func LoadEnabled(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
-	dbPollers := []database.RepositoryPoller{}
+	dbPollers := []RepositoryPoller{}
 	if _, err := db.Select(&dbPollers, "SELECT * FROM poller WHERE enabled = true"); err != nil {
 		return nil, err
 	}
@@ -103,7 +100,7 @@ func LoadEnabledByProject(db gorp.SqlExecutor, projKey string) ([]sdk.Repository
 		and project.projectkey = $1
 		AND enabled = true
     `
-	dbPollers := []database.RepositoryPoller{}
+	dbPollers := []RepositoryPoller{}
 	if _, err := db.Select(&dbPollers, query, projKey); err != nil {
 		return nil, err
 	}
@@ -123,7 +120,7 @@ func LoadByApplication(db gorp.SqlExecutor, applicationID int64) ([]sdk.Reposito
         FROM poller
         WHERE application_id = $1
     `
-	dbPollers := []database.RepositoryPoller{}
+	dbPollers := []RepositoryPoller{}
 	if _, err := db.Select(&dbPollers, query, applicationID); err != nil {
 		return nil, err
 	}
@@ -144,7 +141,7 @@ func LoadByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID
         WHERE application_id = $1
 		AND pipeline_id = $2
     `
-	dbPoller := database.RepositoryPoller{}
+	dbPoller := RepositoryPoller{}
 	if err := db.SelectOne(&dbPoller, query, applicationID, pipelineID); err != nil {
 		return nil, err
 	}
@@ -156,23 +153,7 @@ func LoadByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID
 	return &p, nil
 }
 
-func postGet(db gorp.SqlExecutor, p *sdk.RepositoryPoller) error {
-	app, err := application.LoadApplicationByID(db, p.ApplicationID)
-	if err != nil {
-		log.Warning("postGet> error loading application %d : %s", p.ApplicationID, err)
-		return err
-	}
-	pip, err := pipeline.LoadPipelineByID(db, p.PipelineID, true)
-	if err != nil {
-		log.Warning("postGet> error loading pipeline %d : %s", p.PipelineID, err)
-		return err
-	}
-	p.Application = *app
-	p.Pipeline = *pip
-	return nil
-}
-
-func unwrapPollers(db gorp.SqlExecutor, dbPollers []database.RepositoryPoller) ([]sdk.RepositoryPoller, error) {
+func unwrapPollers(db gorp.SqlExecutor, dbPollers []RepositoryPoller) ([]sdk.RepositoryPoller, error) {
 	pollers := make([]sdk.RepositoryPoller, len(dbPollers))
 	for i, p := range dbPollers {
 		pl, err := unwrapPoller(db, p)
@@ -184,7 +165,10 @@ func unwrapPollers(db gorp.SqlExecutor, dbPollers []database.RepositoryPoller) (
 	return pollers, nil
 }
 
-func unwrapPoller(db gorp.SqlExecutor, dbPoller database.RepositoryPoller) (sdk.RepositoryPoller, error) {
-	p := sdk.RepositoryPoller(dbPoller)
-	return p, postGet(db, &p)
+func unwrapPoller(db gorp.SqlExecutor, dbPoller RepositoryPoller) (p sdk.RepositoryPoller, err error) {
+	if err = dbPoller.PostGet(db); err != nil {
+		return
+	}
+	p = sdk.RepositoryPoller(dbPoller)
+	return
 }

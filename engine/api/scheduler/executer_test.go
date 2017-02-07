@@ -80,10 +80,10 @@ func TestExecuterRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	exs, err := ExecuterRun()
+	exs, err := ExecuterRun(db)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Logf("Has run %v", exs)
-	assert.Equal(t, 1, len(exs))
+	assert.True(t, len(exs) > 1)
 }

@@ -81,8 +81,8 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	scheduler.Run()
-	scheduler.ExecuterRun()
+	scheduler.Run(db)
+	scheduler.ExecuterRun(db)
 
 	vars := map[string]string{
 		"key": proj.Key,
@@ -160,8 +160,8 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester.Run()
 	tester.Reset()
 
-	scheduler.Run()
-	scheduler.ExecuterRun()
+	scheduler.Run(db)
+	scheduler.ExecuterRun(db)
 
 	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
@@ -226,8 +226,8 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester.Run()
 	tester.Reset()
 
-	scheduler.Run()
-	scheduler.ExecuterRun()
+	scheduler.Run(db)
+	scheduler.ExecuterRun(db)
 
 	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))

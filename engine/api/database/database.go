@@ -9,6 +9,7 @@ import (
 
 	"log"
 
+	"github.com/go-gorp/gorp"
 	"github.com/spf13/viper"
 )
 
@@ -39,6 +40,11 @@ func DB() *sql.DB {
 		return nil
 	}
 	return db
+}
+
+// GetDBMap returns a gorp.DbMap pointer
+func GetDBMap() *gorp.DbMap {
+	return DBMap(DB())
 }
 
 //Set is for tetsing purpose, we need to set manually the connection

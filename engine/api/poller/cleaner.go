@@ -1,30 +1,24 @@
 package poller
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 //Cleaner is the cleaner main goroutine
-func Cleaner(nbToKeep int) {
+func Cleaner(DBFunc func() *gorp.DbMap, nbToKeep int) {
 	for {
-		CleanerRun(nbToKeep)
+		CleanerRun(DBFunc(), nbToKeep)
 		time.Sleep(10 * time.Minute)
 	}
 }
 
 //CleanerRun is the core function of the cleaner goroutine
-func CleanerRun(nbToKeep int) ([]sdk.RepositoryPollerExecution, error) {
+func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.RepositoryPollerExecution, error) {
 	log.Debug("poller.CleanerRun> Deleting old executions...")
-	_db := database.DB()
-	if _db == nil {
-		return nil, fmt.Errorf("Database is unavailable")
-	}
-	db := database.DBMap(_db)
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("poller.CleanerRun> Unable to start a transaction : %s", err)
@@ -38,10 +32,10 @@ func CleanerRun(nbToKeep int) ([]sdk.RepositoryPollerExecution, error) {
 		return nil, err
 	}
 
-	//Load schedulers
+	//Load pollers
 	ps, err := LoadAll(tx)
 	if err != nil {
-		log.Warning("poller.CleanerRun> Unable to load pipeline schedulers : %s", err)
+		log.Warning("poller.CleanerRun> Unable to load pipeline pollers : %s", err)
 		return nil, err
 	}
 
@@ -49,7 +43,7 @@ func CleanerRun(nbToKeep int) ([]sdk.RepositoryPollerExecution, error) {
 	for _, s := range ps {
 		exs, err := LoadPastExecutions(tx, s.ApplicationID, s.PipelineID)
 		if err != nil {
-			log.Warning("poller.CleanerRun> Unable to load pipeline schedulers execution : %s", err)
+			log.Warning("poller.CleanerRun> Unable to load pipeline pollers execution : %s", err)
 			return nil, err
 		}
 
@@ -60,7 +54,7 @@ func CleanerRun(nbToKeep int) ([]sdk.RepositoryPollerExecution, error) {
 				break
 			}
 			if err := DeleteExecution(tx, &exs[i]); err != nil {
-				log.Critical("poller.CleanerRun> Unable to delete execution %d", exs[i].ID)
+				log.Critical("poller.CleanerRun> Unable to delete execution %d : %s", exs[i].ID, err)
 			}
 			nbDeleted++
 			deleted = append(deleted, exs[i])

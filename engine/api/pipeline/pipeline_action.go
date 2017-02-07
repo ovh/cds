@@ -6,7 +6,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -136,7 +135,7 @@ func DeleteJob(db gorp.SqlExecutor, job sdk.Job, userID int64) error {
 }
 
 // UpdatePipelineAction Update an action in a pipeline
-func UpdatePipelineAction(db database.Executer, job sdk.Job) error {
+func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
 	query := `UPDATE pipeline_action set action_id=$1, pipeline_stage_id=$2, enabled=$4  WHERE id=$3`
 
 	_, err := db.Exec(query, job.Action.ID, job.PipelineStageID, job.PipelineActionID, job.Enabled)

@@ -9,7 +9,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -267,7 +266,7 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 }
 
 // DeleteAllEnvironment Delete all environment attached to the given project
-func DeleteAllEnvironment(db database.Executer, projectID int64) error {
+func DeleteAllEnvironment(db gorp.SqlExecutor, projectID int64) error {
 
 	query := `DELETE FROM environment_variable WHERE environment_id IN (SELECT id FROM environment WHERE project_id = $1)`
 	_, err := db.Exec(query, projectID)

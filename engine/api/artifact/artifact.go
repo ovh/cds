@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -192,7 +191,7 @@ func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
 	return nil
 }
 
-func insertArtifact(db database.Executer, pipelineID, applicationID int64, environmentID int64, art sdk.Artifact) error {
+func insertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, environmentID int64, art sdk.Artifact) error {
 	query := `DELETE FROM "artifact" WHERE name = $1 AND tag = $2 AND pipeline_id = $3 AND application_id = $4 AND environment_id = $5`
 	_, err := db.Exec(query, art.Name, art.Tag, pipelineID, applicationID, environmentID)
 	if err != nil {

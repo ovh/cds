@@ -4,14 +4,13 @@ import (
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 //InsertExecution a poller execution execution
 func InsertExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) error {
-	ds := database.RepositoryPollerExecution(*s)
+	ds := RepositoryPollerExecution(*s)
 	if err := db.Insert(&ds); err != nil {
 		log.Warning("poller.InsertExecution> Unable to insert poller execution execution : %T %s", err, err)
 		return err
@@ -22,7 +21,7 @@ func InsertExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) erro
 
 //UpdateExecution a poller execution execution
 func UpdateExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) error {
-	ds := database.RepositoryPollerExecution(*s)
+	ds := RepositoryPollerExecution(*s)
 	if n, err := db.Update(&ds); err != nil {
 		log.Warning("poller.UpdateExecution> Unable to update poller execution execution : %T %s", err, err)
 		return err
@@ -35,7 +34,7 @@ func UpdateExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) erro
 
 //DeleteExecution deletes executions
 func DeleteExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) error {
-	ds := database.RepositoryPollerExecution(*s)
+	ds := RepositoryPollerExecution(*s)
 	if n, err := db.Delete(&ds); err != nil {
 		log.Warning("poller.DeleteExecution> Unable to delete poller execution execution : %T %s", err, err)
 		return err
@@ -48,7 +47,7 @@ func DeleteExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) erro
 
 //LoadExecutions loads all poller execution
 func LoadExecutions(db gorp.SqlExecutor, appID, pipID int64) ([]sdk.RepositoryPollerExecution, error) {
-	as := []database.RepositoryPollerExecution{}
+	as := []RepositoryPollerExecution{}
 	if _, err := db.Select(&as, "select * from poller_execution where application_id =$1, pipeline_id = $2", appID, pipID); err != nil {
 		log.Warning("poller.LoadPendingExecutions> Unable to load poller execution execution : %T %s", err, err)
 		return nil, err
@@ -62,7 +61,7 @@ func LoadExecutions(db gorp.SqlExecutor, appID, pipID int64) ([]sdk.RepositoryPo
 
 //LoadLastExecution loads last poller execution
 func LoadLastExecution(db gorp.SqlExecutor, appID, pipID int64) (*sdk.RepositoryPollerExecution, error) {
-	as := database.RepositoryPollerExecution{}
+	as := RepositoryPollerExecution{}
 	if err := db.SelectOne(&as, "select * from poller_execution where application_id =$1 and pipeline_id = $2 order by execution_planned_date desc limit 1", appID, pipID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -76,7 +75,7 @@ func LoadLastExecution(db gorp.SqlExecutor, appID, pipID int64) (*sdk.Repository
 
 //LoadLastExecutedExecution loads last poller execution
 func LoadLastExecutedExecution(db gorp.SqlExecutor, appID, pipID int64) (*sdk.RepositoryPollerExecution, error) {
-	as := database.RepositoryPollerExecution{}
+	as := RepositoryPollerExecution{}
 	if err := db.SelectOne(&as, "select * from poller_execution where application_id =$1 and pipeline_id = $2 and executed = true order by execution_planned_date desc limit 1", appID, pipID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -90,7 +89,7 @@ func LoadLastExecutedExecution(db gorp.SqlExecutor, appID, pipID int64) (*sdk.Re
 
 //LoadNextExecution loads next poller execution
 func LoadNextExecution(db gorp.SqlExecutor, appID, pipID int64) (*sdk.RepositoryPollerExecution, error) {
-	as := database.RepositoryPollerExecution{}
+	as := RepositoryPollerExecution{}
 	if err := db.SelectOne(&as, "select * from poller_execution where application_id =$1 and pipeline_id = $2 and executed = false order by execution_planned_date desc limit 1", appID, pipID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -104,7 +103,7 @@ func LoadNextExecution(db gorp.SqlExecutor, appID, pipID int64) (*sdk.Repository
 
 //LoadPastExecutions loads all poller execution executed prior date 't'
 func LoadPastExecutions(db gorp.SqlExecutor, appID, pipID int64) ([]sdk.RepositoryPollerExecution, error) {
-	as := []database.RepositoryPollerExecution{}
+	as := []RepositoryPollerExecution{}
 	if _, err := db.Select(&as, "select * from poller_execution where application_id =$1 and pipeline_id = $2 and executed = true order by execution_date asc", appID, pipID); err != nil {
 		log.Warning("poller.LoadPendingExecutions> Unable to load poller execution execution : %T %s", err, err)
 		return nil, err
@@ -118,7 +117,7 @@ func LoadPastExecutions(db gorp.SqlExecutor, appID, pipID int64) ([]sdk.Reposito
 
 //LoadPendingExecutions loads all poller execution
 func LoadPendingExecutions(db gorp.SqlExecutor) ([]sdk.RepositoryPollerExecution, error) {
-	as := []database.RepositoryPollerExecution{}
+	as := []RepositoryPollerExecution{}
 	if _, err := db.Select(&as, "select * from poller_execution where executed = false and execution_planned_date <=  now()"); err != nil {
 		log.Warning("poller.LoadPendingExecutions> Unable to load poller execution execution : %T %s", err, err)
 		return nil, err

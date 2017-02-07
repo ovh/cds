@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
@@ -298,7 +297,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 }
 
 // UpdateVariable Update a variable in the given environment
-func UpdateVariable(db database.Executer, envID int64, variable sdk.Variable) error {
+func UpdateVariable(db gorp.SqlExecutor, envID int64, variable sdk.Variable) error {
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -333,7 +332,7 @@ func UpdateVariable(db database.Executer, envID int64, variable sdk.Variable) er
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db database.Executer, envID int64, variableName string) error {
+func DeleteVariable(db gorp.SqlExecutor, envID int64, variableName string) error {
 	query := `DELETE FROM environment_variable
 	          WHERE environment_variable.environment_id = $1 AND environment_variable.name = $2`
 	result, err := db.Exec(query, envID, variableName)

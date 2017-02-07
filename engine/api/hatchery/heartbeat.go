@@ -3,7 +3,7 @@ package hatchery
 import (
 	"time"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/log"
 )
 
@@ -12,12 +12,12 @@ var HatcheryHeartbeatTimeout = 30.0
 
 // Heartbeat runs in a goroutine and check last beat from all hatcheries
 // on a 10s basis
-func Heartbeat() {
+func Heartbeat(DBFunc func() *gorp.DbMap) {
 	// If this goroutine exit, then it's a crash
 	defer log.Fatalf("Goroutine of hatchery.Heartbeat exited - Exit CDS Engine")
 
 	for {
-		db := database.DBMap(database.DB())
+		db := DBFunc()
 		if db != nil {
 			w, err := LoadDeadHatcheries(db, HatcheryHeartbeatTimeout)
 			if err != nil {

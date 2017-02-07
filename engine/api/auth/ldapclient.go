@@ -15,7 +15,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/log"
@@ -218,11 +217,7 @@ func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error
 	return entries, nil
 }
 
-func (c *LDAPClient) searchAndInsertOrUpdateUser(username string) (*sdk.User, error) {
-	db := database.DBMap(database.DB())
-	if db == nil {
-		return nil, sdk.ErrServiceUnavailable
-	}
+func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username string) (*sdk.User, error) {
 	// Search user
 	search := fmt.Sprintf("(uid=%s)", username)
 	entry, errSearch := c.Search(search, "uid", "cn", "ou", "givenName", "sn", "mail")
@@ -294,7 +289,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(username string) (*sdk.User, er
 }
 
 //Authentify check username and password
-func (c *LDAPClient) Authentify(username, password string) (bool, error) {
+func (c *LDAPClient) Authentify(db gorp.SqlExecutor, username, password string) (bool, error) {
 	//Bind user
 	if err := c.Bind(username, password); err != nil {
 		log.Warning("LDAP> Bind error %s %s", username, err)
@@ -303,13 +298,13 @@ func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 			return false, err
 		}
 		//Try local auth
-		return c.local.Authentify(username, password)
+		return c.local.Authentify(db, username, password)
 	}
 
 	log.Debug("LDAP> Bind sucessfull %s", username)
 
 	//Search user, refresh data and update database
-	if _, err := c.searchAndInsertOrUpdateUser(username); err != nil {
+	if _, err := c.searchAndInsertOrUpdateUser(db, username); err != nil {
 		return false, err
 	}
 
@@ -317,8 +312,8 @@ func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 }
 
 //AuthentifyUser check password in database
-func (c *LDAPClient) AuthentifyUser(u *sdk.User, password string) (bool, error) {
-	return c.Authentify(u.Username, password)
+func (c *LDAPClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password string) (bool, error) {
+	return c.Authentify(db, u.Username, password)
 }
 
 //GetCheckAuthHeaderFunc returns the func to heck http headers.
@@ -359,7 +354,7 @@ func (c *LDAPClient) checkUserSessionAuth(db *gorp.DbMap, headers http.Header, c
 	if err != nil {
 		return err
 	}
-	u, err := c.searchAndInsertOrUpdateUser(username)
+	u, err := c.searchAndInsertOrUpdateUser(db, username)
 	if err != nil {
 		return err
 	}

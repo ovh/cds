@@ -7,8 +7,8 @@ import (
 )
 
 func TestExecuterRun(t *testing.T) {
-	test.SetupPG(t)
-	exs, err := ExecuterRun()
+	db := test.SetupPG(t)
+	exs, err := ExecuterRun(db)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}

@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -333,7 +332,7 @@ func LoadGroupByPipeline(db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
 }
 
 // UpdatePipeline update the pipeline
-func UpdatePipeline(db database.Executer, p *sdk.Pipeline) error {
+func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	// Update project
 	query := `
 		UPDATE project

@@ -1,10 +1,9 @@
 package poller
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -15,25 +14,20 @@ var (
 )
 
 //Scheduler is the goroutine which compute date of next execution for pipeline scheduler
-func Scheduler() {
+func Scheduler(DBFunc func() *gorp.DbMap) {
 	for {
 		time.Sleep(2 * time.Second)
-		_, status, err := SchedulerRun()
+		_, status, err := SchedulerRun(DBFunc())
 
 		if err != nil {
-			log.Critical("%s: %s", status, err)
+			log.Critical("poller.Scheduler> %s: %s", status, err)
 		}
 		pollerStatus = status
 	}
 }
 
 //SchedulerRun is the core function of Scheduler goroutine
-func SchedulerRun() ([]sdk.RepositoryPollerExecution, string, error) {
-	_db := database.DB()
-	if _db == nil {
-		return nil, "Database is unavailable", fmt.Errorf("datase.DB failed")
-	}
-	db := database.DBMap(_db)
+func SchedulerRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, string, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, "poller.Scheduler.Run> Unable to start a transaction", err

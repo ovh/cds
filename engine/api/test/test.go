@@ -47,7 +47,7 @@ func init() {
 	}
 }
 
-type bootstrap func(db *sql.DB) error
+type bootstrap func(func() *gorp.DbMap) error
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
@@ -94,7 +94,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	}()
 
 	for _, f := range bootstrapFunc {
-		if err := f(db); err != nil {
+		if err := f(database.GetDBMap); err != nil {
 			return nil
 		}
 	}
