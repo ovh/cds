@@ -60,6 +60,12 @@ func SchedulerRun() ([]sdk.RepositoryPollerExecution, string, error) {
 			continue
 		}
 
+		//Skip if there is a pending execution
+		if next, _ := LoadNextExecution(tx, p.ApplicationID, p.PipelineID); next != nil {
+			log.Debug("poller.Scheduler.Run> Poller has already a pending execution")
+			continue
+		}
+
 		e := sdk.RepositoryPollerExecution{
 			ApplicationID:        p.ApplicationID,
 			PipelineID:           p.PipelineID,

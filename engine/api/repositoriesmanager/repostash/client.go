@@ -243,7 +243,7 @@ func (s *StashClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 		if err != nil {
 			return commit, err
 		}
-		cache.Set(stashCommitKey, stashCommit)
+		cache.SetWithTTL(stashCommitKey, stashCommit, -1)
 	}
 	urlCommit := s.url + "/projects/" + t[0] + "/repos/" + t[1] + "/commits/" + stashCommit.Hash
 	commit = sdk.VCSCommit{
@@ -265,7 +265,7 @@ func (s *StashClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 		if err != nil {
 			log.Debug("Unable to get stash user %s : %s", stashCommit.Author.Email, err)
 		} else {
-			cache.Set(stashUserKey, newStashUser)
+			cache.SetWithTTL(stashUserKey, newStashUser, -1)
 			stashUser = *newStashUser
 		}
 	}

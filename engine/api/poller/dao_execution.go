@@ -91,7 +91,7 @@ func LoadLastExecutedExecution(db gorp.SqlExecutor, appID, pipID int64) (*sdk.Re
 //LoadNextExecution loads next poller execution
 func LoadNextExecution(db gorp.SqlExecutor, appID, pipID int64) (*sdk.RepositoryPollerExecution, error) {
 	as := database.RepositoryPollerExecution{}
-	if err := db.SelectOne(&as, "select * from poller_execution where application_id =$1 and pipeline_id = $2and executed = false order by execution_planned_date desc limit 1", appID, pipID); err != nil {
+	if err := db.SelectOne(&as, "select * from poller_execution where application_id =$1 and pipeline_id = $2 and executed = false order by execution_planned_date desc limit 1", appID, pipID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

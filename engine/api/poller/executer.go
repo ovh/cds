@@ -71,13 +71,12 @@ func ExecuterRun() ([]sdk.RepositoryPollerExecution, error) {
 			log.Warning("poller.ExecuterRun> %s", err)
 			return nil, err
 		}
-
 	}
 
 	return exs, nil
 }
 
-func executerProcess(db gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) error {
+func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) error {
 	t := time.Now()
 	e.ExecutionDate = &t
 	e.Executed = true
@@ -85,10 +84,10 @@ func executerProcess(db gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 	projectKey := p.Application.ProjectKey
 	rm := p.Application.RepositoriesManager
 
-	log.Debug("Polling> Get %S client for project %s", rm.Name, projectKey)
+	log.Debug("Polling> Get %s client for project %s", rm.Name, projectKey)
 
 	//get the client for the repositories manager
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rm.Name)
+	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name)
 	if err != nil {
 		log.Warning("Polling> Unable to get client for %s %s : %s\n", projectKey, rm.Name, err)
 		return err
@@ -101,41 +100,43 @@ func executerProcess(db gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 	}
 
 	if len(e.PushEvents) > 0 {
-		if err := triggerPipelines(db, projectKey, rm, p, e); err != nil {
+		if err := triggerPipelines(tx, projectKey, rm, p, e); err != nil {
 			log.Warning("Polling> Unable to trigger pipeline %s for repository %s\n", p.Pipeline.Name, p.Application.RepositoryFullname)
 			return err
 		}
 	}
 
-	if err := UpdateExecution(db, e); err != nil {
+	if err := UpdateExecution(tx, e); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func triggerPipelines(db gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) error {
-	proj, err := project.LoadProjectByPipelineID(db, poller.Pipeline.ID)
+func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) error {
+	proj, err := project.LoadProjectByPipelineID(tx, poller.Pipeline.ID)
 	if err != nil {
 		log.Warning("Polling.triggerPipelines> Cannot load project for pipeline %s: %s\n", poller.Pipeline.Name, err)
 		return err
 	}
-	projectsVar, err := project.GetAllVariableInProject(db, proj.ID)
+	projectsVar, err := project.GetAllVariableInProject(tx, proj.ID)
 	if err != nil {
 		log.Warning("Polling.triggerPipelines> Cannot load project variable: %s\n", err)
 		return err
 	}
 	proj.Variable = projectsVar
 
+	e.PipelineBuildVersions = map[string]int64{}
+
 	for _, event := range e.PushEvents {
-		pb, err := triggerPipeline(db, rm, poller, event, proj)
+		pb, err := triggerPipeline(tx, rm, poller, event, proj)
 		if err != nil {
 			log.Warning("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
 			return err
 		}
 
 		if pb != nil {
-			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s", projectKey, poller.Application.RepositoryFullname, event.Branch)
+			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
 			e.PipelineBuildVersions[event.Branch.ID+"/"+event.Commit.Hash[:7]] = pb.Version
 		} else {
 			log.Info("Polling.triggerPipelines> Did not trigger %s/%s/%s\n", projectKey, poller.Application.RepositoryFullname, event.Branch.ID)
