@@ -28,6 +28,9 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
 
     // optionnal application data
     application: Application;
+    version: string;
+    buildNumber: string;
+    envName: string;
 
     @ViewChild('permWarning')
         permissionModalWarning: WarningModalComponent;
@@ -40,8 +43,17 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     constructor(private _routeActivated: ActivatedRoute, private _pipStore: PipelineStore,
         private _router: Router, private _toast: ToastService, public _translate: TranslateService) {
         this.project = this._routeActivated.snapshot.data['project'];
-        if (this._routeActivated.snapshot.queryParams['application']) {
+        if (this._routeActivated.snapshot.data['application']) {
             this.application = this._routeActivated.snapshot.data['application'];
+        }
+        if (this._routeActivated.snapshot.queryParams['version']) {
+            this.version = this._routeActivated.snapshot.queryParams['version'];
+        }
+        if (this._routeActivated.snapshot.queryParams['buildNumber']) {
+            this.buildNumber = this._routeActivated.snapshot.queryParams['buildNumber'];
+        }
+        if (this._routeActivated.snapshot.queryParams['envName']) {
+            this.envName = this._routeActivated.snapshot.queryParams['envName'];
         }
     }
 
