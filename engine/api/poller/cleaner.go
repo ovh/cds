@@ -11,6 +11,7 @@ import (
 
 //Cleaner is the cleaner main goroutine
 func Cleaner(DBFunc func() *gorp.DbMap, nbToKeep int) {
+	defer log.Critical("poller.Cleaner> has been exited !")
 	for {
 		CleanerRun(DBFunc(), nbToKeep)
 		time.Sleep(10 * time.Minute)
