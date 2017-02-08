@@ -429,8 +429,10 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 			//Check here only events after the reference date and only of type PushEvent
 			nextEventsAfterDateRef := []Event{}
 			for _, e := range nextEvents {
-				if e.CreatedAt.After(dateRef) && e.Type == "PushEvent" {
-					nextEventsAfterDateRef = append(nextEventsAfterDateRef, e)
+				if e.CreatedAt.After(dateRef) {
+					if e.Type == "PushEvent" {
+						nextEventsAfterDateRef = append(nextEventsAfterDateRef, e)
+					}
 				} else {
 					//If you found a ant older than the dateRef, stop get events
 					nextPage = ""
