@@ -16,6 +16,7 @@ import (
 
 //Executer is the goroutine which run the pipelines
 func Executer(DBFunc func() *gorp.DbMap) {
+	defer log.Critical("poller.Executer> has been exited !")
 	for {
 		time.Sleep(5 * time.Second)
 		ExecuterRun(DBFunc())

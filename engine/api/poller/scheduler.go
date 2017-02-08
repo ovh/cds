@@ -16,6 +16,7 @@ var (
 
 //Scheduler is the goroutine which compute date of next execution for pipeline scheduler
 func Scheduler(DBFunc func() *gorp.DbMap) {
+	defer log.Critical("poller.Scheduler> has been exited !")
 	for {
 		time.Sleep(2 * time.Second)
 		_, status, err := SchedulerRun(DBFunc())
@@ -49,6 +50,7 @@ func SchedulerRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, string, erro
 	execs := []sdk.RepositoryPollerExecution{}
 	for i := range ps {
 		p := &ps[i]
+		log.Notice("poller.Scheduler.Run> Checking poller %s/%s", p.Application.Name, p.Pipeline.Name)
 
 		//Skip disabled scheduler
 		if !p.Enabled {
@@ -57,7 +59,7 @@ func SchedulerRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, string, erro
 
 		//Skip if there is a pending execution
 		if next, _ := LoadNextExecution(tx, p.ApplicationID, p.PipelineID); next != nil {
-			log.Debug("poller.Scheduler.Run> Poller has already a pending execution")
+			log.Notice("poller.Scheduler.Run> Poller has already a pending execution")
 			continue
 		}
 
