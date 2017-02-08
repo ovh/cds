@@ -1,15 +1,13 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
+import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
-import {SharedModule} from '../../../../../shared/shared.module';
-import {ArtifactListComponent} from './artifact.list.component';
-import {Observable} from 'rxjs';
-import {CDSWorker} from '../../../../../shared/worker/worker';
+import {TestsResultComponent} from './tests.component';
 import {ApplicationRunModule} from '../application.run.module';
+import {SharedModule} from '../../../../../shared/shared.module';
 
-describe('CDS: Artifact List', () => {
+describe('CDS: Test Report component', () => {
 
     let injector: Injector;
 
@@ -37,7 +35,7 @@ describe('CDS: Artifact List', () => {
 
     it('should load component', fakeAsync(() => {
         // Create component
-        let fixture = TestBed.createComponent(ArtifactListComponent);
+        let fixture = TestBed.createComponent(TestsResultComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
     }));

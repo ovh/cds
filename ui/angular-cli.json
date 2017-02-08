@@ -39,7 +39,8 @@
         "../node_modules/codemirror/mode/css/css.js",
         "../node_modules/codemirror/mode/powershell/powershell.js",
         "../node_modules/codemirror/mode/python/python.js",
-        "../node_modules/ansi_up/ansi_up.js"
+        "../node_modules/ansi_up/ansi_up.js",
+        "../node_modules/duration-js/duration.js"
       ],
       "environments": {
         "source": "environments/environment.ts",

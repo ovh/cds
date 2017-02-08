@@ -10,12 +10,9 @@ import {environment} from '../../../../../../environments/environment.dev';
     templateUrl: './artifact.list.html',
     styleUrls: ['./artifact.list.scss']
 })
-export class ArtifactListComponent extends Table implements OnInit, OnDestroy {
+export class ArtifactListComponent extends Table {
 
-    @Input() buildWorker: CDSWorker;
-    artifacts: Array<Artifact>;
-
-    workerSubscription: Subscription;
+    @Input() artifacts: Array<Artifact>;
 
     // Allow angular update from work started outside angular context
     zone: NgZone;
@@ -23,22 +20,6 @@ export class ArtifactListComponent extends Table implements OnInit, OnDestroy {
     constructor() {
         super();
         this.zone = new NgZone({enableLongStackTrace: false});
-    }
-
-    ngOnInit(): void {
-        this.workerSubscription = this.buildWorker.response().subscribe( msg => {
-            if (msg.data) {
-                this.zone.run(() => {
-                    this.artifacts = JSON.parse(msg.data).artifacts;
-                });
-            }
-        });
-    }
-
-    ngOnDestroy(): void {
-        if (this.workerSubscription) {
-            this.workerSubscription.unsubscribe();
-        }
     }
 
     getData(): any[] {

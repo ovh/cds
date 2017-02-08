@@ -136,7 +136,7 @@ export enum PipelineType {
     deployment
 }
 
-export interface Tests {
+export class Tests {
     pipeline_build_id: number;
     total: number;
     ok: number;
@@ -145,19 +145,43 @@ export interface Tests {
     test_suites: Array<TestSuite>;
 }
 
-export interface TestSuite {
-    name: string;
-    total: number;
-    failures: number;
+export class TestSuite {
+    disabled: number;
     errors: number;
+    failures: number;
+    id: string;
+    name: string;
+    package: string;
     skipped: number;
-    tests: Array<Test>;
+    total: number;
+    time: string;
+    timestamp: string;
+    tests: Array<TestCase>;
 }
 
-export interface Test {
+export class TestCase {
+    classname: string;
     name: string;
     time: string;
-    failure: string;
-    error: string;
-    skipped: string;
+    errors: Array<Failure>;
+    failures: Array<Failure>;
+    status: string;
+    skipped: number;
+    systemout: InnerResult;
+    systemerr: InnerResult;
+
+    // UI param
+    displayed: boolean;
+}
+
+// Failure contains data related to a failed test.
+export class Failure {
+    value: string;
+    type: string;
+    message: string;
+}
+
+// InnerResult is used by TestCase
+export interface InnerResult {
+    value: string;
 }

@@ -119,6 +119,21 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     jobEvent(event: ActionEvent): void {
         let job: Job = _.cloneDeep(this.selectedJob);
         job.action = event.action;
+        if (job.action.actions) {
+            job.action.actions.forEach(a => {
+               if (a.parameters) {
+                   a.parameters.forEach(p => {
+                      p.value = p.value.toString();
+                   });
+               }
+            });
+        }
+        if (job.action.parameters) {
+            job.action.parameters.forEach(p => {
+                p.value = p.value.toString();
+            });
+        }
+
         switch (event.type) {
             case 'update':
                 this._pipelineStore.updateJob(this.project.key, this.pipeline.name, this.editableStage.id, job).subscribe(() => {
