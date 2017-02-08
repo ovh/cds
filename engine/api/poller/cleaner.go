@@ -13,8 +13,8 @@ import (
 func Cleaner(DBFunc func() *gorp.DbMap, nbToKeep int) {
 	defer log.Critical("poller.Cleaner> has been exited !")
 	for {
+		time.Sleep(30 * time.Minute)
 		CleanerRun(DBFunc(), nbToKeep)
-		time.Sleep(10 * time.Minute)
 	}
 }
 
@@ -27,12 +27,6 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.RepositoryPollerExecution, 
 		return nil, err
 	}
 	defer tx.Rollback()
-
-	//Starting with exclusive lock on the table
-	if err := LockPollerExecutions(tx); err != nil {
-		log.Debug("poller.CleanerRun> Unable to take lock : %s", err)
-		return nil, err
-	}
 
 	//Load pollers
 	ps, err := LoadAll(tx)

@@ -149,12 +149,6 @@ func LoadUnscheduledPollers(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error)
 	return ps, nil
 }
 
-//LockPollerExecutions locks table LockPollerExecutions
-func LockPollerExecutions(db gorp.SqlExecutor) error {
-	_, err := db.Exec("LOCK TABLE poller_execution IN ACCESS EXCLUSIVE MODE NOWAIT")
-	return err
-}
-
 //LockPollerExecution locks table LockPollerExecutions
 func LockPollerExecution(db gorp.SqlExecutor, id int64) error {
 	_, err := db.Exec("SELECT * from poller_execution where id = $1 FOR UPDATE NOWAIT", id)

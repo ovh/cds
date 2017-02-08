@@ -18,13 +18,12 @@ var (
 func Scheduler(DBFunc func() *gorp.DbMap) {
 	defer log.Critical("poller.Scheduler> has been exited !")
 	for {
-		time.Sleep(2 * time.Second)
 		_, status, err := SchedulerRun(DBFunc())
-
 		if err != nil {
 			log.Critical("poller.Scheduler> %s: %s", status, err)
 		}
 		pollerStatus = status
+		time.Sleep(10 * time.Second)
 	}
 }
 
@@ -36,11 +35,6 @@ func SchedulerRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, string, erro
 	}
 	defer tx.Rollback()
 
-	//Starting with exclusive lock on the table
-	if err := LockPollerExecutions(tx); err != nil {
-		return nil, "OK", nil
-	}
-
 	//Load unscheduled pipelines
 	ps, err := LoadUnscheduledPollers(tx)
 	if err != nil {
@@ -50,7 +44,7 @@ func SchedulerRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, string, erro
 	execs := []sdk.RepositoryPollerExecution{}
 	for i := range ps {
 		p := &ps[i]
-		log.Notice("poller.Scheduler.Run> Checking poller %s/%s", p.Application.Name, p.Pipeline.Name)
+		log.Info("poller.Scheduler.Run> Checking poller %s/%s", p.Application.Name, p.Pipeline.Name)
 
 		//Skip disabled scheduler
 		if !p.Enabled {
@@ -59,7 +53,7 @@ func SchedulerRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, string, erro
 
 		//Skip if there is a pending execution
 		if next, _ := LoadNextExecution(tx, p.ApplicationID, p.PipelineID); next != nil {
-			log.Notice("poller.Scheduler.Run> Poller has already a pending execution")
+			log.Info("poller.Scheduler.Run> Poller has already a pending execution")
 			continue
 		}
 
