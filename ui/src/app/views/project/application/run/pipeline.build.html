@@ -19,13 +19,13 @@
                         </span>
                 </div>
                 <div class="five wide column" *ngIf="currentBuild.status !== 'Building'">
-                    <span class="title">{{ 'common_duration' | translate }}</span>
+                    <span class="title">{{ 'common_duration_title' | translate }}</span>
                     <span class="content">{{duration}}</span>
                 </div>
             </div>
             <div class="row">
                 <div class="five wide column">
-                    <span class="title">{{ 'common_branch' | translate }}</span>
+                    <span class="title">{{ 'common_branch_title' | translate }}</span>
                     <span class="content">{{ currentBuild.trigger.vcs_branch}}</span>
                 </div>
                 <div class="six wide column" *ngIf="currentBuild.trigger.vcs_hash !== ''">
@@ -33,7 +33,7 @@
                     <span class="content">{{ currentBuild.trigger.vcs_hash}}</span>
                 </div>
                 <div class="five wide column" *ngIf="currentBuild.trigger.vcs_author !== ''">
-                    <span class="title">{{ 'common_author' | translate }}</span>
+                    <span class="title">{{ 'common_author_title' | translate }}</span>
                     <span class="content">{{ currentBuild.trigger.vcs_author}}</span>
                 </div>
             </div>
