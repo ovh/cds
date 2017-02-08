@@ -406,50 +406,48 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 	var nextPage = "/repos/" + fullname + "/events"
 
 	interval := 60 * time.Second
+	defaultDelay := 60 * time.Second
 	for {
 		if nextPage != "" {
 			status, body, headers, err := g.get(nextPage)
 			if err != nil {
 				log.Warning("GithubClient.PushEvents> Error %s", err)
-				return nil, 0.0, err
+				return nil, defaultDelay, err
 			}
 			if status >= 400 {
-				return nil, 0.0, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
+				return nil, defaultDelay, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
 			}
+			//Get events for this page
 			nextEvents := []Event{}
-
-			//Github may return 304 status because we are using conditionnal request with ETag based headers
-			if status == http.StatusNotModified {
-				//If events aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "events", g.OAuthToken, nextPage), &nextEvents)
-			} else {
-				if err := json.Unmarshal(body, &nextEvents); err != nil {
-					log.Warning("GithubClient.PushEvents> Unable to parse github events: %s", err)
-					return nil, 0.0, err
-				}
-				//Put the body on cache for one hour and one minute
-				cache.SetWithTTL(cache.Key("reposmanager", "github", "events", g.OAuthToken, nextPage), nextEvents, 61*60)
+			if err := json.Unmarshal(body, &nextEvents); err != nil {
+				log.Warning("GithubClient.PushEvents> Unable to parse github events: %s", err)
+				return nil, defaultDelay, err
 			}
+
+			nextPage = getNextPage(headers)
 
 			//Check here only events after the reference date and only of type PushEvent
 			nextEventsAfterDateRef := []Event{}
 			for _, e := range nextEvents {
 				if e.CreatedAt.After(dateRef) && e.Type == "PushEvent" {
 					nextEventsAfterDateRef = append(nextEventsAfterDateRef, e)
+				} else {
+					//If you found a ant older than the dateRef, stop get events
+					nextPage = ""
 				}
 			}
 
 			events = append(events, nextEventsAfterDateRef...)
 
+			//Check poll interval
 			if headers.Get("X-Poll-Interval") != "" {
 				f, err := strconv.ParseFloat(headers.Get("X-Poll-Interval"), 64)
 				if err == nil {
-					interval = time.Duration(f)
+					interval = time.Duration(f) * time.Second
 				}
 			}
 
-			nextPage = getNextPage(headers)
-			time.Sleep(interval * time.Second)
+			time.Sleep(interval)
 		} else {
 			break
 		}
@@ -485,7 +483,7 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 	for b, c := range lastCommitPerBranch {
 		branch, err := g.Branch(fullname, b)
 		if err != nil {
-			return nil, 0.0, fmt.Errorf("Unable to find branch %s in %s : %s", b, fullname, err)
+			return nil, defaultDelay, fmt.Errorf("Unable to find branch %s in %s : %s", b, fullname, err)
 		}
 		res = append(res, sdk.VCSPushEvent{
 			Branch: branch,
