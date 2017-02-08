@@ -1,6 +1,6 @@
 <div id="ApplicationPipelineBuild">
     <div class="CDSbreadcrumb">
-        <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [version]="currentBuild?.version"></app-breadcrumb>
+        <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [version]="currentBuild?.version" [buildNumber]="currentBuild?.build_number" [envName]="envName"></app-breadcrumb>
     </div>
 
     <div class="summary" *ngIf="currentBuild"
@@ -28,7 +28,7 @@
                     <span class="title">{{ 'common_branch' | translate }}</span>
                     <span class="content">{{ currentBuild.trigger.vcs_branch}}</span>
                 </div>
-                <div class="five wide column" *ngIf="currentBuild.trigger.vcs_hash !== ''">
+                <div class="six wide column" *ngIf="currentBuild.trigger.vcs_hash !== ''">
                     <span class="title">{{ 'common_commit_title' | translate }}</span>
                     <span class="content">{{ currentBuild.trigger.vcs_hash}}</span>
                 </div>

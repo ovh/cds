@@ -101,7 +101,10 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                             this.currentBuild = build;
 
                             if (this.currentBuild.status !== 'Building') {
-                                this.duration = (new Duration((new Date(this.currentBuild.done)).getTime() - new Date(this.currentBuild.start).getTime())).toString();
+                                this.duration = (new Duration(
+                                        (new Date(this.currentBuild.done)).getTime() - new Date(this.currentBuild.start).getTime()
+                                    )
+                                ).toString();
                             }
 
                             if (build.artifacts) {

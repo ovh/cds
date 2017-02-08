@@ -6,6 +6,8 @@ import {SharedModule} from '../../../../shared/shared.module';
 import {applicationRunRouting} from './application.run.routing';
 import {ApplicationPipelineBuildComponent} from './pipeline.build.component';
 import {StepLogComponent} from './workflow/step/step.log.component';
+import {TestsResultComponent} from './test/tests.component';
+import {TestTableComponent} from './test/table/test.table.component';
 
 @NgModule({
     declarations: [
@@ -13,7 +15,9 @@ import {StepLogComponent} from './workflow/step/step.log.component';
         PipelineRunWorkflowComponent,
         ArtifactListComponent,
         CommitListComponent,
-        StepLogComponent
+        StepLogComponent,
+        TestsResultComponent,
+        TestTableComponent
     ],
     imports: [
         SharedModule,

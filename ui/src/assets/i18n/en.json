@@ -161,6 +161,14 @@
   "pipeline_type" : "Type of pipeline",
   "pipeline_updated" : "Pipeline updated",
 
+  "pipeline_run_test_total_title_s" : " tests",
+  "pipeline_run_test_total_title_s" : " test",
+  "pipeline_run_test_failed_title_s" : " tests failed",
+  "pipeline_run_test_failed_title" : " test failed",
+  "pipeline_run_test_skipped_title_s" : " tests skipped",
+  "pipeline_run_test_skipped_title_s" : " test skipped",
+  "pipeline_run_test_testcase_name" : "Testcase name",
+
   "prerequisite_parameter_name" : "parameter name",
   "prerequisite_title" : "Run prerequisite",
   "prerequisite_title_s" : "Run prerequisites",
