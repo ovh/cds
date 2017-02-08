@@ -11,7 +11,7 @@
     <a class="section" [class.active]="pipeline && !action && !version" (click)="navigateToPipeline()">{{ pipeline?.name}}</a>
 
     <i *ngIf="application && pipeline && version && version > 0" class="right chevron icon divider"></i>
-    <div *ngIf="application && pipeline && version && version > 0" class="section active">{{ 'v' + version}}</div>
+    <a *ngIf="application && pipeline && version && version > 0" class="section active" (click)="navigateToBuild()">{{ 'v' + version}}</a>
 
     <i *ngIf="action" class="right chevron icon divider"></i>
     <div class="section">{{ action?.name}}</div>
