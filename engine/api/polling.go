@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/go-gorp/gorp"
-
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"

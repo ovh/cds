@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"

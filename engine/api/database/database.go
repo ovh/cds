@@ -3,11 +3,10 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"sync"
-
-	"log"
 
 	"github.com/go-gorp/gorp"
 	"github.com/spf13/viper"

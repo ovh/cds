@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
