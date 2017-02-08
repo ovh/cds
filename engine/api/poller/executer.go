@@ -19,7 +19,14 @@ func Executer(DBFunc func() *gorp.DbMap) {
 	defer log.Critical("poller.Executer> has been exited !")
 	for {
 		time.Sleep(5 * time.Second)
-		ExecuterRun(DBFunc())
+		exs, err := ExecuterRun(DBFunc())
+		if err != nil {
+			log.Warning("poller.Executer> Error : %s", err)
+			continue
+		}
+		if len(exs) > 0 {
+			log.Notice("poller.Executer> %d has been executed", len(exs))
+		}
 	}
 }
 
