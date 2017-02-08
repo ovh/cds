@@ -14,8 +14,7 @@ func Cleaner(DBFunc func() *gorp.DbMap, nbToKeep int) {
 	defer log.Critical("poller.Cleaner> has been exited !")
 	for {
 		time.Sleep(30 * time.Minute)
-		_, err := CleanerRun(DBFunc(), nbToKeep)
-		if err != nil {
+		if _, err := CleanerRun(DBFunc(), nbToKeep); err != nil {
 			log.Warning("poller.Cleaner> Error : %s", err)
 			continue
 		}
