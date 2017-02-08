@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -39,7 +38,7 @@ func Initialize(db *gorp.DbMap, defaultGroupName string) error {
 }
 
 // DeleteGroupAndDependencies deletes group and all subsequent group_project, pipeline_project
-func DeleteGroupAndDependencies(db database.Executer, group *sdk.Group) error {
+func DeleteGroupAndDependencies(db gorp.SqlExecutor, group *sdk.Group) error {
 	err := DeleteGroupUserByGroup(db, group)
 	if err != nil {
 		log.Warning("deleteGroupAndDependencies: Cannot delete group user %s: %s\n", group.Name, err)
@@ -331,7 +330,7 @@ func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
 }
 
 // InsertUserInGroup insert user in group
-func InsertUserInGroup(db database.QueryExecuter, groupID, userID int64, admin bool) error {
+func InsertUserInGroup(db gorp.SqlExecutor, groupID, userID int64, admin bool) error {
 	query := `INSERT INTO group_user (group_id,user_id,group_admin) VALUES($1,$2,$3)`
 	_, err := db.Exec(query, groupID, userID, admin)
 	return err
@@ -350,14 +349,14 @@ func CheckUserInDefaultGroup(db gorp.SqlExecutor, userID int64) error {
 }
 
 // DeleteGroupUserByGroup Delete all user from a group
-func DeleteGroupUserByGroup(db database.Executer, group *sdk.Group) error {
+func DeleteGroupUserByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `DELETE FROM group_user WHERE group_id=$1`
 	_, err := db.Exec(query, group.ID)
 	return err
 }
 
 // UpdateGroup updates group informations in database
-func UpdateGroup(db database.Executer, g *sdk.Group, oldName string) error {
+func UpdateGroup(db gorp.SqlExecutor, g *sdk.Group, oldName string) error {
 	query := `UPDATE "group" set name=$1 WHERE name=$2`
 	_, err := db.Exec(query, g.Name, oldName)
 
@@ -401,14 +400,14 @@ func LoadGroupByProject(db gorp.SqlExecutor, project *sdk.Project) error {
 	return nil
 }
 
-func deleteGroup(db database.Executer, g *sdk.Group) error {
+func deleteGroup(db gorp.SqlExecutor, g *sdk.Group) error {
 	query := `DELETE FROM "group" WHERE id=$1`
 	_, err := db.Exec(query, g.ID)
 	return err
 }
 
 // SetUserGroupAdmin allows a user to perform operations on given group
-func SetUserGroupAdmin(db database.Executer, groupID int64, userID int64) error {
+func SetUserGroupAdmin(db gorp.SqlExecutor, groupID int64, userID int64) error {
 	query := `UPDATE "group_user" SET group_admin = true WHERE group_id = $1 AND user_id = $2`
 
 	res, errE := db.Exec(query, groupID, userID)

@@ -18,9 +18,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
@@ -173,7 +173,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	templs := []sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templs)
 
-	dbtempl := database.TemplateExtension(templ)
+	dbtempl := templateextension.TemplateExtension(templ)
 
 	if _, err := db.Delete(&dbtempl); err != nil {
 		t.Fatal(err)
@@ -460,7 +460,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	templ = sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templ)
 
-	dbtempl := database.TemplateExtension(templ)
+	dbtempl := templateextension.TemplateExtension(templ)
 	db.Delete(&dbtempl)
 }
 
@@ -577,7 +577,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	assert.Equal(t, "testtemplate", templs[1].Name)
 	assert.NotEmpty(t, templs[1].Params)
 
-	dbtempl := database.TemplateExtension(templ)
+	dbtempl := templateextension.TemplateExtension(templ)
 	db.Delete(&dbtempl)
 
 }
@@ -764,7 +764,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	t.Logf("body: %s", w.Body.String())
 
-	dbtempl := database.TemplateExtension(templ)
+	dbtempl := templateextension.TemplateExtension(templ)
 	db.Delete(&dbtempl)
 }
 

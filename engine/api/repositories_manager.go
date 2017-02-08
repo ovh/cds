@@ -504,8 +504,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	// Remove reposmanager poller
-	err = poller.DeleteAllPollers(tx, application.ID)
-	if err != nil {
+	if err := poller.DeleteAll(tx, application.ID); err != nil {
 		return err
 
 	}

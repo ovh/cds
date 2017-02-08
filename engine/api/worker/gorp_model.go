@@ -1,12 +1,16 @@
-package database
+package worker
 
 import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
+
+//WorkerModel is a gorp wrapper around sdk.Model
+type WorkerModel sdk.Model
 
 //PostInsert is a DB Hook on WorkerModel
 func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
@@ -85,4 +89,8 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	}
 
 	return nil
+}
+
+func init() {
+	gorpmapping.Register(gorpmapping.New(WorkerModel{}, "worker_model", true, "id"))
 }

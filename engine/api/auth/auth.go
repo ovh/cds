@@ -24,8 +24,8 @@ import (
 type Driver interface {
 	Open(options interface{}, store sessionstore.Store) error
 	Store() sessionstore.Store
-	Authentify(username, password string) (bool, error)
-	AuthentifyUser(user *sdk.User, password string) (bool, error)
+	Authentify(db gorp.SqlExecutor, username, password string) (bool, error)
+	AuthentifyUser(db gorp.SqlExecutor, user *sdk.User, password string) (bool, error)
 	GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, c *context.Ctx) error
 }
 

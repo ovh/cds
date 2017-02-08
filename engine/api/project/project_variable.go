@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
@@ -293,7 +292,7 @@ func DeleteVariableFromProject(db gorp.SqlExecutor, proj *sdk.Project, variableN
 }
 
 // DeleteAllVariableFromProject Delete all variables from the given project
-func DeleteAllVariableFromProject(db database.Executer, projectID int64) error {
+func DeleteAllVariableFromProject(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)
 	if err != nil {

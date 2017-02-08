@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -33,7 +32,7 @@ func LoadTestResults(db gorp.SqlExecutor, pbID int64) (sdk.Tests, error) {
 }
 
 // InsertTestResults inserts test results of a specific pipeline build in database
-func InsertTestResults(db database.Executer, pbID int64, tests sdk.Tests) error {
+func InsertTestResults(db gorp.SqlExecutor, pbID int64, tests sdk.Tests) error {
 	query := `INSERT INTO pipeline_build_test (pipeline_build_id, tests) VALUES ($1, $2)`
 
 	data, err := json.Marshal(tests)
@@ -77,7 +76,7 @@ func UpdateTestResults(db *gorp.DbMap, pbID int64, tests sdk.Tests) error {
 }
 
 // DeleteTestResults removes from database test results for a specific pipeline build
-func DeleteTestResults(db database.Executer, pbID int64) error {
+func DeleteTestResults(db gorp.SqlExecutor, pbID int64) error {
 	query := `DELETE FROM pipeline_build_test WHERE pipeline_build_id = $1`
 
 	_, err := db.Exec(query, pbID)
@@ -103,7 +102,7 @@ func DeletePipelineTestResults(db gorp.SqlExecutor, pipID int64) error {
 
 /*
 // DeleteApplicationPipelineTestResults removes from database test results for a specific pipeline linked to a specific application
-func DeleteApplicationPipelineTestResults(db database.Executer, appID int64, pipID int64) error {
+func DeleteApplicationPipelineTestResults(db gorp.SqlExecutor, appID int64, pipID int64) error {
 	query := `DELETE FROM pipeline_build_test WHERE pipeline_build_id IN
 		(SELECT id FROM pipeline_build WHERE application_id = $1 AND pipeline_id = $2)`
 

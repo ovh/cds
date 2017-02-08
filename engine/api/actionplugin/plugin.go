@@ -174,7 +174,6 @@ func Delete(db *gorp.DbMap, name string, userID int64) error {
 	defer tx.Rollback()
 
 	a, err := action.LoadPublicAction(tx, name)
-
 	if err != nil {
 		log.Warning("plugin.Delete> Action: Cannot get action %s: %s\n", name, err)
 		return err

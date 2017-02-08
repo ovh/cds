@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
-	test "github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )

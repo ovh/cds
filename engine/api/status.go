@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/internal"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -93,21 +92,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 		status = http.StatusServiceUnavailable
 	}
 	return WriteJSON(w, r, output, status)
-}
-
-func pollinStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	project := r.FormValue("project")
-	application := r.FormValue("application")
-	pipeline := r.FormValue("pipeline")
-
-	exec, err := polling.LoadExecutions(db, project, application, pipeline)
-	if err != nil {
-		log.Warning("Error %s\n", err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, exec, 200)
 }
 
 func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {

@@ -3,14 +3,13 @@ package pipeline
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // UpdateLog Update a pipeline build step log
 func UpdateLog(db gorp.SqlExecutor, l *sdk.Log) error {
-	dbmodel := database.Log(*l)
+	dbmodel := Log(*l)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err
 	}
@@ -19,7 +18,7 @@ func UpdateLog(db gorp.SqlExecutor, l *sdk.Log) error {
 
 // InsertLog insert build log into database
 func InsertLog(db gorp.SqlExecutor, l *sdk.Log) error {
-	dbmodel := database.Log(*l)
+	dbmodel := Log(*l)
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}
@@ -29,7 +28,7 @@ func InsertLog(db gorp.SqlExecutor, l *sdk.Log) error {
 
 // LoadStepLogs load log for the given pipeline build job at the given step
 func LoadStepLogs(db gorp.SqlExecutor, pipJobID int64, stepOrder int) (*sdk.Log, error) {
-	var logGorp database.Log
+	var logGorp Log
 	query := `
 		SELECT *
 		FROM pipeline_build_log
@@ -44,7 +43,7 @@ func LoadStepLogs(db gorp.SqlExecutor, pipJobID int64, stepOrder int) (*sdk.Log,
 
 // LoadLogs retrieves build logs from databse given an offset and a size
 func LoadLogs(db gorp.SqlExecutor, pipelineJobID int64) ([]sdk.Log, error) {
-	var logGorp []database.Log
+	var logGorp []Log
 	query := `
 		SELECT *
 		FROM pipeline_build_log

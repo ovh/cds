@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -110,7 +109,7 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 }
 
 // UpdateParameterInPipeline Update a parameter in the given pipeline
-func UpdateParameterInPipeline(db database.Executer, pipelineID int64, param sdk.Parameter) error {
+func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param sdk.Parameter) error {
 	/* DEPRECATED: no more password in parameter
 		clear, cipher, err := secret.EncryptS(param.Type, param.Value)
 	if err != nil {
@@ -143,7 +142,7 @@ func UpdateParameterInPipeline(db database.Executer, pipelineID int64, param sdk
 }
 
 // DeleteParameterFromPipeline Delete a parameter from the given pipeline
-func DeleteParameterFromPipeline(db database.Executer, pipelineID int64, paramName string) error {
+func DeleteParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64, paramName string) error {
 	query := `DELETE FROM pipeline_parameter WHERE pipeline_id=$1 AND name=$2`
 	_, err := db.Exec(query, pipelineID, paramName)
 	if err != nil {

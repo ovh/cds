@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/log"
@@ -78,7 +77,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 }
 
 // InsertWorker inserts worker representation into database
-func InsertWorker(db database.Executer, w *sdk.Worker, groupID int64) error {
+func InsertWorker(db gorp.SqlExecutor, w *sdk.Worker, groupID int64) error {
 	query := `INSERT INTO worker (id, name, last_beat, model, status, hatchery_id, group_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	_, err := db.Exec(query, w.ID, w.Name, time.Now(), w.Model, w.Status.String(), w.HatcheryID, groupID)
@@ -401,7 +400,7 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 }
 
 // SetStatus sets action_build_id and status to building on given worker
-func SetStatus(db database.Executer, workerID string, status sdk.Status) error {
+func SetStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 	query := `UPDATE worker SET status = $1 WHERE id = $2`
 
 	res, errE := db.Exec(query, status.String(), workerID)
@@ -414,7 +413,7 @@ func SetStatus(db database.Executer, workerID string, status sdk.Status) error {
 }
 
 // SetToBuilding sets action_build_id and status to building on given worker
-func SetToBuilding(db database.Executer, workerID string, actionBuildID int64) error {
+func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64) error {
 	query := `UPDATE worker SET status = $1, action_build_id = $2 WHERE id = $3`
 
 	res, errE := db.Exec(query, sdk.StatusBuilding.String(), actionBuildID, workerID)

@@ -790,15 +790,12 @@ func BuildExists(db gorp.SqlExecutor, appID, pipID, envID int64, trigger *sdk.Pi
 		and pipeline_id = $2
 		and environment_id = $3
 		and vcs_changes_hash = $4
-		and vcs_changes_branch = $5
-		and vcs_changes_author = $6
-	`
+		and vcs_changes_branch = $5`
 	var count int
-	if err := db.QueryRow(query, appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch, trigger.VCSChangesAuthor).Scan(&count); err != nil {
+	if err := db.QueryRow(query, appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch).Scan(&count); err != nil {
 		return false, err
 	}
 	return count > 0, nil
-
 }
 
 // GetBranchHistory  Get last build for all branches

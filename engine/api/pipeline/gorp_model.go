@@ -1,10 +1,19 @@
-package database
+package pipeline
 
 import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/sdk"
 )
+
+// PipelineBuildJob is a gorp wrapper around sdk.PipelineBuildJob
+type PipelineBuildJob sdk.PipelineBuildJob
+
+// Log is a gorp wrapper around sdk.Log
+type Log sdk.Log
 
 //PostInsert is a DB Hook on PipelineBuildJob to store jobs and params as JSON in DB
 func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
@@ -33,4 +42,11 @@ func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 		return err
 	}
 	return nil
+}
+
+func init() {
+	gorpmapping.Register(
+		gorpmapping.New(PipelineBuildJob{}, "pipeline_build_job", true, "id"),
+		gorpmapping.New(Log{}, "pipeline_build_log", true, "id"),
+	)
 }

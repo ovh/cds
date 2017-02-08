@@ -405,7 +405,7 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 	var events = []Event{}
 	var nextPage = "/repos/" + fullname + "/events"
 
-	interval := time.Duration(60.0)
+	interval := 60 * time.Second
 	for {
 		if nextPage != "" {
 			status, body, headers, err := g.get(nextPage)

@@ -11,7 +11,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -248,13 +247,13 @@ func DeleteUserWithDependencies(db gorp.SqlExecutor, u *sdk.User) error {
 	return nil
 }
 
-func deleteUserFromUserGroup(db database.Executer, u *sdk.User) error {
+func deleteUserFromUserGroup(db gorp.SqlExecutor, u *sdk.User) error {
 	query := `DELETE FROM "group_user" WHERE user_id=$1`
 	_, err := db.Exec(query, u.ID)
 	return err
 }
 
-func deleteUser(db database.Executer, u *sdk.User) error {
+func deleteUser(db gorp.SqlExecutor, u *sdk.User) error {
 	query := `DELETE FROM "user" WHERE id=$1`
 	_, err := db.Exec(query, u.ID)
 	return err

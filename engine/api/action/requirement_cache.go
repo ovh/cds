@@ -7,16 +7,15 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 //RequirementsCacheLoader set all action requirement in the cache
-func RequirementsCacheLoader(delay time.Duration) {
+func RequirementsCacheLoader(delay time.Duration, DBFunc func() *gorp.DbMap) {
 	for {
 		time.Sleep(delay * time.Second)
-		db := database.DBMap(database.DB())
+		db := DBFunc()
 		if db != nil {
 			var mayIWork string
 			loaderKey := cache.Key("action", "requirements", "loading")

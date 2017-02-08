@@ -1,12 +1,19 @@
-package database
+package scheduler
 
 import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
+
+//PipelineScheduler is a gorp wrapper around sdk.PipelineScheduler
+type PipelineScheduler sdk.PipelineScheduler
+
+//PipelineSchedulerExecution is a gorp wrapper around sdk.PipelineSchedulerExecution
+type PipelineSchedulerExecution sdk.PipelineSchedulerExecution
 
 //PostInsert is a DB Hook on PipelineScheduler to store params as JSON in DB
 func (p *PipelineScheduler) PostInsert(s gorp.SqlExecutor) error {
@@ -79,4 +86,11 @@ func (p *PipelineScheduler) PostGet(s gorp.SqlExecutor) error {
 	}
 
 	return nil
+}
+
+func init() {
+	gorpmapping.Register(
+		gorpmapping.New(PipelineScheduler{}, "pipeline_scheduler", true, "id"),
+		gorpmapping.New(PipelineSchedulerExecution{}, "pipeline_scheduler_execution", true, "id"),
+	)
 }

@@ -1,10 +1,16 @@
-package database
+package templateextension
 
 import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/sdk"
 )
+
+//TemplateExtension is a gorp wrapper around sdk.TemplateExtension
+type TemplateExtension sdk.TemplateExtension
 
 //PostInsert is a DB Hook on TemplateExtension to store params as JSON in DB
 func (t *TemplateExtension) PostInsert(s gorp.SqlExecutor) error {
@@ -70,5 +76,8 @@ func (t *TemplateExtension) PreDelete(s gorp.SqlExecutor) error {
 		return err
 	}
 	return nil
+}
 
+func init() {
+	gorpmapping.Register(gorpmapping.New(TemplateExtension{}, "template", true, "id"))
 }

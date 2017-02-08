@@ -3,7 +3,6 @@ package group
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -45,14 +44,14 @@ func IsInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64) (bool, e
 }
 
 // InsertGroupInEnvironment add permissions on Environment to Group
-func InsertGroupInEnvironment(db database.Executer, environmentID, groupID int64, role int) error {
+func InsertGroupInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64, role int) error {
 	query := `INSERT INTO environment_group (environment_id, group_id,role) VALUES($1,$2,$3)`
 	_, err := db.Exec(query, environmentID, groupID, role)
 	return err
 }
 
 // InsertGroupsInEnvironment Link the given groups and the given environment
-func InsertGroupsInEnvironment(db database.Executer, groupPermission []sdk.GroupPermission, envID int64) error {
+func InsertGroupsInEnvironment(db gorp.SqlExecutor, groupPermission []sdk.GroupPermission, envID int64) error {
 	for _, g := range groupPermission {
 		if err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission); err != nil {
 			log.Warning("InsertGroupsInEnvironment> unable to insert group %d %s on env %d : %s", g.Group.ID, g.Group.Name, envID, err)
@@ -63,7 +62,7 @@ func InsertGroupsInEnvironment(db database.Executer, groupPermission []sdk.Group
 }
 
 // UpdateGroupRoleInEnvironment update permission on environment
-func UpdateGroupRoleInEnvironment(db database.Executer, key, envName, groupName string, role int) error {
+func UpdateGroupRoleInEnvironment(db gorp.SqlExecutor, key, envName, groupName string, role int) error {
 	query := `UPDATE environment_group
 	          SET role=$1
 	          FROM environment, project, "group"
@@ -88,7 +87,7 @@ func UpdateGroupRoleInEnvironment(db database.Executer, key, envName, groupName 
 }
 
 // DeleteAllGroupFromEnvironment remove all group from the given environment
-func DeleteAllGroupFromEnvironment(db database.Executer, environmentID int64) error {
+func DeleteAllGroupFromEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 	// Update environment
 	query := `
 		UPDATE environment 
@@ -106,7 +105,7 @@ func DeleteAllGroupFromEnvironment(db database.Executer, environmentID int64) er
 }
 
 // DeleteGroupFromEnvironment removes access to environment to group members
-func DeleteGroupFromEnvironment(db database.Executer, key, envName, groupName string) error {
+func DeleteGroupFromEnvironment(db gorp.SqlExecutor, key, envName, groupName string) error {
 	// Update project
 	query := `
 		UPDATE project 
@@ -129,7 +128,7 @@ func DeleteGroupFromEnvironment(db database.Executer, key, envName, groupName st
 	return err
 }
 
-func deleteGroupEnvironmentByGroup(db database.Executer, group *sdk.Group) error {
+func deleteGroupEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `DELETE FROM environment_group WHERE group_id=$1`
 	_, err := db.Exec(query, group.ID)
 	return err

@@ -3,7 +3,6 @@ package group
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,28 +29,28 @@ func LoadAllProjectGroupByRole(db gorp.SqlExecutor, projectID int64, role int) (
 }
 
 // DeleteGroupFromProject  Delete the group from the given project
-func DeleteGroupFromProject(db database.Executer, projectID, groupID int64) error {
+func DeleteGroupFromProject(db gorp.SqlExecutor, projectID, groupID int64) error {
 	query := `DELETE FROM project_group WHERE project_id=$1 AND group_id=$2`
 	_, err := db.Exec(query, projectID, groupID)
 	return err
 }
 
 // UpdateGroupRoleInProject Update group role for the given project
-func UpdateGroupRoleInProject(db database.Executer, projectID, groupID int64, role int) error {
+func UpdateGroupRoleInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
 	query := `UPDATE project_group SET role=$1 WHERE project_id=$2 AND group_id=$3`
 	_, err := db.Exec(query, role, projectID, groupID)
 	return err
 }
 
 // InsertGroupInProject Attach a group to a project
-func InsertGroupInProject(db database.Executer, projectID, groupID int64, role int) error {
+func InsertGroupInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
 	query := `INSERT INTO project_group (project_id, group_id,role) VALUES($1,$2,$3)`
 	_, err := db.Exec(query, projectID, groupID, role)
 	return err
 }
 
 // DeleteGroupProjectByProject removes group associated with project
-func DeleteGroupProjectByProject(db database.Executer, projectID int64) error {
+func DeleteGroupProjectByProject(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_group WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)
 	if err != nil {
@@ -67,7 +66,7 @@ func DeleteGroupProjectByProject(db database.Executer, projectID int64) error {
 	return err
 }
 
-func deleteGroupProjectByGroup(db database.Executer, group *sdk.Group) error {
+func deleteGroupProjectByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `DELETE FROM project_group WHERE group_id=$1`
 	_, err := db.Exec(query, group.ID)
 	if err != nil {

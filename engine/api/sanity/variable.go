@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"

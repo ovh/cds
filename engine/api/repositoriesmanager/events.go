@@ -32,7 +32,7 @@ func ReceiveEvents() {
 
 func retryEvent(e *sdk.Event) {
 	e.Attempts++
-	if e.Attempts >= 10 {
+	if e.Attempts >= 3 {
 		log.Critical("ReceiveEvents> Aborting event processing %v", e)
 		return
 	}

@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"

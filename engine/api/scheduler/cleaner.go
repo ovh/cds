@@ -1,30 +1,26 @@
 package scheduler
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 //Cleaner is the cleaner main goroutine
-func Cleaner(nbToKeep int) {
+func Cleaner(DBFunc func() *gorp.DbMap, nbToKeep int) {
 	for {
-		CleanerRun(nbToKeep)
+		CleanerRun(DBFunc(), nbToKeep)
 		time.Sleep(10 * time.Minute)
 	}
 }
 
 //CleanerRun is the core function of the cleaner goroutine
-func CleanerRun(nbToKeep int) ([]sdk.PipelineSchedulerExecution, error) {
+func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution, error) {
 	log.Debug("CleanerRun> Deleting old executions...")
-	_db := database.DB()
-	if _db == nil {
-		return nil, fmt.Errorf("Database is unavailable")
-	}
-	db := database.DBMap(_db)
+
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("CleanerRun> Unable to start a transaction : %s", err)

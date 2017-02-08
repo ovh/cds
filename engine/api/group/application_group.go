@@ -3,7 +3,6 @@ package group
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,7 +29,7 @@ func LoadAllApplicationGroupByRole(db gorp.SqlExecutor, applicationID int64, rol
 }
 
 // InsertGroupsInApplication Link the given groups and the given application
-func InsertGroupsInApplication(db database.Executer, groupPermission []sdk.GroupPermission, applicationID int64) error {
+func InsertGroupsInApplication(db gorp.SqlExecutor, groupPermission []sdk.GroupPermission, applicationID int64) error {
 	for _, g := range groupPermission {
 		err := InsertGroupInApplication(db, applicationID, g.Group.ID, g.Permission)
 		if err != nil {
@@ -53,14 +52,14 @@ func CheckGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64) 
 }
 
 // InsertGroupInApplication add permissions on Application to Group
-func InsertGroupInApplication(db database.Executer, applicationID, groupID int64, role int) error {
+func InsertGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64, role int) error {
 	query := `INSERT INTO application_group (application_id, group_id,role) VALUES($1,$2,$3)`
 	_, err := db.Exec(query, applicationID, groupID, role)
 	return err
 }
 
 // UpdateGroupRoleInApplication update permission on application
-func UpdateGroupRoleInApplication(db database.Executer, key, appName, groupName string, role int) error {
+func UpdateGroupRoleInApplication(db gorp.SqlExecutor, key, appName, groupName string, role int) error {
 	query := `UPDATE application_group
 	          SET role=$1
 	          FROM application, project, "group"
@@ -71,7 +70,7 @@ func UpdateGroupRoleInApplication(db database.Executer, key, appName, groupName 
 }
 
 // DeleteAllGroupFromApplication remove all group from the given application
-func DeleteAllGroupFromApplication(db database.Executer, applicationID int64) error {
+func DeleteAllGroupFromApplication(db gorp.SqlExecutor, applicationID int64) error {
 	query := `DELETE FROM application_group
 		  WHERE application_id=$1`
 	_, err := db.Exec(query, applicationID)
@@ -79,7 +78,7 @@ func DeleteAllGroupFromApplication(db database.Executer, applicationID int64) er
 }
 
 // DeleteGroupFromApplication removes access to application to group members
-func DeleteGroupFromApplication(db database.Executer, key, appName, groupName string) error {
+func DeleteGroupFromApplication(db gorp.SqlExecutor, key, appName, groupName string) error {
 	query := `DELETE FROM application_group
 		  USING application, project, "group"
 		  WHERE application.id = application_group.application_id AND application.project_id = project.id AND "group".id = application_group.group_id
@@ -88,7 +87,7 @@ func DeleteGroupFromApplication(db database.Executer, key, appName, groupName st
 	return err
 }
 
-func deleteGroupApplicationByGroup(db database.Executer, group *sdk.Group) error {
+func deleteGroupApplicationByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `DELETE FROM application_group WHERE group_id=$1`
 	_, err := db.Exec(query, group.ID)
 	return err
