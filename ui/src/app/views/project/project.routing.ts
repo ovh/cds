@@ -12,8 +12,8 @@ const projectRoutes: Routes = [
         children: [
             { path: '', component: ProjectAddComponent },
             { path: ':key', component: ProjectShowComponent },
-            { path: ':key/application', loadChildren: 'app/views/project/application/application.module#ApplicationModule'},
-            { path: ':key/pipeline', loadChildren: 'app/views/project/pipeline/pipeline.module#PipelineModule'}
+            { path: ':key/application', loadChildren: 'app/views/application/application.module#ApplicationModule'},
+            { path: ':key/pipeline', loadChildren: 'app/views/pipeline/pipeline.module#PipelineModule'}
         ]
     }
 ];
