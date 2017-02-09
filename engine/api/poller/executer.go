@@ -25,7 +25,7 @@ func Executer(DBFunc func() *gorp.DbMap) {
 			continue
 		}
 		if len(exs) > 0 {
-			log.Notice("poller.Executer> %d has been executed", len(exs))
+			log.Info("poller.Executer> %d has been executed", len(exs))
 		}
 	}
 }
