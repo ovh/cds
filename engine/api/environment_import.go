@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -74,6 +73,18 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	allMsg := []msg.Message{}
 	msgChan := make(chan msg.Message, 10)
+	done := make(chan bool)
+
+	go func() {
+		for {
+			msg, ok := <-msgChan
+			log.Debug("importNewEnvironmentHandler >>> %s", msg)
+			allMsg = append(allMsg, msg)
+			if !ok {
+				done <- true
+			}
+		}
+	}()
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
@@ -89,16 +100,10 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 
 	close(msgChan)
-
-	for msg := range msgChan {
-		log.Debug("importNewEnvironmentHandler >>> %s", msg)
-		allMsg = append(allMsg, msg)
-	}
+	<-done
 
 	al := r.Header.Get("Accept-Language")
 	msgListString := []string{}
-
-	fmt.Println(allMsg)
 
 	for _, m := range allMsg {
 		s := m.String(al)
@@ -191,11 +196,16 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	allMsg := []msg.Message{}
 	msgChan := make(chan msg.Message, 10)
+	done := make(chan bool)
 
 	go func() {
-		for msg := range msgChan {
+		for {
+			msg, ok := <-msgChan
 			log.Debug("importIntoEnvironmentHandler >>> %s", msg)
 			allMsg = append(allMsg, msg)
+			if !ok {
+				done <- true
+			}
 		}
 	}()
 
@@ -205,11 +215,10 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	}
 
 	close(msgChan)
+	<-done
 
 	al := r.Header.Get("Accept-Language")
 	msgListString := []string{}
-
-	fmt.Println(allMsg)
 
 	for _, m := range allMsg {
 		s := m.String(al)
