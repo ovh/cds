@@ -463,26 +463,24 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 
 	lastCommitPerBranch := map[string]sdk.VCSCommit{}
 	for _, e := range events {
-		if e.Type == "PushEvent" {
-			branch := strings.Replace(e.Payload.Ref, "refs/heads/", "", 1)
-			for _, c := range e.Payload.Commits {
-				commit := sdk.VCSCommit{
-					Hash:      c.Sha,
-					Message:   c.Message,
-					Timestamp: e.CreatedAt.Unix() * 1000,
-					URL:       c.URL,
-					Author: sdk.VCSAuthor{
-						DisplayName: c.Author.Name,
-						Email:       c.Author.Email,
-						Name:        e.Actor.DisplayLogin,
-						Avatar:      e.Actor.AvatarURL,
-					},
-				}
-				l, b := lastCommitPerBranch[branch]
-				if !b || l.Timestamp < commit.Timestamp {
-					lastCommitPerBranch[branch] = commit
-					continue
-				}
+		branch := strings.Replace(e.Payload.Ref, "refs/heads/", "", 1)
+		for _, c := range e.Payload.Commits {
+			commit := sdk.VCSCommit{
+				Hash:      c.Sha,
+				Message:   c.Message,
+				Timestamp: e.CreatedAt.Unix() * 1000,
+				URL:       c.URL,
+				Author: sdk.VCSAuthor{
+					DisplayName: c.Author.Name,
+					Email:       c.Author.Email,
+					Name:        e.Actor.DisplayLogin,
+					Avatar:      e.Actor.AvatarURL,
+				},
+			}
+			l, b := lastCommitPerBranch[branch]
+			if !b || l.Timestamp < commit.Timestamp {
+				lastCommitPerBranch[branch] = commit
+				continue
 			}
 		}
 	}
