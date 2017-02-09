@@ -792,7 +792,7 @@ func DeleteTrigger(db gorp.SqlExecutor, triggerID int64) error {
 }
 
 // ProcessTriggerParameters replaces all placeholders in trigger before execution
-func ProcessTriggerParameters(t sdk.PipelineTrigger, pbParams []sdk.Parameter) ([]sdk.Parameter, error) {
+func ProcessTriggerParameters(t sdk.PipelineTrigger, pbParams []sdk.Parameter) []sdk.Parameter {
 
 	for {
 		replaced := false
@@ -813,7 +813,7 @@ func ProcessTriggerParameters(t sdk.PipelineTrigger, pbParams []sdk.Parameter) (
 		}
 	}
 
-	return t.Parameters, nil
+	return t.Parameters
 }
 
 //ProcessTriggerExpectedValue processes prerequisites expected values
@@ -840,10 +840,7 @@ func ProcessTriggerExpectedValue(payload string, pb sdk.PipelineBuild) string {
 func CheckPrerequisites(t sdk.PipelineTrigger, pb sdk.PipelineBuild) (bool, error) {
 
 	// Process parameters
-	parameters, err := ProcessTriggerParameters(t, pb.Parameters)
-	if err != nil {
-		return false, err
-	}
+	parameters := ProcessTriggerParameters(t, pb.Parameters)
 
 	// Check conditions
 	prerequisitesOK := true

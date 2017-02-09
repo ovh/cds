@@ -133,15 +133,20 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 
 	if err := pipeline.UpdatePipelineBuildStatusAndStage(tx, &pb, pbNewStatus); err != nil {
 		log.Warning("RunActions> Cannot update UpdatePipelineBuildStatusAndStage on pb %d: %s\n", pb.ID, err)
+		return
 	}
 
 	// If pipeline build succeed, run trigger
 	if pb.Status == sdk.StatusSuccess {
-		pipelineBuildEnd(tx, pb)
+		if err := pipelineBuildEnd(tx, pb); err != nil {
+			log.Warning("RunActions> Cannot execute pipelineBuildEnd: %s", err)
+			return
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("RunActions> Cannot commit tx on pb %d: %s\n", pb.ID, err)
+		return
 	}
 }
 
@@ -251,21 +256,21 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	return stageEnd, nil
 }
 
-func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) {
+func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) error {
 	// run trigger
 	triggers, err := trigger.LoadAutomaticTriggersAsSource(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if err != nil {
 		pqerr, ok := err.(*pq.Error)
 		// Cannot get lock (FOR UPDATE NOWAIT), someone else is on it
 		if ok && pqerr.Code == "55P03" {
-			return
+			return pqerr
 		}
 		if ok {
 			log.Warning("pipelineBuildEnd> Cannot load trigger: %s (%s)\n", pqerr, pqerr.Code)
-			return
+			return pqerr
 		}
 		log.Warning("pipelineBuildEnd> Cannot load trigger for %s-%s-%s[%s] (%d, %d, %d): %s\n", pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.Environment.Name, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, err)
-		return
+		return err
 	}
 
 	if len(triggers) > 0 {
@@ -287,18 +292,14 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) {
 
 		parameters := t.Parameters
 		// Add parent build info
-		parentParams, err := ParentBuildInfos(&pb)
-		if err != nil {
-			log.Warning("pipelineBuildEnd> Cannot create parent build infos: %s\n", err)
-			continue
-		}
+		parentParams := ParentBuildInfos(&pb)
 		parameters = append(parameters, parentParams...)
 
 		// Start build
 		app, err := application.LoadApplicationByName(tx, t.DestProject.Key, t.DestApplication.Name, application.WithClearPassword())
 		if err != nil {
 			log.Warning("pipelineBuildEnd> Cannot load destination application: %s\n", err)
-			continue
+			return err
 		}
 
 		log.Info("Prerequisites OK for trigger %s/%s/%s-%s -> %s/%s/%s-%s (version %d)\n", t.SrcProject.Key, t.SrcApplication.Name, t.SrcPipeline.Name, t.SrcEnvironment.Name, t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name, pb.Version)
@@ -315,13 +316,14 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) {
 		_, err = RunPipeline(tx, t.DestProject.Key, app, t.DestPipeline.Name, t.DestEnvironment.Name, parameters, pb.Version, trigger, &sdk.User{Admin: true})
 		if err != nil {
 			log.Warning("pipelineScheduler> Cannot run pipeline on project %s, application %s, pipeline %s, env %s: %s\n", t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name, err)
-			continue
+			return err
 		}
 	}
+	return nil
 }
 
 // ParentBuildInfos fetch parent build data and injects them as {{.cds.parent.*}} parameters
-func ParentBuildInfos(pb *sdk.PipelineBuild) ([]sdk.Parameter, error) {
+func ParentBuildInfos(pb *sdk.PipelineBuild) []sdk.Parameter {
 	var params []sdk.Parameter
 
 	p := sdk.Parameter{
@@ -352,7 +354,7 @@ func ParentBuildInfos(pb *sdk.PipelineBuild) ([]sdk.Parameter, error) {
 	}
 	params = append(params, p)
 
-	return params, nil
+	return params
 }
 
 func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb sdk.PipelineBuild) ([]sdk.Parameter, error) {

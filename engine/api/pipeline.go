@@ -309,11 +309,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 			log.Warning("runPipelineHandler> Cannot load parent pipeline build: %s\n", err)
 			return err
 		}
-		parentParams, err := queue.ParentBuildInfos(pb)
-		if err != nil {
-			log.Warning("runPipelineHandler> Cannot create parent build infos: %s\n", err)
-			return err
-		}
+		parentParams := queue.ParentBuildInfos(pb)
 		request.Params = append(request.Params, parentParams...)
 
 		// Whether or not use parent build version is checked
