@@ -378,7 +378,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 
 	//7. Update Variable
 	v.Value = "new bar"
-	if err := environment.UpdateVariable(db, env.ID, v); err != nil {
+	if err := environment.UpdateVariable(db, env.ID, &v); err != nil {
 		t.Fail()
 		return
 	}
