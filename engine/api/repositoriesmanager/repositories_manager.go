@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
@@ -104,7 +105,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		stash.DisableSetStatus = options.DisableStashSetStatus
 
 		if stash.DisableSetStatus {
-			log.Debug("RepositoriesManager> ⚠ Stash Statuses are disabled")
+			log.Info("RepositoriesManager> ⚠ Stash Statuses are disabled")
 		}
 
 		rm := sdk.RepositoriesManager{
@@ -171,11 +172,11 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		github.DisableStatusURL = options.DisableGithubStatusURL
 
 		if github.DisableSetStatus {
-			log.Debug("RepositoriesManager> ⚠ Github Statuses are disabled")
+			log.Info("RepositoriesManager> ⚠ Github Statuses are disabled")
 		}
 
 		if github.DisableStatusURL {
-			log.Debug("RepositoriesManager> ⚠ Github Statuses URL are disabled")
+			log.Info("RepositoriesManager> ⚠ Github Statuses URL are disabled")
 		}
 
 		if withHook == nil {

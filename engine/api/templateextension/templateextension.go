@@ -17,7 +17,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -194,7 +193,7 @@ func Apply(db gorp.SqlExecutor, templ template.Interface, proj *sdk.Project, par
 
 //All returns all template extensions
 func All(dbmap *gorp.DbMap) ([]sdk.TemplateExtension, error) {
-	tmpls := []database.TemplateExtension{}
+	tmpls := []TemplateExtension{}
 	_, err := dbmap.Select(&tmpls, "select * from template order by id")
 	if err != nil {
 		log.Warning("All> Error: %s", err)
@@ -227,7 +226,7 @@ func All(dbmap *gorp.DbMap) ([]sdk.TemplateExtension, error) {
 //LoadByID returns a templateextension from its ID
 func LoadByID(dbmap *gorp.DbMap, id int64) (*sdk.TemplateExtension, error) {
 	//Find it
-	templ := database.TemplateExtension{}
+	templ := TemplateExtension{}
 	if err := dbmap.SelectOne(&templ, "select * from template where id = $1", id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNotFound
@@ -242,7 +241,7 @@ func LoadByID(dbmap *gorp.DbMap, id int64) (*sdk.TemplateExtension, error) {
 
 //Insert inserts a new template
 func Insert(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
-	templ := database.TemplateExtension(*sdktmpl)
+	templ := TemplateExtension(*sdktmpl)
 	//Get the database map
 	if err := dbmap.Insert(&templ); err != nil {
 		return err
@@ -255,7 +254,7 @@ func Insert(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
 
 //Update updates the provided template given it ID
 func Update(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
-	templ := database.TemplateExtension(*sdktmpl)
+	templ := TemplateExtension(*sdktmpl)
 	//Get the database map
 	_, err := dbmap.Update(&templ)
 	sdktmpl.Actions = templ.Actions
@@ -265,7 +264,7 @@ func Update(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
 
 //Delete deletes the provided template given it ID
 func Delete(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
-	templ := database.TemplateExtension(*sdktmpl)
+	templ := TemplateExtension(*sdktmpl)
 	//Get the database map
 	n, err := dbmap.Delete(&templ)
 	if n == 0 {
@@ -278,7 +277,7 @@ func Delete(dbmap *gorp.DbMap, sdktmpl *sdk.TemplateExtension) error {
 func LoadByName(dbmap gorp.SqlExecutor, name string) (*sdk.TemplateExtension, error) {
 	log.Debug("Loading template %s", name)
 	// Get template from DB
-	tmpl := database.TemplateExtension{}
+	tmpl := TemplateExtension{}
 	if err := dbmap.SelectOne(&tmpl, "select * from template where name = $1", name); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrUnknownTemplate

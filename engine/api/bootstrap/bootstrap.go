@@ -1,18 +1,17 @@
 package bootstrap
 
 import (
-	"database/sql"
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 )
 
 //InitiliazeDB inits the database
-func InitiliazeDB(db *sql.DB) error {
-	dbGorp := database.DBMap(db)
+func InitiliazeDB(DBFunc func() *gorp.DbMap) error {
+	dbGorp := DBFunc()
 	if err := artifact.CreateBuiltinArtifactActions(dbGorp); err != nil {
 		log.Critical("Cannot setup builtin Artifact actions: %s\n", err)
 		return err

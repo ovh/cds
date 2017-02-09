@@ -9,7 +9,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -17,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//IsAttached checks if an application is attach to a pipeline given its name
+// IsAttached checks if an application is attach to a pipeline given its name
 func IsAttached(db gorp.SqlExecutor, projectID, appID int64, pipelineName string) (bool, error) {
 	query := `SELECT count(1) 
 		from application_pipeline, pipeline 
@@ -33,7 +32,7 @@ func IsAttached(db gorp.SqlExecutor, projectID, appID int64, pipelineName string
 }
 
 // AttachPipeline Attach a pipeline to an application
-func AttachPipeline(db database.Executer, appID, pipelineID int64) error {
+func AttachPipeline(db gorp.SqlExecutor, appID, pipelineID int64) error {
 	query := `INSERT INTO application_pipeline(application_id, pipeline_id, args) VALUES($1, $2, $3)`
 	_, err := db.Exec(query, appID, pipelineID, "[]")
 	if err != nil {

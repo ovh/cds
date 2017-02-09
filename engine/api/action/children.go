@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -42,7 +41,7 @@ func insertActionChild(db gorp.SqlExecutor, actionID int64, child sdk.Action, ex
 	return nil
 }
 
-func insertChildActionParameter(db database.Executer, edgeID, parentID, childID int64, param sdk.Parameter) error {
+func insertChildActionParameter(db gorp.SqlExecutor, edgeID, parentID, childID int64, param sdk.Parameter) error {
 
 	query := `INSERT INTO action_edge_parameter (
 					action_edge_id,

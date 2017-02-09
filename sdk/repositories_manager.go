@@ -31,11 +31,26 @@ type RepositoriesManager struct {
 
 //RepositoryPoller is an alternative to hooks
 type RepositoryPoller struct {
-	Name         string      `json:"name"`
-	Application  Application `json:"application"`
-	Pipeline     Pipeline    `json:"pipeline"`
-	Enabled      bool        `json:"enabled"`
-	DateCreation time.Time   `json:"date_creation"`
+	Name          string      `json:"name" db:"name"`
+	ApplicationID int64       `json:"-" db:"application_id"`
+	PipelineID    int64       `json:"-" db:"pipeline_id"`
+	Application   Application `json:"application" db:"-"`
+	Pipeline      Pipeline    `json:"pipeline" db:"-"`
+	Enabled       bool        `json:"enabled" db:"enabled"`
+	DateCreation  time.Time   `json:"date_creation" db:"date_creation"`
+}
+
+//RepositoryPollerExecution is a polling execution
+type RepositoryPollerExecution struct {
+	ID                    int64            `json:"id" db:"id"`
+	ApplicationID         int64            `json:"-" db:"application_id"`
+	PipelineID            int64            `json:"-" db:"pipeline_id"`
+	ExecutionPlannedDate  time.Time        `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
+	ExecutionDate         *time.Time       `json:"execution_date" db:"execution_date"`
+	Executed              bool             `json:"executed" db:"executed"`
+	PipelineBuildVersions map[string]int64 `json:"pipeline_build_version" db:"-"`
+	PushEvents            []VCSPushEvent   `json:"push_events" db:"-"`
+	Error                 string           `json:"error" db:"error"`
 }
 
 //RepositoriesManagerDriver is the consumer interface

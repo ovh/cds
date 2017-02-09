@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -18,13 +17,13 @@ type awolPipelineBuildJob struct {
 // AWOLPipelineKiller will search in database for actions :
 // - Having building status
 // - Without any logs ouput in the last 15 minutes
-func AWOLPipelineKiller() {
+func AWOLPipelineKiller(DBFunc func() *gorp.DbMap) {
 	// If this goroutine exits, then it's a crash
 	defer log.Fatalf("Goroutine of pipeline.AWOLPipelineKiller exited - Exit CDS Engine")
 
 	for {
 		time.Sleep(1 * time.Minute)
-		db := database.DBMap(database.DB())
+		db := DBFunc()
 
 		if db != nil {
 			pbJobDatas, err := loadAWOLPipelineBuildJob(db)

@@ -1,0 +1,117 @@
+@import '../../../../../../../common';
+$itemWidth : 378px;
+.ui.one.column.grid.hierarchical .column {
+    padding-bottom: 0px;
+}
+
+.ui.one.column.grid.horizontal {
+  display: inline-block;
+}
+
+.ui.one.column.grid.vertical {
+  margin-left: auto;
+  margin-right: auto;
+
+  .column {
+    .ui.segment {
+      margin-bottom: 0px;
+    }
+  }
+}
+
+
+.ui.one.column.grid {
+  width: $itemWidth;
+
+  .column {
+    .icon {
+      color: black;
+    }
+
+    .actionMenu {
+      position:  absolute;
+      top: 33px;
+      right: 30px;
+    }
+
+    .ui.raised.segment {
+      width: 100%;
+      min-height: 45px;
+      z-index: 10;
+      padding-top: 18px;
+      padding-bottom: 7px;
+      white-space: initial;
+
+      i.run {
+        font-size: 2em;
+      }
+
+      // application label
+      .application.flag {
+        font-size: 0.7em;
+        position: absolute;
+        right: 0;
+        left: 0;
+        top: -10px;
+        text-align: center;
+
+        .ui.label {
+          height:21px;
+          padding-top: 5px;
+        }
+      }
+
+      // RIbbon
+      .ui.ribbon {
+        font-size: 0.7em;
+        position: absolute;
+        top: -10px;
+      }
+
+      .ui.left.ribbon {
+        margin-left: 14px;
+      }
+
+      .ui.right.ribbon {
+        margin-left: -14px;
+        min-width: 100px;
+      }
+
+      .ui.circular.label {
+        margin-top: -2px;
+      }
+
+      // Loader
+      .ui.medium.loader {
+        margin-top: -5px;
+        .ui.circular.label {
+          margin-top: 4px;
+        }
+      }
+      .ui.large.loader {
+        margin-top: -13px;
+        .ui.circular.label {
+          margin-top: 12px;
+        }
+      }
+      .ui.huge.loader {
+        margin-top: -16px;
+        .ui.circular.label {
+          margin-top: 15px;
+        }
+      }
+      .ui.massive.loader {
+        margin-top: -16px;
+        .ui.circular.label {
+          margin-top: 15px;
+        }
+      }
+      // End loader
+    }
+  }
+}
+
+
+
+
+

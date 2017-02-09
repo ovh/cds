@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -53,7 +52,7 @@ func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 
 	}
 
-	if err := processHook(rh); err != nil {
+	if err := processHook(db, rh); err != nil {
 		hook.Recovery(rh, err)
 		return err
 
@@ -195,12 +194,12 @@ func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 }
 
 //hookRecoverer is the go-routine which catches on-error hook
-func hookRecoverer() {
+func hookRecoverer(DBFunc func() *gorp.DbMap) {
 	for {
 		h := hook.ReceivedHook{}
 		cache.Dequeue("hook:recovery", &h)
 		if h.Repository != "" {
-			if err := processHook(h); err != nil {
+			if err := processHook(DBFunc(), h); err != nil {
 				hook.Recovery(h, err)
 			}
 		}
@@ -209,8 +208,7 @@ func hookRecoverer() {
 }
 
 //processHook is the core function for hook processing
-func processHook(h hook.ReceivedHook) error {
-	db := database.DBMap(database.DB())
+func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 	if db == nil {
 		return fmt.Errorf("database not available")
 	}

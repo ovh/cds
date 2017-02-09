@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/database"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -13,11 +13,11 @@ const (
 	maxVersion = 10
 )
 
-func auditCleanerRoutine() {
+func auditCleanerRoutine(DBFunc func() *gorp.DbMap) {
 	defer sdk.Exit("AuditCleanerRoutine exited")
 
 	for {
-		db := database.DBMap(database.DB())
+		db := DBFunc()
 		if db != nil {
 			err := actionAuditCleaner(db)
 			if err != nil {

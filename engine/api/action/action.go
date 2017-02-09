@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -119,20 +118,31 @@ func LoadPipelineActionByID(db gorp.SqlExecutor, project, pip string, actionID i
 	JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
 	JOIN project ON project.id = pipeline.project_id
 	WHERE action.id = $1 AND pipeline.name = $2 AND project.projectkey = $3`
-	return loadAction(db, db.QueryRow(query, actionID, pip, project))
+	a, err := loadActions(db, query, actionID, pip, project)
+	if err != nil {
+		return nil, err
+	}
+	return &a[0], nil
 }
 
 // LoadPublicAction load an action from database
 func LoadPublicAction(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
 	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE action.name = $1 AND public = true`
-	return loadAction(db, db.QueryRow(query, name))
+	a, err := loadActions(db, query, name)
+	if err != nil {
+		return nil, err
+	}
+	return &a[0], nil
 }
 
 // LoadActionByID retrieves in database the action with given id
 func LoadActionByID(db gorp.SqlExecutor, actionID int64) (*sdk.Action, error) {
 	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE action.id = $1`
-	//return loadAction(db, db.QueryRow(query, actionID), args...)
-	return loadAction(db, db.QueryRow(query, actionID))
+	a, err := loadActions(db, query, actionID)
+	if err != nil {
+		return nil, err
+	}
+	return &a[0], nil
 }
 
 // LoadActionByPipelineActionID load an action from database
@@ -141,65 +151,76 @@ func LoadActionByPipelineActionID(db gorp.SqlExecutor, pipelineActionID int64) (
 	          FROM action
 	          JOIN pipeline_action ON pipeline_action.action_id = action.id
 	          WHERE pipeline_action.id = $1`
-
-	//return loadAction(db, db.QueryRow(query, pipelineActionID), args...)
-	return loadAction(db, db.QueryRow(query, pipelineActionID))
+	a, err := loadActions(db, query, pipelineActionID)
+	if err != nil {
+		return nil, err
+	}
+	return &a[0], nil
 }
 
 // LoadActions load all actions from database
 func LoadActions(db gorp.SqlExecutor) ([]sdk.Action, error) {
-	var acts []sdk.Action
-
 	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE public = true ORDER BY name`
-	rows, err := db.Query(query)
+	return loadActions(db, query)
+}
+
+func loadActions(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Action, error) {
+	var acts []sdk.Action
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		a, err := loadAction(db, rows)
-		if err != nil {
+		a := sdk.Action{}
+		var lastModified time.Time
+		if err := rows.Scan(&a.ID, &a.Name, &a.Description, &a.Type, &lastModified, &a.Enabled); err != nil {
+			if err == sql.ErrNoRows {
+				return nil, sdk.ErrNoAction
+			}
+			return nil, fmt.Errorf("cannot Scan> %s", err)
+		}
+		a.LastModified = lastModified.Unix()
+		acts = append(acts, a)
+	}
+	rows.Close()
+
+	if len(acts) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	for i := range acts {
+		if err := loadActionDependencies(db, &acts[i]); err != nil {
 			return nil, err
 		}
-		acts = append(acts, *a)
 	}
 	return acts, nil
 }
 
-func loadAction(db gorp.SqlExecutor, s database.Scanner) (*sdk.Action, error) {
-	a := &sdk.Action{}
-
-	var lastModified time.Time
-	err := s.Scan(&a.ID, &a.Name, &a.Description, &a.Type, &lastModified, &a.Enabled)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoAction
-		}
-		return nil, fmt.Errorf("cannot Scan> %s", err)
-	}
-	a.LastModified = lastModified.Unix()
+func loadActionDependencies(db gorp.SqlExecutor, a *sdk.Action) error {
+	var err error
 	// Load requirements
 	a.Requirements, err = LoadActionRequirements(db, a.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot LoadActionRequirements> %s", err)
+		return fmt.Errorf("cannot LoadActionRequirements> %s", err)
 	}
 
 	// Load parameters
 	a.Parameters, err = LoadActionParameters(db, a.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot LoadActionParameters> %s", err)
+		return fmt.Errorf("cannot LoadActionParameters> %s", err)
 	}
 
 	// Don't try to load children is action is builtin
 	if a.Type == sdk.BuiltinAction {
-		return a, nil
+		return nil
 	}
 
 	// Load children
 	a.Actions, err = loadActionChildren(db, a.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot loadActionChildren> %s", err)
+		return fmt.Errorf("cannot loadActionChildren> %s", err)
 	}
 
 	// Requirements of children are requirement of parent
@@ -219,7 +240,7 @@ func loadAction(db gorp.SqlExecutor, s database.Scanner) (*sdk.Action, error) {
 		}
 	}
 
-	return a, nil
+	return nil
 }
 
 // UpdateActionDB  Update an action

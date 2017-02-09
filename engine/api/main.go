@@ -25,9 +25,9 @@ import (
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/polling"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -97,7 +97,7 @@ var mainCmd = &cobra.Command{
 				log.UseDatabaseLogger(db)
 			}
 
-			if err = bootstrap.InitiliazeDB(db); err != nil {
+			if err = bootstrap.InitiliazeDB(database.GetDBMap); err != nil {
 				log.Critical("Cannot setup databases: %s\n", err)
 			}
 
@@ -213,16 +213,16 @@ var mainCmd = &cobra.Command{
 		}
 
 		go queue.Pipelines()
-		go pipeline.AWOLPipelineKiller()
-		go hatchery.Heartbeat()
-		go log.RemovalRoutine()
-		go auditCleanerRoutine()
+		go pipeline.AWOLPipelineKiller(database.GetDBMap)
+		go hatchery.Heartbeat(database.GetDBMap)
+		go log.RemovalRoutine(database.DB)
+		go auditCleanerRoutine(database.GetDBMap)
 
 		go repositoriesmanager.ReceiveEvents()
 
 		go stats.StartRoutine()
-		go action.RequirementsCacheLoader(5)
-		go hookRecoverer()
+		go action.RequirementsCacheLoader(5, database.GetDBMap)
+		go hookRecoverer(database.GetDBMap)
 
 		if !viper.GetBool("no_repo_cache_loader") {
 			go repositoriesmanager.RepositoriesCacheLoader(30)
@@ -231,14 +231,13 @@ var mainCmd = &cobra.Command{
 		}
 
 		if !viper.GetBool("no_repo_polling") {
-			go polling.Initialize()
-			go polling.ExecutionCleaner()
+			go poller.Initialize(database.GetDBMap, 10)
 		} else {
 			log.Warning("⚠ Repositories polling is disabled")
 		}
 
 		if !viper.GetBool("no_scheduler") {
-			go scheduler.Initialize(10)
+			go scheduler.Initialize(database.GetDBMap, 10)
 		} else {
 			log.Warning("⚠ Cron Scheduler is disabled")
 		}

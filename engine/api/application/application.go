@@ -368,6 +368,20 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 		return err
 	}
 
+	// Delete poller execution
+	query = `DELETE FROM poller_execution WHERE application_id = $1`
+	if _, err := db.Exec(query, applicationID); err != nil {
+		log.Warning("DeleteApplication> Cannot delete poller execution: %s\n", err)
+		return err
+	}
+
+	// Delete poller
+	query = `DELETE FROM poller WHERE application_id = $1`
+	if _, err := db.Exec(query, applicationID); err != nil {
+		log.Warning("DeleteApplication> Cannot delete poller: %s\n", err)
+		return err
+	}
+
 	// Delete triggers
 	if err := trigger.DeleteApplicationTriggers(db, applicationID); err != nil {
 		return err

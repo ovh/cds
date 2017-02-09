@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/go-gorp/gorp"
-
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -30,7 +30,7 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 
 	}
 
-	app.RepositoryPollers, err = poller.LoadPollersByApplication(db, app.ID)
+	app.RepositoryPollers, err = poller.LoadByApplication(db, app.ID)
 	if err != nil {
 		log.Warning("addPollerHandler> Cannot load pollers for application %s: %s\n", app.Name, err)
 		return err
@@ -89,7 +89,7 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	defer tx.Rollback()
 
 	// Insert poller in database
-	err = poller.InsertPoller(db, &h)
+	err = poller.Insert(db, &h)
 	if err != nil {
 		log.Warning("addPollerHandler: cannot insert poller in db: %s\n", err)
 		return err
@@ -160,7 +160,7 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	defer tx.Rollback()
 
 	// Update poller in database
-	err = poller.UpdatePoller(tx, &h)
+	err = poller.Update(tx, &h)
 	if err != nil {
 		log.Warning("updatePollerHandler: cannot update poller in db: %s\n", err)
 		return err
@@ -179,11 +179,10 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	app.RepositoryPollers, err = poller.LoadPollersByApplication(db, app.ID)
+	app.RepositoryPollers, err = poller.LoadByApplication(db, app.ID)
 	if err != nil {
 		log.Warning("deleteHook> cannot load pollers: %s\n", err)
 		return err
-
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)
@@ -201,7 +200,7 @@ func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	}
 
-	pollers, err := poller.LoadPollersByApplication(db, a.ID)
+	pollers, err := poller.LoadByApplication(db, a.ID)
 	if err != nil {
 		log.Warning("getApplicationHooksHandler> cannot load pollers: %s\n", err)
 		return err
@@ -233,7 +232,7 @@ func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	}
 
-	poller, err := poller.LoadPollerByApplicationAndPipeline(db, a.ID, p.ID)
+	poller, err := poller.LoadByApplicationAndPipeline(db, a.ID, p.ID)
 	if err != nil {
 		log.Warning("getPollersHandler> cannot load poller with ID %d %d: %s\n", p.ID, a.ID, err)
 		return err
@@ -265,7 +264,7 @@ func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	po, err := poller.LoadPollerByApplicationAndPipeline(db, a.ID, p.ID)
+	po, err := poller.LoadByApplicationAndPipeline(db, a.ID, p.ID)
 	if err != nil {
 		log.Warning("getPollersHandler> cannot load poller: %s\n", err)
 		return err
@@ -280,7 +279,7 @@ func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	}
 	defer tx.Rollback()
 
-	if err = poller.DeletePoller(tx, po); err != nil {
+	if err = poller.Delete(tx, po); err != nil {
 		log.Warning("deleteHook> cannot delete poller: %s\n", err)
 		return err
 
@@ -298,7 +297,7 @@ func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	a.RepositoryPollers, err = poller.LoadPollersByApplication(db, a.ID)
+	a.RepositoryPollers, err = poller.LoadByApplication(db, a.ID)
 	if err != nil {
 		log.Warning("deleteHook> cannot load pollers: %s\n", err)
 		return err

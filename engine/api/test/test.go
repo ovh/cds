@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -47,7 +48,7 @@ func init() {
 	}
 }
 
-type bootstrap func(db *sql.DB) error
+type bootstrap func(func() *gorp.DbMap) error
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
@@ -78,6 +79,9 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	}
 	database.Set(db)
 
+	db.SetMaxOpenConns(100)
+	db.SetMaxIdleConns(20)
+
 	// Gracefully shutdown sql connections
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -91,7 +95,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	}()
 
 	for _, f := range bootstrapFunc {
-		if err := f(db); err != nil {
+		if err := f(database.GetDBMap); err != nil {
 			return nil
 		}
 	}

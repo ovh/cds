@@ -1,13 +1,11 @@
 package scheduler
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/queue"
@@ -16,20 +14,15 @@ import (
 )
 
 //Executer is the goroutine which run the pipelines
-func Executer() {
+func Executer(DBFunc func() *gorp.DbMap) {
 	for {
 		time.Sleep(5 * time.Second)
-		ExecuterRun()
+		ExecuterRun(DBFunc())
 	}
 }
 
 //ExecuterRun is the core function of Executer goroutine
-func ExecuterRun() ([]sdk.PipelineSchedulerExecution, error) {
-	_db := database.DB()
-	if _db == nil {
-		return nil, fmt.Errorf("Database is unavailable")
-	}
-	db := database.DBMap(_db)
+func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 	tx, errb := db.Begin()
 	if errb != nil {
 		log.Warning("ExecuterRun> %s", errb)

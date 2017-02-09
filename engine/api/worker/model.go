@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -14,7 +13,7 @@ import (
 
 // InsertWorkerModel insert a new worker model in database
 func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
-	dbmodel := database.WorkerModel(*model)
+	dbmodel := WorkerModel(*model)
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}
@@ -24,7 +23,7 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 
 // UpdateWorkerModel update a worker model
 func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
-	dbmodel := database.WorkerModel(model)
+	dbmodel := WorkerModel(model)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err
 	}
@@ -33,7 +32,7 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	ms := []database.WorkerModel{}
+	ms := []WorkerModel{}
 	if _, err := db.Select(&ms, "select * from worker_model order by name"); err != nil {
 		log.Warning("LoadWorkerModels> Unable to load worker models : %T %s", err, err)
 		return nil, err
@@ -50,7 +49,7 @@ func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 
 // LoadWorkerModelByName retrieves a specific worker model in database
 func LoadWorkerModelByName(db gorp.SqlExecutor, name string) (*sdk.Model, error) {
-	m := database.WorkerModel(sdk.Model{})
+	m := WorkerModel(sdk.Model{})
 	if err := db.SelectOne(&m, "select * from worker_model where name = $1", name); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoWorkerModel
@@ -67,7 +66,7 @@ func LoadWorkerModelByName(db gorp.SqlExecutor, name string) (*sdk.Model, error)
 
 // LoadWorkerModelByID retrieves a specific worker model in database
 func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
-	m := database.WorkerModel(sdk.Model{})
+	m := WorkerModel(sdk.Model{})
 	if err := db.SelectOne(&m, "select * from worker_model where id = $1", ID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoWorkerModel
@@ -83,7 +82,7 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 
 // LoadWorkerModelsUsableOnGroup returns worker models for a group
 func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
-	ms := []database.WorkerModel{}
+	ms := []WorkerModel{}
 	if _, err := db.Select(&ms, `
 		select * from worker_model
 		where group_id = $1
@@ -105,7 +104,7 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGrou
 
 // LoadWorkerModelsByGroup returns worker models for a group
 func LoadWorkerModelsByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Model, error) {
-	ms := []database.WorkerModel{}
+	ms := []WorkerModel{}
 	if _, err := db.Select(&ms, "select * from worker_model where group_id = $1 order by name", groupID); err != nil {
 		return nil, err
 	}
@@ -121,7 +120,7 @@ func LoadWorkerModelsByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Model, e
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Model, error) {
-	ms := []database.WorkerModel{}
+	ms := []WorkerModel{}
 	query := `	select * 
 				from worker_model 
 				where group_id in (select group_id from group_user where user_id = $1)
@@ -144,7 +143,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Model, err
 
 //LoadSharedWorkerModels returns worker models with group shared.infra
 func LoadSharedWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	ms := []database.WorkerModel{}
+	ms := []WorkerModel{}
 	if _, err := db.Select(&ms, `select * from worker_model where group_id in (select id from "group" where name = $1)`, group.SharedInfraGroup); err != nil {
 		return nil, err
 	}
@@ -160,7 +159,7 @@ func LoadSharedWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 
 // DeleteWorkerModel removes from database worker model informations and all its capabilities
 func DeleteWorkerModel(db gorp.SqlExecutor, ID int64) error {
-	m := database.WorkerModel(sdk.Model{ID: ID})
+	m := WorkerModel(sdk.Model{ID: ID})
 	count, err := db.Delete(&m)
 	if err != nil {
 		return err
@@ -194,7 +193,7 @@ func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Req
 	return capas, nil
 }
 
-func deleteAllWorkerCapabilities(db database.Executer, workerModelID int64) error {
+func deleteAllWorkerCapabilities(db gorp.SqlExecutor, workerModelID int64) error {
 	query := `DELETE FROM worker_capability WHERE worker_model_id = $1`
 	_, err := db.Exec(query, workerModelID)
 	return err
@@ -202,7 +201,7 @@ func deleteAllWorkerCapabilities(db database.Executer, workerModelID int64) erro
 }
 
 // DeleteWorkerModelCapability removes a capability from existing worker model
-func DeleteWorkerModelCapability(db database.Executer, workerID int64, capaName string) error {
+func DeleteWorkerModelCapability(db gorp.SqlExecutor, workerID int64, capaName string) error {
 	query := `DELETE FROM worker_capability WHERE worker_model_id = $1 AND name = $2`
 
 	res, err := db.Exec(query, workerID, capaName)
@@ -222,7 +221,7 @@ func DeleteWorkerModelCapability(db database.Executer, workerID int64, capaName 
 }
 
 // UpdateWorkerModelCapability update a worker model capability
-func UpdateWorkerModelCapability(db database.Executer, capa sdk.Requirement, modelID int64) error {
+func UpdateWorkerModelCapability(db gorp.SqlExecutor, capa sdk.Requirement, modelID int64) error {
 	query := `UPDATE worker_capability SET type=$1, argument=$2 WHERE worker_model_id = $3 AND name = $4`
 	res, err := db.Exec(query, string(capa.Type), capa.Value, modelID, capa.Name)
 	if err != nil {

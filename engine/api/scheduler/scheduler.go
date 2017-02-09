@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorhill/cronexpr"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -15,10 +14,10 @@ import (
 var schedulerStatus = "Not Running"
 
 //Scheduler is the goroutine which compute date of next execution for pipeline scheduler
-func Scheduler() {
+func Scheduler(DBFunc func() *gorp.DbMap) {
 	for {
 		time.Sleep(2 * time.Second)
-		_, status, err := Run()
+		_, status, err := Run(DBFunc())
 
 		if err != nil {
 			log.Critical("%s: %s", status, err)
@@ -28,12 +27,7 @@ func Scheduler() {
 }
 
 //Run is the core function of Scheduler goroutine
-func Run() ([]sdk.PipelineSchedulerExecution, string, error) {
-	_db := database.DB()
-	if _db == nil {
-		return nil, "Database is unavailable", fmt.Errorf("datase.DB failed")
-	}
-	db := database.DBMap(_db)
+func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, "Run> Unable to start a transaction", err

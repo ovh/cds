@@ -8,13 +8,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // InsertTriggerParameter insert given parameter in database
-func InsertTriggerParameter(db database.Executer, triggerID int64, p sdk.Parameter) error {
+func InsertTriggerParameter(db gorp.SqlExecutor, triggerID int64, p sdk.Parameter) error {
 	if string(p.Type) == string(sdk.SecretVariable) {
 		return sdk.ErrNoDirectSecretUse
 	}
@@ -135,7 +134,7 @@ func isTriggerLoopFree(tx gorp.SqlExecutor, t *sdk.PipelineTrigger, parents []pa
 }
 
 // InsertTriggerPrerequisite  Insert the given prerequisite
-func InsertTriggerPrerequisite(db database.Executer, triggerID int64, paramName, value string) error {
+func InsertTriggerPrerequisite(db gorp.SqlExecutor, triggerID int64, paramName, value string) error {
 	query := `INSERT INTO pipeline_trigger_prerequisite (pipeline_trigger_id, parameter, expected_value) VALUES ($1, $2, $3)`
 	_, err := db.Exec(query, triggerID, paramName, value)
 	return err
@@ -462,12 +461,22 @@ func LoadTrigger(db gorp.SqlExecutor, triggerID int64) (*sdk.PipelineTrigger, er
 	WHERE pipeline_trigger.id = $1
 	`
 
-	row := db.QueryRow(query, triggerID)
-	t, err := loadTrigger(db, row, true)
+	rows, err := db.Query(query, triggerID)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
+	triggers := []sdk.PipelineTrigger{}
+	for rows.Next() {
+		t, err := loadTrigger(db, rows, true)
+		if err != nil {
+			return nil, err
+		}
+		triggers = append(triggers, t)
+	}
+
+	t := triggers[0]
 	t.Parameters, err = loadTriggerParameters(db, triggerID)
 	if err != nil {
 		return nil, err
@@ -531,7 +540,7 @@ func LoadTriggers(db gorp.SqlExecutor, appID, pipelineID, envID int64) ([]sdk.Pi
 	return triggers, nil
 }
 
-func loadTrigger(db gorp.SqlExecutor, s database.Scanner, subqueries bool) (sdk.PipelineTrigger, error) {
+func loadTrigger(db gorp.SqlExecutor, s *sql.Rows, subqueries bool) (sdk.PipelineTrigger, error) {
 	var t sdk.PipelineTrigger
 	var srcEnvName, destEnvName sql.NullString
 	var srcEnvID, destEnvID sql.NullInt64
@@ -756,7 +765,7 @@ func DeleteApplicationTriggers(db gorp.SqlExecutor, appID int64) error {
 }
 
 // DeleteTrigger removes from database given trigger
-func DeleteTrigger(db database.Executer, triggerID int64) error {
+func DeleteTrigger(db gorp.SqlExecutor, triggerID int64) error {
 
 	// Delete parameters
 	query := `DELETE FROM pipeline_trigger_parameter WHERE pipeline_trigger_id = $1`

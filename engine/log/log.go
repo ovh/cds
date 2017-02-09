@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-
-	"github.com/ovh/cds/engine/api/database"
 )
 
 func init() {
@@ -175,10 +173,10 @@ func UseDatabaseLogger(db *sql.DB) {
 }
 
 // RemovalRoutine removes logs older than 1 day from database
-func RemovalRoutine() {
+func RemovalRoutine(DBFunc func() *sql.DB) {
 	for {
 		time.Sleep(1 * time.Hour)
-		db := database.DB()
+		db := DBFunc()
 		if db != nil {
 			query := `DELETE FROM system_log WHERE logged < NOW() - INTERVAL '1 days'`
 			db.Exec(query)

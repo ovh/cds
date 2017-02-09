@@ -1,0 +1,99 @@
+<div id="ApplicationPipelineBuild">
+    <div class="CDSbreadcrumb">
+        <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [version]="currentBuild?.version" [buildNumber]="currentBuild?.build_number" [envName]="envName"></app-breadcrumb>
+    </div>
+
+    <div class="summary" *ngIf="currentBuild"
+        [class.success]="currentBuild.status === 'Success'"
+        [class.fail]="currentBuild.status === 'Fail'"
+        [class.building]="currentBuild.status === 'Building'"
+    >
+        <div class="ui grid">
+            <div class="row">
+                <div class="five wide column">
+                    <span class="title">{{ 'common_pipeline_title' | translate }}</span>
+                    <span class="content">
+                        {{ currentBuild.application.name + ' / '}}
+                        {{ currentBuild.pipeline.name}}
+                        {{ ' v' + currentBuild.version}}
+                        </span>
+                </div>
+                <div class="five wide column" *ngIf="currentBuild.status !== 'Building'">
+                    <span class="title">{{ 'common_duration_title' | translate }}</span>
+                    <span class="content">{{duration}}</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="five wide column">
+                    <span class="title">{{ 'common_branch_title' | translate }}</span>
+                    <span class="content">{{ currentBuild.trigger.vcs_branch}}</span>
+                </div>
+                <div class="six wide column" *ngIf="currentBuild.trigger.vcs_hash !== ''">
+                    <span class="title">{{ 'common_commit_title' | translate }}</span>
+                    <span class="content">{{ currentBuild.trigger.vcs_hash}}</span>
+                </div>
+                <div class="five wide column" *ngIf="currentBuild.trigger.vcs_author !== ''">
+                    <span class="title">{{ 'common_author_title' | translate }}</span>
+                    <span class="content">{{ currentBuild.trigger.vcs_author}}</span>
+                </div>
+            </div>
+            <div class="row">
+
+            </div>
+        </div>
+    </div>
+
+    <div class="CDSmenu">
+        <sm-menu title="" class="pointing secondary">
+            <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')">
+                <i class="sitemap icon"></i>
+                {{ 'common_pipeline' | translate }}
+            </a>
+            <a sm-item [class.active]="selectedTab === 'commit'" (click)="(commits && commits.length > 0)?showTab('commit') : showTab(selectedTab)" [class.disabled]="!commits || commits.length === 0">
+                <span *ngIf="commits">{{ commits.length + ' '}}</span>
+                <span *ngIf="commits && commits.length > 1">{{ 'common_commits' | translate }}</span>
+                <span *ngIf="!commits || (commits && commits.length < 2)">{{ 'common_commit' | translate }}</span>
+            </a>
+            <a sm-item [class.active]="selectedTab === 'test'" (click)="(nbTests > 0)?showTab('test') : showTab(selectedTab)" [class.disabled]="nbTests === 0">
+                <span *ngIf="nbTests > 1">{{ 'common_tests' | translate }}</span>
+                <span *ngIf="nbTests < 2">{{ 'common_test' | translate }}</span>
+                {{ ' (' +nbTests + ')'}}
+            </a>
+            <a sm-item [class.active]="selectedTab === 'artifact'" (click)="(nbArtifacts > 0)?showTab('artifact') : showTab(selectedTab)" [class.disabled]="nbArtifacts === 0">
+                <span *ngIf="nbArtifacts > 1">{{ 'common_artifacts' | translate }}</span>
+                <span *ngIf="nbArtifacts < 2">{{ 'common_artifact' | translate }}</span>
+                {{ ' (' +nbArtifacts + ')'}}
+            </a>
+            <a sm-item [class.active]="selectedTab === 'history'" (click)="(nbHistory > 0)?showTab('history') : showTab(selectedTab)" [class.disabled]="nbHistory === 0">
+                {{ 'common_history' | translate }}
+                {{ ' (' + nbHistory + ')'}}
+            </a>
+            <a *ngIf="false" sm-item [class.active]="selectedTab === 'highlights'" (click)="showTab('highlights')"><i class="graduation icon"></i>{{ 'common_highlights' | translate }}</a>
+        </sm-menu>
+    </div>
+
+    <div class="scrollingContent">
+        <div class="paddingContent">
+            <div class="viewContent" [ngSwitch]="selectedTab" *ngIf="currentBuild">
+                <div *ngSwitchCase="'pipeline'" >
+                    <app-pipeline-run-workflow [buildWorker]="worker"
+                        [project]="project" [application]="application" [pipeline]="pipeline"></app-pipeline-run-workflow>
+                </div>
+                <div *ngSwitchCase="'test'">
+                    <app-tests-result [tests]="currentBuild?.tests"></app-tests-result>
+                </div>
+                <div *ngSwitchCase="'artifact'">
+                    <app-artifact-list [artifacts]="currentBuild?.artifacts"></app-artifact-list>
+                </div>
+                <div *ngSwitchCase="'commit'">
+                    <app-commit-list [commits]="commits"></app-commit-list>
+                </div>
+                <div *ngSwitchCase="'history'">
+                    <app-history [history]="histories" [currentBuild]="currentBuild" *ngIf="histories"></app-history>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="ui text active loader" *ngIf="!currentBuild">Loading build...</div>

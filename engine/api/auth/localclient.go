@@ -9,7 +9,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/log"
@@ -34,11 +33,7 @@ func (c *LocalClient) Store() sessionstore.Store {
 }
 
 //Authentify check username and password
-func (c *LocalClient) Authentify(username, password string) (bool, error) {
-	db := database.DBMap(database.DB())
-	if db == nil {
-		return false, sdk.ErrServiceUnavailable
-	}
+func (c *LocalClient) Authentify(db gorp.SqlExecutor, username, password string) (bool, error) {
 	// Load user
 	u, err := user.LoadUserAndAuth(db, username)
 	if err != nil {
@@ -50,7 +45,7 @@ func (c *LocalClient) Authentify(username, password string) (bool, error) {
 }
 
 //AuthentifyUser check password in database
-func (c *LocalClient) AuthentifyUser(u *sdk.User, password string) (bool, error) {
+func (c *LocalClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password string) (bool, error) {
 	return user.IsCheckValid(password, u.Auth.HashedPassword), nil
 }
 
@@ -135,7 +130,7 @@ func (c *LocalClient) checkUserBasicAuth(db gorp.SqlExecutor, authHeaderValue st
 	}
 
 	// Verify password
-	loginOk, err := c.AuthentifyUser(u, userPwdArray[1])
+	loginOk, err := c.AuthentifyUser(db, u, userPwdArray[1])
 	if err != nil {
 		return err
 	}

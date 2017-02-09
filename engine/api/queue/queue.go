@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
@@ -206,16 +205,16 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 				stageEnd = false
 			}
 
-			// If already sync
+			// If same status, sync step status
 			if pbJobDB.Status == pbJob.Status {
-				continue
+				pbJob.Job.StepStatus = pbJobDB.Job.StepStatus
+			} else {
+				pbJob.Status = pbJobDB.Status
+				pbJob.Start = pbJobDB.Start
+				pbJob.Done = pbJobDB.Done
+				pbJob.Model = pbJobDB.Model
+				pbJob.Job = pbJobDB.Job
 			}
-
-			pbJob.Status = pbJobDB.Status
-			pbJob.Start = pbJobDB.Start
-			pbJob.Done = pbJobDB.Done
-			pbJob.Model = pbJobDB.Model
-			pbJob.Job = pbJobDB.Job
 		}
 	}
 

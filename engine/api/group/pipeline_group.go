@@ -3,7 +3,6 @@ package group
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,7 +29,7 @@ func LoadAllPipelineGroupByRole(db gorp.SqlExecutor, pipelineID int64, role int)
 }
 
 // InsertGroupsInPipeline Link the given groups and the given pipeline
-func InsertGroupsInPipeline(db database.Executer, groupPermission []sdk.GroupPermission, pipelineID int64) error {
+func InsertGroupsInPipeline(db gorp.SqlExecutor, groupPermission []sdk.GroupPermission, pipelineID int64) error {
 	for _, g := range groupPermission {
 		err := InsertGroupInPipeline(db, pipelineID, g.Group.ID, g.Permission)
 		if err != nil {
@@ -41,28 +40,28 @@ func InsertGroupsInPipeline(db database.Executer, groupPermission []sdk.GroupPer
 }
 
 // InsertGroupInPipeline add permissions on Pipeline to Group
-func InsertGroupInPipeline(db database.Executer, pipelineID, groupID int64, role int) error {
+func InsertGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64, role int) error {
 	query := `INSERT INTO pipeline_group (pipeline_id, group_id,role) VALUES($1,$2,$3)`
 	_, err := db.Exec(query, pipelineID, groupID, role)
 	return err
 }
 
 // UpdateGroupRoleInPipeline update permission on pipeline
-func UpdateGroupRoleInPipeline(db database.Executer, pipelineID, groupID int64, role int) error {
+func UpdateGroupRoleInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64, role int) error {
 	query := `UPDATE pipeline_group SET role=$1 WHERE pipeline_id=$2 AND group_id=$3`
 	_, err := db.Exec(query, role, pipelineID, groupID)
 	return err
 }
 
 // DeleteGroupFromPipeline removes access to pipeline to group members
-func DeleteGroupFromPipeline(db database.Executer, pipelineID, groupID int64) error {
+func DeleteGroupFromPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) error {
 	query := `DELETE FROM pipeline_group WHERE pipeline_id=$1 AND group_id=$2`
 	_, err := db.Exec(query, pipelineID, groupID)
 	return err
 }
 
 // DeleteAllGroupFromPipeline Delete all groups from the given pipeline
-func DeleteAllGroupFromPipeline(db database.Executer, pipelineID int64) error {
+func DeleteAllGroupFromPipeline(db gorp.SqlExecutor, pipelineID int64) error {
 	query := `DELETE FROM pipeline_group WHERE pipeline_id=$1 `
 	_, err := db.Exec(query, pipelineID)
 	return err
@@ -83,7 +82,7 @@ func CheckGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) (bool,
 	return false, nil
 }
 
-func deleteGroupPipelineByGroup(db database.Executer, group *sdk.Group) error {
+func deleteGroupPipelineByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `DELETE FROM pipeline_group WHERE group_id=$1`
 	_, err := db.Exec(query, group.ID)
 	return err
