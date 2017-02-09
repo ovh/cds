@@ -414,14 +414,19 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 				log.Warning("GithubClient.PushEvents> Error %s", err)
 				return nil, defaultDelay, err
 			}
-			if status >= 400 {
+			if status >= http.StatusBadRequest {
 				return nil, defaultDelay, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
 			}
+
+			if status == http.StatusNotModified {
+				return nil, defaultDelay, fmt.Errorf("No new events")
+			}
+
 			//Get events for this page
 			nextEvents := []Event{}
 			if err := json.Unmarshal(body, &nextEvents); err != nil {
 				log.Warning("GithubClient.PushEvents> Unable to parse github events: %s", err)
-				return nil, defaultDelay, err
+				return nil, defaultDelay, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 			}
 
 			nextPage = getNextPage(headers)
