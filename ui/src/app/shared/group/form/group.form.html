@@ -4,6 +4,6 @@
         <input type="text" name="groupname" class="ui input" [(ngModel)]="group.name">
     </div>
     <div class="right aligned field" *ngIf="mode === 'form'">
-        <button type="submit" class="ui green button">{{ 'btn_create' | translate }}</button>
+        <button [class.disabled]="!group.name || group.name === ''" type="submit" class="ui green button">{{ 'btn_create' | translate }}</button>
     </div>
 </form>

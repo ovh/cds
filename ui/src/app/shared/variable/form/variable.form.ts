@@ -14,13 +14,12 @@ export class VariableFormComponent {
 
 
     private variableTypes: string[];
-    newVariable: Variable;
+    newVariable = new Variable();
 
     @Input() loading = false;
     @Output() createVariableEvent = new EventEmitter<VariableEvent>();
 
     constructor(private _variableService: VariableService, private _sharedService: SharedService) {
-        this.newVariable = new Variable();
         this.variableTypes = this._variableService.getTypesFromCache();
         if (!this.variableTypes) {
             this._variableService.getTypesFromAPI().subscribe(types => this.variableTypes = types);

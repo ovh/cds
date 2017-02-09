@@ -1,4 +1,4 @@
-<div class="ui grid">
+<div class="ui grid" *ngIf="project.environments && project.environments.length > 0">
     <div class="three wide column">
         <div class="ui vertical steps">
             <div class="step" *ngFor="let e of project.environments; let i = index"
@@ -12,4 +12,7 @@
     <div class="thirteen wide stretched column">
         <app-environment [environment]="project.environments[selectedEnvIndex]" [project]="project"></app-environment>
     </div>
+</div>
+<div class="ui info message" *ngIf="!project.environments || project.environments.length === 0">
+    {{ 'environment_no' | translate }}
 </div>

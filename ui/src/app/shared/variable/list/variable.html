@@ -1,5 +1,5 @@
 <div class="variable" *ngIf="ready">
-    <table class="ui fixed celled table">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th class="five wide">{{ 'variable_name' | translate }}</th>
@@ -14,7 +14,7 @@
                 <div class="ui fluid input" *ngIf="mode === 'edit'">
                     <input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="v.updating">
                 </div>
-                <span *ngIf="mode === 'launcher'">{{v.name}}</span>
+                <div class="ui input field" *ngIf="mode !== 'edit'">{{v.name}}</div>
             </td>
             <td>
                 <div class="ui form" *ngIf="mode === 'edit'">
@@ -22,10 +22,11 @@
                         <option *ngFor="let type of variableTypes" [value]="type">{{type}}</option>
                     </sm-select>
                 </div>
-                <span *ngIf="mode === 'launcher'">{{v.type}}</span>
+                <div class="ui input field" *ngIf="mode !== 'edit'">{{v.type}}</div>
             </td>
             <td>
-                <app-variable-value [type]="v.type" [(value)]="v.value" (valueUpdating)="v.hasChanged = true"></app-variable-value>
+                <app-variable-value *ngIf="mode !== 'ro'" [type]="v.type" [(value)]="v.value" (valueUpdating)="v.hasChanged = true"></app-variable-value>
+                <div class="ui input field" *ngIf="mode === 'ro'">{{v.value}}</div>
             </td>
             <td class="center" *ngIf="mode === 'edit'">
                 <button *ngIf="v.hasChanged" class="ui green button" [class.loading]="v.updating" [class.disabled]="v.updating" name="btnupdatevar" (click)="sendEvent('update', v)">
@@ -52,4 +53,7 @@
         </tr>
         </tfoot>
     </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'variable_no' | translate }}
+    </div>
 </div>

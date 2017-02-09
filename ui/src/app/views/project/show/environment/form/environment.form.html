@@ -5,7 +5,7 @@
             <input class="ui input" type="text" name="name" [(ngModel)]="newEnvironment.name" [disabled]="loading">
         </div>
         <div class="three wide center field">
-            <button type="submit" class="ui green button" [class.loading]="loading" [class.disabled]="loading"><i class="plus circle icon"></i>{{ 'btn_create' | translate}}</button>
+            <button type="submit" class="ui green button" [class.loading]="loading" [class.disabled]="loading || !newEnvironment.name || newEnvironment.name === ''"><i class="plus circle icon"></i>{{ 'btn_create' | translate}}</button>
         </div>
     </div>
 </form>

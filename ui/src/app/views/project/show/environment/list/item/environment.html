@@ -1,16 +1,18 @@
-<form class="ui form">
+<form class="ui form" *ngIf="editableEnvironment.permission === 7">
     <div class="fields">
-        <div class="five wide field">
-            <input class="ui input" type="text" name="envname" [(ngModel)]="editableEnvironment.name" [disabled]="loading" (keydown)="hasChanged = true">
+        <div class="eight wide field">
+            <input  class="ui input" type="text" name="envname" [(ngModel)]="editableEnvironment.name" [disabled]="loading" (keydown)="hasChanged = true">
         </div>
-        <div class="three wide center field">
+        <div class="eight wide right aligned field">
             <button *ngIf="hasChanged" (click)="renameEnvironment()" type="button" name="renamebtn" class="ui green button" [class.loading]="loading" [class.disabled]="loading"><i class="save icon"></i>{{ 'btn_rename' | translate}}</button>
             <app-delete-button  *ngIf="!hasChanged" [loading]="loading" (event)="deleteEnvironment()"></app-delete-button>
         </div>
     </div>
 </form>
 
-<h3 *ngIf="editableEnvironment.variables">{{ 'environment_variable_list_title' | translate }}</h3>
-<app-variable *ngIf="editableEnvironment.variables" [variables]="editableEnvironment.variables" (event)="variableEvent($event)"></app-variable>
-<h3>{{ 'environment_variable_form_title' | translate }}</h3>
-<app-variable-form [loading]="addVarLoading" (createVariableEvent)="variableEvent($event)"></app-variable-form>
+<h3>{{ 'environment_variable_list_title' | translate }}</h3>
+<app-variable [variables]="editableEnvironment.variables" (event)="variableEvent($event)" [mode]="editableEnvironment.permission === 7?'edit':'ro'"></app-variable>
+<ng-container *ngIf="editableEnvironment.permission === 7">
+    <h3>{{ 'environment_variable_form_title' | translate }}</h3>
+    <app-variable-form [loading]="addVarLoading" (createVariableEvent)="variableEvent($event)"></app-variable-form>
+</ng-container>

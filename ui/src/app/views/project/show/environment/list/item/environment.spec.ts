@@ -62,6 +62,7 @@ describe('CDS: Environment Component', () => {
         let envs = new Array<Environment>();
         let e = new Environment();
         e.name = 'prod';
+        e.permission = 7;
         envs.push(e);
         project.environments = envs;
 
@@ -102,6 +103,7 @@ describe('CDS: Environment Component', () => {
         let envs = new Array<Environment>();
         let e = new Environment();
         e.name = 'prod';
+        e.permission = 7;
         envs.push(e);
         project.environments = envs;
 

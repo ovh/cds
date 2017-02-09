@@ -15,19 +15,24 @@
                 </div>
             </td>
             <td>
-                <div class="ui form">
+                <div class="ui form" *ngIf="edit">
                     <sm-select class="search" [disabled]="gp.updating" [(model)]="gp.permission" (modelChange)="castPermission(gp)" (onChange)="gp.hasChanged = true">
                         <option *ngFor="let p of permissionsList" [value]="p.value">{{p.name | translate}}</option>
                     </sm-select>
                 </div>
+                <div class="ui fluid input" *ngIf="!edit">
+                    {{ getPermissionName(gp.permission) | translate }}
+                </div>
             </td>
             <td class="center">
-                <button *ngIf="mode === 'submit' && gp.hasChanged" class="ui green button" [class.loading]="gp.updating" [class.disabled]="gp.updating" name="btnupdateperm" (click)="sendEvent('update', gp)">
-                    <i class="save icon"></i>
-                    {{ 'btn_save' | translate}}
-                </button>
-                <app-delete-button *ngIf="mode === 'submit' && !gp.hasChanged" [loading]="gp.updating" (event)="sendEvent('delete', gp)"></app-delete-button>
-                <button *ngIf="mode === 'form'" class="ui icon blue button" (click)="sendEvent('delete', gp)"><i class="trash icon"></i></button>
+                <ng-container *ngIf="edit">
+                    <button *ngIf="mode === 'submit' && gp.hasChanged" class="ui green button" [class.loading]="gp.updating" [class.disabled]="gp.updating" name="btnupdateperm" (click)="sendEvent('update', gp)">
+                        <i class="save icon"></i>
+                        {{ 'btn_save' | translate}}
+                    </button>
+                    <app-delete-button *ngIf="mode === 'submit' && !gp.hasChanged" [loading]="gp.updating" (event)="sendEvent('delete', gp)"></app-delete-button>
+                    <button *ngIf="mode === 'form'" class="ui icon blue button" (click)="sendEvent('delete', gp)"><i class="trash icon"></i></button>
+                </ng-container>
             </td>
         </tr>
         </tbody>

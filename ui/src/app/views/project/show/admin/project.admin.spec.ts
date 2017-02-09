@@ -71,6 +71,7 @@ describe('CDS: Project Admin Component', () => {
 
         let p: Project = new Project();
         p.key = 'key1';
+        p.permission = 7;
         fixture.componentInstance.project = p;
 
         fixture.detectChanges();

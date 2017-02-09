@@ -1,17 +1,18 @@
 import {Component} from '@angular/core/src/metadata/directives';
-import {Input, ViewChild} from '@angular/core';
+import {Input, ViewChild, OnInit} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {ProjectStore} from '../../../../service/project/project.store';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
+import {Router} from '@angular/router';
 
 @Component({
     selector: 'app-project-admin',
     templateUrl: './project.admin.html',
     styleUrls: ['./project.admin.scss']
 })
-export class ProjectAdminComponent {
+export class ProjectAdminComponent implements OnInit {
 
     @Input() project: Project;
     @ViewChild('updateWarning')
@@ -19,7 +20,14 @@ export class ProjectAdminComponent {
 
     loading = false;
 
-    constructor(private _projectStore: ProjectStore, private _toast: ToastService, public _translate: TranslateService) {};
+    constructor(private _projectStore: ProjectStore, private _toast: ToastService,
+                public _translate: TranslateService, private _router: Router) {};
+
+    ngOnInit(): void {
+        if (this.project.permission !== 7) {
+            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' }});
+        }
+    }
 
     onSubmitProjectUpdate(skip?: boolean) {
         if (!skip && this.project.externalChange) {

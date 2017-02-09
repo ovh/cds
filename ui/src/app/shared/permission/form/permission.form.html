@@ -13,8 +13,8 @@
             </sm-select>
         </div>
         <div class="two wide center field">
-            <button *ngIf="buttonType === 'submit'" type="submit" class="ui green button" [class.loading]="loading" [class.disabled]="loading"><i class="save icon"></i>{{ 'btn_save' | translate }}</button>
-            <button *ngIf="buttonType === 'button'" type="submit" class="ui icon blue button" ><i class="plus icon"></i></button>
+            <button *ngIf="buttonType === 'submit'" type="submit" class="ui green button" [class.loading]="loading" [class.disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''"><i class="save icon"></i>{{ 'btn_save' | translate }}</button>
+            <button *ngIf="buttonType === 'button'" type="submit" class="ui icon blue button" [class.loading]="loading" [class.disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''"><i class="plus icon"></i></button>
         </div>
     </div>
 </form>

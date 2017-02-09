@@ -60,6 +60,11 @@ describe('CDS: Permission From Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+        fixture.detectChanges();
+        tick(50);
+
+        expect(fixture.debugElement.nativeElement.querySelector('.ui.button.disabled')).toBeTruthy();
+
         let compiled = fixture.debugElement.nativeElement;
 
         // Permission to add

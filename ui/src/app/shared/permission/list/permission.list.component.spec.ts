@@ -34,6 +34,8 @@ describe('CDS: Permission List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+        fixture.componentInstance.edit = true;
+
         // Init array of permissions
         let groupsPermission: GroupPermission[] = [];
         let gp: GroupPermission = new GroupPermission();
@@ -74,6 +76,8 @@ describe('CDS: Permission List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+        fixture.componentInstance.edit = true;
+
         // Init array of permissions
         let groupsPermission: GroupPermission[] = [];
         let gp: GroupPermission = new GroupPermission();
@@ -96,6 +100,15 @@ describe('CDS: Permission List Component', () => {
 
         // Check if delete event has been emitted
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(new PermissionEvent('update', gp));
+    }));
+
+    it('should get permission name by value', fakeAsync( () => {
+        // Create component
+        let fixture = TestBed.createComponent(PermissionListComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
+
+        expect(fixture.componentInstance.getPermissionName(7)).toBe('permission_read_write_execute');
     }));
 });
 

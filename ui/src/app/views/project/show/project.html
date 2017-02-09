@@ -15,7 +15,7 @@
                 'common_variables' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')"><i class="users icon"></i>{{
                 'common_permissions' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')"><i class="graduation icon"></i>{{
+            <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="project.permission === 7"><i class="graduation icon"></i>{{
                 'common_advanced' | translate }}</a>
         </sm-menu>
     </div>
@@ -28,7 +28,7 @@
                         <div class="eight wide column">
                             <h2>{{ 'project_applications_list' | translate }}</h2>
                         </div>
-                        <div class="right aligned eight wide column">
+                        <div class="right aligned eight wide column" *ngIf="project.permission === 7">
                             <a class="ui blue button" [routerLink]="['./application']">{{ 'application_create' | translate }}</a>
                         </div>
                     </div>
@@ -52,29 +52,36 @@
                     </div>
                 </div>
                 <div *ngSwitchCase="'environments'">
-                    <h2>{{ 'project_env_form_title' | translate}}</h2>
-                    <app-environment-form [project]="project"></app-environment-form>
-                    <h2 *ngIf="project.environments">{{ 'project_env_list_title' | translate}}</h2>
-                    <app-environment-list *ngIf="project.environments" [project]="project"></app-environment-list>
+                    <ng-container *ngIf="project.permission === 7">
+                        <h2>{{ 'project_env_form_title' | translate}}</h2>
+                        <app-environment-form [project]="project"></app-environment-form>
+                    </ng-container>
+                    <h2>{{ 'project_env_list_title' | translate}}</h2>
+                    <app-environment-list [project]="project"></app-environment-list>
 
                 </div>
 
                 <div *ngSwitchCase="'variables'">
                     <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
-                    <div *ngIf="project.variables && project.variables.length > 0">
+                    <div>
                         <h2>{{ 'project_variable_list_title' | translate }}</h2>
-                        <app-variable [variables]="project.variables" (event)="variableEvent($event)"></app-variable>
+                        <app-variable [variables]="project.variables" [mode]="project.permission === 7? 'edit': 'ro'" (event)="variableEvent($event)"></app-variable>
                     </div>
-                    <h2>{{ 'project_variable_form_title' | translate }}</h2>
-                    <app-variable-form (createVariableEvent)="variableEvent($event)" [loading]="varFormLoading"></app-variable-form>
+                    <ng-container *ngIf="project.permission === 7">
+                        <h2>{{ 'project_variable_form_title' | translate }}</h2>
+                        <app-variable-form (createVariableEvent)="variableEvent($event)" [loading]="varFormLoading"></app-variable-form>
+                    </ng-container>
+
                 </div>
 
                 <div *ngSwitchCase="'permissions'">
                     <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                     <h2>{{ 'project_permission_list_title' | translate }}</h2>
-                    <app-permission-list [permissions]="project.groups" (event)="groupEvent($event)"></app-permission-list>
-                    <h2>{{ 'project_permission_form_title' | translate }}</h2>
-                    <app-permission-form (createGroupPermissionEvent)="groupEvent($event)" [loading]="permFormLoading"></app-permission-form>
+                    <app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permission === 7"></app-permission-list>
+                    <ng-container *ngIf="project.permission === 7">
+                        <h2>{{ 'project_permission_form_title' | translate }}</h2>
+                        <app-permission-form (createGroupPermissionEvent)="groupEvent($event)" [loading]="permFormLoading"></app-permission-form>
+                    </ng-container>
                 </div>
                 <div *ngSwitchCase="'advanced'">
                     <h2>{{ 'project_advanced_title' | translate }}</h2>

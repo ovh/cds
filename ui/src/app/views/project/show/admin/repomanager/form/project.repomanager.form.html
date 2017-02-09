@@ -6,7 +6,7 @@
             </sm-select>
         </div>
         <div class="two wide center field">
-            <button type="submit" class="ui green button" [class.loading]="connectLoading" name="addrepo">
+            <button type="submit" [class.disabled]="!selectedRepo" class="ui green button" [class.loading]="connectLoading" name="addrepo">
                 {{ 'btn_link' | translate }}
             </button>
         </div>

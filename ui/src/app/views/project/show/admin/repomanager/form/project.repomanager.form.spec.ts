@@ -97,6 +97,11 @@ describe('CDS: Project RepoManager Form Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+        fixture.detectChanges();
+        tick(50);
+
+        expect(fixture.debugElement.nativeElement.querySelector('.ui.button.disabled')).toBeTruthy();
+
         expect(call).toBe(1, 'List of repo managers must have been loaded');
 
         fixture.detectChanges();

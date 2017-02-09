@@ -14,7 +14,7 @@ export class VariableComponent extends Table {
 
     @Input() variables: Variable[];
 
-    // display: mode
+    // display mode:   edit (edit all field) / launcher (only type value) /ro (display field, no edit)
     @Input() mode = 'edit';
     @Output() event = new EventEmitter<VariableEvent>();
 

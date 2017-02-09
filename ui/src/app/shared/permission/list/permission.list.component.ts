@@ -13,6 +13,7 @@ import {PermissionEvent} from '../permission.event.model';
 export class PermissionListComponent extends Table {
 
     @Input() permissions: GroupPermission[];
+    @Input() edit = false;
 
     // submit(project/app/pip view), form (wizard)
     @Input() mode = 'submit';
@@ -34,6 +35,16 @@ export class PermissionListComponent extends Table {
         gp.updating = true;
         let gpEvent: PermissionEvent = new PermissionEvent(type, gp);
         this.event.emit(gpEvent);
+    }
+
+    getPermissionName(permValue: number): string {
+        if (this.permissionsList) {
+            let perm = this.permissionsList.find(p => p.value === permValue);
+            if (perm) {
+                return perm.name;
+            }
+
+        }
     }
 
     castPermission(gp: GroupPermission) {
