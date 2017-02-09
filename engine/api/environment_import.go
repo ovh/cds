@@ -131,9 +131,22 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 		return errProj
 	}
 
-	env, errEnv := environment.LoadEnvironmentByName(db, key, envName)
-	if errProj != nil {
-		log.Warning("importIntoEnvironmentHandler> Cannot load env %s/%S: %s\n", key, envName, errProj)
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("importIntoEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
+		return errBegin
+	}
+
+	defer tx.Rollback()
+
+	if err := environment.Lock(tx, key, envName; err != nil {
+		log.Warning("importIntoEnvironmentHandler> Cannot lock env %s/%s: %s\n", key, envName, err)
+		return err
+	}
+
+	env, errEnv := environment.LoadEnvironmentByName(tx, key, envName)
+	if errEnv != nil {
+		log.Warning("importIntoEnvironmentHandler> Cannot load env %s/%s: %s\n", key, envName, errProj)
 		return errProj
 	}
 
@@ -168,7 +181,7 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	newEnv := payload.Environment()
 	for i := range newEnv.EnvironmentGroups {
 		eg := &env.EnvironmentGroups[i]
-		g, err := group.LoadGroup(db, eg.Group.Name)
+		g, err := group.LoadGroup(tx, eg.Group.Name)
 		if err != nil {
 			log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
 			return err
@@ -179,15 +192,9 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	allMsg := []msg.Message{}
 	msgChan := make(chan msg.Message, 10)
 
-	tx, errBegin := db.Begin()
-	if errBegin != nil {
-		log.Warning("importIntoEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
-		return errBegin
-	}
-
 	defer tx.Rollback()
 
-	if err := environment.ImportInto(db, proj, newEnv, env, msgChan); err != nil {
+	if err := environment.ImportInto(tx, proj, newEnv, env, msgChan); err != nil {
 		log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
 		return err
 	}
@@ -209,7 +216,7 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 		msgListString = append(msgListString, s)
 	}
 
-	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+	if err := sanity.CheckProjectPipelines(tx, proj); err != nil {
 		log.Warning("importIntoEnvironmentHandler> Cannot check warnings: %s\n", err)
 		return err
 	}
