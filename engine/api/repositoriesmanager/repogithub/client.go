@@ -436,7 +436,7 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 			nextEventsAfterDateRef := []Event{}
 			for _, e := range nextEvents {
 				if e.CreatedAt.After(dateRef) {
-					if e.Type == "PushEvent" {
+					if e.Type == "PushEvent" || e.Type == "CreateEvent" { //May be we should manage PullRequestEvent; payload.action = opened
 						nextEventsAfterDateRef = append(nextEventsAfterDateRef, e)
 					}
 				} else {
