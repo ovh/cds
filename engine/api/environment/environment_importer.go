@@ -62,3 +62,9 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 
 	return nil
 }
+
+//ImportInto import variables and groups on an existing environment
+func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, into *sdk.Environment, msgChan chan<- msg.Message) error {
+
+	return nil
+}
