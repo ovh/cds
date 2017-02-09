@@ -27,6 +27,10 @@ var (
 	HookCreated               = &Message{trad{FR: "Hook créé sur le depôt %s vers le pipeline %s", EN: "Hook created on repository %s to pipeline %s"}, nil}
 	EnvironmentExists         = &Message{trad{FR: "L'environnement %s existe déjà", EN: "Environment %s already exist"}, nil}
 	EnvironmentCreated        = &Message{trad{FR: "L'environnement %s a été créé avec succès", EN: "Environment %s successfully created"}, nil}
+	VariableUpdated           = &Message{trad{FR: "La variable %s de l'environnement %s a été mise à jour", EN: "Variable %s on environment %s has been updated"}, nil}
+	VariableCannotBeUpdated   = &Message{trad{FR: "La variable %s de l'environnement %s n'a pu être mise à jour : %s", EN: "Variable %s on environment %s cannot be updated: %s"}, nil}
+	VariableCreated           = &Message{trad{FR: "La variable %s de l'environnement %s a été ajoutée", EN: "Variable %s on environment %s has been added"}, nil}
+	VariableCannotBeCreated   = &Message{trad{FR: "La variable %s de l'environnement %s n'a pu être ajoutée : %s", EN: "Variable %s on environment %s cannot be added: %s"}, nil}
 )
 
 //Message represent a struc format translated messages
