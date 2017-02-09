@@ -20,7 +20,8 @@ import (
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	test "github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -87,7 +88,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 	_ = deleteAll(t, db, "TEST_APP_PIPELINE_NOTIF")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TEST_APP_PIPELINE_NOTIF", "TEST_APP_PIPELINE_NOTIF")
+	proj := assets.InsertTestProject(t, db, "TEST_APP_PIPELINE_NOTIF", "TEST_APP_PIPELINE_NOTIF")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -144,7 +145,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 	test.NoError(t, err)
 
 	//Delete Project
-	err = test.DeleteTestProject(t, db, "TEST_APP_PIPELINE_NOTIF")
+	err = assets.DeleteTestProject(t, db, "TEST_APP_PIPELINE_NOTIF")
 	test.NoError(t, err)
 }
 

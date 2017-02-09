@@ -80,7 +80,7 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 		JOIN project ON project.id = environment.project_id
 		WHERE project.projectKey = $1 AND environment.name = $2
 	) FOR UPDATE NOWAIT
-	`, ID)
+	`, projectKey, envName)
 	if err == sql.ErrNoRows {
 		return sdk.ErrNoEnvironment
 	}

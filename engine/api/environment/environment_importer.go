@@ -67,18 +67,37 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, into *sdk.Environment, msgChan chan<- msg.Message) error {
 
 	var updateVar = func(v *sdk.Variable) {
-		if err := UpdateVariable(into.ID, v); err != nil {
-			msgChan  <- msg.New(msg.VariableCannotBeUpdated, v.Name, into.Name, err)
+		log.Debug("ImportInto> Updating var %s", v.Name)
+		if err := UpdateVariable(db, into.ID, v); err != nil {
+			msgChan <- msg.New(msg.VariableCannotBeUpdated, v.Name, into.Name, err)
+			return
 		}
+		msgChan <- msg.New(msg.VariableUpdated, v.Name, into.Name)
 	}
 
-	for _, v := range env.Variable {
-		for _, ov := into.Variable {
-			if v.Name == ov.Name {
-				//Need to update
-				v.ID = 
-				
+	var insertVar = func(v *sdk.Variable) {
+		log.Debug("ImportInto> Creating var %s", v.Name)
+		if err := InsertVariable(db, into.ID, v); err != nil {
+			msgChan <- msg.New(msg.VariableCannotBeCreated, v.Name, into.Name, err)
+			return
+		}
+		msgChan <- msg.New(msg.VariableCreated, v.Name, into.Name)
+	}
+
+	for i := range env.Variable {
+		log.Debug("ImportInto> Checking >> %s", env.Variable[i].Name)
+		var found bool
+		for j := range into.Variable {
+			log.Debug("ImportInto> \t with >> %s", into.Variable[j].Name)
+			if env.Variable[i].Name == into.Variable[j].Name {
+				env.Variable[i].ID = into.Variable[j].ID
+				found = true
+				updateVar(&env.Variable[i])
+				break
 			}
+		}
+		if !found {
+			insertVar(&env.Variable[i])
 		}
 	}
 

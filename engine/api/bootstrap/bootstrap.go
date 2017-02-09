@@ -3,16 +3,16 @@ package bootstrap
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 )
 
 //InitiliazeDB inits the database
 func InitiliazeDB(DBFunc func() *gorp.DbMap) error {
 	dbGorp := DBFunc()
-	if err := artifact.CreateBuiltinArtifactActions(dbGorp); err != nil {
+	if err := action.CreateBuiltinArtifactActions(dbGorp); err != nil {
 		log.Critical("Cannot setup builtin Artifact actions: %s\n", err)
 		return err
 	}
@@ -22,12 +22,12 @@ func InitiliazeDB(DBFunc func() *gorp.DbMap) error {
 		return err
 	}
 
-	if err := worker.CreateBuiltinActions(dbGorp); err != nil {
+	if err := action.CreateBuiltinActions(dbGorp); err != nil {
 		log.Critical("Cannot setup builtin actions: %s\n", err)
 		return err
 	}
 
-	if err := worker.CreateBuiltinEnvironments(dbGorp); err != nil {
+	if err := environment.CreateBuiltinEnvironments(dbGorp); err != nil {
 		log.Critical("Cannot setup builtin environments: %s\n", err)
 		return err
 	}

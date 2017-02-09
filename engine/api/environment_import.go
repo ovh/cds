@@ -139,7 +139,7 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	defer tx.Rollback()
 
-	if err := environment.Lock(tx, key, envName; err != nil {
+	if err := environment.Lock(tx, key, envName); err != nil {
 		log.Warning("importIntoEnvironmentHandler> Cannot lock env %s/%s: %s\n", key, envName, err)
 		return err
 	}
@@ -192,7 +192,12 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	allMsg := []msg.Message{}
 	msgChan := make(chan msg.Message, 10)
 
-	defer tx.Rollback()
+	go func() {
+		for msg := range msgChan {
+			log.Debug("importIntoEnvironmentHandler >>> %s", msg)
+			allMsg = append(allMsg, msg)
+		}
+	}()
 
 	if err := environment.ImportInto(tx, proj, newEnv, env, msgChan); err != nil {
 		log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
@@ -200,11 +205,6 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	}
 
 	close(msgChan)
-
-	for msg := range msgChan {
-		log.Debug("importIntoEnvironmentHandler >>> %s", msg)
-		allMsg = append(allMsg, msg)
-	}
 
 	al := r.Header.Get("Accept-Language")
 	msgListString := []string{}

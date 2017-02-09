@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -22,14 +23,14 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := test.RandomString(t, 10)
-	proj := test.InsertTestProject(t, db, pkey, pkey)
+	pkey := assets.RandomString(t, 10)
+	proj := assets.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -83,7 +84,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		"id": strconv.FormatInt(pbJob.ID, 10),
 	}
 	route := router.getRoute("POST", updateStepStatusHandler, vars)
-	headers := test.AuthHeaders(t, u, pass)
+	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
 	tester.Reset()

@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
@@ -47,7 +48,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -74,7 +75,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -93,7 +94,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -120,7 +121,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -144,7 +145,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -169,7 +170,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -182,7 +183,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	//SendBadRequest
 
 	//Prepare request
-	req = test.NewAuthentifiedRequest(t, u, pass, "POST", uri, "blabla")
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, "blabla")
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -205,11 +206,11 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass := test.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -231,7 +232,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -254,11 +255,11 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass := test.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -284,7 +285,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -307,12 +308,12 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	//Create group
 	g1 := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	if err := group.InsertGroup(db, g1); err != nil {
@@ -320,7 +321,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := test.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -346,7 +347,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -369,11 +370,11 @@ func Test_updateWorkerModel(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass := test.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -399,7 +400,7 @@ func Test_updateWorkerModel(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -434,7 +435,7 @@ func Test_updateWorkerModel(t *testing.T) {
 	uri = router.getRoute("PUT", updateWorkerModel, vars)
 	test.NotEmpty(t, uri)
 
-	req = test.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -458,11 +459,11 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass := test.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -488,7 +489,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -507,7 +508,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	uri = router.getRoute("DELETE", deleteWorkerModel, vars)
 	test.NotEmpty(t, uri)
 
-	req = test.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -530,7 +531,7 @@ func Test_getWorkerModel(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -557,7 +558,7 @@ func Test_getWorkerModel(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -571,7 +572,7 @@ func Test_getWorkerModel(t *testing.T) {
 	uri = router.getRoute("GET", getWorkerModels, nil)
 	test.NotEmpty(t, uri)
 
-	req = test.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?name=Test1", nil)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?name=Test1", nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -594,7 +595,7 @@ func Test_getWorkerModels(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -621,7 +622,7 @@ func Test_getWorkerModels(t *testing.T) {
 	uri := router.getRoute("POST", addWorkerModel, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -635,7 +636,7 @@ func Test_getWorkerModels(t *testing.T) {
 	uri = router.getRoute("GET", getWorkerModels, nil)
 	test.NotEmpty(t, uri)
 
-	req = test.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()

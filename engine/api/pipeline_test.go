@@ -16,13 +16,14 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
 func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
-	pkey := test.RandomString(t, 10)
-	projectFoo := test.InsertTestProject(t, db, pkey, pkey)
+	pkey := assets.RandomString(t, 10)
+	projectFoo := assets.InsertTestProject(t, db, pkey, pkey)
 
 	p := &sdk.Pipeline{
 		Name:      name,
@@ -47,13 +48,13 @@ func Test_runPipelineHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -63,7 +64,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := test.RandomString(t, 10)
+	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -93,7 +94,7 @@ func Test_runPipelineHandler(t *testing.T) {
 		t.FailNow()
 		return
 	}
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -123,14 +124,14 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -140,7 +141,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := test.RandomString(t, 10)
+	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -170,7 +171,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		t.FailNow()
 		return
 	}
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -197,7 +198,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 
 	//10. Create another Pipeline
 	pip2 := &sdk.Pipeline{
-		Name:       test.RandomString(t, 10),
+		Name:       assets.RandomString(t, 10),
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
@@ -207,7 +208,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 
 	//11. Insert another Application
 	app2 := &sdk.Application{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 	err = application.InsertApplication(db, proj, app2)
 
@@ -260,7 +261,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		t.FailNow()
 		return
 	}
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//18. Do the request
 	w = httptest.NewRecorder()

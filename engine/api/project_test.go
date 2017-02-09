@@ -6,6 +6,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -13,7 +14,7 @@ func TestVariableInProject(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// 1. Create project
-	project1 := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	project1 := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 
 	// 2. Insert new variable
 	var1 := sdk.Variable{

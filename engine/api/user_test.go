@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
@@ -195,11 +196,11 @@ func TestLoadUserWithGroup(t *testing.T) {
 	}
 
 	project1 := &sdk.Project{
-		Key:  test.RandomString(t, 10),
+		Key:  assets.RandomString(t, 10),
 		Name: "foo",
 	}
 	project2 := &sdk.Project{
-		Key:  test.RandomString(t, 10),
+		Key:  assets.RandomString(t, 10),
 		Name: "bar",
 	}
 
@@ -227,7 +228,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 	}
 
 	groupInsert := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	err = group.InsertGroup(db, groupInsert)
@@ -276,20 +277,20 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	router.init()
 
 	g1 := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	g2 := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
-	u, pass := test.InsertLambaUser(t, db, g1, g2)
+	u, pass := assets.InsertLambaUser(t, db, g1, g2)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
 	uri := router.getRoute("GET", getUserGroupsHandler, map[string]string{"name": u.Username})
 	test.NotEmpty(t, uri)
-	req := test.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()

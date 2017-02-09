@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -25,14 +26,14 @@ func TestAddJobHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -72,7 +73,7 @@ func TestAddJobHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//6. Do the request
 	w := httptest.NewRecorder()
@@ -94,14 +95,14 @@ func TestUpdateJobHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -155,7 +156,7 @@ func TestUpdateJobHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("PUT", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//7. Do the request
 	w := httptest.NewRecorder()
@@ -177,14 +178,14 @@ func TestDeleteJobHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -225,7 +226,7 @@ func TestDeleteJobHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("DELETE", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//7. Do the request
 	w := httptest.NewRecorder()

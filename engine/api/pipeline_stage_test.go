@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,7 +18,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -61,7 +62,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	test.NoError(t, err)
 
 	//Delete Project
-	err = test.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
@@ -71,7 +72,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -131,7 +132,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	test.NoError(t, err)
 
 	//Delete Project
-	err = test.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
@@ -141,7 +142,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -235,7 +236,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	test.NoError(t, err)
 
 	//Delete Project
-	err = test.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
@@ -245,7 +246,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -369,7 +370,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	test.NoError(t, err)
 
 	//Delete Project
-	err = test.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
@@ -379,7 +380,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -427,7 +428,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	test.NoError(t, err)
 
 	//Delete Project
-	err = test.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
@@ -437,7 +438,7 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -512,6 +513,6 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	test.NoError(t, err)
 
 	//Delete Project
-	err = test.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
