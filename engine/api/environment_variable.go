@@ -275,7 +275,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	if err := environment.UpdateVariable(db, env.ID, newVar); err != nil {
+	if err := environment.UpdateVariable(db, env.ID, &newVar); err != nil {
 		log.Warning("updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s:  %s\n", varName, envName, err)
 		return err
 	}

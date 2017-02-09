@@ -216,13 +216,13 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 		msgListString = append(msgListString, s)
 	}
 
-	if err := sanity.CheckProjectPipelines(tx, proj); err != nil {
-		log.Warning("importIntoEnvironmentHandler> Cannot check warnings: %s\n", err)
+	if err := tx.Commit(); err != nil {
+		log.Warning("importIntoEnvironmentHandler> Cannot commit transaction: %s\n", err)
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
-		log.Warning("importIntoEnvironmentHandler> Cannot commit transaction: %s\n", err)
+	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+		log.Warning("importIntoEnvironmentHandler> Cannot check warnings: %s\n", err)
 		return err
 	}
 
