@@ -491,7 +491,8 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 	for b, c := range lastCommitPerBranch {
 		branch, err := g.Branch(fullname, b)
 		if err != nil {
-			return nil, defaultDelay, fmt.Errorf("Unable to find branch %s in %s : %s", b, fullname, err)
+			log.Warning("GithubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			continue
 		}
 		res = append(res, sdk.VCSPushEvent{
 			Branch: branch,
