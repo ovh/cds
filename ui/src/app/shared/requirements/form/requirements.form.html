@@ -1,0 +1,18 @@
+<div class="ui form">
+    <div class="fields">
+        <div class="five wide field">
+            <input name="name" [(ngModel)]="newRequirement.name" placeholder="{{ 'requirement_name' | translate }}" (keyup)="setValue($event)">
+        </div>
+        <div class="three wide field">
+            <sm-select class="search" [(model)]="newRequirement.type" *ngIf="availableRequirements.length > 0" placeholder="{{ 'requirement_type' | translate }}" (onChange)="isWriting = false">
+                <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
+            </sm-select>
+        </div>
+        <div class="five wide field">
+            <input name="value" [(ngModel)]="newRequirement.value" placeholder="{{ 'requirement_value' | translate }}" (keyup)="setName($event)">
+        </div>
+        <div class="three wide center field">
+            <button class="ui blue icon button" (click)="addRequirement()"><i class="plus icon"></i></button>
+        </div>
+    </div>
+</div>

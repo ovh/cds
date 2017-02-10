@@ -1,0 +1,18 @@
+<div class="ui large breadcrumb">
+    <i class="browser icon"></i>
+    <a class="section" [class.active]="!application && !pipeline && !action" (click)="navigateToProject()">{{ project?.name}}</a>
+
+    <i *ngIf="application" class="right chevron icon divider"></i>
+    <i *ngIf="application" class="rocket icon"></i>
+    <a class="section" [class.active]="application && !pipeline && !action" (click)="navigateToApplication()">{{ application?.name}}</a>
+
+    <i *ngIf="pipeline" class="right chevron icon divider"></i>
+    <i *ngIf="pipeline" class="sitemap icon"></i>
+    <a class="section" [class.active]="pipeline && !action && !version" (click)="navigateToPipeline()">{{ pipeline?.name}}</a>
+
+    <i *ngIf="application && pipeline && version && version > 0" class="right chevron icon divider"></i>
+    <a *ngIf="application && pipeline && version && version > 0" class="section active" (click)="navigateToBuild()">{{ 'v' + version}}</a>
+
+    <i *ngIf="action" class="right chevron icon divider"></i>
+    <div class="section">{{ action?.name}}</div>
+</div>

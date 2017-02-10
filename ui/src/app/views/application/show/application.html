@@ -1,0 +1,51 @@
+<div id="ApplicationShow" *ngIf="readyApp">
+    <div class="CDSbreadcrumb">
+        <app-breadcrumb [project]="project" [application]="application"></app-breadcrumb>
+    </div>
+    <div class="CDSmenu">
+        <sm-menu title="" class="pointing secondary">
+            <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')"><i class="rocket icon"></i>{{ 'common_workflow' | translate }}</a>
+            <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')"><i class="font icon"></i>{{ 'common_variables' | translate }}</a>
+            <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')"><i class="users icon"></i>{{ 'common_permissions' | translate }}</a>
+            <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="application.permission === 7"><i class="graduation icon"></i>{{ 'common_advanced' | translate }}</a>
+        </sm-menu>
+    </div>
+
+    <div class="scrollingContent">
+        <div class="paddingContent">
+            <div class="viewContent">
+                <div [hidden]="selectedTab !== 'workflow'" class="workflow">
+                    <app-application-workflow [project]="project" [application]="application" [(applicationFilter)]="appFilter" (changeWorkerEvent)="changeWorkerFilter()" #workflow></app-application-workflow>
+                </div>
+                <div [ngSwitch]="selectedTab">
+                    <div *ngSwitchCase="'variables'">
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
+                        <h2>{{ 'application_variable_list_title' | translate}}</h2>
+                        <app-variable [variables]="application.variables" [mode]="application.permission === 7?'edit':'ro'" (event)="variableEvent($event)"></app-variable>
+                        <ng-container *ngIf="application.permission === 7">
+                            <h2>{{ 'application_variable_form_title' | translate}}</h2>
+                            <app-variable-form [loading]="varFormLoading" (createVariableEvent)="variableEvent($event)"></app-variable-form>
+                        </ng-container>
+
+                    </div>
+
+                    <div *ngSwitchCase="'permissions'">
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
+                        <h2>{{ 'application_permission_list_title' | translate }}</h2>
+                        <app-permission-list [permissions]="application.groups" [edit]="application.permission === 7" (event)="groupEvent($event)"></app-permission-list>
+                        <ng-container *ngIf="application.permission === 7">
+                            <h2>{{ 'application_permission_form_title' | translate }}</h2>
+                            <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
+                        </ng-container>
+                    </div>
+
+                    <div *ngSwitchCase="'advanced'">
+                        <h2>{{ 'application_advanced_title' | translate }}</h2>
+                        <app-application-admin [application]="application" [project]="project"></app-application-admin>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="ui text active loader" *ngIf="!readyApp">Loading application...</div>

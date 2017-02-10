@@ -1,0 +1,46 @@
+<div class="testcase">
+    <table class="ui fixed celled table">
+        <thead>
+        <tr>
+            <th>{{ 'pipeline_run_test_testcase_name' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <ng-container *ngFor="let tc of getDataForCurrentPage()">
+            <tr >
+                <td>
+                    <i class="unhide icon pointing" (click)="tc.displayed = true" *ngIf="!tc.displayed"></i>
+                    <i class="hide icon pointing" (click)="tc.displayed = false" *ngIf="tc.displayed"></i>
+                    {{tc.name}}
+                </td>
+            </tr>
+            <tr *ngIf="tc.displayed" class="log">
+                <td>
+                    <div *ngIf="tc.errors && tc.errors.length > 0">
+                        <pre [innerHTML]="getLogs(e)"  *ngFor="let e of tc.errors"></pre>
+                    </div>
+                    <div *ngIf="tc.failures && tc.failures.length > 0">
+                        <pre [innerHTML]="getLogs(f)"  *ngFor="let f of tc.failures"></pre>
+                    </div>
+                </td>
+            </tr>
+        </ng-container>
+
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="2">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+</div>

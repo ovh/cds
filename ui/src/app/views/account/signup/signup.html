@@ -1,0 +1,37 @@
+<div id="signupComponent">
+    <img id ="logo" class="ui centered image" src="assets/images/cds.png">
+    <div class="ui two column centered grid">
+        <div class="column" *ngIf="!showWaitingMessage">
+            <h3 class="ui top block attached header">
+                {{ 'account_signup_title' | translate }}
+            </h3>
+            <div class="ui bottom attached segment">
+                <form class="ui form" (ngSubmit)="createUser()" #loginForm="ngForm">
+                    <div class="field">
+                        <label>{{ 'user_label_username' | translate }}</label>
+                        <input type="text" [(ngModel)]="user.username" name="username">
+                    </div>
+                    <div class="field">
+                        <label>{{ 'user_label_fullname' | translate }}</label>
+                        <input type="text" [(ngModel)]="user.fullname" name="fullname">
+                    </div>
+                    <div class="field">
+                        <label>{{ 'user_label_email' | translate }}</label>
+                        <input type="email" [(ngModel)]="user.email" name="email">
+                    </div>
+                    <button id="signUpButton" class="ui button green" type="submit">{{ 'account_signup_btn_create' | translate }}</button>
+
+                    <button class="ui button teal right floated" type="button" (click)="navigateToPassword()">{{ 'account_btn_password' | translate}}
+                    </button>
+                    <button class="ui button teal right floated" type="button" (click)="navigateToLogin()">{{ 'account_btn_login' | translate }}
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="column" *ngIf="showWaitingMessage">
+            <div class="ui info message">
+                {{ 'account_signup_waiting_text' | translate }}
+            </div>
+        </div>
+    </div>
+</div>

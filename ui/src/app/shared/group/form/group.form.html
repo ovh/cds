@@ -1,0 +1,9 @@
+<form (ngSubmit)="createGroup()" class="ui form">
+    <div class="field">
+        <label>{{ 'group_name' | translate }}</label>
+        <input type="text" name="groupname" class="ui input" [(ngModel)]="group.name">
+    </div>
+    <div class="right aligned field" *ngIf="mode === 'form'">
+        <button [class.disabled]="!group.name || group.name === ''" type="submit" class="ui green button">{{ 'btn_create' | translate }}</button>
+    </div>
+</form>
