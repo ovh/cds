@@ -17,6 +17,12 @@ type (
 		Type  string `json:"type" yaml:"type"`
 		Value string `json:"value" yaml:"value"`
 	}
+
+	// ParameterValue is a struct to export a defautl value of Parameter
+	ParameterValue struct {
+		Type         string `json:"type" yaml:"type"`
+		DefaultValue string `json:"default" yaml:"default"`
+	}
 )
 
 //All the consts

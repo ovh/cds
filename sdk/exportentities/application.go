@@ -8,7 +8,6 @@ import (
 
 // Application represents exported sdk.Application
 type Application struct {
-	ProjectKey        string                         `json:"project_key" yaml:"project_key"`
 	Name              string                         `json:"name" yaml:"name"`
 	RepositoryManager string                         `json:"repo_manager,omitempty" yaml:"repo_manager,omitempty"`
 	RepositoryName    string                         `json:"repo_name,omitempty" yaml:"repo_name,omitempty"`
@@ -61,7 +60,6 @@ type Condition struct {
 // NewApplication instanciance an exportable application from an sdk.Application
 func NewApplication(app *sdk.Application) (a *Application) {
 	a = new(Application)
-	a.ProjectKey = app.ProjectKey
 	a.Name = app.Name
 
 	if app.RepositoriesManager != nil {
@@ -112,7 +110,7 @@ func NewApplication(app *sdk.Application) (a *Application) {
 			if t.DestEnvironment.Name != sdk.DefaultEnv.Name {
 				destEnv = &t.DestEnvironment.Name
 			}
-			if t.DestProject.Key != a.ProjectKey {
+			if t.DestProject.Key != app.ProjectKey {
 				pKey = &t.DestProject.Key
 			}
 			if t.DestApplication.Name != a.Name {
@@ -222,7 +220,6 @@ func NewApplication(app *sdk.Application) (a *Application) {
 //HCLTemplate returns text/template
 func (a *Application) HCLTemplate() (*template.Template, error) {
 	tmpl := `name = "{{.Name}}"
-project_key = "{{.ProjectKey}}
 
 repo_manager = "{{.RepositoryManager}}
 repo_name = "{{.RepositoryName}}
