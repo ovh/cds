@@ -31,10 +31,10 @@ var (
 	EnvironmentVariableCannotBeUpdated = &Message{trad{FR: "La variable %s de l'environnement %s n'a pu être mise à jour : %s", EN: "Variable %s on environment %s cannot be updated: %s"}, nil}
 	EnvironmentVariableCreated         = &Message{trad{FR: "La variable %s de l'environnement %s a été ajoutée", EN: "Variable %s on environment %s has been added"}, nil}
 	EnvironmentVariableCannotBeCreated = &Message{trad{FR: "La variable %s de l'environnement %s n'a pu être ajoutée : %s", EN: "Variable %s on environment %s cannot be added: %s"}, nil}
-	EnvironmentGroupUpdated            = &Message{trad{FR: "Le groupe %s de l'environnement %s a été mise à jour", EN: "Group %s on environment %s has been updated"}, nil}
-	EnvironmentGroupCannotBeUpdated    = &Message{trad{FR: "Le groupe %s de l'environnement %s n'a pu être mise à jour : %s", EN: "Group %s on environment %s cannot be updated: %s"}, nil}
-	EnvironmentGroupCreated            = &Message{trad{FR: "Le groupe %s de l'environnement %s a été ajoutée", EN: "Group %s on environment %s has been added"}, nil}
-	EnvironmentGroupCannotBeCreated    = &Message{trad{FR: "Le groupe %s de l'environnement %s n'a pu être ajoutée : %s", EN: "Group %s on environment %s cannot be added: %s"}, nil}
+	EnvironmentGroupUpdated            = &Message{trad{FR: "Le groupe %s de l'environnement %s a été mis à jour", EN: "Group %s on environment %s has been updated"}, nil}
+	EnvironmentGroupCannotBeUpdated    = &Message{trad{FR: "Le groupe %s de l'environnement %s n'a pu être mis à jour : %s", EN: "Group %s on environment %s cannot be updated: %s"}, nil}
+	EnvironmentGroupCreated            = &Message{trad{FR: "Le groupe %s de l'environnement %s a été ajouté", EN: "Group %s on environment %s has been added"}, nil}
+	EnvironmentGroupCannotBeCreated    = &Message{trad{FR: "Le groupe %s de l'environnement %s n'a pu être ajouté : %s", EN: "Group %s on environment %s cannot be added: %s"}, nil}
 )
 
 //Message represent a struc format translated messages
