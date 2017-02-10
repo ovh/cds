@@ -1,0 +1,45 @@
+<div id="PipelineRunWorfklow">
+    <div class="ui grid">
+        <div class="row">
+            <div class="column">
+                <ul *ngIf="currentBuild">
+                    <li *ngFor="let stage of currentBuild.stages" class="stage">
+                        <div class="stageItem">
+                            {{stage.name}}
+                            <ul>
+                                <li *ngFor="let j of stage.jobs">
+                                    <div class="job ui segment pointing"
+                                         [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
+                                         (click)="selectedJob(j, stage)">
+                                        <app-status-icon [status]="mapJobStatus[j.pipeline_action_id]"></app-status-icon>
+                                        {{j.action.name}}
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="column">
+                <div class="log" *ngIf="selectedPipJob">
+                    <ul>
+                        <li *ngFor="let step of selectedPipJob.job.action.actions; let i = index">
+                            <app-step-log
+                                    [application]="application"
+                            [pipeline]="pipeline"
+                            [project]="project"
+                            [pipelineBuild]="currentBuild"
+                            [jobID]="selectedPipJob.job.pipeline_action_id"
+                            [step]="step"
+                            [stepOrder]="i"
+                            [stepStatus]="mapStepStatus[selectedPipJob.job.pipeline_action_id + '-' + i]"
+                            ></app-step-log>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

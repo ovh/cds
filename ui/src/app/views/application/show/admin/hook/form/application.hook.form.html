@@ -1,0 +1,16 @@
+<form class="ui form" (ngSubmit)="addHook()">
+    <div class="fields">
+        <div class="six wide field">
+            <label>{{'pipeline_name' | translate}}</label>
+            <sm-select class="fluid search" [disabled]="loading" [(model)]="newHook.pipeline" required>
+                <option *ngFor="let p of project.pipelines" [ngValue]="p">{{p.name}}</option>
+            </sm-select>
+        </div>
+        <div class="two wide center field">
+            <button class="ui green button" [class.loading]="loading" name="addhookbtn">
+                {{ 'btn_save' | translate }}
+            </button>
+        </div>
+    </div>
+    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="addHook(true)" #addHookWarning></app-warning-modal>
+</form>

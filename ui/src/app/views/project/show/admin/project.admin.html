@@ -1,0 +1,31 @@
+<div id="projectAdmin">
+    <h3>{{ 'project_rename_title' | translate }}</h3>
+    <form class="ui form" (ngSubmit)="onSubmitProjectUpdate()" #projectUpdateFrom="ngForm">
+        <div class="fields">
+            <div class="four wide field">
+                <input type="text" name="formProjectUpdateName"
+                       placeholder="{{ 'project_name' | translate}}"
+                       [(ngModel)]="project.name"
+                       [disabled]="loading"
+                       required
+                       #formProjectUpdateName="ngModel"
+                       pattern="[a-zA-Z0-9]*">
+                <div *ngIf="!formProjectUpdateName.valid && !formProjectUpdateName.pristine"
+                     class="ui error message">
+                    <p>{{'project_update_name_error' | translate}}</p>
+                </div>
+            </div>
+            <div class="two wide center field">
+                <button class="ui green button" name="btnrename" [class.loading]="loading">{{ 'btn_rename' | translate }}</button>
+            </div>
+        </div>
+    </form>
+    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitProjectUpdate(true)" #updateWarning></app-warning-modal>
+
+    <div class="repomanager">
+        <h3>{{ 'project_repoman_title' | translate }}</h3>
+        <app-project-repomanager-form [project]="project"></app-project-repomanager-form>
+        <app-project-repomanager-list *ngIf="project.repositories_manager && project.repositories_manager.length > 0"
+                                      [project]="project" [reposmanagers]="project.repositories_manager"></app-project-repomanager-list>
+    </div>
+</div>

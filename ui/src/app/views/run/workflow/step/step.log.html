@@ -1,0 +1,14 @@
+<div class="log" *ngIf="currentStatus">
+    <div class="logHeader pointing" (click)="toggleLogs()">
+        <div class="status" [class.icon]="currentStatus !== 'Building'">
+            <app-status-icon [status]="currentStatus"></app-status-icon>
+        </div>
+        <div class="title">
+            {{step.name}}
+        </div>
+    </div>
+    <div class="logs" *ngIf="logs" [hidden]="!showLog">
+        <pre [innerHTML]="getLogs()">
+        </pre>
+    </div>
+</div>

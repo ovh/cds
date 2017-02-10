@@ -1,0 +1,25 @@
+<div class="test" *ngIf="tests">
+    <div class="summary">
+        <div class="ui grid">
+            <div class="right aligned five wide column">
+                {{tests.total}}
+                <span *ngIf="tests.total > 1">{{'pipeline_run_test_total_title_s' | translate}}</span>
+                <span *ngIf="tests.total < 2">{{'pipeline_run_test_total_title' | translate}}</span>
+            </div>
+            <div class="centered five wide column">
+                {{ tests.ko }}
+                <span *ngIf="tests.ko > 1">{{'pipeline_run_test_failed_title_s' | translate}}</span>
+                <span *ngIf="tests.ko < 2">{{'pipeline_run_test_failed_title' | translate}}</span>
+            </div>
+            <div class="five wide column">
+                {{ tests.skipped }}
+                <span *ngIf="tests.skipped > 1">{{'pipeline_run_test_skipped_title_s' | translate}}</span>
+                <span *ngIf="tests.skipped < 2">{{'pipeline_run_test_skipped_title' | translate}}</span>
+            </div>
+        </div>
+
+    </div>
+    <div class="report">
+        <app-test-table [tests]="tests.test_suites" [statusFilter]="'error'"></app-test-table>
+    </div>
+</div>

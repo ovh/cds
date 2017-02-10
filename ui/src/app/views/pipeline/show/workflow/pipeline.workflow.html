@@ -1,0 +1,19 @@
+<div class="ui top attached steps">
+  <div class="step" *ngFor="let s of pipeline.stages" [class.active]="selectedStage?.id === s.id">
+    <div class="content">
+      <a class="title pointing" (click)="selectedStage = s">{{s.name}}</a>
+    </div>
+  </div>
+  <div class="step" *ngIf="pipeline.permission === 7">
+    <div class="content">
+      <div class="title">
+        <a class="pointing" (click)="addStage()">
+          <i class="green plus circle icon"></i>{{ 'stage_add_label' | translate }}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="ui attached segment" *ngIf="pipeline.stages && pipeline.stages.length > 0 && selectedStage">
+  <app-pipeline-stage [project]="project" [pipeline]="pipeline" [stage]="selectedStage"></app-pipeline-stage>
+</div>

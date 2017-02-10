@@ -1,0 +1,46 @@
+@import '../../../common';
+
+.requirementForm {
+  margin-top: 10px;
+}
+
+.paramName {
+  font-weight: 600;
+}
+
+.dragula-container {
+  .gu-transit {
+    border: 1px solid #f3f3f3;
+  }
+  .gu-transit .ui.form {
+    opacity: 0.4;
+  }
+  .gu-transit .ui.grid {
+    opacity: 0.4;
+  }
+
+  .step hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  .move.icon {
+    margin-right: 10px !important;
+  }
+}
+
+
+.inline.field input {
+  width: 80%;
+}
+
+.inline.field textarea {
+  width: 80%;
+}
+
+.labelPadding {
+  padding-top: 8px;
+}
+
+
+

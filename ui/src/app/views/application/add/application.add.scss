@@ -1,0 +1,27 @@
+@import '../../../../common';
+
+#AddApplication {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  height: 100%;
+  padding-top: 20px;
+
+  h2 {
+    text-align: center;
+  }
+
+  .ui.radio.checkbox {
+    border: 1px solid $darkGreyColor;
+    padding: 10px 30px;
+    width: 100%;
+  }
+
+  .ui.radio.checkbox.active {
+    border-color: #202f3c;
+  }
+
+  .wizard.card {
+    padding-right: 50px;
+  }
+}

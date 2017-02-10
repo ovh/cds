@@ -1,0 +1,10 @@
+<sm-modal title="{{title}}" class="basic warning" #myModal>
+    <modal-content>
+        {{msg}}
+    </modal-content>
+    <modal-actions>
+        <div class="ui grey button" (click)="close(myModal)">{{'btn_cancel' | translate}}</div>
+        <div class="ui green button" (click)="eventAndClose(myModal)">{{'btn_continue' | translate}}</div>
+    </modal-actions>
+</sm-modal>
+
