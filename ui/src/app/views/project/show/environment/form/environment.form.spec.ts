@@ -12,7 +12,7 @@ import {ToastService} from '../../../../../shared/toast/ToastService';
 import {ProjectModule} from '../../../project.module';
 import {ProjectEnvironmentFormComponent} from './environment.form.component';
 import {Project} from '../../../../../model/project.model';
-import {Observable} from 'rxjs';
+import {Observable} from 'rxjs/Rx';
 import {SharedModule} from '../../../../../shared/shared.module';
 import {Environment} from '../../../../../model/environment.model';
 

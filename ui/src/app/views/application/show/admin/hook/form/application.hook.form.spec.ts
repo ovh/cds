@@ -15,7 +15,7 @@ import {SharedModule} from '../../../../../../shared/shared.module';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {ApplicationService} from '../../../../../../service/application/application.service';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
-import {Observable} from 'rxjs';
+import {Observable} from 'rxjs/Rx';
 import {ApplicationHookFormComponent} from './application.hook.form.component';
 import {Hook} from '../../../../../../model/hook.model';
 import {TranslateParser} from 'ng2-translate';

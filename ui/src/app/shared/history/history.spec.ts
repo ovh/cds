@@ -56,7 +56,7 @@ describe('CDS: History component', () => {
         pb.trigger.triggered_by.username = 'Foo';
         pb.trigger.vcs_author = 'Bar';
 
-        expect(fixture.componentInstance.getTriggerSource(pb)).toBe('CDS scheduler')
+        expect(fixture.componentInstance.getTriggerSource(pb)).toBe('CDS scheduler');
     }));
 
     it('should return that pipeline was triggered by a CDS User', fakeAsync( () => {
@@ -72,7 +72,7 @@ describe('CDS: History component', () => {
         pb.trigger.triggered_by.username = 'Foo';
         pb.trigger.vcs_author = 'Bar';
 
-        expect(fixture.componentInstance.getTriggerSource(pb)).toBe('Foo')
+        expect(fixture.componentInstance.getTriggerSource(pb)).toBe('Foo');
     }));
 
     it('should return that pipeline was triggered by Git commit author', fakeAsync( () => {
@@ -88,7 +88,7 @@ describe('CDS: History component', () => {
         pb.trigger.triggered_by.username = '';
         pb.trigger.vcs_author = 'Bar';
 
-        expect(fixture.componentInstance.getTriggerSource(pb)).toBe('Bar')
+        expect(fixture.componentInstance.getTriggerSource(pb)).toBe('Bar');
     }));
 });
 

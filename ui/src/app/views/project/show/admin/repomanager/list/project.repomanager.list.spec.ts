@@ -16,7 +16,7 @@ import {TranslateParser} from 'ng2-translate';
 import {ProjectModule} from '../../../../project.module';
 import {ProjectRepoManagerComponent} from './project.repomanager.list.component';
 import {RepositoriesManager} from '../../../../../../model/repositories.model';
-import {Observable} from 'rxjs';
+import {Observable} from 'rxjs/Rx';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 
 describe('CDS: Project RepoManager List Component', () => {

@@ -17,7 +17,7 @@ import {ApplicationStore} from '../../../../../../service/application/applicatio
 import {ApplicationService} from '../../../../../../service/application/application.service';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {RepositoryPoller} from '../../../../../../model/polling.model';
-import {Observable} from 'rxjs';
+import {Observable} from 'rxjs/Rx';
 import {TranslateParser} from 'ng2-translate';
 
 describe('CDS: Application poller form component', () => {
