@@ -16,7 +16,7 @@ import {List} from 'immutable';
 export class NavbarComponent implements OnInit, AfterViewInit {
 
     // flag to indicate that the component is ready to use
-    private ready = false;
+    public ready = false;
 
     // List of projects in the nav bar
     private navProjects: Project[];

@@ -16,7 +16,7 @@ import {WarningModalComponent} from '../../../shared/modal/warning/warning.compo
 })
 export class ProjectShowComponent implements OnInit, OnDestroy {
 
-    private ready = false;
+    public ready = false;
     public varFormLoading = false;
     public permFormLoading = false;
 

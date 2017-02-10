@@ -23,7 +23,7 @@ import {CDSWorker} from '../../../shared/worker/worker';
 export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     // Flag to show the page or not
-    private readyApp = false;
+    public readyApp = false;
     public varFormLoading = false;
     public permFormLoading = false;
 

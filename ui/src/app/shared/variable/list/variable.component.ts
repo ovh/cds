@@ -18,8 +18,8 @@ export class VariableComponent extends Table {
     @Input() mode = 'edit';
     @Output() event = new EventEmitter<VariableEvent>();
 
-    private ready = false;
-    private variableTypes: string[];
+    public ready = false;
+    public variableTypes: string[];
 
     constructor(private _variableService: VariableService, private _sharedService: SharedService) {
         super();

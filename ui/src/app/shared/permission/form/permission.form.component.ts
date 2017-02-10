@@ -11,7 +11,7 @@ import {PermissionEvent} from '../permission.event.model';
 })
 export class PermissionFormComponent {
 
-    private ready = false;
+    public ready = false;
 
     private permissionList;
     private groupList: Group[];

@@ -20,8 +20,8 @@ export class ParameterListComponent extends Table {
     @Input() mode = 'edit';
     @Output() event = new EventEmitter<ParameterEvent>();
 
-    private ready = false;
-    private parameterTypes: string[];
+    public ready = false;
+    public parameterTypes: string[];
 
     constructor(private _paramService: ParameterService, public _sharedService: SharedService) {
         super();

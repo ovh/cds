@@ -18,7 +18,7 @@ import {Application} from '../../../model/application.model';
 })
 export class PipelineShowComponent implements OnInit, OnDestroy {
 
-    private ready = false;
+    public ready = false;
     public permFormLoading = false;
     public paramFormLoading = false;
 

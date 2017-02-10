@@ -13,7 +13,7 @@ declare var jQuery: any;
 export class VariableFormComponent {
 
 
-    private variableTypes: string[];
+    public variableTypes: string[];
     newVariable = new Variable();
 
     @Input() loading = false;

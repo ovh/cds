@@ -22,7 +22,7 @@ export class ProjectRepoManagerFormComponent  {
     @ViewChild('linkRepoWarning')
     linkRepoWarningModal: WarningModalComponent;
 
-    private ready = false;
+    public ready = false;
     public connectLoading = false;
     public verificationLoading = false;
 
