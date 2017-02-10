@@ -454,8 +454,10 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 					interval = time.Duration(f) * time.Second
 				}
 			}
-
-			time.Sleep(interval)
+			//Only wait if there is an other page
+			if nextPage != "" {
+				time.Sleep(interval)
+			}
 		} else {
 			break
 		}

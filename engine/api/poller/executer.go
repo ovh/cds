@@ -41,40 +41,41 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, error) {
 
 	//Process all
 	for i := range exs {
-		tx, errb := db.Begin()
-		if errb != nil {
-			log.Warning("poller.ExecuterRun> %s", errb)
-			return nil, errb
-		}
-
-		e := &exs[i]
-		//Starting with exclusive lock on the table
-		if err := LockPollerExecution(tx, e.ID); err != nil {
-			tx.Rollback()
-			continue
-		}
-
-		p, err := LoadByApplicationAndPipeline(tx, e.ApplicationID, e.PipelineID)
-		if err != nil {
-			log.Critical("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, err)
-			tx.Rollback()
-			continue
-		}
-		if err := executerProcess(tx, p, e); err != nil {
-			log.Critical("poller.ExecuterRun> Unable to process %v : %s", e, err)
-			tx.Rollback()
-			continue
-		}
-
-		//Commit
-		if err := tx.Commit(); err != nil {
-			log.Warning("poller.ExecuterRun> %s", err)
-			tx.Rollback()
-			continue
-		}
+		go executerRun(db, &exs[i])
+		time.Sleep(time.Second)
 	}
 
 	return exs, nil
+}
+
+func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
+	tx, errb := db.Begin()
+	if errb != nil {
+		log.Critical("poller.ExecuterRun> %s", errb)
+		return
+	}
+
+	defer tx.Rollback()
+
+	if err := LockPollerExecution(tx, e.ID); err != nil {
+		log.Critical("poller.ExecuterRun> LockPollerExecution %s", e.ID)
+		return
+	}
+
+	p, errl := LoadByApplicationAndPipeline(tx, e.ApplicationID, e.PipelineID)
+	if errl != nil {
+		log.Critical("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, errl)
+		return
+	}
+	if err := executerProcess(tx, p, e); err != nil {
+		log.Critical("poller.ExecuterRun> Unable to process %v : %s", e, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("poller.ExecuterRun> %s", err)
+		return
+	}
 }
 
 func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) error {
