@@ -13,7 +13,7 @@ import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {RequirementStore} from '../../../service/worker/requirement/requirement.store';
 
-describe('CDS: Variable List Component', () => {
+describe('CDS: Requirement List Component', () => {
 
     let injector: Injector;
     let backend: MockBackend;
@@ -58,6 +58,7 @@ describe('CDS: Variable List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+
         expect(backend.connectionsArray[0].request.url).toBe('/worker/model/capability/type', 'Component must load requirement type');
         expect(JSON.stringify(fixture.componentInstance.availableRequirements)).toBe(JSON.stringify(['binary', 'network']));
 
@@ -68,6 +69,11 @@ describe('CDS: Variable List Component', () => {
 
         reqs.push(r);
         fixture.componentInstance.requirements = reqs;
+
+        // Readonly mode: no delete button displayed
+        expect(fixture.debugElement.nativeElement.querySelector('.ui.red.button')).toBeFalsy();
+
+        fixture.componentInstance.edit = true;
 
         fixture.detectChanges();
         tick(50);

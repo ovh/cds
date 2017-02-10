@@ -1,5 +1,5 @@
 <div class="prerequisites">
-    <table class="ui fixed celled table">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th class="six wide">{{ 'prerequisite_parameter_name' | translate }}</th>
@@ -13,18 +13,21 @@
                 {{p.parameter}}
             </td>
             <td>
-                <div class="ui form">
+                <div class="ui form" *ngIf="edit">
                     <input [(ngModel)]="p.expected_value" name="value" (keydown)="update(p)">
                 </div>
+                <span *ngIf="!edit">{{p.expected_value}}</span>
             </td>
             <td class="center">
-                <app-delete-button (event)="remove(p)"></app-delete-button>
+                <ng-container *ngIf="edit">
+                    <app-delete-button (event)="remove(p)"></app-delete-button>
+                </ng-container>
             </td>
         </tr>
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
         <tr>
-            <th colspan="4">
+            <th colspan="3">
                 <div class="ui right floated pagination menu" >
                     <a class="icon item" (click)="downPage()">
                         <i class="left chevron icon"></i>
@@ -38,4 +41,7 @@
         </tr>
         </tfoot>
     </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'prerequisite_no' | translate }}
+    </div>
 </div>

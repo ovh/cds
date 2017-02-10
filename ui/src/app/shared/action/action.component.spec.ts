@@ -71,6 +71,7 @@ describe('CDS: Action Component', () => {
         action.name = 'FooAction';
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
+        fixture.componentInstance.edit = true;
 
         fixture.detectChanges();
         tick(50);
@@ -106,6 +107,7 @@ describe('CDS: Action Component', () => {
         action.name = 'FooAction';
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
+        fixture.componentInstance.edit = true;
 
         fixture.detectChanges();
         tick(50);
@@ -141,6 +143,14 @@ describe('CDS: Action Component', () => {
         fixture.detectChanges();
         tick(50);
 
+        // readonly , no button
+        expect(fixture.debugElement.nativeElement.querySelector('.ui.red.button')).toBeFalsy();
+
+        fixture.componentInstance.edit = true;
+
+        fixture.detectChanges();
+        tick(50);
+
         let compiled = fixture.debugElement.nativeElement;
 
         spyOn(fixture.componentInstance.actionEvent, 'emit');
@@ -163,6 +173,7 @@ describe('CDS: Action Component', () => {
         action.name = 'FooAction';
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
+        fixture.componentInstance.edit = true;
 
         fixture.detectChanges();
         tick(50);
@@ -200,6 +211,7 @@ describe('CDS: Action Component', () => {
         action.name = 'FooAction';
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
+        fixture.componentInstance.edit = true;
 
         fixture.detectChanges();
         tick(50);

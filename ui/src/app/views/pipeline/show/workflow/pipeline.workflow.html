@@ -4,7 +4,7 @@
       <a class="title pointing" (click)="selectedStage = s">{{s.name}}</a>
     </div>
   </div>
-  <div class="step">
+  <div class="step" *ngIf="pipeline.permission === 7">
     <div class="content">
       <div class="title">
         <a class="pointing" (click)="addStage()">

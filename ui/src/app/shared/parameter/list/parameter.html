@@ -1,12 +1,12 @@
 <div class="parameter" *ngIf="ready">
-    <table class="ui fixed celled table">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead [hidden]="mode === 'launcher'">
         <tr>
             <th class="four wide">{{ 'parameter_name' | translate }}</th>
-            <th class="two wide" *ngIf="mode ==='edit'">{{ 'parameter_type' | translate }}</th>
-            <th class="wide" [class.four]="mode === 'edit'" [class.eight]="mode === 'launcher'">{{ 'parameter_value' | translate }}</th>
+            <th class="two wide" *ngIf="mode !=='launcher'">{{ 'parameter_type' | translate }}</th>
+            <th class="wide" [class.four]="mode !== 'launcher'" [class.eight]="mode === 'launcher'">{{ 'parameter_value' | translate }}</th>
             <th class="four wide">{{ 'parameter_description' | translate }}</th>
-            <th class="two wide"  *ngIf="mode !=='launcher'"></th>
+            <th class="two wide"  *ngIf="mode ==='edit'"></th>
         </tr>
         </thead>
         <tbody>
@@ -15,30 +15,36 @@
                 <div class="ui fluid input" *ngIf="mode === 'edit'">
                     <input class="ui input" [(ngModel)]="p.name"  (keydown)="p.hasChanged = true" [disabled]="p.updating">
                 </div>
-                <span *ngIf="mode === 'launcher'">
+                <span *ngIf="mode !== 'edit'">
                     {{p.name}}
                 </span>
             </td>
             <td *ngIf="mode !=='launcher'">
-                <div class="ui form">
+                <div class="ui form" *ngIf="mode === 'edit'">
                     <sm-select class="search" [(model)]="p.type" [disabled]="p.updating" (onChange)="p.hasChanged = true">
                         <option *ngFor="let type of parameterTypes" value="{{type}}">{{type}}</option>
                     </sm-select>
                 </div>
+                <span *ngIf="mode !== 'edit'">
+                    {{p.type}}
+                </span>
             </td>
-            <td class="wide" [class.four]="mode === 'edit'" [class.eight]="mode === 'launcher'">
-                <app-parameter-value [project]="project"  [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true"></app-parameter-value>
+            <td class="wide" [class.four]="mode !== 'launcher'" [class.eight]="mode === 'launcher'">
+                <app-parameter-value [project]="project" [edit]="mode !== 'ro'"  [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true"></app-parameter-value>
             </td>
             <td>
-                <textarea *ngIf="!(mode === 'launcher' && (!p.description && p.description === ''))" class="ui textarea" [class.lock]="mode === 'launcher'" [(ngModel)]="p.description" rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'"></textarea>
+                <textarea *ngIf="mode !== launcher && p.description && p.description !== ''" class="ui textarea" [class.lock]="mode !== 'edit'" [(ngModel)]="p.description" rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'"></textarea>
                 <span *ngIf="mode === 'launcher' && (!p.description && p.description === '')">{{'common_no_description' | translate}}</span>
             </td>
             <td class="center"  *ngIf="mode !=='launcher'">
-                <button *ngIf="p.hasChanged" class="ui green button" [class.loading]="p.updating" [class.disabled]="p.updating" name="btnupdatevparam" (click)="sendEvent('update', p)">
-                    <i class="save icon"></i>
-                    {{ 'btn_save' | translate}}
-                </button>
-                <app-delete-button *ngIf="!p.hasChanged" (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
+                <ng-container *ngIf="mode === 'edit'">
+                    <button *ngIf="p.hasChanged" class="ui green button" [class.loading]="p.updating" [class.disabled]="p.updating" name="btnupdatevparam" (click)="sendEvent('update', p)">
+                        <i class="save icon"></i>
+                        {{ 'btn_save' | translate}}
+                    </button>
+                    <app-delete-button *ngIf="!p.hasChanged" (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
+                </ng-container>
+
             </td>
         </tr>
         </tbody>
@@ -58,4 +64,7 @@
         </tr>
         </tfoot>
     </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'parameter_no' | translate }}
+    </div>
 </div>

@@ -11,6 +11,7 @@ import {PrerequisiteEvent} from '../prerequisite.event.model';
 export class PrerequisiteComponent extends Table {
 
     @Input() prerequisites: Prerequisite[];
+    @Input() edit = false;
     @Output() event = new EventEmitter<PrerequisiteEvent>();
 
     constructor() {

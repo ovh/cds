@@ -12,6 +12,7 @@ import {RequirementStore} from '../../../service/worker/requirement/requirement.
 export class RequirementsListComponent extends Table {
 
     @Input() requirements: Requirement[];
+    @Input() edit: boolean;
     @Output() event = new EventEmitter<RequirementEvent>();
 
     availableRequirements: Array<string>;

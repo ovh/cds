@@ -11,22 +11,27 @@
         <tbody>
         <tr *ngFor="let r of getDataForCurrentPage()">
             <td>
-                <div class="ui fluid input">
+                <div class="ui fluid input" *ngIf="edit">
                     <input [(ngModel)]="r.name" name="requirementname">
                 </div>
+                <span *ngIf="!edit">{{r.name}}</span>
             </td>
             <td>
-                <div class="ui form">
+                <div class="ui form" *ngIf="edit">
                     <sm-select class="search" [(model)]="r.type" *ngIf="availableRequirements.length > 0">
                         <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
                     </sm-select>
                 </div>
+                <span *ngIf="!edit">{{r.type}}</span>
             </td>
             <td>
-                <input [(ngModel)]="r.value" name="requirementvalue">
+                <input *ngIf="edit" [(ngModel)]="r.value" name="requirementvalue">
+                <span *ngIf="!edit">{{r.value}}</span>
             </td>
             <td class="center">
-                <app-delete-button (event)="deleteEvent(r)"></app-delete-button>
+                <ng-container *ngIf="edit">
+                    <app-delete-button (event)="deleteEvent(r)"></app-delete-button>
+                </ng-container>
             </td>
         </tr>
         </tbody>

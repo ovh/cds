@@ -57,6 +57,14 @@ describe('CDS: Prerequisite List Component', () => {
         fixture.detectChanges();
         tick(50);
 
+        // Readonly mode: no button displayed
+        expect(fixture.debugElement.nativeElement.querySelector('.ui.red.button')).toBeFalsy();
+
+        fixture.componentInstance.edit = true;
+
+        fixture.detectChanges();
+        tick(50);
+
         let compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('.ui.red.button')).toBeTruthy('Delete button must be displayed');
         compiled.querySelector('.ui.red.button').click();

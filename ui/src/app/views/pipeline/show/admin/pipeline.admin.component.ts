@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
@@ -12,7 +12,7 @@ declare var _: any;
     templateUrl: './pipeline.admin.html',
     styleUrls: ['./pipeline.admin.scss']
 })
-export class PipelineAdminComponent {
+export class PipelineAdminComponent implements OnInit {
 
     public loading = false;
 
@@ -33,6 +33,12 @@ export class PipelineAdminComponent {
         this._pipStore.getPipelineType().subscribe( types => {
             this.pipelineTypes = types.toArray();
         });
+    }
+
+    ngOnInit(): void {
+        if (this.editablePipeline.permission !== 7) {
+            this._router.navigate(['/project', this.project.key, 'pipeline', this.editablePipeline.name], {queryParams: {tab: 'pipeline'}});
+        }
     }
 
     updatePipeline() {

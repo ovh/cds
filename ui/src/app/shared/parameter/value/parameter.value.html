@@ -1,4 +1,4 @@
-<ng-container [ngSwitch]="type">
+<ng-container [ngSwitch]="type" *ngIf="edit">
     <div *ngSwitchCase="'number'" class="ui fluid input">
         <input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
     </div>
@@ -39,5 +39,17 @@
     </div>
     <div *ngSwitchDefault class="ui fluid input">
         <input type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+    </div>
+</ng-container>
+<ng-container [ngSwitch]="type" *ngIf="!edit">
+    <div *ngSwitchCase="'text'" class="ui form">
+        <textarea readonly rows="{{_sharedService.getTextAreaheight(value)}}">{{value}}</textarea>
+    </div>
+    <div *ngSwitchCase="'boolean'" class="ui checkbox">
+        <input disabled type="checkbox" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+        <label>{{ ' '}}</label>
+    </div>
+    <div *ngSwitchDefault class="ui fluid input">
+        {{value}}
     </div>
 </ng-container>

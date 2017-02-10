@@ -15,6 +15,8 @@ export class ParameterListComponent extends Table {
 
     @Input() parameters: Array<Parameter>;
     @Input() project: Project;
+
+    // edit/launcher/ro
     @Input() mode = 'edit';
     @Output() event = new EventEmitter<ParameterEvent>();
 

@@ -24,6 +24,7 @@ export class ActionComponent implements OnDestroy {
     selectedStep: Action;
 
     @Input() project: Project;
+    @Input() edit = false;
 
     @Input('action')
     set action(data: Action) {
