@@ -107,7 +107,9 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	for _, m := range allMsg {
 		s := m.String(al)
-		msgListString = append(msgListString, s)
+		if s != "" {
+			msgListString = append(msgListString, s)
+		}
 	}
 
 	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
@@ -222,7 +224,9 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	for _, m := range allMsg {
 		s := m.String(al)
-		msgListString = append(msgListString, s)
+		if s != "" {
+			msgListString = append(msgListString, s)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
