@@ -42,7 +42,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, error) {
 	//Process all
 	for i := range exs {
 		go executerRun(db, &exs[i])
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 	}
 
 	return exs, nil
@@ -58,7 +58,7 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 	defer tx.Rollback()
 
 	if err := LockPollerExecution(tx, e.ID); err != nil {
-		log.Critical("poller.ExecuterRun> LockPollerExecution %s: %s", e.ID, err)
+		log.Debug("poller.ExecuterRun> LockPollerExecution %d: %s", e.ID, err)
 		return
 	}
 

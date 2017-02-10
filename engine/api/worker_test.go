@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
@@ -93,7 +94,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 	uri := router.getRoute("POST", workerCheckingHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
+	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -190,7 +191,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 	uri := router.getRoute("POST", workerWaitingHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
+	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
