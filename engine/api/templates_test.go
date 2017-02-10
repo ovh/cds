@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -40,7 +41,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -51,7 +52,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -90,7 +91,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -144,7 +145,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -164,7 +165,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -213,7 +214,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -267,7 +268,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -289,7 +290,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("DELETE", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -322,7 +323,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -374,7 +375,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -394,7 +395,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -446,7 +447,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("PUT", uri, bodyBuf)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -488,7 +489,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -540,7 +541,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -560,7 +561,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -614,7 +615,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	 */
 
 	//Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -668,7 +669,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -686,8 +687,8 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	 */
 
 	//Insert a new project
-	pKey := test.RandomString(t, 10)
-	p := test.InsertTestProject(t, db, pKey, pKey)
+	pKey := assets.RandomString(t, 10)
+	p := assets.InsertTestProject(t, db, pKey, pKey)
 	//Insert a Production environment
 	environment.InsertEnvironment(db, &sdk.Environment{
 		ProjectKey: pKey,
@@ -701,7 +702,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Prepare the data send on applyTemplatesHandler
 	opts := sdk.ApplyTemplatesOptions{
-		ApplicationName: test.RandomString(t, 10),
+		ApplicationName: assets.RandomString(t, 10),
 		TemplateName:    templ.Name,
 		TemplateParams: []sdk.TemplateParam{
 			{
@@ -726,7 +727,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("POST", uri, bodyBuf)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -752,7 +753,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	bodyBuf = bytes.NewBuffer(btes)
 	req, err = http.NewRequest("POST", uri, bodyBuf)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
 
@@ -777,7 +778,7 @@ func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
 	req, _ := http.NewRequest("POST", uri, nil)
 	req.Form = url.Values{}
 	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds-contrib/master/actions/cds-git-clone.hcl")
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w := httptest.NewRecorder()

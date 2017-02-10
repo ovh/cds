@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -25,10 +26,10 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -60,7 +61,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//4. Do the request
 	w := httptest.NewRecorder()
@@ -89,10 +90,10 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -132,7 +133,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//5. Do the request
 	w := httptest.NewRecorder()
@@ -161,10 +162,10 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -198,7 +199,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("DELETE", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//5. Do the request
 	w := httptest.NewRecorder()
@@ -226,10 +227,10 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -263,7 +264,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//5. Do the request
 	w := httptest.NewRecorder()
@@ -284,10 +285,10 @@ func TestGetEnvironmentsAuditHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -315,7 +316,7 @@ func TestGetEnvironmentsAuditHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//5. Do the request
 	w := httptest.NewRecorder()
@@ -335,10 +336,10 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -377,7 +378,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 
 	//7. Update Variable
 	v.Value = "new bar"
-	if err := environment.UpdateVariable(db, env.ID, v); err != nil {
+	if err := environment.UpdateVariable(db, env.ID, &v); err != nil {
 		t.Fail()
 		return
 	}
@@ -393,7 +394,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//9. Do the request
 	w := httptest.NewRecorder()

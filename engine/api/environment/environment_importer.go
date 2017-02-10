@@ -62,3 +62,93 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 
 	return nil
 }
+
+//ImportInto import variables and groups on an existing environment
+func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, into *sdk.Environment, msgChan chan<- msg.Message) error {
+
+	if len(into.EnvironmentGroups) == 0 {
+		if err := loadGroupByEnvironment(db, into); err != nil {
+			return err
+		}
+	}
+
+	var updateVar = func(v *sdk.Variable) {
+		log.Debug("ImportInto> Updating var %s", v.Name)
+		if err := UpdateVariable(db, into.ID, v); err != nil {
+			msgChan <- msg.New(msg.EnvironmentVariableCannotBeUpdated, v.Name, into.Name, err)
+			return
+		}
+		msgChan <- msg.New(msg.EnvironmentVariableUpdated, v.Name, into.Name)
+	}
+
+	var insertVar = func(v *sdk.Variable) {
+		log.Debug("ImportInto> Creating var %s", v.Name)
+		if err := InsertVariable(db, into.ID, v); err != nil {
+			msgChan <- msg.New(msg.EnvironmentVariableCannotBeCreated, v.Name, into.Name, err)
+			return
+		}
+		msgChan <- msg.New(msg.EnvironmentVariableCreated, v.Name, into.Name)
+	}
+
+	var updateGroupInEnv = func(groupName string, role int) {
+		log.Debug("ImportInto> Updating group %s", groupName)
+		if err := group.UpdateGroupRoleInEnvironment(db, proj.Key, into.Name, groupName, role); err != nil {
+			msgChan <- msg.New(msg.EnvironmentGroupCannotBeUpdated, groupName, into.Name, err)
+			return
+		}
+		msgChan <- msg.New(msg.EnvironmentGroupUpdated, groupName, into.Name)
+	}
+
+	var insertGroupInEnv = func(groupName string, role int) {
+		log.Debug("ImportInto> Adding group %s", groupName)
+		g, err := group.LoadGroup(db, groupName)
+		if err != nil {
+			msgChan <- msg.New(msg.EnvironmentGroupCannotBeCreated, groupName, into.Name, err)
+			return
+		}
+
+		if err := group.InsertGroupInEnvironment(db, into.ID, g.ID, role); err != nil {
+			msgChan <- msg.New(msg.EnvironmentGroupCannotBeCreated, groupName, into.Name, err)
+			return
+		}
+		msgChan <- msg.New(msg.EnvironmentGroupCreated, groupName, into.Name)
+	}
+
+	for i := range env.Variable {
+		log.Debug("ImportInto> Checking >> %s", env.Variable[i].Name)
+		var found bool
+		for j := range into.Variable {
+			log.Debug("ImportInto> \t with >> %s", into.Variable[j].Name)
+			if env.Variable[i].Name == into.Variable[j].Name {
+				env.Variable[i].ID = into.Variable[j].ID
+				found = true
+				updateVar(&env.Variable[i])
+				break
+			}
+		}
+		if !found {
+			insertVar(&env.Variable[i])
+		}
+	}
+
+	for i := range env.EnvironmentGroups {
+		log.Debug("ImportInto> Checking >> %s", env.EnvironmentGroups[i].Group.Name)
+		var found bool
+		for j := range into.EnvironmentGroups {
+			log.Debug("ImportInto> \t with >> %s", into.EnvironmentGroups[j].Group.Name)
+			if env.EnvironmentGroups[i].Group.Name == into.EnvironmentGroups[j].Group.Name {
+				env.EnvironmentGroups[i].Group.ID = into.EnvironmentGroups[j].Group.ID
+				found = true
+				updateGroupInEnv(env.EnvironmentGroups[i].Group.Name, env.EnvironmentGroups[i].Permission)
+				break
+			}
+		}
+		if !found {
+			insertGroupInEnv(env.EnvironmentGroups[i].Group.Name, env.EnvironmentGroups[i].Permission)
+		}
+	}
+
+	log.Debug("ImportInto> Done")
+
+	return nil
+}

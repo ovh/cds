@@ -297,7 +297,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 }
 
 // UpdateVariable Update a variable in the given environment
-func UpdateVariable(db gorp.SqlExecutor, envID int64, variable sdk.Variable) error {
+func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable) error {
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil

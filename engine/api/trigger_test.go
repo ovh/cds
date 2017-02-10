@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -26,14 +27,14 @@ func TestAddTriggerHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
-	pipelineKey1 := test.RandomString(t, 10)
+	pipelineKey1 := assets.RandomString(t, 10)
 	pip1 := &sdk.Pipeline{
 		Name:       pipelineKey1,
 		Type:       sdk.BuildPipeline,
@@ -43,7 +44,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip1))
 
 	//4. Create Pipeline 2
-	pipelineKey2 := test.RandomString(t, 10)
+	pipelineKey2 := assets.RandomString(t, 10)
 	pip2 := &sdk.Pipeline{
 		Name:       pipelineKey2,
 		Type:       sdk.BuildPipeline,
@@ -54,7 +55,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	//5. Create Application
-	applicationName := test.RandomString(t, 10)
+	applicationName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: applicationName,
 	}
@@ -91,7 +92,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//9. Do the request
 	w := httptest.NewRecorder()
@@ -112,14 +113,14 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
-	pipelineKey1 := test.RandomString(t, 10)
+	pipelineKey1 := assets.RandomString(t, 10)
 	pip1 := &sdk.Pipeline{
 		Name:       pipelineKey1,
 		Type:       sdk.BuildPipeline,
@@ -130,7 +131,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	//4. Create Pipeline 2
-	pipelineKey2 := test.RandomString(t, 10)
+	pipelineKey2 := assets.RandomString(t, 10)
 	pip2 := &sdk.Pipeline{
 		Name:       pipelineKey2,
 		Type:       sdk.BuildPipeline,
@@ -141,7 +142,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	//5. Create Application
-	applicationName := test.RandomString(t, 10)
+	applicationName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: applicationName,
 	}
@@ -184,7 +185,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//9. Do the request
 	w := httptest.NewRecorder()
@@ -206,14 +207,14 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
-	pipelineKey1 := test.RandomString(t, 10)
+	pipelineKey1 := assets.RandomString(t, 10)
 	pip1 := &sdk.Pipeline{
 		Name:       pipelineKey1,
 		Type:       sdk.BuildPipeline,
@@ -223,7 +224,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	err := pipeline.InsertPipeline(db, pip1)
 
 	//4. Create Pipeline 2
-	pipelineKey2 := test.RandomString(t, 10)
+	pipelineKey2 := assets.RandomString(t, 10)
 	pip2 := &sdk.Pipeline{
 		Name:       pipelineKey2,
 		Type:       sdk.BuildPipeline,
@@ -233,7 +234,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	err = pipeline.InsertPipeline(db, pip2)
 
 	//5. Create Application
-	applicationName := test.RandomString(t, 10)
+	applicationName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: applicationName,
 	}
@@ -273,7 +274,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("DELETE", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//9. Do the request
 	w := httptest.NewRecorder()

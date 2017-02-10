@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -65,14 +66,14 @@ func TestAddPollerHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -82,7 +83,7 @@ func TestAddPollerHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := test.RandomString(t, 10)
+	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -115,7 +116,7 @@ func TestAddPollerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -136,14 +137,14 @@ func TestUpdatePollerHandler(t *testing.T) {
 	router.init()
 
 	//1. Crerouter.ate admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -153,7 +154,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := test.RandomString(t, 10)
+	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -186,7 +187,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -208,7 +209,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ = http.NewRequest("PUT", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w = httptest.NewRecorder()
@@ -228,14 +229,14 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -245,7 +246,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := test.RandomString(t, 10)
+	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -278,7 +279,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -297,7 +298,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	//9. Load the pollers
 	uri = router.getRoute("GET", getApplicationPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
@@ -323,14 +324,14 @@ func TestGetPollersHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -340,7 +341,7 @@ func TestGetPollersHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := test.RandomString(t, 10)
+	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -373,7 +374,7 @@ func TestGetPollersHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -391,7 +392,7 @@ func TestGetPollersHandler(t *testing.T) {
 	//9. Load the pollers
 	uri = router.getRoute("GET", getPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
@@ -414,14 +415,14 @@ func TestDeletePollerHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -431,7 +432,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	//4. Insert Application
-	appName := test.RandomString(t, 10)
+	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -465,7 +466,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//8. Do the request
 	w := httptest.NewRecorder()
@@ -483,7 +484,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	//9. Load the pollers
 	uri = router.getRoute("DELETE", deletePollerHandler, vars)
 	req, _ = http.NewRequest("DELETE", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
@@ -493,7 +494,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	//9. Load the pollers
 	uri = router.getRoute("GET", getApplicationPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)

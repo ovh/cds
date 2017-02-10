@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -158,7 +159,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := test.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(t, db)
 	if err := actionplugin.Delete(db, "dummy", u.ID); err != nil {
 		t.Log(err)
 	}
@@ -222,7 +223,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := test.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(t, db)
 	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy1", dummyBinaryFile)
@@ -264,7 +265,7 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := test.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(t, db)
 	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
@@ -314,7 +315,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := test.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(t, db)
 	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
@@ -377,7 +378,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := test.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(t, db)
 	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)

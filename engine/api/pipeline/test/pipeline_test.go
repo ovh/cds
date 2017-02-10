@@ -6,13 +6,14 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInsertPipeline(t *testing.T) {
 	db := test.SetupPG(t)
-	pk := test.RandomString(t, 8)
+	pk := assets.RandomString(t, 8)
 
 	p := sdk.Project{
 		Key:  pk,
@@ -66,7 +67,7 @@ func TestInsertPipeline(t *testing.T) {
 
 func TestInsertPipelineWithParemeters(t *testing.T) {
 	db := test.SetupPG(t)
-	pk := test.RandomString(t, 8)
+	pk := assets.RandomString(t, 8)
 
 	p := sdk.Project{
 		Key:  pk,

@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,8 +18,8 @@ func TestExecuterRun(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := test.RandomString(t, 10)
-	proj := test.InsertTestProject(t, db, pkey, pkey)
+	pkey := assets.RandomString(t, 10)
+	proj := assets.InsertTestProject(t, db, pkey, pkey)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

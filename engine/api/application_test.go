@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -26,14 +27,14 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := test.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := test.InsertTestProject(t, db, test.RandomString(t, 10), test.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
-	pipelineKey := test.RandomString(t, 10)
+	pipelineKey := assets.RandomString(t, 10)
 	pip1 := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -45,7 +46,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	}
 
 	//4. Create Pipeline 2
-	pipelineKey = test.RandomString(t, 10)
+	pipelineKey = assets.RandomString(t, 10)
 	pip2 := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -57,7 +58,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	}
 
 	//5. Create Pipeline 3
-	pipelineKey = test.RandomString(t, 10)
+	pipelineKey = assets.RandomString(t, 10)
 	pip3 := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -68,7 +69,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	// 6. Create application
-	appName := test.RandomString(t, 10)
+	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -125,7 +126,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
-	test.AuthentifyRequest(t, req, u, pass)
+	assets.AuthentifyRequest(t, req, u, pass)
 
 	//10. Do the request
 	w := httptest.NewRecorder()

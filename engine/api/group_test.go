@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -21,11 +22,11 @@ func Test_getPublicGroups(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	//Create user
-	u, pass := test.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(t, db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -33,7 +34,7 @@ func Test_getPublicGroups(t *testing.T) {
 	uri := router.getRoute("GET", getPublicGroups, nil)
 	test.NotEmpty(t, uri)
 
-	req := test.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()

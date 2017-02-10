@@ -19,8 +19,10 @@ func GetFormat(f string) (Format, error) {
 		return FormatJSON, nil
 	case "hcl":
 		return FormatHCL, nil
+	case "toml", "tml":
+		return FormatTOML, nil
 	default:
-		return UnknownFormat, UnsupportedFormat
+		return UnknownFormat, ErrUnsupportedFormat
 	}
 }
 
@@ -28,7 +30,7 @@ func GetFormat(f string) (Format, error) {
 func Marshal(i interface{}, f Format) ([]byte, error) {
 	o, ok := i.(HCLable)
 	if f == FormatHCL && !ok {
-		return nil, UnsupportedHCLFormat
+		return nil, ErrUnsupportedHCLFormat
 	}
 
 	var btes []byte

@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -29,7 +30,7 @@ func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
 
 func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 	g := &sdk.Group{
-		Name: test.RandomString(t, 10),
+		Name: assets.RandomString(t, 10),
 	}
 
 	if err := group.InsertGroup(db, g); err != nil {
@@ -79,7 +80,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	m2, err := LoadWorkerModelsByGroup(db, g.ID)
 	assert.EqualValues(t, []sdk.Model{*m}, m2)
 
-	u, _ := test.InsertLambaUser(t, db, g)
+	u, _ := assets.InsertLambaUser(t, db, g)
 
 	m3, err := LoadWorkerModelsByUser(db, u.ID)
 	assert.EqualValues(t, []sdk.Model{*m}, m3)

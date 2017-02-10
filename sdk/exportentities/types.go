@@ -24,10 +24,13 @@ const (
 	FormatJSON Format = iota
 	FormatYAML
 	FormatHCL
+	FormatTOML
 	UnknownFormat
 )
 
 var (
-	UnsupportedHCLFormat = errors.New("HCL Format is not supported for this entity")
-	UnsupportedFormat    = errors.New("Format is not supported")
+	// ErrUnsupportedHCLFormat is the error for unsupported HCL format
+	ErrUnsupportedHCLFormat = errors.New("HCL Format is not supported for this entity")
+	// ErrUnsupportedFormat is for unknown format
+	ErrUnsupportedFormat = errors.New("Format is not supported")
 )

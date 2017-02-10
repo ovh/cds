@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
@@ -65,7 +66,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 	deleteAll(t, db, "TEST_LAST_UPDATE")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -163,7 +164,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	deleteAll(t, db, "TEST_LAST_UPDATE")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -274,9 +275,9 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 	deleteAll(t, db, "TEST_LAST_UPDATE_2")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
 
-	proj2 := test.InsertTestProject(t, db, "TEST_LAST_UPDATE_2", "TEST_LAST_UPDATE_2")
+	proj2 := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE_2", "TEST_LAST_UPDATE_2")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -400,7 +401,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	deleteAll(t, db, "TEST_LAST_UPDATE")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -520,7 +521,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 	deleteAll(t, db, "TEST_LAST_UPDATE")
 
 	//Insert Project
-	proj := test.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
