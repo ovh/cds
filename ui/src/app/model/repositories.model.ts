@@ -1,9 +1,9 @@
-export interface RepositoriesManager {
+export class RepositoriesManager {
     id: number;
     type: string;
     name: string;
     url: string;
-};
+}
 
 export interface Repository {
     id: number;

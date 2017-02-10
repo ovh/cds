@@ -29,6 +29,10 @@ export class ApplicationAdminComponent implements OnInit {
 
     ngOnInit() {
         this.newName = this.application.name;
+        if (this.application.permission !== 7) {
+            this._router.navigate(['/project', this.project.key, 'application', this.application.name],
+                { queryParams: {tab: 'workflow'}});
+        }
     }
 
     onSubmitApplicationUpdate(skip?: boolean): void {

@@ -39,7 +39,7 @@
             <div class="ui grid">
                 <div class="row">
                     <div class="three wide column">
-                        <div>
+                        <div *ngIf="application.permission > 4">
                             <a class="pointing" (click)="runPipeline()"><i class="video play outline icon run"></i></a>
                         </div>
                     </div>
@@ -66,17 +66,17 @@
                 </div>
             </div>
         </div>
-        <div class="actionMenu" *ngIf="workflowItem">
+        <div class="actionMenu" *ngIf="workflowItem && application.permission > 4">
             <sm-dropdown>
                 <a sm-item class="item" (click)="runAgain()">{{ 'pipeline_label_run_again' | translate }}</a>
                 <a sm-item class="item" (click)="runWithParameters()">{{ 'pipeline_label_run_with_parameter' | translate }}</a>
                 <a sm-item class="item" (click)="rollback()">{{ 'pipeline_label_rollback' | translate }}</a>
-                <div class="divider"></div>
-                <a sm-item class="item" (click)="detachPipeline()">{{ 'pipeline_label_detach' | translate }}</a>
-                <a sm-item class="item" (click)="editPipeline()">{{ 'pipeline_label_edit' | translate }}</a>
-                <div class="divider"></div>
+                <div class="divider" *ngIf="application.permission === 7"></div>
+                <a sm-item class="item" (click)="detachPipeline()" *ngIf="application.permission === 7">{{ 'pipeline_label_detach' | translate }}</a>
+                <a sm-item class="item" (click)="editPipeline()" *ngIf="application.permission === 7">{{ 'pipeline_label_edit' | translate }}</a>
+                <div class="divider" *ngIf="application.permission === 7"></div>
                 <a *ngIf="workflowItem.trigger && workflowItem.trigger.id > 0" sm-item class="item" (click)="openEditTriggerModal()">{{ 'trigger_label_edit' | translate }}</a>
-                <a sm-item class="item" (click)="openCreateTriggerModal()">{{ 'trigger_label_new' | translate }}</a>
+                <a sm-item class="item" (click)="openCreateTriggerModal()" *ngIf="application.permission === 7">{{ 'trigger_label_new' | translate }}</a>
             </sm-dropdown>
         </div>
     </div>

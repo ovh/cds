@@ -22,7 +22,13 @@ export class BreadcrumbComponent {
     constructor(private _router: Router) { }
 
     navigateToProject(): void {
-        this._router.navigate(['project', this.project.key]);
+        let queryParams = { queryParams: {}};
+        if (!this.application && this.pipeline) {
+            queryParams.queryParams['tab'] = 'pipelines';
+        } else {
+            queryParams.queryParams['tab'] = 'applications';
+        }
+        this._router.navigate(['project', this.project.key], queryParams);
     }
 
     navigateToApplication(): void {

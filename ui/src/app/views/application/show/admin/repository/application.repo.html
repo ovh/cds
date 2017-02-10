@@ -42,5 +42,7 @@
     </div>
 </div>
 <div [hidden]="project.repositories_manager && project.repositories_manager.length > 0">
-    <p>{{ 'application_repoman_cant' | translate }}</p>
+    <p>
+        {{ 'application_repoman_cant' | translate }}<a [routerLink]="['/project', project.key]" [queryParams]="{tab: 'advanced'}">{{'application_repoman_cant_link' | translate}}</a>
+    </p>
 </div>

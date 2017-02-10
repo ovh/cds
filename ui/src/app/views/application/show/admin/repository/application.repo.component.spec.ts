@@ -1,13 +1,10 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Router} from '@angular/router';
-import {Injector} from '@angular/core';
-
-import {RouterTestingModule} from '@angular/router/testing';
-
+import {Injector, NO_ERRORS_SCHEMA, Component} from '@angular/core';
 import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ApplicationRepositoryComponent} from './application.repo.component';
@@ -21,6 +18,13 @@ import {RepositoriesManager} from '../../../../../model/repositories.model';
 import {Observable} from 'rxjs';
 import {ApplicationModule} from '../../../application.module';
 import {TranslateParser} from 'ng2-translate';
+import {ProjectModule} from '../../../../project/project.module';
+
+@Component({
+    template: ''
+})
+class DummyComponent {
+}
 
 
 describe('CDS: Application Repo Component', () => {
@@ -32,12 +36,12 @@ describe('CDS: Application Repo Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
+                DummyComponent
             ],
             providers: [
                 { provide: XHRBackend, useClass: MockBackend },
                 { provide: ApplicationStore, useClass: MockStore },
                 ApplicationService,
-                { provide: Router, useClass: MockRouter},
                 { provide: ToastService, useClass: MockToast },
                 TranslateLoader,
                 TranslateService,
@@ -45,10 +49,14 @@ describe('CDS: Application Repo Component', () => {
                 RepoManagerService
             ],
             imports : [
+                RouterTestingModule.withRoutes([
+                    { path: 'project/:key', component: DummyComponent }
+                ]),
+                ProjectModule,
                 ApplicationModule,
-                RouterTestingModule.withRoutes([]),
                 SharedModule
-            ]
+            ],
+            schemas: [ NO_ERRORS_SCHEMA ]
         });
 
 
@@ -69,13 +77,15 @@ describe('CDS: Application Repo Component', () => {
             // Mock Http login request
             backend.connections.subscribe(connection => {
                 call++;
-                connection.mockRespond(new Response(new ResponseOptions({ body : `[ 
+                connection.mockRespond(new Response(new ResponseOptions({
+                    body: `[ 
                     { "name" : "repo1", "fullname": "frepo1" },
                     { "name" : "repo2", "fullname": "frepo2" },
                     { "name" : "repo3", "fullname": "frepo3" },
                     { "name" : "repo4", "fullname": "frepo4" },
                     { "name" : "repo5", "fullname": "frepo5" }
-                ]`})));
+                ]`
+                })));
             });
 
             let fixture = TestBed.createComponent(ApplicationRepositoryComponent);
@@ -83,14 +93,14 @@ describe('CDS: Application Repo Component', () => {
             expect(component).toBeTruthy();
 
 
-
             let app: Application = new Application();
             app.name = 'app';
+            app.permission = 7;
             let p: Project = new Project();
             p.key = 'key1';
             p.name = 'proj1';
 
-            let repoMan: RepositoriesManager = { id: 1, name: 'RepoManager', type: 'typeR', url: 'foo.bar' };
+            let repoMan: RepositoriesManager = {id: 1, name: 'RepoManager', type: 'typeR', url: 'foo.bar'};
             p.repositories_manager = new Array<RepositoriesManager>();
             p.repositories_manager.push(repoMan);
 
@@ -127,7 +137,6 @@ describe('CDS: Application Repo Component', () => {
             tick(50);
             compiled.querySelector('.ui.red.button.active').click();
             expect(toast.success).toHaveBeenCalledTimes(2);
-
         });
     }));
 });

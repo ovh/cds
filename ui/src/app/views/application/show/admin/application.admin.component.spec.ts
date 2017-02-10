@@ -1,16 +1,16 @@
 /* tslint:disable:no-unused-variable */
 
+import {RouterTestingModule} from '@angular/router/testing';
 import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Router, ActivatedRoute} from '@angular/router';
 import {Observable} from 'rxjs';
-import {Injector} from '@angular/core';
+import {Injector, Component} from '@angular/core';
 import {Application} from '../../../../model/application.model';
 import {ApplicationStore} from '../../../../service/application/application.store';
 import {ApplicationAdminComponent} from './application.admin.component';
 import {ApplicationService} from '../../../../service/application/application.service';
-import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../../shared/shared.module';
 import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
 import {ToastService} from '../../../../shared/toast/ToastService';
@@ -21,6 +21,14 @@ import {Pipeline} from '../../../../model/pipeline.model';
 import {ProjectStore} from '../../../../service/project/project.store';
 import {ProjectService} from '../../../../service/project/project.service';
 import {TranslateParser} from 'ng2-translate';
+import {ProjectModule} from '../../../project/project.module';
+import {RepositoriesManager} from '../../../../model/repositories.model';
+
+@Component({
+    template: ''
+})
+class DummyComponent {
+}
 
 describe('CDS: Application Admin Component', () => {
 
@@ -32,6 +40,7 @@ describe('CDS: Application Admin Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
+                DummyComponent
             ],
             providers: [
                 { provide: XHRBackend, useClass: MockBackend },
@@ -39,7 +48,6 @@ describe('CDS: Application Admin Component', () => {
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
-                { provide: Router, useClass: MockRouter},
                 { provide: ToastService, useClass: MockToast },
                 TranslateLoader,
                 TranslateService,
@@ -47,8 +55,11 @@ describe('CDS: Application Admin Component', () => {
                 RepoManagerService
             ],
             imports : [
+                RouterTestingModule.withRoutes([
+                    { path: 'project/:key', component: DummyComponent },
+                    { path: 'project/:key/application/:appName', component: DummyComponent }
+                ]),
                 ApplicationModule,
-                RouterTestingModule.withRoutes([]),
                 SharedModule
             ]
         });
@@ -68,22 +79,25 @@ describe('CDS: Application Admin Component', () => {
     });
 
     it('Load component + renamed app', fakeAsync( () => {
-        TestBed.compileComponents().then(() => {
+
             // Mock Http login request
             backend.connections.subscribe(connection => {
-                connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "appRenamed" }'})));
+                connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "appRenamed", "permission": 7 }'})));
             });
 
             let fixture = TestBed.createComponent(ApplicationAdminComponent);
             let component = fixture.debugElement.componentInstance;
-
             expect(component).toBeTruthy();
 
             let app: Application = new Application();
             app.name = 'app';
+            app.permission = 7;
             let p: Project = new Project();
             p.key = 'key1';
             p.name = 'proj1';
+            p.repositories_manager = new Array<RepositoriesManager>();
+            let rm = new RepositoriesManager();
+            p.repositories_manager.push(rm);
 
             let pip: Pipeline = new Pipeline();
             pip.name = 'myPipeline';
@@ -108,21 +122,9 @@ describe('CDS: Application Admin Component', () => {
             expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1', 'application', 'appRenamed']);
 
             tick(50);
-        });
+
     }));
 });
-
-class MockRouter {
-    public navigate() {
-    }
-}
-
-class MockActivatedRoutes extends ActivatedRoute {
-    constructor() {
-        super();
-        this.params = Observable.of({key: 'key1', appName: 'app1'});
-    }
-}
 
 class MockToast {
     success(title: string, msg: string) {
