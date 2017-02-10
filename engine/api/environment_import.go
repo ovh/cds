@@ -153,8 +153,8 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	env, errEnv := environment.LoadEnvironmentByName(tx, key, envName)
 	if errEnv != nil {
-		log.Warning("importIntoEnvironmentHandler> Cannot load env %s/%s: %s\n", key, envName, errProj)
-		return errProj
+		log.Warning("importIntoEnvironmentHandler> Cannot load env %s/%s: %s\n", key, envName, errEnv)
+		return errEnv
 	}
 
 	var payload = &exportentities.Environment{}
