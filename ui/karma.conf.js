@@ -9,7 +9,7 @@ module.exports = function (config) {
             require('karma-jasmine'),
             require('karma-phantomjs-launcher'),
             require('karma-chrome-launcher'),
-            require('karma-remap-istanbul'),
+            require('karma-coverage-istanbul-reporter'),
             require('karma-junit-reporter'),
             require('@angular/cli/plugins/karma')
         ],
@@ -27,18 +27,16 @@ module.exports = function (config) {
         mime: {
             'text/x-typescript': ['ts', 'tsx']
         },
-        remapIstanbulReporter: {
-            reports: {
-                html: 'coverage',
-                lcovonly: './coverage/coverage.lcov'
-            }
+        coverageIstanbulReporter: {
+            reports: [ 'html', 'lcovonly' ],
+            fixWebpackSourcePaths: true
         },
         angularCli: {
             config: './angular-cli.json',
             environment: 'source'
         },
         reporters: config.angularCli && config.angularCli.codeCoverage
-            ? ['progress', 'karma-remap-istanbul', 'junit']
+            ? ['progress', 'coverage-istanbul', 'junit']
             : ['progress'],
         junitReporter: {
             outputDir: 'tests', // results will be saved as $outputDir/$browserName.xml
