@@ -58,7 +58,7 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 	defer tx.Rollback()
 
 	if err := LockPollerExecution(tx, e.ID); err != nil {
-		log.Critical("poller.ExecuterRun> LockPollerExecution %s", e.ID)
+		log.Critical("poller.ExecuterRun> LockPollerExecution %s: %s", e.ID, err)
 		return
 	}
 
