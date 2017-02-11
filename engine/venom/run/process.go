@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -153,44 +154,90 @@ func runTestStep(s *sdk.TestStep, l *log.Entry) {
 		l = l.WithField("z.type", "exec")
 		runExec(s, l)
 		return
-	case "http":
-		l = l.WithField("type", "http")
-		runHTTP(s, l)
-		return
 	}
 	s.Result.Err = fmt.Errorf("Type %s not supported", stype)
 	return
 }
 
 func runExec(s *sdk.TestStep, l *log.Entry) {
-	if s.Command == "" {
+	if s.ScriptContent == "" {
 		s.Result.Err = fmt.Errorf("Invalid command")
 		return
 	}
 
-	c := s.Command
+	scriptContent := s.ScriptContent
 	for alias, real := range aliases {
-		if strings.HasPrefix(s.Command, alias) {
-			c = strings.Replace(s.Command, alias, real, 1)
+		if strings.HasPrefix(scriptContent, alias) {
+			scriptContent = strings.Replace(scriptContent, alias, real, 1)
 		}
 	}
 
-	args := []string{}
-	ctuple := strings.Split(c, " ")
-	binary := c
-	if len(ctuple) > 1 {
-		binary = ctuple[0]
-		for i := 1; i < len(ctuple); i++ {
-			args = append(args, ctuple[i])
+	// Default shell is sh
+	shell := "/bin/sh"
+	var opts []string
+
+	// If user wants a specific shell, use it
+	if strings.HasPrefix(scriptContent, "#!") {
+		t := strings.SplitN(scriptContent, "\n", 2)
+		shell = strings.TrimPrefix(t[0], "#!")
+		shell = strings.TrimRight(shell, " \t\r\n")
+	}
+
+	// except on windows where it's powershell
+	if runtime.GOOS == "windows" {
+		shell = "PowerShell"
+		opts = append(opts, "-ExecutionPolicy", "Bypass", "-Command")
+	}
+
+	// Create a tmp file
+	tmpscript, errt := ioutil.TempFile(os.TempDir(), "venom-")
+	if errt != nil {
+		s.Result.Err = fmt.Errorf("Cannot create tmp file: %s\n", errt)
+		return
+	}
+
+	// Put script in file
+	l.Debugf("work with tmp file %s", tmpscript)
+	n, errw := tmpscript.Write([]byte(scriptContent))
+	if errw != nil || n != len(scriptContent) {
+		if errw != nil {
+			s.Result.Err = fmt.Errorf("Cannot write script: %s\n", errw)
+			return
 		}
+		s.Result.Err = fmt.Errorf("cannot write all script: %d/%d\n", n, len(scriptContent))
+		return
 	}
 
-	for _, arg := range s.Args {
-		args = append(args, arg)
+	oldPath := tmpscript.Name()
+	tmpscript.Close()
+	var scriptPath string
+	if runtime.GOOS == "windows" {
+		//Remove all .txt Extensions, there is not always a .txt extension
+		newPath := strings.Replace(oldPath, ".txt", "", -1)
+		//and add .PS1 extension
+		newPath = newPath + ".PS1"
+		if err := os.Rename(oldPath, newPath); err != nil {
+			s.Result.Err = fmt.Errorf("cannot rename script to add powershell Extension, aborting\n")
+			return
+		}
+		//This aims to stop a the very first error and return the right exit code
+		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)
+		scriptPath = newPath
+		opts = append(opts, psCommand)
+	} else {
+		scriptPath = oldPath
+		opts = append(opts, scriptPath)
+	}
+	defer os.Remove(scriptPath)
+
+	// Chmod file
+	if errc := os.Chmod(scriptPath, 0755); errc != nil {
+		s.Result.Err = fmt.Errorf("cannot chmod script %s: %s\n", scriptPath, errc)
+		return
 	}
 
-	cmd := exec.Command(binary, args...)
-	l.Debugf("teststep exec '%s %s'", binary, strings.Join(args, " "))
+	cmd := exec.Command(shell, opts...)
+	l.Debugf("teststep exec '%s %s'", shell, strings.Join(opts, " "))
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -344,7 +391,11 @@ func checkCode(assert []string, tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry
 	}
 	out := f(ts.Result.Code, args...)
 	if out != "" {
-		tc.Failures = append(tc.Failures, sdk.Failure{Value: out})
+		c := ts.ScriptContent
+		if len(c) > 200 {
+			c = c[0:200] + "..."
+		}
+		tc.Failures = append(tc.Failures, sdk.Failure{Value: fmt.Sprintf("%s... give %s", c, out)})
 	}
 }
 

@@ -58,21 +58,12 @@ type TestCase struct {
 	TestSteps  []TestStep  `xml:"-" json:"steps" yaml:"steps"`
 }
 
-// TestStep contains command to execute, type: exec, http, etc...
+// TestStep contains command to execute, type: exec
 type TestStep struct {
-	Type string `xml:"-" json:"type,omitempty" yaml:"type,omitempty"`
-
-	// binary
-	Command string   `xml:"-" json:"command,omitempty" yaml:"command,omitempty"`
-	Args    []string `xml:"-" json:"args,omitempty" yaml:"args,omitempty"`
-	StdIn   string   `xml:"-" json:"stdin,omitempty" yaml:"stdin,omitempty"`
-
-	// HTTP
-	Method     string         `xml:"-" json:"method,omitempty" yaml:"method,omitempty"`
-	URL        string         `xml:"-" json:"url,omitempty" yaml:"url,omitempty"`
-	Payload    string         `xml:"-" json:"playload,omitempty" yaml:"playload,omitempty"`
-	Assertions []string       `xml:"-" json:"assertions,omitempty" yaml:"assertions,omitempty"`
-	Result     TestStepResult `xml:"-" json:"result,omitempty" yaml:"result,omitempty"`
+	Type          string         `xml:"-" json:"type,omitempty" yaml:"type,omitempty"`
+	ScriptContent string         `xml:"-" json:"script,omitempty" yaml:"script,omitempty"`
+	Assertions    []string       `xml:"-" json:"assertions,omitempty" yaml:"assertions,omitempty"`
+	Result        TestStepResult `xml:"-" json:"result,omitempty" yaml:"result,omitempty"`
 }
 
 // DetectType returns type of testStep if testStep.Type is not empty.
@@ -82,10 +73,7 @@ func (t *TestStep) DetectType() (string, error) {
 	if t.Type != "" {
 		return t.Type, nil
 	}
-	if t.URL != "" {
-		return "http", nil
-	}
-	if t.Command != "" {
+	if t.ScriptContent != "" {
 		return "exec", nil
 	}
 

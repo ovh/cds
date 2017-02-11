@@ -1,0 +1,5 @@
+name: version command TestSuite
+testcases:
+- name: cds version
+  steps:
+  - script: cds version
