@@ -1,0 +1,6 @@
+name: MyTestCase2
+testcases:
+- name: sleep 2, exit code 0
+  steps:
+  - type: exec
+    command: sleep 2
