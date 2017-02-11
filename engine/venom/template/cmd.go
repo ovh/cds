@@ -43,7 +43,6 @@ func template() {
 					{
 						Type:          "exec",
 						ScriptContent: "cds user list",
-						StdIn:         "Content stdin",
 						Assertions:    []string{"code ShouldNotEqual 0"},
 					},
 				},

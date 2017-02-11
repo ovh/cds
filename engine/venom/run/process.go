@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -34,46 +35,49 @@ func process() (sdk.Tests, error) {
 		aliases[t[0]] = strings.Join(t[1:], "")
 	}
 
-	files, err := ioutil.ReadDir(path)
+	fileInfo, _ := os.Stat(path)
+	if fileInfo != nil && fileInfo.IsDir() {
+		path = filepath.Dir(path) + "/*.yml"
+		log.Debugf("path computed:%s", path)
+	}
+
+	filesPath, err := filepath.Glob(path)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error reading files on path:%s :%s", path, err)
 	}
 
 	tss := []sdk.TestSuite{}
 
 	log.Debugf("Work with parallel %d", parallel)
-	parallels := make(chan os.FileInfo, parallel)
+	parallels := make(chan string, parallel)
 
 	var wg sync.WaitGroup
-	wg.Add(len(files))
+	wg.Add(len(filesPath))
 	queue := make(chan sdk.TestSuite, 1)
 
 	go func() {
 		for file := range parallels {
-			go func(file os.FileInfo) {
-				if !file.IsDir() {
-					l := log.WithField("file", file.Name())
-					l.Debug("readFile")
+			go func(f string) {
 
-					dat, err := ioutil.ReadFile(path + "/" + file.Name())
-					if err != nil {
-						l.WithError(err).Errorf("Error while reading file")
-						wg.Done()
-						return
-					}
+				l := log.WithField("file", f)
+				l.Debug("readFile")
 
-					ts := sdk.TestSuite{}
-					if err := yaml.Unmarshal(dat, &ts); err != nil {
-						l.WithError(err).Errorf("Error while unmarshal file")
-						wg.Done()
-						return
-					}
-
-					runTestSuite(&ts, l)
-					queue <- ts
-				} else {
+				dat, err := ioutil.ReadFile(f)
+				if err != nil {
+					l.WithError(err).Errorf("Error while reading file")
 					wg.Done()
+					return
 				}
+
+				ts := sdk.TestSuite{}
+				if err := yaml.Unmarshal(dat, &ts); err != nil {
+					l.WithError(err).Errorf("Error while unmarshal file")
+					wg.Done()
+					return
+				}
+
+				runTestSuite(&ts, l)
+				queue <- ts
 			}(file)
 		}
 	}()
@@ -85,18 +89,19 @@ func process() (sdk.Tests, error) {
 			if t.Failures > 0 {
 				tr.TotalKO += t.Failures
 			} else {
-				tr.TotalOK++
+				tr.TotalOK += len(t.TestCases) - t.Failures
 			}
 			if t.Skipped > 0 {
-				tr.TotalSkipped++
+				tr.TotalSkipped += t.Skipped
 			}
-			tr.Total++
+
+			tr.Total = tr.TotalKO + tr.TotalOK + tr.TotalSkipped
 
 			wg.Done()
 		}
 	}()
 
-	for _, file := range files {
+	for _, file := range filesPath {
 		parallels <- file
 	}
 
@@ -134,6 +139,9 @@ func runTestCase(tc *sdk.TestCase, l *log.Entry) {
 	for _, ts := range tc.TestSteps {
 		runTestStep(&ts, l)
 		applyResult(tc, &ts, l)
+		if len(tc.Failures) > 0 {
+			break
+		}
 	}
 	l.Infof("end")
 }

@@ -2,19 +2,14 @@ name: MyTestCase
 testcases:
 - name: cdsfoo status
   steps:
-  - type: exec
-    command: cds
-    args:
-    - status
+  - script: cds status
     assertions:
     - code ShouldNotEqual 0
 - name: sleep 1
   steps:
-  - type: exec
-    command: sleep 1
+  - script: sleep 1
     assertions:
     - code ShouldEqual 0
 - name: sleep 3
   steps:
-  - type: exec
-    command: sleep 3
+  - script: sleep 3
