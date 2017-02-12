@@ -1,6 +1,6 @@
 name: user command testsuite
 testcases:
-- name: project add
+- name: prepare test
   steps:
   - script: cds project remove --force CLIPROJ || true
   - script: cds group remove ITCLIPROJ_GRP_TEST || true

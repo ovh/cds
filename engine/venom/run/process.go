@@ -175,8 +175,8 @@ func runExec(s *sdk.TestStep, l *log.Entry) {
 
 	scriptContent := s.ScriptContent
 	for alias, real := range aliases {
-		if strings.HasPrefix(scriptContent, alias) {
-			scriptContent = strings.Replace(scriptContent, alias, real, 1)
+		if strings.Contains(scriptContent, alias+" ") {
+			scriptContent = strings.Replace(scriptContent, alias+" ", real+" ", 1)
 		}
 	}
 

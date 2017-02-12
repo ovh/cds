@@ -1,0 +1,80 @@
+name: Pipeline Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: cds project remove --force ITCLIPIPPRJ || true
+  - script: cds group remove ITCLIPIP_GRP || true
+  - script: cds project add ITCLIPIPPRJ "Test Project" ITCLIPIP_GRP
+  - script: cds group add ITCLIPIP_GRP_EDIT_TEST
+  - script: cds action remove IT_CLI_pipeline_Test_Echo || true
+
+- name: pipeline add
+  steps:
+  - script: cds pipeline add ITCLIPIPPRJ HelloPipeline
+
+- name: pipeline list
+  steps:
+  - script: cds pipeline list ITCLIPIPPRJ
+
+- name: pipeline show
+  steps:
+  - script: cds pipeline show ITCLIPIPPRJ HelloPipeline
+
+- name: pipeline group add
+  steps:
+  - script: cds pipeline group add ITCLIPIPPRJ HelloPipeline ITCLIPIP_GRP_EDIT_TEST 7
+
+- name: pipeline group update
+  steps:
+  - script: cds pipeline group update ITCLIPIPPRJ HelloPipeline ITCLIPIP_GRP_EDIT_TEST 4
+
+- name: pipeline group remove
+  steps:
+  - script: cds pipeline group remove ITCLIPIPPRJ HelloPipeline ITCLIPIP_GRP_EDIT_TEST
+
+- name: pipeline parameter add
+  steps:
+  - script: cds pipeline parameter add ITCLIPIPPRJ HelloPipeline VAR_1 varValue TEXT "Parametre var1"
+
+- name: pipeline parameter update
+  steps:
+  - script: cds pipeline parameter update ITCLIPIPPRJ HelloPipeline VAR_1 varValueUpdated TEXTE "Le parametre var1"
+
+- name: pipeline parameter show
+  steps:
+  - script: cds pipeline parameter show ITCLIPIPPRJ HelloPipeline
+
+- name: pipeline parameter remove
+  steps:
+  - script: cds pipeline parameter remove ITCLIPIPPRJ HelloPipeline VAR_1
+
+- name: pipeline parameter add
+  steps:
+  - script: cds pipeline parameter add ITCLIPIPPRJ HelloPipeline VAR_2 pipelineVariable TEXT "Parametre var2"
+
+- name: pipeline stage add
+  steps:
+  - script: cds pipeline stage add ITCLIPIPPRJ HelloPipeline Stage1
+
+- name: pipeline action add
+  steps:
+  - script: cds action add IT_CLI_pipeline_Test_Echo --requirement="echo" -p name
+  - script: cds pipeline job add ITCLIPIPPRJ HelloPipeline myJob1 --stage=1
+  - script: cds pipeline job append ITCLIPIPPRJ HelloPipeline myJob1 IT_CLI_pipeline_Test_Echo -p "name={{.cds.proj.VAR_2}}"
+
+- name: pipeline run
+  steps:
+  - script: cds application add ITCLIPIPPRJ TestApp
+  - script: cds application pipeline add ITCLIPIPPRJ TestApp HelloPipeline -p "VAR_2=Parametre var2"
+  - script: cds pipeline run ITCLIPIPPRJ TestApp HelloPipeline
+
+- name: pipeline history
+  steps:
+  - script: cds pipeline history ITCLIPIPPRJ TestApp HelloPipeline
+
+- name: cleanup
+  steps:
+  - script: cds group remove ITCLIPIP_GRP_EDIT_TEST
+  - script: cds group remove ITCLIPIP_GRP
+  - script: cds project remove --force ITCLIPIPPRJ
+  - script: cds action remove IT_CLI_pipeline_Test_Echo

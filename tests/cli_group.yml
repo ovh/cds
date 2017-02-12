@@ -1,6 +1,6 @@
 name: Group Command TestSuite
 testcases:
-- name: cds user
+- name: prepare test
   steps:
   - script: cds group remove ITCLIGRP_TEST || true
   - script: cds group remove ITCLIGRP_TEST_2 || true
@@ -8,7 +8,6 @@ testcases:
 - name: group add
   steps:
   - script: cds group add ITCLIGRP_TEST
-  - script: cds group add GRP_EDIT_TEST
 
 - name: group info
   steps:
