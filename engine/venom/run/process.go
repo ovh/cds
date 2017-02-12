@@ -15,6 +15,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/smartystreets/assertions"
+	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
@@ -53,34 +54,11 @@ func process() (sdk.Tests, error) {
 
 	var wg sync.WaitGroup
 	wg.Add(len(filesPath))
+
 	queue := make(chan sdk.TestSuite, 1)
 
-	go func() {
-		for file := range parallels {
-			go func(f string) {
-
-				l := log.WithField("file", f)
-				l.Debug("readFile")
-
-				dat, err := ioutil.ReadFile(f)
-				if err != nil {
-					l.WithError(err).Errorf("Error while reading file")
-					wg.Done()
-					return
-				}
-
-				ts := sdk.TestSuite{}
-				if err := yaml.Unmarshal(dat, &ts); err != nil {
-					l.WithError(err).Errorf("Error while unmarshal file")
-					wg.Done()
-					return
-				}
-
-				runTestSuite(&ts, l)
-				queue <- ts
-			}(file)
-		}
-	}()
+	bar := pb.StartNew(len(filesPath))
+	defer bar.Finish()
 
 	tr := sdk.Tests{}
 	go func() {
@@ -98,11 +76,36 @@ func process() (sdk.Tests, error) {
 			tr.Total = tr.TotalKO + tr.TotalOK + tr.TotalSkipped
 
 			wg.Done()
+			bar.Add(1)
 		}
 	}()
 
 	for _, file := range filesPath {
-		parallels <- file
+		go func(f string) {
+
+			parallels <- f
+			defer func() { <-parallels }()
+
+			l := log.WithField("file", f)
+			l.Debug("readFile")
+
+			dat, err := ioutil.ReadFile(f)
+			if err != nil {
+				l.WithError(err).Errorf("Error while reading file")
+				wg.Done()
+				return
+			}
+
+			ts := sdk.TestSuite{}
+			if err := yaml.Unmarshal(dat, &ts); err != nil {
+				l.WithError(err).Errorf("Error while unmarshal file")
+				wg.Done()
+				return
+			}
+			ts.Name += " [" + f + "]"
+			runTestSuite(&ts, l)
+			queue <- ts
+		}(file)
 	}
 
 	wg.Wait()
@@ -157,13 +160,7 @@ func runTestStep(s *sdk.TestStep, l *log.Entry) {
 	l.Debug("start")
 	defer l.Debug("end")
 
-	switch stype {
-	case "exec":
-		l = l.WithField("z.type", "exec")
-		runExec(s, l)
-		return
-	}
-	s.Result.Err = fmt.Errorf("Type %s not supported", stype)
+	runExec(s, l)
 	return
 }
 
@@ -337,12 +334,7 @@ func applyResult(tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry) error {
 }
 
 func checkAssertion(tc *sdk.TestCase, ts *sdk.TestStep, assertion string, l *log.Entry) {
-	a, erra := getAssertion(ts, assertion, l)
-	if erra != nil {
-		tc.Errors = append(tc.Errors, sdk.Failure{Value: erra.Error()})
-		return
-	}
-
+	a := getAssertion(ts, assertion, l)
 	assert := strings.Split(a, " ")
 	if len(assert) < 3 {
 		tc.Errors = append(tc.Errors, sdk.Failure{Value: fmt.Sprintf("invalid assertion '%s' type:'%s' len:'%d'", a, ts.Type, len(assert))})
@@ -357,19 +349,11 @@ func checkAssertion(tc *sdk.TestCase, ts *sdk.TestStep, assertion string, l *log
 	tc.Errors = append(tc.Errors, sdk.Failure{Value: fmt.Sprintf("invalid assertion %s", assertion)})
 }
 
-func getAssertion(ts *sdk.TestStep, assertion string, l *log.Entry) (string, error) {
+func getAssertion(ts *sdk.TestStep, assertion string, l *log.Entry) string {
 	if assertion != "" {
-		return assertion, nil
+		return assertion
 	}
-
-	switch ts.Type {
-	case "exec":
-		return "code ShouldEqual 0", nil
-	case "http":
-		return "code ShouldBeLessThan 300", nil
-	}
-
-	return "", fmt.Errorf("Invalid assertion of type %s", ts.Type)
+	return "code ShouldEqual 0"
 }
 
 type testingT struct {
@@ -403,7 +387,13 @@ func checkCode(assert []string, tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry
 		if len(c) > 200 {
 			c = c[0:200] + "..."
 		}
-		tc.Failures = append(tc.Failures, sdk.Failure{Value: fmt.Sprintf("%s... give %s", c, out)})
+		if ts.Result.StdOut != "" {
+			out += "\n" + ts.Result.StdOut
+		}
+		if ts.Result.StdErr != "" {
+			out += "\n" + ts.Result.StdErr
+		}
+		tc.Failures = append(tc.Failures, sdk.Failure{Value: fmt.Sprintf("%s give %s", c, out)})
 	}
 }
 

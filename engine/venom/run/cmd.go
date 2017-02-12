@@ -15,12 +15,15 @@ import (
 )
 
 var (
-	path      string
-	alias     []string
-	format    string
-	parallel  int
-	logLevel  string
-	outputDir string
+	path           string
+	alias          []string
+	format         string
+	parallel       int
+	logLevel       string
+	outputDir      string
+	details        bool
+	resumeFailures bool
+	resume         bool
 )
 
 func init() {
@@ -30,6 +33,9 @@ func init() {
 	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
+	Cmd.PersistentFlags().BoolVarP(&details, "details", "", false, "Output Details")
+	Cmd.PersistentFlags().BoolVarP(&resume, "resume", "", true, "Output Resume")
+	Cmd.PersistentFlags().BoolVarP(&resumeFailures, "resumeFailures", "", true, "Output Resume Failures")
 }
 
 // Cmd run
@@ -89,26 +95,68 @@ func outputResult(tests sdk.Tests) {
 		}
 	}
 
-	if outputDir == "" {
+	if details {
 		fmt.Printf(string(data))
-		return
 	}
 
-	if format == "xml" {
-		for i, ts := range tests.TestSuites {
-			dataxml := append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), data...)
-			filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(ts.Name, " ", "", -1))
-			writeFile(filename, dataxml)
+	if resume {
+		outputResume(tests)
+	}
+
+	if outputDir != "" {
+		if format == "xml" {
+			for i, ts := range tests.TestSuites {
+				dataxml := append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), data...)
+				filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(ts.Name, " ", "", -1))
+				writeFile(filename, dataxml)
+			}
+			return
 		}
-		return
+
+		filename := outputDir + "/" + "test_results" + "." + format
+		writeFile(filename, data)
 	}
 
-	filename := outputDir + "/" + "test_results" + "." + format
-	writeFile(filename, data)
+}
+
+func outputResume(tests sdk.Tests) {
+
+	if resumeFailures {
+		for _, t := range tests.TestSuites {
+			if t.Failures > 0 || t.Errors > 0 {
+				fmt.Printf("FAILED %s\n", t.Name)
+				fmt.Printf("--------------\n")
+
+				for _, tc := range t.TestCases {
+					for _, f := range tc.Failures {
+						fmt.Printf("%s\n", f.Value)
+					}
+					for _, f := range tc.Errors {
+						fmt.Printf("%s\n", f.Value)
+					}
+				}
+				fmt.Printf("-=-=-=-=-=-=-=-=-\n")
+			}
+		}
+	}
+
+	for _, t := range tests.TestSuites {
+		if t.Failures > 0 || t.Errors > 0 {
+			fmt.Printf("FAILED %s\n", t.Name)
+		}
+	}
+
+	fmt.Printf("Total:%d  TotalOK:%d TotalKO:%d TotalSkipped:%d TotalTestSuite:%d\n",
+		tests.Total,
+		tests.TotalOK,
+		tests.TotalKO,
+		tests.TotalSkipped,
+		len(tests.TestSuites),
+	)
+
 }
 
 func writeFile(filename string, data []byte) {
-
 	f, err := os.Create(filename)
 	if err != nil {
 		fmt.Printf("Error while creating file %s, err:%s", filename, err)
