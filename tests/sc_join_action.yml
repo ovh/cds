@@ -5,6 +5,9 @@ testcases:
   - script: cds project remove --force ITSCJA || true
   - script: cds project add ITSCJA ITSCJA ITSCJA
   - script: cds application add ITSCJA TestApp
+  - script: cds action remove ITSCJA_GitClone || true
+  - script: cds action remove ITSCJA_GoGet || true
+  - script: cds action remove ITSCJA_GoTest || true
 
 - name : test joined action
   steps:

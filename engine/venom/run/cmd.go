@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -21,20 +22,25 @@ var (
 	parallel       int
 	logLevel       string
 	outputDir      string
-	details        bool
+	detailsLevel   string
 	resumeFailures bool
 	resume         bool
 )
 
+const (
+	detailsLow    = "low"
+	detailsMedium = "medium"
+	detailsHigh   = "high"
+)
+
 func init() {
-	Cmd.Flags().StringVarP(&path, "path", "", "", "Path containing TestSuites")
 	Cmd.Flags().StringSliceVarP(&alias, "alias", "", []string{""}, "--alias cds:'cds -f config.json' --alias cds2:'cds -f config.json'")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--formt:yaml, json, xml")
 	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
-	Cmd.PersistentFlags().BoolVarP(&details, "details", "", false, "Output Details")
-	Cmd.PersistentFlags().BoolVarP(&resume, "resume", "", true, "Output Resume")
+	Cmd.PersistentFlags().StringVarP(&detailsLevel, "details", "", "medium", "Output Details Level : low, medium, high")
+	Cmd.PersistentFlags().BoolVarP(&resume, "resume", "", true, "Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite")
 	Cmd.PersistentFlags().BoolVarP(&resumeFailures, "resumeFailures", "", true, "Output Resume Failures")
 }
 
@@ -43,9 +49,15 @@ var Cmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run Tests",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		if path == "" {
-			log.Fatalf("Invalid --path")
+
+		if len(args) > 1 {
+			log.Fatalf("Invalid path: venom <path>")
 		}
+		if len(args) == 0 {
+			path = "."
+		}
+		path = args[0]
+
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if parallel < 0 {
@@ -63,16 +75,26 @@ var Cmd = &cobra.Command{
 			log.SetLevel(log.WarnLevel)
 		}
 
+		switch detailsLevel {
+		case detailsLow, "medium", "high":
+			log.Infof("Detail Level: %s", detailsLevel)
+		default:
+			log.Fatalf("Invalid details. Must be low, medium or high")
+		}
+
+		start := time.Now()
 		tests, err := process()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		outputResult(tests)
+		elapsed := time.Since(start)
+
+		outputResult(tests, elapsed)
 	},
 }
 
-func outputResult(tests sdk.Tests) {
+func outputResult(tests sdk.Tests, elapsed time.Duration) {
 	var data []byte
 	var err error
 	switch format {
@@ -95,12 +117,12 @@ func outputResult(tests sdk.Tests) {
 		}
 	}
 
-	if details {
+	if detailsLevel == "high" {
 		fmt.Printf(string(data))
 	}
 
 	if resume {
-		outputResume(tests)
+		outputResume(tests, elapsed)
 	}
 
 	if outputDir != "" {
@@ -119,7 +141,7 @@ func outputResult(tests sdk.Tests) {
 
 }
 
-func outputResume(tests sdk.Tests) {
+func outputResume(tests sdk.Tests, elapsed time.Duration) {
 
 	if resumeFailures {
 		for _, t := range tests.TestSuites {
@@ -140,18 +162,27 @@ func outputResume(tests sdk.Tests) {
 		}
 	}
 
+	totalTestCases := 0
+	totalTestSteps := 0
 	for _, t := range tests.TestSuites {
 		if t.Failures > 0 || t.Errors > 0 {
 			fmt.Printf("FAILED %s\n", t.Name)
 		}
+		totalTestCases += len(t.TestCases)
+		for _, tc := range t.TestCases {
+			totalTestSteps += len(tc.TestSteps)
+		}
 	}
 
-	fmt.Printf("Total:%d  TotalOK:%d TotalKO:%d TotalSkipped:%d TotalTestSuite:%d\n",
+	fmt.Printf("Total:%d TotalOK:%d TotalKO:%d TotalSkipped:%d TotalTestSuite:%d TotalTestCase:%d TotalTestStep:%d Duration:%s\n",
 		tests.Total,
 		tests.TotalOK,
 		tests.TotalKO,
 		tests.TotalSkipped,
 		len(tests.TestSuites),
+		totalTestCases,
+		totalTestSteps,
+		elapsed,
 	)
 
 }

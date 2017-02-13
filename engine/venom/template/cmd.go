@@ -36,12 +36,10 @@ func template() {
 				Name: "Title of First TestCase",
 				TestSteps: []sdk.TestStep{
 					{
-						Type:          "exec",
 						ScriptContent: "cds status",
 						Assertions:    []string{"code ShouldEqual 0"},
 					},
 					{
-						Type:          "exec",
 						ScriptContent: "cds user list",
 						Assertions:    []string{"code ShouldNotEqual 0"},
 					},

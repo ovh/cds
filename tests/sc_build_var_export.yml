@@ -3,6 +3,7 @@ testcases:
 - name: prepare test
   steps:
   - script: cds project remove --force ITBUILDVAR || true
+  - script: cds group remove ITBUILDVAR || true
   - script: cds project add ITBUILDVAR ITBUILDVAR ITBUILDVAR
   - script: cds pipeline add ITBUILDVAR pip
   - script: cds app add ITBUILDVAR app

@@ -3,6 +3,8 @@ testcases:
 - name: prepare test
   steps:
   - script: cds project remove --force ITSCGITHOOK || true
+  - script: cds group remove ITSCGITHOOK || true
+  - script: cds action remove ITSCGITHOOK_ACTION_Test_Echo || true
   - script: cds project add ITSCGITHOOK ITSCGITHOOK ITSCGITHOOK
   - script: cds application add ITSCGITHOOK TestApp
   - script: cds action add ITSCGITHOOK_ACTION_Test_Echo --requirement="echo" -p name

@@ -58,26 +58,11 @@ type TestCase struct {
 	TestSteps  []TestStep  `xml:"-" json:"steps" yaml:"steps"`
 }
 
-// TestStep contains command to execute, type: exec
+// TestStep contains script to execute
 type TestStep struct {
-	Type          string         `xml:"-" json:"type,omitempty" yaml:"type,omitempty"`
 	ScriptContent string         `xml:"-" json:"script,omitempty" yaml:"script,omitempty"`
 	Assertions    []string       `xml:"-" json:"assertions,omitempty" yaml:"assertions,omitempty"`
 	Result        TestStepResult `xml:"-" json:"result,omitempty" yaml:"result,omitempty"`
-}
-
-// DetectType returns type of testStep if testStep.Type is not empty.
-// If testStep.Type is empty, return http is URL is not empty
-// of return exec is command is not empty
-func (t *TestStep) DetectType() (string, error) {
-	if t.Type != "" {
-		return t.Type, nil
-	}
-	if t.ScriptContent != "" {
-		return "exec", nil
-	}
-
-	return "", fmt.Errorf("Type is invalid")
 }
 
 // TestStepResult represents a step result

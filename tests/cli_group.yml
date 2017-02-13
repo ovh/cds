@@ -44,4 +44,4 @@ testcases:
 - name: clean
   steps:
   - script: cds group remove ITCLIGRP_TEST || true
-  - script: cds group remove ITCLIGRP_TEST_2 || true
+  - script: cds group remove ITCLIGRP_TEST_2

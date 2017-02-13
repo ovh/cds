@@ -3,6 +3,7 @@ testcases:
 - name: prepare test
   steps:
   - script: cds project remove --force ITSCTRIGGER || true
+  - script: cds group remove ITSCTRIGGER || true
   - script: cds project add ITSCTRIGGER ITSCTRIGGER ITSCTRIGGER
   - script: cds application add ITSCTRIGGER TestApp
 
