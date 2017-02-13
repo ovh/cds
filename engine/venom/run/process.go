@@ -109,7 +109,11 @@ func process() (sdk.Tests, error) {
 			for _, tc := range ts.TestCases {
 				totalSteps += len(tc.TestSteps)
 				nSteps += len(tc.TestSteps)
+				if tc.Skipped == 1 {
+					ts.nSkipped++
+				}
 			}
+			ts.Total = len(ts.TestCases)
 
 			b := pb.New(nSteps).Prefix(rightPad("⚙ "+ts.Package, " ", 47))
 			b.ShowCounters = false
@@ -172,7 +176,7 @@ func process() (sdk.Tests, error) {
 	return tr, nil
 }
 
-func rightPad(s string, padStr string, pLen int) string {
+func rightPad(s string, tc.SkippedpadStr string, pLen int) string {
 	o := s + strings.Repeat(padStr, pLen)
 	return o[0:pLen]
 }
