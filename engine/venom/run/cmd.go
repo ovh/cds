@@ -132,7 +132,7 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 				dataxml := append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), data...)
 				filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(ts.Name, " ", "", -1))
 
-				if err := ioutil.WriteFile(filename, dataxml, 644); err != nil {
+				if err := ioutil.WriteFile(filename, dataxml, 0644); err != nil {
 					fmt.Printf("Error while creating file %s, err:%s", filename, err)
 					os.Exit(1)
 				}
@@ -141,7 +141,7 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 		}
 
 		filename := outputDir + "/" + "test_results" + "." + format
-		if err := ioutil.WriteFile(filename, data, 644); err != nil {
+		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
 			fmt.Printf("Error while creating file %s, err:%s", filename, err)
 			os.Exit(1)
 		}
