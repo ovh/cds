@@ -103,18 +103,18 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 	case "json":
 		data, err = json.Marshal(tests)
 		if err != nil {
-			log.Fatalf("Error: cannot format output (%s)", err)
+			log.Fatalf("Error: cannot format output json (%s)", err)
 		}
 	case "yml", "yaml":
 		data, err = yaml.Marshal(tests)
 		if err != nil {
-			log.Fatalf("Error: cannot format output (%s)", err)
+			log.Fatalf("Error: cannot format output yaml (%s)", err)
 		}
 	default:
 		for _, tss := range tests.TestSuites {
 			data, err = xml.Marshal(tss)
 			if err != nil {
-				log.Fatalf("Error: cannot format output (%s)", err)
+				log.Fatalf("Error: cannot format output xml (%s)", err)
 			}
 		}
 	}

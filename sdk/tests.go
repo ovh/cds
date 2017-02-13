@@ -27,7 +27,7 @@ type TestSuite struct {
 	ID         string     `xml:"id,attr,omitempty" json:"id" yaml:"-"`
 	Name       string     `xml:"name,attr" json:"name" yaml:"name"`
 	Package    string     `xml:"package,attr,omitempty" json:"package" yaml:"-"`
-	Properties []Property `xml:"properties,attr" json:"properties" yaml:"-"`
+	Properties []Property `xml:"-" json:"properties" yaml:"-"`
 	Skipped    int        `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
 	Total      int        `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
 	TestCases  []TestCase `xml:"testcase" json:"tests" yaml:"testcases"`
