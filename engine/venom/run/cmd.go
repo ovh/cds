@@ -52,12 +52,13 @@ var Cmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 
 		if len(args) > 1 {
-			log.Fatalf("Invalid path: venom <path>")
+			log.Fatalf("Invalid path: venom run <path>")
 		}
-		if len(args) == 0 {
+		if len(args) == 1 {
+			path = args[0]
+		} else {
 			path = "."
 		}
-		path = args[0]
 
 	},
 	Run: func(cmd *cobra.Command, args []string) {
