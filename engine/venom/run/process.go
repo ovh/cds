@@ -110,7 +110,7 @@ func process() (sdk.Tests, error) {
 				totalSteps += len(tc.TestSteps)
 				nSteps += len(tc.TestSteps)
 				if tc.Skipped == 1 {
-					ts.nSkipped++
+					ts.Skipped++
 				}
 			}
 			ts.Total = len(ts.TestCases)
@@ -176,7 +176,7 @@ func process() (sdk.Tests, error) {
 	return tr, nil
 }
 
-func rightPad(s string, tc.SkippedpadStr string, pLen int) string {
+func rightPad(s string, padStr string, pLen int) string {
 	o := s + strings.Repeat(padStr, pLen)
 	return o[0:pLen]
 }
