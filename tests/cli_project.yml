@@ -1,4 +1,4 @@
-name: user command testsuite
+name: Project Command TestSuite
 testcases:
 - name: prepare test
   steps:
