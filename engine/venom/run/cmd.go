@@ -132,8 +132,12 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 			for i, ts := range tests.TestSuites {
 
 				tuple := strings.Split(ts.Name, " ") // remove " [...] from name"
+				lname := ts.Name
+				if len(tuple) >= 1 {
+					lname = tuple[0]
+				}
 				dataxml := append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), data...)
-				filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(tuple[0], " ", "", -1))
+				filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(lname, " ", "", -1))
 
 				if err := ioutil.WriteFile(filename, dataxml, 0644); err != nil {
 					fmt.Printf("Error while creating file %s, err:%s", filename, err)

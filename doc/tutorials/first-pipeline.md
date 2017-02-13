@@ -31,11 +31,11 @@ $ cds pipeline add TEST hello-pip
 Pipeline hello-pip created.
 ```
 
-### Create an application 
+### Create an application
 
 ```shell
 $ cds application add TEST hello-world
-Aplication hello-world created.
+Application hello-world created.
 ```
 
 ### Configure your pipeline
@@ -82,4 +82,3 @@ OK
 OK
 OK
 ```
-
