@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -130,13 +131,20 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 			for i, ts := range tests.TestSuites {
 				dataxml := append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), data...)
 				filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(ts.Name, " ", "", -1))
-				writeFile(filename, dataxml)
+
+				if err := ioutil.WriteFile(filename, dataxml, 644); err != nil {
+					fmt.Printf("Error while creating file %s, err:%s", filename, err)
+					os.Exit(1)
+				}
 			}
 			return
 		}
 
 		filename := outputDir + "/" + "test_results" + "." + format
-		writeFile(filename, data)
+		if err := ioutil.WriteFile(filename, data, 644); err != nil {
+			fmt.Printf("Error while creating file %s, err:%s", filename, err)
+			os.Exit(1)
+		}
 	}
 
 }
@@ -185,17 +193,4 @@ func outputResume(tests sdk.Tests, elapsed time.Duration) {
 		elapsed,
 	)
 
-}
-
-func writeFile(filename string, data []byte) {
-	f, err := os.Create(filename)
-	if err != nil {
-		fmt.Printf("Error while creating file %s, err:%s", filename, err)
-		os.Exit(1)
-	}
-
-	if _, err := f.Write(data); err != nil {
-		fmt.Printf("Error while writing content of file %s, err:%s", filename, err)
-		os.Exit(1)
-	}
 }
