@@ -28,7 +28,7 @@ Flags:
 ## TestSuite files
 
 * Run `venom template`
-* Examples: https://github.com/ovh/cds/test
+* Examples: https://github.com/ovh/cds/tests
 
 Example:
 
