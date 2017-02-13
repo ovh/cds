@@ -33,6 +33,7 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(pipelineParameterCmd)
 	cmd.AddCommand(pipelineJoinedCmd())
 	cmd.AddCommand(pipelineBuildCmd())
+	cmd.AddCommand(exportCmd())
 
 	return cmd
 }
