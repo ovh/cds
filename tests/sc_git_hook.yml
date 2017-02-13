@@ -1,0 +1,37 @@
+name: Git Hook TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: cds project remove --force ITSCGITHOOK || true
+  - script: cds group remove ITSCGITHOOK || true
+  - script: cds action remove ITSCGITHOOK_ACTION_Test_Echo || true
+  - script: cds project add ITSCGITHOOK ITSCGITHOOK ITSCGITHOOK
+  - script: cds application add ITSCGITHOOK TestApp
+  - script: cds action add ITSCGITHOOK_ACTION_Test_Echo --requirement="echo" -p name
+  - script: cds action add step ITSCGITHOOK_ACTION_Test_Echo Script -p script="echo {{.cds.version}}. Coucou {{.name}}"
+
+- name: git hooks
+  steps:
+  - script: cds pipeline add ITSCGITHOOK MultiPass
+  - script: cds application pipeline add ITSCGITHOOK TestApp MultiPass
+  - script: cds pipeline job add ITSCGITHOOK MultiPass myJob1 --stage=1
+  - script: cds pipeline job append ITSCGITHOOK MultiPass myJob1 ITSCGITHOOK_ACTION_Test_Echo -p name="Stage 1"
+  - script: cds pipeline hook add ITSCGITHOOK TestApp MultiPass foo.bar.net/test/multipass
+  - script: cds pipeline hook list ITSCGITHOOK TestApp MultiPass
+  - script: cds pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only
+  - script: curl -i -X POST `cds pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only`
+  - script: cds pipeline history ITSCGITHOOK TestApp MultiPass
+  - script: cds pipeline history ITSCGITHOOK TestApp MultiPass | egrep "Building|Success"
+
+- name: Streaming logs of triggered pipeline
+  steps:
+  - script: cds pipeline logs ITSCGITHOOK TestApp MultiPass # Stream
+
+- name: delete hook
+  steps:
+  - script: cds pipeline hook delete ITSCGITHOOK TestApp MultiPass foo.bar.net/test/multipass
+
+- name: cleanup
+  steps:
+  - script: cds project remove --force ITSCGITHOOK
+  - script: cds action remove ITSCGITHOOK_ACTION_Test_Echo

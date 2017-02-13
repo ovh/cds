@@ -1,0 +1,41 @@
+name: Action Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: cds action remove IT_CLI_ACTION_Test_HelloWorld || true
+  - script: cds action remove IT_CLI_ACTION_Test_Echo || true
+  - script: cds action remove IT_CLI_ACTION_Test_Sleep || true
+
+- name: action add
+  steps:
+  - script: cds action add IT_CLI_ACTION_Test_Echo --requirement="echo" -p name
+  - script: |
+            cds action add step IT_CLI_ACTION_Test_Echo Script -p script=" \
+            echo {{.cds.version}} : Coucou {{.name}}  | tee logs.txt \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}} \
+            echo Coucou {{.name}}
+            "
+  - script: cds action add IT_CLI_ACTION_Test_Sleep --requirement="sleep"
+  - script: cds action add step IT_CLI_ACTION_Test_Sleep Script -p script="sleep 1"
+  - script: cds action add IT_CLI_ACTION_Test_HelloWorld
+  - script: cds action add step IT_CLI_ACTION_Test_HelloWorld IT_CLI_ACTION_Test_Echo -p name="World!"
+
+- name: action list
+  steps:
+  - script: cds action list
+
+- name: clean
+  steps:
+  - script: cds action remove IT_CLI_ACTION_Test_HelloWorld
+  - script: cds action remove IT_CLI_ACTION_Test_Echo
+  - script: cds action remove IT_CLI_ACTION_Test_Sleep

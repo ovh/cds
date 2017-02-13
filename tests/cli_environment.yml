@@ -1,0 +1,63 @@
+name: Environment Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: cds project remove --force ITCLIENVPRJ || true
+  - script: cds group remove ITCLIENV_GRP || true
+  - script: cds group remove ITCLIENV_GRP_EDIT_TEST || true
+  - script: cds project add ITCLIENVPRJ "Test Project" ITCLIENV_GRP
+  - script: cds group add ITCLIENV_GRP_EDIT_TEST
+
+- name: environment add
+  steps:
+  - script: cds environment add ITCLIENVPRJ PROD
+
+- name: environment list
+  steps:
+  - script: cds environment list TEST
+
+- name: environment show
+  steps:
+  - script: cds environment show ITCLIENVPRJ PROD
+
+- name: environment update
+  steps:
+  - script: cds environment update ITCLIENVPRJ PROD production
+
+- name: environment delete
+  steps:
+  - script: cds environment delete ITCLIENVPRJ production
+
+- name: environment add
+  steps:
+  - script: cds environment add ITCLIENVPRJ PROD
+
+- name: environment variable add
+  steps:
+  - script: cds environment variable add ITCLIENVPRJ PROD var1 value1 string
+
+- name: environment variable show
+  steps:
+  - script: cds environment variable show ITCLIENVPRJ PROD
+
+- name: environment variable remove
+  steps:
+  - script: cds environment variable remove ITCLIENVPRJ PROD var1
+
+- name: environment group add
+  steps:
+  - script: cds environment group add ITCLIENVPRJ PROD ITCLIENV_GRP_EDIT_TEST 7
+
+- name: environment group update
+  steps:
+  - script: cds environment group update ITCLIENVPRJ PROD ITCLIENV_GRP_EDIT_TEST 4
+
+- name: environment group remove
+  steps:
+  - script: cds environment group remove ITCLIENVPRJ PROD ITCLIENV_GRP_EDIT_TEST
+
+- name: clean
+  steps:
+  - script: cds group remove ITCLIENV_GRP
+  - script: cds group remove ITCLIENV_GRP_EDIT_TEST
+  - script: cds project remove --force ITCLIENVPRJ

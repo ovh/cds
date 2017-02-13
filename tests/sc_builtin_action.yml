@@ -1,0 +1,20 @@
+name: Builtin Action TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: cds project remove --force ITSCBUILTIN || true
+  - script: cds project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
+  - script: cds application add ITSCBUILTIN TestApp
+
+- name: builtin action
+  steps:
+  - script: cds pipeline add ITSCBUILTIN Scripting
+  - script: cds application pipeline add ITSCBUILTIN TestApp Scripting
+  - script: cds pipeline job add ITSCBUILTIN Scripting myJob1
+  - script: cds pipeline job append ITSCBUILTIN Scripting myJob1 Script -p script="echo Hello world !"
+  - script: cds pipeline run ITSCBUILTIN TestApp Scripting
+  - script: cds application pipeline remove ITSCBUILTIN TestApp Scripting
+
+- name: cleanup
+  steps:
+  - script: cds project remove --force ITSCBUILTIN

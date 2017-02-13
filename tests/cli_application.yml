@@ -1,0 +1,64 @@
+name: Application Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: cds project remove --force ITCLIAPPPRJ || true
+  - script: cds group remove ITCLIAPP_GRP || true
+  - script: cds group remove ITCLIAPP_GRP_EDIT_TEST || true
+  - script: cds project add ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
+  - script: cds group add ITCLIAPP_GRP_EDIT_TEST
+
+- name: application add
+  steps:
+  - script: cds application add ITCLIAPPPRJ TestApp
+
+- name: application list
+  steps:
+  - script: cds application list TEST
+
+- name: application show
+  steps:
+  - script: cds application show ITCLIAPPPRJ TestApp
+
+- name: application variable add
+  steps:
+  - script: cds application variable add ITCLIAPPPRJ TestApp var1 value1 string
+
+- name: application variable show
+  steps:
+  - script: cds application variable show ITCLIAPPPRJ TestApp
+
+- name: application variable remove
+  steps:
+  - script: cds application variable remove ITCLIAPPPRJ TestApp var1
+
+- name: application group add
+  steps:
+  - script: cds application group add ITCLIAPPPRJ TestApp ITCLIAPP_GRP_EDIT_TEST 7
+
+- name: application group update
+  steps:
+  - script: cds application group update ITCLIAPPPRJ TestApp ITCLIAPP_GRP_EDIT_TEST 4
+
+- name: application group remove
+  steps:
+  - script: cds application group remove ITCLIAPPPRJ TestApp ITCLIAPP_GRP_EDIT_TEST
+
+- name: application pipeline add
+  steps:
+  - script: cds pipeline add ITCLIAPPPRJ Hello
+  - script: cds application pipeline add ITCLIAPPPRJ TestApp Hello
+
+- name: application pipeline show
+  steps:
+  - script: cds application pipeline show ITCLIAPPPRJ TestApp
+
+- name: application pipeline remove
+  steps:
+  - script: cds application pipeline remove ITCLIAPPPRJ TestApp Hello
+
+- name: clean
+  steps:
+  - script: cds group remove ITCLIAPP_GRP
+  - script: cds group remove ITCLIAPP_GRP_EDIT_TEST
+  - script: cds project remove --force ITCLIAPPPRJ

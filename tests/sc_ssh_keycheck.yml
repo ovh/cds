@@ -1,0 +1,29 @@
+name: SSH Key Check TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: cds action remove sshtest || true
+  - script: cds project remove --force ITSSHKEYCHECK || true
+  - script: cds project add ITSSHKEYCHECK ITSSHKEYCHECK ITSSHKEYCHECK
+  - script: cds app add ITSSHKEYCHECK app
+  - script: cds pipeline add ITSSHKEYCHECK pip
+  - script: cds action remove sshtest || true
+  - script: cds action add sshtest
+  - script: cds action add step sshtest Script -p script="ls -l ~/.ssh; env | grep PKEY; env | grep GIT_SSH; cat \${GIT_SSH}"
+  - script: cds pipeline job add ITSSHKEYCHECK pip myJob1
+  - script: cds pipeline job append ITSSHKEYCHECK pip myJob1 sshtest
+  - script: cds app pipeline add ITSSHKEYCHECK app pip
+- name: test
+  steps:
+  - script: cds project variable add ITSSHKEYCHECK fookey "" key
+  - script: cds project variable show ITSSHKEYCHECK | grep fookey
+  - script: cds project variable show ITSSHKEYCHECK | grep fookey.pub
+  - script: cds pipeline run ITSSHKEYCHECK app pip
+  - script: cds pipeline run ITSSHKEYCHECK app pip | grep fookey
+  - script: cds app variable add ITSSHKEYCHECK app github "" key
+  - script: cds app variable show ITSSHKEYCHECK app | grep github
+  - script: cds app variable show ITSSHKEYCHECK app | grep github.pub
+  - script: cds pipeline run ITSSHKEYCHECK app pip
+  - script: cds pipeline run ITSSHKEYCHECK app pip | grep github
+  - script: cds project remove --force ITSSHKEYCHECK
+  - script: cds action remove sshtest

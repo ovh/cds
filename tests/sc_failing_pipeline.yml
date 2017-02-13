@@ -1,0 +1,37 @@
+name: Failing Pipeline TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: cds project remove --force ITSCFAIL || true
+  - script: cds action remove IT_SC_FAIL_TEST_Failure || true
+  - script: cds project add ITSCFAIL ITSCFAIL ITSCFAIL
+  - script: cds application add ITSCFAIL TestApp
+
+- name: failing action
+  steps:
+  - script: cds action add IT_SC_FAIL_TEST_Failure
+  - script: cds action add step IT_SC_FAIL_TEST_Failure Script -p script="false"
+
+- name: failing pipeline
+  steps:
+  - script: cds pipeline add ITSCFAIL FailingPipeline
+  - script: cds application pipeline add ITSCFAIL TestApp FailingPipeline
+
+  - script: cds pipeline job add ITSCFAIL FailingPipeline myJob1
+  - script: cds pipeline job append ITSCFAIL FailingPipeline myJob1 IT_SC_FAIL_TEST_Failure
+  - script: cds pipeline run ITSCFAIL TestApp FailingPipeline
+    assertions:
+      - code ShouldNotEqual 0
+
+- name: empty stage
+  steps:
+  - script: cds pipeline stage add ITSCFAIL FailingPipeline foo
+  - script: cds pipeline run ITSCFAIL TestApp FailingPipeline
+    assertions:
+      - code ShouldNotEqual 0
+  - script: cds application pipeline remove ITSCFAIL TestApp FailingPipeline
+
+
+- name: cleanup
+  steps:
+  - script: cds project remove --force ITSCFAIL

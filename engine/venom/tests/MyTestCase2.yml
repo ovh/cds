@@ -1,0 +1,5 @@
+name: MyTestCase2
+testcases:
+- name: sleep 2, exit code 0
+  steps:
+  - script: sleep 2
