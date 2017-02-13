@@ -137,8 +137,11 @@ func computeStats(res *sdk.Result, v *sdk.Tests) []string {
 
 	reasons := []string{}
 
+	reasons = append(reasons, fmt.Sprintf("JUnit parser: %d testsuite(s)", len(v.TestSuites)))
+
 	for _, ts := range v.TestSuites {
 		var nbKOTC, nbFailures, nbErrors int
+		reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d testcase(s)", ts.Name, len(ts.TestCases)))
 		for _, tc := range ts.TestCases {
 			if len(tc.Failures) > 0 {
 				reasons = append(reasons, fmt.Sprintf("JUnit parser: testcase %s has %d failure(s)", tc.Name, len(tc.Failures)))
