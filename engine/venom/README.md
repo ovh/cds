@@ -79,7 +79,6 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldBeTrue
 * ShouldBeFalse
 * ShouldBeZeroValue
-
 * ShouldBeGreaterThan
 * ShouldBeGreaterThanOrEqualTo
 * ShouldBeLessThan
@@ -88,7 +87,6 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldNotBeBetween
 * ShouldBeBetweenOrEqual
 * ShouldNotBeBetweenOrEqual
-
 * ShouldContain
 * ShouldNotContain
 * ShouldContainKey
@@ -98,7 +96,6 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldBeEmpty
 * ShouldNotBeEmpty
 * ShouldHaveLength
-
 * ShouldStartWith
 * ShouldNotStartWith
 * ShouldEndWith
@@ -107,10 +104,8 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldNotBeBlank
 * ShouldContainSubstring
 * ShouldNotContainSubstring
-
 * ShouldEqualWithout
 * ShouldEqualTrimSpace
-
 * ShouldHappenBefore
 * ShouldHappenOnOrBefore
 * ShouldHappenAfter
