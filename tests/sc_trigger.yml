@@ -102,3 +102,4 @@ testcases:
 - name: cleanup
   steps:
   - script: cds project remove --force ITSCTRIGGER
+  - script: cds group remove ITSCTRIGGER

@@ -117,6 +117,16 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 func computeStats(res *sdk.Result, v *sdk.Tests) []string {
 	// update global stats
 	for _, ts := range v.TestSuites {
+		nSkipped := 0
+		for _, tc := range ts.TestCases {
+			nSkipped += tc.Skipped
+		}
+		if ts.Skipped < nSkipped {
+			ts.Skipped = nSkipped
+		}
+		if ts.Total < len(ts.TestCases)-nSkipped {
+			ts.Total = len(ts.TestCases) - nSkipped
+		}
 		v.Total += ts.Total
 		v.TotalOK += (ts.Total - ts.Failures - ts.Errors)
 		v.TotalKO += ts.Failures + ts.Errors
@@ -127,8 +137,11 @@ func computeStats(res *sdk.Result, v *sdk.Tests) []string {
 
 	reasons := []string{}
 
+	reasons = append(reasons, fmt.Sprintf("JUnit parser: %d testsuite(s)", len(v.TestSuites)))
+
 	for _, ts := range v.TestSuites {
 		var nbKOTC, nbFailures, nbErrors int
+		reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d testcase(s)", ts.Name, len(ts.TestCases)))
 		for _, tc := range ts.TestCases {
 			if len(tc.Failures) > 0 {
 				reasons = append(reasons, fmt.Sprintf("JUnit parser: testcase %s has %d failure(s)", tc.Name, len(tc.Failures)))

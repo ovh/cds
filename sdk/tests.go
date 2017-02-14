@@ -19,7 +19,7 @@ type Tests struct {
 // TestSuite is a single JUnit test suite which may contain many
 // testcases.
 type TestSuite struct {
-	XMLName    xml.Name   `xml:"testsuite" json:"xmlName" yaml:"-"`
+	XMLName    xml.Name   `xml:"testsuite" json:"-" yaml:"-"`
 	Disabled   int        `xml:"disabled,attr,omitempty" json:"disabled" yaml:"-"`
 	Errors     int        `xml:"errors,attr,omitempty" json:"errors" yaml:"-"`
 	Failures   int        `xml:"failures,attr,omitempty" json:"failures" yaml:"-"`
@@ -27,7 +27,7 @@ type TestSuite struct {
 	ID         string     `xml:"id,attr,omitempty" json:"id" yaml:"-"`
 	Name       string     `xml:"name,attr" json:"name" yaml:"name"`
 	Package    string     `xml:"package,attr,omitempty" json:"package" yaml:"-"`
-	Properties []Property `xml:"properties,attr" json:"properties" yaml:"-"`
+	Properties []Property `xml:"-" json:"properties" yaml:"-"`
 	Skipped    int        `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
 	Total      int        `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
 	TestCases  []TestCase `xml:"testcase" json:"tests" yaml:"testcases"`
@@ -37,14 +37,14 @@ type TestSuite struct {
 
 // Property represents a key/value pair used to define properties.
 type Property struct {
-	XMLName xml.Name `xml:"property" json:"xmlName" yaml:"-"`
+	XMLName xml.Name `xml:"property" json:"-" yaml:"-"`
 	Name    string   `xml:"name,attr" json:"name" yaml:"-"`
 	Value   string   `xml:"value,attr" json:"value" yaml:"-"`
 }
 
 // TestCase is a single test case with its result.
 type TestCase struct {
-	XMLName    xml.Name    `xml:"testcase" json:"xmlName" yaml:"-"`
+	XMLName    xml.Name    `xml:"testcase" json:"-" yaml:"-"`
 	Assertions string      `xml:"assertions,attr,omitempty" json:"assertions" yaml:"-"`
 	Classname  string      `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
 	Errors     []Failure   `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`

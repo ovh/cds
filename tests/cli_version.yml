@@ -1,4 +1,4 @@
-name: version command TestSuite
+name: Version  Command TestSuite
 testcases:
 - name: cds version
   steps:

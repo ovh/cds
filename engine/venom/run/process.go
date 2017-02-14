@@ -109,7 +109,11 @@ func process() (sdk.Tests, error) {
 			for _, tc := range ts.TestCases {
 				totalSteps += len(tc.TestSteps)
 				nSteps += len(tc.TestSteps)
+				if tc.Skipped == 1 {
+					ts.Skipped++
+				}
 			}
+			ts.Total = len(ts.TestCases)
 
 			b := pb.New(nSteps).Prefix(rightPad("⚙ "+ts.Package, " ", 47))
 			b.ShowCounters = false
@@ -121,9 +125,11 @@ func process() (sdk.Tests, error) {
 				b.ShowTimeLeft = false
 			}
 
-			mutex.Lock()
-			bars[ts.Package] = b
-			mutex.Unlock()
+			if detailsLevel != detailsLow {
+				mutex.Lock()
+				bars[ts.Package] = b
+				mutex.Unlock()
+			}
 
 			chanToRun <- ts
 			wgPrepare.Done()
@@ -212,8 +218,12 @@ func runTestSuite(ts *sdk.TestSuite) {
 	if detailsLevel == detailsLow {
 		o += fmt.Sprintf("%s", elapsed)
 	}
-	bars[ts.Package].Prefix(o)
-	bars[ts.Package].Finish()
+	if detailsLevel != detailsLow {
+		bars[ts.Package].Prefix(o)
+		bars[ts.Package].Finish()
+	} else {
+		fmt.Println(o)
+	}
 }
 
 func runTestCase(ts *sdk.TestSuite, tc *sdk.TestCase, l *log.Entry) {
@@ -222,7 +232,9 @@ func runTestCase(ts *sdk.TestSuite, tc *sdk.TestCase, l *log.Entry) {
 	for _, tst := range tc.TestSteps {
 		runTestStep(&tst, l)
 		applyResult(tc, &tst, l)
-		bars[ts.Package].Increment()
+		if detailsLevel != detailsLow {
+			bars[ts.Package].Increment()
+		}
 		if len(tc.Failures) > 0 {
 			break
 		}

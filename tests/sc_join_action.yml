@@ -1,4 +1,4 @@
-name: Git Hook TestSuite
+name: Join Action TestSuite
 testcases:
 - name: prepare test
   steps:

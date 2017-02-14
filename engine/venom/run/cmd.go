@@ -52,12 +52,13 @@ var Cmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 
 		if len(args) > 1 {
-			log.Fatalf("Invalid path: venom <path>")
+			log.Fatalf("Invalid path: venom run <path>")
 		}
-		if len(args) == 0 {
+		if len(args) == 1 {
+			path = args[0]
+		} else {
 			path = "."
 		}
-		path = args[0]
 
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -102,18 +103,18 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 	case "json":
 		data, err = json.Marshal(tests)
 		if err != nil {
-			log.Fatalf("Error: cannot format output (%s)", err)
+			log.Fatalf("Error: cannot format output json (%s)", err)
 		}
 	case "yml", "yaml":
 		data, err = yaml.Marshal(tests)
 		if err != nil {
-			log.Fatalf("Error: cannot format output (%s)", err)
+			log.Fatalf("Error: cannot format output yaml (%s)", err)
 		}
 	default:
 		for _, tss := range tests.TestSuites {
 			data, err = xml.Marshal(tss)
 			if err != nil {
-				log.Fatalf("Error: cannot format output (%s)", err)
+				log.Fatalf("Error: cannot format output xml (%s)", err)
 			}
 		}
 	}
@@ -129,8 +130,14 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 	if outputDir != "" {
 		if format == "xml" {
 			for i, ts := range tests.TestSuites {
+
+				tuple := strings.Split(ts.Name, " ") // remove " [...] from name"
+				lname := ts.Name
+				if len(tuple) >= 1 {
+					lname = tuple[0]
+				}
 				dataxml := append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), data...)
-				filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(ts.Name, " ", "", -1))
+				filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(lname, " ", "", -1))
 
 				if err := ioutil.WriteFile(filename, dataxml, 0644); err != nil {
 					fmt.Printf("Error while creating file %s, err:%s", filename, err)
