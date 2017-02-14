@@ -27,3 +27,4 @@ testcases:
   - script: cds pipeline run ITSSHKEYCHECK app pip | grep github
   - script: cds project remove --force ITSSHKEYCHECK
   - script: cds action remove sshtest
+  - script: cds group remove ITSSHKEYCHECK

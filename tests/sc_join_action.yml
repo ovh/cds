@@ -38,3 +38,4 @@ testcases:
   - script: cds action remove ITSCJA_GitClone
   - script: cds action remove ITSCJA_GoGet
   - script: cds action remove ITSCJA_GoTest
+  - script: cds group remove ITSCJA

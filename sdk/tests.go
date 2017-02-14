@@ -8,12 +8,12 @@ import (
 
 // Tests contains all informations about tests in a pipeline build
 type Tests struct {
-	PipelineBuildID int64       `json:"pipeline_build_id"`
-	Total           int         `json:"total"`
-	TotalOK         int         `json:"ok"`
-	TotalKO         int         `json:"ko"`
-	TotalSkipped    int         `json:"skipped"`
-	TestSuites      []TestSuite `xml:"testsuite" json:"test_suites"`
+	XMLName      xml.Name    `xml:"testsuites" json:"-" yaml:"-"`
+	Total        int         `xml:"-" json:"total"`
+	TotalOK      int         `xml:"-" json:"ok"`
+	TotalKO      int         `xml:"-" json:"ko"`
+	TotalSkipped int         `xml:"-" json:"skipped"`
+	TestSuites   []TestSuite `xml:"testsuite" json:"test_suites"`
 }
 
 // TestSuite is a single JUnit test suite which may contain many

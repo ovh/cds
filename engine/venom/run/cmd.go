@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -111,12 +110,11 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 			log.Fatalf("Error: cannot format output yaml (%s)", err)
 		}
 	default:
-		for _, tss := range tests.TestSuites {
-			data, err = xml.Marshal(tss)
-			if err != nil {
-				log.Fatalf("Error: cannot format output xml (%s)", err)
-			}
+		dataxml, err := xml.Marshal(tests)
+		if err != nil {
+			log.Fatalf("Error: cannot format output xml (%s)", err)
 		}
+		data = append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), dataxml...)
 	}
 
 	if detailsLevel == "high" {
@@ -128,25 +126,6 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 	}
 
 	if outputDir != "" {
-		if format == "xml" {
-			for i, ts := range tests.TestSuites {
-
-				tuple := strings.Split(ts.Name, " ") // remove " [...] from name"
-				lname := ts.Name
-				if len(tuple) >= 1 {
-					lname = tuple[0]
-				}
-				dataxml := append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), data...)
-				filename := fmt.Sprintf("%s/test_results_%d_%s.xml", outputDir, i, strings.Replace(lname, " ", "", -1))
-
-				if err := ioutil.WriteFile(filename, dataxml, 0644); err != nil {
-					fmt.Printf("Error while creating file %s, err:%s", filename, err)
-					os.Exit(1)
-				}
-			}
-			return
-		}
-
 		filename := outputDir + "/" + "test_results" + "." + format
 		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
 			fmt.Printf("Error while creating file %s, err:%s", filename, err)
