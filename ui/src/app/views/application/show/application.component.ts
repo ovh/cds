@@ -14,6 +14,9 @@ import {Subscription} from 'rxjs/Subscription';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {WorkflowItem} from '../../../model/application.workflow.model';
 import {CDSWorker} from '../../../shared/worker/worker';
+import {ApplicationNotificationFormModalComponent} from './notifications/form/notification.form.component';
+import {NotificationEvent} from './notifications/notification.event';
+import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
 
 @Component({
     selector: 'app-application-show',
@@ -26,6 +29,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     public readyApp = false;
     public varFormLoading = false;
     public permFormLoading = false;
+    public notifFormLoading = false;
 
 
     // Project & Application data
@@ -52,6 +56,13 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     private varWarningModal: WarningModalComponent;
     @ViewChild('permWarning')
     private permWarningModal: WarningModalComponent;
+    @ViewChild('notifWarning')
+    private notifWarningModal: WarningModalComponent;
+
+    @ViewChild('notifForm')
+    private addNotifModal: ApplicationNotificationFormModalComponent;
+    @ViewChild('notificationList')
+    private notificationListComponent: ApplicationNotificationListComponent;
 
     // Filter
     appFilter: ApplicationFilter = {
@@ -239,6 +250,55 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         }
     }
 
+    notificationEvent(event: NotificationEvent, skip?: boolean): void {
+        if (!skip && this.application.externalChange) {
+            this.notifWarningModal.show(event);
+        } else {
+            switch (event.type) {
+                case 'add':
+                    this.notifFormLoading = true;
+                    this._applicationStore.addNotifications(this.project.key, this.application.name, event.notifications).subscribe(() => {
+                        this._toast.success('', this._translate.instant('notifications_added'));
+                        this.addNotifModal.close();
+                        this.notifFormLoading = false;
+                    }, () => {
+                        this.notifFormLoading = false;
+                    });
+                    break;
+                case 'update':
+                    this.notifFormLoading = true;
+                    this._applicationStore.updateNotification(
+                        this.project.key,
+                        this.application.name,
+                        event.notifications[0].pipeline.name,
+                        event.notifications[0]
+                    ).subscribe(() => {
+                        this.notificationListComponent.close();
+                        this.notifFormLoading = false;
+                        this._toast.success('', this._translate.instant('notification_updated'));
+                    }, () => {
+                        this.notifFormLoading = false;
+                    });
+                    break;
+                case 'delete':
+                    this.notifFormLoading = true;
+                    this._applicationStore.deleteNotification(
+                        this.project.key,
+                        this.application.name,
+                        event.notifications[0].pipeline.name,
+                        event.notifications[0].environment.name
+                    ).subscribe(() => {
+                        this.notifFormLoading = false;
+                        this.notificationListComponent.close();
+                        this._toast.success('', this._translate.instant('notifications_deleted'));
+                    }, () => {
+                        this.notifFormLoading = false;
+                    });
+                    break;
+            }
+        }
+    }
+
     /**
      * Event on permission
      * @param event
@@ -269,6 +329,12 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     });
                     break;
             }
+        }
+    }
+
+    openNotifForm(): void {
+        if (this.addNotifModal) {
+            this.addNotifModal.show({autofocus: false, closable: false, observeChanges: true});
         }
     }
 }
