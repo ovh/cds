@@ -4,8 +4,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/venom/run"
-	"github.com/ovh/cds/engine/venom/template"
+	"github.com/ovh/cds/engine/venom/cli/venom/run"
+	"github.com/ovh/cds/engine/venom/cli/venom/template"
 )
 
 var rootCmd = &cobra.Command{

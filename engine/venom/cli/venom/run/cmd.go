@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ovh/cds/engine/venom"
+	_ "github.com/ovh/cds/engine/venom/plugins/script" // script test type
 	"github.com/ovh/cds/sdk"
 )
 
@@ -25,12 +27,6 @@ var (
 	detailsLevel   string
 	resumeFailures bool
 	resume         bool
-)
-
-const (
-	detailsLow    = "low"
-	detailsMedium = "medium"
-	detailsHigh   = "high"
 )
 
 func init() {
@@ -77,14 +73,14 @@ var Cmd = &cobra.Command{
 		}
 
 		switch detailsLevel {
-		case detailsLow, "medium", "high":
+		case venom.DetailsLow, venom.DetailsMedium, venom.DetailsHigh:
 			log.Infof("Detail Level: %s", detailsLevel)
 		default:
 			log.Fatalf("Invalid details. Must be low, medium or high")
 		}
 
 		start := time.Now()
-		tests, err := process()
+		tests, err := venom.Process(path, alias, parallel, detailsLevel)
 		if err != nil {
 			log.Fatal(err)
 		}
