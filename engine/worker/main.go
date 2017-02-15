@@ -29,7 +29,6 @@ var (
 	hatchery int64
 	basedir  string
 	logChan  chan sdk.Log
-	building bool
 	// port of variable exporter HTTP server
 	exportport int
 	// current actionBuild is here to allow var export
@@ -180,9 +179,7 @@ func queuePolling() {
 			os.Exit(0)
 		}
 
-		if !building {
-			checkQueue()
-		}
+		checkQueue()
 
 		time.Sleep(5 * time.Second)
 	}
@@ -238,13 +235,6 @@ func postCheckRequirementError(r *sdk.Requirement, err error) {
 
 func takeAction(b sdk.PipelineBuildJob) {
 	nbActionsDone++
-
-	//During build we will disable queue polling
-	building = true
-	defer func() {
-		building = false
-	}()
-
 	gitssh = ""
 	pkey = ""
 	path := fmt.Sprintf("/queue/%d/take", b.ID)
