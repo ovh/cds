@@ -2,9 +2,9 @@ name: Action Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds action remove IT_CLI_ACTION_Test_HelloWorld || true
-  - script: cds action remove IT_CLI_ACTION_Test_Echo || true
-  - script: cds action remove IT_CLI_ACTION_Test_Sleep || true
+  - script: cds action remove IT_CLI_ACTION_Test_HelloWorld --force
+  - script: cds action remove IT_CLI_ACTION_Test_Echo --force
+  - script: cds action remove IT_CLI_ACTION_Test_Sleep --force
 
 - name: action add
   steps:

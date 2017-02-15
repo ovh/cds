@@ -2,8 +2,8 @@ name: Group Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds group remove ITCLIGRP_TEST || true
-  - script: cds group remove ITCLIGRP_TEST_2 || true
+  - script: cds group remove ITCLIGRP_TEST --force
+  - script: cds group remove ITCLIGRP_TEST_2 --force
 
 - name: group add
   steps:
@@ -43,5 +43,5 @@ testcases:
 
 - name: clean
   steps:
-  - script: cds group remove ITCLIGRP_TEST || true
+  - script: cds group remove ITCLIGRP_TEST --force
   - script: cds group remove ITCLIGRP_TEST_2

@@ -35,7 +35,12 @@ func removeProject(cmd *cobra.Command, args []string) {
 	} else {
 		err = sdk.RemoveProject(key)
 	}
+
 	if err != nil {
+		if forceDelete && sdk.ErrorIs(err, sdk.ErrNoProject) {
+			fmt.Printf("%s\n", err.Error())
+			return
+		}
 		sdk.Exit("Error: cannot remove project %s (%s)\n", key, err)
 	}
 

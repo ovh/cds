@@ -1,10 +1,14 @@
 package model
 
 import (
-	"github.com/ovh/cds/sdk"
+	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/sdk"
 )
+
+var forceDelete bool
 
 func cmdWorkerModelRemove() *cobra.Command {
 	cmd := &cobra.Command{
@@ -15,6 +19,7 @@ func cmdWorkerModelRemove() *cobra.Command {
 		Aliases: []string{"rm"},
 	}
 
+	cmd.Flags().BoolVarP(&forceDelete, "force", "", false, "delete worker model, exit 0 if worker model does not exist")
 	return cmd
 }
 
@@ -26,6 +31,10 @@ func removeWorkerModel(cmd *cobra.Command, args []string) {
 
 	m, err := sdk.GetWorkerModel(name)
 	if err != nil {
+		if forceDelete && sdk.ErrorIs(err, sdk.ErrNoWorkerModel) {
+			fmt.Printf("%s\n", err.Error())
+			return
+		}
 		sdk.Exit("Error: cannot retrieve worker model (%s)\n", err)
 	}
 

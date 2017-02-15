@@ -2,8 +2,8 @@ name: Git Branch Overwrite Check TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITBROVERWRITECHECK || true
-  - script: cds action remove PrintGitBranch || true
+  - script: cds project remove --force ITBROVERWRITECHECK
+  - script: cds action remove PrintGitBranch --force
 - name: test
   steps:
   - script: cds project add ITBROVERWRITECHECK ITBROVERWRITECHECK ITBROVERWRITECHECK
@@ -15,7 +15,9 @@ testcases:
   - script: cds pipeline job append ITBROVERWRITECHECK build myJob PrintGitBranch
   - script: cds app pipeline add ITBROVERWRITECHECK TestApp build
   - script: cds pipeline run ITBROVERWRITECHECK TestApp build -p git.branch=YOLO
-  - script: cds pipeline run ITBROVERWRITECHECK TestApp build -p git.branch=YOLO | grep YOLO
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring YOLO
   - script: cds project remove --force ITBROVERWRITECHECK
   - script: cds action remove PrintGitBranch
   - script: cds group remove ITBROVERWRITECHECK

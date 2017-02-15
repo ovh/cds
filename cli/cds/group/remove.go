@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var forceDelete bool
+
 func cmdGroupRemove() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "remove",
@@ -17,6 +19,7 @@ func cmdGroupRemove() *cobra.Command {
 		Aliases: []string{"delete", "rm", "del"},
 	}
 
+	cmd.Flags().BoolVarP(&forceDelete, "force", "", false, "delete group, exit 0 if group does not exist")
 	return cmd
 }
 
@@ -28,6 +31,10 @@ func removeGroup(cmd *cobra.Command, args []string) {
 
 	err := sdk.RemoveGroup(name)
 	if err != nil {
+		if forceDelete && sdk.ErrorIs(err, sdk.ErrGroupNotFound) {
+			fmt.Printf("%s\n", err.Error())
+			return
+		}
 		sdk.Exit("%s\n", err)
 	}
 	fmt.Printf("OK\n")

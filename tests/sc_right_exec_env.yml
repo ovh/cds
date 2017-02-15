@@ -2,8 +2,8 @@ name: Right Execution on environment TestSuite
 testcases:
 - name: prepare test
   steps:
+  - script: cds project remove --force ITPRJRIGHTEXEC    
   - script: cds group remove ITGRPRIGHTRO || true
-  - script: cds project remove --force ITPRJRIGHTEXEC || true
 - name: Test Right Execution on environment
   steps:
   - script: cds group add ITGRPRIGHTRO

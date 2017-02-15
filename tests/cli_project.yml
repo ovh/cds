@@ -2,10 +2,10 @@ name: Project Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force CLIPROJ || true
-  - script: cds group remove ITCLIPROJ_GRP_TEST || true
+  - script: cds project remove --force CLIPROJ
+  - script: cds group remove ITCLIPROJ_GRP_TEST --force
   - script: cds project add CLIPROJ "Test Project" ITCLIPROJ_GRP_TEST
-  - script: cds group remove ITCLIPROJ_GRP_EDIT_TEST || true
+  - script: cds group remove ITCLIPROJ_GRP_EDIT_TEST --force
   - script: cds group add ITCLIPROJ_GRP_EDIT_TEST
 
 - name: project list
@@ -54,4 +54,4 @@ testcases:
 
 - name: clean
   steps:
-  - script: cds project remove --force CLIPROJ || true
+  - script: cds project remove --force CLIPROJ --force
