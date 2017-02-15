@@ -20,7 +20,7 @@ func getProjectNotificationsHandler(w http.ResponseWriter, r *http.Request, db *
 		return err
 	}
 
-	notifs, err := notification.LoadAllUserNotificationSettingsByProject(db, key)
+	notifs, err := notification.LoadAllUserNotificationSettingsByProject(db, key, c.User)
 	if err != nil {
 		return err
 	}

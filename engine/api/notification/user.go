@@ -199,20 +199,40 @@ type UserNotificationInput struct {
 }
 
 //LoadAllUserNotificationSettingsByProject load data for a project
-func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey string) ([]sdk.UserNotification, error) {
+func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey string, u *sdk.User) ([]sdk.UserNotification, error) {
 	n := []sdk.UserNotification{}
-	query := `
-		SELECT 	application_pipeline_id, environment_id, settings, pipeline.id, pipeline.name, environment.name
+
+	var query string
+	var args []interface{}
+	//Handler admin
+	if u == nil || u.Admin {
+		query = `SELECT 	application_pipeline_id, environment_id, settings, pipeline.id, pipeline.name, environment.name
 		FROM  	application_pipeline_notif
 		JOIN 	application_pipeline ON application_pipeline.id = application_pipeline_notif.application_pipeline_id
 		JOIN 	pipeline ON pipeline.id = application_pipeline.pipeline_id
 		JOIN 	environment ON environment.id = environment_id
 		JOIN 	project ON project.id = pipeline.project_id
 		WHERE 	project.projectkey = $1
-		ORDER BY pipeline.name
-	`
+		ORDER BY pipeline.name`
+		args = []interface{}{projectKey}
+	} else {
+		query = `
+		SELECT 	application_pipeline_id, environment_id, settings, pipeline.id, pipeline.name, environment.name
+		FROM  	application_pipeline_notif
+		JOIN 	application_pipeline ON application_pipeline.id = application_pipeline_notif.application_pipeline_id
+		JOIN 	pipeline ON pipeline.id = application_pipeline.pipeline_id
+		JOIN 	environment ON environment.id = environment_id
+		JOIN 	project ON project.id = pipeline.project_id
+		JOIN	application_group ON application_pipeline.application_id = application_group.application_id
+		JOIN 	pipeline_group ON pipeline.id = pipeline_group.pipeline_id
+		JOIN 	group_user ON group_user.group_id = pipeline_group.group_id AND group_user.group_id = application_group.group_id
+		WHERE 	project.projectkey = $1
+		AND 	group_user.user_id = $2
+		ORDER BY pipeline.name`
+		args = []interface{}{projectKey, u.ID}
+	}
 
-	rows, err := db.Query(query, projectKey)
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -228,6 +248,13 @@ func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey st
 		if err != nil {
 			return nil, err
 		}
+
+		if u != nil {
+			if !permission.AccessToEnvironment(un.Environment.ID, u, permission.PermissionRead) {
+				continue
+			}
+		}
+
 		n = append(n, un)
 	}
 
