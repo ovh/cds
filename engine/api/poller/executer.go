@@ -97,7 +97,6 @@ func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 
 	e.PushEvents, pollingDelay, err = client.PushEvents(p.Application.RepositoryFullname, p.DateCreation)
 	if err != nil {
-		log.Warning("Polling> Error with PushEvents on pipeline %s for repository %s: %s\n", p.Pipeline.Name, p.Application.RepositoryFullname, err)
 		e.Error = err.Error()
 	}
 
