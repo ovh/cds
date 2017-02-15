@@ -2,9 +2,9 @@ name: Failing Pipeline TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITSCFAIL || true
-  - script: cds action remove IT_SC_FAIL_TEST_Failure || true
-  - script: cds groupe remove ITSCFAIL || true
+  - script: cds project remove --force ITSCFAIL
+  - script: cds action remove IT_SC_FAIL_TEST_Failure --force
+  - script: cds group remove ITSCFAIL --force
   - script: cds project add ITSCFAIL ITSCFAIL ITSCFAIL
   - script: cds application add ITSCFAIL TestApp
 

@@ -431,9 +431,16 @@ func checkAssertion(tc *sdk.TestCase, ts *sdk.TestStep, assertion string, l *log
 
 	switch assert[0] {
 	case "code":
-		checkCode(assert, tc, ts, l)
+		check(assert, ts.Result.Code, tc, ts, l)
+		return
+	case "stderr":
+		check(assert, ts.Result.StdErr, tc, ts, l)
+		return
+	case "stdout":
+		check(assert, ts.Result.StdOut, tc, ts, l)
 		return
 	}
+
 	tc.Errors = append(tc.Errors, sdk.Failure{Value: fmt.Sprintf("invalid assertion %s", assertion)})
 }
 
@@ -459,7 +466,7 @@ func (t *testingT) Error(args ...interface{}) {
 	}
 }
 
-func checkCode(assert []string, tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry) {
+func check(assert []string, actual interface{}, tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry) {
 	f, ok := assertMap[assert[1]]
 	if !ok {
 		tc.Errors = append(tc.Errors, sdk.Failure{Value: fmt.Sprintf("Method not found \"%s\"", assert[1])})
@@ -469,7 +476,7 @@ func checkCode(assert []string, tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry
 	for i, v := range assert[2:] { // convert []string to []interface for assertions.func()...
 		args[i] = v
 	}
-	out := f(ts.Result.Code, args...)
+	out := f(actual, args...)
 	if out != "" {
 		c := fmt.Sprintf("TestCase:%s\n %s", tc.Name, ts.ScriptContent)
 		if len(c) > 200 {
@@ -481,7 +488,7 @@ func checkCode(assert []string, tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry
 		if ts.Result.StdErr != "" {
 			out += "\n" + ts.Result.StdErr
 		}
-		tc.Failures = append(tc.Failures, sdk.Failure{Value: fmt.Sprintf("%s give %s", c, out)})
+		tc.Failures = append(tc.Failures, sdk.Failure{Value: fmt.Sprintf("%s\n%s", c, out)})
 	}
 }
 

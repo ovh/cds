@@ -2,9 +2,9 @@ name: Builtin Action TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITSCBUILTIN || true
+  - script: cds project remove --force ITSCBUILTIN
   - script: cds project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
-  - script: cds group remove ITSCBUILTIN || true
+  - script: cds group remove ITSCBUILTIN --force
   - script: cds application add ITSCBUILTIN TestApp
 
 - name: builtin action

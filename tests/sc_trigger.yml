@@ -2,8 +2,8 @@ name: Trigger TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITSCTRIGGER || true
-  - script: cds group remove ITSCTRIGGER || true
+  - script: cds project remove --force ITSCTRIGGER
+  - script: cds group remove ITSCTRIGGER --force
   - script: cds project add ITSCTRIGGER ITSCTRIGGER ITSCTRIGGER
   - script: cds application add ITSCTRIGGER TestApp
 
@@ -45,8 +45,14 @@ testcases:
 - name: check triggers
   steps:
   - script: cds trigger list ITSCTRIGGER/TestApp/deploy/foo
-  - script: cds trigger list ITSCTRIGGER/TestApp/deploy/foo | grep build
-  - script: cds trigger list ITSCTRIGGER/TestApp/deploy/foo | grep it
+  - script: cds trigger list ITSCTRIGGER/TestApp/deploy/foo
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring build
+  - script: cds trigger list ITSCTRIGGER/TestApp/deploy/foo
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring it
 
 - name: run chained pipelines
   steps:
@@ -54,12 +60,18 @@ testcases:
 
 - name: expect .cds.buildnumber to be 2
   steps:
-  - script: cds pipeline history ITSCTRIGGER TestApp build | grep 2
+  - script: cds pipeline history ITSCTRIGGER TestApp build
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring 2
   - script: cds pipeline logs ITSCTRIGGER TestApp build
 
 - name: expect .cds.version to be 2
   steps:
-  - script: cds pipeline logs ITSCTRIGGER TestApp build | grep v2
+  - script: cds pipeline logs ITSCTRIGGER TestApp build
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring v2
 
 - name: for testapp/build to trigger testapp/deploy...
   steps:
@@ -67,16 +79,25 @@ testcases:
 
 - name: expect .cds.buildnumber to be 4
   steps:
-  - script: cds pipeline history ITSCTRIGGER TestApp deploy foo | grep 4
+  - script: cds pipeline history ITSCTRIGGER TestApp deploy foo
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring 4
   - script: cds pipeline logs ITSCTRIGGER TestApp deploy foo
 
 - name: expect .cds.version to be 2
   steps:
-  - script: cds pipeline logs ITSCTRIGGER TestApp deploy foo | grep v2
+  - script: cds pipeline logs ITSCTRIGGER TestApp deploy foo
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring v2
 
 - name: expect environment to be foo and variable .cds.env.name to be foo
   steps:
-  - script: cds pipeline logs ITSCTRIGGER TestApp deploy foo | grep foo
+  - script: cds pipeline logs ITSCTRIGGER TestApp deploy foo
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring foo
 
 - name: for testapp/deploy trigger testapp/it
   steps:
@@ -84,16 +105,25 @@ testcases:
 
 - name: expect .cds.buildnumber to be 5
   steps:
-  - script: cds pipeline history ITSCTRIGGER TestApp it bar | grep 5
+  - script: cds pipeline history ITSCTRIGGER TestApp it bar
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring 5
   - script: cds pipeline logs ITSCTRIGGER TestApp it bar
 
 - name: expect .cds.version to be 2
   steps:
-  - script: cds pipeline logs ITSCTRIGGER TestApp it bar | grep v2
+  - script: cds pipeline logs ITSCTRIGGER TestApp it bar
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring v2
 
 - name: expect environment to be bar and variable .cds.env.name to be bar
   steps:
-  - script: cds pipeline logs ITSCTRIGGER TestApp it bar | grep bar
+  - script: cds pipeline logs ITSCTRIGGER TestApp it bar
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring bar
 
 - name: delete trigger
   steps:

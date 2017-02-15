@@ -2,15 +2,15 @@ name: Build Variable Export TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITBUILDVAR || true
-  - script: cds group remove ITBUILDVAR || true
+  - script: cds project remove --force ITBUILDVAR
+  - script: cds group remove ITBUILDVAR --force
   - script: cds project add ITBUILDVAR ITBUILDVAR ITBUILDVAR
   - script: cds pipeline add ITBUILDVAR pip
   - script: cds app add ITBUILDVAR app
-  - script: cds action remove vartestexport || true
+  - script: cds action remove vartestexport --force
   - script: cds action add vartestexport
   - script: cds action add step vartestexport Script -p script="set -e; worker export foo bar"
-  - script: cds action remove vartestimport || true
+  - script: cds action remove vartestimport --force
   - script: cds action add vartestimport
   - script: cds action add step vartestimport Script -p script="echo {{.cds.build.foo}}"
   - script: cds pipeline job add ITBUILDVAR pip myJob1
@@ -21,6 +21,9 @@ testcases:
 - name: test
   steps:
   - script: cds pipeline run ITBUILDVAR app pip
-  - script: cds pipeline run ITBUILDVAR app pip | grep bar
+  - script: cds pipeline run ITBUILDVAR app pip
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring bar
   - script: cds project remove --force ITBUILDVAR
   - script: cds group remove ITBUILDVAR

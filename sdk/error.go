@@ -282,6 +282,11 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrInvalidTimezone.ID:                       "Fuseau horaire invalide",
 }
 
+var errorsLanguages = []map[int]string{
+	errorsAmericanEnglish,
+	errorsFrench,
+}
+
 var matcher = language.NewMatcher(SupportedLanguages)
 
 // NewError just set an error with a root cause
@@ -374,4 +379,18 @@ func (e Error) String() string {
 
 func (e Error) Error() string {
 	return e.String()
+}
+
+// ErrorIs returns true if error is same as and sdk.Error Message
+// this func checks msg in all languages
+func ErrorIs(err error, t *Error) bool {
+	if err == nil {
+		return false
+	}
+	for _, l := range errorsLanguages {
+		if l[t.ID] == err.Error() {
+			return true
+		}
+	}
+	return false
 }

@@ -2,12 +2,12 @@ name: Join Action TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITSCJA || true
+  - script: cds project remove --force ITSCJA
   - script: cds project add ITSCJA ITSCJA ITSCJA
   - script: cds application add ITSCJA TestApp
-  - script: cds action remove ITSCJA_GitClone || true
-  - script: cds action remove ITSCJA_GoGet || true
-  - script: cds action remove ITSCJA_GoTest || true
+  - script: cds action remove ITSCJA_GitClone --force
+  - script: cds action remove ITSCJA_GoGet --force
+  - script: cds action remove ITSCJA_GoTest --force
 
 - name : test joined action
   steps:

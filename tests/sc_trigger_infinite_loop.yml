@@ -2,7 +2,7 @@ name: Trigger Infinite Loop Check TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITIFNINITELOOP || true
+  - script: cds project remove --force ITIFNINITELOOP
   - script: cds project add ITIFNINITELOOP ITIFNINITELOOP ITIFNINITELOOP
   - script: cds pipeline add ITIFNINITELOOP A
   - script: cds pipeline add ITIFNINITELOOP B

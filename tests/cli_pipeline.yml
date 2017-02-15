@@ -2,11 +2,11 @@ name: Pipeline Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITCLIPIPPRJ || true
-  - script: cds group remove ITCLIPIP_GRP || true
+  - script: cds project remove --force ITCLIPIPPRJ
+  - script: cds group remove ITCLIPIP_GRP --force
   - script: cds project add ITCLIPIPPRJ "Test Project" ITCLIPIP_GRP
   - script: cds group add ITCLIPIP_GRP_EDIT_TEST
-  - script: cds action remove IT_CLI_pipeline_Test_Echo || true
+  - script: cds action remove IT_CLI_pipeline_Test_Echo --force
 
 - name: pipeline add
   steps:

@@ -2,9 +2,9 @@ name: Git Hook TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITSCGITHOOK || true
-  - script: cds group remove ITSCGITHOOK || true
-  - script: cds action remove ITSCGITHOOK_ACTION_Test_Echo || true
+  - script: cds project remove --force ITSCGITHOOK
+  - script: cds group remove ITSCGITHOOK --force
+  - script: cds action remove ITSCGITHOOK_ACTION_Test_Echo --force
   - script: cds project add ITSCGITHOOK ITSCGITHOOK ITSCGITHOOK
   - script: cds application add ITSCGITHOOK TestApp
   - script: cds action add ITSCGITHOOK_ACTION_Test_Echo --requirement="echo" -p name
@@ -20,7 +20,6 @@ testcases:
   - script: cds pipeline hook list ITSCGITHOOK TestApp MultiPass
   - script: cds pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only
   - script: curl -i -X POST `cds pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only`
-  - script: cds pipeline history ITSCGITHOOK TestApp MultiPass
   - script: cds pipeline history ITSCGITHOOK TestApp MultiPass | egrep "Building|Success"
 
 - name: Streaming logs of triggered pipeline

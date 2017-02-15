@@ -2,7 +2,7 @@ name: Worker Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds worker model remove worker1 || true
+  - script: cds worker model remove worker1 --force
 
 - name: worker model add
   steps:

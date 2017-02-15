@@ -3,7 +3,7 @@ testcases:
 - name: prepare test
   steps:
   - script: cds action remove sshtest || true
-  - script: cds project remove --force ITSSHKEYCHECK || true
+  - script: cds project remove --force ITSSHKEYCHECK
   - script: cds project add ITSSHKEYCHECK ITSSHKEYCHECK ITSSHKEYCHECK
   - script: cds app add ITSSHKEYCHECK app
   - script: cds pipeline add ITSSHKEYCHECK pip
@@ -16,15 +16,33 @@ testcases:
 - name: test
   steps:
   - script: cds project variable add ITSSHKEYCHECK fookey "" key
-  - script: cds project variable show ITSSHKEYCHECK | grep fookey
-  - script: cds project variable show ITSSHKEYCHECK | grep fookey.pub
+  - script: cds project variable show ITSSHKEYCHECK
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring fookey
+  - script: cds project variable show ITSSHKEYCHECK
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring fookey.pub
   - script: cds pipeline run ITSSHKEYCHECK app pip
-  - script: cds pipeline run ITSSHKEYCHECK app pip | grep fookey
+  - script: cds pipeline run ITSSHKEYCHECK app pip
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring fookey
   - script: cds app variable add ITSSHKEYCHECK app github "" key
-  - script: cds app variable show ITSSHKEYCHECK app | grep github
-  - script: cds app variable show ITSSHKEYCHECK app | grep github.pub
+  - script: cds app variable show ITSSHKEYCHECK app
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring github
+  - script: cds app variable show ITSSHKEYCHECK app
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring github.pub
   - script: cds pipeline run ITSSHKEYCHECK app pip
-  - script: cds pipeline run ITSSHKEYCHECK app pip | grep github
+  - script: cds pipeline run ITSSHKEYCHECK app pip
+    assertions:
+      - code ShouldEqual 0
+      - stdout ShouldContainSubstring github
   - script: cds project remove --force ITSSHKEYCHECK
   - script: cds action remove sshtest
   - script: cds group remove ITSSHKEYCHECK
