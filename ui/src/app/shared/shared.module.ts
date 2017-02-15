@@ -32,6 +32,7 @@ import {GroupFormComponent} from './group/form/group.form.component';
 import {MarkdownModule} from 'angular2-markdown';
 import {HistoryComponent} from './history/history.component';
 import {StatusIconComponent} from './status/status.component';
+import {KeysPipe} from './pipes/keys.pipe';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -43,6 +44,7 @@ import {StatusIconComponent} from './status/status.component';
         DeleteButtonComponent,
         GroupFormComponent,
         HistoryComponent,
+        KeysPipe,
         NgForNumber,
         ParameterListComponent,
         ParameterFormComponent,
@@ -77,6 +79,7 @@ import {StatusIconComponent} from './status/status.component';
         FormsModule,
         GroupFormComponent,
         HistoryComponent,
+        KeysPipe,
         MarkdownModule,
         MomentModule,
         NgForNumber,

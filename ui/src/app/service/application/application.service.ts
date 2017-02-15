@@ -9,6 +9,7 @@ import {GroupPermission} from '../../model/group.model';
 import {Trigger} from '../../model/trigger.model';
 import {ApplyTemplateRequest} from '../../model/template.model';
 import {Project} from '../../model/project.model';
+import {Notification} from '../../model/notification.model';
 
 @Injectable()
 export class ApplicationService {
@@ -27,6 +28,7 @@ export class ApplicationService {
         options.search.set('withPollers', 'true');
         options.search.set('withHooks', 'true');
         options.search.set('withWorkflow', 'true');
+        options.search.set('withNotifs', 'true');
         return this._http.get('/project/' + key + '/application/' + appName, options).map(res => res.json());
     }
 
@@ -268,12 +270,42 @@ export class ApplicationService {
     }
 
     /**
-     * Get application build history
+     * Add notifications to the application
      * @param key Project unique key
      * @param appName Application name
-     * @returns {Observable<PipelineBuild[]>}
+     * @param notifications List of notification
      */
-    getHistory(key: string,  appName: string): Observable<PipelineBuild[]> {
-        return this._http.get('/project/' + key + '/application/' + appName + '/history').map(res => res.json());
+    addNotifications(key: string, appName: string, notifications: Array<Notification>): Observable<Application> {
+        return this._http.post('/project/' + key + '/application/' + appName + '/notifications', notifications).map(res => res.json());
     }
+
+    /**
+     * Update a notification
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name
+     * @param notification Notification data
+     * @returns {Observable<Notification>}
+     */
+    updateNotification(key: string, appName: string, pipName: string, notification: Notification) {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
+        return this._http.put(url, notification).map(res => res.json());
+    }
+
+    /**
+     * Delete all notifications on appliation/pipeline
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name
+     * @returns {Observable<Application>}
+     */
+    deleteNotification(key: string, appName: string, pipName: string, envName?: string): Observable<Application> {
+        let options = new RequestOptions();
+        options.search = new URLSearchParams();
+        options.search.set('envName', envName);
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
+        return this._http.delete(url, options).map(res => res.json());
+    }
+
+
 }

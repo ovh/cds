@@ -13,21 +13,25 @@ import {ApplicationWorkflowComponent} from './show/workflow/application.workflow
 import {ApplicationTreeWorkflowComponent} from './show/workflow/tree/application.tree.workflow.component';
 import {ApplicationWorkflowItemComponent} from './show/workflow/tree/item/application.workflow.item.component';
 import {ApplicationTriggerComponent} from './show/workflow/trigger/trigger.component';
+import {ApplicationNotificationListComponent} from './show/notifications/list/notification.list.component';
+import {ApplicationNotificationFormModalComponent} from './show/notifications/form/notification.form.component';
 
 @NgModule({
     declarations: [
         ApplicationAdminComponent,
         ApplicationAddComponent,
-        ApplicationRepositoryComponent,
-        ApplicationPollerListComponent,
-        ApplicationPollerFormComponent,
         ApplicationHookFormComponent,
         ApplicationHookListComponent,
+        ApplicationNotificationFormModalComponent,
+        ApplicationNotificationListComponent,
+        ApplicationPollerFormComponent,
+        ApplicationPollerListComponent,
+        ApplicationRepositoryComponent,
         ApplicationShowComponent,
-        ApplicationWorkflowComponent,
         ApplicationTreeWorkflowComponent,
-        ApplicationWorkflowItemComponent,
-        ApplicationTriggerComponent
+        ApplicationTriggerComponent,
+        ApplicationWorkflowComponent,
+        ApplicationWorkflowItemComponent
     ],
     imports: [
         SharedModule,

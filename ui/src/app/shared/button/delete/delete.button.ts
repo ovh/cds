@@ -18,4 +18,8 @@ export class DeleteButtonComponent  {
     deleteEvent() {
         this.event.emit(true);
     }
+
+    reset(): void {
+        this.showConfirmation = false;
+    }
 }
