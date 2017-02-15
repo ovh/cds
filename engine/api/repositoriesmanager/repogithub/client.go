@@ -416,7 +416,9 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 			}
 
 			if status >= http.StatusBadRequest {
-				return nil, defaultDelay, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
+				err := sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
+				log.Warning("GithubClient.PushEvents> Error http %s", err)
+				return nil, defaultDelay, err
 			}
 
 			if status == http.StatusNotModified {

@@ -74,7 +74,7 @@ func GetAllPipelines(db gorp.SqlExecutor, projectKey, applicationName string) ([
 // GetAllPipelinesByID Get all pipelines for the given application
 func GetAllPipelinesByID(db gorp.SqlExecutor, applicationID int64) ([]sdk.ApplicationPipeline, error) {
 	appPipelines := []sdk.ApplicationPipeline{}
-	query := `SELECT pipeline.id, pipeline.name, application_pipeline.args, pipeline.type, application_pipeline.last_modified, pipeline.last_modified
+	query := `SELECT application_pipeline.id, pipeline.id, pipeline.name, application_pipeline.args, pipeline.type, application_pipeline.last_modified, pipeline.last_modified
 	          FROM application_pipeline
 	          JOIN application ON application.id = application_pipeline.application_id
 	          JOIN pipeline ON pipeline.id = application_pipeline.pipeline_id
@@ -94,7 +94,7 @@ func GetAllPipelinesByID(db gorp.SqlExecutor, applicationID int64) ([]sdk.Applic
 		var args string
 		var typePipeline string
 		var lastModified, pLastModified time.Time
-		err = rows.Scan(&p.Pipeline.ID, &p.Pipeline.Name, &args, &typePipeline, &lastModified, &pLastModified)
+		err = rows.Scan(&p.ID, &p.Pipeline.ID, &p.Pipeline.Name, &args, &typePipeline, &lastModified, &pLastModified)
 		if err != nil {
 			return nil, err
 		}

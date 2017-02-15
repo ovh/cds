@@ -341,8 +341,97 @@ func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	k := cache.Key("application", key, "*"+appName+"*")
 	cache.DeleteAll(k)
 
-	return nil
+	var errN error
+	applicationData.Notifications, errN = notification.LoadAllUserNotificationSettings(db, applicationData.ID)
+	if errN != nil {
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load notifications: %s\n", errN)
+		return errN
+	}
+	return WriteJSON(w, r, applicationData, http.StatusOK)
 }
+
+func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+
+	var notifs []sdk.UserNotification
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Warning("addNotificationsHandler: Cannot read body: %s\n", err)
+		return sdk.ErrWrongRequest
+	}
+	if err := json.Unmarshal(data, &notifs); err != nil {
+		log.Warning("addNotificationsHandler: Cannot unmarshal request: %s\n", err)
+		return sdk.ErrWrongRequest
+	}
+
+	app, errApp := application.LoadApplicationByName(db, key, appName)
+	if errApp != nil {
+		log.Warning("addNotificationsHandler: Cannot load application: %s\n", errApp)
+		return sdk.ErrWrongRequest
+	}
+
+	mapID := map[int64]string{}
+	for _, appPip := range app.Pipelines {
+		mapID[appPip.ID] = ""
+	}
+
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("addNotificationsHandler: Cannot begin transaction: %s\n", errBegin)
+		return errBegin
+	}
+	defer tx.Rollback()
+
+	for _, n := range notifs {
+		if _, ok := mapID[n.ApplicationPipelineID]; !ok {
+			log.Warning("addNotificationsHandler: Cannot get pipeline for this application: %s\n")
+			return sdk.ErrWrongRequest
+		}
+
+		//Load environment
+		if n.Environment.ID == 0 {
+			n.Environment = sdk.DefaultEnv
+		}
+
+		if n.Environment.ID != sdk.DefaultEnv.ID {
+			if !permission.AccessToEnvironment(n.Environment.ID, c.User, permission.PermissionReadWriteExecute) {
+				log.Warning("addNotificationsHandler > Cannot access to this environment")
+				return sdk.ErrForbidden
+			}
+
+		}
+
+		// Insert or update notification
+		if err := notification.InsertOrUpdateUserNotificationSettings(tx, app.ID, n.Pipeline.ID, n.Environment.ID, &n); err != nil {
+			log.Warning("addNotificationsHandler> cannot update user notification %s\n", err)
+			return err
+
+		}
+	}
+
+	if err := application.UpdateLastModified(tx, app); err != nil {
+		log.Warning("addNotificationsHandler> cannot update application last_modified date: %s\n", err)
+		return err
+
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("addNotificationsHandler: Cannot commit transaction: %s\n", err)
+		return err
+	}
+
+	var errNotif error
+	app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, app.ID)
+	if errNotif != nil {
+		log.Warning("addNotificationsHandler> cannot load notifications: %s\n", errNotif)
+		return errNotif
+	}
+
+	return WriteJSON(w, r, app, http.StatusOK)
+}
+
 func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -420,6 +509,13 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	k := cache.Key("application", key, "*"+appName+"*")
 	cache.DeleteAll(k)
 
-	return WriteJSON(w, r, notifs, http.StatusOK)
+	var errNotif error
+	applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, applicationData.ID)
+	if errNotif != nil {
+		log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load notifications: %s\n", errNotif)
+		return errNotif
+	}
+
+	return WriteJSON(w, r, applicationData, http.StatusOK)
 
 }

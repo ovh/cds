@@ -35,6 +35,7 @@ type Application struct {
 
 // ApplicationPipeline Represent the link between an application and a pipeline
 type ApplicationPipeline struct {
+	ID           int64             `json:"id"`
 	Pipeline     Pipeline          `json:"pipeline"`
 	Parameters   []Parameter       `json:"parameters"`
 	LastModified int64             `json:"last_modified"`

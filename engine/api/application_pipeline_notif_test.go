@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/loopfz/gadgeto/iffy"
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
@@ -403,12 +406,15 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 
 		assert.Equal(t, 200, w.Code)
 
-		notif1, err := notification.ParseUserNotification(w.Body.Bytes())
+		var appResponse sdk.Application
+		err = json.Unmarshal(w.Body.Bytes(), &appResponse)
 		test.NoError(t, err)
-		assert.Equal(t, notif.ApplicationPipelineID, notif1.ApplicationPipelineID)
-		assert.Equal(t, notif.Environment.ID, notif1.Environment.ID)
 
-		testCheckUserNotificationSettings(t, notif.Notifications, notif1.Notifications)
+		assert.Equal(t, len(appResponse.Notifications), 1)
+
+		assert.Equal(t, notif.Environment.ID, appResponse.Notifications[0].Environment.ID)
+
+		testCheckUserNotificationSettings(t, notif.Notifications, appResponse.Notifications[0].Notifications)
 
 	})
 }
@@ -557,4 +563,76 @@ func Test_SendPipeline(t *testing.T) {
 		test.NoError(t, err)
 
 	})
+}
+
+func Test_addNotificationsHandler(t *testing.T) {
+	db := test.SetupPG(t)
+
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler"}
+	router.init()
+
+	//Create admin user
+	u, pass := assets.InsertAdminUser(t, db)
+
+	//Create a fancy httptester
+	tester := iffy.NewTester(t, router.mux)
+
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
+
+	// Create project
+	p := assets.InsertTestProject(t, db, strings.ToUpper(assets.RandomString(t, 4)), assets.RandomString(t, 10))
+
+	app := &sdk.Application{Name: assets.RandomString(t, 10)}
+
+	err := application.InsertApplication(db, p, app)
+	test.NoError(t, err)
+
+	pip := &sdk.Pipeline{
+		Name:      assets.RandomString(t, 10),
+		Type:      "build",
+		ProjectID: p.ID,
+	}
+	err = pipeline.InsertPipeline(db, pip)
+	test.NoError(t, err)
+
+	err = application.AttachPipeline(db, app.ID, pip.ID)
+	test.NoError(t, err)
+
+	appPips, err := application.GetAllPipelinesByID(db, app.ID)
+	test.NoError(t, err)
+
+	notifsToAdd := []sdk.UserNotification{}
+	notifsToAdd = append(notifsToAdd, sdk.UserNotification{
+		ApplicationPipelineID: appPips[0].ID,
+		Pipeline:              *pip,
+		Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
+			sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{
+				OnSuccess:    "on_success",
+				OnStart:      true,
+				OnFailure:    "on_failure",
+				SendToAuthor: true,
+				SendToGroups: true,
+				Recipients:   []string{"1", "2"},
+				Template: sdk.UserNotificationTemplate{
+					Subject: "subject",
+					Body:    "body",
+				},
+			},
+		},
+	})
+
+	vars := map[string]string{
+		"key": p.Key,
+		"permApplicationName": app.Name,
+	}
+	route := router.getRoute("POST", addNotificationsHandler, vars)
+	headers := assets.AuthHeaders(t, u, pass)
+	tester.AddCall("Test_addNotificationsHandler", "POST", route, notifsToAdd).Headers(headers).Checkers(iffy.ExpectStatus(200))
+	tester.Run()
+
+	notifications, errN := notification.LoadAllUserNotificationSettings(db, app.ID)
+	test.NoError(t, errN)
+
+	assert.Equal(t, len(notifications), 1)
 }

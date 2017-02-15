@@ -102,7 +102,7 @@ func CountBuildingPipelineByApplication(db gorp.SqlExecutor, appID int64) (int, 
 // LoadPipelineBuildByApplicationAndBranch loads all pipeline build for the given application on the given branch
 func LoadPipelineBuildByApplicationAndBranch(db gorp.SqlExecutor, appID int64, branch string) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
-		WHERE pb.application_id AND = $1 AND pb.vcs_changes_branch = $2
+		WHERE pb.application_id = $1 AND pb.vcs_changes_branch = $2
 		ORDER by pb.id ASC
 	`
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
@@ -380,8 +380,9 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	if errStage != nil {
 		return errStage
 	}
-	query := `UPDATE pipeline_build set status = $1, stages = $2 WHERE id = $3`
-	if _, err := db.Exec(query, newStatus.String(), string(stagesB), pb.ID); err != nil {
+
+	query := `UPDATE pipeline_build set status = $1, stages = $2, done = $4 WHERE id = $3`
+	if _, err := db.Exec(query, newStatus.String(), string(stagesB), pb.ID, pb.Done); err != nil {
 		return err
 	}
 	//Send notification

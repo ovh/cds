@@ -115,10 +115,12 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 				}
 
 				if stage.Status == sdk.StatusFail {
+					pb.Done = time.Now()
 					pbNewStatus = sdk.StatusFail
 					break
 				}
 				if stageIndex == len(pb.Stages)-1 {
+					pb.Done = time.Now()
 					pbNewStatus = sdk.StatusSuccess
 					break
 				}
@@ -311,6 +313,7 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) error {
 			VCSChangesAuthor:    pb.Trigger.VCSChangesAuthor,
 			VCSChangesBranch:    pb.Trigger.VCSChangesBranch,
 			VCSChangesHash:      pb.Trigger.VCSChangesHash,
+			ScheduledTrigger:    pb.Trigger.ScheduledTrigger,
 		}
 
 		_, err = RunPipeline(tx, t.DestProject.Key, app, t.DestPipeline.Name, t.DestEnvironment.Name, parameters, pb.Version, trigger, &sdk.User{Admin: true})
