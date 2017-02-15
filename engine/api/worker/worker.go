@@ -261,6 +261,7 @@ type RegistrationForm struct {
 	Model              int64
 	Hatchery           int64
 	BinaryCapabilities []string
+	Version            string
 }
 
 // RegisterWorker  Register new worker

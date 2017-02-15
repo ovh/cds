@@ -31,6 +31,7 @@ func register(cdsURI string, name string, uk string) error {
 		Model:              model,
 		Hatchery:           hatchery,
 		BinaryCapabilities: binaryCapabilities,
+		Version:            VERSION,
 	}
 
 	body, err := json.MarshalIndent(in, " ", " ")
@@ -60,6 +61,11 @@ func register(cdsURI string, name string, uk string) error {
 	WorkerID = w.ID
 	sdk.Authorization(w.ID)
 	log.Notice("Registered: %s\n", data)
+
+	if !w.Uptodate {
+		log.Warning("-=-=-=-=- Please update your worker binary -=-=-=-=-")
+	}
+
 	return nil
 }
 

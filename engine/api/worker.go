@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/internal"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -55,6 +56,8 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		log.Warning("registerWorkerHandler: [%s] Registering failed: %s\n", params.Name, err)
 		return sdk.ErrUnauthorized
 	}
+
+	worker.Uptodate = params.Version == internal.VERSION
 
 	log.Debug("New worker: [%s] - %s\n", worker.ID, worker.Name)
 

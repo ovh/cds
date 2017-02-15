@@ -15,6 +15,7 @@ type Worker struct {
 	Model      int64     `json:"model"`
 	HatcheryID int64     `json:"hatchery_id"`
 	Status     Status    `json:"status"` // Waiting, Building, Disabled, Unknown
+	Uptodate   bool      `json:"up_to_date"`
 }
 
 // Existing worker type
