@@ -420,7 +420,7 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 			}
 
 			if status == http.StatusNotModified {
-				return nil, defaultDelay, fmt.Errorf("No new events")
+				return nil, defaultDelay, nil
 			}
 
 			//Get events for this page
