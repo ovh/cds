@@ -4,6 +4,7 @@ testcases:
   steps:
   - script: cds project remove --force ITSCBUILTIN || true
   - script: cds project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
+  - script: cds group remove ITSCBUILTIN || true
   - script: cds application add ITSCBUILTIN TestApp
 
 - name: builtin action

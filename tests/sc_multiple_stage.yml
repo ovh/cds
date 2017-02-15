@@ -44,3 +44,4 @@ testcases:
   - script: cds project remove --force ITSCMULT
   - script: cds action remove ITSCMULT_ACTION_Test_HelloWorld
   - script: cds action remove ITSCMULT_ACTION_Test_Echo
+  - script: cds group remove ITSCMULT

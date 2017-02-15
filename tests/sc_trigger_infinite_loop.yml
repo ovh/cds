@@ -25,3 +25,4 @@ testcases:
     assertions:
       - code ShouldNotEqual 0
   - script: cds project remove --force ITIFNINITELOOP
+  - script: cds group remove ITIFNINITELOOP

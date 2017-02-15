@@ -4,6 +4,7 @@ testcases:
   steps:
   - script: cds project remove --force ITSCFAIL || true
   - script: cds action remove IT_SC_FAIL_TEST_Failure || true
+  - script: cds groupe remove ITSCFAIL || true
   - script: cds project add ITSCFAIL ITSCFAIL ITSCFAIL
   - script: cds application add ITSCFAIL TestApp
 
@@ -35,3 +36,4 @@ testcases:
 - name: cleanup
   steps:
   - script: cds project remove --force ITSCFAIL
+  - script: cds group remove ITSCFAIL

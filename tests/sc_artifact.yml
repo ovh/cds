@@ -29,3 +29,4 @@ testcases:
   steps:
   - script: cds project remove --force ITSCARTIFACT
   - script: cds action remove IT_SC_cdsartifacttest
+  - script: cds group remove ITSCARTIFACT
