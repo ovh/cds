@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-gorp/gorp"
@@ -25,7 +26,6 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
-	"strings"
 )
 
 func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
