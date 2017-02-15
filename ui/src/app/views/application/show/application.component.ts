@@ -259,7 +259,9 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.notifFormLoading = true;
                     this._applicationStore.addNotifications(this.project.key, this.application.name, event.notifications).subscribe(() => {
                         this._toast.success('', this._translate.instant('notifications_added'));
-                        this.addNotifModal.close();
+                        if (this.addNotifModal) {
+                            this.addNotifModal.close();
+                        }
                         this.notifFormLoading = false;
                     }, () => {
                         this.notifFormLoading = false;
@@ -273,7 +275,9 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                         event.notifications[0].pipeline.name,
                         event.notifications[0]
                     ).subscribe(() => {
-                        this.notificationListComponent.close();
+                        if (this.notificationListComponent) {
+                            this.notificationListComponent.close();
+                        }
                         this.notifFormLoading = false;
                         this._toast.success('', this._translate.instant('notification_updated'));
                     }, () => {
@@ -288,8 +292,10 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                         event.notifications[0].pipeline.name,
                         event.notifications[0].environment.name
                     ).subscribe(() => {
+                        if (this.notificationListComponent) {
+                            this.notificationListComponent.close();
+                        }
                         this.notifFormLoading = false;
-                        this.notificationListComponent.close();
                         this._toast.success('', this._translate.instant('notifications_deleted'));
                     }, () => {
                         this.notifFormLoading = false;
