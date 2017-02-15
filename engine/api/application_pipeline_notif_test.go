@@ -406,12 +406,15 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 
 		assert.Equal(t, 200, w.Code)
 
-		notif1, err := notification.ParseUserNotification(w.Body.Bytes())
+		var appResponse sdk.Application
+		err = json.Unmarshal(w.Body.Bytes(), &appResponse)
 		test.NoError(t, err)
-		assert.Equal(t, notif.ApplicationPipelineID, notif1.ApplicationPipelineID)
-		assert.Equal(t, notif.Environment.ID, notif1.Environment.ID)
 
-		testCheckUserNotificationSettings(t, notif.Notifications, notif1.Notifications)
+		assert.Equal(t, len(appResponse.Notifications), 1)
+
+		assert.Equal(t, notif.Environment.ID, appResponse.Notifications[0].Environment.ID)
+
+		testCheckUserNotificationSettings(t, notif.Notifications, appResponse.Notifications[0].Notifications)
 
 	})
 }
