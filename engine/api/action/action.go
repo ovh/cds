@@ -168,6 +168,9 @@ func loadActions(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.
 	var acts []sdk.Action
 	rows, err := db.Query(query, args...)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoAction
+		}
 		return nil, err
 	}
 	defer rows.Close()
@@ -184,10 +187,9 @@ func loadActions(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.
 		a.LastModified = lastModified.Unix()
 		acts = append(acts, a)
 	}
-	rows.Close()
 
 	if len(acts) == 0 {
-		return nil, sql.ErrNoRows
+		return nil, sdk.ErrNoAction
 	}
 
 	for i := range acts {

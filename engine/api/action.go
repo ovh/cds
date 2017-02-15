@@ -113,7 +113,7 @@ func deleteActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	a, errLoad := action.LoadPublicAction(db, name)
 	if errLoad != nil {
 		if errLoad != sdk.ErrNoAction {
-			log.Warning("deleteAction> Cannot load action %s: %s\n", name, errLoad)
+			log.Warning("deleteAction> Cannot load action %s: %T %s\n", name, errLoad, errLoad)
 		}
 		return errLoad
 	}
