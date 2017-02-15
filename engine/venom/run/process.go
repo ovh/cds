@@ -2,6 +2,8 @@ package run
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -390,13 +392,19 @@ func runTestStep(s *sdk.TestStep, l *log.Entry) {
 	s.Result.Code = "0"
 }
 
-func runHTTP(s *sdk.TestStep, l *log.Entry) error {
-	return fmt.Errorf("type http not yet implemented")
-}
-
 func applyResult(tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry) error {
-	tc.Systemerr.Value = ts.Result.StdErr
-	tc.Systemout.Value = ts.Result.StdOut
+
+	buferr := new(bytes.Buffer)
+	if err := xml.EscapeText(buferr, []byte(ts.Result.StdErr)); err != nil {
+		return err
+	}
+	bufout := new(bytes.Buffer)
+	if err := xml.EscapeText(bufout, []byte(ts.Result.StdErr)); err != nil {
+		return err
+	}
+
+	tc.Systemerr.Value = buferr.String()
+	tc.Systemout.Value = bufout.String()
 
 	if ts.Result.Err != nil {
 		tc.Systemerr.Value += ts.Result.Err.Error()
