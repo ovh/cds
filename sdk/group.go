@@ -145,14 +145,6 @@ func ListGroups() ([]Group, error) {
 		return nil, err
 	}
 
-	for i := range groups {
-		var err error
-		groups[i], err = GetGroup(groups[i].Name)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return groups, nil
 }
 
