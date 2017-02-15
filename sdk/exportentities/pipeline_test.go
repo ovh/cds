@@ -127,6 +127,14 @@ var (
 		arg: sdk.Pipeline{
 			Name: "MyPipeline",
 			Type: sdk.BuildPipeline,
+			GroupPermission: []sdk.GroupPermission{
+				sdk.GroupPermission{
+					Group: sdk.Group{
+						Name: "group1",
+					},
+					Permission: 4,
+				},
+			},
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -210,7 +218,182 @@ var (
 		},
 	}
 
-	testcases = []pipelineTestCase{t1_1, t1_2}
+	t2_2 = pipelineTestCase{
+		name: "Pipeline with 1 stage and 2 jobs",
+		arg: sdk.Pipeline{
+			Name: "MyPipeline",
+			Type: sdk.BuildPipeline,
+			GroupPermission: []sdk.GroupPermission{
+				sdk.GroupPermission{
+					Group: sdk.Group{
+						Name: "group1",
+					},
+					Permission: 4,
+				},
+			},
+			Stages: []sdk.Stage{
+				{
+					BuildOrder: 1,
+					Name:       "stage 1",
+					Enabled:    true,
+					Jobs: []sdk.Job{{
+						Action: sdk.Action{
+							Name:        "Job 1",
+							Description: "This is job 1",
+							Actions: []sdk.Action{
+								{
+
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ScriptAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lol",
+										},
+									},
+								},
+								{
+
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ScriptAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lel",
+										},
+									},
+								},
+							},
+						},
+					}, {
+						Action: sdk.Action{
+							Name:        "Job 2",
+							Description: "This is job 2",
+							Actions: []sdk.Action{
+								{
+
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ScriptAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lol",
+										},
+									},
+								},
+								{
+
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ScriptAction,
+									Enabled: false,
+									Final:   true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lel",
+										},
+									},
+								},
+							},
+						},
+					},
+					},
+				}, {
+					BuildOrder: 2,
+					Name:       "stage 2",
+					Enabled:    true,
+					Prerequisites: []sdk.Prerequisite{
+						{
+							Parameter:     "param1",
+							ExpectedValue: "value1",
+						},
+					},
+					Jobs: []sdk.Job{{
+						Action: sdk.Action{
+							Name:        "Job 1",
+							Description: "This is job 1",
+							Actions: []sdk.Action{
+								{
+
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ScriptAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lol",
+										},
+									},
+								},
+								{
+
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ScriptAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lel",
+										},
+									},
+								},
+							},
+						},
+					}, {
+						Action: sdk.Action{
+							Name:        "Job 2",
+							Description: "This is job 2",
+							Actions: []sdk.Action{
+								{
+
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ScriptAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lol",
+										},
+									},
+								},
+								{
+
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ScriptAction,
+									Enabled: false,
+									Final:   true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lel",
+										},
+									},
+								},
+							},
+						},
+					},
+					},
+				},
+			},
+		},
+		expected: Pipeline{
+			Name: "MyPipeline",
+			Type: "build",
+		},
+	}
+
+	testcases = []pipelineTestCase{t1_1, t1_2, t2_2}
 )
 
 func TestExportImportPipeline_HCL(t *testing.T) {

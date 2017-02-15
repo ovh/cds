@@ -19,8 +19,9 @@ type Pipeline struct {
 
 // Stage represents exported sdk.Stage
 type Stage struct {
-	Enabled *bool          `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Jobs    map[string]Job `json:"jobs,omitempty" yaml:"jobs,omitempty"`
+	Enabled    *bool             `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Jobs       map[string]Job    `json:"jobs,omitempty" yaml:"jobs,omitempty"`
+	Conditions map[string]string `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 }
 
 // Job represents exported sdk.Job
@@ -112,6 +113,12 @@ func newStages(stages []sdk.Stage) map[string]Stage {
 		st := Stage{}
 		if !s.Enabled {
 			st.Enabled = &s.Enabled
+		}
+		if len(s.Prerequisites) > 0 {
+			st.Conditions = make(map[string]string)
+		}
+		for _, r := range s.Prerequisites {
+			st.Conditions[r.Parameter] = r.ExpectedValue
 		}
 		st.Jobs = newJobs(s.Jobs)
 		res[fmt.Sprintf("%d|%s", order, s.Name)] = st
