@@ -25,6 +25,10 @@ import {PermissionEvent} from '../../../shared/permission/permission.event.model
 import {Map} from 'immutable';
 import {Project} from '../../../model/project.model';
 import {ApplicationWorkflowService} from '../../../service/application/application.workflow.service';
+import {Notification} from '../../../model/notification.model';
+import {NotificationEvent} from './notifications/notification.event';
+import {Pipeline} from '../../../model/pipeline.model';
+import {Environment} from '../../../model/environment.model';
 
 describe('CDS: Application', () => {
 
@@ -401,6 +405,73 @@ describe('CDS: Application', () => {
         gp.permission = 7;
         fixture.componentInstance.groupEvent(new PermissionEvent('delete', gp));
         expect(appStore.removePermission).toHaveBeenCalledWith('key1', 'app1', gp);
+    }));
+
+    it('should run add/update/delete notification', fakeAsync( () => {
+        let call = 0;
+        // Mock Http
+        backend.connections.subscribe(connection => {
+            call++;
+            switch (call) {
+                case 1:
+                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "key": "key1", "name": "prj1" }'})));
+                    break;
+                case 2:
+                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
+                    break;
+                case 3:
+                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
+                    break;
+            }
+
+        });
+
+        prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
+
+        spyOn(appStore, 'getApplications').and.callFake( () => {
+            let mapApp: Map<string, Application> = Map<string, Application>();
+            let app: Application = new Application();
+            app.name = 'app1';
+            return Observable.of(mapApp.set('key1-app1', app));
+        });
+
+        // Create component
+        let fixture = TestBed.createComponent(ApplicationShowComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
+
+        fixture.componentInstance.ngOnInit();
+
+        spyOn(appStore, 'addNotifications').and.callFake(() => {
+            let app: Application = new Application();
+            return Observable.of(app);
+        });
+
+        let n: Notification = new Notification();
+        n.pipeline = new Pipeline();
+        n.pipeline.name = 'pip1';
+        n.environment = new Environment();
+        n.environment.name = 'production';
+        let notifs = new Array<Notification>();
+        notifs.push(n);
+        fixture.componentInstance.notificationEvent(new NotificationEvent('add', notifs));
+        expect(appStore.addNotifications).toHaveBeenCalledWith('key1', 'app1', notifs);
+
+        spyOn(appStore, 'updateNotification').and.callFake(() => {
+            let app: Application = new Application();
+            return Observable.of(app);
+        });
+
+        fixture.componentInstance.notificationEvent(new NotificationEvent('update', notifs));
+        expect(appStore.updateNotification).toHaveBeenCalledWith('key1', 'app1', 'pip1', n);
+
+        spyOn(appStore, 'deleteNotification').and.callFake(() => {
+            let app: Application = new Application();
+            return Observable.of(app);
+        });
+
+        fixture.componentInstance.notificationEvent(new NotificationEvent('delete', notifs));
+        expect(appStore.deleteNotification).toHaveBeenCalledWith('key1', 'app1', 'pip1', 'production');
     }));
 });
 

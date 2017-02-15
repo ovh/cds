@@ -31,6 +31,7 @@ export class Application {
 }
 
 export class ApplicationPipeline {
+    id: number;
     pipeline: Pipeline;
     parameters: Array<Parameter>;
     last_modified: number;

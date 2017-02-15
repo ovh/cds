@@ -11,6 +11,7 @@ import {GroupPermission} from '../../model/group.model';
 import {ProjectStore} from '../project/project.store';
 import {Trigger} from '../../model/trigger.model';
 import {ApplyTemplateRequest} from '../../model/template.model';
+import {Notification} from '../../model/notification.model';
 
 
 @Injectable()
@@ -481,5 +482,58 @@ export class ApplicationStore {
         }
         return application;
     }
+
+    /**
+     * Add a lit of notification on the application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param notifications List of notifications to add
+     * @returns {Uint8Array|Uint8ClampedArray|Application[]|Int8Array|Promise<any[]>|Int32Array|any}
+     */
+    addNotifications(key: string, appName: string, notifications: Array<Notification>): Observable<Application> {
+        return this._applicationService.addNotifications(key, appName, notifications).map( app => {
+           return this.refreshApplicationNotificationsCache(key, appName, app);
+        });
+    }
+
+    updateNotification(key: string, appName: string, pipName: string, notification: Notification) {
+        return this._applicationService.updateNotification(key, appName, pipName, notification).map( app => {
+            return this.refreshApplicationNotificationsCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Update a notification
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name
+     */
+    deleteNotification(key: string, appName: string, pipName: string, envName?: string): Observable<Application> {
+        return this._applicationService.deleteNotification(key, appName, pipName, envName).map( app => {
+            return this.refreshApplicationNotificationsCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Refresh application cache
+     * @param key Project unique key
+     * @param appName Application Name
+     * @param application updated workflow application
+     * @returns {: Application}
+     */
+    refreshApplicationNotificationsCache(key: string, appName: string, application: Application): Application {
+        let cache = this._application.getValue();
+        let appKey = key + '-' + appName;
+        let appToUpdate = cache.get(appKey);
+        if (appToUpdate) {
+            appToUpdate.last_modified = application.last_modified;
+            appToUpdate.notifications = application.notifications;
+            this._application.next(cache.set(appKey, appToUpdate));
+            return appToUpdate;
+        }
+        return application;
+    }
+
+
 
 }
