@@ -457,11 +457,11 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	//Parse notification settings
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return sdk.ErrParseUserNotification
+		return sdk.ErrWrongRequest
 	}
-	notifs, err := notification.ParseUserNotification(data)
-	if err != nil {
-		return err
+	notifs := &sdk.UserNotification{}
+	if err := json.Unmarshal(data, notifs); err != nil {
+		return sdk.ErrParseUserNotification
 	}
 
 	//Load environment

@@ -301,9 +301,8 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotifi
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, 200, w.Code)
-
-		notif1, err := notification.ParseUserNotification(w.Body.Bytes())
-		test.NoError(t, err)
+		notif1 := &sdk.UserNotification{}
+		test.NoError(t, json.Unmarshal(w.Body.Bytes(), notif1))
 		assert.Equal(t, notif.ApplicationPipelineID, notif1.ApplicationPipelineID)
 		assert.Equal(t, notif.Environment.ID, notif1.Environment.ID)
 
