@@ -259,6 +259,12 @@
 			"revisionTime": "2017-01-03T08:10:50Z"
 		},
 		{
+			"checksumSHA1": "leGX9T5aXD6C1FUWuHt1KmkaeU0=",
+			"path": "github.com/fsamin/go-dump",
+			"revision": "3d751c046d0da88a6687aaaba81ad6f6d82760b3",
+			"revisionTime": "2017-02-15T10:43:15Z"
+		},
+		{
 			"checksumSHA1": "nmc2qcdbg17Ny8tHeEDQuphV6jA=",
 			"path": "github.com/fsnotify/fsnotify",
 			"revision": "bd2828f9f176e52d7222e565abb2d338d3f3c103",

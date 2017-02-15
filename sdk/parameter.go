@@ -96,3 +96,13 @@ func AddParameter(array *[]Parameter, name string, parameterType ParameterType, 
 	})
 	*array = params
 }
+
+// ParameterFind return a parameter given its name if it exists in array
+func ParameterFind(vars []Parameter, s string) *Parameter {
+	for _, v := range vars {
+		if v.Name == s {
+			return &v
+		}
+	}
+	return nil
+}

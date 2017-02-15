@@ -62,7 +62,7 @@ func workerList(cmd *cobra.Command, args []string) {
 	}
 
 	for _, w := range workers {
-		fmt.Printf("- %-30s %s\n", w.Name, w.Status)
+		fmt.Printf("%-50s %s\n", w.Name, w.Status)
 	}
 }
 
