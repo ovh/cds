@@ -99,8 +99,8 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
     updateNeedEnv(pip: Array<string>): void {
         this.needEnv = false;
         pip.forEach(pipName => {
-            let pipeline = this.project.pipelines.find(p => p.name === pipName);
-            if (pipeline && (pipeline.type === 'deployment' || pipeline.type === 'testingt'))  {
+            let appPip = this.application.pipelines.find(p => p.pipeline.name === pipName);
+            if (appPip && (appPip.pipeline.type === 'deployment' || appPip.pipeline.type === 'testing'))  {
                 this.needEnv = true;
             }
         });
@@ -185,6 +185,7 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
                 n.environment = environment;
             }
         }
+
         this.selected.notification.on_start = this.onStartControl.value;
         this.selected.notification.send_to_groups = this.onGroupsControl.value;
         this.selected.notification.send_to_author = this.onAuthorControl.value;
