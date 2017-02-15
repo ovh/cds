@@ -33,5 +33,5 @@ func addApplication(cmd *cobra.Command, args []string) {
 		sdk.Exit("Error: %s\n", err)
 	}
 
-	fmt.Printf("Aplication %s created.\n", name)
+	fmt.Printf("Application %s created.\n", name)
 }
