@@ -1,6 +1,10 @@
 package exportentities
 
-import "github.com/ovh/cds/sdk"
+import (
+	"fmt"
+
+	"github.com/ovh/cds/sdk"
+)
 
 // Pipeline represents exported sdk.Pipeline
 type Pipeline struct {
@@ -10,23 +14,21 @@ type Pipeline struct {
 	Parameters  map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Stages      map[string]Stage          `json:"stages,omitempty" yaml:"stages,omitempty"`
 	Jobs        map[string]Job            `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	Step        []Step                    `json:"step,omitempty" yaml:"steps,omitempty"`
+	Steps       []Step                    `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
 }
 
 // Stage represents exported sdk.Stage
 type Stage struct {
-	name    string
 	Enabled *bool          `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Order   int            `json:"order,omitempty" yaml:"order,omitempty"`
-	Job     map[string]Job `json:"job,omitempty" yaml:"job,omitempty"`
+	Jobs    map[string]Job `json:"jobs,omitempty" yaml:"jobs,omitempty"`
 }
 
 // Job represents exported sdk.Job
 type Job struct {
 	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
 	Enabled      *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Steps        []Step        `json:"step,omitempty" yaml:"steps,omitempty"`
-	Requirements []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
+	Steps        []Step        `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
+	Requirements []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty" hcl:"requirement,omitempty"`
 }
 
 // Step represents exported step used in a job
@@ -79,15 +81,19 @@ func NewPipeline(pip *sdk.Pipeline) (p *Pipeline) {
 	case 0:
 		return
 	case 1:
-		switch len(pip.Stages[0].Jobs) {
-		case 0:
+		if len(pip.Stages[0].Prerequisites) == 0 {
+			switch len(pip.Stages[0].Jobs) {
+			case 0:
+				return
+			case 1:
+				p.Steps = newSteps(pip.Stages[0].Jobs[0].Action)
+				return
+			default:
+				p.Jobs = newJobs(pip.Stages[0].Jobs)
+			}
 			return
-		case 1:
-			p.Step = newSteps(pip.Stages[0].Jobs[0].Action)
-			return
-		default:
-			p.Jobs = newJobs(pip.Stages[0].Jobs)
 		}
+		p.Stages = newStages(pip.Stages)
 	default:
 		p.Stages = newStages(pip.Stages)
 	}
@@ -103,15 +109,12 @@ func newStages(stages []sdk.Stage) map[string]Stage {
 			continue
 		}
 		order++
-		st := Stage{
-			Order: order,
-		}
+		st := Stage{}
 		if !s.Enabled {
 			st.Enabled = &s.Enabled
 		}
-		st.Job = newJobs(s.Jobs)
-		st.name = s.Name
-		res[s.Name] = st
+		st.Jobs = newJobs(s.Jobs)
+		res[fmt.Sprintf("%d|%s", order, s.Name)] = st
 	}
 	return res
 }
@@ -160,7 +163,7 @@ func newSteps(a sdk.Action) []Step {
 		if !a.Enabled {
 			s.Enabled = &a.Enabled
 		}
-		if a.Final {
+		if !a.Final {
 			s.Final = &a.Final
 		}
 
@@ -221,3 +224,234 @@ func newSteps(a sdk.Action) []Step {
 
 	return res
 }
+
+//HCLTemplate returns text/template
+/*
+func (p *Pipeline) HCLTemplate() (*template.Template, error) {
+	tmpl := `name = "{{.Name}}"
+type = "{{.Type}}"
+{{if .Permissions -}}
+permissions  { {{ range $key, $value := .Permissions }}
+	"{{$key}}" = {{$value}}{{ end }}
+}
+{{- end}}
+{{if .Steps -}}
+{{ range $value := .Steps}}
+step {
+	{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}} 	{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
+	{{if .Script -}}  script = "{{.Script}}"
+	{{- else if .Action -}}
+		action {
+			{{ range $key, $value := .Action }}
+			{{$key}} {
+				{{ range $key, $value := $value }}
+				{{$key}} = "{{$value}}"{{end}}
+			}
+			{{end}}}
+		}
+	{{- else if .Plugin -}}
+		plugin {
+			{{ range $key, $value := .Plugin }}
+			{{$key}} {
+				{{ range $key, $value := $value }}
+				{{$key}} = "{{$value}}"{{end}}
+			}
+			{{end}}}
+		}
+	{{- else if .ArtifactUpload -}}
+		artifactUpload {
+		{{ range $key, $value := .ArtifactUpload }}
+			{{$key}} = "{{$value}}"{{ end }}
+		}
+	{{- else if .ArtifactDownload -}}
+		artifactDownload {
+		{{ range $key, $value := .ArtifactDownload }}
+			{{$key}} = "{{$value}}"{{ end }}
+		}
+	{{- else if .JUnitReport -}}
+		jUnitReport = "{{.JUnitReport}}"
+	{{- end}}
+}
+{{ end }}
+
+{{- else -}}
+
+{{if .Jobs -}}
+{{ range $key, $value := .Jobs }}
+job "{{$key}}" {
+	{{ range $key, $value := $value.Steps}}step {
+		{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}}
+		{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
+		{{if .Script -}}
+			script = <<EOV
+{{.Script}}
+EOV
+		{{- else if .Action -}}
+			action {
+				{{ range $key, $value := .Action }}
+				{{$key}} {
+					{{ range $key, $value := $value }}
+					{{$key}} = "{{$value}}"{{end}}
+				}
+				{{end}}}
+			}
+		{{- else if .Plugin -}}
+			plugin {
+				{{ range $key, $value := .Plugin }}
+				{{$key}} {
+					{{ range $key, $value := $value }}
+					{{$key}} = "{{$value}}"{{end}}
+				}
+				{{end}}}
+			}
+		{{- else if .ArtifactUpload -}}
+			artifactUpload {
+			{{ range $key, $value := .ArtifactUpload }}
+				{{$key}} = "{{$value}}"{{ end }}
+			}
+		{{- else if .ArtifactDownload -}}
+			artifactDownload {
+			{{ range $key, $value := .ArtifactDownload}}
+				{{$key}} = "{{$value}}"{{ end }}
+			}
+		{{- else if .JUnitReport -}}
+			jUnitReport = "{{.JUnitReport}}"
+		{{- end}}
+	}
+	{{ end }}
+}
+{{ end }}
+{{- else -}}
+stages {
+{{ range $key, $value := .Stages }}
+	stage "{{$key}}" {
+		{{ range $key, $value := $value.Jobs }}
+		job "{{$key}}" {
+			{{ range $key, $value := $value.Steps}}step {
+				{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}}
+				{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
+				{{if .Script -}}
+					script = <<EOV
+{{.Script}}
+EOV
+				{{- else if .Action -}}
+					action {
+						{{ range $key, $value := .Action }}
+						{{$key}} {
+							{{ range $key, $value := $value }}
+							{{$key}} = "{{$value}}"{{end}}
+						}
+						{{end}}}
+					}
+				{{- else if .Plugin -}}
+					plugin {
+						{{ range $key, $value := .Plugin }}
+						{{$key}} {
+							{{ range $key, $value := $value }}
+							{{$key}} = "{{$value}}"{{end}}
+						}
+						{{end}}}
+					}
+				{{- else if .ArtifactUpload -}}
+					artifactUpload {
+					{{ range $key, $value := .ArtifactUpload }}
+						{{$key}} = "{{$value}}"{{ end }}
+					}
+				{{- else if .ArtifactDownload -}}
+					artifactDownload {
+					{{ range $key, $value := .ArtifactDownload -}}
+						{{$key}} = "{{$value}}"{{- end }}
+					}
+				{{- else if .JUnitReport -}}
+					jUnitReport = "{{.JUnitReport}}"
+				{{- end}}
+			}
+			{{ end }}
+		}
+		{{ end }}
+	}
+{{ end}}}
+{{- end}}
+{{- end}}
+`
+	t := template.New("t")
+	return t.Parse(tmpl)
+}
+
+func decodePipeline(m map[string]interface{}) (p *Pipeline, err error) {
+	if m["name"] == nil || m["type"] == nil {
+		err = errors.New("Invalid pipeline structured map")
+		return
+	}
+
+	p = &Pipeline{
+		Name: m["name"].(string),
+		Type: m["type"].(string),
+	}
+
+	if m["step"] != nil {
+		steps := m["step"].([]map[string]interface{})
+		p.Steps = make([]Step, len(steps))
+		for i, s := range steps {
+			p.Steps[i] = Step{}
+			p.Steps[i].Enabled = getBoolPtr(s, "enabled")
+			p.Steps[i].Final = getBoolPtr(s, "final")
+			p.Steps[i].Script = getStringValue(s, "script")
+			p.Steps[i].Action = getMapStringMapStringString(s, "action")
+			p.Steps[i].Plugin = getMapStringMapStringString(s, "plugin")
+			p.Steps[i].ArtifactDownload = getMapStringString(s, "artifactDownload")
+			p.Steps[i].ArtifactUpload = getMapStringString(s, "artifactUpload")
+			p.Steps[i].JUnitReport = getStringValue(s, "jUnitReport")
+		}
+	}
+
+	return
+}
+
+func getBoolPtr(m map[string]interface{}, k string) *bool {
+	if m[k] == nil {
+		return nil
+	}
+	b, ok := m[k].(bool)
+	if !ok {
+		return nil
+	}
+	return &b
+}
+
+func getStringValue(m map[string]interface{}, k string) (v string) {
+	if m[k] == nil {
+		return
+	}
+	var ok bool
+	v, ok = m[k].(string)
+	if !ok {
+		v = ""
+	}
+	return
+}
+
+func getMapStringString(m map[string]interface{}, k string) (r map[string]string) {
+	if m[k] == nil {
+		return nil
+	}
+	var ok bool
+	r, ok = m[k].(map[string]string)
+	if !ok {
+		return nil
+	}
+	return
+}
+
+func getMapStringMapStringString(m map[string]interface{}, k string) (r map[string]map[string]string) {
+	if m[k] == nil {
+		return nil
+	}
+	var ok bool
+	r, ok = m[k].(map[string]map[string]string)
+	if !ok {
+		return nil
+	}
+	return
+}
+*/
