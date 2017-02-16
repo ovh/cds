@@ -19,6 +19,7 @@ declare var _: any;
 })
 export class ApplicationAddComponent {
 
+    ready = false;
     project: Project;
     templates: Array<Template>;
     typeofCreation = 'empty';
@@ -42,6 +43,7 @@ export class ApplicationAddComponent {
         });
 
         this._appTemplateService.getTemplates().subscribe(templates => {
+            this.ready = true;
             this.templates = templates;
         });
     }
@@ -68,8 +70,16 @@ export class ApplicationAddComponent {
     }
 
     updateSelectedTemplateToUse(name: string): void {
+        this.variables = null;
         this.selectedTemplate = this.templates.find( t => t.name === name);
-        this.parameters = this.selectedTemplate.params;
+        if (this.selectedTemplate) {
+            this.parameters = this.selectedTemplate.params;
+        } else {
+            this.selectedTemplate = new Template();
+            this.selectedTemplate.name = name;
+            this.parameters = null;
+        }
+
     }
 
     updateSelectedApplicationToClone(name: string): void {
