@@ -11,8 +11,11 @@
                                     <div class="job ui segment pointing"
                                          [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
                                          (click)="selectedJob(j, stage)">
-                                        <app-status-icon [status]="mapJobStatus[j.pipeline_action_id]"></app-status-icon>
+                                        <app-status-icon [status]="mapJobStatus[j.pipeline_action_id]" [value]="mapJobProgression[j.pipeline_action_id]"></app-status-icon>
                                         {{j.action.name}}
+                                        <span class="right floated duration">
+                                            {{mapJobDuration[j.pipeline_action_id]}}
+                                        </span>
                                     </div>
                                 </li>
                             </ul>
@@ -35,6 +38,7 @@
                             [step]="step"
                             [stepOrder]="i"
                             [stepStatus]="mapStepStatus[selectedPipJob.job.pipeline_action_id + '-' + i]"
+                            [previousBuild]="previousBuild"
                             ></app-step-log>
                         </li>
                     </ul>

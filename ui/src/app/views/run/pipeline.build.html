@@ -3,45 +3,7 @@
         <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [version]="currentBuild?.version" [buildNumber]="currentBuild?.build_number" [envName]="envName"></app-breadcrumb>
     </div>
 
-    <div class="summary" *ngIf="currentBuild"
-        [class.success]="currentBuild.status === 'Success'"
-        [class.fail]="currentBuild.status === 'Fail'"
-        [class.building]="currentBuild.status === 'Building'"
-    >
-        <div class="ui grid">
-            <div class="row">
-                <div class="five wide column">
-                    <span class="title">{{ 'common_pipeline_title' | translate }}</span>
-                    <span class="content">
-                        {{ currentBuild.application.name + ' / '}}
-                        {{ currentBuild.pipeline.name}}
-                        {{ ' v' + currentBuild.version}}
-                        </span>
-                </div>
-                <div class="five wide column" *ngIf="currentBuild.status !== 'Building'">
-                    <span class="title">{{ 'common_duration_title' | translate }}</span>
-                    <span class="content">{{duration}}</span>
-                </div>
-            </div>
-            <div class="row">
-                <div class="five wide column">
-                    <span class="title">{{ 'common_branch_title' | translate }}</span>
-                    <span class="content">{{ currentBuild.trigger.vcs_branch}}</span>
-                </div>
-                <div class="six wide column" *ngIf="currentBuild.trigger.vcs_hash !== ''">
-                    <span class="title">{{ 'common_commit_title' | translate }}</span>
-                    <span class="content">{{ currentBuild.trigger.vcs_hash}}</span>
-                </div>
-                <div class="five wide column" *ngIf="currentBuild.trigger.vcs_author !== ''">
-                    <span class="title">{{ 'common_author_title' | translate }}</span>
-                    <span class="content">{{ currentBuild.trigger.vcs_author}}</span>
-                </div>
-            </div>
-            <div class="row">
-
-            </div>
-        </div>
-    </div>
+    <app-run-summary [currentBuild]="currentBuild" [duration]="duration"></app-run-summary>
 
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
@@ -77,7 +39,7 @@
             <div class="viewContent" [ngSwitch]="selectedTab" *ngIf="currentBuild">
                 <div *ngSwitchCase="'pipeline'" >
                     <app-pipeline-run-workflow [buildWorker]="worker"
-                        [project]="project" [application]="application" [pipeline]="pipeline"></app-pipeline-run-workflow>
+                        [project]="project" [application]="application" [pipeline]="pipeline" [previousBuild]="previousBuild"></app-pipeline-run-workflow>
                 </div>
                 <div *ngSwitchCase="'test'">
                     <app-tests-result [tests]="currentBuild?.tests"></app-tests-result>

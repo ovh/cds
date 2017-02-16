@@ -65,7 +65,7 @@ export class ApplicationPipelineService {
      * @returns {Observable<Array<PipelineBuild>>}
      */
     buildHistory(key: string, appName: string, pipName: string,
-                 envName: string, limit: number, status: string, branchName: string, stage: boolean): Observable<Array<PipelineBuild>> {
+                 envName: string, limit: number, status: string, branchName: string): Observable<Array<PipelineBuild>> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/history';
         let options = new RequestOptions();
         options.search = new URLSearchParams();
@@ -73,7 +73,6 @@ export class ApplicationPipelineService {
         options.search.set('limit', String(limit));
         options.search.set('status', status);
         options.search.set('branchName', branchName);
-        options.search.set('stage', String(stage));
         return this._http.get(url, options).map(res => res.json());
     }
 }

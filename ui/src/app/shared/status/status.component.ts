@@ -8,6 +8,7 @@ import {Component, Input} from '@angular/core';
 export class StatusIconComponent {
 
     @Input() status: string;
+    @Input() value: string;
 
     constructor() { }
 }

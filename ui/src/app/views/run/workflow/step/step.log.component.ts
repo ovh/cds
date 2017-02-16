@@ -7,6 +7,7 @@ import {environment} from '../../../../../environments/environment';
 import {Project} from '../../../../model/project.model';
 import {Application} from '../../../../model/application.model';
 import {Pipeline, PipelineBuild, Log, BuildResult} from '../../../../model/pipeline.model';
+import {DurationService} from '../../../../shared/duration/duration.service';
 
 declare var ansi_up: any;
 
@@ -25,14 +26,17 @@ export class StepLogComponent implements OnInit, OnDestroy {
     @Input() application: Application;
     @Input() pipeline: Pipeline;
     @Input() pipelineBuild: PipelineBuild;
+    @Input() previousBuild: PipelineBuild;
 
     // Dynamic
     @Input('stepStatus')
     set stepStatus (data: string) {
+        if (data && !this.currentStatus) {
+            this.initWorker();
+        }
         this.currentStatus = data;
     }
     logs: Log;
-
     currentStatus: string;
     showLog = false;
 
@@ -45,28 +49,32 @@ export class StepLogComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.zone = new NgZone({enableLongStackTrace: false});
-        this.worker = new CDSWorker('./assets/worker/shared/log.js', './assets/worker/web/log.js');
-        this.worker.start({
-            user: this._authStore.getUser(),
-            api: environment.apiURL,
-            key: this.project.key,
-            appName: this.application.name,
-            pipName: this.pipeline.name,
-            buildNumber: this.pipelineBuild.build_number,
-            jobID: this.jobID,
-            stepOrder: this.stepOrder
-        });
+    }
 
-        this.worker.response().subscribe( msg => {
-            console.log(msg);
-            if (msg.data) {
-                let build: BuildResult = JSON.parse(msg.data);
-                this.zone.run(() => {
-                    this.logs = build.step_logs;
-                });
-            }
+    initWorker(): void {
+        if (!this.worker) {
+            this.worker = new CDSWorker('./assets/worker/shared/log.js', './assets/worker/web/log.js');
+            this.worker.start({
+                user: this._authStore.getUser(),
+                api: environment.apiURL,
+                key: this.project.key,
+                appName: this.application.name,
+                pipName: this.pipeline.name,
+                buildNumber: this.pipelineBuild.build_number,
+                jobID: this.jobID,
+                stepOrder: this.stepOrder
+            });
 
-        });
+            this.worker.response().subscribe( msg => {
+                if (msg.data) {
+                    let build: BuildResult = JSON.parse(msg.data);
+                    this.zone.run(() => {
+                        this.logs = build.step_logs;
+                    });
+                }
+
+            });
+        }
     }
 
     ngOnDestroy(): void {
