@@ -34,6 +34,7 @@ import {HistoryComponent} from './history/history.component';
 import {StatusIconComponent} from './status/status.component';
 import {KeysPipe} from './pipes/keys.pipe';
 import {DurationService} from './duration/duration.service';
+import {ParameterDescriptionComponent} from './parameter/description-popup/description.popup.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -47,6 +48,7 @@ import {DurationService} from './duration/duration.service';
         HistoryComponent,
         KeysPipe,
         NgForNumber,
+        ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,
         ParameterValueComponent,
@@ -86,6 +88,7 @@ import {DurationService} from './duration/duration.service';
         MomentModule,
         NgForNumber,
         NgSemanticModule,
+        ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,
         ParameterValueComponent,
