@@ -32,12 +32,12 @@ func Test_computeStats(t *testing.T) {
 			args: args{
 				res: &sdk.Result{},
 				v: &venom.Tests{
-					TestSuites: []sdk.TestSuite{
+					TestSuites: []venom.TestSuite{
 						{
 							Name:     "myTestSuite",
 							Errors:   0,
 							Failures: 0,
-							TestCases: []sdk.TestCase{
+							TestCases: []venom.TestCase{
 								{
 									Name: "myTestCase",
 								},
@@ -61,15 +61,15 @@ func Test_computeStats(t *testing.T) {
 			args: args{
 				res: &sdk.Result{},
 				v: &venom.Tests{
-					TestSuites: []sdk.TestSuite{
+					TestSuites: []venom.TestSuite{
 						{
 							Name:     "myTestSuite",
 							Errors:   0,
 							Failures: 1,
-							TestCases: []sdk.TestCase{
+							TestCases: []venom.TestCase{
 								{
 									Name:     "myTestCase",
-									Failures: []sdk.Failure{{Value: "Foo"}},
+									Failures: []venom.Failure{{Value: "Foo"}},
 								},
 							},
 						},
@@ -93,16 +93,16 @@ func Test_computeStats(t *testing.T) {
 			args: args{
 				res: &sdk.Result{},
 				v: &venom.Tests{
-					TestSuites: []sdk.TestSuite{
+					TestSuites: []venom.TestSuite{
 						{
 							Name:     "myTestSuite",
 							Errors:   1,
 							Failures: 1,
-							TestCases: []sdk.TestCase{
+							TestCases: []venom.TestCase{
 								{
 									Name:     "myTestCase",
-									Errors:   []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
+									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
+									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
 								},
 							},
 						},
@@ -128,21 +128,21 @@ func Test_computeStats(t *testing.T) {
 			args: args{
 				res: &sdk.Result{},
 				v: &venom.Tests{
-					TestSuites: []sdk.TestSuite{
+					TestSuites: []venom.TestSuite{
 						{
 							Name:     "myTestSuite",
 							Errors:   1,
 							Failures: 1,
-							TestCases: []sdk.TestCase{
+							TestCases: []venom.TestCase{
 								{
 									Name:     "myTestCase 1",
-									Errors:   []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
+									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
+									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
 								},
 								{
 									Name:     "myTestCase 2",
-									Errors:   []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
+									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
+									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
 								},
 							},
 						},
