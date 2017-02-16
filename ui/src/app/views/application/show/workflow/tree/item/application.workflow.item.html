@@ -9,13 +9,11 @@
 
             <!-- User + date -->
             <span *ngIf="workflowItem.pipeline.last_pipeline_build"
-                  class="ui blue left ribbon label"
+                  class="user ui blue left ribbon label"
                   [class.green]="workflowItem.pipeline.last_pipeline_build.status === 'Success'"
                   [class.blue]="workflowItem.pipeline.last_pipeline_build.status === 'Building'"
                   [class.red]="workflowItem.pipeline.last_pipeline_build.status === 'Fail'">
-                <span *ngIf="workflowItem.pipeline.last_pipeline_build.trigger.triggered_by && workflowItem.pipeline.last_pipeline_build.trigger.triggered_by.username">{{workflowItem.pipeline.last_pipeline_build.trigger.triggered_by.username }}</span>
-                <span *ngIf="workflowItem.pipeline.last_pipeline_build.trigger.vcs_author && !workflowItem.pipeline.last_pipeline_build.trigger.triggered_by.username">{{workflowItem.pipeline.last_pipeline_build.trigger.vcs_author}}</span>
-
+                <span><i class="user icon"></i>{{getTriggerSource(workflowItem.pipeline.last_pipeline_build)}}</span>
             </span>
 
             <!-- Env -->

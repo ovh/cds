@@ -1,0 +1,38 @@
+<div class="summary" *ngIf="currentBuild"
+     [class.success]="currentBuild.status === 'Success'"
+     [class.fail]="currentBuild.status === 'Fail'"
+     [class.building]="currentBuild.status === 'Building'">
+    <div class="ui grid">
+        <div class="row">
+            <div class="five wide column">
+                <span class="title">{{ 'common_pipeline_title' | translate }}</span>
+                <span class="content">
+                        {{ currentBuild.application.name + ' / '}}
+                        {{ currentBuild.pipeline.name}}
+                        {{ ' v' + currentBuild.version}}
+                        </span>
+            </div>
+            <div class="five wide column" *ngIf="currentBuild.status !== 'Building'">
+                <span class="title">{{ 'common_duration_title' | translate }}</span>
+                <span class="content">{{duration}}</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="five wide column">
+                <span class="title">{{ 'common_branch_title' | translate }}</span>
+                <span class="content">{{ currentBuild.trigger.vcs_branch}}</span>
+            </div>
+            <div class="six wide column" *ngIf="currentBuild.trigger.vcs_hash !== ''">
+                <span class="title">{{ 'common_commit_title' | translate }}</span>
+                <span class="content">{{ currentBuild.trigger.vcs_hash}}</span>
+            </div>
+            <div class="five wide column" *ngIf="currentBuild.trigger.vcs_author !== ''">
+                <span class="title">{{ 'common_author_title' | translate }}</span>
+                <span class="content">{{ currentBuild.trigger.vcs_author}}</span>
+            </div>
+        </div>
+        <div class="row">
+
+        </div>
+    </div>
+</div>

@@ -8,6 +8,7 @@ import {environment} from '../../../environments/environment';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {CDSWorker} from '../../shared/worker/worker';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
+import {DurationService} from '../../shared/duration/duration.service';
 
 declare var Duration: any;
 
@@ -27,6 +28,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     envName: string;
     selectedTab: string;
     currentBuild: PipelineBuild;
+    previousBuild: PipelineBuild;
     duration: string;
 
     // Allow angular update from work started outside angular context
@@ -39,9 +41,6 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     workerSubscription: Subscription;
 
 
-
-
-
     // tab datas
     nbTests = 0;
     nbArtifacts = 0;
@@ -49,7 +48,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
 
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-                private _router: Router, private _appPipService: ApplicationPipelineService) {
+                private _router: Router, private _appPipService: ApplicationPipelineService, private _durationService: DurationService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         // Get from pipeline resolver
@@ -66,7 +65,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             this.selectedTab = 'pipeline';
         }
 
-        this._activatedRoute.queryParams.subscribe( q => {
+        this._activatedRoute.queryParams.subscribe(q => {
             this.envName = q['envName'];
             if (q['tab']) {
                 this.selectedTab = q['tab'];
@@ -94,17 +93,15 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                     buildNumber: buildNumber
                 });
 
-                this.worker.response().subscribe( msg => {
+                this.worker.response().subscribe(msg => {
                     if (msg.data) {
                         let build: PipelineBuild = JSON.parse(msg.data);
                         this.zone.run(() => {
                             this.currentBuild = build;
 
                             if (this.currentBuild.status !== 'Building') {
-                                this.duration = (new Duration(
-                                        (new Date(this.currentBuild.done)).getTime() - new Date(this.currentBuild.start).getTime()
-                                    )
-                                ).toString();
+                                this.duration = this._durationService.duration(
+                                    new Date(this.currentBuild.start), new Date(this.currentBuild.done));
                             }
 
                             if (build.artifacts) {
@@ -138,7 +135,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     }
 
     showTab(tab: string): void {
-        this._router.navigateByUrl( '/project/' + this.project.key +
+        this._router.navigateByUrl('/project/' + this.project.key +
             '/application/' + this.application.name +
             '/pipeline/' + this.pipeline.name +
             '/build/' + this.currentBuildNumber +
@@ -151,9 +148,17 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             env = pb.environment.name;
         }
         this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
-            env, 50, '', pb.trigger.vcs_branch, false).subscribe( pbs => {
+            env, 50, '', pb.trigger.vcs_branch).subscribe(pbs => {
             this.histories = pbs;
             this.nbHistory = this.histories.length;
+        });
+
+        this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
+            env, 1, 'Success', pb.trigger.vcs_branch).subscribe(pbs => {
+            if (pbs && pbs.length === 1) {
+                this.previousBuild = pbs[0];
+            }
+
         });
     }
 }

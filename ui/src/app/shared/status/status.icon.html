@@ -1,6 +1,6 @@
 <ng-container [ngSwitch]="status">
     <div class="ui small active inline blue loader" *ngSwitchCase="'Building'">
-        <span class="">99</span>
+        <span class="">{{value}}</span>
     </div>
     <i class="check green icon" *ngSwitchCase="'Success'"></i>
     <i class="remove red icon" *ngSwitchCase="'Fail'"></i>
