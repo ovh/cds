@@ -21,6 +21,10 @@ func TestDeleteByID(t *testing.T) {
 	//covered by TestLoadAll
 }
 
+func TestExist(t *testing.T) {
+	//covered by TestLoadAll
+}
+
 func TestLoadAll(t *testing.T) {
 	db := test.SetupPG(t)
 
@@ -74,10 +78,6 @@ func TestLoadAll(t *testing.T) {
 	Delete(db, "test_TestLoadAll")
 	Delete(db, "test_TestLoadAll1")
 
-}
-
-func TestExist(t *testing.T) {
-	//covered by TestLoadAll
 }
 
 // InsertAdminUser have to be used only for tests

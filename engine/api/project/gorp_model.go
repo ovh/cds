@@ -10,9 +10,11 @@ import (
 )
 
 type dbProject sdk.Project
+type dbVariable sdk.Variable
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbProject{}, "project", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProject{}, "project_variable", true, "id"))
 }
 
 func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
@@ -28,6 +30,5 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 		}
 		p.Metadata = metadata
 	}
-
 	return nil
 }

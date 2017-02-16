@@ -47,17 +47,24 @@ func loadprojects(db gorp.SqlExecutor, u *sdk.User, query string, args ...interf
 		if err := p.PostGet(db); err != nil {
 			return nil, err
 		}
-		var err error
-		p.Applications, err = application.LoadApplications(db, p.Key, false, false, u)
+		proj, err := unwrap(db, p, u)
 		if err != nil {
 			return nil, err
 		}
-
-		proj := sdk.Project(res[i])
-		projs[i] = proj
+		projs[i] = *proj
 	}
 
 	return projs, nil
+}
+
+func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User) (*sdk.Project, error) {
+	var err error
+	p.Applications, err = application.LoadApplications(db, p.Key, false, false, u)
+	if err != nil {
+		return nil, err
+	}
+	proj := sdk.Project(*p)
+	return &proj, LoadAllVariables(db, &proj)
 }
 
 // Exist checks whether a project exists or not
