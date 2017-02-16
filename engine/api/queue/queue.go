@@ -48,14 +48,13 @@ func Pipelines() {
 			}
 
 			for _, id := range ids {
-				RunActions(db, id)
+				runPipeline(db, id)
 			}
 		}
 	}
 }
 
-// RunActions Schedule action for the given Build
-func RunActions(db *gorp.DbMap, pbID int64) {
+func runPipeline(db *gorp.DbMap, pbID int64) {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Warning("queue.RunActions> cannot start tx for pb %d: %s\n", pbID, err)
@@ -85,9 +84,12 @@ func RunActions(db *gorp.DbMap, pbID int64) {
 		return
 	}
 
+	if pb.Status != sdk.StatusBuilding {
+		return
+	}
+
 	pbNewStatus := sdk.StatusBuilding
 
-	// OH! AN EMPTY PIPELINE
 	if len(pb.Stages) == 0 {
 		// Pipeline is done
 		pbNewStatus = sdk.StatusSuccess
