@@ -179,6 +179,16 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			}
 		}
 
+		if c.Hatchery != nil {
+			g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
+			if err != nil {
+				log.Warning("Router> cannot load group permissions: %s")
+				WriteError(w, req, sdk.ErrUnauthorized)
+				return
+			}
+			c.User.Groups = append(c.User.Groups, *g)
+		}
+
 		if c.Worker != nil {
 			g, err := loadGroupPermissions(db, c.Worker.GroupID)
 			if err != nil {
@@ -186,6 +196,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				WriteError(w, req, sdk.ErrUnauthorized)
 			}
 			c.User.Groups = append(c.User.Groups, *g)
+
 			if c.Worker.Model != 0 {
 				//Load model
 				m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
@@ -396,13 +407,8 @@ func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *conte
 		return err
 	}
 
-	log.Debug("HatcheryAuth> Loading permissions for group %d\n", h.GroupID)
 	c.User = &sdk.User{Username: h.Name}
-	g, err := loadGroupPermissions(db, h.GroupID)
-	if err != nil {
-		return fmt.Errorf("cannot load group permissions: %s", err)
-	}
-	c.User.Groups = append(c.User.Groups, *g)
+	c.Hatchery = h
 	return nil
 }
 
