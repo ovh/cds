@@ -73,8 +73,9 @@ func check(assertion string, executorResult ExecutorResult, l *log.Entry) (*Fail
 	out := f(actual, args...)
 
 	if out != "" {
+		prefix := "assertion: " + assertion
 		sdump, _ := dump.Sdump(executorResult)
-		return nil, &Failure{Value: out + "\n" + sdump}
+		return nil, &Failure{Value: prefix + "\n" + out + "\n" + sdump}
 	}
 	return nil, nil
 }

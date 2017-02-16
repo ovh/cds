@@ -49,6 +49,7 @@ testcases:
   - script: echo 'bar'
     assertions:
     - result.stdOut ShouldNotContainSubstring foo
+    - result.timeseconds ShouldBeLessThan 1
 
 - name: GET http testcase
   steps:
@@ -59,6 +60,7 @@ testcases:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing
     - result.statuscode ShouldEqual 200
+    - result.timeseconds ShouldBeLessThan 1
 
 ```
 
@@ -145,11 +147,12 @@ In your yaml file, you can use:
 
 name: Title of TestSuite
 testcases:
-- name: TestCase with default value, exec cmd. Check if exit code != 1
+- name: Check if exit code != 1 and echo command response in less than 1s
   steps:
   - script: echo 'foo'
     assertions:
     - result.code ShouldEqual 0
+    - result.timeseconds ShouldBeLessThan 1
 
 ```
 
@@ -218,9 +221,10 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Code    int    `json:"code,omitempty" yaml:"code,omitempty"`
-	Command string `json:"command,omitempty" yaml:"command,omitempty"`
-	Output  string `json:"Output,omitempty" yaml:"Output,omitempty"`
+	Code        int    `json:"code,omitempty" yaml:"code,omitempty"`
+	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
+	Output      string `json:"Output,omitempty" yaml:"Output,omitempty"`
+  Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
 }
 
 // GetDefaultAssertions return default assertions for this executor
@@ -248,6 +252,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 		Code:    ouputCode, // return Output Code
 		Command: t.Command, // return Command executed
 		Output:  output,    // return Output string
+    Executor: t, // return executor, usefull for display Executor context in failure
 	}
 
 	return dump.ToMap(r)

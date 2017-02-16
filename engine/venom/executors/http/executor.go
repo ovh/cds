@@ -1,9 +1,11 @@
 package http
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
@@ -34,10 +36,13 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	StatusCode int     `json:"statusCode,omitempty" yaml:"statusCode,omitempty"`
-	Body       string  `json:"body,omitempty" yaml:"body,omitempty"`
-	Headers    Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Err        error   `json:"error,omitempty" yaml:"error,omitempty"`
+	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
+	TimeSeconds float64  `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+	TimeHuman   string   `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
+	StatusCode  int      `json:"statusCode,omitempty" yaml:"statusCode,omitempty"`
+	Body        string   `json:"body,omitempty" yaml:"body,omitempty"`
+	Headers     Headers  `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Err         error    `json:"error,omitempty" yaml:"error,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for this executor
@@ -55,7 +60,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 		return nil, err
 	}
 
-	r := Result{}
+	r := Result{Executor: t}
 	var body io.Reader
 
 	path := t.URL + t.Path
@@ -72,10 +77,14 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 		req.Header.Set(k, v)
 	}
 
+	start := time.Now()
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	elapsed := time.Since(start)
+	r.TimeSeconds = elapsed.Seconds()
+	r.TimeHuman = fmt.Sprintf("%s", elapsed)
 
 	var bb []byte
 	if resp.Body != nil {

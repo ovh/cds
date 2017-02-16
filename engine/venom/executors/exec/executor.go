@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
@@ -33,11 +34,13 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Command string `json:"command,omitempty" yaml:"command,omitempty"`
-	StdOut  string `json:"stdout,omitempty" yaml:"stdout,omitempty"`
-	StdErr  string `json:"stderr,omitempty" yaml:"stderr,omitempty"`
-	Err     error  `json:"error,omitempty" yaml:"error,omitempty"`
-	Code    string `json:"code,omitempty" yaml:"code,omitempty"`
+	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
+	StdOut      string   `json:"stdout,omitempty" yaml:"stdout,omitempty"`
+	StdErr      string   `json:"stderr,omitempty" yaml:"stderr,omitempty"`
+	Err         error    `json:"error,omitempty" yaml:"error,omitempty"`
+	Code        string   `json:"code,omitempty" yaml:"code,omitempty"`
+	TimeSeconds float64  `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+	TimeHuman   string   `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for type exec
@@ -125,6 +128,8 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 		return nil, fmt.Errorf("cannot chmod script %s: %s\n", scriptPath, errc)
 	}
 
+	start := time.Now()
+
 	cmd := exec.Command(shell, opts...)
 	l.Debugf("teststep exec '%s %s'", shell, strings.Join(opts, " "))
 
@@ -141,7 +146,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	stdoutreader := bufio.NewReader(stdout)
 	stderrreader := bufio.NewReader(stderr)
 
-	result := Result{Command: t.Script}
+	result := Result{Executor: t}
 	outchan := make(chan bool)
 	go func() {
 		for {
@@ -188,5 +193,10 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 			}
 		}
 	}
+
+	elapsed := time.Since(start)
+	result.TimeSeconds = elapsed.Seconds()
+	result.TimeHuman = fmt.Sprintf("%s", elapsed)
+
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }

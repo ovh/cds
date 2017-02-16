@@ -17,3 +17,4 @@ testcases:
     assertions:
     - result.statuscode ShouldEqual 401
     - result.headers.www-authenticate ShouldEqual X-OVH-Auth
+    - result.timeseconds ShouldBeLessThan 1

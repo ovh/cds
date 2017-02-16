@@ -6,6 +6,7 @@ testcases:
     script: echo 'foo'
     assertions:
     - result.code ShouldEqual 0
+    - result.timeseconds ShouldBeLessThan 1
 
 - name: sleep 1
   steps:
