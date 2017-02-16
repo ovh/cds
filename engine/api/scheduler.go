@@ -122,11 +122,10 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	if env != nil && env.ID != sdk.DefaultEnv.ID {
+	if env != nil {
 		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
 			log.Warning("getSchedulerApplicationPipelineHandler> Cannot access to this environment")
 			return sdk.ErrForbidden
-
 		}
 	}
 
@@ -253,12 +252,10 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 			return err
 		}
 
-		if env.ID != sdk.DefaultEnv.ID {
-			if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
-				log.Warning("updateSchedulerApplicationPipelineHandler> Cannot access to this environment")
-				return sdk.ErrForbidden
+		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+			log.Warning("updateSchedulerApplicationPipelineHandler> Cannot access to this environment")
+			return sdk.ErrForbidden
 
-			}
 		}
 	}
 

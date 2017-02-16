@@ -77,7 +77,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	} else if t.SrcEnvironment.ID == 0 {
 		t.SrcEnvironment = sdk.DefaultEnv
 	}
-	if t.SrcEnvironment.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(t.SrcEnvironment.ID, c.User, permission.PermissionReadWriteExecute) {
+	if !permission.AccessToEnvironment(t.SrcEnvironment.ID, c.User, permission.PermissionReadWriteExecute) {
 		log.Warning("addTriggersHandler> No enought right on this environment %s: \n", t.SrcEnvironment.Name)
 		return sdk.ErrForbidden
 
@@ -122,7 +122,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		t.DestEnvironment = sdk.DefaultEnv
 	}
 
-	if t.DestEnvironment.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(t.DestEnvironment.ID, c.User, permission.PermissionReadWriteExecute) {
+	if !permission.AccessToEnvironment(t.DestEnvironment.ID, c.User, permission.PermissionReadWriteExecute) {
 		log.Warning("addTriggersHandler> No enought right on this environment %s: \n", t.DestEnvironment.Name)
 		return sdk.ErrForbidden
 
@@ -214,7 +214,7 @@ func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		}
 		envID = e.ID
 
-		if e.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(e.ID, c.User, permission.PermissionRead) {
+		if !permission.AccessToEnvironment(e.ID, c.User, permission.PermissionRead) {
 			log.Warning("getTriggersHandler> No enought right on this environment %s: \n", e.Name)
 			return sdk.ErrForbidden
 
@@ -383,7 +383,7 @@ func getTriggersAsSourceHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		}
 		envID = e.ID
 
-		if e.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(e.ID, c.User, permission.PermissionRead) {
+		if !permission.AccessToEnvironment(e.ID, c.User, permission.PermissionRead) {
 			log.Warning("getTriggersAsSourceHandler> No enought right on this environment %s: \n", e.Name)
 			return sdk.ErrForbidden
 		}

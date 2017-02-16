@@ -51,10 +51,9 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 			log.Warning("getStepBuildLogsHandler> Cannot load environment %s: %s\n", envName, errEnv)
 			return errEnv
 		}
-
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getStepBuildLogsHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 	}
@@ -134,7 +133,7 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getBuildLogsHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 
@@ -237,7 +236,7 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getPipelineBuildJobLogsHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 	}

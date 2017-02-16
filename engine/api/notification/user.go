@@ -198,61 +198,67 @@ type UserNotificationInput struct {
 	Pipeline              sdk.Pipeline           `json:"pipeline"`
 }
 
-//ParseUserNotification transform jsons to UserNotificationSettings map
-func ParseUserNotification(body []byte) (*sdk.UserNotification, error) {
+//LoadAllUserNotificationSettingsByProject load data for a project
+func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey string, u *sdk.User) ([]sdk.UserNotification, error) {
+	n := []sdk.UserNotification{}
 
-	var input = &UserNotificationInput{}
-	if err := json.Unmarshal(body, &input); err != nil {
-		return nil, err
+	var query string
+	var args []interface{}
+	//Handler admin
+	if u == nil || u.Admin {
+		query = `SELECT 	application_pipeline_id, environment_id, settings, pipeline.id, pipeline.name, environment.name
+		FROM  	application_pipeline_notif
+		JOIN 	application_pipeline ON application_pipeline.id = application_pipeline_notif.application_pipeline_id
+		JOIN 	pipeline ON pipeline.id = application_pipeline.pipeline_id
+		JOIN 	environment ON environment.id = environment_id
+		JOIN 	project ON project.id = pipeline.project_id
+		WHERE 	project.projectkey = $1
+		ORDER BY pipeline.name`
+		args = []interface{}{projectKey}
+	} else {
+		query = `
+		SELECT 	application_pipeline_id, environment_id, settings, pipeline.id, pipeline.name, environment.name
+		FROM  	application_pipeline_notif
+		JOIN 	application_pipeline ON application_pipeline.id = application_pipeline_notif.application_pipeline_id
+		JOIN 	pipeline ON pipeline.id = application_pipeline.pipeline_id
+		JOIN 	environment ON environment.id = environment_id
+		JOIN 	project ON project.id = pipeline.project_id
+		JOIN	application_group ON application_pipeline.application_id = application_group.application_id
+		JOIN 	pipeline_group ON pipeline.id = pipeline_group.pipeline_id
+		JOIN 	group_user ON group_user.group_id = pipeline_group.group_id AND group_user.group_id = application_group.group_id
+		WHERE 	project.projectkey = $1
+		AND 	group_user.user_id = $2
+		ORDER BY pipeline.name`
+		args = []interface{}{projectKey, u.ID}
 	}
-	settingsBody, err := json.Marshal(input.Notifications)
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
-
-	var notif1 = &sdk.UserNotification{
-		ApplicationPipelineID: input.ApplicationPipelineID,
-		Environment:           input.Environment,
-		Pipeline:              input.Pipeline,
-	}
-
-	var errParse error
-	notif1.Notifications, errParse = ParseUserNotificationSettings(settingsBody)
-	return notif1, errParse
-}
-
-//ParseUserNotificationSettings transforms json to UserNotificationSettings map
-func ParseUserNotificationSettings(settings []byte) (map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings, error) {
-	mapSettings := map[string]interface{}{}
-	if err := json.Unmarshal(settings, &mapSettings); err != nil {
-		return nil, err
-	}
-
-	notifications := map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{}
-
-	for k, v := range mapSettings {
-		switch k {
-		case string(sdk.EmailUserNotification), string(sdk.JabberUserNotification):
-			if v != nil {
-				var x sdk.JabberEmailUserNotificationSettings
-				tmp, err := json.Marshal(v)
-				if err != nil {
-					log.Warning("ParseUserNotificationSettings> unable to parse JabberEmailUserNotificationSettings: %s", err)
-					return nil, sdk.ErrParseUserNotification
-				}
-				if err := json.Unmarshal(tmp, &x); err != nil {
-					log.Warning("ParseUserNotificationSettings> unable to parse JabberEmailUserNotificationSettings: %s", err)
-					return nil, sdk.ErrParseUserNotification
-				}
-				notifications[sdk.UserNotificationSettingsType(k)] = &x
-			}
-		default:
-			log.Critical("ParseUserNotificationSettings> unsupported %s", k)
-			return nil, sdk.ErrNotSupportedUserNotification
+	defer rows.Close()
+	for rows.Next() {
+		var un sdk.UserNotification
+		var settings string
+		if err := rows.Scan(&un.ApplicationPipelineID, &un.Environment.ID, &settings, &un.Pipeline.ID, &un.Pipeline.Name, &un.Environment.Name); err != nil {
+			return nil, err
 		}
+		var err error
+		un.Notifications, err = sdk.ParseUserNotificationSettings([]byte(settings))
+		if err != nil {
+			return nil, err
+		}
+
+		if u != nil {
+			if !permission.AccessToEnvironment(un.Environment.ID, u, permission.PermissionRead) {
+				continue
+			}
+		}
+
+		n = append(n, un)
 	}
 
-	return notifications, nil
+	return n, nil
 }
 
 //LoadAllUserNotificationSettings load data from application_pipeline_notif
@@ -280,7 +286,7 @@ func LoadAllUserNotificationSettings(db gorp.SqlExecutor, appID int64) ([]sdk.Us
 		if err != nil {
 			return nil, err
 		}
-		un.Notifications, err = ParseUserNotificationSettings([]byte(settings))
+		un.Notifications, err = sdk.ParseUserNotificationSettings([]byte(settings))
 		if err != nil {
 			return nil, err
 		}
@@ -316,7 +322,7 @@ func LoadUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, envID int64
 	}
 
 	var err error
-	n.Notifications, err = ParseUserNotificationSettings([]byte(settings))
+	n.Notifications, err = sdk.ParseUserNotificationSettings([]byte(settings))
 	if err != nil {
 		log.Warning("notification.LoadUserNotificationSettings>2> %s", err)
 		return nil, err

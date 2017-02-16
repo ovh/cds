@@ -244,11 +244,9 @@ func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *htt
 		}
 	}
 
-	if env.ID != sdk.DefaultEnv.ID {
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
-			log.Warning("getUserNotificationApplicationPipelineHandler> Cannot access to this environment")
-			return sdk.ErrForbidden
-		}
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+		log.Warning("getUserNotificationApplicationPipelineHandler> Cannot access to this environment")
+		return sdk.ErrForbidden
 	}
 
 	//Load notifs
@@ -305,12 +303,9 @@ func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 		}
 	}
 
-	if env.ID != sdk.DefaultEnv.ID {
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadWriteExecute) {
-			log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot access to this environment")
-			return sdk.ErrForbidden
-		}
-
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadWriteExecute) {
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot access to this environment")
+		return sdk.ErrForbidden
 	}
 
 	tx, err := db.Begin()
@@ -395,12 +390,9 @@ func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 			n.Environment = sdk.DefaultEnv
 		}
 
-		if n.Environment.ID != sdk.DefaultEnv.ID {
-			if !permission.AccessToEnvironment(n.Environment.ID, c.User, permission.PermissionReadWriteExecute) {
-				log.Warning("addNotificationsHandler > Cannot access to this environment")
-				return sdk.ErrForbidden
-			}
-
+		if !permission.AccessToEnvironment(n.Environment.ID, c.User, permission.PermissionReadWriteExecute) {
+			log.Warning("addNotificationsHandler > Cannot access to this environment")
+			return sdk.ErrForbidden
 		}
 
 		// Insert or update notification
@@ -457,11 +449,11 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	//Parse notification settings
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return sdk.ErrParseUserNotification
+		return sdk.ErrWrongRequest
 	}
-	notifs, err := notification.ParseUserNotification(data)
-	if err != nil {
-		return err
+	notifs := &sdk.UserNotification{}
+	if err := json.Unmarshal(data, notifs); err != nil {
+		return sdk.ErrParseUserNotification
 	}
 
 	//Load environment
@@ -469,12 +461,9 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 		notifs.Environment = sdk.DefaultEnv
 	}
 
-	if notifs.Environment.ID != sdk.DefaultEnv.ID {
-		if !permission.AccessToEnvironment(notifs.Environment.ID, c.User, permission.PermissionReadWriteExecute) {
-			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot access to this environment")
-			return sdk.ErrForbidden
-		}
-
+	if !permission.AccessToEnvironment(notifs.Environment.ID, c.User, permission.PermissionReadWriteExecute) {
+		log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot access to this environment")
+		return sdk.ErrForbidden
 	}
 
 	tx, err := db.Begin()
