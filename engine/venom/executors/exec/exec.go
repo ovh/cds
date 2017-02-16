@@ -1,4 +1,4 @@
-package script
+package exec
 
 import (
 	"bufio"
@@ -12,62 +12,59 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/fsamin/go-dump"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/engine/venom"
-	"github.com/ovh/cds/engine/venom/check"
-	"github.com/ovh/cds/sdk"
 )
 
-func init() {
-	venom.RegisterTestFactory("script", func() venom.Test { return &TestExec{} })
+// Name for test exec
+const Name = "exec"
+
+// New returns a new Test Exec
+func New() venom.Executor {
+	return &Executor{}
 }
 
-// TestExec represents a Test Exec
-type TestExec struct{}
-
-// Check check a script result
-func (*TestExec) Check(tc *sdk.TestCase, ts *sdk.TestStep, assertion string, l *log.Entry) {
-	assert := strings.Split(assertion, " ")
-	if len(assert) < 3 {
-		tc.Errors = append(tc.Errors, sdk.Failure{Value: fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert))})
-		return
-	}
-
-	switch assert[0] {
-	case "code":
-		check.Assertion(assert, ts.Result.Code, tc, ts, l)
-		return
-	case "stderr":
-		check.Assertion(assert, ts.Result.StdErr, tc, ts, l)
-		return
-	case "stdout":
-		check.Assertion(assert, ts.Result.StdOut, tc, ts, l)
-		return
-	}
-
-	tc.Errors = append(tc.Errors, sdk.Failure{Value: fmt.Sprintf("invalid assertion %s", assertion)})
+// Executor represents a Test Exec
+type Executor struct {
+	Script string `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
-// GetDefaultAssertion return default assertion for type exec
-func (*TestExec) GetDefaultAssertion(a string) string {
-	return "code ShouldEqual 0"
+// Result represents a step result
+type Result struct {
+	Command string `json:"command,omitempty" yaml:"command,omitempty"`
+	StdOut  string `json:"stdout,omitempty" yaml:"stdout,omitempty"`
+	StdErr  string `json:"stderr,omitempty" yaml:"stderr,omitempty"`
+	Err     error  `json:"error,omitempty" yaml:"error,omitempty"`
+	Code    string `json:"code,omitempty" yaml:"code,omitempty"`
+}
+
+// GetDefaultAssertions return default assertions for type exec
+func (Executor) GetDefaultAssertions() venom.StepAssertions {
+	return venom.StepAssertions{Assertions: []string{"code ShouldEqual 0"}}
 }
 
 // Run execute TestStep of type exec
-func (*TestExec) Run(s *sdk.TestStep, l *log.Entry, aliases map[string]string) {
-	if s.ScriptContent == "" {
-		s.Result.Err = fmt.Errorf("Invalid command")
-		return
+func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+
+	var t Executor
+	if err := mapstructure.Decode(step, &t); err != nil {
+		return nil, err
 	}
 
-	scriptContent := s.ScriptContent
+	if t.Script == "" {
+		return nil, fmt.Errorf("Invalid command")
+	}
+
+	scriptContent := t.Script
 	for alias, real := range aliases {
 		if strings.Contains(scriptContent, alias+" ") {
 			scriptContent = strings.Replace(scriptContent, alias+" ", real+" ", 1)
 		}
 	}
 
-	s.ScriptContent = scriptContent
+	t.Script = scriptContent
 
 	// Default shell is sh
 	shell := "/bin/sh"
@@ -89,8 +86,7 @@ func (*TestExec) Run(s *sdk.TestStep, l *log.Entry, aliases map[string]string) {
 	// Create a tmp file
 	tmpscript, errt := ioutil.TempFile(os.TempDir(), "venom-")
 	if errt != nil {
-		s.Result.Err = fmt.Errorf("Cannot create tmp file: %s\n", errt)
-		return
+		return nil, fmt.Errorf("Cannot create tmp file: %s\n", errt)
 	}
 
 	// Put script in file
@@ -98,11 +94,9 @@ func (*TestExec) Run(s *sdk.TestStep, l *log.Entry, aliases map[string]string) {
 	n, errw := tmpscript.Write([]byte(scriptContent))
 	if errw != nil || n != len(scriptContent) {
 		if errw != nil {
-			s.Result.Err = fmt.Errorf("Cannot write script: %s\n", errw)
-			return
+			return nil, fmt.Errorf("Cannot write script: %s\n", errw)
 		}
-		s.Result.Err = fmt.Errorf("cannot write all script: %d/%d\n", n, len(scriptContent))
-		return
+		return nil, fmt.Errorf("cannot write all script: %d/%d\n", n, len(scriptContent))
 	}
 
 	oldPath := tmpscript.Name()
@@ -114,8 +108,7 @@ func (*TestExec) Run(s *sdk.TestStep, l *log.Entry, aliases map[string]string) {
 		//and add .PS1 extension
 		newPath = newPath + ".PS1"
 		if err := os.Rename(oldPath, newPath); err != nil {
-			s.Result.Err = fmt.Errorf("cannot rename script to add powershell Extension, aborting\n")
-			return
+			return nil, fmt.Errorf("cannot rename script to add powershell Extension, aborting\n")
 		}
 		//This aims to stop a the very first error and return the right exit code
 		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)
@@ -129,8 +122,7 @@ func (*TestExec) Run(s *sdk.TestStep, l *log.Entry, aliases map[string]string) {
 
 	// Chmod file
 	if errc := os.Chmod(scriptPath, 0755); errc != nil {
-		s.Result.Err = fmt.Errorf("cannot chmod script %s: %s\n", scriptPath, errc)
-		return
+		return nil, fmt.Errorf("cannot chmod script %s: %s\n", scriptPath, errc)
 	}
 
 	cmd := exec.Command(shell, opts...)
@@ -138,19 +130,18 @@ func (*TestExec) Run(s *sdk.TestStep, l *log.Entry, aliases map[string]string) {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		l.Warning("runScriptAction: Cannot get stdout pipe: %s\n", err)
-		return
+		return nil, fmt.Errorf("runScriptAction: Cannot get stdout pipe: %s\n", err)
 	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		l.Warning("runScriptAction: Cannot get stderr pipe: %s\n", err)
-		return
+		return nil, fmt.Errorf("runScriptAction: Cannot get stderr pipe: %s\n", err)
 	}
 
 	stdoutreader := bufio.NewReader(stdout)
 	stderrreader := bufio.NewReader(stderr)
 
+	result := Result{Command: t.Script}
 	outchan := make(chan bool)
 	go func() {
 		for {
@@ -160,7 +151,7 @@ func (*TestExec) Run(s *sdk.TestStep, l *log.Entry, aliases map[string]string) {
 				close(outchan)
 				return
 			}
-			s.Result.StdOut += line
+			result.StdOut += line
 			l.Debugf(line)
 		}
 	}()
@@ -174,30 +165,28 @@ func (*TestExec) Run(s *sdk.TestStep, l *log.Entry, aliases map[string]string) {
 				close(errchan)
 				return
 			}
-			s.Result.StdErr += line
+			result.StdErr += line
 			l.Debugf(line)
 		}
 	}()
 
 	if err := cmd.Start(); err != nil {
-		s.Result.Err = err
-		s.Result.Code = "127"
+		result.Err = err
+		result.Code = "127"
 		l.Debugf(err.Error())
-		return
+		return dump.ToMap(t)
 	}
 
 	_ = <-outchan
 	_ = <-errchan
 
+	result.Code = "0"
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				s.Result.Code = strconv.Itoa(status.ExitStatus())
+				result.Code = strconv.Itoa(status.ExitStatus())
 			}
 		}
-
-		s.Result.Err = err
-		return
 	}
-	s.Result.Code = "0"
+	return dump.ToMap(result)
 }

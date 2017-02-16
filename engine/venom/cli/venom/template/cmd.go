@@ -4,10 +4,9 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/ovh/cds/engine/venom"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-
-	"github.com/ovh/cds/sdk"
 )
 
 // Cmd run
@@ -21,27 +20,28 @@ var Cmd = &cobra.Command{
 
 func template() {
 
-	ts := sdk.TestSuite{
+	ts := venom.TestSuite{
 		Name: "Title of TestSuite",
-		TestCases: []sdk.TestCase{
+		TestCases: []venom.TestCase{
 			{
 				Name: "TestCase with default value, exec cmd. Check if exit code != 1",
-				TestSteps: []sdk.TestStep{
+				TestSteps: []venom.TestStep{
 					{
-						ScriptContent: "cds status",
+						"type":   "exec",
+						"script": "echo 'foo'",
 					},
 				},
 			},
 			{
 				Name: "Title of First TestCase",
-				TestSteps: []sdk.TestStep{
+				TestSteps: []venom.TestStep{
 					{
-						ScriptContent: "cds status",
-						Assertions:    []string{"code ShouldEqual 0"},
+						"script":     "echo 'foo'",
+						"assertions": []string{"Result.Code ShouldEqual 0"},
 					},
 					{
-						ScriptContent: "cds user list",
-						Assertions:    []string{"code ShouldNotEqual 0"},
+						"script":     "echo 'bar'",
+						"assertions": []string{"Result.StdOut ShouldNotContainSubstring bar"},
 					},
 				},
 			},

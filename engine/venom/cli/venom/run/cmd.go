@@ -13,8 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/venom"
-	_ "github.com/ovh/cds/engine/venom/plugins/script" // script test type
-	"github.com/ovh/cds/sdk"
+	ex "github.com/ovh/cds/engine/venom/executors/exec"
 )
 
 var (
@@ -55,6 +54,7 @@ var Cmd = &cobra.Command{
 			path = "."
 		}
 
+		venom.RegisterExecutor(ex.Name, ex.New())
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if parallel < 0 {
@@ -91,7 +91,7 @@ var Cmd = &cobra.Command{
 	},
 }
 
-func outputResult(tests sdk.Tests, elapsed time.Duration) {
+func outputResult(tests venom.Tests, elapsed time.Duration) {
 	var data []byte
 	var err error
 	switch format {
@@ -131,7 +131,7 @@ func outputResult(tests sdk.Tests, elapsed time.Duration) {
 
 }
 
-func outputResume(tests sdk.Tests, elapsed time.Duration) {
+func outputResume(tests venom.Tests, elapsed time.Duration) {
 
 	if resumeFailures {
 		for _, t := range tests.TestSuites {

@@ -1,42 +1,56 @@
 package venom
 
 import (
-	"sync"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-
-	"github.com/ovh/cds/sdk"
 )
 
-// Test represents a TestStep. See plugins for implementation
-type Test interface {
-	// Check checks result
-	Check(*sdk.TestCase, *sdk.TestStep, string, *log.Entry)
-	// Run run a Test Case
-	Run(*sdk.TestStep, *log.Entry, map[string]string)
-	// GetDefaultAssertion returns default assertion
-	GetDefaultAssertion(string) string
+type (
+	// Aliases contains list of aliases
+	Aliases map[string]string
+
+	// ExecutorResult represents an executor result on a test step
+	ExecutorResult map[string]string
+)
+
+// StepAssertions contains step assertions
+type StepAssertions struct {
+	Assertions []string `json:"assertions,omitempty" yaml:"assertions,omitempty"`
+}
+
+// Executor execute a testStep.
+type Executor interface {
+	// Run run a Test Step
+	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	// GetDefaultAssertion returns default assertions
+	GetDefaultAssertions() StepAssertions
 }
 
 var (
-	testTypesLock sync.Mutex
-	testTypes     = map[string]func() Test{}
+	executors = map[string]Executor{}
 )
 
-// RegisterTestFactory register Test Plugins
-func RegisterTestFactory(name string, factory func() Test) {
-	testTypesLock.Lock()
-	testTypes[name] = factory
-	testTypesLock.Unlock()
+// RegisterExecutor register Test Executors
+func RegisterExecutor(name string, e Executor) {
+	executors[name] = e
 }
 
-// newTest initializes a test by name
-func newTest(name string) Test {
-	testTypesLock.Lock()
-	f, ok := testTypes[name]
-	testTypesLock.Unlock()
-	if !ok {
-		return nil
+// getExecutor initializes a test by name
+func getExecutor(t map[string]interface{}) (Executor, error) {
+
+	var name string
+	itype, ok := t["type"]
+	if ok {
+		name = fmt.Sprintf("%s", itype)
 	}
-	return f()
+	if name == "" {
+		name = "exec"
+	}
+
+	e, ok := executors[name]
+	if !ok {
+		return nil, fmt.Errorf("type '%s' is not implemented", name)
+	}
+	return e, nil
 }

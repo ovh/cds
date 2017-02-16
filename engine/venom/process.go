@@ -1,8 +1,6 @@
 package venom
 
 import (
-	"bytes"
-	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,8 +12,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
-
-	"github.com/ovh/cds/sdk"
 )
 
 const (
@@ -31,8 +27,8 @@ var aliases map[string]string
 var bars map[string]*pb.ProgressBar
 var mutex = &sync.Mutex{}
 
-// Process runs tests suite and return a sdk.Tests result
-func Process(path string, alias []string, parallel int, detailsLevel string) (sdk.Tests, error) {
+// Process runs tests suite and return a Tests result
+func Process(path string, alias []string, parallel int, detailsLevel string) (Tests, error) {
 	log.Infof("Start processing path %s", path)
 
 	aliases = make(map[string]string)
@@ -56,17 +52,17 @@ func Process(path string, alias []string, parallel int, detailsLevel string) (sd
 		log.Fatalf("Error reading files on path:%s :%s", path, errg)
 	}
 
-	tss := []sdk.TestSuite{}
+	tss := []TestSuite{}
 
 	log.Debugf("Work with parallel %d", parallel)
 	var wgPrepare, wg sync.WaitGroup
 	wg.Add(len(filesPath))
 	wgPrepare.Add(len(filesPath))
 
-	parallels := make(chan sdk.TestSuite, parallel)
-	chanEnd := make(chan sdk.TestSuite, 1)
+	parallels := make(chan TestSuite, parallel)
+	chanEnd := make(chan TestSuite, 1)
 
-	tr := sdk.Tests{}
+	tr := Tests{}
 	go func() {
 		for t := range chanEnd {
 			tss = append(tss, t)
@@ -85,7 +81,7 @@ func Process(path string, alias []string, parallel int, detailsLevel string) (sd
 	}()
 
 	bars = make(map[string]*pb.ProgressBar)
-	chanToRun := make(chan sdk.TestSuite, len(filesPath)+1)
+	chanToRun := make(chan TestSuite, len(filesPath)+1)
 	totalSteps := 0
 	for _, file := range filesPath {
 		go func(f string) {
@@ -99,7 +95,7 @@ func Process(path string, alias []string, parallel int, detailsLevel string) (sd
 				return
 			}
 
-			ts := sdk.TestSuite{}
+			ts := TestSuite{}
 			ts.Package = f
 			log.Debugf("Unmarshal %s", f)
 			if err := yaml.Unmarshal(dat, &ts); err != nil {
@@ -159,7 +155,7 @@ func Process(path string, alias []string, parallel int, detailsLevel string) (sd
 
 	go func() {
 		for ts := range chanToRun {
-			go func(ts sdk.TestSuite) {
+			go func(ts TestSuite) {
 				parallels <- ts
 				defer func() { <-parallels }()
 				runTestSuite(&ts, detailsLevel)
@@ -187,7 +183,7 @@ func rightPad(s string, padStr string, pLen int) string {
 	return o[0:pLen]
 }
 
-func runTestSuite(ts *sdk.TestSuite, detailsLevel string) {
+func runTestSuite(ts *TestSuite, detailsLevel string) {
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 
@@ -232,21 +228,24 @@ func runTestSuite(ts *sdk.TestSuite, detailsLevel string) {
 	}
 }
 
-func runTestCase(ts *sdk.TestSuite, tc *sdk.TestCase, l *log.Entry, detailsLevel string) {
+func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string) {
 	l = l.WithField("x.testcase", tc.Name)
 	l.Infof("start")
-	for _, tst := range tc.TestSteps {
+	for _, step := range tc.TestSteps {
 
-		//testTypes["script"].Run(&tst, l, aliases)
-
-		stype := "script"
-		t := newTest(stype)
-		if t == nil {
-			tc.Errors = append(tc.Errors, sdk.Failure{Value: fmt.Sprintf("Unknown type '%s'", stype)})
+		t, err := getExecutor(step)
+		if err != nil {
+			tc.Errors = append(tc.Errors, Failure{Value: err.Error()})
 			break
 		}
 
-		applyResult(tc, &tst, l, t)
+		result, err := t.Run(l, aliases, step)
+		if err != nil {
+			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
+		}
+
+		applyChecks(result, tc, step, t.GetDefaultAssertions(), l)
+
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()
 		}
@@ -255,41 +254,4 @@ func runTestCase(ts *sdk.TestSuite, tc *sdk.TestCase, l *log.Entry, detailsLevel
 		}
 	}
 	l.Infof("end")
-}
-
-func applyResult(tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry, t Test) error {
-
-	buferr := new(bytes.Buffer)
-	if err := xml.EscapeText(buferr, []byte(ts.Result.StdErr)); err != nil {
-		return err
-	}
-	bufout := new(bytes.Buffer)
-	if err := xml.EscapeText(bufout, []byte(ts.Result.StdErr)); err != nil {
-		return err
-	}
-
-	tc.Systemerr.Value = buferr.String()
-	tc.Systemout.Value = bufout.String()
-
-	if ts.Result.Err != nil {
-		tc.Systemerr.Value += ts.Result.Err.Error()
-	}
-
-	if len(ts.Assertions) == 0 {
-		ts.Assertions = []string{""}
-	}
-
-	for _, a := range ts.Assertions {
-		assertion := getAssertion(ts, a, l, t)
-		t.Check(tc, ts, assertion, l)
-	}
-
-	return nil
-}
-
-func getAssertion(ts *sdk.TestStep, assertion string, l *log.Entry, t Test) string {
-	if assertion != "" {
-		return assertion
-	}
-	return t.GetDefaultAssertion(assertion)
 }

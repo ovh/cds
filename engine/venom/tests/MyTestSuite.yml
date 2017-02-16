@@ -2,14 +2,19 @@ name: MyTestCase
 testcases:
 - name: cdsfoo status
   steps:
-  - script: cds status
-    assertions:
-    - code ShouldNotEqual 0
-- name: sleep 1
-  steps:
-  - script: sleep 1
+  - type: exec
+    script: echo 'foo'
     assertions:
     - code ShouldEqual 0
+
+- name: sleep 1
+  steps:
+  - type: exec
+    script: sleep 1
+    assertions:
+    - code ShouldEqual 0
+
 - name: sleep 3
   steps:
-  - script: sleep 3
+  - type: exec
+    script: sleep 3

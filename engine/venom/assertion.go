@@ -1,12 +1,13 @@
-package check
+package venom
 
 import (
 	"fmt"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/fsamin/go-dump"
+	"github.com/mitchellh/mapstructure"
 	"github.com/smartystreets/assertions"
-
-	"github.com/ovh/cds/sdk"
 )
 
 type testingT struct {
@@ -24,31 +25,57 @@ func (t *testingT) Error(args ...interface{}) {
 	}
 }
 
-// Assertion checks assertion
-func Assertion(assert []string, actual interface{}, tc *sdk.TestCase, ts *sdk.TestStep, l *log.Entry) {
+func applyChecks(executorResult ExecutorResult, tc *TestCase, step TestStep, defaultAssertions StepAssertions, l *log.Entry) {
+
+	var sa StepAssertions
+	if err := mapstructure.Decode(step, &sa); err != nil {
+		log.Errorf("error decoding assertions: %s", err)
+		return
+	}
+
+	if len(sa.Assertions) == 0 {
+		sa = defaultAssertions
+	}
+
+	for _, assertion := range sa.Assertions {
+		errs, fails := check(assertion, executorResult, l)
+		if errs != nil {
+			tc.Errors = append(tc.Errors, *errs)
+		}
+		if fails != nil {
+			tc.Failures = append(tc.Failures, *fails)
+		}
+	}
+
+	return
+}
+
+func check(assertion string, executorResult ExecutorResult, l *log.Entry) (*Failure, *Failure) {
+	assert := strings.Split(assertion, " ")
+	if len(assert) < 3 {
+		return &Failure{Value: fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert))}, nil
+	}
+
+	actual, ok := executorResult[assert[0]]
+	if !ok {
+		return &Failure{Value: fmt.Sprintf("key '%s' does not exist in result of executor: %+v", assert[0], executorResult)}, nil
+	}
+
 	f, ok := assertMap[assert[1]]
 	if !ok {
-		tc.Errors = append(tc.Errors, sdk.Failure{Value: fmt.Sprintf("Method not found \"%s\"", assert[1])})
-		return
+		return &Failure{Value: fmt.Sprintf("Method not found '%s'", assert[1])}, nil
 	}
 	args := make([]interface{}, len(assert[2:]))
 	for i, v := range assert[2:] { // convert []string to []interface for assertions.func()...
 		args[i] = v
 	}
 	out := f(actual, args...)
+
 	if out != "" {
-		c := fmt.Sprintf("TestCase:%s\n %s", tc.Name, ts.ScriptContent)
-		if len(c) > 200 {
-			c = c[0:200] + "..."
-		}
-		if ts.Result.StdOut != "" {
-			out += "\n" + ts.Result.StdOut
-		}
-		if ts.Result.StdErr != "" {
-			out += "\n" + ts.Result.StdErr
-		}
-		tc.Failures = append(tc.Failures, sdk.Failure{Value: fmt.Sprintf("%s\n%s", c, out)})
+		sdump, _ := dump.Sdump(executorResult)
+		return nil, &Failure{Value: out + "\n" + sdump}
 	}
+	return nil, nil
 }
 
 // assertMap contains list of assertions func

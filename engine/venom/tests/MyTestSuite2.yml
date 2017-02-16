@@ -1,4 +1,4 @@
-name: MyTestCase2
+name: MyTestSuite2
 testcases:
 - name: sleep 2, exit code 0
   steps:
