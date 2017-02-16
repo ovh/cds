@@ -471,7 +471,7 @@ func moveDownStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosit
 }
 
 // CheckPrerequisites verifies that all prerequisite are matched before scheduling
-func CheckPrerequisites(s sdk.Stage, pb sdk.PipelineBuild) (bool, error) {
+func CheckPrerequisites(s sdk.Stage, pb *sdk.PipelineBuild) (bool, error) {
 	for {
 		replaced := false
 		// Now for each trigger parameter

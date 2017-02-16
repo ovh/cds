@@ -817,7 +817,7 @@ func ProcessTriggerParameters(t sdk.PipelineTrigger, pbParams []sdk.Parameter) [
 }
 
 //ProcessTriggerExpectedValue processes prerequisites expected values
-func ProcessTriggerExpectedValue(payload string, pb sdk.PipelineBuild) string {
+func ProcessTriggerExpectedValue(payload string, pb *sdk.PipelineBuild) string {
 	for {
 		replaced := false
 
@@ -837,7 +837,7 @@ func ProcessTriggerExpectedValue(payload string, pb sdk.PipelineBuild) string {
 }
 
 // CheckPrerequisites verifies that all prerequisite are matched before scheduling
-func CheckPrerequisites(t sdk.PipelineTrigger, pb sdk.PipelineBuild) (bool, error) {
+func CheckPrerequisites(t sdk.PipelineTrigger, pb *sdk.PipelineBuild) (bool, error) {
 
 	// Process parameters
 	parameters := ProcessTriggerParameters(t, pb.Parameters)

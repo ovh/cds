@@ -71,9 +71,9 @@ const (
 func SelectBuildForUpdate(db gorp.SqlExecutor, buildID int64) error {
 	var id int64
 	query := `SELECT id
-	          FROM pipeline_build
-	          WHERE id = $1 AND status = $2
-		  FOR UPDATE NOWAIT`
+                 FROM pipeline_build
+                 WHERE id = $1 AND status = $2
+                 FOR UPDATE NOWAIT`
 	return db.QueryRow(query, buildID, sdk.StatusBuilding.String()).Scan(&id)
 }
 
@@ -123,28 +123,23 @@ func LoadPipelineBuildByApplicationAndBranch(db gorp.SqlExecutor, appID int64, b
 	return pbs, nil
 }
 
-// LoadBuildingPipelines Load all building pipeline
-func LoadBuildingPipelines(db gorp.SqlExecutor) ([]sdk.PipelineBuild, error) {
-	whereCondition := `
-		WHERE pb.status = $1
-		ORDER by pb.id ASC
-	`
-	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var rows []PipelineBuildDbResult
-	_, err := db.Select(&rows, query, sdk.StatusBuilding.String())
+// LoadBuildingPipelinesIDs Load all building pipeline id
+func LoadBuildingPipelinesIDs(db gorp.SqlExecutor) ([]int64, error) {
+	query := "SELECT id FROM pipeline_build WHERE status = $1 ORDER BY id ASC"
+	rows, err := db.Query(query, sdk.StatusBuilding.String())
 	if err != nil {
 		return nil, err
 	}
-
-	pbs := []sdk.PipelineBuild{}
-	for _, r := range rows {
-		pb, errScan := scanPipelineBuild(r)
-		if errScan != nil {
-			return nil, errScan
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
 		}
-		pbs = append(pbs, *pb)
+		ids = append(ids, id)
 	}
-	return pbs, nil
+	return ids, nil
 }
 
 // LoadRecentPipelineBuild retrieves pipelines in database having a build running or finished

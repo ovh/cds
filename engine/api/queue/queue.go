@@ -39,7 +39,7 @@ func Pipelines() {
 
 		db := database.DBMap(database.DB())
 		if db != nil && !m {
-			pipelines, err := pipeline.LoadBuildingPipelines(db)
+			ids, err := pipeline.LoadBuildingPipelinesIDs(db)
 			if err != nil {
 				log.Warning("queue.Pipelines> Cannot load building pipelines: %s\n", err)
 				// Add some extra sleep if db is down...
@@ -47,26 +47,25 @@ func Pipelines() {
 				continue
 			}
 
-			for i := range pipelines {
-				RunActions(db, pipelines[i])
+			for _, id := range ids {
+				RunActions(db, id)
 			}
 		}
 	}
 }
 
 // RunActions Schedule action for the given Build
-func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
+func RunActions(db *gorp.DbMap, pbID int64) {
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("queue.RunActions> cannot start tx for pb %d: %s\n", pb.ID, err)
+		log.Warning("queue.RunActions> cannot start tx for pb %d: %s\n", pbID, err)
 		return
 	}
 	defer tx.Rollback()
 
 	// Reload pipeline build with a FOR UPDATE NOT WAIT
 	// So only one instance of the API can update it and/or end it
-	err = pipeline.SelectBuildForUpdate(tx, pb.ID)
-	if err != nil {
+	if err := pipeline.SelectBuildForUpdate(tx, pbID); err != nil {
 		// if ErrNoRows, pipelines is already done
 		if err == sql.ErrNoRows {
 			return
@@ -77,6 +76,12 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 			return
 		}
 		log.Warning("queue.RunActions> Cannot load pb: %s\n", err)
+		return
+	}
+
+	pb, errPB := pipeline.LoadPipelineBuildByID(db, pbID)
+	if errPB != nil {
+		log.Warning("queue.RunActions> Cannot load pb [%d]: %s\n", pbID, err)
 		return
 	}
 
@@ -133,7 +138,7 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 		}
 	}
 
-	if err := pipeline.UpdatePipelineBuildStatusAndStage(tx, &pb, pbNewStatus); err != nil {
+	if err := pipeline.UpdatePipelineBuildStatusAndStage(tx, pb, pbNewStatus); err != nil {
 		log.Warning("RunActions> Cannot update UpdatePipelineBuildStatusAndStage on pb %d: %s\n", pb.ID, err)
 		return
 	}
@@ -152,7 +157,7 @@ func RunActions(db *gorp.DbMap, pb sdk.PipelineBuild) {
 	}
 }
 
-func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb sdk.PipelineBuild) error {
+func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild) error {
 	//Check stage prerequisites
 	prerequisitesOK, err := pipeline.CheckPrerequisites(*stage, pb)
 	if err != nil {
@@ -187,7 +192,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb sdk.PipelineBuild)
 			log.Warning("addJobToQueue> Cannot insert job in queue for pipeline build %d: %s\n", pb.ID, err)
 			return err
 		}
-		event.PublishActionBuild(&pb, &pbJob)
+		event.PublishActionBuild(pb, &pbJob)
 		stage.PipelineBuildJobs = append(stage.PipelineBuildJobs, pbJob)
 	}
 
@@ -258,7 +263,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	return stageEnd, nil
 }
 
-func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) error {
+func pipelineBuildEnd(tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 	// run trigger
 	triggers, err := trigger.LoadAutomaticTriggersAsSource(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if err != nil {
@@ -294,7 +299,7 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) error {
 
 		parameters := t.Parameters
 		// Add parent build info
-		parentParams := ParentBuildInfos(&pb)
+		parentParams := ParentBuildInfos(pb)
 		parameters = append(parameters, parentParams...)
 
 		// Start build
@@ -309,7 +314,7 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb sdk.PipelineBuild) error {
 		trigger := sdk.PipelineBuildTrigger{
 			ManualTrigger:       false,
 			TriggeredBy:         pb.Trigger.TriggeredBy,
-			ParentPipelineBuild: &pb,
+			ParentPipelineBuild: pb,
 			VCSChangesAuthor:    pb.Trigger.VCSChangesAuthor,
 			VCSChangesBranch:    pb.Trigger.VCSChangesBranch,
 			VCSChangesHash:      pb.Trigger.VCSChangesHash,
@@ -360,7 +365,7 @@ func ParentBuildInfos(pb *sdk.PipelineBuild) []sdk.Parameter {
 	return params
 }
 
-func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb sdk.PipelineBuild) ([]sdk.Parameter, error) {
+func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.PipelineBuild) ([]sdk.Parameter, error) {
 
 	// Get project and pipeline Information
 	projectData, err := project.LoadProjectByPipelineActionID(db, j.PipelineActionID)
