@@ -184,7 +184,7 @@ func (m *mapWriter) Write(p []byte) (int, error) {
 	if m.data == nil {
 		m.data = map[string]string{}
 	}
-	tuple := strings.Split(string(p), ":")
+	tuple := strings.SplitN(string(p), ":", 2)
 	if len(tuple) != 2 {
 		return 0, errors.New("malformatted bytes")
 	}

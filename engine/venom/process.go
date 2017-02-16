@@ -244,7 +244,11 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
 		}
 
-		applyChecks(result, tc, step, t.GetDefaultAssertions(), l)
+		if h, ok := t.(executorWithDefaultAssertions); ok {
+			applyChecks(result, tc, step, h.GetDefaultAssertions(), l)
+		} else {
+			applyChecks(result, tc, step, nil, l)
+		}
 
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()

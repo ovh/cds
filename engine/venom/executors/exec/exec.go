@@ -41,8 +41,8 @@ type Result struct {
 }
 
 // GetDefaultAssertions return default assertions for type exec
-func (Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"code ShouldEqual 0"}}
+func (Executor) GetDefaultAssertions() *venom.StepAssertions {
+	return &venom.StepAssertions{Assertions: []string{"Result.Code ShouldEqual 0"}}
 }
 
 // Run execute TestStep of type exec
@@ -188,5 +188,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 			}
 		}
 	}
+	d, e := dump.ToMap(result)
+	l.Debugf("executorResult: %+v  result.Code :%s EEEEE:%s\n", d, result.Code, e)
 	return dump.ToMap(result)
 }

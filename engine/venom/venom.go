@@ -23,8 +23,12 @@ type StepAssertions struct {
 type Executor interface {
 	// Run run a Test Step
 	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
+}
+
+// executorWithDefaultAssertions execute a testStep.
+type executorWithDefaultAssertions interface {
 	// GetDefaultAssertion returns default assertions
-	GetDefaultAssertions() StepAssertions
+	GetDefaultAssertions() *StepAssertions
 }
 
 var (

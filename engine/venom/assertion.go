@@ -25,7 +25,7 @@ func (t *testingT) Error(args ...interface{}) {
 	}
 }
 
-func applyChecks(executorResult ExecutorResult, tc *TestCase, step TestStep, defaultAssertions StepAssertions, l *log.Entry) {
+func applyChecks(executorResult ExecutorResult, tc *TestCase, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) {
 
 	var sa StepAssertions
 	if err := mapstructure.Decode(step, &sa); err != nil {
@@ -33,8 +33,8 @@ func applyChecks(executorResult ExecutorResult, tc *TestCase, step TestStep, def
 		return
 	}
 
-	if len(sa.Assertions) == 0 {
-		sa = defaultAssertions
+	if len(sa.Assertions) == 0 && defaultAssertions != nil {
+		sa = *defaultAssertions
 	}
 
 	for _, assertion := range sa.Assertions {

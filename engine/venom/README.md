@@ -170,6 +170,7 @@ type Result struct {
 }
 
 // GetDefaultAssertions return default assertions for this executor
+// Optional
 func (Executor) GetDefaultAssertions() venom.StepAssertions {
 	return venom.StepAssertions{Assertions: []string{"Result.Code ShouldEqual 0"}}
 }
@@ -193,7 +194,6 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
     Command: t.Command, // return Command executed  
     Output: output, // return Output
   }
-
 
 	return dump.ToMap(result)
 }

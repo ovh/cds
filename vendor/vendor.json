@@ -259,10 +259,10 @@
 			"revisionTime": "2017-01-03T08:10:50Z"
 		},
 		{
-			"checksumSHA1": "leGX9T5aXD6C1FUWuHt1KmkaeU0=",
+			"checksumSHA1": "vxuSHCKLs16PyylFAXMjgg5cgdg=",
 			"path": "github.com/fsamin/go-dump",
-			"revision": "3d751c046d0da88a6687aaaba81ad6f6d82760b3",
-			"revisionTime": "2017-02-15T10:43:15Z"
+			"revision": "590cfed312d8e2d75f347b3b323d3f31c387b442",
+			"revisionTime": "2017-02-16T16:06:57Z"
 		},
 		{
 			"checksumSHA1": "nmc2qcdbg17Ny8tHeEDQuphV6jA=",
@@ -585,7 +585,6 @@
 		},
 		{
 			"checksumSHA1": "4FUjSj4CbaZxSPOGl2zwfyaSFWI=",
-			"origin": "github.com/ovh/cds/vendor/github.com/smartystreets/assertions",
 			"path": "github.com/smartystreets/assertions",
 			"revision": "15adfb6b24e2f2a9ecc821eaeabcc90064e4e3e7",
 			"revisionTime": "2017-02-13T16:30:19Z"
