@@ -18,31 +18,31 @@ testcases:
   - script: cds project variable add ITSSHKEYCHECK fookey "" key
   - script: cds project variable show ITSSHKEYCHECK
     assertions:
-      - code ShouldEqual 0
-      - stdout ShouldContainSubstring fookey
+      - Result.Code ShouldEqual 0
+      - Result.StdOut ShouldContainSubstring fookey
   - script: cds project variable show ITSSHKEYCHECK
     assertions:
-      - code ShouldEqual 0
-      - stdout ShouldContainSubstring fookey.pub
+      - Result.Code ShouldEqual 0
+      - Result.StdOut ShouldContainSubstring fookey.pub
   - script: cds pipeline run ITSSHKEYCHECK app pip
   - script: cds pipeline run ITSSHKEYCHECK app pip
     assertions:
-      - code ShouldEqual 0
-      - stdout ShouldContainSubstring fookey
+      - Result.Code ShouldEqual 0
+      - Result.StdOut ShouldContainSubstring fookey
   - script: cds app variable add ITSSHKEYCHECK app github "" key
   - script: cds app variable show ITSSHKEYCHECK app
     assertions:
-      - code ShouldEqual 0
-      - stdout ShouldContainSubstring github
+      - Result.Code ShouldEqual 0
+      - Result.StdOut ShouldContainSubstring github
   - script: cds app variable show ITSSHKEYCHECK app
     assertions:
-      - code ShouldEqual 0
-      - stdout ShouldContainSubstring github.pub
+      - Result.Code ShouldEqual 0
+      - Result.StdOut ShouldContainSubstring github.pub
   - script: cds pipeline run ITSSHKEYCHECK app pip
   - script: cds pipeline run ITSSHKEYCHECK app pip
     assertions:
-      - code ShouldEqual 0
-      - stdout ShouldContainSubstring github
+      - Result.Code ShouldEqual 0
+      - Result.StdOut ShouldContainSubstring github
   - script: cds project remove --force ITSSHKEYCHECK
   - script: cds action remove sshtest
   - script: cds group remove ITSSHKEYCHECK

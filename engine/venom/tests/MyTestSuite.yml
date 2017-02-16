@@ -5,14 +5,14 @@ testcases:
   - type: exec
     script: echo 'foo'
     assertions:
-    - code ShouldEqual 0
+    - Result.Code ShouldEqual 0
 
 - name: sleep 1
   steps:
   - type: exec
     script: sleep 1
     assertions:
-    - code ShouldEqual 0
+    - Result.Code ShouldEqual 0
 
 - name: sleep 3
   steps:
