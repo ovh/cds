@@ -11,16 +11,52 @@ import (
 	"strings"
 )
 
+type KeyFormatterFunc func(s string) string
+
+func WithLowerCaseFormatter() KeyFormatterFunc {
+	return func(s string) string {
+		return strings.ToLower(s)
+	}
+}
+
+func WithDefaultLowerCaseFormatter() KeyFormatterFunc {
+	f := WithDefaultFormatter()
+	return func(s string) string {
+		return strings.ToLower(f(s))
+	}
+}
+
+func WithDefaultFormatter() KeyFormatterFunc {
+	return func(s string) string {
+		s = strings.Replace(s, " ", "_", -1)
+		s = strings.Replace(s, "/", "_", -1)
+		s = strings.Replace(s, ":", "_", -1)
+		return s
+	}
+}
+
+func NoFormatter() KeyFormatterFunc {
+	return func(s string) string {
+		return s
+	}
+}
+
 // Dump displays the passed parameter properties to standard out such as complete types and all
 // pointer addresses used to indirect to the final value.
 // See Fdump if you would prefer dumping to an arbitrary io.Writer or Sdump to
 // get the formatted result as a string.
-func Dump(i interface{}) error {
-	return FDump(os.Stdout, i)
+func Dump(i interface{}, formatters ...KeyFormatterFunc) error {
+	if formatters == nil {
+		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
+	}
+	return Fdump(os.Stdout, i, formatters...)
 }
 
-// FDump formats and displays the passed arguments to io.Writer w. It formats exactly the same as Dump.
-func FDump(w io.Writer, i interface{}) (err error) {
+// Fdump formats and displays the passed arguments to io.Writer w. It formats exactly the same as Dump.
+func Fdump(w io.Writer, i interface{}, formatters ...KeyFormatterFunc) (err error) {
+	if formatters == nil {
+		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			if _, ok := r.(runtime.Error); ok {
@@ -29,22 +65,24 @@ func FDump(w io.Writer, i interface{}) (err error) {
 			err = r.(error)
 			buf := make([]byte, 1<<16)
 			runtime.Stack(buf, true)
-			fmt.Printf("%s", buf)
 		}
 	}()
-	return fDumpStruct(w, i)
+	return fdumpStruct(w, i, nil, formatters...)
 }
 
 // Sdump returns a string with the passed arguments formatted exactly the same as Dump.
-func Sdump(i interface{}) (string, error) {
+func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
+	if formatters == nil {
+		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
+	}
 	var buf bytes.Buffer
-	if err := FDump(&buf, i); err != nil {
+	if err := Fdump(&buf, i, formatters...); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
 }
 
-func fDumpStruct(w io.Writer, i interface{}, roots ...string) error {
+func fdumpStruct(w io.Writer, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	var s reflect.Value
 	if reflect.ValueOf(i).Kind() == reflect.Ptr {
 		s = reflect.ValueOf(i).Elem()
@@ -72,14 +110,14 @@ func fDumpStruct(w io.Writer, i interface{}, roots ...string) error {
 				} else {
 					data = nil
 				}
-				if err := fDumpStruct(w, data, append(roots, s.Type().Field(i).Name)...); err != nil {
+				if err := fdumpStruct(w, data, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
 					return err
 				}
 			default:
 				var data interface{}
 				if validAndNotEmpty(f) {
 					data = f.Interface()
-					res := fmt.Sprintf("%s.%s: %v\n", strings.Join(roots, "."), s.Type().Field(i).Name, data)
+					res := fmt.Sprintf("%s.%s: %v\n", strings.Join(sliceFormat(roots, formatters), "."), format(s.Type().Field(i).Name, formatters), data)
 					if _, err := w.Write([]byte(res)); err != nil {
 						return err
 					}
@@ -87,12 +125,12 @@ func fDumpStruct(w io.Writer, i interface{}, roots ...string) error {
 			}
 		}
 	case reflect.Array, reflect.Slice:
-		if err := fDumpArray(w, i, roots...); err != nil {
+		if err := fDumpArray(w, i, roots, formatters...); err != nil {
 			return err
 		}
 		return nil
 	case reflect.Map:
-		if err := fDumpMap(w, i, roots...); err != nil {
+		if err := fDumpMap(w, i, roots, formatters...); err != nil {
 			return err
 		}
 		return nil
@@ -101,7 +139,7 @@ func fDumpStruct(w io.Writer, i interface{}, roots ...string) error {
 		var data interface{}
 		if validAndNotEmpty(s) {
 			data = s.Interface()
-			res := fmt.Sprintf("%s.%s: %v\n", strings.Join(roots, "."), s.Type().Name(), data)
+			res := fmt.Sprintf("%s.%s: %v\n", strings.Join(sliceFormat(roots, formatters), "."), format(s.Type().Name(), formatters), data)
 			if _, err := w.Write([]byte(res)); err != nil {
 				return err
 			}
@@ -112,7 +150,7 @@ func fDumpStruct(w io.Writer, i interface{}, roots ...string) error {
 	return nil
 }
 
-func fDumpArray(w io.Writer, i interface{}, roots ...string) error {
+func fDumpArray(w io.Writer, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
 	for i := 0; i < v.Len(); i++ {
 		var l string
@@ -134,14 +172,14 @@ func fDumpArray(w io.Writer, i interface{}, roots ...string) error {
 			} else {
 				data = nil
 			}
-			if err := fDumpStruct(w, data, croots...); err != nil {
+			if err := fdumpStruct(w, data, croots, formatters...); err != nil {
 				return err
 			}
 		default:
 			var data interface{}
 			if f.IsValid() {
 				data = f.Interface()
-				res := fmt.Sprintf("%s: %v\n", strings.Join(croots, "."), data)
+				res := fmt.Sprintf("%s: %v\n", strings.Join(sliceFormat(croots, formatters), "."), data)
 				if _, err := w.Write([]byte(res)); err != nil {
 					return err
 				}
@@ -152,7 +190,7 @@ func fDumpArray(w io.Writer, i interface{}, roots ...string) error {
 	return nil
 }
 
-func fDumpMap(w io.Writer, i interface{}, roots ...string) error {
+func fDumpMap(w io.Writer, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
 	keys := v.MapKeys()
 	//TODO  should manager map of pointer
@@ -163,11 +201,11 @@ func fDumpMap(w io.Writer, i interface{}, roots ...string) error {
 		roots := append(roots, key)
 		switch v.MapIndex(k).Kind() {
 		case reflect.Array, reflect.Slice, reflect.Map, reflect.Struct:
-			if err := fDumpStruct(w, v.MapIndex(k).Interface(), roots...); err != nil {
+			if err := fdumpStruct(w, v.MapIndex(k).Interface(), roots, formatters...); err != nil {
 				return err
 			}
 		default:
-			res := fmt.Sprintf("%s: %v\n", strings.Join(roots, "."), v.MapIndex(k).Interface())
+			res := fmt.Sprintf("%s: %v\n", strings.Join(sliceFormat(roots, formatters), "."), v.MapIndex(k).Interface())
 			if _, err := w.Write([]byte(res)); err != nil {
 				return err
 			}
@@ -194,9 +232,9 @@ func (m *mapWriter) Write(p []byte) (int, error) {
 }
 
 // ToMap format passed parameter as a map[string]string. It formats exactly the same as Dump.
-func ToMap(i interface{}) (map[string]string, error) {
+func ToMap(i interface{}, formatters ...KeyFormatterFunc) (map[string]string, error) {
 	m := mapWriter{}
-	err := FDump(&m, i)
+	err := Fdump(&m, i, formatters...)
 	return m.data, err
 }
 
@@ -208,4 +246,18 @@ func validAndNotEmpty(v reflect.Value) bool {
 		return true
 	}
 	return false
+}
+
+func sliceFormat(s []string, formatters []KeyFormatterFunc) []string {
+	for i := range s {
+		s[i] = format(s[i], formatters)
+	}
+	return s
+}
+
+func format(s string, formatters []KeyFormatterFunc) string {
+	for _, f := range formatters {
+		s = f(s)
+	}
+	return s
 }

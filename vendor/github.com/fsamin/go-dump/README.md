@@ -45,6 +45,12 @@ Will returns such a map:
 | T.A           | 23            |
 | T.B           | foo bar       |
 
+## Formatting keys
+
+```golang
+    dump.ToMap(a, dump.WithDefaultLowerCaseFormatter())
+```
+
 ## Complex example
 
 For the following complex struct:

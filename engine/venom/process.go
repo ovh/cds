@@ -244,6 +244,8 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
 		}
 
+		log.Debugf("result:%+v", result)
+
 		if h, ok := t.(executorWithDefaultAssertions); ok {
 			applyChecks(result, tc, step, h.GetDefaultAssertions(), l)
 		} else {

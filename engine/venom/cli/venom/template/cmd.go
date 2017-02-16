@@ -37,11 +37,11 @@ func template() {
 				TestSteps: []venom.TestStep{
 					{
 						"script":     "echo 'foo'",
-						"assertions": []string{"Result.Code ShouldEqual 0"},
+						"assertions": []string{"result.code ShouldEqual 0"},
 					},
 					{
 						"script":     "echo 'bar'",
-						"assertions": []string{"Result.StdOut ShouldNotContainSubstring foo"},
+						"assertions": []string{"result.stdOut ShouldNotContainSubstring foo"},
 					},
 				},
 			},

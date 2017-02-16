@@ -69,6 +69,7 @@ func check(assertion string, executorResult ExecutorResult, l *log.Entry) (*Fail
 	for i, v := range assert[2:] { // convert []string to []interface for assertions.func()...
 		args[i] = v
 	}
+
 	out := f(actual, args...)
 
 	if out != "" {

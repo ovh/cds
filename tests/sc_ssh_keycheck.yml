@@ -18,31 +18,31 @@ testcases:
   - script: cds project variable add ITSSHKEYCHECK fookey "" key
   - script: cds project variable show ITSSHKEYCHECK
     assertions:
-      - Result.Code ShouldEqual 0
-      - Result.StdOut ShouldContainSubstring fookey
+      - result.code ShouldEqual 0
+      - result.stdOut ShouldContainSubstring fookey
   - script: cds project variable show ITSSHKEYCHECK
     assertions:
-      - Result.Code ShouldEqual 0
-      - Result.StdOut ShouldContainSubstring fookey.pub
+      - result.code ShouldEqual 0
+      - result.stdOut ShouldContainSubstring fookey.pub
   - script: cds pipeline run ITSSHKEYCHECK app pip
   - script: cds pipeline run ITSSHKEYCHECK app pip
     assertions:
-      - Result.Code ShouldEqual 0
-      - Result.StdOut ShouldContainSubstring fookey
+      - result.code ShouldEqual 0
+      - result.stdOut ShouldContainSubstring fookey
   - script: cds app variable add ITSSHKEYCHECK app github "" key
   - script: cds app variable show ITSSHKEYCHECK app
     assertions:
-      - Result.Code ShouldEqual 0
-      - Result.StdOut ShouldContainSubstring github
+      - result.code ShouldEqual 0
+      - result.stdOut ShouldContainSubstring github
   - script: cds app variable show ITSSHKEYCHECK app
     assertions:
-      - Result.Code ShouldEqual 0
-      - Result.StdOut ShouldContainSubstring github.pub
+      - result.code ShouldEqual 0
+      - result.stdOut ShouldContainSubstring github.pub
   - script: cds pipeline run ITSSHKEYCHECK app pip
   - script: cds pipeline run ITSSHKEYCHECK app pip
     assertions:
-      - Result.Code ShouldEqual 0
-      - Result.StdOut ShouldContainSubstring github
+      - result.code ShouldEqual 0
+      - result.stdOut ShouldContainSubstring github
   - script: cds project remove --force ITSSHKEYCHECK
   - script: cds action remove sshtest
   - script: cds group remove ITSSHKEYCHECK

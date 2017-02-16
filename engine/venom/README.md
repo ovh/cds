@@ -30,7 +30,7 @@ Flags:
 * Run `venom template`
 * Examples: https://github.com/ovh/cds/tree/master/tests
 
-Example:
+### example:
 
 ```yaml
 
@@ -40,14 +40,25 @@ testcases:
   steps:
   - script: echo 'foo'
     type: exec
+
 - name: Title of First TestCase
   steps:
   - script: echo 'foo'
     assertions:
-    - Result.Code ShouldEqual 0
+    - result.code ShouldEqual 0
   - script: echo 'bar'
     assertions:
-    - Result.StdOut ShouldNotContainSubstring foo
+    - result.stdOut ShouldNotContainSubstring foo
+
+- name: GET http testcase
+  steps:
+  - type: http
+    method: GET
+    url: https://eu.api.ovh.com/1.0/
+    assertions:
+    - result.body ShouldContainSubstring /dedicated/server
+    - result.body ShouldContainSubstring /ipLoadbalancing
+    - result.statuscode ShouldEqual 200
 
 ```
 
@@ -118,8 +129,61 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldNotHappenWithin
 * ShouldBeChronological
 
+## Executors
 
-## Write your executor
+### Exec
+
+Default value of type is `exec`
+
+In your yaml file, you can use:
+
+```yaml
+  - script mandatory
+```
+
+```yaml
+
+name: Title of TestSuite
+testcases:
+- name: TestCase with default value, exec cmd. Check if exit code != 1
+  steps:
+  - script: echo 'foo'
+    assertions:
+    - result.code ShouldEqual 0
+
+```
+
+
+### HTTP
+
+In your yaml file, you can use:
+
+```yaml
+  - method optional, default value : GET
+  - url mandatory
+  - path optional
+  - body optional
+  - headers optional
+```
+
+```yaml
+
+name: Title of TestSuite
+testcases:
+
+- name: GET http testcase
+  steps:
+  - type: http
+    method: GET
+    url: https://eu.api.ovh.com/1.0/
+    assertions:
+    - result.body ShouldContainSubstring /dedicated/server
+    - result.body ShouldContainSubstring /ipLoadbalancing
+    - result.statuscode ShouldEqual 200
+
+```
+
+### Write your executor
 
 An executor have to implement this interface
 
@@ -138,16 +202,6 @@ Example
 
 ```go
 
-package myexecutor
-
-import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/fsamin/go-dump"
-	"github.com/mitchellh/mapstructure"
-
-	"github.com/ovh/cds/engine/venom"
-)
-
 
 // Name of executor
 const Name = "myexecutor"
@@ -164,7 +218,7 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Code    string `json:"code,omitempty" yaml:"code,omitempty"`
+	Code    int    `json:"code,omitempty" yaml:"code,omitempty"`
 	Command string `json:"command,omitempty" yaml:"command,omitempty"`
 	Output  string `json:"Output,omitempty" yaml:"Output,omitempty"`
 }
@@ -172,31 +226,33 @@ type Result struct {
 // GetDefaultAssertions return default assertions for this executor
 // Optional
 func (Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"Result.Code ShouldEqual 0"}}
+	return venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
 }
 
 // Run execute TestStep
 func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
 
-  // transform step to Executor Instance
+	// transform step to Executor Instance
 	var t Executor
 	if err := mapstructure.Decode(step, &t); err != nil {
 		return nil, err
 	}
 
-  // to something with t.Command here...
-  //...
-  output := "foo"
+	// to something with t.Command here...
+	//...
+	output := "foo"
+	ouputCode := 0
 
-  // prepare result
-  r := Result{
-    Code: t.Code, // return Command  Code
-    Command: t.Command, // return Command executed  
-    Output: output, // return Output
-  }
+	// prepare result
+	r := Result{
+		Code:    ouputCode, // return Output Code
+		Command: t.Command, // return Command executed
+		Output:  output,    // return Output string
+	}
 
-	return dump.ToMap(result)
+	return dump.ToMap(r)
 }
+
 ```
 
 Feel free to open a Pull Request with your executors.

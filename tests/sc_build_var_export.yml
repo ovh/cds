@@ -23,7 +23,7 @@ testcases:
   - script: cds pipeline run ITBUILDVAR app pip
   - script: cds pipeline run ITBUILDVAR app pip
     assertions:
-      - Result.Code ShouldEqual 0
-      - Result.StdOut ShouldContainSubstring bar
+      - result.code ShouldEqual 0
+      - result.stdOut ShouldContainSubstring bar
   - script: cds project remove --force ITBUILDVAR
   - script: cds group remove ITBUILDVAR
