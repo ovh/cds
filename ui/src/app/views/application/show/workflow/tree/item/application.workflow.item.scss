@@ -71,6 +71,9 @@ $itemWidth : 378px;
       .ui.left.ribbon {
         margin-left: 14px;
       }
+      .ui.ribbon.label {
+        padding-left: inherit;
+      }
 
       .ui.right.ribbon {
         margin-left: -14px;

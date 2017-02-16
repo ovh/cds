@@ -33,6 +33,7 @@ import {MarkdownModule} from 'angular2-markdown';
 import {HistoryComponent} from './history/history.component';
 import {StatusIconComponent} from './status/status.component';
 import {KeysPipe} from './pipes/keys.pipe';
+import {DurationService} from './duration/duration.service';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -62,6 +63,7 @@ import {KeysPipe} from './pipes/keys.pipe';
         WarningModalComponent,
     ],
     providers: [
+        DurationService,
         PermissionService,
         SharedService,
         ToastService

@@ -89,6 +89,19 @@ export class PipelineBuild {
     trigger: PipelineBuildTrigger;
     artifacts: Array<Artifact>;
     tests: Tests;
+
+    public static GetTriggerSource(pb: PipelineBuild): string {
+        if (pb.trigger.scheduled_trigger) {
+            return 'CDS scheduler';
+        }
+        if (pb.trigger.triggered_by && pb.trigger.triggered_by.username && pb.trigger.triggered_by.username !== '') {
+            return pb.trigger.triggered_by.username;
+        }
+        if (pb.trigger.vcs_author) {
+            return pb.trigger.vcs_author;
+        }
+        return '';
+    }
 }
 
 
@@ -118,6 +131,9 @@ export interface Log {
     timestamp: number;
     step_order: number;
     value: string;
+    start: number;
+    last_modified: number;
+    done: number;
 }
 
 export class PipelineBuildTrigger {

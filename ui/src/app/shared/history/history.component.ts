@@ -21,16 +21,7 @@ export class HistoryComponent extends Table {
     }
 
     getTriggerSource(pb: PipelineBuild): string {
-        if (pb.trigger.scheduled_trigger) {
-            return 'CDS scheduler';
-        }
-        if (pb.trigger.triggered_by && pb.trigger.triggered_by.username && pb.trigger.triggered_by.username !== '') {
-            return pb.trigger.triggered_by.username;
-        }
-        if (pb.trigger.vcs_author) {
-            return pb.trigger.vcs_author;
-        }
-        return '';
+        return PipelineBuild.GetTriggerSource(pb);
     }
 }
 
