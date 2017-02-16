@@ -584,10 +584,11 @@
 			"revisionTime": "2016-06-20T08:32:29Z"
 		},
 		{
-			"checksumSHA1": "RPVh5/wbvFG0q0CWHXifXpkYTDg=",
+			"checksumSHA1": "4FUjSj4CbaZxSPOGl2zwfyaSFWI=",
+			"origin": "github.com/ovh/cds/vendor/github.com/smartystreets/assertions",
 			"path": "github.com/smartystreets/assertions",
-			"revision": "26acb9229f421449ac63d014995b282d59261a8b",
-			"revisionTime": "2016-12-13T22:48:10Z"
+			"revision": "15adfb6b24e2f2a9ecc821eaeabcc90064e4e3e7",
+			"revisionTime": "2017-02-13T16:30:19Z"
 		},
 		{
 			"checksumSHA1": "Vzb+dEH/LTYbvr8RXHmt6xJHz04=",
