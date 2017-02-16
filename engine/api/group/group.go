@@ -8,34 +8,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
-
-var defaultGroupID int64
-
-// Initialize initializes sharedInfraGroup and Default Group
-func Initialize(db *gorp.DbMap, defaultGroupName string) error {
-	//Load the famous sharedInfraGroup
-	sharedInfraGroup, errlg := LoadGroup(db, SharedInfraGroup)
-	if errlg != nil {
-		log.Critical("group.Initialize> Cannot load shared infra group: %s\n", errlg)
-		return errlg
-	}
-	permission.SharedInfraGroupID = sharedInfraGroup.ID
-
-	if defaultGroupName != "" {
-		g, errld := LoadGroup(db, defaultGroupName)
-		if errld != nil {
-			log.Critical("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
-			return errld
-		}
-		defaultGroupID = g.ID
-	}
-
-	return nil
-}
 
 // DeleteGroupAndDependencies deletes group and all subsequent group_project, pipeline_project
 func DeleteGroupAndDependencies(db gorp.SqlExecutor, group *sdk.Group) error {
@@ -267,7 +242,7 @@ func LoadPublicGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 		FROM "group"
 		WHERE name = $1
 		`
-	rows, err := db.Query(query, SharedInfraGroup)
+	rows, err := db.Query(query, SharedInfraGroup.Name)
 	if err != nil {
 		return nil, err
 	}

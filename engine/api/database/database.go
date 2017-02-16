@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
-	"path"
 	"sync"
 
 	"github.com/go-gorp/gorp"
@@ -78,10 +76,11 @@ func Init() (*sql.DB, error) {
 		dbName == "" ||
 		dbHost == "" ||
 		dbPort == "" {
-		log.Printf("Missing database infos for PostgreSQL, fallbacking on RamSQL:\n")
+
+		log.Printf("Missing database infos\n")
 		log.Printf("got user=%s, password=%dchar, name=%s, host=%s, port=%s sslmode=%s\n", dbUser, len(dbPassword), dbName, dbHost, dbPort, dbSSLMode)
 
-		dbDriver = "ramsql"
+		return nil, fmt.Errorf("Missing database infos")
 	}
 
 	timeout := viper.GetInt("db_timeout")
@@ -104,14 +103,6 @@ func Init() (*sql.DB, error) {
 	if err = db.Ping(); err != nil {
 		db = nil
 		return nil, err
-	}
-
-	if dbDriver == "ramsql" {
-		sqlfile := path.Join(os.Getenv("GOPATH"), "src", "github.com/ovh", "cds", "engine", "sql", "create_table.sql")
-		if err = InitSchemas(db, sqlfile); err != nil {
-			log.Printf("InitSchema: %s\n", err)
-			return db, err
-		}
 	}
 
 	max := viper.GetInt("db_maxconn")

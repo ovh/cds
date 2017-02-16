@@ -51,7 +51,7 @@ func LoadApplications(db gorp.SqlExecutor, projectKey string, withPipelines, wit
 	var err error
 	var rows *sql.Rows
 
-	if user.Admin {
+	if user == nil || user.Admin {
 		query := LoadApplicationsRequestAdmin
 		rows, err = db.Query(query, projectKey)
 	} else {

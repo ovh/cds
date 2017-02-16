@@ -32,7 +32,7 @@ import (
 func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, err := project.LoadProject(db, key, &sdk.User{Admin: true})
+	proj, err := project.Load(db, key, &sdk.User{Admin: true})
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	}
 
 	// Delete project
-	err = project.DeleteProject(db, key)
+	err = project.Delete(db, key)
 	if err != nil {
 		t.Logf("RemoveProject: %s", err)
 		return err

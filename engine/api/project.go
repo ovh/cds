@@ -25,52 +25,11 @@ import (
 )
 
 func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	includePipeline := r.FormValue("pipeline")
-	includeApplication := r.FormValue("application")
-	includeEnvironment := r.FormValue("environment")
-	applicationStatus := r.FormValue("applicationStatus")
-
-	projects, errProj := project.LoadProjects(db, c.User)
-	if errProj != nil {
-		log.Warning("GetProjects: Cannot load project from db: %s\n", errProj)
-		return errProj
+	projects, err := project.LoadAll(db, c.User)
+	if err != nil {
+		log.Warning("GetProjects> Cannot load projects from db: %s\n", err)
+		return err
 	}
-
-	if includeApplication == "true" {
-		for _, p := range projects {
-			applications, errApp := application.LoadApplications(db, p.Key, includePipeline == "true", false, c.User)
-			if errApp != nil {
-				log.Warning("GetProjects: Cannot load applications for projects %s : %s\n", p.Key, errApp)
-				return errApp
-			}
-			p.Applications = append(p.Applications, applications...)
-		}
-	}
-
-	if includeEnvironment == "true" {
-		for _, p := range projects {
-			envs, errEnv := environment.LoadEnvironments(db, p.Key, true, c.User)
-			if errEnv != nil {
-				log.Warning("GetProjects: Cannot load environments for projects %s : %s\n", p.Key, errEnv)
-				return errEnv
-			}
-			p.Environments = append(p.Environments, envs...)
-		}
-	}
-
-	if applicationStatus == "true" {
-		for projectIndex := range projects {
-			for appIndex := range projects[projectIndex].Applications {
-				var errBuild error
-				projects[projectIndex].Applications[appIndex].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, projects[projectIndex].Applications[appIndex].ID, "", 0)
-				if errBuild != nil {
-					log.Warning("GetProjects: Cannot load app status: %s\n", errBuild)
-					return errBuild
-				}
-			}
-		}
-	}
-
 	return WriteJSON(w, r, projects, http.StatusOK)
 }
 
@@ -102,7 +61,7 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	}
 
 	// Check is project exist
-	p, errProj := project.LoadProject(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User)
 	if errProj != nil {
 		log.Warning("updateProject: Cannot load project from db: %s\n", errProj)
 		return errProj
@@ -115,7 +74,7 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	}
 
 	p.Name = proj.Name
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 
 	return WriteJSON(w, r, p, http.StatusOK)
 }
@@ -139,7 +98,7 @@ func getProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 		}
 	}
 
-	p, errProj := project.LoadProject(db, key, c.User, project.WithVariables(), project.WithApplications(historyLength))
+	p, errProj := project.Load(db, key, c.User, project.WithVariables(), project.WithApplications(historyLength))
 	if errProj != nil {
 		log.Warning("getProject: Cannot load project from db: %s\n", errProj)
 		return errProj
@@ -306,7 +265,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	p, errProj := project.LoadProject(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User)
 	if errProj != nil {
 		if errProj != sdk.ErrNoProject {
 			log.Warning("deleteProject: load project '%s' from db: %s\n", key, errProj)
@@ -341,7 +300,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	}
 	defer tx.Rollback()
 
-	if err := project.DeleteProject(tx, p.Key); err != nil {
+	if err := project.Delete(tx, p.Key); err != nil {
 		log.Warning("deleteProject: cannot delete project %s: %s\n", err)
 		return err
 

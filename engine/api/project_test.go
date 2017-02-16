@@ -67,7 +67,7 @@ func TestVariableInProject(t *testing.T) {
 	// FIXME subqueries in ramsql
 	/*
 		// 6. Delete project
-		err = project.DeleteProject(db, project1.Key)
+		err = project.Delete(db, project1.Key)
 		if err != nil {
 			t.Fatalf("cannot delete project: %s", err)
 		}

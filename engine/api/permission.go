@@ -48,7 +48,7 @@ func getPermissionByMethod(method string, isExecution bool) int {
 
 func checkPermission(routeVar map[string]string, c *context.Ctx, permission int) bool {
 	for _, g := range c.User.Groups {
-		if g.Name == group.SharedInfraGroup {
+		if g.Name == group.SharedInfraGroup.Name {
 			return true
 		}
 	}

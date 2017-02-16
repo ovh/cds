@@ -8,5 +8,5 @@ import (
 type Ctx struct {
 	Agent  sdk.Agent
 	User   *sdk.User
-	Worker sdk.Worker
+	Worker *sdk.Worker
 }

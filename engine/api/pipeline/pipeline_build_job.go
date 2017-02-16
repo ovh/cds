@@ -141,19 +141,8 @@ func LoadWaitingQueue(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, error) {
 	return pbJobs, nil
 }
 
-var sharedInfraGroupID int64
-
 // LoadGroupWaitingQueue loads pipeline_build_job in queue accessbible to given group
 func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBuildJob, error) {
-	if sharedInfraGroupID == 0 {
-		g, err := group.LoadGroup(db, group.SharedInfraGroup)
-		if err != nil {
-			log.Critical("LoadGroupWaitingQueue> Unable to load sharedInfraGroupID")
-			return nil, err
-		}
-		sharedInfraGroupID = g.ID
-	}
-
 	var pbJobsGorp []PipelineBuildJob
 	if _, err := db.Select(&pbJobsGorp, `
 		SELECT distinct pipeline_build_job.* FROM pipeline_build_job
@@ -170,7 +159,7 @@ func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBu
 
 		)
 		 ORDER BY pipeline_build_job.pipeline_build_id ASC, pipeline_build_job.id ASC
-	`, sdk.StatusWaiting.String(), groupID, sharedInfraGroupID); err != nil {
+	`, sdk.StatusWaiting.String(), groupID, group.SharedInfraGroup.ID); err != nil {
 		return nil, err
 	}
 	var pbJobs []sdk.PipelineBuildJob

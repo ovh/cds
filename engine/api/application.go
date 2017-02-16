@@ -298,7 +298,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	projectData, err := project.LoadProject(db, key, c.User)
+	projectData, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("addApplicationHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -417,7 +417,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	projectData, errProj := project.LoadProject(db, projectKey, c.User)
+	projectData, errProj := project.Load(db, projectKey, c.User)
 	if errProj != nil {
 		log.Warning("cloneApplicationHandler> Cannot load %s: %s\n", projectKey, errProj)
 		return sdk.ErrNoProject
@@ -464,7 +464,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		log.Warning("cloneApplicationHandler> Cannot update project last modified date: %s\n", errLM)
 		return errLM
 	}
-	projectData.LastModified = lastModified.Unix()
+	projectData.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("cloneApplicationHandler> Cannot commit transaction : %s\n", err)
@@ -565,7 +565,7 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	p, err := project.LoadProject(db, projectKey, c.User)
+	p, err := project.Load(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("updateApplicationHandler> Cannot load project %s: %s\n", projectKey, err)
 		return err

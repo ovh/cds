@@ -68,8 +68,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 		return err
 	}
 
-	err = user.LoadUserPermissions(db, u)
-	if err != nil {
+	if err = loadUserPermissions(db, u); err != nil {
 		fmt.Printf("getUserHandler: Cannot get user group and project from db: %s\n", err)
 		return err
 	}
