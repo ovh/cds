@@ -3,15 +3,17 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/ovh/cds/engine/venom"
 )
 
 // GetTestResults retrieves tests results for a specific build
-func GetTestResults(proj, app, pip, env string, bn int) (Tests, error) {
+func GetTestResults(proj, app, pip, env string, bn int) (venom.Tests, error) {
 	if env == "" {
 		env = DefaultEnv.Name
 	}
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/test?env=%s", proj, app, pip, bn, env)
-	var t Tests
+	var t venom.Tests
 
 	data, code, err := Request("GET", uri, nil)
 	if err != nil {

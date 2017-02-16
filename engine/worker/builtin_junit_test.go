@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ovh/cds/engine/venom"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -12,7 +13,7 @@ func Test_computeStats(t *testing.T) {
 	t.SkipNow()
 	type args struct {
 		res *sdk.Result
-		v   *sdk.Tests
+		v   *venom.Tests
 	}
 	tests := []struct {
 		name                    string
@@ -30,7 +31,7 @@ func Test_computeStats(t *testing.T) {
 			want:    []string{},
 			args: args{
 				res: &sdk.Result{},
-				v: &sdk.Tests{
+				v: &venom.Tests{
 					TestSuites: []sdk.TestSuite{
 						{
 							Name:     "myTestSuite",
@@ -59,7 +60,7 @@ func Test_computeStats(t *testing.T) {
 			},
 			args: args{
 				res: &sdk.Result{},
-				v: &sdk.Tests{
+				v: &venom.Tests{
 					TestSuites: []sdk.TestSuite{
 						{
 							Name:     "myTestSuite",
@@ -91,7 +92,7 @@ func Test_computeStats(t *testing.T) {
 			},
 			args: args{
 				res: &sdk.Result{},
-				v: &sdk.Tests{
+				v: &venom.Tests{
 					TestSuites: []sdk.TestSuite{
 						{
 							Name:     "myTestSuite",
@@ -126,7 +127,7 @@ func Test_computeStats(t *testing.T) {
 			},
 			args: args{
 				res: &sdk.Result{},
-				v: &sdk.Tests{
+				v: &venom.Tests{
 					TestSuites: []sdk.TestSuite{
 						{
 							Name:     "myTestSuite",
