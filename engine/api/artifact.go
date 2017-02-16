@@ -80,7 +80,7 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		}
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
 		log.Warning("uploadArtifactHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 
@@ -209,7 +209,7 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		}
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("listArtifactsBuildHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 
@@ -269,7 +269,7 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		}
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("listArtifactsHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 	}

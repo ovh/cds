@@ -157,7 +157,7 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		}
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("deleteBuildHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 	}
@@ -230,7 +230,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		}
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getBuildStateHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 	}
@@ -571,7 +571,7 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
 		log.Warning("addBuildVariableHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 	}
@@ -660,7 +660,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
 		log.Warning("addBuildTestResultsHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 	}
@@ -772,7 +772,7 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 
 	}
 
-	if env.ID != sdk.DefaultEnv.ID && !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getBuildTestResultsHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
 	}

@@ -240,10 +240,10 @@ func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey st
 	for rows.Next() {
 		var un sdk.UserNotification
 		var settings string
-		err := rows.Scan(&un.ApplicationPipelineID, &un.Environment.ID, &settings, &un.Pipeline.ID, &un.Pipeline.Name, &un.Environment.Name)
-		if err != nil {
+		if err := rows.Scan(&un.ApplicationPipelineID, &un.Environment.ID, &settings, &un.Pipeline.ID, &un.Pipeline.Name, &un.Environment.Name); err != nil {
 			return nil, err
 		}
+		var err error
 		un.Notifications, err = sdk.ParseUserNotificationSettings([]byte(settings))
 		if err != nil {
 			return nil, err

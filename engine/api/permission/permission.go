@@ -130,6 +130,10 @@ func AccessToPipeline(environmentID, pipelineID int64, user *sdk.User, access in
 
 // AccessToEnvironment check if we can modify the given environment
 func AccessToEnvironment(envID int64, user *sdk.User, access int) bool {
+	if envID == sdk.DefaultEnv.ID {
+		return true
+	}
+
 	if user.Admin {
 		return true
 	}
