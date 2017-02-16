@@ -24,32 +24,10 @@
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'applications'">
-                    <div class="ui grid">
-                        <div class="eight wide column">
-                            <h2>{{ 'project_applications_list' | translate }}</h2>
-                        </div>
-                        <div class="right aligned eight wide column" *ngIf="project.permission === 7">
-                            <a class="ui blue button" [routerLink]="['./application']">{{ 'application_create' | translate }}</a>
-                        </div>
-                    </div>
-                    <div class="ui segment">
-                        <div class="ui stackable four column grid" *ngIf="project.applications && project.applications.length > 0">
-                            <div class="center aligned column" *ngFor="let app of project.applications">
-                                <a [routerLink]="['./application', app.name]">{{app.name}}</a>
-                            </div>
-                        </div>
-                        <span *ngIf="!project.applications || project.applications.length === 0">{{ 'project_no_application' | translate }}</span>
-                    </div>
+                    <app-project-applications [project]="project"></app-project-applications>
                 </div>
                 <div *ngSwitchCase="'pipelines'">
-                    <h2>{{ 'project_pipelines_list' | translate }}</h2>
-                    <div class="ui segment">
-                        <div class="ui stackable four column grid">
-                            <div class="center aligned column" *ngFor="let pip of project.pipelines">
-                                <a [routerLink]="['./pipeline', pip.name]">{{pip.name}}</a>
-                            </div>
-                        </div>
-                    </div>
+                    <app-project-pipelines [project]="project"></app-project-pipelines>
                 </div>
                 <div *ngSwitchCase="'environments'">
                     <ng-container *ngIf="project.permission === 7">

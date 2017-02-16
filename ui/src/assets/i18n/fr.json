@@ -176,6 +176,7 @@
   "permission_read_write_execute" : "Lecture / Ecriture / Exécution",
   "permission_updated" : "Permission mise à jour",
 
+  "pipeline_create" : "Créer un pipeline",
   "pipeline_label_detach" : "Supprimer le pipeline de l'application",
   "pipeline_label_edit" : "Editer le pipeline",
   "pipeline_label_rollback" : "Effectuer un rollback",
