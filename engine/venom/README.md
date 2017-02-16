@@ -47,7 +47,7 @@ testcases:
     - Result.Code ShouldEqual 0
   - script: echo 'bar'
     assertions:
-    - Result.StdOut ShouldNotContainSubstring bar
+    - Result.StdOut ShouldNotContainSubstring foo
 
 ```
 
