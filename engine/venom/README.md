@@ -164,13 +164,14 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
+	Code    string `json:"code,omitempty" yaml:"code,omitempty"`
 	Command string `json:"command,omitempty" yaml:"command,omitempty"`
 	Output  string `json:"Output,omitempty" yaml:"Output,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for this executor
 func (Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"Result.Command ShouldEqual 0"}}
+	return venom.StepAssertions{Assertions: []string{"Result.Code ShouldEqual 0"}}
 }
 
 // Run execute TestStep
@@ -188,9 +189,9 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 
   // prepare result
   r := Result{
-    Command: t.Command, // return Command runn
-    Output: output, // return Command runn
-
+    Code: t.Code, // return Command  Code
+    Command: t.Command, // return Command executed  
+    Output: output, // return Output
   }
 
 
