@@ -173,6 +173,7 @@ func LoadUsers(db gorp.SqlExecutor) ([]*sdk.User, error) {
 
 		uTemp := &sdk.User{}
 		if err := json.Unmarshal([]byte(data), uTemp); err != nil {
+			log.Warning("LoadUsers> Unable to load user %s : %s", username, err)
 			return nil, err
 		}
 
