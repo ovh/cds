@@ -229,6 +229,7 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string, workerNam
 	if errMarshal != nil {
 		return nil, errMarshal
 	}
+	pbJobGorp.Start = time.Now()
 	pbJobGorp.Status = sdk.StatusBuilding.String()
 	if _, err := db.Update(&pbJobGorp); err != nil {
 		log.Warning("Cannot update model on pipeline build job : %s", err)
