@@ -10,17 +10,21 @@ import {RouterModule} from '@angular/router';
 import {ProjectEnvironmentListComponent} from './show/environment/list/environment.list.component';
 import {ProjectEnvironmentComponent} from './show/environment/list/item/environment.component';
 import {ProjectEnvironmentFormComponent} from './show/environment/form/environment.form.component';
+import {ProjectPipelinesComponent} from './show/pipeline/pipeline.list.component';
+import {ProjectApplicationListComponent} from './show/application/application.list.component';
 
 @NgModule({
     declarations: [
-        ProjectShowComponent,
         ProjectAddComponent,
         ProjectAdminComponent,
-        ProjectRepoManagerComponent,
-        ProjectRepoManagerFormComponent,
+        ProjectApplicationListComponent,
         ProjectEnvironmentFormComponent,
         ProjectEnvironmentListComponent,
-        ProjectEnvironmentComponent
+        ProjectEnvironmentComponent,
+        ProjectPipelinesComponent,
+        ProjectRepoManagerComponent,
+        ProjectRepoManagerFormComponent,
+        ProjectShowComponent
     ],
     imports: [
         SharedModule,

@@ -32,8 +32,8 @@ module.exports = function (config) {
             fixWebpackSourcePaths: true
         },
         angularCli: {
-            config: './angular-cli.json',
-            environment: 'source'
+            config: '.angular-cli.json',
+            environment: 'test'
         },
         reporters: config.angularCli && config.angularCli.codeCoverage
             ? ['progress', 'coverage-istanbul', 'junit']

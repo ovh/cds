@@ -17,6 +17,7 @@ export class Pipeline {
     parameters: Array<Parameter>;
     permission: number;
     last_modified: number;
+    attached_application: Array<Application>;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;
@@ -58,6 +59,10 @@ export class Pipeline {
             }
         }
         return params;
+    }
+
+    constructor() {
+        this.attached_application = new Array<Application>();
     }
 }
 

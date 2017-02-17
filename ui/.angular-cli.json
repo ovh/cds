@@ -42,9 +42,10 @@
         "../node_modules/ansi_up/ansi_up.js",
         "../node_modules/duration-js/duration.js"
       ],
+      "environmentSource": "environments/environment.ts",
       "environments": {
-        "source": "environments/environment.ts",
-        "dev": "environments/environment.dev.ts",
+        "test": "environments/environment.test.ts",
+        "dev": "environments/environment.ts",
         "prod": "environments/environment.prod.ts"
       }
     }
