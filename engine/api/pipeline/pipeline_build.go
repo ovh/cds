@@ -25,10 +25,12 @@ type PipelineBuildDbResult struct {
 	ApplicationID         int64          `db:"appID"`
 	PipelineID            int64          `db:"pipID"`
 	EnvironmentID         int64          `db:"envID"`
+	ProjectID             int64          `db:"projID"`
 	ApplicatioName        string         `db:"appName"`
 	PipelineName          string         `db:"pipName"`
 	PipelineType          string         `db:"pipType"`
 	EnvironmentName       string         `db:"envName"`
+	ProjectKey            string         `db:"key"`
 	BuildNumber           int64          `db:"build_number"`
 	Version               int64          `db:"version"`
 	Status                string         `db:"status"`
@@ -49,6 +51,7 @@ type PipelineBuildDbResult struct {
 const (
 	selectPipelineBuild = `
 		SELECT
+			project.id as projID, project.projectkey as key,
 			pb.id as id, pb.application_id as appID, pb.pipeline_id as pipID, pb.environment_id as envID,
 			application.name as appName, pipeline.name as pipName, pipeline.type as pipType, environment.name as envName,
 			pb.build_number as build_number, pb.version as version, pb.status as status,
@@ -63,6 +66,7 @@ const (
 		JOIN application ON application.id = pb.application_id
 		JOIN pipeline ON pipeline.id = pb.pipeline_id
 		JOIN environment ON environment.id = pb.environment_id
+		JOIN project ON project.id = application.project_id
 		LEFT JOIN "user" ON "user".id = pb.triggered_by
 	`
 )
@@ -316,17 +320,22 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 	pb := sdk.PipelineBuild{
 		ID: pbResult.ID,
 		Application: sdk.Application{
-			ID:   pbResult.ApplicationID,
-			Name: pbResult.ApplicatioName,
+			ID:         pbResult.ApplicationID,
+			Name:       pbResult.ApplicatioName,
+			ProjectKey: pbResult.ProjectKey,
 		},
 		Pipeline: sdk.Pipeline{
-			ID:   pbResult.PipelineID,
-			Name: pbResult.PipelineName,
-			Type: sdk.PipelineType(pbResult.PipelineType),
+			ID:         pbResult.PipelineID,
+			Name:       pbResult.PipelineName,
+			Type:       sdk.PipelineType(pbResult.PipelineType),
+			ProjectKey: pbResult.ProjectKey,
+			ProjectID:  pbResult.ProjectID,
 		},
 		Environment: sdk.Environment{
-			ID:   pbResult.EnvironmentID,
-			Name: pbResult.EnvironmentName,
+			ID:         pbResult.EnvironmentID,
+			Name:       pbResult.EnvironmentName,
+			ProjectKey: pbResult.ProjectKey,
+			ProjectID:  pbResult.ProjectID,
 		},
 		BuildNumber: pbResult.BuildNumber,
 		Version:     pbResult.Version,
@@ -420,17 +429,6 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	}
 
 	if pb.Status != newStatus {
-		query := `
-			SELECT projectkey FROM project
-			JOIN application ON application.project_id = project.id
-			WHERE application.id = $1
-		`
-		var key string
-		if err := db.QueryRow(query, pb.Application.ID).Scan(&key); err != nil {
-			log.Critical("UpdatePipelineBuildStatus> error while loading project key from appID %d err %s", pb.Application.ID, err)
-		}
-		pb.Pipeline.ProjectKey = key
-
 		pb.Status = newStatus
 		event.PublishPipelineBuild(db, pb, previous)
 	}

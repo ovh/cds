@@ -632,6 +632,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 			sharedInfraPresent = true
 			break
 		}
+		p.GroupPermission = append(p.GroupPermission, g)
 	}
 
 	if err := group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID); err != nil {
@@ -658,10 +659,9 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		return err
 	}
 
-	k := cache.Key("application", key, "*")
-	cache.DeleteAll(k)
+	p.Permission = permission.PermissionReadWriteExecute
 
-	return nil
+	return WriteJSON(w, r, p, http.StatusOK)
 }
 
 func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
