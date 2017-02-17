@@ -584,6 +584,12 @@
 			"revisionTime": "2016-06-20T08:32:29Z"
 		},
 		{
+			"checksumSHA1": "dwGZGe6Qdg2tZ9EqHMoRKJt6qt0=",
+			"path": "github.com/runabove/venom",
+			"revision": "93c80caeff7e36cac4c2ee16fa33a8182dc2d657",
+			"revisionTime": "2017-02-17T11:08:18Z"
+		},
+		{
 			"checksumSHA1": "4FUjSj4CbaZxSPOGl2zwfyaSFWI=",
 			"path": "github.com/smartystreets/assertions",
 			"revision": "15adfb6b24e2f2a9ecc821eaeabcc90064e4e3e7",

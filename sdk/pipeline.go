@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/engine/venom"
+	"github.com/runabove/venom"
 )
 
 // Pipeline represents the complete behavior of CDS for each projects

@@ -1,6 +1,7 @@
 # Venom
 
-Venom run executors (script, HTTP Request, etc... ) and assertions on result.
+Venom run executors (script, HTTP Request, etc... ) and assertions.
+It can also output xUnit results files.
 
 <img src="./venom.gif" alt="Venom Demonstration" width="80%">
 
@@ -9,7 +10,8 @@ Venom run executors (script, HTTP Request, etc... ) and assertions on result.
 
 Install with:
 ```bash
-$ go install github.com/ovh/cds/engine/venom/cli/venom
+$ go get github.com/runabove/venom
+$ go install github.com/runabove/venom/cli/venom
 ```
 
 ```bash
@@ -201,8 +203,6 @@ An executor have to implement this interface
 type Executor interface {
 	// Run run a Test Step
 	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
-	// GetDefaultAssertion returns default assertions
-	GetDefaultAssertions() StepAssertions
 }
 ```
 

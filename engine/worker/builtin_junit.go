@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/ovh/cds/engine/venom"
+	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
 )
 

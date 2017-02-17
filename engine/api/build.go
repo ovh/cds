@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
-	"github.com/ovh/cds/engine/venom"
+	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
 )
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/venom"
+	"github.com/runabove/venom"
 )
 
 // LoadTestResults retrieves tests on a specific build in database

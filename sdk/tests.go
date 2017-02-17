@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ovh/cds/engine/venom"
+	"github.com/runabove/venom"
 )
 
 // GetTestResults retrieves tests results for a specific build
