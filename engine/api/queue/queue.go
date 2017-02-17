@@ -171,7 +171,6 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 	for _, job := range stage.Jobs {
 		pbJobParams, errParam := getPipelineBuildJobParameters(tx, job, pb)
 		if errParam != nil {
-			log.Warning("addJobsToQueue> Cannot get action build parameters for pipeline build %d: %s\n", pb.ID, err)
 			return errParam
 		}
 		pbJob := sdk.PipelineBuildJob{
@@ -368,52 +367,37 @@ func ParentBuildInfos(pb *sdk.PipelineBuild) []sdk.Parameter {
 }
 
 func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.PipelineBuild) ([]sdk.Parameter, error) {
-
 	// Get project and pipeline Information
 	projectData, err := project.LoadProjectByPipelineActionID(db, j.PipelineActionID)
 	if err != nil {
-		log.Debug("getActionBuildParameters> err LoadProjectAndPipelineByPipelineActionID: %s", err)
+		log.Warning("getActionBuildParameters> err LoadProjectAndPipelineByPipelineActionID on PipelineActionID %d: %s", j.PipelineActionID, err)
 		return nil, err
 	}
 
 	// Load project Variables
 	projectVariables, err := project.GetAllVariableInProject(db, projectData.ID)
 	if err != nil {
-		log.Debug("getActionBuildParameters> err GetAllVariableInProject: %s", err)
+		log.Warning("getActionBuildParameters> err GetAllVariableInProject on ID %d: %s", projectData.ID, err)
 		return nil, err
 	}
 	// Load application Variables
 	appVariables, err := application.GetAllVariableByID(db, pb.Application.ID)
 	if err != nil {
-		log.Debug("getActionBuildParameters> err GetAllVariableByID for app ID: %s", err)
+		log.Warning("getActionBuildParameters> err GetAllVariableByID for app ID %d: %s", pb.Application.ID, err)
 		return nil, err
 	}
 	// Load environment Variables
 	envVariables, err := environment.GetAllVariableByID(db, pb.Environment.ID)
 	if err != nil {
-		log.Debug("getActionBuildParameters> err GetAllVariableByID for env ID : %s", err)
+		log.Warning("getActionBuildParameters> err GetAllVariableByID for env ID %d: %s", pb.Environment.ID, err)
 		return nil, err
 	}
 
 	pipelineParameters, err := pipeline.GetAllParametersInPipeline(db, pb.Pipeline.ID)
 	if err != nil {
-		log.Debug("getActionBuildParameters> err GetAllParametersInPipeline: %s", err)
+		log.Warning("getActionBuildParameters> err GetAllParametersInPipeline for pip %d: %s", pb.Pipeline.ID, err)
 		return nil, err
 	}
 
-	/* Create and process the full set of build variables from
-	** - Project variables
-	** - Pipeline variables
-	** - Action definition in pipeline
-	** - ActionBuild variables (global ones + trigger parameters)
-	**
-	** -> Replaces all placeholder but PasswordParameter
-	 */
-	params, err := action.ProcessActionBuildVariables(
-		projectVariables,
-		appVariables,
-		envVariables,
-		pipelineParameters,
-		pb.Parameters, j.Action)
-	return params, nil
+	return action.ProcessActionBuildVariables(projectVariables, appVariables, envVariables, pipelineParameters, pb.Parameters, j.Action), nil
 }
