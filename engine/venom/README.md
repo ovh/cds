@@ -1,4 +1,4 @@
-# Venom - RUN Integration Tests
+# Venom
 
 Venom run executors (script, HTTP Request, etc... ) and assertions on result.
 
