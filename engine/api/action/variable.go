@@ -13,7 +13,7 @@ import (
 // - Pipeline parameters
 // - Action definition in pipeline
 // - ActionBuild variables (global ones + trigger parameters)
-func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables []sdk.Variable, envVariables []sdk.Variable, pipelineParameters []sdk.Parameter, actionBuildArguments []sdk.Parameter, action sdk.Action) ([]sdk.Parameter, error) {
+func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables []sdk.Variable, envVariables []sdk.Variable, pipelineParameters []sdk.Parameter, actionBuildArguments []sdk.Parameter, action sdk.Action) []sdk.Parameter {
 	abv := make(map[string]sdk.Parameter)
 	final := []sdk.Parameter{}
 	project := "cds.proj"
@@ -88,5 +88,5 @@ func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables [
 		final = append(final, p)
 	}
 
-	return final, nil
+	return final
 }
