@@ -53,8 +53,9 @@
                         <div class="field" *ngIf="variables && variables.length > 0">
                             <app-variable [variables]="variables" mode="launcher"></app-variable>
                         </div>
-                        <div class="right aligned field">
-                            <button class="ui green button" [class.loading]="loadingCreate"
+                        <div class="field">
+                            <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'applications'}">{{ 'btn_cancel' | translate }}</a>
+                            <button class="ui green right floated button" [class.loading]="loadingCreate"
                                     [class.disabled]="!selectedName || selectedName === ''">{{ 'btn_create' | translate }}
                             </button>
                         </div>
