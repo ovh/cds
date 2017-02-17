@@ -1,6 +1,11 @@
 # Venom - RUN Integration Tests
 
-## CLI
+Venom run executors (script, HTTP Request, etc... ) and assertions on result.
+
+<img src="./venom.gif" alt="Venom Demonstration" width="80%">
+
+
+## Commmand Line
 
 Install with:
 ```bash
@@ -48,7 +53,7 @@ testcases:
     - result.code ShouldEqual 0
   - script: echo 'bar'
     assertions:
-    - result.stdOut ShouldNotContainSubstring foo
+    - result.stdout ShouldNotContainSubstring foo
     - result.timeseconds ShouldBeLessThan 1
 
 - name: GET http testcase
@@ -261,3 +266,13 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 ```
 
 Feel free to open a Pull Request with your executors.
+
+
+# Hacking
+
+You've developed a new cool feature? Fixed an annoying bug? We'd be happy
+to hear from you! Make sure to read [CONTRIBUTING.md](./CONTRIBUTING.md) before.
+
+# License
+
+This work is under the BSD license, see the [LICENSE](LICENSE) file for details.

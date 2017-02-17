@@ -41,7 +41,7 @@ func template() {
 					},
 					{
 						"script":     "echo 'bar'",
-						"assertions": []string{"result.stdOut ShouldNotContainSubstring foo"},
+						"assertions": []string{"result.stdout ShouldNotContainSubstring foo"},
 					},
 				},
 			},

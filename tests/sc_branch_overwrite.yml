@@ -17,7 +17,7 @@ testcases:
   - script: cds pipeline run ITBROVERWRITECHECK TestApp build -p git.branch=YOLO
     assertions:
       - result.code ShouldEqual 0
-      - result.stdOut ShouldContainSubstring YOLO
+      - result.stdout ShouldContainSubstring YOLO
   - script: cds project remove --force ITBROVERWRITECHECK
   - script: cds action remove PrintGitBranch
   - script: cds group remove ITBROVERWRITECHECK
