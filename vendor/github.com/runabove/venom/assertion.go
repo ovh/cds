@@ -25,29 +25,35 @@ func (t *testingT) Error(args ...interface{}) {
 	}
 }
 
-func applyChecks(executorResult ExecutorResult, tc *TestCase, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) {
+// applyChecks apply checks on result, return true if all assertions are OK, false otherwise
+func applyChecks(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) (bool, []Failure, []Failure) {
 
 	var sa StepAssertions
+	var errors []Failure
+	var failures []Failure
+
 	if err := mapstructure.Decode(step, &sa); err != nil {
-		log.Errorf("error decoding assertions: %s", err)
-		return
+		return false, []Failure{{Value: fmt.Sprintf("error decoding assertions: %s", err)}}, failures
 	}
 
 	if len(sa.Assertions) == 0 && defaultAssertions != nil {
 		sa = *defaultAssertions
 	}
 
+	isOK := true
 	for _, assertion := range sa.Assertions {
 		errs, fails := check(assertion, executorResult, l)
 		if errs != nil {
-			tc.Errors = append(tc.Errors, *errs)
+			errors = append(errors, *errs)
+			isOK = false
 		}
 		if fails != nil {
-			tc.Failures = append(tc.Failures, *fails)
+			failures = append(failures, *fails)
+			isOK = false
 		}
 	}
 
-	return
+	return isOK, errors, failures
 }
 
 func check(assertion string, executorResult ExecutorResult, l *log.Entry) (*Failure, *Failure) {

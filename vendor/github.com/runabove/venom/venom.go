@@ -2,34 +2,7 @@ package venom
 
 import (
 	"fmt"
-
-	log "github.com/Sirupsen/logrus"
 )
-
-type (
-	// Aliases contains list of aliases
-	Aliases map[string]string
-
-	// ExecutorResult represents an executor result on a test step
-	ExecutorResult map[string]string
-)
-
-// StepAssertions contains step assertions
-type StepAssertions struct {
-	Assertions []string `json:"assertions,omitempty" yaml:"assertions,omitempty"`
-}
-
-// Executor execute a testStep.
-type Executor interface {
-	// Run run a Test Step
-	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
-}
-
-// executorWithDefaultAssertions execute a testStep.
-type executorWithDefaultAssertions interface {
-	// GetDefaultAssertion returns default assertions
-	GetDefaultAssertions() *StepAssertions
-}
 
 var (
 	executors = map[string]Executor{}
@@ -40,21 +13,58 @@ func RegisterExecutor(name string, e Executor) {
 	executors[name] = e
 }
 
-// getExecutor initializes a test by name
-func getExecutor(t map[string]interface{}) (Executor, error) {
+// getExecutorWrap initializes a test by name
+// no type -> exec is default
+func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 
 	var name string
-	itype, ok := t["type"]
-	if ok {
+	var retry, delay, timeout int
+
+	if itype, ok := t["type"]; ok {
 		name = fmt.Sprintf("%s", itype)
 	}
+
 	if name == "" {
 		name = "exec"
 	}
 
-	e, ok := executors[name]
-	if !ok {
-		return nil, fmt.Errorf("type '%s' is not implemented", name)
+	retry, errRetry := getAttrInt(t, "retry")
+	if errRetry != nil {
+		return nil, errRetry
 	}
-	return e, nil
+	delay, errDelay := getAttrInt(t, "delay")
+	if errDelay != nil {
+		return nil, errDelay
+	}
+	timeout, errTimeout := getAttrInt(t, "timeout")
+	if errTimeout != nil {
+		return nil, errTimeout
+	}
+
+	if e, ok := executors[name]; ok {
+		ew := &executorWrap{
+			executor: e,
+			retry:    retry,
+			delay:    delay,
+			timeout:  timeout,
+		}
+		return ew, nil
+	}
+
+	return nil, fmt.Errorf("type '%s' is not implemented", name)
+}
+
+func getAttrInt(t map[string]interface{}, name string) (int, error) {
+	var out int
+	if i, ok := t[name]; ok {
+		var ok bool
+		out, ok = i.(int)
+		if !ok {
+			return -1, fmt.Errorf("attribute %s '%s' is not an integer", name, i)
+		}
+	}
+	if out < 0 {
+		out = 0
+	}
+	return out, nil
 }

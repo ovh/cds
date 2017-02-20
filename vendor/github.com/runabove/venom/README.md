@@ -5,7 +5,6 @@ It can also output xUnit results files.
 
 <img src="./venom.gif" alt="Venom Demonstration" width="80%">
 
-
 ## Commmand Line
 
 Install with:
@@ -37,7 +36,7 @@ Flags:
 * Run `venom template`
 * Examples: https://github.com/ovh/cds/tree/master/tests
 
-### example:
+### Example:
 
 ```yaml
 
@@ -58,16 +57,54 @@ testcases:
     - result.stdout ShouldNotContainSubstring foo
     - result.timeseconds ShouldBeLessThan 1
 
-- name: GET http testcase
+- name: GET http testcase, with 5 seconds timeout
   steps:
   - type: http
     method: GET
     url: https://eu.api.ovh.com/1.0/
+    timeout: 5
     assertions:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing
     - result.statuscode ShouldEqual 200
     - result.timeseconds ShouldBeLessThan 1
+
+- name: Test with retries and delay in seconds between each try
+  steps:
+  - type: http
+    method: GET
+    url: https://eu.api.ovh.com/1.0/
+    retry: 3
+    delay: 2
+    assertions:
+    - result.statuscode ShouldEqual 200
+
+```
+
+Using variables and reuse results
+
+```yaml
+name: MyTestSuiteTmpl
+vars:
+  api.foo: 'http://api/foo'
+  second: 'venomWithTmpl'
+
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo '{{.api.foo}}'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.stdout ShouldEqual http://api/foo
+
+- name: testB
+  steps:
+  - type: exec
+    script: echo 'XXX{{.testA.result.stdout}}YYY'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.stdout ShouldEqual XXXhttp://api/fooYYY
 
 ```
 
@@ -190,6 +227,7 @@ testcases:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing
     - result.statuscode ShouldEqual 200
+    - result.bodyjson.apis.apis0.path ShouldEqual /allDom
 
 ```
 
@@ -249,6 +287,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 
 	// to something with t.Command here...
 	//...
+
 	output := "foo"
 	ouputCode := 0
 

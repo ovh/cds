@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,17 +11,9 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/fsamin/go-dump"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
-)
-
-const (
-	// DetailsLow prints only summary results
-	DetailsLow = "low"
-	// DetailsMedium prints progress bar and summary
-	DetailsMedium = "medium"
-	// DetailsHigh prints progress bar and details
-	DetailsHigh = "high"
 )
 
 var aliases map[string]string
@@ -187,6 +180,12 @@ func runTestSuite(ts *TestSuite, detailsLevel string) {
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 
+	d, err := dump.ToMap(ts.Vars)
+	if err != nil {
+		log.Errorf("err:%s", err)
+	}
+	ts.Templater = newTemplater(d)
+
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
 		totalSteps += len(tc.TestSteps)
@@ -231,26 +230,21 @@ func runTestSuite(ts *TestSuite, detailsLevel string) {
 func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string) {
 	l = l.WithField("x.testcase", tc.Name)
 	l.Infof("start")
-	for _, step := range tc.TestSteps {
+	for _, stepIn := range tc.TestSteps {
 
-		t, err := getExecutor(step)
+		step, erra := ts.Templater.Apply(stepIn)
+		if erra != nil {
+			tc.Errors = append(tc.Errors, Failure{Value: erra.Error()})
+			break
+		}
+
+		e, err := getExecutorWrap(step)
 		if err != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: err.Error()})
 			break
 		}
 
-		result, err := t.Run(l, aliases, step)
-		if err != nil {
-			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
-		}
-
-		log.Debugf("result:%+v", result)
-
-		if h, ok := t.(executorWithDefaultAssertions); ok {
-			applyChecks(result, tc, step, h.GetDefaultAssertions(), l)
-		} else {
-			applyChecks(result, tc, step, nil, l)
-		}
+		runTestStep(e, ts, tc, step, l, detailsLevel, ts.Templater)
 
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()
@@ -260,4 +254,70 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 		}
 	}
 	l.Infof("end")
+}
+
+func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l *log.Entry, detailsLevel string, templater *Templater) {
+
+	var isOK bool
+	var errors []Failure
+	var failures []Failure
+
+	var retry int
+	for retry = 0; retry <= e.retry && !isOK; retry++ {
+		if retry > 1 && !isOK {
+			log.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
+			time.Sleep(time.Duration(e.delay) * time.Second)
+		}
+
+		result, err := e.executor.Run(l, aliases, step)
+		if err != nil {
+			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
+			continue
+		}
+
+		ts.Templater.Add(tc.Name, result)
+
+		log.Debugf("result:%+v", ts.Templater)
+
+		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
+			isOK, errors, failures = applyChecks(result, step, h.GetDefaultAssertions(), l)
+		} else {
+			isOK, errors, failures = applyChecks(result, step, nil, l)
+		}
+		if isOK {
+			break
+		}
+	}
+	tc.Errors = append(tc.Errors, errors...)
+	tc.Failures = append(tc.Failures, failures...)
+	if retry > 0 && (len(failures) > 0 || len(errors) > 0) {
+		tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempt(s)", retry)})
+	}
+}
+
+func runTestStepExecutor(e *executorWrap, ts *TestSuite, step TestStep, l *log.Entry, templater *Templater) (ExecutorResult, error) {
+	if e.timeout == 0 {
+		return e.executor.Run(l, aliases, step)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(e.timeout)*time.Second)
+	defer cancel()
+
+	ch := make(chan ExecutorResult)
+	cherr := make(chan error)
+	go func(e *executorWrap, step TestStep, l *log.Entry) {
+		result, err := e.executor.Run(l, aliases, step)
+		cherr <- err
+		ch <- result
+	}(e, step, l)
+
+	select {
+	case err := <-cherr:
+		return nil, err
+	case result := <-ch:
+		return result, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf("Timeout after %d second(s)", e.timeout)
+	}
+
 }

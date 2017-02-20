@@ -30,8 +30,8 @@ You can submit your patches via GitHub
 
 ## Licensing for new files:
 
-Tat is licensed under a (modified) BSD license. Anything contributed to
-Tat must be released under this license.
+Venom is licensed under a (modified) BSD license. Anything contributed to
+Venom must be released under this license.
 
 When introducing a new file into the project, please make sure it has a
 copyright header making clear under which license it''s being released.
