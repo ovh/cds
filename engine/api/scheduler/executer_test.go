@@ -43,7 +43,7 @@ func TestExecuterRun(t *testing.T) {
 	}
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 

@@ -32,15 +32,15 @@ func IsAttached(db gorp.SqlExecutor, projectID, appID int64, pipelineName string
 }
 
 // AttachPipeline Attach a pipeline to an application
-func AttachPipeline(db gorp.SqlExecutor, appID, pipelineID int64) error {
-	query := `INSERT INTO application_pipeline(application_id, pipeline_id, args) VALUES($1, $2, $3)`
-	_, err := db.Exec(query, appID, pipelineID, "[]")
-	if err != nil {
+func AttachPipeline(db gorp.SqlExecutor, appID, pipelineID int64) (int64, error) {
+	query := `INSERT INTO application_pipeline(application_id, pipeline_id, args) VALUES($1, $2, $3) RETURNING id`
+	var id int64
+	if err := db.QueryRow(query, appID, pipelineID, "[]").Scan(&id); err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
-			return sdk.ErrPipelineAlreadyAttached
+			return 0, sdk.ErrPipelineAlreadyAttached
 		}
 	}
-	return err
+	return id, nil
 }
 
 // GetAllPipelines Get all pipelines for the given application

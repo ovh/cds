@@ -49,7 +49,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	test.NoError(t, err)
 	test.NoError(t, group.InsertGroupInPipeline(db, pip.ID, p.ProjectGroups[0].Group.ID, 7))
 
-	err = application.AttachPipeline(db, app.ID, pip.ID)
+	_, err = application.AttachPipeline(db, app.ID, pip.ID)
 	test.NoError(t, err)
 
 	appPips, err := application.GetAllPipelinesByID(db, app.ID)

@@ -524,7 +524,7 @@ func cloneApplication(db gorp.SqlExecutor, project *sdk.Project, newApp *sdk.App
 
 	// Attach pipeline + Set pipeline parameters
 	for _, appPip := range newApp.Pipelines {
-		if err := application.AttachPipeline(db, newApp.ID, appPip.Pipeline.ID); err != nil {
+		if _, err := application.AttachPipeline(db, newApp.ID, appPip.Pipeline.ID); err != nil {
 			return err
 		}
 
