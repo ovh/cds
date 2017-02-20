@@ -68,6 +68,8 @@ func VariableTypeFromString(in string) VariableType {
 		return KeyVariable
 	case string(BooleanVariable):
 		return BooleanVariable
+	case string(NumberVariable):
+		return NumberVariable
 	default:
 		return StringVariable
 	}
