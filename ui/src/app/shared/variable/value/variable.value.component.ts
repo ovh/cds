@@ -1,4 +1,4 @@
-import {Component, Input, EventEmitter} from '@angular/core';
+import {Component, Input, EventEmitter, OnInit} from '@angular/core';
 import {SharedService} from '../../shared.service';
 import {Output} from '@angular/core/src/metadata/directives';
 
@@ -7,7 +7,7 @@ import {Output} from '@angular/core/src/metadata/directives';
     templateUrl: './variable.value.html',
     styleUrls: ['./variable.value.scss']
 })
-export class VariableValueComponent  {
+export class VariableValueComponent implements OnInit {
 
     @Input() type: string;
     @Input() value: string|number|boolean;
@@ -17,6 +17,12 @@ export class VariableValueComponent  {
     @Output() valueUpdating = new EventEmitter<boolean>();
 
     constructor(public _sharedService: SharedService) {
+    }
+
+    ngOnInit(): void {
+        if (this.type === 'boolean') {
+            this.value = (this.value === 'true');
+        }
     }
 
     valueChanged(): void {

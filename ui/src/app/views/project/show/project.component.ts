@@ -82,6 +82,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         if (!skip && this.project.externalChange) {
             this.varWarningModal.show(event);
         } else {
+            event.variable.value = String(event.variable.value);
             switch (event.type) {
                 case 'add':
                     this.varFormLoading = true;

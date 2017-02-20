@@ -1,14 +1,40 @@
-<!-- Password -->
-<div class="ui fluid input" *ngIf="type === 'password'">
-    <input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
-</div>
+<ng-container [ngSwitch]="type">
+    <!-- Number -->
+    <div *ngSwitchCase="'number'" class="ui fluid input">
+        <input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
+    </div>
 
-<!-- Text -->
-<div class="ui form" *ngIf="type === 'text'">
-    <textarea [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value)}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
-</div>
+    <!-- Boolean -->
+    <div class="ui checkbox" *ngSwitchCase="'boolean'">
+        <input type="checkbox" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
+        <label>{{ ' '}}</label>
+    </div>
 
-<!-- String -->
-<div class="ui fluid input" *ngIf="type === 'string'">
-    <input [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
-</div>
+    <!-- Password -->
+    <div class="ui fluid input" *ngSwitchCase="'password'">
+        <input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
+    </div>
+
+    <!-- Text -->
+    <div class="ui form" *ngSwitchCase="'text'">
+        <textarea [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value)}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
+    </div>
+
+    <!-- Key -->
+    <div class="ui form" *ngSwitchCase="'key'">
+        <input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
+    </div>
+
+    <!-- String -->
+    <div class="ui fluid input" *ngSwitchDefault>
+        <input [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+    </div>
+
+</ng-container>
+
+
+
+
+
+
+
