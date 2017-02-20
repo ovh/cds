@@ -534,6 +534,51 @@ export class ApplicationStore {
         return application;
     }
 
+    /**
+     * Attach pipelines to application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipelines Array of pipeline name
+     * @returns {Observable<Application>}
+     */
+    attachPipelines(key: string, appName: string, pipelines: Array<string>): Observable<Application> {
+        return this._applicationService.attachPipelines(key, appName, pipelines).map( app => {
+            return this.refreshApplicationPipelineCache(key, appName, app);
+        });
+    }
 
+    /**
+     * Refresh application cache
+     * @param key Project unique key
+     * @param appName Application Name
+     * @param application updated workflow application
+     * @returns {: Application}
+     */
+    refreshApplicationPipelineCache(key: string, appName: string, application: Application): Application {
+        let cache = this._application.getValue();
+        let appKey = key + '-' + appName;
+        let appToUpdate = cache.get(appKey);
+        if (appToUpdate) {
+            appToUpdate.last_modified = application.last_modified;
+            appToUpdate.pipelines = application.pipelines;
+            appToUpdate.workflows = application.workflows;
+            this._application.next(cache.set(appKey, appToUpdate));
+            return appToUpdate;
+        }
+        return application;
+    }
+
+    /**
+     * Detach a pipeline from application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name to detach
+     * @returns {Observable<Application>}
+     */
+    detachPipeline(key: string, appName: string, pipName: string): Observable<Application> {
+        return this._applicationService.detachPipelines(key, appName, pipName).map( app => {
+            return this.refreshApplicationPipelineCache(key, appName, app);
+        });
+    }
 
 }

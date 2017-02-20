@@ -271,8 +271,10 @@ export class ApplicationWorkflowItemComponent {
         this.editTriggerModal.show({autofocus: false, closable: false, observeChanges: true});
     }
 
-    detachPipeline(): void {
-
+    detachPipeline(p: Pipeline): void {
+        this._appStore.detachPipeline(this.project.key, this.application.name, p.name).subscribe(() => {
+           this._toast.success('', this._translate.instant('application_pipeline_detached'));
+        });
     }
 
     getTriggerSource(pb: PipelineBuild): string {

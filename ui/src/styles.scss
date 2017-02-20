@@ -64,6 +64,8 @@ a.disabled:hover {
 
 .ui.green.button {
   background-color: $cds_color_green !important;
+}
+.ui.green.button:active {
   color: #000000;
 }
 
@@ -77,6 +79,8 @@ a.disabled:hover {
 
 .ui.red.button {
   background-color: $cds_color_red !important;
+}
+.ui.red.button:active {
   color: #000000;
 }
 
@@ -90,6 +94,8 @@ a.disabled:hover {
 
 .ui.blue.button {
   background-color: $cds_color_teal !important;
+}
+.ui.blue.button:active {
   color: #000000;
 }
 
@@ -106,13 +112,6 @@ a.disabled:hover {
     width: 100% !important;
   }
 }
-
-
-/*
-.wide.column.fourteen {
-  @extend .fourteen.wide.column !optional;
-}
-*/
 
 // Ribbon
 
