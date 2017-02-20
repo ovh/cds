@@ -54,6 +54,7 @@ export class ProjectEnvironmentComponent {
 
 
     variableEvent(event: VariableEvent): void {
+        event.variable.value = String(event.variable.value);
         switch (event.type) {
             case 'add':
                 this.addVarLoading = true;
