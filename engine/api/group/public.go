@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -61,6 +62,8 @@ func Initialize(db *gorp.DbMap, defaultGroupName string) error {
 		log.Critical("group.Initialize> Cannot load shared infra group: %s\n", errlg)
 		return errlg
 	}
+	//Inject SharedInfraGroup.ID in permission package
+	permission.SharedInfraGroupID = SharedInfraGroup.ID
 
 	if defaultGroupName != "" {
 		g, errld := LoadGroup(db, defaultGroupName)

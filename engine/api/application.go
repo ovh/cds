@@ -298,7 +298,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	projectData, err := project.Load(db, key, c.User)
+	proj, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("addApplicationHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -332,20 +332,19 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	defer tx.Rollback()
 
-	err = application.InsertApplication(tx, projectData, &app)
+	err = application.InsertApplication(tx, proj, &app)
 	if err != nil {
 		log.Warning("addApplicationHandler> Cannot insert pipeline: %s\n", err)
 		return err
 	}
 
-	err = group.LoadGroupByProject(tx, projectData)
+	err = group.LoadGroupByProject(tx, proj)
 	if err != nil {
 		log.Warning("addApplicationHandler> Cannot load group from project: %s\n", err)
 		return err
 	}
 
-	err = group.InsertGroupsInApplication(tx, projectData.ProjectGroups, app.ID)
-	if err != nil {
+	if err := application.AddGroup(tx, proj, &app, proj.ProjectGroups...); err != nil {
 		log.Warning("addApplicationHandler> Cannot add groups on application: %s\n", err)
 		return err
 	}
@@ -478,17 +477,12 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(db gorp.SqlExecutor, project *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
+func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
 	newApp.Pipelines = appToClone.Pipelines
 	newApp.ApplicationGroups = appToClone.ApplicationGroups
 
 	// Create Application
-	if err := application.InsertApplication(db, project, newApp); err != nil {
-		return err
-	}
-
-	// Insert Permission
-	if err := group.InsertGroupsInApplication(db, newApp.ApplicationGroups, newApp.ID); err != nil {
+	if err := application.InsertApplication(db, proj, newApp); err != nil {
 		return err
 	}
 
@@ -551,7 +545,23 @@ func cloneApplication(db gorp.SqlExecutor, project *sdk.Project, newApp *sdk.App
 		}
 	}
 
-	if err := sanity.CheckApplication(db, project, newApp); err != nil {
+	//Reload trigger
+	for i := range newApp.Pipelines {
+		appPip := &newApp.Pipelines[i]
+		var errTrig error
+		appPip.Triggers, errTrig = trigger.LoadTriggersByAppAndPipeline(db, newApp.ID, appPip.Pipeline.ID)
+		if errTrig != nil {
+			log.Warning("cloneApplication> Cannot load triggers: %s\n", errTrig)
+			return errTrig
+		}
+	}
+
+	// Insert Permission
+	if err := application.AddGroup(db, proj, newApp, newApp.ApplicationGroups...); err != nil {
+		return err
+	}
+
+	if err := sanity.CheckApplication(db, proj, newApp); err != nil {
 		log.Warning("cloneApplication> Cannot check application sanity: %s\n", err)
 		return err
 	}
