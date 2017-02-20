@@ -2,7 +2,7 @@ name: Right Execution on environment TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITPRJRIGHTEXEC    
+  - script: cds project remove --force ITPRJRIGHTEXEC
   - script: cds group remove ITGRPRIGHTRO || true
 - name: Test Right Execution on environment
   steps:
@@ -13,6 +13,6 @@ testcases:
   - script: cdsro user list
   - script: cdsro pipeline run ITPRJRIGHTEXEC TestApp deploy foo
     assertions:
-      - code ShouldNotEqual 0
+      - result.code ShouldNotEqual 0
   - script: cds group remove ITGRPRIGHTRO
   - script: cds group remove ITPRJRIGHTEXEC

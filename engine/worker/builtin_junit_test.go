@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -12,7 +13,7 @@ func Test_computeStats(t *testing.T) {
 	t.SkipNow()
 	type args struct {
 		res *sdk.Result
-		v   *sdk.Tests
+		v   *venom.Tests
 	}
 	tests := []struct {
 		name                    string
@@ -30,13 +31,13 @@ func Test_computeStats(t *testing.T) {
 			want:    []string{},
 			args: args{
 				res: &sdk.Result{},
-				v: &sdk.Tests{
-					TestSuites: []sdk.TestSuite{
+				v: &venom.Tests{
+					TestSuites: []venom.TestSuite{
 						{
 							Name:     "myTestSuite",
 							Errors:   0,
 							Failures: 0,
-							TestCases: []sdk.TestCase{
+							TestCases: []venom.TestCase{
 								{
 									Name: "myTestCase",
 								},
@@ -59,16 +60,16 @@ func Test_computeStats(t *testing.T) {
 			},
 			args: args{
 				res: &sdk.Result{},
-				v: &sdk.Tests{
-					TestSuites: []sdk.TestSuite{
+				v: &venom.Tests{
+					TestSuites: []venom.TestSuite{
 						{
 							Name:     "myTestSuite",
 							Errors:   0,
 							Failures: 1,
-							TestCases: []sdk.TestCase{
+							TestCases: []venom.TestCase{
 								{
 									Name:     "myTestCase",
-									Failures: []sdk.Failure{{Value: "Foo"}},
+									Failures: []venom.Failure{{Value: "Foo"}},
 								},
 							},
 						},
@@ -91,17 +92,17 @@ func Test_computeStats(t *testing.T) {
 			},
 			args: args{
 				res: &sdk.Result{},
-				v: &sdk.Tests{
-					TestSuites: []sdk.TestSuite{
+				v: &venom.Tests{
+					TestSuites: []venom.TestSuite{
 						{
 							Name:     "myTestSuite",
 							Errors:   1,
 							Failures: 1,
-							TestCases: []sdk.TestCase{
+							TestCases: []venom.TestCase{
 								{
 									Name:     "myTestCase",
-									Errors:   []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
+									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
+									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
 								},
 							},
 						},
@@ -126,22 +127,22 @@ func Test_computeStats(t *testing.T) {
 			},
 			args: args{
 				res: &sdk.Result{},
-				v: &sdk.Tests{
-					TestSuites: []sdk.TestSuite{
+				v: &venom.Tests{
+					TestSuites: []venom.TestSuite{
 						{
 							Name:     "myTestSuite",
 							Errors:   1,
 							Failures: 1,
-							TestCases: []sdk.TestCase{
+							TestCases: []venom.TestCase{
 								{
 									Name:     "myTestCase 1",
-									Errors:   []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
+									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
+									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
 								},
 								{
 									Name:     "myTestCase 2",
-									Errors:   []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []sdk.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
+									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
+									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
 								},
 							},
 						},

@@ -22,14 +22,14 @@ testcases:
   - script: cds pipeline job append ITSCFAIL FailingPipeline myJob1 IT_SC_FAIL_TEST_Failure
   - script: cds pipeline run ITSCFAIL TestApp FailingPipeline
     assertions:
-      - code ShouldNotEqual 0
+      - result.code ShouldNotEqual 0
 
 - name: empty stage
   steps:
   - script: cds pipeline stage add ITSCFAIL FailingPipeline foo
   - script: cds pipeline run ITSCFAIL TestApp FailingPipeline
     assertions:
-      - code ShouldNotEqual 0
+      - result.code ShouldNotEqual 0
   - script: cds application pipeline remove ITSCFAIL TestApp FailingPipeline
 
 
