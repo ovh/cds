@@ -317,6 +317,13 @@ func DeleteAllEnvironment(db gorp.SqlExecutor, projectID int64) error {
 	return nil
 }
 
+// UpdateLastModified updates last_modified on environment
+func UpdateLastModified(db gorp.SqlExecutor, id int64) error {
+	query := `UPDATE environment SET last_modified = current_timestamp WHERE id=$1`
+	_, err := db.Exec(query, id)
+	return err
+}
+
 func loadGroupByEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
 	query := `SELECT "group".id, "group".name, environment_group.role FROM "group"
 	 		  JOIN environment_group ON environment_group.group_id = "group".id

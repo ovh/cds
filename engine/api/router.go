@@ -209,6 +209,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				if m.GroupID == group.SharedInfraGroup.ID {
 					c.User.Groups = append(c.User.Groups, *group.SharedInfraGroup)
 				} else {
+					log.Debug("Router> loading groups permission for model %d", c.Worker.Model)
 					modelGroup, errLoad2 := loadGroupPermissions(db, m.GroupID)
 					if errLoad2 != nil {
 						log.Warning("checkWorkerAuth> Cannot load group: %s\n", errLoad2)

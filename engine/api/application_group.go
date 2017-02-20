@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -75,7 +76,7 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := application.UpdateLastModified(tx, app); err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot update last modified date:  %s\n", err)
+		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
 		return err
 	}
 
@@ -106,6 +107,12 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	if err != nil {
 		log.Warning("updateGroupsInApplicationHandler: Cannot read body :%s", err)
 		return sdk.ErrWrongRequest
+	}
+
+	proj, err := project.Load(db, key, c.User)
+	if err != nil {
+		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", key, err)
+		return err
 	}
 
 	var groupsPermission []sdk.GroupPermission
@@ -146,25 +153,22 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 
 	if err := group.DeleteAllGroupFromApplication(tx, app.ID); err != nil {
 		log.Warning("updateGroupsInApplicationHandler: Cannot delete groups from application %s: %s\n", appName, err)
-		return sdk.ErrUnknownError
+		return err
 	}
 
-	for _, gp := range groupsPermission {
-		g, err := group.LoadGroup(tx, gp.Group.Name)
-		if err != nil {
-			log.Warning("updateGroupsInApplicationHandler: Cannot find %s: %s\n", gp.Group.Name, err)
-			return sdk.ErrGroupNotFound
-		}
-
-		if err := group.InsertGroupInApplication(tx, app.ID, g.ID, gp.Permission); err != nil {
-			log.Warning("updateGroupsInApplicationHandler: Cannot add group %s in application %s:  %s\n", g.Name, app.Name, err)
-			return err
-		}
+	if err := application.AddGroup(tx, proj, app, groupsPermission...); err != nil {
+		log.Warning("updateGroupsInApplicationHandler: Cannot add groups in application %s:  %s\n", app.Name, err)
+		return err
 	}
 
 	if err := application.UpdateLastModified(tx, app); err != nil {
 		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
-		return sdk.ErrUnknownError
+		return err
+	}
+
+	if _, err := project.UpdateProjectDB(tx, proj.Key, proj.Name); err != nil {
+		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -186,54 +190,60 @@ func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *go
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot read body :%s", err)
+		log.Warning("addGroupInApplicationHandler> Cannot read body :%s", err)
 		return sdk.ErrWrongRequest
 	}
 
 	var groupPermission sdk.GroupPermission
 	if err := json.Unmarshal(data, &groupPermission); err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot unmarshal body :%s", err)
+		log.Warning("addGroupInApplicationHandler> Cannot unmarshal body :%s", err)
 		return sdk.ErrWrongRequest
+	}
+
+	proj, err := project.Load(db, key, c.User)
+	if err != nil {
+		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", key, err)
+		return err
 	}
 
 	app, err := application.LoadApplicationByName(db, key, appName)
 	if err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot load %s: %s\n", appName, err)
+		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", appName, err)
 		return err
 	}
 
 	g, err := group.LoadGroup(db, groupPermission.Group.Name)
 	if err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot find %s: %s\n", groupPermission.Group.Name, err)
+		log.Warning("addGroupInApplicationHandler> Cannot find %s: %s\n", groupPermission.Group.Name, err)
 		return err
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot start transaction: %s\n", err)
+		log.Warning("addGroupInApplicationHandler> Cannot start transaction: %s\n", err)
 		return err
 	}
 	defer tx.Rollback()
 
-	if err := group.InsertGroupInApplication(tx, app.ID, g.ID, groupPermission.Permission); err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot add group %s in application %s:  %s\n", g.Name, app.Name, err)
+	if err := application.AddGroup(tx, proj, app, groupPermission); err != nil {
+		log.Warning("addGroupInApplicationHandler> Cannot add group %s in application %s:  %s\n", g.Name, app.Name, err)
 		return err
 	}
 
 	if err := application.UpdateLastModified(tx, app); err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot update application last modified date:  %s\n", err)
+		log.Warning("addGroupInApplicationHandler> Cannot update application last modified date:  %s\n", err)
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot commit transaction: %s\n", err)
+		log.Warning("addGroupInApplicationHandler> Cannot commit transaction: %s\n", err)
 		return err
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 	if err := application.LoadGroupByApplication(db, app); err != nil {
-		log.Warning("addGroupInApplicationHandler: Cannot load application groups: %s\n", err)
+		log.Warning("addGroupInApplicationHandler> Cannot load application groups: %s\n", err)
 		return err
 	}
 
