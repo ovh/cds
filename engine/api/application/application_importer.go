@@ -124,7 +124,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 		//Attach pipeline
 		if !attached {
 			log.Debug("application.Import> Attach pipeline %s", app.Pipelines[i].Pipeline.Name)
-			if err := AttachPipeline(db, app.ID, app.Pipelines[i].Pipeline.ID); err != nil {
+			if _, err := AttachPipeline(db, app.ID, app.Pipelines[i].Pipeline.ID); err != nil {
 				return err
 			}
 			if msgChan != nil {

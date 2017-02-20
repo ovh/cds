@@ -636,8 +636,13 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	}
 
 	for _, app := range p.AttachedApplication {
-		if err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
+		if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 			log.Warning("addPipelineHandler> Cannot attach pipeline %d to %d: %s\n", app.ID, p.ID, err)
+			return err
+		}
+
+		if err := application.UpdateLastModified(tx, &app); err != nil {
+			log.Warning("addPipelineHandler> Cannot update application last modified date: %s\n", err)
 			return err
 		}
 	}

@@ -78,15 +78,15 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	}
 
 	// 7. Attach pipeline to application
-	if err := application.AttachPipeline(db, app.ID, pip1.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip1.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := application.AttachPipeline(db, app.ID, pip2.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip2.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := application.AttachPipeline(db, app.ID, pip3.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip3.ID); err != nil {
 		t.Fatal(err)
 	}
 
