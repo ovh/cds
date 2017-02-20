@@ -86,7 +86,7 @@ func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOpt
 		close(msgChan)
 		return msgList, errProj
 	}
-	proj.LastModified = lastModified.Unix()
+	proj.LastModified = lastModified
 
 	close(msgChan)
 	<-done

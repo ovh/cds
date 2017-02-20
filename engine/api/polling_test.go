@@ -37,7 +37,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 		return nil, nil
 	}
 
-	projs, err := project.LoadAllProjects(db)
+	projs, err := project.LoadAll(db, nil)
 	if err != nil {
 		t.Error(err.Error())
 		return nil, nil
@@ -45,7 +45,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 	var proj *sdk.Project
 	for _, p := range projs {
 		if p.ID == projectID {
-			proj = p
+			proj = &p
 			break
 		}
 	}

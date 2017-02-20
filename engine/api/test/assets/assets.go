@@ -69,7 +69,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string) *sdk.Proj
 // DeleteTestProject delete a test project
 func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, key string) error {
 	t.Logf("Delete Project %s", key)
-	return project.DeleteProject(db, key)
+	return project.Delete(db, key)
 }
 
 // InsertAdminUser have to be used only for tests

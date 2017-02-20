@@ -11,7 +11,7 @@ import (
 func init() {
 	Cmd.AddCommand(cmdUserInfo())
 	Cmd.AddCommand(cmdUserAdd())
-	Cmd.AddCommand(cmdUserList)
+	Cmd.AddCommand(cmdUserList())
 	Cmd.AddCommand(cmdUserReset())
 	Cmd.AddCommand(cmdUserVerify())
 	Cmd.AddCommand(cmdUserUpdate())

@@ -10,8 +10,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -73,7 +71,7 @@ func LoadProjectByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 			Project: sdk.Project{
 				Key:          projectKey,
 				Name:         projectName,
-				LastModified: lastModified.Unix(),
+				LastModified: lastModified,
 			},
 			Permission: perm,
 		})
@@ -92,7 +90,7 @@ func LoadProjectByPipelineActionID(db gorp.SqlExecutor, pipelineActionID int64) 
 	var proj sdk.Project
 	var lastModified time.Time
 	err := db.QueryRow(query, pipelineActionID).Scan(&proj.ID, &proj.Key, &lastModified)
-	proj.LastModified = lastModified.Unix()
+	proj.LastModified = lastModified
 	return proj, err
 }
 
@@ -152,7 +150,7 @@ func loadprojectwithvariablesandapps(db gorp.SqlExecutor, key string, user *sdk.
 		if err != nil {
 			return nil, err
 		}
-		p.LastModified = lastModified.Unix()
+		p.LastModified = lastModified
 		if varid.Valid && varname.Valid && typ.Valid {
 			par := sdk.Variable{
 				ID:   varid.Int64,
@@ -219,7 +217,7 @@ func loadprojectwithvariables(db gorp.SqlExecutor, key string) (*sdk.Project, er
 		if err != nil {
 			return nil, err
 		}
-		p.LastModified = lastModified.Unix()
+		p.LastModified = lastModified
 		if id.Valid && name.Valid && typ.Valid {
 			par := sdk.Variable{
 				ID:   id.Int64,
@@ -257,12 +255,12 @@ func loadproject(db gorp.SqlExecutor, key string) (*sdk.Project, error) {
 	p := sdk.NewProject(key)
 	p.Name = name
 	p.ID = id
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 	return p, nil
 }
 
-// LoadProject loads an project from database
-func LoadProject(db gorp.SqlExecutor, key string, user *sdk.User, mods ...Mod) (*sdk.Project, error) {
+// Load loads an project from database
+func Load(db gorp.SqlExecutor, key string, user *sdk.User, mods ...Mod) (*sdk.Project, error) {
 	var c funcpar
 	for _, f := range mods {
 		f(&c)
@@ -311,90 +309,8 @@ func LoadProjectByPipelineID(db gorp.SqlExecutor, pipelineID int64) (*sdk.Projec
 		}
 		return nil, err
 	}
-	projectData.LastModified = lastModified.Unix()
+	projectData.LastModified = lastModified
 	return &projectData, nil
-}
-
-// Exist checks whether a project exists or not
-func Exist(db gorp.SqlExecutor, projectKey string) (bool, error) {
-	query := `SELECT COUNT(id) FROM project WHERE project.projectKey = $1`
-
-	var nb int64
-	err := db.QueryRow(query, projectKey).Scan(&nb)
-	if err != nil {
-		return false, err
-	}
-	if nb != 0 {
-		return true, nil
-	}
-	return false, nil
-}
-
-// LoadAllProjects load all projects from database
-func LoadAllProjects(db gorp.SqlExecutor) ([]*sdk.Project, error) {
-	projects := []*sdk.Project{}
-
-	var query string
-	var err error
-	var rows *sql.Rows
-
-	query = `SELECT project.id, project.projectKey, project.name, project.last_modified
-			  FROM project
-			  ORDER by project.name, project.projectkey ASC`
-	rows, err = db.Query(query)
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var key, name string
-		var lastModified time.Time
-		rows.Scan(&id, &key, &name, &lastModified)
-		p := sdk.NewProject(key)
-		p.Name = name
-		p.ID = id
-		p.LastModified = lastModified.Unix()
-		projects = append(projects, p)
-	}
-	return projects, nil
-}
-
-// LoadProjects load all projects from database
-func LoadProjects(db gorp.SqlExecutor, user *sdk.User) ([]*sdk.Project, error) {
-	if user.Admin {
-		return LoadAllProjects(db)
-	}
-
-	projects := []*sdk.Project{}
-
-	query := `SELECT distinct(project.id), project.projectKey,project.name, project.last_modified
-			  FROM project
-			  JOIN project_group ON project.id = project_group.project_id
-			  JOIN group_user ON project_group.group_id = group_user.group_id
-			  WHERE group_user.user_id = $1
-			  ORDER by project.name, project.projectkey ASC`
-	rows, err := db.Query(query, user.ID)
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var key, name string
-		var lastModified time.Time
-		rows.Scan(&id, &key, &name, &lastModified)
-		p := sdk.NewProject(key)
-		p.Name = name
-		p.ID = id
-		p.LastModified = lastModified.Unix()
-		projects = append(projects, p)
-	}
-	return projects, nil
 }
 
 // InsertProject insert given project into given database
@@ -413,46 +329,6 @@ func UpdateProjectDB(db gorp.SqlExecutor, projectKey, projectName string) (time.
 	query := `UPDATE project SET name=$1, last_modified=current_timestamp WHERE projectKey=$2 RETURNING last_modified`
 	err := db.QueryRow(query, projectName, projectKey).Scan(&lastModified)
 	return lastModified, err
-}
-
-// DeleteProject removes given project from database (project and project_group table)
-// DeleteProject also removes all pipelines inside project (pipeline and pipeline_group table).
-func DeleteProject(db gorp.SqlExecutor, key string) error {
-	var projectID int64
-	query := `SELECT id FROM project WHERE projectKey = $1`
-	err := db.QueryRow(query, key).Scan(&projectID)
-	if err != nil {
-		return err
-	}
-
-	err = group.DeleteGroupProjectByProject(db, projectID)
-	if err != nil {
-		return err
-	}
-
-	err = DeleteAllVariableFromProject(db, projectID)
-	if err != nil {
-		return err
-	}
-
-	err = environment.DeleteAllEnvironment(db, projectID)
-	if err != nil {
-		return err
-	}
-
-	query = `DELETE FROM repositories_manager_project WHERE id_project = $1`
-	_, err = db.Exec(query, projectID)
-	if err != nil {
-		return err
-	}
-
-	query = `DELETE FROM project WHERE project.id = $1`
-	_, err = db.Exec(query, projectID)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 //LastUpdates returns projects and application last update

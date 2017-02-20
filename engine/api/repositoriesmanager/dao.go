@@ -223,7 +223,7 @@ func DeleteForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, project 
 	if err = db.QueryRow(query, project.Key).Scan(&lastModified); err != nil {
 		return err
 	}
-	project.LastModified = lastModified.Unix()
+	project.LastModified = lastModified
 	return nil
 }
 

@@ -31,5 +31,11 @@ func InitiliazeDB(DBFunc func() *gorp.DbMap) error {
 		log.Critical("Cannot setup builtin environments: %s\n", err)
 		return err
 	}
+
+	if err := group.Initialize(dbGorp, ""); err != nil {
+		log.Critical("Cannot setup shared infra group: %s\n", err)
+		return err
+	}
+
 	return nil
 }

@@ -70,9 +70,17 @@ func hatcheryRoutine(h Interface, provision int) error {
 		log.Debug("hatcheryRoutine> err while GetWorkerModelStatus:%e\n", err)
 		return err
 	}
+
+	if len(wms) == 0 {
+		log.Warning("hatcheryRoutine> No model from GetWorkerModelStatus")
+	}
+
+	var sumProvisionning int
+
 	for _, ms := range wms {
 		// Provisionning
 		ms.WantedCount += int64(provision)
+		sumProvisionning += int(ms.WantedCount)
 
 		if ms.CurrentCount == ms.WantedCount {
 			// ok, do nothing
@@ -121,6 +129,10 @@ func hatcheryRoutine(h Interface, provision int) error {
 			}
 			continue
 		}
+	}
+
+	if sumProvisionning == 0 {
+		log.Warning("hatcheryRoutine> Nothing to provision")
 	}
 
 	return nil

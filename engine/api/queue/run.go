@@ -43,7 +43,7 @@ func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, p
 	}
 
 	// Load project + var
-	projectData, err := project.LoadProject(db, projectKey, user)
+	projectData, err := project.Load(db, projectKey, user)
 	if err != nil {
 		log.Warning("scheduler.Run> Cannot load project %s: %s\n", projectKey, err)
 		return nil, err

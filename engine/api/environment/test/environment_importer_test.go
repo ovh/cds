@@ -20,7 +20,7 @@ func TestImportInto_Variable(t *testing.T) {
 		Name: "testimportenv",
 	}
 
-	project.DeleteProject(db, proj.Key)
+	project.Delete(db, proj.Key)
 
 	test.NoError(t, project.InsertProject(db, &proj))
 
@@ -140,7 +140,7 @@ func TestImportInto_Group(t *testing.T) {
 		Name: "testimportenv",
 	}
 
-	project.DeleteProject(db, proj.Key)
+	project.Delete(db, proj.Key)
 
 	test.NoError(t, project.InsertProject(db, &proj))
 

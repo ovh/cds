@@ -6,22 +6,28 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID            int64                 `json:"-" yaml:"-"`
-	Key           string                `json:"key" yaml:"key"`
-	Name          string                `json:"name" yaml:"name"`
-	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty"`
-	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty"`
-	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty"`
-	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty"`
-	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty"`
-	Permission    int                   `json:"permission"  yaml:"-"`
-	LastModified  int64                 `json:"last_modified"  yaml:"-"`
-	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-"`
+	ID            int64                 `json:"-" yaml:"-" db:"id"`
+	Key           string                `json:"key" yaml:"key" db:"projectkey"`
+	Name          string                `json:"name" yaml:"name" db:"name"`
+	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"`
+	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"`
+	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"`
+	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"`
+	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"`
+	Permission    int                   `json:"permission"  yaml:"-" db:"-"`
+	Created       time.Time             `json:"created"  yaml:"created" db:"created"`
+	LastModified  time.Time             `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
+	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-"`
+	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-"`
 }
+
+// Metadata represents metadata
+type Metadata map[string]string
 
 //ProjectLastUpdates update times of project, application and pipelines
 type ProjectLastUpdates struct {

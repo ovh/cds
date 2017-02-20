@@ -4,22 +4,27 @@ import (
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk"
 )
 
-// SharedInfraGroup is the name of the builtin group used to share infrastructure between projects
-const SharedInfraGroup = "shared.infra"
+// SharedInfraGroupName is the name of the builtin group used to share infrastructure between projects
+const SharedInfraGroupName = "shared.infra"
+
+// SharedInfraGroup is the group used to share infrastructure between projects
+var SharedInfraGroup *sdk.Group
+
+var defaultGroupID int64
 
 // CreateDefaultGlobalGroup creates a group 'public' where every user will be
 func CreateDefaultGlobalGroup(db *gorp.DbMap) error {
 
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
-	err := db.QueryRow(query, SharedInfraGroup).Scan(&id)
+	err := db.QueryRow(query, SharedInfraGroupName).Scan(&id)
 	if err == sql.ErrNoRows {
 		query = `INSERT INTO "group" (name) VALUES ($1)`
-		_, err = db.Exec(query, SharedInfraGroup)
+		_, err = db.Exec(query, SharedInfraGroupName)
 		if err != nil {
 			return err
 		}
@@ -33,7 +38,7 @@ func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
-	err := db.QueryRow(query, SharedInfraGroup).Scan(&id)
+	err := db.QueryRow(query, SharedInfraGroupName).Scan(&id)
 	if err != nil {
 		return err
 	}
@@ -47,20 +52,23 @@ func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 	return nil
 }
 
-// AddGlobalGroupToPipeline add global group access to given pipeline
-func AddGlobalGroupToPipeline(tx gorp.SqlExecutor, pipID int64) error {
-	query := `SELECT id FROM "group" where name = $1`
-	var id int64
-	err := tx.QueryRow(query, SharedInfraGroup).Scan(&id)
-	if err != nil {
-		return err
+// Initialize initializes sharedInfraGroup and Default Group
+func Initialize(db *gorp.DbMap, defaultGroupName string) error {
+	//Load the famous sharedInfraGroup
+	var errlg error
+	SharedInfraGroup, errlg = LoadGroup(db, SharedInfraGroupName)
+	if errlg != nil {
+		log.Critical("group.Initialize> Cannot load shared infra group: %s\n", errlg)
+		return errlg
 	}
 
-	query = `INSERT INTO pipeline_group (pipeline_id, group_id, role) VALUES ($1, $2, $3)`
-	_, err = tx.Exec(query, pipID, id, permission.PermissionReadExecute)
-	if err != nil {
-		return err
+	if defaultGroupName != "" {
+		g, errld := LoadGroup(db, defaultGroupName)
+		if errld != nil {
+			log.Critical("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
+			return errld
+		}
+		defaultGroupID = g.ID
 	}
-
 	return nil
 }

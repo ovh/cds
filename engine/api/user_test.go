@@ -204,8 +204,8 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Name: "bar",
 	}
 
-	project.DeleteProject(db, project1.Key)
-	project.DeleteProject(db, project2.Key)
+	project.Delete(db, project1.Key)
+	project.Delete(db, project2.Key)
 
 	err = project.InsertProject(db, project1)
 	if err != nil {
@@ -254,8 +254,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 		t.Fatalf("cannot insert user1 in group: %s", err)
 	}
 
-	err = user.LoadUserPermissions(db, u)
-	if err != nil {
+	if err := loadUserPermissions(db, u); err != nil {
 		t.Fatalf("cannot load user group and project: %s", err)
 	}
 
