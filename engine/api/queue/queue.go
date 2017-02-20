@@ -367,17 +367,11 @@ func ParentBuildInfos(pb *sdk.PipelineBuild) []sdk.Parameter {
 }
 
 func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.PipelineBuild) ([]sdk.Parameter, error) {
-	// Get project and pipeline Information
-	projectData, err := project.LoadProjectByPipelineActionID(db, j.PipelineActionID)
-	if err != nil {
-		log.Warning("getActionBuildParameters> err LoadProjectAndPipelineByPipelineActionID on PipelineActionID %d: %s", j.PipelineActionID, err)
-		return nil, err
-	}
 
 	// Load project Variables
-	projectVariables, err := project.GetAllVariableInProject(db, projectData.ID)
+	projectVariables, err := project.GetAllVariableInProject(db, pb.Pipeline.ProjectID)
 	if err != nil {
-		log.Warning("getActionBuildParameters> err GetAllVariableInProject on ID %d: %s", projectData.ID, err)
+		log.Warning("getActionBuildParameters> err GetAllVariableInProject on ID %d: %s", pb.Pipeline.ProjectID, err)
 		return nil, err
 	}
 	// Load application Variables
