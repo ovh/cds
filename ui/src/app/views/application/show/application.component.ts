@@ -91,9 +91,17 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                         if (updatedApplication && !updatedApplication.externalChange) {
                             this.readyApp = true;
                             this.application = updatedApplication;
+
+                            // Add poller subscription to sub application
                             this.checkOtherAppInWorkflow(key);
+
+                            // Start worker
                             this.startWorker(key, appName);
+
+                            // Update recent application viewed
                             this._applicationStore.updateRecentApplication(key, this.application);
+
+                            // Switch workflow
                             if (this.workflowComponentList && this.workflowComponentList.length > 0) {
                                 this.workflowComponentList.first.switchApplication();
                             }
@@ -171,6 +179,10 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Browse all sub applications in workflow and add worker subscription
+     * @param key
+     */
     checkOtherAppInWorkflow(key: string): void {
         if (this.application && this.application.workflows) {
             this.workflowInit = true;
@@ -181,8 +193,13 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     }
 
+    /**
+     * Recursive function adding worker subscription on sub application
+     * @param w
+     * @param key
+     */
     isAnOtherApp(w: WorkflowItem, key: string): void {
-        if (this.application.id !== w.application.id) {
+        if (this.application.id !== w.application.id && this.worker) {
             this.worker.updateWorker('subscribe', {
                 'user': this._authStore.getUser(),
                 'api': environment.apiURL,

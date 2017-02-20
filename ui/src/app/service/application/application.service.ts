@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {Http, RequestOptions, Headers, URLSearchParams} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Application} from '../../model/application.model';
-import {PipelineBuild} from '../../model/pipeline.model';
+import {PipelineBuild, Pipeline} from '../../model/pipeline.model';
 import {Variable} from '../../model/variable.model';
 import {RepositoryPoller} from '../../model/polling.model';
 import {GroupPermission} from '../../model/group.model';
@@ -305,6 +305,26 @@ export class ApplicationService {
         options.search.set('envName', envName);
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
         return this._http.delete(url, options).map(res => res.json());
+    }
+
+    /**
+     * Attach liste of pipeline to the application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipelines Array of pipeline name to attach
+     */
+    attachPipelines(key: string, appName: string, pipelines: Array<string>): Observable<Application> {
+        return this._http.post('/project/' + key + '/application/' + appName + '/pipeline/attach', pipelines).map(res => res.json());
+    }
+
+    /**
+     * Detach liste of pipeline to the application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name to detach
+     */
+    detachPipelines(key: string, appName: string, pipName: string): Observable<Application> {
+        return this._http.delete('/project/' + key + '/application/' + appName + '/pipeline/' + pipName).map(res => res.json());
     }
 
 

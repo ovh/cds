@@ -34,6 +34,10 @@
   "application_permission_form_title" : "Ajouter une permission : ",
   "application_poller_add_ok" : "Poller ajouté à l'application",
   "application_hook_delete_ok" : "Poller supprimé",
+  "application_pipeline_already_linked" : "Pipelines actuellement liés à l'application",
+  "application_pipelines_attached" : "Les pipelines ont été correctement liés à l'application",
+  "application_pipeline_detached" : "Le pipeline a été retiré de l'application",
+  "application_pipeline_linkable" : "Pipelines à lier",
   "application_poller_form_title" : "Ajouter un poller : ",
   "application_poller_list_title" : "Liste des pollers : ",
   "application_rename_title" : "Renommer l'application : ",
@@ -49,6 +53,7 @@
   "application_variable_form_title" : "Ajouter une variable à l'application : ",
   "application_workflow_branch_title" : "Filtrer sur une branche : ",
   "application_workflow_orientation_title" : "Orientation du workflow : ",
+  "application_workflow_pipeline_add" : "Lier un pipeline",
   "application_workflow_version_title" : "Filtrer sur une version : ",
 
   "artifact_name" : "Nom de l'artefact",

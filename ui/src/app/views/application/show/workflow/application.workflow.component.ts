@@ -1,9 +1,10 @@
-import {Component, OnInit, Input, Output, EventEmitter, NgZone} from '@angular/core';
+import {Component, OnInit, Input, Output, EventEmitter, NgZone, ViewChild} from '@angular/core';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {Application} from '../../../../model/application.model';
 import {Project} from '../../../../model/project.model';
 import {WorkflowItem} from '../../../../model/application.workflow.model';
 import {PipelineType, PipelineBuild} from '../../../../model/pipeline.model';
+import {ApplicationPipelineLinkComponent} from './pipeline/pipeline.link.component';
 
 declare var _: any;
 declare var jQuery: any;
@@ -29,6 +30,10 @@ export class ApplicationWorkflowComponent implements OnInit {
     // Filter values
     branches: Array<string>;
     versions: Array<string|number>;
+
+    // Modal Component to link pipeline
+    @ViewChild('linkPipelineComponent')
+    linkPipelineComponent: ApplicationPipelineLinkComponent;
 
     constructor(private _appWorkflow: ApplicationWorkflowService) {
         this.zone = new NgZone({enableLongStackTrace: false});
@@ -197,4 +202,11 @@ export class ApplicationWorkflowComponent implements OnInit {
             this.versions.unshift('');
         });
     };
+
+    openLinkPipelineModal(): void {
+        if (this.linkPipelineComponent) {
+            this.linkPipelineComponent.show({autofocus: false, closable: false, observeChanges: true});
+        }
+    }
 }
+

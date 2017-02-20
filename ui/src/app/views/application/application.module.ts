@@ -15,6 +15,7 @@ import {ApplicationWorkflowItemComponent} from './show/workflow/tree/item/applic
 import {ApplicationTriggerComponent} from './show/workflow/trigger/trigger.component';
 import {ApplicationNotificationListComponent} from './show/notifications/list/notification.list.component';
 import {ApplicationNotificationFormModalComponent} from './show/notifications/form/notification.form.component';
+import {ApplicationPipelineLinkComponent} from './show/workflow/pipeline/pipeline.link.component';
 
 @NgModule({
     declarations: [
@@ -24,6 +25,7 @@ import {ApplicationNotificationFormModalComponent} from './show/notifications/fo
         ApplicationHookListComponent,
         ApplicationNotificationFormModalComponent,
         ApplicationNotificationListComponent,
+        ApplicationPipelineLinkComponent,
         ApplicationPollerFormComponent,
         ApplicationPollerListComponent,
         ApplicationRepositoryComponent,
