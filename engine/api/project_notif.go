@@ -16,7 +16,7 @@ func getProjectNotificationsHandler(w http.ResponseWriter, r *http.Request, db *
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	if _, err := project.LoadProject(db, key, nil); err != nil {
+	if _, err := project.Load(db, key, nil); err != nil {
 		return err
 	}
 

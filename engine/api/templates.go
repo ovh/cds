@@ -305,7 +305,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	projectKey := vars["permProjectKey"]
 
 	// Load the project
-	proj, err := project.LoadProject(db, projectKey, c.User)
+	proj, err := project.Load(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("applyTemplatesHandler> Cannot load project %s: %s\n", projectKey, err)
 		return err
@@ -397,7 +397,7 @@ func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, d
 	appName := vars["permApplicationName"]
 
 	// Load the project
-	proj, err := project.LoadProject(db, projectKey, c.User)
+	proj, err := project.Load(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("applyTemplateOnApplicationHandler> Cannot load project %s: %s\n", projectKey, err)
 		return err

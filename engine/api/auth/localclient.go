@@ -137,10 +137,6 @@ func (c *LocalClient) checkUserBasicAuth(db gorp.SqlExecutor, authHeaderValue st
 	if !loginOk {
 		return fmt.Errorf("bad password")
 	}
-	err = user.LoadUserPermissions(db, u)
-	if err != nil {
-		return err
-	}
 	ctx.User = u
 	return nil
 }

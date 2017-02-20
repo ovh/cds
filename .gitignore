@@ -7,3 +7,4 @@ engine/hatchery/hatchery
 engine/worker/worker
 *.out
 *.html
+.bash_aliases

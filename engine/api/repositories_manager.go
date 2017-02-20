@@ -279,7 +279,7 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 
 	}
 
-	p, err := project.LoadProject(db, projectKey, c.User)
+	p, err := project.Load(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load project %s: %s\n", projectKey, err)
 		return err
@@ -302,7 +302,7 @@ func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
 
-	p, err := project.LoadProject(db, projectKey, c.User)
+	p, err := project.Load(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("deleteRepositoriesManagerHandler> Cannot load project %s: %s\n", projectKey, err)
 		return err
@@ -745,7 +745,7 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 
 	}
 
-	projectData, err := project.LoadProject(db, projectKey, c.User)
+	projectData, err := project.Load(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s\n", projectKey, err)
 		return sdk.ErrInvalidProject

@@ -397,7 +397,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 				}
 			}
 			root.Project.Key = projectkey
-			root.Project.LastModified = lastModified.Unix()
+			root.Project.LastModified = lastModified
 			root.Application.Permission = permission.ApplicationPermission(root.Application.ID, user)
 			root.Pipeline.Permission = permission.PipelinePermission(root.Pipeline.ID, user)
 			if root.Environment.ID != sdk.DefaultEnv.ID {

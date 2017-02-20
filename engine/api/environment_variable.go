@@ -44,7 +44,7 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 		return sdk.ErrInvalidID
 	}
 
-	p, errProj := project.LoadProject(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User)
 	if errProj != nil {
 		log.Warning("restoreEnvironmentAuditHandler: Cannot load project %s: %s\n", key, errProj)
 		return errProj
@@ -100,7 +100,7 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 		log.Warning("restoreEnvironmentAuditHandler> Cannot update project last modified date: %s\n", errDate)
 		return errDate
 	}
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("restoreEnvironmentAuditHandler: Cannot commit transaction:  %s\n", err)
@@ -169,7 +169,7 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.LoadProject(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User)
 	if errProj != nil {
 		log.Warning("deleteVariableFromEnvironmentHandler: Cannot load project %s :  %s\n", key, errProj)
 		return errProj
@@ -203,7 +203,7 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 		log.Warning("deleteVariableFromEnvironmentHandler: Cannot update project last modified date: %s\n", errDate)
 		return errDate
 	}
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("deleteVariableFromEnvironmentHandler: Cannot commit transaction:  %s\n", err)
@@ -238,7 +238,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.LoadProject(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User)
 	if errProj != nil {
 		log.Warning("updateVariableInEnvironment: Cannot load %s: %s\n", key, errProj)
 		return errProj
@@ -285,7 +285,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 		log.Warning("updateVariableInEnvironmentHandler: Cannot update project last modified date:  %s\n", errDate)
 		return errDate
 	}
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("updateVariableInEnvironmentHandler: Cannot commit transaction:  %s\n", err)
@@ -325,7 +325,7 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.LoadProject(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User)
 	if errProj != nil {
 		log.Warning("addVariableInEnvironmentHandler: Cannot load %s: %s\n", key, errProj)
 		return errProj
@@ -381,7 +381,7 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 		log.Warning("addVariableInEnvironmentHandler: Cannot update project last modified date:  %s\n", errDate)
 		return errDate
 	}
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("addVariableInEnvironmentHandler: cannot commit tx: %s\n", err)

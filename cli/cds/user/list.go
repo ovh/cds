@@ -8,12 +8,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cmdUserList = &cobra.Command{
-	Use:     "list",
-	Short:   "",
-	Long:    ``,
-	Aliases: []string{"ls"},
-	Run:     listUser,
+var cmdUserListQuiet bool
+
+func cmdUserList() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "list",
+		Short:   "",
+		Long:    ``,
+		Aliases: []string{"ls"},
+		Run:     listUser,
+	}
+
+	cmd.Flags().BoolVarP(&cmdUserListQuiet, "quiet", "q", false, "")
+
+	return cmd
 }
 
 func listUser(cmd *cobra.Command, args []string) {
@@ -23,6 +31,10 @@ func listUser(cmd *cobra.Command, args []string) {
 	}
 
 	for i := range users {
-		fmt.Printf("- %s %s %s\n", users[i].Username, users[i].Email, users[i].Fullname)
+		if cmdUserListQuiet {
+			fmt.Printf("%s\n", users[i].Username)
+			continue
+		}
+		fmt.Printf("%s %s %s\n", users[i].Username, users[i].Email, users[i].Fullname)
 	}
 }

@@ -46,7 +46,7 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.ErrInvalidID
 	}
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("restoreAuditHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -162,7 +162,7 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	appName := vars["permApplicationName"]
 	varName := vars["name"]
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("deleteVariableInApplicationHandler: Cannot load project: %s\n", err)
 		return err
@@ -229,7 +229,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 	key := vars["key"]
 	appName := vars["permApplicationName"]
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("updateVariablesInApplicationHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -354,7 +354,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	appName := vars["permApplicationName"]
 	varName := vars["name"]
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -442,7 +442,7 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 	appName := vars["permApplicationName"]
 	varName := vars["name"]
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("addVariableInApplicationHandler: Cannot load %s: %s\n", key, err)
 		return err

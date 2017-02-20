@@ -19,8 +19,9 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -164,9 +165,58 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if rc.auth {
 			if err := r.checkAuthentication(db, req.Header, c); err != nil {
-				log.Warning("Authorization denied on %s %s for %s: %s\n", req.Method, req.URL, req.RemoteAddr, err)
+				log.Warning("Router> Authorization denied on %s %s for %s: %s\n", req.Method, req.URL, req.RemoteAddr, err)
 				WriteError(w, req, sdk.ErrUnauthorized)
 				return
+			}
+		}
+
+		if c.User != nil {
+			if err := loadUserPermissions(db, c.User); err != nil {
+				log.Warning("Router> Unable to load user %s permission : %s", c.User.ID, err)
+				WriteError(w, req, sdk.ErrUnauthorized)
+				return
+			}
+		}
+
+		if c.Hatchery != nil {
+			g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
+			if err != nil {
+				log.Warning("Router> cannot load group permissions: %s")
+				WriteError(w, req, sdk.ErrUnauthorized)
+				return
+			}
+			c.User.Groups = append(c.User.Groups, *g)
+		}
+
+		if c.Worker != nil {
+			g, err := loadGroupPermissions(db, c.Worker.GroupID)
+			if err != nil {
+				log.Warning("Router>  cannot load group permissions: %s", err)
+				WriteError(w, req, sdk.ErrUnauthorized)
+			}
+			c.User.Groups = append(c.User.Groups, *g)
+
+			if c.Worker.Model != 0 {
+				//Load model
+				m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
+				if err != nil {
+					log.Warning("Router>  cannot load worker: %s", err)
+					WriteError(w, req, sdk.ErrUnauthorized)
+				}
+
+				//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
+				if m.GroupID == group.SharedInfraGroup.ID {
+					c.User.Groups = append(c.User.Groups, *group.SharedInfraGroup)
+				} else {
+					modelGroup, errLoad2 := loadGroupPermissions(db, m.GroupID)
+					if errLoad2 != nil {
+						log.Warning("checkWorkerAuth> Cannot load group: %s\n", errLoad2)
+						WriteError(w, req, sdk.ErrUnauthorized)
+					}
+					//Anyway, add the group of the model as a group of the user
+					c.User.Groups = append(c.User.Groups, *modelGroup)
+				}
 			}
 		}
 
@@ -357,13 +407,8 @@ func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *conte
 		return err
 	}
 
-	log.Debug("HatcheryAuth> Loading permissions for group %d\n", h.GroupID)
 	c.User = &sdk.User{Username: h.Name}
-	g, err := user.LoadGroupPermissions(db, h.GroupID)
-	if err != nil {
-		return fmt.Errorf("cannot load group permissions: %s", err)
-	}
-	c.User.Groups = append(c.User.Groups, *g)
+	c.Hatchery = h
 	return nil
 }
 

@@ -28,7 +28,7 @@ func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	project, err := project.LoadProject(db, key, c.User)
+	project, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("addPipelineInApplicationHandler: Cannot load project: %s: %s\n", key, err)
 		return err
