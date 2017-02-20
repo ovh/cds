@@ -10,17 +10,17 @@ import (
 
 // Templater contains templating values on a testsuite
 type Templater struct {
-	values map[string]string
+	Values map[string]string
 }
 
 func newTemplater(values map[string]string) *Templater {
-	return &Templater{values: values}
+	return &Templater{Values: values}
 }
 
 // Add add data to templater
 func (tmpl *Templater) Add(prefix string, values map[string]string) {
 	for k, v := range values {
-		tmpl.values[prefix+"."+k] = v
+		tmpl.Values[prefix+"."+k] = v
 	}
 }
 
@@ -35,7 +35,7 @@ func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
 	}
 	sb := string(s)
 
-	for k, v := range tmpl.values {
+	for k, v := range tmpl.Values {
 		sb = strings.Replace(sb, "{{."+k+"}}", v, -1)
 	}
 
