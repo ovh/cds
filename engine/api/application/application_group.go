@@ -21,7 +21,7 @@ func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, groupP
 			g, errG = group.LoadGroup(db, g.Name)
 			if errG != nil {
 				log.Warning("AddGroup: Cannot find %s: %s\n", g.Name, errG)
-				return sdk.ErrGroupNotFound
+				return errG
 			}
 		}
 
@@ -34,7 +34,7 @@ func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, groupP
 
 		if !groupAttachedToApp {
 			if err := group.InsertGroupInApplication(db, a.ID, g.ID, gp.Permission); err != nil {
-				log.Warning("AddGroup> Unable to inserting in application_group %d %d %d: s%", a.ID, g.ID, gp.Permission, err)
+				log.Warning("AddGroup> Unable to inserting in application_group %d %d %d: %s", a.ID, g.ID, gp.Permission, err)
 				return err
 			}
 		}

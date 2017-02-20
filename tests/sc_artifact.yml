@@ -9,7 +9,7 @@ testcases:
 
 - name: test artifact
   steps:
-  - script: cds pipeline add ITSCARTIFACT ArtifactPip
+  - script: cds pipeline add ITSCARTIFACT ArtifactPip --type deployment
   - script: cds app pipeline add ITSCARTIFACT TestApp ArtifactPip
   - script: cds action add IT_SC_cdsartifacttest
   - script: cds action add step IT_SC_cdsartifacttest Script -p script="echo foo > logs.txt"

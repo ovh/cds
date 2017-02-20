@@ -18,7 +18,7 @@ func pipelineAddCmd() *cobra.Command {
 		Run:   addPipeline,
 	}
 
-	cmd.Flags().StringVarP(&pipelineType, "type", "", "build", "Pipeline type {build,deployment,test}")
+	cmd.Flags().StringVarP(&pipelineType, "type", "", "build", "Pipeline type {build,deployment,testing}")
 	return cmd
 }
 
