@@ -626,6 +626,10 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		return err
 	}
 
+	for _, g := range project.ProjectGroups {
+		p.GroupPermission = append(p.GroupPermission, g)
+	}
+
 	if err := group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID); err != nil {
 		log.Warning("addPipelineHandler> Cannot add groups on pipeline: %s\n", err)
 		return err
