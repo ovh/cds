@@ -33,6 +33,14 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 		app.ApplicationGroups = proj.ProjectGroups
 	}
 
+	if err := importVariables(db, proj, app, user, msgChan); err != nil {
+		return err
+	}
+
+	if err := ImportPipelines(db, proj, app, msgChan); err != nil {
+		return err
+	}
+
 	//Insert group permission on application
 	for i := range app.ApplicationGroups {
 		//Load the group by name
@@ -47,14 +55,6 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 		if msgChan != nil {
 			msgChan <- msg.New(msg.AppGroupSetPermission, g.Name, app.Name)
 		}
-	}
-
-	if err := importVariables(db, proj, app, user, msgChan); err != nil {
-		return err
-	}
-
-	if err := ImportPipelines(db, proj, app, msgChan); err != nil {
-		return err
 	}
 
 	//Set repositories manager

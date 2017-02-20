@@ -62,6 +62,7 @@ func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, groupP
 		//For all attached pipelines
 		for _, p := range a.Pipelines {
 			//Check association with pipeline
+			log.Debug("application.AddGroup> proj=%s pip=%d group=%s", proj.Name, p.Pipeline.ID, g.Name)
 			groupAttachedToPipeline, errp := group.CheckGroupInPipeline(db, p.Pipeline.ID, g.ID)
 			if errp != nil {
 				log.Warning("AddGroup> Unable to check group in pipeline %s", errp)
