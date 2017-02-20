@@ -71,7 +71,8 @@ func Test_runPipelineHandler(t *testing.T) {
 	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
+	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	test.NoError(t, err)
 
 	//6. Prepare the run request
 	runRequest := sdk.RunRequest{}
@@ -148,7 +149,8 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
+	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	test.NoError(t, err)
 
 	//6. Prepare the run request
 	runRequest := sdk.RunRequest{}
@@ -213,7 +215,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	err = application.InsertApplication(db, proj, app2)
 
 	//12. Attach pipeline to application
-	err = application.AttachPipeline(db, app2.ID, pip2.ID)
+	_, err = application.AttachPipeline(db, app2.ID, pip2.ID)
 	test.NoError(t, err)
 
 	//13. Prepare the pipelne trigger
