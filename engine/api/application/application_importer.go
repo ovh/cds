@@ -41,7 +41,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 			return err
 		}
 		log.Debug("application.Import> Insert group %d in application", g.ID)
-		if err := group.InsertGroupInApplication(db, app.ID, g.ID, app.ApplicationGroups[i].Permission); err != nil {
+		if err := AddGroup(db, proj, app, app.ApplicationGroups[i]); err != nil {
 			return err
 		}
 		if msgChan != nil {

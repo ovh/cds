@@ -745,7 +745,7 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 
 	}
 
-	projectData, err := project.Load(db, projectKey, c.User)
+	proj, err := project.Load(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s\n", projectKey, err)
 		return sdk.ErrInvalidProject
@@ -793,21 +793,20 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	defer tx.Rollback()
 
 	//Insert application in database
-	if err = application.InsertApplication(tx, projectData, &app); err != nil {
+	if err := application.InsertApplication(tx, proj, &app); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline: %s\n", err)
 		return err
 
 	}
 
 	//Fetch groups from project
-	if err = group.LoadGroupByProject(tx, projectData); err != nil {
+	if err := group.LoadGroupByProject(tx, proj); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot load group from project: %s\n", err)
 		return err
-
 	}
 
 	//Add the  groups on the application
-	if err = group.InsertGroupsInApplication(tx, projectData.ProjectGroups, app.ID); err != nil {
+	if err := application.AddGroup(tx, proj, &app, proj.ProjectGroups...); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot add groups on application: %s\n", err)
 		return err
 	}
