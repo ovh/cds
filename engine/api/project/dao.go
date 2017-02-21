@@ -223,16 +223,16 @@ func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User, opts []loadOptionFun
 	proj := sdk.Project(*p)
 
 	//By default we load applications and variables
-	if err := loadApplications(db, &proj, u); err != nil {
+	if err := loadApplications(db, &proj, u); err != nil && err != sql.ErrNoRows && err != sdk.ErrApplicationNotFound {
 		return nil, err
 	}
 
-	if err := loadAllVariables(db, &proj); err != nil {
+	if err := loadAllVariables(db, &proj); err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 
 	for _, f := range opts {
-		if err := f(db, &proj, u); err != nil {
+		if err := f(db, &proj, u); err != nil && err != sql.ErrNoRows {
 			return nil, err
 		}
 	}

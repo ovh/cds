@@ -1,6 +1,8 @@
 package project
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -15,7 +17,7 @@ import (
 
 func loadAllVariables(db gorp.SqlExecutor, proj *sdk.Project, args ...GetAllVariableFuncArg) error {
 	vars, err := GetAllVariableInProject(db, proj.ID, args...)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	proj.Variable = vars
@@ -25,7 +27,7 @@ func loadAllVariables(db gorp.SqlExecutor, proj *sdk.Project, args ...GetAllVari
 func loadApplications(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	var err error
 	proj.Applications, err = application.LoadApplications(db, proj.Key, true, true, u)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows && err != sdk.ErrApplicationNotFound {
 		return err
 	}
 	return nil
@@ -33,7 +35,7 @@ func loadApplications(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error
 
 func loadPipelines(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	pipelines, errPip := pipeline.LoadPipelines(db, proj.ID, false, u)
-	if errPip != nil {
+	if errPip != nil && errPip != sql.ErrNoRows && errPip != sdk.ErrPipelineNotFound && errPip != sdk.ErrPipelineNotAttached {
 		log.Warning("getProject: Cannot load pipelines from db: %s\n", errPip)
 		return errPip
 	}
@@ -43,7 +45,7 @@ func loadPipelines(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 
 func loadEnvironments(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	envs, errEnv := environment.LoadEnvironments(db, proj.Key, true, u)
-	if errEnv != nil {
+	if errEnv != nil && errEnv != sql.ErrNoRows && errEnv != sdk.ErrNoEnvironment {
 		log.Warning("loadEnvironments> Cannot load environments from db: %s\n", errEnv)
 		return errEnv
 
@@ -70,7 +72,7 @@ func loadPermission(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 func loadRepositoriesManagers(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	var errRepos error
 	proj.ReposManager, errRepos = repositoriesmanager.LoadAllForProject(db, proj.Key)
-	if errRepos != nil {
+	if errRepos != nil && errRepos != sql.ErrNoRows && errRepos != sdk.ErrNoReposManager {
 		log.Warning("loadRepositoriesManagers> Cannot load repos manager for project %s: %s\n", proj.Key, errRepos)
 		return errRepos
 	}
