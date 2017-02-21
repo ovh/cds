@@ -71,12 +71,14 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 		}
 	}
 
+	secrets := Client.GetSecrets()
+	if secrets.Err() != nil {
+		log.Critical("Error: %v", secrets.Err())
+		return secrets.Err()
+	}
+
 	//If key hasn't been initilized with default key
 	if len(key) == 0 {
-		secrets := Client.GetSecrets()
-		if secrets.Err() != nil {
-			return secrets.Err()
-		}
 		aesKey, _ := secrets.Get("cds/aes-key")
 		if aesKey == "" {
 			log.Critical("secret.Init> cds/aes-key not found\n")
@@ -84,20 +86,26 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 		}
 		key = []byte(aesKey)
 
-		cdsDBCredS, _ := secrets.Get("cds/cds")
-		if cdsDBCredS == "" {
-			log.Critical("secret.Init> cds/cds not found")
-			return nil
-		}
-
-		var cdsDBCred = DatabaseCredentials{}
-		if err := json.Unmarshal([]byte(cdsDBCredS), &cdsDBCredS); err != nil {
-			log.Critical("secret.Init> Unable to unmarshal secret", err)
-			return nil
-		}
-		SecretUsername = cdsDBCred.User
-		SecretPassword = cdsDBCred.Password
 	}
+
+	log.Debug("%v", secrets)
+
+	cdsDBCredS, _ := secrets.Get("cds/cds")
+	if cdsDBCredS == "" {
+		log.Critical("secret.Init> cds/cds not found")
+		return nil
+	}
+
+	var cdsDBCred = DatabaseCredentials{}
+	if err := json.Unmarshal([]byte(cdsDBCredS), &cdsDBCred); err != nil {
+		log.Critical("secret.Init> Unable to unmarshal secret %s", cdsDBCredS, err)
+		return nil
+	}
+
+	log.Notice("secret.Init> Database credentials found")
+	SecretUsername = cdsDBCred.User
+	SecretPassword = cdsDBCred.Password
+
 	return nil
 }
 
