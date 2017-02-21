@@ -68,7 +68,7 @@ func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	appName := vars["permApplicationName"]
 
 	var pipelines []string
-	if err := UnmarshalBody(r, pipelines); err != nil {
+	if err := UnmarshalBody(r, &pipelines); err != nil {
 		return err
 	}
 
@@ -144,7 +144,7 @@ func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	appName := vars["permApplicationName"]
 
 	var appPipelines []sdk.ApplicationPipeline
-	if err := UnmarshalBody(r, appPipelines); err != nil {
+	if err := UnmarshalBody(r, &appPipelines); err != nil {
 		return err
 	}
 
@@ -533,7 +533,7 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 
 	//Parse notification settings
 	notifs := &sdk.UserNotification{}
-	if err := UnmarshalBody(r, notifs); err != nil {
+	if err := UnmarshalBody(r, &notifs); err != nil {
 		return err
 	}
 

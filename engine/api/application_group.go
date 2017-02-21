@@ -24,7 +24,7 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 	groupName := vars["group"]
 
 	var groupApplication sdk.GroupPermission
-	if err := UnmarshalBody(r, groupApplication); err != nil {
+	if err := UnmarshalBody(r, &groupApplication); err != nil {
 		return err
 	}
 
@@ -99,7 +99,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	var groupsPermission []sdk.GroupPermission
-	if err := UnmarshalBody(r, groupsPermission); err != nil {
+	if err := UnmarshalBody(r, &groupsPermission); err != nil {
 		return err
 	}
 
@@ -169,7 +169,7 @@ func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *go
 	appName := vars["permApplicationName"]
 
 	var groupPermission sdk.GroupPermission
-	if err := UnmarshalBody(r, groupPermission); err != nil {
+	if err := UnmarshalBody(r, &groupPermission); err != nil {
 		return err
 	}
 

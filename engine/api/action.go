@@ -154,7 +154,7 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	// Get body
 	var a sdk.Action
-	if err := UnmarshalBody(r, a); err != nil {
+	if err := UnmarshalBody(r, &a); err != nil {
 		return err
 	}
 
@@ -190,7 +190,7 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	var a sdk.Action
-	if err := UnmarshalBody(r, a); err != nil {
+	if err := UnmarshalBody(r, &a); err != nil {
 		return err
 	}
 

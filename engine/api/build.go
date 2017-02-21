@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/runabove/venom"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
@@ -21,7 +22,6 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/runabove/venom"
 )
 
 func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {

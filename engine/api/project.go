@@ -31,7 +31,7 @@ func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	key := vars["permProjectKey"]
 
 	proj := &sdk.Project{}
-	if err := UnmarshalBody(r, &proj); err != nil {
+	if err := UnmarshalBody(r, proj); err != nil {
 		return err
 	}
 
@@ -84,7 +84,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	//Unmarshal data
 	p := &sdk.Project{}
-	if err := UnmarshalBody(r, &p); err != nil {
+	if err := UnmarshalBody(r, p); err != nil {
 		return err
 	}
 

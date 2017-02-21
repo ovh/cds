@@ -180,7 +180,7 @@ func getPublicGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 
 func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	g := &sdk.Group{}
-	if err := UnmarshalBody(r, &g); err != nil {
+	if err := UnmarshalBody(r, g); err != nil {
 		return err
 	}
 
