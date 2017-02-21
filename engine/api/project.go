@@ -61,14 +61,10 @@ func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return errProj
 	}
 
-	lastModified, errUp := project.UpdateProjectDB(db, key, proj.Name)
-	if errUp != nil {
+	if errUp := project.Update(db, proj); errUp != nil {
 		log.Warning("updateProject: Cannot update project %s : %s\n", key, errUp)
 		return errUp
 	}
-
-	p.Name = proj.Name
-	p.LastModified = lastModified
 
 	return WriteJSON(w, r, p, http.StatusOK)
 }
@@ -144,7 +140,7 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	}
 
-	if err := project.InsertProject(tx, p); err != nil {
+	if err := project.Insert(tx, p); err != nil {
 		log.Warning("AddProject: Cannot insert project: %s\n", err)
 		return err
 
@@ -182,14 +178,19 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		var errVar error
 		switch v.Type {
 		case sdk.KeyVariable:
-			errVar = project.AddKeyPairToProject(tx, p, v.Name)
+			errVar = project.AddKeyPair(tx, p, v.Name)
 		default:
-			errVar = project.InsertVariableInProject(tx, p, v)
+			errVar = project.InsertVariable(tx, p, v)
 		}
 		if errVar != nil {
 			log.Warning("addProject: Cannot add variable %s in project %s:  %s\n", v.Name, p.Name, errVar)
 			return errVar
 		}
+	}
+
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("addProject: Cannot update last modified:  %s\n", err)
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {

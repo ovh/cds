@@ -95,6 +95,40 @@ func Delete(db gorp.SqlExecutor, key string) error {
 	return nil
 }
 
+// Insert a new project in database
+func Insert(db gorp.SqlExecutor, proj *sdk.Project) error {
+	proj.LastModified = time.Now()
+	dbProj := dbProject(*proj)
+	if err := db.Insert(&dbProj); err != nil {
+		return err
+	}
+	*proj = sdk.Project(dbProj)
+	return nil
+}
+
+// Update a new project in databas
+func Update(db gorp.SqlExecutor, proj *sdk.Project) error {
+	proj.LastModified = time.Now()
+	dbProj := dbProject(*proj)
+	n, err := db.Update(&dbProj)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sdk.ErrNoProject
+	}
+	*proj = sdk.Project(dbProj)
+	return nil
+}
+
+// UpdateLastModified updates last_modified date on a project given its key
+func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) error {
+	t := time.Now()
+	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
+	proj.LastModified = t
+	return err
+}
+
 // DeleteByID removes given project from database (project and project_group table)
 // DeleteByID also removes all pipelines inside project (pipeline and pipeline_group table).
 func DeleteByID(db gorp.SqlExecutor, id int64) error {
@@ -103,7 +137,7 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 		return err
 	}
 
-	if err := DeleteAllVariableFromProject(db, id); err != nil {
+	if err := DeleteAllVariable(db, id); err != nil {
 		return err
 	}
 

@@ -76,10 +76,6 @@ func Init() (*sql.DB, error) {
 		dbName == "" ||
 		dbHost == "" ||
 		dbPort == "" {
-
-		log.Printf("Missing database infos\n")
-		log.Printf("got user=%s, password=%dchar, name=%s, host=%s, port=%s sslmode=%s\n", dbUser, len(dbPassword), dbName, dbHost, dbPort, dbSSLMode)
-
 		return nil, fmt.Errorf("Missing database infos")
 	}
 

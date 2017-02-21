@@ -166,7 +166,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 		return err
 	}
 
-	if _, err := project.UpdateProjectDB(tx, proj.Key, proj.Name); err != nil {
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
 		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
 		return err
 	}

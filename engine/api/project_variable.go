@@ -71,8 +71,7 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 
 	}
 
-	err = project.DeleteAllVariableFromProject(tx, p.ID)
-	if err != nil {
+	if err := project.DeleteAllVariable(tx, p.ID); err != nil {
 		log.Warning("restoreProjectVariableAuditHandler: Cannot delete variables for project %s:  %s\n", key, err)
 		return sdk.ErrUnknownError
 
@@ -88,21 +87,23 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 			}
 			v.Value = string(value)
 		}
-		err := project.InsertVariableInProject(tx, p, v)
-		if err != nil {
+		if err := project.InsertVariable(tx, p, v); err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot insert variable %s for project %s:  %s\n", v.Name, key, err)
 			return err
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("restoreProjectVariableAuditHandler: Cannot commit transaction:  %s\n", err)
-		return sdk.ErrUnknownError
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("restoreProjectVariableAuditHandler: Cannot update last modified:  %s\n", err)
+		return err
 	}
 
-	err = sanity.CheckProjectPipelines(db, p)
-	if err != nil {
+	if err := tx.Commit(); err != nil {
+		log.Warning("restoreProjectVariableAuditHandler: Cannot commit transaction:  %s\n", err)
+		return err
+	}
+
+	if err := sanity.CheckProjectPipelines(db, p); err != nil {
 		log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s\n", err)
 		return err
 	}
@@ -149,14 +150,17 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 		return err
 	}
 
-	err = project.DeleteVariableFromProject(tx, p, varName)
-	if err != nil {
+	if err := project.DeleteVariable(tx, p, varName); err != nil {
 		log.Warning("deleteVariableFromProject: Cannot delete %s: %s\n", varName, err)
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("deleteVariableFromProject: Cannot update last modified date: %s\n", err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteVariableFromProject: Cannot commit transaction: %s\n", err)
 		return err
 	}
@@ -171,6 +175,7 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
+//DEPRECATED
 func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
@@ -223,8 +228,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 
 	}
 
-	err = project.DeleteAllVariableFromProject(tx, p.ID)
-	if err != nil {
+	if err := project.DeleteAllVariable(tx, p.ID); err != nil {
 		log.Warning("updateVariablesInProjectHandler: Cannot delete all variables for project %s: %s\n", p.Key, err)
 		return sdk.ErrNotFound
 
@@ -240,7 +244,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 					}
 				}
 			}
-			err = project.InsertVariableInProject(tx, p, v)
+			err = project.InsertVariable(tx, p, v)
 			if err != nil {
 				log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 				return err
@@ -250,7 +254,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		// In case of a key variable, if empty, generate a pair and add them as variable
 		case sdk.KeyVariable:
 			if v.Value == "" {
-				err := project.AddKeyPairToProject(tx, p, v.Name)
+				err := project.AddKeyPair(tx, p, v.Name)
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler> cannot generate keypair: %s\n", err)
 					return err
@@ -262,7 +266,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 						v.Value = p.Value
 					}
 				}
-				err = project.InsertVariableInProject(tx, p, v)
+				err = project.InsertVariable(tx, p, v)
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 					return err
@@ -271,7 +275,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 			}
 			break
 		default:
-			err = project.InsertVariableInProject(tx, p, v)
+			err = project.InsertVariable(tx, p, v)
 			if err != nil {
 				log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 				return err
@@ -280,15 +284,18 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateVariablesInProjectHandler: Cannot commit transaction: %s\n", err)
 		return sdk.ErrNotFound
 
 	}
 
-	err = sanity.CheckProjectPipelines(db, p)
-	if err != nil {
+	if err := sanity.CheckProjectPipelines(db, p); err != nil {
 		log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
 		return err
 
@@ -343,22 +350,23 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 
 	}
 
-	err = project.UpdateVariableInProject(tx, p, newVar)
-	if err != nil {
+	if err := project.UpdateVariable(tx, p, newVar); err != nil {
 		log.Warning("updateVariableInProject: Cannot update variable %s in project %s:  %s\n", varName, p.Name, err)
 		return err
-
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("updateVariableInProject: Cannot update last modified date: %s\n", err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateVariableInProject: cannot commit transaction: %s\n", err)
 		return err
 
 	}
 
-	err = sanity.CheckProjectPipelines(db, p)
-	if err != nil {
+	if err := sanity.CheckProjectPipelines(db, p); err != nil {
 		log.Warning("updateVariableInProject: Cannot check warnings: %s\n", err)
 		return err
 
@@ -446,24 +454,28 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 	defer tx.Rollback()
 
-	err = project.CreateAudit(tx, p, c.User)
-	if err != nil {
+	if err := project.CreateAudit(tx, p, c.User); err != nil {
 		log.Warning("addVariableInProjectHandler: cannot create audit for project variable: %s\n", err)
 		return err
 	}
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = project.AddKeyPairToProject(tx, p, newVar.Name)
+		err = project.AddKeyPair(tx, p, newVar.Name)
 		break
 	default:
-		err = project.InsertVariableInProject(tx, p, newVar)
+		err = project.InsertVariable(tx, p, newVar)
 		break
 	}
 	if err != nil {
 		log.Warning("AddVariableInProject: Cannot add variable %s in project %s:  %s\n", varName, p.Name, err)
 		return err
 
+	}
+
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
+		return err
 	}
 
 	err = tx.Commit()

@@ -416,7 +416,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	projectData, errProj := project.Load(db, projectKey, c.User)
+	proj, errProj := project.Load(db, projectKey, c.User)
 	if errProj != nil {
 		log.Warning("cloneApplicationHandler> Cannot load %s: %s\n", projectKey, errProj)
 		return sdk.ErrNoProject
@@ -428,7 +428,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return errE
 
 	}
-	projectData.Environments = envs
+	proj.Environments = envs
 
 	var newApp sdk.Application
 	// Get body
@@ -453,17 +453,15 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	defer tx.Rollback()
 
-	if err := cloneApplication(tx, projectData, &newApp, appToClone); err != nil {
+	if err := cloneApplication(tx, proj, &newApp, appToClone); err != nil {
 		log.Warning("cloneApplicationHandler> Cannot insert new application %s: %s\n", newApp.Name, err)
 		return err
 	}
 
-	lastModified, errLM := project.UpdateProjectDB(tx, projectData.Key, projectData.Name)
-	if errLM != nil {
-		log.Warning("cloneApplicationHandler> Cannot update project last modified date: %s\n", errLM)
-		return errLM
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		log.Warning("cloneApplicationHandler: Cannot update last modified date: %s\n", err)
+		return err
 	}
-	projectData.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("cloneApplicationHandler> Cannot commit transaction : %s\n", err)

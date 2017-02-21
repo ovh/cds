@@ -33,7 +33,7 @@ var (
 	level  Level
 )
 
-// Logger defines the logs levels used by RamSQL engine
+// Logger defines the logs levels used
 type Logger interface {
 	Logf(fmt string, values ...interface{})
 }

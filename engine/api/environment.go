@@ -54,7 +54,7 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	projectData, err := project.Load(db, key, c.User)
+	proj, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("updateEnvironmentsHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -81,7 +81,7 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	defer tx.Rollback()
 	for i := range envs {
 		env := &envs[i]
-		env.ProjectID = projectData.ID
+		env.ProjectID = proj.ID
 
 		if env.ID != 0 {
 			err = environment.CreateAudit(tx, key, env, c.User)
@@ -217,13 +217,11 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		}
 	}
 
-	lastModified, err := project.UpdateProjectDB(tx, projectData.Key, projectData.Name)
-	if err != nil {
-		log.Warning("updateEnvironmentsHandler> Cannot update project last modified date: %s\n", err)
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		log.Warning("updateEnvironmentsHandler> Cannot update last modified date: %s\n", err)
 		return err
 	}
-	projectData.LastModified = lastModified
-	projectData.Environments = envs
+	proj.Environments = envs
 
 	err = tx.Commit()
 	if err != nil {
@@ -231,13 +229,13 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return err
 	}
 
-	err = sanity.CheckProjectPipelines(db, projectData)
+	err = sanity.CheckProjectPipelines(db, proj)
 	if err != nil {
 		log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
 		return err
 	}
 
-	return WriteJSON(w, r, projectData, http.StatusOK)
+	return WriteJSON(w, r, proj, http.StatusOK)
 }
 
 func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -246,7 +244,7 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	projectData, errProj := project.Load(db, key, c.User)
+	proj, errProj := project.Load(db, key, c.User)
 	if errProj != nil {
 		log.Warning("addEnvironmentHandler: Cannot load %s: %s\n", key, errProj)
 		return errProj
@@ -261,7 +259,7 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	if err := json.Unmarshal(data, &env); err != nil {
 		return sdk.ErrWrongRequest
 	}
-	env.ProjectID = projectData.ID
+	env.ProjectID = proj.ID
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
@@ -275,23 +273,21 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		log.Warning("addEnvironmentHandler> Cannot insert environment: %s\n", err)
 		return err
 	}
-	if err := group.LoadGroupByProject(tx, projectData); err != nil {
+	if err := group.LoadGroupByProject(tx, proj); err != nil {
 		log.Warning("addEnvironmentHandler> Cannot load group from project: %s\n", err)
 		return err
 	}
-	for _, g := range projectData.ProjectGroups {
+	for _, g := range proj.ProjectGroups {
 		if err := group.InsertGroupInEnvironment(tx, env.ID, g.Group.ID, g.Permission); err != nil {
 			log.Warning("addEnvironmentHandler> Cannot add group on environment: %s\n", err)
 			return err
 		}
 	}
 
-	lastModified, errDate := project.UpdateProjectDB(tx, projectData.Key, projectData.Name)
-	if errDate != nil {
-		log.Warning("addEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
-		return errDate
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		log.Warning("addEnvironmentHandler> Cannot update last modified date: %s\n", err)
+		return err
 	}
-	projectData.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("addEnvironmentHandler> Cannot commit transaction: %s\n", err)
@@ -299,13 +295,13 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	var errEnvs error
-	projectData.Environments, errEnvs = environment.LoadEnvironments(db, projectData.Key, true, c.User)
+	proj.Environments, errEnvs = environment.LoadEnvironments(db, proj.Key, true, c.User)
 	if errEnvs != nil {
 		log.Warning("addEnvironmentHandler> Cannot load all environments: %s\n", errEnvs)
 		return errEnvs
 	}
 
-	return WriteJSON(w, r, projectData, http.StatusOK)
+	return WriteJSON(w, r, proj, http.StatusOK)
 }
 
 func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -339,12 +335,10 @@ func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 
-	lastModified, errDate := project.UpdateProjectDB(tx, projectKey, p.Name)
-	if errDate != nil {
-		log.Warning("deleteEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
-		return errDate
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("deleteEnvironmentHandler> Cannot update last modified date: %s\n", err)
+		return err
 	}
-	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("deleteEnvironmentHandler> Cannot commit transaction: %s\n", err)
@@ -446,12 +440,10 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		}
 	}
 
-	lastModified, errDate := project.UpdateProjectDB(tx, projectKey, p.Name)
-	if errDate != nil {
-		log.Warning("updateEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
-		return errDate
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("updateEnvironmentHandler> Cannot update last modified date: %s\n", err)
+		return err
 	}
-	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("updateEnvironmentHandler> Cannot commit transaction: %s\n", err)
@@ -552,12 +544,10 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	//Update the poroject
-	lastModified, errDate := project.UpdateProjectDB(tx, projectKey, p.Name)
-	if errDate != nil {
-		log.Warning("cloneEnvironmentHandler> Cannot update project last modified date: %s\n", errDate)
-		return errDate
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("cloneEnvironmentHandler> Cannot update last modified date: %s\n", err)
+		return err
 	}
-	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		return err

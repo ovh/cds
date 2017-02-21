@@ -207,11 +207,11 @@ func TestLoadUserWithGroup(t *testing.T) {
 	project.Delete(db, project1.Key)
 	project.Delete(db, project2.Key)
 
-	err = project.InsertProject(db, project1)
+	err = project.Insert(db, project1)
 	if err != nil {
 		t.Fatalf("cannot insert project1: %s", err)
 	}
-	err = project.InsertProject(db, project2)
+	err = project.Insert(db, project2)
 	if err != nil {
 		t.Fatalf("cannot insert project2: %s", err)
 	}

@@ -34,6 +34,10 @@ func TestLoadAll(t *testing.T) {
 	proj := sdk.Project{
 		Key:  "test_TestLoadAll",
 		Name: "test_TestLoadAll",
+		Metadata: map[string]string{
+			"data1": "value1",
+			"data2": "value2",
+		},
 	}
 
 	proj1 := sdk.Project{
@@ -52,8 +56,8 @@ func TestLoadAll(t *testing.T) {
 		t.Fatalf("Cannot insert group : %s", err)
 	}
 
-	test.NoError(t, InsertProject(db, &proj))
-	test.NoError(t, InsertProject(db, &proj1))
+	test.NoError(t, Insert(db, &proj))
+	test.NoError(t, Insert(db, &proj1))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 

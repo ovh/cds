@@ -275,7 +275,7 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 		return err
 	}
 
-	if err := application.UpdateLastModified(db, a); err != nil {
+	if err := application.UpdateLastModified(tx, a); err != nil {
 		log.Warning("removePipelineFromApplicationHandler> Cannot update application last modified date: %s\n", err)
 		return err
 	}
