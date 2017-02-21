@@ -32,7 +32,7 @@ import (
 func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, err := project.LoadProject(db, key, &sdk.User{Admin: true})
+	proj, err := project.Load(db, key, &sdk.User{Admin: true})
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	}
 
 	// Delete project
-	err = project.DeleteProject(db, key)
+	err = project.Delete(db, key)
 	if err != nil {
 		t.Logf("RemoveProject: %s", err)
 		return err
@@ -118,7 +118,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 	env := &sdk.DefaultEnv
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	err = application.AttachPipeline(db, app.ID, pip.ID)
+	_, err = application.AttachPipeline(db, app.ID, pip.ID)
 	test.NoError(t, err)
 
 	f(t, db, proj, pip, app, env, u)
@@ -606,7 +606,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 	err = pipeline.InsertPipeline(db, pip)
 	test.NoError(t, err)
 
-	err = application.AttachPipeline(db, app.ID, pip.ID)
+	_, err = application.AttachPipeline(db, app.ID, pip.ID)
 	test.NoError(t, err)
 
 	appPips, err := application.GetAllPipelinesByID(db, app.ID)

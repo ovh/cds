@@ -3,8 +3,8 @@ testcases:
 - name: prepare test
   steps:
   - script: cds project remove --force ITSCBUILTIN
-  - script: cds project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
   - script: cds group remove ITSCBUILTIN --force
+  - script: cds project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
   - script: cds application add ITSCBUILTIN TestApp
 
 - name: builtin action

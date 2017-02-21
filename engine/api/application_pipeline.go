@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// Deprecated
 func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 
 	vars := mux.Vars(r)
@@ -28,7 +29,7 @@ func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	project, err := project.LoadProject(db, key, c.User)
+	project, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("addPipelineInApplicationHandler: Cannot load project: %s: %s\n", key, err)
 		return err
@@ -46,16 +47,100 @@ func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return sdk.ErrNotFound
 	}
 
-	err = application.AttachPipeline(db, app.ID, pipeline.ID)
-	if err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pipeline.ID); err != nil {
 		log.Warning("addPipelineInApplicationHandler: Cannot attach pipeline %s to application %s:  %s\n", pipelineName, appName, err)
 		return err
 	}
 
-	err = sanity.CheckPipeline(db, project, pipeline)
-	if err != nil {
+	if err := sanity.CheckPipeline(db, project, pipeline); err != nil {
 		log.Warning("addPipelineInApplicationHandler: Cannot check pipeline sanity: %s\n", err)
 		return err
+	}
+
+	k := cache.Key("application", key, "*"+appName+"*")
+	cache.DeleteAll(k)
+
+	return WriteJSON(w, r, app, http.StatusOK)
+}
+
+func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+
+	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+
+	// Get args in body
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Warning("attachPipelinesToApplicationHandler>Cannot read body: %s\n", err)
+		return sdk.ErrWrongRequest
+	}
+
+	var pipelines []string
+	err = json.Unmarshal([]byte(data), &pipelines)
+	if err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot unmarshal body: %s\n", err)
+		return sdk.ErrWrongRequest
+	}
+
+	project, err := project.Load(db, key, c.User)
+	if err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot load project: %s: %s\n", key, err)
+		return err
+	}
+
+	app, err := application.LoadApplicationByName(db, key, appName)
+	if err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
+		return err
+	}
+
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot begin transaction: %s\n", errBegin)
+		return errBegin
+	}
+
+	for _, pipName := range pipelines {
+		pipeline, err := pipeline.LoadPipeline(tx, key, pipName, true)
+		if err != nil {
+			log.Warning("attachPipelinesToApplicationHandler: Cannot load pipeline %s: %s\n", pipName, err)
+			return err
+		}
+
+		id, errA := application.AttachPipeline(tx, app.ID, pipeline.ID)
+		if errA != nil {
+			log.Warning("attachPipelinesToApplicationHandler: Cannot attach pipeline %s to application %s:  %s\n", pipName, appName, errA)
+			return errA
+		}
+
+		app.Pipelines = append(app.Pipelines, sdk.ApplicationPipeline{
+			Pipeline: *pipeline,
+			ID:       id,
+		})
+
+	}
+
+	if err := application.UpdateLastModified(tx, app); err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot update application last modified date: %s\n", err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot commit transaction: %s\n", err)
+		return err
+	}
+
+	if err := sanity.CheckProjectPipelines(db, project); err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot check project sanity: %s\n", err)
+		return err
+	}
+
+	var errW error
+	app.Workflows, errW = application.LoadCDTree(db, project.Key, app.Name, c.User)
+	if errW != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s\n", errW)
+		return errW
 	}
 
 	k := cache.Key("application", key, "*"+appName+"*")
@@ -172,21 +257,30 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("removePipelineFromApplicationHandler> Cannot start tx: %s\n", err)
-		return err
+	a, errA := application.LoadApplicationByName(db, key, appName)
+	if errA != nil {
+		log.Warning("removePipelineFromApplicationHandler> Cannot load application: %s\n", errA)
+		return errA
+	}
+
+	tx, errB := db.Begin()
+	if errB != nil {
+		log.Warning("removePipelineFromApplicationHandler> Cannot start tx: %s\n", errB)
+		return errB
 	}
 	defer tx.Rollback()
 
-	err = application.RemovePipeline(tx, key, appName, pipelineName)
-	if err != nil {
+	if err := application.RemovePipeline(tx, key, appName, pipelineName); err != nil {
 		log.Warning("removePipelineFromApplicationHandler: Cannot detach pipeline %s from %s: %s\n", pipelineName, appName, err)
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := application.UpdateLastModified(db, a); err != nil {
+		log.Warning("removePipelineFromApplicationHandler> Cannot update application last modified date: %s\n", err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("removePipelineFromApplicationHandler> Cannot commit tx: %s\n", err)
 		return err
 	}
@@ -194,7 +288,24 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	k := cache.Key("application", key, "*"+appName+"*")
 	cache.DeleteAll(k)
 
-	return nil
+	var errW error
+	a.Workflows, errW = application.LoadCDTree(db, key, a.Name, c.User)
+	if errW != nil {
+		log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s\n", errW)
+		return errW
+	}
+
+	// Remove pipeline from struct
+	var indexPipeline int
+	for i, appPip := range a.Pipelines {
+		if appPip.Pipeline.Name == pipelineName {
+			indexPipeline = i
+			break
+		}
+	}
+	a.Pipelines = append(a.Pipelines[:indexPipeline], a.Pipelines[indexPipeline+1:]...)
+
+	return WriteJSON(w, r, a, http.StatusOK)
 }
 
 func getUserNotificationTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {

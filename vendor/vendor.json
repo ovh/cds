@@ -259,10 +259,10 @@
 			"revisionTime": "2017-01-03T08:10:50Z"
 		},
 		{
-			"checksumSHA1": "leGX9T5aXD6C1FUWuHt1KmkaeU0=",
+			"checksumSHA1": "JB2isLKsToinFNz+VwtLNVAE9mI=",
 			"path": "github.com/fsamin/go-dump",
-			"revision": "3d751c046d0da88a6687aaaba81ad6f6d82760b3",
-			"revisionTime": "2017-02-15T10:43:15Z"
+			"revision": "94b5ad5f675eaed023794ef65dd884cda5cb98cf",
+			"revisionTime": "2017-02-16T20:47:41Z"
 		},
 		{
 			"checksumSHA1": "nmc2qcdbg17Ny8tHeEDQuphV6jA=",
@@ -584,8 +584,13 @@
 			"revisionTime": "2016-06-20T08:32:29Z"
 		},
 		{
+			"checksumSHA1": "PxSXZMlIxofKdehEXQHue9RFETA=",
+			"path": "github.com/runabove/venom",
+			"revision": "2e244f4258910c85e2ecfe676a29404d6da0b2e9",
+			"revisionTime": "2017-02-20T11:07:49Z"
+		},
+		{
 			"checksumSHA1": "4FUjSj4CbaZxSPOGl2zwfyaSFWI=",
-			"origin": "github.com/ovh/cds/vendor/github.com/smartystreets/assertions",
 			"path": "github.com/smartystreets/assertions",
 			"revision": "15adfb6b24e2f2a9ecc821eaeabcc90064e4e3e7",
 			"revisionTime": "2017-02-13T16:30:19Z"

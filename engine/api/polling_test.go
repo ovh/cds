@@ -37,7 +37,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 		return nil, nil
 	}
 
-	projs, err := project.LoadAllProjects(db)
+	projs, err := project.LoadAll(db, nil)
 	if err != nil {
 		t.Error(err.Error())
 		return nil, nil
@@ -45,7 +45,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 	var proj *sdk.Project
 	for _, p := range projs {
 		if p.ID == projectID {
-			proj = p
+			proj = &p
 			break
 		}
 	}
@@ -90,7 +90,8 @@ func TestAddPollerHandler(t *testing.T) {
 	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
+	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
@@ -161,7 +162,8 @@ func TestUpdatePollerHandler(t *testing.T) {
 	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
+	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
@@ -253,7 +255,8 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
+	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
@@ -348,7 +351,8 @@ func TestGetPollersHandler(t *testing.T) {
 	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
+	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
@@ -439,7 +443,8 @@ func TestDeletePollerHandler(t *testing.T) {
 	test.NoError(t, application.InsertApplication(db, proj, app))
 
 	//5. Attach pipeline to application
-	test.NoError(t, application.AttachPipeline(db, app.ID, pip.ID))
+	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name

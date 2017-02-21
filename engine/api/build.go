@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
+	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -700,7 +701,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	// Unmarshal into results
-	var new sdk.Tests
+	var new venom.Tests
 	err = json.Unmarshal([]byte(data), &new)
 	if err != nil {
 		log.Warning("addBuildtestResultsHandler> Cannot unmarshal Tests: %s\n", err)

@@ -39,8 +39,8 @@ testcases:
 
   - script: cds pipeline run ITSCMULT TestApp MultiPass -p git.branch="master"
     assertions:
-      - code ShouldEqual 0
-      - stdout ShouldContainSubstring World!
+      - result.code ShouldEqual 0
+      - result.stdout ShouldContainSubstring World!
 
 - name: cleanup
   steps:

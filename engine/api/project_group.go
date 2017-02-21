@@ -26,7 +26,7 @@ func deleteGroupFromProjectHandler(w http.ResponseWriter, r *http.Request, db *g
 	key := vars["permProjectKey"]
 	groupName := vars["group"]
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("deleteGroupFromProjectHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -58,7 +58,7 @@ func deleteGroupFromProjectHandler(w http.ResponseWriter, r *http.Request, db *g
 		return err
 
 	}
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("deleteGroupFromProjectHandler: Cannot commit transaction:  %s\n", err)
@@ -99,7 +99,7 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 
 	}
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("updateGroupRoleHandler: Cannot load %s: %s\n", key, err)
 		return sdk.ErrNoProject
@@ -160,7 +160,7 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		return err
 
 	}
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("updateGroupRoleHandler: Cannot start transaction: %s\n", err)
@@ -215,7 +215,7 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	}
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("updateGroupsInProject: Cannot load %s: %s\n", key, err)
 		return sdk.ErrUnknownError
@@ -282,7 +282,7 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	}
 
-	p, err := project.LoadProject(db, key, c.User)
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("AddGroupInProject: Cannot load %s: %s\n", key, err)
 		return err
@@ -347,10 +347,9 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 						return err
 
 					}
-				} else if err := group.InsertGroupInApplication(tx, app.ID, g.ID, groupProject.Permission); err != nil {
+				} else if err := application.AddGroup(db, p, &app, groupProject); err != nil {
 					log.Warning("AddGroupInProject: Cannot insert group %s on application %s: %s\n", g.Name, app.Name, err)
 					return err
-
 				}
 			}
 		}
@@ -422,7 +421,7 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return err
 
 	}
-	p.LastModified = lastModified.Unix()
+	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("AddGroupInProject: Cannot commit transaction:  %s\n", err)

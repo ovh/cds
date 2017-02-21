@@ -51,7 +51,7 @@ func LoadApplications(db gorp.SqlExecutor, projectKey string, withPipelines, wit
 	var err error
 	var rows *sql.Rows
 
-	if user.Admin {
+	if user == nil || user.Admin {
 		query := LoadApplicationsRequestAdmin
 		rows, err = db.Query(query, projectKey)
 	} else {
@@ -246,6 +246,15 @@ func loadDependencies(db gorp.SqlExecutor, app *sdk.Application, fargs ...FuncAr
 	}
 
 	app.Pipelines = pipelines
+	for i := range app.Pipelines {
+		appPip := &app.Pipelines[i]
+		var errTrig error
+		appPip.Triggers, errTrig = trigger.LoadTriggersByAppAndPipeline(db, app.ID, appPip.Pipeline.ID)
+		if errTrig != nil {
+			return errTrig
+		}
+	}
+
 	return nil
 }
 

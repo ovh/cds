@@ -6,13 +6,13 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk"
+	"github.com/runabove/venom"
 )
 
 // LoadTestResults retrieves tests on a specific build in database
-func LoadTestResults(db gorp.SqlExecutor, pbID int64) (sdk.Tests, error) {
+func LoadTestResults(db gorp.SqlExecutor, pbID int64) (venom.Tests, error) {
 	query := `SELECT tests FROM pipeline_build_test WHERE pipeline_build_id = $1`
-	t := sdk.Tests{}
+	t := venom.Tests{}
 	var data string
 
 	err := db.QueryRow(query, pbID).Scan(&data)
@@ -32,7 +32,7 @@ func LoadTestResults(db gorp.SqlExecutor, pbID int64) (sdk.Tests, error) {
 }
 
 // InsertTestResults inserts test results of a specific pipeline build in database
-func InsertTestResults(db gorp.SqlExecutor, pbID int64, tests sdk.Tests) error {
+func InsertTestResults(db gorp.SqlExecutor, pbID int64, tests venom.Tests) error {
 	query := `INSERT INTO pipeline_build_test (pipeline_build_id, tests) VALUES ($1, $2)`
 
 	data, err := json.Marshal(tests)
@@ -49,7 +49,7 @@ func InsertTestResults(db gorp.SqlExecutor, pbID int64, tests sdk.Tests) error {
 }
 
 // UpdateTestResults update test results of a specific pipeline build in database
-func UpdateTestResults(db *gorp.DbMap, pbID int64, tests sdk.Tests) error {
+func UpdateTestResults(db *gorp.DbMap, pbID int64, tests venom.Tests) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err

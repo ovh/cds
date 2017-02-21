@@ -245,7 +245,7 @@ func InsertVariableInProject(db gorp.SqlExecutor, proj *sdk.Project, variable sd
 
 	lastModified, err := UpdateProjectDB(db, proj.Key, proj.Name)
 	if err == nil {
-		proj.LastModified = lastModified.Unix()
+		proj.LastModified = lastModified
 	}
 	return err
 }
@@ -271,7 +271,7 @@ func UpdateVariableInProject(db gorp.SqlExecutor, proj *sdk.Project, variable sd
 
 	lastModifier, err := UpdateProjectDB(db, proj.Key, proj.Name)
 	if err == nil {
-		proj.LastModified = lastModifier.Unix()
+		proj.LastModified = lastModifier
 	}
 	return err
 }
@@ -286,7 +286,7 @@ func DeleteVariableFromProject(db gorp.SqlExecutor, proj *sdk.Project, variableN
 
 	lastModified, err := UpdateProjectDB(db, proj.Key, proj.Name)
 	if err == nil {
-		proj.LastModified = lastModified.Unix()
+		proj.LastModified = lastModified
 	}
 	return err
 }

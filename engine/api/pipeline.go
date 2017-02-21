@@ -574,7 +574,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	project, err := project.LoadProject(db, key, c.User)
+	project, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("AddPipeline: Cannot load %s: %s\n", key, err)
 		return err
@@ -626,12 +626,8 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		return err
 	}
 
-	sharedInfraPresent := false
 	for _, g := range project.ProjectGroups {
-		if g.Group.Name == group.SharedInfraGroup {
-			sharedInfraPresent = true
-			break
-		}
+		p.GroupPermission = append(p.GroupPermission, g)
 	}
 
 	if err := group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID); err != nil {
@@ -639,16 +635,14 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		return err
 	}
 
-	if !sharedInfraPresent {
-		if err := group.AddGlobalGroupToPipeline(tx, p.ID); err != nil {
-			log.Warning("addPipelineHandler> Cannot add Global infra group: %s\n", err)
+	for _, app := range p.AttachedApplication {
+		if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
+			log.Warning("addPipelineHandler> Cannot attach pipeline %d to %d: %s\n", app.ID, p.ID, err)
 			return err
 		}
-	}
 
-	for _, app := range p.AttachedApplication {
-		if err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
-			log.Warning("addPipelineHandler> Cannot attach pipeline %d to %d: %s\n", app.ID, p.ID, err)
+		if err := application.UpdateLastModified(tx, &app); err != nil {
+			log.Warning("addPipelineHandler> Cannot update application last modified date: %s\n", err)
 			return err
 		}
 	}
@@ -658,10 +652,9 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		return err
 	}
 
-	k := cache.Key("application", key, "*")
-	cache.DeleteAll(k)
+	p.Permission = permission.PermissionReadWriteExecute
 
-	return nil
+	return WriteJSON(w, r, p, http.StatusOK)
 }
 
 func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -690,7 +683,7 @@ func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	project, err := project.LoadProject(db, key, c.User)
+	project, err := project.Load(db, key, c.User)
 	if err != nil {
 		if err != sdk.ErrNoProject {
 			log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -861,7 +854,7 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return sdk.ErrWrongRequest
 	}
 
-	proj, errP := project.LoadProject(db, projectKey, c.User, project.WithVariables(), project.WithApplications(1))
+	proj, errP := project.Load(db, projectKey, c.User, project.WithVariables(), project.WithApplications(1))
 	if errP != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, errP)
 		return errP
@@ -913,7 +906,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
 
-	proj, err := project.LoadProject(db, key, c.User, project.WithVariables(), project.WithApplications(1))
+	proj, err := project.Load(db, key, c.User, project.WithVariables(), project.WithApplications(1))
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot load project %s: %s\n", key, err)
 		return sdk.ErrNoProject

@@ -14,7 +14,7 @@ type User struct {
 	Email    string  `json:"email" yaml:"email,omitempty"`
 	Admin    bool    `json:"admin" yaml:"admin,omitempty"`
 	Auth     Auth    `json:"-" yaml:"-"`
-	Groups   []Group `json:"groups" yaml:"-"`
+	Groups   []Group `json:"groups,omitempty" yaml:"-"`
 	Origin   string  `json:"origin" yaml:"origin,omitempty"`
 }
 

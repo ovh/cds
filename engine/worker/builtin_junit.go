@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -57,11 +58,11 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 		return res
 	}
 
-	var tests sdk.Tests
+	var tests venom.Tests
 	sendLog(pbJob.ID, fmt.Sprintf("%d file(s) to analyze", len(files)), pbJob.PipelineBuildID, stepOrder, false)
 
 	for _, f := range files {
-		var ftests sdk.Tests
+		var ftests venom.Tests
 
 		data, errRead := ioutil.ReadFile(f)
 		if errRead != nil {
@@ -70,7 +71,7 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 			return res
 		}
 
-		var vf sdk.Tests
+		var vf venom.Tests
 		if err := xml.Unmarshal(data, &vf); err != nil {
 			// Check if file contains testsuite only (and no testsuites)
 			if s, ok := parseTestsuiteAlone(data); ok {
@@ -114,7 +115,7 @@ func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, st
 
 // computeStats computes failures / errors on testSuites,
 // set result.Status and return a list of log to send to API
-func computeStats(res *sdk.Result, v *sdk.Tests) []string {
+func computeStats(res *sdk.Result, v *venom.Tests) []string {
 	// update global stats
 	for _, ts := range v.TestSuites {
 		nSkipped := 0
@@ -193,8 +194,8 @@ func computeStats(res *sdk.Result, v *sdk.Tests) []string {
 	return reasons
 }
 
-func parseTestsuiteAlone(data []byte) (sdk.TestSuite, bool) {
-	var s sdk.TestSuite
+func parseTestsuiteAlone(data []byte) (venom.TestSuite, bool) {
+	var s venom.TestSuite
 	err := xml.Unmarshal([]byte(data), &s)
 	if err != nil {
 		return s, false

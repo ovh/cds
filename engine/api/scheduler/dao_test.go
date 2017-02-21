@@ -53,7 +53,7 @@ func TestInsert(t *testing.T) {
 	}
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -120,7 +120,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -204,7 +204,7 @@ func TestGetByApplication(t *testing.T) {
 	}
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -267,7 +267,7 @@ func TestGetByPipeline(t *testing.T) {
 	}
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -330,7 +330,7 @@ func TestGetByApplicationPipeline(t *testing.T) {
 	}
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -393,7 +393,7 @@ func TestGetByApplicationPipelineEnv(t *testing.T) {
 	}
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	if err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 

@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,7 +30,12 @@ func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
 
 func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: "test-group-model",
+	}
+
+	g1, _ := group.LoadGroup(db, g.Name)
+	if g1 != nil {
+		group.DeleteGroupAndDependencies(db, g1)
 	}
 
 	if err := group.InsertGroup(db, g); err != nil {
@@ -64,7 +69,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -80,7 +85,22 @@ func TestInsertWorkerModel(t *testing.T) {
 	m2, err := LoadWorkerModelsByGroup(db, g.ID)
 	assert.EqualValues(t, []sdk.Model{*m}, m2)
 
-	u, _ := assets.InsertLambaUser(t, db, g)
+	s := test.RandomString(t, 10)
+	_, hash, _ := user.GeneratePassword()
+	u := &sdk.User{
+		Admin:    false,
+		Email:    "no-reply-" + s + "@corp.ovh.com",
+		Username: s,
+		Origin:   "local",
+		Fullname: "Test " + s,
+		Auth: sdk.Auth{
+			EmailVerified:  true,
+			HashedPassword: hash,
+		},
+	}
+	user.InsertUser(db, u, &u.Auth)
+	group.InsertGroup(db, g)
+	group.InsertUserInGroup(db, g.ID, u.ID, false)
 
 	m3, err := LoadWorkerModelsByUser(db, u.ID)
 	assert.EqualValues(t, []sdk.Model{*m}, m3)

@@ -297,18 +297,11 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 		}
 	}
 
-	//Load the famous sharedInfraGroup
-	sharedInfraGroup, errLoad := group.LoadGroup(db, group.SharedInfraGroup)
-	if errLoad != nil {
-		log.Warning("RegisterWorker> Cannot load shared infra group: %s\n", errLoad)
-		return nil, errLoad
-	}
-
 	//If worker model is public (sharedInfraGroup) it can be ran by every one
 	//If worker is public it can run every model
 	//Private worker for a group cannot run a private model for another group
 	if m != nil {
-		if t.GroupID != sharedInfraGroup.ID && t.GroupID != m.GroupID && m.GroupID != sharedInfraGroup.ID {
+		if t.GroupID != group.SharedInfraGroup.ID && t.GroupID != m.GroupID && m.GroupID != group.SharedInfraGroup.ID {
 			log.Warning("RegisterWorker> worker %s (%d) cannot be spawned as %s (%d)", name, t.GroupID, m.Name, m.GroupID)
 			return nil, sdk.ErrForbidden
 		}

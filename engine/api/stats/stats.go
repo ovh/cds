@@ -8,11 +8,12 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/log"
+	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
 )
 
 // TestEvent inserts in stats the max number of tests for each application and total in stats
-func TestEvent(db gorp.SqlExecutor, projectID, appID int64, tests sdk.Tests) {
+func TestEvent(db gorp.SqlExecutor, projectID, appID int64, tests venom.Tests) {
 	query := `UPDATE stats SET unit_test = unit_test + $1 WHERE day = current_date`
 
 	// Update global daily stats table

@@ -28,17 +28,6 @@ func LoadAllApplicationGroupByRole(db gorp.SqlExecutor, applicationID int64, rol
 	return groupsPermission, nil
 }
 
-// InsertGroupsInApplication Link the given groups and the given application
-func InsertGroupsInApplication(db gorp.SqlExecutor, groupPermission []sdk.GroupPermission, applicationID int64) error {
-	for _, g := range groupPermission {
-		err := InsertGroupInApplication(db, applicationID, g.Group.ID, g.Permission)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // CheckGroupInApplication  Check if the group is already attached to the application
 func CheckGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64) (bool, error) {
 	query := `SELECT COUNT(group_id) FROM application_group WHERE application_id = $1 AND group_id = $2`
