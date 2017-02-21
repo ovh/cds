@@ -213,6 +213,9 @@ func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query
 func load(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	dbProj := &dbProject{}
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoProject
+		}
 		return nil, err
 	}
 
