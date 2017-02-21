@@ -71,6 +71,13 @@ func TestLoadAll(t *testing.T) {
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups1) > 1, "This should return more than one project")
 
+	for _, p := range actualGroups1 {
+		if p.Name == "test_TestLoadAll" {
+			t.Log(p)
+			assert.EqualValues(t, proj.Metadata, p.Metadata)
+		}
+	}
+
 	actualGroups2, err := LoadAll(db, u2)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups2) == 1, "This should return one project")
