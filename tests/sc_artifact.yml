@@ -20,11 +20,11 @@ testcases:
 
 - name: listing artifact
   steps:
-  - script: cds artifact list ITSCARTIFACT TestApp ArtifactPip 1
+  - script: cds artifact list ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv
 
 - name: downloading artifact
   steps:
-  - script: cds artifact dl ITSCARTIFACT TestApp ArtifactPip 1 && cat logs.txt | grep foo && rm logs.txt
+  - script: cds artifact dl ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv && cat logs.txt | grep foo && rm logs.txt
 
 - name: cleanup
   steps:
