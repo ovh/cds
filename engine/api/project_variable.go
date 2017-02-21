@@ -446,11 +446,9 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("addVariableInProjectHandler: cannot commit tx: %s\n", err)
 		return err
-
 	}
 
 	err = sanity.CheckProjectPipelines(db, p)
