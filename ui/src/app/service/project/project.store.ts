@@ -6,6 +6,7 @@ import {ProjectService} from './project.service';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
+import {Notification} from '../../model/notification.model';
 
 @Injectable()
 export class ProjectStore {

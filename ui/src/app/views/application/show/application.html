@@ -42,12 +42,7 @@
 
                     <div *ngSwitchCase="'notifications'">
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="notificationEvent($event, true)" #notifWarning></app-warning-modal>
-                        <button class="right floated circular ui icon blue button" *ngIf="application.permission === 7" (click)="openNotifForm()"
-                                smDirTooltip="{{'application_notifications_form_title_add' | translate }}" smDirPosition="left center">
-                            <i class="icon plus"></i>
-                        </button>
                         <h2>{{ 'application_notifications_list_title' | translate }}</h2>
-                        <app-notification-form-modal [project]="project" [application]="application" [loading]="notifFormLoading" (event)="notificationEvent($event)" #notifForm></app-notification-form-modal>
                         <app-notification-list (event)="notificationEvent($event)" [project]="project" [application]="application" [loading]="notifFormLoading" [notifications]="application.notifications" [edit]="application.permission === 7" #notificationList></app-notification-list>
                     </div>
 

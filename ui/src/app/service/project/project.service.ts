@@ -5,6 +5,7 @@ import {Observable} from 'rxjs/Rx';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
+import {Notification} from '../../model/notification.model';
 
 /**
  * Service to access Project from API.
@@ -227,5 +228,13 @@ export class ProjectService {
      */
     removeEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
         return this._http.delete('/project/' + key + '/environment/' + envName + '/variable/' + v.name).map(res => res.json());
+    }
+
+    /**
+     * Get all notification on project
+     * @param key Project unique key
+     */
+    getAllNotifications(key: string): Observable<Array<Notification>> {
+        return this._http.get('/project/' + key + '/notifications').map(res => res.json());
     }
 }

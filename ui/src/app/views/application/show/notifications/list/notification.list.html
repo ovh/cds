@@ -1,5 +1,9 @@
 <div class="notifications">
-    <app-notification-form-modal [project]="project" [application]="application" [loading]="loading" [notification]="selectedNotification" (event)="send($event)" #editForm></app-notification-form-modal>
+    <button class="form circular ui icon blue button" *ngIf="application.permission === 7" (click)="openModal()"
+            smDirTooltip="{{'application_notifications_form_title_add' | translate }}" smDirPosition="left center">
+        <i class="icon plus"></i>
+    </button>
+    <app-notification-form-modal [project]="project" [application]="application" [loading]="loading" [notification]="selectedNotification" (event)="send($event)" #notifForm></app-notification-form-modal>
     <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
@@ -20,7 +24,7 @@
             <td>
                 <ul>
                     <li *ngFor="let k of n.notifications | keys">
-                        <a class="pointing" (click)="editNotification(n, k)">{{k}}</a>
+                        <a class="pointing" (click)="openModal(n, k)">{{k}}</a>
                     </li>
                 </ul>
             </td>
