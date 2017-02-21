@@ -37,7 +37,7 @@
     "ng2-dragula": "^1.2.1",
     "ng2-translate": "^4.2.0",
     "rxjs": "5.0.1",
-    "semantic-ui": "^2.2.4",
+    "semantic-ui": "2.2.7",
     "ts-helpers": "^1.1.1",
     "zone.js": "^0.7.2"
   },
@@ -62,6 +62,7 @@
     "ts-node": "1.2.1",
     "tslint": "^4.3.0",
     "typescript": "~2.0.3",
-    "webdriver-manager": "10.2.5"
+    "webdriver-manager": "10.2.5",
+    "wrench-sui": "0.0.3"
   }
 }

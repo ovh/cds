@@ -59,8 +59,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     @ViewChild('notifWarning')
     private notifWarningModal: WarningModalComponent;
 
-    @ViewChild('notifForm')
-    private addNotifModal: ApplicationNotificationFormModalComponent;
     @ViewChild('notificationList')
     private notificationListComponent: ApplicationNotificationListComponent;
 
@@ -277,8 +275,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.notifFormLoading = true;
                     this._applicationStore.addNotifications(this.project.key, this.application.name, event.notifications).subscribe(() => {
                         this._toast.success('', this._translate.instant('notifications_added'));
-                        if (this.addNotifModal) {
-                            this.addNotifModal.close();
+                        if (this.notificationListComponent) {
+                            this.notificationListComponent.close();
                         }
                         this.notifFormLoading = false;
                     }, () => {
@@ -353,12 +351,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     });
                     break;
             }
-        }
-    }
-
-    openNotifForm(): void {
-        if (this.addNotifModal) {
-            this.addNotifModal.show({autofocus: false, closable: false, observeChanges: true});
         }
     }
 }

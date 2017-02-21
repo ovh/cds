@@ -1,7 +1,10 @@
 import {Component, Input, ViewChild, Output, EventEmitter, AfterViewInit} from '@angular/core';
 import {
-    UserNotificationSettings, notificationTypes, notificationOnSuccess,
-    notificationOnFailure, Notification
+    UserNotificationSettings,
+    notificationTypes,
+    notificationOnSuccess,
+    notificationOnFailure,
+    Notification
 } from '../../../../../model/notification.model';
 import {Project} from '../../../../../model/project.model';
 import {Application, ApplicationPipeline} from '../../../../../model/application.model';
@@ -11,6 +14,9 @@ import {Environment} from '../../../../../model/environment.model';
 import {NotificationEvent} from '../notification.event';
 import {TranslateService} from 'ng2-translate';
 import {DeleteButtonComponent} from '../../../../../shared/button/delete/delete.button';
+import {ProjectService} from '../../../../../service/project/project.service';
+
+declare var _: any;
 
 @Component({
     selector: 'app-notification-form-modal',
@@ -27,6 +33,10 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
     @Input() application: Application;
     @Input() loading = false;
 
+    // existing notification
+    projectNotifications: Array<Notification> = new Array<Notification>();
+    clonedNotification: Notification;
+
     // Form data
     needEnv = false;
     selected: any;
@@ -35,14 +45,15 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
     onAuthorControl: FormControl;
 
     // Notif cst
-    notificationTypes = notificationTypes;
+    notificationTypes: Array<string> = notificationTypes;
     notificationOnSuccess = notificationOnSuccess;
     notificationOnFailure = notificationOnFailure;
 
     // Only set to edit an existing notification
     isNewNotif = true;
+
     @Input('notification')
-    set notification (data: Notification){
+    set notification(data: Notification) {
         if (data) {
             this.isNewNotif = false;
             this.selected.pipeline = [];
@@ -65,12 +76,13 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
     }
 
     @ViewChild('myModal')
-    private modal: SemanticModalComponent;
+    modal: SemanticModalComponent;
     @ViewChild('deleteButton')
     deleteButtonComponent: DeleteButtonComponent;
 
-    constructor(private _translate: TranslateService) {
+    constructor(private _translate: TranslateService, private _projectService: ProjectService) {
         this.initForm();
+        this.notificationTypes.push('clone');
     }
 
     ngAfterViewInit(): void {
@@ -86,10 +98,12 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
         this.selected = {
             pipeline: [],
             environment: [],
-            notification : new UserNotificationSettings(),
+            notification: new UserNotificationSettings(),
             type: notificationTypes[0],
+            clonedType: '',
             recipients: ''
         };
+        this.isNewNotif = true;
         this.onStartControl = new FormControl(this.selected.notification.on_start);
         this.onGroupsControl = new FormControl(this.selected.notification.send_to_groups);
         this.onAuthorControl = new FormControl(this.selected.notification.send_to_author);
@@ -100,15 +114,66 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
         this.needEnv = false;
         pip.forEach(pipName => {
             let appPip = this.application.pipelines.find(p => p.pipeline.name === pipName);
-            if (appPip && (appPip.pipeline.type === 'deployment' || appPip.pipeline.type === 'testing'))  {
+            if (appPip && (appPip.pipeline.type === 'deployment' || appPip.pipeline.type === 'testing')) {
                 this.needEnv = true;
             }
         });
     }
 
+    updateWithClonedNotification(index: number): void {
+        this.isNewNotif = true;
+        this.selected.clonedType = Object.keys(this.projectNotifications[index].notifications)[0];
+        this.selected.notification = new UserNotificationSettings();
+        this.selected.notification = this.projectNotifications[index].notifications[this.selected.clonedType];
+        this.selected.recipients = this.selected.notification.recipients.join(',');
+        this.onStartControl.setValue(this.selected.notification.on_start);
+        this.onGroupsControl.setValue(this.selected.notification.send_to_groups);
+        this.onAuthorControl.setValue(this.selected.notification.send_to_author);
+    }
+
+    getCloneNotificationLabel(n: Notification): string {
+        let name = '';
+        if (this.project) {
+            name += this.project.applications.find(a => {
+                if (a.pipelines.find(appPip => {
+                        return appPip.id === n.application_pipeline_id;
+                    })) {
+                    return true;
+                }
+                return false;
+            }).name;
+            name += '-' + n.pipeline.name;
+            if (n.environment && n.environment.name !== 'NoEnv') {
+                name += '-' + n.environment.name;
+            }
+        }
+        return '[' + Object.keys(n.notifications)[0] + '] ' + name;
+
+    }
+
     // Show modal
     show(data?: {}) {
         this.modal.show(data);
+        this._projectService.getAllNotifications(this.project.key).subscribe(ns => {
+            if (ns && ns.length > 0) {
+                this.projectNotifications = new Array<Notification>();
+                ns.forEach(n => {
+                    if (n.notifications) {
+                        for (let key in n.notifications) {
+                            if (n.notifications[key]) {
+                                let notification = new Notification();
+                                notification.application_pipeline_id = n.application_pipeline_id;
+                                notification.pipeline = n.pipeline;
+                                notification.environment = n.environment;
+                                notification.notifications = {};
+                                notification.notifications[key] = _.cloneDeep(n.notifications[key]);
+                                this.projectNotifications.push(notification);
+                            }
+                        }
+                    }
+                });
+            }
+        });
     }
 
     removeNotif() {
@@ -116,7 +181,7 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
         let pipName = this.selected.pipeline[0];
         let envName = this.selected.environment[0];
 
-        let currentNotif =  this.application.notifications.find(n => {
+        let currentNotif = this.application.notifications.find(n => {
             return n.pipeline.name === pipName && n.environment.name === envName;
 
         });
@@ -190,7 +255,12 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
         this.selected.notification.send_to_groups = this.onGroupsControl.value;
         this.selected.notification.send_to_author = this.onAuthorControl.value;
         this.selected.notification.recipients = this.selected.recipients.split(',');
-        n.notifications[this.selected.type] = this.selected.notification;
+        if (this.selected.type !== 'clone') {
+            n.notifications[this.selected.type] = this.selected.notification;
+        } else {
+            n.notifications[this.selected.clonedType] = this.selected.notification;
+        }
+
         return n;
     }
 

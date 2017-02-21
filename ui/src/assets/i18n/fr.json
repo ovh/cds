@@ -66,6 +66,7 @@
   "btn_link" : "Connecter",
   "btn_or" : "ou",
   "btn_rename" : "Renommer",
+  "btn_run" : "Lancer le pipeline",
   "btn_validate" : "Valider",
   "btn_save" : "Sauvegarder",
 
@@ -146,6 +147,7 @@
   "navbar_workers" : "Agents",
 
   "notifications_added" : "Notifications ajoutées",
+  "notification_clone" : "Notification à cloner",
   "notifications_deleted" : "Notification supprimée",
   "notifications_no" : "Il n'y a aucune notification définie",
   "notification_on_pipeline_s" : "Sur les pipelines : ",
@@ -159,9 +161,10 @@
   "notification_recipients_jabber" : "Envoyer à des utilisateurs jabber",
   "notification_send_group" : "Envoyer aux groupes",
   "notification_send_initiator" : "Envoyer à l'initiateur",
-  "notification_title" : "Titre de la notification",
-  "notification_body" : "Contenu de la notification",
-  "notification_type" : "Type de notification",
+  "notification_title" : "Titre",
+  "notification_body" : "Contenu",
+  "notification_type_title" : "Type : ",
+  "notification_type" : "Type",
   "notification_updated" : "Notification mise à jour",
 
   "parameter_added" : "Paramètre ajouté",

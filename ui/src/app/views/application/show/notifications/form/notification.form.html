@@ -1,6 +1,8 @@
 <sm-modal title="{{getTitle()}}" class="" #myModal>
     <modal-content>
         <form class="ui form">
+
+            <!-- Pipeline + Env + Delete button -->
             <div class="ui fields">
                 <div class="ui eight wide field" [class.eight]="isNewNotif" [class.six]="!isNewNotif">
                     <ng-container *ngIf="isNewNotif">
@@ -10,10 +12,9 @@
                         </sm-select>
                     </ng-container>
                     <ng-container *ngIf="!isNewNotif">
-                        <label class="inline">{{'notification_on_pipeline' | translate}}</label>
+                        <label class="inline">{{'common_pipeline_title' | translate}}</label>
                         <div class="inline">{{selected.pipeline[0]}}</div>
                     </ng-container>
-
                 </div>
                 <div class="ui wide field" [class.eight]="isNewNotif" [class.six]="!isNewNotif">
                     <ng-container *ngIf="needEnv">
@@ -33,14 +34,25 @@
                     <app-delete-button [loading]="loading" (event)="removeNotif()" #deleteButton></app-delete-button>
                 </div>
             </div>
+
+            <!-- Notification Type + Clone -->
             <div class="ui fields">
                 <div class="ui eight wide field">
-                    <label>{{'notification_type' | translate}}</label>
-                    <sm-select [(model)]="selected.type" class="fluid search">
+                    <label [class.inline]="!isNewNotif">{{'notification_type_title' | translate}}</label>
+                    <sm-select [(model)]="selected.type" class="fluid search" *ngIf="isNewNotif">
                         <option *ngFor="let t of notificationTypes" [value]="t">{{t}}</option>
+                    </sm-select>
+                    <div class="inline" *ngIf="!isNewNotif">{{selected.type}}</div>
+                </div>
+                <div class="ui eight wide field" *ngIf="selected.type === 'clone'">
+                    <label>{{'notification_clone' | translate}}</label>
+                    <sm-select class="fluid search" (modelChange)="updateWithClonedNotification($event)">
+                        <option *ngFor="let n of projectNotifications; let i = index" [value]="i">{{getCloneNotificationLabel(n)}}</option>
                     </sm-select>
                 </div>
             </div>
+
+            <!-- On success/failure/start -->
             <div class="ui fields">
                 <div class="ui five wide field">
                     <label>{{'notification_on_success' | translate}}</label>
@@ -60,15 +72,18 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Send TO -->
             <div class="ui fields">
                 <div class="ui five wide field">
-                    <ng-container *ngIf="selected.type === 'jabber'">
+                    <ng-container *ngIf="selected.type === 'jabber' || (selected.type === 'clone' && selected.clonedType === 'jabber')">
                         <label>{{ 'notification_recipients_jabber' | translate }}</label>
                     </ng-container>
-                    <ng-container *ngIf="selected.type === 'email'">
+                    <ng-container *ngIf="selected.type === 'email'  || (selected.type === 'clone' && selected.clonedType === 'email')">
                         <label>{{ 'notification_recipients_email' | translate }}</label>
                     </ng-container>
-                    <input type="text" class="ui input" [(ngModel)]="selected.recipients" name="recipients">
+                    <input type="text" class="ui input" [(ngModel)]="selected.recipients" name="recipients"
+                           *ngIf="selected.type !== 'clone' || (selected.type === 'clone' && selected.clonedType !== '')">
                 </div>
                 <div class="ui six wide centered field">
                     <div class="ui slider checkbox">
@@ -81,6 +96,8 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Notif content -->
             <div class="ui field">
                 <label>{{ 'notification_title' | translate }}</label>
                 <input type="text" class="ui input" [(ngModel)]="selected.notification.template.subject" name="subject">

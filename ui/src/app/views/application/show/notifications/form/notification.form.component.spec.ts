@@ -1,5 +1,4 @@
 /* tslint:disable:no-unused-variable */
-
 import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -20,7 +19,6 @@ import {UserNotificationSettings, UserNotificationTemplate, Notification} from '
 import {Pipeline} from '../../../../../model/pipeline.model';
 import {Environment} from '../../../../../model/environment.model';
 import {NotificationEvent} from '../notification.event';
-import {detectWTF} from '@angular/core/src/profile/wtf_impl';
 
 describe('CDS: Application notifications', () => {
 
@@ -28,10 +26,9 @@ describe('CDS: Application notifications', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
-                { provide: XHRBackend, useClass: MockBackend },
+                {provide: XHRBackend, useClass: MockBackend},
                 AuthentificationStore,
                 ApplicationStore,
                 ApplicationService,
@@ -41,7 +38,7 @@ describe('CDS: Application notifications', () => {
                 TranslateLoader,
                 TranslateParser
             ],
-            imports : [
+            imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule
@@ -55,7 +52,7 @@ describe('CDS: Application notifications', () => {
         injector = undefined;
     });
 
-    it('should create new multiple notifications', fakeAsync( () => {
+    it('should create new multiple notifications', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ApplicationNotificationFormModalComponent);
         let component = fixture.debugElement.componentInstance;
@@ -92,7 +89,7 @@ describe('CDS: Application notifications', () => {
         fixture.componentInstance.selected = {
             pipeline: [ap1.pipeline.name, ap2.pipeline.name],
             environment: [e.name],
-            notification : userNotif,
+            notification: userNotif,
             type: 'jabber',
             recipients: 'toto'
         };
@@ -133,7 +130,7 @@ describe('CDS: Application notifications', () => {
     }));
 
 
-    it('should add one type of notif to an existing notif', fakeAsync( () => {
+    it('should add one type of notif to an existing notif', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ApplicationNotificationFormModalComponent);
         let component = fixture.debugElement.componentInstance;
@@ -165,7 +162,7 @@ describe('CDS: Application notifications', () => {
         n.pipeline = ap2.pipeline;
         n.environment = e;
         n.application_pipeline_id = ap2.id;
-        n.notifications['jabber'] =  new UserNotificationSettings();
+        n.notifications['jabber'] = new UserNotificationSettings();
         (<UserNotificationSettings>n.notifications['jabber']).on_failure = 'never';
         (<UserNotificationSettings>n.notifications['jabber']).on_start = true;
         (<UserNotificationSettings>n.notifications['jabber']).on_success = 'never';
@@ -187,7 +184,7 @@ describe('CDS: Application notifications', () => {
         fixture.componentInstance.selected = {
             pipeline: [ap2.pipeline.name],
             environment: [e.name],
-            notification : userNotif,
+            notification: userNotif,
             type: 'email',
             recipients: 'toto'
         };
@@ -213,7 +210,7 @@ describe('CDS: Application notifications', () => {
         expect(result.event.notifications[0].notifications['email'].send_to_groups).toBeFalsy();
     }));
 
-    it('should update a notification', fakeAsync( () => {
+    it('should update a notification', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ApplicationNotificationFormModalComponent);
         let component = fixture.debugElement.componentInstance;
@@ -248,7 +245,7 @@ describe('CDS: Application notifications', () => {
         n.pipeline = ap2.pipeline;
         n.environment = e;
         n.application_pipeline_id = ap2.id;
-        n.notifications['jabber'] =  new UserNotificationSettings();
+        n.notifications['jabber'] = new UserNotificationSettings();
         (<UserNotificationSettings>n.notifications['jabber']).on_failure = 'never';
         (<UserNotificationSettings>n.notifications['jabber']).on_start = true;
         (<UserNotificationSettings>n.notifications['jabber']).on_success = 'never';
@@ -280,7 +277,7 @@ describe('CDS: Application notifications', () => {
         expect(result.event.notifications[0].notifications['jabber'].template.subject).toBe('New Subject');
     }));
 
-    it('should remove on type of notif', fakeAsync( () => {
+    it('should remove on type of notif', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ApplicationNotificationFormModalComponent);
         let component = fixture.debugElement.componentInstance;
@@ -323,7 +320,7 @@ describe('CDS: Application notifications', () => {
         jabber.recipients = ['foo', 'bar'];
         jabber.send_to_author = true;
         jabber.send_to_groups = false;
-        n.notifications['jabber'] =  jabber;
+        n.notifications['jabber'] = jabber;
 
         let email = new UserNotificationSettings();
         email.on_failure = 'never';
@@ -332,7 +329,7 @@ describe('CDS: Application notifications', () => {
         email.recipients = ['foo', 'bar'];
         email.send_to_author = true;
         email.send_to_groups = false;
-        n.notifications['email'] =  email;
+        n.notifications['email'] = email;
 
         a.notifications.push(n);
 
@@ -358,7 +355,7 @@ describe('CDS: Application notifications', () => {
         expect(result.event.notifications[0].notifications['jabber']).toBeTruthy();
         expect(result.event.notifications[0].notifications['email']).toBeFalsy();
     }));
-    it('should remove last type of notif', fakeAsync( () => {
+    it('should remove last type of notif', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ApplicationNotificationFormModalComponent);
         let component = fixture.debugElement.componentInstance;
@@ -401,7 +398,7 @@ describe('CDS: Application notifications', () => {
         jabber.recipients = ['foo', 'bar'];
         jabber.send_to_author = true;
         jabber.send_to_groups = false;
-        n.notifications['jabber'] =  jabber;
+        n.notifications['jabber'] = jabber;
 
         a.notifications.push(n);
 
@@ -424,6 +421,80 @@ describe('CDS: Application notifications', () => {
         let result: MockEventEmitter = <MockEventEmitter>fixture.componentInstance.event;
         expect(result.event.type).toBe('delete');
         expect(Object.keys(result.event.notifications[0].notifications).length).toBe(0);
+    }));
+
+
+    it('should clone notification', fakeAsync(() => {
+        // Create component
+        let fixture = TestBed.createComponent(ApplicationNotificationFormModalComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
+
+        // Notification to add
+        fixture.componentInstance.initForm();
+
+        // Init component Input
+        let p = new Project();
+        p.environments = new Array<Environment>();
+        let e = new Environment();
+        e.name = 'production';
+        p.environments.push(e);
+        p.applications = new Array<Application>();
+
+        let a = new Application();
+        a.name = 'app';
+        a.pipelines = new Array<ApplicationPipeline>();
+        let ap1 = new ApplicationPipeline();
+        ap1.id = 1;
+        ap1.pipeline = new Pipeline();
+        ap1.pipeline.name = 'build1';
+        let ap2 = new ApplicationPipeline();
+        ap2.id = 2;
+        ap2.pipeline = new Pipeline();
+        ap2.pipeline.type = 'deployment';
+        ap2.pipeline.name = 'deploy1';
+        a.pipelines.push(ap1, ap2);
+
+        a.notifications = new Array<Notification>();
+        let n = new Notification();
+        n.pipeline = ap2.pipeline;
+        n.environment = e;
+        n.application_pipeline_id = ap2.id;
+
+        let jabber = new UserNotificationSettings();
+        jabber.on_failure = 'never';
+        jabber.on_start = true;
+        jabber.on_success = 'never';
+        jabber.recipients = ['foo', 'bar'];
+        jabber.send_to_author = true;
+        jabber.send_to_groups = false;
+        jabber.template.subject = 'subj';
+        jabber.template.body = 'body';
+        n.notifications['jabber'] = jabber;
+
+        a.notifications.push(n);
+
+        fixture.componentInstance.application = a;
+
+        p.applications.push(a);
+        fixture.componentInstance.project = p;
+
+        fixture.componentInstance.projectNotifications = new Array<Notification>();
+        fixture.componentInstance.projectNotifications.push(n);
+
+        expect(fixture.componentInstance.getCloneNotificationLabel(n)).toBe('[jabber] app-deploy1-production');
+
+        fixture.componentInstance.updateWithClonedNotification(0);
+
+        expect(fixture.componentInstance.isNewNotif).toBeTruthy();
+        expect(fixture.componentInstance.selected.clonedType).toBe('jabber');
+        expect(fixture.componentInstance.selected.notification.on_failure).toBe('never');
+        expect(fixture.componentInstance.selected.notification.on_success).toBe('never');
+        expect(fixture.componentInstance.selected.notification.template.subject).toBe('subj');
+        expect(fixture.componentInstance.selected.notification.template.body).toBe('body');
+        expect(fixture.componentInstance.onStartControl.value).toBeTruthy();
+        expect(fixture.componentInstance.onAuthorControl.value).toBeTruthy();
+        expect(fixture.componentInstance.onGroupsControl.value).toBeFalsy();
     }));
 });
 
