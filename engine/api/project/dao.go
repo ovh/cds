@@ -2,6 +2,7 @@ package project
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -31,50 +32,39 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User, opts ...loadOptionFunc) ([]sdk.Pr
 	return loadprojects(db, u, opts, query, args...)
 }
 
-func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
-	var res []dbProject
-	if _, err := db.Select(&res, query, args...); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoProject
-		}
-		return nil, err
-	}
+// LoadByGroup loads all projects where group has access
+func LoadByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
+	query := `
+		SELECT project.projectKey, project.name, project.last_modified, project_group.role
+		FROM project
+	 	JOIN project_group ON project_group.project_id = project.id
+	 	WHERE project_group.group_id = $1
+		ORDER BY project.name ASC`
 
-	projs := make([]sdk.Project, len(res))
-	for i := range res {
-		p := &res[i]
-		if err := p.PostGet(db); err != nil {
-			return nil, err
-		}
-		proj, err := unwrap(db, p, u, opts)
+	rows, err := db.Query(query, group.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var projectKey, projectName string
+		var perm int
+		var lastModified time.Time
+		err = rows.Scan(&projectKey, &projectName, &lastModified, &perm)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		projs[i] = *proj
+		group.ProjectGroups = append(group.ProjectGroups, sdk.ProjectGroup{
+			Project: sdk.Project{
+				Key:          projectKey,
+				Name:         projectName,
+				LastModified: lastModified,
+			},
+			Permission: perm,
+		})
 	}
-
-	return projs, nil
-}
-
-func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User, opts []loadOptionFunc) (*sdk.Project, error) {
-	proj := sdk.Project(*p)
-
-	//By default we load applications and variables
-	if err := loadApplications(db, &proj, u); err != nil {
-		return nil, err
-	}
-
-	if err := loadAllVariables(db, &proj); err != nil {
-		return nil, err
-	}
-
-	for _, f := range opts {
-		if err := f(db, &proj, u); err != nil {
-			return nil, err
-		}
-	}
-
-	return &proj, nil
+	return nil
 }
 
 // Exist checks whether a project exists or not
@@ -153,6 +143,40 @@ func Load(db gorp.SqlExecutor, key string, u *sdk.User, opts ...loadOptionFunc) 
 	return load(db, u, opts, "select * from project where projectkey = $1", key)
 }
 
+// LoadByPipelineID loads an project from pipeline iD
+func LoadByPipelineID(db gorp.SqlExecutor, u *sdk.User, pipelineID int64, opts ...loadOptionFunc) (*sdk.Project, error) {
+	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
+	          FROM project
+	          JOIN pipeline ON pipeline.project_id = projecT.id
+	          WHERE pipeline.id = $1 `
+	return load(db, u, opts, query, pipelineID)
+}
+
+func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
+	var res []dbProject
+	if _, err := db.Select(&res, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoProject
+		}
+		return nil, err
+	}
+
+	projs := make([]sdk.Project, len(res))
+	for i := range res {
+		p := &res[i]
+		if err := p.PostGet(db); err != nil {
+			return nil, err
+		}
+		proj, err := unwrap(db, p, u, opts)
+		if err != nil {
+			return nil, err
+		}
+		projs[i] = *proj
+	}
+
+	return projs, nil
+}
+
 func load(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	dbProj := &dbProject{}
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
@@ -160,4 +184,25 @@ func load(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string,
 	}
 
 	return unwrap(db, dbProj, u, opts)
+}
+
+func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User, opts []loadOptionFunc) (*sdk.Project, error) {
+	proj := sdk.Project(*p)
+
+	//By default we load applications and variables
+	if err := loadApplications(db, &proj, u); err != nil {
+		return nil, err
+	}
+
+	if err := loadAllVariables(db, &proj); err != nil {
+		return nil, err
+	}
+
+	for _, f := range opts {
+		if err := f(db, &proj, u); err != nil {
+			return nil, err
+		}
+	}
+
+	return &proj, nil
 }

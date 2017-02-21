@@ -264,7 +264,7 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 
 		// get Project
 		// Load project
-		projectData, err := project.LoadProjectByPipelineID(tx, p.ID)
+		projectData, err := project.LoadByPipelineID(tx, nil, p.ID)
 		if err != nil {
 			log.Warning("processHook> Cannot load project for pipeline %s: %s\n", p.Name, err)
 			return err
