@@ -54,6 +54,29 @@ var mainCmd = &cobra.Command{
 
 		startupTime = time.Now()
 
+		//Initialize secret driver
+		secretBackend := viper.GetString("secret_backend")
+		secretBackendOptions := viper.GetStringSlice("secret_backend_option")
+		secretBackendOptionsMap := map[string]string{}
+		for _, o := range secretBackendOptions {
+			if !strings.Contains(o, "=") {
+				log.Warning("Malformated options : %s", o)
+				continue
+			}
+			t := strings.Split(o, "=")
+			secretBackendOptionsMap[t[0]] = t[1]
+		}
+		if err := secret.Init(secretBackend, secretBackendOptionsMap); err != nil {
+			log.Critical("Cannot initialize secret manager: %s\n", err)
+		}
+
+		if secret.SecretUsername != "" {
+			database.SecretDBUser = secret.SecretUsername
+		}
+		if secret.SecretPassword != "" {
+			database.SecretDBPassword = secret.SecretPassword
+		}
+
 		if err := mail.CheckMailConfiguration(); err != nil {
 			log.Fatalf("SMTP configuration error: %s\n", err)
 		}
@@ -134,22 +157,6 @@ var mainCmd = &cobra.Command{
 
 		if err := group.Initialize(database.DBMap(db), viper.GetString("default_group")); err != nil {
 			log.Critical("Cannot initialize groups: %s\n", err)
-		}
-
-		//Initialize secret driver
-		secretBackend := viper.GetString("secret_backend")
-		secretBackendOptions := viper.GetStringSlice("secret_backend_option")
-		secretBackendOptionsMap := map[string]string{}
-		for _, o := range secretBackendOptions {
-			if !strings.Contains(o, "=") {
-				log.Warning("Malformated options : %s", o)
-				continue
-			}
-			t := strings.Split(o, "=")
-			secretBackendOptionsMap[t[0]] = t[1]
-		}
-		if err := secret.Init(secretBackend, secretBackendOptionsMap); err != nil {
-			log.Critical("Cannot initialize secret manager: %s\n", err)
 		}
 
 		//Intialize repositories manager

@@ -11,6 +11,8 @@ import (
 	"io"
 	"strings"
 
+	"encoding/json"
+
 	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
 	"github.com/ovh/cds/engine/api/secret/secretbackend"
 	"github.com/ovh/cds/engine/log"
@@ -25,13 +27,27 @@ const (
 )
 
 var (
-	key           []byte
-	prefix        = "3DICC3It"
-	defaultKey    = []byte("78eKVxCGLm6gwoH9LAQ15ZD5AOABo1Xf")
-	testingPrefix = "3IFCC4Ib"
+	key                            []byte
+	prefix                         = "3DICC3It"
+	defaultKey                     = []byte("78eKVxCGLm6gwoH9LAQ15ZD5AOABo1Xf")
+	testingPrefix                  = "3IFCC4Ib"
+	SecretUsername, SecretPassword string
 	//Client is a shared instance
 	Client secretbackend.Driver
 )
+
+type databaseInstance struct {
+	Port int    `json:"port"`
+	Host string `json:"host"`
+}
+
+type DatabaseCredentials struct {
+	Readers  []databaseInstance `json:"readers"`
+	Writers  []databaseInstance `json:"writers"`
+	Database string             `json:"database"`
+	Password string             `json:"password"`
+	User     string             `json:"user"`
+}
 
 // Init password manager
 // if secretBackendBinary is empty, use default AES key and default file secret backend
@@ -67,8 +83,21 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 			return sdk.ErrSecretKeyFetchFailed
 		}
 		key = []byte(aesKey)
-	}
 
+		cdsDBCredS, _ := secrets.Get("cds/cds")
+		if cdsDBCredS == "" {
+			log.Critical("secret.Init> cds/cds not found")
+			return nil
+		}
+
+		var cdsDBCred = DatabaseCredentials{}
+		if err := json.Unmarshal([]byte(cdsDBCredS), &cdsDBCredS); err != nil {
+			log.Critical("secret.Init> Unable to unmarshal secret", err)
+			return nil
+		}
+		SecretUsername = cdsDBCred.User
+		SecretPassword = cdsDBCred.Password
+	}
 	return nil
 }
 
