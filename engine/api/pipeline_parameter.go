@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -82,15 +80,9 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var pipParams []sdk.Parameter
-	if err := json.Unmarshal(data, &pipParams); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &pipParams); err != nil {
+		return err
 	}
 
 	pip, err := pipeline.LoadPipeline(db, key, pipelineName, false)
@@ -196,15 +188,9 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	pipelineName := vars["permPipelineKey"]
 	paramName := vars["name"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var newParam sdk.Parameter
-	if err := json.Unmarshal(data, &newParam); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &newParam); err != nil {
+		return err
 	}
 	if newParam.Name != paramName {
 		return sdk.ErrWrongRequest
@@ -260,17 +246,9 @@ func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *g
 	pipelineName := vars["permPipelineKey"]
 	paramName := vars["name"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addParameterInPipelineHandler> Cannot read body: %s", err)
-		return sdk.ErrWrongRequest
-	}
-
 	var newParam sdk.Parameter
-	if err := json.Unmarshal(data, &newParam); err != nil {
-		log.Warning("addParameterInPipelineHandler> Cannot unmarshal body: %s", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &newParam); err != nil {
+		return err
 	}
 	if newParam.Name != paramName {
 		log.Warning("addParameterInPipelineHandler> Wrong param name got %s instead of %s", newParam.Name, paramName)

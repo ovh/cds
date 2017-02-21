@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -25,17 +23,9 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 	appName := vars["permApplicationName"]
 	groupName := vars["group"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot read body :%s", err)
-		return sdk.ErrWrongRequest
-	}
-
 	var groupApplication sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupApplication); err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot unmarshal body :%s", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, groupApplication); err != nil {
+		return err
 	}
 
 	app, err := application.LoadApplicationByName(db, key, appName)
@@ -102,13 +92,6 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	key := vars["key"]
 	appName := vars["permApplicationName"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot read body :%s", err)
-		return sdk.ErrWrongRequest
-	}
-
 	proj, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", key, err)
@@ -116,9 +99,8 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	var groupsPermission []sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupsPermission); err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot unmarshal body :%s", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, groupsPermission); err != nil {
+		return err
 	}
 
 	if len(groupsPermission) == 0 {
@@ -181,23 +163,14 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 }
 
 func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot read body :%s", err)
-		return sdk.ErrWrongRequest
-	}
-
 	var groupPermission sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupPermission); err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot unmarshal body :%s", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, groupPermission); err != nil {
+		return err
 	}
 
 	proj, err := project.Load(db, key, c.User)

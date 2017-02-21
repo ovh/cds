@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -16,17 +14,10 @@ import (
 )
 
 func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrUnknownError
-	}
-
 	// Unmarshal body
 	hatch := sdk.Hatchery{}
-	if err = json.Unmarshal(data, &hatch); err != nil {
-		log.Warning("registerHatchery: Cannot unmarshal data: %s\n", err)
-		return sdk.ErrUnknownError
+	if err := UnmarshalBody(r, &hatch); err != nil {
+		return err
 	}
 
 	// Load token

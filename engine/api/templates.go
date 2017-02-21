@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -325,20 +324,10 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	}
 
-	// Get data in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("applyTemplatesHandler> Cannot read body %s: %s\n", string(data), err)
-		return sdk.ErrWrongRequest
-
-	}
-
 	// Parse body to sdk.ApplyTemplatesOptions
 	var opts sdk.ApplyTemplatesOptions
-	if err := json.Unmarshal(data, &opts); err != nil {
-		log.Warning("applyTemplatesHandler> Cannot parse body %s: %s\n", string(data), err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &opts); err != nil {
+		return err
 	}
 
 	// Create a session for current user
@@ -412,19 +401,10 @@ func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, d
 
 	}
 
-	// Get data in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("applyTemplateOnApplicationHandler> Unable to read body : %s\n", err)
-		return sdk.ErrWrongRequest
-
-	}
-
 	// Parse body to sdk.ApplyTemplatesOptions
 	var opts sdk.ApplyTemplatesOptions
-	if err := json.Unmarshal(data, &opts); err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &opts); err != nil {
+		return err
 	}
 
 	//Create a session for current user

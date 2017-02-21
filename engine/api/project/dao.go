@@ -51,8 +51,7 @@ func LoadByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 		var projectKey, projectName string
 		var perm int
 		var lastModified time.Time
-		err = rows.Scan(&projectKey, &projectName, &lastModified, &perm)
-		if err != nil {
+		if err := rows.Scan(&projectKey, &projectName, &lastModified, &perm); err != nil {
 			return err
 		}
 		group.ProjectGroups = append(group.ProjectGroups, sdk.ProjectGroup{
@@ -172,7 +171,7 @@ var LoadOptions = struct {
 	WithRepositoriesManagers: loadRepositoriesManagers,
 }
 
-// Load  returns a project with all its variables and applications given a user
+// Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func Load(db gorp.SqlExecutor, key string, u *sdk.User, opts ...loadOptionFunc) (*sdk.Project, error) {
 	return load(db, u, opts, "select * from project where projectkey = $1", key)
 }

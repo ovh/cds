@@ -2,10 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -43,17 +41,8 @@ func addRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *g
 	var args interface{}
 	options := map[string]string{}
 
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addRepositoriesManagerHandler> Cannot read request body: %s", err)
-		return sdk.ErrWrongRequest
-
-	}
-
-	if e := json.Unmarshal(data, &args); e != nil {
-		log.Warning("addRepositoriesManagerHandler> Cannot parse request body: %s", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &args); err != nil {
+		return err
 	}
 
 	t := args.(map[string]interface{})["type"].(string)
@@ -231,17 +220,8 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 	}
 
 	var tv map[string]interface{}
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot read request body: %s", err)
-		return sdk.ErrWrongRequest
-
-	}
-
-	if e := json.Unmarshal(data, &tv); e != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot parse request body: %s", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &tv); err != nil {
+		return err
 	}
 
 	var token, verifier string
@@ -530,17 +510,8 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	rmName := vars["name"]
 
 	var data map[string]string
-	dataBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot read request body: %s", err)
-		return sdk.ErrWrongRequest
-
-	}
-
-	if e := json.Unmarshal(dataBytes, &data); e != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot parse request body: %s", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &data); err != nil {
+		return err
 	}
 
 	repoFullname := data["repository_fullname"]
@@ -725,17 +696,8 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	rmName := vars["name"]
 
 	var data map[string]string
-	dataBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot read request body: %s", err)
-		return sdk.ErrWrongRequest
-
-	}
-
-	if e := json.Unmarshal(dataBytes, &data); e != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot parse request body: %s", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &data); err != nil {
+		return err
 	}
 
 	repoFullname := data["repository_fullname"]

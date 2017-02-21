@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -181,20 +179,9 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateVariablesInProjectHandler: Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-
-	}
-
 	var projectVars []sdk.Variable
-	err = json.Unmarshal(data, &projectVars)
-	if err != nil {
-		log.Warning("updateVariablesInProjectHandler: Cannot unmarshal body: %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &projectVars); err != nil {
+		return err
 	}
 
 	p, err := project.Load(db, key, c.User)
@@ -310,18 +297,9 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 	key := vars["permProjectKey"]
 	varName := vars["name"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	var newVar sdk.Variable
-	err = json.Unmarshal(data, &newVar)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &newVar); err != nil {
+		return err
 	}
 	if newVar.Name != varName {
 		return sdk.ErrWrongRequest
@@ -407,24 +385,14 @@ func getVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 }
 
 func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	varName := vars["name"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	var newVar sdk.Variable
-	err = json.Unmarshal(data, &newVar)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &newVar); err != nil {
+		return err
 	}
 	if newVar.Name != varName {
 		return sdk.ErrWrongRequest

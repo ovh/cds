@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -23,15 +21,9 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	pipelineName := vars["permPipelineKey"]
 	groupName := vars["group"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var groupPipeline sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupPipeline); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &groupPipeline); err != nil {
+		return err
 	}
 
 	if groupName != groupPipeline.Group.Name {
@@ -108,15 +100,8 @@ func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *g
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return err
-	}
-
 	var groupsPermission []sdk.GroupPermission
-	err = json.Unmarshal(data, &groupsPermission)
-	if err != nil {
+	if err := UnmarshalBody(r, &groupsPermission); err != nil {
 		return err
 	}
 
@@ -190,15 +175,9 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var groupPermission sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupPermission); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &groupPermission); err != nil {
+		return err
 	}
 
 	p, err := pipeline.LoadPipeline(db, key, pipelineName, false)

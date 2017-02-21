@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -305,16 +303,8 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	var app sdk.Application
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addApplicationHandler: Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-	err = json.Unmarshal(data, &app)
-	if err != nil {
-		log.Warning("addApplicationHandler: Cannot unmarshal request: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &app); err != nil {
+		return err
 	}
 
 	// check application name pattern
@@ -431,13 +421,8 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	proj.Environments = envs
 
 	var newApp sdk.Application
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-	if err := json.Unmarshal(data, &newApp); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &newApp); err != nil {
+		return err
 	}
 
 	appToClone, errApp := application.LoadApplicationByName(db, projectKey, applicationName)
@@ -592,16 +577,8 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 
 	var appPost sdk.Application
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateApplicationHandler> Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-	err = json.Unmarshal(data, &appPost)
-	if err != nil {
-		log.Warning("updateApplicationHandler> Cannot unmarshal request: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &appPost); err != nil {
+		return err
 	}
 
 	// check application name pattern

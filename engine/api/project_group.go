@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -78,17 +76,9 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 	key := vars["permProjectKey"]
 	groupName := vars["group"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	var groupProject sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupProject); err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &groupProject); err != nil {
+		return err
 	}
 
 	if groupName != groupProject.Group.Name {
@@ -176,18 +166,9 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	var groupProject []sdk.GroupPermission
-	err = json.Unmarshal(data, &groupProject)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &groupProject); err != nil {
+		return err
 	}
 
 	if len(groupProject) == 0 {
@@ -258,22 +239,13 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 }
 
 func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	var groupProject sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupProject); err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &groupProject); err != nil {
+		return err
 	}
 
 	p, err := project.Load(db, key, c.User)

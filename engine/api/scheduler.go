@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -150,20 +148,10 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	// Get args in body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> cannot read body: %s\n", errRead)
-		return sdk.ErrWrongRequest
-
-	}
-
 	// Unmarshal args
 	s := &sdk.PipelineScheduler{}
-	if err := json.Unmarshal(data, s); err != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> cannot unmarshal body:  %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, s); err != nil {
+		return err
 	}
 
 	//Check timezone
@@ -219,20 +207,10 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	// Get args in body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		log.Warning("updateSchedulerApplicationPipelineHandler> cannot read body: %s\n", errRead)
-		return sdk.ErrWrongRequest
-
-	}
-
 	// Unmarshal args
 	s := &sdk.PipelineScheduler{}
-	if err := json.Unmarshal(data, s); err != nil {
-		log.Warning("updateSchedulerApplicationPipelineHandler> cannot unmarshal body:  %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, s); err != nil {
+		return err
 	}
 
 	//Parsing cronexpr

@@ -2,8 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"time"
@@ -32,15 +30,9 @@ func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	proj := &sdk.Project{}
-	if err := json.Unmarshal(data, proj); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &proj); err != nil {
+		return err
 	}
 
 	if proj.Name == "" {
@@ -90,18 +82,10 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 }
 
 func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	//Unmarshal data
 	p := &sdk.Project{}
-	if err := json.Unmarshal(data, &p); err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &p); err != nil {
+		return err
 	}
 
 	// check projectKey pattern

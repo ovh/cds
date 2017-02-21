@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -240,16 +238,8 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 		return errProj
 	}
 
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot read body: %s\n", errRead)
-		return errRead
-	}
-
 	var newVar sdk.Variable
-	if err := json.Unmarshal(data, &newVar); err != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot unmarshal body : %s\n", err)
+	if err := UnmarshalBody(r, &newVar); err != nil {
 		return err
 	}
 
@@ -325,15 +315,9 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 		return errProj
 	}
 
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var newVar sdk.Variable
-	if err := json.Unmarshal(data, &newVar); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &newVar); err != nil {
+		return err
 	}
 
 	if newVar.Name != varName {

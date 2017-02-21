@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -61,15 +59,7 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	var envs []sdk.Environment
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateEnvironmentsHandler: Cannot read body: %s\n", err)
-		return err
-	}
-	err = json.Unmarshal(data, &envs)
-	if err != nil {
-		log.Warning("updateEnvironmentsHandler: Cannot unmarshal body: %s\n", err)
+	if err := UnmarshalBody(r, &envs); err != nil {
 		return err
 	}
 
@@ -223,14 +213,12 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 	proj.Environments = envs
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("updateEnvironmentsHandler> Cannot commit transaction: %s\n", err)
 		return err
 	}
 
-	err = sanity.CheckProjectPipelines(db, proj)
-	if err != nil {
+	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
 		log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
 		return err
 	}
@@ -239,7 +227,6 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 }
 
 func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -251,13 +238,8 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	var env sdk.Environment
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-	if err := json.Unmarshal(data, &env); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &env); err != nil {
+		return err
 	}
 	env.ProjectID = proj.ID
 
@@ -374,14 +356,8 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 
 	var envPost sdk.Environment
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-
-	if err := json.Unmarshal(data, &envPost); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &envPost); err != nil {
+		return err
 	}
 
 	env.Name = envPost.Name
@@ -479,14 +455,8 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	var envPost sdk.Environment
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-
-	if err := json.Unmarshal(data, &envPost); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &envPost); err != nil {
+		return err
 	}
 
 	//Check if the new environment has a name

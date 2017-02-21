@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -45,20 +43,9 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addPollerHandler: Cannot read body: %s\n", err)
-		return err
-
-	}
-
 	var h sdk.RepositoryPoller
-	err = json.Unmarshal(data, &h)
-	if err != nil {
-		log.Warning("addPollerHandler: Cannot unmarshal body: %s\n", err)
+	if err := UnmarshalBody(r, &h); err != nil {
 		return err
-
 	}
 
 	h.Application = *app
@@ -132,20 +119,9 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updatePollerHandler: Cannot read body: %s\n", err)
-		return err
-
-	}
-
 	var h sdk.RepositoryPoller
-	err = json.Unmarshal(data, &h)
-	if err != nil {
-		log.Warning("updatePollerHandler: Cannot unmarshal body: %s\n", err)
+	if err := UnmarshalBody(r, &h); err != nil {
 		return err
-
 	}
 
 	h.Application = *app

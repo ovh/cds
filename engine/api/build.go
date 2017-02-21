@@ -20,8 +20,8 @@ import (
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
-	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
+	"github.com/runabove/venom"
 )
 
 func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -40,16 +40,9 @@ func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return errJob
 	}
 
-	// Get body
-	data, errR := ioutil.ReadAll(r.Body)
-	if errR != nil {
-		log.Warning("updateStepStatusHandler> Cannot read body: %s\n", errR)
-		return sdk.ErrWrongRequest
-	}
 	var step sdk.StepStatus
-	if err := json.Unmarshal(data, &step); err != nil {
-		log.Warning("updateStepStatusHandler> Cannot unmarshall body: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &step); err != nil {
+		return err
 	}
 
 	found := false
@@ -300,19 +293,10 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return sdk.ErrNotFound
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addQueueResultHandler> Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-
 	// Unmarshal into results
 	var res sdk.Result
-	err = json.Unmarshal([]byte(data), &res)
-	if err != nil {
-		log.Warning("addQueueResultHandler> Cannot unmarshal Result: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &res); err != nil {
+		return err
 	}
 
 	tx, err := db.Begin()
@@ -605,17 +589,9 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return errPB
 	}
 
-	// Get body
-	data, errR := ioutil.ReadAll(r.Body)
-	if errR != nil {
-		log.Warning("addBuildVariableHandler> Cannot read body: %s\n", errR)
-		return errR
-	}
-
 	// Unmarshal into results
 	var v sdk.Variable
-	if err := json.Unmarshal([]byte(data), &v); err != nil {
-		log.Warning("addBuildVariableHandler> Cannot unmarshal Tests: %s\n", err)
+	if err := UnmarshalBody(r, &v); err != nil {
 		return err
 	}
 
@@ -693,18 +669,9 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return err
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addBuildTestResultsHandler> Cannot read body: %s\n", err)
-		return err
-	}
-
 	// Unmarshal into results
 	var new venom.Tests
-	err = json.Unmarshal([]byte(data), &new)
-	if err != nil {
-		log.Warning("addBuildtestResultsHandler> Cannot unmarshal Tests: %s\n", err)
+	if err := UnmarshalBody(r, &new); err != nil {
 		return err
 	}
 
