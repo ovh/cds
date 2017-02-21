@@ -478,7 +478,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 }
 
 func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	if c.Worker.ID != "" {
+	if c.Worker != nil && c.Worker.ID != "" {
 		// Load calling worker
 		caller, errW := worker.LoadWorker(db, c.Worker.ID)
 		if errW != nil {
