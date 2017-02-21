@@ -24,9 +24,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     getProject(key: string): Observable<Project> {
-        let params = new URLSearchParams ();
-        params.set('applicationStatus', '5');
-        return this._http.get('/project/' + key, {search: params}).map(res => res.json());
+        return this._http.get('/project/' + key).map(res => res.json());
     }
 
     /**

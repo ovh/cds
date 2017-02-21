@@ -111,12 +111,19 @@ export class ApplicationWorkflowItemComponent {
     }
 
     navigateToBuild(pb: PipelineBuild): void {
+        let queryParams = { queryParams:  {envName: pb.environment.name}};
+        if (this.applicationFilter.branch !== '') {
+            queryParams.queryParams['branch'] = this.applicationFilter.branch;
+        }
+        if (this.applicationFilter.version !== 0) {
+            queryParams.queryParams['version'] = this.applicationFilter.version;
+        }
         this._router.navigate([
             '/project', this.workflowItem.project.key,
             'application', pb.application.name,
             'pipeline', pb.pipeline.name,
             'build', pb.build_number
-        ], {queryParams: {envName: pb.environment.name}});
+        ], queryParams);
     }
 
     runWithParameters(): void {

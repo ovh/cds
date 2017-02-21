@@ -31,6 +31,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     version: string;
     buildNumber: string;
     envName: string;
+    branch: string;
 
     @ViewChild('permWarning')
         permissionModalWarning: WarningModalComponent;
@@ -54,6 +55,9 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         }
         if (this._routeActivated.snapshot.queryParams['envName']) {
             this.envName = this._routeActivated.snapshot.queryParams['envName'];
+        }
+        if (this._routeActivated.snapshot.queryParams['branch']) {
+            this.branch = this._routeActivated.snapshot.queryParams['branch'];
         }
     }
 
@@ -87,7 +91,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         this.pipelineSubscriber = this._pipStore.getPipelines(key, pipName).subscribe( pip => {
           if (pip) {
             let pipelineUpdated = pip.get(key + '-' + pipName);
-            if (pipelineUpdated && !pipelineUpdated.externalChange) {
+            if (pipelineUpdated && !pipelineUpdated.externalChange &&
+                (!this.pipeline || this.pipeline.last_modified < pipelineUpdated.last_modified)) {
               this.pipeline = pipelineUpdated;
             } else if (pipelineUpdated && pipelineUpdated.externalChange) {
                 // TODO show warning

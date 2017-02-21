@@ -18,6 +18,7 @@ export class BreadcrumbComponent {
     @Input() version = 0;
     @Input() buildNumber = 0;
     @Input() envName: string;
+    @Input() branch: string;
 
     constructor(private _router: Router) { }
 
@@ -32,7 +33,14 @@ export class BreadcrumbComponent {
     }
 
     navigateToApplication(): void {
-        this._router.navigate(['project', this.project.key, 'application', this.application.name]);
+        let queryParams = { queryParams: {}};
+        if (this.branch) {
+            queryParams.queryParams['branch'] = this.branch;
+        }
+        if (this.version) {
+            queryParams.queryParams['version'] = this.version;
+        }
+        this._router.navigate(['project', this.project.key, 'application', this.application.name], queryParams);
     }
 
     navigateToPipeline(): void {
@@ -40,10 +48,17 @@ export class BreadcrumbComponent {
         if (this.application) {
             queryParams.queryParams['application'] = this.application.name;
         }
-        if (this.version && this.buildNumber && this.envName) {
+        if (this.version) {
             queryParams.queryParams['version'] = this.version;
+        }
+        if (this.buildNumber) {
             queryParams.queryParams['buildNumber'] = this.buildNumber;
+        }
+        if (this.envName) {
             queryParams.queryParams['envName'] = this.envName;
+        }
+        if (this.branch) {
+            queryParams.queryParams['branch'] = this.branch;
         }
         this._router.navigate(['project', this.project.key, 'pipeline', this.pipeline.name], queryParams);
     }

@@ -12,10 +12,10 @@
         <div class="four wide field" *ngIf="branches && branches.length > 0">
             <label>{{ 'application_workflow_branch_title' | translate }}</label>
             <sm-select [(model)]="applicationFilter.branch" (modelChange)="changeBranch()" class="search">
-                <option *ngFor="let branch of branches" value="{{branch}}">{{ branch}}</option>
+                <option *ngFor="let branch of branches" value="{{branch.display_id}}">{{ branch.display_id}}</option>
             </sm-select>
         </div>
-        <div class="six wide field cdsVersion" *ngIf="branches && branches.length > 0">
+        <div class="six wide field cdsVersion" *ngIf="branches && branches.length > 0 && versions">
             <label>{{ 'application_workflow_version_title' | translate }}</label>
             <sm-select [(model)]="applicationFilter.version" (modelChange)="changeVersion()">
                 <option *ngFor="let v of versions" value="{{v}}">{{ v }}</option>

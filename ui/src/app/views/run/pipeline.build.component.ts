@@ -30,6 +30,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     currentBuild: PipelineBuild;
     previousBuild: PipelineBuild;
     duration: string;
+    branch: string;
 
     // Allow angular update from work started outside angular context
     zone: NgZone;
@@ -58,19 +59,15 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             this.project = data['project'];
         });
 
-        this.envName = this._activatedRoute.snapshot.queryParams['envName'];
-        if (this._activatedRoute.snapshot.queryParams['tab']) {
-            this.selectedTab = this._activatedRoute.snapshot.queryParams['tab'];
-        } else {
-            this.selectedTab = 'pipeline';
-        }
-
         this._activatedRoute.queryParams.subscribe(q => {
             this.envName = q['envName'];
             if (q['tab']) {
                 this.selectedTab = q['tab'];
             } else {
                 this.selectedTab = 'pipeline';
+            }
+            if (q['branch']) {
+                this.branch = q['branch'];
             }
         });
         this._activatedRoute.params.subscribe(params => {
