@@ -88,8 +88,6 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 
 	}
 
-	log.Debug("%v", secrets)
-
 	cdsDBCredS, _ := secrets.Get("cds/cds")
 	if cdsDBCredS == "" {
 		log.Critical("secret.Init> cds/cds not found")
@@ -98,7 +96,7 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 
 	var cdsDBCred = DatabaseCredentials{}
 	if err := json.Unmarshal([]byte(cdsDBCredS), &cdsDBCred); err != nil {
-		log.Critical("secret.Init> Unable to unmarshal secret %s", cdsDBCredS, err)
+		log.Critical("secret.Init> Unable to unmarshal secret %s", err)
 		return nil
 	}
 
