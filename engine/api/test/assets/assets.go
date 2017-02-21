@@ -48,7 +48,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string) *sdk.Proj
 		return nil
 	}
 
-	if err := project.InsertProject(db, &proj); err != nil {
+	if err := project.Insert(db, &proj); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 		return nil
 	}

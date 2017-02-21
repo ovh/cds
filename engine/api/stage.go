@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -21,17 +20,9 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	projectKey := vars["key"]
 	pipelineKey := vars["permPipelineKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addStageHandler> cannot read body: %s", err)
-		return sdk.ErrWrongRequest
-	}
-
-	stageData, err := sdk.NewStage("").FromJSON(data)
-	if err != nil {
-		log.Warning("addStageHandler> cannot unmarshal body: %s", err)
-		return sdk.ErrWrongRequest
+	var stageData = &sdk.Stage{}
+	if err := UnmarshalBody(r, stageData); err != nil {
+		return err
 	}
 
 	// Check if pipeline exist
@@ -115,18 +106,9 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	projectKey := vars["key"]
 	pipelineKey := vars["permPipelineKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("moveStageHandler> cannot read body: %s", err)
-		return sdk.ErrWrongRequest
-	}
-
-	// get stage to move
-	stageData, err := sdk.NewStage("").FromJSON(data)
-	if err != nil {
-		log.Warning("moveStageHandler> Cannot unmarshal body: %s", err)
-		return sdk.ErrWrongRequest
+	var stageData = &sdk.Stage{}
+	if err := UnmarshalBody(r, stageData); err != nil {
+		return err
 	}
 
 	if stageData.BuildOrder < 1 {
@@ -180,17 +162,9 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	pipelineKey := vars["permPipelineKey"]
 	stageIDString := vars["stageID"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addStageHandler> cannot read body: %s", err)
-		return sdk.ErrWrongRequest
-	}
-
-	stageData, err := sdk.NewStage("").FromJSON(data)
-	if err != nil {
-		log.Warning("addStageHandler> Cannot unmarshal body: %s", err)
-		return sdk.ErrWrongRequest
+	var stageData = &sdk.Stage{}
+	if err := UnmarshalBody(r, stageData); err != nil {
+		return err
 	}
 
 	stageID, err := strconv.ParseInt(stageIDString, 10, 60)

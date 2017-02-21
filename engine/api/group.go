@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -74,15 +72,8 @@ func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	oldName := vars["permGroupName"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var updatedGroup sdk.Group
-	err = json.Unmarshal(data, &updatedGroup)
-	if err != nil {
+	if err := UnmarshalBody(r, &updatedGroup); err != nil {
 		return err
 	}
 
@@ -188,15 +179,9 @@ func getPublicGroups(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 }
 
 func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	g := &sdk.Group{}
-	if err := json.Unmarshal(data, g); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, g); err != nil {
+		return err
 	}
 
 	tx, err := db.Begin()
@@ -277,21 +262,13 @@ func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp
 }
 
 func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get group name in URL
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var users []string
-	err = json.Unmarshal(data, &users)
-	if err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &users); err != nil {
+		return err
 	}
 
 	g, err := group.LoadGroup(db, name)

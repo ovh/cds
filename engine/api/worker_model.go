@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -18,18 +16,10 @@ import (
 )
 
 func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addWorkerModel> cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-
 	// Unmarshal body
 	var model sdk.Model
-	if err := json.Unmarshal(data, &model); err != nil {
-		log.Warning("addWorkerModel> cannot unmarshal body data: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &model); err != nil {
+		return err
 	}
 
 	if model.Type == "" {
@@ -37,15 +27,13 @@ func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	}
 
 	if len(model.Name) == 0 {
-		log.Warning("addWorkerModel> model name is empty: %s\n", err)
+		log.Warning("addWorkerModel> model name is empty")
 		return sdk.ErrWrongRequest
-
 	}
 
 	if model.GroupID == 0 {
-		log.Warning("addWorkerModel> groupID should be set: %s\n", err)
+		log.Warning("addWorkerModel> groupID should be set")
 		return sdk.ErrWrongRequest
-
 	}
 
 	//User must be admin of the group set in the model
@@ -101,20 +89,10 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return errLoad
 	}
 
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		log.Warning("updateWorkerModel> cannot read body: %s\n", errRead)
-		return sdk.ErrWrongRequest
-
-	}
-
 	// Unmarshal body
 	var model sdk.Model
-	if err := json.Unmarshal(data, &model); err != nil {
-		log.Warning("updateWorkerModel> cannot unmarshal body data: %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &model); err != nil {
+		return err
 	}
 
 	//If the model name has not been set, keep the old name
@@ -271,18 +249,9 @@ func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return errLoad
 	}
 
-	// Get body
-	data, errJSON := ioutil.ReadAll(r.Body)
-	if errJSON != nil {
-		log.Warning("addWorkerModelCapa> cannot read body: %s\n", errJSON)
-		return sdk.ErrWrongRequest
-	}
-
 	var capa sdk.Requirement
-	if err := json.Unmarshal(data, &capa); err != nil {
-		log.Warning("addWorkerModelCapa> cannot unmarshal body data: %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &capa); err != nil {
+		return err
 	}
 	workerModel.Capabilities = append(workerModel.Capabilities, capa)
 
@@ -326,22 +295,10 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return sdk.ErrWrongRequest
 
 	}
-
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateWorkerModelCapa> cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-
-	}
-
 	// Unmarshal body
 	var capa sdk.Requirement
-	err = json.Unmarshal(data, &capa)
-	if err != nil {
-		log.Warning("updateWorkerModelCapa> cannot unmarshal body data: %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &capa); err != nil {
+		return err
 	}
 
 	if capaName != capa.Name {

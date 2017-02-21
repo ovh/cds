@@ -2,29 +2,21 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
-func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	projects, err := project.LoadAll(db, c.User)
 	if err != nil {
 		log.Warning("GetProjects> Cannot load projects from db: %s\n", err)
@@ -33,20 +25,14 @@ func getProjects(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	return WriteJSON(w, r, projects, http.StatusOK)
 }
 
-func updateProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	proj := &sdk.Project{}
-	if err := json.Unmarshal(data, proj); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, proj); err != nil {
+		return err
 	}
 
 	if proj.Name == "" {
@@ -67,105 +53,39 @@ func updateProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 		return errProj
 	}
 
-	lastModified, errUp := project.UpdateProjectDB(db, key, proj.Name)
-	if errUp != nil {
+	if errUp := project.Update(db, proj); errUp != nil {
 		log.Warning("updateProject: Cannot update project %s : %s\n", key, errUp)
 		return errUp
 	}
 
-	p.Name = proj.Name
-	p.LastModified = lastModified
-
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	historyLengthString := r.FormValue("applicationHistory")
-	applicationStatus := r.FormValue("applicationStatus")
-
-	historyLength := 0
-
-	if historyLengthString != "" {
-		var errAtoi error
-		historyLength, errAtoi = strconv.Atoi(historyLengthString)
-		if errAtoi != nil {
-			log.Warning("getProject: applicationHistory must be an integer: %s\n", errAtoi)
-			return errAtoi
-		}
-	}
-
-	p, errProj := project.Load(db, key, c.User, project.WithVariables(), project.WithApplications(historyLength))
+	p, errProj := project.Load(db, key, c.User,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+		project.LoadOptions.WithPermission,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithRepositoriesManagers,
+	)
 	if errProj != nil {
 		log.Warning("getProject: Cannot load project from db: %s\n", errProj)
 		return errProj
 	}
 
-	pipelines, errPip := pipeline.LoadPipelines(db, p.ID, false, c.User)
-	if errPip != nil {
-		log.Warning("getProject: Cannot load pipelines from db: %s\n", errPip)
-		return errPip
-	}
-	p.Pipelines = append(p.Pipelines, pipelines...)
-
-	envs, errEnv := environment.LoadEnvironments(db, key, true, c.User)
-	if errEnv != nil {
-		log.Warning("getProject: Cannot load environments from db: %s\n", errEnv)
-		return errEnv
-
-	}
-	p.Environments = append(p.Environments, envs...)
-
-	if err := group.LoadGroupByProject(db, p); err != nil {
-		log.Warning("getProject: Cannot load groups from db: %s\n", err)
-		return err
-
-	}
-
-	p.Permission = permission.ProjectPermission(p.Key, c.User)
-
-	for i := range p.Environments {
-		env := &p.Environments[i]
-		env.Permission = permission.EnvironmentPermission(env.ID, c.User)
-	}
-
-	if applicationStatus == "true" {
-		for i := range p.Applications {
-			var errBuild error
-			p.Applications[i].PipelinesBuild, errBuild = pipeline.GetAllLastBuildByApplication(db, p.Applications[i].ID, "", 0)
-			if errBuild != nil {
-				log.Warning("GetProject: Cannot load app status: %s\n", errBuild)
-				return errBuild
-			}
-		}
-	}
-
-	var errRepos error
-	p.ReposManager, errRepos = repositoriesmanager.LoadAllForProject(db, p.Key)
-	if errRepos != nil {
-		log.Warning("GetProject: Cannot load repos manager for project %s: %s\n", p.Key, errRepos)
-		return errRepos
-	}
-
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func addProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
+func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	//Unmarshal data
 	p := &sdk.Project{}
-	if err := json.Unmarshal(data, &p); err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, p); err != nil {
+		return err
 	}
 
 	// check projectKey pattern
@@ -204,7 +124,7 @@ func addProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 
 	}
 
-	if err := project.InsertProject(tx, p); err != nil {
+	if err := project.Insert(tx, p); err != nil {
 		log.Warning("AddProject: Cannot insert project: %s\n", err)
 		return err
 
@@ -242,14 +162,19 @@ func addProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 		var errVar error
 		switch v.Type {
 		case sdk.KeyVariable:
-			errVar = project.AddKeyPairToProject(tx, p, v.Name)
+			errVar = project.AddKeyPair(tx, p, v.Name)
 		default:
-			errVar = project.InsertVariableInProject(tx, p, v)
+			errVar = project.InsertVariable(tx, p, v)
 		}
 		if errVar != nil {
 			log.Warning("addProject: Cannot add variable %s in project %s:  %s\n", v.Name, p.Name, errVar)
 			return errVar
 		}
+	}
+
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("addProject: Cannot update last modified:  %s\n", err)
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -260,12 +185,12 @@ func addProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 	return WriteJSON(w, r, p, http.StatusCreated)
 }
 
-func deleteProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	p, errProj := project.Load(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.WithPipelines)
 	if errProj != nil {
 		if errProj != sdk.ErrNoProject {
 			log.Warning("deleteProject: load project '%s' from db: %s\n", key, errProj)
@@ -273,23 +198,13 @@ func deleteProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 		return errProj
 	}
 
-	countPipeline, errCount := pipeline.CountPipelineByProject(db, p.ID)
-	if errCount != nil {
-		log.Warning("deleteProject: Cannot count pipeline for project %s: %s\n", p.Name, errCount)
-		return errCount
-	}
-	if countPipeline > 0 {
-		log.Warning("deleteProject> Project '%s' still used by %d pipelines\n", key, countPipeline)
+	if len(p.Pipelines) > 0 {
+		log.Warning("deleteProject> Project '%s' still used by %d pipelines\n", key, len(p.Pipelines))
 		return sdk.ErrProjectHasPipeline
 	}
 
-	countApplications, errCountApp := application.CountApplicationByProject(db, p.ID)
-	if errCountApp != nil {
-		log.Warning("deleteProject: Cannot count application for project %s: %s\n", p.Name, errCountApp)
-		return errCountApp
-	}
-	if countApplications > 0 {
-		log.Warning("deleteProject> Project '%s' still used by %d applications\n", key, countApplications)
+	if len(p.Applications) > 0 {
+		log.Warning("deleteProject> Project '%s' still used by %d applications\n", key, len(p.Applications))
 		return sdk.ErrProjectHasApplication
 	}
 

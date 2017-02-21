@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -23,20 +21,10 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	vars := mux.Vars(r)
 	project := vars["key"]
 
-	// Get args in body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		log.Warning("addTriggerHandler> cannot read body: %s\n", errRead)
-		return sdk.ErrWrongRequest
-
-	}
-
 	// Unmarshal args
 	var t sdk.PipelineTrigger
-	if err := json.Unmarshal(data, &t); err != nil {
-		log.Warning("addTriggerHandler> cannot unmarshal body:  %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &t); err != nil {
+		return err
 	}
 
 	// load source ids
@@ -293,19 +281,9 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	}
 
-	// Get args in body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		log.Warning("updateTriggerHandler> cannot read body: %s\n", errRead)
-		return sdk.ErrWrongRequest
-
-	}
-
 	var t sdk.PipelineTrigger
-	if err := json.Unmarshal(data, &t); err != nil {
-		log.Warning("updateTriggerHandler> cannot unmarshal trigger: %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &t); err != nil {
+		return err
 	}
 
 	if t.SrcApplication.ID == 0 || t.DestApplication.ID == 0 ||

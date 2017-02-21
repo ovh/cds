@@ -19,7 +19,7 @@ func TestInsertPipeline(t *testing.T) {
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.InsertProject(db, &p); err != nil {
+	if err := project.Insert(db, &p); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 
@@ -73,7 +73,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.InsertProject(db, &p); err != nil {
+	if err := project.Insert(db, &p); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 

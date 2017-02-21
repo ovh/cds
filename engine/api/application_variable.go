@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -241,18 +239,9 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateVariablesInApplicationHandler: Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-
 	var varsToUpdate []sdk.Variable
-	err = json.Unmarshal(data, &varsToUpdate)
-	if err != nil {
-		log.Warning("updateVariablesInApplicationHandler: Cannot unmarshal body : %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &varsToUpdate); err != nil {
+		return err
 	}
 
 	app, err := application.LoadApplicationByName(db, key, appName)
@@ -366,18 +355,9 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-
 	var newVar sdk.Variable
-	err = json.Unmarshal(data, &newVar)
-	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot unmarshal body : %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &newVar); err != nil {
+		return err
 	}
 	if newVar.Name != varName {
 		return sdk.ErrWrongRequest
@@ -454,15 +434,9 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 		return err
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var newVar sdk.Variable
-	if err := json.Unmarshal(data, &newVar); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &newVar); err != nil {
+		return err
 	}
 
 	if newVar.Name != varName {

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -37,15 +35,7 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	appName := vars["permApplicationName"]
 
 	var request sdk.RunRequest
-
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return err
-	}
-	// Unmarshal args
-	err = json.Unmarshal(data, &request)
-	if err != nil {
+	if err := UnmarshalBody(r, &request); err != nil {
 		return err
 	}
 
@@ -161,16 +151,9 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 		return err
 	}
 
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var request sdk.RunRequest
-	// Unmarshal args
-	if err := json.Unmarshal(data, &request); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &request); err != nil {
+		return err
 	}
 
 	//Check parent stuff
@@ -363,17 +346,8 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 
 func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	var request sdk.RunRequest
-
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
-	// Unmarshal args
-	err = json.Unmarshal(data, &request)
-	if err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &request); err != nil {
+		return err
 	}
 
 	return runPipelineHandlerFunc(w, r, db, c, &request)
@@ -393,17 +367,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 
 	var job sdk.Job
-
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updatePipelineActionHandler>Cannot read body: %s\n", err)
-		return err
-	}
-
-	err = json.Unmarshal(data, &job)
-	if err != nil {
-		log.Warning("updatePipelineActionHandler>Cannot unmarshal request: %s\n", err)
+	if err := UnmarshalBody(r, &job); err != nil {
 		return err
 	}
 
@@ -508,17 +472,8 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	name := vars["permPipelineKey"]
 
 	var p sdk.Pipeline
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updatePipelineHandler: Cannot read body: %s", err)
-		return sdk.ErrWrongRequest
-	}
-
-	err = json.Unmarshal(data, &p)
-	if err != nil {
-		log.Warning("updatePipelineHandler: Cannot unmarshal body: %s", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &p); err != nil {
+		return err
 	}
 
 	// check pipeline name pattern
@@ -581,14 +536,8 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	}
 
 	var p sdk.Pipeline
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
-
-	if err := json.Unmarshal(data, &p); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &p); err != nil {
+		return err
 	}
 
 	// check pipeline name pattern
@@ -840,21 +789,12 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	}
 
-	// Get args in body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot read body: %s\n", errRead)
-		return sdk.ErrWrongRequest
-
-	}
-
 	var job sdk.Job
-	if err := json.Unmarshal(data, &job); err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot unmarshall body: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &job); err != nil {
+		return err
 	}
 
-	proj, errP := project.Load(db, projectKey, c.User, project.WithVariables(), project.WithApplications(1))
+	proj, errP := project.Load(db, projectKey, c.User)
 	if errP != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, errP)
 		return errP
@@ -906,7 +846,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
 
-	proj, err := project.Load(db, key, c.User, project.WithVariables(), project.WithApplications(1))
+	proj, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot load project %s: %s\n", key, err)
 		return sdk.ErrNoProject
@@ -927,19 +867,9 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 	}
 
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateJoinedAction> Unable to parse payload: %s", err)
-		return sdk.ErrWrongRequest
-
-	}
-
-	a, err := sdk.NewAction("").FromJSON(data)
-	if err != nil {
-		log.Warning("updateJoinedAction> Unable to parse json %s: %s\n", actionIDString, err)
-		return sdk.ErrWrongRequest
-
+	var a sdk.Action
+	if err := UnmarshalBody(r, &a); err != nil {
+		return err
 	}
 	a.ID = actionID
 
@@ -964,7 +894,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer tx.Rollback()
 
-	if err := action.UpdateActionDB(tx, a, c.User.ID); err != nil {
+	if err := action.UpdateActionDB(tx, &a, c.User.ID); err != nil {
 		log.Warning("updateJoinedAction> cannot update action: %s\n", err)
 		return err
 

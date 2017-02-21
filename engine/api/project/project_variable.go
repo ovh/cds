@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
@@ -228,8 +229,8 @@ func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName str
 	return variable, err
 }
 
-// InsertVariableInProject Insert a new variable in the given project
-func InsertVariableInProject(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variable) error {
+// InsertVariable Insert a new variable in the given project
+func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variable) error {
 	query := `INSERT INTO project_variable(project_id, var_name, var_value, cipher_value, var_type)
 		  VALUES($1, $2, $3, $4, $5)`
 
@@ -242,16 +243,11 @@ func InsertVariableInProject(db gorp.SqlExecutor, proj *sdk.Project, variable sd
 	if err != nil {
 		return err
 	}
-
-	lastModified, err := UpdateProjectDB(db, proj.Key, proj.Name)
-	if err == nil {
-		proj.LastModified = lastModified
-	}
-	return err
+	return nil
 }
 
-// UpdateVariableInProject Update a variable in the given project
-func UpdateVariableInProject(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variable) error {
+// UpdateVariable Update a variable in the given project
+func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variable) error {
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -269,38 +265,53 @@ func UpdateVariableInProject(db gorp.SqlExecutor, proj *sdk.Project, variable sd
 		return err
 	}
 
-	lastModifier, err := UpdateProjectDB(db, proj.Key, proj.Name)
-	if err == nil {
-		proj.LastModified = lastModifier
-	}
-	return err
+	return nil
 }
 
-// DeleteVariableFromProject Delete a variable from the given project
-func DeleteVariableFromProject(db gorp.SqlExecutor, proj *sdk.Project, variableName string) error {
+// DeleteVariable Delete a variable from the given project
+func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variableName string) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1 AND var_name=$2`
 	_, err := db.Exec(query, proj.ID, variableName)
 	if err != nil {
 		return err
 	}
 
-	lastModified, err := UpdateProjectDB(db, proj.Key, proj.Name)
-	if err == nil {
-		proj.LastModified = lastModified
-	}
 	return err
 }
 
-// DeleteAllVariableFromProject Delete all variables from the given project
-func DeleteAllVariableFromProject(db gorp.SqlExecutor, projectID int64) error {
+// DeleteAllVariable Delete all variables from the given project
+func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)
 	if err != nil {
 		return err
 	}
 
-	query = "UPDATE project SET last_modified = current_timestamp WHERE id=$1"
-	_, err = db.Exec(query, projectID)
-
 	return err
+}
+
+// AddKeyPair generate a ssh key pair and add them as project variables
+func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string) error {
+	pub, priv, errGenerate := keys.Generatekeypair(keyname)
+	if errGenerate != nil {
+		return errGenerate
+	}
+
+	v := sdk.Variable{
+		Name:  keyname,
+		Type:  sdk.KeyVariable,
+		Value: priv,
+	}
+
+	if err := InsertVariable(db, proj, v); err != nil {
+		return err
+	}
+
+	p := sdk.Variable{
+		Name:  keyname + ".pub",
+		Type:  sdk.TextVariable,
+		Value: pub,
+	}
+
+	return InsertVariable(db, proj, p)
 }
