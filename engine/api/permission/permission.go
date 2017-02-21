@@ -41,7 +41,7 @@ func ApplicationPermission(applicationID int64, user *sdk.User) int {
 
 // ProjectPermission  Get the permission for the given project
 func ProjectPermission(projectKey string, user *sdk.User) int {
-	if user.Admin {
+	if user.Admin || user == nil {
 		return PermissionReadWriteExecute
 	}
 	max := 0

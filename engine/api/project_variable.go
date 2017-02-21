@@ -115,7 +115,7 @@ func getVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *go
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	p, err := project.Load(db, key, c.User, project.WithVariables())
+	p, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 		return sdk.ErrNotFound
@@ -374,6 +374,7 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
+//DEPRECATED
 func getVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)

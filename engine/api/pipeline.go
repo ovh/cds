@@ -854,7 +854,7 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return sdk.ErrWrongRequest
 	}
 
-	proj, errP := project.Load(db, projectKey, c.User, project.WithVariables(), project.WithApplications(1))
+	proj, errP := project.Load(db, projectKey, c.User)
 	if errP != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, errP)
 		return errP
@@ -906,7 +906,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
 
-	proj, err := project.Load(db, key, c.User, project.WithVariables(), project.WithApplications(1))
+	proj, err := project.Load(db, key, c.User)
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot load project %s: %s\n", key, err)
 		return sdk.ErrNoProject

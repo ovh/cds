@@ -64,8 +64,8 @@ func (router *Router) init() {
 	router.Handle("/mon/lastupdates", GET(getUserLastUpdates))
 
 	// Project
-	router.Handle("/project", GET(getProjects), POST(addProject))
-	router.Handle("/project/{permProjectKey}", GET(getProject), PUT(updateProject), DELETE(deleteProject))
+	router.Handle("/project", GET(getProjectsHandler), POST(addProjectHandler))
+	router.Handle("/project/{permProjectKey}", GET(getProjectHandler), PUT(updateProjectHandler), DELETE(deleteProjectHandler))
 	router.Handle("/project/{permProjectKey}/group", POST(addGroupInProject), PUT(updateGroupsInProject))
 	router.Handle("/project/{permProjectKey}/group/{group}", PUT(updateGroupRoleOnProjectHandler), DELETE(deleteGroupFromProjectHandler))
 	router.Handle("/project/{permProjectKey}/variable", GET(getVariablesInProjectHandler), PUT(updateVariablesInProjectHandler))

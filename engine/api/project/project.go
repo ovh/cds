@@ -238,62 +238,6 @@ func loadprojectwithvariables(db gorp.SqlExecutor, key string) (*sdk.Project, er
 	return p, nil
 }
 
-func loadproject(db gorp.SqlExecutor, key string) (*sdk.Project, error) {
-	query := `SELECT project.id, project.name, project.last_modified FROM project WHERE project.projectKey = $1`
-	var name string
-	var id int64
-	var lastModified time.Time
-	err := db.QueryRow(query, key).Scan(&id, &name, &lastModified)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoProject
-		}
-		return nil, err
-	}
-
-	// Load project
-	p := sdk.NewProject(key)
-	p.Name = name
-	p.ID = id
-	p.LastModified = lastModified
-	return p, nil
-}
-
-// Load loads an project from database
-func Load(db gorp.SqlExecutor, key string, user *sdk.User, mods ...Mod) (*sdk.Project, error) {
-	var c funcpar
-	for _, f := range mods {
-		f(&c)
-	}
-
-	var p *sdk.Project
-	var err error
-
-	if c.loadvariables && c.loadapps {
-		p, err = loadprojectwithvariablesandapps(db, key, user)
-	} else if c.loadvariables {
-		p, err = loadprojectwithvariables(db, key)
-	} else {
-		p, err = loadproject(db, key)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	if c.loadapps {
-		for i := range p.Applications {
-			pipelines, err := application.GetAllPipelinesByID(db, p.Applications[i].ID)
-			if err != nil && err != sdk.ErrNoAttachedPipeline {
-				return nil, err
-			}
-			p.Applications[i].Pipelines = pipelines
-		}
-	}
-
-	return p, nil
-}
-
 // LoadProjectByPipelineID loads an project from pipeline iD
 func LoadProjectByPipelineID(db gorp.SqlExecutor, pipelineID int64) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified

@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
@@ -13,7 +12,7 @@ import (
 )
 
 // LoadAll returns all projects
-func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Project, error) {
+func LoadAll(db gorp.SqlExecutor, u *sdk.User, opts ...loadOptionFunc) ([]sdk.Project, error) {
 	var query string
 	var args []interface{}
 	// Admin can gets all project
@@ -29,10 +28,10 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Project, error) {
             ORDER by project.name, project.projectkey ASC`
 		args = []interface{}{u.ID}
 	}
-	return loadprojects(db, u, query, args...)
+	return loadprojects(db, u, opts, query, args...)
 }
 
-func loadprojects(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) ([]sdk.Project, error) {
+func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -47,7 +46,7 @@ func loadprojects(db gorp.SqlExecutor, u *sdk.User, query string, args ...interf
 		if err := p.PostGet(db); err != nil {
 			return nil, err
 		}
-		proj, err := unwrap(db, p, u)
+		proj, err := unwrap(db, p, u, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -57,14 +56,25 @@ func loadprojects(db gorp.SqlExecutor, u *sdk.User, query string, args ...interf
 	return projs, nil
 }
 
-func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User) (*sdk.Project, error) {
-	var err error
-	p.Applications, err = application.LoadApplications(db, p.Key, false, false, u)
-	if err != nil {
+func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User, opts []loadOptionFunc) (*sdk.Project, error) {
+	proj := sdk.Project(*p)
+
+	//By default we load applications and variables
+	if err := loadApplications(db, &proj, u); err != nil {
 		return nil, err
 	}
-	proj := sdk.Project(*p)
-	return &proj, LoadAllVariables(db, &proj)
+
+	if err := loadAllVariables(db, &proj); err != nil {
+		return nil, err
+	}
+
+	for _, f := range opts {
+		if err := f(db, &proj, u); err != nil {
+			return nil, err
+		}
+	}
+
+	return &proj, nil
 }
 
 // Exist checks whether a project exists or not
@@ -119,4 +129,35 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 		return err
 	}
 	return nil
+}
+
+type loadOptionFunc func(gorp.SqlExecutor, *sdk.Project, *sdk.User) error
+
+// LoadOptions provides all options on project loads functions
+var LoadOptions = struct {
+	WithPipelines            loadOptionFunc
+	WithEnvironments         loadOptionFunc
+	WithGroups               loadOptionFunc
+	WithPermission           loadOptionFunc
+	WithRepositoriesManagers loadOptionFunc
+}{
+	WithPipelines:            loadPipelines,
+	WithEnvironments:         loadEnvironments,
+	WithGroups:               loadGroups,
+	WithPermission:           loadPermission,
+	WithRepositoriesManagers: loadRepositoriesManagers,
+}
+
+// Load  returns a project with all its variables and applications given a user
+func Load(db gorp.SqlExecutor, key string, u *sdk.User, opts ...loadOptionFunc) (*sdk.Project, error) {
+	return load(db, u, opts, "select * from project where projectkey = $1", key)
+}
+
+func load(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
+	dbProj := &dbProject{}
+	if err := db.SelectOne(dbProj, query, args...); err != nil {
+		return nil, err
+	}
+
+	return unwrap(db, dbProj, u, opts)
 }
