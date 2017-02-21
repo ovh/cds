@@ -7,11 +7,10 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
-
-	"encoding/json"
 
 	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
 	"github.com/ovh/cds/engine/api/secret/secretbackend"
