@@ -11,15 +11,17 @@ import (
 )
 
 var (
-	dbDriver   string
-	dbUser     string
-	dbPassword string
-	dbName     string
-	dbHost     string
-	dbPort     string
-	dbSSLMode  string
-	db         *sql.DB
-	mutex      = &sync.Mutex{}
+	dbDriver         string
+	dbUser           string
+	dbPassword       string
+	dbName           string
+	dbHost           string
+	dbPort           string
+	dbSSLMode        string
+	db               *sql.DB
+	mutex            = &sync.Mutex{}
+	SecretDBUser     string
+	SecretDBPassword string
 )
 
 // DB returns the current sql.DB object
@@ -77,6 +79,14 @@ func Init() (*sql.DB, error) {
 		dbHost == "" ||
 		dbPort == "" {
 		return nil, fmt.Errorf("Missing database infos")
+	}
+
+	if SecretDBUser != "" {
+		dbUser = SecretDBUser
+	}
+
+	if SecretDBPassword != "" {
+		dbPassword = SecretDBPassword
 	}
 
 	timeout := viper.GetInt("db_timeout")
