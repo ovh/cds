@@ -2,7 +2,6 @@ package project
 
 import (
 	"fmt"
-
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -39,8 +38,9 @@ func cmdMetadata() *cobra.Command {
 	}
 
 	cmdCreate := &cobra.Command{
-		Use:   "create",
-		Short: "cds project metadata create <projectKey> <key> [key [...]]",
+		Use:    "create",
+		Hidden: true,
+		Short:  "cds project metadata create <projectKey> <key> [key [...]]",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 2 {
 				sdk.Exit("Wrong usage: %s\n", cmd.Short)
@@ -73,7 +73,7 @@ func cmdMetadata() *cobra.Command {
 		},
 	}
 
-	cmdAdd := &cobra.Command{
+	cmdSet := &cobra.Command{
 		Use:   "set",
 		Short: "cds project metadata set <projectKey> <key=value> [key=value [...]]",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -112,7 +112,7 @@ func cmdMetadata() *cobra.Command {
 		},
 	}
 
-	cmdDel := &cobra.Command{
+	cmdUnset := &cobra.Command{
 		Use:   "unset",
 		Short: "cds project metadata unset <projectKey> <key> [key [...]]",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -143,8 +143,8 @@ func cmdMetadata() *cobra.Command {
 	}
 
 	cmdDelAll := &cobra.Command{
-		Use:   "unset-all",
-		Short: "cds project metadata unset-all <projectKey>",
+		Use:   "delete",
+		Short: "cds project metadata delete <projectKey>",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
 				sdk.Exit("Wrong usage: %s\n", cmd.Short)
@@ -166,9 +166,9 @@ func cmdMetadata() *cobra.Command {
 	}
 
 	cmd.AddCommand(cmdShow)
-	cmd.AddCommand(cmdAdd)
+	cmd.AddCommand(cmdSet)
 	cmd.AddCommand(cmdCreate)
-	cmd.AddCommand(cmdDel)
+	cmd.AddCommand(cmdUnset)
 	cmd.AddCommand(cmdDelAll)
 
 	return cmd
