@@ -15,11 +15,16 @@ export interface Repository {
     ssh_url: string;
 };
 
-export interface Branch {
+export class Branch {
     id: number;
     display_id: string;
     latest_commit: string;
-    default: string;
+    default: boolean;
+
+    constructor() {
+        this.default = false;
+        this.display_id = ' ';
+    }
 };
 
 export interface Commit {

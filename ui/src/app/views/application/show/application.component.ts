@@ -76,6 +76,10 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             this.project = datas['project'];
         });
 
+        this._route.queryParams.subscribe(queryParams => {
+           this.appFilter.branch = queryParams['branch'] ? queryParams['branch'] : 'master';
+           this.appFilter.version = queryParams['version'] ? Number(queryParams['version']) : 0;
+        });
         this._route.params.subscribe(params => {
             let key = params['key'];
             let appName = params['appName'];
@@ -86,7 +90,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 this.applicationSubscription = this._applicationStore.getApplications(key, appName).subscribe(apps => {
                     if (apps) {
                         let updatedApplication = apps.get(key + '-' + appName);
-                        if (updatedApplication && !updatedApplication.externalChange) {
+                        if (updatedApplication && !updatedApplication.externalChange &&
+                            (!this.application || this.application.last_modified < updatedApplication.last_modified)) {
                             this.readyApp = true;
                             this.application = updatedApplication;
 

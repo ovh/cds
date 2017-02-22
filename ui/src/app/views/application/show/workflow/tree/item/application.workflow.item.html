@@ -58,7 +58,7 @@
                         {{workflowItem.pipeline.name}}
                     </div>
                     <div class="one wide column" *ngIf="workflowItem.pipeline.last_pipeline_build">
-                        <a [routerLink]="['./pipeline', workflowItem.pipeline.name, 'build', workflowItem.pipeline.last_pipeline_build.build_number]" [queryParams]="{ envName: workflowItem.environment.name}">
+                        <a class="pointing" (click)="navigateToBuild(workflowItem.pipeline.last_pipeline_build)">
                             <i class="newspaper icon"></i>
                         </a>
                     </div>

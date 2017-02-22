@@ -74,7 +74,8 @@ describe('CDS: Application Workflow', () => {
         // Create spy
         let workflowService: ApplicationWorkflowService = injector.get(ApplicationWorkflowService);
         spyOn(workflowService, 'getBranches').and.callFake(() => {
-            return Observable.of(['branche1', 'branche2', 'master', 'branche3']);
+            return Observable.of([{ 'display_id' : 'branche1', default: true}, { 'display_id' : 'branche2'}, { 'display_id' : 'master'},
+                { 'display_id' : 'branche3' }]);
         });
         spyOn(workflowService, 'getVersions').and.callFake(() => {
             return Observable.of([1, 2, 3]);
@@ -84,9 +85,15 @@ describe('CDS: Application Workflow', () => {
         fixture.componentInstance.ngOnInit();
 
         // Check
-        expect(fixture.componentInstance.applicationFilter.branch).toBe('master');
-        expect(JSON.stringify(fixture.componentInstance.versions)).toBe(JSON.stringify(['', 1, 2, 3]));
-        expect(JSON.stringify(fixture.componentInstance.branches)).toBe(JSON.stringify(['', 'branche1', 'branche2', 'master', 'branche3']));
+        expect(fixture.componentInstance.applicationFilter.branch).toBe('branche1');
+        expect(JSON.stringify(fixture.componentInstance.versions)).toBe(JSON.stringify([' ', 1, 2, 3]));
+        expect(JSON.stringify(fixture.componentInstance.branches)).toBe(JSON.stringify([
+            {'default': false, 'display_id': ' '},
+            {'display_id': 'branche1', 'default': true},
+            {'display_id': 'branche2'},
+            {'display_id': 'master'},
+            {'display_id': 'branche3'}
+        ]));
     }));
 
     it('should refresh the workflow', fakeAsync( () => {

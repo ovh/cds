@@ -61,7 +61,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         this.projectSubscriber = this._projectStore.getProjects(key).subscribe( projects => {
             if (projects) {
                 const updatedProject = projects.get(key);
-                if (updatedProject) {
+                if (updatedProject && (!this.project || this.project.last_modified < updatedProject.last_modified)) {
                     this.project = updatedProject;
                     if (this.project.externalChange) {
                         this._toast.info('', this._translate.instant('warning_project'));

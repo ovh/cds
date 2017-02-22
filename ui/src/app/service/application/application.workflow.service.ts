@@ -16,16 +16,8 @@ export class ApplicationWorkflowService {
      * @param appName Application Name
      * @returns {Observable<Array<Branch>>}
      */
-    getBranches(key: string, appName: string): Observable<Array<string>> {
-        return this._http.get('/project/' + key + '/application/' + appName + '/branches').map(res => {
-            let data: Array<Branch> = res.json();
-            let branches: Array<string> = new Array<string>();
-            data.forEach(b => {
-                branches.push(b.display_id);
-            });
-            branches = _.sortBy(branches);
-            return branches.reverse();
-        });
+    getBranches(key: string, appName: string): Observable<Array<Branch>> {
+        return this._http.get('/project/' + key + '/application/' + appName + '/branches').map(res => res.json());
     }
 
     /**

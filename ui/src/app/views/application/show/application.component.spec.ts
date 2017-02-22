@@ -490,7 +490,7 @@ class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
         this.params = Observable.of({key: 'key1', appName: 'app1'});
-        this.queryParams = Observable.of({key: 'key1', appName: 'app1'});
+        this.queryParams = Observable.of({key: 'key1', appName: 'app1', version: 0, branch: 'master'});
 
         this.snapshot = new ActivatedRouteSnapshot();
 
@@ -499,6 +499,7 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.snapshot.data = {
             project: project
         };
+        this.snapshot.queryParams = {key: 'key1', appName: 'app1', version: 0, branch: 'master'};
 
         this.data = Observable.of({ project: project });
     }

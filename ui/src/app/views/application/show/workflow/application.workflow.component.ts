@@ -5,6 +5,8 @@ import {Project} from '../../../../model/project.model';
 import {WorkflowItem} from '../../../../model/application.workflow.model';
 import {PipelineType, PipelineBuild} from '../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline/pipeline.link.component';
+import {Branch} from '../../../../model/repositories.model';
+import {Router} from '@angular/router';
 
 declare var _: any;
 declare var jQuery: any;
@@ -28,14 +30,14 @@ export class ApplicationWorkflowComponent implements OnInit {
     workflowOrientation = 'horizontal';
 
     // Filter values
-    branches: Array<string>;
+    branches: Array<Branch>;
     versions: Array<string|number>;
 
     // Modal Component to link pipeline
     @ViewChild('linkPipelineComponent')
     linkPipelineComponent: ApplicationPipelineLinkComponent;
 
-    constructor(private _appWorkflow: ApplicationWorkflowService) {
+    constructor(private _appWorkflow: ApplicationWorkflowService, private _router: Router) {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
@@ -43,12 +45,12 @@ export class ApplicationWorkflowComponent implements OnInit {
         this.generateParentInformation();
         // Load branches
         this._appWorkflow.getBranches(this.project.key, this.application.name).subscribe(branches => {
-            branches.unshift('');
+            branches.unshift(new Branch());
             this.branches = branches;
 
             this.branches.forEach(b => {
-                if (b === 'master') {
-                    this.applicationFilter.branch = b;
+                if (b.default || (this.applicationFilter.branch === '' && b.display_id === 'master')) {
+                    this.applicationFilter.branch = b.display_id;
                 }
             });
             this.loadVersions(this.project.key, this.application.name);
@@ -142,7 +144,7 @@ export class ApplicationWorkflowComponent implements OnInit {
             }
         }
         // Update parent info
-        if (w.parent && w.parent.application_id === app.id) {
+        if (w.parent && w.parent.application_id === app.id && app.pipelines_build) {
             let parentUpdated = app.pipelines_build.filter(
                 pb => pb.pipeline.id === w.parent.pipeline_id && pb.environment.id === w.parent.environment_id
             );
@@ -180,6 +182,12 @@ export class ApplicationWorkflowComponent implements OnInit {
      * Action when changing version
      */
     changeVersion(): void {
+        this.applicationFilter.branch = this.applicationFilter.branch.trim();
+        if (this.applicationFilter.version.trim() === '') {
+            this.applicationFilter.version = 0;
+        }
+        this._router.navigate(['/project/', this.project.key, 'application', this.application.name],
+            {queryParams: { tab: 'workflow', branch: this.applicationFilter.branch, version: this.applicationFilter.version}});
         this.changeWorkerEvent.emit(true);
         this.clearTree(this.application.workflows);
     }
@@ -199,7 +207,7 @@ export class ApplicationWorkflowComponent implements OnInit {
     loadVersions(key: string, appName: string): void {
         this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch).subscribe(versions => {
             this.versions = versions;
-            this.versions.unshift('');
+            this.versions.unshift(' ');
         });
     };
 
