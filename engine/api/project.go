@@ -17,7 +17,10 @@ import (
 )
 
 func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	projects, err := project.LoadAll(db, c.User)
+	projects, err := project.LoadAll(db, c.User,
+		project.LoadOptions.WithoutVariables,
+		project.LoadOptions.WithoutApplicationVariables,
+		project.LoadOptions.WithoutApplicationPipelines)
 	if err != nil {
 		log.Warning("GetProjects> Cannot load projects from db: %s\n", err)
 		return err
@@ -52,7 +55,8 @@ func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		log.Warning("updateProject: Cannot load project from db: %s\n", errProj)
 		return errProj
 	}
-
+	// Update in DB is made given the primary key
+	proj.ID = p.ID
 	if errUp := project.Update(db, proj); errUp != nil {
 		log.Warning("updateProject: Cannot update project %s : %s\n", key, errUp)
 		return errUp
