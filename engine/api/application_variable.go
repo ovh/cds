@@ -50,7 +50,7 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return err
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("restoreAuditHandler: Cannot load application %s : %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -124,7 +124,7 @@ func getVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 	appName := vars["permApplicationName"]
 	varName := vars["name"]
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("getVariableInApplicationHandler: Cannot load application %s: %s\n", appName, err)
 		return err
@@ -174,7 +174,7 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 
 	p.Environments = envs
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("deleteVariableInApplicationHandler: Cannot load application: %s\n", err)
 		return err
@@ -244,7 +244,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updateVariablesInApplicationHandler: Cannot load application %s : %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -363,7 +363,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return sdk.ErrWrongRequest
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot load application: %s\n", err)
 		return err
@@ -443,7 +443,7 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 		return sdk.ErrWrongRequest
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("addVariableInApplicationHandler: Cannot load application %s :  %s\n", appName, err)
 		return err

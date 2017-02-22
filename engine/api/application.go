@@ -122,7 +122,7 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 
 	branch := r.FormValue("branch")
 
-	app, err := application.LoadApplicationByName(db, projectKey, applicationName)
+	app, err := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.WithTriggers)
 	if err != nil {
 		log.Warning("getApplicationBranchVersionHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
 		return err
@@ -261,32 +261,33 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gor
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	application, err := application.LoadApplicationByName(db, projectKey, applicationName)
+	app, err := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("getApplicationBranchHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
 		return err
 	}
 
 	var branches []sdk.VCSBranch
-	if application.RepositoryFullname != "" && application.RepositoriesManager != nil {
-		client, err := repositoriesmanager.AuthorizedClient(db, projectKey, application.RepositoriesManager.Name)
+	if app.RepositoryFullname != "" && app.RepositoriesManager != nil {
+		client, err := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
 		if err != nil {
-			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, application.RepositoriesManager.Name, err)
+			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, err)
 			return sdk.ErrNoReposManagerClientAuth
 		}
-		branches, err = client.Branches(application.RepositoryFullname)
+		branches, err = client.Branches(app.RepositoryFullname)
 		if err != nil {
-			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", application.RepositoryFullname, err)
+			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, err)
 			return sdk.ErrNoReposManagerClientAuth
 		}
-
 	} else {
-		branches, err = pipeline.GetBranches(db, application)
+		branches, err = pipeline.GetBranches(db, app)
 		if err != nil {
 			log.Warning("getApplicationBranchHandler> Cannot get branches from builds: %s", err)
 			return err
 		}
 	}
+
+	//Yo analyze branch and delete pipeline_build for old branches...
 
 	return WriteJSON(w, r, branches, http.StatusOK)
 }
@@ -356,7 +357,7 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
 
-	app, err := application.LoadApplicationByName(db, projectKey, applicationName)
+	app, err := application.LoadByName(db, projectKey, applicationName, c.User)
 	if err != nil {
 		if err != sdk.ErrApplicationNotFound {
 			log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
@@ -425,7 +426,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return err
 	}
 
-	appToClone, errApp := application.LoadApplicationByName(db, projectKey, applicationName)
+	appToClone, errApp := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
 	if errApp != nil {
 		log.Warning("cloneApplicationHandler> Cannot load application %s: %s\n", applicationName, errApp)
 		return errApp
@@ -570,7 +571,7 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 	p.Environments = envs
 
-	app, err := application.LoadApplicationByName(db, projectKey, applicationName)
+	app, err := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updateApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
 		return err

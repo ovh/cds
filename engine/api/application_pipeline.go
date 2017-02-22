@@ -40,7 +40,7 @@ func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return sdk.ErrNotFound
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("addPipelineInApplicationHandler: Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrNotFound
@@ -78,7 +78,7 @@ func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("attachPipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 		return err
@@ -148,7 +148,7 @@ func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updatePipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -180,6 +180,7 @@ func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
+// DEPRECATED
 func updatePipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -192,7 +193,7 @@ func updatePipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return sdk.ErrNotFound
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("updatePipelineToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrNotFound
@@ -237,7 +238,7 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	a, errA := application.LoadApplicationByName(db, key, appName)
+	a, errA := application.LoadByName(db, key, appName, c.User)
 	if errA != nil {
 		log.Warning("removePipelineFromApplicationHandler> Cannot load application: %s\n", errA)
 		return errA
@@ -312,7 +313,7 @@ func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *htt
 	envName := r.Form.Get("envName")
 
 	//Load application
-	application, err := application.LoadApplicationByName(db, key, appName)
+	application, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("getUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 		return err
@@ -368,7 +369,7 @@ func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	envName := r.Form.Get("envName")
 
 	///Load application
-	applicationData, err := application.LoadApplicationByName(db, key, appName)
+	applicationData, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 		return err
@@ -446,7 +447,7 @@ func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return err
 	}
 
-	app, errApp := application.LoadApplicationByName(db, key, appName)
+	app, errApp := application.LoadByName(db, key, appName, c.User, application.LoadOptions.WithPipelines)
 	if errApp != nil {
 		log.Warning("addNotificationsHandler: Cannot load application: %s\n", errApp)
 		return sdk.ErrWrongRequest
@@ -516,11 +517,10 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	pipelineName := vars["permPipelineKey"]
 
 	///Load application
-	applicationData, err := application.LoadApplicationByName(db, key, appName)
+	applicationData, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 		return err
-
 	}
 
 	//Load pipeline

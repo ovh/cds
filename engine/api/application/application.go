@@ -94,7 +94,7 @@ func LoadApplications(db gorp.SqlExecutor, projectKey string, withPipelines, wit
 
 		app.ProjectKey = projectKey
 		app.RepositoriesManager = rm
-		app.LastModified = appLastModified.Unix()
+		app.LastModified = appLastModified
 
 		apps = append(apps, app)
 	}
@@ -151,7 +151,7 @@ func LoadApplicationByName(db gorp.SqlExecutor, projectKey, appName string, farg
 			}
 			return &app, err
 		}
-		app.LastModified = lastModified.Unix()
+		app.LastModified = lastModified
 
 		//check data for repositories_manager
 		if rmID.Valid && rmType.Valid && rmName.Valid && rmURL.Valid {
@@ -201,7 +201,7 @@ func LoadApplicationByID(db gorp.SqlExecutor, applicationID int64, fargs ...Func
 		}
 		return &app, err
 	}
-	app.LastModified = lastModified.Unix()
+	app.LastModified = lastModified
 	//check data for repositories_manager
 	if rmID.Valid && rmType.Valid && rmName.Valid && rmURL.Valid {
 		var err error
@@ -291,7 +291,7 @@ func UpdateApplication(db gorp.SqlExecutor, application *sdk.Application) error 
 	`
 	err = db.QueryRow(query, application.ID).Scan(&lastModified)
 	if err == nil {
-		application.LastModified = lastModified.Unix()
+		application.LastModified = lastModified
 	}
 	return err
 }
@@ -304,7 +304,7 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application) error {
 	var lastModified time.Time
 	err := db.QueryRow(query, app.ID).Scan(&lastModified)
 	if err == nil {
-		app.LastModified = lastModified.Unix()
+		app.LastModified = lastModified
 	}
 	return err
 }
@@ -452,7 +452,7 @@ func LoadApplicationByPipeline(db gorp.SqlExecutor, pipelineID int64) ([]sdk.App
 		if err != nil {
 			return nil, err
 		}
-		app.LastModified = lastModified.Unix()
+		app.LastModified = lastModified
 		applications = append(applications, app)
 	}
 	return applications, nil
@@ -484,7 +484,7 @@ func LoadApplicationByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 		if err != nil {
 			return err
 		}
-		application.LastModified = lastModified.Unix()
+		application.LastModified = lastModified
 		group.ApplicationGroups = append(group.ApplicationGroups, sdk.ApplicationGroup{
 			Application: application,
 			Permission:  perm,

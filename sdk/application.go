@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // Repository structs contains all needed information about a single repository
@@ -15,22 +16,25 @@ type Repository struct {
 
 // Application represent an application in a project
 type Application struct {
-	ID                  int64                 `json:"id"`
-	Name                string                `json:"name"`
-	ProjectKey          string                `json:"project_key"`
-	ApplicationGroups   []GroupPermission     `json:"groups,omitempty"`
-	Variable            []Variable            `json:"variables,omitempty"`
-	Pipelines           []ApplicationPipeline `json:"pipelines,omitempty"`
-	PipelinesBuild      []PipelineBuild       `json:"pipelines_build,omitempty"`
-	Permission          int                   `json:"permission"`
-	Notifications       []UserNotification    `json:"notifications,omitempty"`
-	LastModified        int64                 `json:"last_modified"`
-	RepositoriesManager *RepositoriesManager  `json:"repositories_manager,omitempty"`
-	RepositoryFullname  string                `json:"repository_fullname,omitempty"`
-	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty"`
-	Hooks               []Hook                `json:"hooks,omitempty"`
-	Workflows           []CDPipeline          `json:"workflows,omitempty"`
-	Schedulers          []PipelineScheduler   `json:"schedulers,omitempty"`
+	ID                  int64                 `json:"id" db:"id"`
+	Name                string                `json:"name" db:"name"`
+	Description         string                `json:"description"  db:"description"`
+	ProjectID           int64                 `json:"-" db:"project_id"`
+	ProjectKey          string                `json:"project_key" db:"-"`
+	ApplicationGroups   []GroupPermission     `json:"groups,omitempty" db:"-"`
+	Variable            []Variable            `json:"variables,omitempty" db:"-"`
+	Pipelines           []ApplicationPipeline `json:"pipelines,omitempty" db:"-"`
+	PipelinesBuild      []PipelineBuild       `json:"pipelines_build,omitempty" db:"-"`
+	Permission          int                   `json:"permission" db:"-"`
+	Notifications       []UserNotification    `json:"notifications,omitempty" db:"-"`
+	LastModified        time.Time             `json:"last_modified" db:"last_modified"`
+	RepositoriesManager *RepositoriesManager  `json:"repositories_manager,omitempty" db:"-"`
+	RepositoryFullname  string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
+	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
+	Hooks               []Hook                `json:"hooks,omitempty" db:"-"`
+	Workflows           []CDPipeline          `json:"workflows,omitempty" db:"-"`
+	Schedulers          []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
+	Metadata            Metadata              `json:"metadata" yaml:"metadata" db:"-"`
 }
 
 // ApplicationPipeline Represent the link between an application and a pipeline
