@@ -21,12 +21,15 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User, opts ...loadOptionFunc) ([]sdk.Pr
 	if u == nil || u.Admin {
 		query = "select * from project ORDER by project.name, project.projectkey ASC"
 	} else {
-		query = `select * 
-            from project 
-            JOIN project_group ON project.id = project_group.project_id
-            JOIN group_user ON project_group.group_id = group_user.group_id
-            WHERE group_user.user_id = $1
-            ORDER by project.name, project.projectkey ASC`
+		query = `SELECT * 
+				FROM project 
+				WHERE project.id IN (
+					SELECT project_group.project_id
+					FROM project_group
+					JOIN group_user ON project_group.group_id = group_user.group_id
+					WHERE group_user.user_id = $1
+				)
+				ORDER by project.name, project.projectkey ASC`
 		args = []interface{}{u.ID}
 	}
 	return loadprojects(db, u, opts, query, args...)
@@ -154,21 +157,29 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 	return nil
 }
 
-type loadOptionFunc func(gorp.SqlExecutor, *sdk.Project, *sdk.User) error
+type loadOptionFunc *func(gorp.SqlExecutor, *sdk.Project, *sdk.User) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
-	WithPipelines            loadOptionFunc
-	WithEnvironments         loadOptionFunc
-	WithGroups               loadOptionFunc
-	WithPermission           loadOptionFunc
-	WithRepositoriesManagers loadOptionFunc
+	WithoutApplications         loadOptionFunc
+	WithoutVariables            loadOptionFunc
+	WithoutApplicationPipelines loadOptionFunc
+	WithoutApplicationVariables loadOptionFunc
+	WithPipelines               loadOptionFunc
+	WithEnvironments            loadOptionFunc
+	WithGroups                  loadOptionFunc
+	WithPermission              loadOptionFunc
+	WithRepositoriesManagers    loadOptionFunc
 }{
-	WithPipelines:            loadPipelines,
-	WithEnvironments:         loadEnvironments,
-	WithGroups:               loadGroups,
-	WithPermission:           loadPermission,
-	WithRepositoriesManagers: loadRepositoriesManagers,
+	WithPipelines:               &loadPipelines,
+	WithEnvironments:            &loadEnvironments,
+	WithGroups:                  &loadGroups,
+	WithPermission:              &loadPermission,
+	WithRepositoriesManagers:    &loadRepositoriesManagers,
+	WithoutApplications:         &dontLoadApplications,
+	WithoutVariables:            &dontLoadVariables,
+	WithoutApplicationPipelines: &dontLoadApplicationPipelines,
+	WithoutApplicationVariables: &dontLoadApplicationVariables,
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
@@ -225,17 +236,35 @@ func load(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string,
 func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User, opts []loadOptionFunc) (*sdk.Project, error) {
 	proj := sdk.Project(*p)
 
-	//By default we load applications and variables
-	if err := loadApplications(db, &proj, u); err != nil && err != sql.ErrNoRows && err != sdk.ErrApplicationNotFound {
-		return nil, err
-	}
-
-	if err := loadAllVariables(db, &proj); err != nil && err != sql.ErrNoRows {
-		return nil, err
-	}
-
+	var withoutApplicationPipelines, withoutApplications, withoutApplicationVariables, withoutVariables bool
 	for _, f := range opts {
-		if err := f(db, &proj, u); err != nil && err != sql.ErrNoRows {
+		if f == LoadOptions.WithoutApplicationPipelines {
+			withoutApplicationPipelines = true
+		}
+		if f == LoadOptions.WithoutApplications {
+			withoutApplications = true
+		}
+		if f == LoadOptions.WithoutApplicationVariables {
+			withoutApplicationVariables = true
+		}
+		if f == LoadOptions.WithoutVariables {
+			withoutVariables = true
+		}
+	}
+
+	if !withoutApplications {
+		if err := loadApplications(db, &proj, u, !withoutApplicationPipelines, !withoutApplicationVariables); err != nil && err != sql.ErrNoRows && err != sdk.ErrApplicationNotFound {
+			return nil, err
+		}
+	}
+
+	if !withoutVariables {
+		if err := loadAllVariables(db, &proj); err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+	}
+	for _, f := range opts {
+		if err := (*f)(db, &proj, u); err != nil && err != sql.ErrNoRows {
 			return nil, err
 		}
 	}
