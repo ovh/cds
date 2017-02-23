@@ -12,11 +12,12 @@ import (
 	"io"
 	"strings"
 
+	"github.com/spf13/viper"
+
 	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
 	"github.com/ovh/cds/engine/api/secret/secretbackend"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/spf13/viper"
 )
 
 // AES key fetched
