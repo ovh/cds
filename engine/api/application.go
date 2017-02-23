@@ -14,8 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hook"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
@@ -142,33 +140,48 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	applicationStatus := r.FormValue("applicationStatus")
-	withPollers := r.FormValue("withPollers")
-	withHooks := r.FormValue("withHooks")
-	withNotifs := r.FormValue("withNotifs")
-	withWorkflow := r.FormValue("withWorkflow")
-	withTriggers := r.FormValue("withTriggers")
-	withSchedulers := r.FormValue("withSchedulers")
+	applicationStatus := FormBool(r, "applicationStatus")
+	withPollers := FormBool(r, "withPollers")
+	withHooks := FormBool(r, "withHooks")
+	withNotifs := FormBool(r, "withNotifs")
+	withWorkflow := FormBool(r, "withWorkflow")
+	withTriggers := FormBool(r, "withTriggers")
+	withSchedulers := FormBool(r, "withSchedulers")
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
-	app, errApp := application.LoadApplicationByName(db, projectKey, applicationName)
+	loadOptions := []application.LoadOptionFunc{
+		application.LoadOptions.WithVariables,
+		application.LoadOptions.WithRepositoryManager,
+		application.LoadOptions.WithVariables,
+		application.LoadOptions.WithPipelines,
+	}
+	if withHooks {
+		loadOptions = append(loadOptions, application.LoadOptions.WithHooks)
+	}
+	if withTriggers {
+		loadOptions = append(loadOptions, application.LoadOptions.WithTriggers)
+	}
+	if withNotifs {
+		loadOptions = append(loadOptions, application.LoadOptions.WithNotifs)
+	}
+
+	app, errApp := application.LoadByName(db, projectKey, applicationName, c.User, loadOptions...)
 	if errApp != nil {
 		log.Warning("getApplicationHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, errApp)
 		return errApp
 	}
 
-	if withPollers == "true" {
+	if withPollers {
 		var errPoller error
 		app.RepositoryPollers, errPoller = poller.LoadByApplication(db, app.ID)
 		if errPoller != nil {
 			log.Warning("getApplicationHandler: Cannot load pollers for application %s: %s\n", applicationName, errPoller)
 			return errPoller
 		}
-
 	}
 
-	if withSchedulers == "true" {
+	if withSchedulers {
 		var errScheduler error
 		app.Schedulers, errScheduler = scheduler.GetByApplication(db, app)
 		if errScheduler != nil {
@@ -177,37 +190,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		}
 	}
 
-	if withHooks == "true" {
-		var errHook error
-		app.Hooks, errHook = hook.LoadApplicationHooks(db, app.ID)
-		if errHook != nil {
-			log.Warning("getApplicationHandler: Cannot load hooks for application %s: %s\n", applicationName, errHook)
-			return errHook
-		}
-	}
-
-	if withNotifs == "true" {
-		var errNotif error
-		app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, app.ID)
-		if errNotif != nil {
-			log.Warning("getApplicationHandler: Cannot load user notifications for application %s: %s\n", applicationName, errNotif)
-			return errNotif
-		}
-	}
-
-	if withTriggers == "true" {
-		for i := range app.Pipelines {
-			appPip := &app.Pipelines[i]
-			var errTrig error
-			appPip.Triggers, errTrig = trigger.LoadTriggersByAppAndPipeline(db, app.ID, appPip.Pipeline.ID)
-			if errTrig != nil {
-				log.Warning("getApplicationHandler: Cannot load triggers: %s\n", errTrig)
-				return errTrig
-			}
-		}
-	}
-
-	if withWorkflow == "true" {
+	if withWorkflow {
 		var errWorflow error
 		app.Workflows, errWorflow = application.LoadCDTree(db, projectKey, applicationName, c.User)
 		if errWorflow != nil {
@@ -216,7 +199,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		}
 	}
 
-	if applicationStatus == "true" {
+	if applicationStatus {
 		var pipelineBuilds = []sdk.PipelineBuild{}
 
 		version := 0

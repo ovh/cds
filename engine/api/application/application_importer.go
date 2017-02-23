@@ -37,7 +37,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 		return err
 	}
 
-	if err := ImportPipelines(db, proj, app, msgChan); err != nil {
+	if err := ImportPipelines(db, proj, app, user, msgChan); err != nil {
 		return err
 	}
 
@@ -106,7 +106,7 @@ func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 }
 
 //ImportPipelines is able to create pipelines on an existing application
-func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, msgChan chan<- msg.Message) error {
+func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk.User, msgChan chan<- msg.Message) error {
 	//Import pipelines
 	for i := range app.Pipelines {
 		//Import pipeline
@@ -147,7 +147,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 				log.Debug("ImportPipelines> current app")
 			} else {
 				log.Debug("Load t.SrcApplication.Name:%s", t.SrcApplication.Name)
-				srcApp, err := LoadApplicationByName(db, proj.Key, t.SrcApplication.Name)
+				srcApp, err := LoadByName(db, proj.Key, t.SrcApplication.Name, u, LoadOptions.Default)
 				if err != nil {
 					return err
 				}
@@ -172,7 +172,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 			if t.DestApplication.Name == "" {
 				t.DestApplication = *app
 			} else {
-				dest, err := LoadApplicationByName(db, proj.Key, t.DestApplication.Name)
+				dest, err := LoadByName(db, proj.Key, t.DestApplication.Name, u, LoadOptions.Default)
 				if err != nil {
 					return err
 				}

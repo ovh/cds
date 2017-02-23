@@ -40,7 +40,7 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	// Load application
-	app, err := application.LoadApplicationByName(db, projectKey, appName, application.WithClearPassword())
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		if err != sdk.ErrApplicationNotFound {
 			log.Warning("rollbackPipelineHandler> Cannot load application %s: %s\n", appName, err)
@@ -143,7 +143,7 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	pipelineName := vars["permPipelineKey"]
 	appName := vars["permApplicationName"]
 
-	app, err := application.LoadApplicationByName(db, projectKey, appName, application.WithClearPassword())
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		if err != sdk.ErrApplicationNotFound {
 			log.Warning("runPipelineWithLastParentHandler> Cannot load application %s: %s\n", appName, err)
@@ -246,7 +246,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
 
-	app, err := application.LoadApplicationByName(db, projectKey, appName, application.WithClearPassword())
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		if err != sdk.ErrApplicationNotFound {
 			log.Warning("runPipelineHandler> Cannot load application %s: %s\n", appName, err)

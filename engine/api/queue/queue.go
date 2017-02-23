@@ -304,7 +304,7 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 		parameters = append(parameters, parentParams...)
 
 		// Start build
-		app, err := application.LoadApplicationByName(tx, t.DestProject.Key, t.DestApplication.Name, application.WithClearPassword())
+		app, err := application.LoadByName(tx, t.DestProject.Key, t.DestApplication.Name, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if err != nil {
 			log.Warning("pipelineBuildEnd> Cannot load destination application: %s\n", err)
 			return err

@@ -22,8 +22,14 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	pipName := vars["permPipelineKey"]
 
 	//Load the application
-	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default, application.LoadOptions.WithPollers)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
+		return err
+	}
+
+	app.RepositoryPollers, err = poller.LoadByApplication(db, app.ID)
+	if err != nil {
+		log.Warning("addPollerHandler> cannot load application poller %s/%s: %s\n", projectKey, appName, err)
 		return err
 	}
 
@@ -104,8 +110,14 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	pipName := vars["permPipelineKey"]
 
 	//Load the application
-	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default, application.LoadOptions.WithPollers)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
+		return err
+	}
+
+	app.RepositoryPollers, err = poller.LoadByApplication(db, app.ID)
+	if err != nil {
+		log.Warning("updatePollerHandler> cannot load application poller %s/%s: %s\n", projectKey, appName, err)
 		return err
 	}
 
@@ -174,11 +186,16 @@ func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *go
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
 
-	a, err := application.LoadByName(db, projectName, appName, c.User, application.LoadOptions.WithPollers)
+	a, err := application.LoadByName(db, projectName, appName, c.User)
 	if err != nil {
 		log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 		return err
+	}
 
+	a.RepositoryPollers, err = poller.LoadByApplication(db, a.ID)
+	if err != nil {
+		log.Warning("getApplicationHooksHandler> cannot load application poller %s/%s: %s\n", projectName, appName, err)
+		return err
 	}
 
 	return WriteJSON(w, r, a.RepositoryPollers, http.StatusOK)
