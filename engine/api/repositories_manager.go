@@ -387,7 +387,7 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	rmName := vars["name"]
 	fullname := r.FormValue("fullname")
 
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("attachRepositoriesManager> Cannot load application %s: %s\n", appName, err)
 		return err
@@ -434,10 +434,9 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	appName := vars["permApplicationName"]
 	rmName := vars["name"]
 
-	application, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
 	if err != nil {
-		return sdk.ErrApplicationNotFound
-
+		return err
 	}
 
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
@@ -451,29 +450,19 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	tx, err := db.Begin()
 	defer tx.Rollback()
 
-	if err := repositoriesmanager.DeleteForApplication(tx, projectKey, application); err != nil {
+	if err := repositoriesmanager.DeleteForApplication(tx, projectKey, app); err != nil {
 		log.Warning("detachRepositoriesManager> Cannot delete for application: %s", err)
 		return err
 
 	}
 
-	//Remove reposmanager hooks
-	//Load all hooks
-	hooks, err := hook.LoadApplicationHooks(tx, application.ID)
-	if err != nil {
-		log.Warning("detachRepositoriesManager> Cannot get hooks for application: %s", err)
-		return err
-
-	}
-
-	for _, h := range hooks {
+	for _, h := range app.Hooks {
 		s := viper.GetString("api_url") + hook.HookLink
 		link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
 
 		if err = client.DeleteHook(h.Project+"/"+h.Repository, link); err != nil {
 			log.Warning("detachRepositoriesManager> Cannot delete hook on stash: %s", err)
-			return err
-
+			//do no return, try to delete the hook in database
 		}
 
 		if err := hook.DeleteHook(tx, h.ID); err != nil {
@@ -484,7 +473,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	// Remove reposmanager poller
-	if err := poller.DeleteAll(tx, application.ID); err != nil {
+	if err := poller.DeleteAll(tx, app.ID); err != nil {
 		return err
 
 	}
@@ -495,7 +484,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 
 	}
 
-	return WriteJSON(w, r, application, http.StatusOK)
+	return WriteJSON(w, r, app, http.StatusOK)
 }
 
 func getRepositoriesManagerForApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -517,7 +506,7 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	repoFullname := data["repository_fullname"]
 	pipelineName := data["pipeline_name"]
 
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		return sdk.ErrApplicationNotFound
 
@@ -605,7 +594,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	}
 
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("deleteHookOnRepositoriesManagerHandler> Application not found %s", err)
 		return err

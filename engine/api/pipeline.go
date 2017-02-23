@@ -687,7 +687,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return err
 	}
 
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		if err != sdk.ErrApplicationNotFound {
 			log.Warning("getPipelineHistoryHandler> Cannot load application %s: %s\n", appName, err)
@@ -1095,7 +1095,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 
 	// Load application
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("stopPipelineBuildHandler> Cannot load application: %s\n", err)
 		return err
@@ -1186,7 +1186,7 @@ func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 
 	// Load application
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("restartPipelineBuildHandler> Cannot load application: %s\n", err)
 		return err
@@ -1293,25 +1293,23 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getPipelineCommitsHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
-
 	}
 
 	//Load the application
-	application, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager)
 	if err != nil {
-		return sdk.ErrApplicationNotFound
-
+		return err
 	}
 
 	commits := []sdk.VCSCommit{}
 
 	//Check it the application is attached to a repository
-	if application.RepositoriesManager == nil {
+	if app.RepositoriesManager == nil {
 		log.Warning("getPipelineCommitsHandler> Application %s/%s not attached to a repository manager", projectKey, appName)
 		return WriteJSON(w, r, commits, http.StatusOK)
 	}
 
-	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, application.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
+	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
 	if err != nil {
 		log.Warning("getPipelineCommitsHandler> Cannot load pipeline build %s: \n", err)
 		return err
@@ -1324,19 +1322,19 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 
 	}
 
-	b, e := repositoriesmanager.CheckApplicationIsAttached(db, application.RepositoriesManager.Name, projectKey, appName)
+	b, e := repositoriesmanager.CheckApplicationIsAttached(db, app.RepositoriesManager.Name, projectKey, appName)
 	if e != nil {
-		log.Warning("getPipelineCommitsHandler> Cannot check app (%s,%s,%s): %s", application.RepositoriesManager.Name, projectKey, appName, e)
+		log.Warning("getPipelineCommitsHandler> Cannot check app (%s,%s,%s): %s", app.RepositoriesManager.Name, projectKey, appName, e)
 		return e
 	}
 
-	if !b && application.RepositoryFullname == "" {
+	if !b && app.RepositoryFullname == "" {
 		log.Warning("getPipelineCommitsHandler> No repository on the application %s", appName)
 		return WriteJSON(w, r, commits, http.StatusOK)
 	}
 
 	//Get the RepositoriesManager Client
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, application.RepositoriesManager.Name)
+	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
 	if err != nil {
 		log.Warning("getPipelineCommitsHandler> Cannot get client: %s", err)
 		return sdk.ErrNoReposManagerClientAuth
@@ -1348,7 +1346,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	//If we are lucky, return a true diff
-	commits, err = client.Commits(application.RepositoryFullname, pbs[0].Trigger.VCSChangesBranch, pbs[0].Trigger.VCSChangesHash, hash)
+	commits, err = client.Commits(app.RepositoryFullname, pbs[0].Trigger.VCSChangesBranch, pbs[0].Trigger.VCSChangesHash, hash)
 	if err != nil {
 		log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
 		return err
@@ -1394,40 +1392,37 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 				log.Warning("getPipelineBuildCommitsHandler> Cannot load environment %s: %s\n", envName, err)
 			}
 			return err
-
 		}
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getPipelineHistoryHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
-
 	}
 
 	//Load the application
-	application, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager)
 	if err != nil {
 		return sdk.ErrApplicationNotFound
-
 	}
 
 	//Check it the application is attached to a repository
-	if application.RepositoriesManager == nil {
+	if app.RepositoriesManager == nil {
 		return sdk.ErrNoReposManagerClientAuth
 	}
 
-	b, e := repositoriesmanager.CheckApplicationIsAttached(db, application.RepositoriesManager.Name, projectKey, appName)
+	b, e := repositoriesmanager.CheckApplicationIsAttached(db, app.RepositoriesManager.Name, projectKey, appName)
 	if e != nil {
-		log.Warning("getPipelineBuildCommitsHandler> Cannot check app (%s,%s,%s): %s", application.RepositoriesManager.Name, projectKey, appName, e)
+		log.Warning("getPipelineBuildCommitsHandler> Cannot check app (%s,%s,%s): %s", app.RepositoriesManager.Name, projectKey, appName, e)
 		return e
 	}
 
-	if !b && application.RepositoryFullname == "" {
+	if !b && app.RepositoryFullname == "" {
 		return sdk.ErrNoReposManagerClientAuth
 	}
 
 	//Get the RepositoriesManager Client
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, application.RepositoriesManager.Name)
+	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
 	if err != nil {
 		log.Warning("getPipelineBuildCommitsHandler> Cannot get client: %s", err)
 		return sdk.ErrNoReposManagerClientAuth
@@ -1435,10 +1430,10 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 
 	//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
 	//buildNumber, pipelineID, applicationID, environmentID
-	cur, prev, err := pipeline.CurrentAndPreviousPipelineBuildNumberAndHash(db, int64(buildNumber), pip.ID, application.ID, env.ID)
+	cur, prev, err := pipeline.CurrentAndPreviousPipelineBuildNumberAndHash(db, int64(buildNumber), pip.ID, app.ID, env.ID)
 
 	if err != nil {
-		log.Warning("getPipelineBuildCommitsHandler> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", buildNumber, pip.ID, application.ID, env.ID, err)
+		log.Warning("getPipelineBuildCommitsHandler> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", buildNumber, pip.ID, app.ID, env.ID, err)
 		return err
 	}
 
@@ -1456,7 +1451,7 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 
 	if prev != nil && cur.Hash != "" && prev.Hash != "" {
 		//If we are lucky, return a true diff
-		commits, err := client.Commits(application.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
+		commits, err := client.Commits(app.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
 		if err != nil {
 			log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
 			return err
@@ -1469,7 +1464,7 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 	if cur.Hash != "" {
 		//If we only get current pipeline build hash
 		log.Info("getPipelineBuildCommitsHandler>  Looking for every commit until %s ", cur.Hash)
-		c, err := client.Commits(application.RepositoryFullname, cur.Branch, "", cur.Hash)
+		c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
 		if err != nil {
 			log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
 			return err
@@ -1479,7 +1474,7 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 	}
 
 	//If we only have the current branch, search for the branch
-	br, err := client.Branch(application.RepositoryFullname, cur.Branch)
+	br, err := client.Branch(app.RepositoryFullname, cur.Branch)
 	if err != nil {
 		log.Warning("getPipelineBuildCommitsHandler> Cannot get branch: %s", err)
 		return err
@@ -1491,7 +1486,7 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 	}
 	//and return the last commit of the branch
 	log.Debug("get the last commit : %s", br.LatestCommit)
-	cm, err := client.Commit(application.RepositoryFullname, br.LatestCommit)
+	cm, err := client.Commit(app.RepositoryFullname, br.LatestCommit)
 	if err != nil {
 		log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
 		return err

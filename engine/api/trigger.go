@@ -29,7 +29,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	// load source ids
 	if t.SrcApplication.ID == 0 {
-		a, errSrcApp := application.LoadApplicationByName(db, project, t.SrcApplication.Name)
+		a, errSrcApp := application.LoadByName(db, project, t.SrcApplication.Name, c.User)
 		if errSrcApp != nil {
 			log.Warning("addTriggersHandler> cannot load src application: %s\n", errSrcApp)
 			return errSrcApp
@@ -73,7 +73,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	// load destination ids
 	if t.DestApplication.ID == 0 {
-		a, errDestApp := application.LoadApplicationByName(db, project, t.DestApplication.Name)
+		a, errDestApp := application.LoadByName(db, project, t.DestApplication.Name, c.User)
 		if errDestApp != nil {
 			log.Warning("addTriggersHandler> cannot load dst application: %s\n", errDestApp)
 			return errDestApp
@@ -181,7 +181,7 @@ func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	env := r.Form.Get("env")
 
-	a, errApp := application.LoadApplicationByName(db, project, app)
+	a, errApp := application.LoadByName(db, project, app, c.User)
 	if errApp != nil {
 		log.Warning("getTriggersHandler> cannot load application: %s\n", errApp)
 		return errApp
@@ -340,7 +340,7 @@ func getTriggersAsSourceHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 	env := r.Form.Get("env")
 
-	a, errApp := application.LoadApplicationByName(db, project, app)
+	a, errApp := application.LoadByName(db, project, app, c.User)
 	if errApp != nil {
 		log.Warning("getTriggersAsSourceHandler> cannot load application: %s\n", errApp)
 		return errApp

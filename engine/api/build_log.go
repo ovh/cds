@@ -64,7 +64,7 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	// Check that application exists
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getStepBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
 		return err
@@ -146,7 +146,7 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	}
 
 	// Check that application exists
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -220,7 +220,7 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 		return err
 	}
 
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getPipelineBuildJobLogsHandler> Cannot load application %s: %s\n", appName, err)
 		return err

@@ -394,7 +394,7 @@ func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, d
 	}
 
 	// Load the application
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("applyTemplateOnApplicationHandler> Cannot load application %s: %s\n", appName, err)
 		return err
