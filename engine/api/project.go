@@ -22,8 +22,7 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		project.LoadOptions.WithoutApplicationVariables,
 		project.LoadOptions.WithoutApplicationPipelines)
 	if err != nil {
-		log.Warning("GetProjects> Cannot load projects from db: %s\n", err)
-		return err
+		return sdk.WrapError(err, "getProjectsHandler")
 	}
 	return WriteJSON(w, r, projects, http.StatusOK)
 }
@@ -78,8 +77,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		project.LoadOptions.WithRepositoriesManagers,
 	)
 	if errProj != nil {
-		log.Warning("getProject: Cannot load project from db: %s\n", errProj)
-		return errProj
+		return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 	}
 
 	return WriteJSON(w, r, p, http.StatusOK)
