@@ -12,6 +12,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/spf13/viper"
+
 	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
 	"github.com/ovh/cds/engine/api/secret/secretbackend"
 	"github.com/ovh/cds/engine/log"
@@ -40,12 +42,13 @@ type databaseInstance struct {
 	Host string `json:"host"`
 }
 
-type DatabaseCredentials struct {
+type databaseCredentials struct {
 	Readers  []databaseInstance `json:"readers"`
 	Writers  []databaseInstance `json:"writers"`
 	Database string             `json:"database"`
 	Password string             `json:"password"`
 	User     string             `json:"user"`
+	Type     string             `json:"type"`
 }
 
 // Init password manager
@@ -87,13 +90,17 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 
 	}
 
-	cdsDBCredS, _ := secrets.Get("cds/cds")
+	dbKey := viper.GetString("DB_SECRET")
+	if dbKey == "" {
+		return nil
+	}
+	cdsDBCredS, _ := secrets.Get(dbKey)
 	if cdsDBCredS == "" {
-		log.Critical("secret.Init> cds/cds not found")
+		log.Critical("secret.Init> %s not found", dbKey)
 		return nil
 	}
 
-	var cdsDBCred = DatabaseCredentials{}
+	var cdsDBCred = databaseCredentials{}
 	if err := json.Unmarshal([]byte(cdsDBCredS), &cdsDBCred); err != nil {
 		log.Critical("secret.Init> Unable to unmarshal secret %s", err)
 		return nil

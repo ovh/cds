@@ -25,6 +25,9 @@ func init() {
 	viper.BindPFlag("db_maxconn", pflags.Lookup("db-maxconn"))
 	viper.BindPFlag("db_timeout", pflags.Lookup("db-timeout"))
 
+	pflags.String("db-secret", "cds/db", "DB Secret: used in secret backend manager")
+	viper.BindPFlag("db_secret", pflags.Lookup("db-secret"))
+
 	flags := mainCmd.Flags()
 
 	flags.String("log-level", "notice", "Log Level : debug, info, notice, warning, critical")
