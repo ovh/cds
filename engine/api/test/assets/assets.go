@@ -34,8 +34,6 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string) *sdk.Proj
 		Key:  key,
 		Name: name,
 	}
-	t.Logf("Insert Project %s", key)
-
 	g := sdk.Group{
 		Name: name + "-group",
 	}

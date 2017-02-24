@@ -60,7 +60,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.InsertApplication(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app); err != nil {
 		t.Fatal(err)
 	}
 

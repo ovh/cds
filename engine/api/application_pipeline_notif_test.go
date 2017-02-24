@@ -37,7 +37,7 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 		return err
 	}
 
-	apps, err := application.LoadApplications(db, key, false, false, &sdk.User{Admin: true})
+	apps, err := application.LoadAll(db, key, &sdk.User{Admin: true})
 	if err != nil {
 		t.Logf("Cannot list app: %s", err)
 		return err
@@ -113,7 +113,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.InsertApplication(db, proj, app)
+	err = application.Insert(db, proj, app)
 
 	env := &sdk.DefaultEnv
 
@@ -595,7 +595,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 
 	app := &sdk.Application{Name: assets.RandomString(t, 10)}
 
-	err := application.InsertApplication(db, p, app)
+	err := application.Insert(db, p, app)
 	test.NoError(t, err)
 
 	pip := &sdk.Pipeline{

@@ -17,10 +17,7 @@ import (
 )
 
 func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	projects, err := project.LoadAll(db, c.User,
-		project.LoadOptions.WithoutVariables,
-		project.LoadOptions.WithoutApplicationVariables,
-		project.LoadOptions.WithoutApplicationPipelines)
+	projects, err := project.LoadAll(db, c.User)
 	if err != nil {
 		return sdk.WrapError(err, "getProjectsHandler")
 	}
@@ -70,6 +67,9 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	key := vars["permProjectKey"]
 
 	p, errProj := project.Load(db, key, c.User,
+		project.LoadOptions.WithVariables,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithApplicationPipelines,
 		project.LoadOptions.WithEnvironments,
 		project.LoadOptions.WithGroups,
 		project.LoadOptions.WithPermission,

@@ -15,10 +15,10 @@ import (
 )
 
 //Import is able to create a new application and all its components
-func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, user *sdk.User, msgChan chan<- msg.Message) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, u *sdk.User, msgChan chan<- msg.Message) error {
 	//Save application in database
-	if err := InsertApplication(db, proj, app); err != nil {
-		return err
+	if err := Insert(db, proj, app); err != nil {
+		return sdk.WrapError(err, "application.Import")
 	}
 
 	if msgChan != nil {
@@ -33,11 +33,11 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 		app.ApplicationGroups = proj.ProjectGroups
 	}
 
-	if err := importVariables(db, proj, app, user, msgChan); err != nil {
+	if err := importVariables(db, proj, app, u, msgChan); err != nil {
 		return err
 	}
 
-	if err := ImportPipelines(db, proj, app, user, msgChan); err != nil {
+	if err := ImportPipelines(db, proj, app, u, msgChan); err != nil {
 		return err
 	}
 
@@ -76,23 +76,22 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 }
 
 //importVariables is able to create variable on an existing application
-func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, user *sdk.User, msgChan chan<- msg.Message) error {
-
+func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk.User, msgChan chan<- msg.Message) error {
 	for _, newVar := range app.Variable {
 		var errCreate error
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			errCreate = AddKeyPairToApplication(db, app, newVar.Name)
+			errCreate = AddKeyPairToApplication(db, app, newVar.Name, u)
 			break
 		default:
-			errCreate = InsertVariable(db, app, newVar)
+			errCreate = InsertVariable(db, app, newVar, u)
 			break
 		}
 		if errCreate != nil {
 			log.Warning("importVariables> Cannot add variable %s in application %s:  %s\n", newVar.Name, app.Name, errCreate)
 			return errCreate
 		}
-		if err := CreateAudit(db, newVar.Name, app, user); err != nil {
+		if err := CreateAudit(db, newVar.Name, app, u); err != nil {
 			log.Warning("importVariabitles> Cannot create variable audit for application %s:  %s\n", app.Name, err)
 			return err
 		}

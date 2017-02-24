@@ -30,7 +30,7 @@ func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
-	applications, err := application.LoadApplications(db, projectKey, false, false, c.User)
+	applications, err := application.LoadAll(db, projectKey, c.User)
 	if err != nil {
 		log.Warning("getApplicationsHandler: Cannot load applications from db: %s\n", err)
 		return err
@@ -306,7 +306,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	defer tx.Rollback()
 
-	err = application.InsertApplication(tx, proj, &app)
+	err = application.Insert(tx, proj, &app)
 	if err != nil {
 		log.Warning("addApplicationHandler> Cannot insert pipeline: %s\n", err)
 		return err
@@ -422,7 +422,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	defer tx.Rollback()
 
-	if err := cloneApplication(tx, proj, &newApp, appToClone); err != nil {
+	if err := cloneApplication(tx, proj, &newApp, appToClone, c.User); err != nil {
 		log.Warning("cloneApplicationHandler> Cannot insert new application %s: %s\n", newApp.Name, err)
 		return err
 	}
@@ -444,12 +444,12 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
+func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application, u *sdk.User) error {
 	newApp.Pipelines = appToClone.Pipelines
 	newApp.ApplicationGroups = appToClone.ApplicationGroups
 
 	// Create Application
-	if err := application.InsertApplication(db, proj, newApp); err != nil {
+	if err := application.Insert(db, proj, newApp); err != nil {
 		return err
 	}
 
@@ -474,9 +474,9 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 		var errVar error
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			errVar = application.AddKeyPairToApplication(db, newApp, v.Name)
+			errVar = application.AddKeyPairToApplication(db, newApp, v.Name, u)
 		} else {
-			errVar = application.InsertVariable(db, newApp, v)
+			errVar = application.InsertVariable(db, newApp, v, u)
 		}
 		if errVar != nil {
 			return errVar
@@ -489,7 +489,7 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 			return err
 		}
 
-		if err := application.UpdatePipelineApplication(db, newApp, appPip.Pipeline.ID, appPip.Parameters); err != nil {
+		if err := application.UpdatePipelineApplication(db, newApp, appPip.Pipeline.ID, appPip.Parameters, u); err != nil {
 			return err
 		}
 	}
@@ -542,7 +542,7 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	p, err := project.Load(db, projectKey, c.User)
+	p, err := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updateApplicationHandler> Cannot load project %s: %s\n", projectKey, err)
 		return err
@@ -581,7 +581,7 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 	defer tx.Rollback()
 
-	if err := application.UpdateApplication(tx, app); err != nil {
+	if err := application.Update(tx, app); err != nil {
 		log.Warning("updateApplicationHandler> Cannot delete application %s: %s\n", applicationName, err)
 		return err
 	}

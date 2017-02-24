@@ -87,7 +87,7 @@ func TestAddPollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.InsertApplication(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -159,7 +159,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.InsertApplication(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -252,7 +252,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.InsertApplication(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -348,7 +348,7 @@ func TestGetPollersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.InsertApplication(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -440,7 +440,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.InsertApplication(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)

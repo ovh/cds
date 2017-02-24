@@ -130,7 +130,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 
 	// Update src application
-	if err := application.UpdateLastModified(tx, &t.SrcApplication); err != nil {
+	if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
 		log.Warning("addTriggerHandler> cannot update loast modified date on src application: %s\n", err)
 		return err
 	}
@@ -247,7 +247,7 @@ func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return err
 	}
 
-	if err := application.UpdateLastModified(tx, &t.SrcApplication); err != nil {
+	if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
 		log.Warning("deleteTriggerHandler> cannot update src application last modified date: %s\n", err)
 		return err
 
@@ -305,10 +305,9 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	if err := trigger.UpdateTrigger(tx, &t); err != nil {
 		log.Warning("updateTriggerHandler> cannot update trigger: %s\n", err)
 		return err
-
 	}
 
-	if err := application.UpdateLastModified(tx, &t.SrcApplication); err != nil {
+	if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
 		log.Warning("updateTriggerHandler> cannot update src application last modified date: %s\n", err)
 		return err
 	}

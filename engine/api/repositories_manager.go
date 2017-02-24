@@ -259,16 +259,9 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 
 	}
 
-	p, err := project.Load(db, projectKey, c.User)
+	p, err := project.Load(db, projectKey, c.User, project.LoadOptions.WithRepositoriesManagers)
 	if err != nil {
 		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load project %s: %s\n", projectKey, err)
-		return err
-
-	}
-
-	p.ReposManager, err = repositoriesmanager.LoadAllForProject(db, projectKey)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load repositories manager for project %s: %s\n", projectKey, err)
 		return err
 
 	}
@@ -557,7 +550,7 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 
 	}
 
-	if err := application.UpdateLastModified(tx, app); err != nil {
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("addHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
 		return err
 
@@ -622,7 +615,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	}
 
-	if err = application.UpdateLastModified(tx, app); err != nil {
+	if err = application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
 		return err
 
@@ -744,7 +737,7 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	defer tx.Rollback()
 
 	//Insert application in database
-	if err := application.InsertApplication(tx, proj, &app); err != nil {
+	if err := application.Insert(tx, proj, &app); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline: %s\n", err)
 		return err
 

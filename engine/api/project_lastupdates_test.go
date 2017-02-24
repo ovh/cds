@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
@@ -83,7 +84,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.InsertApplication(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app))
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
@@ -181,7 +182,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.InsertApplication(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app))
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
@@ -198,13 +199,13 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, 4))
 	test.NoError(t, group.InsertGroupInApplication(db, app.ID, g.ID, 4))
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 	//Insert Application
 	app2 := &sdk.Application{
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	test.NoError(t, application.InsertApplication(db, proj, app2))
+	test.NoError(t, application.Insert(db, proj, app2))
 	test.NoError(t, group.InsertGroupInApplication(db, app2.ID, g.ID, 4))
 	test.NoError(t, group.InsertGroupInPipeline(db, pip.ID, g.ID, 4))
 
@@ -294,7 +295,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.InsertApplication(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app))
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
@@ -321,7 +322,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.InsertApplication(db, proj, app2)
+	err = application.Insert(db, proj, app2)
 	test.NoError(t, err)
 	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
 	test.NoError(t, err)
@@ -419,7 +420,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.InsertApplication(db, proj, app)
+	err = application.Insert(db, proj, app)
 	test.NoError(t, err)
 
 	//Create a user
@@ -442,17 +443,17 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	err = group.InsertGroupInApplication(db, app.ID, g.ID, 4)
 	test.NoError(t, err)
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 	since := time.Now()
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
 	//Insert Application
 	app2 := &sdk.Application{
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.InsertApplication(db, proj, app2)
-
+	err = application.Insert(db, proj, app2)
 	test.NoError(t, err)
+	test.NoError(t, project.UpdateLastModified(db, nil, proj))
 	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
 	test.NoError(t, err)
 	err = group.InsertGroupInPipeline(db, pip.ID, g.ID, 4)
@@ -539,7 +540,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.InsertApplication(db, proj, app)
+	err = application.Insert(db, proj, app)
 	test.NoError(t, err)
 
 	//Create a user
@@ -567,7 +568,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.InsertApplication(db, proj, app2)
+	err = application.Insert(db, proj, app2)
 
 	test.NoError(t, err)
 	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
@@ -578,7 +579,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 	url := fmt.Sprintf("/project_lastupdates_test4/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 	since := time.Now()
 
 	req.Header.Set("If-Modified-Since", since.Format(time.RFC1123))

@@ -40,7 +40,7 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 
 	}
 
-	p, err := project.Load(db, key, c.User)
+	p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("restoreProjectVariableAuditHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -114,7 +114,7 @@ func getVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *go
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	p, err := project.Load(db, key, c.User)
+	p, err := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
 	if err != nil {
 		log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 		return sdk.ErrNotFound
@@ -129,7 +129,7 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 	key := vars["permProjectKey"]
 	varName := vars["name"]
 
-	p, err := project.Load(db, key, c.User)
+	p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 		return err
@@ -184,7 +184,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		return err
 	}
 
-	p, err := project.Load(db, key, c.User)
+	p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updateVariablesInProjectHandler: Cannot load %s: %s\n", key, err)
 		return sdk.ErrNotFound
@@ -306,7 +306,7 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 
 	}
 
-	p, err := project.Load(db, key, c.User)
+	p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updateVariableInProject: Cannot load %s: %s\n", key, err)
 		return err
@@ -399,7 +399,7 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	}
 
-	p, err := project.Load(db, key, c.User)
+	p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("AddVariableInProject: Cannot load %s: %s\n", key, err)
 		return err

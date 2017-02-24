@@ -86,7 +86,7 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		return err
 	}
 
-	err = application.UpdateLastModified(tx, app)
+	err = application.UpdateLastModified(tx, app, c.User)
 	if err != nil {
 		log.Warning("addPollerHandler: cannot update application (%s) lastmodified date: %s\n", app.Name, err)
 		return err
@@ -160,7 +160,7 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	if err = application.UpdateLastModified(tx, app); err != nil {
+	if err = application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("updatePollerHandler: cannot update application last modified date: %s\n", err)
 		return err
 
@@ -274,7 +274,7 @@ func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	if err = application.UpdateLastModified(tx, a); err != nil {
+	if err = application.UpdateLastModified(tx, a, c.User); err != nil {
 		log.Warning("deleteHook> cannot update application last modified date: %s\n", err)
 		return err
 

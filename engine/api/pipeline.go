@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -175,7 +174,7 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	// Check that pipeline is attached to application
-	ok, err := application.PipelineAttached(db, app.ID, pip.ID)
+	ok, err := application.IsAttached(db, app.ProjectID, app.ID, pip.Name)
 	if !ok {
 		log.Warning("runPipelineWithLastParentHandler> Pipeline %s is not attached to app %s\n", pipelineName, appName)
 		return sdk.ErrPipelineNotAttached
@@ -200,7 +199,7 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	//Find parent trigger
 	var trig *sdk.PipelineTrigger
 	for i, t := range triggers {
-		fmt.Printf("Trigger from app(%s[%d]) pip(%s[%d]) env(%s[%d]) to app(%s[%d]) pip(%s[%d]) env(%s[%d])\n", t.SrcApplication.Name, t.SrcApplication.ID, t.SrcPipeline.Name, t.SrcPipeline.ID, t.SrcEnvironment.Name, t.SrcEnvironment.ID, t.DestApplication.Name, t.DestApplication.ID, t.DestPipeline.Name, t.DestPipeline.ID, t.DestEnvironment.Name, t.DestEnvironment.ID)
+		log.Debug("Trigger from app(%s[%d]) pip(%s[%d]) env(%s[%d]) to app(%s[%d]) pip(%s[%d]) env(%s[%d])\n", t.SrcApplication.Name, t.SrcApplication.ID, t.SrcPipeline.Name, t.SrcPipeline.ID, t.SrcEnvironment.Name, t.SrcEnvironment.ID, t.DestApplication.Name, t.DestApplication.ID, t.DestPipeline.Name, t.DestPipeline.ID, t.DestEnvironment.Name, t.DestEnvironment.ID)
 		if t.SrcApplication.ID == request.ParentApplicationID &&
 			t.SrcPipeline.ID == request.ParentPipelineID &&
 			t.SrcEnvironment.ID == envID {
@@ -242,10 +241,6 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	pipelineName := vars["permPipelineKey"]
 	appName := vars["permApplicationName"]
 
-	// Load application to be send to scheduler.Run() from DB
-	cache.DeleteAll(cache.Key("application", projectKey, "*"))
-	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
-
 	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		if err != sdk.ErrApplicationNotFound {
@@ -254,24 +249,17 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		return err
 	}
 
-	// Load pipeline
-	pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if err != nil {
-		if err != sdk.ErrPipelineNotFound {
-			log.Warning("runPipelineHandler> Cannot load pipeline %s; %s\n", pipelineName, err)
+	var pip *sdk.Pipeline
+	for _, p := range app.Pipelines {
+		if p.Pipeline.Name == pipelineName {
+			pip = &p.Pipeline
+			break
 		}
-		return err
 	}
 
-	// Check that pipeline is attached to application
-	ok, err := application.PipelineAttached(db, app.ID, pip.ID)
-	if !ok {
+	if pip == nil {
 		log.Warning("runPipelineHandler> Pipeline %s is not attached to app %s\n", pipelineName, appName)
 		return sdk.ErrPipelineNotAttached
-	}
-	if err != nil {
-		log.Warning("runPipelineHandler> Cannot check if pipeline %s is attached to %s: %s\n", pipelineName, appName, err)
-		return err
 	}
 
 	version := int64(0)
@@ -284,30 +272,23 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		}
 		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentBuildNumber)
 		if err != nil {
-			log.Warning("runPipelineHandler> Cannot load parent pipeline build: %s\n", err)
-			return err
+			return sdk.WrapError(err, "runPipelineHandler> Cannot load parent pipeline build")
 		}
 		parentParams := queue.ParentBuildInfos(pb)
 		request.Params = append(request.Params, parentParams...)
 
-		// Whether or not use parent build version is checked
-		// in InsertPipelineBuild
-		//if pip.Type != sdk.BuildPipeline {
 		version = pb.Version
-		//}
-		//save the pointer of the parent pipeline_build for trigger struct
 		parentPipelineBuild = pb
 	}
 
 	envDest, err := loadDestEnvFromRunRequest(db, c, request, projectKey)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "runPipelineHandler> Unable to load dest environment")
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("runPipelineHandler> Cannot start tx: %s", err)
-		return err
+		return sdk.WrapError(err, "runPipelineHandler> Cannot start tx")
 	}
 	defer tx.Rollback()
 
@@ -328,18 +309,12 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 
 	pb, err := queue.RunPipeline(tx, projectKey, app, pipelineName, envDest.Name, request.Params, version, trigger, c.User)
 	if err != nil {
-		log.Warning("runPipelineHandler> Cannot run pipeline: %s\n", err)
-		return err
+		return sdk.WrapError(err, "runPipelineHandler> Cannot run pipeline")
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("runPipelineHandler> Cannot commit tx: %s", err)
-		return err
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "runPipelineHandler> Cannot commit tx")
 	}
-
-	k := cache.Key("application", projectKey, "builds", "*")
-	cache.DeleteAll(k)
 
 	return WriteJSON(w, r, pb, http.StatusOK)
 }
@@ -515,7 +490,7 @@ func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, 
 		log.Warning("getApplicationUsingPipelineHandler> Cannot load pipeline %s: %s\n", name, err)
 		return err
 	}
-	applications, err := application.LoadApplicationByPipeline(db, pipelineData.ID)
+	applications, err := application.LoadByPipeline(db, pipelineData.ID, c.User)
 	if err != nil {
 		log.Warning("getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s: %s\n", name, err)
 		return err
@@ -529,7 +504,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	project, err := project.Load(db, key, c.User)
+	project, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("AddPipeline: Cannot load %s: %s\n", key, err)
 		return err
@@ -590,7 +565,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 			return err
 		}
 
-		if err := application.UpdateLastModified(tx, &app); err != nil {
+		if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
 			log.Warning("addPipelineHandler> Cannot update application last modified date: %s\n", err)
 			return err
 		}
@@ -632,7 +607,7 @@ func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	project, err := project.Load(db, key, c.User)
+	project, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		if err != sdk.ErrNoProject {
 			log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -794,7 +769,7 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return err
 	}
 
-	proj, errP := project.Load(db, projectKey, c.User)
+	proj, errP := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
 	if errP != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, errP)
 		return errP
@@ -846,7 +821,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
 
-	proj, err := project.Load(db, key, c.User)
+	proj, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot load project %s: %s\n", key, err)
 		return sdk.ErrNoProject

@@ -52,7 +52,7 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	proj, err := project.Load(db, key, c.User)
+	proj, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
 		log.Warning("updateEnvironmentsHandler: Cannot load %s: %s\n", key, err)
 		return err
@@ -231,7 +231,7 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	proj, errProj := project.Load(db, key, c.User)
+	proj, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		log.Warning("addEnvironmentHandler: Cannot load %s: %s\n", key, errProj)
 		return errProj
@@ -292,7 +292,7 @@ func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	projectKey := vars["key"]
 	environmentName := vars["permEnvironmentName"]
 
-	p, errProj := project.Load(db, projectKey, c.User)
+	p, errProj := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		log.Warning("deleteEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
 		return errProj
@@ -349,7 +349,7 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return errEnv
 	}
 
-	p, errProj := project.Load(db, projectKey, c.User)
+	p, errProj := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		log.Warning("updateEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
 		return errProj
