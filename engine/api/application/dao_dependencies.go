@@ -118,6 +118,6 @@ var (
 		if err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadNotifs> Unable to load notifications for application %d", app.ID)
 		}
-		return err
+		return nil
 	}
 )

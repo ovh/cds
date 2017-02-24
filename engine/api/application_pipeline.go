@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -77,8 +76,6 @@ func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 		log.Warning("attachPipelinesToApplicationHandler: Cannot load project: %s: %s\n", key, err)
 		return err
 	}
-
-	fmt.Println(c.User)
 
 	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
