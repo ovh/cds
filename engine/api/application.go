@@ -572,7 +572,9 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return sdk.ErrInvalidApplicationPattern
 	}
 
+	//Update name and Metadata
 	app.Name = appPost.Name
+	app.Metadata = appPost.Metadata
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -580,7 +582,6 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 	defer tx.Rollback()
-
 	if err := application.Update(tx, app); err != nil {
 		log.Warning("updateApplicationHandler> Cannot delete application %s: %s\n", applicationName, err)
 		return err
