@@ -1,9 +1,9 @@
 package application
 
 import (
-	"github.com/go-gorp/gorp"
-
 	"database/sql"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/notification"
