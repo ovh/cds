@@ -93,7 +93,7 @@ function createPipelineBuildJob(id: number, name: string, status: string): Pipel
 
 class MockWorker extends CDSWorker {
     constructor() {
-        super('fake', 'fake');
+        super('fake');
     }
 
     response(): any {
@@ -121,7 +121,7 @@ class MockWorker extends CDSWorker {
 
 
 
-        let response = { data : JSON.stringify(pb) };
+        let response = JSON.stringify(pb);
         return Observable.of(response);
     }
 }
