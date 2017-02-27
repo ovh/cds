@@ -63,7 +63,7 @@ export class AppComponent extends Type implements OnInit {
             this.stopWarningWorker();
         }
         this.worker = new CDSWorker('./assets/worker/web/warning.js');
-        this.worker.start({ 'user': this._authStore.getUser(), 'api': environment.apiURL});
+        this.worker.start({ 'user': this._authStore.getUser(), 'session': this._authStore.getSessionToken(), 'api': environment.apiURL});
         this.worker.response().subscribe( msg => {
             if (msg) {
                 this.zone.run(() => {

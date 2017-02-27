@@ -161,6 +161,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         if (this.application.workflows && this.application.workflows.length > 0) {
             let msgToSend = {
                 'user': this._authStore.getUser(),
+                'session': this._authStore.getSessionToken(),
                 'api': environment.apiURL,
                 'key': key,
                 'appName': '',

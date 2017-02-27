@@ -86,6 +86,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 this.worker = new CDSWorker('./assets/worker/web/runpipeline.js');
                 this.worker.start({
                     user: this._authStore.getUser(),
+                    session: this._authStore.getSessionToken(),
                     api: environment.apiURL,
                     key: this.project.key,
                     appName: this.application.name,
