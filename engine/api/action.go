@@ -288,7 +288,7 @@ func importActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 			return err
 		}
 	} else { // a jsonified action is posted in body
-		if err := UnmarshalBody(r, a); err != nil {
+		if err := UnmarshalBody(r, &a); err != nil {
 			return err
 		}
 	}
