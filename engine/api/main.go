@@ -189,6 +189,13 @@ var mainCmd = &cobra.Command{
 			}
 		default:
 			authMode = "local"
+			if viper.GetString("auth_local_mode") == "basic" {
+				log.Notice("Authentitication mode: Basic\n")
+				localCLientAuthMode = auth.LocalClientBasicAuthMode
+			} else {
+				log.Notice("Authentitication mode: Session\n")
+				localCLientAuthMode = auth.LocalClientSessionMode
+			}
 		}
 
 		storeOptions := sessionstore.Options{
