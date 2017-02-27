@@ -18,7 +18,6 @@ import {Application} from '../../../model/application.model';
 })
 export class PipelineShowComponent implements OnInit, OnDestroy {
 
-    public ready = false;
     public permFormLoading = false;
     public paramFormLoading = false;
 
@@ -96,9 +95,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
               this.pipeline = pipelineUpdated;
             } else if (pipelineUpdated && pipelineUpdated.externalChange) {
                 // TODO show warning
-            }
-            if (this.pipeline) {
-              this.ready = true;
             }
           }
         }, () => {

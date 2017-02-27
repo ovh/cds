@@ -9,6 +9,9 @@ import {EventEmitter, Output, Input} from '@angular/core';
 export class DeleteButtonComponent  {
 
     @Input() loading = false;
+
+    // normal / icon
+    @Input() buttonType = 'normal';
     @Output() event = new EventEmitter<boolean>();
 
     showConfirmation = false;
