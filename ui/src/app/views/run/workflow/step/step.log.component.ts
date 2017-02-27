@@ -53,7 +53,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
 
     initWorker(): void {
         if (!this.worker) {
-            this.worker = new CDSWorker('./assets/worker/shared/log.js', './assets/worker/web/log.js');
+            this.worker = new CDSWorker('./assets/worker/web/log.js');
             this.worker.start({
                 user: this._authStore.getUser(),
                 api: environment.apiURL,
@@ -66,8 +66,8 @@ export class StepLogComponent implements OnInit, OnDestroy {
             });
 
             this.worker.response().subscribe( msg => {
-                if (msg.data) {
-                    let build: BuildResult = JSON.parse(msg.data);
+                if (msg) {
+                    let build: BuildResult = JSON.parse(msg);
                     this.zone.run(() => {
                         this.logs = build.step_logs;
                     });

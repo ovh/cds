@@ -1,8 +1,10 @@
-import {Component, Type, OnInit} from '@angular/core';
+import {Component, Type, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from 'ng2-translate';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {environment} from '../environments/environment';
 import {WarningStore} from './service/warning/warning.store';
+import {CDSWorker} from './shared/worker/worker';
+import {Subscription} from 'rxjs/Rx';
 
 @Component({
     selector: 'app-root',
@@ -13,13 +15,14 @@ export class AppComponent extends Type implements OnInit {
 
     open: boolean;
     isConnected = false;
-    warningSharedWorker = null;
-    warningWebWorker: Worker = null;
+    worker: CDSWorker;
+    workerSubscription: Subscription;
+    zone: NgZone;
 
     constructor(private translate: TranslateService,
                 private _authStore: AuthentificationStore, private _warnStore: WarningStore) {
         super();
-
+        this.zone = new NgZone({enableLongStackTrace: false});
         translate.addLangs(['en', 'fr']);
         translate.setDefaultLang('en');
         let browserLang = translate.getBrowserLang();
@@ -42,14 +45,11 @@ export class AppComponent extends Type implements OnInit {
      * Stop worker that are pulling warnings.
      */
     stopWarningWorker(): void {
-        if (typeof (SharedWorker) !== 'undefined') {
-            if (this.warningSharedWorker) {
-                this.warningSharedWorker.port.close();
-            }
-        } else {
-            if (this.warningWebWorker) {
-                this.warningWebWorker.terminate();
-            }
+        if (this.worker) {
+            this.worker.stop();
+        }
+        if (this.workerSubscription) {
+            this.workerSubscription.unsubscribe();
         }
     }
 
@@ -59,34 +59,17 @@ export class AppComponent extends Type implements OnInit {
      * SharedWorker for the others  (worker shared between tabs)
      */
     startWarningWorker(): void {
-        // Run worker to pull CDS Warning
-        if (typeof (SharedWorker) !== 'undefined') {
-            if (!this.warningSharedWorker) {
-                this.warningSharedWorker = new SharedWorker('./assets/worker/shared/warning.js');
-                this.warningSharedWorker.port.postMessage({ 'user': this._authStore.getUser(), 'api': environment.apiURL});
-                this.warningSharedWorker.port.onmessage = ((e) => {
-                    if (e.data && e.data !== 'null') {
-                        this._warnStore.updateWarnings(JSON.parse(e.data));
-                    }
-                });
-                this.warningSharedWorker.port.onerror = function (e) {
-                    console.log('Warning Worker Error: ', e);
-                };
-            }
-        } else {
-            // Use web worker for safari, and edge. Web Workers are not shared between tabs
-            if (!this.warningWebWorker) {
-                this.warningWebWorker = new Worker('./assets/worker/web/warning.js');
-                this.warningWebWorker.postMessage({ 'user': this._authStore.getUser(), 'api': environment.apiURL});
-                this.warningWebWorker.onmessage = ((e) => {
-                    if (e.data !== 'null') {
-                        this._warnStore.updateWarnings(JSON.parse(e.data));
-                    }
-                });
-                this.warningWebWorker.onerror = function (e) {
-                    console.log('Warning Worker Error: ', e);
-                };
-            }
+        if (this.worker) {
+            this.stopWarningWorker();
         }
+        this.worker = new CDSWorker('./assets/worker/web/warning.js');
+        this.worker.start({ 'user': this._authStore.getUser(), 'api': environment.apiURL});
+        this.worker.response().subscribe( msg => {
+            if (msg) {
+                this.zone.run(() => {
+                    this._warnStore.updateWarnings(JSON.parse(msg));
+                });
+            }
+        });
     }
 }

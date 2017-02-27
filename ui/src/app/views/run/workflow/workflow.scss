@@ -65,14 +65,16 @@ ul {
         height: 50px;
       }
 
-      .job.ui.segment.active {
-        border: 2px solid $cds_color_teal;
-
+      .job.ui.segment {
         .duration {
           color: gray;
           font-size: 0.8rem;
           font-weight: 600;
         }
+      }
+
+      .job.ui.segment.active {
+        border: 2px solid $cds_color_teal;
       }
     }
   }

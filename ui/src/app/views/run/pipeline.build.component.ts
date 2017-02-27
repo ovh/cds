@@ -31,6 +31,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     previousBuild: PipelineBuild;
     duration: string;
     branch: string;
+    appVersionFilter: number;
 
     // Allow angular update from work started outside angular context
     zone: NgZone;
@@ -69,6 +70,9 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             if (q['branch']) {
                 this.branch = q['branch'];
             }
+            if (q['version']) {
+                this.appVersionFilter = q['version'];
+            }
         });
         this._activatedRoute.params.subscribe(params => {
             let buildNumber = params['buildNumber'];
@@ -79,7 +83,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 if (this.workerSubscription) {
                     this.workerSubscription.unsubscribe();
                 }
-                this.worker = new CDSWorker('./assets/worker/shared/runpipeline.js', './assets/worker/web/runpipeline.js');
+                this.worker = new CDSWorker('./assets/worker/web/runpipeline.js');
                 this.worker.start({
                     user: this._authStore.getUser(),
                     api: environment.apiURL,
@@ -91,8 +95,8 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 });
 
                 this.worker.response().subscribe(msg => {
-                    if (msg.data) {
-                        let build: PipelineBuild = JSON.parse(msg.data);
+                    if (msg) {
+                        let build: PipelineBuild = JSON.parse(msg);
                         this.zone.run(() => {
                             this.currentBuild = build;
 
@@ -123,7 +127,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         if (this.worker) {
-            this.worker.updateWorker('unsubscribe', {});
+            this.worker.stop();
         }
 
         if (this.workerSubscription) {

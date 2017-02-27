@@ -19,6 +19,7 @@ export class BreadcrumbComponent {
     @Input() buildNumber = 0;
     @Input() envName: string;
     @Input() branch: string;
+    @Input() appVersion: number;
 
     constructor(private _router: Router) { }
 
@@ -37,8 +38,8 @@ export class BreadcrumbComponent {
         if (this.branch) {
             queryParams.queryParams['branch'] = this.branch;
         }
-        if (this.version) {
-            queryParams.queryParams['version'] = this.version;
+        if (this.appVersion) {
+            queryParams.queryParams['version'] = this.appVersion;
         }
         this._router.navigate(['project', this.project.key, 'application', this.application.name], queryParams);
     }
