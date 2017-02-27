@@ -11,7 +11,7 @@ export class Action {
     actions: Array<Action>;
     final: boolean;
     last_modified: boolean;
-
+    enabled: boolean;
 
     // UI parameter
     hasChanged: boolean;

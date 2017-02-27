@@ -35,12 +35,16 @@ import {StatusIconComponent} from './status/status.component';
 import {KeysPipe} from './pipes/keys.pipe';
 import {DurationService} from './duration/duration.service';
 import {ParameterDescriptionComponent} from './parameter/description-popup/description.popup.component';
+import {ActionStepComponent} from './action/step/step.component';
+import {ActionStepFormComponent} from './action/step/form/step.form.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
         PrettyJsonModule, CodemirrorModule, ReactiveFormsModule, MarkdownModule ],
     declarations: [
         ActionComponent,
+        ActionStepComponent,
+        ActionStepFormComponent,
         BreadcrumbComponent,
         CutPipe,
         DeleteButtonComponent,

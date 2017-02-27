@@ -12,7 +12,7 @@
                 <div class="inline" *ngIf="pipeline.permission !== 7">{{editableStage.build_order}}</div>
             </div>
             <div class="four wide right aligned field">
-                <div class="ui toggle checkbox">
+                <div class="ui checkbox">
                     <input type="checkbox" name="enabled" [(ngModel)]="editableStage.enabled" (change)="editableStage.hasChanged = true" [disabled]="pipeline.permission !== 7">
                     <label>{{ 'common_enable' | translate }}</label>
                 </div>
@@ -61,7 +61,7 @@
                     <div class="content">
                         <a class="title pointing" (click)="selectedJob = job">{{job.action.name}}</a>
                         <div class="description">
-                            <pre>{{job.action.description}}</pre>
+                            <markdown>{{job.action.description}}</markdown>
                         </div>
                     </div>
                 </div>

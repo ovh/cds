@@ -21,6 +21,7 @@ import {ActionStore} from '../../service/action/action.store';
 import {ActionService} from '../../service/action/action.service';
 import {Injector} from '@angular/core';
 import {RepoManagerService} from '../../service/repomanager/project.repomanager.service';
+import {StepEvent} from './step/step.event';
 
 describe('CDS: Action Component', () => {
 
@@ -217,30 +218,47 @@ describe('CDS: Action Component', () => {
         tick(50);
 
 
-        fixture.componentInstance.selectPublicAction('action1');
-        expect(fixture.componentInstance.selectedStep.name).toBe('action1');
+        let step = new Action();
+        step.final = false;
+        step.name = 'action1';
+        let event = new StepEvent('add', step);
+        fixture.componentInstance.stepManagement(event);
 
-        let compiled = fixture.debugElement.nativeElement;
+        expect(fixture.componentInstance.nonFinalSteps.length).toBe(1, 'Action must have 1 non final step');
+        expect(fixture.componentInstance.nonFinalSteps[0].name).toBe('action1');
 
-        spyOn(fixture.componentInstance.actionEvent, 'emit');
-        let inputName = compiled.querySelector('button[name="addstepbtn"]');
-        inputName.click();
+        event.type = 'add';
+        step.final = true;
+        step.name = 'action2';
+        fixture.componentInstance.stepManagement(event);
+        expect(fixture.componentInstance.finalSteps.length).toBe(1, 'Action must have 1 final step');
+        expect(fixture.componentInstance.finalSteps[0].name).toBe('action2');
 
-        expect(fixture.componentInstance.editableAction.actions.length).toBe(1, 'Action must have 1 step');
-        expect(fixture.componentInstance.editableAction.actions[0].name).toBe('action1');
+    }));
 
-        fixture.detectChanges();
-        tick(50);
+    it('should init nonFinalSteps and finalSteps', fakeAsync( () => {
+        // Create component
+        let fixture = TestBed.createComponent(ActionComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
 
-        compiled.querySelector('.ui.red.button').click();
+        let action = new Action();
+        action.name = 'rootAction';
 
-        fixture.detectChanges();
-        tick(50);
+        let step1 = new Action();
+        step1.final = true;
 
-        compiled.querySelector('.ui.red.button.active').click();
+        let step2 = new Action();
+        step2.final = false;
 
+        action.actions = new Array<Action>();
+        action.actions.push(step1, step2);
 
-        expect(fixture.componentInstance.editableAction.actions.length).toBe(0, 'Action must have 0 step');
+        fixture.componentInstance.action = action;
+
+        expect(fixture.componentInstance.nonFinalSteps.length).toBe(1);
+        expect(fixture.componentInstance.finalSteps.length).toBe(1);
+
     }));
 });
 

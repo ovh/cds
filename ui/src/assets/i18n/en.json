@@ -15,6 +15,7 @@
   "account_verify_error" : "Unable to activate this account.",
 
   "action_step_title" : "Job steps",
+  "action_step_final_title" : "Job final steps",
 
   "application_advanced_title" : "Application administration",
   "application_create" : "Create a new application",

@@ -9,6 +9,7 @@ import {ActionEvent} from './action.event.model';
 import {ActionStore} from '../../service/action/action.store';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {Project} from '../../model/project.model';
+import {StepEvent} from './step/step.event';
 
 declare var _: any;
 
@@ -20,8 +21,9 @@ declare var _: any;
 export class ActionComponent implements OnDestroy {
 
     editableAction: Action;
+    nonFinalSteps: Array<Action> = new Array<Action>();
+    finalSteps: Array<Action> = new Array<Action>();
     publicActions: Array<Action>;
-    selectedStep: Action;
 
     @Input() project: Project;
     @Input() edit = false;
@@ -31,6 +33,17 @@ export class ActionComponent implements OnDestroy {
         this.editableAction = _.cloneDeep(data);
         if (!this.editableAction.requirements) {
             this.editableAction.requirements = new Array<Requirement>();
+        }
+        this.nonFinalSteps = new Array<Action>();
+        this.finalSteps = new Array<Action>();
+        if (this.editableAction.actions) {
+            this.editableAction.actions.forEach(s => {
+                if (s.final) {
+                    this.finalSteps.push(s);
+                } else {
+                    this.nonFinalSteps.push(s);
+                }
+            });
         }
     }
 
@@ -113,29 +126,32 @@ export class ActionComponent implements OnDestroy {
         }
     }
 
-    selectPublicAction(name: string): void {
-        let index = this.publicActions.findIndex(a => a.name === name);
-        if (index >= 0) {
-            this.selectedStep = this.publicActions[index];
-        }
-    };
+    stepManagement(event: StepEvent): void {
+        this.editableAction.hasChanged = true;
+        switch (event.type) {
+            case 'add':
+                let newStep = _.cloneDeep(event.step);
+                if (newStep.final) {
+                    this.finalSteps.push(newStep);
+                } else {
+                    this.nonFinalSteps.push(newStep);
+                }
+                break;
+            case 'delete':
+                if (event.step.final) {
+                    let index = this.finalSteps.indexOf(event.step);
+                    if (index >= 0 ) {
+                        this.finalSteps.splice(index, 1);
+                    }
+                } else {
+                    let index = this.nonFinalSteps.indexOf(event.step);
+                    console.log('Non final step:' + index);
+                    if (index >= 0 ) {
+                        this.nonFinalSteps.splice(index, 1);
+                    }
+                }
 
-    addStep(): void {
-        if (this.selectedStep) {
-            this.editableAction.hasChanged = true;
-            if (!this.editableAction.actions) {
-                this.editableAction.actions = new Array<Action>();
-            }
-            let newStep = _.cloneDeep(this.selectedStep);
-            newStep.enabled = true;
-            this.editableAction.actions.push(newStep);
-        }
-    }
-
-    removeStep(step): void {
-        let index = this.editableAction.actions.indexOf(step);
-        if (index >= 0 ) {
-            this.editableAction.actions.splice(index, 1);
+                break;
         }
     }
 
@@ -144,6 +160,21 @@ export class ActionComponent implements OnDestroy {
      * @param type type of event (update/delete)
      */
     sendActionEvent(type: string): void {
+        // Rebuild step
+        this.editableAction.actions = new Array<Action>();
+        if (this.nonFinalSteps) {
+            this.nonFinalSteps.forEach(s => {
+                this.editableAction.actions.push(s);
+            });
+        }
+
+        if (this.finalSteps) {
+            this.finalSteps.forEach(s => {
+                this.editableAction.actions.push(s);
+            });
+        }
+
+
         this.actionEvent.emit(new ActionEvent(type, this.editableAction));
     }
 }
