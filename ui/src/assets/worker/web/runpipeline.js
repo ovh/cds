@@ -13,17 +13,17 @@ onmessage = function (e) {
     appName = e.data.appName;
     pipName = e.data.pipName;
     envName = e.data.envName;
-    loadBuild(e.data.user, e.data.api);
+    loadBuild(e.data.user, e.data.session, e.data.api);
 };
 
-function loadBuild (user, api) {
+function loadBuild (user, session, api) {
     if (user && api) {
+        var url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '?withArtifacts=true&withTests=true&envName=' + envName;
+        postMessage(httpCall(url, api, user, session));
+
         setInterval(function () {
-            var url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '?withArtifacts=true&withTests=true&envName=' + envName;
-            var response = httpCall(url, api, user);
-
+            var response = httpCall(url, api, user, session);
             postMessage(response);
-
             var jsonPb = JSON.parse(response);
             if (jsonPb.status !== 'Building') {
                 close();

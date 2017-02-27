@@ -15,18 +15,19 @@ onmessage = function (e) {
     buildNumber = e.data.buildNumber;
     jobID = e.data.jobID;
     stepOrder = e.data.stepOrder;
-    loadLog(e.data.user, e.data.api);
+    loadLog(e.data.user, e.data.session, e.data.api);
 };
 
-function loadLog (user, api) {
+function loadLog (user, session, api) {
     if (user && api) {
+        var url = '/project/' + key + '/application/' + appName +
+            '/pipeline/' + pipName +'/build/' + buildNumber +
+            '/action/' + jobID + '/step/' + stepOrder + '/log';
+        postMessage(httpCall(url, api, user, session));
         setInterval(function () {
-            var url = '/project/' + key + '/application/' + appName +
-                '/pipeline/' + pipName +'/build/' + buildNumber +
-                '/action/' + jobID + '/step/' + stepOrder + '/log';
-            var stepLogs = httpCall(url, api, user);
-            postMessage(stepLogs);
 
+            var stepLogs = httpCall(url, api, user, session);
+            postMessage(stepLogs);
             var jsonLogs = JSON.parse(stepLogs);
             if (jsonLogs.status !== 'Building') {
                 close();

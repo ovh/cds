@@ -56,6 +56,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
             this.worker = new CDSWorker('./assets/worker/web/log.js');
             this.worker.start({
                 user: this._authStore.getUser(),
+                session: this._authStore.getSessionToken(),
                 api: environment.apiURL,
                 key: this.project.key,
                 appName: this.application.name,

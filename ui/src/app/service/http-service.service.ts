@@ -73,7 +73,7 @@ export class HttpService extends Http {
         // ADD user AUTH
         let sessionToken = this._authStore.getSessionToken();
         if (sessionToken) {
-            options.headers.append(this._authStore.localStorageSessionKey, 'Session ' + sessionToken);
+            options.headers.append(this._authStore.localStorageSessionKey, sessionToken);
         } else {
             let user = this._authStore.getUser();
             if (user != null) {
