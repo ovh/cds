@@ -15,11 +15,14 @@ onmessage = function (e) {
 };
 
 function loadWorkflow (user, api) {
+    var url = '/project/' + key + '/application/' + appName +
+        '?applicationStatus=true&branchName=' + branch + '&version=' + version;
+
     if (user && api) {
+        postMessage(httpCall(url, api, user));
         setInterval(function () {
-            var url = '/project/' + projectKey + '/application/' + applicationName +
-                '?applicationStatus=true&branchName=' + branchName + '&version=' + version;
-            postMessage(httpCall(url, api, user));
+            var response = httpCall(url, api, user);
+            postMessage(response);
         }, 2000);
     }
 }

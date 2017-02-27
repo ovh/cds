@@ -15,8 +15,8 @@
             <td class="center"><app-status-icon [status]="pb.status"></app-status-icon></td>
             <td>{{pb.version}}</td>
             <td>{{getTriggerSource(pb)}}</td>
-            <td>{{pb.start}}</td>
-            <td>{{pb.done}}</td>
+            <td>{{pb.start | amCalendar}}</td>
+            <td>{{pb.done | amCalendar}}</td>
             <td class="center">
                 <app-delete-button></app-delete-button>
             </td>

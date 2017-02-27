@@ -46,9 +46,9 @@ export class PipelineRunWorkflowComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.workerSubscription = this.buildWorker.response().subscribe(msg => {
-            if (msg.data) {
+            if (msg) {
                 this.zone.run(() => {
-                    this.currentBuild = JSON.parse(msg.data);
+                    this.currentBuild = JSON.parse(msg);
 
                     // Set selected job if needed or refresh step_status
                     if (this.currentBuild.stages) {
