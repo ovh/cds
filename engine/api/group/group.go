@@ -313,12 +313,14 @@ func InsertUserInGroup(db gorp.SqlExecutor, groupID, userID int64, admin bool) e
 
 // CheckUserInDefaultGroup insert user in default group
 func CheckUserInDefaultGroup(db gorp.SqlExecutor, userID int64) error {
-	inGroup, err := CheckUserInGroup(db, defaultGroupID, userID)
-	if err != nil {
-		return err
-	}
-	if !inGroup {
-		return InsertUserInGroup(db, defaultGroupID, userID, false)
+	if defaultGroupID != 0 {
+		inGroup, err := CheckUserInGroup(db, defaultGroupID, userID)
+		if err != nil {
+			return err
+		}
+		if !inGroup {
+			return InsertUserInGroup(db, defaultGroupID, userID, false)
+		}
 	}
 	return nil
 }
