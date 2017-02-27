@@ -1,4 +1,4 @@
-<div id="PipelineShow" *ngIf="ready">
+<div id="PipelineShow" *ngIf="pipeline">
     <div class="CDSbreadcrumb">
         <app-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application" [version]="version" [buildNumber]="buildNumber" [envName]="envName" [branch]="branch"></app-breadcrumb>
     </div>
@@ -42,4 +42,4 @@
         </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!ready">Loading pipeline...</div>
+<div class="ui text active loader" *ngIf="!pipeline">Loading pipeline...</div>

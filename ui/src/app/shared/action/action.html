@@ -46,68 +46,34 @@
 
     <div class="ui segment">
     <h2>{{ 'action_step_title' | translate }}</h2>
-    <div class="dragula-container" [dragula]="'bag-one'" [dragulaModel]="editableAction.actions" *ngIf="editableAction">
-        <div *ngFor="let step of editableAction.actions" class="step">
-            <div class="ui form">
-                <div class="inline fields">
-                    <div class="eight wide field paramName">
-                        <i class="move icon" *ngIf="edit"></i>{{step.name}}
-                    </div>
-                    <div class="right aligned four wide field">
-                        <div style="width: 100%;">
-                            <div class="ui toggle checkbox" *ngIf="edit">
-                                <input type="checkbox" name="enabled" [(ngModel)]="step.enabled" (change)="editableAction.hasChanged = true">
-                                <label>{{ 'common_enable' | translate }}</label>
-                            </div>
-                        </div>
-                        <ng-container *ngIf="!edit">
-                            <ng-container *ngIf="step.enabled">{{ 'common_enabled_f' | translate }}</ng-container>
-                            <ng-container *ngIf="!step.enabled">{{ 'common_disabled_f' | translate }}</ng-container>
-                        </ng-container>
-                    </div>
-                    <div class="right aligned four wide field">
-                        <div style="width: 100%;">
-                            <div class="ui toggle checkbox" *ngIf="edit">
-                                <input type="checkbox" name="final" [(ngModel)]="step.final" (change)="editableAction.hasChanged = true">
-                                <label>{{ 'step_final' | translate }}</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="right aligned four wide field" *ngIf="edit">
-                        <div style="width: 100%;">
-                            <app-delete-button (event)="removeStep(step)"></app-delete-button>
-                        </div>
-                    </div>
-                </div>
+        <div class="dragula-container" [dragula]="'bag-one'" [dragulaModel]="nonFinalSteps" *ngIf="nonFinalSteps">
+            <div *ngFor="let step of nonFinalSteps" class="step">
+                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" (removeEvent)="stepManagement($event)"></app-action-step>
+                <hr>
             </div>
-            <div class="ui aligned grid" *ngFor="let p of step.parameters">
-                <div class="column">
-                    <label><b>{{p.name + ' :'}}</b></label>
-                    <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value" (valueUpdating)="editableAction.hasChanged = true"></app-parameter-value>
-                </div>
-            </div>
-            <hr>
         </div>
-    </div>
-    <div class="ui form" *ngIf="edit">
-        <div class="fields">
-            <div class="field">
-                <sm-select name="step" class="search" (onChange)="selectPublicAction($event)">
-                    <option *ngFor="let a of publicActions" value="{{a.name}}">{{a.name}}</option>
-                </sm-select>
-            </div>
-            <div class="field">
-                <button name="addstepbtn" class="ui left floated blue button" (click)="addStep()"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
-            </div>
+        <ng-container *ngIf="edit">
+            <app-action-step-form [publicActions]="publicActions" [final]="false" (create)="stepManagement($event)"></app-action-step-form>
+        </ng-container>
 
+    </div>
+
+
+    <div class="ui segment">
+        <h2>{{ 'action_step_final_title' | translate }}</h2>
+        <div class="dragula-container" [dragula]="'bag-one'" [dragulaModel]="finalSteps" *ngIf="finalSteps">
+            <div *ngFor="let step of finalSteps" class="step">
+                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" (removeEvent)="stepManagement($event)"></app-action-step>
+                <hr>
+            </div>
         </div>
-    </div>
+        <ng-container *ngIf="edit">
+            <app-action-step-form [publicActions]="publicActions" [final]="true" (create)="stepManagement($event)"></app-action-step-form>
+        </ng-container>
 
-
-    <div class="right aligned field" *ngIf="edit">
-        <button name="updatebtn" class="ui green button" *ngIf="editableAction.hasChanged" (click)="sendActionEvent('update')"><i class="save icon"></i>{{ 'job_save' | translate }}</button>
-        <app-delete-button *ngIf="!editableAction.hasChanged" (event)="sendActionEvent('delete')"></app-delete-button>
-    </div>
-
+        <div class="right aligned field" *ngIf="edit">
+            <button name="updatebtn" class="ui green button" *ngIf="editableAction.hasChanged" (click)="sendActionEvent('update')"><i class="save icon"></i>{{ 'job_save' | translate }}</button>
+            <app-delete-button *ngIf="!editableAction.hasChanged" (event)="sendActionEvent('delete')"></app-delete-button>
+        </div>
     </div>
 </form>

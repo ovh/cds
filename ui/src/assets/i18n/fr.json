@@ -15,6 +15,7 @@
   "account_verify_error" : "Impossible d'activer le compte.",
 
   "action_step_title" : "Etapes du job",
+  "action_step_final_title" : "Etapes finales du job",
 
   "application_advanced_title" : "Administration de l'application",
   "application_create" : "Créer une application",
