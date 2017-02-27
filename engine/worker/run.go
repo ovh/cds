@@ -137,6 +137,14 @@ func runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob sdk.PipelineBuildJo
 	var doNotRunChildrenAnymore bool
 	var nbDisabledChildren int
 
+	// Nothing to do, success !
+	if len(steps) == 0 {
+		return sdk.Result{
+			Status:  sdk.StatusSuccess,
+			BuildID: pipBuildJob.ID,
+		}, 0
+	}
+
 	r := sdk.Result{
 		Status:  sdk.StatusFail,
 		BuildID: pipBuildJob.ID,
