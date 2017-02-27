@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -52,13 +50,10 @@ func deleteGroupFromProjectHandler(w http.ResponseWriter, r *http.Request, db *g
 		return err
 
 	}
-	lastModified, err := project.UpdateProjectDB(db, p.Key, p.Name)
-	if err != nil {
-		log.Warning("deleteGroupFromProjectHandler: Cannot update project last modified date: %s\n", err)
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("deleteGroupFromProjectHandler: Cannot update last modified date: %s\n", err)
 		return err
-
 	}
-	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("deleteGroupFromProjectHandler: Cannot commit transaction:  %s\n", err)
@@ -81,17 +76,9 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 	key := vars["permProjectKey"]
 	groupName := vars["group"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	var groupProject sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupProject); err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &groupProject); err != nil {
+		return err
 	}
 
 	if groupName != groupProject.Group.Name {
@@ -154,13 +141,10 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 
 	}
 
-	lastModified, err := project.UpdateProjectDB(db, p.Key, p.Name)
-	if err != nil {
-		log.Warning("updateGroupRoleHandler: Cannot update project last modified date: %s\n", err)
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("updateGroupRoleHandler: Cannot update last modified date: %s\n", err)
 		return err
-
 	}
-	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("updateGroupRoleHandler: Cannot start transaction: %s\n", err)
@@ -182,18 +166,9 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	var groupProject []sdk.GroupPermission
-	err = json.Unmarshal(data, &groupProject)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &groupProject); err != nil {
+		return err
 	}
 
 	if len(groupProject) == 0 {
@@ -264,22 +239,13 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 }
 
 func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	var groupProject sdk.GroupPermission
-	if err := json.Unmarshal(data, &groupProject); err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &groupProject); err != nil {
+		return err
 	}
 
 	p, err := project.Load(db, key, c.User)
@@ -415,13 +381,10 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		}
 	}
 
-	lastModified, err := project.UpdateProjectDB(db, p.Key, p.Name)
-	if err != nil {
-		log.Warning("AddGroupInProject: Cannot update project last modified date: %s\n", err)
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		log.Warning("AddGroupInProject: Cannot update last modified date: %s\n", err)
 		return err
-
 	}
-	p.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("AddGroupInProject: Cannot commit transaction:  %s\n", err)

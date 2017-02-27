@@ -153,14 +153,9 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	name := vars["permActionName"]
 
 	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-
-	a, errJSON := sdk.NewAction("").FromJSON(data)
-	if errJSON != nil {
-		return sdk.ErrWrongRequest
+	var a sdk.Action
+	if err := UnmarshalBody(r, &a); err != nil {
+		return err
 	}
 
 	// Check that action  already exists
@@ -180,7 +175,7 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	a.ID = actionDB.ID
 
-	if err = action.UpdateActionDB(tx, a, c.User.ID); err != nil {
+	if err = action.UpdateActionDB(tx, &a, c.User.ID); err != nil {
 		log.Warning("updateAction: Cannot update action: %s\n", err)
 		return err
 	}
@@ -194,15 +189,9 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 }
 
 func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-
-	a, errJSON := sdk.NewAction("").FromJSON(data)
-	if errJSON != nil {
-		return sdk.ErrWrongRequest
+	var a sdk.Action
+	if err := UnmarshalBody(r, &a); err != nil {
+		return err
 	}
 
 	// Check that action does not already exists
@@ -223,7 +212,7 @@ func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	defer tx.Rollback()
 
 	a.Type = sdk.DefaultAction
-	if err := action.InsertAction(tx, a, true); err != nil {
+	if err := action.InsertAction(tx, &a, true); err != nil {
 		log.Warning("Action: Cannot insert action: %s\n", err)
 		return err
 
@@ -299,14 +288,8 @@ func importActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 			return err
 		}
 	} else { // a jsonified action is posted in body
-		btes, errRead := ioutil.ReadAll(r.Body)
-		if errRead != nil {
-			return sdk.ErrWrongRequest
-		}
-
-		a, err = sdk.NewAction("").FromJSON(btes)
-		if err != nil {
-			return sdk.ErrWrongRequest
+		if err := UnmarshalBody(r, a); err != nil {
+			return err
 		}
 	}
 

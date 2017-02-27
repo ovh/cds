@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -417,7 +418,7 @@ func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *conte
 func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {
 	b, e := json.Marshal(data)
 	if e != nil {
-		log.Warning("return WriteJSON> unable to marshal : %s", e)
+		log.Warning("WriteJSON> unable to marshal : %s", e)
 		return sdk.ErrUnknownError
 
 	}
@@ -425,6 +426,19 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(b)
+	return nil
+}
+
+// UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
+func UnmarshalBody(r *http.Request, i interface{}) error {
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		return sdk.ErrWrongRequest
+	}
+	if err := json.Unmarshal(data, i); err != nil {
+		log.Warning("UnmarshalBody> unable to unmarshal %s : %s", string(data), err)
+		return sdk.ErrWrongRequest
+	}
 	return nil
 }
 

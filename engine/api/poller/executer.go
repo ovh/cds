@@ -115,17 +115,11 @@ func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 }
 
 func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) error {
-	proj, err := project.LoadProjectByPipelineID(tx, poller.Pipeline.ID)
+	proj, err := project.LoadByPipelineID(tx, nil, poller.Pipeline.ID)
 	if err != nil {
 		log.Warning("Polling.triggerPipelines> Cannot load project for pipeline %s: %s\n", poller.Pipeline.Name, err)
 		return err
 	}
-	projectsVar, err := project.GetAllVariableInProject(tx, proj.ID)
-	if err != nil {
-		log.Warning("Polling.triggerPipelines> Cannot load project variable: %s\n", err)
-		return err
-	}
-	proj.Variable = projectsVar
 
 	e.PipelineBuildVersions = map[string]int64{}
 

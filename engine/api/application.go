@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -305,16 +303,8 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	var app sdk.Application
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addApplicationHandler: Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-	err = json.Unmarshal(data, &app)
-	if err != nil {
-		log.Warning("addApplicationHandler: Cannot unmarshal request: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &app); err != nil {
+		return err
 	}
 
 	// check application name pattern
@@ -416,7 +406,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	projectData, errProj := project.Load(db, projectKey, c.User)
+	proj, errProj := project.Load(db, projectKey, c.User)
 	if errProj != nil {
 		log.Warning("cloneApplicationHandler> Cannot load %s: %s\n", projectKey, errProj)
 		return sdk.ErrNoProject
@@ -428,16 +418,11 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return errE
 
 	}
-	projectData.Environments = envs
+	proj.Environments = envs
 
 	var newApp sdk.Application
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-	if err := json.Unmarshal(data, &newApp); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &newApp); err != nil {
+		return err
 	}
 
 	appToClone, errApp := application.LoadApplicationByName(db, projectKey, applicationName)
@@ -453,17 +438,15 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	defer tx.Rollback()
 
-	if err := cloneApplication(tx, projectData, &newApp, appToClone); err != nil {
+	if err := cloneApplication(tx, proj, &newApp, appToClone); err != nil {
 		log.Warning("cloneApplicationHandler> Cannot insert new application %s: %s\n", newApp.Name, err)
 		return err
 	}
 
-	lastModified, errLM := project.UpdateProjectDB(tx, projectData.Key, projectData.Name)
-	if errLM != nil {
-		log.Warning("cloneApplicationHandler> Cannot update project last modified date: %s\n", errLM)
-		return errLM
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		log.Warning("cloneApplicationHandler: Cannot update last modified date: %s\n", err)
+		return err
 	}
-	projectData.LastModified = lastModified
 
 	if err := tx.Commit(); err != nil {
 		log.Warning("cloneApplicationHandler> Cannot commit transaction : %s\n", err)
@@ -594,16 +577,8 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 
 	var appPost sdk.Application
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateApplicationHandler> Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-	err = json.Unmarshal(data, &appPost)
-	if err != nil {
-		log.Warning("updateApplicationHandler> Cannot unmarshal request: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &appPost); err != nil {
+		return err
 	}
 
 	// check application name pattern

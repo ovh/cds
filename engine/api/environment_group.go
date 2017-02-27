@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -23,16 +21,8 @@ func updateGroupRoleOnEnvironmentHandler(w http.ResponseWriter, r *http.Request,
 	envName := vars["permEnvironmentName"]
 	groupName := vars["group"]
 
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateGroupRoleOnEnvironmentHandler: Cannot read body :%s", err)
-		return sdk.ErrWrongRequest
-	}
-
 	var groupEnvironment sdk.GroupPermission
-	err = json.Unmarshal(data, &groupEnvironment)
-	if err != nil {
-		log.Warning("updateGroupRoleOnEnvironmentHandler: Cannot unmarshal body :%s", err)
+	if err := UnmarshalBody(r, &groupEnvironment); err != nil {
 		return err
 	}
 
@@ -75,18 +65,9 @@ func addGroupInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addGroupInEnvironmentHandler: Cannot read body :%s", err)
-		return sdk.ErrWrongRequest
-	}
-
 	var groupPermission sdk.GroupPermission
-	err = json.Unmarshal(data, &groupPermission)
-	if err != nil {
-		log.Warning("addGroupInEnvironmentHandler: Cannot unmarshal body :%s", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &groupPermission); err != nil {
+		return err
 	}
 
 	env, err := environment.LoadEnvironmentByName(db, key, envName)

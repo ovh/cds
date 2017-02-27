@@ -22,7 +22,7 @@ func TestImportInto_Variable(t *testing.T) {
 
 	project.Delete(db, proj.Key)
 
-	test.NoError(t, project.InsertProject(db, &proj))
+	test.NoError(t, project.Insert(db, &proj))
 
 	env := sdk.Environment{
 		Name:      "testenv",
@@ -142,7 +142,7 @@ func TestImportInto_Group(t *testing.T) {
 
 	project.Delete(db, proj.Key)
 
-	test.NoError(t, project.InsertProject(db, &proj))
+	test.NoError(t, project.Insert(db, &proj))
 
 	oldEnv, _ := environment.LoadEnvironmentByName(db, proj.Key, "testenv")
 	if oldEnv != nil {

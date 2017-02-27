@@ -2,9 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -127,17 +125,11 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
+	var userBody sdk.User
+	if err := UnmarshalBody(r, &userBody); err != nil {
+		return err
 	}
 
-	var userBody sdk.User
-	err = json.Unmarshal(data, &userBody)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
 	userBody.ID = userDB.ID
 
 	if !user.IsValidEmail(userBody.Email) {
@@ -172,15 +164,8 @@ func AddUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.
 		return sdk.ErrForbidden
 	}
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return err
-	}
-
 	createUserRequest := sdk.UserAPIRequest{}
-	err = json.Unmarshal(data, &createUserRequest)
-	if err != nil {
+	if err := UnmarshalBody(r, &createUserRequest); err != nil {
 		return err
 	}
 
@@ -262,20 +247,9 @@ func ResetUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	vars := mux.Vars(r)
 	username := vars["name"]
 
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("Cannot read body: %s\n", err)
-		return err
-
-	}
-
 	resetUserRequest := sdk.UserAPIRequest{}
-	err = json.Unmarshal(data, &resetUserRequest)
-	if err != nil {
-		log.Warning("Cannot unmarshal body: %s\n", err)
+	if err := UnmarshalBody(r, &resetUserRequest); err != nil {
 		return err
-
 	}
 
 	// Load user
@@ -386,17 +360,9 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 
 // LoginUser take user credentials and creates a auth token
 func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get body
-	data, errr := ioutil.ReadAll(r.Body)
-	if errr != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
 	loginUserRequest := sdk.UserLoginRequest{}
-	if err := json.Unmarshal(data, &loginUserRequest); err != nil {
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &loginUserRequest); err != nil {
+		return err
 	}
 
 	var logFromCLI bool
@@ -466,15 +432,9 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 }
 
 func importUsersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get body
-	data, errr := ioutil.ReadAll(r.Body)
-	if errr != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	var users = []sdk.User{}
-	if err := json.Unmarshal(data, &users); err != nil {
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &users); err != nil {
+		return err
 	}
 
 	_, hashedToken, err := user.GeneratePassword()

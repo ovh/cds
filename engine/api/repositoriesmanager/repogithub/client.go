@@ -403,65 +403,44 @@ func (g *GithubClient) RateLimit() error {
 func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCSPushEvent, time.Duration, error) {
 	log.Debug("GithubClient.PushEvents> loading events for %s after %v", fullname, dateRef)
 	var events = []Event{}
-	var nextPage = "/repos/" + fullname + "/events"
 
 	interval := 60 * time.Second
-	defaultDelay := 60 * time.Second
-	for {
-		if nextPage != "" {
-			status, body, headers, err := g.get(nextPage)
-			if err != nil {
-				log.Warning("GithubClient.PushEvents> Error %s", err)
-				return nil, defaultDelay, err
-			}
 
-			if status >= http.StatusBadRequest {
-				err := sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
-				log.Warning("GithubClient.PushEvents> Error http %s", err)
-				return nil, defaultDelay, err
-			}
+	status, body, headers, err := g.get("/repos/" + fullname + "/events")
+	if err != nil {
+		log.Warning("GithubClient.PushEvents> Error %s", err)
+		return nil, interval, err
+	}
 
-			if status == http.StatusNotModified {
-				return nil, defaultDelay, fmt.Errorf("No new events")
-			}
+	if status >= http.StatusBadRequest {
+		err := sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
+		log.Warning("GithubClient.PushEvents> Error http %s", err)
+		return nil, interval, err
+	}
 
-			//Get events for this page
-			nextEvents := []Event{}
-			if err := json.Unmarshal(body, &nextEvents); err != nil {
-				log.Warning("GithubClient.PushEvents> Unable to parse github events: %s", err)
-				return nil, defaultDelay, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
-			}
+	if status == http.StatusNotModified {
+		return nil, interval, fmt.Errorf("No new events")
+	}
 
-			nextPage = getNextPage(headers)
-
-			//Check here only events after the reference date and only of type PushEvent
-			nextEventsAfterDateRef := []Event{}
-			for _, e := range nextEvents {
-				if e.CreatedAt.After(dateRef) {
-					if e.Type == "PushEvent" || e.Type == "CreateEvent" { //May be we should manage PullRequestEvent; payload.action = opened
-						nextEventsAfterDateRef = append(nextEventsAfterDateRef, e)
-					}
-				} else {
-					//If you found a ant older than the dateRef, stop get events
-					nextPage = ""
-				}
+	nextEvents := []Event{}
+	if err := json.Unmarshal(body, &nextEvents); err != nil {
+		log.Warning("GithubClient.PushEvents> Unable to parse github events: %s", err)
+		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
+	}
+	//Check here only events after the reference date and only of type PushEvent or CreateEvent
+	for _, e := range nextEvents {
+		if e.CreatedAt.After(dateRef) {
+			if e.Type == "PushEvent" || e.Type == "CreateEvent" { //May be we should manage PullRequestEvent; payload.action = opened
+				events = append(events, e)
 			}
+		}
+	}
 
-			events = append(events, nextEventsAfterDateRef...)
-
-			//Check poll interval
-			if headers.Get("X-Poll-Interval") != "" {
-				f, err := strconv.ParseFloat(headers.Get("X-Poll-Interval"), 64)
-				if err == nil {
-					interval = time.Duration(f) * time.Second
-				}
-			}
-			//Only wait if there is an other page
-			if nextPage != "" {
-				time.Sleep(interval)
-			}
-		} else {
-			break
+	//Check poll interval
+	if headers.Get("X-Poll-Interval") != "" {
+		f, err := strconv.ParseFloat(headers.Get("X-Poll-Interval"), 64)
+		if err == nil {
+			interval = time.Duration(f) * time.Second
 		}
 	}
 

@@ -2,9 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -21,18 +19,10 @@ import (
 )
 
 func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Read body
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-
 	// Unmarshal body
 	params := &worker.RegistrationForm{}
-	if err := json.Unmarshal(data, params); err != nil {
-		fmt.Printf("registerWorkerHandler: Cannot unmarshal parameters: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, params); err != nil {
+		return err
 	}
 
 	// Check that hatchery exists

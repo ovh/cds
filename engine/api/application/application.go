@@ -121,16 +121,6 @@ func LoadApplications(db gorp.SqlExecutor, projectKey string, withPipelines, wit
 	return apps, nil
 }
 
-// CountApplicationByProject Count the number of applications in the given project
-func CountApplicationByProject(db gorp.SqlExecutor, projectID int64) (int, error) {
-	var count int
-	query := `SELECT COUNT(application.id)
-		  FROM application
-		  WHERE application.project_id =$1`
-	err := db.QueryRow(query, projectID).Scan(&count)
-	return count, err
-}
-
 // LoadApplicationByName load the given application
 func LoadApplicationByName(db gorp.SqlExecutor, projectKey, appName string, fargs ...FuncArg) (*sdk.Application, error) {
 	var app sdk.Application

@@ -48,11 +48,11 @@ testcases:
   - script: cds trigger list ITSCTRIGGER/TestApp/deploy/foo
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring build
+      - result.systemout ShouldContainSubstring build
   - script: cds trigger list ITSCTRIGGER/TestApp/deploy/foo
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring it
+      - result.systemout ShouldContainSubstring it
 
 - name: run chained pipelines
   steps:
@@ -63,7 +63,7 @@ testcases:
   - script: cds pipeline history ITSCTRIGGER TestApp build
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring 2
+      - result.systemout ShouldContainSubstring 2
   - script: cds pipeline logs ITSCTRIGGER TestApp build
 
 - name: expect .cds.version to be 2
@@ -71,7 +71,7 @@ testcases:
   - script: cds pipeline logs ITSCTRIGGER TestApp build
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring v2
+      - result.systemout ShouldContainSubstring v2
 
 - name: for testapp/build to trigger testapp/deploy...
   steps:
@@ -82,7 +82,7 @@ testcases:
   - script: cds pipeline history ITSCTRIGGER TestApp deploy foo
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring 4
+      - result.systemout ShouldContainSubstring 4
   - script: cds pipeline logs ITSCTRIGGER TestApp deploy foo
 
 - name: expect .cds.version to be 2
@@ -90,14 +90,14 @@ testcases:
   - script: cds pipeline logs ITSCTRIGGER TestApp deploy foo
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring v2
+      - result.systemout ShouldContainSubstring v2
 
 - name: expect environment to be foo and variable .cds.env.name to be foo
   steps:
   - script: cds pipeline logs ITSCTRIGGER TestApp deploy foo
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring foo
+      - result.systemout ShouldContainSubstring foo
 
 - name: for testapp/deploy trigger testapp/it
   steps:
@@ -108,7 +108,7 @@ testcases:
   - script: cds pipeline history ITSCTRIGGER TestApp it bar
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring 5
+      - result.systemout ShouldContainSubstring 5
   - script: cds pipeline logs ITSCTRIGGER TestApp it bar
 
 - name: expect .cds.version to be 2
@@ -116,14 +116,14 @@ testcases:
   - script: cds pipeline logs ITSCTRIGGER TestApp it bar
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring v2
+      - result.systemout ShouldContainSubstring v2
 
 - name: expect environment to be bar and variable .cds.env.name to be bar
   steps:
   - script: cds pipeline logs ITSCTRIGGER TestApp it bar
     assertions:
       - result.code ShouldEqual 0
-      - result.stdout ShouldContainSubstring bar
+      - result.systemout ShouldContainSubstring bar
 
 - name: delete trigger
   steps:

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -64,23 +63,13 @@ func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
 
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("attachPipelinesToApplicationHandler>Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-
 	var pipelines []string
-	err = json.Unmarshal([]byte(data), &pipelines)
-	if err != nil {
-		log.Warning("attachPipelinesToApplicationHandler: Cannot unmarshal body: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &pipelines); err != nil {
+		return err
 	}
 
 	project, err := project.Load(db, key, c.User)
@@ -154,18 +143,9 @@ func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	key := vars["key"]
 	appName := vars["permApplicationName"]
 
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updatePipelinesToApplicationHandler>Cannot read body: %s\n", err)
-		return sdk.ErrUnknownError
-	}
-
 	var appPipelines []sdk.ApplicationPipeline
-	err = json.Unmarshal([]byte(data), &appPipelines)
-	if err != nil {
-		log.Warning("updatePipelinesToApplicationHandler: Cannot unmarshal body: %s\n", err)
-		return sdk.ErrUnknownError
+	if err := UnmarshalBody(r, &appPipelines); err != nil {
+		return err
 	}
 
 	app, err := application.LoadApplicationByName(db, key, appName)
@@ -275,7 +255,7 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 		return err
 	}
 
-	if err := application.UpdateLastModified(db, a); err != nil {
+	if err := application.UpdateLastModified(tx, a); err != nil {
 		log.Warning("removePipelineFromApplicationHandler> Cannot update application last modified date: %s\n", err)
 		return err
 	}
@@ -462,14 +442,8 @@ func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	appName := vars["permApplicationName"]
 
 	var notifs []sdk.UserNotification
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addNotificationsHandler: Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-	}
-	if err := json.Unmarshal(data, &notifs); err != nil {
-		log.Warning("addNotificationsHandler: Cannot unmarshal request: %s\n", err)
-		return sdk.ErrWrongRequest
+	if err := UnmarshalBody(r, &notifs); err != nil {
+		return err
 	}
 
 	app, errApp := application.LoadApplicationByName(db, key, appName)
@@ -558,13 +532,9 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	}
 
 	//Parse notification settings
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-	}
 	notifs := &sdk.UserNotification{}
-	if err := json.Unmarshal(data, notifs); err != nil {
-		return sdk.ErrParseUserNotification
+	if err := UnmarshalBody(r, &notifs); err != nil {
+		return err
 	}
 
 	//Load environment

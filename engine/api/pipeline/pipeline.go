@@ -28,16 +28,6 @@ func UpdatePipelineLastModified(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	return err
 }
 
-// CountPipelineByProject Count the number of pipelines for the given project
-func CountPipelineByProject(db gorp.SqlExecutor, projectID int64) (int, error) {
-	var nbPipelines int
-	query := `SELECT count(pipeline.id)
-	          FROM pipeline
-	 	  WHERE pipeline.project_id = $1`
-	err := db.QueryRow(query, projectID).Scan(&nbPipelines)
-	return nbPipelines, err
-}
-
 // LoadPipeline loads a pipeline from database
 func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
 	var p sdk.Pipeline

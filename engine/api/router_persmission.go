@@ -32,7 +32,7 @@ func loadUserPermissions(db gorp.SqlExecutor, user *sdk.User) error {
 			return err
 		}
 
-		if err := project.LoadProjectByGroup(db, &group); err != nil {
+		if err := project.LoadByGroup(db, &group); err != nil {
 			return err
 		}
 
@@ -68,7 +68,7 @@ func loadGroupPermissions(db gorp.SqlExecutor, groupID int64) (*sdk.Group, error
 		return nil, fmt.Errorf("no group with id %d: %s", groupID, err)
 	}
 
-	if err := project.LoadProjectByGroup(db, group); err != nil {
+	if err := project.LoadByGroup(db, group); err != nil {
 		return nil, err
 	}
 

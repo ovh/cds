@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -31,19 +29,9 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	}
 
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("addJobToStageHandler> Cannot read body: %s\n", err)
-		return sdk.ErrWrongRequest
-
-	}
-
 	var job sdk.Job
-	if err := json.Unmarshal(data, &job); err != nil {
-		log.Warning("addJobToStageHandler> Cannot unmarshal body: %s\n", err)
-		return sdk.ErrWrongRequest
-
+	if err := UnmarshalBody(r, &job); err != nil {
+		return err
 	}
 
 	pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
@@ -132,18 +120,8 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	}
 
 	var job sdk.Job
-	// Get args in body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("updateJobHandler>Cannot read body: %s\n", err)
+	if err := UnmarshalBody(r, &job); err != nil {
 		return err
-
-	}
-
-	if err := json.Unmarshal(data, &job); err != nil {
-		log.Warning("updateJobHandler>Cannot unmarshal request: %s\n", err)
-		return err
-
 	}
 
 	if jobID != job.PipelineActionID {

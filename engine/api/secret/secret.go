@@ -7,9 +7,12 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
 	"github.com/ovh/cds/engine/api/secret/secretbackend"
@@ -25,13 +28,28 @@ const (
 )
 
 var (
-	key           []byte
-	prefix        = "3DICC3It"
-	defaultKey    = []byte("78eKVxCGLm6gwoH9LAQ15ZD5AOABo1Xf")
-	testingPrefix = "3IFCC4Ib"
+	key                            []byte
+	prefix                         = "3DICC3It"
+	defaultKey                     = []byte("78eKVxCGLm6gwoH9LAQ15ZD5AOABo1Xf")
+	testingPrefix                  = "3IFCC4Ib"
+	SecretUsername, SecretPassword string
 	//Client is a shared instance
 	Client secretbackend.Driver
 )
+
+type databaseInstance struct {
+	Port int    `json:"port"`
+	Host string `json:"host"`
+}
+
+type databaseCredentials struct {
+	Readers  []databaseInstance `json:"readers"`
+	Writers  []databaseInstance `json:"writers"`
+	Database string             `json:"database"`
+	Password string             `json:"password"`
+	User     string             `json:"user"`
+	Type     string             `json:"type"`
+}
 
 // Init password manager
 // if secretBackendBinary is empty, use default AES key and default file secret backend
@@ -55,19 +73,42 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 		}
 	}
 
+	secrets := Client.GetSecrets()
+	if secrets.Err() != nil {
+		log.Critical("Error: %v", secrets.Err())
+		return secrets.Err()
+	}
+
 	//If key hasn't been initilized with default key
 	if len(key) == 0 {
-		secrets := Client.GetSecrets()
-		if secrets.Err() != nil {
-			return secrets.Err()
-		}
 		aesKey, _ := secrets.Get("cds/aes-key")
 		if aesKey == "" {
 			log.Critical("secret.Init> cds/aes-key not found\n")
 			return sdk.ErrSecretKeyFetchFailed
 		}
 		key = []byte(aesKey)
+
 	}
+
+	dbKey := viper.GetString("DB_SECRET")
+	if dbKey == "" {
+		return nil
+	}
+	cdsDBCredS, _ := secrets.Get(dbKey)
+	if cdsDBCredS == "" {
+		log.Critical("secret.Init> %s not found", dbKey)
+		return nil
+	}
+
+	var cdsDBCred = databaseCredentials{}
+	if err := json.Unmarshal([]byte(cdsDBCredS), &cdsDBCred); err != nil {
+		log.Critical("secret.Init> Unable to unmarshal secret %s", err)
+		return nil
+	}
+
+	log.Notice("secret.Init> Database credentials found")
+	SecretUsername = cdsDBCred.User
+	SecretPassword = cdsDBCred.Password
 
 	return nil
 }
