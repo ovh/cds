@@ -30,13 +30,6 @@ func (a *dbApplication) PostGet(db gorp.SqlExecutor) error {
 		}
 		a.Metadata = metadata
 	}
-
-	pkey, errP := db.SelectStr("select projectkey from project where id = $1", a.ProjectID)
-	if errP != nil {
-		return errP
-	}
-
-	a.ProjectKey = pkey
 	return nil
 }
 

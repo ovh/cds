@@ -1,11 +1,10 @@
 package application
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"database/sql"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -63,7 +62,7 @@ func LoadByName(db gorp.SqlExecutor, projectKey, appName string, u *sdk.User, op
 		args = []interface{}{projectKey, appName, u.ID}
 	}
 
-	return load(db, u, opts, query, args...)
+	return load(db, projectKey, u, opts, query, args...)
 }
 
 // LoadByID load an application from DB
@@ -88,7 +87,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc
 		args = []interface{}{id, u.ID}
 	}
 
-	return load(db, u, opts, query, args...)
+	return load(db, "", u, opts, query, args...)
 }
 
 // LoadByPipeline Load application where pipeline is attached
@@ -105,7 +104,7 @@ func LoadByPipeline(db gorp.SqlExecutor, pipelineID int64, u *sdk.User, opts ...
 	return app, nil
 }
 
-func load(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
+func load(db gorp.SqlExecutor, key string, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
 	log.Debug("application.load> %s %v", query, args)
 	dbApp := dbApplication{}
 	if err := db.SelectOne(&dbApp, query, args...); err != nil {
@@ -114,11 +113,20 @@ func load(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string,
 		}
 		return nil, sdk.WrapError(err, "application.load")
 	}
+	dbApp.ProjectKey = key
 	return unwrap(db, u, opts, &dbApp)
 }
 
 func unwrap(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, dbApp *dbApplication) (*sdk.Application, error) {
 	app := sdk.Application(*dbApp)
+
+	if app.ProjectKey == "" {
+		pkey, errP := db.SelectStr("select projectkey from project where id = $1", app.ProjectID)
+		if errP != nil {
+			return nil, sdk.WrapError(errP, "application.unwrap")
+		}
+		app.ProjectKey = pkey
+	}
 
 	if u != nil {
 		loadPermission(db, &app, u)
