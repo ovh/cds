@@ -91,11 +91,6 @@ func replaceBuildVariablesPlaceholder(a *sdk.Action) {
 }
 
 func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, stepName string) sdk.Result {
-	r := sdk.Result{
-		Status:  sdk.StatusFail,
-		BuildID: pipBuildJob.ID,
-	}
-
 	// Replace build variable placeholder that may have been added by last step
 	replaceBuildVariablesPlaceholder(a)
 
@@ -108,11 +103,11 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, s
 
 	// Nothing to do, success !
 	if len(a.Actions) == 0 {
-		r.Status = sdk.StatusSuccess
-		return r
+		return sdk.Result{
+			Status:  sdk.StatusSuccess,
+			BuildID: pipBuildJob.ID,
+		}
 	}
-
-	var nbDisabledChildren int
 
 	finalActions := []sdk.Action{}
 	noFinalActions := []sdk.Action{}
@@ -124,17 +119,45 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, s
 		}
 	}
 
+	r, nDisabled := runSteps(noFinalActions, a, pipBuildJob, stepOrder, stepName, 0)
+	//If all steps are disabled, set action status to disabled
+	if nDisabled >= (len(a.Actions) - len(finalActions)) {
+		r.Status = sdk.StatusDisabled
+	}
+
+	rFinal, _ := runSteps(finalActions, a, pipBuildJob, stepOrder, stepName, len(noFinalActions))
+
+	if r.Status == sdk.StatusFail {
+		return r
+	}
+	return rFinal
+}
+
+func runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
 	var doNotRunChildrenAnymore bool
-	for i, child := range noFinalActions {
+	var nbDisabledChildren int
+
+	// Nothing to do, success !
+	if len(steps) == 0 {
+		return sdk.Result{
+			Status:  sdk.StatusSuccess,
+			BuildID: pipBuildJob.ID,
+		}, 0
+	}
+
+	r := sdk.Result{
+		Status:  sdk.StatusFail,
+		BuildID: pipBuildJob.ID,
+	}
+
+	for i, child := range steps {
 		if stepOrder == -1 {
-			currentStep = i
+			currentStep = stepBaseCount + i
 		} else {
 			currentStep = stepOrder
 		}
-
+		childName := fmt.Sprintf("%s/%s-%d", stepName, child.Name, i+1)
 		if !child.Enabled {
-			childName := fmt.Sprintf("%s/%s-%d", a.Name, child.Name, i+1)
-
 			// Update step status and continue
 			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusDisabled.String()); err != nil {
 				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
@@ -146,14 +169,11 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, s
 		}
 
 		if !doNotRunChildrenAnymore {
-			childName := fmt.Sprintf("%s/%s-%d", stepName, child.Name, i+1)
 			log.Printf("Running %s\n", childName)
-
 			// Update step status
 			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusBuilding.String()); err != nil {
 				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
-
 			sendLog(pipBuildJob.ID, fmt.Sprintf("Starting step %s", childName), pipBuildJob.PipelineBuildID, currentStep, false)
 
 			r = startAction(&child, pipBuildJob, currentStep, childName)
@@ -170,39 +190,7 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, s
 			}
 		}
 	}
-
-	//If all steps are disabled, set action status to disabled
-	if nbDisabledChildren >= (len(a.Actions) - len(finalActions)) {
-		r.Status = sdk.StatusDisabled
-	}
-
-	for i, child := range finalActions {
-		if stepOrder == -1 {
-			currentStep = len(noFinalActions) + i
-		} else {
-			currentStep = stepOrder
-		}
-
-		childName := fmt.Sprintf("%s/%s-%d", stepName, child.Name, i+1)
-		log.Printf("Running final action : %s\n", childName)
-
-		sendLog(pipBuildJob.ID, fmt.Sprintf("Starting step %s", childName), pipBuildJob.PipelineBuildID, currentStep, false)
-
-		finalActionResult := startAction(&child, pipBuildJob, currentStep, childName)
-
-		sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s [%s]", childName, finalActionResult.Status.String()), pipBuildJob.PipelineBuildID, currentStep, true)
-
-		//If action is success or disabled we consider final action status
-		if r.Status == sdk.StatusSuccess || r.Status == sdk.StatusDisabled {
-			r = finalActionResult
-		}
-		if finalActionResult.Status != sdk.StatusSuccess {
-			log.Printf("Stoping %s at final step %s", a.Name, childName)
-			return r
-		}
-	}
-
-	return r
+	return r, nbDisabledChildren
 }
 
 func updateStepStatus(pbJobID int64, stepOrder int, status string) error {

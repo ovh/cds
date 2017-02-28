@@ -120,6 +120,9 @@ func init() {
 	flags.Int("cache-ttl", 600, "Cache Time to Live (seconds)")
 	viper.BindPFlag("cache_ttl", flags.Lookup("cache-ttl"))
 
+	flags.String("auth-local-mode", "basic", "Authentification mode  basic|session")
+	viper.BindPFlag("auth_local_mode", flags.Lookup("auth-local-mode"))
+
 	flags.Int("session-ttl", 60, "Session Time to Live (minutes)")
 	viper.BindPFlag("session_ttl", flags.Lookup("session-ttl"))
 

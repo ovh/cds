@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
+	"github.com/runabove/venom"
 )
 
 func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {

@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
+	"github.com/runabove/venom"
 )
 
 func Test_computeStats(t *testing.T) {
