@@ -160,6 +160,29 @@ func GetApplication(pk, name string, opts ...RequestModifier) (*Application, err
 	return &a, nil
 }
 
+// UpdateApplication update an application in CDS
+func UpdateApplication(app *Application) error {
+	data, err := json.Marshal(app)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("/project/%s/application/%s", app.ProjectKey, app.Name)
+	data, code, err := Request("PUT", url, data)
+	if err != nil {
+		return err
+	}
+
+	if code != http.StatusOK {
+		return fmt.Errorf("Error [%d]: %s", code, data)
+	}
+	if e := DecodeError(data); e != nil {
+		return e
+	}
+
+	return nil
+}
+
 // RenameApplication renames an application from CDS
 func RenameApplication(pk, name, newName string) error {
 	app := NewApplication(newName)

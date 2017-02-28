@@ -23,6 +23,7 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(applicationPipelineCmd)
 	cmd.AddCommand(applicationRepositoriesManagerCmd)
 	cmd.AddCommand(exportCmd())
+	cmd.AddCommand(cmdMetadata())
 
 	return cmd
 }
