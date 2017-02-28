@@ -237,7 +237,7 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	a, errA := application.LoadByName(db, key, appName, c.User)
+	a, errA := application.LoadByName(db, key, appName, c.User, application.LoadOptions.WithPipelines)
 	if errA != nil {
 		log.Warning("removePipelineFromApplicationHandler> Cannot load application: %s\n", errA)
 		return errA
