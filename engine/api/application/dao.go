@@ -6,6 +6,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"fmt"
+
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -55,11 +58,22 @@ func LoadByName(db gorp.SqlExecutor, projectKey, appName string, u *sdk.User, op
             FROM application 
             JOIN project ON project.id = application.project_id
             JOIN application_group on application.id = application_group.application_id
-            JOIN group_user on application_group.group_id = application_group.group_id
             WHERE project.projectkey = $1
             AND application.name = $2
-            AND group_user.user_id = $3`
-		args = []interface{}{projectKey, appName, u.ID}
+            AND (
+				application_group.group_id = ANY(string_to_array($3, ',')::int[])
+				OR
+				$4 = ANY(string_to_array($3, ',')::int[])
+			)`
+		var groupID string
+		for i, g := range u.Groups {
+			if i == 0 {
+				groupID = fmt.Sprintf("%d", g.ID)
+			} else {
+				groupID += "," + fmt.Sprintf("%d", g.ID)
+			}
+		}
+		args = []interface{}{projectKey, appName, groupID, group.SharedInfraGroup.ID}
 	}
 
 	return load(db, projectKey, u, opts, query, args...)
@@ -81,10 +95,22 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc
             SELECT application.* 
             FROM application 
             JOIN application_group on application.id = application_group.application_id
-            JOIN group_user on application_group.group_id = application_group.group_id
-            AND application.id = $1
-            AND group_user.user_id = $2`
-		args = []interface{}{id, u.ID}
+            WHERE application.id = $1
+            AND (
+				application_group.group_id = ANY(string_to_array($2, ',')::int[])
+				OR
+				$3 = ANY(string_to_array($2, ',')::int[])
+			)`
+		var groupID string
+
+		for i, g := range u.Groups {
+			if i == 0 {
+				groupID = fmt.Sprintf("%d", g.ID)
+			} else {
+				groupID += "," + fmt.Sprintf("%d", g.ID)
+			}
+		}
+		args = []interface{}{id, groupID, group.SharedInfraGroup.ID}
 	}
 
 	return load(db, "", u, opts, query, args...)

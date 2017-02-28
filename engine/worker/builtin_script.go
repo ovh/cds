@@ -122,6 +122,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", pKEY, pkey))
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", GitSSH, gitssh))
 	}
+
 	workerpath, err := osext.Executable()
 	if err != nil {
 		log.Warning("runScriptAction: Cannot get worker path: %s\n", err)

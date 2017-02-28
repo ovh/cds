@@ -108,6 +108,7 @@ func InsertLambaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (*
 	for _, g := range groups {
 		group.InsertGroup(db, g)
 		group.InsertUserInGroup(db, g.ID, u.ID, false)
+		u.Groups = append(u.Groups, *g)
 	}
 	return u, password
 }

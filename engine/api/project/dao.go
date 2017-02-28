@@ -2,6 +2,7 @@ package project
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -26,11 +27,21 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User, opts ...loadOptionFunc) ([]sdk.Pr
 				WHERE project.id IN (
 					SELECT project_group.project_id
 					FROM project_group
-					JOIN group_user ON project_group.group_id = group_user.group_id
-					WHERE group_user.user_id = $1
+					WHERE 
+						project_group.group_id = ANY(string_to_array($1, ',')::int[])
+						OR
+						$2 = ANY(string_to_array($1, ',')::int[])
 				)
 				ORDER by project.name, project.projectkey ASC`
-		args = []interface{}{u.ID}
+		var groupID string
+		for i, g := range u.Groups {
+			if i == 0 {
+				groupID = fmt.Sprintf("%d", g.ID)
+			} else {
+				groupID += "," + fmt.Sprintf("%d", g.ID)
+			}
+		}
+		args = []interface{}{groupID, group.SharedInfraGroup.ID}
 	}
 	return loadprojects(db, u, opts, query, args...)
 }
@@ -199,6 +210,7 @@ func LoadByPipelineID(db gorp.SqlExecutor, u *sdk.User, pipelineID int64, opts .
 }
 
 func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
+	log.Debug("loadprojects> %s %v", query, args)
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {

@@ -6,13 +6,14 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestLoadByNameAsAdmin(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
 	proj := assets.InsertTestProject(t, db, key, key)
 	app := sdk.Application{
@@ -30,7 +31,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 }
 
 func TestLoadByNameAsUser(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
 	proj := assets.InsertTestProject(t, db, key, key)
 	app := sdk.Application{
@@ -52,7 +53,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 }
 
 func TestLoadByIDAsAdmin(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
 	proj := assets.InsertTestProject(t, db, key, key)
 	app := sdk.Application{
@@ -70,7 +71,7 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 }
 
 func TestLoadByIDAsUser(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
 	proj := assets.InsertTestProject(t, db, key, key)
 	app := sdk.Application{
@@ -92,7 +93,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 }
 
 func TestLoadAllAsAdmin(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
 	proj := assets.InsertTestProject(t, db, key, key)
 	app := sdk.Application{
@@ -124,7 +125,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 }
 
 func TestLoadAllAsUser(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
 	proj := assets.InsertTestProject(t, db, key, key)
 	app := sdk.Application{
