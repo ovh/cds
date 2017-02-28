@@ -72,11 +72,8 @@ func AddApplication(key, appName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+
+	return DecodeError(data)
 }
 
 // ListApplications returns all available application for the given project
@@ -176,11 +173,8 @@ func UpdateApplication(app *Application) error {
 	if code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	if e := DecodeError(data); e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // RenameApplication renames an application from CDS
@@ -201,12 +195,8 @@ func RenameApplication(pk, name, newName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // DeleteApplication delete an application from CDS
@@ -268,12 +258,8 @@ func AddApplicationVariable(projectKey, appName, varName, varValue string, varTy
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // GetVariableInApplication Get a variable in the given application
@@ -289,13 +275,11 @@ func GetVariableInApplication(projectKey, appName, name string) (*Variable, erro
 	if code != http.StatusCreated && code != http.StatusOK {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
+	if e := DecodeError(data); e != nil {
 		return nil, e
 	}
 
-	err = json.Unmarshal(data, &v)
-	if err != nil {
+	if err := json.Unmarshal(data, &v); err != nil {
 		return nil, err
 	}
 
@@ -330,12 +314,8 @@ func UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, 
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveApplicationVariable  remove a variable from an application
@@ -349,12 +329,8 @@ func RemoveApplicationVariable(projectKey, appName, varName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveGroupFromApplication  call api to remove a group from the given application
@@ -369,11 +345,8 @@ func RemoveGroupFromApplication(projectKey, appName, groupName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+
+	return DecodeError(data)
 }
 
 // UpdateGroupInApplication  call api to update group permission for the given application
@@ -404,11 +377,8 @@ func UpdateGroupInApplication(projectKey, appName, groupName string, permission 
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+
+	return DecodeError(data)
 }
 
 // AddGroupInApplication  add a group in an application
@@ -439,11 +409,8 @@ func AddGroupInApplication(projectKey, appName, groupName string, permission int
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+
+	return DecodeError(data)
 }
 
 // ListApplicationPipeline  list all pipelines attached to the application
@@ -495,12 +462,8 @@ func AddApplicationPipeline(projectKey, appName, pipelineName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateApplicationPipeline  add a pipeline in an application
@@ -520,12 +483,8 @@ func UpdateApplicationPipeline(projectKey, appName, pipelineName string, params 
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveApplicationPipeline  remove a pipeline from an application
@@ -539,12 +498,8 @@ func RemoveApplicationPipeline(projectKey, appName, pipelineName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 //GetPipelineScheduler returns all pipeline scheduler
