@@ -26,14 +26,28 @@ func (t *testingT) Error(args ...interface{}) {
 }
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) (bool, []Failure, []Failure) {
+func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) (bool, []Failure, []Failure, string, string) {
+	isOK, errors, failures, systemout, systemerr := applyAssertions(*executorResult, step, defaultAssertions, l)
+	if !isOK {
+		return isOK, errors, failures, systemout, systemerr
+	}
 
+	isOKExtract, errorsExtract, failuresExtract := applyExtracts(executorResult, step, l)
+
+	errors = append(errors, errorsExtract...)
+	failures = append(failures, failuresExtract...)
+
+	return isOKExtract, errors, failures, systemout, systemerr
+}
+
+func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) (bool, []Failure, []Failure, string, string) {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
+	var systemerr, systemout string
 
 	if err := mapstructure.Decode(step, &sa); err != nil {
-		return false, []Failure{{Value: fmt.Sprintf("error decoding assertions: %s", err)}}, failures
+		return false, []Failure{{Value: fmt.Sprintf("error decoding assertions: %s", err)}}, failures, systemout, systemerr
 	}
 
 	if len(sa.Assertions) == 0 && defaultAssertions != nil {
@@ -53,18 +67,31 @@ func applyChecks(executorResult ExecutorResult, step TestStep, defaultAssertions
 		}
 	}
 
-	return isOK, errors, failures
+	if _, ok := executorResult["result.systemerr"]; ok {
+		systemerr = executorResult["result.systemerr"]
+	}
+
+	if _, ok := executorResult["result.systemout"]; ok {
+		systemout = executorResult["result.systemout"]
+	}
+
+	return isOK, errors, failures, systemout, systemerr
 }
 
 func check(assertion string, executorResult ExecutorResult, l *log.Entry) (*Failure, *Failure) {
 	assert := strings.Split(assertion, " ")
-	if len(assert) < 3 {
+	if len(assert) < 2 {
 		return &Failure{Value: fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert))}, nil
 	}
 
 	actual, ok := executorResult[assert[0]]
 	if !ok {
+		if assert[1] == "ShouldNotExist" {
+			return nil, nil
+		}
 		return &Failure{Value: fmt.Sprintf("key '%s' does not exist in result of executor: %+v", assert[0], executorResult)}, nil
+	} else if assert[1] == "ShouldNotExist" {
+		return &Failure{Value: fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual)}, nil
 	}
 
 	f, ok := assertMap[assert[1]]
@@ -88,6 +115,7 @@ func check(assertion string, executorResult ExecutorResult, l *log.Entry) (*Fail
 
 // assertMap contains list of assertions func
 var assertMap = map[string]func(actual interface{}, expected ...interface{}) string{
+	// "ShouldNotExist" see func check
 	"ShouldEqual":                  assertions.ShouldEqual,
 	"ShouldNotEqual":               assertions.ShouldNotEqual,
 	"ShouldAlmostEqual":            assertions.ShouldAlmostEqual,
@@ -96,8 +124,6 @@ var assertMap = map[string]func(actual interface{}, expected ...interface{}) str
 	"ShouldNotResemble":            assertions.ShouldNotResemble,
 	"ShouldPointTo":                assertions.ShouldPointTo,
 	"ShouldNotPointTo":             assertions.ShouldNotPointTo,
-	"ShouldBeNil":                  assertions.ShouldBeNil,
-	"ShouldNotBeNil":               assertions.ShouldNotBeNil,
 	"ShouldBeTrue":                 assertions.ShouldBeTrue,
 	"ShouldBeFalse":                assertions.ShouldBeFalse,
 	"ShouldBeZeroValue":            assertions.ShouldBeZeroValue,
