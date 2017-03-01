@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pkg/errors"
+
 	"golang.org/x/text/language"
 )
 
@@ -295,8 +297,16 @@ func NewError(target *Error, root error) *Error {
 	return target
 }
 
+// WrapError constructs a stack of errors, adding context to the preceding error.
+func WrapError(err error, format string, args ...interface{}) error {
+	return errors.Wrap(err, fmt.Sprintf(format, args...))
+}
+
 // ProcessError tries to recognize given error and return error message in a language matching Accepted-Language
 func ProcessError(target error, al string) (string, int) {
+	// will recursively retrieve the topmost error which does not implement causer, which is assumed to be the original cause
+	target = errors.Cause(target)
+
 	cdsErr, ok := target.(*Error)
 	if !ok {
 		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError.Status

@@ -62,7 +62,7 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return errP
 	}
 
-	a, errA := application.LoadApplicationByName(db, project, appName)
+	a, errA := application.LoadByName(db, project, appName, c.User)
 	if errA != nil {
 		log.Warning("uploadArtifactHandler> cannot load application %s-%s: %s\n", project, appName, errA)
 		return errA
@@ -189,7 +189,7 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	// Load application
-	a, errA := application.LoadApplicationByName(db, project, appName)
+	a, errA := application.LoadByName(db, project, appName, c.User)
 	if errA != nil {
 		log.Warning("listArtifactsBuildHandler> Cannot load application %s: %s\n", appName, errA)
 		return errA
@@ -250,7 +250,7 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	// Load application
-	a, errA := application.LoadApplicationByName(db, project, appName)
+	a, errA := application.LoadByName(db, project, appName, c.User)
 	if errA != nil {
 		log.Warning("listArtifactsHandler> Cannot load application %s: %s\n", appName, errA)
 		return errA

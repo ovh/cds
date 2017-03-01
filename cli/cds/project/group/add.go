@@ -18,7 +18,6 @@ func cmdProjectAddGroup() *cobra.Command {
 		Long:  ``,
 		Run:   addGroupInProject,
 	}
-	cmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Apply on application/pipeline/environment")
 	return cmd
 }
 
@@ -34,7 +33,7 @@ func addGroupInProject(cmd *cobra.Command, args []string) {
 	if err != nil {
 		sdk.Exit("Permission should be an integer: %s.", err)
 	}
-	err = sdk.AddGroupInProject(projectKey, groupName, permissionInt, recursive)
+	err = sdk.AddGroupInProject(projectKey, groupName, permissionInt)
 	if err != nil {
 		sdk.Exit("Error: cannot add group %s in project %s (%s)\n", groupName, projectKey, err)
 	}

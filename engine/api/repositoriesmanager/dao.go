@@ -303,7 +303,7 @@ func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey 
 	if err != nil {
 		return err
 	}
-	app.LastModified = lastModified.Unix()
+	app.LastModified = lastModified
 
 	k := cache.Key("application", projectKey, "*"+app.Name+"*")
 	cache.DeleteAll(k)
@@ -327,7 +327,7 @@ func DeleteForApplication(db gorp.SqlExecutor, projectKey string, app *sdk.Appli
 	if err != nil {
 		return err
 	}
-	app.LastModified = lastModified.Unix()
+	app.LastModified = lastModified
 
 	k := cache.Key("application", projectKey, "*"+app.Name+"*")
 	cache.DeleteAll(k)

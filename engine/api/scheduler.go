@@ -26,7 +26,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	pipelineName := vars["permPipelineKey"]
 
 	///Load application
-	app, errA := application.LoadApplicationByName(db, key, appName)
+	app, errA := application.LoadByName(db, key, appName, c.User)
 	if errA != nil {
 		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
 		return errA
@@ -88,7 +88,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	pipelineName := vars["permPipelineKey"]
 
 	///Load application
-	app, errA := application.LoadApplicationByName(db, key, appName)
+	app, errA := application.LoadByName(db, key, appName, c.User)
 	if errA != nil {
 		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
 		return errA

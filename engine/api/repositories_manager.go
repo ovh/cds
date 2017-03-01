@@ -259,16 +259,9 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 
 	}
 
-	p, err := project.Load(db, projectKey, c.User)
+	p, err := project.Load(db, projectKey, c.User, project.LoadOptions.WithRepositoriesManagers)
 	if err != nil {
 		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load project %s: %s\n", projectKey, err)
-		return err
-
-	}
-
-	p.ReposManager, err = repositoriesmanager.LoadAllForProject(db, projectKey)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load repositories manager for project %s: %s\n", projectKey, err)
 		return err
 
 	}
@@ -387,7 +380,7 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	rmName := vars["name"]
 	fullname := r.FormValue("fullname")
 
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("attachRepositoriesManager> Cannot load application %s: %s\n", appName, err)
 		return err
@@ -434,10 +427,9 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	appName := vars["permApplicationName"]
 	rmName := vars["name"]
 
-	application, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
 	if err != nil {
-		return sdk.ErrApplicationNotFound
-
+		return err
 	}
 
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
@@ -451,29 +443,19 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	tx, err := db.Begin()
 	defer tx.Rollback()
 
-	if err := repositoriesmanager.DeleteForApplication(tx, projectKey, application); err != nil {
+	if err := repositoriesmanager.DeleteForApplication(tx, projectKey, app); err != nil {
 		log.Warning("detachRepositoriesManager> Cannot delete for application: %s", err)
 		return err
 
 	}
 
-	//Remove reposmanager hooks
-	//Load all hooks
-	hooks, err := hook.LoadApplicationHooks(tx, application.ID)
-	if err != nil {
-		log.Warning("detachRepositoriesManager> Cannot get hooks for application: %s", err)
-		return err
-
-	}
-
-	for _, h := range hooks {
+	for _, h := range app.Hooks {
 		s := viper.GetString("api_url") + hook.HookLink
 		link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
 
 		if err = client.DeleteHook(h.Project+"/"+h.Repository, link); err != nil {
 			log.Warning("detachRepositoriesManager> Cannot delete hook on stash: %s", err)
-			return err
-
+			//do no return, try to delete the hook in database
 		}
 
 		if err := hook.DeleteHook(tx, h.ID); err != nil {
@@ -484,7 +466,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	// Remove reposmanager poller
-	if err := poller.DeleteAll(tx, application.ID); err != nil {
+	if err := poller.DeleteAll(tx, app.ID); err != nil {
 		return err
 
 	}
@@ -495,7 +477,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 
 	}
 
-	return WriteJSON(w, r, application, http.StatusOK)
+	return WriteJSON(w, r, app, http.StatusOK)
 }
 
 func getRepositoriesManagerForApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -517,7 +499,7 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	repoFullname := data["repository_fullname"]
 	pipelineName := data["pipeline_name"]
 
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		return sdk.ErrApplicationNotFound
 
@@ -568,7 +550,7 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 
 	}
 
-	if err := application.UpdateLastModified(tx, app); err != nil {
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("addHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
 		return err
 
@@ -605,7 +587,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	}
 
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("deleteHookOnRepositoriesManagerHandler> Application not found %s", err)
 		return err
@@ -633,7 +615,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	}
 
-	if err = application.UpdateLastModified(tx, app); err != nil {
+	if err = application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
 		return err
 
@@ -755,7 +737,7 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	defer tx.Rollback()
 
 	//Insert application in database
-	if err := application.InsertApplication(tx, proj, &app); err != nil {
+	if err := application.Insert(tx, proj, &app); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline: %s\n", err)
 		return err
 

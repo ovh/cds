@@ -97,19 +97,13 @@ func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
 
-	a, err := application.LoadApplicationByName(db, projectName, appName)
+	a, err := application.LoadByName(db, projectName, appName, c.User, application.LoadOptions.WithHooks)
 	if err != nil {
 		log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 		return err
 	}
 
-	hooks, err := hook.LoadApplicationHooks(db, a.ID)
-	if err != nil {
-		log.Warning("getApplicationHooksHandler> cannot load hooks: %s\n", err)
-		return err
-	}
-
-	return WriteJSON(w, r, hooks, http.StatusOK)
+	return WriteJSON(w, r, a.Hooks, http.StatusOK)
 }
 
 func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -126,7 +120,7 @@ func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context
 		return err
 	}
 
-	a, err := application.LoadApplicationByName(db, projectName, appName)
+	a, err := application.LoadByName(db, projectName, appName, c.User)
 	if err != nil {
 		log.Warning("getHooks> cannot load application %s/%s: %s\n", projectName, appName, err)
 		return err

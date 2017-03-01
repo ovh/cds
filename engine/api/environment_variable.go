@@ -42,7 +42,7 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 		return sdk.ErrInvalidID
 	}
 
-	p, errProj := project.Load(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		log.Warning("restoreEnvironmentAuditHandler: Cannot load project %s: %s\n", key, errProj)
 		return errProj
@@ -115,7 +115,7 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 		return errEnvs
 	}
 
-	apps, errApps := application.LoadApplications(db, p.Key, false, true, c.User)
+	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
 		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
 		return errApps
@@ -165,7 +165,7 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		log.Warning("deleteVariableFromEnvironmentHandler: Cannot load project %s :  %s\n", key, errProj)
 		return errProj
@@ -211,7 +211,7 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 		return errEnvs
 	}
 
-	apps, errApps := application.LoadApplications(db, p.Key, false, true, c.User)
+	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
 		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
 		return errApps
@@ -232,7 +232,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		log.Warning("updateVariableInEnvironment: Cannot load %s: %s\n", key, errProj)
 		return errProj
@@ -288,7 +288,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 		return errEnvs
 	}
 
-	apps, errApps := application.LoadApplications(db, p.Key, false, true, c.User)
+	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
 		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
 		return errApps
@@ -309,7 +309,7 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		log.Warning("addVariableInEnvironmentHandler: Cannot load %s: %s\n", key, errProj)
 		return errProj
@@ -375,7 +375,7 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 		return errEnvs
 	}
 
-	apps, errApps := application.LoadApplications(db, p.Key, false, true, c.User)
+	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
 		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
 		return errApps

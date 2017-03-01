@@ -3,14 +3,10 @@ package main
 import (
 	"compress/gzip"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"reflect"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -238,7 +234,6 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 			if req.Method == "GET" && rc.get != nil {
 				if err := rc.get(w, req, db, c); err != nil {
-					log.Debug("Error : %s %v : %T %s", req.Method, req.URL, err, err)
 					WriteError(w, req, err)
 				}
 				return
@@ -246,14 +241,12 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 			if req.Method == "POST" && rc.post != nil {
 				if err := rc.post(w, req, db, c); err != nil {
-					log.Debug("Error : %s %v : %T %s", req.Method, req.URL, err, err)
 					WriteError(w, req, err)
 				}
 				return
 			}
 			if req.Method == "PUT" && rc.put != nil {
 				if err := rc.put(w, req, db, c); err != nil {
-					log.Debug("Error : %s %v : %T %s", req.Method, req.URL, err, err)
 					WriteError(w, req, err)
 				}
 				return
@@ -261,7 +254,6 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 			if req.Method == "DELETE" && rc.deleteHandler != nil {
 				if err := rc.deleteHandler(w, req, db, c); err != nil {
-					log.Debug("Error : %s %v : %T %s", req.Method, req.URL, err, err)
 					WriteError(w, req, err)
 				}
 				return
@@ -326,51 +318,6 @@ func DELETE(h Handler) RouterConfigParam {
 	return f
 }
 
-func (r *Router) getRoute(method string, handler Handler, vars map[string]string) string {
-	sf1 := reflect.ValueOf(handler)
-	var url string
-	for uri, routerConfig := range mapRouterConfigs {
-		if strings.HasPrefix(uri, r.prefix) {
-			switch method {
-			case "GET":
-				sf2 := reflect.ValueOf(routerConfig.get)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "POST":
-				sf2 := reflect.ValueOf(routerConfig.post)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "PUT":
-				sf2 := reflect.ValueOf(routerConfig.put)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "DELETE":
-				sf2 := reflect.ValueOf(routerConfig.deleteHandler)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			}
-		}
-	}
-
-	for k, v := range vars {
-		url = strings.Replace(url, "{"+k+"}", v, -1)
-	}
-
-	if url == "" {
-		log.Debug("Cant find route for Handler %s %v", method, handler)
-	}
-
-	return url
-}
-
 // Auth set manually whether authorisation layer should be applied
 // Authorization is enabled by default
 func Auth(v bool) RouterConfigParam {
@@ -411,34 +358,6 @@ func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *conte
 
 	c.User = &sdk.User{Username: h.Name}
 	c.Hatchery = h
-	return nil
-}
-
-// WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
-func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {
-	b, e := json.Marshal(data)
-	if e != nil {
-		log.Warning("WriteJSON> unable to marshal : %s", e)
-		return sdk.ErrUnknownError
-
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(b)
-	return nil
-}
-
-// UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
-func UnmarshalBody(r *http.Request, i interface{}) error {
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-	if err := json.Unmarshal(data, i); err != nil {
-		log.Warning("UnmarshalBody> unable to unmarshal %s : %s", string(data), err)
-		return sdk.ErrWrongRequest
-	}
 	return nil
 }
 

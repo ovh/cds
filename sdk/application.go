@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // Repository structs contains all needed information about a single repository
@@ -15,22 +16,25 @@ type Repository struct {
 
 // Application represent an application in a project
 type Application struct {
-	ID                  int64                 `json:"id"`
-	Name                string                `json:"name"`
-	ProjectKey          string                `json:"project_key"`
-	ApplicationGroups   []GroupPermission     `json:"groups,omitempty"`
-	Variable            []Variable            `json:"variables,omitempty"`
-	Pipelines           []ApplicationPipeline `json:"pipelines,omitempty"`
-	PipelinesBuild      []PipelineBuild       `json:"pipelines_build,omitempty"`
-	Permission          int                   `json:"permission"`
-	Notifications       []UserNotification    `json:"notifications,omitempty"`
-	LastModified        int64                 `json:"last_modified"`
-	RepositoriesManager *RepositoriesManager  `json:"repositories_manager,omitempty"`
-	RepositoryFullname  string                `json:"repository_fullname,omitempty"`
-	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty"`
-	Hooks               []Hook                `json:"hooks,omitempty"`
-	Workflows           []CDPipeline          `json:"workflows,omitempty"`
-	Schedulers          []PipelineScheduler   `json:"schedulers,omitempty"`
+	ID                  int64                 `json:"id" db:"id"`
+	Name                string                `json:"name" db:"name"`
+	Description         string                `json:"description"  db:"description"`
+	ProjectID           int64                 `json:"-" db:"project_id"`
+	ProjectKey          string                `json:"project_key" db:"-"`
+	ApplicationGroups   []GroupPermission     `json:"groups,omitempty" db:"-"`
+	Variable            []Variable            `json:"variables,omitempty" db:"-"`
+	Pipelines           []ApplicationPipeline `json:"pipelines,omitempty" db:"-"`
+	PipelinesBuild      []PipelineBuild       `json:"pipelines_build,omitempty" db:"-"`
+	Permission          int                   `json:"permission" db:"-"`
+	Notifications       []UserNotification    `json:"notifications,omitempty" db:"-"`
+	LastModified        time.Time             `json:"last_modified" db:"last_modified"`
+	RepositoriesManager *RepositoriesManager  `json:"repositories_manager,omitempty" db:"-"`
+	RepositoryFullname  string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
+	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
+	Hooks               []Hook                `json:"hooks,omitempty" db:"-"`
+	Workflows           []CDPipeline          `json:"workflows,omitempty" db:"-"`
+	Schedulers          []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
+	Metadata            Metadata              `json:"metadata" yaml:"metadata" db:"-"`
 }
 
 // ApplicationPipeline Represent the link between an application and a pipeline
@@ -68,11 +72,8 @@ func AddApplication(key, appName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+
+	return DecodeError(data)
 }
 
 // ListApplications returns all available application for the given project
@@ -156,6 +157,26 @@ func GetApplication(pk, name string, opts ...RequestModifier) (*Application, err
 	return &a, nil
 }
 
+// UpdateApplication update an application in CDS
+func UpdateApplication(app *Application) error {
+	data, err := json.Marshal(app)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("/project/%s/application/%s", app.ProjectKey, app.Name)
+	data, code, err := Request("PUT", url, data)
+	if err != nil {
+		return err
+	}
+
+	if code != http.StatusOK {
+		return fmt.Errorf("Error [%d]: %s", code, data)
+	}
+
+	return DecodeError(data)
+}
+
 // RenameApplication renames an application from CDS
 func RenameApplication(pk, name, newName string) error {
 	app := NewApplication(newName)
@@ -174,12 +195,8 @@ func RenameApplication(pk, name, newName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // DeleteApplication delete an application from CDS
@@ -241,12 +258,8 @@ func AddApplicationVariable(projectKey, appName, varName, varValue string, varTy
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // GetVariableInApplication Get a variable in the given application
@@ -262,13 +275,11 @@ func GetVariableInApplication(projectKey, appName, name string) (*Variable, erro
 	if code != http.StatusCreated && code != http.StatusOK {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
+	if e := DecodeError(data); e != nil {
 		return nil, e
 	}
 
-	err = json.Unmarshal(data, &v)
-	if err != nil {
+	if err := json.Unmarshal(data, &v); err != nil {
 		return nil, err
 	}
 
@@ -303,12 +314,8 @@ func UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, 
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveApplicationVariable  remove a variable from an application
@@ -322,12 +329,8 @@ func RemoveApplicationVariable(projectKey, appName, varName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveGroupFromApplication  call api to remove a group from the given application
@@ -342,11 +345,8 @@ func RemoveGroupFromApplication(projectKey, appName, groupName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+
+	return DecodeError(data)
 }
 
 // UpdateGroupInApplication  call api to update group permission for the given application
@@ -377,11 +377,8 @@ func UpdateGroupInApplication(projectKey, appName, groupName string, permission 
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+
+	return DecodeError(data)
 }
 
 // AddGroupInApplication  add a group in an application
@@ -412,11 +409,8 @@ func AddGroupInApplication(projectKey, appName, groupName string, permission int
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+
+	return DecodeError(data)
 }
 
 // ListApplicationPipeline  list all pipelines attached to the application
@@ -468,12 +462,8 @@ func AddApplicationPipeline(projectKey, appName, pipelineName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateApplicationPipeline  add a pipeline in an application
@@ -493,12 +483,8 @@ func UpdateApplicationPipeline(projectKey, appName, pipelineName string, params 
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveApplicationPipeline  remove a pipeline from an application
@@ -512,12 +498,8 @@ func RemoveApplicationPipeline(projectKey, appName, pipelineName string) error {
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
 
-	return nil
+	return DecodeError(data)
 }
 
 //GetPipelineScheduler returns all pipeline scheduler

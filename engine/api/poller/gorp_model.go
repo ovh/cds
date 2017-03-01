@@ -46,7 +46,7 @@ func (p *RepositoryPoller) PreDelete(s gorp.SqlExecutor) error {
 
 // PostGet is a DB Hook
 func (p *RepositoryPoller) PostGet(db gorp.SqlExecutor) error {
-	app, err := application.LoadApplicationByID(db, p.ApplicationID)
+	app, err := application.LoadByID(db, p.ApplicationID, nil, application.LoadOptions.Default)
 	if err != nil {
 		log.Warning("PostGet> error loading application %d : %s", p.ApplicationID, err)
 		return err
