@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -68,10 +68,10 @@ func startAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int,
 
 	// Process action build arguments
 	for _, abp := range pipBuildJob.Parameters {
-
 		// Process build variable for root action
 		for j := range a.Parameters {
 			if abp.Name == a.Parameters[j].Name {
+
 				a.Parameters[j].Value = abp.Value
 			}
 		}
@@ -160,7 +160,7 @@ func runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob sdk.PipelineBuildJo
 		if !child.Enabled {
 			// Update step status and continue
 			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusDisabled.String()); err != nil {
-				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 
 			sendLog(pipBuildJob.ID, fmt.Sprintf("End of Step %s [Disabled]\n", childName), pipBuildJob.PipelineBuildID, currentStep, true)
@@ -169,16 +169,16 @@ func runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob sdk.PipelineBuildJo
 		}
 
 		if !doNotRunChildrenAnymore {
-			log.Printf("Running %s\n", childName)
+			log.Debug("Running %s\n", childName)
 			// Update step status
 			if err := updateStepStatus(pipBuildJob.ID, currentStep, sdk.StatusBuilding.String()); err != nil {
-				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 			sendLog(pipBuildJob.ID, fmt.Sprintf("Starting step %s", childName), pipBuildJob.PipelineBuildID, currentStep, false)
 
 			r = startAction(&child, pipBuildJob, currentStep, childName)
 			if r.Status != sdk.StatusSuccess {
-				log.Printf("Stopping %s at step %s", a.Name, childName)
+				log.Debug("Stopping %s at step %s", a.Name, childName)
 				doNotRunChildrenAnymore = true
 			}
 
@@ -186,7 +186,7 @@ func runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob sdk.PipelineBuildJo
 
 			// Update step status
 			if err := updateStepStatus(pipBuildJob.ID, currentStep, r.Status.String()); err != nil {
-				log.Printf("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 		}
 	}
@@ -265,7 +265,7 @@ func logger(inputChan chan sdk.Log) {
 
 				// and if count > 1, then add it at the beginning of the log
 				if count > 1 {
-					l.Value = fmt.Sprintf("[x%d] %s %s", count, l.Value)
+					l.Value = fmt.Sprintf("[x%d] %s", count, l.Value)
 				}
 				// and append to the logs batch
 				l.Value = strings.Trim(strings.Replace(l.Value, "\n", " ", -1), " \t\n") + "\n"
@@ -358,7 +358,6 @@ func generateWorkingDirectory() (string, error) {
 }
 
 func workingDirectory(basedir string, jobInfo *worker.PipelineBuildJobInfo) string {
-
 	gen, _ := generateWorkingDirectory()
 
 	dir := path.Join(basedir,
@@ -374,15 +373,15 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
 	err := processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob, pbji.Secrets)
 	if err != nil {
-		log.Printf("takeActionBuildHandler> Cannot process action %s parameters: %s\n", pbji.PipelineBuildJob.Job.Action.Name, err)
+		log.Warning("takeActionBuildHandler> Cannot process action %s parameters: %s\n", pbji.PipelineBuildJob.Job.Action.Name, err)
 		return sdk.Result{Status: sdk.StatusFail}
 	}
 
-	// Add secrets as string in ActionBuild.Args
+	// Add secrets as string or password in ActionBuild.Args
 	// So they can be used by plugins
 	for _, s := range pbji.Secrets {
 		p := sdk.Parameter{
-			Type:  sdk.StringParameter,
+			Type:  sdk.ParameterType("password"),
 			Name:  s.Name,
 			Value: s.Value,
 		}
