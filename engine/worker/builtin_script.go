@@ -115,12 +115,37 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	cmd := exec.Command(shell, opts...)
 	res.Status = sdk.StatusUnknown
 
+	env := os.Environ()
+	cmd.Env = []string{}
+	// filter technical env variables
+	for _, e := range env {
+		if strings.HasPrefix(e, "CDS_MODEL=") ||
+			strings.HasPrefix(e, "CDS_TTL=") ||
+			strings.HasPrefix(e, "CDS_SINGLE_USE=") ||
+			strings.HasPrefix(e, "CDS_NAME=") ||
+			strings.HasPrefix(e, "CDS_KEY=") ||
+			strings.HasPrefix(e, "CDS_API=") ||
+			strings.HasPrefix(e, "CDS_HATCHERY=") {
+			continue
+		}
+		cmd.Env = append(cmd.Env, e)
+	}
+
 	// worker export http port
-	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", WorkerServerPort, exportport))
+	// manage keys
 	if pkey != "" && gitssh != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", pKEY, pkey))
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", GitSSH, gitssh))
+	}
+
+	//set up environment variables from pipeline build job parameters
+	for _, p := range pbJob.Parameters {
+		envName := strings.Replace(p.Name, ".", "_", -1)
+		envName = strings.ToUpper(envName)
+		if p.Type != sdk.ParameterType("password") {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
+		}
 	}
 
 	workerpath, err := osext.Executable()
