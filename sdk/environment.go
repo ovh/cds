@@ -13,7 +13,7 @@ type Environment struct {
 	EnvironmentGroups []GroupPermission `json:"groups,omitempty" yaml:"groups"`
 	Variable          []Variable        `json:"variables,omitempty" yaml:"variables"`
 	ProjectID         int64             `json:"-" yaml:"-"`
-	ProjectKey        string            `json:"-" yaml:"-"`
+	ProjectKey        string            `json:"project_key" yaml:"-"`
 	Permission        int               `json:"permission"`
 	LastModified      int64             `json:"last_modified"`
 }
