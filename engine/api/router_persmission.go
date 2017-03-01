@@ -55,8 +55,8 @@ func loadUserPermissions(db gorp.SqlExecutor, user *sdk.User) error {
 				group.Admins = append(group.Admins, usr)
 			}
 			user.Groups = append(user.Groups, group)
-			cache.SetWithTTL(k, user.Groups, 30)
 		}
+		cache.SetWithTTL(k, user.Groups, 30)
 	}
 	return nil
 }
