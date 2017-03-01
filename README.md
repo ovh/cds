@@ -25,6 +25,9 @@ An WebUI is also available at https://github.com/ovh/cds-ui
 
 A Go SDK is available at github.com/ovh/cds/sdk. It provide helper functions for all API handlers, with embedded authentification mechanism.
 
+### CDS Contrib
+
+Actions, Plugins, Templates, uServices are under : https://github.com/ovh/cds/tree/master/contrib
 
 ### API usage
 
@@ -50,7 +53,7 @@ To get the best out of CDS api though, one should use all compatible third parti
 
 It is possible to configure CDS to fetch secret cipher keys from Vault.
 
-See documentation at https://github.com/ovh/cds-contrib/tree/master/secret-backend-vault
+See documentation at https://github.com/ovh/cds/tree/master/contrib/secret-backends/secret-backend-vault
 
 ### Artifact Storage
 

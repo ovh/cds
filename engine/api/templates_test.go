@@ -777,7 +777,7 @@ func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
 
 	req, _ := http.NewRequest("POST", uri, nil)
 	req.Form = url.Values{}
-	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds-contrib/master/actions/cds-git-clone.hcl")
+	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-git-clone.hcl")
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
