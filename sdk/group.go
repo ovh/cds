@@ -22,7 +22,6 @@ type Group struct {
 type GroupPermission struct {
 	Group      Group `json:"group"`
 	Permission int   `json:"permission"`
-	Recursive  bool  `json:"recursive,omitempty" yaml:"-"`
 }
 
 // EnvironmentGroup represent a link with a pipeline

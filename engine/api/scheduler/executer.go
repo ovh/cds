@@ -66,7 +66,7 @@ func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) err
 	}
 
 	//Load application
-	app, err := application.LoadApplicationByID(db, s.ApplicationID)
+	app, err := application.LoadByID(db, s.ApplicationID, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		return err
 	}

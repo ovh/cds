@@ -93,7 +93,7 @@ func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	// Load Application
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getPipelineBuildTriggeredHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -134,7 +134,7 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return sdk.ErrPipelineNotFound
 	}
 
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("deleteBuildHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -207,7 +207,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return sdk.ErrPipelineNotFound
 	}
 
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getBuildStateHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -569,7 +569,7 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	// Check that application exists
-	a, errLA := application.LoadApplicationByName(db, projectKey, appName)
+	a, errLA := application.LoadByName(db, projectKey, appName, c.User)
 	if errLA != nil {
 		log.Warning("addBuildVariableHandler> Cannot load application %s: %s\n", appName, errLA)
 		return errLA
@@ -650,7 +650,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	// Check that application exists
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("addBuildTestResultsHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrNotFound
@@ -753,7 +753,7 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	// Check that application exists
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getBuildTestResultsHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrNotFound

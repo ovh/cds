@@ -385,7 +385,7 @@ func checkApplicationVariables(db gorp.SqlExecutor, vars []string, project *sdk.
 	var warnings []sdk.Warning
 
 	// Load all application where pipeline is attached
-	apps, err := application.LoadApplicationByPipeline(db, pip.ID)
+	apps, err := application.LoadByPipeline(db, pip.ID, nil)
 	if err != nil {
 		return nil, err
 	}

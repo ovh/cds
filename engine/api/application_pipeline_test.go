@@ -60,7 +60,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.InsertApplication(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -75,7 +75,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	tester.AddCall("Test_attachPipelinesToApplicationHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200))
 	tester.Run()
 
-	appDB, err := application.LoadApplicationByName(db, proj.Key, app.Name)
+	appDB, err := application.LoadByName(db, proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
 	test.NoError(t, err)
 
 	assert.Equal(t, len(appDB.Pipelines), 2)

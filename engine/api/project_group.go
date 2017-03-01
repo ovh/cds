@@ -288,95 +288,90 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	}
 
-	// recursive or not?
-	if groupProject.Recursive {
+	// apply on application
+	applications, err := application.LoadAll(db, p.Key, c.User)
+	if err != nil {
+		log.Warning("AddGroupInProject: Cannot load applications for project %s:  %s\n", p.Name, err)
+		return err
+	}
 
-		// apply on application
-		applications, err := application.LoadApplications(tx, p.Key, false, false, c.User)
-		if err != nil {
-			log.Warning("AddGroupInProject: Cannot load applications for project %s:  %s\n", p.Name, err)
-			return err
+	for _, app := range applications {
+		if permission.AccessToApplication(app.ID, c.User, permission.PermissionReadWriteExecute) {
+			inApp, err := group.CheckGroupInApplication(tx, app.ID, g.ID)
+			if err != nil {
+				log.Warning("AddGroupInProject: Cannot check if group %s is already in the application %s: %s\n", g.Name, app.Name, err)
+				return err
 
-		}
-
-		for _, app := range applications {
-			if permission.AccessToApplication(app.ID, c.User, permission.PermissionReadWriteExecute) {
-				inApp, err := group.CheckGroupInApplication(tx, app.ID, g.ID)
-				if err != nil {
-					log.Warning("AddGroupInProject: Cannot check if group %s is already in the application %s: %s\n", g.Name, app.Name, err)
+			}
+			if inApp {
+				if err := group.UpdateGroupRoleInApplication(tx, p.Key, app.Name, g.Name, groupProject.Permission); err != nil {
+					log.Warning("AddGroupInProject: Cannot update group %s on application %s: %s\n", g.Name, app.Name, err)
 					return err
 
 				}
-				if inApp {
-					if err := group.UpdateGroupRoleInApplication(tx, p.Key, app.Name, g.Name, groupProject.Permission); err != nil {
-						log.Warning("AddGroupInProject: Cannot update group %s on application %s: %s\n", g.Name, app.Name, err)
-						return err
-
-					}
-				} else if err := application.AddGroup(db, p, &app, groupProject); err != nil {
-					log.Warning("AddGroupInProject: Cannot insert group %s on application %s: %s\n", g.Name, app.Name, err)
-					return err
-				}
+			} else if err := application.AddGroup(db, p, &app, groupProject); err != nil {
+				log.Warning("AddGroupInProject: Cannot insert group %s on application %s: %s\n", g.Name, app.Name, err)
+				return err
 			}
 		}
+	}
 
-		// apply on pipeline
-		pipelines, err := pipeline.LoadPipelines(tx, p.ID, false, c.User)
-		if err != nil {
-			log.Warning("AddGroupInProject: Cannot load pipelines for project %s:  %s\n", p.Name, err)
-			return err
+	// apply on pipeline
+	pipelines, err := pipeline.LoadPipelines(tx, p.ID, false, c.User)
+	if err != nil {
+		log.Warning("AddGroupInProject: Cannot load pipelines for project %s:  %s\n", p.Name, err)
+		return err
 
-		}
+	}
 
-		for _, pip := range pipelines {
-			if permission.AccessToPipeline(sdk.DefaultEnv.ID, pip.ID, c.User, permission.PermissionReadWriteExecute) {
-				inPip, err := group.CheckGroupInPipeline(tx, pip.ID, g.ID)
-				if err != nil {
-					log.Warning("AddGroupInProject: Cannot check if group %s is already in the pipeline %s: %s\n", g.Name, pip.Name, err)
+	for _, pip := range pipelines {
+		if permission.AccessToPipeline(sdk.DefaultEnv.ID, pip.ID, c.User, permission.PermissionReadWriteExecute) {
+			inPip, err := group.CheckGroupInPipeline(tx, pip.ID, g.ID)
+			if err != nil {
+				log.Warning("AddGroupInProject: Cannot check if group %s is already in the pipeline %s: %s\n", g.Name, pip.Name, err)
+				return err
+
+			}
+			if inPip {
+				if err := group.UpdateGroupRoleInPipeline(tx, pip.ID, g.ID, groupProject.Permission); err != nil {
+					log.Warning("AddGroupInProject: Cannot update group %s on pipeline %s: %s\n", g.Name, pip.Name, err)
 					return err
 
 				}
-				if inPip {
-					if err := group.UpdateGroupRoleInPipeline(tx, pip.ID, g.ID, groupProject.Permission); err != nil {
-						log.Warning("AddGroupInProject: Cannot update group %s on pipeline %s: %s\n", g.Name, pip.Name, err)
-						return err
+			} else if err := group.InsertGroupInPipeline(tx, pip.ID, g.ID, groupProject.Permission); err != nil {
+				log.Warning("AddGroupInProject: Cannot insert group %s on pipeline %s: %s\n", g.Name, pip.Name, err)
+				return err
 
-					}
-				} else if err := group.InsertGroupInPipeline(tx, pip.ID, g.ID, groupProject.Permission); err != nil {
-					log.Warning("AddGroupInProject: Cannot insert group %s on pipeline %s: %s\n", g.Name, pip.Name, err)
-					return err
-
-				}
 			}
 		}
+	}
 
-		// apply on environment
-		envs, err := environment.LoadEnvironments(tx, p.Key, false, c.User)
-		if err != nil {
-			log.Warning("AddGroupInProject: Cannot load environments for project %s:  %s\n", p.Name, err)
-			return err
+	// apply on environment
+	envs, err := environment.LoadEnvironments(tx, p.Key, false, c.User)
+	if err != nil {
+		log.Warning("AddGroupInProject: Cannot load environments for project %s:  %s\n", p.Name, err)
+		return err
 
-		}
+	}
 
-		for _, env := range envs {
-			if permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadWriteExecute) {
-				inEnv, err := group.IsInEnvironment(tx, env.ID, g.ID)
-				if err != nil {
-					log.Warning("AddGroupInProject: Cannot check if group %s is already in the environment %s: %s\n", g.Name, env.Name, err)
+	for _, env := range envs {
+		if permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadWriteExecute) {
+			inEnv, err := group.IsInEnvironment(tx, env.ID, g.ID)
+			if err != nil {
+				log.Warning("AddGroupInProject: Cannot check if group %s is already in the environment %s: %s\n", g.Name, env.Name, err)
+				return err
+
+			}
+			if inEnv {
+				if err := group.UpdateGroupRoleInEnvironment(tx, p.Key, env.Name, g.Name, groupProject.Permission); err != nil {
+					log.Warning("AddGroupInProject: Cannot update group %s on environment %s: %s\n", g.Name, env.Name, err)
 					return err
 
 				}
-				if inEnv {
-					if err := group.UpdateGroupRoleInEnvironment(tx, p.Key, env.Name, g.Name, groupProject.Permission); err != nil {
-						log.Warning("AddGroupInProject: Cannot update group %s on environment %s: %s\n", g.Name, env.Name, err)
-						return err
+			} else if err := group.InsertGroupInEnvironment(tx, env.ID, g.ID, groupProject.Permission); err != nil {
+				log.Warning("AddGroupInProject: Cannot insert group %s on environment %s: %s\n", g.Name, env.Name, err)
+				return err
 
-					}
-				} else if err := group.InsertGroupInEnvironment(tx, env.ID, g.ID, groupProject.Permission); err != nil {
-					log.Warning("AddGroupInProject: Cannot insert group %s on environment %s: %s\n", g.Name, env.Name, err)
-					return err
-
-				}
 			}
 		}
 	}
