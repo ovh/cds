@@ -46,7 +46,7 @@ func LoadByName(db gorp.SqlExecutor, projectKey, appName string, u *sdk.User, op
 
 	if u == nil || u.Admin {
 		query = `
-                SELECT application.* 
+                SELECT application.*
                 FROM application
                 JOIN project ON project.id = application.project_id
                 WHERE project.projectkey = $1
@@ -54,7 +54,7 @@ func LoadByName(db gorp.SqlExecutor, projectKey, appName string, u *sdk.User, op
 		args = []interface{}{projectKey, appName}
 	} else {
 		query = `
-            SELECT application.* 
+            SELECT distinct application.*
             FROM application 
             JOIN project ON project.id = application.project_id
             JOIN application_group on application.id = application_group.application_id
@@ -86,13 +86,13 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc
 
 	if u == nil || u.Admin {
 		query = `
-                SELECT application.* 
+                SELECT application.*
                 FROM application
                 WHERE application.id = $1`
 		args = []interface{}{id}
 	} else {
 		query = `
-            SELECT application.* 
+            SELECT distinct application.*
             FROM application 
             JOIN application_group on application.id = application_group.application_id
             WHERE application.id = $1
@@ -118,7 +118,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc
 
 // LoadByPipeline Load application where pipeline is attached
 func LoadByPipeline(db gorp.SqlExecutor, pipelineID int64, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
-	query := `SELECT application.*
+	query := `SELECT distinct application.*
 		 FROM application
 		 JOIN application_pipeline ON application.id = application_pipeline.application_id
 		 WHERE application_pipeline.pipeline_id = $1
@@ -221,7 +221,7 @@ func LoadAll(db gorp.SqlExecutor, key string, u *sdk.User, opts ...LoadOptionFun
 		args = []interface{}{key}
 	} else {
 		query = `
-			SELECT application.* 
+			SELECT distinct application.*
 			FROM application 
 			JOIN project ON project.id = application.project_id
 			WHERE application.id IN (
