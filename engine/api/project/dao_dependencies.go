@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -42,8 +43,10 @@ var (
 			}
 		}
 
-		for _, a := range proj.Applications {
-			if err := (*application.LoadOptions.WithPipelines)(db, &a, u); err != nil {
+		for i := range proj.Applications {
+			a := &proj.Applications[i]
+			log.Debug("loading application %s", a.Name)
+			if err := (*application.LoadOptions.WithTriggers)(db, a, u); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationPipelines")
 			}
 		}
