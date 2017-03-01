@@ -44,7 +44,7 @@ func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
 		  SELECT project.projectKey,
 	                 application.name,
 	                 application.id,
-					 application_group.role
+					 application_group.role, application.last_modified
 	      FROM application
 	      JOIN application_group ON application_group.application_id = application.id
 	 	  JOIN project ON application.project_id = project.id
@@ -59,7 +59,7 @@ func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
 	for rows.Next() {
 		var application sdk.Application
 		var perm int
-		err = rows.Scan(&application.ProjectKey, &application.Name, &application.ID, &perm)
+		err = rows.Scan(&application.ProjectKey, &application.Name, &application.ID, &perm, &application.LastModified)
 		if err != nil {
 			return sdk.WrapError(err, "LoadPermission %s (%d)", group.Name, group.ID)
 		}
