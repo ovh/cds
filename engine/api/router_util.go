@@ -33,8 +33,8 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 		return sdk.ErrWrongRequest
 	}
 	if err := json.Unmarshal(data, i); err != nil {
-		log.Warning("UnmarshalBody> unable to unmarshal %s : %s", string(data), err)
-		return sdk.ErrWrongRequest
+		err = sdk.NewError(sdk.ErrWrongRequest, err)
+		return sdk.WrapError(err, "UnmarshalBody> unable to unmarshal %s", string(data))
 	}
 	return nil
 }
