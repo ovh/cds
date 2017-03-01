@@ -67,6 +67,14 @@ var (
 			if err != nil && err != sql.ErrNoRows {
 				return sdk.WrapError(err, "application.loadTriggers> Unable to load trigger for application %d, pipeline %s(%d)", app.ID, appPip.Pipeline.Name, appPip.Pipeline.ID)
 			}
+			for i := range appPip.Triggers {
+				trig := &appPip.Triggers[i]
+				a, err := LoadByName(db, trig.DestApplication.ProjectKey, trig.DestApplication.Name, u, &loadPipelines)
+				if err != nil && err != sql.ErrNoRows {
+					return sdk.WrapError(err, "application.loadTriggers> Unable to load trigger for application %d, pipeline %s(%d)", app.ID, appPip.Pipeline.Name, appPip.Pipeline.ID)
+				}
+				trig.DestApplication = *a
+			}
 		}
 		return nil
 	}
