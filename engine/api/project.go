@@ -17,7 +17,7 @@ import (
 )
 
 func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	projects, err := project.LoadAll(db, c.User)
+	projects, err := project.LoadAll(db, c.User, project.LoadOptions.WithApplications)
 	if err != nil {
 		return sdk.WrapError(err, "getProjectsHandler")
 	}
