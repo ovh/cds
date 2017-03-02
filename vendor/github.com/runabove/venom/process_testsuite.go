@@ -9,7 +9,7 @@ import (
 	"gopkg.in/cheggaaa/pb.v1"
 )
 
-func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel string, aliases map[string]string) {
+func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel string) {
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 
@@ -17,14 +17,14 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 	if err != nil {
 		log.Errorf("err:%s", err)
 	}
-	ts.Templater = newTemplater(d)
+	ts.Templater.Add("", d)
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
 		totalSteps += len(tc.TestSteps)
 	}
 
-	runTestCases(ts, bars, aliases, detailsLevel, l)
+	runTestCases(ts, bars, detailsLevel, l)
 
 	elapsed := time.Since(start)
 
@@ -45,10 +45,10 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 	}
 }
 
-func runTestCases(ts *TestSuite, bars map[string]*pb.ProgressBar, aliases map[string]string, detailsLevel string, l *log.Entry) {
+func runTestCases(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel string, l *log.Entry) {
 	for i, tc := range ts.TestCases {
 		if tc.Skipped == 0 {
-			runTestCase(ts, &tc, bars, aliases, l, detailsLevel)
+			runTestCase(ts, &tc, bars, l, detailsLevel)
 			ts.TestCases[i] = tc
 		}
 

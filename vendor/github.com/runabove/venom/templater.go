@@ -24,23 +24,22 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 	if tmpl.Values == nil {
 		tmpl.Values = make(map[string]string)
 	}
+	dot := ""
+	if prefix != "" {
+		dot = "."
+	}
 	for k, v := range values {
-		tmpl.Values[prefix+"."+k] = v
+		tmpl.Values[prefix+dot+k] = v
 	}
 }
 
-// Apply apply vars on string
-func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
+func (tmpl *Templater) applyOnStep(step TestStep) (TestStep, error) {
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
 	s, err := yaml.Marshal(step)
 	if err != nil {
 		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
-	sb := string(s)
-
-	for k, v := range tmpl.Values {
-		sb = strings.Replace(sb, "{{."+k+"}}", v, -1)
-	}
+	sb := tmpl.apply(s)
 
 	var t TestStep
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
@@ -48,4 +47,12 @@ func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
 	}
 
 	return t, nil
+}
+
+func (tmpl *Templater) apply(in []byte) []byte {
+	out := string(in)
+	for k, v := range tmpl.Values {
+		out = strings.Replace(out, "{{."+k+"}}", v, -1)
+	}
+	return []byte(out)
 }

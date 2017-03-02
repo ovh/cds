@@ -56,24 +56,28 @@ func getFilesPath(path []string, exclude []string) []string {
 	return filesPath
 }
 
-func readFiles(detailsLevel string, filesPath []string, chanToRun chan<- TestSuite) map[string]*pb.ProgressBar {
+func readFiles(variables map[string]string, detailsLevel string, filesPath []string, chanToRun chan<- TestSuite) map[string]*pb.ProgressBar {
 	bars := make(map[string]*pb.ProgressBar)
+
 	for _, f := range filesPath {
-		log.Debugf("read %s", f)
 		dat, errr := ioutil.ReadFile(f)
 		if errr != nil {
-			log.WithError(errr).Errorf("Error while reading file")
+			log.WithError(errr).Errorf("Error while reading file %s", f)
 			continue
 		}
 
+		templater := newTemplater(variables)
+		out := templater.apply(dat)
+
 		ts := TestSuite{}
 		ts.Package = f
-		log.Debugf("Unmarshal %s", f)
-		if err := yaml.Unmarshal(dat, &ts); err != nil {
-			log.WithError(err).Errorf("Error while unmarshal file")
+
+		if err := yaml.Unmarshal(out, &ts); err != nil {
+			log.WithError(err).Errorf("Error while unmarshal file %s", f)
 			continue
 		}
 		ts.Name += " [" + f + "]"
+		ts.Templater = templater
 
 		nSteps := 0
 		for _, tc := range ts.TestCases {

@@ -34,7 +34,7 @@ type StepExtracts struct {
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(TestCaseContext, *log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	Run(TestCaseContext, *log.Entry, TestStep) (ExecutorResult, error)
 }
 
 // TestCaseContext represents the context of a testcase

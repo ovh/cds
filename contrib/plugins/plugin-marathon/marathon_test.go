@@ -52,7 +52,7 @@ func Test_tmplApplicationConfigFile(t *testing.T) {
 	plugin.SetTrace(os.Stdout)
 
 	filepath := "./fixtures/marathon5.json"
-	a := plugin.Action{
+	a := plugin.Job{
 		Args: plugin.Arguments{
 			Data: map[string]string{
 				"cds.app.name": "MonApplication",
@@ -79,7 +79,7 @@ func Test_tmplApplicationConfigFileX(t *testing.T) {
 	plugin.SetTrace(os.Stdout)
 
 	filepath := "./fixtures/marathon6.json"
-	a := plugin.Action{
+	a := plugin.Job{
 		Args: plugin.Arguments{
 			Data: map[string]string{
 				"cds.env.image": "\"toto\"",
