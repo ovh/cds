@@ -172,6 +172,10 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return errApp
 	}
 
+	if err := application.LoadGroupByApplication(db, app); err != nil {
+		return sdk.WrapError(err, "getApplicationHandler> Unable to load groups by application")
+	}
+
 	if withPollers {
 		var errPoller error
 		app.RepositoryPollers, errPoller = poller.LoadByApplication(db, app.ID)
