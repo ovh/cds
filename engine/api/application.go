@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -45,7 +46,7 @@ func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	tree, err := application.LoadCDTree(db, projectKey, applicationName, c.User)
+	tree, err := workflow.LoadCDTree(db, projectKey, applicationName, c.User)
 	if err != nil {
 		log.Warning("getApplicationTreeHandler: Cannot load CD Tree for applications %s: %s\n", applicationName, err)
 		return err
@@ -196,7 +197,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	if withWorkflow {
 		var errWorflow error
-		app.Workflows, errWorflow = application.LoadCDTree(db, projectKey, applicationName, c.User)
+		app.Workflows, errWorflow = workflow.LoadCDTree(db, projectKey, applicationName, c.User)
 		if errWorflow != nil {
 			log.Warning("getApplicationHandler: Cannot load CD Tree for applications %s: %s\n", app.Name, errWorflow)
 			return errWorflow

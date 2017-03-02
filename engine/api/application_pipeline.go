@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -125,7 +126,7 @@ func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	var errW error
-	app.Workflows, errW = application.LoadCDTree(db, project.Key, app.Name, c.User)
+	app.Workflows, errW = workflow.LoadCDTree(db, project.Key, app.Name, c.User)
 	if errW != nil {
 		log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s\n", errW)
 		return errW
@@ -269,7 +270,7 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	cache.DeleteAll(k)
 
 	var errW error
-	a.Workflows, errW = application.LoadCDTree(db, key, a.Name, c.User)
+	a.Workflows, errW = workflow.LoadCDTree(db, key, a.Name, c.User)
 	if errW != nil {
 		log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s\n", errW)
 		return errW
