@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 
@@ -223,6 +224,11 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t))
 	route = router.getRoute("PUT", updateSchedulerApplicationPipelineHandler, vars)
+
+	assert.Equal(t, len(app.Workflows), 0)
+	assert.Equal(t, len(app.Workflows[0].Schedulers), 0)
+	s = &app.Workflows[0].Schedulers[0]
+
 	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "PUT", route, s).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
 	tester.Run()
 	tester.Reset()
@@ -291,6 +297,10 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	tester.Run()
 	tester.Reset()
+
+	assert.Equal(t, len(app.Workflows), 0)
+	assert.Equal(t, len(app.Workflows[0].Schedulers), 0)
+	s = &app.Workflows[0].Schedulers[0]
 
 	vars["id"] = strconv.FormatInt(s.ID, 10)
 	route = router.getRoute("DELETE", deleteSchedulerApplicationPipelineHandler, vars)

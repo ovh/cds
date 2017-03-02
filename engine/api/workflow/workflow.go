@@ -166,7 +166,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 		if len(cdTrees) > 0 {
 			lastTree = &cdTrees[len(cdTrees)-1]
 		}
-		log.Warning("Actual: %s", root.Pipeline.Name)
+
 		if lastTree == nil || lastTree.Application.ID != root.Application.ID ||
 			lastTree.Pipeline.ID != root.Pipeline.ID || lastTree.Environment.ID != root.Environment.ID {
 			if permission.AccessToPipeline(root.Environment.ID, root.Pipeline.ID, user, permission.PermissionRead) {
