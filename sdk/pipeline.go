@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/lib/pq"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/lib/pq"
 
 	"github.com/runabove/venom"
 )
@@ -17,7 +18,7 @@ import (
 type Pipeline struct {
 	ID                  int64             `json:"id" yaml:"-"`
 	Name                string            `json:"name"`
-	Type                PipelineType      `json:"type"`
+	Type                string            `json:"type"`
 	ProjectKey          string            `json:"projectKey"`
 	ProjectID           int64             `json:"-"`
 	LastPipelineBuild   *PipelineBuild    `json:"last_pipeline_build"`
@@ -88,35 +89,18 @@ type PipelineBuildTrigger struct {
 	VCSChangesAuthor    string         `json:"vcs_author"`
 }
 
-// PipelineType defines the purpose of a given pipeline
-type PipelineType string
-
 // Different types of Pipeline
 const (
-	BuildPipeline      PipelineType = "build"
-	DeploymentPipeline PipelineType = "deployment"
-	TestingPipeline    PipelineType = "testing"
+	BuildPipeline      = "build"
+	DeploymentPipeline = "deployment"
+	TestingPipeline    = "testing"
 )
 
 // AvailablePipelineType List of all pipeline type
 var AvailablePipelineType = []string{
-	string(BuildPipeline),
-	string(DeploymentPipeline),
-	string(TestingPipeline),
-}
-
-// PipelineTypeFromString returns the proper PipelineType
-func PipelineTypeFromString(in string) PipelineType {
-	switch in {
-	case string(BuildPipeline):
-		return BuildPipeline
-	case string(DeploymentPipeline):
-		return DeploymentPipeline
-	case string(TestingPipeline):
-		return TestingPipeline
-	default:
-		return BuildPipeline
-	}
+	BuildPipeline,
+	DeploymentPipeline,
+	TestingPipeline,
 }
 
 // PipelineAction represents an action in a pipeline
@@ -183,7 +167,7 @@ func GetPipeline(key, name string) (*Pipeline, error) {
 }
 
 // AddPipeline creates a new empty pipeline
-func AddPipeline(name string, projectKey string, pipelineType PipelineType, params []Parameter) error {
+func AddPipeline(name string, projectKey string, pipelineType string, params []Parameter) error {
 	p := Pipeline{
 		Name:       name,
 		ProjectKey: projectKey,

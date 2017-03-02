@@ -30,13 +30,13 @@ func addPipeline(cmd *cobra.Command, args []string) {
 
 	projectKey := args[0]
 	name := args[1]
-	var t sdk.PipelineType
+	var t string
 
 	found := false
 	for i := range sdk.AvailablePipelineType {
 		if sdk.AvailablePipelineType[i] == pipelineType {
 			found = true
-			t = sdk.PipelineTypeFromString(sdk.AvailablePipelineType[i])
+			t = sdk.AvailablePipelineType[i]
 			break
 		}
 	}
