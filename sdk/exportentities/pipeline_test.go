@@ -409,9 +409,9 @@ func TestExportImportPipeline_YAML(t *testing.T) {
 		p1 := Pipeline{}
 		test.NoError(t, yaml.Unmarshal(b, &p1))
 
-		m1, _ := dump.ToMap(p1)
-		m2, _ := dump.ToMap(p)
-		assert.EqualValues(t, m2, m1)
+		m1, _ := dump.Sdump(p1)
+		m2, _ := dump.Sdump(p)
+		assert.Equal(t, m2, m1)
 	}
 }
 
@@ -425,9 +425,9 @@ func TestExportImportPipeline_JSON(t *testing.T) {
 		p1 := Pipeline{}
 		test.NoError(t, json.Unmarshal(b, &p1))
 
-		m1, _ := dump.ToMap(p1)
-		m2, _ := dump.ToMap(p)
-		assert.EqualValues(t, m2, m1)
+		m1, _ := dump.Sdump(p1)
+		m2, _ := dump.Sdump(p)
+		assert.Equal(t, m2, m1)
 	}
 }
 
