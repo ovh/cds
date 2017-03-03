@@ -19,7 +19,7 @@ testcases:
   - script: {{.cds}} pipeline hook add ITSCGITHOOK TestApp MultiPass foo.bar.net/test/multipass
   - script: {{.cds}} pipeline hook list ITSCGITHOOK TestApp MultiPass
   - script: {{.cds}} pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only
-  - script: curl -i -X POST `cds pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only`
+  - script: curl -i -X POST `{{.cds}} pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only`
   - script: {{.cds}} pipeline history ITSCGITHOOK TestApp MultiPass | egrep "Building|Success"
 
 - name: Streaming logs of triggered pipeline
