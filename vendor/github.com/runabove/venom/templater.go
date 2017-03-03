@@ -43,7 +43,7 @@ func (tmpl *Templater) applyOnStep(step TestStep) (TestStep, error) {
 
 	var t TestStep
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
-		return nil, fmt.Errorf("templater> Error while unmarshal: %s", err)
+		return nil, fmt.Errorf("templater> Error while unmarshal: %s, content:%s", err, sb)
 	}
 
 	return t, nil
