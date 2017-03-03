@@ -2,6 +2,11 @@ package exportentities
 
 import (
 	"fmt"
+	"strconv"
+
+	"sort"
+
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -105,7 +110,8 @@ func NewPipeline(pip *sdk.Pipeline) (p *Pipeline) {
 func newStages(stages []sdk.Stage) map[string]Stage {
 	res := map[string]Stage{}
 	var order int
-	for _, s := range stages {
+	for i := range stages {
+		s := &stages[i]
 		if len(s.Jobs) == 0 {
 			continue
 		}
@@ -128,7 +134,8 @@ func newStages(stages []sdk.Stage) map[string]Stage {
 
 func newJobs(jobs []sdk.Job) map[string]Job {
 	res := map[string]Job{}
-	for _, j := range jobs {
+	for i := range jobs {
+		j := &jobs[i]
 		if len(j.Action.Actions) == 0 {
 			continue
 		}
@@ -165,12 +172,13 @@ func newJobs(jobs []sdk.Job) map[string]Job {
 
 func newSteps(a sdk.Action) []Step {
 	res := []Step{}
-	for _, a := range a.Actions {
+	for i := range a.Actions {
+		a := &a.Actions[i]
 		s := Step{}
 		if !a.Enabled {
 			s.Enabled = &a.Enabled
 		}
-		if !a.Final {
+		if a.Final {
 			s.Final = &a.Final
 		}
 
@@ -225,240 +233,242 @@ func newSteps(a sdk.Action) []Step {
 				}
 			}
 		}
-
 		res = append(res, s)
 	}
 
 	return res
 }
 
-//HCLTemplate returns text/template
-/*
-func (p *Pipeline) HCLTemplate() (*template.Template, error) {
-	tmpl := `name = "{{.Name}}"
-type = "{{.Type}}"
-{{if .Permissions -}}
-permissions  { {{ range $key, $value := .Permissions }}
-	"{{$key}}" = {{$value}}{{ end }}
-}
-{{- end}}
-{{if .Steps -}}
-{{ range $value := .Steps}}
-step {
-	{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}} 	{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
-	{{if .Script -}}  script = "{{.Script}}"
-	{{- else if .Action -}}
-		action {
-			{{ range $key, $value := .Action }}
-			{{$key}} {
-				{{ range $key, $value := $value }}
-				{{$key}} = "{{$value}}"{{end}}
-			}
-			{{end}}}
-		}
-	{{- else if .Plugin -}}
-		plugin {
-			{{ range $key, $value := .Plugin }}
-			{{$key}} {
-				{{ range $key, $value := $value }}
-				{{$key}} = "{{$value}}"{{end}}
-			}
-			{{end}}}
-		}
-	{{- else if .ArtifactUpload -}}
-		artifactUpload {
-		{{ range $key, $value := .ArtifactUpload }}
-			{{$key}} = "{{$value}}"{{ end }}
-		}
-	{{- else if .ArtifactDownload -}}
-		artifactDownload {
-		{{ range $key, $value := .ArtifactDownload }}
-			{{$key}} = "{{$value}}"{{ end }}
-		}
-	{{- else if .JUnitReport -}}
-		jUnitReport = "{{.JUnitReport}}"
-	{{- end}}
-}
-{{ end }}
+//Pipeline returns a sdk.Pipeline entity
+func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
+	pip := new(sdk.Pipeline)
 
-{{- else -}}
+	pip.Name = p.Name
+	pip.Type = p.Type
 
-{{if .Jobs -}}
-{{ range $key, $value := .Jobs }}
-job "{{$key}}" {
-	{{ range $key, $value := $value.Steps}}step {
-		{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}}
-		{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
-		{{if .Script -}}
-			script = <<EOV
-{{.Script}}
-EOV
-		{{- else if .Action -}}
-			action {
-				{{ range $key, $value := .Action }}
-				{{$key}} {
-					{{ range $key, $value := $value }}
-					{{$key}} = "{{$value}}"{{end}}
-				}
-				{{end}}}
-			}
-		{{- else if .Plugin -}}
-			plugin {
-				{{ range $key, $value := .Plugin }}
-				{{$key}} {
-					{{ range $key, $value := $value }}
-					{{$key}} = "{{$value}}"{{end}}
-				}
-				{{end}}}
-			}
-		{{- else if .ArtifactUpload -}}
-			artifactUpload {
-			{{ range $key, $value := .ArtifactUpload }}
-				{{$key}} = "{{$value}}"{{ end }}
-			}
-		{{- else if .ArtifactDownload -}}
-			artifactDownload {
-			{{ range $key, $value := .ArtifactDownload}}
-				{{$key}} = "{{$value}}"{{ end }}
-			}
-		{{- else if .JUnitReport -}}
-			jUnitReport = "{{.JUnitReport}}"
-		{{- end}}
+	//Compute permissions
+	for g, p := range p.Permissions {
+		perm := sdk.GroupPermission{
+			Group:      sdk.Group{Name: g},
+			Permission: p,
+		}
+		pip.GroupPermission = append(pip.GroupPermission, perm)
 	}
-	{{ end }}
-}
-{{ end }}
-{{- else -}}
-stages {
-{{ range $key, $value := .Stages }}
-	stage "{{$key}}" {
-		{{ range $key, $value := $value.Jobs }}
-		job "{{$key}}" {
-			{{ range $key, $value := $value.Steps}}step {
-				{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}}
-				{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
-				{{if .Script -}}
-					script = <<EOV
-{{.Script}}
-EOV
-				{{- else if .Action -}}
-					action {
-						{{ range $key, $value := .Action }}
-						{{$key}} {
-							{{ range $key, $value := $value }}
-							{{$key}} = "{{$value}}"{{end}}
-						}
-						{{end}}}
-					}
-				{{- else if .Plugin -}}
-					plugin {
-						{{ range $key, $value := .Plugin }}
-						{{$key}} {
-							{{ range $key, $value := $value }}
-							{{$key}} = "{{$value}}"{{end}}
-						}
-						{{end}}}
-					}
-				{{- else if .ArtifactUpload -}}
-					artifactUpload {
-					{{ range $key, $value := .ArtifactUpload }}
-						{{$key}} = "{{$value}}"{{ end }}
-					}
-				{{- else if .ArtifactDownload -}}
-					artifactDownload {
-					{{ range $key, $value := .ArtifactDownload -}}
-						{{$key}} = "{{$value}}"{{- end }}
-					}
-				{{- else if .JUnitReport -}}
-					jUnitReport = "{{.JUnitReport}}"
-				{{- end}}
-			}
-			{{ end }}
+
+	//Compute parameters
+	for p, v := range p.Parameters {
+		param := sdk.Parameter{
+			Name:  p,
+			Type:  sdk.ParameterTypeFromString(v.Type),
+			Value: v.DefaultValue,
 		}
-		{{ end }}
+		pip.Parameter = append(pip.Parameter, param)
 	}
-{{ end}}}
-{{- end}}
-{{- end}}
-`
-	t := template.New("t")
-	return t.Parse(tmpl)
+
+	if p.Steps != nil {
+		//There one stage, with one job
+		actions, err := computeSteps(p.Steps)
+		if err != nil {
+			return nil, err
+		}
+		pip.Stages = []sdk.Stage{
+			sdk.Stage{
+				Name:       p.Name,
+				BuildOrder: 1,
+				Enabled:    true,
+				Jobs: []sdk.Job{
+					sdk.Job{
+						Enabled: true,
+						Action: sdk.Action{
+							Name:    p.Name,
+							Actions: actions,
+						},
+					},
+				},
+			},
+		}
+
+	} else if p.Jobs != nil {
+		//There is one stage with several jobs
+		stage := sdk.Stage{
+			Name:       p.Name,
+			BuildOrder: 1,
+			Enabled:    true,
+		}
+		for s, j := range p.Jobs {
+			job, err := computeJob(s, j)
+			if err != nil {
+				return nil, err
+			}
+			stage.Jobs = append(stage.Jobs, *job)
+		}
+		pip.Stages = []sdk.Stage{stage}
+	} else {
+		//There is more than one stage
+		stageKeys := []string{}
+		for k := range p.Stages {
+			stageKeys = append(stageKeys, k)
+		}
+		sort.Strings(stageKeys)
+
+		//Compute stages
+		for i, stageName := range stageKeys {
+			buildOrder := i
+			name := stageName
+			//Try to find buildOrder and name
+			if strings.Contains(stageName, "|") {
+				t := strings.SplitN(stageName, "|", 2)
+				var err error
+				buildOrder, err = strconv.Atoi(t[0])
+				if err != nil {
+					return nil, fmt.Errorf("malformatted stage name : %s", stageName)
+				}
+				name = t[1]
+			}
+
+			s := sdk.Stage{
+				BuildOrder: buildOrder,
+				Name:       name,
+			}
+
+			if p.Stages[stageName].Enabled != nil {
+				s.Enabled = *p.Stages[stageName].Enabled
+			} else {
+				s.Enabled = true
+			}
+
+			//Compute stage Prerequisites
+			for n, c := range p.Stages[stageName].Conditions {
+				s.Prerequisites = append(s.Prerequisites, sdk.Prerequisite{
+					Parameter:     n,
+					ExpectedValue: c,
+				})
+			}
+
+			//Compute jobs
+			for n, j := range p.Stages[stageName].Jobs {
+				job, err := computeJob(n, j)
+				if err != nil {
+					return nil, err
+				}
+				s.Jobs = append(s.Jobs, *job)
+			}
+
+			pip.Stages = append(pip.Stages, s)
+		}
+	}
+
+	return pip, nil
 }
 
-func decodePipeline(m map[string]interface{}) (p *Pipeline, err error) {
-	if m["name"] == nil || m["type"] == nil {
-		err = errors.New("Invalid pipeline structured map")
+func computeSteps(steps []Step) ([]sdk.Action, error) {
+	res := []sdk.Action{}
+	for _, s := range steps {
+		a, err := computeStep(s)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, a)
+	}
+	return res, nil
+}
+
+func computeStep(s Step) (a sdk.Action, e error) {
+	//Compute artifact upload
+	if s.Script != "" {
+		a = sdk.NewStepScript(s.Script)
+	} else if s.JUnitReport != "" {
+		a = sdk.NewStepJUnitReport(s.JUnitReport)
+	} else if s.ArtifactUpload != nil {
+		a = sdk.NewStepArtifactUpload(s.ArtifactUpload)
+	} else if s.ArtifactDownload != nil {
+		a = sdk.NewStepArtifactDownload(s.ArtifactDownload)
+	} else if s.Plugin != nil {
+		act, err := sdk.NewStepPlugin(s.Plugin)
+		if err != nil {
+			e = err
+			return
+		}
+		a = *act
+	} else if s.Action != nil {
+		act, err := sdk.NewStepDefault(s.Action)
+		if err != nil {
+			e = err
+			return
+		}
+		a = *act
+	} else {
+		e = fmt.Errorf("Malformatted step")
 		return
 	}
-
-	p = &Pipeline{
-		Name: m["name"].(string),
-		Type: m["type"].(string),
+	//Compute enable flag
+	if s.Enabled != nil {
+		a.Enabled = *s.Enabled
+	} else {
+		a.Enabled = true
+	}
+	//Compute final flag
+	if s.Final != nil {
+		a.Final = *s.Final
+	} else {
+		a.Final = false
 	}
 
-	if m["step"] != nil {
-		steps := m["step"].([]map[string]interface{})
-		p.Steps = make([]Step, len(steps))
-		for i, s := range steps {
-			p.Steps[i] = Step{}
-			p.Steps[i].Enabled = getBoolPtr(s, "enabled")
-			p.Steps[i].Final = getBoolPtr(s, "final")
-			p.Steps[i].Script = getStringValue(s, "script")
-			p.Steps[i].Action = getMapStringMapStringString(s, "action")
-			p.Steps[i].Plugin = getMapStringMapStringString(s, "plugin")
-			p.Steps[i].ArtifactDownload = getMapStringString(s, "artifactDownload")
-			p.Steps[i].ArtifactUpload = getMapStringString(s, "artifactUpload")
-			p.Steps[i].JUnitReport = getStringValue(s, "jUnitReport")
+	return
+}
+
+func computeJob(name string, j Job) (*sdk.Job, error) {
+	job := sdk.Job{
+		Action: sdk.Action{
+			Name:        name,
+			Description: j.Description,
+		},
+	}
+	if j.Enabled != nil {
+		job.Enabled = *j.Enabled
+	} else {
+		job.Enabled = true
+	}
+	for _, r := range j.Requirements {
+		var name, tpe, val string
+		if r.Binary != "" {
+			name = r.Binary
+			val = r.Binary
+			tpe = sdk.BinaryRequirement
+		} else if r.Hostname != "" {
+			name = "hostname"
+			val = r.Hostname
+			tpe = sdk.HostnameRequirement
+		} else if r.Memory != "" {
+			name = "memory"
+			val = r.Memory
+			tpe = sdk.MemoryRequirement
+		} else if r.Model != "" {
+			name = "model"
+			val = r.Model
+			tpe = sdk.ModelRequirement
+		} else if r.Network != "" {
+			name = "network"
+			val = r.Network
+			tpe = sdk.NetworkAccessRequirement
+		} else if r.Plugin != "" {
+			name = r.Plugin
+			val = r.Plugin
+			tpe = sdk.PluginRequirement
+		} else if r.Service.Name != "" {
+			name = r.Service.Name
+			val = r.Service.Value
+			tpe = sdk.ServiceRequirement
 		}
+		job.Action.Requirement(name, tpe, val)
 	}
 
-	return
-}
+	//Compute steps for the jobs
+	children, err := computeSteps(j.Steps)
+	if err != nil {
+		return nil, err
+	}
+	job.Action.Actions = children
 
-func getBoolPtr(m map[string]interface{}, k string) *bool {
-	if m[k] == nil {
-		return nil
-	}
-	b, ok := m[k].(bool)
-	if !ok {
-		return nil
-	}
-	return &b
+	return &job, nil
 }
-
-func getStringValue(m map[string]interface{}, k string) (v string) {
-	if m[k] == nil {
-		return
-	}
-	var ok bool
-	v, ok = m[k].(string)
-	if !ok {
-		v = ""
-	}
-	return
-}
-
-func getMapStringString(m map[string]interface{}, k string) (r map[string]string) {
-	if m[k] == nil {
-		return nil
-	}
-	var ok bool
-	r, ok = m[k].(map[string]string)
-	if !ok {
-		return nil
-	}
-	return
-}
-
-func getMapStringMapStringString(m map[string]interface{}, k string) (r map[string]map[string]string) {
-	if m[k] == nil {
-		return nil
-	}
-	var ok bool
-	r, ok = m[k].(map[string]map[string]string)
-	if !ok {
-		return nil
-	}
-	return
-}
-*/

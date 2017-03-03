@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,14 +43,40 @@ func interfaceSlice(slice interface{}) []interface{} {
 	return ret
 }
 
-func arrayContains(array interface{}, s interface{}) bool {
+func ArrayContains(array interface{}, s interface{}) bool {
 	b := interfaceSlice(array)
 	for _, i := range b {
-		if reflect.DeepEqual(i, s) {
+		if DeepEquals(i, s) {
 			return true
 		}
 	}
 	return false
+}
+
+func Equal(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
+	e := DeepEquals(a, b)
+
+	if !e {
+		t.Log("Expected:")
+		t.Log(dump.Sdump(a))
+		t.Log("Actual:")
+		t.Log(dump.Sdump(b))
+	}
+
+	assert.True(t, e, msgAndArgs...)
+}
+
+func DeepEquals(a, b interface{}) bool {
+	s1, err := dump.Sdump(a)
+	if err != nil {
+		return false
+	}
+	s2, err := dump.Sdump(b)
+	if err != nil {
+		return false
+	}
+
+	return s1 == s2
 }
 
 func EqualValuesWithoutOrder(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
@@ -57,7 +84,7 @@ func EqualValuesWithoutOrder(t *testing.T, a, b interface{}, msgAndArgs ...inter
 	s2 := interfaceSlice(b)
 
 	for _, x := range s1 {
-		if !arrayContains(s2, x) {
+		if !ArrayContains(s2, x) {
 			assert.Fail(t, "EqualValuesWithoutOrder failed", msgAndArgs...)
 		}
 	}
@@ -67,7 +94,7 @@ func EqualValuesWithoutOrder(t *testing.T, a, b interface{}, msgAndArgs ...inter
 	}
 
 	for _, x := range s2 {
-		if !arrayContains(s1, x) {
+		if !ArrayContains(s1, x) {
 			assert.Fail(t, "EqualValuesWithoutOrder failed", msgAndArgs...)
 		}
 	}
