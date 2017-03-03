@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"strings"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -23,6 +25,13 @@ func importCmd() *cobra.Command {
 			projectKey := args[0]
 			name := args[1]
 			msg := []string{}
+
+			importFormat = "yaml"
+			if strings.HasSuffix(name, ".json") {
+				importFormat = "json"
+			} else if strings.HasSuffix(name, ".hcl") {
+				importFormat = "hcl"
+			}
 
 			btes, err := ioutil.ReadFile(name)
 			if err != nil {
@@ -53,7 +62,6 @@ func importCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&importInto, "env", "", "", "Import environment variables into an existing environment")
-	cmd.Flags().StringVarP(&importFormat, "format", "", "yaml", "Import format json|hcl|yaml")
 
 	return cmd
 }

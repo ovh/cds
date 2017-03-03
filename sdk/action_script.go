@@ -126,25 +126,18 @@ func NewStepPlugin(v map[string]map[string]string) (*Action, error) {
 }
 
 // NewStepDefault returns an action (basically used as a step of a job) of default type
-func NewStepDefault(v map[string]map[string]string) (*Action, error) {
-	if len(v) != 1 {
-		return nil, fmt.Errorf("Malformatted action step")
+func NewStepDefault(n string, args map[string]string) (*Action, error) {
+	newAction := Action{
+		Name:       n,
+		Parameters: []Parameter{},
 	}
-	for k, v := range v {
-		newAction := Action{
-			Name:       k,
-			Parameters: []Parameter{},
-		}
-		for p, val := range v {
-			newAction.Parameters = append(newAction.Parameters, Parameter{
-				Name:  p,
-				Value: val,
-			})
-		}
-		return &newAction, nil
+	for p, val := range args {
+		newAction.Parameters = append(newAction.Parameters, Parameter{
+			Name:  p,
+			Value: val,
+		})
 	}
-	return nil, nil
-
+	return &newAction, nil
 }
 
 //NewActionFromScript creates an action from a HCL file as bytes
