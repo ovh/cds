@@ -34,6 +34,13 @@ $itemWidth : 378px;
       right: 30px;
     }
 
+    .ui.compact.segments {
+      width: 100%;
+      min-height: 45px;
+      z-index: 10;
+      white-space: initial;
+    }
+
     .ui.raised.segment {
       width: 100%;
       min-height: 45px;
@@ -58,6 +65,11 @@ $itemWidth : 378px;
         .ui.label {
           height:21px;
           padding-top: 5px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width:  130px;
+          height: 21px;
+          white-space: nowrap;
         }
       }
 
@@ -78,6 +90,9 @@ $itemWidth : 378px;
       .ui.right.ribbon {
         margin-left: -14px;
         min-width: 100px;
+        padding-left: 5px;
+        padding-right: 5px;
+        text-align: center;
       }
 
       .ui.circular.label {
@@ -110,6 +125,12 @@ $itemWidth : 378px;
         }
       }
       // End loader
+    }
+
+    .ui.scheduler.segment {
+      padding-top: 5px;
+      padding-bottom: 5px;
+      font-size: 0.8rem;
     }
   }
 }

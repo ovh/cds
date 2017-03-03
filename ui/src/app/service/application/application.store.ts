@@ -12,6 +12,7 @@ import {ProjectStore} from '../project/project.store';
 import {Trigger} from '../../model/trigger.model';
 import {ApplyTemplateRequest} from '../../model/template.model';
 import {Notification} from '../../model/notification.model';
+import {Scheduler} from '../../model/scheduler.model';
 
 
 @Injectable()
@@ -578,6 +579,48 @@ export class ApplicationStore {
     detachPipeline(key: string, appName: string, pipName: string): Observable<Application> {
         return this._applicationService.detachPipelines(key, appName, pipName).map( app => {
             return this.refreshApplicationPipelineCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Add a scheduler
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline Name
+     * @param scheduler Scheduler to add
+     * @returns {Observable<Application>}
+     */
+    addScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
+        return this._applicationService.addScheduler(key, appName, pipName, scheduler).map( app => {
+            return this.refreshApplicationWorkflowCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Update a scheduler
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline Name
+     * @param scheduler Scheduler to update
+     * @returns {Observable<Application>}
+     */
+    updateScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
+        return this._applicationService.updateScheduler(key, appName, pipName, scheduler).map( app => {
+            return this.refreshApplicationWorkflowCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Delete a scheduler
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline Name
+     * @param scheduler Scheduler to update
+     * @returns {Observable<Application>}
+     */
+    deleteScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
+        return this._applicationService.deleteScheduler(key, appName, pipName, scheduler).map( app => {
+            return this.refreshApplicationWorkflowCache(key, appName, app);
         });
     }
 

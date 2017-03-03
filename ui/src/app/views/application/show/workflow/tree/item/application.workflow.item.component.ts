@@ -13,6 +13,7 @@ import {Trigger} from '../../../../../../model/trigger.model';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
+import {Scheduler} from '../../../../../../model/scheduler.model';
 
 declare var _: any;
 
@@ -45,6 +46,11 @@ export class ApplicationWorkflowItemComponent {
     createTriggerModal: SemanticModalComponent;
     triggerInModal: Trigger;
     triggerLoading = false;
+
+    // scheduler
+    @ViewChild('createSchedulerModal')
+    createSchedulerModal: SemanticModalComponent;
+    newScheduler: Scheduler;
 
     constructor(private _router: Router, private _appPipService: ApplicationPipelineService, private _pipStore: PipelineStore,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService) {
@@ -276,6 +282,39 @@ export class ApplicationWorkflowItemComponent {
     openEditTriggerModal(): void {
         this.triggerInModal = _.cloneDeep(this.workflowItem.trigger);
         this.editTriggerModal.show({autofocus: false, closable: false, observeChanges: true});
+    }
+
+    openCreateSchedulerModal(): void {
+        this.newScheduler = new Scheduler();
+        if (this.createSchedulerModal) {
+            this.createSchedulerModal.show({autofocus: false, closable: false, observeChanges: true});
+        }
+    }
+
+    schedulerEvent(type: string, scheduler: Scheduler): void {
+        switch (type) {
+            case 'add':
+                this._appStore.addScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
+                    .subscribe(() => {
+                    this._toast.success('', this._translate.instant('scheduler_added'));
+                    if (this.createSchedulerModal) {
+                        this.createSchedulerModal.hide();
+                    }
+                });
+                break;
+            case 'update':
+                this._appStore.updateScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
+                    .subscribe(() => {
+                    this._toast.success('', this._translate.instant('scheduler_updated'));
+                });
+                break;
+            case 'delete':
+                this._appStore.deleteScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
+                    .subscribe(() => {
+                    this._toast.success('', this._translate.instant('scheduler_deleted'));
+                });
+                break;
+        }
     }
 
     detachPipeline(p: Pipeline): void {

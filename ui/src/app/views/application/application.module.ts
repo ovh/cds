@@ -16,6 +16,8 @@ import {ApplicationTriggerComponent} from './show/workflow/trigger/trigger.compo
 import {ApplicationNotificationListComponent} from './show/notifications/list/notification.list.component';
 import {ApplicationNotificationFormModalComponent} from './show/notifications/form/notification.form.component';
 import {ApplicationPipelineLinkComponent} from './show/workflow/pipeline/pipeline.link.component';
+import {ApplicationSchedulerItemComponent} from './show/scheduler/item/scheduler.item.component';
+import {ApplicationSchedulerFormComponent} from './show/scheduler/form/scheduler.form.component';
 
 @NgModule({
     declarations: [
@@ -29,6 +31,8 @@ import {ApplicationPipelineLinkComponent} from './show/workflow/pipeline/pipelin
         ApplicationPollerFormComponent,
         ApplicationPollerListComponent,
         ApplicationRepositoryComponent,
+        ApplicationSchedulerItemComponent,
+        ApplicationSchedulerFormComponent,
         ApplicationShowComponent,
         ApplicationTreeWorkflowComponent,
         ApplicationTriggerComponent,

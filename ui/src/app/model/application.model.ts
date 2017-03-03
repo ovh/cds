@@ -7,6 +7,7 @@ import {RepositoriesManager} from './repositories.model';
 import {RepositoryPoller} from './polling.model';
 import {Hook} from './hook.model';
 import {WorkflowItem} from './application.workflow.model';
+import {Scheduler} from './scheduler.model';
 
 export class Application {
     id: number;
@@ -23,6 +24,7 @@ export class Application {
     pollers: Array<RepositoryPoller>;
     hooks: Array<Hook>;
     workflows: Array<WorkflowItem>;
+    schedulers: Array<Scheduler>;
 
     project_key: string; // project unique key
 

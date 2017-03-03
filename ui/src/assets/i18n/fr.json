@@ -254,6 +254,14 @@
   "requirement_type" : "Type",
   "requirement_value" : "Valeur",
 
+  "scheduler_added" : "Scheduler créé",
+  "scheduler_deleted" : "Scheduler supprimé",
+  "scheduler_create_label" : "Créer un scheduler",
+  "scheduler_create_title" : "Création d'un scheduler : {{app}} / {{pip}}",
+  "scheduler_edit_title" : "Edition du scheduler : {{app}} / {{pip}} {{env}}",
+  "scheduler_updated" : "Scheduler mis à jour",
+  "scheduler_workflow_label" : "Scheduler : ",
+
   "stage_add_label" : "Ajouter un stage",
   "stage_added" : "Stage ajouté",
   "stage_deleted" : "Stage supprimé",

@@ -26,6 +26,7 @@ import {ApplicationService} from '../../../../../../service/application/applicat
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
+import {Scheduler} from '../../../../../../model/scheduler.model';
 
 describe('CDS: Application Workflow Item', () => {
 
@@ -562,6 +563,69 @@ describe('CDS: Application Workflow Item', () => {
 
 
         expect(fixture.componentInstance.editTriggerModal.hide).toHaveBeenCalledTimes(2);
+    }));
+
+    it('should add/update/delete a scheduler', fakeAsync(() => {
+        // Create component
+        let fixture = TestBed.createComponent(ApplicationWorkflowItemComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
+
+        // Init modal
+        fixture.componentInstance.createSchedulerModal = new SemanticModalComponent();
+
+        // Init workflow item
+        let workflowItem = new WorkflowItem();
+
+        // project
+        workflowItem.project = new Project();
+        workflowItem.project.key = 'key1';
+
+        // application
+        workflowItem.application = new Application();
+        workflowItem.application.name = 'app1';
+        workflowItem.application.id = 6;
+
+        // pipeline
+        workflowItem.pipeline = new Pipeline();
+        workflowItem.pipeline.name = 'pip1';
+        workflowItem.pipeline.type = 'build';
+
+        fixture.componentInstance.workflowItem = workflowItem;
+        fixture.componentInstance.application = workflowItem.application;
+        fixture.componentInstance.project = workflowItem.project;
+
+        fixture.detectChanges();
+        tick(250);
+
+        fixture.componentInstance.newScheduler = new Scheduler();
+        fixture.componentInstance.newScheduler.crontab = '* * * * *';
+
+        // Add scheduler
+        let appStore: ApplicationStore = injector.get(ApplicationStore);
+        spyOn(appStore, 'addScheduler').and.callFake(() => {
+            return Observable.of(workflowItem.application);
+        });
+        spyOn(fixture.componentInstance.createSchedulerModal, 'hide').and.callFake(() => true);
+
+        fixture.componentInstance.schedulerEvent('add', fixture.componentInstance.newScheduler);
+        expect(appStore.addScheduler).toHaveBeenCalledWith('key1', 'app1', 'pip1', fixture.componentInstance.newScheduler);
+        expect(fixture.componentInstance.createSchedulerModal.hide).toHaveBeenCalled();
+
+        // Update scheduler
+        spyOn(appStore, 'updateScheduler').and.callFake(() => {
+            return Observable.of(workflowItem.application);
+        });
+        fixture.componentInstance.schedulerEvent('update', fixture.componentInstance.newScheduler);
+        expect(appStore.updateScheduler).toHaveBeenCalledWith('key1', 'app1', 'pip1', fixture.componentInstance.newScheduler);
+
+
+        // Delete scheduler
+        spyOn(appStore, 'deleteScheduler').and.callFake(() => {
+            return Observable.of(workflowItem.application);
+        });
+        fixture.componentInstance.schedulerEvent('delete', fixture.componentInstance.newScheduler);
+        expect(appStore.deleteScheduler).toHaveBeenCalledWith('key1', 'app1', 'pip1', fixture.componentInstance.newScheduler);
     }));
 });
 

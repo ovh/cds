@@ -37,6 +37,7 @@ import {DurationService} from './duration/duration.service';
 import {ParameterDescriptionComponent} from './parameter/description-popup/description.popup.component';
 import {ActionStepComponent} from './action/step/step.component';
 import {ActionStepFormComponent} from './action/step/form/step.form.component';
+import {TruncatePipe} from './pipes/truncate.pipe';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -63,6 +64,7 @@ import {ActionStepFormComponent} from './action/step/form/step.form.component';
         RequirementsListComponent,
         RequirementsFormComponent,
         StatusIconComponent,
+        TruncatePipe,
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
@@ -104,6 +106,7 @@ import {ActionStepFormComponent} from './action/step/form/step.form.component';
         ReactiveFormsModule,
         StatusIconComponent,
         TranslateModule,
+        TruncatePipe,
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,

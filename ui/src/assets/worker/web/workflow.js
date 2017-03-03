@@ -16,7 +16,7 @@ onmessage = function (e) {
 
 function loadWorkflow (user, session, api) {
     var url = '/project/' + key + '/application/' + appName +
-        '?applicationStatus=true&branchName=' + branch + '&version=' + version;
+        '?withSchedulers=true&applicationStatus=true&branchName=' + branch + '&version=' + version;
 
     if (user && api) {
         postMessage(httpCall(url, api, user, session));
