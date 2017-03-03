@@ -11,7 +11,7 @@ testcases:
   - script: {{.cds}} application add ITSCMULT TestApp
   - script: {{.cds}} action add ITSCMULT_ACTION_Test_Echo --requirement="echo" -p name
   - script: |
-            cds action add step ITSCMULT_ACTION_Test_Echo Script -p script=" \
+            {{.cds}} action add step ITSCMULT_ACTION_Test_Echo Script -p script=" \
             echo {{.cds.version}} : Coucou {{.name}}  | tee logs.txt \
             echo Coucou {{.name}}
             "
