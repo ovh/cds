@@ -81,7 +81,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	}
 
 	start := time.Now()
-	tests, err := venom.Process([]string{path}, nil, []string{exclude}, p, "error", "low")
+	tests, err := venom.Process([]string{path}, a.Arguments().Data, []string{exclude}, p, "error", "low")
 	if err != nil {
 		plugin.SendLog(a, "PLUGIN", "Fail on venom: %s", err)
 		return plugin.Fail

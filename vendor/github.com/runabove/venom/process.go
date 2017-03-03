@@ -9,7 +9,7 @@ import (
 )
 
 // Process runs tests suite and return a Tests result
-func Process(path []string, alias []string, exclude []string, parallel int, logLevel string, detailsLevel string) (*Tests, error) {
+func Process(path []string, variables map[string]string, exclude []string, parallel int, logLevel string, detailsLevel string) (*Tests, error) {
 
 	switch logLevel {
 	case "debug":
@@ -34,15 +34,13 @@ func Process(path []string, alias []string, exclude []string, parallel int, logL
 	wg := sync.WaitGroup{}
 	testsResult := &Tests{}
 
-	aliases := computeAliases(alias)
-
 	filesPath := getFilesPath(path, exclude)
 	wg.Add(len(filesPath))
 	chanToRun := make(chan TestSuite, len(filesPath)+1)
 
 	go computeStats(testsResult, chanEnd, &wg)
 
-	bars := readFiles(detailsLevel, filesPath, chanToRun)
+	bars := readFiles(variables, detailsLevel, filesPath, chanToRun)
 
 	pool := initBars(detailsLevel, bars)
 
@@ -50,7 +48,7 @@ func Process(path []string, alias []string, exclude []string, parallel int, logL
 		for ts := range chanToRun {
 			parallels <- ts
 			go func(ts TestSuite) {
-				runTestSuite(&ts, bars, detailsLevel, aliases)
+				runTestSuite(&ts, bars, detailsLevel)
 				chanEnd <- ts
 				<-parallels
 			}(ts)
@@ -62,18 +60,6 @@ func Process(path []string, alias []string, exclude []string, parallel int, logL
 	endBars(detailsLevel, pool)
 
 	return testsResult, nil
-}
-
-func computeAliases(alias []string) map[string]string {
-	aliases := make(map[string]string)
-	for _, a := range alias {
-		t := strings.Split(a, ":")
-		if len(t) < 2 {
-			continue
-		}
-		aliases[t[0]] = strings.Join(t[1:], "")
-	}
-	return aliases
 }
 
 func computeStats(testsResult *Tests, chanEnd <-chan TestSuite, wg *sync.WaitGroup) {

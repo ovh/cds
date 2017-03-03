@@ -2,40 +2,40 @@ name: Join Action TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITSCJA
-  - script: cds project add ITSCJA ITSCJA ITSCJA
-  - script: cds application add ITSCJA TestApp
-  - script: cds action remove ITSCJA_GitClone --force
-  - script: cds action remove ITSCJA_GoGet --force
-  - script: cds action remove ITSCJA_GoTest --force
+  - script: {{.cds}} project remove --force ITSCJA
+  - script: {{.cds}} project add ITSCJA ITSCJA ITSCJA
+  - script: {{.cds}} application add ITSCJA TestApp
+  - script: {{.cds}} action remove ITSCJA_GitClone --force
+  - script: {{.cds}} action remove ITSCJA_GoGet --force
+  - script: {{.cds}} action remove ITSCJA_GoTest --force
 
 - name : test joined action
   steps:
-  - script: cds pipeline add ITSCJA JA_Pipeline
-  - script: cds action add ITSCJA_GitClone -r git -p gitURL -p gitTarget
-  - script: cds action add step ITSCJA_GitClone Script -p script="git --version; echo Cloning {{.gitURL}} in {{.gitTarget}}; echo toto={{.toto}}"
-  - script: cds action add ITSCJA_GoGet -r go -p goGetTarget
-  - script: cds action add step ITSCJA_GoGet Script -p script="go version; echo {{.goGetTarget}}; echo toto={{.toto}}"
-  - script: cds action add ITSCJA_GoTest -r go -p goTestTarget
-  - script: cds action add step ITSCJA_GoTest Script -p script="go version; echo {{.goTestTarget}}; echo toto={{.toto}}"
+  - script: {{.cds}} pipeline add ITSCJA JA_Pipeline
+  - script: {{.cds}} action add ITSCJA_GitClone -r git -p gitURL -p gitTarget
+  - script: {{.cds}} action add step ITSCJA_GitClone Script -p script="git --version; echo Cloning {{.gitURL}} in {{.gitTarget}}; echo toto={{.toto}}"
+  - script: {{.cds}} action add ITSCJA_GoGet -r go -p goGetTarget
+  - script: {{.cds}} action add step ITSCJA_GoGet Script -p script="go version; echo {{.goGetTarget}}; echo toto={{.toto}}"
+  - script: {{.cds}} action add ITSCJA_GoTest -r go -p goTestTarget
+  - script: {{.cds}} action add step ITSCJA_GoTest Script -p script="go version; echo {{.goTestTarget}}; echo toto={{.toto}}"
 
-  - script: cds pipeline job add ITSCJA JA_Pipeline TestFoo
-  - script: cds pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GitClone -p gitURL="ssh://foo@bar.com" -p gitTarget="./src/foo@bar.com/test"
-  - script: cds pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GoGet -p goGetTarget="./..."
-  - script: cds pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GoTest -p goTestTarget="./..."
-  - script: cds pipeline show ITSCJA JA_Pipeline
+  - script: {{.cds}} pipeline job add ITSCJA JA_Pipeline TestFoo
+  - script: {{.cds}} pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GitClone -p gitURL="ssh://foo@bar.com" -p gitTarget="./src/foo@bar.com/test"
+  - script: {{.cds}} pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GoGet -p goGetTarget="./..."
+  - script: {{.cds}} pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GoTest -p goTestTarget="./..."
+  - script: {{.cds}} pipeline show ITSCJA JA_Pipeline
 
 - name : joined action run
   steps:
-  - script: cds application pipeline add ITSCJA TestApp JA_Pipeline
-  - script: cds pipeline run ITSCJA TestApp JA_Pipeline -p toto="Hello toto var!"
+  - script: {{.cds}} application pipeline add ITSCJA TestApp JA_Pipeline
+  - script: {{.cds}} pipeline run ITSCJA TestApp JA_Pipeline -p toto="Hello toto var!"
 
 - name : joined action cleanup
   steps:
-  - script: cds application pipeline remove ITSCJA TestApp JA_Pipeline
-  - script: cds pipeline delete ITSCJA JA_Pipeline
-  - script: cds project remove --force ITSCJA
-  - script: cds action remove ITSCJA_GitClone
-  - script: cds action remove ITSCJA_GoGet
-  - script: cds action remove ITSCJA_GoTest
-  - script: cds group remove ITSCJA
+  - script: {{.cds}} application pipeline remove ITSCJA TestApp JA_Pipeline
+  - script: {{.cds}} pipeline delete ITSCJA JA_Pipeline
+  - script: {{.cds}} project remove --force ITSCJA
+  - script: {{.cds}} action remove ITSCJA_GitClone
+  - script: {{.cds}} action remove ITSCJA_GoGet
+  - script: {{.cds}} action remove ITSCJA_GoTest
+  - script: {{.cds}} group remove ITSCJA

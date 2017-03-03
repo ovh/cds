@@ -2,32 +2,32 @@ name: Artifact TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITSCARTIFACT
-  - script: cds project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
-  - script: cds application add ITSCARTIFACT TestApp
-  - script: cds environment add ITSCARTIFACT TestEnv
+  - script: {{.cds}} project remove --force ITSCARTIFACT
+  - script: {{.cds}} project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
+  - script: {{.cds}} application add ITSCARTIFACT TestApp
+  - script: {{.cds}} environment add ITSCARTIFACT TestEnv
 
 - name: test artifact
   steps:
-  - script: cds pipeline add ITSCARTIFACT ArtifactPip --type deployment
-  - script: cds app pipeline add ITSCARTIFACT TestApp ArtifactPip
-  - script: cds action add IT_SC_cdsartifacttest
-  - script: cds action add step IT_SC_cdsartifacttest Script -p script="echo foo > logs.txt"
-  - script: cds action add step IT_SC_cdsartifacttest "Artifact Upload" -p path=./logs.txt -p tag="{{.cds.version}}"
-  - script: cds pipeline job add ITSCARTIFACT ArtifactPip myJob1
-  - script: cds pipeline job append ITSCARTIFACT ArtifactPip myJob1 IT_SC_cdsartifacttest
-  - script: cds pipeline run ITSCARTIFACT TestApp ArtifactPip TestEnv
+  - script: {{.cds}} pipeline add ITSCARTIFACT ArtifactPip --type deployment
+  - script: {{.cds}} app pipeline add ITSCARTIFACT TestApp ArtifactPip
+  - script: {{.cds}} action add IT_SC_cdsartifacttest
+  - script: {{.cds}} action add step IT_SC_cdsartifacttest Script -p script="echo foo > logs.txt"
+  - script: {{.cds}} action add step IT_SC_cdsartifacttest "Artifact Upload" -p path=./logs.txt -p tag="{{.cds.version}}"
+  - script: {{.cds}} pipeline job add ITSCARTIFACT ArtifactPip myJob1
+  - script: {{.cds}} pipeline job append ITSCARTIFACT ArtifactPip myJob1 IT_SC_cdsartifacttest
+  - script: {{.cds}} pipeline run ITSCARTIFACT TestApp ArtifactPip TestEnv
 
 - name: listing artifact
   steps:
-  - script: cds artifact list ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv
+  - script: {{.cds}} artifact list ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv
 
 - name: downloading artifact
   steps:
-  - script: cds artifact dl ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv && cat logs.txt | grep foo && rm logs.txt
+  - script: {{.cds}} artifact dl ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv && cat logs.txt | grep foo && rm logs.txt
 
 - name: cleanup
   steps:
-  - script: cds project remove --force ITSCARTIFACT
-  - script: cds action remove IT_SC_cdsartifacttest
-  - script: cds group remove ITSCARTIFACT
+  - script: {{.cds}} project remove --force ITSCARTIFACT
+  - script: {{.cds}} action remove IT_SC_cdsartifacttest
+  - script: {{.cds}} group remove ITSCARTIFACT

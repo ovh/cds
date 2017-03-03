@@ -21,15 +21,16 @@ Usage:
   venom run [flags]
 
 Flags:
-      --alias stringSlice     --alias cds:'cds -f config.json' --alias cds2:'cds -f config.json'
       --details string        Output Details Level : low, medium, high (default "medium")
+      --env                   Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
       --exclude stringSlice   --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
-      --format string         --formt:yaml, json, xml (default "xml")
+      --format string         --format:yaml, json, xml (default "xml")
       --log string            Log Level : debug, info or warn (default "warn")
       --output-dir string     Output Directory: create tests results file inside this directory
       --parallel int          --parallel=2 : launches 2 Test Suites in parallel (default 1)
       --resume                Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
       --resumeFailures        Output Resume Failures (default true)
+      --var stringSlice       --var cds='cds -f config.json' --var cds2='cds -f config.json'
 ```
 
 ## TestSuite files
@@ -134,7 +135,7 @@ testcases:
 
 ```bash
 cd $GOPATH/src/github.com/ovh/cds/tests
-venom run --alias='cdsro:cds -f $HOME/.cds/it.user.ro.json' --alias='cds:cds -f $HOME/.cds/it.user.rw.json' --parallel=5
+venom run --var cdsro='cds -f $HOME/.cds/it.user.ro.json' --var cds='cds -f $HOME/.cds/it.user.rw.json' --parallel=5
 ```
 
 ## RUN Venom, with an export xUnit
@@ -218,7 +219,7 @@ An executor have to implement this interface
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(ctx context.Content, *log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	Run(ctx context.Content, *log.Entry, TestStep) (ExecutorResult, error)
 }
 ```
 
@@ -256,7 +257,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx context.Context, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor
