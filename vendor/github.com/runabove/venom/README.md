@@ -135,7 +135,7 @@ testcases:
 
 ```bash
 cd $GOPATH/src/github.com/ovh/cds/tests
-venom run --var='cdsro:cds -f $HOME/.cds/it.user.ro.json' --var='cds:cds -f $HOME/.cds/it.user.rw.json' --parallel=5
+venom run --var cdsro='cds -f $HOME/.cds/it.user.ro.json' --var cds='cds -f $HOME/.cds/it.user.rw.json' --parallel=5
 ```
 
 ## RUN Venom, with an export xUnit

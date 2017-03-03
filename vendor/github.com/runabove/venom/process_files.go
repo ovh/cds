@@ -66,18 +66,17 @@ func readFiles(variables map[string]string, detailsLevel string, filesPath []str
 			continue
 		}
 
-		templater := newTemplater(variables)
-		out := templater.apply(dat)
-
 		ts := TestSuite{}
+		ts.Templater = newTemplater(variables)
 		ts.Package = f
+
+		out := ts.Templater.apply(dat)
 
 		if err := yaml.Unmarshal(out, &ts); err != nil {
 			log.WithError(err).Errorf("Error while unmarshal file %s", f)
 			continue
 		}
 		ts.Name += " [" + f + "]"
-		ts.Templater = templater
 
 		nSteps := 0
 		for _, tc := range ts.TestCases {
