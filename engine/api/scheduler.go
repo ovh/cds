@@ -291,6 +291,19 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot update scheduler")
 	}
 
+	if err := scheduler.LockPipelineExecutions(tx); err != nil {
+		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot lock pipeline execution")
+	}
+
+	nx, errN := scheduler.LoadNextExecution(tx, sOld.ID, sOld.Timezone)
+	if errN != nil {
+		return sdk.WrapError(errN, "updateSchedulerApplicationPipelineHandler> Cannot load next execution")
+	}
+
+	if err := scheduler.DeleteExecution(tx, nx); err != nil {
+		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot delete next execution")
+	}
+
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
 		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot update application last modified date")
 	}
