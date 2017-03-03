@@ -284,7 +284,7 @@ func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
 	}
 
 	// apply cds.var on marathon.json file
-	out, errapp := plugin.ApplyArgumentsOnString(a.Arguments().Data, string(buff))
+	out, errapp := plugin.ApplyArguments(a.Arguments().Data, buff)
 	if errapp != nil {
 		plugin.SendLog(a, "Apply cds variables error: %s\n", errapp)
 		return "", errapp
@@ -299,7 +299,7 @@ func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
 	outPath := outfile.Name()
 
 	// write new content in new marathon.json
-	_, errw := outfile.WriteString(out)
+	_, errw := outfile.Write(out)
 	if errw != nil {
 		plugin.SendLog(a, "Error writing content to file: %s\n", errw.Error())
 		return "", errw

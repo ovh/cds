@@ -2,7 +2,7 @@ package plugin
 
 import "testing"
 
-func TestApplyArgumentsOnString(t *testing.T) {
+func TestApplyArguments(t *testing.T) {
 	type args struct {
 		variables map[string]string
 		input     string
@@ -31,13 +31,13 @@ func TestApplyArgumentsOnString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ApplyArgumentsOnString(tt.args.variables, tt.args.input)
+			got, err := ApplyArguments(tt.args.variables, tt.args.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ApplyArgumentsOnString() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ApplyArguments() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("ApplyArgumentsOnString() = %v, want %v", got, tt.want)
+				t.Errorf("ApplyArguments() = %v, want %v", got, tt.want)
 			}
 		})
 	}
