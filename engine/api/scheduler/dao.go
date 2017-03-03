@@ -178,8 +178,7 @@ func LoadNextExecution(db gorp.SqlExecutor, id int64, timezone string) (*sdk.Pip
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		log.Warning("LoadNextExecution> Unable to load pipeline scheduler execution : %T %s", err, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "LoadNextExecution> Unable to load pipeline scheduler execution")
 	}
 	if timezone == "" {
 		timezone = "UTC"
