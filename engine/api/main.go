@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/gops/agent"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/spf13/cobra"
@@ -79,6 +80,10 @@ var mainCmd = &cobra.Command{
 
 		if err := mail.CheckMailConfiguration(); err != nil {
 			log.Fatalf("SMTP configuration error: %s\n", err)
+		}
+
+		if err := agent.Listen(nil); err != nil {
+			log.Critical("Cannot initialize agent listener for gops: %s\n", err)
 		}
 
 		var objectstoreKind objectstore.Kind
