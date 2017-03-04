@@ -103,14 +103,17 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		"{{.cds.application}}",
 		"{{.cds.buildNumber}}",
 		"{{.cds.environment}}",
+		"{{.cds.job}}",
 		"{{.cds.parent.application}}",
 		"{{.cds.parent.buildNumber}}",
 		"{{.cds.parent.pipeline}}",
 		"{{.cds.pipeline}}",
 		"{{.cds.project}}",
+		"{{.cds.stage}}",
 		"{{.cds.triggered_by.email}}",
 		"{{.cds.triggered_by.fullname}}",
 		"{{.cds.triggered_by.username}}",
+		"{{.cds.worker}}",
 	}
 	allVariables = append(allVariables, cdsVar...)
 
