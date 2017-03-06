@@ -337,8 +337,11 @@ export class ApplicationService {
      * @param scheduler Scheduler
      */
     addScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
+        let options = new RequestOptions();
+        options.search = new URLSearchParams();
+        options.search.set('envName', scheduler.environment_name);
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler';
-        return this._http.post(url, scheduler).map(res => res.json());
+        return this._http.post(url, scheduler, options).map(res => res.json());
 
     }
 
