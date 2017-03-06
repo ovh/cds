@@ -101,6 +101,13 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, s
 		return runPlugin(a, pipBuildJob, stepOrder)
 	}
 
+	if !a.Enabled {
+		return sdk.Result{
+			Status:  sdk.StatusDisabled,
+			BuildID: pipBuildJob.ID,
+		}
+	}
+
 	// Nothing to do, success !
 	if len(a.Actions) == 0 {
 		return sdk.Result{
@@ -377,7 +384,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 		return sdk.Result{Status: sdk.StatusFail}
 	}
 
-	// Add secrets as string or password in ActionBuild.Args
+	// Add secrets as stringq or password in ActionBuild.Args
 	// So they can be used by plugins
 	for _, s := range pbji.Secrets {
 		p := sdk.Parameter{
