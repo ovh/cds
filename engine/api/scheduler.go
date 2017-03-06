@@ -149,6 +149,10 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
+	if pip.Type != sdk.BuildPipeline && env.ID == sdk.DefaultEnv.ID {
+		return sdk.WrapError(sdk.ErrWrongRequest, "Cannot create a scheduler on this pipeline without an environment")
+	}
+
 	// Unmarshal args
 	s := &sdk.PipelineScheduler{}
 	if err := UnmarshalBody(r, s); err != nil {
