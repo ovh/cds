@@ -62,7 +62,7 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 			log.Debug("InsertAction> Child Action %s is knowned with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
 		}
 
-		log.Debug("InsertAction> Insert Child Action %s with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
+		log.Debug("InsertAction> Insert Child Action %s with enabled:%t and parameters: %+v", a.Actions[i].Name, a.Actions[i].Enabled, a.Actions[i].Parameters)
 		if err := insertActionChild(tx, a.ID, a.Actions[i], i+1); err != nil {
 			return err
 		}
@@ -127,7 +127,7 @@ func LoadPipelineActionByID(db gorp.SqlExecutor, project, pip string, actionID i
 
 // LoadPublicAction load an action from database
 func LoadPublicAction(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
-	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE action.name = $1 AND public = true`
+	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE lower(action.name) = lower($1) AND public = true`
 	a, err := loadActions(db, query, name)
 	if err != nil {
 		return nil, err

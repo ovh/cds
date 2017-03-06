@@ -1,0 +1,60 @@
+name: Pipeline Export / Import Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cds}} project remove --force ITCLIPIPPRJ
+  - script: {{.cds}} group remove ITCLIPIP_GRP --force
+  - script: {{.cds}} project add ITCLIPIPPRJ "Test Project" ITCLIPIP_GRP
+  - script: {{.cds}} group add ITCLIPIP_GRP_EDIT_TEST
+  - script: {{.cds}} action remove IT_CLI_pipeline_Test_Echo --force
+
+- name: pipeline add
+  steps:
+  - script: {{.cds}} pipeline add ITCLIPIPPRJ HelloPipeline
+
+- name: pipeline stage add
+  steps:
+  - script: {{.cds}} pipeline stage add ITCLIPIPPRJ HelloPipeline Stage1
+
+- name: pipeline action add
+  steps:
+  - script: {{.cds}} action add IT_CLI_pipeline_Test_Echo --requirement="echo" -p name
+  - script: {{.cds}} pipeline job add ITCLIPIPPRJ HelloPipeline myJob1 --stage=1
+  - script: {{.cds}} pipeline job append ITCLIPIPPRJ HelloPipeline myJob1 IT_CLI_pipeline_Test_Echo -p "name={{.cds.proj.VAR_2}}"
+
+- name: pipeline export
+  steps:
+  - script: {{.cds}} pipeline export ITCLIPIPPRJ HelloPipeline --output pip.yml
+
+- name: pipeline update yaml file
+  steps:
+  - script: sed -i "s/HelloPipeline/HelloPipeline2/g" pip.yml
+
+- name: pipeline import
+  steps:
+  - script: {{.cds}} pipeline import ITCLIPIPPRJ pip.yml
+
+- name: pipeline show
+  steps:
+  - script: {{.cds}} pipeline show ITCLIPIPPRJ HelloPipeline2
+
+- name: pipeline update yaml file with errors
+  steps:
+  - script: sed -i "s/HelloPipeline2/HelloPipeline3/g" pip.yml
+
+- name: pipeline update yaml file with errors
+  steps:
+  - script: sed -i "s/IT_CLI_pipeline_Test_Echo/IT_CLI_pipeline_Test_Echo_Error/g" pip.yml
+
+- name: pipeline import should fail
+  steps:
+  - script: {{.cds}} pipeline import ITCLIPIPPRJ pip.yml
+    assertions:
+      - result.code ShouldEqual 1
+      - result.systemout ShouldContainSubstring IT_CLI_pipeline_Test_Echo_Error
+
+- name: pipeline show should fail
+  steps:
+  - script: {{.cds}} pipeline show ITCLIPIPPRJ HelloPipeline3
+    assertions:
+      - result.code ShouldEqual 1

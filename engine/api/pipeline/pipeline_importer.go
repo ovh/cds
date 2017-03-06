@@ -21,10 +21,24 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 		return err
 	}
 	if !ok {
+		if err := importNew(db, proj, pip); err != nil {
+			log.Debug("pipeline.Import> %s", err)
+			switch err.(type) {
+			case *msg.Errors:
+				if msgChan != nil {
+					msgChan <- msg.New(msg.PipelineCreationAborted, pip.Name)
+				}
+				for _, m := range *err.(*msg.Errors) {
+					msgChan <- m
+				}
+				return sdk.ErrInvalidPipeline
+			default:
+				return sdk.WrapError(err, "pipeline.Import")
+			}
+		}
 		if msgChan != nil {
 			msgChan <- msg.New(msg.PipelineCreated, pip.Name)
 		}
-		return importNew(db, proj, pip)
 	}
 	//Reload the pipeline
 	pip2, err := LoadPipeline(db, proj.Key, pip.Name, false)
@@ -33,7 +47,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 	}
 	//Be confident: use the pipeline
 	*pip = *pip2
-	if msgChan != nil {
+	if ok {
 		msgChan <- msg.New(msg.PipelineExists, pip.Name)
 	}
 	return nil
@@ -59,8 +73,10 @@ func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline) error 
 	//Insert stages
 	for i, s := range pip.Stages {
 		log.Debug("pipeline.importNew> Creating stage %s on pipeline %s", s.Name, pip.Name)
-		//Set default build order
-		s.BuildOrder = i + 1
+		if s.BuildOrder == 0 {
+			//Set default build order
+			s.BuildOrder = i + 1
+		}
 		//Default is enabled
 		s.Enabled = true
 		//Set relation with pipeline
@@ -70,10 +86,16 @@ func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline) error 
 			return err
 		}
 		//Insert stage's Jobs
-		for _, jobAction := range s.Jobs {
+		for i := range s.Jobs {
+			jobAction := &s.Jobs[i]
+			if errs := CheckJob(db, jobAction); errs != nil {
+				log.Debug("CheckJob > %s", errs)
+				return errs
+			}
+
 			jobAction.PipelineStageID = s.ID
 			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
-			if err := InsertJob(db, &jobAction, s.ID, pip); err != nil {
+			if err := InsertJob(db, jobAction, s.ID, pip); err != nil {
 				return err
 			}
 		}

@@ -18,6 +18,7 @@ var (
 var (
 	AppCreated                         = &Message{trad{FR: "L'application %s a été créée avec succès", EN: "Application %s successfully created"}, nil}
 	PipelineCreated                    = &Message{trad{FR: "Le pipeline %s a été créé avec succès", EN: "Pipeline %s successfully created"}, nil}
+	PipelineCreationAborted            = &Message{trad{FR: "La création du pipeline %s a été abandonnée", EN: "Pipeline %s creation aborted"}, nil}
 	PipelineExists                     = &Message{trad{FR: "Le pipeline %s existe déjà", EN: "Pipeline %s already exist"}, nil}
 	PipelineAttached                   = &Message{trad{FR: "Le pipeline %s a été attaché à l'application %s", EN: "Pipeline %s has been attached to application %s"}, nil}
 	PipelineTriggerCreated             = &Message{trad{FR: "Le trigger du pipeline %s de l'application %s vers le pipeline %s l'application %s a été créé avec succès", EN: "Trigger from pipeline %s of application %s to pipeline %s attached to application %s successfully created"}, nil}
@@ -35,6 +36,8 @@ var (
 	EnvironmentGroupCannotBeUpdated    = &Message{trad{FR: "Le groupe %s de l'environnement %s n'a pu être mis à jour : %s", EN: "Group %s on environment %s cannot be updated: %s"}, nil}
 	EnvironmentGroupCreated            = &Message{trad{FR: "Le groupe %s de l'environnement %s a été ajouté", EN: "Group %s on environment %s has been added"}, nil}
 	EnvironmentGroupCannotBeCreated    = &Message{trad{FR: "Le groupe %s de l'environnement %s n'a pu être ajouté : %s", EN: "Group %s on environment %s cannot be added: %s"}, nil}
+	JobNotValidActionNotFound          = &Message{trad{FR: "Erreur de validation du Job %s : L'action %s à l'étape %d n'a pas été trouvée", EN: "Job %s validation Failure: Unknown action %s on step #%d"}, nil}
+	JobNotValidInvalidActionParameter  = &Message{trad{FR: "Erreur de validation du Job %s : Le paramètre %s de l'étape %d - %s est invalide", EN: "Job %s validation Failure: Invalid parameter %s on step #%d %s"}, nil}
 )
 
 //Message represent a struc format translated messages
@@ -74,4 +77,23 @@ func (m *Message) String(al string) string {
 	default:
 		return fmt.Sprintf(m.Format[EN], m.Args...)
 	}
+}
+
+// Errors implement error interface and is a set of error
+type Errors []Message
+
+func (e *Errors) Error() string {
+	return e.TranslatedError(language.AmericanEnglish.String())
+}
+
+// TranslatedError returns translation for all errors
+func (e *Errors) TranslatedError(al string) string {
+	var s string
+	for i, err := range *e {
+		if i != 0 {
+			s += "\n"
+		}
+		s += err.String(language.AmericanEnglish.String())
+	}
+	return s
 }

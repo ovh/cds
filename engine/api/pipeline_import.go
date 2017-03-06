@@ -104,14 +104,14 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	defer tx.Rollback()
 
+	var globalError error
+
 	if exist {
 		// Override pipeline
 		return fmt.Errorf("Unsupported operation")
 	} else {
 		// Import new pipeline
-		if err := pipeline.Import(tx, proj, pip, msgChan); err != nil {
-			return sdk.WrapError(err, "importPipelineHandler> Error on import ")
-		}
+		globalError = pipeline.Import(tx, proj, pip, msgChan)
 	}
 
 	close(msgChan)
@@ -125,6 +125,14 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		if s != "" {
 			msgListString = append(msgListString, s)
 		}
+	}
+
+	if globalError != nil {
+		myError, ok := globalError.(*sdk.Error)
+		if ok {
+			return WriteJSON(w, r, msgListString, myError.Status)
+		}
+		return sdk.WrapError(err, "importPipelineHandler> Unable import pipeline")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {

@@ -64,20 +64,9 @@ func NewStepJUnitReport(s string) Action {
 // NewStepArtifactUpload returns an action (basically used as a step of a job) of artifact upload type
 func NewStepArtifactUpload(v map[string]string) Action {
 	newAction := Action{
-		Name: ArtifactUpload,
-		Type: BuiltinAction,
-		Parameters: []Parameter{
-			{
-				Name:  "path",
-				Value: v["path"],
-				Type:  StringParameter,
-			},
-			{
-				Name:  "tag",
-				Value: v["tag"],
-				Type:  StringParameter,
-			},
-		},
+		Name:       ArtifactUpload,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
 	}
 	return newAction
 }
@@ -85,20 +74,9 @@ func NewStepArtifactUpload(v map[string]string) Action {
 // NewStepArtifactDownload returns an action (basically used as a step of a job) of artifact download type
 func NewStepArtifactDownload(v map[string]string) Action {
 	newAction := Action{
-		Name: ArtifactDownload,
-		Type: BuiltinAction,
-		Parameters: []Parameter{
-			{
-				Name:  "path",
-				Value: v["path"],
-				Type:  StringParameter,
-			},
-			{
-				Name:  "tag",
-				Value: v["tag"],
-				Type:  StringParameter,
-			},
-		},
+		Name:       ArtifactDownload,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
 	}
 	return newAction
 }
