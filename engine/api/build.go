@@ -682,18 +682,16 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return err
 	}
 
-	for _, s := range new.TestSuites {
-		var found bool
+	for k := range new.TestSuites {
 		for i := range tests.TestSuites {
-			if tests.TestSuites[i].Name == s.Name {
-				found = true
-				tests.TestSuites[i] = s
+			if tests.TestSuites[i].Name == new.TestSuites[k].Name {
+				// testsuite with same name already exists,
+				// Create a unique name
+				new.TestSuites[k].Name = fmt.Sprintf("%s.%d", new.TestSuites[k].Name, pb.ID)
 				break
 			}
 		}
-		if !found {
-			tests.TestSuites = append(tests.TestSuites, s)
-		}
+		tests.TestSuites = append(tests.TestSuites, new.TestSuites[k])
 	}
 
 	// update total values
