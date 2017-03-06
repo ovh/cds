@@ -17,6 +17,7 @@ import {Observable} from 'rxjs/Rx';
 import {WorkflowItem} from '../../../../model/application.workflow.model';
 import {PipelineBuild, Pipeline} from '../../../../model/pipeline.model';
 import {Environment} from '../../../../model/environment.model';
+import {Scheduler, SchedulerExecution} from '../../../../model/scheduler.model';
 
 describe('CDS: Application Workflow', () => {
 
@@ -51,7 +52,7 @@ describe('CDS: Application Workflow', () => {
         backend = undefined;
     });
 
-    it('Load component', fakeAsync( () => {
+    it('should load component', fakeAsync( () => {
         // Create component
         let fixture = TestBed.createComponent(ApplicationWorkflowComponent);
         let component = fixture.debugElement.componentInstance;
@@ -126,6 +127,12 @@ describe('CDS: Application Workflow', () => {
         deploydPip.id = 2;
         deploydPip.name = 'deployPipeline';
 
+        // Create scheduler
+        let s = new Scheduler();
+        s.id = 1;
+        s.next_execution = new SchedulerExecution();
+        s.next_execution.execution_planned_date = '123';
+
         // Current workflow
         let currentWorkflow: Array<WorkflowItem> = new Array<WorkflowItem>();
 
@@ -133,6 +140,8 @@ describe('CDS: Application Workflow', () => {
         rootItem1.application = a;
         rootItem1.pipeline = buildPip;
         rootItem1.environment = e1;
+        rootItem1.schedulers = new Array<Scheduler>();
+        rootItem1.schedulers.push(s);
 
         let child1: WorkflowItem = new WorkflowItem();
         child1.application = a;
@@ -150,6 +159,13 @@ describe('CDS: Application Workflow', () => {
         // Updated Application to apply
         let upApp: Application = new Application();
         upApp.id = 1;
+
+        upApp.schedulers = new Array<Scheduler>();
+        let sUp = new Scheduler();
+        sUp.id = 1;
+        sUp.next_execution = new SchedulerExecution();
+        sUp.next_execution.execution_planned_date = '456';
+        upApp.schedulers.push(sUp);
 
         let pbs: Array<PipelineBuild> = new Array<PipelineBuild>();
 
@@ -179,6 +195,7 @@ describe('CDS: Application Workflow', () => {
 
         expect(fixture.componentInstance.application.workflows[0].pipeline.last_pipeline_build.version).toBe(6);
         expect(fixture.componentInstance.application.workflows[0].subPipelines[0].pipeline.last_pipeline_build.version).toBe(5);
+        expect(fixture.componentInstance.application.workflows[0].schedulers[0].next_execution.execution_planned_date).toBe('456');
     }));
 
     it('should add staging env in workflow', fakeAsync( () => {

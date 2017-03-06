@@ -54,7 +54,7 @@ export class HttpService extends Http {
             }
             if (err.status === 401) {
                 this._authStore.removeUser();
-                this._router.navigate(['account/login']);
+                this._router.navigate(['/account', 'login']);
                 return Observable.throw(err);
             } else {
                 return Observable.throw(err);

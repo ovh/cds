@@ -10,6 +10,7 @@ import {Trigger} from '../../model/trigger.model';
 import {ApplyTemplateRequest} from '../../model/template.model';
 import {Project} from '../../model/project.model';
 import {Notification} from '../../model/notification.model';
+import {Scheduler} from '../../model/scheduler.model';
 
 @Injectable()
 export class ApplicationService {
@@ -328,4 +329,42 @@ export class ApplicationService {
     }
 
 
+    /**
+     * Add a scheduler on the couple application/pipeline
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name
+     * @param scheduler Scheduler
+     */
+    addScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler';
+        return this._http.post(url, scheduler).map(res => res.json());
+
+    }
+
+    /**
+     * Update a scheduler
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name
+     * @param scheduler Scheduler
+     */
+    updateScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler';
+        return this._http.put(url, scheduler).map(res => res.json());
+
+    }
+
+    /**
+     * Delete a scheduler
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name
+     * @param scheduler Scheduler
+     */
+    deleteScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler/' + scheduler.id;
+        return this._http.delete(url).map(res => res.json());
+
+    }
 }

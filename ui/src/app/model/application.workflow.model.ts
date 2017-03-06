@@ -3,6 +3,9 @@ import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {Pipeline} from './pipeline.model';
 import {Trigger} from './trigger.model';
+import {Scheduler} from './scheduler.model';
+import {RepositoryPoller} from './polling.model';
+import {Hook} from './hook.model';
 
 export class WorkflowItem {
     // API Data
@@ -12,6 +15,9 @@ export class WorkflowItem {
     pipeline: Pipeline;
     subPipelines: Array<WorkflowItem>;
     trigger: Trigger;
+    schedulers: Array<Scheduler>;
+    poller: RepositoryPoller;
+    hooks: Array<Hook>;
 
     // Parent data
     parent: ParentItem;

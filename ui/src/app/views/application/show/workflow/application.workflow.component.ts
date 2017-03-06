@@ -120,6 +120,12 @@ export class ApplicationWorkflowComponent implements OnInit {
             // If pipeline found : update it
             if (pipelineBuildUpdated && pipelineBuildUpdated.length === 1) {
                 w.pipeline.last_pipeline_build = pipelineBuildUpdated[0];
+
+                // Check update scheduler
+                if (w.schedulers) {
+                    this.updateSchedulers(w, app);
+                }
+
             } else if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
                 // If current item is a deploy or testing pipeline without environment
                 // Then add new item on workflow
@@ -164,6 +170,22 @@ export class ApplicationWorkflowComponent implements OnInit {
             });
         }
     };
+
+    /**
+     * Update scheduler last execution date;
+     * @param w Workflow item to update
+     * @param app Data up to date
+     */
+    updateSchedulers(w: WorkflowItem, app: Application): void {
+        w.schedulers.forEach(s => {
+           let sInApp = app.schedulers.find(sc => {
+               return sc.id === s.id;
+           });
+           if (sInApp && sInApp.next_execution) {
+               s.next_execution = sInApp.next_execution;
+           }
+        });
+    }
 
     /**
      * Action when changing branch
