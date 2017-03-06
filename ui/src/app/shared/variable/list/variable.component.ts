@@ -13,7 +13,10 @@ import {VariableEvent} from '../variable.event.model';
 export class VariableComponent extends Table {
 
     @Input() variables: Variable[];
-
+    @Input('maxPerPage')
+    set maxPerPage(data: number) {
+        this.nbElementsByPage = data;
+    };
     // display mode:   edit (edit all field) / launcher (only type value) /ro (display field, no edit)
     @Input() mode = 'edit';
     @Output() event = new EventEmitter<VariableEvent>();

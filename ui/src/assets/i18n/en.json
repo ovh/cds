@@ -118,6 +118,7 @@
   "common_yes" : "Yes",
 
   "environment_created" : "Environment added",
+  "environment_create_placeholder" : "New environment",
   "environment_deleted" : "Environment deleted",
   "environment_name" : "Environment name",
   "environment_no" : "There is no environment",

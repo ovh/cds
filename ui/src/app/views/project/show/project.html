@@ -30,39 +30,34 @@
                     <app-project-pipelines [project]="project"></app-project-pipelines>
                 </div>
                 <div *ngSwitchCase="'environments'">
-                    <ng-container *ngIf="project.permission === 7">
-                        <h2>{{ 'project_env_form_title' | translate}}</h2>
-                        <app-environment-form [project]="project"></app-environment-form>
-                    </ng-container>
-                    <h2>{{ 'project_env_list_title' | translate}}</h2>
+                    <h3>{{ 'project_env_list_title' | translate}}</h3>
                     <app-environment-list [project]="project"></app-environment-list>
 
                 </div>
 
                 <div *ngSwitchCase="'variables'">
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
-                    <div>
-                        <h2>{{ 'project_variable_list_title' | translate }}</h2>
-                        <app-variable [variables]="project.variables" [mode]="project.permission === 7? 'edit': 'ro'" (event)="variableEvent($event)"></app-variable>
-                    </div>
                     <ng-container *ngIf="project.permission === 7">
-                        <h2>{{ 'project_variable_form_title' | translate }}</h2>
+                        <h3>{{ 'project_variable_form_title' | translate }}</h3>
                         <app-variable-form (createVariableEvent)="variableEvent($event)" [loading]="varFormLoading"></app-variable-form>
                     </ng-container>
-
+                    <div>
+                        <h3>{{ 'project_variable_list_title' | translate }}</h3>
+                        <app-variable [variables]="project.variables" [mode]="project.permission === 7? 'edit': 'ro'" (event)="variableEvent($event)"></app-variable>
+                    </div>
+                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
                 </div>
 
                 <div *ngSwitchCase="'permissions'">
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
-                    <h2>{{ 'project_permission_list_title' | translate }}</h2>
+                    <h3>{{ 'project_permission_list_title' | translate }}</h3>
                     <app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permission === 7"></app-permission-list>
                     <ng-container *ngIf="project.permission === 7">
-                        <h2>{{ 'project_permission_form_title' | translate }}</h2>
+                        <h3>{{ 'project_permission_form_title' | translate }}</h3>
                         <app-permission-form (createGroupPermissionEvent)="groupEvent($event)" [loading]="permFormLoading"></app-permission-form>
                     </ng-container>
+                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                 </div>
                 <div *ngSwitchCase="'advanced'">
-                    <h2>{{ 'project_advanced_title' | translate }}</h2>
+                    <h3>{{ 'project_advanced_title' | translate }}</h3>
                     <app-project-admin [project]="project"></app-project-admin>
                 </div>
             </div>
