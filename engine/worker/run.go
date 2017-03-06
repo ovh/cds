@@ -384,7 +384,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 		return sdk.Result{Status: sdk.StatusFail}
 	}
 
-	// Add secrets as stringq or password in ActionBuild.Args
+	// Add secrets as string or password in ActionBuild.Args
 	// So they can be used by plugins
 	for _, s := range pbji.Secrets {
 		p := sdk.Parameter{
