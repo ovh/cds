@@ -58,3 +58,10 @@ testcases:
   - script: {{.cds}} pipeline show ITCLIPIPPRJ HelloPipeline3
     assertions:
       - result.code ShouldEqual 1
+
+- name: cleanup
+  steps:
+  - script: {{.cds}} group remove ITCLIPIP_GRP_EDIT_TEST
+  - script: {{.cds}} group remove ITCLIPIP_GRP
+  - script: {{.cds}} project remove --force ITCLIPIPPRJ
+  - script: {{.cds}} action remove IT_CLI_pipeline_Test_Echo

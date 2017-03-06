@@ -40,7 +40,7 @@ func importCmd() *cobra.Command {
 
 			url = fmt.Sprintf("/project/%s/pipeline/import?format=%s", projectKey, importFormat)
 
-			data, _, err := sdk.Request("POST", url, btes)
+			data, code, err := sdk.Request("POST", url, btes)
 			json.Unmarshal(data, &msg)
 			if err != nil {
 				sdk.Exit("Error: %s\n", err)
@@ -48,6 +48,10 @@ func importCmd() *cobra.Command {
 
 			for _, s := range msg {
 				fmt.Println(s)
+			}
+
+			if code >= 400 {
+				sdk.Exit("Error while importing pipeline\n")
 			}
 		},
 	}
