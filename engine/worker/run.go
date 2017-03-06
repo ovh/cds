@@ -71,9 +71,10 @@ func startAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int,
 		// Process build variable for root action
 		for j := range a.Parameters {
 			if abp.Name == a.Parameters[j].Name {
-
 				a.Parameters[j].Value = abp.Value
 			}
+			a.Parameters[j].Value = strings.Replace(a.Parameters[j].Value,
+				"{{.cds.worker}}", pipBuildJob.Job.WorkerName, -1)
 		}
 	}
 
@@ -85,7 +86,6 @@ func replaceBuildVariablesPlaceholder(a *sdk.Action) {
 		for _, v := range buildVariables {
 			a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value,
 				"{{.cds.build."+v.Name+"}}", v.Value, -1)
-
 		}
 	}
 }
@@ -99,6 +99,13 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, s
 	}
 	if a.Type == sdk.PluginAction {
 		return runPlugin(a, pipBuildJob, stepOrder)
+	}
+
+	if !a.Enabled {
+		return sdk.Result{
+			Status:  sdk.StatusDisabled,
+			BuildID: pipBuildJob.ID,
+		}
 	}
 
 	// Nothing to do, success !
@@ -430,6 +437,10 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	}
 
 	logsecrets = pbji.Secrets
+
+	// add cds.worker on parameters available
+	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{Name: "cds.worker", Value: pbji.PipelineBuildJob.Job.WorkerName, Type: sdk.StringParameter})
+
 	res := startAction(&pbji.PipelineBuildJob.Job.Action, pbji.PipelineBuildJob, -1, "")
 	close(doneChan)
 	logsecrets = nil

@@ -2,20 +2,24 @@ name: Builtin Action TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds project remove --force ITSCBUILTIN
-  - script: cds group remove ITSCBUILTIN --force
-  - script: cds project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
-  - script: cds application add ITSCBUILTIN TestApp
+  - script: {{.cds}} project remove --force ITSCBUILTIN
+  - script: {{.cds}} group remove ITSCBUILTIN --force
+  - script: {{.cds}} project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
+  - script: {{.cds}} application add ITSCBUILTIN TestApp
 
 - name: builtin action
   steps:
-  - script: cds pipeline add ITSCBUILTIN Scripting
-  - script: cds application pipeline add ITSCBUILTIN TestApp Scripting
-  - script: cds pipeline job add ITSCBUILTIN Scripting myJob1
-  - script: cds pipeline job append ITSCBUILTIN Scripting myJob1 Script -p script="echo Hello world !"
-  - script: cds pipeline run ITSCBUILTIN TestApp Scripting
-  - script: cds application pipeline remove ITSCBUILTIN TestApp Scripting
+  - script: {{.cds}} pipeline add ITSCBUILTIN Scripting
+  - script: {{.cds}} application pipeline add ITSCBUILTIN TestApp Scripting
+  - script: {{.cds}} pipeline stage add ITSCBUILTIN Scripting Stage1
+  - script: {{.cds}} pipeline job add ITSCBUILTIN Scripting MyJob1 --stage=1
+  - script: {{.cds}} pipeline job append ITSCBUILTIN Scripting MyJob1 Script -p script="echo HelloWorld{{.cds.pipeline}}{{.cds.stage}}{{.cds.job}}!"
+  - script: {{.cds}} pipeline run ITSCBUILTIN TestApp Scripting
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring HelloWorldScriptingStage1MyJob1!
+  - script: {{.cds}} application pipeline remove ITSCBUILTIN TestApp Scripting
 
 - name: cleanup
   steps:
-  - script: cds project remove --force ITSCBUILTIN
+  - script: {{.cds}} project remove --force ITSCBUILTIN

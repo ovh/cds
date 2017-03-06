@@ -11,11 +11,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strconv"
-	"strings"
 	"sync"
-	"text/template"
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
@@ -279,52 +276,36 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 }
 
 func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
-	//Read marathon.json
+	//Read initial marathon.json file
 	buff, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		plugin.SendLog(a, "Configuration file error : %s\n", err)
+		plugin.SendLog(a, "Configuration file error: %s\n", err)
 		return "", err
 	}
 
-	fileContent := string(buff)
-	data := map[string]string{}
-	for k, v := range a.Arguments().Data {
-		kb := strings.Replace(k, ".", "__", -1)
-		data[kb] = v
-		re := regexp.MustCompile("{{." + k + "(.*)}}")
-		for {
-			sm := re.FindStringSubmatch(fileContent)
-			if len(sm) > 0 {
-				fileContent = strings.Replace(fileContent, sm[0], "{{."+kb+sm[1]+"}}", -1)
-			} else {
-				break
-			}
-		}
+	// apply cds.var on marathon.json file
+	out, errapp := plugin.ApplyArguments(a.Arguments().Data, buff)
+	if errapp != nil {
+		plugin.SendLog(a, "Apply cds variables error: %s\n", errapp)
+		return "", errapp
 	}
 
-	funcMap := template.FuncMap{
-		"title":  strings.Title,
-		"lower":  strings.ToLower,
-		"upper":  strings.ToUpper,
-		"escape": Escape,
+	// create file
+	outfile, errtemp := ioutil.TempFile(os.TempDir(), "marathon.json")
+	if errtemp != nil {
+		plugin.SendLog(a, "Error writing temporary file: %s\n", errtemp.Error())
+		return "", errtemp
 	}
+	outPath := outfile.Name()
 
-	t, err := template.New("file").Funcs(funcMap).Parse(fileContent)
-	if err != nil {
-		plugin.SendLog(a, "Invalid template format: %s\n", err.Error())
-		return "", err
+	// write new content in new marathon.json
+	_, errw := outfile.Write(out)
+	if errw != nil {
+		plugin.SendLog(a, "Error writing content to file: %s\n", errw.Error())
+		return "", errw
 	}
-
-	out, err := ioutil.TempFile(os.TempDir(), "marathon.json")
-	if err != nil {
-		plugin.SendLog(a, "Error writing temporary file : %s\n", err.Error())
-		return "", err
-	}
-	outPath := out.Name()
-	if err := t.Execute(out, data); err != nil {
-		plugin.SendLog(a, "Failed to execute template: %s\n", err.Error())
-		return "", err
-	}
+	outfile.Sync()
+	outfile.Close()
 
 	return outPath, nil
 }
@@ -333,14 +314,14 @@ func parseApplicationConfigFile(a plugin.IJob, f string) (*marathon.Application,
 	//Read marathon.json
 	buff, errf := ioutil.ReadFile(f)
 	if errf != nil {
-		plugin.SendLog(a, "Configuration file error : %s\n", errf)
+		plugin.SendLog(a, "Configuration file error: %s\n", errf)
 		return nil, errf
 	}
 
 	//Parse marathon.json
 	appConfig := &marathon.Application{}
 	if err := json.Unmarshal(buff, appConfig); err != nil {
-		plugin.SendLog(a, "Configuration file parse error : %s\n", err)
+		plugin.SendLog(a, "Configuration file parse error: %s\n", err)
 		return nil, err
 	}
 

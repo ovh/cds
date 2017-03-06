@@ -112,12 +112,15 @@ type PipelineAction struct {
 
 // CDPipeline  Represent a pipeline in the CDTree
 type CDPipeline struct {
-	Project      Project         `json:"project"`
-	Application  Application     `json:"application"`
-	Environment  Environment     `json:"environment"`
-	Pipeline     Pipeline        `json:"pipeline"`
-	SubPipelines []CDPipeline    `json:"subPipelines"`
-	Trigger      PipelineTrigger `json:"trigger"`
+	Project      Project             `json:"project"`
+	Application  Application         `json:"application"`
+	Environment  Environment         `json:"environment"`
+	Pipeline     Pipeline            `json:"pipeline"`
+	SubPipelines []CDPipeline        `json:"subPipelines"`
+	Trigger      PipelineTrigger     `json:"trigger"`
+	Schedulers   []PipelineScheduler `json:"schedulers"`
+	Hooks        []Hook              `json:"hooks"`
+	Poller       *RepositoryPoller   `json:"poller"`
 }
 
 // RunRequest  Request to run a pipeline

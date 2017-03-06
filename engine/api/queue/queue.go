@@ -169,7 +169,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 	stage.Status = sdk.StatusBuilding
 
 	for _, job := range stage.Jobs {
-		pbJobParams, errParam := getPipelineBuildJobParameters(tx, job, pb)
+		pbJobParams, errParam := getPipelineBuildJobParameters(tx, job, pb, stage)
 		if errParam != nil {
 			return errParam
 		}
@@ -366,7 +366,7 @@ func ParentBuildInfos(pb *sdk.PipelineBuild) []sdk.Parameter {
 	return params
 }
 
-func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.PipelineBuild) ([]sdk.Parameter, error) {
+func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.PipelineBuild, stage *sdk.Stage) ([]sdk.Parameter, error) {
 
 	// Load project Variables
 	projectVariables, err := project.GetAllVariableInProject(db, pb.Pipeline.ProjectID)
@@ -393,5 +393,5 @@ func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.Pipel
 		return nil, err
 	}
 
-	return action.ProcessActionBuildVariables(projectVariables, appVariables, envVariables, pipelineParameters, pb.Parameters, j.Action), nil
+	return action.ProcessActionBuildVariables(projectVariables, appVariables, envVariables, pipelineParameters, pb.Parameters, stage, j.Action), nil
 }

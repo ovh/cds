@@ -13,7 +13,7 @@ import (
 // - Pipeline parameters
 // - Action definition in pipeline
 // - ActionBuild variables (global ones + trigger parameters)
-func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables []sdk.Variable, envVariables []sdk.Variable, pipelineParameters []sdk.Parameter, actionBuildArguments []sdk.Parameter, action sdk.Action) []sdk.Parameter {
+func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables []sdk.Variable, envVariables []sdk.Variable, pipelineParameters []sdk.Parameter, actionBuildArguments []sdk.Parameter, stage *sdk.Stage, action sdk.Action) []sdk.Parameter {
 	abv := make(map[string]sdk.Parameter)
 	final := []sdk.Parameter{}
 	project := "cds.proj"
@@ -57,6 +57,9 @@ func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables [
 	for _, a := range actionBuildArguments {
 		abv[a.Name] = a
 	}
+
+	abv["cds.stage"] = sdk.Parameter{Name: "cds.stage", Type: sdk.StringParameter, Value: stage.Name}
+	abv["cds.job"] = sdk.Parameter{Name: "cds.job", Type: sdk.StringParameter, Value: action.Name}
 
 	// Until there is no replace (or loop escape trigger), replace variables
 	var loopEscape int
