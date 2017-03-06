@@ -4,7 +4,7 @@ ul {
   list-style: none;
 
   li.stage {
-    width: 25%;
+    width: 10%;
     float: left;
     position: relative;
 
@@ -25,6 +25,19 @@ ul {
           padding-top: 5px;
           padding-bottom: 5px;
           position: relative;
+
+          .success.segment {
+            background-color: $cds_color_light_green;
+          }
+          .fail.segment {
+            background-color: $cds_color_light_red;
+          }
+          .inactive.segment {
+            background-color: $cds_color_light_grey;
+          }
+          .building.segment {
+            background-color: $cds_color_light_teal;
+          }
 
           .newspaper .icon {
             float: right;
@@ -67,6 +80,9 @@ ul {
 
       .job.ui.segment {
         .duration {
+          position: absolute;
+          right: 4px;
+          bottom: -3px;
           color: gray;
           font-size: 0.8rem;
           font-weight: 600;
@@ -77,6 +93,28 @@ ul {
         border: 2px solid $cds_color_teal;
       }
     }
+  }
+
+  li.one.stage {
+    width: 100%;
+  }
+
+  li.two.stage {
+    width: 50%;
+  }
+
+  li.three.stage {
+    width: 33%;
+  }
+
+  li.four.stage {
+    width: 25%;
+  }
+  li.five.stage {
+    width: 20%
+  }
+  li.six.stage {
+    width: 16%;
   }
 }
 

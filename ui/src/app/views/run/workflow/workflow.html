@@ -3,19 +3,31 @@
         <div class="row">
             <div class="column">
                 <ul *ngIf="currentBuild">
-                    <li *ngFor="let stage of currentBuild.stages" class="stage">
+                    <li *ngFor="let stage of currentBuild.stages" class="stage"
+                        [class.one]="currentBuild.stages.length === 1"
+                        [class.two]="currentBuild.stages.length === 2"
+                        [class.three]="currentBuild.stages.length === 3"
+                        [class.four]="currentBuild.stages.length === 4"
+                        [class.five]="currentBuild.stages.length === 5"
+                        [class.six]="currentBuild.stages.length === 6">
                         <div class="stageItem">
                             {{stage.name}}
                             <ul>
                                 <li *ngFor="let j of stage.jobs">
                                     <div class="job ui segment pointing"
                                          [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
+                                         [class.success]="mapJobStatus[j.pipeline_action_id] === 'Success'"
+                                         [class.inactive]="mapJobStatus[j.pipeline_action_id] === 'Disabled'"
+                                         [class.fail]="mapJobStatus[j.pipeline_action_id] === 'Fail'"
+                                         [class.building]="mapJobStatus[j.pipeline_action_id] === 'Building'"
                                          (click)="selectedJob(j, stage)">
-                                        <app-status-icon [status]="mapJobStatus[j.pipeline_action_id]" [value]="mapJobProgression[j.pipeline_action_id]"></app-status-icon>
-                                        {{j.action.name}}
-                                        <span class="right floated duration">
+                                        <div>
+                                            <app-status-icon [status]="mapJobStatus[j.pipeline_action_id]" [value]="mapJobProgression[j.pipeline_action_id]"></app-status-icon>
+                                            {{j.action.name}}
+                                        </div>
+                                        <div class="duration">
                                             {{mapJobDuration[j.pipeline_action_id]}}
-                                        </span>
+                                        </div>
                                     </div>
                                 </li>
                             </ul>
