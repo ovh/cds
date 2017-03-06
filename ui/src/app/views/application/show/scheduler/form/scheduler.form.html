@@ -4,7 +4,7 @@
             <label>{{ 'scheduler_crontab' | translate }}</label>
             <input type="text" [(ngModel)]="scheduler.crontab" (keypress)="scheduler.hasChanged = true" placeholder="* * * * *">
         </div>
-        <div class="eight wide field" *ngIf="edit && pipeline && pipeline.type !== 'build'">
+        <div class="eight wide field" *ngIf="application.permission === 7 && pipeline && pipeline.type !== 'build'">
             <label>{{ 'common_environment' | translate }}</label>
             <sm-select [(model)]="scheduler.environment_name">
                 <option *ngFor="let e of project.environments" [value]="e.name">{{e.name}}</option>

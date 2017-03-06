@@ -71,8 +71,8 @@
             </div>
             <div class="ui scheduler segment" *ngFor="let s of workflowItem.schedulers">
                 <app-application-scheduler-item
-                        [project]="project" [application]="application"
-                        [scheduler]="s" [edit]="application.permission === 7" [pipeline]="workflowItem.pipeline"
+                        [project]="project" [application]="workflowItem.application"
+                        [scheduler]="s" [pipeline]="workflowItem.pipeline"
                         (event)="schedulerEvent($event.type, $event.scheduler)"></app-application-scheduler-item>
             </div>
             <div class="ui segment" *ngFor="let h of workflowItem.hooks">
