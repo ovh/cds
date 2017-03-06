@@ -166,7 +166,7 @@ func (hd *HatcheryDocker) WorkerStarted(model *sdk.Model) int {
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) error {
+func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
 	var err error
 
 	if wm.Type != sdk.Docker {
