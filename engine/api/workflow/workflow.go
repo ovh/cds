@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -38,6 +37,20 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			JOIN project ON project.id = application.project_id
 			JOIN environment ON environment.id = s.environment_id
 			WHERE application.name = $2 and project.projectkey = $1
+			-- AND NOT TRIGGERED
+			AND s.pipeline_id || '-' || s.environment_id  NOT IN (
+				SELECT pipID || '-' || envID
+				FROM
+				(
+					SELECT src_pipeline_id as pipID, src_environment_id as envID
+					FROM pipeline_trigger
+					WHERE src_pipeline_id = s.pipeline_id AND src_environment_id = s.environment_id AND src_application_id = s.application_id
+				UNION
+					SELECT dest_pipeline_id as pipID, dest_environment_id as envID
+					FROM pipeline_trigger
+					WHERE dest_pipeline_id = s.pipeline_id AND dest_environment_id = s.environment_id AND src_application_id = s.application_id
+				) a
+			)
 		     ) withScheduler
 
 		     UNION
@@ -54,6 +67,20 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			JOIN project ON project.id = application.project_id
 			JOIN environment ON environment.id = 1
 			WHERE application.name = $2 and project.projectkey = $1
+			-- AND NOT TRIGGERED
+			AND h.pipeline_id || '-' || environment.id  NOT IN (
+				SELECT pipID || '-' || envID
+				FROM
+				(
+					SELECT src_pipeline_id as pipID, src_environment_id as envID
+					FROM pipeline_trigger
+					WHERE src_pipeline_id = h.pipeline_id AND src_environment_id = environment.id AND src_application_id = h.application_id
+				UNION
+					SELECT dest_pipeline_id as pipID, dest_environment_id as envID
+					FROM pipeline_trigger
+					WHERE dest_pipeline_id = h.pipeline_id AND dest_environment_id = environment.id AND src_application_id = h.application_id
+				) a
+			)
 		     )
 		     UNION
 		     -- SELECT FROM POLLER
@@ -69,6 +96,20 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			JOIN project ON project.id = application.project_id
 			JOIN environment ON environment.id = 1
 			WHERE application.name = $2 and project.projectkey = $1
+			-- AND NOT TRIGGERED
+			AND p.pipeline_id || '-' || environment.id  NOT IN (
+				SELECT pipID || '-' || envID
+				FROM
+				(
+					SELECT src_pipeline_id as pipID, src_environment_id as envID
+					FROM pipeline_trigger
+					WHERE src_pipeline_id = p.pipeline_id AND src_environment_id = environment.id AND src_application_id = p.application_id
+				UNION
+					SELECT dest_pipeline_id as pipID, dest_environment_id as envID
+					FROM pipeline_trigger
+					WHERE dest_pipeline_id = p.pipeline_id AND dest_environment_id = environment.id AND src_application_id = p.application_id
+				) a
+			)
 		     )
 		     UNION
 		     -- ROOT PIPELINE WITH NO TRIGGER
@@ -187,30 +228,10 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			}
 		}
 
-		if lastTree != nil && hasHook {
-			hooks, errH := hook.LoadPipelineHooks(db, lastTree.Pipeline.ID, lastTree.Application.ID)
-			if errH != nil {
-				log.Warning("LoadCDTree> Cannot load hooks for application %s [%d] and pipeline %s [%d]: %s", lastTree.Application.Name, lastTree.Application.ID, lastTree.Pipeline.Name, lastTree.Pipeline.ID, errH)
-				return nil, errH
+		if lastTree != nil {
+			if err := fetchTriggers(db, lastTree, hasScheduler, hasPoller, hasHook); err != nil {
+				return nil, err
 			}
-			lastTree.Hooks = hooks
-		}
-		if lastTree != nil && hasPoller {
-			poller, errP := poller.LoadByApplicationAndPipeline(db, lastTree.Application.ID, lastTree.Pipeline.ID)
-			if errP != nil {
-				log.Warning("LoadCDTree> Cannot load pollers for application %s [%d] and pipeline %s [%d]: %s", lastTree.Application.Name, lastTree.Application.ID, lastTree.Pipeline.Name, lastTree.Pipeline.ID, errP)
-				return nil, errP
-			}
-			lastTree.Poller = poller
-		}
-
-		if lastTree != nil && hasScheduler {
-			schedulers, errS := scheduler.GetByApplicationPipeline(db, &lastTree.Application, &lastTree.Pipeline)
-			if errS != nil {
-				log.Warning("LoadCDTree> Cannot load schedulers for application %s [%d] and pipeline %s [%d]: %s", lastTree.Application.Name, lastTree.Application.ID, lastTree.Pipeline.Name, lastTree.Pipeline.ID, errS)
-				return nil, errS
-			}
-			lastTree.Schedulers = schedulers
 		}
 	}
 	return cdTrees, nil
@@ -264,7 +285,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 			LEFT JOIN pipeline_trigger_prerequisite pre ON pre.pipeline_trigger_id = pt.id
 			WHERE pt.src_pipeline_id = pr.dest_pipeline_id AND COALESCE(pt.src_environment_id,1) = COALESCE(pr.dest_environment_id,1)
 	)
-	SELECT id,
+	SELECT  parent.id,
 		src_application_id, dest_application_id,
 		src_pipeline_id, src_environment_id, dest_pipeline_id, dest_environment_id,
 		manual,
@@ -279,10 +300,16 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 		COALESCE(
 			json_agg(json_build_object('parameter', prerequisiteName, 'expected_value', prerequisiteValue))
 			FILTER (WHERE prerequisiteName IS NOT NULL), '[]'
-		)
+		),
+		CASE WHEN COALESCE (count(sc.id), 0)>0 THEN true ELSE false END as hasSchedulers,
+		CASE WHEN COALESCE (count(h.id), 0)>0 THEN true ELSE false END as hasHooks,
+		CASE WHEN COALESCE (count(p.application_id), 0)>0 THEN true ELSE false END as hasPoller
 	FROM parent
+	LEFT JOIN pipeline_scheduler sc ON sc.application_id = dest_application_id AND sc.pipeline_id = dest_pipeline_id AND sc.environment_id = dest_environment_id
+	LEFT JOIN hook h ON h.application_id = dest_application_id AND h.pipeline_id = dest_pipeline_id AND sc.environment_id = 1
+	LEFT JOIN poller p ON p.application_id = dest_application_id AND p.pipeline_id = dest_pipeline_id AND sc.environment_id = 1
 	GROUP BY
-		id,
+		parent.id,
 		src_application_id, dest_application_id, srcAppName, destAppName,
 		src_pipeline_id, dest_pipeline_id,
 		src_environment_id, dest_environment_id, srcEnvName, destEnvName,
@@ -300,6 +327,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 		var child sdk.CDPipeline
 		var srcType, destType string
 		var params, prerequisites string
+		var hasSchedulers, hasHooks, hasPoller bool
 		if err := rows.Scan(&child.Trigger.ID,
 			&child.Trigger.SrcApplication.ID, &child.Trigger.DestApplication.ID,
 			&child.Trigger.SrcPipeline.ID, &child.Trigger.SrcEnvironment.ID, &child.Trigger.DestPipeline.ID, &child.Trigger.DestEnvironment.ID,
@@ -309,7 +337,8 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 			&child.Trigger.SrcEnvironment.Name, &child.Trigger.DestEnvironment.Name,
 			&child.Trigger.SrcProject.ID, &child.Trigger.SrcProject.Key, &child.Trigger.SrcProject.Name,
 			&child.Trigger.DestProject.ID, &child.Trigger.DestProject.Key, &child.Trigger.DestProject.Name,
-			&params, &prerequisites); err != nil {
+			&params, &prerequisites,
+			&hasSchedulers, &hasHooks, &hasPoller); err != nil {
 			return err
 		}
 
@@ -321,11 +350,22 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 			child.Application = child.Trigger.DestApplication
 			child.Pipeline = child.Trigger.DestPipeline
 			child.Environment = child.Trigger.DestEnvironment
+
+			// Calculate permission
+			child.Application.Permission = permission.ApplicationPermission(child.Application.ID, user)
+			child.Project.Permission = permission.ProjectPermission(child.Project.Key, user)
+			child.Pipeline.Permission = permission.PipelinePermission(child.Pipeline.ID, user)
+			child.Environment.Permission = permission.EnvironmentPermission(child.Environment.ID, user)
+
 			if err := json.Unmarshal([]byte(params), &child.Trigger.Parameters); err != nil {
 				return err
 			}
 
 			if err := json.Unmarshal([]byte(prerequisites), &child.Trigger.Prerequisites); err != nil {
+				return err
+			}
+
+			if err := fetchTriggers(db, &child, hasSchedulers, hasPoller, hasHooks); err != nil {
 				return err
 			}
 
@@ -354,4 +394,30 @@ func buildTreeOrder(parent *sdk.CDPipeline, listChild []sdk.CDPipeline, user *sd
 		}
 	}
 	return *parent
+}
+
+func fetchTriggers(db gorp.SqlExecutor, workflowItem *sdk.CDPipeline, hasSchedulers, hasPoller, hasHooks bool) error {
+	if hasHooks {
+		hooks, errH := hook.LoadPipelineHooks(db, workflowItem.Pipeline.ID, workflowItem.Application.ID)
+		if errH != nil {
+			return sdk.WrapError(errH, "fetchTriggers> Cannot load hooks for application %s [%d] and pipeline %s [%d]: %s", workflowItem.Application.Name, workflowItem.Application.ID, workflowItem.Pipeline.Name, workflowItem.Pipeline.ID, errH)
+		}
+		workflowItem.Hooks = hooks
+	}
+	if hasPoller {
+		poller, errP := poller.LoadByApplicationAndPipeline(db, workflowItem.Application.ID, workflowItem.Pipeline.ID)
+		if errP != nil {
+			return sdk.WrapError(errP, "fetchTriggers> Cannot load pollers for application %s [%d] and pipeline %s [%d]: %s", workflowItem.Application.Name, workflowItem.Application.ID, workflowItem.Pipeline.Name, workflowItem.Pipeline.ID, errP)
+		}
+		workflowItem.Poller = poller
+	}
+
+	if hasSchedulers {
+		schedulers, errS := scheduler.GetByApplicationPipeline(db, &workflowItem.Application, &workflowItem.Pipeline)
+		if errS != nil {
+			return sdk.WrapError(errS, "fetchTriggers> Cannot load schedulers for application %s [%d] and pipeline %s [%d]: %s", workflowItem.Application.Name, workflowItem.Application.ID, workflowItem.Pipeline.Name, workflowItem.Pipeline.ID, errS)
+		}
+		workflowItem.Schedulers = schedulers
+	}
+	return nil
 }
