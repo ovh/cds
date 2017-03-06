@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -26,7 +27,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	pipelineName := vars["permPipelineKey"]
 
 	///Load application
-	app, errA := application.LoadApplicationByName(db, key, appName)
+	app, errA := application.LoadByName(db, key, appName, c.User)
 	if errA != nil {
 		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
 		return errA
@@ -88,7 +89,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	pipelineName := vars["permPipelineKey"]
 
 	///Load application
-	app, errA := application.LoadApplicationByName(db, key, appName)
+	app, errA := application.LoadByName(db, key, appName, c.User)
 	if errA != nil {
 		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
 		return errA
@@ -148,6 +149,10 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
+	if pip.Type != sdk.BuildPipeline && env.ID == sdk.DefaultEnv.ID {
+		return sdk.WrapError(sdk.ErrWrongRequest, "Cannot create a scheduler on this pipeline without an environment")
+	}
+
 	// Unmarshal args
 	s := &sdk.PipelineScheduler{}
 	if err := UnmarshalBody(r, s); err != nil {
@@ -194,18 +199,38 @@ check:
 	s.PipelineID = pip.ID
 	s.EnvironmentID = env.ID
 
-	if err := scheduler.Insert(db, s); err != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> cannot insert scheduler : %s", err)
-		return err
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		return sdk.WrapError(errBegin, "addSchedulerApplicationPipelineHandler> Cannot open transaction")
+	}
+	defer tx.Rollback()
+
+	if err := scheduler.Insert(tx, s); err != nil {
+		return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot insert scheduler")
 
 	}
 
-	return WriteJSON(w, r, s, http.StatusCreated)
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot update application last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot commit transaction")
+	}
+
+	var errW error
+	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "addSchedulerApplicationPipelineHandler> cannot reload workflow")
+	}
+
+	return WriteJSON(w, r, app, http.StatusCreated)
 }
 
 func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
+	appName := vars["permApplicationName"]
 
 	// Unmarshal args
 	s := &sdk.PipelineScheduler{}
@@ -237,6 +262,12 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 		}
 	}
 
+	// Load application
+	app, errA := application.LoadByName(db, key, appName, c.User)
+	if errA != nil {
+		return sdk.WrapError(errA, "updateSchedulerApplicationPipelineHandler> Cannot load application %s", appName)
+	}
+
 	//Load the scheduler
 	sOld, err := scheduler.Load(db, s.ID)
 	if err != nil {
@@ -254,21 +285,61 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 		sOld.EnvironmentID = env.ID
 	}
 
-	if err := scheduler.Update(db, sOld); err != nil {
-		log.Warning("updateSchedulerApplicationPipelineHandler> %s", err)
-		return err
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		return sdk.WrapError(errBegin, "updateSchedulerApplicationPipelineHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	if err := scheduler.Update(tx, sOld); err != nil {
+		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot update scheduler")
 	}
 
-	return WriteJSON(w, r, s, http.StatusOK)
+	if err := scheduler.LockPipelineExecutions(tx); err != nil {
+		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot lock pipeline execution")
+	}
+
+	nx, errN := scheduler.LoadNextExecution(tx, sOld.ID, sOld.Timezone)
+	if errN != nil {
+		return sdk.WrapError(errN, "updateSchedulerApplicationPipelineHandler> Cannot load next execution")
+	}
+
+	if err := scheduler.DeleteExecution(tx, nx); err != nil {
+		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot delete next execution")
+	}
+
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot update application last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot commit transaction")
+	}
+
+	var errW error
+	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "updateSchedulerApplicationPipelineHandler> Cannot load workflow")
+	}
+
+	return WriteJSON(w, r, app, http.StatusOK)
 }
 
 func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+
 	idString := vars["id"]
 
 	id, errInt := strconv.ParseInt(idString, 10, 64)
 	if errInt != nil {
 		return sdk.ErrInvalidID
+	}
+
+	app, errA := application.LoadByName(db, key, appName, c.User)
+	if errA != nil {
+		return sdk.WrapError(errA, "deleteSchedulerApplicationPipelineHandler> Cannot load application %s", appName)
 	}
 
 	//Load the scheduler
@@ -277,10 +348,30 @@ func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 		return err
 	}
 
+	tx, errB := db.Begin()
+	if errB != nil {
+		return sdk.WrapError(errB, "deleteSchedulerApplicationPipelineHandler> Cannot open transaction")
+	}
+	defer tx.Rollback()
+
 	//Delete all the things
-	if err := scheduler.Delete(db, sOld); err != nil {
+	if err := scheduler.Delete(tx, sOld); err != nil {
 		return err
 	}
 
-	return nil
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		return sdk.WrapError(err, "deleteSchedulerApplicationPipelineHandler> Cannot update application last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "deleteSchedulerApplicationPipelineHandler> Cannot commit transaction")
+	}
+
+	var errW error
+	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "deleteSchedulerApplicationPipelineHandler> Cannot load workflow")
+	}
+
+	return WriteJSON(w, r, app, http.StatusOK)
 }

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pkg/errors"
+
 	"golang.org/x/text/language"
 )
 
@@ -95,7 +97,8 @@ var (
 	ErrInvalidWorkerStatus                   = &Error{ID: 81, Status: http.StatusNotFound}
 	ErrInvalidToken                          = &Error{ID: 82, Status: http.StatusUnauthorized}
 	ErrAppBuildingPipelines                  = &Error{ID: 83, Status: http.StatusForbidden}
-	ErrInvalidTimezone                       = &Error{ID: 84, Status: http.StatusBadGateway}
+	ErrInvalidTimezone                       = &Error{ID: 84, Status: http.StatusBadRequest}
+	ErrEnvironmentCannotBeDeleted            = &Error{ID: 85, Status: http.StatusForbidden}
 )
 
 // SupportedLanguages on API errors
@@ -191,6 +194,7 @@ You can safely use them in a String or Text parameter`,
 	ErrInvalidToken.ID:                          "Invalid token",
 	ErrAppBuildingPipelines.ID:                  "Cannot delete application, there are building pipelines",
 	ErrInvalidTimezone.ID:                       "Invalid timezone",
+	ErrEnvironmentCannotBeDeleted.ID:            "Environment cannot be deleted. It is still in used",
 }
 
 var errorsFrench = map[int]string{
@@ -280,6 +284,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrInvalidToken.ID:                          "Token non valide",
 	ErrAppBuildingPipelines.ID:                  "Impossible de supprimer l'application, il y a pipelines en cours",
 	ErrInvalidTimezone.ID:                       "Fuseau horaire invalide",
+	ErrEnvironmentCannotBeDeleted.ID:            "L'environement ne peut etre supprimé. Il est encore utilisé.",
 }
 
 var errorsLanguages = []map[int]string{
@@ -295,8 +300,16 @@ func NewError(target *Error, root error) *Error {
 	return target
 }
 
+// WrapError constructs a stack of errors, adding context to the preceding error.
+func WrapError(err error, format string, args ...interface{}) error {
+	return errors.Wrap(err, fmt.Sprintf(format, args...))
+}
+
 // ProcessError tries to recognize given error and return error message in a language matching Accepted-Language
 func ProcessError(target error, al string) (string, int) {
+	// will recursively retrieve the topmost error which does not implement causer, which is assumed to be the original cause
+	target = errors.Cause(target)
+
 	cdsErr, ok := target.(*Error)
 	if !ok {
 		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError.Status

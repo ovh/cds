@@ -11,6 +11,66 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// LoadGroupByApplication loads all the groups on the given application
+func LoadGroupByApplication(db gorp.SqlExecutor, app *sdk.Application) error {
+	app.ApplicationGroups = []sdk.GroupPermission{}
+	query := `SELECT "group".id, "group".name, application_group.role FROM "group"
+	 		  JOIN application_group ON application_group.group_id = "group".id
+	 		  WHERE application_group.application_id = $1 ORDER BY "group".name ASC`
+	rows, err := db.Query(query, app.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var group sdk.Group
+		var perm int
+		err = rows.Scan(&group.ID, &group.Name, &perm)
+		if err != nil {
+			return err
+		}
+		app.ApplicationGroups = append(app.ApplicationGroups, sdk.GroupPermission{
+			Group:      group,
+			Permission: perm,
+		})
+	}
+	return nil
+}
+
+// LoadPermissions loads all applications where group has access
+func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
+	query := `
+		  SELECT project.projectKey,
+	                 application.name,
+	                 application.id,
+					 application_group.role, application.last_modified
+	      FROM application
+	      JOIN application_group ON application_group.application_id = application.id
+	 	  JOIN project ON application.project_id = project.id
+	 	  WHERE application_group.group_id = $1
+	 	  ORDER BY application.name ASC`
+	rows, err := db.Query(query, group.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var application sdk.Application
+		var perm int
+		err = rows.Scan(&application.ProjectKey, &application.Name, &application.ID, &perm, &application.LastModified)
+		if err != nil {
+			return sdk.WrapError(err, "LoadPermission %s (%d)", group.Name, group.ID)
+		}
+		group.ApplicationGroups = append(group.ApplicationGroups, sdk.ApplicationGroup{
+			Application: application,
+			Permission:  perm,
+		})
+	}
+	return nil
+}
+
 // AddGroup Link the given groups and the given application
 func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, groupPermission ...sdk.GroupPermission) error {
 	for i := range groupPermission {

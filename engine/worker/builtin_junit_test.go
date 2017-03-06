@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
+	"github.com/runabove/venom"
 )
 
 func Test_computeStats(t *testing.T) {
@@ -28,7 +28,10 @@ func Test_computeStats(t *testing.T) {
 			totalOK: 1,
 			totalKO: 0,
 			total:   1,
-			want:    []string{},
+			want: []string{
+				"JUnit parser: 1 testsuite(s)",
+				"JUnit parser: testsuite myTestSuite has 1 testcase(s)",
+			},
 			args: args{
 				res: &sdk.Result{},
 				v: &venom.Tests{
@@ -54,6 +57,8 @@ func Test_computeStats(t *testing.T) {
 			totalKO: 1, // sum of failure + errors on testsuite attribute. So 1+1
 			total:   1,
 			want: []string{
+				"JUnit parser: 1 testsuite(s)",
+				"JUnit parser: testsuite myTestSuite has 1 testcase(s)",
 				"JUnit parser: testcase myTestCase has 1 failure(s)",
 				"JUnit parser: testsuite myTestSuite has 1 failure(s)",
 				"JUnit parser: testsuite myTestSuite has 1 test(s) failed",
@@ -78,12 +83,48 @@ func Test_computeStats(t *testing.T) {
 			},
 		},
 		{
+			name:    "defaultName",
+			status:  sdk.StatusFail,
+			totalOK: 0,
+			totalKO: 2,
+			total:   2,
+			want: []string{
+				"JUnit parser: 1 testsuite(s)",
+				"JUnit parser: testsuite TestSuite.0 has 2 testcase(s)",
+				"JUnit parser: testcase TestCase.0 has 1 failure(s)",
+				"JUnit parser: testcase TestCase.1 has 1 failure(s)",
+				"JUnit parser: testsuite TestSuite.0 has 2 failure(s)",
+				"JUnit parser: testsuite TestSuite.0 has 2 test(s) failed",
+			},
+			args: args{
+				res: &sdk.Result{},
+				v: &venom.Tests{
+					TestSuites: []venom.TestSuite{
+						{
+							Errors:   0,
+							Failures: 1,
+							TestCases: []venom.TestCase{
+								{
+									Failures: []venom.Failure{{Value: "Foo"}},
+								},
+								{
+									Failures: []venom.Failure{{Value: "Foo"}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "malformed",
 			status:  sdk.StatusFail,
 			totalOK: 0,
 			totalKO: 2, // sum of failure + errors on testsuite attribute. So 1+1
 			total:   2,
 			want: []string{
+				"JUnit parser: 1 testsuite(s)",
+				"JUnit parser: testsuite myTestSuite has 1 testcase(s)",
 				"JUnit parser: testcase myTestCase has 3 failure(s)",
 				"JUnit parser: testcase myTestCase has 2 error(s)",
 				"JUnit parser: testsuite myTestSuite has 3 failure(s)",
@@ -117,6 +158,8 @@ func Test_computeStats(t *testing.T) {
 			totalKO: 2,
 			total:   2,
 			want: []string{
+				"JUnit parser: 1 testsuite(s)",
+				"JUnit parser: testsuite myTestSuite has 2 testcase(s)",
 				"JUnit parser: testcase myTestCase 1 has 3 failure(s)",
 				"JUnit parser: testcase myTestCase 1 has 2 error(s)",
 				"JUnit parser: testcase myTestCase 2 has 3 failure(s)",

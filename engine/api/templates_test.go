@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	testTestTemplate = "https://dl.plik.ovh/file/9eiloHMDejKO4lp4/GheHFamfJc9DjlpG/testtemplate"
+	testTestTemplate = "https://dl.plik.ovh/file/FIcfha7CCqHO8DON/c69ILIhdO4iq73GH/testtemplate"
 )
 
 func Test_getTemplatesHandler(t *testing.T) {
@@ -777,7 +777,7 @@ func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
 
 	req, _ := http.NewRequest("POST", uri, nil)
 	req.Form = url.Values{}
-	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds-contrib/master/actions/cds-git-clone.hcl")
+	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-git-clone.hcl")
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request

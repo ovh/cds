@@ -110,8 +110,8 @@ func AddTrigger(t *PipelineTrigger) error {
 		return fmt.Errorf("HTTP %d", code)
 	}
 
-	err = json.Unmarshal(data, &t)
-	if err != nil {
+	srcApp := &Application{}
+	if err := json.Unmarshal(data, srcApp); err != nil {
 		return err
 	}
 

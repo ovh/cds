@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
@@ -238,7 +239,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncA
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable) error {
+func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable, u *sdk.User) error {
 
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return fmt.Errorf("You try to insert a placeholder for new variable %s", variable.Name)
@@ -258,11 +259,11 @@ func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 	if err != nil {
 		return err
 	}
-	return UpdateLastModified(db, app)
+	return UpdateLastModified(db, app, u)
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable) error {
+func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable, u *sdk.User) error {
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -286,11 +287,11 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 	}
 
 	// Update application
-	return UpdateLastModified(db, app)
+	return UpdateLastModified(db, app, u)
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variableName string) error {
+func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variableName string, u *sdk.User) error {
 	query := `DELETE FROM application_variable
 		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
 	result, err := db.Exec(query, app.ID, variableName)
@@ -305,7 +306,7 @@ func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variableName stri
 	if rowAffected == 0 {
 		return ErrNoVariable
 	}
-	return UpdateLastModified(db, app)
+	return UpdateLastModified(db, app, u)
 }
 
 // DeleteAllVariable Delete all variables from the given pipeline
@@ -320,4 +321,30 @@ func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 	query = "UPDATE application SET last_modified = current_timestamp WHERE id=$1"
 	_, err = db.Exec(query, applicationID)
 	return err
+}
+
+// AddKeyPairToApplication generate a ssh key pair and add them as application variables
+func AddKeyPairToApplication(db gorp.SqlExecutor, app *sdk.Application, keyname string, u *sdk.User) error {
+	pub, priv, errGenerate := keys.Generatekeypair(keyname)
+	if errGenerate != nil {
+		return errGenerate
+	}
+
+	v := sdk.Variable{
+		Name:  keyname,
+		Type:  sdk.KeyVariable,
+		Value: priv,
+	}
+
+	if err := InsertVariable(db, app, v, u); err != nil {
+		return err
+	}
+
+	p := sdk.Variable{
+		Name:  keyname + ".pub",
+		Type:  sdk.TextVariable,
+		Value: pub,
+	}
+
+	return InsertVariable(db, app, p, u)
 }

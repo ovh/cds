@@ -59,7 +59,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.InsertApplication(db, proj, app)
+	err = application.Insert(db, proj, app)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -146,7 +146,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.InsertApplication(db, proj, app)
+	err = application.Insert(db, proj, app)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -238,7 +238,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.InsertApplication(db, proj, app)
+	err = application.Insert(db, proj, app)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1

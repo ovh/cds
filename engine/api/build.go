@@ -93,7 +93,7 @@ func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	// Load Application
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getPipelineBuildTriggeredHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -134,7 +134,7 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return sdk.ErrPipelineNotFound
 	}
 
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("deleteBuildHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -207,7 +207,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return sdk.ErrPipelineNotFound
 	}
 
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getBuildStateHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -569,7 +569,7 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	// Check that application exists
-	a, errLA := application.LoadApplicationByName(db, projectKey, appName)
+	a, errLA := application.LoadByName(db, projectKey, appName, c.User)
 	if errLA != nil {
 		log.Warning("addBuildVariableHandler> Cannot load application %s: %s\n", appName, errLA)
 		return errLA
@@ -650,7 +650,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	// Check that application exists
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("addBuildTestResultsHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrNotFound
@@ -682,18 +682,16 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return err
 	}
 
-	for _, s := range new.TestSuites {
-		var found bool
+	for k := range new.TestSuites {
 		for i := range tests.TestSuites {
-			if tests.TestSuites[i].Name == s.Name {
-				found = true
-				tests.TestSuites[i] = s
+			if tests.TestSuites[i].Name == new.TestSuites[k].Name {
+				// testsuite with same name already exists,
+				// Create a unique name
+				new.TestSuites[k].Name = fmt.Sprintf("%s.%d", new.TestSuites[k].Name, pb.ID)
 				break
 			}
 		}
-		if !found {
-			tests.TestSuites = append(tests.TestSuites, s)
-		}
+		tests.TestSuites = append(tests.TestSuites, new.TestSuites[k])
 	}
 
 	// update total values
@@ -753,7 +751,7 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	// Check that application exists
-	a, err := application.LoadApplicationByName(db, projectKey, appName)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		log.Warning("getBuildTestResultsHandler> Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrNotFound

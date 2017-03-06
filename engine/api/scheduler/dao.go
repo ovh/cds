@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -26,7 +27,7 @@ func loadPipelineSchedulers(db gorp.SqlExecutor, query string, args ...interface
 		if err != nil {
 			return nil, err
 		}
-		x.NextExecution, err = LoadNextExecution(db, x.ID)
+		x.NextExecution, err = LoadNextExecution(db, x.ID, x.Timezone)
 		if err != nil {
 			return nil, err
 		}
@@ -171,15 +172,26 @@ func LoadLastExecutedExecution(db gorp.SqlExecutor, id int64) (*sdk.PipelineSche
 }
 
 //LoadNextExecution loads next pipeline execution
-func LoadNextExecution(db gorp.SqlExecutor, id int64) (*sdk.PipelineSchedulerExecution, error) {
+func LoadNextExecution(db gorp.SqlExecutor, id int64, timezone string) (*sdk.PipelineSchedulerExecution, error) {
 	as := PipelineSchedulerExecution{}
 	if err := db.SelectOne(&as, "select * from pipeline_scheduler_execution where pipeline_scheduler_id = $1 and executed = false order by execution_planned_date desc limit 1", id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "LoadNextExecution> Unable to load pipeline scheduler execution")
 	}
+	if timezone == "" {
+		timezone = "UTC"
+	}
+	t, errT := time.LoadLocation(timezone)
+	if errT != nil {
+		return nil, sdk.WrapError(errT, "LoadNextExecution> Cannot get timezone")
+	}
+	as.ExecutionPlannedDate = as.ExecutionPlannedDate.In(t)
+	if as.ExecutionDate != nil {
+		*as.ExecutionDate = as.ExecutionDate.In(t)
+	}
+
 	ps := sdk.PipelineSchedulerExecution(as)
 	return &ps, nil
 }

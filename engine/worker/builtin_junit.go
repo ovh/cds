@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/runabove/venom"
 	"github.com/ovh/cds/sdk"
+	"github.com/runabove/venom"
 )
 
 func runParseJunitTestResultAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
@@ -139,10 +139,16 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 	reasons := []string{}
 	reasons = append(reasons, fmt.Sprintf("JUnit parser: %d testsuite(s)", len(v.TestSuites)))
 
-	for _, ts := range v.TestSuites {
+	for i, ts := range v.TestSuites {
 		var nbKOTC, nbFailures, nbErrors int
+		if ts.Name == "" {
+			ts.Name = fmt.Sprintf("TestSuite.%d", i)
+		}
 		reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d testcase(s)", ts.Name, len(ts.TestCases)))
-		for _, tc := range ts.TestCases {
+		for k, tc := range ts.TestCases {
+			if tc.Name == "" {
+				tc.Name = fmt.Sprintf("TestCase.%d", k)
+			}
 			if len(tc.Failures) > 0 {
 				reasons = append(reasons, fmt.Sprintf("JUnit parser: testcase %s has %d failure(s)", tc.Name, len(tc.Failures)))
 				nbFailures += len(tc.Failures)
@@ -154,6 +160,7 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 			if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
 				nbKOTC++
 			}
+			v.TestSuites[i].TestCases[k] = tc
 		}
 		nbOK += len(ts.TestCases) - nbKOTC
 		nbKO += nbKOTC
@@ -173,17 +180,18 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 		if nbKOTC > 0 {
 			reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d test(s) failed", ts.Name, nbKOTC))
 		}
+		v.TestSuites[i] = ts
 	}
 
 	if nbKO > v.TotalKO {
 		v.TotalKO = nbKO
 	}
 
-	if nbOK > v.TotalOK {
+	if nbOK != v.TotalOK {
 		v.TotalOK = nbOK
 	}
 
-	if v.TotalKO+v.TotalOK > v.Total {
+	if v.TotalKO+v.TotalOK != v.Total {
 		v.Total = v.TotalKO + v.TotalOK
 	}
 

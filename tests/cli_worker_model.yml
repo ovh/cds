@@ -2,22 +2,22 @@ name: Worker Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: cds worker model remove worker1 --force
+  - script: {{.cds}} worker model remove worker1 --force
 
 - name: worker model add
   steps:
-  - script: cds worker model add worker1 docker --image=foo/model/go:latest --group shared.infra
+  - script: {{.cds}} worker model add worker1 docker --image=foo/model/go:latest --group shared.infra
 
 - name: worker model list
   steps:
-  - script: cds worker model list
+  - script: {{.cds}} worker model list
 
 - name: worker model capability
   steps:
-  - script: cds worker model capability add worker1 capa_go binary go
-  - script: cds worker model capability add worker1 "echo" binary "echo"
-  - script: cds worker model capability add worker1 "sleep" binary "sleep"
+  - script: {{.cds}} worker model capability add worker1 capa_go binary go
+  - script: {{.cds}} worker model capability add worker1 "echo" binary "echo"
+  - script: {{.cds}} worker model capability add worker1 "sleep" binary "sleep"
 
 - name: cleanup
   steps:
-  - script: cds worker model remove worker1
+  - script: {{.cds}} worker model remove worker1

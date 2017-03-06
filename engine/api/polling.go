@@ -22,25 +22,30 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	pipName := vars["permPipelineKey"]
 
 	//Load the application
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
-		return sdk.ErrApplicationNotFound
-
+		return err
 	}
 
 	app.RepositoryPollers, err = poller.LoadByApplication(db, app.ID)
 	if err != nil {
-		log.Warning("addPollerHandler> Cannot load pollers for application %s: %s\n", app.Name, err)
+		log.Warning("addPollerHandler> cannot load application poller %s/%s: %s\n", projectKey, appName, err)
 		return err
-
 	}
 
-	// Load pipeline
-	pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
-	if err != nil {
-		log.Warning("addPollerHandler> Cannot load pipeline: %s\n", err)
-		return err
+	//Find the pipeline
+	var pip *sdk.Pipeline
+	for _, p := range app.Pipelines {
+		if p.Pipeline.Name == pipName {
+			pip = &p.Pipeline
+			break
+		}
+	}
 
+	//Check if pipeline has been found
+	if pip == nil {
+		log.Warning("addPollerHandler> Cannot load pipeline: %s", pipName)
+		return sdk.ErrPipelineNotFound
 	}
 
 	var h sdk.RepositoryPoller
@@ -55,7 +60,6 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	//Check it the application is attached to a repository
 	if app.RepositoriesManager == nil {
 		return sdk.ErrNoReposManagerClientAuth
-
 	}
 
 	b, e := repositoriesmanager.CheckApplicationIsAttached(db, app.RepositoriesManager.Name, projectKey, appName)
@@ -82,7 +86,7 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		return err
 	}
 
-	err = application.UpdateLastModified(tx, app)
+	err = application.UpdateLastModified(tx, app, c.User)
 	if err != nil {
 		log.Warning("addPollerHandler: cannot update application (%s) lastmodified date: %s\n", app.Name, err)
 		return err
@@ -106,17 +110,30 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	pipName := vars["permPipelineKey"]
 
 	//Load the application
-	app, err := application.LoadApplicationByName(db, projectKey, appName)
+	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
-		return sdk.ErrApplicationNotFound
+		return err
 	}
 
-	// Load pipeline
-	pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
+	app.RepositoryPollers, err = poller.LoadByApplication(db, app.ID)
 	if err != nil {
-		log.Warning("updatePollerHandler> Cannot load pipeline: %s\n", err)
+		log.Warning("updatePollerHandler> cannot load application poller %s/%s: %s\n", projectKey, appName, err)
 		return err
+	}
 
+	//Find the pipeline
+	var pip *sdk.Pipeline
+	for _, p := range app.Pipelines {
+		if p.Pipeline.Name == pipName {
+			pip = &p.Pipeline
+			break
+		}
+	}
+
+	//Check if pipeline has been found
+	if pip == nil {
+		log.Warning("addPollerHandler> Cannot load pipeline: %s", pipName)
+		return sdk.ErrPipelineNotFound
 	}
 
 	var h sdk.RepositoryPoller
@@ -143,7 +160,7 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	if err = application.UpdateLastModified(tx, app); err != nil {
+	if err = application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("updatePollerHandler: cannot update application last modified date: %s\n", err)
 		return err
 
@@ -169,21 +186,19 @@ func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *go
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
 
-	a, err := application.LoadApplicationByName(db, projectName, appName)
+	a, err := application.LoadByName(db, projectName, appName, c.User)
 	if err != nil {
 		log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 		return err
-
 	}
 
-	pollers, err := poller.LoadByApplication(db, a.ID)
+	a.RepositoryPollers, err = poller.LoadByApplication(db, a.ID)
 	if err != nil {
-		log.Warning("getApplicationHooksHandler> cannot load pollers: %s\n", err)
+		log.Warning("getApplicationHooksHandler> cannot load application poller %s/%s: %s\n", projectName, appName, err)
 		return err
-
 	}
 
-	return WriteJSON(w, r, pollers, http.StatusOK)
+	return WriteJSON(w, r, a.RepositoryPollers, http.StatusOK)
 }
 
 func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -198,10 +213,9 @@ func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 			log.Warning("getPollersHandler> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
 		}
 		return err
-
 	}
 
-	a, err := application.LoadApplicationByName(db, projectName, appName)
+	a, err := application.LoadByName(db, projectName, appName, c.User)
 	if err != nil {
 		log.Warning("getPollersHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 		return err
@@ -233,11 +247,10 @@ func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	a, err := application.LoadApplicationByName(db, projectName, appName)
+	a, err := application.LoadByName(db, projectName, appName, c.User)
 	if err != nil {
 		log.Warning("getPollersHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 		return err
-
 	}
 
 	po, err := poller.LoadByApplicationAndPipeline(db, a.ID, p.ID)
@@ -261,7 +274,7 @@ func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 
-	if err = application.UpdateLastModified(tx, a); err != nil {
+	if err = application.UpdateLastModified(tx, a, c.User); err != nil {
 		log.Warning("deleteHook> cannot update application last modified date: %s\n", err)
 		return err
 

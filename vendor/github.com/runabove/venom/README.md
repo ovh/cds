@@ -21,14 +21,16 @@ Usage:
   venom run [flags]
 
 Flags:
-      --alias stringSlice   --alias cds:'cds -f config.json' --alias cds2:'cds -f config.json'
-      --details string      Output Details Level : low, medium, high (default "medium")
-      --format string       --formt:yaml, json, xml (default "xml")
-      --log string          Log Level : debug, info or warn (default "warn")
-      --output-dir string   Output Directory: create tests results file inside this directory
-      --parallel int        --parallel=2 (default 1)
-      --resume              Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
-      --resumeFailures      Output Resume Failures (default true)
+      --details string        Output Details Level : low, medium, high (default "medium")
+      --env                   Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
+      --exclude stringSlice   --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
+      --format string         --format:yaml, json, xml (default "xml")
+      --log string            Log Level : debug, info or warn (default "warn")
+      --output-dir string     Output Directory: create tests results file inside this directory
+      --parallel int          --parallel=2 : launches 2 Test Suites in parallel (default 1)
+      --resume                Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
+      --resumeFailures        Output Resume Failures (default true)
+      --var stringSlice       --var cds='cds -f config.json' --var cds2='cds -f config.json'
 ```
 
 ## TestSuite files
@@ -54,7 +56,7 @@ testcases:
     - result.code ShouldEqual 0
   - script: echo 'bar'
     assertions:
-    - result.stdout ShouldNotContainSubstring foo
+    - result.systemout ShouldNotContainSubstring foo
     - result.timeseconds ShouldBeLessThan 1
 
 - name: GET http testcase, with 5 seconds timeout
@@ -96,23 +98,44 @@ testcases:
     script: echo '{{.api.foo}}'
     assertions:
     - result.code ShouldEqual 0
-    - result.stdout ShouldEqual http://api/foo
+    - result.systemout ShouldEqual http://api/foo
 
 - name: testB
   steps:
   - type: exec
-    script: echo 'XXX{{.testA.result.stdout}}YYY'
+    script: echo 'XXX{{.testA.result.systemout}}YYY'
     assertions:
     - result.code ShouldEqual 0
-    - result.stdout ShouldEqual XXXhttp://api/fooYYY
+    - result.systemout ShouldEqual XXXhttp://api/fooYYY
 
+```
+
+Extract variable from results and reuse it in step after
+
+```yaml
+name: MyTestSuite
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo 'foo with a bar here'
+    extracts:
+      result.systemout: foo with a {{myvariable=[a-z]+}} here
+
+- name: testB
+  steps:
+  - type: exec
+    script: echo {{.testA.myvariable}}
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring bar
 ```
 
 ## RUN Venom locally on CDS Integration Tests
 
 ```bash
 cd $GOPATH/src/github.com/ovh/cds/tests
-venom run --alias='cdsro:cds -f $HOME/.cds/it.user.ro.json' --alias='cds:cds -f $HOME/.cds/it.user.rw.json' --parallel=5
+venom run --var cdsro='cds -f $HOME/.cds/it.user.ro.json' --var cds='cds -f $HOME/.cds/it.user.rw.json' --parallel=5
 ```
 
 ## RUN Venom, with an export xUnit
@@ -120,6 +143,17 @@ venom run --alias='cdsro:cds -f $HOME/.cds/it.user.ro.json' --alias='cds:cds -f 
 ```bash
 venom run  --details=low --format=xml --output-dir="."
 ```
+
+## Executors
+
+* **exec**: https://github.com/runabove/venom/tree/master/executors/exec `exec` is the default type for a step
+* **http**: https://github.com/runabove/venom/tree/master/executors/http
+* **imap**: https://github.com/runabove/venom/tree/master/executors/imap
+* **readfile**: https://github.com/runabove/venom/tree/master/executors/readfile
+* **smtp**: https://github.com/runabove/venom/tree/master/executors/smtp
+* **ssh**: https://github.com/runabove/venom/tree/master/executors/ssh
+* **web**: https://github.com/runabove/venom/tree/master/executors/web
+
 
 ## Assertion
 
@@ -175,61 +209,6 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldNotHappenWithin
 * ShouldBeChronological
 
-## Executors
-
-### Exec
-
-Default value of type is `exec`
-
-In your yaml file, you can use:
-
-```yaml
-  - script mandatory
-```
-
-```yaml
-
-name: Title of TestSuite
-testcases:
-- name: Check if exit code != 1 and echo command response in less than 1s
-  steps:
-  - script: echo 'foo'
-    assertions:
-    - result.code ShouldEqual 0
-    - result.timeseconds ShouldBeLessThan 1
-
-```
-
-
-### HTTP
-
-In your yaml file, you can use:
-
-```yaml
-  - method optional, default value : GET
-  - url mandatory
-  - path optional
-  - body optional
-  - headers optional
-```
-
-```yaml
-
-name: Title of TestSuite
-testcases:
-
-- name: GET http testcase
-  steps:
-  - type: http
-    method: GET
-    url: https://eu.api.ovh.com/1.0/
-    assertions:
-    - result.body ShouldContainSubstring /dedicated/server
-    - result.body ShouldContainSubstring /ipLoadbalancing
-    - result.statuscode ShouldEqual 200
-    - result.bodyjson.apis.apis0.path ShouldEqual /allDom
-
-```
 
 ### Write your executor
 
@@ -240,7 +219,7 @@ An executor have to implement this interface
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	Run(ctx context.Content, *log.Entry, TestStep) (ExecutorResult, error)
 }
 ```
 
@@ -266,8 +245,9 @@ type Executor struct {
 type Result struct {
 	Code        int    `json:"code,omitempty" yaml:"code,omitempty"`
 	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
-	Output      string `json:"Output,omitempty" yaml:"Output,omitempty"`
-  Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
+	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
+	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
+	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
 }
 
 // GetDefaultAssertions return default assertions for this executor
@@ -277,7 +257,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx context.Context, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor
@@ -285,18 +265,25 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 		return nil, err
 	}
 
+	// Get testcase context if needed
+	varContext := ctx.Value(venom.ContextKey).(map[string]interface{})
+	if varContext == nil {
+        return nil, fmt.Errorf("Executor web need a context")
+    }
+    bar := varContext['foo']
+
 	// to something with t.Command here...
 	//...
 
-	output := "foo"
+	systemout := "foo"
 	ouputCode := 0
 
 	// prepare result
 	r := Result{
 		Code:    ouputCode, // return Output Code
 		Command: t.Command, // return Command executed
-		Output:  output,    // return Output string
-    Executor: t, // return executor, usefull for display Executor context in failure
+		Systemout:  systemout,    // return Output string
+		Executor: t, // return executor, usefull for display Executor context in failure
 	}
 
 	return dump.ToMap(r)
@@ -306,6 +293,57 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 
 Feel free to open a Pull Request with your executors.
 
+
+## TestCase Context
+
+TestCase Context allows you to inject datas in all Steps.
+
+Define a context is optional, but can be usefull to keep data between teststeps on a testcase.
+
+### Write your TestCase Context
+
+A TestCase Context has to implement this interface
+
+```go
+
+type TestCaseContext interface {
+	Init() error
+	Close() error
+	SetTestCase(tc TestCase)
+	GetName() string
+}
+```
+
+Example
+
+```go
+// Context Type name
+const Name = "default"
+
+// New returns a new TestCaseContext
+func New() venom.TestCaseContext {
+	ctx := &DefaultTestCaseContext{}
+	ctx.Name = Name
+	return ctx
+}
+
+// DefaultTestCaseContext represents the context of a testcase
+type DefaultTestCaseContext struct {
+	venom.CommonTestCaseContext
+	datas map[string]interface{}
+}
+
+// Init Initialize the context
+func (tcc *DefaultTestCaseContext) Init() error {
+	return nil
+}
+
+// Close the context
+func (tcc *DefaultTestCaseContext) Close() error {
+	return nil
+}
+```
+Methods SetTestCase and  GetName are implemented by CommonTestCaseContext
 
 # Hacking
 

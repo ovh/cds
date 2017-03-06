@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/trigger"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -29,7 +30,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	// load source ids
 	if t.SrcApplication.ID == 0 {
-		a, errSrcApp := application.LoadApplicationByName(db, project, t.SrcApplication.Name)
+		a, errSrcApp := application.LoadByName(db, project, t.SrcApplication.Name, c.User)
 		if errSrcApp != nil {
 			log.Warning("addTriggersHandler> cannot load src application: %s\n", errSrcApp)
 			return errSrcApp
@@ -73,7 +74,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	// load destination ids
 	if t.DestApplication.ID == 0 {
-		a, errDestApp := application.LoadApplicationByName(db, project, t.DestApplication.Name)
+		a, errDestApp := application.LoadByName(db, project, t.DestApplication.Name, c.User)
 		if errDestApp != nil {
 			log.Warning("addTriggersHandler> cannot load dst application: %s\n", errDestApp)
 			return errDestApp
@@ -130,7 +131,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 
 	// Update src application
-	if err := application.UpdateLastModified(tx, &t.SrcApplication); err != nil {
+	if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
 		log.Warning("addTriggerHandler> cannot update loast modified date on src application: %s\n", err)
 		return err
 	}
@@ -140,7 +141,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 
 	var errWorkflow error
-	t.SrcApplication.Workflows, errWorkflow = application.LoadCDTree(db, project, t.SrcApplication.Name, c.User)
+	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, project, t.SrcApplication.Name, c.User)
 	if errWorkflow != nil {
 		log.Warning("addTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 		return errWorkflow
@@ -181,7 +182,7 @@ func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	env := r.Form.Get("env")
 
-	a, errApp := application.LoadApplicationByName(db, project, app)
+	a, errApp := application.LoadByName(db, project, app, c.User)
 	if errApp != nil {
 		log.Warning("getTriggersHandler> cannot load application: %s\n", errApp)
 		return errApp
@@ -247,7 +248,7 @@ func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return err
 	}
 
-	if err := application.UpdateLastModified(tx, &t.SrcApplication); err != nil {
+	if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
 		log.Warning("deleteTriggerHandler> cannot update src application last modified date: %s\n", err)
 		return err
 
@@ -260,7 +261,7 @@ func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	var errWorkflow error
-	t.SrcApplication.Workflows, errWorkflow = application.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User)
+	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User)
 	if errWorkflow != nil {
 		log.Warning("deleteTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 		return errWorkflow
@@ -305,10 +306,9 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	if err := trigger.UpdateTrigger(tx, &t); err != nil {
 		log.Warning("updateTriggerHandler> cannot update trigger: %s\n", err)
 		return err
-
 	}
 
-	if err := application.UpdateLastModified(tx, &t.SrcApplication); err != nil {
+	if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
 		log.Warning("updateTriggerHandler> cannot update src application last modified date: %s\n", err)
 		return err
 	}
@@ -319,7 +319,7 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	var errWorkflow error
-	t.SrcApplication.Workflows, errWorkflow = application.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User)
+	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User)
 	if errWorkflow != nil {
 		log.Warning("updateTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 		return errWorkflow
@@ -340,7 +340,7 @@ func getTriggersAsSourceHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 	env := r.Form.Get("env")
 
-	a, errApp := application.LoadApplicationByName(db, project, app)
+	a, errApp := application.LoadByName(db, project, app, c.User)
 	if errApp != nil {
 		log.Warning("getTriggersAsSourceHandler> cannot load application: %s\n", errApp)
 		return errApp

@@ -28,7 +28,7 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("updateGroupRoleOnApplicationHandler: Cannot load application %s :%s", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -65,7 +65,7 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	if err := application.UpdateLastModified(tx, app); err != nil {
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
 		return err
 	}
@@ -120,7 +120,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 		return sdk.ErrGroupNeedWrite
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("updateGroupsInApplicationHandler: Cannot load application %s: %s\n", appName, err)
 		return sdk.ErrApplicationNotFound
@@ -143,7 +143,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 		return err
 	}
 
-	if err := application.UpdateLastModified(tx, app); err != nil {
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
 		return err
 	}
@@ -179,7 +179,7 @@ func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *go
 		return err
 	}
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", appName, err)
 		return err
@@ -203,7 +203,7 @@ func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *go
 		return err
 	}
 
-	if err := application.UpdateLastModified(tx, app); err != nil {
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("addGroupInApplicationHandler> Cannot update application last modified date:  %s\n", err)
 		return err
 	}
@@ -230,7 +230,7 @@ func deleteGroupFromApplicationHandler(w http.ResponseWriter, r *http.Request, d
 	appName := vars["permApplicationName"]
 	groupName := vars["group"]
 
-	app, err := application.LoadApplicationByName(db, key, appName)
+	app, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
 		log.Warning("deleteGroupFromApplicationHandler: Cannot load application %s :  %s\n", appName, err)
 		return err
@@ -248,7 +248,7 @@ func deleteGroupFromApplicationHandler(w http.ResponseWriter, r *http.Request, d
 		return err
 	}
 
-	if err := application.UpdateLastModified(tx, app); err != nil {
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
 		log.Warning("deleteGroupFromApplicationHandler: Cannot update application last modified date:  %s\n", err)
 		return err
 	}

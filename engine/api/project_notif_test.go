@@ -36,7 +36,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	test.NoError(t, group.InsertUserInGroup(db, p.ProjectGroups[0].Group.ID, u.ID, true))
 
 	app := &sdk.Application{Name: assets.RandomString(t, 10)}
-	err := application.InsertApplication(db, p, app)
+	err := application.Insert(db, p, app)
 	test.NoError(t, err)
 	test.NoError(t, group.InsertGroupInApplication(db, app.ID, p.ProjectGroups[0].Group.ID, 7))
 

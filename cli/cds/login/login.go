@@ -18,11 +18,13 @@ import (
 var (
 	defaultEndPoint string
 	defaultUser     string
+	defaultPassword string
 )
 
 func init() {
 	Cmd.Flags().StringVarP(&defaultEndPoint, "host", "", "", "CDS API URL")
 	Cmd.Flags().StringVarP(&defaultUser, "user", "", "", "CDS User")
+	Cmd.Flags().StringVarP(&defaultPassword, "password", "", "", "CDS Password")
 }
 
 // Cmd login
@@ -73,11 +75,18 @@ func runLogin() {
 		conf.User = defaultUser
 	}
 
-	//Ask for the password
-	fmt.Printf("Password: ")
-	password, err := gopass.GetPasswd()
-	if err != nil {
-		sdk.Exit("Error: wrong usage (%s)\n", err)
+	//Take the password from flags or ask for on command line
+	if defaultUser == "" {
+		//Ask for the password
+		fmt.Printf("Password: ")
+		b, err := gopass.GetPasswd()
+		conf.Password = string(b)
+		if err != nil {
+			sdk.Exit("Error: wrong usage (%s)\n", err)
+		}
+	} else {
+		fmt.Printf("Password: ******** \n")
+		conf.Password = defaultPassword
 	}
 
 	//Create the config directory
@@ -89,7 +98,7 @@ func runLogin() {
 	sdk.Options(conf.Host, "", "", "")
 
 	//Login
-	loginOK, res, err := sdk.LoginUser(conf.User, string(password))
+	loginOK, res, err := sdk.LoginUser(conf.User, conf.Password)
 	if !loginOK {
 		if err != nil {
 			sdk.Exit("Error: Login failed (%s)\n", err)
@@ -99,8 +108,9 @@ func runLogin() {
 	//Store result in conf object
 	if res.Token != "" {
 		conf.Token = res.Token
+		conf.Password = ""
 	} else {
-		conf.Password = string(password)
+		conf.Token = ""
 	}
 
 	//Write conf in file

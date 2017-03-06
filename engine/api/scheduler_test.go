@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 
@@ -50,7 +51,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.InsertApplication(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -138,7 +139,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.InsertApplication(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -157,7 +158,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	}
 	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "POST", route+"?envName="+env.Name, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t))
+	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "POST", route+"?envName="+env.Name, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
 	tester.Run()
 	tester.Reset()
 
@@ -202,7 +203,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.InsertApplication(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -221,9 +222,14 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	}
 	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(&s))
+	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t))
 	route = router.getRoute("PUT", updateSchedulerApplicationPipelineHandler, vars)
-	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "PUT", route, s).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
+
+	assert.Equal(t, len(app.Workflows), 0)
+	assert.Equal(t, len(app.Workflows[0].Schedulers), 0)
+	s = &app.Workflows[0].Schedulers[0]
+
+	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "PUT", route, s).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
 	tester.Run()
 	tester.Reset()
 
@@ -267,7 +273,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.InsertApplication(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -286,10 +292,15 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	}
 	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(&s))
+
+	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
 
 	tester.Run()
 	tester.Reset()
+
+	assert.Equal(t, len(app.Workflows), 0)
+	assert.Equal(t, len(app.Workflows[0].Schedulers), 0)
+	s = &app.Workflows[0].Schedulers[0]
 
 	vars["id"] = strconv.FormatInt(s.ID, 10)
 	route = router.getRoute("DELETE", deleteSchedulerApplicationPipelineHandler, vars)

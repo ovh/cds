@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/test"
@@ -26,7 +27,7 @@ func TestExist(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	Delete(db, "test_TestLoadAll")
 	Delete(db, "test_TestLoadAll1")
@@ -127,6 +128,7 @@ func InsertLambaUser(t *testing.T, db gorp.SqlExecutor, s string, groups ...*sdk
 	for _, g := range groups {
 		group.InsertGroup(db, g)
 		group.InsertUserInGroup(db, g.ID, u.ID, false)
+		u.Groups = append(u.Groups, *g)
 	}
 	return u, password
 }

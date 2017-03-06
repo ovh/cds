@@ -51,20 +51,20 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	appVar := []string{}
 	if appName != "" {
 		// Check permission on application
-		applicationData, err := application.LoadApplicationByName(db, projectKey, appName)
+		app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithVariables)
 		if err != nil {
 			log.Warning("getPipelineTypeHandler> Cannot Load application: %s\n", err)
 			return err
 
 		}
 
-		if !permission.AccessToApplication(applicationData.ID, c.User, permission.PermissionRead) {
+		if !permission.AccessToApplication(app.ID, c.User, permission.PermissionRead) {
 			log.Warning("getVariablesHandler> Not allow to access to this application: %s\n", appName)
 			return sdk.ErrForbidden
 
 		}
 
-		for _, v := range applicationData.Variable {
+		for _, v := range app.Variable {
 			appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", v.Name))
 		}
 
@@ -103,14 +103,17 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		"{{.cds.application}}",
 		"{{.cds.buildNumber}}",
 		"{{.cds.environment}}",
+		"{{.cds.job}}",
 		"{{.cds.parent.application}}",
 		"{{.cds.parent.buildNumber}}",
 		"{{.cds.parent.pipeline}}",
 		"{{.cds.pipeline}}",
 		"{{.cds.project}}",
+		"{{.cds.stage}}",
 		"{{.cds.triggered_by.email}}",
 		"{{.cds.triggered_by.fullname}}",
 		"{{.cds.triggered_by.username}}",
+		"{{.cds.worker}}",
 	}
 	allVariables = append(allVariables, cdsVar...)
 
@@ -121,6 +124,8 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		"{{.git.author}}",
 		"{{.git.project}}",
 		"{{.git.repository}}",
+		"{{.git.url}}",
+		"{{.git.http_url}}",
 	}
 	allVariables = append(allVariables, gitVar...)
 
