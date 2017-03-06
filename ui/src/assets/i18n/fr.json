@@ -118,7 +118,7 @@
   "common_yes" : "Oui",
 
   "environment_created" : "Environnement créé",
-  "environment_create_placeholder" : "Nouveau environnement",
+  "environment_create_placeholder" : "Nouvel environnement",
   "environment_deleted" : "Environnement supprimé",
   "environment_name" : "Nom de l'environnement",
   "environment_no" : "Il n'y a aucun environnement défini",
