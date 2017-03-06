@@ -414,7 +414,7 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return err
 	}
 
-	appToClone, errApp := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
+	appToClone, errApp := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default, application.LoadOptions.WithGroups)
 	if errApp != nil {
 		log.Warning("cloneApplicationHandler> Cannot load application %s: %s\n", applicationName, errApp)
 		return errApp
