@@ -18,22 +18,23 @@
                     <app-pipeline-workflow [project]="project" [pipeline]="pipeline"></app-pipeline-workflow>
                 </div>
                 <div *ngSwitchCase="'parameters'">
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="parameterEvent($event, true)" #paramWarning></app-warning-modal>
-                    <h2>{{ 'pipeline_parameters_list_title' | translate }}</h2>
+                    <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
                     <app-parameter-list (event)="parameterEvent($event)" [project]="project" [parameters]="pipeline.parameters" [mode]="pipeline.permission === 7? 'edit': 'ro'"></app-parameter-list>
                     <ng-container *ngIf="pipeline.permission === 7">
-                        <h2>{{ 'pipeline_parameters_form_title' | translate }}</h2>
+                        <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
                         <app-parameter-form [project]="project" [loading]="paramFormLoading" (createParameterEvent)="parameterEvent($event)"></app-parameter-form>
                     </ng-container>
+                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="parameterEvent($event, true)" #paramWarning></app-warning-modal>
+
                 </div>
                 <div *ngSwitchCase="'permissions'">
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
-                    <h2>{{ 'pipeline_permission_list_title' | translate }}</h2>
+                    <h3>{{ 'pipeline_permission_list_title' | translate }}</h3>
                     <app-permission-list [permissions]="pipeline.groups" [edit]="pipeline.permission === 7" (event)="groupEvent($event)"></app-permission-list>
                     <ng-container *ngIf="pipeline.permission === 7">
-                        <h2>{{ 'pipeline_permission_form_title' | translate }}</h2>
+                        <h3>{{ 'pipeline_permission_form_title' | translate }}</h3>
                         <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
                     </ng-container>
+                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                 </div>
                 <div *ngSwitchCase="'advanced'">
                     <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
