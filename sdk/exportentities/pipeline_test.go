@@ -399,7 +399,7 @@ var (
 	testcases = []pipelineTestCase{t1_1, t1_2, t2_2}
 )
 
-func TestExportImportPipeline_YAML(t *testing.T) {
+func TestExportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
 		p := NewPipeline(&tc.arg)
 		b, err := Marshal(p, FormatYAML)
@@ -409,13 +409,13 @@ func TestExportImportPipeline_YAML(t *testing.T) {
 		p1 := Pipeline{}
 		test.NoError(t, yaml.Unmarshal(b, &p1))
 
-		m1, _ := dump.Sdump(p1)
+		m1, _ := dump.Sdump(&p1)
 		m2, _ := dump.Sdump(p)
 		assert.Equal(t, m2, m1)
 	}
 }
 
-func TestExportImportPipeline_JSON(t *testing.T) {
+func TestExportPipeline_JSON(t *testing.T) {
 	for _, tc := range testcases {
 		p := NewPipeline(&tc.arg)
 		b, err := Marshal(p, FormatJSON)

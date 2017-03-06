@@ -279,15 +279,20 @@ func NewPipeline(pip *sdk.Pipeline) (p *Pipeline) {
 		p.Type = pip.Type
 	}
 
-	p.Permissions = make(map[string]int, len(pip.GroupPermission))
-	for _, perm := range pip.GroupPermission {
-		p.Permissions[perm.Group.Name] = perm.Permission
+	if len(pip.GroupPermission) > 0 {
+		p.Permissions = make(map[string]int, len(pip.GroupPermission))
+		for _, perm := range pip.GroupPermission {
+			p.Permissions[perm.Group.Name] = perm.Permission
+		}
 	}
-	p.Parameters = make(map[string]ParameterValue, len(pip.Parameter))
-	for _, v := range pip.Parameter {
-		p.Parameters[v.Name] = ParameterValue{
-			Type:         string(v.Type),
-			DefaultValue: v.Value,
+
+	if len(pip.Parameter) > 0 {
+		p.Parameters = make(map[string]ParameterValue, len(pip.Parameter))
+		for _, v := range pip.Parameter {
+			p.Parameters[v.Name] = ParameterValue{
+				Type:         string(v.Type),
+				DefaultValue: v.Value,
+			}
 		}
 	}
 
@@ -342,6 +347,9 @@ func newStages(stages []sdk.Stage) map[string]Stage {
 }
 
 func newRequirements(req []sdk.Requirement) []Requirement {
+	if req == nil {
+		return nil
+	}
 	res := []Requirement{}
 	for _, r := range req {
 		switch r.Type {

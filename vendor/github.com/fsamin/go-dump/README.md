@@ -132,4 +132,8 @@ See [unit tests](test/dump_test.go) for more examples.
 
 ## Dependencies
 
-Go-Dump needs Go >= 1.7 and has no dependencies :).
+Go-Dump needs Go >= 1.7
+
+External Dependencies :
+
+- github.com/mitchellh/mapstructure
