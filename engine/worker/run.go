@@ -101,6 +101,13 @@ func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, s
 		return runPlugin(a, pipBuildJob, stepOrder)
 	}
 
+	if !a.Enabled {
+		return sdk.Result{
+			Status:  sdk.StatusDisabled,
+			BuildID: pipBuildJob.ID,
+		}
+	}
+
 	// Nothing to do, success !
 	if len(a.Actions) == 0 {
 		return sdk.Result{

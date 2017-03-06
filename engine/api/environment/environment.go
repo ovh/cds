@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -55,6 +56,8 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, use
 		if err != nil {
 			return envs, err
 		}
+		env.Permission = permission.EnvironmentPermission(env.ID, user)
+
 		envs = append(envs, env)
 	}
 	rows.Close()
