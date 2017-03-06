@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/spf13/cobra"
-
-	"strings"
 
 	"github.com/ovh/cds/sdk"
 )

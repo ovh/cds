@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/sdk" 
+	"github.com/ovh/cds/sdk"
 )
 
 // LoadCDTree Load the continuous delivery pipeline tree for the given application

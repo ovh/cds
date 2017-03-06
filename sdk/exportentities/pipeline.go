@@ -2,15 +2,13 @@ package exportentities
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
-
 	"sort"
-
 	"strings"
 
-	"reflect"
-
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/ovh/cds/sdk"
 )
 

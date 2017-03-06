@@ -2,12 +2,10 @@ package pipeline
 
 import (
 	"fmt"
+	"time"
+	"strings"
 
 	"github.com/go-gorp/gorp"
-
-	"time"
-
-	"strings"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/msg"
