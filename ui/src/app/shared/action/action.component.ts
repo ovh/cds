@@ -54,13 +54,16 @@ export class ActionComponent implements OnDestroy {
             this.publicActions = mapActions.toArray();
         });
 
-        this.dragulaService.setOptions('bag-one', {
-            isContainer: function (el) {
-                return el.classList.contains('dragula-container');
-            },
+        dragulaService.setOptions('bag-nonfinal', {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
-            }
+            },
+        });
+        dragulaService.setOptions('bag-final', {
+            moves: function (el, source, handle) {
+                return handle.classList.contains('move');
+            },
+            direction: 'vertical'
         });
         this.dragulaService.drop.subscribe( () => {
             this.editableAction.hasChanged = true;
@@ -68,7 +71,8 @@ export class ActionComponent implements OnDestroy {
     }
 
     ngOnDestroy() {
-        this.dragulaService.destroy('bag-one');
+        this.dragulaService.destroy('bag-nonfinal');
+        this.dragulaService.destroy('bag-final');
     }
 
     getDescriptionHeight(): number {

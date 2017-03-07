@@ -19,7 +19,8 @@ module.exports = function (config) {
             {pattern: './node_modules/lodash/lodash.js', watch: false, included: true, served: true},
             {pattern: './node_modules/jquery/dist/jquery.js', watch: false, included: true, served: true},
             {pattern: './node_modules/semantic-ui/dist/semantic.js', watch: false, included: true, served: true},
-            {pattern: './node_modules/codemirror/lib/codemirror.js', watch: false, included: true, served: true}
+            {pattern: './node_modules/codemirror/lib/codemirror.js', watch: false, included: true, served: true},
+            {pattern: './node_modules/dragula/dist/dragula.js', watch: false, included: true, served: true}
         ],
         preprocessors: {
             './src/test.ts': ['@angular/cli']

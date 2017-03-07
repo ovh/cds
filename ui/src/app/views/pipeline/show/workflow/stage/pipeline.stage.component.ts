@@ -41,7 +41,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     ngOnInit(): void {
         this.initPrerequisites();
         if (this.editableStage && this.editableStage.jobs && this.editableStage.jobs.length > 0) {
-            this.selectedJob = this.editableStage.jobs[0];
+            this.selectJob(this.editableStage.jobs[0]);
         }
         this.currentStageID = this.editableStage.id;
     }
@@ -53,7 +53,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     ngDoCheck() {
         if (this.currentStageID !== this.editableStage.id) {
             if (this.selectedJob && this.editableStage.jobs && this.editableStage.jobs.length > 0) {
-                this.selectedJob = this.editableStage.jobs[0];
+                this.selectJob(this.editableStage.jobs[0]);
             } else {
                 this.selectedJob = undefined;
             }
@@ -78,6 +78,11 @@ export class PipelineStageComponent implements OnInit, DoCheck {
                 });
             });
         }
+    }
+
+    selectJob(j: Job) {
+        this.selectedJob = j;
+        this.selectedJob.action.enabled = j.enabled;
     }
 
 
@@ -119,6 +124,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     jobEvent(event: ActionEvent): void {
         let job: Job = _.cloneDeep(this.selectedJob);
         job.action = event.action;
+        job.enabled = event.action.enabled;
         if (job.action.actions) {
             job.action.actions.forEach(a => {
                if (a.parameters) {

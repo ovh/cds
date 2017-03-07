@@ -277,6 +277,8 @@
   "step_added" : "Step added",
   "step_deleted" : "Step deleted",
   "step_final" : "Final step",
+  "step_final_no" : "There is no final step.",
+  "step_nonfinal_no" : "There is no step.",
   "step_updated" : "Step updated",
 
   "trigger_added" : "Trigger added",

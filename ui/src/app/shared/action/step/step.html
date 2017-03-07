@@ -23,9 +23,10 @@
         </div>
     </div>
 </div>
-<div class="ui aligned grid" *ngFor="let p of step.parameters">
-    <div class="column">
-        <label><b>{{p.name + ' :'}}</b></label>
-        <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value" (valueUpdating)="action.hasChanged = true"></app-parameter-value>
+<ng-container *ngFor="let p of step.parameters">
+    <label style="display: inline"><b>{{p.name + ' :'}}</b></label>
+    <div style="display: inline">
+        <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value"
+                             (valueUpdating)="action.hasChanged = true"></app-parameter-value>
     </div>
-</div>
+</ng-container>

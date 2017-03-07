@@ -1,5 +1,6 @@
 @import '../../../common';
 
+
 .requirementForm {
   margin-top: 10px;
 }
@@ -9,23 +10,19 @@
 }
 
 .dragula-container {
+
   .gu-transit {
-    border: 1px solid #f3f3f3;
+    opacity: 0.3;
   }
-  .gu-transit .ui.form {
-    opacity: 0.4;
-  }
-  .gu-transit .ui.grid {
-    opacity: 0.4;
+
+  .step.off {
+    border-radius: 3px;
+    background-color: rgba(189, 189, 189, 0.3);
   }
 
   .step hr {
     margin-top: 20px;
     margin-bottom: 20px;
-  }
-
-  .move.icon {
-    margin-right: 10px !important;
   }
 }
 
@@ -42,5 +39,20 @@
   padding-top: 8px;
 }
 
+.subtitle {
+  height: 40px;
+  line-height:40px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  vertical-align: middle;
+}
+
+.ui.segment.off {
+  background-color: rgba(189, 189, 189, 0.3);
+
+  .step.off {
+    background-color: transparent;
+  }
+}
 
 
