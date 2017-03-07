@@ -32,6 +32,14 @@ a.disabled:hover {
   border-radius: 4px;
 }
 
+// Dragula mirror item  (append on body)
+.gu-mirror {
+  margin: 10px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.2);
+  transition: opacity 0.4s ease-in-out;
+}
+
 // Code mirror
 .CodeMirror-scroll {
   text-align: left;

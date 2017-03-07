@@ -277,6 +277,8 @@
   "step_added" : "Etape ajoutée",
   "step_deleted" : "Etape supprimée",
   "step_final" : "Etape finale",
+  "step_final_no" : "Il n'y a aucune étape finale.",
+  "step_nonfinal_no" : "Il n'y a aucune étape.",
   "step_updated" : "Etape mise à jour",
 
   "trigger_added" : "Trigger ajouté",

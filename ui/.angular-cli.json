@@ -18,6 +18,7 @@
       "tsconfig": "tsconfig.json",
       "prefix": "app",
       "styles": [
+        "../node_modules/dragula/dist/dragula.css",
         "../node_modules/codemirror/lib/codemirror.css",
         "../node_modules/semantic-ui/dist/semantic.css",
         "../node_modules/angular2-toaster/toaster.css",

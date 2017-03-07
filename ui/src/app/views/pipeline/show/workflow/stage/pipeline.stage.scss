@@ -1,5 +1,25 @@
+@import '../../../../../../common';
+
 .ui.vertical.steps {
   width: 100%;
+
+  .step.active {
+    background-color: $cds_color_teal !important;
+    .title {
+      color: white;
+    }
+
+  }
+  .step.active::after {
+    background-color: $cds_color_teal !important;
+  }
+
+  .step.off {
+    .title {
+      color: rgba(040, 40, 40, 0.3);
+    }
+  }
+
 }
 
 .ui.form {
@@ -30,4 +50,3 @@
 pre {
   word-break: break-word;
 }
-

@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import {Action} from '../../../../model/action.model';
 import {StepEvent} from '../step.event';
 
@@ -7,7 +7,7 @@ import {StepEvent} from '../step.event';
     templateUrl: './step.form.html',
     styleUrls: ['./step.form.scss']
 })
-export class ActionStepFormComponent {
+export class ActionStepFormComponent implements OnInit {
 
     @Input() publicActions: Array<Action>;
     @Input() final: boolean;
@@ -16,6 +16,10 @@ export class ActionStepFormComponent {
     step: Action;
 
     constructor() { }
+
+    ngOnInit(): void {
+        this.step = this.publicActions.find(a => a.name === 'Script');
+    }
 
     selectPublicAction(name: string): void {
         let index = this.publicActions.findIndex(a => a.name === name);

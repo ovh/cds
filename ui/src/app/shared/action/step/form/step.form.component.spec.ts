@@ -57,6 +57,10 @@ describe('CDS: Action Component', () => {
         let step = new Action();
         step.final = true;
         fixture.componentInstance.step = step;
+        fixture.componentInstance.publicActions = new Array<Action>();
+        let a = new Action();
+        a.name = 'Script';
+        fixture.componentInstance.publicActions.push(a);
 
         fixture.detectChanges();
         tick(50);

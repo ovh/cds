@@ -1,5 +1,6 @@
 <div class="ui top attached steps">
-  <div class="step" *ngFor="let s of pipeline.stages" [class.active]="selectedStage?.id === s.id">
+  <div class="step" *ngFor="let s of pipeline.stages" [class.active]="selectedStage?.id === s.id"
+      [class.off]="!s.enabled">
     <div class="content">
       <a class="title pointing" (click)="selectedStage = s">{{s.name}}</a>
     </div>

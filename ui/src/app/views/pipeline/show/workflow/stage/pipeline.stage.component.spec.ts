@@ -252,13 +252,16 @@ describe('CDS: Stage', () => {
 
         expect(pipStore.addJob).toHaveBeenCalledWith('key', 'pip', 123, jobToAdd);
 
+        jobToAdd.action.enabled = true;
         let event = new ActionEvent('update', jobToAdd.action);
+
         spyOn(pipStore, 'updateJob').and.callFake(() => {
             return Observable.of(pip);
         });
         fixture.componentInstance.selectedJob = jobToAdd;
         fixture.componentInstance.jobEvent(event);
 
+        jobToAdd.enabled = true;
         expect(pipStore.updateJob).toHaveBeenCalledWith('key', 'pip', 123, jobToAdd);
 
 
