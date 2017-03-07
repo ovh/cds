@@ -20,34 +20,33 @@
                 </div>
                 <div [ngSwitch]="selectedTab">
                     <div *ngSwitchCase="'variables'">
-                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
-                        <h2>{{ 'application_variable_list_title' | translate}}</h2>
-                        <app-variable [variables]="application.variables" [mode]="application.permission === 7?'edit':'ro'" (event)="variableEvent($event)"></app-variable>
                         <ng-container *ngIf="application.permission === 7">
-                            <h2>{{ 'application_variable_form_title' | translate}}</h2>
+                            <h3>{{ 'application_variable_form_title' | translate}}</h3>
                             <app-variable-form [loading]="varFormLoading" (createVariableEvent)="variableEvent($event)"></app-variable-form>
                         </ng-container>
-
+                        <h3>{{ 'application_variable_list_title' | translate}}</h3>
+                        <app-variable [variables]="application.variables" [mode]="application.permission === 7?'edit':'ro'" (event)="variableEvent($event)"></app-variable>
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
                     </div>
 
                     <div *ngSwitchCase="'permissions'">
-                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
-                        <h2>{{ 'application_permission_list_title' | translate }}</h2>
+                        <h3>{{ 'application_permission_list_title' | translate }}</h3>
                         <app-permission-list [permissions]="application.groups" [edit]="application.permission === 7" (event)="groupEvent($event)"></app-permission-list>
                         <ng-container *ngIf="application.permission === 7">
-                            <h2>{{ 'application_permission_form_title' | translate }}</h2>
+                            <h3>{{ 'application_permission_form_title' | translate }}</h3>
                             <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
                         </ng-container>
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                     </div>
 
                     <div *ngSwitchCase="'notifications'">
-                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="notificationEvent($event, true)" #notifWarning></app-warning-modal>
-                        <h2>{{ 'application_notifications_list_title' | translate }}</h2>
+                        <h3>{{ 'application_notifications_list_title' | translate }}</h3>
                         <app-notification-list (event)="notificationEvent($event)" [project]="project" [application]="application" [loading]="notifFormLoading" [notifications]="application.notifications" [edit]="application.permission === 7" #notificationList></app-notification-list>
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="notificationEvent($event, true)" #notifWarning></app-warning-modal>
                     </div>
 
                     <div *ngSwitchCase="'advanced'">
-                        <h2>{{ 'application_advanced_title' | translate }}</h2>
+                        <h3>{{ 'application_advanced_title' | translate }}</h3>
                         <app-application-admin [application]="application" [project]="project"></app-application-admin>
                     </div>
                 </div>

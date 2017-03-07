@@ -1,6 +1,6 @@
 <div class="ui grid">
     <div class="eight wide column">
-        <h2>{{ 'project_pipelines_list' | translate }}</h2>
+        <h3>{{ 'project_pipelines_list' | translate }}</h3>
     </div>
     <div class="right aligned eight wide column" *ngIf="project.permission === 7">
         <a class="ui blue button" [routerLink]="['./pipeline']">{{ 'pipeline_create' | translate }}</a>

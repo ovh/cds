@@ -7,9 +7,12 @@
                     <a class="title pointing" (click)="selectedEnvIndex = i">{{e.name}}</a>
                 </div>
             </div>
+            <div class="step" *ngIf="project.permission === 7">
+                <app-environment-form [project]="project"></app-environment-form>
+            </div>
         </div>
     </div>
-    <div class="thirteen wide stretched column">
+    <div class="thirteen wide stretched detailed column">
         <app-environment [environment]="project.environments[selectedEnvIndex]" [project]="project"></app-environment>
     </div>
 </div>
