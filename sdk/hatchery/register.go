@@ -18,7 +18,7 @@ import (
 type Interface interface {
 	Init() error
 	KillWorker(worker sdk.Worker) error
-	SpawnWorker(model *sdk.Model, req []sdk.Requirement) error
+	SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error
 	CanSpawn(model *sdk.Model, req []sdk.Requirement) bool
 	WorkerStarted(model *sdk.Model) int
 	Hatchery() *sdk.Hatchery
@@ -108,7 +108,7 @@ func hatcheryRoutine(h Interface, provision int) error {
 			log.Notice("I got to spawn %d %s worker ! (%d/%d)\n", diff, ms.ModelName, ms.CurrentCount, ms.WantedCount)
 
 			for i := 0; i < int(diff); i++ {
-				if errSpawn := h.SpawnWorker(m, ms.Requirements); errSpawn != nil {
+				if errSpawn := h.SpawnWorker(m, ms.Requirements, wms); errSpawn != nil {
 					log.Warning("Cannot spawn %s: %s\n", ms.ModelName, errSpawn)
 					continue
 				}

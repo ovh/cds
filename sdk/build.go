@@ -101,8 +101,7 @@ func GetBuildQueue() ([]PipelineBuildJob, error) {
 		return nil, fmt.Errorf("HTTP %d", code)
 	}
 
-	err = json.Unmarshal(data, &q)
-	if err != nil {
+	if err = json.Unmarshal(data, &q); err != nil {
 		return nil, err
 	}
 
