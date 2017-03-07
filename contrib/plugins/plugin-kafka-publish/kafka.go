@@ -12,6 +12,8 @@ import (
 func initKafkaProducer(kafka, key string) (sarama.SyncProducer, error) {
 	c := sarama.NewConfig()
 	c.ClientID = key
+	c.Producer.Return.Successes = true
+
 	producer, err := sarama.NewSyncProducer(strings.Split(kafka, ","), c)
 	if err != nil {
 		return nil, err
