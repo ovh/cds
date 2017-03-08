@@ -316,7 +316,7 @@ func DeleteForApplication(db gorp.SqlExecutor, projectKey string, app *sdk.Appli
 	query := `UPDATE application
 						SET
 							repositories_manager_id =  NULL,
-							repo_fullname = NULL,
+							repo_fullname = '',
 							last_modified = current_timestamp
 						WHERE
 							id = $1
