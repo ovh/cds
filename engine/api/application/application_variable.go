@@ -60,7 +60,7 @@ func CreateAudit(db gorp.SqlExecutor, key string, app *sdk.Application, u *sdk.U
 	}
 
 	query := `
-		INSERT INTO application_variable_audit (versionned, application_id, data, author)
+		INSERT INTO application_variable_audit_old (versionned, application_id, data, author)
 		VALUES (NOW(), $1, $2, $3)
 	`
 	_, err = db.Exec(query, app.ID, string(data), u.Username)
@@ -70,12 +70,12 @@ func CreateAudit(db gorp.SqlExecutor, key string, app *sdk.Application, u *sdk.U
 // GetAudit retrieve the current application variable audit
 func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Variable, error) {
 	query := `
-		SELECT application_variable_audit.data
-		FROM application_variable_audit
-		JOIN application ON application.id = application_variable_audit.application_id
+		SELECT application_variable_audit_old.data
+		FROM application_variable_audit_old
+		JOIN application ON application.id = application_variable_audit_old.application_id
 		JOIN project ON project.id = application.project_id
-		WHERE application.name = $1 AND project.projectkey = $2 AND application_variable_audit.id = $3
-		ORDER BY application_variable_audit.versionned DESC
+		WHERE application.name = $1 AND project.projectkey = $2 AND application_variable_audit_old.id = $3
+		ORDER BY application_variable_audit_old.versionned DESC
 	`
 	var data string
 	err := db.QueryRow(query, appName, key, auditID).Scan(&data)
@@ -102,12 +102,12 @@ func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Va
 func GetVariableAudit(db gorp.SqlExecutor, key, appName string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
-		SELECT application_variable_audit.id, application_variable_audit.versionned, application_variable_audit.data, application_variable_audit.author
-		FROM application_variable_audit
-		JOIN application ON application.id = application_variable_audit.application_id
+		SELECT application_variable_audit_old.id, application_variable_audit_old.versionned, application_variable_audit_old.data, application_variable_audit_old.author
+		FROM application_variable_audit_old
+		JOIN application ON application.id = application_variable_audit_old.application_id
 		JOIN project ON project.id = application.project_id
 		WHERE application.name = $1 AND project.projectkey = $2
-		ORDER BY application_variable_audit.versionned DESC
+		ORDER BY application_variable_audit_old.versionned DESC
 	`
 	rows, err := db.Query(query, appName, key)
 	if err != nil {

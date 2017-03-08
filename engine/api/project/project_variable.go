@@ -16,11 +16,11 @@ import (
 func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
-		SELECT project_variable_audit.id, project_variable_audit.versionned, project_variable_audit.data, project_variable_audit.author
-		FROM project_variable_audit
-		JOIN project ON project.id = project_variable_audit.project_id
+		SELECT project_variable_audit_old.id, project_variable_audit_old.versionned, project_variable_audit_old.data, project_variable_audit_old.author
+		FROM project_variable_audit_old
+		JOIN project ON project.id = project_variable_audit_old.project_id
 		WHERE project.projectkey = $1
-		ORDER BY project_variable_audit.versionned DESC
+		ORDER BY project_variable_audit_old.versionned DESC
 	`
 	rows, err := db.Query(query, key)
 	if err != nil {
@@ -55,11 +55,11 @@ func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, err
 // GetAudit retrieve the current project variable audit
 func GetAudit(db gorp.SqlExecutor, key string, auditID int64) ([]sdk.Variable, error) {
 	query := `
-		SELECT project_variable_audit.data
-		FROM project_variable_audit
-		JOIN project ON project.id = project_variable_audit.project_id
-		WHERE project.projectkey = $1 AND project_variable_audit.id = $2
-		ORDER BY project_variable_audit.versionned DESC
+		SELECT project_variable_audit_old.data
+		FROM project_variable_audit_old
+		JOIN project ON project.id = project_variable_audit_old.project_id
+		WHERE project.projectkey = $1 AND project_variable_audit_old.id = $2
+		ORDER BY project_variable_audit_old.versionned DESC
 	`
 	var data string
 	err := db.QueryRow(query, key, auditID).Scan(&data)
@@ -101,7 +101,7 @@ func CreateAudit(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	}
 
 	query := `
-		INSERT INTO project_variable_audit (versionned, project_id, data, author)
+		INSERT INTO project_variable_audit_old (versionned, project_id, data, author)
 		VALUES (NOW(), $1, $2, $3)
 	`
 	_, err = db.Exec(query, proj.ID, string(data), u.Username)

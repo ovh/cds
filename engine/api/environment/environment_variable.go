@@ -32,7 +32,7 @@ func CreateAudit(db gorp.SqlExecutor, key string, env *sdk.Environment, u *sdk.U
 	}
 
 	query := `
-		INSERT INTO environment_variable_audit (versionned, environment_id, data, author)
+		INSERT INTO environment_variable_audit_old (versionned, environment_id, data, author)
 		VALUES (NOW(), $1, $2, $3)
 	`
 	_, err = db.Exec(query, env.ID, string(data), u.Username)
@@ -42,9 +42,9 @@ func CreateAudit(db gorp.SqlExecutor, key string, env *sdk.Environment, u *sdk.U
 // GetAudit retrieve the current environment variable audit
 func GetAudit(db gorp.SqlExecutor, auditID int64) ([]sdk.Variable, error) {
 	query := `
-		SELECT environment_variable_audit.data
-		FROM environment_variable_audit
-		WHERE environment_variable_audit.id = $1
+		SELECT environment_variable_audit_old.data
+		FROM environment_variable_audit_old
+		WHERE environment_variable_audit_old.id = $1
 	`
 	var data string
 	err := db.QueryRow(query, auditID).Scan(&data)
@@ -70,12 +70,12 @@ func GetAudit(db gorp.SqlExecutor, auditID int64) ([]sdk.Variable, error) {
 func GetEnvironmentAudit(db gorp.SqlExecutor, key, envName string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
-		SELECT environment_variable_audit.id, environment_variable_audit.versionned, environment_variable_audit.data, environment_variable_audit.author
-		FROM environment_variable_audit
-		JOIN environment ON environment.id = environment_variable_audit.environment_id
+		SELECT environment_variable_audit_old.id, environment_variable_audit_old.versionned, environment_variable_audit_old.data, environment_variable_audit_old.author
+		FROM environment_variable_audit_old
+		JOIN environment ON environment.id = environment_variable_audit_old.environment_id
 		JOIN project ON project.id = environment.project_id
 		WHERE project.projectkey = $1 AND environment.name = $2
-		ORDER BY environment_variable_audit.versionned DESC
+		ORDER BY environment_variable_audit_old.versionned DESC
 	`
 	rows, err := db.Query(query, key, envName)
 	if err != nil {
