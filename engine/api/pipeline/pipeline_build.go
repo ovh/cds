@@ -171,7 +171,7 @@ func LoadRecentPipelineBuild(db gorp.SqlExecutor, args ...FuncArg) ([]sdk.Pipeli
 	return pbs, nil
 }
 
-// LoadRecentPipelineBuild retrieves pipelines in database having a build running or finished
+// LoadUserRecentPipelineBuild retrieves pipelines in database having a build running or finished
 // less than a minute ago
 func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
@@ -515,9 +515,9 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 	})
 
 	// Update pb in database
-	data, errJson := json.Marshal(params)
-	if errJson != nil {
-		return errJson
+	data, errj := json.Marshal(params)
+	if errj != nil {
+		return errj
 	}
 
 	query = `UPDATE pipeline_build SET args = $1 WHERE id = $2`
@@ -1185,7 +1185,6 @@ func RestartPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 				if err := DeleteBuildLogs(db, pbJob.ID); err != nil {
 					return err
 				}
-
 			}
 			stage.PipelineBuildJobs = nil
 		}

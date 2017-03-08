@@ -70,7 +70,7 @@ func Set(key string, value interface{}) {
 	s.Set(key, value)
 }
 
-//SetWithTTL something in the cache with a specific TTL.
+//SetWithTTL something in the cache with a specific TTL (second).
 func SetWithTTL(key string, value interface{}, ttl int) {
 	if s == nil {
 		return

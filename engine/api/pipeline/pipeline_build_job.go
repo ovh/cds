@@ -3,10 +3,12 @@ package pipeline
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/log"
@@ -16,6 +18,9 @@ import (
 var (
 	// ErrAlreadyTaken Action already taken by a worker
 	ErrAlreadyTaken = fmt.Errorf("cds: action already taken")
+
+	// ErrAlreadyBooked Action already book by a hatchery
+	ErrAlreadyBooked = fmt.Errorf("cds: action already booked")
 )
 
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build
@@ -207,8 +212,8 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 	return pbJobs, nil
 }
 
-// TakeActionBuild Take an action build for update
-func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string, workerName string) (*sdk.PipelineBuildJob, error) {
+// TakePipelineBuildJob Take an action build for update
+func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, workerName string) (*sdk.PipelineBuildJob, error) {
 	var pbJobGorp PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
@@ -224,10 +229,10 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string, workerNam
 
 	pbJobGorp.Model = model
 	pbJobGorp.Job.WorkerName = workerName
-	var errMarshal error
-	pbJobGorp.JobJSON, errMarshal = json.Marshal(pbJobGorp.Job)
-	if errMarshal != nil {
-		return nil, errMarshal
+	var errm error
+	pbJobGorp.JobJSON, errm = json.Marshal(pbJobGorp.Job)
+	if errm != nil {
+		return nil, errm
 	}
 	pbJobGorp.Start = time.Now()
 	pbJobGorp.Status = sdk.StatusBuilding.String()
@@ -238,6 +243,22 @@ func TakeActionBuild(db gorp.SqlExecutor, pbJobID int64, model string, workerNam
 
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
 	return &pbJob, nil
+}
+
+func keyBookJob(pbJobID int64) string {
+	return cache.Key("book", "job", strconv.FormatInt(pbJobID, 10))
+}
+
+// BookPipelineBuildJob Book an action for a hatchery
+func BookPipelineBuildJob(pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
+	k := keyBookJob(pbJobID)
+	h := sdk.Hatchery{}
+	if !cache.Get(k, &h) {
+		// job not already booked
+		cache.SetWithTTL(k, hatchery.ID, 180)
+		return nil, nil
+	}
+	return &h, ErrAlreadyBooked
 }
 
 // RestartPipelineBuildJob destroy pipeline build job data and queue it up again

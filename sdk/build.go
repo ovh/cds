@@ -19,6 +19,7 @@ type PipelineBuildJob struct {
 	Done            time.Time   `json:"done,omitempty" db:"done"`
 	Model           string      `json:"model,omitempty" db:"model"`
 	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
+	BookedBy        Hatchery    `json:"book" db:"-"`
 }
 
 // ExecutedJob represents a running job
