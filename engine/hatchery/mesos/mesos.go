@@ -124,7 +124,7 @@ func (m *HatcheryMesos) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
+func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
 	if model.Type != sdk.Docker {
 		return fmt.Errorf("Model not handled")
 	}
@@ -150,11 +150,7 @@ func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement) err
 		return fmt.Errorf("max number of containers reached, aborting")
 	}
 
-	mss, err := sdk.GetWorkerModelStatus()
-	if err != nil {
-		return err
-	}
-	for _, ms := range mss {
+	for _, ms := range wms {
 		if ms.ModelName == model.Name {
 			// Security against deficient worker model with worker not connecting
 			// TODO: Should validate worker before running them at scale
@@ -218,7 +214,7 @@ func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memor
 
 	labels, err := json.Marshal(m.marathonLabels)
 	if err != nil {
-		log.Critical("spawnMesosDockerWorker> Invalid labels : %s", err)
+		log.Critical("marathonConfig> Invalid labels : %s", err)
 		return nil, err
 	}
 
