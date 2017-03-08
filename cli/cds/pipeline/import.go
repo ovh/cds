@@ -46,13 +46,6 @@ func importCmd() *cobra.Command {
 				if err != nil {
 					sdk.Exit("Error: %s\n", err)
 				}
-			} else if importGit != "" {
-				var err error
-				var format exportentities.Format
-				btes, format, err = exportentities.ReadGit(importGit)
-				if err != nil {
-					sdk.Exit("Error: %s\n", err)
-				}
 			} else {
 				sdk.Exit("Wrong usage: see %s\n", cmd.Short)
 			}
@@ -61,8 +54,14 @@ func importCmd() *cobra.Command {
 			url = fmt.Sprintf("/project/%s/pipeline/import?format=%s", projectKey, importFormat)
 
 			data, code, err := sdk.Request("POST", url, btes)
-			json.Unmarshal(data, &msg)
+			if code > 400 {
+				sdk.Exit("Error: %s\n", err)
+			}
 			if err != nil {
+				sdk.Exit("Error: %s\n", err)
+			}
+
+			if err := json.Unmarshal(data, &msg); err != nil {
 				sdk.Exit("Error: %s\n", err)
 			}
 
@@ -70,7 +69,7 @@ func importCmd() *cobra.Command {
 				fmt.Println(s)
 			}
 
-			if code >= 400 {
+			if code == 400 {
 				sdk.Exit("Error while importing pipeline\n")
 			}
 		},
