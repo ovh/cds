@@ -43,7 +43,6 @@ func processActionVariables(a *sdk.Action, parent *sdk.Action, pipBuildJob sdk.P
 
 			for _, p := range secrets {
 				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
-
 			}
 
 			// If parameters wasn't updated, consider it done
@@ -321,19 +320,15 @@ func logger(inputChan chan sdk.Log) {
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
 func setupBuildDirectory(wd string) error {
-
-	err := os.MkdirAll(wd, 0755)
-	if err != nil {
+	if err := os.MkdirAll(wd, 0755); err != nil {
 		return err
 	}
 
-	err = os.Chdir(wd)
-	if err != nil {
+	if err := os.Chdir(wd); err != nil {
 		return err
 	}
 
-	err = os.Setenv("HOME", wd)
-	if err != nil {
+	if err := os.Setenv("HOME", wd); err != nil {
 		return err
 	}
 
@@ -342,13 +337,7 @@ func setupBuildDirectory(wd string) error {
 
 // remove the buildDirectory created by setupBuildDirectory
 func teardownBuildDirectory(wd string) error {
-
-	err := os.RemoveAll(wd)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return os.RemoveAll(wd)
 }
 
 func generateWorkingDirectory() (string, error) {
@@ -378,9 +367,8 @@ func workingDirectory(basedir string, jobInfo *worker.PipelineBuildJobInfo) stri
 
 func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
-	err := processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob, pbji.Secrets)
-	if err != nil {
-		log.Warning("takeActionBuildHandler> Cannot process action %s parameters: %s\n", pbji.PipelineBuildJob.Job.Action.Name, err)
+	if err := processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob, pbji.Secrets); err != nil {
+		log.Warning("run> Cannot process action %s parameters: %s\n", pbji.PipelineBuildJob.Job.Action.Name, err)
 		return sdk.Result{Status: sdk.StatusFail}
 	}
 
@@ -417,8 +405,8 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 
 	// Setup working directory
 	wd := workingDirectory(basedir, pbji)
-	err = setupBuildDirectory(wd)
-	if err != nil {
+
+	if err := setupBuildDirectory(wd); err != nil {
 		time.Sleep(5 * time.Second)
 		return sdk.Result{
 			Status: sdk.StatusFail,
@@ -427,8 +415,8 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	}
 
 	// Setup user ssh keys
-	err = setupSSHKey(pbji.Secrets, path.Join(wd, ".ssh"))
-	if err != nil {
+
+	if err := setupSSHKey(pbji.Secrets, path.Join(wd, ".ssh")); err != nil {
 		time.Sleep(5 * time.Second)
 		return sdk.Result{
 			Status: sdk.StatusFail,
@@ -445,11 +433,10 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	close(doneChan)
 	logsecrets = nil
 
-	err = teardownBuildDirectory(wd)
-	if err != nil {
+	if err := teardownBuildDirectory(wd); err != nil {
 		fmt.Printf("Cannot remove build directory: %s\n", err)
 	}
 
-	fmt.Printf("Run> Done.\n")
+	fmt.Printf("run> Done.\n")
 	return res
 }
