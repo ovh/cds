@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
@@ -73,7 +74,7 @@ func addApplicationVariable(cmd *cobra.Command, args []string) {
 	varValue := args[3]
 	varType := args[4]
 
-	err := sdk.AddApplicationVariable(projectKey, appName, varName, varValue, sdk.VariableTypeFromString(varType))
+	err := sdk.AddApplicationVariable(projectKey, appName, varName, varValue, varType)
 	if err != nil {
 		sdk.Exit("Error: cannot add variable %s in application %s (%s)\n", varName, appName, err)
 	}

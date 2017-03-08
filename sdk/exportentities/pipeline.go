@@ -3,8 +3,8 @@ package exportentities
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -488,7 +488,7 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 	for p, v := range p.Parameters {
 		param := sdk.Parameter{
 			Name:  p,
-			Type:  sdk.ParameterTypeFromString(v.Type),
+			Type:  v.Type,
 			Value: v.DefaultValue,
 		}
 		pip.Parameter = append(pip.Parameter, param)

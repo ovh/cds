@@ -73,7 +73,7 @@ func addEnvironmentVariable(cmd *cobra.Command, args []string) {
 	varValue := args[3]
 	varType := args[4]
 
-	err := sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, sdk.VariableTypeFromString(varType))
+	err := sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, (varType)
 	if err != nil {
 		sdk.Exit("Error: cannot add variable %s in environment %s (%s)\n", varName, envName, err)
 	}

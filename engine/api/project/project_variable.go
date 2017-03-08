@@ -171,7 +171,7 @@ func GetAllVariableInProject(db gorp.SqlExecutor, projectID int64, args ...GetAl
 		if err != nil {
 			return nil, err
 		}
-		v.Type = sdk.VariableTypeFromString(typeVar)
+		v.Type = typeVar
 		if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
 			v.Value = string(cipherVal)
 		} else {
@@ -220,7 +220,7 @@ func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName str
 	if err != nil {
 		return variable, err
 	}
-	variable.Type = sdk.VariableTypeFromString(typeVar)
+	variable.Type = typeVar
 	if sdk.NeedPlaceholder(variable.Type) {
 		variable.Value = sdk.PasswordPlaceholder
 	} else {

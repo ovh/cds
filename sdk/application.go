@@ -236,7 +236,7 @@ func ShowApplicationVariable(projectKey, appName string) ([]Variable, error) {
 }
 
 // AddApplicationVariable  add a variable in an application
-func AddApplicationVariable(projectKey, appName, varName, varValue string, varType VariableType) error {
+func AddApplicationVariable(projectKey, appName, varName, varValue string, varType string) error {
 
 	newVar := Variable{
 		Name:  varName,
@@ -297,7 +297,7 @@ func UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, 
 		ID:    oldVar.ID,
 		Name:  varName,
 		Value: varValue,
-		Type:  VariableTypeFromString(varType),
+		Type:  varType,
 	}
 
 	data, err := json.Marshal(newVar)

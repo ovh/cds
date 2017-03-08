@@ -279,7 +279,7 @@ func ShowVariableInProject(projectKey string) ([]Variable, error) {
 }
 
 // AddProjectVariable adds a project wide variable
-func AddProjectVariable(key, name, val string, t VariableType) error {
+func AddProjectVariable(key, name, val string, t string) error {
 	return AddVariableInProject(key, name, val, string(t))
 }
 
@@ -289,7 +289,7 @@ func AddVariableInProject(projectKey, varName, varValue, varType string) error {
 	newVar := Variable{
 		Name:  varName,
 		Value: varValue,
-		Type:  VariableTypeFromString(varType),
+		Type:  varType,
 	}
 
 	data, err := json.Marshal(newVar)
@@ -351,7 +351,7 @@ func UpdateVariableInProject(projectKey, oldName, varName, varValue, varType str
 		ID:    oldVar.ID,
 		Name:  varName,
 		Value: varValue,
-		Type:  VariableTypeFromString(varType),
+		Type:  varType,
 	}
 
 	data, err := json.Marshal(newVar)

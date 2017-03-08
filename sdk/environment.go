@@ -171,7 +171,7 @@ func ShowEnvironmentVariable(projectKey, envName string) ([]Variable, error) {
 }
 
 // AddEnvironmentVariable  add a variable in an environment
-func AddEnvironmentVariable(projectKey, envName, varName, varValue string, varType VariableType) error {
+func AddEnvironmentVariable(projectKey, envName, varName, varValue string, varType string) error {
 
 	newVar := Variable{
 		Name:  varName,
@@ -234,7 +234,7 @@ func UpdateEnvironmentVariable(projectKey, envName, oldVarName, varName, varValu
 		ID:    oldVar.ID,
 		Name:  varName,
 		Value: varValue,
-		Type:  VariableTypeFromString(varType),
+		Type:  varType,
 	}
 
 	data, err := json.Marshal(newVar)

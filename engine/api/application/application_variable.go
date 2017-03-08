@@ -168,7 +168,7 @@ func GetAllVariable(db gorp.SqlExecutor, key, appName string, args ...FuncArg) (
 		if err != nil {
 			return nil, err
 		}
-		v.Type = sdk.VariableTypeFromString(typeVar)
+		v.Type = typeVar
 
 		if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
 			v.Value = string(cipherVal)
@@ -228,7 +228,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncA
 		if err != nil {
 			return nil, err
 		}
-		v.Type = sdk.VariableTypeFromString(typeVar)
+		v.Type = typeVar
 		v.Value, err = secret.DecryptS(v.Type, clearVal, cipherVal, c.clearsecret)
 		if err != nil {
 			return nil, err
