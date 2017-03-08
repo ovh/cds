@@ -479,7 +479,7 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 		var errVar error
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			errVar = application.AddKeyPairToApplication(db, newApp, v.Name, u)
+			errVar = application.AddKeyPairToApplication(db, newApp, v, u)
 		} else {
 			errVar = application.InsertVariable(db, newApp, v, u)
 		}

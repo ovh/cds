@@ -187,13 +187,17 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer tx.Rollback()
 
-	err = application.CreateAudit(tx, key, app, c.User)
-	if err != nil {
+	if err := application.CreateAudit(tx, key, app, c.User); err != nil {
 		log.Warning("deleteVariableFromApplicationHandler: Cannot create variable audit for application %s: %s\n", appName, err)
 		return err
 	}
 
-	err = application.DeleteVariable(tx, app, varName, c.User)
+	varToDelete, errV := application.LoadVariable(db, app.ID, varName)
+	if errV != nil {
+		return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
+	}
+
+	err = application.DeleteVariable(tx, app, varToDelete, c.User)
 	if err != nil {
 		log.Warning("deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
 		return err
@@ -288,7 +292,7 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 			break
 		case sdk.KeyVariable:
 			if v.Value == "" {
-				if err := application.AddKeyPairToApplication(tx, app, v.Name, c.User); err != nil {
+				if err := application.AddKeyPairToApplication(tx, app, v, c.User); err != nil {
 					log.Warning("updateVariablesInApplicationHandler> cannot generate keypair: %s\n", err)
 					return err
 				}
@@ -438,6 +442,7 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 	}
 	defer tx.Rollback()
 
+	// DEPRECATED
 	if err = application.CreateAudit(tx, key, app, c.User); err != nil {
 		log.Warning("addVariableInApplicationHandler: Cannot create variable audit for application %s:  %s\n", appName, err)
 		return err
@@ -445,7 +450,7 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = application.AddKeyPairToApplication(tx, app, newVar.Name, c.User)
+		err = application.AddKeyPairToApplication(tx, app, newVar, c.User)
 		break
 	default:
 		err = application.InsertVariable(tx, app, newVar, c.User)

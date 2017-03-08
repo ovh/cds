@@ -26,7 +26,7 @@ type Project struct {
 	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-"`
 }
 
-// ProjectVariableAudit represents an audit on an project variable
+// ProjectVariableAudit represents an audit on a project variable
 type ProjectVariableAudit struct {
 	ID             int64     `json:"id" yaml:"-" db:"id"`
 	ProjectID      int64     `json:"project_id" yaml:"-" db:"project_id"`

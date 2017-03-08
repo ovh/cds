@@ -81,7 +81,7 @@ func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 		var errCreate error
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			errCreate = AddKeyPairToApplication(db, app, newVar.Name, u)
+			errCreate = AddKeyPairToApplication(db, app, newVar, u)
 			break
 		default:
 			errCreate = InsertVariable(db, app, newVar, u)
