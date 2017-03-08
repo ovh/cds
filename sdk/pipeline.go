@@ -739,18 +739,31 @@ func GetBuildingPipelines() ([]PipelineBuild, error) {
 func GetBuildingPipelineByHash(hash string) ([]PipelineBuild, error) {
 	var pbs []PipelineBuild
 
-	data, code, err := Request("GET", "/mon/building/"+hash, nil)
-	if err != nil {
-		return nil, err
+	data, code, errr := Request("GET", "/mon/building/"+hash, nil)
+	if errr != nil {
+		return nil, errr
 	}
 	if code >= 300 {
 		return nil, fmt.Errorf("HTTP %d", code)
 	}
 
-	err = json.Unmarshal(data, &pbs)
-	if err != nil {
+	if err := json.Unmarshal(data, &pbs); err != nil {
 		return nil, err
 	}
 
 	return pbs, nil
+}
+
+// BookPipelineBuildJob books a job for a Hatchery
+func BookPipelineBuildJob(pipelineBuildJobID int64) error {
+	path := fmt.Sprintf("/queue/%d/book", pipelineBuildJobID)
+	data, code, err := Request("POST", path, nil)
+	if err != nil {
+		return fmt.Errorf("HTTP %d err:%s", code, err)
+	}
+	if code != http.StatusOK {
+		return fmt.Errorf("HTTP %d body:%s", code, string(data))
+	}
+
+	return nil
 }

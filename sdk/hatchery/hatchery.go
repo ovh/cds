@@ -58,11 +58,16 @@ func routine(h Interface, provision int, hostname string) error {
 	}
 
 	for _, job := range jobs {
+
 		for _, model := range models {
 			if canRunJob(h, &job, &model, hostname) {
-				if errs := h.SpawnWorker(&model, &job); errs != nil {
-					log.Warning("routine> Cannot spawn %s: %s\n", model.Name, errs)
-					continue
+				if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
+					log.Warning("routine> Cannot book job %d %s: %s\n", job.ID, model.Name, err)
+					break
+				}
+				if err := h.SpawnWorker(&model, &job); err != nil {
+					log.Warning("routine> Cannot spawn worker %s for job %d: %s\n", model.Name, job.ID, err)
+					break
 				}
 			}
 		}
