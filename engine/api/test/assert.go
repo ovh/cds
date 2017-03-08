@@ -43,6 +43,7 @@ func interfaceSlice(slice interface{}) []interface{} {
 	return ret
 }
 
+// ArrayContains check if an element exists in an array using DeepEquals function
 func ArrayContains(array interface{}, s interface{}) bool {
 	b := interfaceSlice(array)
 	for _, i := range b {
@@ -53,6 +54,7 @@ func ArrayContains(array interface{}, s interface{}) bool {
 	return false
 }
 
+// Equal checks 2 element Equality using github.com/fsamin/go-dump
 func Equal(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
 	e := DeepEquals(a, b)
 
@@ -66,6 +68,7 @@ func Equal(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
 	assert.True(t, e, msgAndArgs...)
 }
 
+// DeepEquals returns equality between 2 elements using github.com/fsamin/go-dump
 func DeepEquals(a, b interface{}) bool {
 	s1, err := dump.Sdump(a)
 	if err != nil {
@@ -79,6 +82,7 @@ func DeepEquals(a, b interface{}) bool {
 	return s1 == s2
 }
 
+// EqualValuesWithoutOrder checks equality between two slices without respecting slide order
 func EqualValuesWithoutOrder(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
 	s1 := interfaceSlice(a)
 	s2 := interfaceSlice(b)
