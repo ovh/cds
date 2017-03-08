@@ -90,13 +90,11 @@ func GetAllPipelinesByID(db gorp.SqlExecutor, applicationID int64) ([]sdk.Applic
 	for rows.Next() {
 		var p sdk.ApplicationPipeline
 		var args string
-		var typePipeline string
 		var lastModified, pLastModified time.Time
-		err = rows.Scan(&p.ID, &p.Pipeline.ID, &p.Pipeline.Name, &args, &typePipeline, &lastModified, &pLastModified)
+		err = rows.Scan(&p.ID, &p.Pipeline.ID, &p.Pipeline.Name, &args, &p.Pipeline.Type, &lastModified, &pLastModified)
 		if err != nil {
 			return nil, err
 		}
-		p.Pipeline.Type = sdk.PipelineTypeFromString(typePipeline)
 		p.LastModified = lastModified.Unix()
 		p.Pipeline.LastModified = pLastModified.Unix()
 		err := json.Unmarshal([]byte(args), &p.Parameters)

@@ -2,10 +2,13 @@ package pipeline
 
 import (
 	"fmt"
+	"time"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -156,5 +159,73 @@ func DeletePipelineAction(db gorp.SqlExecutor, pipelineActionID int64) error {
 		return err
 	}
 
+	return nil
+}
+
+//CheckJob validate a job
+func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
+	t := time.Now()
+	log.Debug("CheckJob> Begin")
+	defer log.Debug("CheckJob> End (%d ns)", time.Since(t).Nanoseconds())
+	errs := new(msg.Errors)
+	//Check steps
+	for i := range job.Action.Actions {
+		step := &job.Action.Actions[i]
+		log.Debug("CheckJob> Checking step %s", step.Name)
+		a, err := action.LoadPublicAction(db, step.Name)
+		if err != nil {
+			if err == sdk.ErrNoAction {
+				*errs = append(*errs, msg.New(msg.JobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
+				continue
+			}
+			return sdk.WrapError(err, "CheckJob> Unable to load public action %s", step.Name)
+		}
+
+		a.Parameters, err = action.LoadActionParameters(db, a.ID)
+		if err != nil {
+			return sdk.WrapError(err, "CheckJob> Unable to load public action %s parameters", step.Name)
+		}
+
+		for x := range step.Parameters {
+			sp := &step.Parameters[x]
+			log.Debug("CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
+			var found bool
+			for y := range a.Parameters {
+				ap := a.Parameters[y]
+				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				*errs = append(*errs, msg.New(msg.JobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
+			}
+		}
+
+		//Set default values
+		for y := range a.Parameters {
+			ap := a.Parameters[y]
+			var found bool
+			for x := range step.Parameters {
+				sp := &step.Parameters[x]
+				if strings.ToLower(sp.Name) == strings.ToLower(a.Name) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				step.Parameters = append(step.Parameters, sdk.Parameter{
+					Name:  ap.Name,
+					Type:  ap.Type,
+					Value: ap.Value,
+				})
+			}
+		}
+
+	}
+
+	if len(*errs) > 0 {
+		return errs
+	}
 	return nil
 }

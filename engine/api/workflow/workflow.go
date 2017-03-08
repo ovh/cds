@@ -15,7 +15,7 @@ import (
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
 func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
-
+  
 	// Select root trigger element + non triggered pipeline
 	query := `
 		SELECT  projID, projName,
@@ -197,7 +197,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			&hasHook, &hasScheduler, &hasPoller, &hasChild); err != nil {
 			return nil, err
 		}
-		root.Pipeline.Type = sdk.PipelineTypeFromString(typePipeline)
+		root.Pipeline.Type = typePipeline
 		if root.Environment.ID == 0 {
 			root.Environment = sdk.DefaultEnv
 		}
@@ -343,8 +343,8 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 		}
 
 		if permission.AccessToPipeline(child.Trigger.DestEnvironment.ID, child.Trigger.DestPipeline.ID, user, permission.PermissionRead) {
-			child.Trigger.SrcPipeline.Type = sdk.PipelineTypeFromString(srcType)
-			child.Trigger.DestPipeline.Type = sdk.PipelineTypeFromString(destType)
+			child.Trigger.SrcPipeline.Type = srcType
+			child.Trigger.DestPipeline.Type = destType
 
 			child.Project = child.Trigger.DestProject
 			child.Application = child.Trigger.DestApplication
