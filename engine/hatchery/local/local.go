@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -40,7 +41,7 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryLocal) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
+func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
 	if h.Hatchery() == nil {
 		log.Debug("CanSpawn false Hatchery nil\n")
 		return false
@@ -49,9 +50,10 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 		log.Debug("CanSpawn false ID different model.ID:%d h.workerModelID:%d \n", model.ID, h.Hatchery().Model.ID)
 		return false
 	}
-	if len(req) > 0 {
-		log.Debug("CanSpawn false len(req) > 0 \n")
-		return false
+	for _, r := range job.Job.Action.Requirements {
+		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			return false
+		}
 	}
 	log.Debug("CanSpawn true")
 	return true
@@ -70,7 +72,7 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
+func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) error {
 	var err error
 
 	if len(h.workers) >= viper.GetInt("max-worker") {
@@ -156,11 +158,6 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]*exec.Cmd)
 
-	name, err := os.Hostname()
-	if err != nil {
-		return fmt.Errorf("Cannot retrieve hostname: %s", err)
-	}
-
 	req, err := sdk.GetRequirements()
 	if err != nil {
 		return fmt.Errorf("Cannot fetch requirements: %s", err)
@@ -170,6 +167,8 @@ func (h *HatcheryLocal) Init() error {
 	if err != nil {
 		return fmt.Errorf("Cannot check local capabilities: %s", err)
 	}
+
+	name := hatchery.GenerateName("", viper.GetBool("random-name"))
 
 	h.hatch = &sdk.Hatchery{
 		Name: name,

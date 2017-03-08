@@ -54,7 +54,7 @@ $ CDS_OPENSTACK_USER=<user> CDS_OPENSTACK_TENANT=<tenant> CDS_OPENSTACK_AUTH_END
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Born(hatcheryOpenStack, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
+		hatchery.Create(hatcheryOpenStack, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		hatcheryOpenStack.tenant = viper.GetString("openstack-tenant")

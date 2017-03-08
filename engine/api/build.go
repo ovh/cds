@@ -494,7 +494,9 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	var queue []sdk.PipelineBuildJob
 	var errQ error
 	switch c.Agent {
-	case sdk.HatcheryAgent, sdk.WorkerAgent:
+	case sdk.HatcheryAgent:
+		queue, errQ = pipeline.LoadGroupWaitingQueue(db, c.Hatchery.GroupID)
+	case sdk.WorkerAgent:
 		queue, errQ = pipeline.LoadGroupWaitingQueue(db, c.Worker.GroupID)
 	default:
 		queue, errQ = pipeline.LoadUserWaitingQueue(db, c.User)

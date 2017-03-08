@@ -121,11 +121,11 @@ func LoadWorkerModelsByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Model, e
 // LoadWorkerModelsByUser returns worker models list according to user's groups
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Model, error) {
 	ms := []WorkerModel{}
-	query := `	select * 
-				from worker_model 
+	query := `	select *
+				from worker_model
 				where group_id in (select group_id from group_user where user_id = $1)
-				union 
-				select * from worker_model 
+				union
+				select * from worker_model
 				where group_id = $2
 				order by name`
 	if _, err := db.Select(&ms, query, userID, group.SharedInfraGroup.ID); err != nil {
@@ -238,6 +238,7 @@ func UpdateWorkerModelCapability(db gorp.SqlExecutor, capa sdk.Requirement, mode
 	return nil
 }
 
+// deprecatd
 func modelCanRun(db *gorp.DbMap, name string, req []sdk.Requirement, capa []sdk.Requirement) bool {
 	defer logTime("compareRequirements", time.Now())
 

@@ -12,8 +12,8 @@ import (
 func init() {
 	hatcherySwarm = &HatcherySwarm{}
 
-	Cmd.Flags().BoolVar(&hatcherySwarm.onlyWithServiceReq, "only-with-service-req", false, "")
-	viper.BindPFlag("only-with-service-req", Cmd.Flags().Lookup("only-with-service-req"))
+	Cmd.Flags().IntVar(&hatcherySwarm.ratioService, "ratio-service", 75, "Percent reserved for spwaning worker with service requirement ")
+	viper.BindPFlag("ratio-service", Cmd.Flags().Lookup("ratio-service"))
 
 	Cmd.Flags().IntVar(&hatcherySwarm.maxContainers, "max-containers", 10, "")
 	viper.BindPFlag("max-containers", Cmd.Flags().Lookup("max-containers"))
@@ -38,14 +38,14 @@ You should export DOCKER_TLS_VERIFY and DOCKER_CERT_PATH
 $ cds generate token --group shared.infra --expiration persistent
 2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4
 
-$ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> --token=<token> 
+$ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> --token=<token>
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Born(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
+		hatchery.Create(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		hatcherySwarm.onlyWithServiceReq = viper.GetBool("only-with-service-req")
+		hatcherySwarm.ratioService = viper.GetInt("ratio-service")
 		hatcherySwarm.maxContainers = viper.GetInt("max-containers")
 		hatcherySwarm.defaultMemory = viper.GetInt("worker-memory")
 		hatcherySwarm.workerTTL = viper.GetInt("worker-ttl")

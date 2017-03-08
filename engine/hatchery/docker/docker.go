@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -42,13 +41,17 @@ func (hd *HatcheryDocker) Hatchery() *sdk.Hatchery {
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirement are not supported
-func (hd *HatcheryDocker) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
+func (hd *HatcheryDocker) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
 	if model.Type != sdk.Docker {
 		return false
 	}
-	if len(req) > 0 {
-		return false
+
+	for _, r := range job.Job.Action.Requirements {
+		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			return false
+		}
 	}
+
 	return true
 }
 
@@ -65,15 +68,8 @@ func (hd *HatcheryDocker) Init() error {
 		return fmt.Errorf("Docker not found on this host")
 	}
 
-	// Register without declaring model
-	name, err := os.Hostname()
-	if err != nil {
-		log.Warning("Cannot retrieve hostname: %s\n", err)
-		name = "cds-hatchery"
-	}
-	name += "-docker"
 	hd.hatch = &sdk.Hatchery{
-		Name: name,
+		Name: hatchery.GenerateName("docker", viper.GetBool("random-name")),
 		UID:  viper.GetString("token"),
 	}
 
@@ -166,7 +162,7 @@ func (hd *HatcheryDocker) WorkerStarted(model *sdk.Model) int {
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
+func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) error {
 	var err error
 
 	if wm.Type != sdk.Docker {

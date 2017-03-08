@@ -38,7 +38,7 @@ var (
 			}
 
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Prj", "App", "Status", "Job", "Queued", "Requirements"})
+			table.SetHeader([]string{"Prj-App-Job", "Queued", "Requirements"})
 			table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 			table.SetCenterSeparator("|")
 
@@ -54,9 +54,9 @@ var (
 				if maxQueued < duration {
 					maxQueued = duration
 				}
-				table.Append([]string{prj, app, pb.Status, pb.Job.Action.Name, round(duration, time.Second).String(), req})
+				table.Append([]string{fmt.Sprintf("%s➤%s➤%s", prj, app, pb.Job.Action.Name), round(duration, time.Second).String(), req})
 			}
-			table.SetFooter([]string{"", "Total", fmt.Sprintf("%d", len(pbs)), "Max Queued", round(maxQueued, time.Second).String(), ""})
+			table.SetFooter([]string{fmt.Sprintf("Total: %d", len(pbs)), "Max Queued", round(maxQueued, time.Second).String()})
 
 			table.Render()
 		},

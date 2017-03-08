@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -108,12 +107,12 @@ func (m *HatcheryMesos) KillWorker(worker sdk.Worker) error {
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements services are not supported
-func (m *HatcheryMesos) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
+func (m *HatcheryMesos) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
 	if model.Type != sdk.Docker {
 		return false
 	}
 	//Service requirement are not supported
-	for _, r := range req {
+	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement {
 			return false
 		}
@@ -124,7 +123,7 @@ func (m *HatcheryMesos) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
+func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
 	if model.Type != sdk.Docker {
 		return fmt.Errorf("Model not handled")
 	}
@@ -150,18 +149,18 @@ func (m *HatcheryMesos) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms
 		return fmt.Errorf("max number of containers reached, aborting")
 	}
 
-	for _, ms := range wms {
-		if ms.ModelName == model.Name {
-			// Security against deficient worker model with worker not connecting
-			// TODO: Should validate worker before running them at scale
-			if int(ms.CurrentCount) > countOf(model.Name, apps)+10 {
-				return fmt.Errorf("Over 20 %s workers started on mesos but 0 connected, something is wrong\n", model.Name)
-			}
-			break
-		}
-	}
+	// TODO for _, ms := range wms {
+	// 	if ms.ModelName == model.Name {
+	// 		// Security against deficient worker model with worker not connecting
+	// 		// TODO: Should validate worker before running them at scale
+	// 		if int(ms.CurrentCount) > countOf(model.Name, apps)+10 {
+	// 			return fmt.Errorf("Over 20 %s workers started on mesos but 0 connected, something is wrong\n", model.Name)
+	// 		}
+	// 		break
+	// 	}
+	// }
 
-	return m.spawnMesosDockerWorker(model, m.hatch.ID, req)
+	return m.spawnMesosDockerWorker(model, m.hatch.ID, job)
 }
 
 // WorkerStarted returns the number of instances of given model started but
@@ -185,17 +184,12 @@ func (m *HatcheryMesos) WorkerStarted(model *sdk.Model) int {
 // Init only starts killing routine of worker not registered
 func (m *HatcheryMesos) Init() error {
 	// Register without declaring model
-	name, err := os.Hostname()
-	if err != nil {
-		log.Warning("Cannot retrieve hostname: %s\n", err)
-		name = "cds-hatchery-mesos"
-	}
 	m.hatch = &sdk.Hatchery{
-		Name: name,
+		Name: hatchery.GenerateName("mesos", viper.GetBool("random-name")),
 		UID:  viper.GetString("token"),
 	}
 
-	if err = hatchery.Register(m.hatch, viper.GetString("token")); err != nil {
+	if err := hatchery.Register(m.hatch, viper.GetString("token")); err != nil {
 		log.Warning("Cannot register hatchery: %s\n", err)
 	}
 
@@ -242,22 +236,24 @@ func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memor
 	return buffer, nil
 }
 
-func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64, req []sdk.Requirement) error {
+func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int64, job *sdk.PipelineBuildJob) error {
 	// Estimate needed memory, we will set 110% of required memory
 	memory := m.defaultMemory
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
-	for _, r := range req {
-		if r.Name == sdk.ServiceRequirement {
-			return fmt.Errorf("Service requirement not supported")
-		}
+	if job != nil {
+		for _, r := range job.Job.Action.Requirements {
+			if r.Name == sdk.ServiceRequirement {
+				return fmt.Errorf("Service requirement not supported")
+			}
 
-		if r.Type == sdk.MemoryRequirement {
-			var err error
-			memory, err = strconv.Atoi(r.Value)
-			if err != nil {
-				log.Warning("spawnMesosDockerWorker>Unable to parse memory requirement %s :s\n", memory, err)
-				return err
+			if r.Type == sdk.MemoryRequirement {
+				var err error
+				memory, err = strconv.Atoi(r.Value)
+				if err != nil {
+					log.Warning("spawnMesosDockerWorker>Unable to parse memory requirement %s :s\n", memory, err)
+					return err
+				}
 			}
 		}
 	}

@@ -63,12 +63,14 @@ func (h *HatcheryCloud) Hatchery() *sdk.Hatchery {
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryCloud) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
+func (h *HatcheryCloud) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
 	if model.Type != sdk.Openstack {
 		return false
 	}
-	if len(req) > 0 {
-		return false
+	for _, r := range job.Job.Action.Requirements {
+		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			return false
+		}
 	}
 	return true
 }
@@ -81,13 +83,8 @@ const serverStatusActive = "ACTIVE"
 // then list available images
 func (h *HatcheryCloud) Init() error {
 	// Register without declaring model
-	name, err := os.Hostname()
-	if err != nil {
-		log.Warning("Cannot retrieve hostname: %s\n", err)
-		name = "cds-hatchery-openstack"
-	}
 	h.hatch = &sdk.Hatchery{
-		Name: name,
+		Name: hatchery.GenerateName("openstack", viper.GetBool("random-name")),
 		UID:  viper.GetString("uk"),
 	}
 
@@ -95,36 +92,42 @@ func (h *HatcheryCloud) Init() error {
 		log.Warning("Cannot register hatchery: %s\n", errRegistrer)
 	}
 
-	h.token, h.endpoint, err = getToken(h.user, h.password, h.address, h.tenant, h.region)
-	if err != nil {
-		return err
+	var errt error
+	h.token, h.endpoint, errt = getToken(h.user, h.password, h.address, h.tenant, h.region)
+	if errt != nil {
+		return errt
 	}
 	go h.refreshTokenRoutine()
 
 	log.Debug("NewOpenstackStore> Got token %dchar at %s\n", len(h.token.ID), h.endpoint)
 
-	h.images, err = getImages(h.endpoint, h.token.ID)
-	if err != nil {
-		log.Warning("Error getting images: %s\n", err)
+	var erri error
+	h.images, erri = getImages(h.endpoint, h.token.ID)
+	if erri != nil {
+		log.Warning("Error getting images: %s\n", erri)
 	}
-	h.flavors, err = getFlavors(h.endpoint, h.token.ID)
-	if err != nil {
-		log.Warning("Error getting flavors: %s\n", err)
+	var errf error
+	h.flavors, errf = getFlavors(h.endpoint, h.token.ID)
+	if errf != nil {
+		log.Warning("Error getting flavors: %s\n", errf)
 	}
-	h.networks, err = getNetworks(h.endpoint, h.token.ID)
-	if err != nil {
-		log.Warning("Error getting networks: %s\n", err)
+	var errn error
+	h.networks, errn = getNetworks(h.endpoint, h.token.ID)
+	if errn != nil {
+		log.Warning("Error getting networks: %s\n", errn)
 	}
-	h.networkID, err = h.getNetworkID(h.network)
-	if err != nil {
+	var errni error
+	h.networkID, errni = h.getNetworkID(h.network)
+	if errni != nil {
 		return fmt.Errorf("cannot find network '%s'", h.network)
 	}
 
 	//Download the worker binary witch should be injected in servers
 	//FIXME: only linux is supported for the moment. Windows worker binary can be downloaded but, he have to manager OS requirement first
 	var code int
-	mapWorkerBinaries["linux_x86_64"], code, err = sdk.Request("GET", "/download/worker/x86_64", nil)
-	if err != nil || code != 200 {
+	var errd error
+	mapWorkerBinaries["linux_x86_64"], code, errd = sdk.Request("GET", "/download/worker/x86_64", nil)
+	if errd != nil || code != 200 {
 		log.Fatalf("Unable to download worker binary from api. This is fatal...")
 		os.Exit(10)
 	}
@@ -296,7 +299,7 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
+func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
 	var err error
 	var omd sdk.OpenstackModelData
 

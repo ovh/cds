@@ -179,18 +179,17 @@ func UpdateWorkerModel(id int64, name string, t string, value string) error {
 	return nil
 }
 
-// GetWorkerModels retrieves all worker models avaialbe to user
+// GetWorkerModels retrieves all worker models available to user
 func GetWorkerModels() ([]Model, error) {
 	uri := fmt.Sprintf("/worker/model")
 
-	data, _, err := Request("GET", uri, nil)
-	if err != nil {
-		return nil, err
+	data, _, errr := Request("GET", uri, nil)
+	if errr != nil {
+		return nil, errr
 	}
 
 	var models []Model
-	err = json.Unmarshal(data, &models)
-	if err != nil {
+	if err := json.Unmarshal(data, &models); err != nil {
 		return nil, err
 	}
 
