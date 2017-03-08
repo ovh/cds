@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -209,6 +210,25 @@ func GetAllVariableNameInProjectByKey(db gorp.SqlExecutor, projectKey string) ([
 	return variables, err
 }
 
+func GetVariableByID(db gorp.SqlExecutor, projectID int64, variableID int64) (*sdk.Variable, error) {
+	variable := &sdk.Variable{}
+	query := `SELECT id, var_name, var_value, var_type FROM project_variable
+		  WHERE id=$1 AND project_id=$2`
+	var typeVar string
+	var varValue []byte
+	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &typeVar)
+	if err != nil {
+		return variable, err
+	}
+	variable.Type = sdk.VariableTypeFromString(typeVar)
+	if sdk.NeedPlaceholder(variable.Type) {
+		variable.Value = sdk.PasswordPlaceholder
+	} else {
+		variable.Value = string(varValue)
+	}
+	return variable, err
+}
+
 // GetVariableInProject get the variable information for the given project
 func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName string) (*sdk.Variable, error) {
 	variable := &sdk.Variable{}
@@ -230,24 +250,39 @@ func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName str
 }
 
 // InsertVariable Insert a new variable in the given project
-func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variable) error {
+func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
 	query := `INSERT INTO project_variable(project_id, var_name, var_value, cipher_value, var_type)
-		  VALUES($1, $2, $3, $4, $5)`
+		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(query, proj.ID, variable.Name, clear, cipher, string(variable.Type))
-	if err != nil {
+	if err := db.QueryRow(query, proj.ID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID); err != nil {
 		return err
 	}
+
+	pva := &sdk.ProjectVariableAudit{
+		ProjectID:     proj.ID,
+		Type:          sdk.AUDIT_ADD,
+		VariableID:    variable.ID,
+		VariableAfter: variable,
+		Author:        u.Username,
+		Versionned:    time.Now(),
+	}
+
+	if err := InsertAudit(db, pva); err != nil {
+		return sdk.WrapError(err, "InsertVariable> Cannot insert audit for variable %s", variable.Name)
+	}
+
 	return nil
 }
 
 // UpdateVariable Update a variable in the given project
-func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variable) error {
+func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
+	previousVar, err := GetVariableByID(db, proj.ID, variable.ID)
+
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -265,15 +300,42 @@ func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable sdk.Variabl
 		return err
 	}
 
+	pva := &sdk.ProjectVariableAudit{
+		ProjectID:      proj.ID,
+		Type:           sdk.AUDIT_UPDATE,
+		VariableID:     variable.ID,
+		VariableBefore: previousVar,
+		VariableAfter:  variable,
+		Author:         u.Username,
+		Versionned:     time.Now(),
+	}
+
+	if err := InsertAudit(db, pva); err != nil {
+		return sdk.WrapError(err, "UpdateVariable> Cannot insert audit for variable %s", variable.Name)
+	}
+
 	return nil
 }
 
 // DeleteVariable Delete a variable from the given project
-func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variableName string) error {
-	query := `DELETE FROM project_variable WHERE project_id=$1 AND var_name=$2`
-	_, err := db.Exec(query, proj.ID, variableName)
+func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
+	query := `DELETE FROM project_variable WHERE project_id=$1 AND id=$2`
+	_, err := db.Exec(query, proj.ID, variable.ID)
 	if err != nil {
 		return err
+	}
+
+	pva := &sdk.ProjectVariableAudit{
+		ProjectID:      proj.ID,
+		Type:           sdk.AUDIT_DELETE,
+		VariableID:     variable.ID,
+		VariableBefore: variable,
+		Author:         u.Username,
+		Versionned:     time.Now(),
+	}
+
+	if err := InsertAudit(db, pva); err != nil {
+		return sdk.WrapError(err, "DeleteVariable> Cannot insert audit for variable %s", variable.Name)
 	}
 
 	return err
@@ -291,27 +353,37 @@ func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 }
 
 // AddKeyPair generate a ssh key pair and add them as project variables
-func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string) error {
-	pub, priv, errGenerate := keys.Generatekeypair(keyname)
+func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
+	pub, priv, errGenerate := keys.Generatekeypair(variable.Name)
 	if errGenerate != nil {
 		return errGenerate
 	}
 
-	v := sdk.Variable{
-		Name:  keyname,
+	v := &sdk.Variable{
+		Name:  variable.Name,
 		Type:  sdk.KeyVariable,
 		Value: priv,
 	}
 
-	if err := InsertVariable(db, proj, v); err != nil {
+	if err := InsertVariable(db, proj, v, u); err != nil {
 		return err
 	}
 
-	p := sdk.Variable{
-		Name:  keyname + ".pub",
+	p := &sdk.Variable{
+		Name:  variable.Name + ".pub",
 		Type:  sdk.TextVariable,
 		Value: pub,
 	}
 
-	return InsertVariable(db, proj, p)
+	return InsertVariable(db, proj, p, u)
+}
+
+// InsertAudit insert an audit on a project variable
+func InsertAudit(db gorp.SqlExecutor, pva *sdk.ProjectVariableAudit) error {
+	dbProjVarAudit := dbProjectVariableAudit(*pva)
+	if err := db.Insert(&dbProjVarAudit); err != nil {
+		return err
+	}
+	*pva = sdk.ProjectVariableAudit(dbProjVarAudit)
+	return nil
 }

@@ -2,7 +2,7 @@ package sdk
 
 // Different type of Audit event
 const (
-	ADD    = "add"
-	UPDATE = "update"
-	DELETE = "delete"
+	AUDIT_ADD    = "add"
+	AUDIT_UPDATE = "update"
+	AUDIT_DELETE = "delete"
 )

@@ -26,6 +26,18 @@ type Project struct {
 	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-"`
 }
 
+// ProjectVariableAudit represents an audit on an project variable
+type ProjectVariableAudit struct {
+	ID             int64     `json:"id" yaml:"-" db:"id"`
+	ProjectID      int64     `json:"project_id" yaml:"-" db:"project_id"`
+	VariableID     int64     `json:"variable_id" yaml:"-" db:"variable_id"`
+	Type           string    `json:"type" yaml:"-" db:"type"`
+	VariableBefore *Variable `json:"variable_before,omitempty" yaml:"-" db:"-"`
+	VariableAfter  *Variable `json:"variable_after,omitempty" yaml:"-" db:"-"`
+	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
+	Author         string    `json:"author" yaml:"-" db:"author"`
+}
+
 // Metadata represents metadata
 type Metadata map[string]string
 

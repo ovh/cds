@@ -4,10 +4,10 @@ import "time"
 
 // Variable represent a variable for a project or pipeline
 type Variable struct {
-	ID    int64        `json:"id"`
-	Name  string       `json:"name"`
-	Value string       `json:"value"`
-	Type  VariableType `json:"type"`
+	ID          int64        `json:"id"`
+	Name        string       `json:"name"`
+	Value       string       `json:"value"`
+	Type        VariableType `json:"type"`
 }
 
 // VariableAudit represent audit for a variable
