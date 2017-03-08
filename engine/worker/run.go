@@ -388,7 +388,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	// So they can be used by plugins
 	for _, s := range pbji.Secrets {
 		p := sdk.Parameter{
-			Type:  sdk.ParameterType("password"),
+			Type:  "password",
 			Name:  s.Name,
 			Value: s.Value,
 		}

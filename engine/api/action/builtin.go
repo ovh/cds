@@ -76,6 +76,21 @@ Parse given file to extract Unit Test results.`
 		return err
 	}
 
+	// ----------------------------------- Git clone    -----------------------
+	gitclone := sdk.NewAction(sdk.GitCloneAction)
+	gitclone.Type = sdk.BuiltinAction
+	gitclone.Description = `CDS Builtin Action.
+Clone a repository into a new directory.`
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "privateKey",
+		Description: "Set the private key to be able to git clone from ssh",
+		Type:        sdk.KeyParameter,
+	})
+
+	if err := checkBuiltinAction(db, gitclone); err != nil {
+		return err
+	}
+
 	return nil
 }
 

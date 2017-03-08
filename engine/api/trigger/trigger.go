@@ -637,7 +637,7 @@ func loadTriggerParameters(db gorp.SqlExecutor, triggerID int64) ([]sdk.Paramete
 		if err != nil {
 			return nil, err
 		}
-		p.Type = sdk.ParameterTypeFromString(pType)
+		p.Type = pType
 		p.Value = val
 
 		params = append(params, p)

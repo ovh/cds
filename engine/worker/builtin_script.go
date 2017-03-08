@@ -143,7 +143,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	for _, p := range pbJob.Parameters {
 		envName := strings.Replace(p.Name, ".", "_", -1)
 		envName = strings.ToUpper(envName)
-		if p.Type != sdk.ParameterType("password") {
+		if p.Type != password {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
 		}
 	}

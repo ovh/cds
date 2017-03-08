@@ -5,30 +5,29 @@ import (
 	"strings"
 )
 
-// ParameterType defines the types of parameter of a pipeline or a action
-type ParameterType string
-
 // Different type of Parameter
 const (
-	EnvironmentParameter ParameterType = "env"
-	PipelineParameter    ParameterType = "pipeline"
-	ListParameter        ParameterType = "list"
-	NumberParameter      ParameterType = "number"
-	StringParameter      ParameterType = "string"
-	TextParameter        ParameterType = "text"
-	BooleanParameter     ParameterType = "boolean"
+	EnvironmentParameter = "env"
+	PipelineParameter    = "pipeline"
+	ListParameter        = "list"
+	NumberParameter      = "number"
+	StringParameter      = "string"
+	TextParameter        = "text"
+	BooleanParameter     = "boolean"
+	KeyParameter         = "key"
 )
 
 var (
 	// AvailableParameterType list all existing parameters type in CDS
 	AvailableParameterType = []string{
-		string(StringParameter),
-		string(NumberParameter),
-		string(TextParameter),
-		string(EnvironmentParameter),
-		string(BooleanParameter),
-		string(ListParameter),
-		string(PipelineParameter),
+		StringParameter,
+		NumberParameter,
+		TextParameter,
+		EnvironmentParameter,
+		BooleanParameter,
+		ListParameter,
+		PipelineParameter,
+		KeyParameter,
 	}
 )
 
@@ -37,39 +36,13 @@ const (
 	PasswordPlaceholder string = "**********"
 )
 
-// ParameterTypeFromString returns a parameter Type from a given string
-func ParameterTypeFromString(in string) ParameterType {
-	switch in {
-	case EnvironmentParameter.String():
-		return EnvironmentParameter
-	case ListParameter.String():
-		return ListParameter
-	case NumberParameter.String():
-		return NumberParameter
-	case StringParameter.String():
-		return StringParameter
-	case TextParameter.String():
-		return TextParameter
-	case BooleanParameter.String():
-		return BooleanParameter
-	case PipelineParameter.String():
-		return PipelineParameter
-	default:
-		return TextParameter
-	}
-}
-
-func (t ParameterType) String() string {
-	return string(t)
-}
-
 // Parameter can be a String/Date/Script/URL...
 type Parameter struct {
-	ID          int64         `json:"id" yaml:"-"`
-	Name        string        `json:"name"`
-	Type        ParameterType `json:"type"`
-	Value       string        `json:"value"`
-	Description string        `json:"description" yaml:"desc,omitempty"`
+	ID          int64  `json:"id" yaml:"-"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Value       string `json:"value"`
+	Description string `json:"description" yaml:"desc,omitempty"`
 }
 
 // NewStringParameter creates a Parameter from a string with <name>=<value> format
@@ -88,7 +61,7 @@ func NewStringParameter(s string) (Parameter, error) {
 }
 
 // AddParameter append a parameter in a parameter array
-func AddParameter(array *[]Parameter, name string, parameterType ParameterType, value string) {
+func AddParameter(array *[]Parameter, name string, parameterType string, value string) {
 	params := append(*array, Parameter{
 		Name:  name,
 		Value: value,

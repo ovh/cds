@@ -135,7 +135,7 @@ func loadChildActionParameterValue(db gorp.SqlExecutor, edgeID int64) ([]sdk.Par
 		if err != nil {
 			return nil, err
 		}
-		p.Type = sdk.ParameterType(pType)
+		p.Type = pType
 		p.Value = val
 
 		params = append(params, p)

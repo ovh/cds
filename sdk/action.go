@@ -65,9 +65,10 @@ const (
 
 // Builtin Action
 const (
-	ScriptAction = "Script"
-	NotifAction  = "Notif"
-	JUnitAction  = "JUnit"
+	ScriptAction   = "Script"
+	NotifAction    = "Notif"
+	JUnitAction    = "JUnit"
+	GitCloneAction = "GitClone"
 )
 
 const (
