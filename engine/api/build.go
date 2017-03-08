@@ -427,7 +427,7 @@ func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	if h, err := pipeline.BookPipelineBuildJob(id, c.Hatchery); err != nil {
 		if err == pipeline.ErrAlreadyBooked && h != nil {
 			log.Warning("bookPipelineBuildJobHandler> job %d already booked by %s (%d): %s\n", id, h.Name, h.ID)
-			return WriteJSON(w, r, "job already booked", http.StatusOK)
+			return WriteJSON(w, r, "job already booked", http.StatusConflict)
 		}
 		log.Warning("bookPipelineBuildJobHandler> Cannot book job %d: %s\n", id, err)
 		return err
