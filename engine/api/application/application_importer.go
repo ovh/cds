@@ -81,7 +81,7 @@ func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 		var errCreate error
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			errCreate = AddKeyPairToApplication(db, app, newVar, u)
+			errCreate = AddKeyPairToApplication(db, app, newVar.Name, u)
 			break
 		default:
 			errCreate = InsertVariable(db, app, newVar, u)
@@ -194,7 +194,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 				t.SrcEnvironment = sdk.DefaultEnv
 			} else {
 				if err := environment.Import(db, proj, &t.SrcEnvironment, msgChan, u); err != nil {
-					return err
+					return sdk.WrapError(err, "ImportPipelines> Cannot import environment %s", t.SrcEnvironment.Name)
 				}
 			}
 
@@ -203,7 +203,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 				t.DestEnvironment = sdk.DefaultEnv
 			} else {
 				if err := environment.Import(db, proj, &t.DestEnvironment, msgChan, u); err != nil {
-					return err
+					return sdk.WrapError(err, "ImportPipelines> Cannot import environment %s", t.DestEnvironment.Name)
 				}
 			}
 
