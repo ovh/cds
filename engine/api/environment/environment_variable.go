@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// DEPRECATED
 // CreateAudit Create environment variable audit for the given project
 func CreateAudit(db gorp.SqlExecutor, key string, env *sdk.Environment, u *sdk.User) error {
 
@@ -173,7 +174,7 @@ func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetA
 	          WHERE environment_id = $1 AND id = $2
 	          ORDER BY name`
 	if err := db.QueryRow(query, envID, varID).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &typeVar); err != nil {
-		return v, err
+		return v, sdk.WrapError(err, "GetVariableByID> Cannot get variable %d", varID)
 	}
 
 	v.Type = sdk.VariableTypeFromString(typeVar)
@@ -184,7 +185,7 @@ func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetA
 		var errDecrypt error
 		v.Value, errDecrypt = secret.DecryptS(v.Type, clearVal, cipherVal, c.clearsecret)
 		if errDecrypt != nil {
-			return v, errDecrypt
+			return v, sdk.WrapError(errDecrypt, "GetVariableByID> Cannot decrypt secret %s", v.Name)
 		}
 	}
 	return v, nil
@@ -315,12 +316,12 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "InsertVariable> Cannot encrypt secret %s", variable.Name)
 	}
 
 	err = db.QueryRow(query, environmentID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "InsertVariable> Cannot insert variable %s in db", variable.Name)
 	}
 
 	eva := &sdk.EnvironmentVariableAudit{
@@ -346,7 +347,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 
 // UpdateVariable Update a variable in the given environment
 func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u *sdk.User) error {
-	varBefore, errV := GetVariableByID(db, envID, variable.ID)
+	varBefore, errV := GetVariableByID(db, envID, variable.ID, WithClearPassword())
 	if errV != nil {
 		return sdk.WrapError(errV, "UpdateVariable> Cannot load variable %d", variable.ID)
 	}
@@ -358,7 +359,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret")
 	}
 
 	query := `UPDATE environment_variable
@@ -366,7 +367,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 	          WHERE environment_id = $4 AND environment_variable.id = $5`
 	result, err := db.Exec(query, clear, cipher, string(variable.Type), envID, variable.ID, variable.Name)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "Cannot update variable %s in db", variable.Name)
 	}
 	rowAffected, err := result.RowsAffected()
 	if err != nil {

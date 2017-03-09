@@ -165,66 +165,53 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 	if errProj != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler: Cannot load project %s :  %s\n", key, errProj)
-		return errProj
+		return sdk.WrapError(errProj, "deleteVariableFromEnvironmentHandler: Cannot load project %s", key)
 	}
 
 	env, errEnv := environment.LoadEnvironmentByName(db, key, envName)
 	if errEnv != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler: Cannot load environment %s :  %s\n", envName, errEnv)
-		return errEnv
+		return sdk.WrapError(errEnv, "deleteVariableFromEnvironmentHandler: Cannot load environment %s", envName)
 	}
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler: Cannot start transaction:  %s\n", errBegin)
-		return errBegin
+		return sdk.WrapError(errBegin, "deleteVariableFromEnvironmentHandler: Cannot start transaction")
 	}
 	defer tx.Rollback()
 
+	// DEPRECATED
 	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
 		log.Warning("deleteVariableFromEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
 		return err
 	}
 
-	varToDelete, errV := environment.GetVariable(db, key, envName, varName)
+	// clear passwordfor audit
+	varToDelete, errV := environment.GetVariable(db, key, envName, varName, environment.WithClearPassword())
 	if errV != nil {
 		return sdk.WrapError(errV, "deleteVariableFromEnvironmentHandler> Cannot load variable %s", varName)
 	}
 
 	if err := environment.DeleteVariable(db, env.ID, varToDelete, c.User); err != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler: Cannot delete %s: %s\n", varName, err)
-		return err
+		return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler> Cannot update last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update last modified date")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler: Cannot commit transaction:  %s\n", err)
-		return err
-	}
-
-	var errEnvs error
-	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
-	if errEnvs != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler: Cannot load environments: %s\n", errEnvs)
-		return errEnvs
+		return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 	}
 
 	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
-		return errApps
+		return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
 	}
 	for _, a := range apps {
 		if err := sanity.CheckApplication(db, p, &a); err != nil {
-			log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
 		}
 	}
 
@@ -237,71 +224,56 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 	if errProj != nil {
-		log.Warning("updateVariableInEnvironment: Cannot load %s: %s\n", key, errProj)
-		return errProj
+		return sdk.WrapError(errProj, "updateVariableInEnvironment: Cannot load %s", key)
 	}
 
 	var newVar sdk.Variable
 	if err := UnmarshalBody(r, &newVar); err != nil {
-		return err
+		return sdk.ErrWrongRequest
 	}
 
 	env, errEnv := environment.LoadEnvironmentByName(db, key, envName)
 	if errEnv != nil {
-		log.Warning("updateVariableInEnvironmentHandler: cannot load environment %s: %s\n", envName, errEnv)
-		return errEnv
+		return sdk.WrapError(errEnv, "updateVariableInEnvironmentHandler: cannot load environment %s", envName)
 	}
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot start transaction:  %s\n", errBegin)
-		return errBegin
+		return sdk.WrapError(errBegin, "updateVariableInEnvironmentHandler: Cannot start transaction")
 	}
 	defer tx.Rollback()
 
+	// DEPRECATED
 	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
 		log.Warning("updateVariableInEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
 		return err
 	}
 
 	if err := environment.UpdateVariable(db, env.ID, &newVar, c.User); err != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s:  %s\n", varName, envName, err)
-		return err
+		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot update last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update last modified date")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot commit transaction:  %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 	}
 
 	if err := sanity.CheckProjectPipelines(db, p); err != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot check warnings: %s\n", err)
-		return err
-	}
-
-	var errEnvs error
-	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
-	if errEnvs != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot load environments: %s\n", errEnvs)
-		return errEnvs
+		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot check warnings")
 	}
 
 	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
-		return errApps
+		return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
 	}
 	for _, a := range apps {
 		if err := sanity.CheckApplication(db, p, &a); err != nil {
-			log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
 		}
 	}
 
@@ -314,15 +286,14 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 	if errProj != nil {
-		log.Warning("addVariableInEnvironmentHandler: Cannot load %s: %s\n", key, errProj)
-		return errProj
+		return sdk.WrapError(errProj, "addVariableInEnvironmentHandler: Cannot load project %s", key)
 	}
 
 	var newVar sdk.Variable
 	if err := UnmarshalBody(r, &newVar); err != nil {
-		return err
+		return sdk.ErrWrongRequest
 	}
 
 	if newVar.Name != varName {
@@ -331,20 +302,19 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 
 	env, errEnv := environment.LoadEnvironmentByName(db, key, envName)
 	if errEnv != nil {
-		log.Warning("addVariableInEnvironmentHandler: Cannot load environment %s :  %s\n", envName, errEnv)
-		return errEnv
+		return sdk.WrapError(errEnv, "addVariableInEnvironmentHandler: Cannot load environment %s", envName)
 	}
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		log.Warning("addVariableInEnvironmentHandler: cannot begin tx: %s\n", errBegin)
-		return errBegin
+		return sdk.WrapError(errBegin, "addVariableInEnvironmentHandler: cannot begin tx")
 	}
 	defer tx.Rollback()
 
+	// DEPRECATED
 	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
 		log.Warning("addVariableInEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
-		return err
+		return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot create audit for env %s", envName)
 	}
 
 	var errInsert error
@@ -355,40 +325,27 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 		errInsert = environment.InsertVariable(tx, env.ID, &newVar, c.User)
 	}
 	if errInsert != nil {
-		log.Warning("addVariableInEnvironmentHandler: Cannot add variable %s in environment %s:  %s\n", varName, envName, errInsert)
-		return errInsert
+		return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
-		log.Warning("addVariableInEnvironmentHandler: Cannot update last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot update last modified date")
 	}
 	if err := tx.Commit(); err != nil {
-		log.Warning("addVariableInEnvironmentHandler: cannot commit tx: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 	}
 
 	if err := sanity.CheckProjectPipelines(db, p); err != nil {
-		log.Warning("addVariableInEnvironmentHandler: Cannot check warnings: %s\n", err)
-		return err
-	}
-
-	var errEnvs error
-	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
-	if errEnvs != nil {
-		log.Warning("addVariableInEnvironmentHandler: Cannot load environments: %s\n", errEnvs)
-		return errEnvs
+		return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot check warnings")
 	}
 
 	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
-		return errApps
+		return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
 	}
 	for _, a := range apps {
 		if err := sanity.CheckApplication(db, p, &a); err != nil {
-			log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
 		}
 	}
 
