@@ -15,7 +15,7 @@ import (
 func TestImportInto_Variable(t *testing.T) {
 	db := test.SetupPG(t)
 
-	u := &sdk.User {
+	u := &sdk.User{
 		Username: "foo",
 	}
 
@@ -139,7 +139,7 @@ func TestImportInto_Variable(t *testing.T) {
 func TestImportInto_Group(t *testing.T) {
 	db := test.SetupPG(t)
 
-	u := &sdk.User {
+	u := &sdk.User{
 		Username: "foo",
 	}
 

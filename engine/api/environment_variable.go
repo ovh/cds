@@ -165,7 +165,7 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		return sdk.WrapError(errProj, "deleteVariableFromEnvironmentHandler: Cannot load project %s", key)
 	}
@@ -207,12 +207,18 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 
 	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
-		return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
+		return sdk.WrapError(errApps, "deleteVariableFromEnvironmentHandler: Cannot load applications")
 	}
 	for _, a := range apps {
 		if err := sanity.CheckApplication(db, p, &a); err != nil {
-			return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
+			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot check application sanity")
 		}
+	}
+
+	var errEnvs error
+	p.Environments, errEnvs = environment.LoadEnvironments(db, key, true, c.User)
+	if errEnvs != nil {
+		return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
 	}
 
 	return WriteJSON(w, r, p, http.StatusOK)
@@ -224,7 +230,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		return sdk.WrapError(errProj, "updateVariableInEnvironment: Cannot load %s", key)
 	}
@@ -273,8 +279,14 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	}
 	for _, a := range apps {
 		if err := sanity.CheckApplication(db, p, &a); err != nil {
-			return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
+			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot check application sanity")
 		}
+	}
+
+	var errEnvs error
+	p.Environments, errEnvs = environment.LoadEnvironments(db, key, true, c.User)
+	if errEnvs != nil {
+		return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
 	}
 
 	return WriteJSON(w, r, p, http.StatusOK)
@@ -286,7 +298,7 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	envName := vars["permEnvironmentName"]
 	varName := vars["name"]
 
-	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errProj != nil {
 		return sdk.WrapError(errProj, "addVariableInEnvironmentHandler: Cannot load project %s", key)
 	}
@@ -341,12 +353,18 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 
 	apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
 	if errApps != nil {
-		return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
+		return sdk.WrapError(errApps, "addVariableInEnvironmentHandler: Cannot load applications")
 	}
 	for _, a := range apps {
 		if err := sanity.CheckApplication(db, p, &a); err != nil {
-			return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
+			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot check application sanity")
 		}
+	}
+
+	var errEnvs error
+	p.Environments, errEnvs = environment.LoadEnvironments(db, key, true, c.User)
+	if errEnvs != nil {
+		return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
 	}
 
 	return WriteJSON(w, r, p, http.StatusOK)
