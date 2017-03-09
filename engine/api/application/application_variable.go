@@ -188,7 +188,7 @@ func GetAllVariable(db gorp.SqlExecutor, key, appName string, args ...FuncArg) (
 }
 
 // LoadVariableByID retrieve a specific variable
-func LoadVariableByID(db gorp.SqlExecutor, appID int64, varID int64, fargs ...FuncArg) (sdk.Variable, error) {
+func LoadVariableByID(db gorp.SqlExecutor, appID int64, varID int64, fargs ...FuncArg) (*sdk.Variable, error) {
 	c := structarg{}
 	for _, f := range fargs {
 		f(&c)
@@ -201,16 +201,16 @@ func LoadVariableByID(db gorp.SqlExecutor, appID int64, varID int64, fargs ...Fu
 	var value sql.NullString
 	var cipher []byte
 	if err := db.QueryRow(query, appID, varID).Scan(&v.ID, &v.Name, &value, &v.Type, &cipher); err != nil {
-		return v, err
+		return nil, err
 	}
 
 	var errC error
 	v.Value, errC = secret.DecryptS(v.Type, value, cipher, c.clearsecret)
-	return v, errC
+	return &v, errC
 }
 
 // LoadVariable retrieve a specific variable
-func LoadVariable(db gorp.SqlExecutor, appID int64, varName string, fargs ...FuncArg) (sdk.Variable, error) {
+func LoadVariable(db gorp.SqlExecutor, appID int64, varName string, fargs ...FuncArg) (*sdk.Variable, error) {
 	c := structarg{}
 	for _, f := range fargs {
 		f(&c)
@@ -223,11 +223,11 @@ func LoadVariable(db gorp.SqlExecutor, appID int64, varName string, fargs ...Fun
 	var value sql.NullString
 	var cipher []byte
 	if err := db.QueryRow(query, appID, varName).Scan(&v.ID, &v.Name, &value, &v.Type, &cipher); err != nil {
-		return v, err
+		return nil, err
 	}
 	var errC error
 	v.Value, errC = secret.DecryptS(v.Type, value, cipher, c.clearsecret)
-	return v, errC
+	return &v, errC
 }
 
 // GetAllVariableByID Get all variable for the given application
@@ -304,7 +304,7 @@ func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
 	variableBefore, err := LoadVariableByID(db, app.ID, variable.ID, WithClearPassword())
 	if err != nil {
 		return sdk.WrapError(err, "UpdateVariable> cannot load variable %d", variable.ID)
@@ -336,8 +336,8 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 		ApplicationID:  app.ID,
 		Type:           sdk.AUDIT_UPDATE,
 		Author:         u.Username,
-		VariableAfter:  &variable,
-		VariableBefore: &variableBefore,
+		VariableAfter:  variable,
+		VariableBefore: variableBefore,
 		VariableID:     variable.ID,
 		Versionned:     time.Now(),
 	}
@@ -351,7 +351,7 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable, u *sdk.User) error {
+func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
 	query := `DELETE FROM application_variable
 		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
 	result, err := db.Exec(query, app.ID, variable.Name)
@@ -371,7 +371,7 @@ func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 		ApplicationID:  app.ID,
 		Type:           sdk.AUDIT_DELETE,
 		Author:         u.Username,
-		VariableBefore: &variable,
+		VariableBefore: variable,
 		VariableID:     variable.ID,
 		Versionned:     time.Now(),
 	}
@@ -427,7 +427,7 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, app *sdk.Application, keyname 
 func InserAudit(db gorp.SqlExecutor, ava *sdk.ApplicationVariableAudit) error {
 	dbAppVarAudit := dbApplicationVariableAudit(*ava)
 	if err := db.Insert(&dbAppVarAudit); err != nil {
-		return err
+		return sdk.WrapError(err, "Cannot Insert Audit for variable %d", ava.VariableID)
 	}
 	*ava = sdk.ApplicationVariableAudit(dbAppVarAudit)
 	return nil

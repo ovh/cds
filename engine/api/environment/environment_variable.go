@@ -192,7 +192,7 @@ func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetA
 }
 
 // GetVariable Get a variable for the given environment
-func GetVariable(db gorp.SqlExecutor, key, envName string, varName string, args ...GetAllVariableFuncArg) (sdk.Variable, error) {
+func GetVariable(db gorp.SqlExecutor, key, envName string, varName string, args ...GetAllVariableFuncArg) (*sdk.Variable, error) {
 	v := sdk.Variable{}
 	var clearVal sql.NullString
 	var cipherVal []byte
@@ -211,7 +211,7 @@ func GetVariable(db gorp.SqlExecutor, key, envName string, varName string, args 
 	          WHERE environment.name = $1 AND project.projectKey = $2 AND environment_variable.name = $3
 	          ORDER BY name`
 	if err := db.QueryRow(query, envName, key, varName).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &typeVar); err != nil {
-		return v, err
+		return nil, err
 	}
 
 	v.Type = sdk.VariableTypeFromString(typeVar)
@@ -222,10 +222,10 @@ func GetVariable(db gorp.SqlExecutor, key, envName string, varName string, args 
 		var errDecrypt error
 		v.Value, errDecrypt = secret.DecryptS(v.Type, clearVal, cipherVal, c.clearsecret)
 		if errDecrypt != nil {
-			return v, errDecrypt
+			return nil, errDecrypt
 		}
 	}
-	return v, nil
+	return &v, nil
 }
 
 // GetAllVariable Get all variable for the given environment
@@ -399,7 +399,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, envID int64, variable sdk.Variable, u *sdk.User) error {
+func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u *sdk.User) error {
 	query := `DELETE FROM environment_variable
 	          WHERE environment_variable.environment_id = $1 AND environment_variable.name = $2`
 	result, err := db.Exec(query, envID, variable.Name)
@@ -415,7 +415,7 @@ func DeleteVariable(db gorp.SqlExecutor, envID int64, variable sdk.Variable, u *
 		Author:         u.Username,
 		EnvironmentID:  envID,
 		Type:           sdk.AUDIT_DELETE,
-		VariableBefore: &variable,
+		VariableBefore: variable,
 		VariableID:     variable.ID,
 		Versionned:     time.Now(),
 	}
@@ -452,7 +452,7 @@ func DeleteAllVariable(db gorp.SqlExecutor, environmentID int64) error {
 func InsertAudit(db gorp.SqlExecutor, eva *sdk.EnvironmentVariableAudit) error {
 	dbEnvVarAudit := dbEnvironmentVariableAudit(*eva)
 	if err := db.Insert(&dbEnvVarAudit); err != nil {
-		return err
+		return sdk.WrapError(err, "Cannot insert audit for variable %d", eva.VariableID)
 	}
 	*eva = sdk.EnvironmentVariableAudit(dbEnvVarAudit)
 	return nil

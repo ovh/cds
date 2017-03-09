@@ -331,7 +331,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 
 	var newVar sdk.Variable
 	if err := UnmarshalBody(r, &newVar); err != nil {
-		return sdk.ErrWrongRequest
+		return err
 	}
 	if newVar.Name != varName {
 		return sdk.ErrWrongRequest
@@ -353,7 +353,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot create audit")
 	}
 
-	if err := application.UpdateVariable(tx, app, newVar, c.User); err != nil {
+	if err := application.UpdateVariable(tx, app, &newVar, c.User); err != nil {
 		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot update variable %s for application %s", varName, appName)
 	}
 

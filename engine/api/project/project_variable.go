@@ -390,7 +390,7 @@ func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u *sdk.U
 func InsertAudit(db gorp.SqlExecutor, pva *sdk.ProjectVariableAudit) error {
 	dbProjVarAudit := dbProjectVariableAudit(*pva)
 	if err := db.Insert(&dbProjVarAudit); err != nil {
-		return err
+		return sdk.WrapError(err, "Cannot insert audit for variable %d", pva.VariableID)
 	}
 	*pva = sdk.ProjectVariableAudit(dbProjVarAudit)
 	return nil
