@@ -20,8 +20,8 @@ func SetupSSHKey(vars []sdk.Variable, path string, key *sdk.Parameter) error {
 				return err
 			}
 		}
+		return nil
 	}
-
 	return write(path, key.Name, key.Value)
 }
 
@@ -32,8 +32,8 @@ type SSHKey struct {
 }
 
 // GetSSHKey get a key in the path. If the key is nil, it will choose a default key among project, application and env variables
-func GetSSHKey(vars []sdk.Variable, path string, key *sdk.Parameter) (*SSHKey, error) {
-	var k sdk.Variable
+func GetSSHKey(vars []sdk.Parameter, path string, key *sdk.Parameter) (*SSHKey, error) {
+	var k sdk.Parameter
 	if key == nil {
 		var prio int
 		for _, v := range vars {
@@ -41,20 +41,15 @@ func GetSSHKey(vars []sdk.Variable, path string, key *sdk.Parameter) (*SSHKey, e
 				continue
 			}
 			var keyprio int
-			var prefix string
 			if strings.HasPrefix(v.Name, "cds.proj.") {
 				keyprio = 1
-				prefix = "cds.proj."
 			} else if strings.HasPrefix(v.Name, "cds.app.") {
 				keyprio = 2
-				prefix = "cds.app."
 			} else if strings.HasPrefix(v.Name, "cds.env.") {
 				keyprio = 3
-				prefix = "cds.env."
 			}
 			if keyprio > prio {
 				k = v
-				key.Name = strings.TrimPrefix(key.Name, prefix)
 			}
 		}
 	} else {

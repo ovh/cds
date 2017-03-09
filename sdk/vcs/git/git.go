@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"path/filepath"
 
 	"github.com/ovh/cds/sdk/vcs"
 )
@@ -90,23 +93,31 @@ func gitCloneOverSSH(repo string, path string, auth *AuthOpts, opts *CloneOpts, 
 		return fmt.Errorf("Authentication is required for git over ssh")
 	}
 
-	allCmd := []cmd{}
-	gitSSHCmd := "ssh"
+	keyDir := filepath.Dir(auth.PrivateKey.Filename)
+	allCmd := gitCommand(repo, path, opts)
+
+	gitSSHCmd := exec.Command("ssh").Path
 	if opts != nil && opts.NoStrictHostKeyChecking {
-		gitSSHCmd += " -oStrictHostKeyChecking=no"
+		gitSSHCmd += " -o StrictHostKeyChecking=no"
 	}
 	gitSSHCmd += " -i " + auth.PrivateKey.Filename
 
+	var wrapper string
 	if runtime.GOOS == "windows" {
 		gitSSHCmd += " %*"
+		wrapper = gitSSHCmd
 	} else {
-		gitSSHCmd += " $@"
+		gitSSHCmd += ` "$@"`
+		wrapper = `#!/bin/sh
+` + gitSSHCmd
 	}
 
-	cloneCmd := gitCommand(repo, path, opts)
-	allCmd = append(allCmd, cloneCmd...)
+	wrapperPath := filepath.Join(keyDir, "gitwrapper")
+	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
+		return err
+	}
 
-	return runCommand(allCmd, output, "GIT_SSH="+gitSSHCmd)
+	return runCommand(allCmd, output, "GIT_SSH="+wrapperPath)
 }
 
 func gitCommand(repo string, path string, opts *CloneOpts) cmds {

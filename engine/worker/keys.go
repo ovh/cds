@@ -10,8 +10,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// DEPRECATED
 var keysDirectory string
 
+// DEPRECATED
 const (
 	gitsshscript = `#!/bin/sh
 if [ -z "$PKEY" ]; then
@@ -20,12 +22,13 @@ else
 	ssh -oStrictHostKeyChecking=no -i "$PKEY" "$@"
 fi
 `
-
 	pKEY   = "PKEY"
 	gitSSH = "GIT_SSH"
 )
 
+// DEPRECATED
 func writeSSHKey(key []byte, keypath string) error {
+	log.Debug("writeSSHKey> Writing key in %", keypath)
 	err := ioutil.WriteFile(keypath, key, os.FileMode(0600))
 	if err != nil {
 		return err
@@ -35,6 +38,7 @@ func writeSSHKey(key []byte, keypath string) error {
 	return nil
 }
 
+// DEPRECATED
 func writeGitSSH(p string) error {
 	p = path.Join(p, "gitssh.sh")
 	err := ioutil.WriteFile(p, []byte(gitsshscript), os.FileMode(0770))
@@ -43,12 +47,15 @@ func writeGitSSH(p string) error {
 	}
 
 	gitsshPath = p
+	log.Debug("writeGitSSH> gitssh.sh is  %s", p)
 	return nil
 }
 
 // Setup SSH keys will chose from available keys in this order:
 // Environment > Application > Project
+// This is the DEPRECATED way to setup ssh key
 func setupSSHKey(vars []sdk.Variable, keypath string) error {
+	log.Debug("setupSSHKey> setup key in %s", keypath)
 	var key sdk.Variable
 	var prio int
 

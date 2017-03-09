@@ -100,10 +100,7 @@ var (
 	ErrInvalidTimezone                       = &Error{ID: 84, Status: http.StatusBadRequest}
 	ErrEnvironmentCannotBeDeleted            = &Error{ID: 85, Status: http.StatusForbidden}
 	ErrInvalidPipeline                       = &Error{ID: 86, Status: http.StatusBadRequest}
-<<<<<<< Updated upstream
 	ErrKeyNotFound                           = &Error{ID: 87, Status: http.StatusNotFound}
-=======
->>>>>>> Stashed changes
 )
 
 // SupportedLanguages on API errors
@@ -201,10 +198,7 @@ You can safely use them in a String or Text parameter`,
 	ErrInvalidTimezone.ID:                       "Invalid timezone",
 	ErrEnvironmentCannotBeDeleted.ID:            "Environment cannot be deleted. It is still in used",
 	ErrInvalidPipeline.ID:                       "Invalid pipeline",
-<<<<<<< Updated upstream
 	ErrKeyNotFound.ID:                           "Key not found",
-=======
->>>>>>> Stashed changes
 }
 
 var errorsFrench = map[int]string{
@@ -296,10 +290,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrInvalidTimezone.ID:                       "Fuseau horaire invalide",
 	ErrEnvironmentCannotBeDeleted.ID:            "L'environement ne peut etre supprimé. Il est encore utilisé.",
 	ErrInvalidPipeline.ID:                       "Pipeline invalide",
-<<<<<<< Updated upstream
 	ErrKeyNotFound.ID:                           "Clé introuvable",
-=======
->>>>>>> Stashed changes
 }
 
 var errorsLanguages = []map[int]string{
@@ -422,3 +413,4 @@ func ErrorIs(err error, t *Error) bool {
 	}
 	return false
 }
+ 

@@ -122,6 +122,7 @@ Clone a repository into a new directory.`
 		Value:       "",
 		Type:        sdk.StringParameter,
 	})
+	gitclone.Requirement("git", sdk.BinaryRequirement, "git")
 
 	if err := checkBuiltinAction(db, gitclone); err != nil {
 		return err
