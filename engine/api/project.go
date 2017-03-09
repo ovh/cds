@@ -164,7 +164,7 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		var errVar error
 		switch v.Type {
 		case sdk.KeyVariable:
-			errVar = project.AddKeyPair(tx, p, &v, c.User)
+			errVar = project.AddKeyPair(tx, p, v.Name, c.User)
 		default:
 			errVar = project.InsertVariable(tx, p, &v, c.User)
 		}

@@ -246,7 +246,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		// In case of a key variable, if empty, generate a pair and add them as variable
 		case sdk.KeyVariable:
 			if v.Value == "" {
-				err := project.AddKeyPair(tx, p, &v, c.User)
+				err := project.AddKeyPair(tx, p, v.Name, c.User)
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler> cannot generate keypair: %s\n", err)
 					return err
@@ -435,7 +435,7 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = project.AddKeyPair(tx, p, &newVar, c.User)
+		err = project.AddKeyPair(tx, p, newVar.Name, c.User)
 		break
 	default:
 		err = project.InsertVariable(tx, p, &newVar, c.User)

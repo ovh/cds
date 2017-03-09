@@ -210,43 +210,51 @@ func GetAllVariableNameInProjectByKey(db gorp.SqlExecutor, projectKey string) ([
 	return variables, err
 }
 
-func GetVariableByID(db gorp.SqlExecutor, projectID int64, variableID int64) (*sdk.Variable, error) {
+// GetVariableByID Get a project variable by its ID
+func GetVariableByID(db gorp.SqlExecutor, projectID int64, variableID int64, args ...GetAllVariableFuncArg) (*sdk.Variable, error) {
+	c := structarg{}
+	for _, f := range args {
+		f(&c)
+	}
+
 	variable := &sdk.Variable{}
-	query := `SELECT id, var_name, var_value, var_type FROM project_variable
+	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM project_variable
 		  WHERE id=$1 AND project_id=$2`
 	var typeVar string
-	var varValue []byte
-	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &typeVar)
+	var varValue sql.NullString
+	var cipher_value []byte
+	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &typeVar, &cipher_value)
 	if err != nil {
 		return variable, err
 	}
 	variable.Type = sdk.VariableTypeFromString(typeVar)
-	if sdk.NeedPlaceholder(variable.Type) {
-		variable.Value = sdk.PasswordPlaceholder
-	} else {
-		variable.Value = string(varValue)
-	}
-	return variable, err
+
+	var errD error
+	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipher_value, c.clearsecret)
+	return variable, errD
 }
 
 // GetVariableInProject get the variable information for the given project
-func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName string) (*sdk.Variable, error) {
+func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName string, args ...GetAllVariableFuncArg) (*sdk.Variable, error) {
+	c := structarg{}
+	for _, f := range args {
+		f(&c)
+	}
+
 	variable := &sdk.Variable{}
-	query := `SELECT id, var_name, var_value, var_type FROM project_variable
+	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM project_variable
 		  WHERE var_name=$1 AND project_id=$2`
 	var typeVar string
-	var varValue []byte
-	err := db.QueryRow(query, variableName, projectID).Scan(&variable.ID, &variable.Name, &varValue, &typeVar)
+	var varValue sql.NullString
+	var cipher_value []byte
+	err := db.QueryRow(query, variableName, projectID).Scan(&variable.ID, &variable.Name, &varValue, &typeVar, &cipher_value)
 	if err != nil {
 		return variable, err
 	}
 	variable.Type = sdk.VariableTypeFromString(typeVar)
-	if sdk.NeedPlaceholder(variable.Type) {
-		variable.Value = sdk.PasswordPlaceholder
-	} else {
-		variable.Value = string(varValue)
-	}
-	return variable, err
+	var errD error
+	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipher_value, c.clearsecret)
+	return variable, errD
 }
 
 // InsertVariable Insert a new variable in the given project
@@ -256,11 +264,11 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "InsertVariable> Cannot encryp secret %s", variable.Name)
 	}
 
 	if err := db.QueryRow(query, proj.ID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID); err != nil {
-		return err
+		return sdk.WrapError(err, "InsertVariable> Cannot insert variable %s in DB", variable.Name)
 	}
 
 	pva := &sdk.ProjectVariableAudit{
@@ -275,13 +283,13 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 	if err := InsertAudit(db, pva); err != nil {
 		return sdk.WrapError(err, "InsertVariable> Cannot insert audit for variable %s", variable.Name)
 	}
-
 	return nil
 }
 
 // UpdateVariable Update a variable in the given project
 func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
-	previousVar, err := GetVariableByID(db, proj.ID, variable.ID)
+	// Clear password for audit
+	previousVar, err := GetVariableByID(db, proj.ID, variable.ID, WithClearPassword())
 
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
@@ -290,14 +298,14 @@ func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret %s", variable.Name)
 	}
 
 	query := `UPDATE project_variable SET var_name=$1, var_value=$2, cipher_value=$3, var_type=$4
 		   WHERE id=$5`
 	_, err = db.Exec(query, variable.Name, clear, cipher, string(variable.Type), variable.ID)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "UpdateVariable> Cannot update variable %s", variable.Name)
 	}
 
 	pva := &sdk.ProjectVariableAudit{
@@ -322,7 +330,7 @@ func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 	query := `DELETE FROM project_variable WHERE project_id=$1 AND id=$2`
 	_, err := db.Exec(query, proj.ID, variable.ID)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "DeleteVariable> Cannot delete variable %s", variable.Name)
 	}
 
 	pva := &sdk.ProjectVariableAudit{
@@ -353,14 +361,14 @@ func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 }
 
 // AddKeyPair generate a ssh key pair and add them as project variables
-func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
-	pub, priv, errGenerate := keys.Generatekeypair(variable.Name)
+func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u *sdk.User) error {
+	pub, priv, errGenerate := keys.Generatekeypair(keyname)
 	if errGenerate != nil {
 		return errGenerate
 	}
 
 	v := &sdk.Variable{
-		Name:  variable.Name,
+		Name:  keyname,
 		Type:  sdk.KeyVariable,
 		Value: priv,
 	}
@@ -370,7 +378,7 @@ func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, 
 	}
 
 	p := &sdk.Variable{
-		Name:  variable.Name + ".pub",
+		Name:  keyname + ".pub",
 		Type:  sdk.TextVariable,
 		Value: pub,
 	}
