@@ -112,7 +112,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -184,7 +184,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -249,7 +249,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -358,7 +358,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -378,7 +378,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 
 	//7. Update Variable
 	v.Value = "new bar"
-	if err := environment.UpdateVariable(db, env.ID, &v); err != nil {
+	if err := environment.UpdateVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
