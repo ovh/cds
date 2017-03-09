@@ -94,7 +94,6 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 	//Prepare all options - clone options
 	var clone = &git.CloneOpts{
 		Recursive:               true,
-		Verbose:                 true,
 		NoStrictHostKeyChecking: true,
 	}
 	if branch != nil {
