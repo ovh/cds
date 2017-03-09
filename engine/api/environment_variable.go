@@ -87,7 +87,7 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 			}
 			varEnv.Value = string(value)
 		}
-		if err := environment.InsertVariable(tx, env.ID, varEnv); err != nil {
+		if err := environment.InsertVariable(tx, env.ID, varEnv, c.User); err != nil {
 			log.Warning("restoreEnvironmentAuditHandler> Cannot insert variables on environments: %s\n", err)
 			return err
 		}
@@ -189,7 +189,12 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 		return err
 	}
 
-	if err := environment.DeleteVariable(db, env.ID, varName); err != nil {
+	varToDelete, errV := environment.GetVariable(db, key, envName, varName)
+	if errV != nil {
+		return sdk.WrapError(errV, "deleteVariableFromEnvironmentHandler> Cannot load variable %s", varName)
+	}
+
+	if err := environment.DeleteVariable(db, env.ID, varToDelete, c.User); err != nil {
 		log.Warning("deleteVariableFromEnvironmentHandler: Cannot delete %s: %s\n", varName, err)
 		return err
 	}
@@ -261,7 +266,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	if err := environment.UpdateVariable(db, env.ID, &newVar); err != nil {
+	if err := environment.UpdateVariable(db, env.ID, &newVar, c.User); err != nil {
 		log.Warning("updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s:  %s\n", varName, envName, err)
 		return err
 	}
@@ -345,9 +350,9 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	var errInsert error
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name)
+		errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name, c.User)
 	default:
-		errInsert = environment.InsertVariable(tx, env.ID, &newVar)
+		errInsert = environment.InsertVariable(tx, env.ID, &newVar, c.User)
 	}
 	if errInsert != nil {
 		log.Warning("addVariableInEnvironmentHandler: Cannot add variable %s in environment %s:  %s\n", varName, envName, errInsert)

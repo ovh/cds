@@ -94,7 +94,7 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	defer tx.Rollback()
 
-	if err := environment.Import(db, proj, env, msgChan); err != nil {
+	if err := environment.Import(db, proj, env, msgChan, c.User); err != nil {
 		log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
 		return err
 	}
@@ -211,7 +211,7 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 		}
 	}()
 
-	if err := environment.ImportInto(tx, proj, newEnv, env, msgChan); err != nil {
+	if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, c.User); err != nil {
 		log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
 		return err
 	}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -154,6 +155,41 @@ func WithEncryptPassword() GetAllVariableFuncArg {
 	}
 }
 
+// GetVariableByID Get a variable for the given environment
+func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetAllVariableFuncArg) (sdk.Variable, error) {
+	v := sdk.Variable{}
+	var clearVal sql.NullString
+	var cipherVal []byte
+	var typeVar string
+
+	c := structarg{}
+	for _, f := range args {
+		f(&c)
+	}
+
+	query := `SELECT environment_variable.id, environment_variable.name, environment_variable.value,
+						environment_variable.cipher_value, environment_variable.type
+	          FROM environment_variable
+	          WHERE environment_id = $1 AND id = $2
+	          ORDER BY name`
+	if err := db.QueryRow(query, envID, varID).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &typeVar); err != nil {
+		return v, err
+	}
+
+	v.Type = sdk.VariableTypeFromString(typeVar)
+
+	if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
+		v.Value = string(cipherVal)
+	} else {
+		var errDecrypt error
+		v.Value, errDecrypt = secret.DecryptS(v.Type, clearVal, cipherVal, c.clearsecret)
+		if errDecrypt != nil {
+			return v, errDecrypt
+		}
+	}
+	return v, nil
+}
+
 // GetVariable Get a variable for the given environment
 func GetVariable(db gorp.SqlExecutor, key, envName string, varName string, args ...GetAllVariableFuncArg) (sdk.Variable, error) {
 	v := sdk.Variable{}
@@ -273,7 +309,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, environmentID int64, args ...GetAll
 }
 
 // InsertVariable Insert a new variable in the given environment
-func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Variable) error {
+func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Variable, u *sdk.User) error {
 	query := `INSERT INTO environment_variable(environment_id, name, value, cipher_value, type)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 
@@ -287,6 +323,18 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 		return err
 	}
 
+	eva := &sdk.EnvironmentVariableAudit{
+		Author:        u.Username,
+		EnvironmentID: environmentID,
+		Type:          sdk.AUDIT_ADD,
+		VariableAfter: variable,
+		VariableID:    variable.ID,
+		Versionned:    time.Now(),
+	}
+	if err := InsertAudit(db, eva); err != nil {
+		return sdk.WrapError(err, "InsertVariable> Cannot add audit")
+	}
+
 	query = `
 		UPDATE environment 
 		SET last_modified = current_timestamp
@@ -297,7 +345,12 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 }
 
 // UpdateVariable Update a variable in the given environment
-func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable) error {
+func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u *sdk.User) error {
+	varBefore, errV := GetVariableByID(db, envID, variable.ID)
+	if errV != nil {
+		return sdk.WrapError(errV, "UpdateVariable> Cannot load variable %d", variable.ID)
+	}
+
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
@@ -323,6 +376,19 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable) er
 		return sdk.ErrNoVariable
 	}
 
+	eva := &sdk.EnvironmentVariableAudit{
+		Author:         u.Username,
+		EnvironmentID:  envID,
+		Type:           sdk.AUDIT_UPDATE,
+		VariableBefore: &varBefore,
+		VariableAfter:  variable,
+		VariableID:     variable.ID,
+		Versionned:     time.Now(),
+	}
+	if err := InsertAudit(db, eva); err != nil {
+		return sdk.WrapError(err, "UpdateVariable> Cannot add audit")
+	}
+
 	query = `
 		UPDATE environment
 		SET last_modified = current_timestamp
@@ -332,16 +398,28 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable) er
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, envID int64, variableName string) error {
+func DeleteVariable(db gorp.SqlExecutor, envID int64, variable sdk.Variable, u *sdk.User) error {
 	query := `DELETE FROM environment_variable
 	          WHERE environment_variable.environment_id = $1 AND environment_variable.name = $2`
-	result, err := db.Exec(query, envID, variableName)
+	result, err := db.Exec(query, envID, variable.Name)
 	rowAffected, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
 	if rowAffected == 0 {
 		return sdk.ErrNoVariable
+	}
+
+	eva := &sdk.EnvironmentVariableAudit{
+		Author:         u.Username,
+		EnvironmentID:  envID,
+		Type:           sdk.AUDIT_DELETE,
+		VariableBefore: &variable,
+		VariableID:     variable.ID,
+		Versionned:     time.Now(),
+	}
+	if err := InsertAudit(db, eva); err != nil {
+		return sdk.WrapError(err, "DeleteVariable> Cannot add audit")
 	}
 
 	query = `
@@ -367,4 +445,15 @@ func DeleteAllVariable(db gorp.SqlExecutor, environmentID int64) error {
 		WHERE id=$1`
 	_, err = db.Exec(query, environmentID)
 	return err
+}
+
+// InsertAudit Insert an audit for an environment variable
+func InsertAudit(db gorp.SqlExecutor, eva *sdk.EnvironmentVariableAudit) error {
+	dbEnvVarAudit := dbEnvironmentVariableAudit(*eva)
+	if err := db.Insert(&dbEnvVarAudit); err != nil {
+		return err
+	}
+	*eva = sdk.EnvironmentVariableAudit(dbEnvVarAudit)
+	return nil
+
 }

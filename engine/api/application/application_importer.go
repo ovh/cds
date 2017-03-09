@@ -193,7 +193,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 			if t.SrcEnvironment.Name == "" {
 				t.SrcEnvironment = sdk.DefaultEnv
 			} else {
-				if err := environment.Import(db, proj, &t.SrcEnvironment, msgChan); err != nil {
+				if err := environment.Import(db, proj, &t.SrcEnvironment, msgChan, u); err != nil {
 					return err
 				}
 			}
@@ -202,7 +202,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 			if t.DestEnvironment.Name == "" {
 				t.DestEnvironment = sdk.DefaultEnv
 			} else {
-				if err := environment.Import(db, proj, &t.DestEnvironment, msgChan); err != nil {
+				if err := environment.Import(db, proj, &t.DestEnvironment, msgChan, u); err != nil {
 					return err
 				}
 			}

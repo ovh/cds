@@ -30,7 +30,7 @@ ALTER table environment_variable_audit RENAME TO environment_variable_audit_old;
 CREATE TABLE IF NOT EXISTS "environment_variable_audit" (
   id BIGSERIAL PRIMARY KEY,
   environment_id BIGINT,
-  variable_name BIGINT,
+  variable_id BIGINT,
   type TEXT,
   variable_before JSONB,
   variable_after JSONB,
