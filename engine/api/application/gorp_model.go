@@ -18,6 +18,7 @@ type dbApplicationVariableAudit sdk.ApplicationVariableAudit
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbApplication{}, "application", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbApplicationVariableAudit{}, "application_variable_audit", true, "id"))
 }
 
 // PostGet is a db hook

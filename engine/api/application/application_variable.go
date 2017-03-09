@@ -192,8 +192,12 @@ func LoadVariableByID(db gorp.SqlExecutor, appID int64, varID int64) (sdk.Variab
 			WHERE application_id = $1 AND id = $2`
 
 	var v sdk.Variable
-	if err := db.QueryRow(query, appID, varID).Scan(&v.ID, &v.Name, &v.Value, &v.Type); err != nil {
+	var value sql.NullString
+	if err := db.QueryRow(query, appID, varID).Scan(&v.ID, &v.Name, &value, &v.Type); err != nil {
 		return v, err
+	}
+	if value.Valid {
+		v.Value = value.String
 	}
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
@@ -207,9 +211,12 @@ func LoadVariable(db gorp.SqlExecutor, appID int64, varName string) (sdk.Variabl
 			WHERE application_id = $1 AND var_name = $2`
 
 	var v sdk.Variable
-	err := db.QueryRow(query, appID, varName).Scan(&v.ID, &v.Name, &v.Value, &v.Type)
-	if err != nil {
+	var value sql.NullString
+	if err := db.QueryRow(query, appID, varName).Scan(&v.ID, &v.Name, &value, &v.Type); err != nil {
 		return v, err
+	}
+	if value.Valid {
+		v.Value = value.String
 	}
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder

@@ -194,7 +194,7 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 
 	varToDelete, errV := application.LoadVariable(db, app.ID, varName)
 	if errV != nil {
-		return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
+		return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
 	}
 
 	err = application.DeleteVariable(tx, app, varToDelete, c.User)
@@ -221,7 +221,7 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
-
+	log.Warning("%v", app)
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
@@ -368,14 +368,12 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	}
 	defer tx.Rollback()
 
-	err = application.CreateAudit(tx, key, app, c.User)
-	if err != nil {
+	if err := application.CreateAudit(tx, key, app, c.User); err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot create audit: %s\n", err)
 		return err
 	}
 
-	err = application.UpdateVariable(tx, app, newVar, c.User)
-	if err != nil {
+	if err := application.UpdateVariable(tx, app, newVar, c.User); err != nil {
 		log.Warning("updateVariableInApplicationHandler: Cannot update variable %s for application %s:  %s\n", varName, appName, err)
 		return err
 	}
