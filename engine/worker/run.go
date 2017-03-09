@@ -427,8 +427,16 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	}
 
 	// Setup user ssh keys
-	err = setupSSHKey(pbji.Secrets, path.Join(wd, ".ssh"))
-	if err != nil {
+	keysDirectory = workingDirectory(basedir, pbji)
+	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
+		time.Sleep(5 * time.Second)
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
+		}
+	}
+
+	if err := setupSSHKey(pbji.Secrets, keysDirectory); err != nil {
 		time.Sleep(5 * time.Second)
 		return sdk.Result{
 			Status: sdk.StatusFail,

@@ -53,15 +53,16 @@ func importCmd() *cobra.Command {
 			var url string
 			url = fmt.Sprintf("/project/%s/pipeline/import?format=%s", projectKey, importFormat)
 
+<<<<<<< Updated upstream
 			data, code, err := sdk.Request("POST", url, btes)
 			if code > 400 {
 				sdk.Exit("Error: %s\n", err)
 			}
+=======
+			data, _, err := sdk.Request("POST", url, btes)
+			json.Unmarshal(data, &msg)
+>>>>>>> Stashed changes
 			if err != nil {
-				sdk.Exit("Error: %s\n", err)
-			}
-
-			if err := json.Unmarshal(data, &msg); err != nil {
 				sdk.Exit("Error: %s\n", err)
 			}
 

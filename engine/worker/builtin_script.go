@@ -134,16 +134,16 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 	// worker export http port
 	cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", WorkerServerPort, exportport))
 	// manage keys
-	if pkey != "" && gitssh != "" {
+	if pkey != "" && gitsshPath != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", pKEY, pkey))
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", GitSSH, gitssh))
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", gitSSH, path.Join(keysDirectory, gitsshPath)))
 	}
 
 	//set up environment variables from pipeline build job parameters
 	for _, p := range pbJob.Parameters {
 		envName := strings.Replace(p.Name, ".", "_", -1)
 		envName = strings.ToUpper(envName)
-		if p.Type != password {
+		if p.Type != "password" {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
 		}
 	}

@@ -84,7 +84,11 @@ func ParameterFind(vars []Parameter, s string) *Parameter {
 func ParametersFromMap(m map[string]string) []Parameter {
 	res := []Parameter{}
 	for k, v := range m {
+<<<<<<< Updated upstream
 		res = append(res, Parameter{Name: k, Value: v, Type: "string"})
+=======
+		res = append(res, Parameter{Name: k, Value: v})
+>>>>>>> Stashed changes
 	}
 	return res
 }

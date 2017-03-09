@@ -10,7 +10,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-const gitsshscript = `#!/bin/sh
+var keysDirectory string
+
+const (
+	gitsshscript = `#!/bin/sh
 if [ -z "$PKEY" ]; then
 	ssh "$@"
 else
@@ -18,14 +21,11 @@ else
 fi
 `
 
-// pKEY contains the environment variable containing path to specific ssh key to use
-const pKEY = "PKEY"
-
-// GitSSH is the name of the environment variable that need to be set so git use our specific key
-const GitSSH = "GIT_SSH"
+	pKEY   = "PKEY"
+	gitSSH = "GIT_SSH"
+)
 
 func writeSSHKey(key []byte, keypath string) error {
-
 	err := ioutil.WriteFile(keypath, key, os.FileMode(0600))
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func writeGitSSH(p string) error {
 		return err
 	}
 
-	gitssh = p
+	gitsshPath = p
 	return nil
 }
 
