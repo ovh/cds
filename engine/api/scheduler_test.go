@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
