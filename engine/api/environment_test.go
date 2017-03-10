@@ -291,7 +291,7 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 		Value: "val1",
 	}
-	test.NoError(t, environment.InsertVariable(db, env.ID, v))
+	test.NoError(t, environment.InsertVariable(db, env.ID, v, u))
 
 	vars := map[string]string{
 		"key": proj.Key,
