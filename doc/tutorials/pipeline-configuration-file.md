@@ -133,7 +133,11 @@ stages:
 
       Unit Tests:
         steps:
-        - {}
+        - GitClone:
+            url: '{{.git.http_url}}'
+            branch: '{{.git.branch}}'
+            commit: '{{.git.hash}}'
+            directory: .
         - script: mvn test
         - jUnitReport: ./target/surefire-reports*.xml
         requirements:
