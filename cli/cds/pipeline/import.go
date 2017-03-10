@@ -75,7 +75,6 @@ func importCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&importGit, "git", "", "", "Import pipeline from a git repository. Default filename if .cds.pip.yml")
 	cmd.Flags().StringVarP(&importURL, "url", "", "", "Import pipeline from an URL")
 	cmd.Flags().StringVarP(&importFormat, "format", "", "yaml", "Configuration file format")
 
