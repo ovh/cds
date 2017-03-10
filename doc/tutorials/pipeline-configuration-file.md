@@ -6,7 +6,7 @@ A pipeline describes how things need to be executed in order to achieve wanted r
 
 A pipeline is structured in sequential **stages** containing one or multiple concurrent **jobs**.
 
-In CDS there is several types of pipeline : **buiild**, **testing** and **deployment**. In Pipeline configuration file, default type is **build**.
+In CDS there is several types of pipeline : **build**, **testing** and **deployment**. In Pipeline configuration file, default type is **build**.
 
 The goal is to make your pipeline the more reusable as possible. It have to be able to build, test or deploy all the tiers, services or micro-services of your project.
 
@@ -37,7 +37,7 @@ You can set as many requirements as you want, following those rules :
 - Only one hostname can be set as requirement
 - Memory and Services requirements are availabe only on Docker models
 
-If you want to share files or artifact between jobs, stages or pipelines you have to use *Artifact upload* and *Artifact download*.
+If you want to share files or artifact between jobs, stages or pipelines you have to use *Artifact upload* and *Artifact download*. You can also share variable between stages, see [variables tutorial](variables.md) for more details.
 
 ### Steps
 
