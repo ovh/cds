@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,10 @@ import (
 )
 
 func TestTemplateCall(t *testing.T) {
+	if _, err := os.Stat("../testtemplate"); os.IsNotExist(err) {
+		t.SkipNow()
+	}
+
 	client := template.NewClient("testtemplate", "../testtemplate", "ID", "http://localhost:8081", true)
 	defer client.Kill()
 

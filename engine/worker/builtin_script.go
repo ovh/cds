@@ -145,6 +145,8 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 		envName = strings.ToUpper(envName)
 		if p.Type != sdk.ParameterType("password") {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
+		} else {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, sdk.PasswordPlaceholder))
 		}
 	}
 

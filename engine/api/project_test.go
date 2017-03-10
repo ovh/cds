@@ -17,25 +17,25 @@ func TestVariableInProject(t *testing.T) {
 	project1 := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
 
 	// 2. Insert new variable
-	var1 := sdk.Variable{
+	var1 := &sdk.Variable{
 		Name:  "var1",
 		Value: "value1",
 		Type:  "PASSWORD",
 	}
-	err := project.InsertVariable(db, project1, var1)
+	err := project.InsertVariable(db, project1, var1, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
 
 	// 3. Test Update variable
 	var1.Value = "value1Updated"
-	err = project.UpdateVariable(db, project1, var1)
+	err = project.UpdateVariable(db, project1, var1, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot update var1 in project1: %s", err)
 	}
 
 	// 4. Delete variable
-	err = project.DeleteVariable(db, project1, var1.Name)
+	err = project.DeleteVariable(db, project1, var1, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot delete var1 from project: %s", err)
 	}
@@ -45,12 +45,12 @@ func TestVariableInProject(t *testing.T) {
 	}
 
 	// 5. Insert new var
-	var2 := sdk.Variable{
+	var2 := &sdk.Variable{
 		Name:  "var2",
 		Value: "value2",
 		Type:  "STRING",
 	}
-	err = project.InsertVariable(db, project1, var2)
+	err = project.InsertVariable(db, project1, var2, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
