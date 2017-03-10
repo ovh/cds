@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -25,6 +24,7 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	format := r.FormValue("format")
+	forceUpdate := FormBool(r, "forceUpdate")
 
 	// Load project
 	proj, err := project.Load(db, key, c.User, project.LoadOptions.Default)
@@ -106,9 +106,10 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	var globalError error
 
-	if exist {
-		// Override pipeline
-		return fmt.Errorf("Unsupported operation")
+	if exist && !forceUpdate {
+		return sdk.ErrPipelineAlreadyExists
+	} else if exist {
+		globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan)
 	} else {
 		// Import new pipeline
 		globalError = pipeline.Import(tx, proj, pip, msgChan)
