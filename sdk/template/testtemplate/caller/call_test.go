@@ -12,7 +12,7 @@ import (
 )
 
 func TestTemplateCall(t *testing.T) {
-	if _, err := os.Stat("../testtemplate"); err == os.ErrNotExist {
+	if _, err := os.Stat("../testtemplate"); os.IsNotExist(err) {
 		t.SkipNow()
 	}
 
