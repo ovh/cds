@@ -213,6 +213,11 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
 	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker", sdk.Host)}
 
+	var jobID int64
+	if job != nil {
+		jobID = job.ID
+	}
+
 	//CDS env needed by the worker binary
 	env := []string{
 		"CDS_API" + "=" + sdk.Host,
@@ -220,6 +225,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		"CDS_KEY" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
+		"CDS_BOOKED_JOB_ID" + "=" + strconv.FormatInt(jobID, 10),
 		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
 		"CDS_SINGLE_USE=1",
 	}

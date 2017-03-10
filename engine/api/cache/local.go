@@ -80,11 +80,13 @@ func (s *LocalStore) DeleteAll(key string) {
 
 //Enqueue pushes to queue
 func (s *LocalStore) Enqueue(queueName string, value interface{}) {
+	s.Mutex.Lock()
 	l := s.Queues[queueName]
 	if l == nil {
 		s.Queues[queueName] = &list.List{}
 		l = s.Queues[queueName]
 	}
+	s.Mutex.Unlock()
 	b, err := json.Marshal(value)
 	if err != nil {
 		return

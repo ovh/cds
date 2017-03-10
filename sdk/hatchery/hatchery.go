@@ -58,7 +58,6 @@ func routine(h Interface, provision int, hostname string) error {
 	}
 
 	for _, job := range jobs {
-
 		if job.BookedBy.ID != 0 {
 			t := "current hatchery"
 			if job.BookedBy.ID != h.Hatchery().ID {
@@ -71,10 +70,10 @@ func routine(h Interface, provision int, hostname string) error {
 		for _, model := range models {
 			if canRunJob(h, &job, &model, hostname) {
 				if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
-					log.Warning("routine> cannot book job %d %s: %s\n", job.ID, model.Name, err)
+					log.Notice("routine> cannot book job %d %s: %s\n", job.ID, model.Name, err)
 					break
 				}
-				log.Warning("routine> send book job %d %s by h:%d\n", job.ID, model.Name, h.Hatchery().ID)
+				log.Debug("routine> send book job %d %s by h:%d\n", job.ID, model.Name, h.Hatchery().ID)
 
 				if err := h.SpawnWorker(&model, &job); err != nil {
 					log.Warning("routine> cannot spawn worker %s for job %d: %s\n", model.Name, job.ID, err)

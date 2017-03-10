@@ -81,6 +81,11 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
 
+	var jobID int64
+	if job != nil {
+		jobID = job.ID
+	}
+
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", sdk.Host))
 	args = append(args, fmt.Sprintf("--key=%s", viper.GetString("token")))
@@ -88,6 +93,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
+	args = append(args, fmt.Sprintf("--booked-job-id=%d", jobID))
 	args = append(args, "--single-use")
 
 	cmd := exec.Command("worker", args...)

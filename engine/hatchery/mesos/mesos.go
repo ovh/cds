@@ -30,6 +30,7 @@ type marathonPOSTAppParams struct {
 	WorkerName     string
 	WorkerModelID  int64
 	HatcheryID     int64
+	JobID          int64
 	MarathonID     string
 	MarathonVHOST  string
 	MarathonLabels string
@@ -56,6 +57,7 @@ const marathonPOSTAppTemplate = `
         "CDS_NAME": "{{.WorkerName}}",
         "CDS_MODEL": "{{.WorkerModelID}}",
         "CDS_HATCHERY": "{{.HatcheryID}}",
+        "CDS_BOOKED_JOB_ID": "{{.JobID}}",
         "CDS_SINGLE_USE": "1",
         "CDS_TTL" : "{{.WorkerTTL}}"
     },
@@ -198,7 +200,7 @@ func (m *HatcheryMesos) Init() error {
 	return nil
 }
 
-func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memory int) (io.Reader, error) {
+func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, job *sdk.PipelineBuildJob, memory int) (io.Reader, error) {
 	tmpl, err := template.New("marathonPOST").Parse(marathonPOSTAppTemplate)
 	if err != nil {
 		return nil, err
@@ -212,6 +214,11 @@ func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memor
 		return nil, err
 	}
 
+	var jobID int64
+	if job != nil {
+		jobID = job.ID
+	}
+
 	params := marathonPOSTAppParams{
 		ForcePullImage: strings.HasSuffix(model.Image, ":latest"),
 		DockerImage:    model.Image,
@@ -220,6 +227,7 @@ func (m *HatcheryMesos) marathonConfig(model *sdk.Model, hatcheryID int64, memor
 		WorkerName:     fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)),
 		WorkerModelID:  model.ID,
 		HatcheryID:     hatcheryID,
+		JobID:          jobID,
 		MarathonID:     m.marathonID,
 		MarathonVHOST:  m.marathonVHOST,
 		Memory:         memory * 110 / 100,
@@ -258,7 +266,7 @@ func (m *HatcheryMesos) spawnMesosDockerWorker(model *sdk.Model, hatcheryID int6
 		}
 	}
 
-	buffer, errm := m.marathonConfig(model, hatcheryID, memory)
+	buffer, errm := m.marathonConfig(model, hatcheryID, job, memory)
 	if errm != nil {
 		return errm
 	}
@@ -298,7 +306,6 @@ func startKillAwolWorkerRoutine() {
 	go func() {
 		for {
 			time.Sleep(10 * time.Second)
-
 			if err := killAwolWorkers(); err != nil {
 				log.Warning("Cannot kill awol workers: %s\n", err)
 			}
@@ -372,7 +379,6 @@ func killAwolWorkers() error {
 		// then if it's not found, kill it !
 		if !found && time.Since(t) > 1*time.Minute {
 			log.Notice("killing awol worker %s\n", apps[i].ID)
-
 			if err := deleteApp(hatcheryMesos.marathonHost, hatcheryMesos.marathonUser, hatcheryMesos.marathonPassword, apps[i].ID); err != nil {
 				return err
 			}

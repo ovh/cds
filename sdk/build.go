@@ -20,7 +20,16 @@ type PipelineBuildJob struct {
 	Model           string      `json:"model,omitempty" db:"model"`
 	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
 	BookedBy        Hatchery    `json:"bookedby" db:"-"`
-	// TODO info about worker: [] {start (by hatchery)/ end time (by worker) spawned, model, hatchery, error}
+	SpawnInfos      []SpawnInfo `json:"spawninfos,omitempty" db:"-"`
+}
+
+// SpawnInfo contains details on spawn
+type SpawnInfo struct {
+	Start    time.Time `json:"spawn_start" db:"-"`
+	End      time.Time `json:"spawn_end" db:"-"`
+	Error    string    `json:"error" db:"-"`
+	Hatchery int       `json:"hatchery" db:"-"`
+	Model    string    `json:"model,omitempty" db:"model"`
 }
 
 // ExecutedJob represents a running job

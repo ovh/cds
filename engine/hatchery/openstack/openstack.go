@@ -366,13 +366,18 @@ cd $HOME
 # Download and start worker with curl
 curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 0 -C - >> /tmp/user_data 2>&1
 chmod +x worker
-CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --single-use --ttl={{.TTL}} && exit 0
+CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --job-id={{.JobID}} --single-use --ttl={{.TTL}} && exit 0
 `
 	var udata = udataBegin + string(udataModel) + udataEnd
 
-	tmpl, err := template.New("udata").Parse(string(udata))
-	if err != nil {
-		return err
+	var jobID int64
+	if job != nil {
+		jobID = job.ID
+	}
+
+	tmpl, errt := template.New("udata").Parse(string(udata))
+	if errt != nil {
+		return errt
 	}
 	udataParam := struct {
 		API      string
@@ -380,6 +385,7 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Key      string
 		Model    int64
 		Hatchery int64
+		JobID    int64
 		TTL      int
 	}{
 		API:      viper.GetString("api"),
@@ -387,6 +393,7 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Key:      viper.GetString("token"),
 		Model:    model.ID,
 		Hatchery: h.hatch.ID,
+		JobID:    jobID,
 		TTL:      h.workerTTL,
 	}
 	var buffer bytes.Buffer
@@ -398,14 +405,13 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 	udata64 := base64.StdEncoding.EncodeToString([]byte(buffer.String()))
 
 	// Create openstack vm
-	err = createServer(h.endpoint, h.token.ID, name, imageID, flavorID, h.networkID, ip, udata64, personnality)
-	if err != nil {
+	if err := createServer(h.endpoint, h.token.ID, name, imageID, flavorID, h.networkID, ip, udata64, personnality); err != nil {
 		return err
 	}
 	// update server cache
-	servers, err := getServers(h.endpoint, h.token.ID)
-	if err != nil {
-		log.Warning("SpawnWorker> Cannot get servers: %s\n", err)
+	servers, errs := getServers(h.endpoint, h.token.ID)
+	if errs != nil {
+		log.Warning("SpawnWorker> Cannot get servers: %s\n", errs)
 		return nil
 	}
 	h.servers = servers
