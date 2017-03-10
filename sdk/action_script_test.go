@@ -149,7 +149,7 @@ steps  = [{
 	assert.Equal(t, "{{.cds.version}}", a.Actions[0].Parameters[1].Value)
 }
 
-func TestTestLoadFromActionScriptWithPlugin(t *testing.T) {
+func TestLoadFromActionScriptWithPlugin(t *testing.T) {
 	b := []byte(`
 steps  = [{
 	plugin = {
@@ -167,10 +167,23 @@ steps  = [{
 
 	assert.Equal(t, "my-plugin", a.Actions[0].Name)
 	assert.Equal(t, PluginAction, a.Actions[0].Type)
-	assert.Equal(t, "param1", a.Actions[0].Parameters[0].Name)
-	assert.Equal(t, "value1", a.Actions[0].Parameters[0].Value)
-	assert.Equal(t, "param2", a.Actions[0].Parameters[1].Name)
-	assert.Equal(t, "value2", a.Actions[0].Parameters[1].Value)
+
+	// check param1
+	param1Checked := false
+	param2Checked := false
+	for _, p := range a.Actions[0].Parameters {
+		if p.Name == "param1" {
+			assert.Equal(t, "value1", p.Value)
+			param1Checked = true
+		}
+		if p.Name == "param2" {
+			assert.Equal(t, "value2", p.Value)
+			param2Checked = true
+		}
+	}
+
+	assert.Equal(t, true, param1Checked)
+	assert.Equal(t, true, param2Checked)
 
 }
 
