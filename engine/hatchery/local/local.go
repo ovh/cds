@@ -55,7 +55,7 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 			return false
 		}
 	}
-	log.Debug("CanSpawn true")
+	log.Debug("CanSpawn true for job %d", job.ID)
 	return true
 }
 

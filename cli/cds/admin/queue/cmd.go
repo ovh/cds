@@ -2,10 +2,9 @@ package queue
 
 import (
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/olekukonko/tablewriter"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
@@ -37,10 +36,7 @@ var (
 				sdk.Exit("No job in queue\n")
 			}
 
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Prj-App-Job", "Queued", "Requirements"})
-			table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-			table.SetCenterSeparator("|")
+			red := color.New(color.BgRed).Add(color.FgWhite)
 
 			var maxQueued time.Duration
 			for _, pb := range pbs {
@@ -54,11 +50,22 @@ var (
 				if maxQueued < duration {
 					maxQueued = duration
 				}
-				table.Append([]string{fmt.Sprintf("%s➤%s➤%s", prj, app, pb.Job.Action.Name), round(duration, time.Second).String(), req})
-			}
-			table.SetFooter([]string{fmt.Sprintf("Total: %d", len(pbs)), "Max Queued", round(maxQueued, time.Second).String()})
 
-			table.Render()
+				if duration > 10*time.Second {
+					red.Printf(round(duration, time.Second).String())
+				} else {
+					fmt.Printf(round(duration, time.Second).String())
+				}
+
+				if pb.BookedBy.ID != 0 {
+					fmt.Printf(" BOOKED(%d) ", pb.BookedBy.ID)
+				} else {
+					fmt.Printf("\t")
+				}
+
+				fmt.Printf(" \t%s➤%s➤%s \t%s\n", prj, app, pb.Job.Action.Name, req)
+			}
+			fmt.Printf("max:%s\n", round(maxQueued, time.Second).String())
 		},
 	}
 )

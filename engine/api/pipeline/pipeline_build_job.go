@@ -254,8 +254,8 @@ func BookPipelineBuildJob(pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery,
 	k := keyBookJob(pbJobID)
 	h := sdk.Hatchery{}
 	if !cache.Get(k, &h) {
-		// job not already booked
-		cache.SetWithTTL(k, hatchery.ID, 180)
+		// job not already booked, book it for 2 min
+		cache.SetWithTTL(k, hatchery, 180)
 		return nil, nil
 	}
 	return &h, ErrAlreadyBooked

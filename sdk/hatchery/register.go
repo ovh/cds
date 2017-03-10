@@ -80,7 +80,7 @@ func Register(h *sdk.Hatchery, token string) error {
 
 	sdk.Authorization(h.UID)
 
-	log.Notice("Register> Hatchery registered with uid:%s\n", h.UID)
+	log.Notice("Register> Hatchery registered with id:%d\n", h.ID)
 
 	return nil
 }
