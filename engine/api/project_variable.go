@@ -85,7 +85,7 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 			}
 			v.Value = string(value)
 		}
-		if err := project.InsertVariable(tx, p, v); err != nil {
+		if err := project.InsertVariable(tx, p, &v, c.User); err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot insert variable %s for project %s:  %s\n", v.Name, key, err)
 			return err
 		}
@@ -142,13 +142,18 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 	}
 	defer tx.Rollback()
 
-	err = project.CreateAudit(tx, p, c.User)
-	if err != nil {
+	// DEPRECATED
+	if err := project.CreateAudit(tx, p, c.User); err != nil {
 		log.Warning("deleteVariableFromProject: cannot create audit for project variable: %s\n", err)
 		return err
 	}
 
-	if err := project.DeleteVariable(tx, p, varName); err != nil {
+	varToDelete, errV := project.GetVariableInProject(db, p.ID, varName)
+	if errV != nil {
+		return sdk.WrapError(errV, "deleteVariableFromProject> Cannot load variable %s", varName)
+	}
+
+	if err := project.DeleteVariable(tx, p, varToDelete, c.User); err != nil {
 		log.Warning("deleteVariableFromProject: Cannot delete %s: %s\n", varName, err)
 		return err
 	}
@@ -231,7 +236,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 					}
 				}
 			}
-			err = project.InsertVariable(tx, p, v)
+			err = project.InsertVariable(tx, p, &v, c.User)
 			if err != nil {
 				log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 				return err
@@ -241,7 +246,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		// In case of a key variable, if empty, generate a pair and add them as variable
 		case sdk.KeyVariable:
 			if v.Value == "" {
-				err := project.AddKeyPair(tx, p, v.Name)
+				err := project.AddKeyPair(tx, p, v.Name, c.User)
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler> cannot generate keypair: %s\n", err)
 					return err
@@ -253,7 +258,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 						v.Value = p.Value
 					}
 				}
-				err = project.InsertVariable(tx, p, v)
+				err = project.InsertVariable(tx, p, &v, c.User)
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 					return err
@@ -262,7 +267,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 			}
 			break
 		default:
-			err = project.InsertVariable(tx, p, v)
+			err = project.InsertVariable(tx, p, &v, c.User)
 			if err != nil {
 				log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 				return err
@@ -328,7 +333,7 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 
 	}
 
-	if err := project.UpdateVariable(tx, p, newVar); err != nil {
+	if err := project.UpdateVariable(tx, p, &newVar, c.User); err != nil {
 		log.Warning("updateVariableInProject: Cannot update variable %s in project %s:  %s\n", varName, p.Name, err)
 		return err
 	}
@@ -422,6 +427,7 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 	defer tx.Rollback()
 
+	// DEPRECATED
 	if err := project.CreateAudit(tx, p, c.User); err != nil {
 		log.Warning("addVariableInProjectHandler: cannot create audit for project variable: %s\n", err)
 		return err
@@ -429,10 +435,10 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	switch newVar.Type {
 	case sdk.KeyVariable:
-		err = project.AddKeyPair(tx, p, newVar.Name)
+		err = project.AddKeyPair(tx, p, newVar.Name, c.User)
 		break
 	default:
-		err = project.InsertVariable(tx, p, newVar)
+		err = project.InsertVariable(tx, p, &newVar, c.User)
 		break
 	}
 	if err != nil {
