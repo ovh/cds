@@ -75,7 +75,6 @@ var (
 										},
 									},
 									{
-
 										Type: sdk.BuiltinAction,
 										Name: sdk.ArtifactDownload,
 										Parameters: []sdk.Parameter{
@@ -469,7 +468,18 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 						jobFound = true
 
 						assert.Equal(t, j.Enabled, j1.Enabled)
-						test.Equal(t, j.Action, j1.Action, "Jobs details does not match")
+						assert.Equal(t, j.Action.Name, j1.Action.Name)
+						assert.Equal(t, j.Action.Enabled, j1.Action.Enabled)
+						assert.Equal(t, j.Action.Final, j1.Action.Final)
+
+						for i, s := range j.Action.Actions {
+							s1 := j1.Action.Actions[i]
+							if s.Name == s1.Name {
+								assert.Equal(t, s.Enabled, s1.Enabled, s.Name, s1.Name)
+								assert.Equal(t, s.Final, s1.Final)
+								test.EqualValuesWithoutOrder(t, s.Parameters, s1.Parameters)
+							}
+						}
 					}
 					assert.True(t, jobFound, "Job not found")
 				}
