@@ -26,7 +26,7 @@ func Test_marathonConfig(t *testing.T) {
 		workerTTL: 100,
 	}
 
-	r, err := m.marathonConfig(&sdk.Model{ID: 1, Name: "model", Image: "my-image:latest"}, 1, 64)
+	r, err := m.marathonConfig(&sdk.Model{ID: 1, Name: "model", Image: "my-image:latest"}, 1, &sdk.PipelineBuildJob{ID: 1}, 64)
 	test.NoError(t, err)
 	assert.NotNil(t, r)
 
@@ -57,13 +57,13 @@ func Test_marathonConfig(t *testing.T) {
 		        "CDS_MODEL": "1",
 		        "CDS_HATCHERY": "1",
 		        "CDS_SINGLE_USE": "1",
-				"CDS_TTL" : "10"
+		        "CDS_TTL" : "10"
 		    },
 		    "id": "marathonID/model-silly-einstein",
 		    "instances": 1,
-			"ports": [],
-			"mem": 70,
-			"labels": {"blabla":"blabla","hatchery":"1"}
+		    "ports": [],
+		    "mem": 70,
+		    "labels": {"blabla":"blabla","hatchery":"1"}
 		}
 `), &expected)
 
