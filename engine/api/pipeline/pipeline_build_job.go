@@ -217,7 +217,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 }
 
 // TakePipelineBuildJob Take an action build for update
-func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, workerName string) (*sdk.PipelineBuildJob, error) {
+func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, workerName string, infos []sdk.SpawnInfo) (*sdk.PipelineBuildJob, error) {
 	var pbJobGorp PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
@@ -240,8 +240,13 @@ func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, work
 	}
 	pbJobGorp.Start = time.Now()
 	pbJobGorp.Status = sdk.StatusBuilding.String()
+
+	if err := prepareSpawnInfos(&pbJobGorp, infos); err != nil {
+		return nil, err
+	}
+
 	if _, err := db.Update(&pbJobGorp); err != nil {
-		log.Warning("Cannot update model on pipeline build job : %s", err)
+		log.Warning("Cannot update model on pipeline build job: %s", err)
 		return nil, err
 	}
 
@@ -267,19 +272,29 @@ func BookPipelineBuildJob(pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery,
 
 // AddSpawnInfosPipelineBuildJob saves spawn info before starting worker
 func AddSpawnInfosPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, infos []sdk.SpawnInfo) (*sdk.PipelineBuildJob, error) {
-	log.Debug("------############# > AddSpawnInfosPipelineBuildJob %d %+v", pbJobID, infos)
 	var pbJobGorp PipelineBuildJob
-	// TODO FOR UPDATE ?
 	if err := db.SelectOne(&pbJobGorp, `SELECT * FROM pipeline_build_job WHERE id = $1 FOR UPDATE`, pbJobID); err != nil {
-		log.Debug("------############# > AddSpawnInfosPipelineBuildJob Err Select One %s", err)
 		return nil, err
 	}
 
 	if err := pbJobGorp.PostGet(db); err != nil {
-		log.Debug("------############# > AddSpawnInfosPipelineBuildJob Err PostGet %s", err)
 		return nil, err
 	}
 
+	if err := prepareSpawnInfos(&pbJobGorp, infos); err != nil {
+		return nil, err
+	}
+
+	query := "update pipeline_build_job set spawninfos = $1 where id = $2"
+	if _, err := db.Exec(query, pbJobGorp.SpawnInfosJSON, pbJobGorp.ID); err != nil {
+		return nil, err
+	}
+
+	pbJob := sdk.PipelineBuildJob(pbJobGorp)
+	return &pbJob, nil
+}
+
+func prepareSpawnInfos(pbJobGorp *PipelineBuildJob, infos []sdk.SpawnInfo) error {
 	now := time.Now()
 	for _, info := range infos {
 		pbJobGorp.SpawnInfos = append(pbJobGorp.SpawnInfos, sdk.SpawnInfo{
@@ -289,25 +304,11 @@ func AddSpawnInfosPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, infos []s
 		})
 	}
 
-	if err := updateSpawnInfos(db, pbJobGorp); err != nil {
-		return nil, err
-	}
-
-	pbJob := sdk.PipelineBuildJob(pbJobGorp)
-	return &pbJob, nil
-}
-
-func updateSpawnInfos(db gorp.SqlExecutor, pbJobGorp PipelineBuildJob) error {
 	spawninfos, errspawn := json.Marshal(pbJobGorp.SpawnInfos)
 	if errspawn != nil {
 		return errspawn
 	}
-
-	query := "update pipeline_build_job set spawninfos = $1 where id = $2"
-	if _, err := db.Exec(query, spawninfos, pbJobGorp.ID); err != nil {
-		return err
-	}
-
+	pbJobGorp.SpawnInfosJSON = spawninfos
 	return nil
 }
 

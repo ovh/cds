@@ -380,7 +380,19 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 		workerModel = wm.Name
 	}
 
-	pbJob, errTake := pipeline.TakePipelineBuildJob(tx, id, workerModel, caller.Name)
+	infos := []sdk.SpawnInfo{{
+		RemoteTime: takeForm.Time,
+		Info:       fmt.Sprintf("Action taken by worker %s", c.Worker.Name),
+	}}
+
+	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
+		infos = append(infos, sdk.SpawnInfo{
+			RemoteTime: takeForm.Time,
+			Info:       "This worker was created to take this action",
+		})
+	}
+
+	pbJob, errTake := pipeline.TakePipelineBuildJob(tx, id, workerModel, caller.Name, infos)
 	if errTake != nil {
 		if errTake != pipeline.ErrAlreadyTaken {
 			log.Warning("takePipelineBuildJobHandler> Cannot give ActionBuild %d: %s\n", id, errTake)
@@ -390,23 +402,6 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	if err := worker.SetToBuilding(tx, c.Worker.ID, pbJob.ID); err != nil {
 		log.Warning("takePipelineBuildJobHandler> Cannot update worker status: %s\n", err)
-		return err
-	}
-
-	infos := []sdk.SpawnInfo{{
-		RemoteTime: takeForm.Time,
-		Info:       fmt.Sprintf("Action taken by worker %s", c.Worker.Name),
-	}}
-
-	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == pbJob.ID {
-		infos = append(infos, sdk.SpawnInfo{
-			RemoteTime: takeForm.Time,
-			Info:       "This worker was created to take this action",
-		})
-	}
-
-	if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, takeForm.BookedJobID, infos); err != nil {
-		log.Critical("takePipelineBuildJobHandler> Cannot save spawn info job %d: %s\n", takeForm.BookedJobID, err)
 		return err
 	}
 
