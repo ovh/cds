@@ -12,7 +12,7 @@ type PipelineBuildJob struct {
 	Job             ExecutedJob `json:"job" db:"-"`
 	JobJSON         []byte      `json:"-" db:"job"`
 	Parameters      []Parameter `json:"parameters,omitempty" db:"-"`
-	ParametersJSON  []byte      `json:"-,omitempty" db:"parameters"`
+	ParametersJSON  []byte      `json:"-" db:"parameters"`
 	Status          string      `json:"status"  db:"status"`
 	Queued          time.Time   `json:"queued,omitempty" db:"queued"`
 	Start           time.Time   `json:"start,omitempty" db:"start"`
@@ -20,16 +20,15 @@ type PipelineBuildJob struct {
 	Model           string      `json:"model,omitempty" db:"model"`
 	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
 	BookedBy        Hatchery    `json:"bookedby" db:"-"`
-	SpawnInfos      []SpawnInfo `json:"spawninfos,omitempty" db:"-"`
+	SpawnInfos      []SpawnInfo `json:"spawninfos" db:"-"`
+	SpawnInfosJSON  []byte      `json:"-" db:"spawninfos"`
 }
 
-// SpawnInfo contains details on spawn
+// SpawnInfo contains an information about spawning
 type SpawnInfo struct {
-	Start    time.Time `json:"spawn_start" db:"-"`
-	End      time.Time `json:"spawn_end" db:"-"`
-	Error    string    `json:"error" db:"-"`
-	Hatchery int       `json:"hatchery" db:"-"`
-	Model    string    `json:"model,omitempty" db:"model"`
+	APITime    time.Time `json:"api_time,omitempty" db:"-"`
+	RemoteTime time.Time `json:"remote_time,omitempty" db:"-"`
+	Info       string    `json:"info,omitempty" db:"-"`
 }
 
 // ExecutedJob represents a running job

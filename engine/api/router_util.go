@@ -17,7 +17,6 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status 
 	if e != nil {
 		log.Warning("WriteJSON> unable to marshal : %s", e)
 		return sdk.ErrUnknownError
-
 	}
 
 	w.Header().Add("Content-Type", "application/json")

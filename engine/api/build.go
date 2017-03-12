@@ -299,30 +299,37 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return err
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("addQueueResultHandler> Cannot begin tx: %s\n", err)
+	tx, errb := db.Begin()
+	if errb != nil {
+		log.Warning("addQueueResultHandler> Cannot begin tx: %s\n", errb)
 		return sdk.ErrUnknownError
 	}
 	defer tx.Rollback()
 
 	//Update worker status
-	err = worker.UpdateWorkerStatus(tx, c.Worker.ID, sdk.StatusWaiting)
-	if err != nil {
+	if err := worker.UpdateWorkerStatus(tx, c.Worker.ID, sdk.StatusWaiting); err != nil {
 		log.Warning("addQueueResultHandler> Cannot update worker status (%s): %s\n", c.Worker.ID, err)
-		// We want to update ActionBuild status anyway
+		// We want to update pipelineBuildJob status anyway
 	}
 
 	// Update action status
-	log.Debug("Updating %s to %s in queue\n", id, res.Status)
-	err = pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, res.Status)
-	if err != nil {
+	log.Debug("addQueueResultHandler> Updating %d to %s in queue\n", id, res.Status)
+	if err := pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, res.Status); err != nil {
 		log.Warning("addQueueResultHandler> Cannot update %d status: %s\n", id, err)
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	infos := []sdk.SpawnInfo{{
+		RemoteTime: res.RemoteTime,
+		Info:       fmt.Sprintf("worker %s finished working on this job and took %s to work on the steps", c.Worker.Name, res.Duration),
+	}}
+
+	if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, pbJob.ID, infos); err != nil {
+		log.Critical("addQueueResultHandler> Cannot save spawn info job %d: %s\n", pbJob.ID, err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("addQueueResultHandler> Cannot commit tx: %s\n", err)
 		return sdk.ErrUnknownError
 	}
@@ -334,6 +341,11 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	// Get action name in URL
 	vars := mux.Vars(r)
 	idString := vars["id"]
+
+	takeForm := &worker.TakeForm{}
+	if err := UnmarshalBody(r, takeForm); err != nil {
+		return sdk.WrapError(err, "takePipelineBuildJobHandler> Unable to parse take form")
+	}
 
 	// Load worker
 	caller, err := worker.LoadWorker(db, c.Worker.ID)
@@ -381,7 +393,24 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return err
 	}
 
-	log.Debug("Updated %s (PipelineAction %d) to %s\n", id, pbJob.Job.PipelineActionID, sdk.StatusBuilding)
+	infos := []sdk.SpawnInfo{{
+		RemoteTime: takeForm.Time,
+		Info:       fmt.Sprintf("Action taken by worker %s", c.Worker.Name),
+	}}
+
+	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == pbJob.ID {
+		infos = append(infos, sdk.SpawnInfo{
+			RemoteTime: takeForm.Time,
+			Info:       "This worker was created to take this action",
+		})
+	}
+
+	if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, takeForm.BookedJobID, infos); err != nil {
+		log.Critical("takePipelineBuildJobHandler> Cannot save spawn info job %d: %s\n", takeForm.BookedJobID, err)
+		return err
+	}
+
+	log.Debug("takePipelineBuildJobHandler>Updated %d (PipelineAction %d) to %s\n", id, pbJob.Job.PipelineActionID, sdk.StatusBuilding)
 
 	secrets, errSecret := loadActionBuildSecrets(db, pbJob.ID)
 	if errSecret != nil {
@@ -408,10 +437,10 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, pbji, http.StatusOK)
 }
 
-func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func preCheckHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) (int64, error) {
 	if c.Hatchery == nil {
-		log.Warning("bookPipelineBuildJobHandler> this handler should be called only by hatcheries\n")
-		return sdk.ErrWrongRequest
+		log.Warning("this handler should be called only by hatcheries\n")
+		return 0, sdk.ErrWrongRequest
 	}
 
 	// Get action name in URL
@@ -421,7 +450,15 @@ func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	// Check ID Job
 	id, erri := strconv.ParseInt(idString, 10, 64)
 	if erri != nil {
-		return sdk.ErrInvalidID
+		return id, sdk.ErrInvalidID
+	}
+	return id, nil
+}
+
+func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	id, errc := preCheckHatchery(w, r, db, c)
+	if errc != nil {
+		return errc
 	}
 
 	if h, err := pipeline.BookPipelineBuildJob(id, c.Hatchery); err != nil {
@@ -432,12 +469,40 @@ func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 		log.Warning("bookPipelineBuildJobHandler> Cannot book job %d: %s\n", id, err)
 		return err
 	}
+	return WriteJSON(w, r, nil, http.StatusOK)
+}
+
+func addSpawnInfosPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	pbJobID, errc := preCheckHatchery(w, r, db, c)
+	if errc != nil {
+		return errc
+	}
+	var s []sdk.SpawnInfo
+	if err := UnmarshalBody(r, &s); err != nil {
+		return err
+	}
+
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		log.Info("addSpawnInfosPipelineBuildJobHandler> Cannot start transaction: %s\n", errBegin)
+		return errBegin
+	}
+	defer tx.Rollback()
+
+	if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, pbJobID, s); err != nil {
+		log.Warning("addSpawnInfosPipelineBuildJobHandler> Cannot save job %d: %s\n", pbJobID, err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Warning("addSpawnInfosPipelineBuildJobHandler> Cannot commit tx: %s\n", err)
+		return sdk.ErrUnknownError
+	}
 
 	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
 func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, error) {
-
 	query := `SELECT pipeline.project_id, pipeline_build.application_id, pipeline_build.environment_id
 	FROM pipeline_build
 	JOIN pipeline_build_job ON pipeline_build_job.pipeline_build_id = pipeline_build.id
@@ -446,8 +511,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 
 	var projectID, appID, envID int64
 	var secrets []sdk.Variable
-	err := db.QueryRow(query, pbJobID).Scan(&projectID, &appID, &envID)
-	if err != nil {
+	if err := db.QueryRow(query, pbJobID).Scan(&projectID, &appID, &envID); err != nil {
 		return nil, err
 	}
 

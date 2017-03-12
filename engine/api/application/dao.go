@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -55,7 +54,7 @@ func LoadByName(db gorp.SqlExecutor, projectKey, appName string, u *sdk.User, op
 	} else {
 		query = `
             SELECT distinct application.*
-            FROM application 
+            FROM application
             JOIN project ON project.id = application.project_id
             JOIN application_group on application.id = application_group.application_id
             WHERE project.projectkey = $1
@@ -93,7 +92,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc
 	} else {
 		query = `
             SELECT distinct application.*
-            FROM application 
+            FROM application
             JOIN application_group on application.id = application_group.application_id
             WHERE application.id = $1
             AND (
@@ -131,7 +130,6 @@ func LoadByPipeline(db gorp.SqlExecutor, pipelineID int64, u *sdk.User, opts ...
 }
 
 func load(db gorp.SqlExecutor, key string, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
-	log.Debug("application.load> %s %v", query, args)
 	dbApp := dbApplication{}
 	if err := db.SelectOne(&dbApp, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -222,7 +220,7 @@ func LoadAll(db gorp.SqlExecutor, key string, u *sdk.User, opts ...LoadOptionFun
 	} else {
 		query = `
 			SELECT distinct application.*
-			FROM application 
+			FROM application
 			JOIN project ON project.id = application.project_id
 			WHERE application.id IN (
 				SELECT application_group.application_id
@@ -238,8 +236,6 @@ func LoadAll(db gorp.SqlExecutor, key string, u *sdk.User, opts ...LoadOptionFun
 }
 
 func loadapplications(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Application, error) {
-	log.Debug("application.load> %s %v", query, args)
-
 	var res []dbApplication
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {

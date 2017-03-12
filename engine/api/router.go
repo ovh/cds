@@ -189,7 +189,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		if c.Worker != nil {
 			g, err := loadGroupPermissions(db, c.Worker.GroupID)
 			if err != nil {
-				log.Warning("Router>  cannot load group permissions: %s", err)
+				log.Warning("Router> cannot load group permissions: %s", err)
 				WriteError(w, req, sdk.ErrUnauthorized)
 			}
 			c.User.Groups = append(c.User.Groups, *g)
@@ -198,7 +198,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				//Load model
 				m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
 				if err != nil {
-					log.Warning("Router>  cannot load worker: %s", err)
+					log.Warning("Router> cannot load worker: %s", err)
 					WriteError(w, req, sdk.ErrUnauthorized)
 				}
 
@@ -349,7 +349,6 @@ func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *conte
 	if err != nil {
 		return fmt.Errorf("bad worker key syntax: %s", err)
 	}
-	log.Debug("HatcheryAuth> Hatchery looking for auth (%s)\n", id)
 
 	h, err := hatchery.LoadHatchery(db, string(id))
 	if err != nil {

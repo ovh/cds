@@ -259,6 +259,12 @@ type RegistrationForm struct {
 	Version            string
 }
 
+// TakeForm contains booked JobID if exists
+type TakeForm struct {
+	BookedJobID int64
+	Time        time.Time
+}
+
 // RegisterWorker  Register new worker
 func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *sdk.Hatchery, binaryCapabilities []string) (*sdk.Worker, error) {
 	if name == "" {

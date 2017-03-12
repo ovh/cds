@@ -35,6 +35,7 @@ func InsertPipelineBuildJob(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJob) er
 	dbmodel := PipelineBuildJob(*pbJob)
 	dbmodel.JobJSON = []byte("[]")
 	dbmodel.ParametersJSON = []byte("[]")
+	dbmodel.SpawnInfosJSON = []byte("[]")
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}
@@ -121,6 +122,9 @@ func GetPipelineBuildJob(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, 
 		FROM pipeline_build_job
 		WHERE id = $1
 	`, id); err != nil {
+		return nil, err
+	}
+	if err := pbJobGorp.PostGet(db); err != nil {
 		return nil, err
 	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
@@ -261,6 +265,52 @@ func BookPipelineBuildJob(pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery,
 	return &h, ErrAlreadyBooked
 }
 
+// AddSpawnInfosPipelineBuildJob saves spawn info before starting worker
+func AddSpawnInfosPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, infos []sdk.SpawnInfo) (*sdk.PipelineBuildJob, error) {
+	log.Debug("------############# > AddSpawnInfosPipelineBuildJob %d %+v", pbJobID, infos)
+	var pbJobGorp PipelineBuildJob
+	// TODO FOR UPDATE ?
+	if err := db.SelectOne(&pbJobGorp, `SELECT * FROM pipeline_build_job WHERE id = $1 FOR UPDATE`, pbJobID); err != nil {
+		log.Debug("------############# > AddSpawnInfosPipelineBuildJob Err Select One %s", err)
+		return nil, err
+	}
+
+	if err := pbJobGorp.PostGet(db); err != nil {
+		log.Debug("------############# > AddSpawnInfosPipelineBuildJob Err PostGet %s", err)
+		return nil, err
+	}
+
+	now := time.Now()
+	for _, info := range infos {
+		pbJobGorp.SpawnInfos = append(pbJobGorp.SpawnInfos, sdk.SpawnInfo{
+			APITime:    now,
+			RemoteTime: info.RemoteTime,
+			Info:       info.Info,
+		})
+	}
+
+	if err := updateSpawnInfos(db, pbJobGorp); err != nil {
+		return nil, err
+	}
+
+	pbJob := sdk.PipelineBuildJob(pbJobGorp)
+	return &pbJob, nil
+}
+
+func updateSpawnInfos(db gorp.SqlExecutor, pbJobGorp PipelineBuildJob) error {
+	spawninfos, errspawn := json.Marshal(pbJobGorp.SpawnInfos)
+	if errspawn != nil {
+		return errspawn
+	}
+
+	query := "update pipeline_build_job set spawninfos = $1 where id = $2"
+	if _, err := db.Exec(query, spawninfos, pbJobGorp.ID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RestartPipelineBuildJob destroy pipeline build job data and queue it up again
 func RestartPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64) error {
 	var pbJobGorp PipelineBuildJob
@@ -309,14 +359,14 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 	query = `SELECT status FROM pipeline_build_job WHERE id = $1 FOR UPDATE`
 	var currentStatus string
 	if err := db.QueryRow(query, pbJob.ID).Scan(&currentStatus); err != nil {
-		log.Warning("UpdatePipelineBuildJobStatus> Cannot lock pipeline build job %s: %s", pbJob.ID, err)
+		log.Warning("UpdatePipelineBuildJobStatus> Cannot lock pipeline build job %d: %s", pbJob.ID, err)
 		return err
 	}
 
 	switch status {
 	case sdk.StatusBuilding:
 		if currentStatus != sdk.StatusWaiting.String() {
-			return fmt.Errorf("Cannot update status of PipelineBuildJob %d to %s, expected current status %s, got %s",
+			return fmt.Errorf("UpdatePipelineBuildJobStatus> Cannot update status of PipelineBuildJob %d to %s, expected current status %s, got %s",
 				pbJob.ID, status, sdk.StatusWaiting, currentStatus)
 		}
 		pbJob.Start = time.Now()
@@ -324,14 +374,14 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 
 	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped:
 		if currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
-			log.Info("Status is %s, cannot update %d to %s", currentStatus, pbJob.ID, status)
+			log.Info("UpdatePipelineBuildJobStatus> Status is %s, cannot update %d to %s", currentStatus, pbJob.ID, status)
 			// too late, Nate
 			return nil
 		}
 		pbJob.Done = time.Now()
 		pbJob.Status = status.String()
 	default:
-		return fmt.Errorf("Cannot update PipelineBuildJob %d to status %v", pbJob.ID, status.String())
+		return fmt.Errorf("UpdatePipelineBuildJobStatus> Cannot update PipelineBuildJob %d to status %v", pbJob.ID, status.String())
 	}
 
 	if err := UpdatePipelineBuildJob(db, pbJob); err != nil {

@@ -48,6 +48,9 @@ func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 	if err := json.Unmarshal(p.ParametersJSON, &p.Parameters); err != nil {
 		return err
 	}
+	if err := json.Unmarshal(p.SpawnInfosJSON, &p.SpawnInfos); err != nil {
+		return err
+	}
 
 	return nil
 }

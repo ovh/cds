@@ -422,7 +422,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
 		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID)
 		if errl != nil {
-			log.Critical("UpdatePipelineBuildStatus> error while loading repoManger for appID %s err:%s", pb.Application.ID, errl)
+			log.Critical("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
 		}
 		pb.Application.RepositoryFullname = rfn
 		pb.Application.RepositoriesManager = rm
@@ -456,7 +456,7 @@ func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
 	return errDelete
 }
 
-// GetLastBuildNumber returns the last build number at the time of query.
+// GetLastBuildNumberInTx returns the last build number at the time of query.
 // Should be used only for non-sensitive query
 func GetLastBuildNumberInTx(db *gorp.DbMap, pipID, appID, envID int64) (int64, error) {
 	// JIRA CD-1164: When starting a lot of pipeline in a short time,

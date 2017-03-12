@@ -214,7 +214,6 @@ func checkQueue(bookedJobID int64) {
 	sdk.SetWorkerStatus(sdk.StatusChecking)
 
 	for i := range queue {
-
 		if bookedJobID != 0 && queue[i].ID != bookedJobID {
 			continue
 		}
@@ -241,7 +240,7 @@ func checkQueue(bookedJobID int64) {
 				t = ", this was my booked job"
 			}
 			log.Notice("checkQueue> Taking job %d%s", queue[i].ID, t)
-			takeAction(queue[i])
+			takeAction(queue[i], queue[i].ID == bookedJobID)
 		}
 	}
 
@@ -254,12 +253,22 @@ func postCheckRequirementError(r *sdk.Requirement, err error) {
 	sdk.Request("POST", "/queue/requirements/errors", btes)
 }
 
-func takeAction(b sdk.PipelineBuildJob) {
+func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
+	in := worker.TakeForm{Time: time.Now()}
+	if isBooked {
+		in.BookedJobID = b.ID
+	}
+
+	bodyTake, errm := json.Marshal(in)
+	if errm != nil {
+		log.Notice("takeAction: Cannot marshal body: %s\n", errm)
+	}
+
 	nbActionsDone++
 	gitssh = ""
 	pkey = ""
 	path := fmt.Sprintf("/queue/%d/take", b.ID)
-	data, code, errr := sdk.Request("POST", path, nil)
+	data, code, errr := sdk.Request("POST", path, bodyTake)
 	if errr != nil {
 		log.Notice("takeAction> Cannot take action %d : %s\n", b.Job.PipelineActionID, errr)
 		return
@@ -277,7 +286,11 @@ func takeAction(b sdk.PipelineBuildJob) {
 	pbJob = pbji.PipelineBuildJob
 	// Reset build variables
 	buildVariables = nil
+	start := time.Now()
 	res := run(&pbji)
+	res.RemoteTime = time.Now()
+	res.Duration = sdk.Round(time.Since(start), time.Second).String()
+
 	// Give time to buffered logs to be sent
 	time.Sleep(3 * time.Second)
 
@@ -359,6 +372,5 @@ func unregister() error {
 	if code > 300 {
 		return fmt.Errorf("HTTP %d", code)
 	}
-
 	return nil
 }

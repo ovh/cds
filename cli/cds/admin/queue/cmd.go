@@ -52,9 +52,9 @@ var (
 				}
 
 				if duration > 10*time.Second {
-					red.Printf(round(duration, time.Second).String())
+					red.Printf(sdk.Round(duration, time.Second).String())
 				} else {
-					fmt.Printf(round(duration, time.Second).String())
+					fmt.Printf(sdk.Round(duration, time.Second).String())
 				}
 
 				if pb.BookedBy.ID != 0 {
@@ -65,29 +65,10 @@ var (
 
 				fmt.Printf(" \t%s➤%s➤%s \t%s\n", prj, app, pb.Job.Action.Name, req)
 			}
-			fmt.Printf("max:%s\n", round(maxQueued, time.Second).String())
+			fmt.Printf("max:%s\n", sdk.Round(maxQueued, time.Second).String())
 		},
 	}
 )
-
-func round(d, r time.Duration) time.Duration {
-	if r <= 0 {
-		return d
-	}
-	neg := d < 0
-	if neg {
-		d = -d
-	}
-	if m := d % r; m+m < r {
-		d = d - m
-	} else {
-		d = d + r - m
-	}
-	if neg {
-		return -d
-	}
-	return d
-}
 
 func getVarsInPbj(key string, ps []sdk.Parameter) string {
 	for _, p := range ps {

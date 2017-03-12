@@ -218,6 +218,8 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 				stageEnd = false
 			}
 
+			pbJob.SpawnInfos = pbJobDB.SpawnInfos
+
 			// If same status, sync step status
 			if pbJobDB.Status == pbJob.Status {
 				pbJob.Job.StepStatus = pbJobDB.Job.StepStatus
@@ -284,8 +286,8 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 	if len(triggers) > 0 {
 		log.Debug("(v%d) Loaded %d potential triggers for  %s[%s]", pb.Version, len(triggers), pb.Pipeline.Name, pb.Environment.Name)
 	}
-	for _, t := range triggers {
 
+	for _, t := range triggers {
 		// Check prerequisites
 		log.Debug("Checking %d prerequisites for trigger %s/%s/%s -> %s/%s/%s\n", len(t.Prerequisites), t.SrcProject.Key, t.SrcApplication.Name, t.SrcPipeline.Name, t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name)
 		prereqOK, err := trigger.CheckPrerequisites(t, pb)

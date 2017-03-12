@@ -1,7 +1,9 @@
 package hatchery
 
 import (
+	"fmt"
 	"os/exec"
+	"time"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -70,19 +72,44 @@ func routine(h Interface, provision int, hostname string) error {
 		for _, model := range models {
 			if canRunJob(h, &job, &model, hostname) {
 				if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
-					log.Notice("routine> cannot book job %d %s: %s\n", job.ID, model.Name, err)
-					break
+					// perhaps already booked by another hatchery
+					log.Debug("routine> cannot book job %d %s: %s\n", job.ID, model.Name, err)
+					break // go to next job
 				}
 				log.Debug("routine> send book job %d %s by h:%d\n", job.ID, model.Name, h.Hatchery().ID)
 
-				if err := h.SpawnWorker(&model, &job); err != nil {
-					log.Warning("routine> cannot spawn worker %s for job %d: %s\n", model.Name, job.ID, err)
-					break
+				start := time.Now()
+				infos := []sdk.SpawnInfo{
+					{
+						RemoteTime: start,
+						Info:       fmt.Sprintf("Hatchery (%d) starts spawn worker with model %s", h.Hatchery().ID, model.Name),
+					},
+				}
+
+				errs := h.SpawnWorker(&model, &job)
+				if errs != nil {
+					log.Warning("routine> cannot spawn worker %s for job %d: %s\n", model.Name, job.ID, errs)
+					infos = append(infos, sdk.SpawnInfo{
+						RemoteTime: time.Now(),
+						Info:       fmt.Sprintf("Error while Hatchery (%d) spawn worker with model %s after %s, err:%s", h.Hatchery().ID, model.Name, sdk.Round(time.Since(start), time.Second).String(), errs),
+					})
+					if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
+						log.Warning("routine> cannot record AddSpawnInfosPipelineBuildJob for job (err spawn)%d: %s\n", job.ID, err)
+					}
+					continue // try another model
+				}
+
+				infos = append(infos, sdk.SpawnInfo{
+					RemoteTime: time.Now(),
+					Info:       fmt.Sprintf("Hatchery (%d) spawn worker successfully in %s", h.Hatchery().ID, sdk.Round(time.Since(start), time.Second).String()),
+				})
+
+				if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
+					log.Warning("routine> cannot record AddSpawnInfosPipelineBuildJob for job %d: %s\n", job.ID, err)
 				}
 			}
 		}
 	}
-
 	return nil
 }
 
