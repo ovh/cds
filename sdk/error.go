@@ -101,12 +101,6 @@ var (
 	ErrEnvironmentCannotBeDeleted            = &Error{ID: 85, Status: http.StatusForbidden}
 )
 
-// SupportedLanguages on API errors
-var SupportedLanguages = []language.Tag{
-	language.AmericanEnglish,
-	language.French,
-}
-
 var errorsAmericanEnglish = map[int]string{
 	ErrUnknownError.ID:              "internal server error",
 	ErrActionAlreadyUpdated.ID:      "action status already updated",
@@ -291,8 +285,6 @@ var errorsLanguages = []map[int]string{
 	errorsAmericanEnglish,
 	errorsFrench,
 }
-
-var matcher = language.NewMatcher(SupportedLanguages)
 
 // NewError just set an error with a root cause
 func NewError(target *Error, root error) *Error {

@@ -28,7 +28,15 @@ type PipelineBuildJob struct {
 type SpawnInfo struct {
 	APITime    time.Time `json:"api_time,omitempty" db:"-"`
 	RemoteTime time.Time `json:"remote_time,omitempty" db:"-"`
-	Info       string    `json:"info,omitempty" db:"-"`
+	Message    SpawnMsg  `json:"message,omitempty" db:"-"`
+	// UserMessage contains msg translated for end user
+	UserMessage string `json:"user_message,omitempty" db:"-"`
+}
+
+// SpawnMsg represents a msg for spawnInfo
+type SpawnMsg struct {
+	ID   int           `json:"id" db:"-"`
+	Args []interface{} `json:"args" db:"-"`
 }
 
 // ExecutedJob represents a running job

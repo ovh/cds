@@ -300,7 +300,7 @@ func prepareSpawnInfos(pbJobGorp *PipelineBuildJob, infos []sdk.SpawnInfo) error
 		pbJobGorp.SpawnInfos = append(pbJobGorp.SpawnInfos, sdk.SpawnInfo{
 			APITime:    now,
 			RemoteTime: info.RemoteTime,
-			Info:       info.Info,
+			Message:    info.Message,
 		})
 	}
 

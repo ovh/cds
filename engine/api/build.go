@@ -321,7 +321,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	infos := []sdk.SpawnInfo{{
 		RemoteTime: res.RemoteTime,
-		Info:       fmt.Sprintf("worker %s finished working on this job and took %s to work on the steps", c.Worker.Name, res.Duration),
+		Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoWorkerEnd.ID, Args: []interface{}{c.Worker.Name, res.Duration}},
 	}}
 
 	if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, pbJob.ID, infos); err != nil {
@@ -382,13 +382,13 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	infos := []sdk.SpawnInfo{{
 		RemoteTime: takeForm.Time,
-		Info:       fmt.Sprintf("Action taken by worker %s", c.Worker.Name),
+		Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoJobTaken.ID, Args: []interface{}{c.Worker.Name}},
 	}}
 
 	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
 		infos = append(infos, sdk.SpawnInfo{
 			RemoteTime: takeForm.Time,
-			Info:       "This worker was created to take this action",
+			Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoWorkerForJob.ID, Args: []interface{}{c.Worker.Name}},
 		})
 	}
 
