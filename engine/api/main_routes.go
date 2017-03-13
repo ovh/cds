@@ -97,6 +97,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/variable/audit", GET(getVariablesAuditInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/variable/audit/{auditID}", PUT(restoreAuditHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", GET(getVariableInApplicationHandler), POST(addVariableInApplicationHandler), PUT(updateVariableInApplicationHandler), DELETE(deleteVariableFromApplicationHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", GET(getVariableAuditInApplicationHandler))
 
 	// Pipeline
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/history", GET(getPipelineHistoryHandler))
@@ -151,6 +152,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/group/{group}", PUT(updateGroupRoleOnEnvironmentHandler), DELETE(deleteGroupFromEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/variable", GET(getVariablesInEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}", GET(getVariableInEnvironmentHandler), POST(addVariableInEnvironmentHandler), PUT(updateVariableInEnvironmentHandler), DELETE(deleteVariableFromEnvironmentHandler))
+	router.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}/audit", GET(getVariableAuditInEnvironmentHandler))
 
 	// Artifacts
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/{tag}", GET(listArtifactsHandler))
