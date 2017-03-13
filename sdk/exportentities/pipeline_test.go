@@ -469,7 +469,7 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 
 						assert.Equal(t, j.Enabled, j1.Enabled)
 						assert.Equal(t, j.Action.Name, j1.Action.Name)
-						assert.Equal(t, j.Action.Enabled, j1.Action.Enabled)
+						assert.Equal(t, j.Enabled, j1.Action.Enabled)
 						assert.Equal(t, j.Action.Final, j1.Action.Final)
 
 						for i, s := range j.Action.Actions {
