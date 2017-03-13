@@ -716,66 +716,6 @@
 			"revisionTime": "2016-06-20T08:32:29Z"
 		},
 		{
-			"checksumSHA1": "DayYRHOkePlDDa+vPrcvP/fOc+4=",
-			"path": "github.com/runabove/venom",
-			"revision": "515b7a8dd3a82c3a3d8ce1e574780e8131828907",
-			"revisionTime": "2017-03-03T09:49:54Z"
-		},
-		{
-			"checksumSHA1": "fFunxX8WjXOUtMP+eihGbpUCa3k=",
-			"path": "github.com/runabove/venom/context/default",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "5B38qI+VxcZb9NFrYozFjHwXZoA=",
-			"path": "github.com/runabove/venom/context/webctx",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "TYGf7QSCLqyynE4x6xHSonbpOFw=",
-			"path": "github.com/runabove/venom/executors/exec",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "SUuifefjb3WmsJ+I0a0+VNwrruc=",
-			"path": "github.com/runabove/venom/executors/http",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "gPhRNaKGO+PlR4LP1Gne0mIL1IE=",
-			"path": "github.com/runabove/venom/executors/imap",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "00iV+/kFuXvTF6LCJaVLYqGHFM4=",
-			"path": "github.com/runabove/venom/executors/readfile",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "bxo6qf9L27BerJDTQWsTDnyem2U=",
-			"path": "github.com/runabove/venom/executors/smtp",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "fgM/egdiu5Q+gLbJHAzj46bVsE0=",
-			"path": "github.com/runabove/venom/executors/ssh",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "Mph67YjvNPADITJZks/RGtHSCr8=",
-			"path": "github.com/runabove/venom/executors/web",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
 			"checksumSHA1": "zmC8/3V4ls53DJlNTKDZwPSC/dA=",
 			"path": "github.com/satori/go.uuid",
 			"revision": "b061729afc07e77a8aa4fad0a2fd840958f1942a",
