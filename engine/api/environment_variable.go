@@ -130,6 +130,30 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
+func getVariableAuditInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	// Get project name in URL
+	vars := mux.Vars(r)
+	key := vars["key"]
+	envName := vars["permEnvironmentName"]
+	varName := vars["name"]
+
+	env, errE := environment.LoadEnvironmentByName(db, key, envName)
+	if errE != nil {
+		return sdk.WrapError(errE, "getVariableAuditInEnvironmentHandler> Cannot load environment %s on project %s", envName, key)
+	}
+
+	variable, errV := environment.GetVariable(db, key, envName, varName)
+	if errV != nil {
+		return sdk.WrapError(errV, "getVariableAuditInEnvironmentHandler> Cannot load variable %s", varName)
+	}
+
+	audits, errA := environment.LoadVariableAudits(db, env.ID, variable.ID)
+	if errA != nil {
+		return sdk.WrapError(errA, "getVariableAuditInEnvironmentHandler> Cannot load audit for variable %s", varName)
+	}
+	return WriteJSON(w, r, audits, http.StatusOK)
+}
+
 func getVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]

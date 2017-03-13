@@ -117,6 +117,30 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return nil
 }
 
+func getVariableAuditInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	// Get project name in URL
+	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+	varName := vars["name"]
+
+	app, errA := application.LoadByName(db, key, appName, c.User)
+	if errA != nil {
+		return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
+	}
+
+	variable, errV := application.LoadVariable(db, app.ID, varName)
+	if errV != nil {
+		return sdk.WrapError(errV, "getVariableAuditInApplicationHandler> Cannot load variable %s", varName)
+	}
+
+	audits, errA := application.LoadVariableAudits(db, app.ID, variable.ID)
+	if errA != nil {
+		return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
+	}
+	return WriteJSON(w, r, audits, http.StatusOK)
+}
+
 func getVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
