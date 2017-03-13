@@ -395,3 +395,28 @@ func InsertAudit(db gorp.SqlExecutor, pva *sdk.ProjectVariableAudit) error {
 	*pva = sdk.ProjectVariableAudit(dbProjVarAudit)
 	return nil
 }
+
+// LoadVariableAudits Load audits for the given variable
+func LoadVariableAudits(db gorp.SqlExecutor, projectID, varID int64) ([]sdk.ProjectVariableAudit, error) {
+	var res []dbProjectVariableAudit
+	query := "SELECT * FROM project_variable_audit WHERE project_id = $1 AND variable_id = $2 ORDER BY versionned DESC"
+	if _, err := db.Select(&res, query, projectID, varID); err != nil {
+		if err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+		if err != nil && err == sql.ErrNoRows {
+			return []sdk.ProjectVariableAudit{}, nil
+		}
+	}
+
+	pvas := make([]sdk.ProjectVariableAudit, len(res))
+	for i := range res {
+		dbPva := &res[i]
+		if err := dbPva.PostGet(db); err != nil {
+			return nil, err
+		}
+		pva := sdk.ProjectVariableAudit(*dbPva)
+		pvas[i] = pva
+	}
+	return pvas, nil
+}

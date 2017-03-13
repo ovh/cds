@@ -473,3 +473,26 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	return WriteJSON(w, r, p, http.StatusOK)
 }
+
+func getVariableAuditInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	// Get project name in URL
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	varName := vars["name"]
+
+	p, errP := project.Load(db, key, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "getVariableAuditInProjectHandler> Cannot load project %s", key)
+	}
+
+	variable, errV := project.GetVariableInProject(db, p.ID, varName)
+	if errV != nil {
+		return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
+	}
+
+	audits, errA := project.LoadVariableAudits(db, p.ID, variable.ID)
+	if errA != nil {
+		return sdk.WrapError(errA, "getVariableAuditInProjectHandler> Cannot load audit for variable %s", varName)
+	}
+	return WriteJSON(w, r, audits, http.StatusOK)
+}

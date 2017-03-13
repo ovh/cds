@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS "project_variable_audit" (
   author TEXT
 );
 
+select create_index('project_variable_audit', 'IDX_PROJECT_VARIABLE_AUDIT_IDS', 'project_id,variable_id');
+
 ALTER table application_variable_audit RENAME TO application_variable_audit_old;
 
 CREATE TABLE IF NOT EXISTS "application_variable_audit" (
@@ -25,6 +27,8 @@ CREATE TABLE IF NOT EXISTS "application_variable_audit" (
   author TEXT
 );
 
+select create_index('application_variable_audit', 'IDX_APPLICATION_VARIABLE_AUDIT_IDS', 'application_id,variable_id');
+
 ALTER table environment_variable_audit RENAME TO environment_variable_audit_old;
 
 CREATE TABLE IF NOT EXISTS "environment_variable_audit" (
@@ -37,6 +41,8 @@ CREATE TABLE IF NOT EXISTS "environment_variable_audit" (
   versionned TIMESTAMP WITH TIME ZONE,
   author TEXT
 );
+
+select create_index('environment_variable_audit', 'IDX_ENVIRONMENT_VARIABLE_AUDIT_IDS', 'environment_id,variable_id');
 -- +migrate Down
 DROP TABLE project_variable_audit;
 DROP TABLE application_variable_audit;
