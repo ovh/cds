@@ -126,6 +126,7 @@ func UpdateJob(db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
 	if err != nil {
 		return err
 	}
+	job.Action.Enabled = job.Enabled
 	return action.UpdateActionDB(db, &job.Action, userID)
 }
 
