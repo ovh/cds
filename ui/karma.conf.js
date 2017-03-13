@@ -13,6 +13,9 @@ module.exports = function (config) {
             require('karma-junit-reporter'),
             require('@angular/cli/plugins/karma')
         ],
+        client:{
+            clearContext: false // leave Jasmine Spec Runner output visible in browser
+        },
         files: [
             {pattern: './src/test.ts', watched: false},
             {pattern: './src/assets/**/*.png', watched: false, included: false, served: true},
@@ -38,7 +41,7 @@ module.exports = function (config) {
         },
         reporters: config.angularCli && config.angularCli.codeCoverage
             ? ['progress', 'coverage-istanbul', 'junit']
-            : ['progress'],
+            : ['progress', 'kjhtml'],
         junitReporter: {
             outputDir: 'tests', // results will be saved as $outputDir/$browserName.xml
             outputFile: 'results.xml', // if included, results will be saved as $outputDir/$browserName/$outputFile
