@@ -281,6 +281,8 @@ func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline) error 
 		//Insert stage's Jobs
 		for i := range s.Jobs {
 			jobAction := &s.Jobs[i]
+			jobAction.Enabled = true
+			jobAction.Action.Enabled = true
 			if errs := CheckJob(db, jobAction); errs != nil {
 				log.Debug("CheckJob > %s", errs)
 				return errs

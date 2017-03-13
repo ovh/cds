@@ -38,6 +38,7 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 
 	stageData.BuildOrder = len(pipelineData.Stages) + 1
 	stageData.PipelineID = pipelineData.ID
+	stageData.Enabled = true
 
 	tx, err := db.Begin()
 	if err != nil {
