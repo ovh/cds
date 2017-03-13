@@ -109,9 +109,8 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	if exist && !forceUpdate {
 		return sdk.ErrPipelineAlreadyExists
 	} else if exist {
-		globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan)
+		globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan, c.User)
 	} else {
-		// Import new pipeline
 		globalError = pipeline.Import(tx, proj, pip, msgChan)
 	}
 

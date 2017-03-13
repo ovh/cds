@@ -45,8 +45,8 @@ var (
 	PipelineStageAdded                 = &Message{trad{FR: "Le stage %s a été ajouté", EN: "Stage %s added"}, nil}
 	PipelineStageDeleted               = &Message{trad{FR: "Le stage %s a été supprimé", EN: "Stage %s deleted"}, nil}
 	PipelineJobUpdated                 = &Message{trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil}
-	PipelineJobAdded                   = &Message{trad{FR: "Le job %s du stage %s a été ajouté", EN: "Stage %s in stage %s added"}, nil}
-	PipelineJobDeleted                 = &Message{trad{FR: "Le job %s du stage %s a été supprimé", EN: "Stage %s in stage %s deleted"}, nil}
+	PipelineJobAdded                   = &Message{trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil}
+	PipelineJobDeleted                 = &Message{trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil}
 )
 
 //Message represent a struc format translated messages

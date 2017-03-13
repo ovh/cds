@@ -3,8 +3,8 @@ package exportentities
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -509,6 +509,7 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 					sdk.Job{
 						Enabled: true,
 						Action: sdk.Action{
+							Enabled: true,
 							Name:    p.Name,
 							Actions: actions,
 						},
@@ -648,6 +649,8 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 	} else {
 		job.Enabled = true
 	}
+	job.Action.Enabled = job.Enabled
+
 	for _, r := range j.Requirements {
 		var name, tpe, val string
 		if r.Binary != "" {
