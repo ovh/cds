@@ -69,7 +69,7 @@ export class VariableComponent extends Table {
     showAudit(event: any, v: Variable): void {
         if (this.auditModal) {
             this.currentVariableAudits = undefined;
-            switch(this.auditContext) {
+            switch (this.auditContext) {
                 case 'project':
                     this._projAudit.getVariableAudit(this.project.key, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;

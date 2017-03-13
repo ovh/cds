@@ -13,5 +13,4 @@ export class VariableDiffComponent {
     @Input() variableAfter: Variable;
 
     constructor() { }
-
 }

@@ -3,7 +3,7 @@ import {VariableAudit} from '../../../model/variable.model';
 import {Table} from '../../table/table';
 
 @Component({
-    selector: 'app-variable_audit',
+    selector: 'app-variable-audit',
     templateUrl: './variable.audit.html',
     styleUrls: ['./variable.audit.scss']
 })
