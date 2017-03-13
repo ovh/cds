@@ -13,6 +13,8 @@ import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {VariableEvent} from '../variable.event.model';
 import {ProjectAuditService} from '../../../service/project/project.audit.service';
+import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
+import {ApplicationAuditService} from '../../../service/application/application.audit.service';
 
 describe('CDS: Variable List Component', () => {
 
@@ -30,7 +32,9 @@ describe('CDS: Variable List Component', () => {
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
-                ProjectAuditService
+                ProjectAuditService,
+                EnvironmentAuditService,
+                ApplicationAuditService
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),
