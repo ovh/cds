@@ -38,6 +38,8 @@ import {ParameterDescriptionComponent} from './parameter/description-popup/descr
 import {ActionStepComponent} from './action/step/step.component';
 import {ActionStepFormComponent} from './action/step/form/step.form.component';
 import {TruncatePipe} from './pipes/truncate.pipe';
+import {VariableAuditComponent} from './variable/audit/audit.component';
+import {VariableDiffComponent} from './variable/diff/variable.diff.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -66,6 +68,8 @@ import {TruncatePipe} from './pipes/truncate.pipe';
         StatusIconComponent,
         TruncatePipe,
         VariableComponent,
+        VariableAuditComponent,
+        VariableDiffComponent,
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
