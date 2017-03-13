@@ -16,3 +16,13 @@ export class Variable {
         this.description = '';
     }
 }
+
+export class VariableAudit {
+    id: number;
+    variable_id: number;
+    type: string;
+    variable_before: Variable;
+    variable_after: Variable;
+    versionned: Date;
+    author; string;
+}
