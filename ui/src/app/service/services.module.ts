@@ -28,6 +28,8 @@ import {ApplicationResolver, ApplicationQueryParamResolver} from './application/
 import {ProjectResolver} from './project/project.resolver';
 import {ApplicationTemplateService} from './application/application.template.service';
 import {ProjectAuditService} from './project/project.audit.service';
+import {EnvironmentAuditService} from './environment/environment.audit.service';
+import {ApplicationAuditService} from './application/application.audit.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -36,6 +38,7 @@ export class ServicesModule {
         return {
             ngModule: ServicesModule,
             providers: [
+                ApplicationAuditService,
                 ApplicationResolver,
                 ApplicationQueryParamResolver,
                 ActionService,
@@ -47,6 +50,7 @@ export class ServicesModule {
                 ApplicationStore,
                 AuthentificationStore,
                 CanActivateAuthRoute,
+                EnvironmentAuditService,
                 GroupService,
                 ParameterService,
                 PipelineResolver,
@@ -85,6 +89,7 @@ export function httpFactory(backend: XHRBackend, defaultOptions: RequestOptions,
 }
 
 export {
+    ApplicationAuditService,
     ActionStore,
     ApplicationResolver,
     ApplicationStore,
@@ -93,6 +98,7 @@ export {
     ApplicationTemplateService,
     AuthentificationStore,
     CanActivateAuthRoute,
+    EnvironmentAuditService,
     GroupService,
     ParameterService,
     PipelineResolver,

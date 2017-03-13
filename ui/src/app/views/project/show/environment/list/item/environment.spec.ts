@@ -19,6 +19,8 @@ import {Observable} from 'rxjs/Rx';
 import {VariableEvent} from '../../../../../../shared/variable/variable.event.model';
 import {Variable} from '../../../../../../model/variable.model';
 import {ProjectAuditService} from '../../../../../../service/project/project.audit.service';
+import {EnvironmentAuditService} from '../../../../../../service/environment/environment.audit.service';
+import {ApplicationAuditService} from '../../../../../../service/application/application.audit.service';
 
 describe('CDS: Environment Component', () => {
 
@@ -28,6 +30,8 @@ describe('CDS: Environment Component', () => {
             ],
             providers: [
                 ProjectAuditService,
+                EnvironmentAuditService,
+                ApplicationAuditService,
                 ProjectStore,
                 ProjectService,
                 TranslateService,

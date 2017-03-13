@@ -18,6 +18,6 @@
 </ng-container>
 <h3>{{ 'environment_variable_list_title' | translate }}</h3>
 <app-variable [variables]="editableEnvironment.variables" (event)="variableEvent($event)"
-              [mode]="editableEnvironment.permission === 7?'edit':'ro'" [maxPerPage]="8"></app-variable>
+              [mode]="editableEnvironment.permission === 7?'edit':'ro'" [maxPerPage]="8" [environment]="editableEnvironment" [project]="project" auditContext="environment"></app-variable>
 
 
