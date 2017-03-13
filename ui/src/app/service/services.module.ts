@@ -27,6 +27,7 @@ import {PipelineResolver} from './pipeline/pipeline.resolver';
 import {ApplicationResolver, ApplicationQueryParamResolver} from './application/application.resolver';
 import {ProjectResolver} from './project/project.resolver';
 import {ApplicationTemplateService} from './application/application.template.service';
+import {ProjectAuditService} from './project/project.audit.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -53,6 +54,7 @@ export class ServicesModule {
                 PipelineStore,
                 ProjectResolver,
                 ProjectService,
+                ProjectAuditService,
                 ProjectStore,
                 RepoManagerService,
                 RequirementStore,
@@ -97,6 +99,7 @@ export {
     PipelineStore,
     ProjectResolver,
     ProjectStore,
+    ProjectAuditService,
     RepoManagerService,
     RequirementStore,
     UserService,

@@ -2,7 +2,8 @@
     <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
-            <th class="five wide">{{ 'variable_name' | translate }}</th>
+            <th class="one wide" *ngIf="auditContext"></th>
+            <th class="four wide">{{ 'variable_name' | translate }}</th>
             <th class="three wide">{{ 'variable_type' | translate }}</th>
             <th class="five wide">{{ 'variable_value' | translate }}</th>
             <th class="three wide" *ngIf="mode === 'edit'"></th>
@@ -10,6 +11,11 @@
         </thead>
         <tbody>
         <tr *ngFor="let v of getDataForCurrentPage()">
+            <td *ngIf="auditContext">
+                <button class="ui basic icon button" (click)="showAudit($event, v)">
+                    <i class="calendar icon"></i>
+                </button>
+            </td>
             <td>
                 <div class="ui fluid input" *ngIf="mode === 'edit'">
                     <input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="v.updating">
@@ -57,3 +63,8 @@
         {{ 'variable_no' | translate }}
     </div>
 </div>
+<sm-modal #auditModal title="{{'audit_title_variable' | translate }}" class="fluid">
+    <modal-content>
+        <app-variable-audit [audits]="currentVariableAudits"></app-variable-audit>
+    </modal-content>
+</sm-modal>

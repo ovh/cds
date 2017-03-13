@@ -60,6 +60,10 @@
   "artifact_name" : "Artifact name",
   "artifact_tag" : "Tag",
 
+  "audit_change": "Change",
+  "audit_time_author": "Change date",
+  "audit_title_variable": "Change history",
+
   "btn_cancel" : "Cancel",
   "btn_continue" : "Continue",
   "btn_create" : "Create",
