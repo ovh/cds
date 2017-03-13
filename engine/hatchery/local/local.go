@@ -70,7 +70,7 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, req []sdk.Requirement) error {
+func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
 	var err error
 
 	if len(h.workers) >= viper.GetInt("max-worker") {

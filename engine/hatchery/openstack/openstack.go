@@ -296,7 +296,7 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, req []sdk.Requirement) error {
+func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
 	var err error
 	var omd sdk.OpenstackModelData
 
