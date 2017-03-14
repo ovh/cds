@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
-
 	"strings"
-
 	"time"
 
 	"github.com/ovh/cds/engine/log"
