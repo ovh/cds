@@ -8,7 +8,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/log"
-	"github.com/ovh/cds/sdk"
 	"github.com/runabove/venom"
 )
 
@@ -41,8 +40,7 @@ func TestEvent(db gorp.SqlExecutor, projectID, appID int64, tests venom.Tests) {
 }
 
 // PipelineEvent inserts in stats table data related to build
-func PipelineEvent(db gorp.SqlExecutor, t sdk.PipelineType, projectID, appID int64) {
-
+func PipelineEvent(db gorp.SqlExecutor, t string, projectID, appID int64) {
 	// Update stats table
 	query := `UPDATE stats SET %s = %s + 1
 	WHERE day = current_date`

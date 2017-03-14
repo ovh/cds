@@ -102,7 +102,8 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 
 	job := &sdk.Job{
 		Action: sdk.Action{
-			Name: "NewAction",
+			Name:    "NewAction",
+			Enabled: true,
 		},
 		Enabled: true,
 	}
@@ -184,7 +185,8 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	t.Logf("Insert Action script on Stage %s for Pipeline %s of Project %s", stage1.Name, pip.Name, proj.Name)
 	job := &sdk.Job{
 		Action: sdk.Action{
-			Name: "NewAction1",
+			Name:    "NewAction1",
+			Enabled: true,
 		},
 		Enabled: true,
 	}
@@ -195,7 +197,8 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	job2 := &sdk.Job{
 		Action: sdk.Action{
-			Name: "NewAction2",
+			Name:    "NewAction2",
+			Enabled: true,
 		},
 		Enabled: true,
 	}
@@ -276,7 +279,8 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	t.Logf("Insert Action %s(%d) on Stage %s(%d) for Pipeline %s(%d) of Project %s", script.Name, script.ID, stage.Name, stage.ID, pip.Name, pip.ID, proj.Name)
 	job := &sdk.Job{
 		Action: sdk.Action{
-			Name: "NewAction1",
+			Name:    "NewAction1",
+			Enabled: true,
 		},
 		Enabled: true,
 	}
@@ -312,7 +316,8 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	//Insert Action
 	job1 := &sdk.Job{
 		Action: sdk.Action{
-			Name: "NewAction2",
+			Name:    "NewAction2",
+			Enabled: true,
 		},
 		Enabled: true,
 	}

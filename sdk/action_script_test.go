@@ -143,10 +143,22 @@ steps  = [{
 
 	assert.Equal(t, ArtifactDownload, a.Actions[0].Name)
 	assert.Equal(t, BuiltinAction, a.Actions[0].Type)
-	assert.Equal(t, "path", a.Actions[0].Parameters[0].Name)
-	assert.Equal(t, "myartifact", a.Actions[0].Parameters[0].Value)
-	assert.Equal(t, "tag", a.Actions[0].Parameters[1].Name)
-	assert.Equal(t, "{{.cds.version}}", a.Actions[0].Parameters[1].Value)
+
+	var pathFound, tagFound bool
+	for _, p := range a.Actions[0].Parameters {
+		if p.Name == "path" {
+			pathFound = true
+			assert.Equal(t, "myartifact", p.Value)
+		}
+
+		if p.Name == "tag" {
+			tagFound = true
+			assert.Equal(t, "{{.cds.version}}", p.Value)
+		}
+	}
+
+	assert.True(t, pathFound)
+	assert.True(t, tagFound)
 }
 
 func TestLoadFromActionScriptWithPlugin(t *testing.T) {
