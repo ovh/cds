@@ -165,3 +165,12 @@ func GetBuildActionLog(projectKey, appName, pipelineName, buildID, pipelineActio
 	}
 	return buildState, nil
 }
+
+// Translate translates messages in pipelineBuildJob
+func (p *PipelineBuildJob) Translate(lang string) {
+	for ki, info := range p.SpawnInfos {
+		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+		p.SpawnInfos[ki].UserMessage = m.String(lang)
+	}
+
+}

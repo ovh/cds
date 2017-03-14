@@ -327,7 +327,7 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 		Pipeline: sdk.Pipeline{
 			ID:         pbResult.PipelineID,
 			Name:       pbResult.PipelineName,
-			Type:       sdk.PipelineType(pbResult.PipelineType),
+			Type:       pbResult.PipelineType,
 			ProjectKey: pbResult.ProjectKey,
 			ProjectID:  pbResult.ProjectID,
 		},

@@ -383,7 +383,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 		pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, p)
 	}
 
-	// If action is not done within 1 hour, KILL IT WITH FIRE
+	// If action is not done within 12 hour, KILL IT WITH FIRE
 	doneChan := make(chan bool)
 	go func() {
 		for {

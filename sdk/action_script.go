@@ -29,6 +29,95 @@ type ActionScript struct {
 	} `json:"steps"`
 }
 
+// NewStepScript returns an action (basically used as a step of a job) of Script type
+func NewStepScript(s string) Action {
+	newAction := Action{
+		Name: ScriptAction,
+		Type: BuiltinAction,
+		Parameters: []Parameter{
+			{
+				Name:  "script",
+				Value: s,
+				Type:  TextParameter,
+			},
+		},
+	}
+	return newAction
+}
+
+// NewStepJUnitReport returns an action (basically used as a step of a job) of JUnitReport type
+func NewStepJUnitReport(s string) Action {
+	newAction := Action{
+		Name: JUnitAction,
+		Type: BuiltinAction,
+		Parameters: []Parameter{
+			{
+				Name:  "path",
+				Value: s,
+				Type:  StringParameter,
+			},
+		},
+	}
+	return newAction
+}
+
+// NewStepArtifactUpload returns an action (basically used as a step of a job) of artifact upload type
+func NewStepArtifactUpload(v map[string]string) Action {
+	newAction := Action{
+		Name:       ArtifactUpload,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
+	}
+	return newAction
+}
+
+// NewStepArtifactDownload returns an action (basically used as a step of a job) of artifact download type
+func NewStepArtifactDownload(v map[string]string) Action {
+	newAction := Action{
+		Name:       ArtifactDownload,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
+	}
+	return newAction
+}
+
+// NewStepPlugin returns an action (basically used as a step of a job) of plugin type
+func NewStepPlugin(v map[string]map[string]string) (*Action, error) {
+	if len(v) != 1 {
+		return nil, fmt.Errorf("Malformatted plugin step")
+	}
+	for k, v := range v {
+		newAction := Action{
+			Name:       k,
+			Type:       PluginAction,
+			Parameters: []Parameter{},
+		}
+		for p, val := range v {
+			newAction.Parameters = append(newAction.Parameters, Parameter{
+				Name:  p,
+				Value: val,
+			})
+		}
+		return &newAction, nil
+	}
+	return nil, nil
+}
+
+// NewStepDefault returns an action (basically used as a step of a job) of default type
+func NewStepDefault(n string, args map[string]string) (*Action, error) {
+	newAction := Action{
+		Name:       n,
+		Parameters: []Parameter{},
+	}
+	for p, val := range args {
+		newAction.Parameters = append(newAction.Parameters, Parameter{
+			Name:  p,
+			Value: val,
+		})
+	}
+	return &newAction, nil
+}
+
 //NewActionFromScript creates an action from a HCL file as bytes
 func NewActionFromScript(btes []byte) (*Action, error) {
 	as := ActionScript{}
@@ -66,94 +155,36 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 		var newAction Action
 		//Action builtin = Script
 		if v.Script != "" {
-			newAction = Action{
-				Name: ScriptAction,
-				Type: BuiltinAction,
-				Parameters: []Parameter{
-					{
-						Name:  "script",
-						Value: v.Script,
-						Type:  TextParameter,
-					},
-				},
-			}
+			newAction = NewStepScript(v.Script)
 			goto next
 		}
 
 		//Action builtin =JUnitReport
 		if v.JUnitReport != "" {
-			newAction = Action{
-				Name: JUnitAction,
-				Type: BuiltinAction,
-				Parameters: []Parameter{
-					{
-						Name:  "path",
-						Value: v.JUnitReport,
-						Type:  StringParameter,
-					},
-				},
-			}
+			newAction = NewStepJUnitReport(v.JUnitReport)
 			goto next
 		}
 
 		//Action builtin = ArtifactUpload
 		if v.ArtifactUpload != nil {
-			newAction = Action{
-				Name: ArtifactUpload,
-				Type: BuiltinAction,
-				Parameters: []Parameter{
-					{
-						Name:  "path",
-						Value: v.ArtifactUpload["path"],
-						Type:  StringParameter,
-					},
-					{
-						Name:  "tag",
-						Value: v.ArtifactUpload["tag"],
-						Type:  StringParameter,
-					},
-				},
-			}
+			newAction = NewStepArtifactUpload(v.ArtifactUpload)
 			goto next
 		}
 
 		//Action builtin = ArtifactDownload
 		if v.ArtifactDownload != nil {
-			newAction = Action{
-				Name: ArtifactDownload,
-				Type: BuiltinAction,
-				Parameters: []Parameter{
-					{
-						Name:  "path",
-						Value: v.ArtifactDownload["path"],
-						Type:  StringParameter,
-					},
-					{
-						Name:  "tag",
-						Value: v.ArtifactDownload["tag"],
-						Type:  StringParameter,
-					},
-				},
-			}
+			newAction = NewStepArtifactDownload(v.ArtifactDownload)
 			goto next
 		}
 
 		//Action builtin = Plugin
 		if v.Plugin != nil {
-			for k, v := range v.Plugin {
-				newAction = Action{
-					Name:       k,
-					Type:       PluginAction,
-					Parameters: []Parameter{},
-				}
-				for p, val := range v {
-					newAction.Parameters = append(newAction.Parameters, Parameter{
-						Name:  p,
-						Value: val,
-					})
-				}
-				goto next
+			a, err := NewStepPlugin(v.Plugin)
+			if err != nil {
+				return nil, err
 			}
+			newAction = *a
+			goto next
 		}
 
 		return nil, fmt.Errorf("Unsupported action : %s", string(btes))

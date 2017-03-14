@@ -272,6 +272,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 			pb.Tests = &tests
 		}
 	}
+	pb.Translate(r.Header.Get("Accept-Language"))
 
 	return WriteJSON(w, r, pb, http.StatusOK)
 }

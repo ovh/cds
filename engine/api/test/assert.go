@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,22 +43,52 @@ func interfaceSlice(slice interface{}) []interface{} {
 	return ret
 }
 
-func arrayContains(array interface{}, s interface{}) bool {
+// ArrayContains check if an element exists in an array using DeepEquals function
+func ArrayContains(array interface{}, s interface{}) bool {
 	b := interfaceSlice(array)
 	for _, i := range b {
-		if reflect.DeepEqual(i, s) {
+		if DeepEquals(i, s) {
 			return true
 		}
 	}
 	return false
 }
 
+// Equal checks 2 element Equality using github.com/fsamin/go-dump
+func Equal(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
+	e := DeepEquals(a, b)
+
+	if !e {
+		t.Log("Expected:")
+		t.Log(dump.Sdump(a))
+		t.Log("Actual:")
+		t.Log(dump.Sdump(b))
+	}
+
+	assert.True(t, e, msgAndArgs...)
+}
+
+// DeepEquals returns equality between 2 elements using github.com/fsamin/go-dump
+func DeepEquals(a, b interface{}) bool {
+	s1, err := dump.Sdump(a)
+	if err != nil {
+		return false
+	}
+	s2, err := dump.Sdump(b)
+	if err != nil {
+		return false
+	}
+
+	return s1 == s2
+}
+
+// EqualValuesWithoutOrder checks equality between two slices without respecting slide order
 func EqualValuesWithoutOrder(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
 	s1 := interfaceSlice(a)
 	s2 := interfaceSlice(b)
 
 	for _, x := range s1 {
-		if !arrayContains(s2, x) {
+		if !ArrayContains(s2, x) {
 			assert.Fail(t, "EqualValuesWithoutOrder failed", msgAndArgs...)
 		}
 	}
@@ -67,7 +98,7 @@ func EqualValuesWithoutOrder(t *testing.T, a, b interface{}, msgAndArgs ...inter
 	}
 
 	for _, x := range s2 {
-		if !arrayContains(s1, x) {
+		if !ArrayContains(s1, x) {
 			assert.Fail(t, "EqualValuesWithoutOrder failed", msgAndArgs...)
 		}
 	}
