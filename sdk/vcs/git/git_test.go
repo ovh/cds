@@ -5,6 +5,8 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/ovh/cds/sdk/vcs"
 )
 
 func TestClone(t *testing.T) {
@@ -118,8 +120,8 @@ func Test_gitCloneOverSSH(t *testing.T) {
 			args: args{
 				repo: "git@github.com:fsamin/go-dump.git",
 				path: "/tmp/Test_gitCloneOverHTTPS-1",
-				auth: AuthOpts{
-					PrivateKey: "~/.ssh/id_rsa",
+				auth: &AuthOpts{
+					PrivateKey: vcs.SSHKey{Filename: "~/.ssh/id_rsa"},
 				},
 			},
 			wantErr: false,
@@ -127,7 +129,7 @@ func Test_gitCloneOverSSH(t *testing.T) {
 	}
 	for _, tt := range tests {
 		if tt.args.auth != nil {
-			if _, err := os.Stat(tt.args.auth.PrivateKey); os.IsNotExist(err) {
+			if _, err := os.Stat(tt.args.auth.PrivateKey.Filename); os.IsNotExist(err) {
 				t.SkipNow()
 			}
 		}
