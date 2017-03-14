@@ -643,7 +643,7 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 		Action: sdk.Action{
 			Name:        name,
 			Description: j.Description,
-			Type: sdk.JoinedAction,
+			Type:        sdk.JoinedAction,
 		},
 	}
 	if j.Enabled != nil {
@@ -651,6 +651,7 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 	} else {
 		job.Enabled = true
 	}
+	job.Action.Enabled = job.Enabled
 	for _, r := range j.Requirements {
 		var name, tpe, val string
 		if r.Binary != "" {
