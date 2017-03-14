@@ -781,3 +781,15 @@ func AddSpawnInfosPipelineBuildJob(pipelineBuildJobID int64, infos []SpawnInfo) 
 	}
 	return nil
 }
+
+// Translate translates messages in pipelineBuild
+func (p *PipelineBuild) Translate(lang string) {
+	for ks := range p.Stages {
+		for kj := range p.Stages[ks].PipelineBuildJobs {
+			for ki, info := range p.Stages[ks].PipelineBuildJobs[kj].SpawnInfos {
+				m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+				p.Stages[ks].PipelineBuildJobs[kj].SpawnInfos[ki].UserMessage = m.String(lang)
+			}
+		}
+	}
+}

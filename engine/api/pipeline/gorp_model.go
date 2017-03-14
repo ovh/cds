@@ -51,11 +51,6 @@ func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	for k := range p.SpawnInfos {
-		m := sdk.NewMessage(sdk.Messages[p.SpawnInfos[k].Message.ID], p.SpawnInfos[k].Message.Args...)
-		p.SpawnInfos[k].UserMessage = m.String("en")
-	}
-
 	return nil
 }
 

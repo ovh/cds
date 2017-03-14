@@ -261,14 +261,13 @@ func getActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 // importActionHandler insert OR update an existing action.
 func importActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	var a *sdk.Action
-	var err error
-
 	url := r.Form.Get("url")
 	//Load action from url
 	if url != "" {
-		a, err = sdk.NewActionFromRemoteScript(url, nil)
-		if err != nil {
-			return err
+		var errnew error
+		a, errnew = sdk.NewActionFromRemoteScript(url, nil)
+		if errnew != nil {
+			return errnew
 		}
 	} else if r.Header.Get("content-type") == "multipart/form-data" {
 		//Try to load from the file
@@ -283,9 +282,10 @@ func importActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 			return errRead
 		}
 
-		a, err = sdk.NewActionFromScript(btes)
-		if err != nil {
-			return err
+		var errnew error
+		a, errnew = sdk.NewActionFromScript(btes)
+		if errnew != nil {
+			return errnew
 		}
 	} else { // a jsonified action is posted in body
 		if err := UnmarshalBody(r, &a); err != nil {
@@ -297,17 +297,17 @@ func importActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.ErrWrongRequest
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		return err
+	tx, errbegin := db.Begin()
+	if errbegin != nil {
+		return errbegin
 	}
 
 	defer tx.Rollback()
 
 	//Check if action exists
 	exist := false
-	existingAction, err := action.LoadPublicAction(tx, a.Name)
-	if err == nil {
+	existingAction, errload := action.LoadPublicAction(tx, a.Name)
+	if errload == nil {
 		exist = true
 		a.ID = existingAction.ID
 	}

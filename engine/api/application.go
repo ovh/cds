@@ -205,7 +205,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	if applicationStatus {
-		var pipelineBuilds = []sdk.PipelineBuild{}
+		var pipelineBuilds []sdk.PipelineBuild
 
 		version := 0
 		if versionString != "" {
@@ -236,6 +236,10 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 				return errPipBuilds
 			}
 		}
+		al := r.Header.Get("Accept-Language")
+		for _, p := range pipelineBuilds {
+			p.Translate(al)
+		}
 		app.PipelinesBuild = pipelineBuilds
 	}
 
@@ -257,21 +261,23 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	var branches []sdk.VCSBranch
 	if app.RepositoryFullname != "" && app.RepositoriesManager != nil {
-		client, err := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
-		if err != nil {
-			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, err)
+		client, erra := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
+		if erra != nil {
+			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
 			return sdk.ErrNoReposManagerClientAuth
 		}
-		branches, err = client.Branches(app.RepositoryFullname)
-		if err != nil {
-			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, err)
+		var errb error
+		branches, errb = client.Branches(app.RepositoryFullname)
+		if errb != nil {
+			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 			return sdk.ErrNoReposManagerClientAuth
 		}
 	} else {
-		branches, err = pipeline.GetBranches(db, app)
-		if err != nil {
-			log.Warning("getApplicationBranchHandler> Cannot get branches from builds: %s", err)
-			return err
+		var errg error
+		branches, errg = pipeline.GetBranches(db, app)
+		if errg != nil {
+			log.Warning("getApplicationBranchHandler> Cannot get branches from builds: %s", errg)
+			return errg
 		}
 	}
 
@@ -285,10 +291,10 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	proj, err := project.Load(db, key, c.User)
-	if err != nil {
-		log.Warning("addApplicationHandler: Cannot load %s: %s\n", key, err)
-		return err
+	proj, errl := project.Load(db, key, c.User)
+	if errl != nil {
+		log.Warning("addApplicationHandler: Cannot load %s: %s\n", key, errl)
+		return errl
 	}
 
 	var app sdk.Application
@@ -311,14 +317,12 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	defer tx.Rollback()
 
-	err = application.Insert(tx, proj, &app)
-	if err != nil {
+	if err := application.Insert(tx, proj, &app); err != nil {
 		log.Warning("addApplicationHandler> Cannot insert pipeline: %s\n", err)
 		return err
 	}
 
-	err = group.LoadGroupByProject(tx, proj)
-	if err != nil {
+	if err := group.LoadGroupByProject(tx, proj); err != nil {
 		log.Warning("addApplicationHandler> Cannot load group from project: %s\n", err)
 		return err
 	}
@@ -328,8 +332,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("addApplicationHandler> Cannot commit transaction: %s\n", err)
 		return err
 	}
@@ -547,22 +550,22 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	p, err := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
-	if err != nil {
-		log.Warning("updateApplicationHandler> Cannot load project %s: %s\n", projectKey, err)
-		return err
+	p, errload := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
+	if errload != nil {
+		log.Warning("updateApplicationHandler> Cannot load project %s: %s\n", projectKey, errload)
+		return errload
 	}
-	envs, err := environment.LoadEnvironments(db, projectKey, true, c.User)
-	if err != nil {
-		log.Warning("updateApplicationHandler> Cannot load environments %s: %s\n", projectKey, err)
-		return err
+	envs, errloadenv := environment.LoadEnvironments(db, projectKey, true, c.User)
+	if errloadenv != nil {
+		log.Warning("updateApplicationHandler> Cannot load environments %s: %s\n", projectKey, errloadenv)
+		return errloadenv
 	}
 	p.Environments = envs
 
-	app, err := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
-	if err != nil {
-		log.Warning("updateApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
-		return err
+	app, errloadbyname := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
+	if errloadbyname != nil {
+		log.Warning("updateApplicationHandler> Cannot load application %s: %s\n", applicationName, errloadbyname)
+		return errloadbyname
 	}
 
 	var appPost sdk.Application

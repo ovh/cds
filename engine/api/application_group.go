@@ -28,9 +28,9 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	app, err := application.LoadByName(db, key, appName, c.User)
-	if err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot load application %s :%s", appName, err)
+	app, errload := application.LoadByName(db, key, appName, c.User)
+	if errload != nil {
+		log.Warning("updateGroupRoleOnApplicationHandler: Cannot load application %s :%s", appName, errload)
 		return sdk.ErrApplicationNotFound
 	}
 
@@ -41,10 +41,10 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	if groupApplication.Permission != permission.PermissionReadWriteExecute {
-		permissions, err := group.LoadAllApplicationGroupByRole(db, app.ID, permission.PermissionReadWriteExecute)
-		if err != nil {
-			log.Warning("updateGroupRoleOnApplicationHandler: Cannot load group for application %s:  %s\n", appName, err)
-			return err
+		permissions, errloadall := group.LoadAllApplicationGroupByRole(db, app.ID, permission.PermissionReadWriteExecute)
+		if errloadall != nil {
+			log.Warning("updateGroupRoleOnApplicationHandler: Cannot load group for application %s:  %s\n", appName, errloadall)
+			return errloadall
 		}
 
 		if len(permissions) == 1 && permissions[0].Group.ID == g.ID {
@@ -92,10 +92,10 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	key := vars["key"]
 	appName := vars["permApplicationName"]
 
-	proj, err := project.Load(db, key, c.User)
-	if err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", key, err)
-		return err
+	proj, errload := project.Load(db, key, c.User)
+	if errload != nil {
+		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", key, errload)
+		return errload
 	}
 
 	var groupsPermission []sdk.GroupPermission
@@ -120,9 +120,9 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 		return sdk.ErrGroupNeedWrite
 	}
 
-	app, err := application.LoadByName(db, key, appName, c.User)
-	if err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot load application %s: %s\n", appName, err)
+	app, errLoadName := application.LoadByName(db, key, appName, c.User)
+	if errLoadName != nil {
+		log.Warning("updateGroupsInApplicationHandler: Cannot load application %s: %s\n", appName, errLoadName)
 		return sdk.ErrApplicationNotFound
 	}
 
