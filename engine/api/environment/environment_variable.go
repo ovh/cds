@@ -458,3 +458,28 @@ func InsertAudit(db gorp.SqlExecutor, eva *sdk.EnvironmentVariableAudit) error {
 	return nil
 
 }
+
+// LoadVariableAudits Load audits for the given variable
+func LoadVariableAudits(db gorp.SqlExecutor, envID, varID int64) ([]sdk.EnvironmentVariableAudit, error) {
+	var res []dbEnvironmentVariableAudit
+	query := "SELECT * FROM environment_variable_audit WHERE environment_id = $1 AND variable_id = $2 ORDER BY versionned DESC"
+	if _, err := db.Select(&res, query, envID, varID); err != nil {
+		if err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+		if err != nil && err == sql.ErrNoRows {
+			return []sdk.EnvironmentVariableAudit{}, nil
+		}
+	}
+
+	evas := make([]sdk.EnvironmentVariableAudit, len(res))
+	for i := range res {
+		dbEva := &res[i]
+		if err := dbEva.PostGet(db); err != nil {
+			return nil, err
+		}
+		pva := sdk.EnvironmentVariableAudit(*dbEva)
+		evas[i] = pva
+	}
+	return evas, nil
+}

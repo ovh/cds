@@ -432,3 +432,28 @@ func InserAudit(db gorp.SqlExecutor, ava *sdk.ApplicationVariableAudit) error {
 	*ava = sdk.ApplicationVariableAudit(dbAppVarAudit)
 	return nil
 }
+
+// LoadVariableAudits Load audits for the given variable
+func LoadVariableAudits(db gorp.SqlExecutor, appID, varID int64) ([]sdk.ApplicationVariableAudit, error) {
+	var res []dbApplicationVariableAudit
+	query := "SELECT * FROM application_variable_audit WHERE application_id = $1 AND variable_id = $2 ORDER BY versionned DESC"
+	if _, err := db.Select(&res, query, appID, varID); err != nil {
+		if err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+		if err != nil && err == sql.ErrNoRows {
+			return []sdk.ApplicationVariableAudit{}, nil
+		}
+	}
+
+	avas := make([]sdk.ApplicationVariableAudit, len(res))
+	for i := range res {
+		dbAva := &res[i]
+		if err := dbAva.PostGet(db); err != nil {
+			return nil, err
+		}
+		ava := sdk.ApplicationVariableAudit(*dbAva)
+		avas[i] = ava
+	}
+	return avas, nil
+}
