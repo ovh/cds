@@ -15,6 +15,10 @@ import (
 func TestImportInto_Variable(t *testing.T) {
 	db := test.SetupPG(t)
 
+	u := &sdk.User{
+		Username: "foo",
+	}
+
 	proj := sdk.Project{
 		Key:  "testimportenv",
 		Name: "testimportenv",
@@ -49,9 +53,9 @@ func TestImportInto_Variable(t *testing.T) {
 		Value: "value2",
 	}
 
-	test.NoError(t, environment.InsertVariable(db, env.ID, &v0))
-	test.NoError(t, environment.InsertVariable(db, env.ID, &v1))
-	test.NoError(t, environment.InsertVariable(db, env.ID, &v2))
+	test.NoError(t, environment.InsertVariable(db, env.ID, &v0, u))
+	test.NoError(t, environment.InsertVariable(db, env.ID, &v1, u))
+	test.NoError(t, environment.InsertVariable(db, env.ID, &v2, u))
 
 	var err error
 	env.Variable, err = environment.GetAllVariableByID(db, env.ID)
@@ -93,7 +97,7 @@ func TestImportInto_Variable(t *testing.T) {
 		}
 	}()
 
-	environment.ImportInto(db, &proj, &env2, &env, msgChan)
+	environment.ImportInto(db, &proj, &env2, &env, msgChan, u)
 
 	close(msgChan)
 	<-done
@@ -134,6 +138,10 @@ func TestImportInto_Variable(t *testing.T) {
 
 func TestImportInto_Group(t *testing.T) {
 	db := test.SetupPG(t)
+
+	u := &sdk.User{
+		Username: "foo",
+	}
 
 	proj := sdk.Project{
 		Key:  "testimportenv",
@@ -215,7 +223,7 @@ func TestImportInto_Group(t *testing.T) {
 		}
 	}()
 
-	environment.ImportInto(db, &proj, &env2, &env, msgChan)
+	environment.ImportInto(db, &proj, &env2, &env, msgChan, u)
 
 	close(msgChan)
 	<-done

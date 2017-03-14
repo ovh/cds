@@ -787,6 +787,8 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	defer tx.Rollback()
 
+	job.Enabled = true
+	job.Action.Enabled = true
 	if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot insert job: %s\n", err)
 		return err

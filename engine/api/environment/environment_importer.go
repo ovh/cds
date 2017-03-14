@@ -10,7 +10,7 @@ import (
 )
 
 //Import import or reuser the provided environment
-func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgChan chan<- msg.Message) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgChan chan<- msg.Message, u *sdk.User) error {
 	exists, err := Exists(db, proj.Key, env.Name)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 
 	//Insert all variables
 	for i := range env.Variable {
-		if err := InsertVariable(db, env.ID, &env.Variable[i]); err != nil {
+		if err := InsertVariable(db, env.ID, &env.Variable[i], u); err != nil {
 			return err
 		}
 	}
@@ -64,7 +64,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 }
 
 //ImportInto import variables and groups on an existing environment
-func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, into *sdk.Environment, msgChan chan<- msg.Message) error {
+func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, into *sdk.Environment, msgChan chan<- msg.Message, u *sdk.User) error {
 
 	if len(into.EnvironmentGroups) == 0 {
 		if err := loadGroupByEnvironment(db, into); err != nil {
@@ -74,7 +74,7 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 
 	var updateVar = func(v *sdk.Variable) {
 		log.Debug("ImportInto> Updating var %s", v.Name)
-		if err := UpdateVariable(db, into.ID, v); err != nil {
+		if err := UpdateVariable(db, into.ID, v, u); err != nil {
 			msgChan <- msg.New(msg.EnvironmentVariableCannotBeUpdated, v.Name, into.Name, err)
 			return
 		}
@@ -83,7 +83,7 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 
 	var insertVar = func(v *sdk.Variable) {
 		log.Debug("ImportInto> Creating var %s", v.Name)
-		if err := InsertVariable(db, into.ID, v); err != nil {
+		if err := InsertVariable(db, into.ID, v, u); err != nil {
 			msgChan <- msg.New(msg.EnvironmentVariableCannotBeCreated, v.Name, into.Name, err)
 			return
 		}

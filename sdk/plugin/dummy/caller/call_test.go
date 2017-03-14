@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,9 @@ import (
 )
 
 func TestDummyPlugin(t *testing.T) {
+	if _, err := os.Stat("../dummy"); os.IsNotExist(err) {
+		t.SkipNow()
+	}
 	client := plugin.NewClient("dummy", "../dummy", "ID", "http://localhost:8081", true)
 	defer client.Kill()
 

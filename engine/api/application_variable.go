@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
@@ -118,6 +117,30 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return nil
 }
 
+func getVariableAuditInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	// Get project name in URL
+	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+	varName := vars["name"]
+
+	app, errA := application.LoadByName(db, key, appName, c.User)
+	if errA != nil {
+		return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
+	}
+
+	variable, errV := application.LoadVariable(db, app.ID, varName)
+	if errV != nil {
+		return sdk.WrapError(errV, "getVariableAuditInApplicationHandler> Cannot load variable %s", varName)
+	}
+
+	audits, errA := application.LoadVariableAudits(db, app.ID, variable.ID)
+	if errA != nil {
+		return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
+	}
+	return WriteJSON(w, r, audits, http.StatusOK)
+}
+
 func getVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -160,64 +183,52 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	appName := vars["permApplicationName"]
 	varName := vars["name"]
 
-	p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+	p, err := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 	if err != nil {
-		log.Warning("deleteVariableInApplicationHandler: Cannot load project: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteVariableInApplicationHandler: Cannot load project %s", key)
 	}
-
-	envs, err := environment.LoadEnvironments(db, key, true, c.User)
-	if err != nil {
-		log.Warning("deleteVariableInApplicationHandler: Cannot load environments: %s\n", err)
-		return err
-	}
-
-	p.Environments = envs
 
 	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
-		log.Warning("deleteVariableInApplicationHandler: Cannot load application: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteVariableInApplicationHandler: Cannot load application: %s", appName)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("deleteVariableFromApplicationHandler: Cannot start transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot start transaction")
 	}
 	defer tx.Rollback()
 
-	err = application.CreateAudit(tx, key, app, c.User)
-	if err != nil {
-		log.Warning("deleteVariableFromApplicationHandler: Cannot create variable audit for application %s: %s\n", appName, err)
-		return err
+	// DEPRECATED
+	if err := application.CreateAudit(tx, key, app, c.User); err != nil {
+		return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot create variable audit for application %s", appName)
 	}
 
-	err = application.DeleteVariable(tx, app, varName, c.User)
-	if err != nil {
+	// Clear password for audit
+	varToDelete, errV := application.LoadVariable(db, app.ID, varName, application.WithClearPassword())
+	if errV != nil {
+		return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
+	}
+
+	if err := application.DeleteVariable(tx, app, varToDelete, c.User); err != nil {
 		log.Warning("deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
-		return err
+		return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot delete %s", varName)
 	}
 
 	if err := sanity.CheckApplication(tx, p, app); err != nil {
-		log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-		return err
+		return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("deleteVariableFromApplicationHandler: Cannot commit transaction: %s\n", err)
-		return err
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot commit transaction")
 	}
 
 	app.Variable, err = application.GetAllVariableByID(db, app.ID)
 	if err != nil {
-		log.Warning("deleteVariableFromApplicationHandler: Cannot load variables: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot load variables")
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
-
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
@@ -339,8 +350,7 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 
 	p, err := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot load %s: %s\n", key, err)
-		return err
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load project %s", key)
 	}
 
 	var newVar sdk.Variable
@@ -353,50 +363,39 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 
 	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
 	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot load application: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load application: %s", appName)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot create transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot create transaction")
 	}
 	defer tx.Rollback()
 
-	err = application.CreateAudit(tx, key, app, c.User)
-	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot create audit: %s\n", err)
-		return err
+	// DEPRECATED
+	if err := application.CreateAudit(tx, key, app, c.User); err != nil {
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot create audit")
 	}
 
-	err = application.UpdateVariable(tx, app, newVar, c.User)
-	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot update variable %s for application %s:  %s\n", varName, appName, err)
-		return err
+	if err := application.UpdateVariable(tx, app, &newVar, c.User); err != nil {
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot update variable %s for application %s", varName, appName)
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot commit transaction: %s\n", err)
-		return err
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot commit transaction")
 	}
 
-	err = sanity.CheckProjectPipelines(db, p)
-	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot check warnings: %s\n", err)
-		return err
+	if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check warnings")
 	}
 
 	app.Variable, err = application.GetAllVariableByID(db, app.ID)
 	if err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot load variables: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load variables")
 	}
 
 	if err := sanity.CheckApplication(db, p, app); err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check application sanity")
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
@@ -438,6 +437,7 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 	}
 	defer tx.Rollback()
 
+	// DEPRECATED
 	if err = application.CreateAudit(tx, key, app, c.User); err != nil {
 		log.Warning("addVariableInApplicationHandler: Cannot create variable audit for application %s:  %s\n", appName, err)
 		return err

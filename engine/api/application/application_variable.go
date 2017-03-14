@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -41,6 +42,7 @@ func WithEncryptPassword() FuncArg {
 	}
 }
 
+// DEPRECATED
 // CreateAudit Create variable audit for the given application
 func CreateAudit(db gorp.SqlExecutor, key string, app *sdk.Application, u *sdk.User) error {
 	variables, err := GetAllVariable(db, key, app.Name, WithEncryptPassword())
@@ -60,7 +62,7 @@ func CreateAudit(db gorp.SqlExecutor, key string, app *sdk.Application, u *sdk.U
 	}
 
 	query := `
-		INSERT INTO application_variable_audit (versionned, application_id, data, author)
+		INSERT INTO application_variable_audit_old (versionned, application_id, data, author)
 		VALUES (NOW(), $1, $2, $3)
 	`
 	_, err = db.Exec(query, app.ID, string(data), u.Username)
@@ -70,12 +72,12 @@ func CreateAudit(db gorp.SqlExecutor, key string, app *sdk.Application, u *sdk.U
 // GetAudit retrieve the current application variable audit
 func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Variable, error) {
 	query := `
-		SELECT application_variable_audit.data
-		FROM application_variable_audit
-		JOIN application ON application.id = application_variable_audit.application_id
+		SELECT application_variable_audit_old.data
+		FROM application_variable_audit_old
+		JOIN application ON application.id = application_variable_audit_old.application_id
 		JOIN project ON project.id = application.project_id
-		WHERE application.name = $1 AND project.projectkey = $2 AND application_variable_audit.id = $3
-		ORDER BY application_variable_audit.versionned DESC
+		WHERE application.name = $1 AND project.projectkey = $2 AND application_variable_audit_old.id = $3
+		ORDER BY application_variable_audit_old.versionned DESC
 	`
 	var data string
 	err := db.QueryRow(query, appName, key, auditID).Scan(&data)
@@ -102,12 +104,12 @@ func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Va
 func GetVariableAudit(db gorp.SqlExecutor, key, appName string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
-		SELECT application_variable_audit.id, application_variable_audit.versionned, application_variable_audit.data, application_variable_audit.author
-		FROM application_variable_audit
-		JOIN application ON application.id = application_variable_audit.application_id
+		SELECT application_variable_audit_old.id, application_variable_audit_old.versionned, application_variable_audit_old.data, application_variable_audit_old.author
+		FROM application_variable_audit_old
+		JOIN application ON application.id = application_variable_audit_old.application_id
 		JOIN project ON project.id = application.project_id
 		WHERE application.name = $1 AND project.projectkey = $2
-		ORDER BY application_variable_audit.versionned DESC
+		ORDER BY application_variable_audit_old.versionned DESC
 	`
 	rows, err := db.Query(query, appName, key)
 	if err != nil {
@@ -185,21 +187,47 @@ func GetAllVariable(db gorp.SqlExecutor, key, appName string, args ...FuncArg) (
 	return variables, err
 }
 
+// LoadVariableByID retrieve a specific variable
+func LoadVariableByID(db gorp.SqlExecutor, appID int64, varID int64, fargs ...FuncArg) (*sdk.Variable, error) {
+	c := structarg{}
+	for _, f := range fargs {
+		f(&c)
+	}
+
+	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM application_variable
+			WHERE application_id = $1 AND id = $2`
+
+	var v sdk.Variable
+	var value sql.NullString
+	var cipher []byte
+	if err := db.QueryRow(query, appID, varID).Scan(&v.ID, &v.Name, &value, &v.Type, &cipher); err != nil {
+		return nil, err
+	}
+
+	var errC error
+	v.Value, errC = secret.DecryptS(v.Type, value, cipher, c.clearsecret)
+	return &v, errC
+}
+
 // LoadVariable retrieve a specific variable
-func LoadVariable(db gorp.SqlExecutor, appID int64, varName string) (sdk.Variable, error) {
-	query := `SELECT id, var_name, var_value, var_type FROM application_variable
+func LoadVariable(db gorp.SqlExecutor, appID int64, varName string, fargs ...FuncArg) (*sdk.Variable, error) {
+	c := structarg{}
+	for _, f := range fargs {
+		f(&c)
+	}
+
+	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM application_variable
 			WHERE application_id = $1 AND var_name = $2`
 
 	var v sdk.Variable
-	err := db.QueryRow(query, appID, varName).Scan(&v.ID, &v.Name, &v.Value, &v.Type)
-	if err != nil {
-		return v, err
+	var value sql.NullString
+	var cipher []byte
+	if err := db.QueryRow(query, appID, varName).Scan(&v.ID, &v.Name, &value, &v.Type, &cipher); err != nil {
+		return nil, err
 	}
-	if sdk.NeedPlaceholder(v.Type) {
-		v.Value = sdk.PasswordPlaceholder
-	}
-
-	return v, nil
+	var errC error
+	v.Value, errC = secret.DecryptS(v.Type, value, cipher, c.clearsecret)
+	return &v, errC
 }
 
 // GetAllVariableByID Get all variable for the given application
@@ -247,36 +275,54 @@ func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "InsertVariable> Cannot encrypt secret")
 	}
 
 	query := `INSERT INTO application_variable(application_id, var_name, var_value, cipher_value, var_type)
-		  VALUES($1, $2, $3, $4, $5)`
-	_, err = db.Exec(query, app.ID, variable.Name, clear, cipher, string(variable.Type))
-	if err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
+		  VALUES($1, $2, $3, $4, $5) RETURNING id`
+	if err := db.QueryRow(query, app.ID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID); err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
 		return sdk.ErrVariableExists
 	}
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "InsertVariable> Cannot insert variable %s", variable.Name)
 	}
+
+	ava := &sdk.ApplicationVariableAudit{
+		ApplicationID: app.ID,
+		Type:          sdk.AUDIT_ADD,
+		Author:        u.Username,
+		VariableAfter: &variable,
+		VariableID:    variable.ID,
+		Versionned:    time.Now(),
+	}
+
+	if err := InserAudit(db, ava); err != nil {
+		return sdk.WrapError(err, "InsertVariable> Cannot insert audit for variable %d", variable.ID)
+	}
+
 	return UpdateLastModified(db, app, u)
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
+	variableBefore, err := LoadVariableByID(db, app.ID, variable.ID, WithClearPassword())
+	if err != nil {
+		return sdk.WrapError(err, "UpdateVariable> cannot load variable %d", variable.ID)
+	}
+
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return nil
 	}
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret %s", variable.Name)
 	}
 
 	query := `UPDATE application_variable SET var_name= $1, var_value=$2, cipher_value=$3 WHERE id = $4`
 	result, err := db.Exec(query, variable.Name, clear, cipher, variable.ID)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "Cannot update variable %s", variable.Name)
 	}
 	rowAffected, err := result.RowsAffected()
 	if err != nil {
@@ -284,6 +330,20 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 	}
 	if rowAffected == 0 {
 		return ErrNoVariable
+	}
+
+	ava := &sdk.ApplicationVariableAudit{
+		ApplicationID:  app.ID,
+		Type:           sdk.AUDIT_UPDATE,
+		Author:         u.Username,
+		VariableAfter:  variable,
+		VariableBefore: variableBefore,
+		VariableID:     variable.ID,
+		Versionned:     time.Now(),
+	}
+
+	if err := InserAudit(db, ava); err != nil {
+		return sdk.WrapError(err, "UpdateVariable> Cannot insert audit for variable %s", variable.Name)
 	}
 
 	// Update application
@@ -291,12 +351,12 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variableName string, u *sdk.User) error {
+func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
 	query := `DELETE FROM application_variable
 		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
-	result, err := db.Exec(query, app.ID, variableName)
+	result, err := db.Exec(query, app.ID, variable.Name)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "DeleteVariable> Cannot delete variable %s", variable.Name)
 	}
 
 	rowAffected, err := result.RowsAffected()
@@ -306,6 +366,20 @@ func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variableName stri
 	if rowAffected == 0 {
 		return ErrNoVariable
 	}
+
+	ava := &sdk.ApplicationVariableAudit{
+		ApplicationID:  app.ID,
+		Type:           sdk.AUDIT_DELETE,
+		Author:         u.Username,
+		VariableBefore: variable,
+		VariableID:     variable.ID,
+		Versionned:     time.Now(),
+	}
+
+	if err := InserAudit(db, ava); err != nil {
+		return sdk.WrapError(err, "DeleteVariable> Cannot insert audit for variable %s", variable.Name)
+	}
+
 	return UpdateLastModified(db, app, u)
 }
 
@@ -327,7 +401,7 @@ func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 func AddKeyPairToApplication(db gorp.SqlExecutor, app *sdk.Application, keyname string, u *sdk.User) error {
 	pub, priv, errGenerate := keys.Generatekeypair(keyname)
 	if errGenerate != nil {
-		return errGenerate
+		return sdk.WrapError(errGenerate, "AddKeyPairToApplication> Cannot generate key")
 	}
 
 	v := sdk.Variable{
@@ -347,4 +421,39 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, app *sdk.Application, keyname 
 	}
 
 	return InsertVariable(db, app, p, u)
+}
+
+// InsertAudit  insert an application variable audit
+func InserAudit(db gorp.SqlExecutor, ava *sdk.ApplicationVariableAudit) error {
+	dbAppVarAudit := dbApplicationVariableAudit(*ava)
+	if err := db.Insert(&dbAppVarAudit); err != nil {
+		return sdk.WrapError(err, "Cannot Insert Audit for variable %d", ava.VariableID)
+	}
+	*ava = sdk.ApplicationVariableAudit(dbAppVarAudit)
+	return nil
+}
+
+// LoadVariableAudits Load audits for the given variable
+func LoadVariableAudits(db gorp.SqlExecutor, appID, varID int64) ([]sdk.ApplicationVariableAudit, error) {
+	var res []dbApplicationVariableAudit
+	query := "SELECT * FROM application_variable_audit WHERE application_id = $1 AND variable_id = $2 ORDER BY versionned DESC"
+	if _, err := db.Select(&res, query, appID, varID); err != nil {
+		if err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+		if err != nil && err == sql.ErrNoRows {
+			return []sdk.ApplicationVariableAudit{}, nil
+		}
+	}
+
+	avas := make([]sdk.ApplicationVariableAudit, len(res))
+	for i := range res {
+		dbAva := &res[i]
+		if err := dbAva.PostGet(db); err != nil {
+			return nil, err
+		}
+		ava := sdk.ApplicationVariableAudit(*dbAva)
+		avas[i] = ava
+	}
+	return avas, nil
 }

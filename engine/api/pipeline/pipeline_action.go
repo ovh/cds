@@ -74,8 +74,6 @@ func selectAllPipelineActionID(db gorp.SqlExecutor, pipelineStageID int64) ([]in
 func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeline) error {
 	// Insert Joined Action
 	job.Action.Type = sdk.JoinedAction
-	job.Action.Enabled = true
-	job.Enabled = true
 	log.Debug("InsertJob> Insert Action %s on pipeline %s with %d children", job.Action.Name, pip.Name, len(job.Action.Actions))
 	if err := action.InsertAction(db, &job.Action, false); err != nil {
 		return err
@@ -129,6 +127,7 @@ func UpdateJob(db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
 	if err != nil {
 		return err
 	}
+	job.Action.Enabled = job.Enabled
 	return action.UpdateActionDB(db, &job.Action, userID)
 }
 

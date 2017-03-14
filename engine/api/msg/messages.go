@@ -38,6 +38,15 @@ var (
 	EnvironmentGroupCannotBeCreated    = &Message{trad{FR: "Le groupe %s de l'environnement %s n'a pu être ajouté : %s", EN: "Group %s on environment %s cannot be added: %s"}, nil}
 	JobNotValidActionNotFound          = &Message{trad{FR: "Erreur de validation du Job %s : L'action %s à l'étape %d n'a pas été trouvée", EN: "Job %s validation Failure: Unknown action %s on step #%d"}, nil}
 	JobNotValidInvalidActionParameter  = &Message{trad{FR: "Erreur de validation du Job %s : Le paramètre %s de l'étape %d - %s est invalide", EN: "Job %s validation Failure: Invalid parameter %s on step #%d %s"}, nil}
+	PipelineGroupUpdated               = &Message{trad{FR: "Les permissions du groupe %s sur le pipeline %s on été mises à jour", EN: "Permission for group %s on pipeline %s has been updated"}, nil}
+	PipelineGroupAdded                 = &Message{trad{FR: "Les permissions du groupe %s sur le pipeline %s on été ajoutées", EN: "Permission for group %s on pipeline %s has been added"}, nil}
+	PipelineGroupDeleted               = &Message{trad{FR: "Les permissions du groupe %s sur le pipeline %s on été supprimées", EN: "Permission for group %s on pipeline %s has been deleted"}, nil}
+	PipelineStageUpdated               = &Message{trad{FR: "Le stage %s a été mis à jour", EN: "Stage %s updated"}, nil}
+	PipelineStageAdded                 = &Message{trad{FR: "Le stage %s a été ajouté", EN: "Stage %s added"}, nil}
+	PipelineStageDeleted               = &Message{trad{FR: "Le stage %s a été supprimé", EN: "Stage %s deleted"}, nil}
+	PipelineJobUpdated                 = &Message{trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil}
+	PipelineJobAdded                   = &Message{trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil}
+	PipelineJobDeleted                 = &Message{trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil}
 )
 
 //Message represent a struc format translated messages

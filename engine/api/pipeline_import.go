@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -25,11 +24,12 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	format := r.FormValue("format")
+	forceUpdate := FormBool(r, "forceUpdate")
 
 	// Load project
-	proj, err := project.Load(db, key, c.User, project.LoadOptions.Default)
-	if err != nil {
-		return sdk.WrapError(err, "importPipelineHandler> Unable to load project %s", key)
+	proj, errp := project.Load(db, key, c.User, project.LoadOptions.Default)
+	if errp != nil {
+		return sdk.WrapError(errp, "importPipelineHandler> Unable to load project %s", key)
 	}
 
 	// Get body
@@ -60,38 +60,38 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	// Check if pipeline exists
-	exist, err := pipeline.ExistPipeline(db, proj.ID, payload.Name)
-	if err != nil {
-		return sdk.WrapError(err, "importPipelineHandler> Unable to check if pipeline %s exists", payload.Name)
+	exist, errE := pipeline.ExistPipeline(db, proj.ID, payload.Name)
+	if errE != nil {
+		return sdk.WrapError(errE, "importPipelineHandler> Unable to check if pipeline %s exists", payload.Name)
 	}
 
 	//Transform payload to a sdk.Pipeline
-	pip, err := payload.Pipeline()
-	if err != nil {
-		return sdk.WrapError(err, "importPipelineHandler> Unable to parse pipeline %s", payload.Name)
+	pip, errP := payload.Pipeline()
+	if errP != nil {
+		return sdk.WrapError(errP, "importPipelineHandler> Unable to parse pipeline %s", payload.Name)
 	}
 
 	// Load group in permission
 	for i := range pip.GroupPermission {
 		eg := &pip.GroupPermission[i]
-		g, err := group.LoadGroup(db, eg.Group.Name)
-		if err != nil {
-			return sdk.WrapError(err, "importPipelineHandler> Error loading groups for permission")
+		g, errg := group.LoadGroup(db, eg.Group.Name)
+		if errg != nil {
+			return sdk.WrapError(errg, "importPipelineHandler> Error loading groups for permission")
 		}
 		eg.Group = *g
 	}
 
 	allMsg := []msg.Message{}
-	msgChan := make(chan msg.Message, 10)
+	msgChan := make(chan msg.Message, 1)
 	done := make(chan bool)
 
 	go func() {
 		for {
 			msg, ok := <-msgChan
-			log.Debug("importPipelineHandler >>> %s", msg)
 			allMsg = append(allMsg, msg)
 			if !ok {
 				done <- true
+				return
 			}
 		}
 	}()
@@ -106,11 +106,11 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	var globalError error
 
-	if exist {
-		// Override pipeline
-		return fmt.Errorf("Unsupported operation")
+	if exist && !forceUpdate {
+		return sdk.ErrPipelineAlreadyExists
+	} else if exist {
+		globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan, c.User)
 	} else {
-		// Import new pipeline
 		globalError = pipeline.Import(tx, proj, pip, msgChan)
 	}
 
@@ -127,12 +127,14 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		}
 	}
 
+	log.Debug("importPipelineHandler >>> %v", msgListString)
+
 	if globalError != nil {
 		myError, ok := globalError.(*sdk.Error)
 		if ok {
 			return WriteJSON(w, r, msgListString, myError.Status)
 		}
-		return sdk.WrapError(err, "importPipelineHandler> Unable import pipeline")
+		return sdk.WrapError(globalError, "importPipelineHandler> Unable import pipeline")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
@@ -143,10 +145,10 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
 	}
 
-	var errp error
-	proj.Pipelines, errp = pipeline.LoadPipelines(db, proj.ID, true, c.User)
-	if errp != nil {
-		return sdk.WrapError(errp, "importPipelineHandler> Unable to reload pipelines for project %s", proj.Key)
+	var errlp error
+	proj.Pipelines, errlp = pipeline.LoadPipelines(db, proj.ID, true, c.User)
+	if errlp != nil {
+		return sdk.WrapError(errlp, "importPipelineHandler> Unable to reload pipelines for project %s", proj.Key)
 	}
 
 	if err := sanity.CheckProjectPipelines(db, proj); err != nil {

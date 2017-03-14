@@ -84,7 +84,7 @@ func ParameterFind(vars []Parameter, s string) *Parameter {
 func ParametersFromMap(m map[string]string) []Parameter {
 	res := []Parameter{}
 	for k, v := range m {
-		res = append(res, Parameter{Name: k, Value: v})
+		res = append(res, Parameter{Name: k, Value: v, Type: "string"})
 	}
 	return res
 }

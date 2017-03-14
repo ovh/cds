@@ -7,16 +7,20 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-var importFormat, importGit, importURL string
+var (
+	importFormat, importGit, importURL string
+	importForce                        bool
+)
 
 func importCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import",
-		Short: "cds pipeline import <projectKey> [file] [--git <your-repository> --format json|yaml] [--url <url> --format json|yaml]",
+		Short: "cds pipeline import <projectKey> [file] [--url <url> --format json|yaml] [--force]",
 		Long:  "See documentation on https://github.com/ovh/cds/tree/master/doc/tutorials",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
@@ -53,9 +57,23 @@ func importCmd() *cobra.Command {
 			var url string
 			url = fmt.Sprintf("/project/%s/pipeline/import?format=%s", projectKey, importFormat)
 
+			if importForce {
+				url += "&forceUpdate=true"
+			}
+
 			data, code, err := sdk.Request("POST", url, btes)
+			if sdk.ErrorIs(err, sdk.ErrPipelineAlreadyExists) {
+				fmt.Print("Pipline already exists. ")
+				if cli.AskForConfirmation("Do you want to override ?") {
+					url = fmt.Sprintf("/project/%s/pipeline/import?format=%s&forceUpdate=true", projectKey, importFormat)
+					data, code, err = sdk.Request("POST", url, btes)
+				} else {
+					sdk.Exit("Aborted\n")
+				}
+			}
+
 			if code > 400 {
-				sdk.Exit("Error: %s\n", err)
+				sdk.Exit("Error: %d - %s\n", code, err)
 			}
 			if err != nil {
 				sdk.Exit("Error: %s\n", err)
@@ -75,9 +93,9 @@ func importCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&importGit, "git", "", "", "Import pipeline from a git repository. Default filename if .cds.pip.yml")
 	cmd.Flags().StringVarP(&importURL, "url", "", "", "Import pipeline from an URL")
 	cmd.Flags().StringVarP(&importFormat, "format", "", "yaml", "Configuration file format")
+	cmd.Flags().BoolVarP(&importForce, "force", "", false, "Use force flag to update your pipeline")
 
 	return cmd
 }

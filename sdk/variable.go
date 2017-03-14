@@ -60,3 +60,13 @@ func VariablerFind(vars []Variable, s string) *Variable {
 	}
 	return nil
 }
+
+// VariablerFind return a variable given its name if it exists in array
+func VariablerFind(vars []Variable, s string) *Variable {
+	for _, v := range vars {
+		if v.Name == s {
+			return &v
+		}
+	}
+	return nil
+}
