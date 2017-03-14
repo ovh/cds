@@ -9,7 +9,7 @@ testcases:
   - script: {{.cds}} pipeline add ITSSHKEYCHECK pip
   - script: {{.cds}} action remove sshtest || true
   - script: {{.cds}} action add sshtest
-  - script: {{.cds}} action add step sshtest Script -p script="ls -l ~/.ssh; env | grep PKEY; env | grep GIT_SSH; cat \${GIT_SSH}"
+  - script: {{.cds}} action add step sshtest Script -p script="env | grep PKEY; env | grep GIT_SSH; cat \${GIT_SSH}"
   - script: {{.cds}} pipeline job add ITSSHKEYCHECK pip myJob1
   - script: {{.cds}} pipeline job append ITSSHKEYCHECK pip myJob1 sshtest
   - script: {{.cds}} app pipeline add ITSSHKEYCHECK app pip
@@ -25,7 +25,6 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring fookey.pub
   - script: {{.cds}} pipeline run ITSSHKEYCHECK app pip
-  - script: {{.cds}} pipeline run ITSSHKEYCHECK app pip
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring fookey
@@ -38,7 +37,6 @@ testcases:
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring github.pub
-  - script: {{.cds}} pipeline run ITSSHKEYCHECK app pip
   - script: {{.cds}} pipeline run ITSSHKEYCHECK app pip
     assertions:
       - result.code ShouldEqual 0
