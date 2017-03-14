@@ -3,9 +3,11 @@ package git
 import (
 	"bytes"
 	"os"
+	"os/user"
 	"reflect"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk/vcs"
 )
 
@@ -103,6 +105,10 @@ func Test_gitCloneOverHTTPS(t *testing.T) {
 }
 
 func Test_gitCloneOverSSH(t *testing.T) {
+	u, err := user.Current()
+	test.NoError(t, err)
+	homedir := u.HomeDir
+
 	type args struct {
 		repo   string
 		path   string
@@ -121,7 +127,7 @@ func Test_gitCloneOverSSH(t *testing.T) {
 				repo: "git@github.com:fsamin/go-dump.git",
 				path: "/tmp/Test_gitCloneOverHTTPS-1",
 				auth: &AuthOpts{
-					PrivateKey: vcs.SSHKey{Filename: "~/.ssh/id_rsa"},
+					PrivateKey: vcs.SSHKey{Filename: homedir + "/.ssh/id_rsa"},
 				},
 			},
 			wantErr: false,
