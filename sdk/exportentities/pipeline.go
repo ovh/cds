@@ -512,6 +512,7 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 							Enabled: true,
 							Name:    p.Name,
 							Actions: actions,
+							Type:    sdk.JoinedAction,
 						},
 					},
 				},
@@ -642,6 +643,7 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 		Action: sdk.Action{
 			Name:        name,
 			Description: j.Description,
+			Type:        sdk.JoinedAction,
 		},
 	}
 	if j.Enabled != nil {

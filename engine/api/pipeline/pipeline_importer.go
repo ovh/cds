@@ -111,6 +111,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					return errs
 				}
 				jobAction.PipelineStageID = s.ID
+				jobAction.Action.Type = sdk.JoinedAction
 				log.Debug("Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
 				if err := InsertJob(db, jobAction, s.ID, pip); err != nil {
 					return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", jobAction.Action.Name, pip.Name)
@@ -142,6 +143,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 						j.Action.ID = oj.Action.ID
 						j.PipelineActionID = oj.PipelineActionID
 						j.PipelineStageID = oj.PipelineStageID
+						j.Action.Type = sdk.JoinedAction
 						log.Debug(">> Updating job %s on stage %s on pipeline %s", j.Action.Name, s.Name, pip.Name)
 						if err := UpdateJob(db, j, u.ID); err != nil {
 							return sdk.WrapError(err, "ImportUpdate> Unable to update job %s in %s", j.Action.Name, pip.Name)
@@ -156,6 +158,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 				if !jobFound {
 					//Insert the job
 					j.PipelineStageID = s.ID
+					j.Action.Type = sdk.JoinedAction
 					log.Debug(">> Creating job %s on stage %s on pipeline %s", j.Action.Name, s.Name, pip.Name)
 					if err := InsertJob(db, j, s.ID, pip); err != nil {
 						return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", j.Action.Name, pip.Name)
