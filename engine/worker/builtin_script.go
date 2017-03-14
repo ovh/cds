@@ -127,10 +127,10 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 			strings.HasPrefix(e, "CDS_HATCHERY=") {
 			continue
 		}
-		cmd.Env = append(cmd.Env, "CDS_KEY=********")
 		cmd.Env = append(cmd.Env, e)
 	}
-
+	// always set CDS_KEY for some legacy reasons...
+	cmd.Env = append(cmd.Env, "CDS_KEY=********")
 	// worker export http port
 	cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", WorkerServerPort, exportport))
 
