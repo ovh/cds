@@ -2,8 +2,8 @@ package pipeline
 
 import (
 	"fmt"
-	"strings"
 	"time"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 

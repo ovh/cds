@@ -21,6 +21,8 @@ func runBuiltin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Re
 		return runScriptAction(a, pbJob, stepOrder)
 	case sdk.JUnitAction:
 		return runParseJunitTestResultAction(a, pbJob, stepOrder)
+	case sdk.GitCloneAction:
+		return runGitClone(a, pbJob, stepOrder)
 	}
 
 	res.Reason = fmt.Sprintf("Unknown builtin step: %s\n", name)

@@ -172,7 +172,7 @@ func GetAllVariableInProject(db gorp.SqlExecutor, projectID int64, args ...GetAl
 		if err != nil {
 			return nil, err
 		}
-		v.Type = sdk.VariableTypeFromString(typeVar)
+		v.Type = typeVar
 		if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
 			v.Value = string(cipherVal)
 		} else {
@@ -220,14 +220,12 @@ func GetVariableByID(db gorp.SqlExecutor, projectID int64, variableID int64, arg
 	variable := &sdk.Variable{}
 	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM project_variable
 		  WHERE id=$1 AND project_id=$2`
-	var typeVar string
 	var varValue sql.NullString
 	var cipher_value []byte
-	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &typeVar, &cipher_value)
+	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipher_value)
 	if err != nil {
 		return variable, err
 	}
-	variable.Type = sdk.VariableTypeFromString(typeVar)
 
 	var errD error
 	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipher_value, c.clearsecret)
@@ -244,14 +242,12 @@ func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName str
 	variable := &sdk.Variable{}
 	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM project_variable
 		  WHERE var_name=$1 AND project_id=$2`
-	var typeVar string
 	var varValue sql.NullString
 	var cipher_value []byte
-	err := db.QueryRow(query, variableName, projectID).Scan(&variable.ID, &variable.Name, &varValue, &typeVar, &cipher_value)
+	err := db.QueryRow(query, variableName, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipher_value)
 	if err != nil {
 		return variable, err
 	}
-	variable.Type = sdk.VariableTypeFromString(typeVar)
 	var errD error
 	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipher_value, c.clearsecret)
 	return variable, errD

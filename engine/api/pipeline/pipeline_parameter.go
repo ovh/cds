@@ -52,7 +52,7 @@ func GetAllParametersInPipeline(db gorp.SqlExecutor, pipelineID int64 /*, args .
 		if err != nil {
 			return nil, err
 		}
-		p.Type = sdk.ParameterTypeFromString(typeParam)
+		p.Type = typeParam
 		p.Value = val
 		parameters = append(parameters, p)
 	}
