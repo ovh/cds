@@ -124,10 +124,10 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 			strings.HasPrefix(e, "CDS_SINGLE_USE=") ||
 			strings.HasPrefix(e, "CDS_NAME=") ||
 			strings.HasPrefix(e, "CDS_KEY=") ||
-			strings.HasPrefix(e, "CDS_API=") ||
 			strings.HasPrefix(e, "CDS_HATCHERY=") {
 			continue
 		}
+		cmd.Env = append(cmd.Env, "CDS_KEY=********")
 		cmd.Env = append(cmd.Env, e)
 	}
 
