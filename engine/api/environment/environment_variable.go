@@ -161,7 +161,6 @@ func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetA
 	v := sdk.Variable{}
 	var clearVal sql.NullString
 	var cipherVal []byte
-	var typeVar string
 
 	c := structarg{}
 	for _, f := range args {
@@ -173,11 +172,9 @@ func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetA
 	          FROM environment_variable
 	          WHERE environment_id = $1 AND id = $2
 	          ORDER BY name`
-	if err := db.QueryRow(query, envID, varID).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &typeVar); err != nil {
+	if err := db.QueryRow(query, envID, varID).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &v.Type); err != nil {
 		return v, sdk.WrapError(err, "GetVariableByID> Cannot get variable %d", varID)
 	}
-
-	v.Type = sdk.VariableTypeFromString(typeVar)
 
 	if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
 		v.Value = string(cipherVal)
