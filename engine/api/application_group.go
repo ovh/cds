@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -151,54 +150,46 @@ func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	var groupPermission sdk.GroupPermission
 	if err := UnmarshalBody(r, &groupPermission); err != nil {
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot unmarshal request")
 	}
 
 	proj, err := project.Load(db, key, c.User)
 	if err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", key, err)
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load %s", key)
 	}
 
 	app, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", appName, err)
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load %s", appName)
 	}
 
 	g, err := group.LoadGroup(db, groupPermission.Group.Name)
 	if err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot find %s: %s\n", groupPermission.Group.Name, err)
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot find %s", groupPermission.Group.Name)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot start transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
 	if err := application.AddGroup(tx, proj, app, groupPermission); err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot add group %s in application %s:  %s\n", g.Name, app.Name, err)
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot add group %s in application %s", g.Name, app.Name)
 	}
 
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot update application last modified date:  %s\n", err)
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot update application last modified date")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot commit transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot commit transaction")
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 	if err := application.LoadGroupByApplication(db, app); err != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot load application groups: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load application groups")
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)
@@ -213,37 +204,31 @@ func deleteGroupFromApplicationHandler(w http.ResponseWriter, r *http.Request, d
 
 	app, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
-		log.Warning("deleteGroupFromApplicationHandler: Cannot load application %s :  %s\n", appName, err)
-		return err
+		return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application %s", appName)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("deleteGroupFromApplicationHandler: Cannot start transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot start transaction")
 	}
 	defer tx.Rollback()
 
 	if err := group.DeleteGroupFromApplication(tx, key, appName, groupName); err != nil {
-		log.Warning("deleteGroupFromApplicationHandler: Cannot delete group %s from pipeline %s:  %s\n", groupName, appName, err)
-		return err
+		return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot delete group %s from pipeline %s", groupName, appName)
 	}
 
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
-		log.Warning("deleteGroupFromApplicationHandler: Cannot update application last modified date:  %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot update application last modified date")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("deleteGroupFromApplicationHandler: Cannot commit transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot commit transaction")
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 	if err := application.LoadGroupByApplication(db, app); err != nil {
-		log.Warning("deleteGroupFromApplicationHandler: Cannot load application groups: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application groups")
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)
