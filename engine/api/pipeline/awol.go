@@ -47,7 +47,7 @@ func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) er
 
 	tx, errb := db.Begin()
 	if errb != nil {
-		return errb
+		return sdk.WrapError(errb, "killAWOLPipelineBuildJob> cannot begin transaction")
 	}
 	defer tx.Rollback()
 
@@ -63,7 +63,7 @@ func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) er
 
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE action_build_id = $2`
 	if _, err := tx.Exec(query, string(sdk.StatusDisabled), pbJobData.pipelineBuildJobID); err != nil {
-		return err
+		return sdk.WrapError(err, "killAWOLPipelineBuildJob> error while execute query. pbJobData.pipelineBuildJobID:%d", pbJobData.pipelineBuildJobID)
 	}
 
 	return tx.Commit()

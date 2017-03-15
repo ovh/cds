@@ -85,8 +85,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 
 	proj, errload := project.Load(db, key, c.User)
 	if errload != nil {
-		log.Warning("addGroupInApplicationHandler> Cannot load %s: %s\n", key, errload)
-		return errload
+		return sdk.WrapError(errload, "addGroupInApplicationHandler> Cannot load %s", key)
 	}
 
 	var groupsPermission []sdk.GroupPermission
@@ -95,8 +94,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	if len(groupsPermission) == 0 {
-		log.Warning("updateGroupsInApplicationHandler: Cannot remove all groups for application %s", appName)
-		return sdk.ErrGroupNeedWrite
+		return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInApplicationHandler: Cannot remove all groups for application %s", appName)
 	}
 
 	found := false
@@ -107,46 +105,38 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 		}
 	}
 	if !found {
-		log.Warning("updateGroupsInApplicationHandler: Need one group with write permission.")
-		return sdk.ErrGroupNeedWrite
+		return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInApplicationHandler: Need one group with write permission.")
 	}
 
 	app, errLoadName := application.LoadByName(db, key, appName, c.User)
 	if errLoadName != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot load application %s: %s\n", appName, errLoadName)
-		return sdk.ErrApplicationNotFound
+		return sdk.WrapError(sdk.ErrApplicationNotFound, "updateGroupsInApplicationHandler: Cannot load application %s: %s\n", appName, errLoadName)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot start transaction: %s\n", err)
-		return sdk.ErrUnknownError
+		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInApplicationHandler: Cannot start transaction: %s\n", err)
 	}
 	defer tx.Rollback()
 
 	if err := group.DeleteAllGroupFromApplication(tx, app.ID); err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot delete groups from application %s: %s\n", appName, err)
-		return err
+		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot delete groups from application %s", appName)
 	}
 
 	if err := application.AddGroup(tx, proj, app, groupsPermission...); err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot add groups in application %s:  %s\n", app.Name, err)
-		return err
+		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot add groups in application %s", app.Name)
 	}
 
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot commit transaction: %s\n", err)
-		return sdk.ErrUnknownError
+		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInApplicationHandler: Cannot commit transaction: %s\n", err)
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))

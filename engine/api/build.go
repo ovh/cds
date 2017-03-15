@@ -371,7 +371,7 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	pbJob, errTake := pipeline.TakePipelineBuildJob(tx, id, workerModel, caller.Name, infos)
 	if errTake != nil {
 		if errTake != pipeline.ErrAlreadyTaken {
-			log.Warning("takePipelineBuildJobHandler> Cannot give ActionBuild %d: %s\n", id, errTake)
+			return sdk.WrapError(errTake, "takePipelineBuildJobHandler> Cannot give ActionBuild %d", id)
 		}
 		return errTake
 	}
@@ -425,7 +425,7 @@ func addSpawnInfosPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request
 	}
 	var s []sdk.SpawnInfo
 	if err := UnmarshalBody(r, &s); err != nil {
-		return err
+		return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Error while unmarshal request")
 	}
 
 	tx, errBegin := db.Begin()
