@@ -88,34 +88,40 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                  if (this.applicationSubscription) {
                     this.applicationSubscription.unsubscribe();
                 }
-                this.applicationSubscription = this._applicationStore.getApplications(key, appName).subscribe(apps => {
-                    if (apps) {
-                        let updatedApplication = apps.get(key + '-' + appName);
-                        if (updatedApplication && !updatedApplication.externalChange &&
-                            (!this.application || this.application.last_modified < updatedApplication.last_modified)) {
-                            this.readyApp = true;
-                            this.application = updatedApplication;
+                if (this.application && this.application.name !== appName) {
+                     this.application = undefined;
+                    this.stopWorkers();
+                }
+                if (!this.application) {
+                    this.applicationSubscription = this._applicationStore.getApplications(key, appName).subscribe(apps => {
+                        if (apps) {
+                            let updatedApplication = apps.get(key + '-' + appName);
+                            if (updatedApplication && !updatedApplication.externalChange &&
+                                (!this.application || this.application.last_modified < updatedApplication.last_modified)) {
+                                this.readyApp = true;
+                                this.application = updatedApplication;
 
-                            // List applications in workflow
-                            this.checkOtherAppInWorkflow(key);
+                                // List applications in workflow
+                                this.checkOtherAppInWorkflow(key);
 
-                            // Start worker
-                            this.startWorkers(key);
+                                // Start worker
+                                this.startWorkers(key);
 
-                            // Update recent application viewed
-                            this._applicationStore.updateRecentApplication(key, this.application);
+                                // Update recent application viewed
+                                this._applicationStore.updateRecentApplication(key, this.application);
 
-                            // Switch workflow
-                            if (this.workflowComponentList && this.workflowComponentList.length > 0) {
-                                this.workflowComponentList.first.switchApplication();
+                                // Switch workflow
+                                if (this.workflowComponentList && this.workflowComponentList.length > 0) {
+                                    this.workflowComponentList.first.switchApplication();
+                                }
+                            } else if (updatedApplication && updatedApplication.externalChange) {
+                                // TODO show warning
                             }
-                        } else if (updatedApplication && updatedApplication.externalChange) {
-                            // TODO show warning
                         }
-                    }
-                }, () => {
-                    this._router.navigate(['/project', key]);
-                });
+                    }, () => {
+                        this._router.navigate(['/project', key]);
+                    });
+                }
             }
         });
     }
