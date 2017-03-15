@@ -38,7 +38,7 @@ var (
 	buildVariables []sdk.Variable
 	// Git ssh configuration
 	pkey           string
-	gitssh         string
+	gitsshPath     string
 	startTimestamp time.Time
 	nbActionsDone  int
 	status         struct {
@@ -265,7 +265,7 @@ func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
 	}
 
 	nbActionsDone++
-	gitssh = ""
+	gitsshPath = ""
 	pkey = ""
 	path := fmt.Sprintf("/queue/%d/take", b.ID)
 	data, code, errr := sdk.Request("POST", path, bodyTake)

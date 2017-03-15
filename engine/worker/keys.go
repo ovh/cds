@@ -10,22 +10,25 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-const gitsshscript = `#!/bin/sh
+// DEPRECATED
+var keysDirectory string
+
+// DEPRECATED
+const (
+	gitsshscript = `#!/bin/sh
 if [ -z "$PKEY" ]; then
 	ssh "$@"
 else
 	ssh -oStrictHostKeyChecking=no -i "$PKEY" "$@"
 fi
 `
+	pKEY   = "PKEY"
+	gitSSH = "GIT_SSH"
+)
 
-// pKEY contains the environment variable containing path to specific ssh key to use
-const pKEY = "PKEY"
-
-// GitSSH is the name of the environment variable that need to be set so git use our specific key
-const GitSSH = "GIT_SSH"
-
+// DEPRECATED
 func writeSSHKey(key []byte, keypath string) error {
-
+	log.Debug("writeSSHKey> Writing key in %", keypath)
 	err := ioutil.WriteFile(keypath, key, os.FileMode(0600))
 	if err != nil {
 		return err
@@ -35,6 +38,7 @@ func writeSSHKey(key []byte, keypath string) error {
 	return nil
 }
 
+// DEPRECATED
 func writeGitSSH(p string) error {
 	p = path.Join(p, "gitssh.sh")
 	err := ioutil.WriteFile(p, []byte(gitsshscript), os.FileMode(0770))
@@ -42,13 +46,16 @@ func writeGitSSH(p string) error {
 		return err
 	}
 
-	gitssh = p
+	gitsshPath = p
+	log.Debug("writeGitSSH> gitssh.sh is  %s", p)
 	return nil
 }
 
 // Setup SSH keys will chose from available keys in this order:
 // Environment > Application > Project
+// This is the DEPRECATED way to setup ssh key
 func setupSSHKey(vars []sdk.Variable, keypath string) error {
+	log.Debug("setupSSHKey> setup key in %s", keypath)
 	var key sdk.Variable
 	var prio int
 

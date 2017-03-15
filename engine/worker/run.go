@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/vcs"
 )
 
 // ProcessActionVariables replaces all placeholders inside action recursively using
@@ -376,7 +377,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	// So they can be used by plugins
 	for _, s := range pbji.Secrets {
 		p := sdk.Parameter{
-			Type:  sdk.ParameterType("password"),
+			Type:  s.Type,
 			Name:  s.Name,
 			Value: s.Value,
 		}
@@ -415,8 +416,27 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	}
 
 	// Setup user ssh keys
+	keysDirectory = workingDirectory(basedir, pbji)
+	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
+		time.Sleep(5 * time.Second)
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
+		}
+	}
 
-	if err := setupSSHKey(pbji.Secrets, path.Join(wd, ".ssh")); err != nil {
+	// DEPRECATED - BEGIN
+	if err := setupSSHKey(pbji.Secrets, keysDirectory); err != nil {
+		time.Sleep(5 * time.Second)
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
+		}
+	}
+	// DEPRECATED - END
+
+	// The right way to go is :
+	if err := vcs.SetupSSHKey(pbji.Secrets, keysDirectory, nil); err != nil {
 		time.Sleep(5 * time.Second)
 		return sdk.Result{
 			Status: sdk.StatusFail,

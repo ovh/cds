@@ -31,6 +31,10 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return sdk.WrapError(errp, "importPipelineHandler> Unable to load project %s", key)
 	}
 
+	if err := group.LoadGroupByProject(db, proj); err != nil {
+		return sdk.WrapError(errp, "importPipelineHandler> Unable to load project permissions %s", key)
+	}
+
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {

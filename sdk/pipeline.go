@@ -590,7 +590,7 @@ func AddParameterInPipeline(projectKey, pipelineName, paramName, paramValue, par
 	newParam := Parameter{
 		Name:        paramName,
 		Value:       paramValue,
-		Type:        ParameterTypeFromString(paramType),
+		Type:        paramType,
 		Description: paramDescription,
 	}
 
@@ -622,7 +622,7 @@ func UpdateParameterInPipeline(projectKey, pipelineName, paramName, paramValue, 
 	newParam := Parameter{
 		Name:        paramName,
 		Value:       paramValue,
-		Type:        ParameterTypeFromString(paramType),
+		Type:        paramType,
 		Description: paramDescription,
 	}
 

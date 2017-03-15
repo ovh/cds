@@ -188,7 +188,7 @@ func Decrypt(data []byte) ([]byte, error) {
 // DecryptS wrap Decrypt and:
 // - return Placeholder instead of value if not needed
 // - cast returned value in string
-func DecryptS(ptype sdk.VariableType, val sql.NullString, data []byte, clear bool) (string, error) {
+func DecryptS(ptype string, val sql.NullString, data []byte, clear bool) (string, error) {
 	// If not a password, return value
 	if !sdk.NeedPlaceholder(ptype) && val.Valid {
 		return val.String, nil
@@ -218,7 +218,7 @@ func DecryptS(ptype sdk.VariableType, val sql.NullString, data []byte, clear boo
 // EncryptS wrap Encrypt and:
 // - return valid string if type is not a password
 // - cipher and returned ciphered value in a []byte if password
-func EncryptS(ptype sdk.VariableType, value string) (sql.NullString, []byte, error) {
+func EncryptS(ptype string, value string) (sql.NullString, []byte, error) {
 	var n sql.NullString
 
 	if !sdk.NeedPlaceholder(ptype) {

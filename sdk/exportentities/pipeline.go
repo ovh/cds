@@ -488,7 +488,7 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 	for p, v := range p.Parameters {
 		param := sdk.Parameter{
 			Name:  p,
-			Type:  sdk.ParameterTypeFromString(v.Type),
+			Type:  v.Type,
 			Value: v.DefaultValue,
 		}
 		pip.Parameter = append(pip.Parameter, param)
@@ -652,7 +652,6 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 		job.Enabled = true
 	}
 	job.Action.Enabled = job.Enabled
-
 	for _, r := range j.Requirements {
 		var name, tpe, val string
 		if r.Binary != "" {

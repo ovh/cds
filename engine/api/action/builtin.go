@@ -76,6 +76,58 @@ Parse given file to extract Unit Test results.`
 		return err
 	}
 
+	// ----------------------------------- Git clone    -----------------------
+	gitclone := sdk.NewAction(sdk.GitCloneAction)
+	gitclone.Type = sdk.BuiltinAction
+	gitclone.Description = `CDS Builtin Action.
+Clone a repository into a new directory.`
+
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "url",
+		Description: "URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.",
+		Value:       "{{.git.http_url}}",
+		Type:        sdk.StringParameter,
+	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "privateKey",
+		Value:       "{{.cds.app.key}}",
+		Description: "Set the private key to be able to git clone from ssh",
+		Type:        sdk.KeyParameter,
+	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "user",
+		Description: "Set the user to be able to git clone from https with authentication",
+		Type:        sdk.StringParameter,
+	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "password",
+		Description: "Set the password to be able to git clone from https with authentication",
+		Type:        sdk.StringParameter,
+	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "branch",
+		Description: "Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.git.branch}} branch instead.",
+		Value:       "{{.git.branch}}",
+		Type:        sdk.StringParameter,
+	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "commit",
+		Description: "Set the current branch head (HEAD) to the commit.",
+		Value:       "{{.git.hash}}",
+		Type:        sdk.StringParameter,
+	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "directory",
+		Description: "The name of a new directory to clone into.",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gitclone.Requirement("git", sdk.BinaryRequirement, "git")
+
+	if err := checkBuiltinAction(db, gitclone); err != nil {
+		return err
+	}
+
 	return nil
 }
 

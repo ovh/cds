@@ -68,7 +68,7 @@ func actionPluginToAction(ap *sdk.ActionPlugin, params *plugin.Parameters) (*sdk
 	actionParams := []sdk.Parameter{}
 	names := params.Names()
 	for _, p := range names {
-		var t sdk.ParameterType
+		var t string
 		switch params.GetType(p) {
 		case plugin.EnvironmentParameter:
 			t = sdk.EnvironmentParameter
