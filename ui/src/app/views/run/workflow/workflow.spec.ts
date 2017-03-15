@@ -45,8 +45,10 @@ describe('CDS: Pipeline Run Workflow', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        fixture.componentInstance.buildWorker = new MockWorker();
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
+        tick(250);
+
+        fixture.componentInstance.build = getPipelineBuild();
 
         fixture.detectChanges();
         tick(250);
@@ -71,6 +73,30 @@ describe('CDS: Pipeline Run Workflow', () => {
     }));
 });
 
+function getPipelineBuild(): PipelineBuild {
+    let pb = new PipelineBuild();
+    pb.version = 123;
+    pb.stages = new Array<Stage>();
+    let s: Stage = new Stage();
+    s.name = 'Stage 1';
+    s.id = 1;
+    s.jobs = new Array<Job>();
+    s.jobs.push(createJob(1, 'jobBuilding'));
+    s.jobs.push(createJob(2, 'jobSkipped'));
+    s.jobs.push(createJob(3, 'jobDisabled'));
+    s.jobs.push(createJob(4, 'jobSuccess'));
+    s.jobs.push(createJob(5, 'jobFail'));
+    s.jobs.push(createJob(6, 'jobWaiting'));
+    s.builds = new Array<PipelineBuildJob>();
+    s.builds.push(createPipelineBuildJob(1, 'jobBuilding', 'Building'));
+    s.builds.push(createPipelineBuildJob(2, 'jobSkipped', 'Skipped'));
+    s.builds.push(createPipelineBuildJob(3, 'jobDisabled', 'Disabled'));
+    s.builds.push(createPipelineBuildJob(4, 'jobSuccess', 'Success'));
+    s.builds.push(createPipelineBuildJob(5, 'jobFail', 'Fail'));
+    s.builds.push(createPipelineBuildJob(6, 'jobWaiting', 'Waiting'));
+    pb.stages.push(s);
+    return pb;
+}
 
 function createJob(id: number, name: string): Job {
     let j: Job = new Job();
@@ -89,39 +115,4 @@ function createPipelineBuildJob(id: number, name: string, status: string): Pipel
     pbJob.job = j;
     pbJob.status = status;
     return pbJob;
-}
-
-class MockWorker extends CDSWorker {
-    constructor() {
-        super('fake');
-    }
-
-    response(): any {
-        let pb = new PipelineBuild();
-        pb.version = 123;
-        pb.stages = new Array<Stage>();
-        let s: Stage = new Stage();
-        s.name = 'Stage 1';
-        s.id = 1;
-        s.jobs = new Array<Job>();
-        s.jobs.push(createJob(1, 'jobBuilding'));
-        s.jobs.push(createJob(2, 'jobSkipped'));
-        s.jobs.push(createJob(3, 'jobDisabled'));
-        s.jobs.push(createJob(4, 'jobSuccess'));
-        s.jobs.push(createJob(5, 'jobFail'));
-        s.jobs.push(createJob(6, 'jobWaiting'));
-        s.builds = new Array<PipelineBuildJob>();
-        s.builds.push(createPipelineBuildJob(1, 'jobBuilding', 'Building'));
-        s.builds.push(createPipelineBuildJob(2, 'jobSkipped', 'Skipped'));
-        s.builds.push(createPipelineBuildJob(3, 'jobDisabled', 'Disabled'));
-        s.builds.push(createPipelineBuildJob(4, 'jobSuccess', 'Success'));
-        s.builds.push(createPipelineBuildJob(5, 'jobFail', 'Fail'));
-        s.builds.push(createPipelineBuildJob(6, 'jobWaiting', 'Waiting'));
-        pb.stages.push(s);
-
-
-
-        let response = JSON.stringify(pb);
-        return Observable.of(response);
-    }
 }

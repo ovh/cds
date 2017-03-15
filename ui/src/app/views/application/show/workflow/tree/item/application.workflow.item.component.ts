@@ -105,17 +105,6 @@ export class ApplicationWorkflowItemComponent {
 
     }
 
-    runAgain(): void {
-        this._appPipService.runAgain(
-            this.workflowItem.project.key,
-            this.workflowItem.application.name,
-            this.workflowItem.pipeline.name,
-            this.workflowItem.pipeline.last_pipeline_build.build_number,
-            this.workflowItem.environment.name).subscribe(pb => {
-            this.navigateToBuild(pb);
-        });
-    }
-
     navigateToBuild(pb: PipelineBuild): void {
         let queryParams = { queryParams:  {envName: pb.environment.name}};
         if (this.applicationFilter.branch !== '') {
@@ -171,8 +160,9 @@ export class ApplicationWorkflowItemComponent {
                         this.launchParentBuildNumber = pbs[0].build_number;
                     });
             }
-
-            this.launchModal.show({autofocus: false, closable: false});
+            setTimeout(() => {
+                this.launchModal.show({autofocus: false, closable: false});
+            }, 100);
         } else {
             console.log('Error loading modal');
         }
@@ -233,7 +223,9 @@ export class ApplicationWorkflowItemComponent {
         this.triggerInModal.src_environment = new Environment();
         this.triggerInModal.src_environment.name = this.workflowItem.environment.name;
         this.triggerInModal.dest_project = this.project;
-        this.createTriggerModal.show({autofocus: false, closable: false, observeChanges: true});
+        setTimeout(() => {
+            this.createTriggerModal.show({autofocus: false, closable: false, observeChanges: true});
+        }, 100);
     }
 
     /**
@@ -281,13 +273,17 @@ export class ApplicationWorkflowItemComponent {
 
     openEditTriggerModal(): void {
         this.triggerInModal = _.cloneDeep(this.workflowItem.trigger);
-        this.editTriggerModal.show({autofocus: false, closable: false, observeChanges: true});
+        setTimeout(() => {
+            this.editTriggerModal.show({autofocus: false, closable: false, observeChanges: true});
+        }, 100);
     }
 
     openCreateSchedulerModal(): void {
         this.newScheduler = new Scheduler();
         if (this.createSchedulerModal) {
-            this.createSchedulerModal.show({autofocus: false, closable: false, observeChanges: true});
+            setTimeout(() => {
+                this.createSchedulerModal.show({autofocus: false, closable: false, observeChanges: true});
+            }, 100);
         }
     }
 

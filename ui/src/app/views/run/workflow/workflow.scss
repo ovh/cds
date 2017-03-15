@@ -74,11 +74,16 @@ ul {
           height: calc(100% + 14px);
         }
       }
-      .ui.segment {
-        height: 50px;
-      }
 
       .job.ui.segment {
+        height: 51px;
+
+        .truncate {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
         .duration {
           position: absolute;
           right: 4px;
@@ -89,9 +94,13 @@ ul {
         }
       }
 
+      .job.ui.segment {
+        border: 2px solid transparent;
+      }
       .job.ui.segment.active {
         border: 2px solid $cds_color_teal;
       }
+
     }
   }
 
@@ -115,6 +124,9 @@ ul {
   }
   li.six.stage {
     width: 16%;
+  }
+  li.seven.stage {
+    width: 14%;
   }
 }
 

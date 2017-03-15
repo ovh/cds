@@ -73,53 +73,61 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             if (q['version']) {
                 this.appVersionFilter = q['version'];
             }
+            if (q['ts'] && this.project && this.application && this.currentBuildNumber) {
+                this.currentBuild = undefined;
+                this.histories = undefined;
+                this.startWorker();
+            }
         });
         this._activatedRoute.params.subscribe(params => {
             let buildNumber = params['buildNumber'];
 
             if (buildNumber && this.envName) {
                 this.currentBuildNumber = Number(buildNumber);
+                this.startWorker();
+            }
+        });
+    }
 
-                if (this.workerSubscription) {
-                    this.workerSubscription.unsubscribe();
-                }
-                this.worker = new CDSWorker('./assets/worker/web/runpipeline.js');
-                this.worker.start({
-                    user: this._authStore.getUser(),
-                    session: this._authStore.getSessionToken(),
-                    api: environment.apiURL,
-                    key: this.project.key,
-                    appName: this.application.name,
-                    pipName: this.pipeline.name,
-                    envName: this.envName,
-                    buildNumber: buildNumber
-                });
+    startWorker(): void {
+        if (this.workerSubscription) {
+            this.workerSubscription.unsubscribe();
+        }
+        this.worker = new CDSWorker('./assets/worker/web/runpipeline.js');
+        this.worker.start({
+            user: this._authStore.getUser(),
+            session: this._authStore.getSessionToken(),
+            api: environment.apiURL,
+            key: this.project.key,
+            appName: this.application.name,
+            pipName: this.pipeline.name,
+            envName: this.envName,
+            buildNumber: this.currentBuildNumber
+        });
 
-                this.worker.response().subscribe(msg => {
-                    if (msg) {
-                        let build: PipelineBuild = JSON.parse(msg);
-                        this.zone.run(() => {
-                            this.currentBuild = build;
+        this.worker.response().subscribe(msg => {
+            if (msg) {
+                let build: PipelineBuild = JSON.parse(msg);
+                this.zone.run(() => {
+                    this.currentBuild = build;
 
-                            if (this.currentBuild.status !== 'Building') {
-                                this.duration = this._durationService.duration(
-                                    new Date(this.currentBuild.start), new Date(this.currentBuild.done));
-                            }
+                    if (this.currentBuild.status !== 'Building') {
+                        this.duration = this._durationService.duration(
+                            new Date(this.currentBuild.start), new Date(this.currentBuild.done));
+                    }
 
-                            if (build.artifacts) {
-                                if (build.artifacts.length !== this.nbArtifacts) {
-                                    this.nbArtifacts = build.artifacts.length;
-                                }
-                            }
-                            if (build.tests) {
-                                if (build.tests.total !== this.nbTests) {
-                                    this.nbTests = build.tests.total;
-                                }
-                            }
-                            if (!this.histories) {
-                                this.loadHistory(build);
-                            }
-                        });
+                    if (build.artifacts) {
+                        if (build.artifacts.length !== this.nbArtifacts) {
+                            this.nbArtifacts = build.artifacts.length;
+                        }
+                    }
+                    if (build.tests) {
+                        if (build.tests.total !== this.nbTests) {
+                            this.nbTests = build.tests.total;
+                        }
+                    }
+                    if (!this.histories) {
+                        this.loadHistory(build);
                     }
                 });
             }

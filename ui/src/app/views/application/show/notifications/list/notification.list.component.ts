@@ -72,7 +72,9 @@ export class ApplicationNotificationListComponent extends Table implements After
             this.selectedNotification.application_pipeline_id = n.application_pipeline_id;
             this.selectedNotification.notifications[key] = _.cloneDeep(n.notifications[key]);
         }
-        this.editNotifModal.show({autofocus: false, closable: false, observeChanges: false});
+        setTimeout(() => {
+            this.editNotifModal.show({autofocus: false, closable: false, observeChanges: false});
+        }, 100);
     }
 
     close(): void {

@@ -379,9 +379,6 @@ describe('CDS: Application Workflow Item', () => {
 
         fixture.componentInstance.runWithParameters();
 
-        // Open modal?
-        expect(fixture.componentInstance.launchModal.show).toHaveBeenCalled();
-
         // Check Git params
         expect(fixture.componentInstance.launchGitParams.length).toBe(1);
         expect(fixture.componentInstance.launchGitParams[0].name).toBe('git.branch');
@@ -393,6 +390,10 @@ describe('CDS: Application Workflow Item', () => {
         // Check run parameter
         expect(fixture.componentInstance.launchPipelineParams.length).toBe(1);
         expect(fixture.componentInstance.launchPipelineParams[0].name).toBe('foo');
+
+        tick(150);
+        // Open modal?
+        expect(fixture.componentInstance.launchModal.show).toHaveBeenCalled();
     }));
 
     it('should load manual run data with parent information', fakeAsync(() => {
@@ -477,9 +478,6 @@ describe('CDS: Application Workflow Item', () => {
 
         fixture.componentInstance.runWithParameters();
 
-        // Open modal?
-        expect(fixture.componentInstance.launchModal.show).toHaveBeenCalled();
-
         // Check Git params
         expect(fixture.componentInstance.launchGitParams.length).toBe(1);
         expect(fixture.componentInstance.launchGitParams[0].name).toBe('git.branch');
@@ -493,6 +491,10 @@ describe('CDS: Application Workflow Item', () => {
         expect(fixture.componentInstance.launchPipelineParams[0].name).toBe('commonParam');
         expect(fixture.componentInstance.launchPipelineParams[0].value).toBe('commonParam-Value');
         expect(fixture.componentInstance.launchPipelineParams[1].name).toBe('onlyInPip');
+
+        tick(150);
+        // Open modal?
+       expect(fixture.componentInstance.launchModal.show).toHaveBeenCalled();
     }));
 
     it('should add/update/delete trigger', fakeAsync(() => {

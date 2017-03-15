@@ -3,7 +3,10 @@
         <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [appVersion]="appVersionFilter" [version]="currentBuild?.version" [buildNumber]="currentBuild?.build_number" [envName]="envName" [branch]="branch"></app-breadcrumb>
     </div>
 
-    <app-run-summary [currentBuild]="currentBuild" [duration]="duration"></app-run-summary>
+    <ng-container *ngIf="application && currentBuild">
+        <app-run-summary [application]="application" [currentBuild]="currentBuild" [duration]="duration"></app-run-summary>
+    </ng-container>
+
 
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
@@ -38,7 +41,7 @@
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab" *ngIf="currentBuild">
                 <div *ngSwitchCase="'pipeline'" >
-                    <app-pipeline-run-workflow [buildWorker]="worker"
+                    <app-pipeline-run-workflow [build]="currentBuild"
                         [project]="project" [application]="application" [pipeline]="pipeline" [previousBuild]="previousBuild"></app-pipeline-run-workflow>
                 </div>
                 <div *ngSwitchCase="'test'">

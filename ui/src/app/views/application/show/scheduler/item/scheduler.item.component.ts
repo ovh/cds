@@ -34,7 +34,9 @@ export class ApplicationSchedulerItemComponent {
     editScheduler(): void {
         if (this.editSchedulerModal) {
             this.editableScheduler = _.cloneDeep(this.scheduler);
-            this.editSchedulerModal.show();
+            setTimeout(() => {
+                this.editSchedulerModal.show();
+            }, 100);
         }
     }
 
