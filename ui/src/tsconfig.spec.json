@@ -5,18 +5,22 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es5",
     "lib": [
-      "es2016",
-      "dom"
+      "es2016"
     ],
-    "outDir": "../out-tsc/app",
-    "module": "es2015",
+    "outDir": "../out-tsc/spec",
+    "module": "commonjs",
+    "target": "es5",
     "baseUrl": "",
-    "types": []
+    "types": [
+      "jasmine",
+      "node"
+    ]
   },
-  "exclude": [
-    "test.ts",
+  "files": [
+    "test.ts"
+  ],
+  "include": [
     "**/*.spec.ts"
   ]
 }

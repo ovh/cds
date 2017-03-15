@@ -1,6 +1,6 @@
 {
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "project": {
-    "version": "1.0.0-beta.30",
     "name": "ui-ng2"
   },
   "apps": [
@@ -16,6 +16,7 @@
       "polyfills": "polyfills.ts",
       "test": "test.ts",
       "tsconfig": "tsconfig.app.json",
+      "testTsconfig": "tsconfig.spec.json",
       "prefix": "app",
       "styles": [
         "../node_modules/dragula/dist/dragula.css",
@@ -42,7 +43,8 @@
         "../node_modules/codemirror/mode/powershell/powershell.js",
         "../node_modules/codemirror/mode/python/python.js",
         "../node_modules/ansi_up/ansi_up.js",
-        "../node_modules/duration-js/duration.js"
+        "../node_modules/duration-js/duration.js",
+        "../node_modules/prismjs/themes/prism-okaidia.css"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {
@@ -61,6 +63,10 @@
     {
       "files": "src/**/*.ts",
       "project": "src/tsconfig.app.json"
+    },
+    {
+      "files": "src/**/*.spec.ts",
+      "project": "src/tsconfig.spec.json"
     }
   ],
   "test": {
@@ -70,9 +76,6 @@
   },
   "defaults": {
     "styleExt": "scss",
-    "component": {
-      "inlineTemplate": false,
-      "spec": true
-    }
+    "component": {}
   }
 }
