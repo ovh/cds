@@ -9,7 +9,8 @@
                         [class.three]="currentBuild.stages.length === 3"
                         [class.four]="currentBuild.stages.length === 4"
                         [class.five]="currentBuild.stages.length === 5"
-                        [class.six]="currentBuild.stages.length === 6">
+                        [class.six]="currentBuild.stages.length === 6"
+                        [class.seven]="currentBuild.stages.length === 7">
                         <div class="stageItem">
                             {{stage.name}}
                             <ul>
@@ -18,14 +19,15 @@
                                          [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
                                          [class.success]="mapJobStatus[j.pipeline_action_id] === 'Success'"
                                          [class.inactive]="mapJobStatus[j.pipeline_action_id] === 'Disabled'"
+                                         [class.inactive]="mapJobStatus[j.pipeline_action_id] === 'Skipped'"
                                          [class.fail]="mapJobStatus[j.pipeline_action_id] === 'Fail'"
                                          [class.building]="mapJobStatus[j.pipeline_action_id] === 'Building'"
                                          (click)="selectedJob(j, stage)">
-                                        <div>
+                                        <div class="truncate">
                                             <app-status-icon [status]="mapJobStatus[j.pipeline_action_id]" [value]="mapJobProgression[j.pipeline_action_id]"></app-status-icon>
                                             {{j.action.name}}
                                         </div>
-                                        <div class="duration">
+                                        <div class="duration" *ngIf="mapJobStatus[j.pipeline_action_id] !== 'Disabled' && mapJobStatus[j.pipeline_action_id] !== 'Skipped'">
                                             {{mapJobDuration[j.pipeline_action_id]}}
                                         </div>
                                     </div>

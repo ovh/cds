@@ -61,6 +61,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
                 key: this.project.key,
                 appName: this.application.name,
                 pipName: this.pipeline.name,
+                envName: this.pipelineBuild.environment.name,
                 buildNumber: this.pipelineBuild.build_number,
                 jobID: this.jobID,
                 stepOrder: this.stepOrder

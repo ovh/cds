@@ -73,6 +73,9 @@ a.disabled:hover {
 .ui.green.button {
   background-color: $cds_color_green !important;
 }
+.ui.green.basic.button {
+  background-color: transparent !important;
+}
 .ui.green.button:active {
   color: #000000;
 }
@@ -88,6 +91,9 @@ a.disabled:hover {
 .ui.red.button {
   background-color: $cds_color_red !important;
 }
+.ui.red.basic.button {
+  background-color: transparent !important;
+}
 .ui.red.button:active {
   color: #000000;
 }
@@ -102,6 +108,9 @@ a.disabled:hover {
 
 .ui.blue.button {
   background-color: $cds_color_teal !important;
+}
+.ui.blue.basic.button {
+  background-color: transparent !important;
 }
 .ui.blue.button:active {
   color: #000000;

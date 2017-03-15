@@ -42,29 +42,41 @@
                 <div class="ui grid">
                     <div class="row">
                         <div class="three wide column">
-                            <div *ngIf="application.permission > 4">
+                            <div *ngIf="application.permission > 4" class="verticalPlayIcon">
                                 <a class="pointing" (click)="runPipeline()"><i class="video play outline icon run"></i></a>
                             </div>
                         </div>
                         <div class="ten wide column">
-                            <span *ngIf="workflowItem.pipeline.last_pipeline_build"
-                                  [ngSwitch]="workflowItem.pipeline.last_pipeline_build?.status">
-                                <div class="ui active inline blue loader"
-                                     *ngSwitchCase="'Building'"
-                                     [class.medium]="workflowItem.pipeline.last_pipeline_build.version < 10"
-                                     [class.large]="workflowItem.pipeline.last_pipeline_build.version >= 10 && workflowItem.pipeline.last_pipeline_build.version < 10000"
-                                     [class.huge]="workflowItem.pipeline.last_pipeline_build.version >= 10000 && workflowItem.pipeline.last_pipeline_build.version < 100000"
-                                     [class.massive]="workflowItem.pipeline.last_pipeline_build.version >= 100000">
-                                    <span *ngIf="workflowItem.pipeline.last_pipeline_build" class="ui blue circular label">{{'v' + workflowItem.pipeline.last_pipeline_build.version }}</span>
+                            <div class="pipelineLabel">
+                                <div>
+                                    <ng-container *ngIf="workflowItem.pipeline.last_pipeline_build" [ngSwitch]="workflowItem.pipeline.last_pipeline_build?.status">
+                                        <div class="ui active inline blue loader"
+                                             *ngSwitchCase="'Building'"
+                                             [class.medium]="workflowItem.pipeline.last_pipeline_build.version < 10"
+                                             [class.large]="workflowItem.pipeline.last_pipeline_build.version >= 10 && workflowItem.pipeline.last_pipeline_build.version < 10000"
+                                             [class.huge]="workflowItem.pipeline.last_pipeline_build.version >= 10000 && workflowItem.pipeline.last_pipeline_build.version < 100000"
+                                             [class.massive]="workflowItem.pipeline.last_pipeline_build.version >= 100000">
+                                            <span *ngIf="workflowItem.pipeline.last_pipeline_build" class="ui blue circular label">{{'v' + workflowItem.pipeline.last_pipeline_build.version }}</span>
+                                        </div>
+                                        <span *ngSwitchDefault class="ui black circular label">{{'v' + workflowItem.pipeline.last_pipeline_build.version }}</span>
+                                    </ng-container>
+                                    <span
+                                            [class.medium]="workflowItem.pipeline.last_pipeline_build?.version < 10"
+                                            [class.large]="workflowItem.pipeline.last_pipeline_build?.version >= 10 && workflowItem.pipeline.last_pipeline_build?.version < 10000"
+                                            [class.huge]="workflowItem.pipeline.last_pipeline_build?.version >= 10000 && workflowItem.pipeline.last_pipeline_build?.version < 100000"
+                                            [class.massive]="workflowItem.pipeline.last_pipeline_build?.version >= 100000">
+                                    <span class="toto" *ngIf="workflowItem.pipeline.name.length <= 17">{{workflowItem.pipeline.name}}</span>
+                                     <span class="toto" *ngIf="workflowItem.pipeline.name.length > 17" smDirTooltip="{{workflowItem.pipeline.name}}">{{workflowItem.pipeline.name | truncate:17}}</span>
+                                    </span>
                                 </div>
-                                <span *ngSwitchDefault class="ui black circular label">{{'v' + workflowItem.pipeline.last_pipeline_build.version }}</span>
-                            </span>
-                            {{workflowItem.pipeline.name}}
+                            </div>
                         </div>
-                        <div class="one wide column" *ngIf="workflowItem.pipeline.last_pipeline_build">
-                            <a class="pointing" (click)="navigateToBuild(workflowItem.pipeline.last_pipeline_build)">
-                                <i class="newspaper icon"></i>
-                            </a>
+                        <div class="three wide column" *ngIf="workflowItem.pipeline.last_pipeline_build">
+                            <div class="verticalDetailIcon">
+                                <a class="pointing" (click)="navigateToBuild(workflowItem.pipeline.last_pipeline_build)">
+                                    <i class="newspaper icon"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -83,7 +95,6 @@
         </div>
         <div class="actionMenu" *ngIf="workflowItem && application.permission > 4">
             <sm-dropdown>
-                <a sm-item class="item" (click)="runAgain()">{{ 'pipeline_label_run_again' | translate }}</a>
                 <a sm-item class="item" (click)="runWithParameters()">{{ 'pipeline_label_run_with_parameter' | translate }}</a>
                 <a sm-item class="item" (click)="rollback()">{{ 'pipeline_label_rollback' | translate }}</a>
                 <div class="divider" *ngIf="application.permission === 7"></div>
@@ -146,7 +157,7 @@
     <modal-content>
         <div class="ui form" *ngIf="launchPipelineParams">
             <div class="field" *ngIf="workflowItem.parent">
-                <label>{{ 'parent' | translate }}</label>
+                <label>{{ 'pipeline_parent_version' | translate }}</label>
                 <sm-select class="fluid search" [disabled]="loading" name="envname" [(model)]="launchParentVersion">
                     <option *ngFor="let pb of launchOldBuilds" [value]="pb.build_number">{{pb.version}}</option>
                 </sm-select>

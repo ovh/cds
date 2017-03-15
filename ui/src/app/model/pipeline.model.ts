@@ -17,6 +17,7 @@ export class Pipeline {
     parameters: Array<Parameter>;
     permission: number;
     last_modified: number;
+    projectKey: string;
     attached_application: Array<Application>;
 
     // true if someone has updated the pipeline ( used for warnings )
