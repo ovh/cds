@@ -8,7 +8,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -166,7 +165,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 	t := time.Now()
 	log.Debug("CheckJob> Begin")
 	defer log.Debug("CheckJob> End (%d ns)", time.Since(t).Nanoseconds())
-	errs := new(msg.Errors)
+	errs := new(sdk.Errors)
 	//Check steps
 	for i := range job.Action.Actions {
 		step := &job.Action.Actions[i]
@@ -174,7 +173,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 		a, err := action.LoadPublicAction(db, step.Name)
 		if err != nil {
 			if err == sdk.ErrNoAction {
-				*errs = append(*errs, msg.New(msg.JobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
+				*errs = append(*errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
 				continue
 			}
 			return sdk.WrapError(err, "CheckJob> Unable to load public action %s", step.Name)
@@ -197,7 +196,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 				}
 			}
 			if !found {
-				*errs = append(*errs, msg.New(msg.JobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
+				*errs = append(*errs, sdk.NewMessage(sdk.MsgJobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
 			}
 		}
 

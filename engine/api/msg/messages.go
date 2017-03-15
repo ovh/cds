@@ -1,5 +1,6 @@
 package msg
 
+/*
 import "golang.org/x/text/language"
 import "fmt"
 
@@ -106,3 +107,5 @@ func (e *Errors) TranslatedError(al string) string {
 	}
 	return s
 }
+
+*/

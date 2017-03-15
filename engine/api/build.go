@@ -322,7 +322,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	infos := []sdk.SpawnInfo{{
 		RemoteTime: res.RemoteTime,
-		Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoWorkerEnd.ID, Args: []interface{}{c.Worker.Name, res.Duration}},
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{c.Worker.Name, res.Duration}},
 	}}
 
 	if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, pbJob.ID, infos); err != nil {
@@ -383,13 +383,13 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	infos := []sdk.SpawnInfo{{
 		RemoteTime: takeForm.Time,
-		Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoJobTaken.ID, Args: []interface{}{c.Worker.Name}},
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{c.Worker.Name}},
 	}}
 
 	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
 		infos = append(infos, sdk.SpawnInfo{
 			RemoteTime: takeForm.Time,
-			Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoWorkerForJob.ID, Args: []interface{}{c.Worker.Name}},
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJob.ID, Args: []interface{}{c.Worker.Name}},
 		})
 	}
 

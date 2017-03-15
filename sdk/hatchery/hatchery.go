@@ -82,7 +82,7 @@ func routine(h Interface, provision int, hostname string) error {
 				infos := []sdk.SpawnInfo{
 					{
 						RemoteTime: start,
-						Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
+						Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
 					},
 				}
 
@@ -91,7 +91,7 @@ func routine(h Interface, provision int, hostname string) error {
 					log.Warning("routine> cannot spawn worker %s for job %d: %s\n", model.Name, job.ID, errs)
 					infos = append(infos, sdk.SpawnInfo{
 						RemoteTime: time.Now(),
-						Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errs.Error()}},
+						Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errs.Error()}},
 					})
 					if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
 						log.Warning("routine> cannot record AddSpawnInfosPipelineBuildJob for job (err spawn)%d: %s\n", job.ID, err)
@@ -101,7 +101,7 @@ func routine(h Interface, provision int, hostname string) error {
 
 				infos = append(infos, sdk.SpawnInfo{
 					RemoteTime: time.Now(),
-					Message:    sdk.SpawnMsg{ID: sdk.SpawnInfoHatcheryStartsSuccessfully.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), sdk.Round(time.Since(start), time.Second).String()}},
+					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), sdk.Round(time.Since(start), time.Second).String()}},
 				})
 
 				if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {

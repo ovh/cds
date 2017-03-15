@@ -11,7 +11,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -81,8 +80,8 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		eg.Group = *g
 	}
 
-	allMsg := []msg.Message{}
-	msgChan := make(chan msg.Message, 1)
+	allMsg := []sdk.Message{}
+	msgChan := make(chan sdk.Message, 1)
 	done := make(chan bool)
 
 	go func() {

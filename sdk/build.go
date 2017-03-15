@@ -35,7 +35,7 @@ type SpawnInfo struct {
 
 // SpawnMsg represents a msg for spawnInfo
 type SpawnMsg struct {
-	ID   int           `json:"id" db:"-"`
+	ID   string        `json:"id" db:"-"`
 	Args []interface{} `json:"args" db:"-"`
 }
 
