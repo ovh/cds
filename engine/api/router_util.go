@@ -5,7 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -92,4 +95,20 @@ func FormBool(r *http.Request, s string) bool {
 	default:
 		return false
 	}
+}
+
+// requestVarInt return int value for a var in Request
+func requestVarInt(r *http.Request, s string) (int64, error) {
+	vars := mux.Vars(r)
+	idString := vars[s]
+
+	// Check ID Job
+	id, erri := strconv.ParseInt(idString, 10, 64)
+	if erri != nil {
+		if s == "id" {
+			return id, sdk.ErrInvalidID
+		}
+		return id, sdk.ErrWrongRequest
+	}
+	return id, nil
 }

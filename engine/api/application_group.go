@@ -30,56 +30,47 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 
 	app, errload := application.LoadByName(db, key, appName, c.User)
 	if errload != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot load application %s :%s", appName, errload)
-		return sdk.ErrApplicationNotFound
+		return sdk.WrapError(sdk.ErrApplicationNotFound, "updateGroupRoleOnApplicationHandler: Cannot load application %s: %s", appName, errload)
 	}
 
-	g, err := group.LoadGroup(db, groupName)
-	if err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot load group %s :%s", groupName, err)
-		return sdk.ErrGroupNotFound
+	g, errLoadGroup := group.LoadGroup(db, groupName)
+	if errLoadGroup != nil {
+		return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleOnApplicationHandler: Cannot load group %s: %s", groupName, errLoadGroup)
 	}
 
 	if groupApplication.Permission != permission.PermissionReadWriteExecute {
-		permissions, errloadall := group.LoadAllApplicationGroupByRole(db, app.ID, permission.PermissionReadWriteExecute)
-		if errloadall != nil {
-			log.Warning("updateGroupRoleOnApplicationHandler: Cannot load group for application %s:  %s\n", appName, errloadall)
-			return errloadall
+		permissions, err := group.LoadAllApplicationGroupByRole(db, app.ID, permission.PermissionReadWriteExecute)
+		if err != nil {
+			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load group for application %s", appName)
 		}
 
 		if len(permissions) == 1 && permissions[0].Group.ID == g.ID {
-			log.Warning("updateGroupRoleOnApplicationHandler: Cannot remove write permission for group %s in application %s\n", groupName, appName)
-			return sdk.ErrGroupNeedWrite
+			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleOnApplicationHandler: Cannot remove write permission for group %s in application %s\n", groupName, appName)
 		}
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot start transaction: %s\n", err)
-		return sdk.ErrUnknownError
+		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupRoleOnApplicationHandler: Cannot start transaction: %s\n", err)
 	}
 	defer tx.Rollback()
 
 	if err := group.UpdateGroupRoleInApplication(tx, key, appName, groupName, groupApplication.Permission); err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot update permission for group %s in application %s:  %s\n", groupName, appName, err)
-		return err
+		return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot update permission for group %s in application %s", groupName, appName)
 	}
 
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
-		log.Warning("updateGroupsInApplicationHandler: Cannot update last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot commit transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot commit transaction")
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 	if err := application.LoadGroupByApplication(db, app); err != nil {
-		log.Warning("updateGroupRoleOnApplicationHandler: Cannot load application groups: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load application groups")
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)

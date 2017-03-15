@@ -114,7 +114,6 @@ func routine(h Interface, provision int, hostname string) error {
 }
 
 func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostname string) bool {
-
 	// Common check
 	for _, r := range job.Job.Action.Requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
