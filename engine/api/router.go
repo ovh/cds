@@ -46,6 +46,7 @@ type routerConfig struct {
 	auth          bool
 	isExecution   bool
 	needAdmin     bool
+	needHatchery  bool
 }
 
 // ServeAbsoluteFile Serve file to download
@@ -127,7 +128,7 @@ var mapRouterConfigs = map[string]*routerConfig{}
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 	uri = r.prefix + uri
-	rc := &routerConfig{auth: true, isExecution: false, needAdmin: false}
+	rc := &routerConfig{auth: true, isExecution: false, needAdmin: false, needHatchery: false}
 	mapRouterConfigs[uri] = rc
 
 	for _, h := range handlers {
@@ -219,50 +220,53 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		}
 
 		permissionOk := true
-		if rc.auth && rc.needAdmin && !c.User.Admin {
+		if rc.auth && rc.needHatchery && c.Hatchery == nil {
+			permissionOk = false
+		} else if rc.auth && rc.needAdmin && !c.User.Admin {
 			permissionOk = false
 		} else if rc.auth && !rc.needAdmin && !c.User.Admin {
 			permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
 		}
-		if permissionOk {
-			start := time.Now()
-			defer func() {
-				end := time.Now()
-				latency := end.Sub(start)
-				log.Info("%-7s | %13v | %v", req.Method, latency, req.URL)
-			}()
-
-			if req.Method == "GET" && rc.get != nil {
-				if err := rc.get(w, req, db, c); err != nil {
-					WriteError(w, req, err)
-				}
-				return
-			}
-
-			if req.Method == "POST" && rc.post != nil {
-				if err := rc.post(w, req, db, c); err != nil {
-					WriteError(w, req, err)
-				}
-				return
-			}
-			if req.Method == "PUT" && rc.put != nil {
-				if err := rc.put(w, req, db, c); err != nil {
-					WriteError(w, req, err)
-				}
-				return
-			}
-
-			if req.Method == "DELETE" && rc.deleteHandler != nil {
-				if err := rc.deleteHandler(w, req, db, c); err != nil {
-					WriteError(w, req, err)
-				}
-				return
-			}
-			WriteError(w, req, sdk.ErrNotFound)
+		if !permissionOk {
+			WriteError(w, req, sdk.ErrForbidden)
 			return
 		}
-		WriteError(w, req, sdk.ErrForbidden)
-		return
+
+		start := time.Now()
+		defer func() {
+			end := time.Now()
+			latency := end.Sub(start)
+			log.Info("%-7s | %13v | %v", req.Method, latency, req.URL)
+		}()
+
+		if req.Method == "GET" && rc.get != nil {
+			if err := rc.get(w, req, db, c); err != nil {
+				WriteError(w, req, err)
+			}
+			return
+		}
+
+		if req.Method == "POST" && rc.post != nil {
+			if err := rc.post(w, req, db, c); err != nil {
+				WriteError(w, req, err)
+			}
+			return
+		}
+
+		if req.Method == "PUT" && rc.put != nil {
+			if err := rc.put(w, req, db, c); err != nil {
+				WriteError(w, req, err)
+			}
+			return
+		}
+
+		if req.Method == "DELETE" && rc.deleteHandler != nil {
+			if err := rc.deleteHandler(w, req, db, c); err != nil {
+				WriteError(w, req, err)
+			}
+			return
+		}
+		WriteError(w, req, sdk.ErrNotFound)
 	}
 	router.mux.HandleFunc(uri, compress(recoverWrap(f)))
 }
@@ -272,7 +276,6 @@ func GET(h Handler) RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.get = h
 	}
-
 	return f
 }
 
@@ -290,7 +293,6 @@ func POSTEXECUTE(h Handler) RouterConfigParam {
 		rc.post = h
 		rc.isExecution = true
 	}
-
 	return f
 }
 
@@ -306,6 +308,14 @@ func PUT(h Handler) RouterConfigParam {
 func NeedAdmin(admin bool) RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.needAdmin = admin
+	}
+	return f
+}
+
+// NeedHatchery set the route for hatchery only
+func NeedHatchery() RouterConfigParam {
+	f := func(rc *routerConfig) {
+		rc.needHatchery = true
 	}
 	return f
 }
@@ -332,7 +342,6 @@ func (r *Router) checkAuthHeader(db *gorp.DbMap, headers http.Header, c *context
 }
 
 func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
-
 	c.Agent = sdk.Agent(headers.Get("User-Agent"))
 
 	switch headers.Get("User-Agent") {

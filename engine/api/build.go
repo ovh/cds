@@ -278,13 +278,9 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 }
 
 func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get action name in URL
-	vars := mux.Vars(r)
-	idString := vars["id"]
-
-	id, errInt := strconv.ParseInt(idString, 10, 64)
-	if errInt != nil {
-		return sdk.ErrInvalidID
+	id, errc := preGetID(w, r, db, c)
+	if errc != nil {
+		return errc
 	}
 
 	// Load Build
@@ -339,9 +335,10 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 }
 
 func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get action name in URL
-	vars := mux.Vars(r)
-	idString := vars["id"]
+	id, errc := preGetID(w, r, db, c)
+	if errc != nil {
+		return errc
+	}
 
 	takeForm := &worker.TakeForm{}
 	if err := UnmarshalBody(r, takeForm); err != nil {
@@ -365,12 +362,6 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return errBegin
 	}
 	defer tx.Rollback()
-
-	// Take job
-	id, errInt := strconv.ParseInt(idString, 10, 64)
-	if errInt != nil {
-		return sdk.ErrInvalidID
-	}
 
 	workerModel := caller.Name
 	if caller.Model != 0 {
@@ -433,12 +424,7 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, pbji, http.StatusOK)
 }
 
-func preCheckHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) (int64, error) {
-	if c.Hatchery == nil {
-		log.Warning("this handler should be called only by hatcheries\n")
-		return 0, sdk.ErrWrongRequest
-	}
-
+func preGetID(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) (int64, error) {
 	// Get action name in URL
 	vars := mux.Vars(r)
 	idString := vars["id"]
@@ -452,7 +438,7 @@ func preCheckHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 }
 
 func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	id, errc := preCheckHatchery(w, r, db, c)
+	id, errc := preGetID(w, r, db, c)
 	if errc != nil {
 		return errc
 	}
@@ -469,7 +455,7 @@ func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 }
 
 func addSpawnInfosPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	pbJobID, errc := preCheckHatchery(w, r, db, c)
+	pbJobID, errc := preGetID(w, r, db, c)
 	if errc != nil {
 		return errc
 	}
