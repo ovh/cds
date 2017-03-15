@@ -73,10 +73,11 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	// if buildNumber is 'last' fetch last build number
 	var buildNumber int64
 	if buildNumberS == "last" {
-		bn, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
-		if err != nil {
-			log.Warning("getStepBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
-			return err
+		var errLastBuildN error
+		bn, errLastBuildN := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
+		if errLastBuildN != nil {
+			log.Warning("getStepBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, errLastBuildN)
+			return errLastBuildN
 		}
 		buildNumber = bn
 	} else {
@@ -156,11 +157,11 @@ func getBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	// if buildNumber is 'last' fetch last build number
 	var buildNumber int64
 	if buildNumberS == "last" {
-		bn, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
-		if err != nil {
-			log.Warning("getBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
-			return err
-
+		var errLastBuildN error
+		bn, errLastBuildN := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
+		if errLastBuildN != nil {
+			log.Warning("getBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, errLastBuildN)
+			return errLastBuildN
 		}
 		buildNumber = bn
 	} else {
@@ -231,7 +232,12 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 	if envName == "" || envName == sdk.DefaultEnv.Name {
 		env = &sdk.DefaultEnv
 	} else {
-		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
+		var errload error
+		env, errload = environment.LoadEnvironmentByName(db, projectKey, envName)
+		if errload != nil {
+			log.Warning("getPipelineBuildJobLogsHandler> Cannot load environment %s on application %s: %s\n", envName, appName, errload)
+			return errload
+		}
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
@@ -242,10 +248,10 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 	// if buildNumber is 'last' fetch last build number
 	var buildNumber int64
 	if buildNumberS == "last" {
-		bn, err := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
-		if err != nil {
-			log.Warning("getPipelineBuildJobLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, err)
-			return err
+		bn, errLastBuild := pipeline.GetLastBuildNumberInTx(db, p.ID, a.ID, env.ID)
+		if errLastBuild != nil {
+			log.Warning("getPipelineBuildJobLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, errLastBuild)
+			return errLastBuild
 		}
 		buildNumber = bn
 	} else {

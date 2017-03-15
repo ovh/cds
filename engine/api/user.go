@@ -118,11 +118,10 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	vars := mux.Vars(r)
 	username := vars["name"]
 
-	userDB, err := user.LoadUserWithoutAuth(db, username)
-	if err != nil {
-		fmt.Printf("getUserHandler: Cannot load user from db: %s\n", err)
-		return err
-
+	userDB, errload := user.LoadUserWithoutAuth(db, username)
+	if errload != nil {
+		fmt.Printf("getUserHandler: Cannot load user from db: %s\n", errload)
+		return errload
 	}
 
 	var userBody sdk.User
@@ -137,8 +136,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return sdk.ErrWrongRequest
 	}
 
-	err = user.UpdateUser(db, userBody)
-	if err != nil {
+	if err := user.UpdateUser(db, userBody); err != nil {
 		log.Warning("updateUserHandler: Cannot update user table: %s", err)
 		return err
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/hatchery/docker"
 	"github.com/ovh/cds/engine/hatchery/local"
-	"github.com/ovh/cds/engine/hatchery/mesos"
+	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/log"
@@ -55,7 +55,7 @@ func main() {
 func addCommands() {
 	rootCmd.AddCommand(local.Cmd)
 	rootCmd.AddCommand(docker.Cmd)
-	rootCmd.AddCommand(mesos.Cmd)
+	rootCmd.AddCommand(marathon.Cmd)
 	rootCmd.AddCommand(swarm.Cmd)
 	rootCmd.AddCommand(openstack.Cmd)
 }
