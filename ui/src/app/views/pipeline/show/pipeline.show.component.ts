@@ -87,19 +87,24 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         if (this.pipelineSubscriber) {
             this.pipelineSubscriber.unsubscribe();
         }
-        this.pipelineSubscriber = this._pipStore.getPipelines(key, pipName).subscribe( pip => {
-          if (pip) {
-            let pipelineUpdated = pip.get(key + '-' + pipName);
-            if (pipelineUpdated && !pipelineUpdated.externalChange &&
-                (!this.pipeline || this.pipeline.last_modified < pipelineUpdated.last_modified)) {
-              this.pipeline = pipelineUpdated;
-            } else if (pipelineUpdated && pipelineUpdated.externalChange) {
-                // TODO show warning
-            }
-          }
-        }, () => {
-            this._router.navigate(['/project', key]);
-        });
+        if (this.pipeline && this.pipeline.name !== pipName) {
+            this.pipeline = undefined;
+        }
+        if (!this.pipeline) {
+            this.pipelineSubscriber = this._pipStore.getPipelines(key, pipName).subscribe( pip => {
+                if (pip) {
+                    let pipelineUpdated = pip.get(key + '-' + pipName);
+                    if (pipelineUpdated && !pipelineUpdated.externalChange &&
+                        (!this.pipeline || this.pipeline.last_modified < pipelineUpdated.last_modified)) {
+                        this.pipeline = pipelineUpdated;
+                    } else if (pipelineUpdated && pipelineUpdated.externalChange) {
+                        // TODO show warning
+                    }
+                }
+            }, () => {
+                this._router.navigate(['/project', key]);
+            });
+        }
     }
 
     showTab(tab: string): void {

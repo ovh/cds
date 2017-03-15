@@ -33,7 +33,7 @@ export class BreadcrumbComponent {
         this._router.navigate(['project', this.project.key], queryParams);
     }
 
-    navigateToApplication(): void {
+    navigateToApplication(appName: string): void {
         let queryParams = { queryParams: {}};
         if (this.branch) {
             queryParams.queryParams['branch'] = this.branch;
@@ -41,10 +41,13 @@ export class BreadcrumbComponent {
         if (this.appVersion) {
             queryParams.queryParams['version'] = this.appVersion;
         }
-        this._router.navigate(['project', this.project.key, 'application', this.application.name], queryParams);
+        if (!appName) {
+            appName = this.application.name;
+        }
+        this._router.navigate(['project', this.project.key, 'application', appName], queryParams);
     }
 
-    navigateToPipeline(): void {
+    navigateToPipeline(pipName: string): void {
         let queryParams = { queryParams: {}};
         if (this.application) {
             queryParams.queryParams['application'] = this.application.name;
@@ -61,7 +64,10 @@ export class BreadcrumbComponent {
         if (this.branch) {
             queryParams.queryParams['branch'] = this.branch;
         }
-        this._router.navigate(['project', this.project.key, 'pipeline', this.pipeline.name], queryParams);
+        if (!pipName) {
+            pipName = this.pipeline.name;
+        }
+        this._router.navigate(['project', this.project.key, 'pipeline', pipName], queryParams);
     }
 
     navigateToBuild(): void {
