@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -121,6 +119,18 @@ func ackAction(c *cli.Context) error {
 		}
 	}
 
+	//Read the context json file
+	contextBody, err := ioutil.ReadFile(contextFile)
+	if err != nil {
+		return cli.NewExitError(err.Error(), 42)
+	}
+
+	//Parste the context file
+	ctx := &kafkapublisher.Context{}
+	if err := json.Unmarshal(contextBody, ctx); err != nil {
+		return cli.NewExitError(err.Error(), 43)
+	}
+
 	//Send artifacts
 	if artifacts := c.StringSlice("artifact"); len(artifacts) > 0 {
 		//Artifacts are send with AES encryption
@@ -134,7 +144,7 @@ func ackAction(c *cli.Context) error {
 		}
 
 		for _, a := range artifacts {
-			chunks, err := shredder.ShredFile(a, opts)
+			chunks, err := shredder.ShredFile(a, fmt.Sprintf("%d", ctx.ActionID), opts)
 			if err != nil {
 				return cli.NewExitError(err.Error(), 66)
 			}
@@ -146,18 +156,6 @@ func ackAction(c *cli.Context) error {
 				return cli.NewExitError(err.Error(), 68)
 			}
 		}
-	}
-
-	//Read the context json file
-	contextBody, err := ioutil.ReadFile(contextFile)
-	if err != nil {
-		return cli.NewExitError(err.Error(), 42)
-	}
-
-	//Parste the context file
-	ctx := &kafkapublisher.Context{}
-	if err := json.Unmarshal(contextBody, ctx); err != nil {
-		return cli.NewExitError(err.Error(), 43)
 	}
 
 	//Prepare the ack object wich will be send to kafka
@@ -186,11 +184,9 @@ func getAESEncryptionOptions(password string) (*shredder.AESEncryption, error) {
 	if len(aeskey) > 32 {
 		aeskey = aeskey[:32]
 	} else {
-		buf := bytes.NewBuffer(make([]byte, 32))
-		if err := binary.Write(buf, binary.LittleEndian, aeskey); err != nil {
-			return nil, err
+		for len(aeskey) != 32 {
+			aeskey = append(aeskey, '\x00')
 		}
-		aeskey = buf.Bytes()
 	}
 	return &shredder.AESEncryption{Key: aeskey}, nil
 }

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -45,20 +43,13 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 	}
 
 	//Default is AES encryption based on password
-	aeskey := []byte(password)
-	if len(aeskey) > 32 {
-		aeskey = aeskey[:32]
-	} else {
-		buf := bytes.NewBuffer(make([]byte, 32))
-		if err := binary.Write(buf, binary.LittleEndian, aeskey); err != nil {
-			return err
-		}
-		aeskey = buf.Bytes()
+	aes, err := getAESEncryptionOptions(password)
+	if err != nil {
+		return err
 	}
-
 	var opts = &shredder.Opts{
 		ChunkSize:     512 * 1024,
-		AESEncryption: &shredder.AESEncryption{Key: aeskey},
+		AESEncryption: aes,
 	}
 
 	//If provided use GPG encryption
@@ -137,8 +128,9 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 				}
 				chunks = append(chunks, *c)
 
+				actionID := c.Ctx.GetUUID()
 				//Try to match a context
-				ctx, ok := contexts[c.Ctx.UUID]
+				ctx, ok := contexts[actionID]
 				if !ok {
 					fmt.Printf("Unknown CDS context : %s\n", c.Ctx.UUID)
 				}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"math"
 	"os"
@@ -16,7 +17,7 @@ import (
 )
 
 var (
-	version = "0.1"
+	version = "0.2"
 	job     plugin.IJob
 )
 
@@ -26,6 +27,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	kafka := job.Arguments().Get("kafkaAddresses")
 	user := job.Arguments().Get("kafkaUser")
 	password := job.Arguments().Get("kafkaPassword")
+	group := job.Arguments().Get("kafkaGroup")
 	topic := job.Arguments().Get("topic")
 
 	if user == "" || password == "" || kafka == "" || topic == "" {
@@ -109,7 +111,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 			}
 		}
 
-		chunks, err := shredder.ShredFile(f, opts)
+		chunks, err := shredder.ShredFile(f, fmt.Sprintf("%d", job.ID()), opts)
 		if err != nil {
 			Logf("Unable to shred file %s : %s", f, err)
 			return plugin.Fail
@@ -146,7 +148,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	defer ticker.Stop()
 
 	//Wait for ack
-	ack, err := ackFromKafka(kafka, ackTopic, "cds", user, password, time.Duration(timeout)*time.Second, job.ID())
+	ack, err := ackFromKafka(kafka, ackTopic, group, user, password, time.Duration(timeout)*time.Second, job.ID())
 	if err != nil {
 		Logf("Failed to get ack on topic %s: %s", ackTopic, err)
 		return plugin.Fail

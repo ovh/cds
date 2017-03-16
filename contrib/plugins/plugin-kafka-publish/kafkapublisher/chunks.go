@@ -35,7 +35,6 @@ func KafkaMessages(chunks shredder.Chunks) ([][]byte, error) {
 
 	var res = [][]byte{}
 	for _, c := range chunks {
-		r := []byte{}
 		//Considering 4 bytes to store header size
 		headerSize := make([]byte, 4)
 		//Computing header size
@@ -47,6 +46,7 @@ func KafkaMessages(chunks shredder.Chunks) ([][]byte, error) {
 		}
 		headerSize = buf.Bytes()
 		//Push magic number
+		r := []byte{}
 		r = append(r, MagicNumber...)
 		//Push header size in bytes array
 		r = append(r, headerSize...)
