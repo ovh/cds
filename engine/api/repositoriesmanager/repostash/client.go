@@ -212,7 +212,6 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 				newStashUserUnknown := newUnknownStashUser(*sc.Author)
 				cache.SetWithTTL(stashUserKey, newStashUserUnknown, 86400) // 1 day
 				stashUser = *newStashUserUnknown
-				continue
 			} else {
 				cache.Set(stashUserKey, newStashUser)
 				stashUser = *newStashUser
