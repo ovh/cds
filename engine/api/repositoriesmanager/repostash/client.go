@@ -205,10 +205,13 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 		var stashUser = stash.User{}
 		var stashUserKey = cache.Key("reposmanager", "stash", stashURL.Host, sc.Author.Email)
 		cache.Get(stashUserKey, &stashUser)
-		if stashUser.Username == "" {
+		if stashUser.Username == "" && sc.Author != nil && sc.Author.Email != "" {
 			newStashUser, err := s.client.Users.FindByEmail(sc.Author.Email)
 			if err != nil {
 				log.Debug("Unable to get stash user %s : %s", sc.Author.Email, err)
+				newStashUserUnknown := newUnknownStashUser(*sc.Author)
+				cache.SetWithTTL(stashUserKey, newStashUserUnknown, 86400) // 1 day
+				stashUser = *newStashUserUnknown
 				continue
 			} else {
 				cache.Set(stashUserKey, newStashUser)
@@ -221,6 +224,15 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 		}
 	}
 	return commits, nil
+}
+
+func newUnknownStashUser(author stash.Author) *stash.User {
+	return &stash.User{
+		Username:     author.Name,
+		EmailAddress: author.Email,
+		DisplayName:  author.Name,
+		Slug:         "unknownSlug",
+	}
 }
 
 //Commit retrieves a specific according to a hash
@@ -260,10 +272,13 @@ func (s *StashClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	var stashUser = stash.User{}
 	var stashUserKey = cache.Key("reposmanager", "stash", stashURL.Host, stashCommit.Author.Email)
 	cache.Get(stashUserKey, &stashUser)
-	if stashUser.Username == "" {
+	if stashUser.Username == "" && stashCommit.Author != nil && stashCommit.Author.Email != "" {
 		newStashUser, err := s.client.Users.FindByEmail(stashCommit.Author.Email)
 		if err != nil {
 			log.Debug("Unable to get stash user %s : %s", stashCommit.Author.Email, err)
+			newStashUserUnknown := newUnknownStashUser(*stashCommit.Author)
+			cache.SetWithTTL(stashUserKey, newStashUserUnknown, 86400) // 1 day
+			stashUser = *newStashUserUnknown
 		} else {
 			cache.SetWithTTL(stashUserKey, newStashUser, -1)
 			stashUser = *newStashUser
