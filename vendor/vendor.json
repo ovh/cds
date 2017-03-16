@@ -271,6 +271,12 @@
 			"revisionTime": "2017-03-06T10:05:53Z"
 		},
 		{
+			"checksumSHA1": "oEINCgyJZZKEgiZ407sqVNJcLOw=",
+			"path": "github.com/fsamin/go-shredder",
+			"revision": "fda423b792638f6a15c2093ff66ef72c02c34357",
+			"revisionTime": "2017-03-16T14:13:21Z"
+		},
+		{
 			"checksumSHA1": "nmc2qcdbg17Ny8tHeEDQuphV6jA=",
 			"path": "github.com/fsnotify/fsnotify",
 			"revision": "bd2828f9f176e52d7222e565abb2d338d3f3c103",
