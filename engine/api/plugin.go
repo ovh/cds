@@ -159,7 +159,7 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	}
 
 	var tmpFile string
-	if buf != nil {
+	if buf != nil && errFetch == nil {
 		defer buf.Close()
 		//Read it
 		btes, errr := ioutil.ReadAll(buf)
