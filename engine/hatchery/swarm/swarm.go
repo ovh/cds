@@ -29,12 +29,11 @@ type HatcherySwarm struct {
 
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
-	var err error
-
-	h.dockerClient, err = docker.NewClientFromEnv()
-	if err != nil {
+	var errc error
+	h.dockerClient, errc = docker.NewClientFromEnv()
+	if errc != nil {
 		log.Critical("Unable to connect to a docker client")
-		return err
+		return errc
 	}
 
 	if errPing := h.dockerClient.Ping(); errPing != nil {
@@ -308,15 +307,18 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 
 // CanSpawn checks if the model can be spawned by this hatchery
 func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-
-	// TODO CHECK RATIO
-
 	if model.Type != sdk.Docker {
 		return false
 	}
 
 	//List all containers to check if we can spawn a new one
-	if cs, _ := h.dockerClient.ListContainers(docker.ListContainersOptions{}); len(cs) > h.maxContainers {
+	cs, errList := h.dockerClient.ListContainers(docker.ListContainersOptions{})
+	if errList != nil {
+		log.Warning("Unable to list containers: %s", errList)
+		return false
+	}
+
+	if len(cs) > h.maxContainers {
 		return false
 	}
 
@@ -326,6 +328,15 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement {
 			links[r.Name] = strings.Split(r.Value, " ")[0]
+		}
+	}
+
+	// hatcherySwarm.ratioService: Percent reserved for spwaning worker with service requirement
+	// if no link -> we need to check ratioService
+	if len(links) == 0 && len(cs) > 0 {
+		percentFree := 100 - (100 * len(cs) / h.maxContainers)
+		if percentFree <= hatcherySwarm.ratioService {
+			return false
 		}
 	}
 
@@ -347,7 +358,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 		var errl error
 		images, errl = h.dockerClient.ListImages(docker.ListImagesOptions{})
 		if errl != nil {
-			log.Warning("Unable to get images : %s", errl)
+			log.Warning("Unable to list images: %s", errl)
 		}
 	}
 

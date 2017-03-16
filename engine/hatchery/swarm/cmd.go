@@ -12,7 +12,7 @@ import (
 func init() {
 	hatcherySwarm = &HatcherySwarm{}
 
-	Cmd.Flags().IntVar(&hatcherySwarm.ratioService, "ratio-service", 75, "Percent reserved for spwaning worker with service requirement ")
+	Cmd.Flags().IntVar(&hatcherySwarm.ratioService, "ratio-service", 75, "Percent reserved for spwaning worker with service requirement")
 	viper.BindPFlag("ratio-service", Cmd.Flags().Lookup("ratio-service"))
 
 	Cmd.Flags().IntVar(&hatcherySwarm.maxContainers, "max-containers", 10, "")
@@ -45,6 +45,16 @@ $ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> -
 		hatchery.Create(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
+		if viper.GetInt("max-containers") <= 0 {
+			sdk.Exit("max-containers must be > 0")
+		}
+		if viper.GetInt("worker-ttl") <= 0 {
+			sdk.Exit("worker-ttl must be > 0")
+		}
+		if viper.GetInt("worker-memory") <= 1 {
+			sdk.Exit("worker-memory must be > 1")
+		}
+
 		hatcherySwarm.ratioService = viper.GetInt("ratio-service")
 		hatcherySwarm.maxContainers = viper.GetInt("max-containers")
 		hatcherySwarm.defaultMemory = viper.GetInt("worker-memory")
