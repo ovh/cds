@@ -35,7 +35,7 @@ func (m KafkaPlugin) Parameters() plugin.Parameters {
     "version" : "{{.cds.version}}"
 }`)
 	params.Add("kafkaUser", plugin.StringParameter, "Kafka User", "{{.cds.proj.kafkaUser}}")
-	params.Add("kafkaPassword", plugin.StringParameter, "Kafka User", "{{.cds.proj.kafkaPassword}}")
+	params.Add("kafkaPassword", plugin.StringParameter, "Kafka Password", "{{.cds.proj.kafkaPassword}}")
 	params.Add("kafkaAddresses", plugin.StringParameter, "Kafka Addresses", "{{.cds.proj.kafkaAddresses}}")
 	params.Add("topic", plugin.StringParameter, "Kafka Topic", "{{.cds.env.kafkaTopic}}")
 	params.Add("artifacts", plugin.StringParameter, "Artifacts list (comma separated)", "")

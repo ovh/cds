@@ -24,12 +24,12 @@ var (
 func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	job = j
 	kafka := job.Arguments().Get("kafkaAddresses")
-	user := job.Arguments().Get("kafkaKey")
+	user := job.Arguments().Get("kafkaUser")
 	password := job.Arguments().Get("kafkaPassword")
 	topic := job.Arguments().Get("topic")
 
 	if user == "" || password == "" || kafka == "" || topic == "" {
-		Logf("Kafka is not configured")
+		Logf("Kafka is not configured : %+v", job.Arguments().Data)
 		return plugin.Fail
 	}
 
