@@ -201,7 +201,6 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 			},
 			URL: urlCommit + sc.Hash,
 		}
-		commits = append(commits, c)
 		var stashUser = stash.User{}
 		var stashUserKey = cache.Key("reposmanager", "stash", stashURL.Host, sc.Author.Email)
 		if !cache.Get(stashUserKey, &stashUser) && sc.Author.Email != "" {
@@ -220,6 +219,7 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 		if stashUser.Slug != "" && stashUser.Slug != "unknownSlug" {
 			c.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", s.url, stashUser.Slug)
 		}
+		commits = append(commits, c)
 	}
 	return commits, nil
 }
