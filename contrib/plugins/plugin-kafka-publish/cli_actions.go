@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
 	"github.com/bgentry/speakeasy"
+	"github.com/fsamin/go-shredder"
 	"gopkg.in/urfave/cli.v1"
 
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
@@ -50,13 +53,14 @@ func listenAction(c *cli.Context) error {
 	kafka := c.Args().Get(0)
 	topic := c.Args().Get(1)
 	group := c.Args().Get(2)
-	key := c.Args().Get(3)
-
-	var err error
+	user := c.Args().Get(3)
+	password := c.Args().Get(4)
 
 	//If provided, read the pgp private key file, and ask for the password
 	pgpPrivKey := c.String("pgp-decrypt")
+	var pgpPrivateKey, pgpPassphrase []byte
 	if pgpPrivKey != "" {
+		var err error
 		pgpPrivateKey, err = ioutil.ReadFile(pgpPrivKey)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 11)
@@ -69,7 +73,7 @@ func listenAction(c *cli.Context) error {
 	}
 
 	//Goroutine for kafka listening
-	if err := consumeFromKafka(kafka, topic, group, key); err != nil {
+	if err := consumeFromKafka(kafka, topic, group, user, password, pgpPrivateKey, pgpPassphrase); err != nil {
 		return cli.NewExitError(err.Error(), 13)
 	}
 
@@ -88,9 +92,16 @@ func ackAction(c *cli.Context) error {
 	//Get arguments from commandline
 	kafka := c.Args().Get(0)
 	topic := c.Args().Get(1)
-	key := c.Args().Get(2)
-	contextFile := c.Args().Get(3)
-	result := c.Args().Get(4)
+	user := c.Args().Get(2)
+	password := c.Args().Get(3)
+	contextFile := c.Args().Get(4)
+	result := c.Args().Get(5)
+
+	//Connect to kafka
+	producer, err := initKafkaProducer(kafka, user, password)
+	if err != nil {
+		return cli.NewExitError(err.Error(), 44)
+	}
 
 	if result != "OK" && result != "KO" {
 		cli.ShowCommandHelp(c, "ack")
@@ -110,6 +121,33 @@ func ackAction(c *cli.Context) error {
 		}
 	}
 
+	//Send artifacts
+	if artifacts := c.StringSlice("artifact"); len(artifacts) > 0 {
+		//Artifacts are send with AES encryption
+		aes, err := getAESEncryptionOptions(password)
+		if err != nil {
+			return cli.NewExitError(err.Error(), 65)
+		}
+		var opts = &shredder.Opts{
+			ChunkSize:     512 * 1024,
+			AESEncryption: aes,
+		}
+
+		for _, a := range artifacts {
+			chunks, err := shredder.ShredFile(a, opts)
+			if err != nil {
+				return cli.NewExitError(err.Error(), 66)
+			}
+			datas, err := kafkapublisher.KafkaMessages(chunks)
+			if err != nil {
+				return cli.NewExitError(err.Error(), 67)
+			}
+			if _, _, err := sendDataOnKafka(producer, topic, datas); err != nil {
+				return cli.NewExitError(err.Error(), 68)
+			}
+		}
+	}
+
 	//Read the context json file
 	contextBody, err := ioutil.ReadFile(contextFile)
 	if err != nil {
@@ -120,12 +158,6 @@ func ackAction(c *cli.Context) error {
 	ctx := &kafkapublisher.Context{}
 	if err := json.Unmarshal(contextBody, ctx); err != nil {
 		return cli.NewExitError(err.Error(), 43)
-	}
-
-	//Connect to kafka
-	producer, err := initKafkaProducer(kafka, key)
-	if err != nil {
-		return cli.NewExitError(err.Error(), 44)
 	}
 
 	//Prepare the ack object wich will be send to kafka
@@ -147,4 +179,18 @@ func ackAction(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func getAESEncryptionOptions(password string) (*shredder.AESEncryption, error) {
+	aeskey := []byte(password)
+	if len(aeskey) > 32 {
+		aeskey = aeskey[:32]
+	} else {
+		buf := bytes.NewBuffer(make([]byte, 32))
+		if err := binary.Write(buf, binary.LittleEndian, aeskey); err != nil {
+			return nil, err
+		}
+		aeskey = buf.Bytes()
+	}
+	return &shredder.AESEncryption{Key: aeskey}, nil
 }

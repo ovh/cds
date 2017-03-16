@@ -9,9 +9,13 @@ import (
 )
 
 //Client to send to kafka
-func initKafkaProducer(kafka, key string) (sarama.SyncProducer, error) {
+func initKafkaProducer(kafka, user, password string) (sarama.SyncProducer, error) {
 	c := sarama.NewConfig()
-	c.ClientID = key
+	c.Net.TLS.Enable = true
+	c.Net.SASL.Enable = true
+	c.Net.SASL.User = user
+	c.Net.SASL.Password = password
+	c.ClientID = user
 	c.Producer.Return.Successes = true
 
 	producer, err := sarama.NewSyncProducer(strings.Split(kafka, ","), c)
