@@ -180,7 +180,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		if c.Hatchery != nil {
 			g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
 			if err != nil {
-				log.Warning("Router> cannot load group permissions: %s")
+				log.Warning("Router> cannot load group permissions for GroupID %d err:%s", c.Hatchery.GroupID, err)
 				WriteError(w, req, sdk.ErrUnauthorized)
 				return
 			}
@@ -190,7 +190,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		if c.Worker != nil {
 			g, err := loadGroupPermissions(db, c.Worker.GroupID)
 			if err != nil {
-				log.Warning("Router> cannot load group permissions: %s", err)
+				log.Warning("Router> cannot load group permissions : %s", err)
 				WriteError(w, req, sdk.ErrUnauthorized)
 			}
 			c.User.Groups = append(c.User.Groups, *g)
@@ -361,7 +361,7 @@ func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *conte
 
 	h, err := hatchery.LoadHatchery(db, string(id))
 	if err != nil {
-		return err
+		return fmt.Errorf("Invalid Hatchery ID:%s err:%s", string(id), err)
 	}
 
 	c.User = &sdk.User{Username: h.Name}

@@ -43,11 +43,11 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 // requirements are not supported
 func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
 	if h.Hatchery() == nil {
-		log.Debug("CanSpawn false Hatchery nil\n")
+		log.Debug("CanSpawn false Hatchery nil")
 		return false
 	}
 	if model.ID != h.Hatchery().Model.ID {
-		log.Debug("CanSpawn false ID different model.ID:%d h.workerModelID:%d \n", model.ID, h.Hatchery().Model.ID)
+		log.Debug("CanSpawn false ID different model.ID:%d h.workerModelID:%d ", model.ID, h.Hatchery().Model.ID)
 		return false
 	}
 	for _, r := range job.Job.Action.Requirements {
@@ -63,7 +63,7 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 	for name, cmd := range h.workers {
 		if worker.Name == name {
-			log.Notice("KillLocalWorker> Killing %s\n", worker.Name)
+			log.Notice("KillLocalWorker> Killing %s", worker.Name)
 			return cmd.Process.Kill()
 		}
 	}
@@ -76,7 +76,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	var err error
 
 	if len(h.workers) >= viper.GetInt("max-worker") {
-		return fmt.Errorf("Max capacity reached (%d)\n", viper.GetInt("max-worker"))
+		return fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
 	}
 
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
@@ -186,10 +186,10 @@ func (h *HatcheryLocal) Init() error {
 		},
 	}
 
-	log.Notice("Call hatchery.Register Init()\n")
+	log.Notice("Call hatchery.Register Init()")
 
 	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
-		log.Warning("Cannot register hatchery: %s\n", err)
+		log.Warning("Cannot register hatchery: %s", err)
 		return err
 	}
 
@@ -220,7 +220,7 @@ func (h *HatcheryLocal) startKillAwolWorkerRoutine() {
 		time.Sleep(30 * time.Second)
 		err := h.killAwolWorkers()
 		if err != nil {
-			log.Warning("Cannot kill awol workers: %s\n", err)
+			log.Warning("Cannot kill awol workers: %s", err)
 		}
 	}
 }
@@ -249,7 +249,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		// Worker not found on api side. kill it
 		if w.Name == "" {
 			w.Name = name
-			log.Notice("Killing AWOL worker %s\n", w.Name)
+			log.Notice("Killing AWOL worker %s", w.Name)
 			if err := h.KillWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
@@ -258,7 +258,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		}
 		// Worker is disabled. kill it
 		if w.Status == sdk.StatusDisabled {
-			log.Notice("Killing disabled worker %s\n", w.Name)
+			log.Notice("Killing disabled worker %s", w.Name)
 
 			if err := h.KillWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
