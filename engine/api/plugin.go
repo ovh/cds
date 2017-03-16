@@ -164,7 +164,7 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		//Read it
 		btes, errr := ioutil.ReadAll(buf)
 		if errr != nil {
-			log.Warning("updatePluginHandler> Unable to read old plugin buffer")
+			return sdk.WrapError(errr, "updatePluginHandler> Unable to read old plugin buffer")
 		}
 		//Get a dir
 		tmpDir, errtmp := ioutil.TempDir("", "old-plugin")
