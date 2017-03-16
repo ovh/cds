@@ -125,7 +125,8 @@ func TestUpdateJobHandler(t *testing.T) {
 		Enabled:         true,
 		PipelineStageID: stage.ID,
 		Action: sdk.Action{
-			Name: "myJob",
+			Enabled: true,
+			Name:    "myJob",
 		},
 	}
 	test.NoError(t, pipeline.InsertJob(db, job, stage.ID, pip))
@@ -208,6 +209,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		Enabled:         true,
 		PipelineStageID: stage.ID,
 		Action: sdk.Action{
+			Enabled: true,
 			Name: "myJob",
 		},
 	}

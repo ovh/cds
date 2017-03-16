@@ -2,6 +2,7 @@ package environment
 
 import (
 	"fmt"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
@@ -73,8 +74,7 @@ func addEnvironmentVariable(cmd *cobra.Command, args []string) {
 	varValue := args[3]
 	varType := args[4]
 
-	err := sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, sdk.VariableTypeFromString(varType))
-	if err != nil {
+	if err := sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, varType); err != nil {
 		sdk.Exit("Error: cannot add variable %s in environment %s (%s)\n", varName, envName, err)
 	}
 	fmt.Printf("OK\n")
@@ -101,8 +101,7 @@ func updateEnvironmentVariable(cmd *cobra.Command, args []string) {
 	varValue := args[4]
 	varType := args[5]
 
-	err := sdk.UpdateEnvironmentVariable(projectKey, envName, varOldName, varName, varValue, varType)
-	if err != nil {
+	if err := sdk.UpdateEnvironmentVariable(projectKey, envName, varOldName, varName, varValue, varType); err != nil {
 		sdk.Exit("Error: cannot update variable %s in environment %s (%s)\n", varName, envName, err)
 	}
 	fmt.Printf("OK\n")

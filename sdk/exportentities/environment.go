@@ -70,7 +70,7 @@ func (e *Environment) Environment() (env *sdk.Environment) {
 	for k, v := range e.Values {
 		env.Variable[i] = sdk.Variable{
 			Name:  k,
-			Type:  sdk.VariableType(v.Type),
+			Type:  v.Type,
 			Value: v.Value,
 		}
 		i++

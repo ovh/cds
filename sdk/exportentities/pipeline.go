@@ -2,19 +2,26 @@ package exportentities
 
 import (
 	"fmt"
+	"reflect"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/sdk"
 )
 
 // Pipeline represents exported sdk.Pipeline
 type Pipeline struct {
-	Name        string                    `json:"name" yaml:"name"`
-	Type        string                    `json:"type" yaml:"type"`
-	Permissions map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
-	Parameters  map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Stages      map[string]Stage          `json:"stages,omitempty" yaml:"stages,omitempty"`
-	Jobs        map[string]Job            `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	Steps       []Step                    `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
+	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Type         string                    `json:"type,omitempty" yaml:"type,omitempty"`
+	Permissions  map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Stages       map[string]Stage          `json:"stages,omitempty" yaml:"stages,omitempty"`
+	Jobs         map[string]Job            `json:"jobs,omitempty" yaml:"jobs,omitempty"`
+	Requirements []Requirement             `json:"requirements,omitempty" yaml:"requirements,omitempty" hcl:"requirement,omitempty"`
+	Steps        []Step                    `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
 }
 
 // Stage represents exported sdk.Stage
@@ -33,15 +40,210 @@ type Job struct {
 }
 
 // Step represents exported step used in a job
-type Step struct {
-	Enabled          *bool                        `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Final            *bool                        `json:"final,omitempty" yaml:"final,omitempty"`
-	ArtifactUpload   map[string]string            `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty"`
-	ArtifactDownload map[string]string            `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty"`
-	Script           string                       `json:"script,omitempty" yaml:"script,omitempty"`
-	JUnitReport      string                       `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty"`
-	Plugin           map[string]map[string]string `json:"plugin,omitempty" yaml:"plugin,omitempty"`
-	Action           map[string]map[string]string `json:"action,omitempty" yaml:"action,omitempty"`
+type Step map[string]interface{}
+
+func (s Step) IsValid() bool {
+	keys := []string{}
+	for k := range s {
+		if k != "enabled" && k != "final" {
+			keys = append(keys, k)
+		}
+	}
+	return len(keys) == 1
+}
+
+func (s Step) key() string {
+	keys := []string{}
+	for k := range s {
+		if k != "enabled" && k != "final" {
+			keys = append(keys, k)
+		}
+	}
+	return keys[0]
+}
+
+func (s Step) AsScript() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+
+	bI, ok := s["script"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	bS, ok := bI.(string)
+	if !ok {
+		return nil, true, fmt.Errorf("Malformatted Step : script must be a string")
+	}
+
+	a := sdk.NewStepScript(bS)
+
+	var err error
+	a.Enabled, err = s.IsEnabled()
+	if err != nil {
+		return nil, true, err
+	}
+	a.Final, err = s.IsFinal()
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
+func (s Step) AsAction() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+
+	actionName := s.key()
+
+	bI, ok := s[actionName]
+	if !ok {
+		return nil, false, nil
+	}
+
+	if reflect.ValueOf(bI).Kind() != reflect.Map {
+		return nil, false, nil
+	}
+
+	argss := map[string]string{}
+	if err := mapstructure.Decode(bI, &argss); err != nil {
+		return nil, true, sdk.WrapError(err, "Malformatted Step")
+	}
+
+	a, err := sdk.NewStepDefault(actionName, argss)
+	if err != nil {
+		return nil, true, err
+	}
+
+	a.Enabled, err = s.IsEnabled()
+	if err != nil {
+		return nil, true, err
+	}
+	a.Final, err = s.IsFinal()
+	if err != nil {
+		return nil, true, err
+	}
+	return a, true, nil
+}
+
+func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+
+	bI, ok := s["jUnitReport"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	bS, ok := bI.(string)
+	if !ok {
+		return nil, true, fmt.Errorf("Malformatted Step : jUnitReport must be a string")
+	}
+
+	a := sdk.NewStepJUnitReport(bS)
+
+	var err error
+	a.Enabled, err = s.IsEnabled()
+	if err != nil {
+		return nil, true, err
+	}
+	a.Final, err = s.IsFinal()
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
+func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+
+	bI, ok := s["artifactUpload"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	if reflect.ValueOf(bI).Kind() != reflect.Map {
+		return nil, false, nil
+	}
+
+	argss := map[string]string{}
+	if err := mapstructure.Decode(bI, &argss); err != nil {
+		return nil, true, sdk.WrapError(err, "Malformatted Step")
+	}
+
+	a := sdk.NewStepArtifactUpload(argss)
+
+	var err error
+	a.Enabled, err = s.IsEnabled()
+	if err != nil {
+		return nil, true, err
+	}
+	a.Final, err = s.IsFinal()
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
+func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+
+	bI, ok := s["artifactDownload"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	argss := map[string]string{}
+	if err := mapstructure.Decode(bI, &argss); err != nil {
+		return nil, true, sdk.WrapError(err, "Malformatted Step")
+	}
+	a := sdk.NewStepArtifactDownload(argss)
+
+	var err error
+	a.Enabled, err = s.IsEnabled()
+	if err != nil {
+		return nil, true, err
+	}
+	a.Final, err = s.IsFinal()
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
+func (s Step) IsEnabled() (bool, error) {
+	bI, ok := s["enabled"]
+	if !ok {
+		return true, nil
+	}
+	bS, ok := bI.(bool)
+	if !ok {
+		return false, fmt.Errorf("Malformatted Step : enabled attribute must be true|false")
+	}
+	return bS, nil
+}
+
+func (s Step) IsFinal() (bool, error) {
+	bI, ok := s["final"]
+	if !ok {
+		return false, nil
+	}
+	bS, ok := bI.(bool)
+	if !ok {
+		return false, fmt.Errorf("Malformatted Step : final attribute must be true|false (%v)", bI)
+	}
+	return bS, nil
 }
 
 // Requirement represents an exported sdk.Requirement
@@ -64,17 +266,31 @@ type ServiceRequirement struct {
 //NewPipeline creates an exportable pipeline from a sdk.Pipeline
 func NewPipeline(pip *sdk.Pipeline) (p *Pipeline) {
 	p = &Pipeline{}
-	p.Name = pip.Name
-	p.Type = string(pip.Type)
-	p.Permissions = make(map[string]int, len(pip.GroupPermission))
-	for _, perm := range pip.GroupPermission {
-		p.Permissions[perm.Group.Name] = perm.Permission
+
+	// Default name is like the type
+	if strings.ToLower(pip.Name) != pip.Type {
+		p.Name = pip.Name
 	}
-	p.Parameters = make(map[string]ParameterValue, len(pip.Parameter))
-	for _, v := range pip.Parameter {
-		p.Parameters[v.Name] = ParameterValue{
-			Type:         string(v.Type),
-			DefaultValue: v.Value,
+
+	// We consider build pipeline are default
+	if pip.Type != sdk.BuildPipeline {
+		p.Type = pip.Type
+	}
+
+	if len(pip.GroupPermission) > 0 {
+		p.Permissions = make(map[string]int, len(pip.GroupPermission))
+		for _, perm := range pip.GroupPermission {
+			p.Permissions[perm.Group.Name] = perm.Permission
+		}
+	}
+
+	if len(pip.Parameter) > 0 {
+		p.Parameters = make(map[string]ParameterValue, len(pip.Parameter))
+		for _, v := range pip.Parameter {
+			p.Parameters[v.Name] = ParameterValue{
+				Type:         string(v.Type),
+				DefaultValue: v.Value,
+			}
 		}
 	}
 
@@ -88,6 +304,7 @@ func NewPipeline(pip *sdk.Pipeline) (p *Pipeline) {
 				return
 			case 1:
 				p.Steps = newSteps(pip.Stages[0].Jobs[0].Action)
+				p.Requirements = newRequirements(pip.Stages[0].Jobs[0].Action.Requirements)
 				return
 			default:
 				p.Jobs = newJobs(pip.Stages[0].Jobs)
@@ -105,7 +322,8 @@ func NewPipeline(pip *sdk.Pipeline) (p *Pipeline) {
 func newStages(stages []sdk.Stage) map[string]Stage {
 	res := map[string]Stage{}
 	var order int
-	for _, s := range stages {
+	for i := range stages {
+		s := &stages[i]
 		if len(s.Jobs) == 0 {
 			continue
 		}
@@ -126,9 +344,36 @@ func newStages(stages []sdk.Stage) map[string]Stage {
 	return res
 }
 
+func newRequirements(req []sdk.Requirement) []Requirement {
+	if req == nil {
+		return nil
+	}
+	res := []Requirement{}
+	for _, r := range req {
+		switch r.Type {
+		case sdk.BinaryRequirement:
+			res = append(res, Requirement{Binary: r.Value})
+		case sdk.NetworkAccessRequirement:
+			res = append(res, Requirement{Network: r.Value})
+		case sdk.ModelRequirement:
+			res = append(res, Requirement{Model: r.Value})
+		case sdk.HostnameRequirement:
+			res = append(res, Requirement{Hostname: r.Value})
+		case sdk.PluginRequirement:
+			res = append(res, Requirement{Plugin: r.Value})
+		case sdk.ServiceRequirement:
+			res = append(res, Requirement{Service: ServiceRequirement{Name: r.Name, Value: r.Value}})
+		case sdk.MemoryRequirement:
+			res = append(res, Requirement{Memory: r.Value})
+		}
+	}
+	return res
+}
+
 func newJobs(jobs []sdk.Job) map[string]Job {
 	res := map[string]Job{}
-	for _, j := range jobs {
+	for i := range jobs {
+		j := &jobs[i]
 		if len(j.Action.Actions) == 0 {
 			continue
 		}
@@ -138,40 +383,22 @@ func newJobs(jobs []sdk.Job) map[string]Job {
 		}
 		jo.Steps = newSteps(j.Action)
 		jo.Description = j.Action.Description
-		for _, r := range j.Action.Requirements {
-			switch r.Type {
-			case sdk.BinaryRequirement:
-				jo.Requirements = append(jo.Requirements, Requirement{Binary: r.Value})
-			case sdk.NetworkAccessRequirement:
-				jo.Requirements = append(jo.Requirements, Requirement{Network: r.Value})
-			case sdk.ModelRequirement:
-				jo.Requirements = append(jo.Requirements, Requirement{Model: r.Value})
-			case sdk.HostnameRequirement:
-				jo.Requirements = append(jo.Requirements, Requirement{Hostname: r.Value})
-			case sdk.PluginRequirement:
-				jo.Requirements = append(jo.Requirements, Requirement{Plugin: r.Value})
-			case sdk.ServiceRequirement:
-				jo.Requirements = append(jo.Requirements, Requirement{Service: ServiceRequirement{Name: r.Name, Value: r.Value}})
-			case sdk.MemoryRequirement:
-				jo.Requirements = append(jo.Requirements, Requirement{Memory: r.Value})
-			}
-		}
-
+		jo.Requirements = newRequirements(j.Action.Requirements)
 		res[j.Action.Name] = jo
-
 	}
 	return res
 }
 
 func newSteps(a sdk.Action) []Step {
 	res := []Step{}
-	for _, a := range a.Actions {
+	for i := range a.Actions {
+		a := &a.Actions[i]
 		s := Step{}
 		if !a.Enabled {
-			s.Enabled = &a.Enabled
+			s["enabled"] = a.Enabled
 		}
-		if !a.Final {
-			s.Final = &a.Final
+		if a.Final {
+			s["final"] = a.Final
 		}
 
 		switch a.Type {
@@ -180,285 +407,291 @@ func newSteps(a sdk.Action) []Step {
 			case sdk.ScriptAction:
 				script := sdk.ParameterFind(a.Parameters, "script")
 				if script != nil {
-					s.Script = script.Value
+					s["script"] = script.Value
 				}
 			case sdk.ArtifactDownload:
-				s.ArtifactDownload = map[string]string{}
+				artifactDownloadArgs := map[string]string{}
 				path := sdk.ParameterFind(a.Parameters, "path")
 				if path != nil {
-					s.ArtifactDownload["path"] = path.Value
+					artifactDownloadArgs["path"] = path.Value
 				}
 				tag := sdk.ParameterFind(a.Parameters, "tag")
 				if tag != nil {
-					s.ArtifactDownload["tag"] = tag.Value
+					artifactDownloadArgs["tag"] = tag.Value
 				}
+				application := sdk.ParameterFind(a.Parameters, "application")
+				if application != nil {
+					artifactDownloadArgs["application"] = application.Value
+				}
+				pipeline := sdk.ParameterFind(a.Parameters, "pipeline")
+				if pipeline != nil {
+					artifactDownloadArgs["pipeline"] = pipeline.Value
+				}
+				s["artifactDownload"] = artifactDownloadArgs
 			case sdk.ArtifactUpload:
-				s.ArtifactUpload = map[string]string{}
+				artifactUploadArgs := map[string]string{}
 				path := sdk.ParameterFind(a.Parameters, "path")
 				if path != nil {
-					s.ArtifactUpload["path"] = path.Value
+					artifactUploadArgs["path"] = path.Value
 				}
 				tag := sdk.ParameterFind(a.Parameters, "tag")
 				if tag != nil {
-					s.ArtifactUpload["tag"] = tag.Value
+					artifactUploadArgs["tag"] = tag.Value
 				}
+				s["artifactUpload"] = artifactUploadArgs
 			case sdk.JUnitAction:
 				path := sdk.ParameterFind(a.Parameters, "path")
 				if path != nil {
-					s.JUnitReport = path.Value
-				}
-			}
-		case sdk.PluginAction:
-			s.Plugin = map[string]map[string]string{}
-			s.Plugin[a.Name] = map[string]string{}
-			for _, p := range a.Parameters {
-				if p.Value != "" {
-					s.Plugin[a.Name][p.Name] = p.Value
+					s["jUnitReport"] = path.Value
 				}
 			}
 		default:
-			s.Action = map[string]map[string]string{}
-			s.Action[a.Name] = map[string]string{}
+			args := map[string]string{}
 			for _, p := range a.Parameters {
 				if p.Value != "" {
-					s.Action[a.Name][p.Name] = p.Value
+					args[p.Name] = p.Value
 				}
 			}
+			s[a.Name] = args
 		}
-
 		res = append(res, s)
 	}
 
 	return res
 }
 
-//HCLTemplate returns text/template
-/*
-func (p *Pipeline) HCLTemplate() (*template.Template, error) {
-	tmpl := `name = "{{.Name}}"
-type = "{{.Type}}"
-{{if .Permissions -}}
-permissions  { {{ range $key, $value := .Permissions }}
-	"{{$key}}" = {{$value}}{{ end }}
-}
-{{- end}}
-{{if .Steps -}}
-{{ range $value := .Steps}}
-step {
-	{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}} 	{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
-	{{if .Script -}}  script = "{{.Script}}"
-	{{- else if .Action -}}
-		action {
-			{{ range $key, $value := .Action }}
-			{{$key}} {
-				{{ range $key, $value := $value }}
-				{{$key}} = "{{$value}}"{{end}}
-			}
-			{{end}}}
-		}
-	{{- else if .Plugin -}}
-		plugin {
-			{{ range $key, $value := .Plugin }}
-			{{$key}} {
-				{{ range $key, $value := $value }}
-				{{$key}} = "{{$value}}"{{end}}
-			}
-			{{end}}}
-		}
-	{{- else if .ArtifactUpload -}}
-		artifactUpload {
-		{{ range $key, $value := .ArtifactUpload }}
-			{{$key}} = "{{$value}}"{{ end }}
-		}
-	{{- else if .ArtifactDownload -}}
-		artifactDownload {
-		{{ range $key, $value := .ArtifactDownload }}
-			{{$key}} = "{{$value}}"{{ end }}
-		}
-	{{- else if .JUnitReport -}}
-		jUnitReport = "{{.JUnitReport}}"
-	{{- end}}
-}
-{{ end }}
+//Pipeline returns a sdk.Pipeline entity
+func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
+	pip := new(sdk.Pipeline)
 
-{{- else -}}
-
-{{if .Jobs -}}
-{{ range $key, $value := .Jobs }}
-job "{{$key}}" {
-	{{ range $key, $value := $value.Steps}}step {
-		{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}}
-		{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
-		{{if .Script -}}
-			script = <<EOV
-{{.Script}}
-EOV
-		{{- else if .Action -}}
-			action {
-				{{ range $key, $value := .Action }}
-				{{$key}} {
-					{{ range $key, $value := $value }}
-					{{$key}} = "{{$value}}"{{end}}
-				}
-				{{end}}}
-			}
-		{{- else if .Plugin -}}
-			plugin {
-				{{ range $key, $value := .Plugin }}
-				{{$key}} {
-					{{ range $key, $value := $value }}
-					{{$key}} = "{{$value}}"{{end}}
-				}
-				{{end}}}
-			}
-		{{- else if .ArtifactUpload -}}
-			artifactUpload {
-			{{ range $key, $value := .ArtifactUpload }}
-				{{$key}} = "{{$value}}"{{ end }}
-			}
-		{{- else if .ArtifactDownload -}}
-			artifactDownload {
-			{{ range $key, $value := .ArtifactDownload}}
-				{{$key}} = "{{$value}}"{{ end }}
-			}
-		{{- else if .JUnitReport -}}
-			jUnitReport = "{{.JUnitReport}}"
-		{{- end}}
+	if p.Type == "" {
+		p.Type = sdk.BuildPipeline
 	}
-	{{ end }}
-}
-{{ end }}
-{{- else -}}
-stages {
-{{ range $key, $value := .Stages }}
-	stage "{{$key}}" {
-		{{ range $key, $value := $value.Jobs }}
-		job "{{$key}}" {
-			{{ range $key, $value := $value.Steps}}step {
-				{{if $value.Enabled -}} enabled = {{ $value.Enabled }}{{- end}}
-				{{if $value.Final -}} final = {{ $value.Final }}{{- end}}
-				{{if .Script -}}
-					script = <<EOV
-{{.Script}}
-EOV
-				{{- else if .Action -}}
-					action {
-						{{ range $key, $value := .Action }}
-						{{$key}} {
-							{{ range $key, $value := $value }}
-							{{$key}} = "{{$value}}"{{end}}
-						}
-						{{end}}}
-					}
-				{{- else if .Plugin -}}
-					plugin {
-						{{ range $key, $value := .Plugin }}
-						{{$key}} {
-							{{ range $key, $value := $value }}
-							{{$key}} = "{{$value}}"{{end}}
-						}
-						{{end}}}
-					}
-				{{- else if .ArtifactUpload -}}
-					artifactUpload {
-					{{ range $key, $value := .ArtifactUpload }}
-						{{$key}} = "{{$value}}"{{ end }}
-					}
-				{{- else if .ArtifactDownload -}}
-					artifactDownload {
-					{{ range $key, $value := .ArtifactDownload -}}
-						{{$key}} = "{{$value}}"{{- end }}
-					}
-				{{- else if .JUnitReport -}}
-					jUnitReport = "{{.JUnitReport}}"
-				{{- end}}
-			}
-			{{ end }}
-		}
-		{{ end }}
+
+	if p.Name == "" {
+		p.Name = strings.Title(p.Type)
 	}
-{{ end}}}
-{{- end}}
-{{- end}}
-`
-	t := template.New("t")
-	return t.Parse(tmpl)
+
+	pip.Name = p.Name
+	pip.Type = p.Type
+
+	//Compute permissions
+	for g, p := range p.Permissions {
+		perm := sdk.GroupPermission{
+			Group:      sdk.Group{Name: g},
+			Permission: p,
+		}
+		pip.GroupPermission = append(pip.GroupPermission, perm)
+	}
+
+	//Compute parameters
+	for p, v := range p.Parameters {
+		param := sdk.Parameter{
+			Name:  p,
+			Type:  v.Type,
+			Value: v.DefaultValue,
+		}
+		pip.Parameter = append(pip.Parameter, param)
+	}
+
+	if p.Steps != nil {
+		//There one stage, with one job
+		actions, err := computeSteps(p.Steps)
+		if err != nil {
+			return nil, err
+		}
+		pip.Stages = []sdk.Stage{
+			sdk.Stage{
+				Name:       p.Name,
+				BuildOrder: 1,
+				Enabled:    true,
+				Jobs: []sdk.Job{
+					sdk.Job{
+						Enabled: true,
+						Action: sdk.Action{
+							Enabled: true,
+							Name:    p.Name,
+							Actions: actions,
+							Type:    sdk.JoinedAction,
+						},
+					},
+				},
+			},
+		}
+	} else if p.Jobs != nil {
+		//There is one stage with several jobs
+		stage := sdk.Stage{
+			Name:       p.Name,
+			BuildOrder: 1,
+			Enabled:    true,
+		}
+		for s, j := range p.Jobs {
+			job, err := computeJob(s, j)
+			if err != nil {
+				return nil, err
+			}
+			stage.Jobs = append(stage.Jobs, *job)
+		}
+		pip.Stages = []sdk.Stage{stage}
+	} else {
+		//There is more than one stage
+		stageKeys := []string{}
+		for k := range p.Stages {
+			stageKeys = append(stageKeys, k)
+		}
+		sort.Strings(stageKeys)
+
+		//Compute stages
+		for i, stageName := range stageKeys {
+			buildOrder := i
+			name := stageName
+			//Try to find buildOrder and name
+			if strings.Contains(stageName, "|") {
+				t := strings.SplitN(stageName, "|", 2)
+				var err error
+				buildOrder, err = strconv.Atoi(t[0])
+				if err != nil {
+					return nil, fmt.Errorf("malformatted stage name : %s", stageName)
+				}
+				name = t[1]
+			}
+
+			s := sdk.Stage{
+				BuildOrder: buildOrder,
+				Name:       name,
+			}
+
+			if p.Stages[stageName].Enabled != nil {
+				s.Enabled = *p.Stages[stageName].Enabled
+			} else {
+				s.Enabled = true
+			}
+
+			//Compute stage Prerequisites
+			for n, c := range p.Stages[stageName].Conditions {
+				s.Prerequisites = append(s.Prerequisites, sdk.Prerequisite{
+					Parameter:     n,
+					ExpectedValue: c,
+				})
+			}
+
+			//Compute jobs
+			for n, j := range p.Stages[stageName].Jobs {
+				job, err := computeJob(n, j)
+				if err != nil {
+					return nil, err
+				}
+				s.Jobs = append(s.Jobs, *job)
+			}
+
+			pip.Stages = append(pip.Stages, s)
+		}
+	}
+
+	return pip, nil
 }
 
-func decodePipeline(m map[string]interface{}) (p *Pipeline, err error) {
-	if m["name"] == nil || m["type"] == nil {
-		err = errors.New("Invalid pipeline structured map")
+func computeSteps(steps []Step) ([]sdk.Action, error) {
+	res := []sdk.Action{}
+	for _, s := range steps {
+		a, err := computeStep(s)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, *a)
+	}
+	return res, nil
+}
+
+func computeStep(s Step) (a *sdk.Action, e error) {
+	if !s.IsValid() {
+		e = fmt.Errorf("Malformatted step")
 		return
 	}
 
-	p = &Pipeline{
-		Name: m["name"].(string),
-		Type: m["type"].(string),
-	}
-
-	if m["step"] != nil {
-		steps := m["step"].([]map[string]interface{})
-		p.Steps = make([]Step, len(steps))
-		for i, s := range steps {
-			p.Steps[i] = Step{}
-			p.Steps[i].Enabled = getBoolPtr(s, "enabled")
-			p.Steps[i].Final = getBoolPtr(s, "final")
-			p.Steps[i].Script = getStringValue(s, "script")
-			p.Steps[i].Action = getMapStringMapStringString(s, "action")
-			p.Steps[i].Plugin = getMapStringMapStringString(s, "plugin")
-			p.Steps[i].ArtifactDownload = getMapStringString(s, "artifactDownload")
-			p.Steps[i].ArtifactUpload = getMapStringString(s, "artifactUpload")
-			p.Steps[i].JUnitReport = getStringValue(s, "jUnitReport")
-		}
-	}
-
-	return
-}
-
-func getBoolPtr(m map[string]interface{}, k string) *bool {
-	if m[k] == nil {
-		return nil
-	}
-	b, ok := m[k].(bool)
-	if !ok {
-		return nil
-	}
-	return &b
-}
-
-func getStringValue(m map[string]interface{}, k string) (v string) {
-	if m[k] == nil {
+	var ok bool
+	a, ok, e = s.AsArtifactDownload()
+	if ok {
 		return
 	}
-	var ok bool
-	v, ok = m[k].(string)
-	if !ok {
-		v = ""
+
+	a, ok, e = s.AsArtifactUpload()
+	if ok {
+		return
 	}
+
+	a, ok, e = s.AsJUnitReport()
+	if ok {
+		return
+	}
+
+	a, ok, e = s.AsScript()
+	if ok {
+		return
+	}
+
+	a, ok, e = s.AsAction()
+	if ok {
+		return
+	}
+
 	return
 }
 
-func getMapStringString(m map[string]interface{}, k string) (r map[string]string) {
-	if m[k] == nil {
-		return nil
+func computeJob(name string, j Job) (*sdk.Job, error) {
+	job := sdk.Job{
+		Action: sdk.Action{
+			Name:        name,
+			Description: j.Description,
+			Type:        sdk.JoinedAction,
+		},
 	}
-	var ok bool
-	r, ok = m[k].(map[string]string)
-	if !ok {
-		return nil
+	if j.Enabled != nil {
+		job.Enabled = *j.Enabled
+	} else {
+		job.Enabled = true
 	}
-	return
-}
+	job.Action.Enabled = job.Enabled
+	for _, r := range j.Requirements {
+		var name, tpe, val string
+		if r.Binary != "" {
+			name = r.Binary
+			val = r.Binary
+			tpe = sdk.BinaryRequirement
+		} else if r.Hostname != "" {
+			name = "hostname"
+			val = r.Hostname
+			tpe = sdk.HostnameRequirement
+		} else if r.Memory != "" {
+			name = "memory"
+			val = r.Memory
+			tpe = sdk.MemoryRequirement
+		} else if r.Model != "" {
+			name = "model"
+			val = r.Model
+			tpe = sdk.ModelRequirement
+		} else if r.Network != "" {
+			name = "network"
+			val = r.Network
+			tpe = sdk.NetworkAccessRequirement
+		} else if r.Plugin != "" {
+			name = r.Plugin
+			val = r.Plugin
+			tpe = sdk.PluginRequirement
+		} else if r.Service.Name != "" {
+			name = r.Service.Name
+			val = r.Service.Value
+			tpe = sdk.ServiceRequirement
+		}
+		job.Action.Requirement(name, tpe, val)
+	}
 
-func getMapStringMapStringString(m map[string]interface{}, k string) (r map[string]map[string]string) {
-	if m[k] == nil {
-		return nil
+	//Compute steps for the jobs
+	children, err := computeSteps(j.Steps)
+	if err != nil {
+		return nil, err
 	}
-	var ok bool
-	r, ok = m[k].(map[string]map[string]string)
-	if !ok {
-		return nil
-	}
-	return
+	job.Action.Actions = children
+
+	return &job, nil
 }
-*/

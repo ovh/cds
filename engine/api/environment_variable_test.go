@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/auth"
@@ -112,7 +113,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -184,7 +185,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -249,7 +250,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -358,7 +359,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v); err != nil {
+	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -378,7 +379,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 
 	//7. Update Variable
 	v.Value = "new bar"
-	if err := environment.UpdateVariable(db, env.ID, &v); err != nil {
+	if err := environment.UpdateVariable(db, env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -415,4 +416,56 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 	}
 	assert.Equal(t, len(envDb.Variable), 1)
 	assert.Equal(t, envDb.Variable[0].Value, "bar")
+}
+
+func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
+	db := test.SetupPG(t)
+
+	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getVariableAuditInEnvironmentHandler"}
+	router.init()
+
+	//Create admin user
+	u, pass := assets.InsertAdminUser(t, db)
+
+	//Create a fancy httptester
+	tester := iffy.NewTester(t, router.mux)
+
+	//Insert Project
+	pkey := assets.RandomString(t, 10)
+	proj := assets.InsertTestProject(t, db, pkey, pkey)
+
+	// Insert env
+	e := &sdk.Environment{
+		Name:      "Production",
+		ProjectID: proj.ID,
+	}
+	if err := environment.InsertEnvironment(db, e); err != nil {
+		t.Fatal(err)
+	}
+
+	// Add variable
+	v := sdk.Variable{
+		Name:  "foo",
+		Type:  "string",
+		Value: "bar",
+	}
+	if err := environment.InsertVariable(db, e.ID, &v, u); err != nil {
+		t.Fatal(err)
+	}
+
+	vars := map[string]string{
+		"key": proj.Key,
+		"permEnvironmentName": e.Name,
+		"name":                "foo",
+	}
+
+	route := router.getRoute("GET", getVariableAuditInEnvironmentHandler, vars)
+	headers := assets.AuthHeaders(t, u, pass)
+
+	var audits []sdk.EnvironmentVariableAudit
+	tester.AddCall("Test_getVariableAuditInEnvironmentHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t), iffy.UnmarshalResponse(&audits))
+	tester.Run()
+
+	assert.Nil(t, audits[0].VariableBefore)
+	assert.Equal(t, "foo", audits[0].VariableAfter.Name)
 }

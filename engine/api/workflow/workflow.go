@@ -15,7 +15,7 @@ import (
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
 func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
-
+  
 	// Select root trigger element + non triggered pipeline
 	query := `
 		SELECT  projID, projName,
@@ -118,12 +118,18 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			       application.id as appID, application.name as appName,
 			       pipeline.id as pipID, pipeline.name as pipName, pipeline.type as pipType,
 			       environment.id as envID, environment.name as EnvName,
-			       false as hasHook, false as hasScheduler, false as hasPoller, false as hasChild
+			       CASE WHEN COALESCE (count(h.id), 0)>0 THEN true ELSE false END as hasHook,
+			       CASE WHEN COALESCE (count(sc.id), 0)>0 THEN true ELSE false END as hasScheduler,
+			       CASE WHEN COALESCE (count(p.application_id), 0)>0 THEN true ELSE false END as hasPoller,
+			       false as hasChild
 			FROM pipeline
 			JOIN application_pipeline ON application_pipeline.pipeline_id = pipeline.id
 			JOIN application ON application.id = application_pipeline.application_id
 			JOIN project ON project.id = application.project_id
 			JOIN environment ON environment.id = 1
+			LEFT JOIN pipeline_scheduler sc ON sc.application_id = application.id AND sc.pipeline_id = pipeline.id AND sc.environment_id = 1
+			LEFT JOIN hook h ON h.application_id = application.id AND h.pipeline_id = pipeline.id AND sc.environment_id = 1
+			LEFT JOIN poller p ON p.application_id = application.id AND p.pipeline_id = pipeline.id AND sc.environment_id = 1
 			WHERE application.name = $2 and project.projectkey = $1 AND pipeline.id NOT IN (
 				select src_pipeline_id
 				FROM pipeline_trigger
@@ -136,6 +142,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 				WHERE dest_application_id = application.id
 				AND src_application_id = application.id
 			)
+			GROUP by project.id, application.id, pipeline.id, environment.id
 		     )
 		     UNION
 		     (
@@ -144,11 +151,14 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			       appID, appName,
 			       pipID, pipName, pipType,
 			       envID, envName,
-			       false as hasHook, false as hasScheduler, false as hasPoller, true as hasChild
+			       CASE WHEN COALESCE (count(h.id), 0)>0 THEN true ELSE false END as hasHook,
+			       CASE WHEN COALESCE (count(sc.id), 0)>0 THEN true ELSE false END as hasScheduler,
+			       CASE WHEN COALESCE (count(p.application_id), 0)>0 THEN true ELSE false END as hasPoller,
+			       true as hasChild
 			FROM (
 				-- SELECT ALL SRC APP/PIP/ENV
 				SELECT
-					distinct on (src_pipeline_id, src_environment_id)src_pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
+					distinct on (src_pipeline_id, src_environment_id) src_pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
 					application.project_id as projID, project.name as projName,
 					application.id as appID, application.name as appName,
 					COALESCE(src_environment_id,1) as envID, environment.name as envName,
@@ -164,6 +174,9 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 					WHERE project.projectkey = $1 AND application.name = $2
 				)
 			) roots
+			LEFT JOIN pipeline_scheduler sc ON sc.application_id = appID AND sc.pipeline_id = pipID AND sc.environment_id = envID
+			LEFT JOIN hook h ON h.application_id = appID AND h.pipeline_id = pipID AND sc.environment_id = envID
+			LEFT JOIN poller p ON p.application_id = appID AND p.pipeline_id = pipID AND sc.environment_id = envID
 			WHERE (
 				dis not in (
 					select
@@ -175,6 +188,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 
 				)
 			)
+			GROUP BY projID, projName, appID, appName, pipID, pipName, pipType, envID, envName
 		)
 		order by
 		appID, pipID, envID`
@@ -197,7 +211,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			&hasHook, &hasScheduler, &hasPoller, &hasChild); err != nil {
 			return nil, err
 		}
-		root.Pipeline.Type = sdk.PipelineTypeFromString(typePipeline)
+		root.Pipeline.Type = typePipeline
 		if root.Environment.ID == 0 {
 			root.Environment = sdk.DefaultEnv
 		}
@@ -343,8 +357,8 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 		}
 
 		if permission.AccessToPipeline(child.Trigger.DestEnvironment.ID, child.Trigger.DestPipeline.ID, user, permission.PermissionRead) {
-			child.Trigger.SrcPipeline.Type = sdk.PipelineTypeFromString(srcType)
-			child.Trigger.DestPipeline.Type = sdk.PipelineTypeFromString(destType)
+			child.Trigger.SrcPipeline.Type = srcType
+			child.Trigger.DestPipeline.Type = destType
 
 			child.Project = child.Trigger.DestProject
 			child.Application = child.Trigger.DestApplication

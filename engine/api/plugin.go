@@ -134,112 +134,91 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 
 func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	//Upload file and get plugin information
-	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
+	ap, params, file, deferFunc, errUpload := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
 		defer deferFunc()
 	}
-
-	if err != nil {
-		log.Warning("updatePluginHandler>%T %s", err, err)
-		return err
-
+	if errUpload != nil {
+		return sdk.WrapError(errUpload, "updatePluginHandler> fileUploadAndGetPlugin error")
 	}
 
 	// Check that action does not already exists
-	exists, err := action.Exists(db, ap.Name)
-	if err != nil {
-		log.Warning("updatePluginHandler>%T %s", err, err)
-		return err
-
+	exists, errExists := action.Exists(db, ap.Name)
+	if errExists != nil {
+		return sdk.WrapError(errExists, "updatePluginHandler> unable to check if action %s exists", ap.Name)
 	}
 	if !exists {
-		return sdk.ErrNoAction
-
+		return sdk.WrapError(sdk.ErrNoAction, "updatePluginHandler")
 	}
 
 	//Store previous file from objectstore
-	buf, err := objectstore.FetchPlugin(*ap)
-	if err != nil {
-		log.Warning("updatePluginHandler>Unable to fetch plugin: %s", err)
-		return sdk.NewError(sdk.ErrPluginInvalid, err)
-
+	buf, errFetch := objectstore.FetchPlugin(*ap)
+	if errFetch != nil {
+		log.Warning("updatePluginHandler>Unable to fetch plugin: %s", errFetch)
+		// do no raise error... it just mean that we cannot fetch the old version of the plugin
 	}
-	defer buf.Close()
 
-	//Read it
-	btes, err := ioutil.ReadAll(buf)
-	if err != nil {
-		log.Warning("updatePluginHandler>%T %s", err, err)
-		return err
+	var tmpFile string
+	if buf != nil && errFetch == nil {
+		defer buf.Close()
+		//Read it
+		btes, errr := ioutil.ReadAll(buf)
+		if errr != nil {
+			return sdk.WrapError(errr, "updatePluginHandler> Unable to read old plugin buffer")
+		}
+		//Get a dir
+		tmpDir, errtmp := ioutil.TempDir("", "old-plugin")
+		if errtmp != nil {
+			return sdk.WrapError(errtmp, "updatePluginHandler> error with tempdir")
+		}
+		os.MkdirAll(tmpDir, os.FileMode(0700))
 
-	}
-	//Get a dir
-	tmpDir, err := ioutil.TempDir("", "old-plugin")
-	if err != nil {
-		log.Warning("updatePluginHandler> error with tempdir %T %s", err, err)
-		return err
+		//Get a temp file
+		tmpFile = path.Join(tmpDir, ap.Name)
 
-	}
-	os.MkdirAll(tmpDir, os.FileMode(0700))
-
-	//Get a temp file
-	tmpFile := path.Join(tmpDir, ap.Name)
-
-	//Write it
-	log.Debug("updatePluginHandler>store oldfile %s in case of error", tmpFile)
-	if err := ioutil.WriteFile(tmpFile, btes, os.FileMode(0600)); err != nil {
-		log.Warning("updatePluginHandler>Error writing file %s %T %s", tmpFile, err, err)
-		return err
-	}
-	defer func() {
-		log.Debug("updatePluginHandler> deleting file %s", tmpFile)
-		os.RemoveAll(tmpFile)
-	}()
-
-	//Delete previous file from objectstore
-	objectstore.DeletePlugin(*ap)
-	if err != nil {
-		log.Warning("updatePluginHandler>Error deleting file %T %s", err, err)
-		return err
-
+		//Write it
+		log.Debug("updatePluginHandler>store oldfile %s in case of error", tmpFile)
+		if err := ioutil.WriteFile(tmpFile, btes, os.FileMode(0600)); err != nil {
+			return sdk.WrapError(err, "updatePluginHandler>Error writing file %s", tmpFile)
+		}
+		defer func() {
+			log.Debug("updatePluginHandler> deleting file %s", tmpFile)
+			os.RemoveAll(tmpFile)
+		}()
+		//Delete previous file from objectstore
+		if err := objectstore.DeletePlugin(*ap); err != nil {
+			return sdk.WrapError(err, "updatePluginHandler>Error deleting file")
+		}
 	}
 
 	//Upload it to objectstore
-	objectPath, err := objectstore.StorePlugin(*ap, file)
-	if err != nil {
-		log.Warning("updatePluginHandler> Error while uploading to object store %s: %s\n", ap.Name, err)
-		return err
-
+	objectPath, errStore := objectstore.StorePlugin(*ap, file)
+	if errStore != nil {
+		return sdk.WrapError(errStore, "updatePluginHandler> Error while uploading to object store %s", ap.Name)
 	}
 	ap.ObjectPath = objectPath
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("updatePluginHandler> Cannot start transaction: %s\n", err)
-		return err
-
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		return sdk.WrapError(errBegin, "updatePluginHandler> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
 	//Update in database
 	a, errDB := actionplugin.Update(tx, ap, params, c.User.ID)
-	if errDB != nil {
-		log.Warning("updatePluginHandler> Error while updating action %s in database: %s\n", ap.Name, err)
-
+	if errDB != nil && tmpFile != "" {
+		log.Warning("updatePluginHandler> Error while updating action %s in database: %s\n", ap.Name, errDB)
 		//Restore previous file
-		oldFile, err := os.Open(tmpFile)
-		if err != nil {
-			log.Warning("updatePluginHandler>Error opening file %s %T %s", tmpFile, err, err)
-			return err
+		oldFile, errO := os.Open(tmpFile)
+		if errO != nil {
+			return sdk.WrapError(errO, "updatePluginHandler>Error opening file %s ", tmpFile)
 		}
 		//re-store the old plugin file
-		if _, err := objectstore.StorePlugin(*ap, oldFile); err != nil {
-			log.Warning("updatePluginHandler> Error while uploading to object store %s: %s\n", ap.Name, err)
-			return err
+		if _, errStore := objectstore.StorePlugin(*ap, oldFile); errStore != nil {
+			return sdk.WrapError(errStore, "updatePluginHandler> Error while uploading to object store %s", ap.Name)
 		}
 
-		log.Warning("updatePluginHandler>%T %s", errDB, errDB)
-		return errDB
+		return sdk.WrapError(errDB, "updatePluginHandler> Unable to update plugin", ap.Name)
 	}
 	if err := tx.Commit(); err != nil {
 		log.Warning("updatePluginHandler> Cannot commit transaction: %s\n", err)

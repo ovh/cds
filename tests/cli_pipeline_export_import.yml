@@ -1,0 +1,67 @@
+name: Pipeline Export / Import Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cds}} project remove --force ITCLIPIPPRJIMPIMP
+  - script: {{.cds}} group remove ITCLIPIPIMP_GRP --force
+  - script: {{.cds}} project add ITCLIPIPPRJIMP "Test Project" ITCLIPIPIMP_GRP
+  - script: {{.cds}} group add ITCLIPIPIMP_GRP_EDIT_TEST
+  - script: {{.cds}} action remove IT_CLI_pipeline_Test_Echo --force
+
+- name: pipeline add
+  steps:
+  - script: {{.cds}} pipeline add ITCLIPIPPRJIMP HelloPipeline
+
+- name: pipeline stage add
+  steps:
+  - script: {{.cds}} pipeline stage add ITCLIPIPPRJIMP HelloPipeline Stage1
+
+- name: pipeline action add
+  steps:
+  - script: {{.cds}} action add IT_CLI_pipeline_Test_Echo --requirement="echo" -p name
+  - script: {{.cds}} pipeline job add ITCLIPIPPRJIMP HelloPipeline myJob1 --stage=1
+  - script: {{.cds}} pipeline job append ITCLIPIPPRJIMP HelloPipeline myJob1 IT_CLI_pipeline_Test_Echo -p "name={{.cds.proj.VAR_2}}"
+
+- name: pipeline export
+  steps:
+  - script: {{.cds}} pipeline export ITCLIPIPPRJIMP HelloPipeline --output pip.yml
+
+- name: pipeline update yaml file
+  steps:
+  - script: sed -i "s/HelloPipeline/HelloPipeline2/g" pip.yml
+
+- name: pipeline import
+  steps:
+  - script: {{.cds}} pipeline import ITCLIPIPPRJIMP pip.yml
+
+- name: pipeline show
+  steps:
+  - script: {{.cds}} pipeline show ITCLIPIPPRJIMP HelloPipeline2
+
+- name: pipeline update yaml file with errors
+  steps:
+  - script: sed -i "s/HelloPipeline2/HelloPipeline3/g" pip.yml
+
+- name: pipeline update yaml file with errors
+  steps:
+  - script: sed -i "s/IT_CLI_pipeline_Test_Echo/IT_CLI_pipeline_Test_Echo_Error/g" pip.yml
+
+- name: pipeline import should fail
+  steps:
+  - script: {{.cds}} pipeline import ITCLIPIPPRJIMP pip.yml
+    assertions:
+      - result.code ShouldEqual 1
+      - result.systemout ShouldContainSubstring IT_CLI_pipeline_Test_Echo_Error
+
+- name: pipeline show should fail
+  steps:
+  - script: {{.cds}} pipeline show ITCLIPIPPRJIMP HelloPipeline3
+    assertions:
+      - result.code ShouldEqual 1
+
+- name: cleanup
+  steps:
+  - script: {{.cds}} group remove ITCLIPIPIMP_GRP_EDIT_TEST
+  - script: {{.cds}} group remove ITCLIPIPIMP_GRP
+  - script: {{.cds}} project remove --force ITCLIPIPPRJIMP
+  - script: {{.cds}} action remove IT_CLI_pipeline_Test_Echo

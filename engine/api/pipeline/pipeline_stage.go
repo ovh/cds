@@ -61,10 +61,9 @@ func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage
 
 // InsertStage insert given stage into given database
 func InsertStage(db gorp.SqlExecutor, s *sdk.Stage) error {
-	s.Enabled = true
 	query := `INSERT INTO "pipeline_stage" (pipeline_id, name, build_order, enabled) VALUES($1,$2,$3,$4) RETURNING id`
 
-	if err := db.QueryRow(query, s.PipelineID, s.Name, s.BuildOrder, true).Scan(&s.ID); err != nil {
+	if err := db.QueryRow(query, s.PipelineID, s.Name, s.BuildOrder, s.Enabled).Scan(&s.ID); err != nil {
 		return err
 	}
 	return InsertStagePrequisites(db, s)

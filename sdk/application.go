@@ -37,6 +37,18 @@ type Application struct {
 	Metadata            Metadata              `json:"metadata" yaml:"metadata" db:"-"`
 }
 
+// ApplicationVariableAudit represents an audit on an application variable
+type ApplicationVariableAudit struct {
+	ID             int64     `json:"id" yaml:"-" db:"id"`
+	ApplicationID  int64     `json:"application_id" yaml:"-" db:"application_id"`
+	VariableID     int64     `json:"variable_id" yaml:"-" db:"variable_id"`
+	Type           string    `json:"type" yaml:"-" db:"type"`
+	VariableBefore *Variable `json:"variable_before,omitempty" yaml:"-" db:"-"`
+	VariableAfter  *Variable `json:"variable_after,omitempty" yaml:"-" db:"-"`
+	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
+	Author         string    `json:"author" yaml:"-" db:"author"`
+}
+
 // ApplicationPipeline Represent the link between an application and a pipeline
 type ApplicationPipeline struct {
 	ID           int64             `json:"id"`
@@ -236,7 +248,7 @@ func ShowApplicationVariable(projectKey, appName string) ([]Variable, error) {
 }
 
 // AddApplicationVariable  add a variable in an application
-func AddApplicationVariable(projectKey, appName, varName, varValue string, varType VariableType) error {
+func AddApplicationVariable(projectKey, appName, varName, varValue string, varType string) error {
 
 	newVar := Variable{
 		Name:  varName,
@@ -297,7 +309,7 @@ func UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, 
 		ID:    oldVar.ID,
 		Name:  varName,
 		Value: varValue,
-		Type:  VariableTypeFromString(varType),
+		Type:  varType,
 	}
 
 	data, err := json.Marshal(newVar)

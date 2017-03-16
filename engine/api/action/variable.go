@@ -28,7 +28,7 @@ func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables [
 		}
 
 		t.Name = project + "." + t.Name
-		abv[t.Name] = sdk.Parameter{Name: t.Name, Type: sdk.ParameterType(t.Type), Value: t.Value}
+		abv[t.Name] = sdk.Parameter{Name: t.Name, Type: t.Type, Value: t.Value}
 	}
 
 	for _, t := range appVariables {
@@ -37,7 +37,7 @@ func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables [
 		}
 
 		t.Name = app + "." + t.Name
-		abv[t.Name] = sdk.Parameter{Name: t.Name, Type: sdk.ParameterType(t.Type), Value: t.Value}
+		abv[t.Name] = sdk.Parameter{Name: t.Name, Type: t.Type, Value: t.Value}
 	}
 
 	for _, t := range envVariables {
@@ -46,7 +46,7 @@ func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables [
 		}
 
 		t.Name = env + "." + t.Name
-		abv[t.Name] = sdk.Parameter{Name: t.Name, Type: sdk.ParameterType(t.Type), Value: t.Value}
+		abv[t.Name] = sdk.Parameter{Name: t.Name, Type: t.Type, Value: t.Value}
 	}
 
 	for _, t := range pipelineParameters {

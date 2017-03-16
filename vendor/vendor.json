@@ -265,10 +265,10 @@
 			"revisionTime": "2017-01-03T08:10:50Z"
 		},
 		{
-			"checksumSHA1": "JB2isLKsToinFNz+VwtLNVAE9mI=",
+			"checksumSHA1": "BV+2PSs0s2bFU3NnGvbUjUXByR4=",
 			"path": "github.com/fsamin/go-dump",
-			"revision": "94b5ad5f675eaed023794ef65dd884cda5cb98cf",
-			"revisionTime": "2017-02-16T20:47:41Z"
+			"revision": "ffa09687b10de28606ad5b7f577f3cebe44cdd56",
+			"revisionTime": "2017-03-06T10:05:53Z"
 		},
 		{
 			"checksumSHA1": "nmc2qcdbg17Ny8tHeEDQuphV6jA=",
@@ -714,66 +714,6 @@
 			"path": "github.com/rubenv/sql-migrate/sqlparse",
 			"revision": "6f4757563362064790a6687a6b60f182062c8634",
 			"revisionTime": "2016-06-20T08:32:29Z"
-		},
-		{
-			"checksumSHA1": "DayYRHOkePlDDa+vPrcvP/fOc+4=",
-			"path": "github.com/runabove/venom",
-			"revision": "515b7a8dd3a82c3a3d8ce1e574780e8131828907",
-			"revisionTime": "2017-03-03T09:49:54Z"
-		},
-		{
-			"checksumSHA1": "fFunxX8WjXOUtMP+eihGbpUCa3k=",
-			"path": "github.com/runabove/venom/context/default",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "5B38qI+VxcZb9NFrYozFjHwXZoA=",
-			"path": "github.com/runabove/venom/context/webctx",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "TYGf7QSCLqyynE4x6xHSonbpOFw=",
-			"path": "github.com/runabove/venom/executors/exec",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "SUuifefjb3WmsJ+I0a0+VNwrruc=",
-			"path": "github.com/runabove/venom/executors/http",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "gPhRNaKGO+PlR4LP1Gne0mIL1IE=",
-			"path": "github.com/runabove/venom/executors/imap",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "00iV+/kFuXvTF6LCJaVLYqGHFM4=",
-			"path": "github.com/runabove/venom/executors/readfile",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "bxo6qf9L27BerJDTQWsTDnyem2U=",
-			"path": "github.com/runabove/venom/executors/smtp",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "fgM/egdiu5Q+gLbJHAzj46bVsE0=",
-			"path": "github.com/runabove/venom/executors/ssh",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
-		},
-		{
-			"checksumSHA1": "Mph67YjvNPADITJZks/RGtHSCr8=",
-			"path": "github.com/runabove/venom/executors/web",
-			"revision": "7e8b1a23eca231a7baa110a2101cd8c64d19a6d8",
-			"revisionTime": "2017-03-02T16:36:38Z"
 		},
 		{
 			"checksumSHA1": "zmC8/3V4ls53DJlNTKDZwPSC/dA=",
