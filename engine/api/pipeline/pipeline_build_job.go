@@ -18,9 +18,6 @@ import (
 var (
 	// ErrAlreadyTaken Action already taken by a worker
 	ErrAlreadyTaken = fmt.Errorf("cds: action already taken")
-
-	// ErrAlreadyBooked Action already book by a hatchery
-	ErrAlreadyBooked = fmt.Errorf("cds: action already booked")
 )
 
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build
@@ -267,7 +264,7 @@ func BookPipelineBuildJob(pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery,
 		cache.SetWithTTL(k, hatchery, 120)
 		return nil, nil
 	}
-	return &h, ErrAlreadyBooked
+	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookPipelineBuildJob> job %d already booked by %s (%d): %s", pbJobID, h.Name, h.ID)
 }
 
 // AddSpawnInfosPipelineBuildJob saves spawn info before starting worker

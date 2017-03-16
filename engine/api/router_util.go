@@ -106,9 +106,9 @@ func requestVarInt(r *http.Request, s string) (int64, error) {
 	id, erri := strconv.ParseInt(idString, 10, 64)
 	if erri != nil {
 		if s == "id" {
-			return id, sdk.ErrInvalidID
+			return id, sdk.WrapError(sdk.ErrInvalidID, "requestVarInt> id not an integer: %s", idString)
 		}
-		return id, sdk.ErrWrongRequest
+		return id, sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %s is not an integer: %s", s, idString)
 	}
 	return id, nil
 }
