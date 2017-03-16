@@ -44,7 +44,7 @@ func infoAction(c *cli.Context) error {
 func listenAction(c *cli.Context) error {
 	args := []string{c.Args().First()}
 	args = append(args, c.Args().Tail()...)
-	if len(args) != 4 {
+	if len(args) != 5 {
 		cli.ShowCommandHelp(c, "listen")
 		return cli.NewExitError("Invalid usage", 10)
 	}
@@ -84,7 +84,7 @@ func listenAction(c *cli.Context) error {
 func ackAction(c *cli.Context) error {
 	args := []string{c.Args().First()}
 	args = append(args, c.Args().Tail()...)
-	if len(args) != 5 {
+	if len(args) != 6 {
 		cli.ShowCommandHelp(c, "ack")
 		return cli.NewExitError("Invalid usage", 40)
 	}
