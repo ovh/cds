@@ -219,7 +219,7 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 			}
 		}
 		c.Author.DisplayName = stashUser.DisplayName
-		if stashUser.Slug != "" {
+		if stashUser.Slug != "" && stashUser.Slug != "unknownSlug" {
 			c.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", s.url, stashUser.Slug)
 		}
 	}
@@ -285,7 +285,7 @@ func (s *StashClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 		}
 	}
 	commit.Author.DisplayName = stashUser.DisplayName
-	if stashUser.Slug != "" {
+	if stashUser.Slug != "" && stashUser.Slug != "unknownSlug" {
 		commit.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", s.url, stashUser.Slug)
 	}
 
