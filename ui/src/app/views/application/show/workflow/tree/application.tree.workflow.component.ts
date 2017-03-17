@@ -14,6 +14,5 @@ export class ApplicationTreeWorkflowComponent {
     @Input() workflowItems: Array<WorkflowItem>;
     @Input() orientation: string;
     @Input() applicationFilter: any;
-
     constructor() { }
 }

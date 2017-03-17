@@ -204,7 +204,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         if (this.application && this.application.workflows) {
             this.workflowInit = true;
             this.application.workflows.forEach( w => {
-                this.isAnOtherApp(w, key);
+                this.isAnOtherApp(w, key, 1);
             });
         }
     }
@@ -214,7 +214,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
      * @param w
      * @param key
      */
-    isAnOtherApp(w: WorkflowItem, key: string): void {
+    isAnOtherApp(w: WorkflowItem, key: string, horizontalDepth: number): void {
         if (!this.applicationsWorflow.find(a => {
             return a === w.application.name;
             })) {
@@ -222,8 +222,12 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         }
         if (w.subPipelines) {
             w.subPipelines.forEach( sub => {
-                this.isAnOtherApp(sub, key);
+                this.isAnOtherApp(sub, key, horizontalDepth + 1);
             });
+        } else {
+            if (!this.application.horizontalDepth || this.application.horizontalDepth < horizontalDepth) {
+                this.application.horizontalDepth = horizontalDepth;
+            }
         }
     }
 

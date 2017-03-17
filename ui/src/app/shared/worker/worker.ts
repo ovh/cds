@@ -41,7 +41,9 @@ export class CDSWorker {
     }
 
     stop() {
-        this.webWorker.terminate();
-        delete this.webWorker;
+        if (this.webWorker) {
+            this.webWorker.terminate();
+            delete this.webWorker;
+        }
     }
 }

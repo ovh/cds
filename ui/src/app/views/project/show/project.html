@@ -1,4 +1,4 @@
-<div id="ProjectShow" *ngIf="ready">
+<div id="ProjectShow" *ngIf="project">
     <div class="CDSbreadcrumb">
         <app-breadcrumb [project]="project"></app-breadcrumb>
     </div>
@@ -64,4 +64,4 @@
         </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!ready">Loading project...</div>
+<div class="ui text active loader" *ngIf="!project">Loading project...</div>

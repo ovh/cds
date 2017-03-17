@@ -19,14 +19,14 @@ export class AppComponent extends Type implements OnInit {
     workerSubscription: Subscription;
     zone: NgZone;
 
-    constructor(private translate: TranslateService,
+    constructor(private _translate: TranslateService,
                 private _authStore: AuthentificationStore, private _warnStore: WarningStore) {
         super();
         this.zone = new NgZone({enableLongStackTrace: false});
-        translate.addLangs(['en', 'fr']);
-        translate.setDefaultLang('en');
-        let browserLang = translate.getBrowserLang();
-        translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
+        _translate.addLangs(['en', 'fr']);
+        _translate.setDefaultLang('en');
+        let browserLang = _translate.getBrowserLang();
+        _translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
     }
 
     ngOnInit(): void {

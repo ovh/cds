@@ -47,7 +47,6 @@
     "@angular/compiler-cli": "2.4.9",
     "@types/jasmine": "2.5.38",
     "@types/node": "~6.0.60",
-    "@types/sharedworker": "0.0.27",
     "codelyzer": "~2.0.0",
     "jasmine-core": "2.5.2",
     "karma": "1.4.1",

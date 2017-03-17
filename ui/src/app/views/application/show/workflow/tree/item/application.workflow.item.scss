@@ -1,7 +1,148 @@
 @import '../../../../../../../common';
-$itemWidth : 378px;
+
+$itemWidth: 378px;
+$itemWidthDepth5: 365px;
+$itemWidthDepth6: 290px;
+$itemWidthDepth7: 256px;
+$itemWidthDepth8: 220px;
+
+.ui.one.column.grid {
+  width: $itemWidth;
+
+  .column {
+    .icon {
+      color: black;
+    }
+
+    .actionMenu {
+      position: absolute;
+      top: 36px;
+      right: 20px;
+
+    }
+
+    // application label
+    .application.flag {
+      font-size: 0.8em;
+      position: absolute;
+      right: 0;
+      left: 0;
+      bottom: 0px;
+      text-align: center;
+      color: #ff0000;
+      font-weight: bold;
+    }
+
+    // segment containers
+    .ui.compact.segments {
+      width: 100%;
+      min-height: 45px;
+      z-index: 10;
+      white-space: initial;
+      margin-bottom: 0px;
+
+      // Pipeline segment
+      .ui.raised.segment {
+        width: 100%;
+        height: 65px;
+        z-index: 10;
+        padding-top: 18px;
+        padding-bottom: 7px;
+
+        .verticalPlayIcon {
+          display: flex;
+          align-items: center;
+          height: 38px;
+
+          i.run {
+            font-size: 2em;
+          }
+        }
+
+        .verticalDetailIcon {
+          display: flex;
+          align-items: center;
+          height: 26px;
+        }
+
+        .pipelineLabel {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 28px;
+
+          .break {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+
+        // RIbbon
+        .ui.ribbon {
+          font-size: 0.7em;
+          position: absolute;
+          top: -10px;
+        }
+
+        .ui.left.ribbon {
+          margin-left: 14px;
+        }
+        .ui.ribbon.label {
+          padding-left: inherit;
+        }
+
+        .ui.right.ribbon {
+          margin-left: -14px;
+          min-width: 100px;
+          padding-left: 5px;
+          padding-right: 5px;
+          text-align: center;
+        }
+
+        .ui.circular.label {
+          margin-top: -2px;
+        }
+
+        // Loader
+        .ui.medium.loader {
+          .ui.circular.label {
+            margin-top: 4px;
+          }
+        }
+        .ui.large.loader {
+          .ui.circular.label {
+            margin-top: 12px;
+          }
+        }
+        .ui.huge.loader {
+          margin-top: 4px;
+          .ui.circular.label {
+            margin-top: 15px;
+          }
+        }
+        .ui.massive.loader {
+          .ui.circular.label {
+            margin-top: 20px;
+          }
+        }
+        // End loader
+      }
+
+      // Scheduler segment
+      .ui.scheduler.segment {
+        padding-top: 5px;
+        padding-bottom: 5px;
+        font-size: 0.8rem;
+      }
+
+    }
+
+  }
+}
+
 .ui.one.column.grid.hierarchical .column {
-    padding-bottom: 0px;
+  padding-bottom: 0px;
 }
 
 .ui.one.column.grid.horizontal {
@@ -19,139 +160,50 @@ $itemWidth : 378px;
   }
 }
 
-
-.ui.one.column.grid {
-  width: $itemWidth;
-
-  .column {
-    .icon {
-      color: black;
+.ui.one.column.grid.horizontal.five {
+  width: $itemWidthDepth5;
+  .column.verticalPlayIcon {
+    .icon.run {
+      font-size: 1rem;
     }
+  }
 
-    .actionMenu {
-      position:  absolute;
-      top: 36px;
-      right: 30px;
-    }
-
-    .ui.compact.segments {
-      width: 100%;
-      min-height: 45px;
-      z-index: 10;
-      white-space: initial;
-    }
-
-    // Pipeline segment
-    .ui.raised.segment {
-      width: 100%;
-      height: 65px;
-      z-index: 10;
-      padding-top: 18px;
-      padding-bottom: 7px;
-
-      .verticalPlayIcon {
-        display:flex;
-        align-items:center;
-        height:38px;
-      }
-
-      .verticalDetailIcon {
-        display:flex;
-        align-items:center;
-        height:26px;
-      }
-
-      .pipelineLabel {
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        height:28px
-      }
-
-      i.run {
-        font-size: 2em;
-      }
-
-      // application label
-      .application.flag {
-        font-size: 0.7em;
-        position: absolute;
-        right: 0;
-        left: 0;
-        top: -10px;
-        text-align: center;
-
-        .ui.label {
-          height:21px;
-          padding-top: 5px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width:  130px;
-          height: 21px;
-          white-space: nowrap;
-        }
-      }
-
-      // RIbbon
-      .ui.ribbon {
-        font-size: 0.7em;
-        position: absolute;
-        top: -10px;
-      }
-
-      .ui.left.ribbon {
-        margin-left: 14px;
-      }
-      .ui.ribbon.label {
-        padding-left: inherit;
-      }
-
-      .ui.right.ribbon {
-        margin-left: -14px;
-        min-width: 100px;
-        padding-left: 5px;
-        padding-right: 5px;
-        text-align: center;
-      }
-
-      .ui.circular.label {
-        margin-top: -2px;
-      }
-
-      // Loader
-      .ui.medium.loader {
-        .ui.circular.label {
-          margin-top: 4px;
-        }
-      }
-      .ui.large.loader {
-        .ui.circular.label {
-          margin-top: 12px;
-        }
-      }
-      .ui.huge.loader {
-        margin-top: 4px;
-        .ui.circular.label {
-          margin-top: 15px;
-        }
-      }
-      .ui.massive.loader {
-        .ui.circular.label {
-          margin-top: 20px;
-        }
-      }
-      // End loader
-    }
-
-    .ui.scheduler.segment {
-      padding-top: 5px;
-      padding-bottom: 5px;
-      font-size: 0.8rem;
-    }
+  .column.label {
+    width: 60% !important;
+    padding-left: 7px;
+    padding-right: 7px;
   }
 }
 
+.ui.one.column.grid.horizontal.six {
+  width: $itemWidthDepth6;
+  .column.verticalPlayIcon {
+    .icon.run {
+      font-size: 1rem;
+    }
+  }
+  .column.verticalDetailIcon {
+    display: none !important;
+  }
+  .column.label {
+    width: 75% !important;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+}
 
-
-
+.ui.one.column.grid.horizontal.seven {
+  width: $itemWidthDepth7;
+  .column.verticalPlayIcon {
+    display: none !important;
+  }
+  .column.verticalDetailIcon {
+    display: none !important;
+  }
+  .column.label {
+    width: 100% !important;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+}
 

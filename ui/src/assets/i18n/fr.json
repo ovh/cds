@@ -197,6 +197,7 @@
   "pipeline_label_detach" : "Supprimer le pipeline de l'application",
   "pipeline_label_edit" : "Editer le pipeline",
   "pipeline_label_rollback" : "Effectuer un rollback",
+  "pipeline_label_run" : "Lancer le pipeline",
   "pipeline_label_run_again" : "Relancer le pipeline",
   "pipeline_label_run_with_parameter" : "Lancer le pipeline avec des paramètres",
   "pipeline_name": "Nom du pipeline",

@@ -190,6 +190,15 @@ a.disabled:hover {
   .dropdown.icon {
     position: relative;
     z-index: 11;
+    border: 1px solid #cac9c9;
+    border-radius: 3px;
+    padding: 5px;
+    height: 25px;
+  }
+  .dropdown.icon:active {
+    background-color: #cac9c9;
+    border-color: white;
+    color: white;
   }
 
   .menu.transition {
