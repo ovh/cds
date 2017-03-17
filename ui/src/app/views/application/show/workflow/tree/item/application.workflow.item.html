@@ -1,5 +1,8 @@
 <div class="workflow ui one column grid" [class.horizontal]="orientation === 'horizontal'" [class.vertical]="orientation === 'vertical'"
-     [class.hierarchical]="orientation === 'hierarchical'">
+     [class.hierarchical]="orientation === 'hierarchical'"
+     [class.seven]="application.horizontalDepth >= 7"
+     [class.six]="application.horizontalDepth === 6"
+     [class.five]="application.horizontalDepth === 5">
     <div class="column">
         <div class="ui compact segments">
             <div class="ui raised segment"
@@ -29,27 +32,18 @@
 
                 ><div smDirTooltip="{{workflowItem.environment.name}}">{{workflowItem.environment.name | truncate : 20 }}</div></span>
 
-
-                <!-- Application -->
-                <div *ngIf="workflowItem.application.id !== application.id"
-                     class="application flag">
-                    <div class="ui orange application label" smDirTooltip="{{workflowItem.application.name}}">
-                        {{workflowItem.application.name}}
-                    </div>
-                </div>
-
-
                 <div class="ui grid">
                     <div class="row">
-                        <div class="three wide column">
-                            <div *ngIf="application.permission > 4" class="verticalPlayIcon">
+                        <div class="three wide column verticalPlayIcon">
+                            <div *ngIf="application.permission > 4">
                                 <a class="pointing" (click)="runPipeline()"><i class="video play outline icon run"></i></a>
                             </div>
                         </div>
-                        <div class="ten wide column">
+                        <div class="ten wide column label">
                             <div class="pipelineLabel">
-                                <div>
-                                    <ng-container *ngIf="workflowItem.pipeline.last_pipeline_build" [ngSwitch]="workflowItem.pipeline.last_pipeline_build?.status">
+                                <div class="pointing" (click)="navigateToBuild(workflowItem.pipeline.last_pipeline_build)">
+                                    <ng-container *ngIf="workflowItem.pipeline.last_pipeline_build"
+                                                  [ngSwitch]="workflowItem.pipeline.last_pipeline_build?.status">
                                         <div class="ui active inline blue loader"
                                              *ngSwitchCase="'Building'"
                                              [class.medium]="workflowItem.pipeline.last_pipeline_build.version < 10"
@@ -60,25 +54,24 @@
                                         </div>
                                         <span *ngSwitchDefault class="ui black circular label">{{'v' + workflowItem.pipeline.last_pipeline_build.version }}</span>
                                     </ng-container>
-                                    <span
-                                            [class.medium]="workflowItem.pipeline.last_pipeline_build?.version < 10"
-                                            [class.large]="workflowItem.pipeline.last_pipeline_build?.version >= 10 && workflowItem.pipeline.last_pipeline_build?.version < 10000"
-                                            [class.huge]="workflowItem.pipeline.last_pipeline_build?.version >= 10000 && workflowItem.pipeline.last_pipeline_build?.version < 100000"
-                                            [class.massive]="workflowItem.pipeline.last_pipeline_build?.version >= 100000">
-                                    <span class="toto" *ngIf="workflowItem.pipeline.name.length <= 17">{{workflowItem.pipeline.name}}</span>
-                                     <span class="toto" *ngIf="workflowItem.pipeline.name.length > 17" smDirTooltip="{{workflowItem.pipeline.name}}">{{workflowItem.pipeline.name | truncate:17}}</span>
-                                    </span>
+                                    <span class="break"
+                                          *ngIf="workflowItem.pipeline.name.length <= 17">{{workflowItem.pipeline.name}}</span>
+                                    <span class="break" *ngIf="workflowItem.pipeline.name.length > 17"
+                                          smDirTooltip="{{workflowItem.pipeline.name}}">{{workflowItem.pipeline.name | truncate:17}}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="three wide column" *ngIf="workflowItem.pipeline.last_pipeline_build">
-                            <div class="verticalDetailIcon">
+                        <div class="three wide column verticalDetailIcon" *ngIf="workflowItem.pipeline.last_pipeline_build">
                                 <a class="pointing" (click)="navigateToBuild(workflowItem.pipeline.last_pipeline_build)">
                                     <i class="newspaper icon"></i>
                                 </a>
-                            </div>
                         </div>
                     </div>
+                </div>
+                <!-- Application -->
+                <div *ngIf="workflowItem.application.id !== application.id"
+                     class="application flag">
+                    {{workflowItem.application.name}}
                 </div>
             </div>
             <div class="ui scheduler segment" *ngFor="let s of workflowItem.schedulers">
@@ -93,17 +86,24 @@
 
             </div>
         </div>
+
         <div class="actionMenu" *ngIf="workflowItem && application.permission > 4">
             <sm-dropdown>
+                <a sm-item class="item" (click)="runPipeline()">{{ 'pipeline_label_run' | translate }}</a>
                 <a sm-item class="item" (click)="runWithParameters()">{{ 'pipeline_label_run_with_parameter' | translate }}</a>
                 <a sm-item class="item" (click)="rollback()">{{ 'pipeline_label_rollback' | translate }}</a>
                 <div class="divider" *ngIf="application.permission === 7"></div>
-                <a sm-item class="item" (click)="detachPipeline(workflowItem.pipeline)" *ngIf="application.permission === 7">{{ 'pipeline_label_detach' | translate }}</a>
-                <a sm-item class="item" (click)="editPipeline()" *ngIf="application.permission === 7">{{ 'pipeline_label_edit' | translate }}</a>
+                <a sm-item class="item" (click)="detachPipeline(workflowItem.pipeline)" *ngIf="application.permission === 7">{{
+                    'pipeline_label_detach' | translate }}</a>
+                <a sm-item class="item" (click)="editPipeline()" *ngIf="application.permission === 7">{{ 'pipeline_label_edit' | translate
+                    }}</a>
                 <div class="divider" *ngIf="application.permission === 7"></div>
-                <a sm-item class="item" (click)="openCreateSchedulerModal()" *ngIf="application.permission === 7">{{ 'scheduler_create_label' | translate }}</a>
-                <a *ngIf="workflowItem.trigger && workflowItem.trigger.id > 0" sm-item class="item" (click)="openEditTriggerModal()">{{ 'trigger_label_edit' | translate }}</a>
-                <a sm-item class="item" (click)="openCreateTriggerModal()" *ngIf="application.permission === 7">{{ 'trigger_label_new' | translate }}</a>
+                <a sm-item class="item" (click)="openCreateSchedulerModal()" *ngIf="application.permission === 7">{{
+                    'scheduler_create_label' | translate }}</a>
+                <a *ngIf="workflowItem.trigger && workflowItem.trigger.id > 0" sm-item class="item" (click)="openEditTriggerModal()">{{
+                    'trigger_label_edit' | translate }}</a>
+                <a sm-item class="item" (click)="openCreateTriggerModal()" *ngIf="application.permission === 7">{{ 'trigger_label_new' |
+                    translate }}</a>
             </sm-dropdown>
         </div>
     </div>
@@ -114,11 +114,14 @@
             pip: workflowItem.pipeline.name
         } }}" #createSchedulerModal>
     <modal-content>
-        <app-application-scheduler-form [project]="project" [application]="workflowItem.application" [pipeline]="workflowItem.pipeline" [scheduler]="newScheduler" [edit]="false" ></app-application-scheduler-form>
+        <app-application-scheduler-form [project]="project" [application]="workflowItem.application" [pipeline]="workflowItem.pipeline"
+                                        [scheduler]="newScheduler" [edit]="false"></app-application-scheduler-form>
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="createSchedulerModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <button class="ui green button" [class.loading]="newScheduler?.updating" (click)="schedulerEvent('add', newScheduler)">{{ 'btn_save' | translate }}</button>
+        <button class="ui green button" [class.loading]="newScheduler?.updating" (click)="schedulerEvent('add', newScheduler)">{{ 'btn_save'
+            | translate }}
+        </button>
     </modal-actions>
 </sm-modal>
 <sm-modal
@@ -133,8 +136,11 @@
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="editTriggerModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <app-delete-button *ngIf="triggerInModal?!triggerInModal.hasChanged:true" (event)="triggerEvent('delete')" [loading]="triggerLoading"></app-delete-button>
-        <button *ngIf="triggerInModal?triggerInModal.hasChanged:false" class="ui green button" [class.loading]="triggerInModal?triggerInModal.updating:false" (click)="triggerEvent('update')">{{ 'btn_save' | translate }}</button>
+        <app-delete-button *ngIf="triggerInModal?!triggerInModal.hasChanged:true" (event)="triggerEvent('delete')"
+                           [loading]="triggerLoading"></app-delete-button>
+        <button *ngIf="triggerInModal?triggerInModal.hasChanged:false" class="ui green button"
+                [class.loading]="triggerInModal?triggerInModal.updating:false" (click)="triggerEvent('update')">{{ 'btn_save' | translate }}
+        </button>
     </modal-actions>
 </sm-modal>
 <sm-modal

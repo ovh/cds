@@ -16,7 +16,6 @@ import {WarningModalComponent} from '../../../shared/modal/warning/warning.compo
 })
 export class ProjectShowComponent implements OnInit, OnDestroy {
 
-    public ready = false;
     public varFormLoading = false;
     public permFormLoading = false;
 
@@ -44,7 +43,13 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         this._route.params.subscribe(params => {
             const key = params['key'];
             if (key) {
-                this.refreshDatas(key);
+                if (this.project && this.project.key !== key) {
+                    this.project = undefined;
+                }
+                if (!this.project) {
+                    this.refreshDatas(key);
+                }
+
             }
         });
         this._route.queryParams.subscribe(params => {
@@ -66,7 +71,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
                     if (this.project.externalChange) {
                         this._toast.info('', this._translate.instant('warning_project'));
                     }
-                    this.ready = true;
                 }
             }
         }, () => {

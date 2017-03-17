@@ -8,6 +8,6 @@ function loadWarnings (user, session, api) {
     if (user && api) {
         setInterval(function () {
             postMessage(httpCall('/mon/warning', api, user, session));
-        }, 2000);
+        }, 10000);
     }
 }

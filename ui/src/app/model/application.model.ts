@@ -30,6 +30,9 @@ export class Application {
 
     // true if someone has updated the application ( used for warnings )
     externalChange: boolean;
+
+    // workflow depth for horizontal tree view
+    horizontalDepth: number;
 }
 
 export class ApplicationPipeline {
