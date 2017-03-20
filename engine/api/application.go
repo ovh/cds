@@ -146,6 +146,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	withHooks := FormBool(r, "withHooks")
 	withNotifs := FormBool(r, "withNotifs")
 	withWorkflow := FormBool(r, "withWorkflow")
+	withRepoManager := FormBool(r, "withRepoMan")
 	withTriggers := FormBool(r, "withTriggers")
 	withSchedulers := FormBool(r, "withSchedulers")
 	branchName := r.FormValue("branchName")
@@ -201,6 +202,14 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		if errWorflow != nil {
 			log.Warning("getApplicationHandler: Cannot load CD Tree for applications %s: %s\n", app.Name, errWorflow)
 			return errWorflow
+		}
+	}
+
+	if withRepoManager {
+		var errRepo error
+		_, app.RepositoriesManager, errRepo = repositoriesmanager.LoadFromApplicationByID(db, app.ID)
+		if errRepo != nil {
+			return sdk.WrapError(errRepo, "getApplicationHandler: Cannot load repo manager for application %s", app.Name)
 		}
 	}
 
