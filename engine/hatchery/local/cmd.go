@@ -27,7 +27,7 @@ $ hatchery docker --api=https://<api.domain> --token=<token> --basedir=/tmp
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Create(hatcheryLocal, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
+		hatchery.Create(hatcheryLocal, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if hatcheryLocal.basedir == "" {

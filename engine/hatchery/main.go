@@ -28,6 +28,10 @@ var rootCmd = &cobra.Command{
 			sdk.Exit("max-worker have to be > 0\n")
 		}
 
+		if viper.GetInt("max-failures") < 1 {
+			sdk.Exit("max-failures have to be > 0\n")
+		}
+
 		if viper.GetInt("provision") < 0 {
 			sdk.Exit("provision have to be >= 0\n")
 		}
@@ -90,6 +94,9 @@ func addFlags() {
 
 	rootCmd.PersistentFlags().Int("max-worker", 10, "Maximum allowed simultaenous workers")
 	viper.BindPFlag("max-worker", rootCmd.PersistentFlags().Lookup("max-worker"))
+
+	rootCmd.PersistentFlags().Int("max-failures-heartbeat", 10, "Maximum allowed consecutives failures on heatbeat routine")
+	viper.BindPFlag("max-failures-heartbeat", rootCmd.PersistentFlags().Lookup("max-failures-heartbeat"))
 
 	rootCmd.PersistentFlags().BoolP("insecure", "k", false, `(SSL) This option explicitly allows hatchery to perform "insecure" SSL connections on CDS API.`)
 	viper.BindPFlag("insecure", rootCmd.PersistentFlags().Lookup("insecure"))

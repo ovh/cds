@@ -61,7 +61,7 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Create(hatcheryMarathon, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
+		hatchery.Create(hatcheryMarathon, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		hatcheryMarathon.token = viper.GetString("token")

@@ -17,7 +17,7 @@ import (
 
 var (
 	// ErrAlreadyTaken Action already taken by a worker
-	ErrAlreadyTaken = fmt.Errorf("cds: action already taken")
+	ErrAlreadyTaken = fmt.Errorf("cds: action is already taken")
 )
 
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build

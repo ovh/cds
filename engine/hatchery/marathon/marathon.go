@@ -329,7 +329,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 				return
 			}
 
-			log.Warning("Deployment %s succeeded", id)
+			log.Debug("Deployment %s succeeded", id)
 			ticker.Stop()
 			successChan <- true
 			wg.Done()

@@ -16,7 +16,7 @@ import (
 )
 
 // Create creates hatchery
-func Create(h Interface, api, token string, provision int, requestSecondsTimeout int, insecureSkipVerifyTLS bool) {
+func Create(h Interface, api, token string, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool) {
 	Client = &http.Client{
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
@@ -40,7 +40,7 @@ func Create(h Interface, api, token string, provision int, requestSecondsTimeout
 		os.Exit(10)
 	}
 
-	go hearbeat(h, token)
+	go hearbeat(h, token, maxFailures int)
 
 	for {
 		time.Sleep(2 * time.Second)
@@ -106,22 +106,38 @@ func GenerateName(add string, withRandom bool) string {
 	return name
 }
 
-func hearbeat(m Interface, token string) {
+func hearbeat(m Interface, token string, maxFailures int) {
+	var failures int
 	for {
 		time.Sleep(5 * time.Second)
 		if m.Hatchery().ID == 0 {
 			log.Notice("hearbeat> Disconnected from CDS engine, trying to register...\n")
 			if err := Register(m.Hatchery(), token); err != nil {
 				log.Notice("hearbeat> Cannot register: %s\n", err)
+				checkFailures(maxFailures, failures)
 				continue
 			}
-			log.Notice("hearbeat> Registered back: ID %d", m.Hatchery().Model.ID)
+			if m.Hatchery().ID == 0 {
+				log.Critical("hearbeat> Cannot register hatchery. ID %d", m.Hatchery().ID)
+				checkFailures(maxFailures, failures)
+				continue
+			}
+			log.Notice("hearbeat> Registered back: ID %d with model ID %d", m.Hatchery().ID, m.Hatchery().Model.ID)
 		}
 
 		if _, _, err := sdk.Request("PUT", fmt.Sprintf("/hatchery/%d", m.Hatchery().ID), nil); err != nil {
 			log.Notice("heartbeat> cannot refresh beat: %s\n", err)
 			m.Hatchery().ID = 0
+			checkFailures(maxFailures, failures)
 			continue
 		}
+		failures = 0
+	}
+}
+
+func checkFailures(maxFailures, nb int) {
+	if nb > maxFailures {
+		log.Critical("Too many failures on try register. This hatchery is killed")
+		os.Exit(10)
 	}
 }
