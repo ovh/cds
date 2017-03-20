@@ -264,7 +264,7 @@ func BookPipelineBuildJob(pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery,
 		cache.SetWithTTL(k, hatchery, 120)
 		return nil, nil
 	}
-	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookPipelineBuildJob> job %d already booked by %s (%d): %s", pbJobID, h.Name, h.ID)
+	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookPipelineBuildJob> job %d already booked by %s (%d)", pbJobID, h.Name, h.ID)
 }
 
 // AddSpawnInfosPipelineBuildJob saves spawn info before starting worker
