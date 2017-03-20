@@ -17,7 +17,17 @@ import (
 )
 
 func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	projects, err := project.LoadAll(db, c.User, project.LoadOptions.WithApplications)
+	// Get project name in URL
+	withApplication := FormBool(r, "application")
+
+	var projects []sdk.Project
+	var err error
+
+	if withApplication {
+		projects, err = project.LoadAll(db, c.User, project.LoadOptions.WithApplications)
+	} else {
+		projects, err = project.LoadAll(db, c.User)
+	}
 	if err != nil {
 		return sdk.WrapError(err, "getProjectsHandler")
 	}
