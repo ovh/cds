@@ -49,7 +49,7 @@ func init() {
 
 // Cmd configures comamnd for HatcheryLocal
 var Cmd = &cobra.Command{
-	Use:   "mesos",
+	Use:   "marathon",
 	Short: "Hatchery mesos commands: hatchery mesos --help",
 	Long: `Hatchery mesos commands: hatchery mesos <command>
 Start worker model instances on a mesos cluster
