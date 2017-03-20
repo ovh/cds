@@ -15,11 +15,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	// ErrAlreadyTaken Action already taken by a worker
-	ErrAlreadyTaken = fmt.Errorf("cds: action is already taken")
-)
-
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build
 func DeletePipelineBuildJob(db gorp.SqlExecutor, pipelineBuildID int64) error {
 	query := "DELETE FROM pipeline_build_job WHERE pipeline_build_id = $1"
@@ -225,7 +220,12 @@ func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, work
 	}
 
 	if pbJobGorp.Status != sdk.StatusWaiting.String() {
-		return nil, ErrAlreadyTaken
+		k := keyBookJob(pbJobID)
+		h := sdk.Hatchery{}
+		if cache.Get(k, &h) {
+			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status and was booked by %d. Current status:%s", h.ID, pbJobGorp.Status)
+		}
+		return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status. Current status:%s", pbJobGorp.Status)
 	}
 
 	pbJobGorp.Model = model

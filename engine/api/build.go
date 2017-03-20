@@ -348,8 +348,8 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	pbJob, errTake := pipeline.TakePipelineBuildJob(tx, id, workerModel, caller.Name, infos)
 	if errTake != nil {
-		if errTake != pipeline.ErrAlreadyTaken {
-			return sdk.WrapError(errTake, "takePipelineBuildJobHandler> Cannot give ActionBuild %d", id)
+		if errTake != sdk.ErrAlreadyTaken {
+			return sdk.WrapError(errTake, "takePipelineBuildJobHandler> Cannot take job %d", id)
 		}
 		return errTake
 	}

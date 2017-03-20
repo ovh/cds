@@ -104,6 +104,7 @@ var (
 	ErrPipelineAlreadyExists                 = &Error{ID: 88, Status: http.StatusConflict}
 	ErrJobAlreadyBooked                      = &Error{ID: 89, Status: http.StatusConflict}
 	ErrPipelineBuildNotFound                 = &Error{ID: 90, Status: http.StatusNotFound}
+	ErrAlreadyTaken                          = &Error{ID: 91, Status: http.StatusGone}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -199,6 +200,7 @@ You can safely use them in a String or Text parameter`,
 	ErrPipelineAlreadyExists.ID:                 "Pipeline already exist",
 	ErrJobAlreadyBooked.ID:                      "Job already booked",
 	ErrPipelineBuildNotFound.ID:                 "Pipeline build not found",
+	ErrAlreadyTaken.ID:                          "This job is already taken by another worker",
 }
 
 var errorsFrench = map[int]string{
@@ -294,6 +296,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrPipelineAlreadyExists.ID:                 "Le pipeline existe déjà",
 	ErrJobAlreadyBooked.ID:                      "Le job est déjà réservé",
 	ErrPipelineBuildNotFound.ID:                 "Le pipeline build n'a pu être trouvé",
+	ErrAlreadyTaken.ID:                          "Ce job est déjà en cours de traitement par un autre worker",
 }
 
 var errorsLanguages = []map[int]string{
