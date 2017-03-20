@@ -254,7 +254,7 @@ func (m *HatcheryMarathon) marathonConfig(model *sdk.Model, hatcheryID int64, jo
 func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryID int64, job *sdk.PipelineBuildJob) error {
 	var logJob string
 	if job != nil {
-		logJob = fmt.Sprintf("for job %d ,", job.ID)
+		logJob = fmt.Sprintf("for job %d,", job.ID)
 	}
 
 	// Estimate needed memory, we will set 110% of required memory
