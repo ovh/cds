@@ -79,7 +79,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 					log.Debug("routine> %d cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
 					break // go to next job
 				}
-				log.Debug("routine> %d - send book job %d %s by h:%d", timestamp, job.ID, model.Name, h.Hatchery().ID)
+				log.Debug("routine> %d - send book job %d %s by hatchery %d", timestamp, job.ID, model.Name, h.Hatchery().ID)
 
 				start := time.Now()
 				infos := []sdk.SpawnInfo{
@@ -111,6 +111,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 				if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
 					log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job %d: %s", timestamp, job.ID, err)
 				}
+				break // ok for this job
 			}
 		}
 	}

@@ -134,7 +134,7 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 // requirements services are not supported
 func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
 	if model.Type != sdk.Docker {
-		return fmt.Errorf("spawnWorker> Model not handled")
+		return fmt.Errorf("spawnWorker> model %s not handled for hatchery marathon", model.Type)
 	}
 
 	if job != nil {
@@ -259,14 +259,14 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 	if job != nil {
 		for _, r := range job.Job.Action.Requirements {
 			if r.Name == sdk.ServiceRequirement {
-				return fmt.Errorf("Service requirement not supported")
+				return fmt.Errorf("spawnMarathonDockerWorker> Service requirement not supported")
 			}
 
 			if r.Type == sdk.MemoryRequirement {
 				var err error
 				memory, err = strconv.Atoi(r.Value)
 				if err != nil {
-					log.Warning("spawnMarathonDockerWorker>Unable to parse memory requirement %s :s", memory, err)
+					log.Warning("spawnMarathonDockerWorker> Unable to parse memory requirement %s :s", memory, err)
 					return err
 				}
 			}
@@ -280,7 +280,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 
 	application := &marathon.Application{}
 	if err := json.Unmarshal(buffer, application); err != nil {
-		log.Warning("Configuration file parse error err:%s", err)
+		log.Warning("spawnMarathonDockerWorker> configuration file parse error err:%s", err)
 		return err
 	}
 
@@ -293,7 +293,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 		t0 := time.Now()
 		for t := range ticker.C {
 			delta := math.Floor(t.Sub(t0).Seconds())
-			log.Debug("Application %s spawning in progress [%d seconds] please wait...", application.ID, int(delta))
+			log.Debug("spawnMarathonDockerWorker> application %s spawning in progress [%d seconds] please wait...", application.ID, int(delta))
 		}
 	}()
 
@@ -301,7 +301,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 	deployments, err := m.client.ApplicationDeployments(application.ID)
 	if err != nil {
 		ticker.Stop()
-		return fmt.Errorf("Failed to list deployments: %s", err.Error())
+		return fmt.Errorf("spawnMarathonDockerWorker> failed to list deployments: %s", err.Error())
 	}
 
 	if len(deployments) == 0 {
