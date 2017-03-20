@@ -28,10 +28,6 @@ var rootCmd = &cobra.Command{
 			sdk.Exit("max-worker have to be > 0\n")
 		}
 
-		if viper.GetInt("max-failures") < 1 {
-			sdk.Exit("max-failures have to be > 0\n")
-		}
-
 		if viper.GetInt("provision") < 0 {
 			sdk.Exit("provision have to be >= 0\n")
 		}

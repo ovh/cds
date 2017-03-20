@@ -40,7 +40,7 @@ func Create(h Interface, api, token string, provision int, requestSecondsTimeout
 		os.Exit(10)
 	}
 
-	go hearbeat(h, token, maxFailures int)
+	go hearbeat(h, token, maxFailures)
 
 	for {
 		time.Sleep(2 * time.Second)

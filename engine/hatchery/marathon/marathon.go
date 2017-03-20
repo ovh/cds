@@ -297,7 +297,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 	deployments, err := m.client.ApplicationDeployments(application.ID)
 	if err != nil {
 		ticker.Stop()
-		return fmt.Errorf("Failed to list deployments : %s\n", err.Error())
+		return fmt.Errorf("Failed to list deployments: %s\n", err.Error())
 	}
 
 	if len(deployments) == 0 {
@@ -306,13 +306,18 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 	}
 
 	wg := &sync.WaitGroup{}
+	var done bool
 	var successChan = make(chan bool, len(deployments))
 	for _, deploy := range deployments {
 		wg.Add(1)
 		go func(id string) {
 			go func() {
 				time.Sleep((time.Duration(m.workerSpawnTimeout) + 1) * time.Second)
+				if done {
+					return
+				}
 				// try to delete deployment
+				log.Debug("timeout (%d) on deployment %s\n", m.workerSpawnTimeout, id)
 				if _, err := m.client.DeleteDeployment(id, true); err != nil {
 					log.Warning("Error on delete timeouted deployment %s: %s\n", id, err.Error())
 				}
@@ -347,6 +352,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 	}
 	ticker.Stop()
 	close(successChan)
+	done = true
 
 	if success {
 		return nil
