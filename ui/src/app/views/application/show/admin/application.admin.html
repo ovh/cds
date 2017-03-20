@@ -31,10 +31,4 @@
         <app-application-poller-form *ngIf="application.repositories_manager" [project]="project"
                                      [application]="application"></app-application-poller-form>
     </div>
-    <div class="hook">
-        <h4 *ngIf="application.hooks && application.hooks.length > 0">{{ 'application_hook_list_title' | translate }}</h4>
-        <app-application-hook-list *ngIf="application.hooks && application.hooks.length > 0" [project]="project" [application]="application"></app-application-hook-list>
-        <h4 *ngIf="application.repositories_manager">{{ 'application_hook_form_title' | translate }}</h4>
-        <app-application-hook-form *ngIf="application.repositories_manager" [project]="project" [application]="application"></app-application-hook-form>
-    </div>
 </div>
