@@ -10,15 +10,21 @@ import (
 	"strconv"
 
 	"github.com/Shopify/sarama"
+	"github.com/fsamin/go-shredder"
 
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
 )
 
-func consumeFromKafka(kafka, topic, group, key string) error {
+func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey, gpgPassphrase []byte) error {
 	//Create a new client
 	var config = sarama.NewConfig()
-	// Set key as the client id for authentication
-	config.ClientID = key
+	config.Net.TLS.Enable = true
+	config.Net.SASL.Enable = true
+	config.Net.SASL.User = user
+	config.Net.SASL.Password = password
+	config.ClientID = user
+	config.Producer.Return.Successes = true
+
 	client, err := sarama.NewClient([]string{kafka}, config)
 	if err != nil {
 		return err
@@ -34,6 +40,25 @@ func consumeFromKafka(kafka, topic, group, key string) error {
 	consumer, err := sarama.NewConsumerFromClient(client)
 	if err != nil {
 		return err
+	}
+
+	//Default is AES encryption based on password
+	aes, err := getAESEncryptionOptions(password)
+	if err != nil {
+		return err
+	}
+	var opts = &shredder.Opts{
+		ChunkSize:     512 * 1024,
+		AESEncryption: aes,
+	}
+
+	//If provided use GPG encryption
+	if len(gpgPrivatekey) > 0 && len(gpgPassphrase) > 0 {
+		opts.AESEncryption = nil
+		opts.GPGEncryption = &shredder.GPGEncryption{
+			PrivateKey: gpgPrivatekey,
+			Passphrase: gpgPassphrase,
+		}
 	}
 
 	fmt.Printf("Listening Kafka %s on topic %s...\n", kafka, topic)
@@ -75,63 +100,70 @@ func consumeFromKafka(kafka, topic, group, key string) error {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
-	files := map[string]*kafkapublisher.File{}
-	chunks := map[string]*kafkapublisher.Chunks{}
-	contexts := map[int64]*kafkapublisher.Context{}
+	chunks := shredder.Chunks{}
+	contexts := map[string]*kafkapublisher.Context{}
 
 	for {
 		select {
 		case msg := <-messagesChan:
 			//If we receive a "Context" Message
 			if c, ok := kafkapublisher.GetContext(msg); ok {
-				if contexts[c.ActionID] != nil {
+				id := fmt.Sprintf("%d", c.ActionID)
+				if contexts[id] != nil {
 					fmt.Printf("Context reinitialized : %s\n", msg)
-					os.RemoveAll(contexts[c.ActionID].Directory)
+					os.RemoveAll(contexts[id].Directory)
 				} else {
 					fmt.Printf("New Context received : %s\n", msg)
 				}
-				contexts[c.ActionID] = c
+				contexts[id] = c
 				continue
 			}
 
 			//If we recieve a "Chunk" Message
 			if kafkapublisher.IsChunk(msg) {
-				f, c, err := kafkapublisher.ReadBytes(msg)
+				c, err := kafkapublisher.ReadBytes(msg)
 				if err != nil {
 					fmt.Printf("Unable to read bytes : %s\n", err)
 					continue
 				}
-				if files[f.ID] == nil {
-					files[f.ID] = f
-				}
-				if chunks[f.ID] == nil {
-					chunks[f.ID] = &kafkapublisher.Chunks{}
-				}
-				cs := *chunks[f.ID]
-				cs = append(cs, *c)
-				chunks[f.ID] = &cs
+				chunks = append(chunks, *c)
 
+				actionID := c.Ctx.GetUUID()
 				//Try to match a context
-				var ctx *kafkapublisher.Context
-				if c.ContextID != nil {
-					ctx = contexts[*c.ContextID]
+				ctx, ok := contexts[actionID]
+				if !ok {
+					fmt.Printf("Unknown CDS context : %s\n", c.Ctx.UUID)
 				}
+
+				allChunks := shredder.Filter(chunks)
+				cs := allChunks[c.Ctx.UUID]
 
 				//If we received all chunks for a file, let save it on disk
-				if cs.IsFileComplete(f) {
-					if err := fileHandler(ctx, f, chunks[f.ID]); err != nil {
+				if cs.Completed() {
+					content, err := shredder.Reassemble(cs, opts)
+					if err != nil {
+						fmt.Printf("Error: %s\n", err)
+						continue
+					}
+
+					filename, data, err := content.File()
+					if err != nil {
+						fmt.Printf("Error: %s\n", err)
+						continue
+					}
+
+					if err := fileHandler(ctx, filename, data); err != nil {
 						fmt.Printf("Error: %s\n", err)
 						continue
 					}
 					//File has been processed, remove data from memory
-					delete(files, f.ID)
-					delete(chunks, f.ID)
+					chunks.Delete(*c)
 				}
 
 				if ctx != nil && ctx.Closed {
 					//File has been processed, remove data from memory
-					delete(contexts, *c.ContextID)
-					fmt.Printf("Context %d successfully closed\n", *c.ContextID)
+					delete(contexts, c.Ctx.UUID)
+					fmt.Printf("Context %d successfully closed\n", ctx.ActionID)
 				}
 				continue
 			}
@@ -166,39 +198,21 @@ func consumptionHandler(pc sarama.PartitionConsumer, topic string, po sarama.Par
 	}
 }
 
-var (
-	pgpPassphrase []byte
-	pgpPrivateKey []byte
-)
-
 //This manages a file composed of chunks within a context or not
-func fileHandler(ctx *kafkapublisher.Context, f *kafkapublisher.File, chunks *kafkapublisher.Chunks) error {
-	//Reassemble the chunks onto the file
-	if err := chunks.Reassemble(f); err != nil {
-		return err
-	}
-
-	//If there is a private key, decrypt the file content
-	if len(pgpPrivateKey) != 0 {
-		if err := f.DecryptContent(pgpPrivateKey, pgpPassphrase); err != nil {
-			return err
-		}
-	}
-
+func fileHandler(ctx *kafkapublisher.Context, filename string, data []byte) error {
 	//No context
 	if ctx == nil {
-		fmt.Printf("Received file %s\n", f.Name)
-		if err := ioutil.WriteFile(f.Name, f.Content.Bytes(), os.FileMode(0644)); err != nil {
+		fmt.Printf("Received file %s\n", filename)
+		if err := ioutil.WriteFile(filename, data, os.FileMode(0644)); err != nil {
 			return err
 		}
-
 		return nil
 	}
 
 	//Context is not nil
 	var found bool
 	for _, name := range ctx.Files {
-		if name == f.Name {
+		if name == filename {
 			found = true
 			break
 		}
@@ -206,7 +220,7 @@ func fileHandler(ctx *kafkapublisher.Context, f *kafkapublisher.File, chunks *ka
 
 	//The file doesn't match with the context
 	if !found {
-		return fmt.Errorf("File %s is not expected in context %d", f.Name, ctx.ActionID)
+		return fmt.Errorf("File %s is not expected in context %d", filename, ctx.ActionID)
 	}
 
 	//Mkdir the directory
@@ -215,14 +229,14 @@ func fileHandler(ctx *kafkapublisher.Context, f *kafkapublisher.File, chunks *ka
 	}
 
 	//Write the file
-	filename := path.Join(ctx.Directory, f.Name)
-	fmt.Printf("Received file %s in context %d (%s)\n", f.Name, ctx.ActionID, filename)
-	if err := ioutil.WriteFile(filename, f.Content.Bytes(), os.FileMode(0644)); err != nil {
+	filepath := path.Join(ctx.Directory, filename)
+	fmt.Printf("Received file %s in context %d => %s\n", filename, ctx.ActionID, filepath)
+	if err := ioutil.WriteFile(filepath, data, os.FileMode(0644)); err != nil {
 		return err
 	}
 
 	//Mark the file as received in the context
-	ctx.ReceivedFiles[f.Name] = true
+	ctx.ReceivedFiles[filename] = true
 
 	//Write the Context file
 	if ctx.IsComplete() {

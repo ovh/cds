@@ -58,6 +58,14 @@ func (p *RepositoryPoller) PostGet(db gorp.SqlExecutor) error {
 	}
 	p.Application = *app
 	p.Pipeline = *pip
+
+	next, errN := LoadNextExecution(db, app.ID, pip.ID)
+	if errN != nil {
+		return sdk.WrapError(errN, "PostGet> Cannot load nextexecution")
+	}
+	if next != nil {
+		p.NextExecution = next
+	}
 	return nil
 }
 

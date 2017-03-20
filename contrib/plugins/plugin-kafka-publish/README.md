@@ -87,13 +87,13 @@ In a terminal
 In a terminal, go to the working directory in wich you want to receive all CDS Data and run:
 
 ```shell
-    $ plugin-kafka-publish listen <kafka address> <topic> <kafka key> --pgp-decrypt ~/gpg.priv.as
+    $ plugin-kafka-publish listen <kafka address> <topic> <kafka user> <kafka password> --pgp-decrypt ~/gpg.priv.as
 ```
 
 Enter your secure passphrase. You now should be able to see it action...
 
 ```shell
-    $ plugin-kafka-publish listen kafka.queue.ovh.net:9000 myapp.my-topic cds ************************ --pgp-decrypt ~/gpg.priv.asc
+    $ plugin-kafka-publish listen kafka.queue.ovh.net:9000 myapp.my-topic myapp.my-topic.cds my-user ************************ --pgp-decrypt ~/gpg.priv.asc
     Please enter your passphrase: ************
     Listening Kafka kafka.queue.ovh.net:9000 on topic myapp.my-topic...
 ```
@@ -106,7 +106,7 @@ Now the listener will listen for data send by CDS. Data send by CDS are composed
 Prior to files the listener should receive a context from CDS. This context will be printed on your terminal :
 
 ```shell
-    $ plugin-kafka-publish listen kafka.queue.ovh.net:9000 myapp.my-topic cds ************************ --pgp-decrypt ~/gpg.priv.asc
+    $ plugin-kafka-publish listen kafka.queue.ovh.net:9000 myapp.my-topic myapp.my-topic.cds my-user  ************************ --pgp-decrypt ~/gpg.priv.asc
     Please enter your passphrase: ************
     Listening Kafka kafka.queue.ovh.net:9000 on topic myapp.my-topic...
     New Context received : {"action_id":1220,"directory":"1220","files":["message","file_1"]}
@@ -115,7 +115,7 @@ Prior to files the listener should receive a context from CDS. This context will
 After that, the listener should receive files. Every file should be printed in your terminal :
 
 ```shell
-    $ plugin-kafka-publish listen kafka.queue.ovh.net:9000 myapp.my-topic cds ************************ --pgp-decrypt ~/gpg.priv.asc
+    $ plugin-kafka-publish listen kafka.queue.ovh.net:9000 myapp.my-topic myapp.my-topic.cds my-user  ************************ --pgp-decrypt ~/gpg.priv.asc
     Please enter your passphrase: ************
     Listening Kafka kafka.queue.ovh.net:9000 on topic myapp.my-topic...
     New Context received : {"action_id":1220,"directory":"1220","files":["message","file_1"]}
@@ -148,10 +148,10 @@ The listener will never delete files, so have to do it by yourself.
 If you want to send acknowledgement to the CDS action which triggered the files transfert you can do it with :
 
 ```shell
-    $ plugin-kafka-publish ack kafka.queue.ovh.net:9000 myapp.my-topic-ack ************************ ./cds-action-1220.json OK --log my_log_file
+    $ plugin-kafka-publish ack kafka.queue.ovh.net:9000 myapp.my-topic-ack my-user ************************ ./cds-action-1220.json OK --log my_log_file --artifact file1  --artifact file2  --artifact file3
 ```
 
-You have to specify which CDS context you want to ack, using the previously created file (`cds-action-1220.json`), then the status of the action `OK` or `KO`. You can also attach a log file : it will be accessible in logs from CDS.
+You have to specify which CDS context you want to ack, using the previously created file (`cds-action-1220.json`), then the status of the action `OK` or `KO`. You can also attach a log file : it will be accessible in logs from CDS; and you can upload to CDS as many artifact as you want.
 
 
 ### Producer Side
