@@ -87,9 +87,9 @@ func InsertHook(db gorp.SqlExecutor, h *sdk.Hook) error {
 // LoadHook loads a single hook
 func LoadHook(db gorp.SqlExecutor, id int64) (sdk.Hook, error) {
 	h := sdk.Hook{ID: id}
-	query := `SELECT application_id, pipeline_id, kind, host, project, repository FROM hook WHERE id = $1`
+	query := `SELECT application_id, pipeline_id, kind, host, project, repository, enabled FROM hook WHERE id = $1`
 
-	err := db.QueryRow(query, id).Scan(&h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository)
+	err := db.QueryRow(query, id).Scan(&h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.Enabled)
 	if err != nil {
 		return h, err
 	}
@@ -167,7 +167,7 @@ func LoadApplicationHooks(db gorp.SqlExecutor, applicationID int64) ([]sdk.Hook,
 
 // LoadPipelineHooks will load all hooks related to given pipeline
 func LoadPipelineHooks(db gorp.SqlExecutor, pipelineID int64, applicationID int64) ([]sdk.Hook, error) {
-	query := `SELECT id, kind, host, project, repository, uid FROM hook WHERE pipeline_id = $1 AND application_id= $2`
+	query := `SELECT id, kind, host, project, repository, uid, enabled FROM hook WHERE pipeline_id = $1 AND application_id= $2`
 
 	rows, err := db.Query(query, pipelineID, applicationID)
 	if err != nil {
@@ -180,7 +180,7 @@ func LoadPipelineHooks(db gorp.SqlExecutor, pipelineID int64, applicationID int6
 		var h sdk.Hook
 		h.Pipeline.ID = pipelineID
 		h.ApplicationID = applicationID
-		if err = rows.Scan(&h.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.UID); err != nil {
+		if err = rows.Scan(&h.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.UID, &h.Enabled); err != nil {
 			return nil, err
 		}
 		link := viper.GetString("api_url") + HookLink
