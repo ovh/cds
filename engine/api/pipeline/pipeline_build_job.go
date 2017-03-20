@@ -223,9 +223,9 @@ func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, work
 		k := keyBookJob(pbJobID)
 		h := sdk.Hatchery{}
 		if cache.Get(k, &h) {
-			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status and was booked by %d. Current status:%s", h.ID, pbJobGorp.Status)
+			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status and was booked by %d. Current status:%s", pbJobID, h.ID, pbJobGorp.Status)
 		}
-		return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status. Current status:%s", pbJobGorp.Status)
+		return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status. Current status:%s", pbJobID, pbJobGorp.Status)
 	}
 
 	pbJobGorp.Model = model
