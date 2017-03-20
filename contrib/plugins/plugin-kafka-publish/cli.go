@@ -35,7 +35,7 @@ func initCli(mainFunc func()) *cli.App {
 				Name:      "listen",
 				Aliases:   []string{"l"},
 				Usage:     "Listen a Kafka topic and wait for chunks",
-				ArgsUsage: "<kafka> <topic> <group> <key>",
+				ArgsUsage: "<kafka> <topic> <group> <user> <password>",
 				Flags: []cli.Flag{
 					cli.StringFlag{
 						Name:  "pgp-decrypt",
@@ -46,45 +46,17 @@ func initCli(mainFunc func()) *cli.App {
 				Action: listenAction,
 			},
 			cli.Command{
-				Name:      "send",
-				Aliases:   []string{"s"},
-				Usage:     "[DEBUG] Encrypt and send a file through Kafka topic",
-				ArgsUsage: "<kafka> <topic> <key> <file>",
-				Flags: []cli.Flag{
-					cli.BoolFlag{
-						Name:  "as-file",
-						Usage: "Send file as plain file",
-					},
-					cli.BoolFlag{
-						Name:  "as-chunks",
-						Usage: "Send file as chunked file",
-					},
-					cli.StringFlag{
-						Name:  "pgp-encrypt",
-						Usage: "Encrypt file with a public pgp file",
-						Value: "",
-					},
-					cli.Int64Flag{
-						Name:  "actionID",
-						Usage: "CDS Action ID Context",
-					},
-				},
-				Action: sendAction,
-			},
-			cli.Command{
-				Name:      "send-context",
-				Usage:     "[DEBUG] Send a context through Kafka topic",
-				ArgsUsage: "<kafka> <topic> <key> <actionID> <file> <file> ...",
-				Action:    sendContext,
-			},
-			cli.Command{
 				Name:      "ack",
 				Usage:     "Send Ack to CDS",
-				ArgsUsage: "<kafka> <topic> <key> <cds-action json file> <OK|KO>",
+				ArgsUsage: "<kafka> <topic> <user> <password> <cds-action json file> <OK|KO>",
 				Flags: []cli.Flag{
 					cli.StringFlag{
 						Name:  "log",
-						Usage: "<file> Attach log file",
+						Usage: "--log <file>: Attach a log file",
+					},
+					cli.StringSliceFlag{
+						Name:  "artifact",
+						Usage: "--artifact <file> [--artifact <file>]: Upload artifact files ",
 					},
 				},
 				Action: ackAction,
