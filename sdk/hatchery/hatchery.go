@@ -44,7 +44,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 
 	jobs, errbq := sdk.GetBuildQueue()
 	if errbq != nil {
-		log.Debug("routine> %d err while GetBuildQueue:%e", timestamp, errbq)
+		log.Critical("routine> %d err while GetBuildQueue:%e", timestamp, errbq)
 		return nil, errbq
 	}
 
