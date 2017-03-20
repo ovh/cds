@@ -50,14 +50,14 @@ func init() {
 // Cmd configures comamnd for HatcheryLocal
 var Cmd = &cobra.Command{
 	Use:   "marathon",
-	Short: "Hatchery mesos commands: hatchery mesos --help",
-	Long: `Hatchery mesos commands: hatchery mesos <command>
-Start worker model instances on a mesos cluster
+	Short: "Hatchery marathon commands: hatchery marathon --help",
+	Long: `Hatchery marathon commands: hatchery marathon <command>
+Start worker model instances on a marathon cluster
 
 $ cds generate token --group shared.infra --expiration persistent
 2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4
 
-$ hatchery mesos --api=https://<api.domain> --token=<token>
+$ hatchery marathon --api=https://<api.domain> --token=<token>
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
