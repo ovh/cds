@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -627,11 +628,10 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	}
 
-	app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
-	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot load hook from application %s: %s", app.Name, err)
-		return err
-
+	var errW error
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Cannot load workflow")
 	}
 
 	b, e := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
