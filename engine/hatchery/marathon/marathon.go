@@ -289,11 +289,11 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 		t0 := time.Now()
 		for t := range ticker.C {
 			delta := math.Floor(t.Sub(t0).Seconds())
-			log.Debug("Application %s deployment in progress [%d seconds] please wait...\n", application.ID, int(delta))
+			log.Debug("Application %s spawning in progress [%d seconds] please wait...\n", application.ID, int(delta))
 		}
 	}()
 
-	log.Debug("Application %s deployment in progress [%d seconds] please wait...\n", application.ID)
+	log.Debug("Application %s spawning in progress, please wait...\n", application.ID)
 	deployments, err := m.client.ApplicationDeployments(application.ID)
 	if err != nil {
 		ticker.Stop()

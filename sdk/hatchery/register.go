@@ -49,7 +49,7 @@ func Create(h Interface, api, token string, provision int, requestSecondsTimeout
 			continue
 		}
 
-		if err := routine(h, provision, hostname); err != nil {
+		if err := routine(h, provision, hostname, time.Now().Unix()); err != nil {
 			log.Warning("Create> Error: %s\n", err)
 		}
 	}
