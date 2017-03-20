@@ -3,6 +3,7 @@ package hatchery
 import (
 	"fmt"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/ovh/cds/engine/log"
@@ -40,11 +41,12 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 }
 
 func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64) ([]int64, error) {
+	defer logTime("routine", time.Now())
 	log.Debug("routine> %d", timestamp)
 
 	jobs, errbq := sdk.GetBuildQueue()
 	if errbq != nil {
-		log.Critical("routine> %d err while GetBuildQueue:%e", timestamp, errbq)
+		log.Critical("routine> %d error on GetBuildQueue:%e", timestamp, errbq)
 		return nil, errbq
 	}
 
@@ -55,66 +57,76 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 
 	models, errwm := sdk.GetWorkerModels()
 	if errwm != nil {
-		log.Debug("routine> %d - err while GetWorkerModels:%e", timestamp, errwm)
+		log.Debug("routine> %d - error on GetWorkerModels:%e", timestamp, errwm)
 		return nil, errwm
 	}
 
 	spawnedIDs := []int64{}
+	wg := &sync.WaitGroup{}
 
 	for _, job := range jobs {
-		log.Debug("routine> %d work on job %d", timestamp, job.ID)
-		if job.BookedBy.ID != 0 {
-			t := "current hatchery"
-			if job.BookedBy.ID != h.Hatchery().ID {
-				t = "another hatchery"
+		wg.Add(1)
+		go func(job sdk.PipelineBuildJob) {
+			defer logTime(fmt.Sprintf("routine> job %d>", job.ID), time.Now())
+			log.Debug("routine> %d work on job %d", timestamp, job.ID)
+			if job.BookedBy.ID != 0 {
+				t := "current hatchery"
+				if job.BookedBy.ID != h.Hatchery().ID {
+					t = "another hatchery"
+				}
+				log.Debug("routine> %d - job %d already booked by %s %s (%d)", timestamp, job.ID, t, job.BookedBy.Name, job.BookedBy.ID)
+				wg.Done()
+				return
 			}
-			log.Debug("routine> %d - job %d already booked by %s %s (%d)", timestamp, job.ID, t, job.BookedBy.Name, job.BookedBy.ID)
-			continue
-		}
 
-		for _, model := range models {
-			if canRunJob(h, &job, &model, hostname) {
-				if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
-					// perhaps already booked by another hatchery
-					log.Debug("routine> %d cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
-					break // go to next job
-				}
-				log.Debug("routine> %d - send book job %d %s by hatchery %d", timestamp, job.ID, model.Name, h.Hatchery().ID)
+			for _, model := range models {
+				if canRunJob(h, &job, &model, hostname) {
+					if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
+						// perhaps already booked by another hatchery
+						log.Debug("routine> %d cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
+						break // go to next job
+					}
+					log.Debug("routine> %d - send book job %d %s by hatchery %d", timestamp, job.ID, model.Name, h.Hatchery().ID)
 
-				start := time.Now()
-				infos := []sdk.SpawnInfo{
-					{
-						RemoteTime: start,
-						Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
-					},
-				}
+					start := time.Now()
+					infos := []sdk.SpawnInfo{
+						{
+							RemoteTime: start,
+							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
+						},
+					}
 
-				errs := h.SpawnWorker(&model, &job)
-				if errs != nil {
-					log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, errs)
+					errs := h.SpawnWorker(&model, &job)
+					if errs != nil {
+						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, errs)
+						infos = append(infos, sdk.SpawnInfo{
+							RemoteTime: time.Now(),
+							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errs.Error()}},
+						})
+						if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
+							log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job (err spawn)%d: %s", timestamp, job.ID, err)
+						}
+						continue // try another model
+					}
+					spawnedIDs = append(spawnedIDs, job.ID)
+
 					infos = append(infos, sdk.SpawnInfo{
 						RemoteTime: time.Now(),
-						Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errs.Error()}},
+						Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), sdk.Round(time.Since(start), time.Second).String()}},
 					})
+
 					if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
-						log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job (err spawn)%d: %s", timestamp, job.ID, err)
+						log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job %d: %s", timestamp, job.ID, err)
 					}
-					continue // try another model
+					break // ok for this job
 				}
-				spawnedIDs = append(spawnedIDs, job.ID)
-
-				infos = append(infos, sdk.SpawnInfo{
-					RemoteTime: time.Now(),
-					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), sdk.Round(time.Since(start), time.Second).String()}},
-				})
-
-				if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
-					log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job %d: %s", timestamp, job.ID, err)
-				}
-				break // ok for this job
 			}
-		}
+			wg.Done()
+		}(job)
 	}
+
+	wg.Wait()
+
 	return spawnedIDs, nil
 }
 
@@ -157,4 +169,19 @@ func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostnam
 	}
 
 	return h.CanSpawn(model, job)
+}
+
+func logTime(name string, then time.Time) {
+	d := time.Since(then)
+	if d > 10*time.Second {
+		log.Critical("%s took %s to execute", name, d)
+		return
+	}
+
+	if d > 4*time.Second {
+		log.Warning("%s took %s to execute", name, d)
+		return
+	}
+
+	log.Debug("%s took %s to execute", name, d)
 }

@@ -252,6 +252,11 @@ func (m *HatcheryMarathon) marathonConfig(model *sdk.Model, hatcheryID int64, jo
 }
 
 func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryID int64, job *sdk.PipelineBuildJob) error {
+	var logJob string
+	if job != nil {
+		logJob = fmt.Sprintf("for job %d ,", job.ID)
+	}
+
 	// Estimate needed memory, we will set 110% of required memory
 	memory := m.defaultMemory
 	//Check if there is a memory requirement
@@ -259,14 +264,14 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 	if job != nil {
 		for _, r := range job.Job.Action.Requirements {
 			if r.Name == sdk.ServiceRequirement {
-				return fmt.Errorf("spawnMarathonDockerWorker> Service requirement not supported")
+				return fmt.Errorf("spawnMarathonDockerWorker> %s service requirement not supported", logJob)
 			}
 
 			if r.Type == sdk.MemoryRequirement {
 				var err error
 				memory, err = strconv.Atoi(r.Value)
 				if err != nil {
-					log.Warning("spawnMarathonDockerWorker> Unable to parse memory requirement %s :s", memory, err)
+					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %s:%s", logJob, memory, err)
 					return err
 				}
 			}
@@ -280,7 +285,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 
 	application := &marathon.Application{}
 	if err := json.Unmarshal(buffer, application); err != nil {
-		log.Warning("spawnMarathonDockerWorker> configuration file parse error err:%s", err)
+		log.Warning("spawnMarathonDockerWorker> %s configuration file parse error err:%s", logJob, err)
 		return err
 	}
 
@@ -293,15 +298,16 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 		t0 := time.Now()
 		for t := range ticker.C {
 			delta := math.Floor(t.Sub(t0).Seconds())
-			log.Debug("spawnMarathonDockerWorker> application %s spawning in progress [%d seconds] please wait...", application.ID, int(delta))
+			log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress [%d seconds] please wait...", logJob, application.ID, int(delta))
 		}
 	}()
 
-	log.Debug("Application %s spawning in progress, please wait...", application.ID)
+	log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress, please wait...", logJob, application.ID)
+
 	deployments, err := m.client.ApplicationDeployments(application.ID)
 	if err != nil {
 		ticker.Stop()
-		return fmt.Errorf("spawnMarathonDockerWorker> failed to list deployments: %s", err.Error())
+		return fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
 	}
 
 	if len(deployments) == 0 {
@@ -321,9 +327,9 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 					return
 				}
 				// try to delete deployment
-				log.Debug("timeout (%d) on deployment %s", m.workerSpawnTimeout, id)
+				log.Debug("spawnMarathonDockerWorker> %s timeout (%d) on deployment %s", logJob, m.workerSpawnTimeout, id)
 				if _, err := m.client.DeleteDeployment(id, true); err != nil {
-					log.Warning("Error on delete timeouted deployment %s: %s", id, err.Error())
+					log.Warning("spawnMarathonDockerWorker> %s error on delete timeouted deployment %s: %s", logJob, id, err.Error())
 				}
 				ticker.Stop()
 				successChan <- false
@@ -331,14 +337,14 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 			}()
 
 			if err := m.client.WaitOnDeployment(id, time.Duration(m.workerSpawnTimeout)*time.Second); err != nil {
-				log.Warning("Error on deployment %s: %s", id, err.Error())
+				log.Warning("spawnMarathonDockerWorker> %s error on deployment %s: %s", logJob, id, err.Error())
 				ticker.Stop()
 				successChan <- false
 				wg.Done()
 				return
 			}
 
-			log.Debug("Deployment %s succeeded", id)
+			log.Debug("spawnMarathonDockerWorker> %s deployment %s succeeded", logJob, id)
 			ticker.Stop()
 			successChan <- true
 			wg.Done()
@@ -362,7 +368,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 		return nil
 	}
 
-	return fmt.Errorf("Error while deploying worker")
+	return fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
 }
 
 func (m *HatcheryMarathon) startKillAwolWorkerRoutine() {
