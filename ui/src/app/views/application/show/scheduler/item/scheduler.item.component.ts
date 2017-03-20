@@ -4,7 +4,9 @@ import {Application} from '../../../../../model/application.model';
 import {Scheduler} from '../../../../../model/scheduler.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Pipeline} from '../../../../../model/pipeline.model';
-import {SchedulerEvent} from '../scheduler.event';
+import {ApplicationStore} from '../../../../../service/application/application.store';
+import {ToastService} from '../../../../../shared/toast/ToastService';
+import {TranslateService} from 'ng2-translate';
 
 declare var _: any;
 
@@ -29,7 +31,8 @@ export class ApplicationSchedulerItemComponent {
 
     @Output() event = new EventEmitter();
 
-    constructor() { }
+    constructor(private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService) {
+    }
 
     editScheduler(): void {
         if (this.editSchedulerModal) {
@@ -48,13 +51,23 @@ export class ApplicationSchedulerItemComponent {
 
     updateScheduler(): void {
         this.scheduler.updating = true;
-        this.event.emit(new SchedulerEvent('update', this.editableScheduler));
-        this.close();
+        this._appStore.updateScheduler(this.project.key, this.application.name, this.pipeline.name, this.editableScheduler)
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('scheduler_updated'));
+                this.close();
+            }, () => {
+                this.scheduler.updating = false;
+            });
     }
 
     deleteScheduler(): void {
         this.scheduler.updating = true;
-        this.event.emit(new SchedulerEvent('delete', this.editableScheduler));
-        this.close();
+        this._appStore.deleteScheduler(this.project.key, this.application.name, this.pipeline.name, this.editableScheduler)
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('scheduler_deleted'));
+                this.close();
+            }, () => {
+                this.scheduler.updating = false;
+            });
     }
 }

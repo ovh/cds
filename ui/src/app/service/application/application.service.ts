@@ -11,6 +11,7 @@ import {ApplyTemplateRequest} from '../../model/template.model';
 import {Project} from '../../model/project.model';
 import {Notification} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
+import {Hook} from '../../model/hook.model';
 
 @Injectable()
 export class ApplicationService {
@@ -30,6 +31,7 @@ export class ApplicationService {
         options.search.set('withHooks', 'true');
         options.search.set('withWorkflow', 'true');
         options.search.set('withNotifs', 'true');
+        options.search.set('withRepoMan', 'true');
         return this._http.get('/project/' + key + '/application/' + appName, options).map(res => res.json());
     }
 
@@ -147,6 +149,18 @@ export class ApplicationService {
             'pipeline_name' : pipName
         };
         return this._http.post(url, request).map(res => res.json());
+    }
+
+    /**
+     * Update the given hook
+     * @param key Project key
+     * @param appName Application Name
+     * @param pipName Pipeline name
+     * @param hook Hook to update
+     */
+    updateHook(key: string, appName: string, pipName: string, hook: Hook) {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/hook/' + hook.id;
+        return this._http.put(url, hook).map(res => res.json());
     }
 
     /**

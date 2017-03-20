@@ -610,24 +610,9 @@ describe('CDS: Application Workflow Item', () => {
         });
         spyOn(fixture.componentInstance.createSchedulerModal, 'hide').and.callFake(() => true);
 
-        fixture.componentInstance.schedulerEvent('add', fixture.componentInstance.newScheduler);
+        fixture.componentInstance.createScheduler(fixture.componentInstance.newScheduler);
         expect(appStore.addScheduler).toHaveBeenCalledWith('key1', 'app1', 'pip1', fixture.componentInstance.newScheduler);
         expect(fixture.componentInstance.createSchedulerModal.hide).toHaveBeenCalled();
-
-        // Update scheduler
-        spyOn(appStore, 'updateScheduler').and.callFake(() => {
-            return Observable.of(workflowItem.application);
-        });
-        fixture.componentInstance.schedulerEvent('update', fixture.componentInstance.newScheduler);
-        expect(appStore.updateScheduler).toHaveBeenCalledWith('key1', 'app1', 'pip1', fixture.componentInstance.newScheduler);
-
-
-        // Delete scheduler
-        spyOn(appStore, 'deleteScheduler').and.callFake(() => {
-            return Observable.of(workflowItem.application);
-        });
-        fixture.componentInstance.schedulerEvent('delete', fixture.componentInstance.newScheduler);
-        expect(appStore.deleteScheduler).toHaveBeenCalledWith('key1', 'app1', 'pip1', fixture.componentInstance.newScheduler);
     }));
 });
 

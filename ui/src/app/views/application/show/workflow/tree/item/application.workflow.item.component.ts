@@ -14,6 +14,7 @@ import {ApplicationStore} from '../../../../../../service/application/applicatio
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {Scheduler} from '../../../../../../model/scheduler.model';
+import {Hook} from '../../../../../../model/hook.model';
 
 declare var _: any;
 
@@ -106,7 +107,7 @@ export class ApplicationWorkflowItemComponent {
     }
 
     navigateToBuild(pb: PipelineBuild): void {
-        let queryParams = { queryParams:  {envName: pb.environment.name}};
+        let queryParams = {queryParams: {envName: pb.environment.name}};
         if (this.applicationFilter.branch !== '') {
             queryParams.queryParams['branch'] = this.applicationFilter.branch;
         }
@@ -287,35 +288,33 @@ export class ApplicationWorkflowItemComponent {
         }
     }
 
-    schedulerEvent(type: string, scheduler: Scheduler): void {
-        switch (type) {
-            case 'add':
-                this._appStore.addScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
-                    .subscribe(() => {
-                    this._toast.success('', this._translate.instant('scheduler_added'));
-                    if (this.createSchedulerModal) {
-                        this.createSchedulerModal.hide();
-                    }
-                });
-                break;
-            case 'update':
-                this._appStore.updateScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
-                    .subscribe(() => {
-                    this._toast.success('', this._translate.instant('scheduler_updated'));
-                });
-                break;
-            case 'delete':
-                this._appStore.deleteScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
-                    .subscribe(() => {
-                    this._toast.success('', this._translate.instant('scheduler_deleted'));
-                });
-                break;
+    createScheduler(scheduler: Scheduler): void {
+        this._appStore.addScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('scheduler_added'));
+                if (this.createSchedulerModal) {
+                    this.createSchedulerModal.hide();
+                }
+            });
+    }
+
+    createHook(): void {
+        if (!this.application.repositories_manager) {
+            this._toast.error('', this._translate.instant('hook_repo_man_needed'));
+            return;
         }
+        let hook = new Hook();
+        hook.pipeline = this.workflowItem.pipeline;
+        hook.enabled = true;
+        this._appStore.addHook(this.project, this.application, hook)
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('hook_added'));
+            });
     }
 
     detachPipeline(p: Pipeline): void {
         this._appStore.detachPipeline(this.project.key, this.application.name, p.name).subscribe(() => {
-           this._toast.success('', this._translate.instant('application_pipeline_detached'));
+            this._toast.success('', this._translate.instant('application_pipeline_detached'));
         });
     }
 

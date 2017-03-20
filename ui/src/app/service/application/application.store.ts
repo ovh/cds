@@ -272,6 +272,20 @@ export class ApplicationStore {
     }
 
     /**
+     * Update the given hook
+     * @param p Project
+     * @param a Application
+     * @param h Hook to update
+     * @returns {Observable<Application>}
+     */
+    updateHook(p: Project, a: Application, pipName: string, h: Hook): Observable<Application> {
+        return this._applicationService.updateHook(p.key, a.name, pipName, h)
+            .map( app => {
+                return this.refreshApplicationWorkflowCache(p.key, a.name, app);
+            });
+    }
+
+    /**
      * Remove a hook from an application
      * @param p Project
      * @param a Application
@@ -280,7 +294,7 @@ export class ApplicationStore {
      */
     removeHook(p: Project, a: Application, h: Hook): Observable<Application> {
         return this._applicationService.deleteHook(p.key, a.name, a.repositories_manager.name, h.id).map(app => {
-            return this.refreshApplicationHookCache(p.key, a.name, app);
+            return this.refreshApplicationWorkflowCache(p.key, a.name, app);
         });
     }
 

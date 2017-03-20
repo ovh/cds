@@ -1,0 +1,17 @@
+<div class="poller">
+    <div class="ui one column grid">
+        <div class="column">
+            <button class="ui basic icon mini button" (click)="editPoller()" *ngIf="application.permission === 7">
+                <i class="pencil icon"></i>
+            </button>
+            {{ 'poller_workflow_label' | translate }}
+            {{poller.name}}
+            <span *ngIf="poller.next_execution">
+                {{poller.next_execution.execution_planned_date | amCalendar}}
+                <span *ngIf="poller.timezone !== 'UTC'">
+                    {{ ' ' + poller.timezone}}
+                </span>
+            </span>
+        </div>
+    </div>
+</div>
