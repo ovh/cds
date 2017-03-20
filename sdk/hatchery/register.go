@@ -42,6 +42,8 @@ func Create(h Interface, api, token string, provision int, requestSecondsTimeout
 
 	go hearbeat(h, token, maxFailures)
 
+	var spawnIds []int64
+	var errR error
 	for {
 		time.Sleep(2 * time.Second)
 		if h.Hatchery() == nil || h.Hatchery().ID == 0 {
@@ -49,8 +51,9 @@ func Create(h Interface, api, token string, provision int, requestSecondsTimeout
 			continue
 		}
 
-		if err := routine(h, provision, hostname, time.Now().Unix()); err != nil {
-			log.Warning("Create> Error: %s\n", err)
+		spawnIds, errR = routine(h, provision, hostname, time.Now().Unix(), spawnIds)
+		if errR != nil {
+			log.Warning("Create> Error: %s\n", errR)
 		}
 	}
 }

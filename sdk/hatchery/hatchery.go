@@ -39,25 +39,27 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func routine(h Interface, provision int, hostname string, timestamp int64) error {
+func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64) ([]int64, error) {
 	log.Debug("routine> %d", timestamp)
 
 	jobs, errbq := sdk.GetBuildQueue()
 	if errbq != nil {
 		log.Debug("routine> %d err while GetBuildQueue:%e", timestamp, errbq)
-		return errbq
+		return nil, errbq
 	}
 
 	if len(jobs) == 0 {
 		log.Debug("routine> %d - Job queue is empty", timestamp)
-		return nil
+		return nil, nil
 	}
 
 	models, errwm := sdk.GetWorkerModels()
 	if errwm != nil {
 		log.Debug("routine> %d - err while GetWorkerModels:%e", timestamp, errwm)
-		return errwm
+		return nil, errwm
 	}
+
+	spawnedIDs := []int64{}
 
 	for _, job := range jobs {
 		log.Debug("routine> %d work on job %d", timestamp, job.ID)
@@ -99,6 +101,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64) error
 					}
 					continue // try another model
 				}
+				spawnedIDs = append(spawnedIDs, job.ID)
 
 				infos = append(infos, sdk.SpawnInfo{
 					RemoteTime: time.Now(),
@@ -111,7 +114,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64) error
 			}
 		}
 	}
-	return nil
+	return spawnedIDs, nil
 }
 
 func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostname string) bool {

@@ -108,7 +108,7 @@ func (m *HatcheryMarathon) Hatchery() *sdk.Hatchery {
 // KillWorker deletes an application on mesos via marathon
 func (m *HatcheryMarathon) KillWorker(worker sdk.Worker) error {
 	appID := path.Join(hatcheryMarathon.marathonID, worker.Name)
-	log.Notice("KillWorker> Killing %s\n", appID)
+	log.Notice("KillWorker> Killing %s", appID)
 
 	_, err := m.client.DeleteApplication(appID, true)
 	return err
@@ -134,10 +134,14 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 // requirements services are not supported
 func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
 	if model.Type != sdk.Docker {
-		return fmt.Errorf("Model not handled")
+		return fmt.Errorf("spawnWorker> Model not handled")
 	}
 
-	log.Notice("Spawning worker %s (%s)\n", model.Name, model.Image)
+	if job != nil {
+		log.Notice("spawnWorker> spawning worker %s (%s) for job %d", model.Name, model.Image, job.ID)
+	} else {
+		log.Notice("spawnWorker> spawning worker %s (%s)", model.Name, model.Image)
+	}
 
 	deployments, errd := m.client.Deployments()
 	if errd != nil {
@@ -145,7 +149,7 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	}
 	// Do not DOS marathon, if deployment queue is longer than 10, wait
 	if len(deployments) >= 10 {
-		log.Notice("%d item in deployment queue, waiting\n", len(deployments))
+		log.Notice("spawnWorker> %d item in deployment queue, waiting", len(deployments))
 		time.Sleep(2 * time.Second)
 		return nil
 	}
@@ -155,7 +159,7 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 		return err
 	}
 	if len(apps) >= viper.GetInt("max-worker") {
-		return fmt.Errorf("max number of containers reached, aborting")
+		return fmt.Errorf("spawnWorker> max number of containers reached, aborting")
 	}
 
 	return m.spawnMarathonDockerWorker(model, m.hatch.ID, job)
@@ -195,7 +199,7 @@ func (m *HatcheryMarathon) Init() error {
 	}
 
 	if err := hatchery.Register(m.hatch, viper.GetString("token")); err != nil {
-		log.Warning("Cannot register hatchery: %s\n", err)
+		log.Warning("Cannot register hatchery: %s", err)
 	}
 
 	// Start cleaning routines
@@ -262,7 +266,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 				var err error
 				memory, err = strconv.Atoi(r.Value)
 				if err != nil {
-					log.Warning("spawnMarathonDockerWorker>Unable to parse memory requirement %s :s\n", memory, err)
+					log.Warning("spawnMarathonDockerWorker>Unable to parse memory requirement %s :s", memory, err)
 					return err
 				}
 			}
@@ -276,7 +280,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 
 	application := &marathon.Application{}
 	if err := json.Unmarshal(buffer, application); err != nil {
-		log.Warning("Configuration file parse error err:%s\n", err)
+		log.Warning("Configuration file parse error err:%s", err)
 		return err
 	}
 
@@ -289,15 +293,15 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 		t0 := time.Now()
 		for t := range ticker.C {
 			delta := math.Floor(t.Sub(t0).Seconds())
-			log.Debug("Application %s spawning in progress [%d seconds] please wait...\n", application.ID, int(delta))
+			log.Debug("Application %s spawning in progress [%d seconds] please wait...", application.ID, int(delta))
 		}
 	}()
 
-	log.Debug("Application %s spawning in progress, please wait...\n", application.ID)
+	log.Debug("Application %s spawning in progress, please wait...", application.ID)
 	deployments, err := m.client.ApplicationDeployments(application.ID)
 	if err != nil {
 		ticker.Stop()
-		return fmt.Errorf("Failed to list deployments: %s\n", err.Error())
+		return fmt.Errorf("Failed to list deployments: %s", err.Error())
 	}
 
 	if len(deployments) == 0 {
@@ -317,9 +321,9 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 					return
 				}
 				// try to delete deployment
-				log.Debug("timeout (%d) on deployment %s\n", m.workerSpawnTimeout, id)
+				log.Debug("timeout (%d) on deployment %s", m.workerSpawnTimeout, id)
 				if _, err := m.client.DeleteDeployment(id, true); err != nil {
-					log.Warning("Error on delete timeouted deployment %s: %s\n", id, err.Error())
+					log.Warning("Error on delete timeouted deployment %s: %s", id, err.Error())
 				}
 				ticker.Stop()
 				successChan <- false
@@ -327,7 +331,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 			}()
 
 			if err := m.client.WaitOnDeployment(id, time.Duration(m.workerSpawnTimeout)*time.Second); err != nil {
-				log.Warning("Error on deployment %s: %s\n", id, err.Error())
+				log.Warning("Error on deployment %s: %s", id, err.Error())
 				ticker.Stop()
 				successChan <- false
 				wg.Done()
@@ -366,7 +370,7 @@ func (m *HatcheryMarathon) startKillAwolWorkerRoutine() {
 		for {
 			time.Sleep(10 * time.Second)
 			if err := m.killDisabledWorkers(); err != nil {
-				log.Warning("Cannot kill awol workers: %s\n", err)
+				log.Warning("Cannot kill awol workers: %s", err)
 			}
 		}
 	}()
@@ -375,7 +379,7 @@ func (m *HatcheryMarathon) startKillAwolWorkerRoutine() {
 		for {
 			time.Sleep(10 * time.Second)
 			if err := m.killAwolWorkers(); err != nil {
-				log.Warning("Cannot kill awol workers: %s\n", err)
+				log.Warning("Cannot kill awol workers: %s", err)
 			}
 		}
 	}()
@@ -400,7 +404,7 @@ func (m *HatcheryMarathon) killDisabledWorkers() error {
 		// check that there is a worker matching
 		for _, app := range apps {
 			if strings.HasSuffix(app, w.Name) {
-				log.Notice("killing disabled worker %s\n", app)
+				log.Notice("killing disabled worker %s", app)
 				if _, err := m.client.DeleteApplication(app, true); err != nil {
 					return err
 				}
@@ -435,7 +439,7 @@ func (m *HatcheryMarathon) killAwolWorkers() error {
 		}
 		t, err := time.Parse(time.RFC3339, app.Version)
 		if err != nil {
-			log.Warning("Cannot parse last update: %s\n", err)
+			log.Warning("Cannot parse last update: %s", err)
 			break
 		}
 
@@ -450,7 +454,7 @@ func (m *HatcheryMarathon) killAwolWorkers() error {
 
 		// then if it's not found, kill it !
 		if !found && time.Since(t) > 1*time.Minute {
-			log.Notice("killing awol worker %s\n", app.ID)
+			log.Notice("killing awol worker %s", app.ID)
 			if _, err := m.client.DeleteApplication(app.ID, true); err != nil {
 				return err
 			}
