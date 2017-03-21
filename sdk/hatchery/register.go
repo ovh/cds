@@ -16,7 +16,7 @@ import (
 )
 
 // Create creates hatchery
-func Create(h Interface, api, token string, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool) {
+func Create(h Interface, api, token string, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, warningSeconds, criticalSeconds int) {
 	Client = &http.Client{
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
@@ -51,7 +51,7 @@ func Create(h Interface, api, token string, provision int, requestSecondsTimeout
 			continue
 		}
 
-		spawnIds, errR = routine(h, provision, hostname, time.Now().Unix(), spawnIds)
+		spawnIds, errR = routine(h, provision, hostname, time.Now().Unix(), spawnIds, warningSeconds, criticalSeconds)
 		if errR != nil {
 			log.Warning("Create> Error: %s\n", errR)
 		}

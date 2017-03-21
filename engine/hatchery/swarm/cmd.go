@@ -23,6 +23,12 @@ func init() {
 
 	Cmd.Flags().IntVar(&hatcherySwarm.workerTTL, "worker-ttl", 10, "Worker TTL (minutes)")
 	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
+
+	Cmd.Flags().Int("spawn-threshold-critical", 20, "log critical if spawn take more than this value (in seconds)")
+	viper.BindPFlag("spawn-threshold-critical", Cmd.Flags().Lookup("spawn-threshold-critical"))
+
+	Cmd.Flags().Int("spawn-threshold-warning", 4, "log warning if spawn take more than this value (in seconds)")
+	viper.BindPFlag("spawn-threshold-warning", Cmd.Flags().Lookup("spawn-threshold-warning"))
 }
 
 // Cmd configures comamnd for HatcherySwarm
@@ -42,7 +48,7 @@ $ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> -
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Create(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"))
+		hatchery.Create(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"), viper.GetInt("spawn-threshold-warning"), viper.GetInt("spawn-threshold-critical"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if viper.GetInt("max-containers") <= 0 {

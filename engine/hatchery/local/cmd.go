@@ -11,6 +11,12 @@ func init() {
 	hatcheryLocal = &HatcheryLocal{}
 	Cmd.Flags().StringVarP(&hatcheryLocal.basedir, "basedir", "", "/tmp", "BaseDir for worker workspace")
 	viper.BindPFlag("basedir", Cmd.Flags().Lookup("basedir"))
+
+	Cmd.Flags().Int("spawn-threshold-critical", 480, "log critical if spawn take more than this value (in seconds)")
+	viper.BindPFlag("spawn-threshold-critical", Cmd.Flags().Lookup("spawn-threshold-critical"))
+
+	Cmd.Flags().Int("spawn-threshold-warning", 360, "log warning if spawn take more than this value (in seconds)")
+	viper.BindPFlag("spawn-threshold-warning", Cmd.Flags().Lookup("spawn-threshold-warning"))
 }
 
 // Cmd configures comamnd for HatcheryLocal
@@ -27,7 +33,7 @@ $ hatchery docker --api=https://<api.domain> --token=<token> --basedir=/tmp
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Create(hatcheryLocal, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"))
+		hatchery.Create(hatcheryLocal, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"), viper.GetInt("spawn-threshold-warning"), viper.GetInt("spawn-threshold-critical"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if hatcheryLocal.basedir == "" {

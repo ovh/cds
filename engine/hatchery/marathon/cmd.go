@@ -45,6 +45,11 @@ func init() {
 	Cmd.Flags().IntVar(&hatcheryMarathon.workerSpawnTimeout, "worker-spawn-timeout", 120, "Worker Timeout Spawning (seconds)")
 	viper.BindPFlag("worker-spawn-timeout", Cmd.Flags().Lookup("worker-spawn-timeout"))
 
+	Cmd.Flags().Int("spawn-threshold-critical", 10, "log critical if spawn take more than this value (in seconds)")
+	viper.BindPFlag("spawn-threshold-critical", Cmd.Flags().Lookup("spawn-threshold-critical"))
+
+	Cmd.Flags().Int("spawn-threshold-warning", 4, "log warning if spawn take more than this value (in seconds)")
+	viper.BindPFlag("spawn-threshold-warning", Cmd.Flags().Lookup("spawn-threshold-warning"))
 }
 
 // Cmd configures comamnd for HatcheryLocal
@@ -61,7 +66,7 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Create(hatcheryMarathon, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"))
+		hatchery.Create(hatcheryMarathon, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"), viper.GetInt("spawn-threshold-warning"), viper.GetInt("spawn-threshold-critical"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		hatcheryMarathon.token = viper.GetString("token")

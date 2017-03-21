@@ -40,8 +40,8 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64) ([]int64, error) {
-	defer logTime("routine", time.Now())
+func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds int) ([]int64, error) {
+	defer logTime("routine", time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d", timestamp)
 
 	jobs, errbq := sdk.GetBuildQueue()
@@ -67,7 +67,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 	for _, job := range jobs {
 		wg.Add(1)
 		go func(job sdk.PipelineBuildJob) {
-			defer logTime(fmt.Sprintf("routine> job %d>", job.ID), time.Now())
+			defer logTime(fmt.Sprintf("routine> job %d>", job.ID), time.Now(), warningSeconds, criticalSeconds)
 			log.Debug("routine> %d work on job %d", timestamp, job.ID)
 			if job.BookedBy.ID != 0 {
 				t := "current hatchery"
@@ -171,14 +171,14 @@ func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostnam
 	return h.CanSpawn(model, job)
 }
 
-func logTime(name string, then time.Time) {
+func logTime(name string, then time.Time, warningSeconds, criticalSeconds int) {
 	d := time.Since(then)
-	if d > 10*time.Second {
+	if d > time.Duration(criticalSeconds)*time.Second {
 		log.Critical("%s took %s to execute", name, d)
 		return
 	}
 
-	if d > 4*time.Second {
+	if d > time.Duration(warningSeconds)*time.Second {
 		log.Warning("%s took %s to execute", name, d)
 		return
 	}
