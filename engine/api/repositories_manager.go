@@ -589,7 +589,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	app, errload := application.LoadByName(db, projectKey, appName, c.User)
 	if errload != nil {
-		return sdk.WrapError(errload, "deleteHookOnRepositoriesManagerHandler> Application %s/%s not found ", appName)
+		return sdk.WrapError(errload, "deleteHookOnRepositoriesManagerHandler> Application %s/%s not found ", projectKey, appName)
 	}
 
 	h, errhook := hook.LoadHook(db, hookID)
@@ -623,7 +623,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	b, errcheck := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
 	if errcheck != nil {
-		return sdk.WrapError(errcheck, "deleteHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s): %s", rmName, projectKey, appName)
+		return sdk.WrapError(errcheck, "deleteHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s)", rmName, projectKey, appName)
 	}
 
 	if !b {
@@ -632,7 +632,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 
 	client, errauth := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
 	if errauth != nil {
-		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, rmName)
+		return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, rmName)
 	}
 
 	t := strings.Split(app.RepositoryFullname, "/")
