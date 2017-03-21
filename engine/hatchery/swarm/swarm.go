@@ -32,12 +32,12 @@ func (h *HatcherySwarm) Init() error {
 	var errc error
 	h.dockerClient, errc = docker.NewClientFromEnv()
 	if errc != nil {
-		log.Critical("Unable to connect to a docker client")
+		log.Critical("Unable to connect to a docker client:%s", errc)
 		return errc
 	}
 
 	if errPing := h.dockerClient.Ping(); errPing != nil {
-		log.Critical("Unable to ping docker host")
+		log.Critical("Unable to ping docker host:%s", errPing)
 		return errPing
 	}
 

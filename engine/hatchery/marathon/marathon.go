@@ -122,8 +122,8 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 	}
 	//Service requirement are not supported
 	for _, r := range job.Job.Action.Requirements {
-		log.Notice("CanSpawn> Job %d has a service requirement. Marathon can't spawn a worker for this job %s", job.ID)
 		if r.Type == sdk.ServiceRequirement {
+			log.Notice("CanSpawn> Job %d has a service requirement. Marathon can't spawn a worker for this job", job.ID)
 			return false
 		}
 	}
