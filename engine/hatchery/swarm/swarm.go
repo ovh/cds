@@ -294,12 +294,12 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 
 	c, err := h.dockerClient.CreateContainer(opts)
 	if err != nil {
-		log.Warning("startAndCreateContainer> Unable to create container %s", err)
+		log.Warning("startAndCreateContainer> Unable to create container with opts: %+v err:%s", opts, err)
 		return err
 	}
 
 	if err := h.dockerClient.StartContainer(c.ID, nil); err != nil {
-		log.Warning("startAndCreateContainer> Unable to start container %s", err)
+		log.Warning("startAndCreateContainer> Unable to start container %s err:%s", c.ID, err)
 		return err
 	}
 	return nil
@@ -358,7 +358,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 		var errl error
 		images, errl = h.dockerClient.ListImages(docker.ListImagesOptions{})
 		if errl != nil {
-			log.Warning("Unable to list images: %s", errl)
+			log.Warning("CanSpawn> Unable to list images: %s", errl)
 		}
 	}
 
@@ -386,7 +386,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 		auth := docker.AuthConfiguration{}
 		log.Notice("CanSpawn> pulling image %s", model.Image)
 		if err := h.dockerClient.PullImage(opts, auth); err != nil {
-			log.Warning("Unable to pull image %s : %s", model.Image, err)
+			log.Warning("CanSpawn> Unable to pull image %s : %s", model.Image, err)
 			return false
 		}
 	}
@@ -416,7 +416,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 			auth := docker.AuthConfiguration{}
 			log.Notice("CanSpawn> pulling image %s", i)
 			if err := h.dockerClient.PullImage(opts, auth); err != nil {
-				log.Warning("Unable to pull image %s : %s", i, err)
+				log.Warning("CanSpawn> Unable to pull image %s : %s", i, err)
 				return false
 			}
 		}
