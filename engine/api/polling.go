@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -99,6 +100,11 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	}
 
 	app.RepositoryPollers = append(app.RepositoryPollers, h)
+	var errW error
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "addPollerHandler> Cannot load workflow")
+	}
 
 	return WriteJSON(w, r, app, http.StatusOK)
 }
@@ -174,8 +180,13 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	app.RepositoryPollers, err = poller.LoadByApplication(db, app.ID)
 	if err != nil {
-		log.Warning("deleteHook> cannot load pollers: %s\n", err)
+		log.Warning("updatePollerHandler> cannot load pollers: %s\n", err)
 		return err
+	}
+	var errW error
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "updatePollerHandler> Cannot load workflow")
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)
@@ -234,63 +245,68 @@ func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
-	projectName := vars["key"]
+	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	p, err := pipeline.LoadPipeline(db, projectName, pipelineName, false)
+	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		if err != sdk.ErrPipelineNotFound {
-			log.Warning("getPollersHandler> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
+			log.Warning("deletePollerHandler> cannot load pipeline %s/%s: %s\n", projectKey, pipelineName, err)
 		}
 		return err
 
 	}
 
-	a, err := application.LoadByName(db, projectName, appName, c.User)
+	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
-		log.Warning("getPollersHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
+		log.Warning("deletePollerHandler> cannot load application %s/%s: %s\n", projectKey, appName, err)
 		return err
 	}
 
 	po, err := poller.LoadByApplicationAndPipeline(db, a.ID, p.ID)
 	if err != nil {
-		log.Warning("getPollersHandler> cannot load poller: %s\n", err)
+		log.Warning("deletePollerHandler> cannot load poller: %s\n", err)
 		return err
 
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("deleteHook> cannot start transaction: %s\n", err)
+		log.Warning("deletePollerHandler> cannot start transaction: %s\n", err)
 		return err
 
 	}
 	defer tx.Rollback()
 
 	if err = poller.Delete(tx, po); err != nil {
-		log.Warning("deleteHook> cannot delete poller: %s\n", err)
+		log.Warning("deletePollerHandler> cannot delete poller: %s\n", err)
 		return err
 
 	}
 
 	if err = application.UpdateLastModified(tx, a, c.User); err != nil {
-		log.Warning("deleteHook> cannot update application last modified date: %s\n", err)
+		log.Warning("deletePollerHandler> cannot update application last modified date: %s\n", err)
 		return err
 
 	}
 
 	if err = tx.Commit(); err != nil {
-		log.Warning("deleteHook> cannot commit transaction: %s\n", err)
+		log.Warning("deletePollerHandler> cannot commit transaction: %s\n", err)
 		return err
 
 	}
 
 	a.RepositoryPollers, err = poller.LoadByApplication(db, a.ID)
 	if err != nil {
-		log.Warning("deleteHook> cannot load pollers: %s\n", err)
+		log.Warning("deletePollerHandler> cannot load pollers: %s\n", err)
 		return err
 
+	}
+	var errW error
+	a.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "deletePollerHandler> Cannot load workflow")
 	}
 
 	return WriteJSON(w, r, a, http.StatusOK)
