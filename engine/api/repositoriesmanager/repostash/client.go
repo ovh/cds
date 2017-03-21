@@ -22,7 +22,7 @@ const stashHookKey string = "de.aeffle.stash.plugin.stash-http-get-post-receive-
 func init() {
 	stash.DefaultClient = &http.Client{
 		Transport: &httpcontrol.Transport{
-			RequestTimeout: time.Minute,
+			RequestTimeout: 10 * time.Second,
 			MaxTries:       3,
 		},
 	}
@@ -214,7 +214,7 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 				cache.Set(stashUserKey, newStashUser)
 				stashUser = *newStashUser
 			}
-		} 
+		}
 		c.Author.DisplayName = stashUser.DisplayName
 		if stashUser.Slug != "" && stashUser.Slug != "unknownSlug" {
 			c.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", s.url, stashUser.Slug)

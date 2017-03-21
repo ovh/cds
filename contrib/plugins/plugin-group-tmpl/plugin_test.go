@@ -178,7 +178,7 @@ func TestGetConfigByApplication(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Fatalf("Test #%d failed : expected %+v, got %+v", test.expected, result)
+			t.Fatalf("Test #%d failed : expected %+v, got %+v", i, test.expected, result)
 		}
 	}
 }
