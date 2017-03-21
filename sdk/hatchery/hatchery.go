@@ -131,6 +131,10 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 }
 
 func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostname string) bool {
+	if !h.CanSpawn(model, job) {
+		return false
+	}
+
 	// Common check
 	for _, r := range job.Job.Action.Requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
@@ -168,7 +172,7 @@ func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostnam
 		}
 	}
 
-	return h.CanSpawn(model, job)
+	return true
 }
 
 func logTime(name string, then time.Time, warningSeconds, criticalSeconds int) {
