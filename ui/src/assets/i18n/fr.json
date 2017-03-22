@@ -139,7 +139,7 @@
   "hook_deleted" : "Hook supprimé",
   "hook_edit_title" : "Edition du hook : {{app}} / {{pip}}",
   "hook_link_label" : "Url du hook",
-  "hook_repo_man_needed" : "L'application doit être lié à un dépôt",
+  "hook_repo_man_needed" : "L'application doit être liée à un dépôt",
   "hook_updated" : "Hook mis à jour",
   "hook_workflow_label" : "Hook : ",
 
