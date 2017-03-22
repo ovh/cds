@@ -69,7 +69,7 @@ func (hd *HatcheryDocker) Init() error {
 	}
 
 	hd.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("docker", viper.GetBool("random-name")),
+		Name: hatchery.GenerateName("docker", viper.GetString("name-suffix"), viper.GetBool("random-name")),
 		UID:  viper.GetString("token"),
 	}
 

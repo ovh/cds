@@ -90,7 +90,7 @@ func Register(h *sdk.Hatchery, token string) error {
 }
 
 // GenerateName generate a hatchery's name
-func GenerateName(add string, withRandom bool) string {
+func GenerateName(add, suffix string, withRandom bool) string {
 	// Register without declaring model
 	name, err := os.Hostname()
 	if err != nil {
@@ -101,6 +101,8 @@ func GenerateName(add string, withRandom bool) string {
 	if add != "" {
 		name += "-" + add
 	}
+
+	name += suffix
 
 	if withRandom {
 		name += "-" + namesgenerator.GetRandomName(0)

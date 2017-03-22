@@ -84,7 +84,7 @@ const serverStatusActive = "ACTIVE"
 func (h *HatcheryCloud) Init() error {
 	// Register without declaring model
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("openstack", viper.GetBool("random-name")),
+		Name: hatchery.GenerateName("openstack", viper.GetString("name-suffix"), viper.GetBool("random-name")),
 		UID:  viper.GetString("uk"),
 	}
 
@@ -608,7 +608,6 @@ type Server struct {
 	Networks    []Network            `json:"networks"`
 	Links       []Link               `json:"links"`
 	Status      string               `json:"status"`
-	IP          string               `json:"accessIPv4,omitempty"`
 	KeyName     string               `json:"key_name"`
 	AccessIPv4  string               `json:"accessIPv4"`
 	Addresses   map[string][]Address `json:"addresses"`

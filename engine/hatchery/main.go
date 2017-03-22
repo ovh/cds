@@ -20,7 +20,6 @@ var rootCmd = &cobra.Command{
 	Use:   "hatchery",
 	Short: "hatchery <mode> --api=<cds.domain> --token=<token>",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-
 		log.Initialize()
 		sdk.SetAgent(sdk.HatcheryAgent)
 
@@ -97,7 +96,10 @@ func addFlags() {
 	rootCmd.PersistentFlags().BoolP("insecure", "k", false, `(SSL) This option explicitly allows hatchery to perform "insecure" SSL connections on CDS API.`)
 	viper.BindPFlag("insecure", rootCmd.PersistentFlags().Lookup("insecure"))
 
-	rootCmd.PersistentFlags().BoolP("random-name", "", false, `Generate a random name for hatchery`)
+	rootCmd.PersistentFlags().BoolP("name-suffix", "", false, `The suffix of the name for hatchery cds-<type>-<suffix-name>`)
+	viper.BindPFlag("name-suffix", rootCmd.PersistentFlags().Lookup("name-suffix"))
+
+	rootCmd.PersistentFlags().BoolP("random-name", "", false, `Generate a random name for hatchery cds-<type>-<suffix-name>-<random-name>`)
 	viper.BindPFlag("random-name", rootCmd.PersistentFlags().Lookup("random-name"))
 
 }

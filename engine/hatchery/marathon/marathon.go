@@ -144,7 +144,7 @@ func (m *HatcheryMarathon) WorkerStarted(model *sdk.Model) int {
 func (m *HatcheryMarathon) Init() error {
 	// Register without declaring model
 	m.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("marathon", viper.GetBool("random-name")),
+		Name: hatchery.GenerateName("marathon", viper.GetString("name-suffix"), viper.GetBool("random-name")),
 		UID:  viper.GetString("token"),
 	}
 
