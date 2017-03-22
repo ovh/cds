@@ -188,12 +188,20 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 	instance := 1
 	mem := float64(memory * 110 / 100)
 	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	forcePull := strings.HasSuffix(model.Image, ":latest")
 
 	application := &marathon.Application{
-		ID:        fmt.Sprintf("%s/%s", m.marathonID, workerName),
-		Cmd:       &cmd,
-		Container: &marathon.Container{},
-		CPUs:      0.5,
+		ID:  fmt.Sprintf("%s/%s", m.marathonID, workerName),
+		Cmd: &cmd,
+		Container: &marathon.Container{
+			Docker: &marathon.Docker{
+				ForcePullImage: &forcePull,
+				Image:          model.Image,
+				Network:        "BRIDGE",
+			},
+			Type: "DOCKER",
+		},
+		CPUs: 0.5,
 		Env: &map[string]string{
 			"CDS_API":           sdk.Host,
 			"CDS_KEY":           m.token,
