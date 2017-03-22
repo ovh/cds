@@ -1,8 +1,6 @@
 package marathon
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"math"
 	"net/url"
@@ -10,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"text/template"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
@@ -24,53 +21,6 @@ import (
 
 var hatcheryMarathon *HatcheryMarathon
 
-type marathonPOSTAppParams struct {
-	DockerImage    string
-	ForcePullImage bool
-	APIEndpoint    string
-	WorkerKey      string
-	WorkerName     string
-	WorkerModelID  int64
-	HatcheryID     int64
-	JobID          int64
-	MarathonID     string
-	MarathonVHOST  string
-	MarathonLabels string
-	Memory         int
-	WorkerTTL      int
-}
-
-const marathonPOSTAppTemplate = `
-{
-    "container": {
-        "docker": {
-            "forcePullImage": {{.ForcePullImage}},
-            "image": "{{.DockerImage}}",
-            "network": "BRIDGE",
-            "portMapping": []
-				},
-        "type": "DOCKER"
-    },
-		"cmd": "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker",
-		"cpus": 0.5,
-    "env": {
-        "CDS_API": "{{.APIEndpoint}}",
-        "CDS_KEY": "{{.WorkerKey}}",
-        "CDS_NAME": "{{.WorkerName}}",
-        "CDS_MODEL": "{{.WorkerModelID}}",
-        "CDS_HATCHERY": "{{.HatcheryID}}",
-        "CDS_BOOKED_JOB_ID": "{{.JobID}}",
-        "CDS_SINGLE_USE": "1",
-        "CDS_TTL" : "{{.WorkerTTL}}"
-    },
-    "id": "{{.MarathonID}}/{{.WorkerName}}",
-    "instances": 1,
-    "ports": [],
-    "mem": {{.Memory}},
-    "labels": {{.MarathonLabels}}
-}
-`
-
 // HatcheryMarathon implements HatcheryMode interface for mesos mode
 type HatcheryMarathon struct {
 	hatch *sdk.Hatchery
@@ -83,7 +33,6 @@ type HatcheryMarathon struct {
 	marathonPassword string
 
 	marathonID           string
-	marathonVHOST        string
 	marathonLabelsString string
 	marathonLabels       map[string]string
 
@@ -208,50 +157,6 @@ func (m *HatcheryMarathon) Init() error {
 	return nil
 }
 
-func (m *HatcheryMarathon) marathonConfig(model *sdk.Model, hatcheryID int64, job *sdk.PipelineBuildJob, memory int) ([]byte, error) {
-	tmpl, err := template.New("marathonPOST").Parse(marathonPOSTAppTemplate)
-	if err != nil {
-		return nil, err
-	}
-
-	m.marathonLabels["hatchery"] = fmt.Sprintf("%d", hatcheryID)
-
-	labels, err := json.Marshal(m.marathonLabels)
-	if err != nil {
-		log.Critical("marathonConfig> Invalid labels : %s", err)
-		return nil, err
-	}
-
-	var jobID int64
-	if job != nil {
-		jobID = job.ID
-	}
-
-	params := marathonPOSTAppParams{
-		ForcePullImage: strings.HasSuffix(model.Image, ":latest"),
-		DockerImage:    model.Image,
-		APIEndpoint:    sdk.Host,
-		WorkerKey:      m.token,
-		WorkerName:     fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)),
-		WorkerModelID:  model.ID,
-		HatcheryID:     hatcheryID,
-		JobID:          jobID,
-		MarathonID:     m.marathonID,
-		MarathonVHOST:  m.marathonVHOST,
-		Memory:         memory * 110 / 100,
-		MarathonLabels: string(labels),
-		WorkerTTL:      m.workerTTL,
-	}
-
-	buffer := &bytes.Buffer{}
-	if err := tmpl.Execute(buffer, params); err != nil {
-		log.Critical("Unable to execute marathon template : %s", err)
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
-}
-
 func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryID int64, job *sdk.PipelineBuildJob) error {
 	var logJob string
 	if job != nil {
@@ -279,15 +184,29 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 		}
 	}
 
-	buffer, errm := m.marathonConfig(model, hatcheryID, job, memory)
-	if errm != nil {
-		return errm
-	}
+	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
+	instance := 1
+	mem := float64(memory * 110 / 100)
+	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 
-	application := &marathon.Application{}
-	if err := json.Unmarshal(buffer, application); err != nil {
-		log.Warning("spawnMarathonDockerWorker> %s configuration file parse error err:%s", logJob, err)
-		return err
+	application := &marathon.Application{
+		ID:        fmt.Sprintf("%s/%s", m.marathonID, workerName),
+		Cmd:       &cmd,
+		Container: &marathon.Container{},
+		CPUs:      0.5,
+		Env: &map[string]string{
+			"CDS_API":           sdk.Host,
+			"CDS_KEY":           m.token,
+			"CDS_NAME":          workerName,
+			"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
+			"CDS_HATCHERY":      fmt.Sprintf("%d", hatcheryID),
+			"CDS_BOOKED_JOB_ID": fmt.Sprintf("%d", job.ID),
+			"CDS_SINGLE_USE":    "1",
+			"CDS_TTL":           fmt.Sprintf("%d", m.workerTTL),
+		},
+		Instances: &instance,
+		Mem:       &mem,
+		Labels:    &hatcheryMarathon.marathonLabels,
 	}
 
 	if _, err := m.client.CreateApplication(application); err != nil {

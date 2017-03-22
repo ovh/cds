@@ -29,12 +29,12 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 
 	app, errload := application.LoadByName(db, key, appName, c.User)
 	if errload != nil {
-		return sdk.WrapError(sdk.ErrApplicationNotFound, "updateGroupRoleOnApplicationHandler: Cannot load application %s: %s", appName, errload)
+		return sdk.WrapError(errload, "updateGroupRoleOnApplicationHandler: Cannot load application %s", appName)
 	}
 
 	g, errLoadGroup := group.LoadGroup(db, groupName)
 	if errLoadGroup != nil {
-		return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleOnApplicationHandler: Cannot load group %s: %s", groupName, errLoadGroup)
+		return sdk.WrapError(errLoadGroup, "updateGroupRoleOnApplicationHandler: Cannot load group %s", groupName)
 	}
 
 	if groupApplication.Permission != permission.PermissionReadWriteExecute {
@@ -44,13 +44,13 @@ func updateGroupRoleOnApplicationHandler(w http.ResponseWriter, r *http.Request,
 		}
 
 		if len(permissions) == 1 && permissions[0].Group.ID == g.ID {
-			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleOnApplicationHandler: Cannot remove write permission for group %s in application %s\n", groupName, appName)
+			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleOnApplicationHandler: Cannot remove write permission for group %s in application %s", groupName, appName)
 		}
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupRoleOnApplicationHandler: Cannot start transaction: %s\n", err)
+		return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot start transaction")
 	}
 	defer tx.Rollback()
 
@@ -109,12 +109,12 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 
 	app, errLoadName := application.LoadByName(db, key, appName, c.User)
 	if errLoadName != nil {
-		return sdk.WrapError(sdk.ErrApplicationNotFound, "updateGroupsInApplicationHandler: Cannot load application %s: %s\n", appName, errLoadName)
+		return sdk.WrapError(errLoadName, "updateGroupsInApplicationHandler: Cannot load application %s: %s", appName)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInApplicationHandler: Cannot start transaction: %s\n", err)
+		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot start transaction")
 	}
 	defer tx.Rollback()
 
@@ -135,7 +135,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInApplicationHandler: Cannot commit transaction: %s\n", err)
+		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot commit transaction")
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))

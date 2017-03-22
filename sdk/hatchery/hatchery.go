@@ -64,9 +64,9 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 	spawnedIDs := []int64{}
 	wg := &sync.WaitGroup{}
 
-	for _, job := range jobs {
+	for i := range jobs {
 		wg.Add(1)
-		go func(job sdk.PipelineBuildJob) {
+		go func(job *sdk.PipelineBuildJob) {
 			defer logTime(fmt.Sprintf("routine> job %d>", job.ID), time.Now(), warningSeconds, criticalSeconds)
 			log.Debug("routine> %d work on job %d", timestamp, job.ID)
 			if job.BookedBy.ID != 0 {
@@ -80,7 +80,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 			}
 
 			for _, model := range models {
-				if canRunJob(h, &job, &model, hostname) {
+				if canRunJob(h, job, &model, hostname) {
 					if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
 						// perhaps already booked by another hatchery
 						log.Debug("routine> %d cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
@@ -96,7 +96,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 						},
 					}
 
-					errs := h.SpawnWorker(&model, &job)
+					errs := h.SpawnWorker(&model, job)
 					if errs != nil {
 						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, errs)
 						infos = append(infos, sdk.SpawnInfo{
@@ -122,7 +122,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 				}
 			}
 			wg.Done()
-		}(job)
+		}(&jobs[i])
 	}
 
 	wg.Wait()

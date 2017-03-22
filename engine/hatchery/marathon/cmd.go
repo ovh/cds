@@ -24,9 +24,6 @@ func init() {
 	Cmd.Flags().StringVar(&hatcheryMarathon.marathonID, "marathon-id", "", "marathon-id")
 	viper.BindPFlag("marathon-id", Cmd.Flags().Lookup("marathon-id"))
 
-	Cmd.Flags().StringVar(&hatcheryMarathon.marathonVHOST, "marathon-vhost", "", "marathon-vhost")
-	viper.BindPFlag("marathon-vhost", Cmd.Flags().Lookup("marathon-vhost"))
-
 	Cmd.Flags().StringVar(&hatcheryMarathon.marathonUser, "marathon-user", "", "marathon-user")
 	viper.BindPFlag("marathon-user", Cmd.Flags().Lookup("marathon-user"))
 
@@ -78,11 +75,6 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 		hatcheryMarathon.marathonID = viper.GetString("marathon-id")
 		if hatcheryMarathon.marathonID == "" {
 			sdk.Exit("flag or environmnent variable marathon-id not provided, aborting\n")
-		}
-
-		hatcheryMarathon.marathonVHOST = viper.GetString("marathon-vhost")
-		if hatcheryMarathon.marathonVHOST == "" {
-			sdk.Exit("flag or environmnent variable marathon-vhost not provided, aborting\n")
 		}
 
 		if viper.GetString("marathon-user") == "" {

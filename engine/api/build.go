@@ -81,13 +81,13 @@ func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db
 	// Load Pipeline
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrPipelineNotFound, "getPipelineBuildTriggeredHandler> Cannot load pipeline %s: %s", pipelineName, err)
+		return sdk.WrapError(err, "getPipelineBuildTriggeredHandler> Cannot load pipeline %s", pipelineName)
 	}
 
 	// Load Application
 	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrApplicationNotFound, "getPipelineBuildTriggeredHandler> Cannot load application %s: %s", appName, err)
+		return sdk.WrapError(err, "getPipelineBuildTriggeredHandler> Cannot load application %s", appName)
 	}
 
 	// Load Env
@@ -95,7 +95,7 @@ func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db
 	if envName != sdk.DefaultEnv.Name && envName != "" {
 		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoEnvironment, "getPipelineBuildTriggeredHandler> Cannot load environment %s: %s", envName, err)
+			return sdk.WrapError(err, "getPipelineBuildTriggeredHandler> Cannot load environment %s", envName)
 		}
 	}
 
@@ -123,12 +123,12 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	// Check that pipeline exists
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrPipelineNotFound, "deleteBuildHandler> Cannot load pipeline %s: %s", pipelineName, err)
+		return sdk.WrapError(err, "deleteBuildHandler> Cannot load pipeline %s", pipelineName)
 	}
 
 	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrApplicationNotFound, "deleteBuildHandler> Cannot load application %s: %s", appName, err)
+		return sdk.WrapError(err, "deleteBuildHandler> Cannot load application %s", appName)
 	}
 
 	var env *sdk.Environment
@@ -137,7 +137,7 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	} else {
 		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrUnknownEnv, "deleteBuildHandler> Cannot load environment %s: %s", envName, err)
+			return sdk.WrapError(err, "deleteBuildHandler> Cannot load environment %s", envName)
 		}
 	}
 
@@ -147,12 +147,12 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 	pbID, errPB := pipeline.LoadPipelineBuildID(db, a.ID, p.ID, env.ID, buildNumber)
 	if errPB != nil {
-		return sdk.WrapError(sdk.ErrPipelineBuildNotFound, "deleteBuildHandler> Cannot load pipeline build")
+		return sdk.WrapError(errPB, "deleteBuildHandler> Cannot load pipeline build")
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "deleteBuildHandler> Cannot start transaction: %s", err)
+		return sdk.WrapError(err, "deleteBuildHandler> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
@@ -161,7 +161,7 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "deleteBuildHandler> Cannot commit transaction: %s", err)
+		return sdk.WrapError(err, "deleteBuildHandler> Cannot commit transaction")
 	}
 
 	return nil
@@ -181,12 +181,12 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	// Check that pipeline exists
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrPipelineNotFound, "getBuildStateHandler> Cannot load pipeline %s: %s", pipelineName, err)
+		return sdk.WrapError(err, "getBuildStateHandler> Cannot load pipeline %s", pipelineName)
 	}
 
 	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrApplicationNotFound, "getBuildStateHandler> Cannot load application %s: %s", appName, err)
+		return sdk.WrapError(err, "getBuildStateHandler> Cannot load application %s", appName)
 	}
 
 	var env *sdk.Environment
@@ -195,12 +195,12 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	} else {
 		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrUnknownEnv, "getBuildStateHandler> Cannot load environment %s: %s", envName, err)
+			return sdk.WrapError(err, "getBuildStateHandler> Cannot load environment %s", envName)
 		}
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
-		return sdk.WrapError(sdk.ErrForbidden, "getBuildStateHandler> No enought right on this environment %s: \n", envName)
+		return sdk.WrapError(sdk.ErrForbidden, "getBuildStateHandler> No enought right on this environment %s: ", envName)
 	}
 
 	// if buildNumber is 'last' fetch last build number
@@ -228,7 +228,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		var errLoadArtifact error
 		pb.Artifacts, errLoadArtifact = artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
 		if errLoadArtifact != nil {
-			return sdk.WrapError(errLoadArtifact, "getBuildStateHandler> Cannot load artifacts: %s", errLoadArtifact)
+			return sdk.WrapError(errLoadArtifact, "getBuildStateHandler> Cannot load artifacts")
 		}
 	}
 
@@ -266,7 +266,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	tx, errb := db.Begin()
 	if errb != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "addQueueResultHandler> Cannot begin tx: %s", errb)
+		return sdk.WrapError(errb, "addQueueResultHandler> Cannot begin tx")
 	}
 	defer tx.Rollback()
 
@@ -277,7 +277,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	// Update action status
-	log.Debug("addQueueResultHandler> Updating %d to %s in queue\n", id, res.Status)
+	log.Debug("addQueueResultHandler> Updating %d to %s in queue", id, res.Status)
 	if err := pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, res.Status); err != nil {
 		return sdk.WrapError(err, "addQueueResultHandler> Cannot update %d status", id)
 	}
@@ -293,7 +293,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "addQueueResultHandler> Cannot commit tx: %s", err)
+		return sdk.WrapError(err, "addQueueResultHandler> Cannot commit tx")
 	}
 
 	return nil
@@ -316,7 +316,7 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return sdk.WrapError(err, "takePipelineBuildJobHandler> cannot load calling worker")
 	}
 	if caller.Status != sdk.StatusChecking {
-		return sdk.WrapError(sdk.ErrWrongRequest, "takePipelineBuildJobHandler> worker %s is not available to for build (status = %s)\n", caller.ID, caller.Status)
+		return sdk.WrapError(sdk.ErrWrongRequest, "takePipelineBuildJobHandler> worker %s is not available to for build (status = %s)", caller.ID, caller.Status)
 	}
 
 	tx, errBegin := db.Begin()
@@ -369,7 +369,7 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "takePipelineBuildJobHandler> Cannot commit transaction: %s", err)
+		return sdk.WrapError(err, "takePipelineBuildJobHandler> Cannot commit transaction")
 	}
 
 	pbji := worker.PipelineBuildJobInfo{}
@@ -404,7 +404,7 @@ func addSpawnInfosPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		return sdk.WrapError(errBegin, "addSpawnInfosPipelineBuildJobHandler> Cannot start transaction: %s", errBegin)
+		return sdk.WrapError(errBegin, "addSpawnInfosPipelineBuildJobHandler> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
@@ -413,7 +413,7 @@ func addSpawnInfosPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx: %s", err)
+		return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
 	}
 
 	return WriteJSON(w, r, nil, http.StatusOK)
@@ -442,7 +442,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 			continue
 		}
 		if s.Value == sdk.PasswordPlaceholder {
-			log.Critical("loadActionBuildSecrets> Loaded an placeholder for %s !\n", s.Name)
+			log.Critical("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
 			return nil, fmt.Errorf("Loaded placeholder for %s", s.Name)
 		}
 		s.Name = "cds.proj." + s.Name
@@ -459,7 +459,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 			continue
 		}
 		if s.Value == sdk.PasswordPlaceholder {
-			log.Critical("loadActionBuildSecrets> Loaded an placeholder for %s !\n", s.Name)
+			log.Critical("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
 			return nil, fmt.Errorf("Loaded placeholder for %s", s.Name)
 		}
 		s.Name = "cds.app." + s.Name
@@ -622,24 +622,24 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		var errle error
 		env, errle = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if errle != nil {
-			return sdk.WrapError(sdk.ErrUnknownEnv, "addBuildTestResultsHandler> Cannot load environment %s: %s", envName, errle)
+			return sdk.WrapError(errle, "addBuildTestResultsHandler> Cannot load environment %s", envName)
 		}
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
-		return sdk.WrapError(sdk.ErrForbidden, "addBuildTestResultsHandler> No enought right on this environment %s: \n", envName)
+		return sdk.WrapError(sdk.ErrForbidden, "addBuildTestResultsHandler> No enought right on this environment %s: ", envName)
 	}
 
 	// Check that pipeline exists
 	p, errlp := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if errlp != nil {
-		return sdk.WrapError(sdk.ErrNotFound, "addBuildTestResultsHandler> Cannot load pipeline %s: %s", pipelineName, errlp)
+		return sdk.WrapError(errlp, "addBuildTestResultsHandler> Cannot load pipeline %s", pipelineName)
 	}
 
 	// Check that application exists
 	a, errln := application.LoadByName(db, projectKey, appName, c.User)
 	if errln != nil {
-		return sdk.WrapError(sdk.ErrNotFound, "addBuildTestResultsHandler> Cannot load application %s: %s", appName, errln)
+		return sdk.WrapError(errln, "addBuildTestResultsHandler> Cannot load application %s", appName)
 	}
 
 	// load pipeline_build.id
@@ -712,19 +712,19 @@ func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
-		return sdk.WrapError(sdk.ErrForbidden, "getBuildTestResultsHandler> No enought right on this environment %s: \n", envName)
+		return sdk.WrapError(sdk.ErrForbidden, "getBuildTestResultsHandler> No enought right on this environment %s: ", envName)
 	}
 
 	// Check that pipeline exists
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrNotFound, "getBuildTestResultsHandler> Cannot load pipeline %s: %s", pipelineName, err)
+		return sdk.WrapError(err, "getBuildTestResultsHandler> Cannot load pipeline %s", pipelineName)
 	}
 
 	// Check that application exists
 	a, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrNotFound, "getBuildTestResultsHandler> Cannot load application %s: %s", appName, err)
+		return sdk.WrapError(err, "getBuildTestResultsHandler> Cannot load application %s", appName)
 	}
 
 	// if buildNumber is 'last' fetch last build number
