@@ -101,6 +101,7 @@
                     }}</a>
                 <div class="divider" *ngIf="application.permission === 7"></div>
                 <a sm-item class="item" (click)="createHook()" *ngIf="application.permission === 7">{{ 'hook_create_label' | translate }}</a>
+                <a sm-item class="item" (click)="createPoller()" *ngIf="application.permission === 7">{{ 'poller_create_label' | translate }}</a>
                 <div class="divider" *ngIf="application.permission === 7"></div>
                 <a sm-item class="item" (click)="openCreateSchedulerModal()" *ngIf="application.permission === 7">{{
                     'scheduler_create_label' | translate }}</a>

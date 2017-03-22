@@ -5,8 +5,6 @@ import {ApplicationShowComponent} from './show/application.component';
 import {ApplicationAddComponent} from './add/application.add.component';
 import {ApplicationAdminComponent} from './show/admin/application.admin.component';
 import {ApplicationRepositoryComponent} from './show/admin/repository/application.repo.component';
-import {ApplicationPollerListComponent} from './show/admin/poller/list/application.poller.list.component';
-import {ApplicationPollerFormComponent} from './show/admin/poller/form/application.poller.form.component';
 import {ApplicationWorkflowComponent} from './show/workflow/application.workflow.component';
 import {ApplicationTreeWorkflowComponent} from './show/workflow/tree/application.tree.workflow.component';
 import {ApplicationWorkflowItemComponent} from './show/workflow/tree/item/application.workflow.item.component';
@@ -18,7 +16,8 @@ import {ApplicationSchedulerItemComponent} from './show/scheduler/item/scheduler
 import {ApplicationSchedulerFormComponent} from './show/scheduler/form/scheduler.form.component';
 import {ApplicationHookItemComponent} from './show/hook/item/hook.item.component';
 import {ApplicationPollerItemComponent} from './show/poller/item/poller.item.component';
-import {ApplicationHookItemFormComponent} from './show/hook/item/edit/item.form.component';
+import {ApplicationHookItemFormComponent} from './show/hook/edit/item.form.component';
+import {ApplicationPollerFormComponent} from './show/poller/edit/poller.edit.component';
 
 @NgModule({
     declarations: [
@@ -31,7 +30,6 @@ import {ApplicationHookItemFormComponent} from './show/hook/item/edit/item.form.
         ApplicationPipelineLinkComponent,
         ApplicationPollerItemComponent,
         ApplicationPollerFormComponent,
-        ApplicationPollerListComponent,
         ApplicationRepositoryComponent,
         ApplicationSchedulerItemComponent,
         ApplicationSchedulerFormComponent,

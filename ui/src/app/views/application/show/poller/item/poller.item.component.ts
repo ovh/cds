@@ -1,10 +1,12 @@
-import {Component, Input, ViewChild, Output, EventEmitter} from '@angular/core';
+import {Component, Input, ViewChild} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {Application} from '../../../../../model/application.model';
-import {Scheduler} from '../../../../../model/scheduler.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Pipeline} from '../../../../../model/pipeline.model';
 import {RepositoryPoller} from '../../../../../model/polling.model';
+import {ApplicationStore} from '../../../../../service/application/application.store';
+import {ToastService} from '../../../../../shared/toast/ToastService';
+import {TranslateService} from 'ng2-translate';
 
 declare var _: any;
 
@@ -20,42 +22,46 @@ export class ApplicationPollerItemComponent {
     @Input() pipeline: Pipeline;
     @Input() poller: RepositoryPoller;
 
-    editableScheduler: Scheduler;
+    editablePoller: RepositoryPoller;
 
     // Schedulers modals
-    @ViewChild('editSchedulerModal')
-    editSchedulerModal: SemanticModalComponent;
+    @ViewChild('editPollerModal')
+    editPollerModal: SemanticModalComponent;
 
-    @Output() event = new EventEmitter();
+    constructor(private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService) { }
 
-    constructor() { }
-
-    /*
-    editScheduler(): void {
-        if (this.editSchedulerModal) {
-            this.editableScheduler = _.cloneDeep(this.scheduler);
+    editPoller(): void {
+        if (this.editPollerModal) {
+            this.editablePoller = _.cloneDeep(this.poller);
             setTimeout(() => {
-                this.editSchedulerModal.show();
+                this.editPollerModal.show();
             }, 100);
         }
     }
 
     close(): void {
-        if (this.editSchedulerModal) {
-            this.editSchedulerModal.hide();
+        if (this.editPollerModal) {
+            this.editPollerModal.hide();
         }
     }
 
     updatePoller(): void {
-        this.scheduler.updating = true;
-        this.event.emit(new SchedulerEvent('update', this.editableScheduler));
-        this.close();
+        this.editablePoller.updating = true;
+        this._appStore.updatePoller(this.project.key, this.application.name, this.pipeline.name, this.editablePoller).subscribe(() => {
+            this._toast.success('', this._translate.instant('poller_updated'));
+            this.close();
+        }, () => {
+            this.editablePoller.updating = false;
+        });
     }
 
     deletePoller(): void {
-        this.scheduler.updating = true;
-        this.event.emit(new SchedulerEvent('delete', this.editableScheduler));
-        this.close();
+        this.editablePoller.updating = true;
+        this._appStore.deletePoller(this.project.key, this.application.name, this.editablePoller).subscribe(() => {
+            this._toast.success('', this._translate.instant('poller_deleted'));
+            this.close();
+        }, () => {
+            this.editablePoller.updating = false;
+        });
     }
-    */
 }

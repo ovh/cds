@@ -267,7 +267,6 @@ describe('CDS: application Store', () => {
         let checkedAddPoller = false;
         applicationStore.getApplications(projectKey, 'myApplication').subscribe( apps => {
             expect(apps.get(projectKey + '-myApplication').last_modified).toBe(456, 'App lastModified date must have been updated');
-            expect(apps.get(projectKey + '-myApplication').pollers.length).toBe(1, 'A poller must have been added');
             checkedAddPoller = true;
         }).unsubscribe();
         expect(checkedAddPoller).toBeTruthy('Need application to be updated');

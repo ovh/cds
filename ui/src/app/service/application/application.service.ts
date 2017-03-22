@@ -122,6 +122,18 @@ export class ApplicationService {
     }
 
     /**
+     * Update the given poller
+     * @param key Project unique key
+     * @param appName Application name
+     * @param poller Poller to update
+     * @returns {Observable<Application>}
+     */
+    updatePoller(key: string, appName: string, pipName: string, poller: RepositoryPoller): Observable<Application> {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/polling';
+        return this._http.put(url, poller).map(res => res.json());
+    }
+
+    /**
      * Delete the poller from the given application
      * @param key Project unique key
      * @param appName Application name

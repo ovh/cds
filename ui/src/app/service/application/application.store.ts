@@ -32,7 +32,8 @@ export class ApplicationStore {
     }
 
     loadRecentApplication(): void {
-        this._recentApplications.next(JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATION_KEY)));
+        let arrayApp = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATION_KEY));
+        this._recentApplications.next(List.of(...arrayApp));
     }
 
     /**
@@ -220,7 +221,20 @@ export class ApplicationStore {
      */
     addPoller(key: string, appName: string, pipName: string, poller: RepositoryPoller): Observable<Application> {
         return this._applicationService.addPoller(key, appName, pipName, poller).map(app => {
-            return this.refreshApplicationPollerCache(key, appName, app);
+            return this.refreshApplicationWorkflowCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Update given poller
+     * @param key Project key
+     * @param appName Application name
+     * @param poller Poller to update
+     * @returns {Observable<Application>}
+     */
+    updatePoller(key: string, appName: string, pipName: string, poller: RepositoryPoller): Observable<Application> {
+        return this._applicationService.updatePoller(key, appName, pipName, poller).map(app => {
+            return this.refreshApplicationWorkflowCache(key, appName, app);
         });
     }
 
@@ -233,28 +247,8 @@ export class ApplicationStore {
      */
     deletePoller(key: string, appName: string, poller: RepositoryPoller): Observable<Application> {
         return this._applicationService.deletePoller(key, appName, poller.pipeline.name).map( app => {
-           return this.refreshApplicationPollerCache(key, appName, app);
+           return this.refreshApplicationWorkflowCache(key, appName, app);
         });
-    }
-
-    /**
-     * Refresh application cache
-     * @param key Project unique key
-     * @param appName Application Name
-     * @param application updated poller application
-     * @returns {: Application}
-     */
-    refreshApplicationPollerCache(key: string, appName: string, application: Application): Application {
-        let cache = this._application.getValue();
-        let appKey = key + '-' + appName;
-        let appToUpdate = cache.get(appKey);
-        if (appToUpdate) {
-            appToUpdate.last_modified = application.last_modified;
-            appToUpdate.pollers = application.pollers;
-            this._application.next(cache.set(appKey, appToUpdate));
-            return appToUpdate;
-        }
-        return application;
     }
 
     /**
@@ -267,7 +261,7 @@ export class ApplicationStore {
     addHook(p: Project, a: Application, hook: Hook): Observable<Application> {
         return this._applicationService.addHook(p.key, a.name, a.repositories_manager.name, a.repository_fullname, hook.pipeline.name)
             .map( app => {
-                return this.refreshApplicationHookCache(p.key, a.name, app);
+                return this.refreshApplicationWorkflowCache(p.key, a.name, app);
         });
     }
 
@@ -296,26 +290,6 @@ export class ApplicationStore {
         return this._applicationService.deleteHook(p.key, a.name, a.repositories_manager.name, h.id).map(app => {
             return this.refreshApplicationWorkflowCache(p.key, a.name, app);
         });
-    }
-
-    /**
-     * Refresh application cache
-     * @param key Project unique key
-     * @param appName Application Name
-     * @param application updated hook application
-     * @returns {: Application}
-     */
-    refreshApplicationHookCache(key: string, appName: string, application: Application): Application {
-        let cache = this._application.getValue();
-        let appKey = key + '-' + appName;
-        let appToUpdate = cache.get(appKey);
-        if (appToUpdate) {
-            appToUpdate.last_modified = application.last_modified;
-            appToUpdate.hooks = application.hooks;
-            this._application.next(cache.set(appKey, appToUpdate));
-            return appToUpdate;
-        }
-        return application;
     }
 
     /**

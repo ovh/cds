@@ -156,7 +156,7 @@
   "navbar_download" : "Téléchargement",
   "navbar_feedback" : "Feedbacks",
   "navbar_groups" : "Groupes",
-  "navbar_projects_placeholder": "Projets",
+  "navbar_projects_placeholder": "Tous les Projets",
   "navbar_users" : "Utilisateurs",
   "navbar_workers" : "Agents",
 
@@ -225,6 +225,11 @@
   "pipeline_run_test_skipped_title" : " test ignoré",
   "pipeline_run_test_testcase_name" : "Nom du testcase",
 
+  "poller_added" : "Poller ajouté",
+  "poller_create_label" : "Créer un poller",
+  "poller_deleted" : "Poller supprimé",
+  "poller_edit_title" : "Edition du poller sur {{app}} / {pip}}",
+  "poller_updated" : "Poller mis à jour",
   "poller_workflow_label" : "Poller : ",
 
   "prerequisite_no" : "Aucune condition de lancement n'est définie",

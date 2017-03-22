@@ -15,6 +15,7 @@ import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {Scheduler} from '../../../../../../model/scheduler.model';
 import {Hook} from '../../../../../../model/hook.model';
+import {RepositoryPoller} from '../../../../../../model/polling.model';
 
 declare var _: any;
 
@@ -309,6 +310,21 @@ export class ApplicationWorkflowItemComponent {
         this._appStore.addHook(this.project, this.application, hook)
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('hook_added'));
+            });
+    }
+
+    createPoller(): void {
+        if (!this.application.repositories_manager) {
+            this._toast.error('', this._translate.instant('hook_repo_man_needed'));
+            return;
+        }
+        let poller = new RepositoryPoller();
+        poller.enabled = true;
+        poller.pipeline = this.workflowItem.pipeline;
+        poller.application = this.workflowItem.application;
+        this._appStore.addPoller(this.project.key, this.workflowItem.application.name, this.workflowItem.pipeline.name, poller)
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('poller_added'));
             });
     }
 

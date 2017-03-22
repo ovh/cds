@@ -48,7 +48,7 @@ export class UserNotificationTemplate {
         this.body = 'Project : {{.cds.project}}\n' +
                 'Application : {{.cds.application}}\n' +
                 'Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.buildNumber}}\n' +
-                'Statuts : {{.cds.status}}\n' +
+                'Status : {{.cds.status}}\n' +
                 'Details : {{.cds.buildURL}}\n' +
                 'Triggered by : {{.cds.triggered_by.username}}\n' +
                 'Branch : {{.git.branch}}';
