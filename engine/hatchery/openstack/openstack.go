@@ -230,18 +230,21 @@ func (h *HatcheryCloud) killAwolServers() {
 			if found {
 				continue
 			}
+
+			workerHatcheryName, okHatchery := s.Metadata["hatcheryName"]
 			_, ok := s.Metadata["worker"]
+
 			t, err := time.Parse(time.RFC3339, s.Updated)
 			if err != nil {
 				log.Warning("Cannot parse last update: %s\n", err)
 				break
 			}
 
-			log.Debug("killAwolServers> Deleting %s (%s) %v ? : %v %v", s.Name, s.ImageRef, s.Metadata, ok, (time.Since(t) > 6*time.Minute))
+			log.Debug("killAwolServers> Deleting %s (%s) %v ? : %v %v %v", s.Name, s.ImageRef, s.Metadata, ok, okHatchery, (time.Since(t) > 6*time.Minute))
 
 			// Delete workers, if not identified by CDS API
 			// Wait for 6 minutes, to avoid killing worker babies
-			if ok && time.Since(t) > 6*time.Minute {
+			if okHatchery && workerHatcheryName == h.Hatchery().Name && ok && time.Since(t) > 6*time.Minute {
 				//if !found && time.Since(t) > 6*time.Minute {
 				log.Notice("%s last update: %s", s.Name, time.Since(t))
 				err := deleteServer(h.endpoint, h.token.ID, s.ID)
@@ -255,10 +258,8 @@ func (h *HatcheryCloud) killAwolServers() {
 }
 
 func (h *HatcheryCloud) refreshTokenRoutine() {
-
 	for {
 		time.Sleep(20 * time.Hour)
-
 		tk, endpoint, err := getToken(h.user, h.password, h.address, h.tenant, h.region)
 		if err != nil {
 			log.Critical("refreshTokenRoutine> Cannot refresh token: %s\n", err)
@@ -293,7 +294,6 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 			return nil
 		}
 	}
-
 	return fmt.Errorf("not found")
 }
 
@@ -405,11 +405,11 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 	udata64 := base64.StdEncoding.EncodeToString([]byte(buffer.String()))
 
 	// Create openstack vm
-	if err := createServer(h.endpoint, h.token.ID, name, imageID, flavorID, h.networkID, ip, udata64, personnality); err != nil {
+	if err := h.createServer(h.endpoint, h.token.ID, name, imageID, flavorID, h.networkID, ip, udata64, personnality); err != nil {
 		return err
 	}
 	// update server cache
-	servers, errs := getServers(h.endpoint, h.token.ID)
+	servers, errs := h.getServers(h.endpoint, h.token.ID)
 	if errs != nil {
 		log.Warning("SpawnWorker> Cannot get servers: %s\n", errs)
 		return nil
@@ -490,8 +490,7 @@ func (h *HatcheryCloud) findAvailableIP() (string, error) {
 func (h *HatcheryCloud) updateServerList() {
 	for {
 		time.Sleep(2 * time.Second)
-
-		servers, err := getServers(h.endpoint, h.token.ID)
+		servers, err := h.getServers(h.endpoint, h.token.ID)
 		if err != nil {
 			log.Warning("updateServerList> Cannot get servers: %s\n", err)
 			continue
@@ -609,7 +608,7 @@ type Server struct {
 	Links       []Link               `json:"links"`
 	Status      string               `json:"status"`
 	KeyName     string               `json:"key_name"`
-	AccessIPv4  string               `json:"accessIPv4"`
+	AccessIPv4  string               `json:"accessIPv4,omitempty"`
 	Addresses   map[string][]Address `json:"addresses"`
 	Updated     string               `json:"updated"`
 	Personality Personality          `json:"personality"`
@@ -646,7 +645,7 @@ func (f *File) MarshalJSON() ([]byte, error) {
 	return json.Marshal(file)
 }
 
-func createServer(endpoint, token, name, image, flavor, network, ip, udata string, personality Personality) error {
+func (h *HatcheryCloud) createServer(endpoint, token, name, image, flavor, network, ip, udata string, personality Personality) error {
 	log.Notice("Create server %s %s\n", name, ip)
 	uri := fmt.Sprintf("%s/servers", endpoint)
 
@@ -655,7 +654,7 @@ func createServer(endpoint, token, name, image, flavor, network, ip, udata strin
 		ImageRef:    image,
 		FlavorRef:   flavor,
 		UserData:    udata,
-		Metadata:    map[string]string{"worker": name},
+		Metadata:    map[string]string{"worker": name, "hatcheryName": h.Hatchery().Name},
 		Personality: personality,
 	}
 
@@ -760,7 +759,7 @@ func getFlavors(endpoint string, token string) ([]Flavor, error) {
 	return s.Flavors, nil
 }
 
-func getServers(endpoint, token string) ([]Server, error) {
+func (h *HatcheryCloud) getServers(endpoint, token string) ([]Server, error) {
 	uri := fmt.Sprintf("%s/servers/detail", endpoint)
 	req, errRequest := http.NewRequest("GET", uri, nil)
 	if errRequest != nil {
@@ -801,6 +800,10 @@ func getServers(endpoint, token string) ([]Server, error) {
 	for _, s := range s.Servers {
 		_, worker := s.Metadata["worker"]
 		if !worker {
+			continue
+		}
+		workerHatcheryName, ok := s.Metadata["hatcheryName"]
+		if !ok || workerHatcheryName != h.Hatchery().Name {
 			continue
 		}
 		servers = append(servers, s)
