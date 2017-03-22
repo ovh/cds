@@ -21,7 +21,7 @@
     "@angular/router": "3.4.9",
     "angular2-markdown": "^1.5.1",
     "angular2-moment": "^1.0.0",
-    "angular2-prettyjson": "https://github.com/matiboy/angular2-prettyjson/tarball/master",
+    "angular2-prettyjson": "2.0.4",
     "angular2-toaster": "^2.0.0",
     "ansi_up": "^1.3.0",
     "codemirror": "^5.22.0",

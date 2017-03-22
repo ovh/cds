@@ -1,0 +1,31 @@
+<div class="poller">
+    <div class="ui one column grid">
+        <div class="column">
+            <button class="ui basic icon mini button" (click)="editPoller()" *ngIf="application.permission === 7">
+                <i class="pencil icon"></i>
+            </button>
+            {{ 'poller_workflow_label' | translate }}
+            {{poller.name + ' - ' }}
+            <span *ngIf="poller.next_execution">
+                {{poller.next_execution.execution_planned_date | amCalendar}}
+                <span *ngIf="poller.timezone && poller.timezone !== 'UTC'">
+                    {{ ' ' + poller.timezone}}
+                </span>
+            </span>
+        </div>
+    </div>
+</div>
+<sm-modal
+        title="{{ 'poller_edit_title' | translate: {
+        app: application.name,
+        pip: pipeline.name
+    } }}" #editPollerModal>
+    <modal-content>
+        <app-application-poller-form [project]="project" [application]="application" [poller]="editablePoller"></app-application-poller-form>
+    </modal-content>
+    <modal-actions>
+        <button class="ui grey button" (click)="close()">{{ 'btn_cancel' | translate }}</button>
+        <app-delete-button *ngIf="!editablePoller?.hasChanged" (event)="deletePoller()" [loading]="editablePoller?.updating"></app-delete-button>
+        <button class="ui green button" (click)="updatePoller()" [class.loading]="editablePoller?.updating" *ngIf="editablePoller?.hasChanged">{{ 'btn_save' | translate }}</button>
+    </modal-actions>
+</sm-modal>

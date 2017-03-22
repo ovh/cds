@@ -8,6 +8,10 @@ export class RepositoryPoller {
     enabled: boolean;
     date_creation: Date;
 
+    // Ui params
+    updating: boolean;
+    hasChanged: boolean;
+
     constructor() {
         this.name = '';
         this.enabled = true;

@@ -34,7 +34,6 @@
   "application_permission_list_title" : "Liste des permissions sur l'application : ",
   "application_permission_form_title" : "Ajouter une permission : ",
   "application_poller_add_ok" : "Poller ajouté à l'application",
-  "application_hook_delete_ok" : "Poller supprimé",
   "application_pipeline_already_linked" : "Pipelines actuellement liés à l'application",
   "application_pipelines_attached" : "Les pipelines ont été correctement liés à l'application",
   "application_pipeline_detached" : "Le pipeline a été retiré de l'application",
@@ -136,6 +135,14 @@
   "group_name" : "Nom du groupe",
   "group_permission" : "Permission du groupe",
 
+  "hook_create_label" : "Créer un hook",
+  "hook_deleted" : "Hook supprimé",
+  "hook_edit_title" : "Edition du hook : {{app}} / {{pip}}",
+  "hook_link_label" : "Url du hook",
+  "hook_repo_man_needed" : "L'application doit être liée à un dépôt",
+  "hook_updated" : "Hook mis à jour",
+  "hook_workflow_label" : "Hook : ",
+
   "home_documentation" : "Documentation",
   "home_title" : "Bienvenue sur CDS",
 
@@ -149,7 +156,7 @@
   "navbar_download" : "Téléchargement",
   "navbar_feedback" : "Feedbacks",
   "navbar_groups" : "Groupes",
-  "navbar_projects_placeholder": "Projets",
+  "navbar_projects_placeholder": "Tous les Projets",
   "navbar_users" : "Utilisateurs",
   "navbar_workers" : "Agents",
 
@@ -217,6 +224,13 @@
   "pipeline_run_test_skipped_title_s" : " tests ignorés",
   "pipeline_run_test_skipped_title" : " test ignoré",
   "pipeline_run_test_testcase_name" : "Nom du testcase",
+
+  "poller_added" : "Poller ajouté",
+  "poller_create_label" : "Créer un poller",
+  "poller_deleted" : "Poller supprimé",
+  "poller_edit_title" : "Edition du poller sur {{app}} / {{pip}}",
+  "poller_updated" : "Poller mis à jour",
+  "poller_workflow_label" : "Poller : ",
 
   "prerequisite_no" : "Aucune condition de lancement n'est définie",
   "prerequisite_parameter_name" : "Nom du paramètre",

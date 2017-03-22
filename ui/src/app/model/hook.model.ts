@@ -6,4 +6,8 @@ export class Hook {
     pipeline: Pipeline;
     enabled: boolean;
     link: string;
+
+    // ui data
+    updating: boolean;
+    hasChanged: boolean;
 }

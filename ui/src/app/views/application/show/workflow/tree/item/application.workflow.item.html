@@ -74,16 +74,18 @@
                     {{workflowItem.application.name}}
                 </div>
             </div>
-            <div class="ui scheduler segment" *ngFor="let s of workflowItem.schedulers">
+            <div class="ui trigger segment" *ngFor="let s of workflowItem.schedulers">
                 <app-application-scheduler-item
                         [project]="project" [application]="workflowItem.application"
-                        [scheduler]="s" [pipeline]="workflowItem.pipeline"
-                        (event)="schedulerEvent($event.type, $event.scheduler)"></app-application-scheduler-item>
+                        [scheduler]="s" [pipeline]="workflowItem.pipeline"></app-application-scheduler-item>
             </div>
-            <div class="ui segment" *ngFor="let h of workflowItem.hooks">
+            <div class="ui trigger segment" *ngFor="let h of workflowItem.hooks">
+                <app-application-hook-item [project]="project" [application]="workflowItem.application"
+                    [pipeline]="workflowItem.pipeline" [hook]="h"></app-application-hook-item>
             </div>
-            <div class="ui segment" *ngIf="workflowItem.poller">
-
+            <div class="ui trigger segment" *ngIf="workflowItem.poller">
+                <app-application-poller-item [project]="project" [application]="workflowItem.application"
+                               [pipeline]="workflowItem.pipeline" [poller]="workflowItem.poller"></app-application-poller-item>
             </div>
         </div>
 
@@ -98,6 +100,9 @@
                 <a sm-item class="item" (click)="editPipeline()" *ngIf="application.permission === 7">{{ 'pipeline_label_edit' | translate
                     }}</a>
                 <div class="divider" *ngIf="application.permission === 7"></div>
+                <a sm-item class="item" (click)="createHook()" *ngIf="application.permission === 7">{{ 'hook_create_label' | translate }}</a>
+                <a sm-item class="item" (click)="createPoller()" *ngIf="application.permission === 7">{{ 'poller_create_label' | translate }}</a>
+                <div class="divider" *ngIf="application.permission === 7"></div>
                 <a sm-item class="item" (click)="openCreateSchedulerModal()" *ngIf="application.permission === 7">{{
                     'scheduler_create_label' | translate }}</a>
                 <a *ngIf="workflowItem.trigger && workflowItem.trigger.id > 0" sm-item class="item" (click)="openEditTriggerModal()">{{
@@ -108,22 +113,23 @@
         </div>
     </div>
 </div>
+<!-- Create scheduler modal -->
 <sm-modal
         title="{{ 'scheduler_create_title' | translate: {
             app: workflowItem.application.name,
             pip: workflowItem.pipeline.name
         } }}" #createSchedulerModal>
     <modal-content>
-        <app-application-scheduler-form [project]="project" [application]="workflowItem.application" [pipeline]="workflowItem.pipeline"
-                                        [scheduler]="newScheduler" [edit]="false"></app-application-scheduler-form>
+        <app-application-scheduler-form [project]="project" [application]="workflowItem.application" [pipeline]="workflowItem.pipeline" [scheduler]="newScheduler" [edit]="false"></app-application-scheduler-form>
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="createSchedulerModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <button class="ui green button" [class.loading]="newScheduler?.updating" (click)="schedulerEvent('add', newScheduler)">{{ 'btn_save'
+        <button class="ui green button" [class.loading]="newScheduler?.updating" (click)="createScheduler(newScheduler)">{{ 'btn_save'
             | translate }}
         </button>
     </modal-actions>
 </sm-modal>
+<!--  edit trigger Modal-->
 <sm-modal
         title="{{ 'trigger_edit_title' |
         translate:{
@@ -143,6 +149,7 @@
         </button>
     </modal-actions>
 </sm-modal>
+<!-- Create trigger modal -->
 <sm-modal
         title="{{ 'trigger_create_title' |
         translate:{
@@ -158,7 +165,7 @@
         <button class="ui green button" (click)="triggerEvent('add')">{{ 'btn_create' | translate }}</button>
     </modal-actions>
 </sm-modal>
-
+<!-- Application launch -->
 <sm-modal title="{{ 'application_launch_manual_title' | translate}}" class="fluid" #launchModal>
     <modal-content>
         <div class="ui form" *ngIf="launchPipelineParams">

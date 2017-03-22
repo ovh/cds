@@ -29,10 +29,10 @@ export class UserNotificationSettings {
     template: UserNotificationTemplate;
 
     constructor() {
-        this.on_success = notificationOnSuccess[0];
+        this.on_success = notificationOnSuccess[1];
         this.on_failure = notificationOnFailure[0];
         this.on_start = false;
-        this.send_to_author = false;
+        this.send_to_author = true;
         this.send_to_groups = false;
         this.recipients = [];
         this.template = new UserNotificationTemplate();
@@ -48,7 +48,7 @@ export class UserNotificationTemplate {
         this.body = 'Project : {{.cds.project}}\n' +
                 'Application : {{.cds.application}}\n' +
                 'Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.buildNumber}}\n' +
-                'Statuts : {{.cds.status}}\n' +
+                'Status : {{.cds.status}}\n' +
                 'Details : {{.cds.buildURL}}\n' +
                 'Triggered by : {{.cds.triggered_by.username}}\n' +
                 'Branch : {{.git.branch}}';
