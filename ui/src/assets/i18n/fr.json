@@ -228,7 +228,7 @@
   "poller_added" : "Poller ajouté",
   "poller_create_label" : "Créer un poller",
   "poller_deleted" : "Poller supprimé",
-  "poller_edit_title" : "Edition du poller sur {{app}} / {pip}}",
+  "poller_edit_title" : "Edition du poller sur {{app}} / {{pip}}",
   "poller_updated" : "Poller mis à jour",
   "poller_workflow_label" : "Poller : ",
 
