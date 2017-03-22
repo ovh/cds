@@ -98,8 +98,4 @@ func addFlags() {
 
 	rootCmd.PersistentFlags().BoolP("name", "", false, `The name for hatchery <name>-cds-<type>`)
 	viper.BindPFlag("name", rootCmd.PersistentFlags().Lookup("name"))
-
-	rootCmd.PersistentFlags().BoolP("random-name", "", false, `Generate a random name for hatchery <name>-cds-<type>-<random-name>`)
-	viper.BindPFlag("random-name", rootCmd.PersistentFlags().Lookup("random-name"))
-
 }

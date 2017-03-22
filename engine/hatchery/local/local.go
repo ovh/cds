@@ -174,7 +174,7 @@ func (h *HatcheryLocal) Init() error {
 		return fmt.Errorf("Cannot check local capabilities: %s", err)
 	}
 
-	name := hatchery.GenerateName("local", viper.GetString("name"), viper.GetBool("random-name"))
+	name := hatchery.GenerateName("local", viper.GetString("name"))
 
 	h.hatch = &sdk.Hatchery{
 		Name: name,

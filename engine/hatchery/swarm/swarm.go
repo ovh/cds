@@ -42,7 +42,7 @@ func (h *HatcherySwarm) Init() error {
 	}
 
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("swarm", viper.GetString("name"), viper.GetBool("random-name")),
+		Name: hatchery.GenerateName("swarm", viper.GetString("name")),
 	}
 
 	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
