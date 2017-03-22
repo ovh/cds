@@ -90,19 +90,20 @@ func Register(h *sdk.Hatchery, token string) error {
 }
 
 // GenerateName generate a hatchery's name
-func GenerateName(add, suffix string, withRandom bool) string {
-	// Register without declaring model
-	name, err := os.Hostname()
-	if err != nil {
-		log.Warning("Cannot retrieve hostname: %s\n", err)
-		name = "cds-hatchery"
+func GenerateName(add, name string, withRandom bool) string {
+	if name == "" {
+		// Register without declaring model
+		var errHostname error
+		name, errHostname = os.Hostname()
+		if errHostname != nil {
+			log.Warning("Cannot retrieve hostname: %s", errHostname)
+			name = "cds-hatchery"
+		}
 	}
 
 	if add != "" {
 		name += "-" + add
 	}
-
-	name += suffix
 
 	if withRandom {
 		name += "-" + namesgenerator.GetRandomName(0)

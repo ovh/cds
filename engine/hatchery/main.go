@@ -96,10 +96,10 @@ func addFlags() {
 	rootCmd.PersistentFlags().BoolP("insecure", "k", false, `(SSL) This option explicitly allows hatchery to perform "insecure" SSL connections on CDS API.`)
 	viper.BindPFlag("insecure", rootCmd.PersistentFlags().Lookup("insecure"))
 
-	rootCmd.PersistentFlags().BoolP("name-suffix", "", false, `The suffix of the name for hatchery cds-<type>-<suffix-name>`)
-	viper.BindPFlag("name-suffix", rootCmd.PersistentFlags().Lookup("name-suffix"))
+	rootCmd.PersistentFlags().BoolP("name", "", false, `The name for hatchery <name>-cds-<type>`)
+	viper.BindPFlag("name", rootCmd.PersistentFlags().Lookup("name"))
 
-	rootCmd.PersistentFlags().BoolP("random-name", "", false, `Generate a random name for hatchery cds-<type>-<suffix-name>-<random-name>`)
+	rootCmd.PersistentFlags().BoolP("random-name", "", false, `Generate a random name for hatchery <name>-cds-<type>-<random-name>`)
 	viper.BindPFlag("random-name", rootCmd.PersistentFlags().Lookup("random-name"))
 
 }

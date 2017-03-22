@@ -84,7 +84,7 @@ const serverStatusActive = "ACTIVE"
 func (h *HatcheryCloud) Init() error {
 	// Register without declaring model
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("openstack", viper.GetString("name-suffix"), viper.GetBool("random-name")),
+		Name: hatchery.GenerateName("openstack", viper.GetString("name"), viper.GetBool("random-name")),
 		UID:  viper.GetString("uk"),
 	}
 
