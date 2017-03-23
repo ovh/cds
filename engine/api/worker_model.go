@@ -227,19 +227,19 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	models := []sdk.Model{}
 	if c.User != nil && c.User.ID > 0 {
 		var errbyuser error
-		models, errbyuser = worker.LoadWorkerModelsByUser(db, c.User.ID)
+		models, errbyuser = worker.LoadWorkerModelsByUser(db, c.User.ID, c.User.Admin)
 		if errbyuser != nil {
 			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models by user %d", c.User.ID)
 		}
+		log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", c.User.ID, c.User.Username, c.User.Admin, models)
 	} else if c.Hatchery != nil && c.Hatchery.GroupID > 0 {
 		var errgroup error
 		models, errgroup = worker.LoadWorkerModelsUsableOnGroup(db, c.Hatchery.GroupID, group.SharedInfraGroup.ID)
 		if errgroup != nil {
 			return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", c.Hatchery.ID, c.Hatchery.GroupID)
 		}
+		log.Debug("getWorkerModels> for hatchery %s with group %s : %s", c.Hatchery.ID, c.Hatchery.GroupID, models)
 	}
-
-	log.Debug("getWorkerModels> %s", models)
 
 	return WriteJSON(w, r, models, http.StatusOK)
 }

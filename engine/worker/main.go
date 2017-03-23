@@ -47,6 +47,7 @@ var (
 		Status    string    `json:"status"`
 		Model     int64     `json:"model"`
 	}
+	alive bool
 )
 
 var mainCmd = &cobra.Command{
@@ -58,31 +59,35 @@ var mainCmd = &cobra.Command{
 
 		log.Initialize()
 
-		log.Notice("What a good time to be alive\n")
+		log.Notice("What a good time to be alive")
 		var err error
 
 		name, err = os.Hostname()
 		if err != nil {
-			log.Notice("Cannot retrieve hostname: %s\n", err)
+			log.Notice("Cannot retrieve hostname: %s", err)
 			return
 		}
 
 		hatchS := viper.GetString("hatchery")
 		hatchery, err = strconv.ParseInt(hatchS, 10, 64)
 		if err != nil {
-			fmt.Printf("WARNING: Invalid hatchery ID (%s)\n", err)
+			fmt.Printf("WARNING: Invalid hatchery ID (%s)", err)
 		}
 
 		api = viper.GetString("api")
 		if api == "" {
-			fmt.Printf("--api not provided, aborting.\n")
+			fmt.Printf("--api not provided, aborting.")
 			return
 		}
 
 		key = viper.GetString("key")
 		if key == "" {
-			fmt.Printf("--key not provided, aborting.\n")
+			fmt.Printf("--key not provided, aborting.")
 			return
+		}
+
+		if !viper.GetBool("exit_on_end") && hatchery == 0 {
+			sdk.Exit("you could not use --exit-on-end=false on spawning a worker without a hatchery")
 		}
 
 		givenName := viper.GetString("name")
@@ -103,7 +108,7 @@ var mainCmd = &cobra.Command{
 
 		port, err := server()
 		if err != nil {
-			sdk.Exit("cannot bind port for worker export: %s\n", err)
+			sdk.Exit("cannot bind port for worker export: %s", err)
 		}
 		exportport = port
 
@@ -148,6 +153,9 @@ func init() {
 	flags.Int("ttl", 30, "Worker time to live (minutes)")
 	viper.BindPFlag("ttl", flags.Lookup("ttl"))
 
+	flags.Bool("exit-on-end", true, "call os.Exit when worker finish his life")
+	viper.BindPFlag("exit_on_end", flags.Lookup("exit-on-end"))
+
 	flags.Int("heartbeat", 10, "Worker heartbeat frequency")
 	viper.BindPFlag("heartbeat", flags.Lookup("heartbeat"))
 
@@ -161,7 +169,6 @@ func init() {
 
 func main() {
 	sdk.SetAgent(sdk.WorkerAgent)
-
 	mainCmd.Execute()
 }
 
@@ -170,19 +177,33 @@ func main() {
 func queuePolling() {
 	firstViewQueue := true
 	for {
+		if !alive && !firstViewQueue {
+			log.Notice("I am old and waiting to be killed now")
+			time.Sleep(60 * time.Second)
+		}
+
 		if WorkerID == "" {
-			log.Notice("[WORKER] Registering on CDS engine, \n")
+			var info string
+			if bookedJobID > 0 {
+				info = fmt.Sprintf(", I was born to work on job %d", bookedJobID)
+			}
+			log.Notice("Registering on CDS engine%s", info)
 			if err := register(api, name, key); err != nil {
-				log.Notice("Cannot register: %s\n", err)
+				log.Notice("Cannot register: %s", err)
 				time.Sleep(10 * time.Second)
 				continue
 			}
+			alive = true
 		}
 
 		//We we've done nothing until ttl is over, let's exit
 		if nbActionsDone == 0 && startTimestamp.Add(time.Duration(viper.GetInt("ttl"))*time.Minute).Before(time.Now()) {
 			log.Notice("Time to exit.")
 			unregister()
+			if !viper.GetBool("exit_on_end") {
+				log.Notice("queuePolling> --exit-on-end is false, waiting 1h to be killed by hatchery")
+				time.Sleep(1 * time.Hour)
+			}
 			os.Exit(0)
 		}
 
@@ -193,6 +214,7 @@ func queuePolling() {
 			bookedJobID = 0
 		}
 
+		firstViewQueue = false
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -202,13 +224,13 @@ func checkQueue(bookedJobID int64) {
 
 	queue, err := sdk.GetBuildQueue()
 	if err != nil {
-		log.Notice("checkQueue> Cannot get build queue: %s\n", err)
+		log.Warning("checkQueue> Cannot get build queue: %s", err)
 		time.Sleep(5 * time.Second)
 		WorkerID = ""
 		return
 	}
 
-	log.Notice("checkQueue> %d Actions in queue", len(queue))
+	log.Notice("checkQueue> %d actions in queue", len(queue))
 
 	//Set the status to checking to avoid beeing killed while checking queue, actions and requirements
 	sdk.SetWorkerStatus(sdk.StatusChecking)
@@ -240,20 +262,25 @@ func checkQueue(bookedJobID int64) {
 				t = ", this was my booked job"
 			}
 			log.Notice("checkQueue> Taking job %d%s", queue[i].ID, t)
-			takeAction(queue[i], queue[i].ID == bookedJobID)
+			takeJob(queue[i], queue[i].ID == bookedJobID)
 		}
 	}
 
-	log.Notice("checkQueue> Nothing to do...")
+	if bookedJobID > 0 {
+		log.Notice("checkQueue> worker born for work on job %d but job is not found in queue", bookedJobID)
+	}
+
+	if !viper.GetBool("single_use") {
+		log.Notice("checkQueue> Nothing to do...")
+	}
 }
 
 func postCheckRequirementError(r *sdk.Requirement, err error) {
 	s := fmt.Sprintf("Error checking requirement Name=%s Type=%s Value=%s :%s", r.Name, r.Type, r.Value, err)
-	btes := []byte(s)
-	sdk.Request("POST", "/queue/requirements/errors", btes)
+	sdk.Request("POST", "/queue/requirements/errors", []byte(s))
 }
 
-func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
+func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	in := worker.TakeForm{Time: time.Now()}
 	if isBooked {
 		in.BookedJobID = b.ID
@@ -261,7 +288,7 @@ func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
 
 	bodyTake, errm := json.Marshal(in)
 	if errm != nil {
-		log.Notice("takeAction: Cannot marshal body: %s\n", errm)
+		log.Notice("takeJob> Cannot marshal body: %s", errm)
 	}
 
 	nbActionsDone++
@@ -270,7 +297,7 @@ func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
 	path := fmt.Sprintf("/queue/%d/take", b.ID)
 	data, code, errr := sdk.Request("POST", path, bodyTake)
 	if errr != nil {
-		log.Notice("takeAction> Cannot take action %d : %s\n", b.Job.PipelineActionID, errr)
+		log.Notice("takeJob> Cannot take action %d : %s", b.Job.PipelineActionID, errr)
 		return
 	}
 	if code != http.StatusOK {
@@ -279,7 +306,7 @@ func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
 
 	pbji := worker.PipelineBuildJobInfo{}
 	if err := json.Unmarshal([]byte(data), &pbji); err != nil {
-		log.Notice("takeAction> Cannot unmarshal action: %s\n", err)
+		log.Notice("takeJob> Cannot unmarshal action: %s", err)
 		return
 	}
 
@@ -297,7 +324,8 @@ func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
 	path = fmt.Sprintf("/queue/%d/result", b.ID)
 	body, errm := json.MarshalIndent(res, " ", " ")
 	if errm != nil {
-		log.Notice("takeAction>Cannot marshal result: %s\n", errm)
+		log.Critical("takeJob> Cannot marshal result: %s", errm)
+		unregister()
 		return
 	}
 
@@ -308,24 +336,24 @@ func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
 		_, code, errre = sdk.Request("POST", path, body)
 		if code == http.StatusNotFound {
 			unregister() // well...
-			log.Notice("takeAction> Cannot send build result: PipelineBuildJob does not exists anymore\n")
+			log.Notice("takeJob> Cannot send build result: PipelineBuildJob does not exists anymore")
 			break
 		}
 		if errre == nil && code < 300 {
-			fmt.Printf("BuildResult sent.\n")
+			fmt.Printf("BuildResult sent.")
 			break
 		}
 
 		if errre != nil {
-			log.Notice("takeAction> Cannot send build result: %s\n", errre)
+			log.Warning("takeJob> Cannot send build result: %s", errre)
 		} else {
-			log.Notice("takeAction> Cannot send build result: HTTP %d\n", code)
+			log.Warning("takeJob> Cannot send build result: HTTP %d", code)
 		}
 
 		time.Sleep(5 * time.Second)
 		isThereAnyHopeLeft--
 		if isThereAnyHopeLeft < 0 {
-			log.Notice("takeAction> Could not send built result 50 times, giving up\n")
+			log.Notice("takeJob> Could not send built result 10 times, giving up")
 			break
 		}
 	}
@@ -335,10 +363,14 @@ func takeAction(b sdk.PipelineBuildJob, isBooked bool) {
 		time.Sleep(2 * time.Second)
 		// Unregister from engine
 		if err := unregister(); err != nil {
-			log.Warning("takeAction> could not unregister: %s\n", err)
+			log.Warning("takeJob> could not unregister: %s", err)
 		}
 		// then exit
-		log.Notice("takeAction> --single_use is on, exiting\n")
+		log.Notice("takeJob> --single-use is on, exiting")
+		if !viper.GetBool("exit_on_end") {
+			log.Notice("takeJob> --exit-on-end is false, waiting to be killed by hatchery")
+			time.Sleep(1 * time.Hour)
+		}
 		os.Exit(0)
 	}
 
@@ -348,29 +380,29 @@ func heartbeat() {
 	for {
 		time.Sleep(time.Duration(viper.GetInt("heartbeat")) * time.Second)
 		if WorkerID == "" {
-			log.Notice("[WORKER] Disconnected from CDS engine, trying to register...\n")
+			log.Notice("Disconnected from CDS engine, trying to register...")
 			if err := register(api, name, key); err != nil {
-				log.Notice("Cannot register: %s\n", err)
+				log.Notice("Cannot register: %s", err)
 				continue
 			}
 		}
 
 		_, code, err := sdk.Request("POST", "/worker/refresh", nil)
 		if err != nil || code >= 300 {
-			log.Notice("heartbeat> cannot refresh beat: %d %s\n", code, err)
+			log.Notice("heartbeat> cannot refresh beat: %d %s", code, err)
 			WorkerID = ""
 		}
 	}
 }
 
 func unregister() error {
-	uri := "/worker/unregister"
-	_, code, err := sdk.Request("POST", uri, nil)
+	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
 	if err != nil {
 		return err
 	}
 	if code > 300 {
 		return fmt.Errorf("HTTP %d", code)
 	}
+	alive = false
 	return nil
 }

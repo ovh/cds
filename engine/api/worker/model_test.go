@@ -99,7 +99,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	group.InsertGroup(db, g)
 	group.InsertUserInGroup(db, g.ID, u.ID, false)
 
-	m3, err := LoadWorkerModelsByUser(db, u.ID)
+	m3, err := LoadWorkerModelsByUser(db, u.ID, false)
 	if err != nil {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}

@@ -80,15 +80,20 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
-func LoadWorkerModelsByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Model, error) {
+func LoadWorkerModelsByUser(db gorp.SqlExecutor, userID int64, isAdmin bool) ([]sdk.Model, error) {
 	ms := []WorkerModel{}
-	query := `	select *
-				from worker_model
-				where group_id in (select group_id from group_user where user_id = $1)
-				union
-				select * from worker_model
-				where group_id = $2
-				order by name`
+	var query string
+	if isAdmin {
+		query = `	select * from worker_model`
+	} else {
+		query = `	select *
+					from worker_model
+					where group_id in (select group_id from group_user where user_id = $1)
+					union
+					select * from worker_model
+					where group_id = $2
+					order by name`
+	}
 	if _, err := db.Select(&ms, query, userID, group.SharedInfraGroup.ID); err != nil {
 		return nil, err
 	}
