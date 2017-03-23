@@ -33,7 +33,7 @@
     "immutable": "^3.8.1",
     "lodash": "~4.17.2",
     "moment": "^2.17.1",
-    "ng-semantic": "https://github.com/vladotesanovic/ngSemantic/tarball/master",
+    "ng-semantic": "https://github.com/sguiheux/ngSemantic/tarball/searchEvent",
     "ng2-codemirror-typescript": "1.0.2",
     "ng2-dragula": "^1.2.1",
     "ng2-translate": "^4.2.0",

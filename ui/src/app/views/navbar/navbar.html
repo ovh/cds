@@ -1,18 +1,28 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
+
     <img src="assets/images/cds.png" class="item">
-    <sm-select
-            placeholder="{{'navbar_projects_placeholder' | translate}}"
-            class="search item"
-            [model]="selectedProject.name"
-            (onChange)="navigateToProject($event)">
-        <option *ngFor="let project of navProjects" [value]="project.key">{{project.name}}</option>
-    </sm-select>
-    <sm-select
-            placeholder="{{'navbar_applications_placeholder' | translate}}"
-            (onChange)="navigateToApplication($event)"
-            class="search item">
-        <option *ngFor="let app of navRecentApp" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
-    </sm-select>
+
+
+        <sm-select
+                placeholder="{{'navbar_projects_placeholder' | translate}}"
+                class="search left"
+                [(model)]="selectedProjectKey"
+                (modelChange)="navigateToProject($event)"
+        >
+            <option [value]="'#NOPROJECT#'">{{'navbar_projects_placeholder' | translate}}</option>
+            <option *ngFor="let project of navProjects" [value]="project.key">{{project.name}}</option>
+        </sm-select>
+        <sm-select
+                placeholder="Find application"
+                class="search right"
+                (keydown)="applicationKeyEvent($event)"
+                [(model)]="selectedApplicationName"
+                (modelChange)="navigateToApplication($event)"
+                (onSearchChange)="filterApplication($event)"
+        >
+            <option [value]="'#NOAPP#'"></option>
+            <option *ngFor="let app of listApplications" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
+        </sm-select>
 
 
     <div class="right menu">

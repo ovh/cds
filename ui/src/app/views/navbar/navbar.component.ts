@@ -19,15 +19,19 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     public ready = false;
 
     // List of projects in the nav bar
-    private navProjects: Project[];
+    navProjects: List<Project>;
     navRecentApp: List<Application>;
-    selectedProject: Project = new Project();
+
+    selectedProjectKey: string;
+    selectedApplicationName: string;
+    listApplications: Array<Application>;
 
     constructor(private _projectStore: ProjectStore,
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
                 private _router: Router,
                 private _translate: TranslateService) {
+        this.selectedProjectKey = '#NOPROJECT#';
     }
 
     ngAfterViewInit () {
@@ -48,6 +52,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         this._appStore.getRecentApplications().subscribe( app => {
             if (app) {
                 this.navRecentApp = app;
+                this.listApplications = this.navRecentApp.toArray();
             }
         });
     }
@@ -57,19 +62,14 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      */
     getProjects(): void {
         this._projectStore.getProjectsList().subscribe( projects => {
-            if (projects) {
-                this.navProjects = projects.toArray();
-                if (this.selectedProject) {
-                    let project = this.selectedProject;
-                    this.navProjects.forEach(function (p) {
-                        if (p.key === project.key) {
-                            project = p;
-                        }
-                    });
-                    this.selectedProject = project;
-                }
+            if (projects.size > 0) {
+                this.navProjects = projects;
             }
         });
+    }
+
+    selectAllProjects(): void {
+        this.listApplications = this.navRecentApp.toArray();
     }
 
     /**
@@ -77,15 +77,45 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      * @param key Project unique key get by the event
      */
     navigateToProject(key): void {
-        this.selectedProject = this.navProjects.filter(p => p.key === key)[0];
+        if (key === '#NOPROJECT#') {
+            this.selectAllProjects();
+            return;
+        }
+
+        let selectedProject = this.navProjects.filter(p => {
+            return p.key === key;
+        }).toArray()[0];
+        this.listApplications = selectedProject.applications;
         this._router.navigate(['/project/' + key]);
     }
 
     /**
      * Navigate to the selected application.
-     * @param application Applicaiton to nagivate to
      */
-    navigateToApplication(route): void {
+    navigateToApplication(route: string): void {
+        this.selectedApplicationName = '#NOAPP#';
         this._router.navigate([route]);
+    }
+
+    applicationKeyEvent(event: KeyboardEvent, a): void {
+        if (event.key === 'Escape') {
+            this.selectedProjectKey = '#NOPROJECT#';
+            this.selectedApplicationName = '#NOAPP#';
+            this.selectAllProjects();
+        }
+    }
+
+    filterApplication(event: any): void {
+        if (this.selectedProjectKey === '#NOPROJECT#') {
+            let apps = new Array<Application>();
+            if (this.navProjects) {
+                this.navProjects.toArray().forEach(p => {
+                   apps.push(...p.applications.filter(app => {
+                       return app.name.toLocaleLowerCase().indexOf(event.toLowerCase()) !== -1;
+                   }));
+                });
+            }
+            this.listApplications = apps;
+        }
     }
 }
