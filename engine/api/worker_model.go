@@ -369,28 +369,6 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
-func getWorkerModelStatus(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	if c.Agent == sdk.HatcheryAgent {
-		ms, err := worker.EstimateWorkerModelNeeds(db, c.User.Groups[0].ID, worker.LoadWorkerModelStatusForGroup, worker.LoadGroupActionCount)
-		if err != nil {
-			log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
-			return err
-		}
-		return WriteJSON(w, r, ms, http.StatusOK)
-	}
-
-	if c.User.Admin == true {
-		ms, err := worker.EstimateWorkerModelNeeds(db, c.User.ID, worker.LoadWorkerModelStatusForAdminUser, worker.LoadAllActionCount)
-		if err != nil {
-			log.Warning("getWorkerModelStatus> Cannot estimate worker model needs: %s\n", err)
-			return err
-		}
-		return WriteJSON(w, r, ms, http.StatusOK)
-	}
-
-	return sdk.ErrForbidden
-}
-
 func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	res := []struct {
 		Model string

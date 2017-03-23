@@ -82,9 +82,6 @@ func TestInsertWorkerModel(t *testing.T) {
 	}
 	assert.EqualValues(t, m, m1)
 
-	m2, err := LoadWorkerModelsByGroup(db, g.ID)
-	assert.EqualValues(t, []sdk.Model{*m}, m2)
-
 	s := test.RandomString(t, 10)
 	_, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
@@ -124,12 +121,6 @@ func TestLoadWorkerModel(t *testing.T) {
 	}
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m.Type)
-
-	m1, err := LoadSharedWorkerModels(db)
-	if err != nil {
-		t.Fatalf("Error : %s", err)
-	}
-	assert.EqualValues(t, []sdk.Model{*m}, m1)
 }
 
 func TestLoadWorkerModels(t *testing.T) {

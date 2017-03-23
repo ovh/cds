@@ -51,7 +51,6 @@ func (ui *Termui) showStatus() {
 		termui.NewCol(12, 0, ui.workers),
 	)
 
-	ui.updateWorkerStatus()
 	ui.updateQueue()
 	ui.updateVersion()
 	termui.Clear()
@@ -116,71 +115,6 @@ func (ui *Termui) updateVersion() {
 
 		} // for
 	}()
-}
-
-func (ui *Termui) updateWorkerStatus() {
-
-	var max int64
-	var totalBuilding int64
-
-	go func() {
-		for {
-			max = 0
-			totalBuilding = 0
-
-			if ui.workers == nil {
-				time.Sleep(1 * time.Second)
-				continue
-			}
-
-			begin := time.Now()
-			wms, err := sdk.GetWorkerModelStatus()
-			if err != nil {
-				ui.msg.Text = err.Error()
-				time.Sleep(1 * time.Second)
-				continue
-			}
-			ui.msg.Text = fmt.Sprintf("Delay: %s", time.Since(begin).String())
-
-			var available, building, missing []int
-			var labels []string
-			for _, s := range wms {
-				if s.BuildingCount == 0 && s.CurrentCount == 0 && s.WantedCount == 0 {
-					continue
-				}
-				totalBuilding += s.BuildingCount
-				m := int(s.WantedCount - s.CurrentCount)
-				if m < 0 {
-					m = 0
-				}
-				missing = append(missing, m)
-				building = append(building, int(s.BuildingCount))
-				available = append(available, int(s.CurrentCount))
-				labels = append(labels, s.ModelName)
-				if s.CurrentCount+s.BuildingCount+(s.WantedCount-s.CurrentCount) > max {
-					max = s.CurrentCount + s.BuildingCount + (s.WantedCount - s.CurrentCount)
-				}
-			}
-
-			almostHeight := int64(termui.TermHeight() - 6)
-			if max > almostHeight {
-				max = almostHeight
-			}
-
-			ui.workers.Data[0] = available
-			ui.workers.Data[1] = building
-			ui.workers.Data[2] = missing
-			ui.workers.DataLabels = labels
-			ui.workers.Height = int(almostHeight) // was 15
-
-			ui.totalBuildingWorkers = totalBuilding
-			if totalBuilding > ui.maxBuildingWorkers {
-				ui.maxBuildingWorkers = totalBuilding
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
-
 }
 
 func newWorkerBarChart() *termui.MBarChart {
