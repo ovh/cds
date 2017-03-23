@@ -231,7 +231,7 @@ func (h *HatcheryCloud) killAwolServers() {
 				continue
 			}
 
-			workerHatcheryName, okHatchery := s.Metadata["hatcheryName"]
+			workerHatcheryName, _ := s.Metadata["hatcheryName"]
 			_, ok := s.Metadata["worker"]
 
 			t, err := time.Parse(time.RFC3339, s.Updated)
@@ -240,14 +240,14 @@ func (h *HatcheryCloud) killAwolServers() {
 				break
 			}
 
-			log.Debug("killAwolServers> Deleting %s (%s) %v ? : %v %v %v", s.Name, s.ImageRef, s.Metadata, ok, okHatchery, (time.Since(t) > 6*time.Minute))
+			log.Debug("killAwolServers> Deleting %s (%s) %v ? : %v %v hatcheryName:%s %v", s.Name, s.ImageRef, s.Metadata, ok, (time.Since(t) > 6*time.Minute), workerHatcheryName, (workerHatcheryName == h.Hatchery().Name))
 
 			// Delete workers, if not identified by CDS API
 			// Wait for 6 minutes, to avoid killing worker babies
-			if okHatchery && workerHatcheryName == h.Hatchery().Name && ok && time.Since(t) > 6*time.Minute {
-				log.Notice("%s last update: %s", s.Name, time.Since(t))
+			if (workerHatcheryName == "" || workerHatcheryName == h.Hatchery().Name) && ok && time.Since(t) > 6*time.Minute {
+				log.Notice("killAwolServers> %s last update: %s", s.Name, time.Since(t))
 				if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
-					log.Warning("Cannot remove server %s: %s", s.Name, err)
+					log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
 				}
 			}
 		}
@@ -800,8 +800,8 @@ func (h *HatcheryCloud) getServers(endpoint, token string) ([]Server, error) {
 		if !worker {
 			continue
 		}
-		workerHatcheryName, ok := s.Metadata["hatcheryName"]
-		if !ok || workerHatcheryName != h.Hatchery().Name {
+		workerHatcheryName, _ := s.Metadata["hatcheryName"]
+		if workerHatcheryName == "" || workerHatcheryName != h.Hatchery().Name {
 			continue
 		}
 		servers = append(servers, s)
