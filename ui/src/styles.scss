@@ -415,3 +415,23 @@ $verticalTreeHeightLine: 40px;
   white-space: nowrap;
   height: 100%;
 }
+
+// Don't know why it's not working on navbar.scss
+.navbar {
+  .ui.dropdown {
+    background-color: transparent;
+    border-color: rgba(34, 36, 38, 0.35);
+  }
+  .ui.selection.dropdown {
+    color: rgba(191, 191, 191, 0.87);
+  }
+  .ui.right.dropdown {
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    border-left: none;
+  }
+  .ui.left.dropdown {
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+  }
+}
