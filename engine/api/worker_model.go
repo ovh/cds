@@ -203,7 +203,7 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 		var errbyuser error
 		models, errbyuser = worker.LoadWorkerModelsByUser(db, c.User.ID, c.User.Admin)
 		if errbyuser != nil {
-			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models by user %d", c.User.ID)
+			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", c.User.ID)
 		}
 		log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", c.User.ID, c.User.Username, c.User.Admin, models)
 	} else if c.Hatchery != nil && c.Hatchery.GroupID > 0 {
