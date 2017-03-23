@@ -31,13 +31,14 @@ type RepositoriesManager struct {
 
 //RepositoryPoller is an alternative to hooks
 type RepositoryPoller struct {
-	Name          string      `json:"name" db:"name"`
-	ApplicationID int64       `json:"-" db:"application_id"`
-	PipelineID    int64       `json:"-" db:"pipeline_id"`
-	Application   Application `json:"application" db:"-"`
-	Pipeline      Pipeline    `json:"pipeline" db:"-"`
-	Enabled       bool        `json:"enabled" db:"enabled"`
-	DateCreation  time.Time   `json:"date_creation" db:"date_creation"`
+	Name          string                     `json:"name" db:"name"`
+	ApplicationID int64                      `json:"-" db:"application_id"`
+	PipelineID    int64                      `json:"-" db:"pipeline_id"`
+	Application   Application                `json:"application" db:"-"`
+	Pipeline      Pipeline                   `json:"pipeline" db:"-"`
+	Enabled       bool                       `json:"enabled" db:"enabled"`
+	DateCreation  time.Time                  `json:"date_creation" db:"date_creation"`
+	NextExecution *RepositoryPollerExecution `json:"next_execution" db:"-"`
 }
 
 //RepositoryPollerExecution is a polling execution

@@ -29,7 +29,7 @@ func LoadActionParameters(db gorp.SqlExecutor, actionID int64) ([]sdk.Parameter,
 		if d != nil {
 			r.Description = string(d)
 		}
-		r.Type = sdk.ParameterType(t)
+		r.Type = t
 		r.Value = val
 
 		req = append(req, r)

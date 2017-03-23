@@ -99,13 +99,13 @@ var (
 	ErrAppBuildingPipelines                  = &Error{ID: 83, Status: http.StatusForbidden}
 	ErrInvalidTimezone                       = &Error{ID: 84, Status: http.StatusBadRequest}
 	ErrEnvironmentCannotBeDeleted            = &Error{ID: 85, Status: http.StatusForbidden}
+	ErrInvalidPipeline                       = &Error{ID: 86, Status: http.StatusBadRequest}
+	ErrKeyNotFound                           = &Error{ID: 87, Status: http.StatusNotFound}
+	ErrPipelineAlreadyExists                 = &Error{ID: 88, Status: http.StatusConflict}
+	ErrJobAlreadyBooked                      = &Error{ID: 89, Status: http.StatusConflict}
+	ErrPipelineBuildNotFound                 = &Error{ID: 90, Status: http.StatusNotFound}
+	ErrAlreadyTaken                          = &Error{ID: 91, Status: http.StatusGone}
 )
-
-// SupportedLanguages on API errors
-var SupportedLanguages = []language.Tag{
-	language.AmericanEnglish,
-	language.French,
-}
 
 var errorsAmericanEnglish = map[int]string{
 	ErrUnknownError.ID:              "internal server error",
@@ -195,6 +195,12 @@ You can safely use them in a String or Text parameter`,
 	ErrAppBuildingPipelines.ID:                  "Cannot delete application, there are building pipelines",
 	ErrInvalidTimezone.ID:                       "Invalid timezone",
 	ErrEnvironmentCannotBeDeleted.ID:            "Environment cannot be deleted. It is still in used",
+	ErrInvalidPipeline.ID:                       "Invalid pipeline",
+	ErrKeyNotFound.ID:                           "Key not found",
+	ErrPipelineAlreadyExists.ID:                 "Pipeline already exist",
+	ErrJobAlreadyBooked.ID:                      "Job already booked",
+	ErrPipelineBuildNotFound.ID:                 "Pipeline build not found",
+	ErrAlreadyTaken.ID:                          "This job is already taken by another worker",
 }
 
 var errorsFrench = map[int]string{
@@ -285,14 +291,18 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrAppBuildingPipelines.ID:                  "Impossible de supprimer l'application, il y a pipelines en cours",
 	ErrInvalidTimezone.ID:                       "Fuseau horaire invalide",
 	ErrEnvironmentCannotBeDeleted.ID:            "L'environement ne peut etre supprimé. Il est encore utilisé.",
+	ErrInvalidPipeline.ID:                       "Pipeline invalide",
+	ErrKeyNotFound.ID:                           "Clé introuvable",
+	ErrPipelineAlreadyExists.ID:                 "Le pipeline existe déjà",
+	ErrJobAlreadyBooked.ID:                      "Le job est déjà réservé",
+	ErrPipelineBuildNotFound.ID:                 "Le pipeline build n'a pu être trouvé",
+	ErrAlreadyTaken.ID:                          "Ce job est déjà en cours de traitement par un autre worker",
 }
 
 var errorsLanguages = []map[int]string{
 	errorsAmericanEnglish,
 	errorsFrench,
 }
-
-var matcher = language.NewMatcher(SupportedLanguages)
 
 // NewError just set an error with a root cause
 func NewError(target *Error, root error) *Error {

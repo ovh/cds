@@ -13,11 +13,11 @@ import (
 
 // TemplateParam can be a String/Date/Script/URL...
 type TemplateParam struct {
-	ID          int64        `json:"id" yaml:"-"`
-	Name        string       `json:"name"`
-	Type        VariableType `json:"type"`
-	Value       string       `json:"value"`
-	Description string       `json:"description" yaml:"desc,omitempty"`
+	ID          int64  `json:"id" yaml:"-"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Value       string `json:"value"`
+	Description string `json:"description" yaml:"desc,omitempty"`
 }
 
 // Template definition to help users bootstrap their pipelines

@@ -544,15 +544,13 @@ func loadTrigger(db gorp.SqlExecutor, s *sql.Rows, subqueries bool) (sdk.Pipelin
 	var t sdk.PipelineTrigger
 	var srcEnvName, destEnvName sql.NullString
 	var srcEnvID, destEnvID sql.NullInt64
-
-	var srcPipType, destPipType string
 	err := s.Scan(&t.ID,
 		&t.SrcApplication.ID, &t.SrcApplication.Name,
-		&t.SrcPipeline.ID, &t.SrcPipeline.Name, &srcPipType,
+		&t.SrcPipeline.ID, &t.SrcPipeline.Name, &t.SrcPipeline.Type,
 		&srcEnvID, &srcEnvName,
 		&t.SrcProject.ID, &t.SrcProject.Key, &t.SrcProject.Name,
 		&t.DestApplication.ID, &t.DestApplication.Name,
-		&t.DestPipeline.ID, &t.DestPipeline.Name, &destPipType,
+		&t.DestPipeline.ID, &t.DestPipeline.Name, &t.DestPipeline.Type,
 		&destEnvID, &destEnvName,
 		&t.DestProject.ID, &t.DestProject.Key, &t.DestProject.Name,
 		&t.Manual,
@@ -561,8 +559,6 @@ func loadTrigger(db gorp.SqlExecutor, s *sql.Rows, subqueries bool) (sdk.Pipelin
 		return t, err
 	}
 
-	t.SrcPipeline.Type = sdk.PipelineTypeFromString(srcPipType)
-	t.DestPipeline.Type = sdk.PipelineTypeFromString(destPipType)
 	// Handle nullable envirnoments
 	if destEnvName.Valid {
 		t.DestEnvironment.Name = destEnvName.String
@@ -637,7 +633,7 @@ func loadTriggerParameters(db gorp.SqlExecutor, triggerID int64) ([]sdk.Paramete
 		if err != nil {
 			return nil, err
 		}
-		p.Type = sdk.ParameterTypeFromString(pType)
+		p.Type = pType
 		p.Value = val
 
 		params = append(params, p)

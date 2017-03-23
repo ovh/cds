@@ -69,6 +69,9 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 	defer tx.Rollback()
 
+	//Default value is job enabled
+	job.Action.Enabled = true
+	job.Enabled = true
 	if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
 		log.Warning("addJobToStageHandler> Cannot insert job in database: %s\n", err)
 		return err

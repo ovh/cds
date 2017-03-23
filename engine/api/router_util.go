@@ -5,7 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -17,7 +20,6 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status 
 	if e != nil {
 		log.Warning("WriteJSON> unable to marshal : %s", e)
 		return sdk.ErrUnknownError
-
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -93,4 +95,20 @@ func FormBool(r *http.Request, s string) bool {
 	default:
 		return false
 	}
+}
+
+// requestVarInt return int value for a var in Request
+func requestVarInt(r *http.Request, s string) (int64, error) {
+	vars := mux.Vars(r)
+	idString := vars[s]
+
+	// Check ID Job
+	id, erri := strconv.ParseInt(idString, 10, 64)
+	if erri != nil {
+		if s == "id" {
+			return id, sdk.WrapError(sdk.ErrInvalidID, "requestVarInt> id not an integer: %s", idString)
+		}
+		return id, sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %s is not an integer: %s", s, idString)
+	}
+	return id, nil
 }

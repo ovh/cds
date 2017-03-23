@@ -3,7 +3,10 @@ package exportentities
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -50,4 +53,41 @@ func Marshal(i interface{}, f Format) ([]byte, error) {
 		btes = buff.Bytes()
 	}
 	return btes, errMarshal
+}
+
+// ReadFile reads the file and return the content, the format and eventually an error
+func ReadFile(filename string) ([]byte, Format, error) {
+	format := FormatYAML
+	if strings.HasSuffix(filename, ".json") {
+		format = FormatJSON
+	} else if strings.HasSuffix(filename, ".hcl") {
+		format = FormatHCL
+	}
+
+	btes, err := ioutil.ReadFile(filename)
+	return btes, format, err
+}
+
+// ReadURL reads the file given by an URL
+func ReadURL(u string, f string) ([]byte, Format, error) {
+	format, err := GetFormat(f)
+	if err != nil {
+		return nil, format, err
+	}
+	var netClient = &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	response, err := netClient.Get(u)
+	if err != nil {
+		return nil, format, err
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, format, err
+	}
+	defer response.Body.Close()
+
+	return body, format, nil
 }

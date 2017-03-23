@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/fsamin/go-dump"
-	"github.com/hashicorp/hcl"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
@@ -23,18 +22,18 @@ var (
 	t1_1 = pipelineTestCase{
 		name: "Pipeline with 1 stage and 1 job",
 		arg: sdk.Pipeline{
-			Name: "MyPipeline",
+			Name: "MyPipeline t1_1",
 			Type: sdk.BuildPipeline,
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
-					Name:       "stage 1",
+					Name:       "MyPipeline t1_1",
 					Enabled:    true,
 					Jobs: []sdk.Job{
 						{
+							Enabled: true,
 							Action: sdk.Action{
-								Name:        "Job 1",
-								Description: "This is job 1",
+								Name: "MyPipeline t1_1",
 								Actions: []sdk.Action{
 									{
 
@@ -76,7 +75,6 @@ var (
 										},
 									},
 									{
-
 										Type: sdk.BuiltinAction,
 										Name: sdk.ArtifactDownload,
 										Parameters: []sdk.Parameter{
@@ -125,7 +123,7 @@ var (
 	t1_2 = pipelineTestCase{
 		name: "Pipeline with 1 stage and 2 jobs",
 		arg: sdk.Pipeline{
-			Name: "MyPipeline",
+			Name: "MyPipeline t1_2",
 			Type: sdk.BuildPipeline,
 			GroupPermission: []sdk.GroupPermission{
 				sdk.GroupPermission{
@@ -138,7 +136,7 @@ var (
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
-					Name:       "stage 1",
+					Name:       "MyPipeline t1_2",
 					Enabled:    true,
 					Jobs: []sdk.Job{{
 						Action: sdk.Action{
@@ -219,9 +217,9 @@ var (
 	}
 
 	t2_2 = pipelineTestCase{
-		name: "Pipeline with 1 stage and 2 jobs",
+		name: "Pipeline with 2 stages and 2 jobs",
 		arg: sdk.Pipeline{
-			Name: "MyPipeline",
+			Name: "MyPipeline t2_2",
 			Type: sdk.BuildPipeline,
 			GroupPermission: []sdk.GroupPermission{
 				sdk.GroupPermission{
@@ -237,6 +235,7 @@ var (
 					Name:       "stage 1",
 					Enabled:    true,
 					Jobs: []sdk.Job{{
+						Enabled: true,
 						Action: sdk.Action{
 							Name:        "Job 1",
 							Description: "This is job 1",
@@ -270,6 +269,7 @@ var (
 							},
 						},
 					}, {
+						Enabled: true,
 						Action: sdk.Action{
 							Name:        "Job 2",
 							Description: "This is job 2",
@@ -316,6 +316,7 @@ var (
 						},
 					},
 					Jobs: []sdk.Job{{
+						Enabled: true,
 						Action: sdk.Action{
 							Name:        "Job 1",
 							Description: "This is job 1",
@@ -349,6 +350,7 @@ var (
 							},
 						},
 					}, {
+						Enabled: true,
 						Action: sdk.Action{
 							Name:        "Job 2",
 							Description: "This is job 2",
@@ -396,32 +398,7 @@ var (
 	testcases = []pipelineTestCase{t1_1, t1_2, t2_2}
 )
 
-func TestExportImportPipeline_HCL(t *testing.T) {
-	t.SkipNow()
-	for _, tc := range testcases {
-		p := NewPipeline(&tc.arg)
-		b, err := Marshal(p, FormatHCL)
-		test.NoError(t, err)
-		t.Log("\n" + string(b))
-
-		i1 := map[string]interface{}{}
-		test.NoError(t, hcl.Unmarshal(b, &i1))
-		/*p1, err := decodePipeline(i1)
-		test.NoError(t, err)
-		t.Logf("%s", p1)
-
-		t.Logf(dump.Sdump(p))
-		t.Logf(dump.Sdump(p1))
-
-		m1, err := dump.ToMap(p1)
-		test.NoError(t, err)
-		m2, err := dump.ToMap(p)
-		assert.EqualValues(t, m2, m1)
-		test.NoError(t, err)*/
-	}
-}
-
-func TestExportImportPipeline_YAML(t *testing.T) {
+func TestExportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
 		p := NewPipeline(&tc.arg)
 		b, err := Marshal(p, FormatYAML)
@@ -431,13 +408,13 @@ func TestExportImportPipeline_YAML(t *testing.T) {
 		p1 := Pipeline{}
 		test.NoError(t, yaml.Unmarshal(b, &p1))
 
-		m1, _ := dump.ToMap(p1)
-		m2, _ := dump.ToMap(p)
-		assert.EqualValues(t, m2, m1)
+		m1, _ := dump.Sdump(&p1)
+		m2, _ := dump.Sdump(p)
+		assert.Equal(t, m2, m1)
 	}
 }
 
-func TestExportImportPipeline_JSON(t *testing.T) {
+func TestExportPipeline_JSON(t *testing.T) {
 	for _, tc := range testcases {
 		p := NewPipeline(&tc.arg)
 		b, err := Marshal(p, FormatJSON)
@@ -447,9 +424,68 @@ func TestExportImportPipeline_JSON(t *testing.T) {
 		p1 := Pipeline{}
 		test.NoError(t, json.Unmarshal(b, &p1))
 
-		m1, _ := dump.ToMap(p1)
-		m2, _ := dump.ToMap(p)
-		assert.EqualValues(t, m2, m1)
+		m1, _ := dump.Sdump(p1)
+		m2, _ := dump.Sdump(p)
+		assert.Equal(t, m2, m1)
+	}
+}
 
+func TestExportAndImportPipeline_YAML(t *testing.T) {
+	for _, tc := range testcases {
+		p := NewPipeline(&tc.arg)
+
+		b, err := Marshal(p, FormatYAML)
+		test.NoError(t, err)
+
+		importedP := Pipeline{}
+		test.NoError(t, yaml.Unmarshal(b, &importedP))
+		transformedP, err := importedP.Pipeline()
+
+		test.NoError(t, err)
+
+		assert.Equal(t, tc.arg.Name, transformedP.Name)
+		assert.Equal(t, tc.arg.Type, transformedP.Type)
+		test.EqualValuesWithoutOrder(t, tc.arg.GroupPermission, transformedP.GroupPermission)
+		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
+		for _, s := range tc.arg.Stages {
+			var stageFound bool
+			for _, s1 := range transformedP.Stages {
+				if s.Name != s1.Name {
+					continue
+				}
+				stageFound = true
+
+				assert.Equal(t, s.BuildOrder, s1.BuildOrder, "Build order does not match")
+				assert.Equal(t, s.Enabled, s1.Enabled, "Enabled does not match")
+				test.EqualValuesWithoutOrder(t, s.Prerequisites, s1.Prerequisites)
+
+				for _, j := range s.Jobs {
+					var jobFound bool
+					for _, j1 := range s1.Jobs {
+						if j.Action.Name != j1.Action.Name {
+							continue
+						}
+						jobFound = true
+
+						assert.Equal(t, j.Enabled, j1.Enabled)
+						assert.Equal(t, j.Action.Name, j1.Action.Name)
+						assert.Equal(t, j.Enabled, j1.Action.Enabled)
+						assert.Equal(t, j.Action.Final, j1.Action.Final)
+
+						for i, s := range j.Action.Actions {
+							s1 := j1.Action.Actions[i]
+							if s.Name == s1.Name {
+								assert.Equal(t, s.Enabled, s1.Enabled, s.Name, s1.Name)
+								assert.Equal(t, s.Final, s1.Final)
+								test.EqualValuesWithoutOrder(t, s.Parameters, s1.Parameters)
+							}
+						}
+					}
+					assert.True(t, jobFound, "Job not found")
+				}
+
+			}
+			assert.True(t, stageFound, "Stage not found")
+		}
 	}
 }

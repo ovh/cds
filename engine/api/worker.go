@@ -28,7 +28,7 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	var h *sdk.Hatchery
 	if params.Hatchery != 0 {
 		if err := hatchery.Exists(db, params.Hatchery); err != nil {
-			return sdk.WrapError(err, "registerWorkerHandler> Unable to check if hatchery exists")
+			return sdk.WrapError(err, "registerWorkerHandler> Unable to check if hatchery (%d) exists on register worker %s (model:%d)", params.Hatchery, params.Name, params.Model)
 		}
 
 		var errH error
@@ -62,8 +62,7 @@ func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 }
 
 func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	err := r.ParseForm()
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
 		return sdk.WrapError(err, "getWorkerModels> cannot parse form")
 	}
 
@@ -72,9 +71,9 @@ func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return getOrphanWorker(w, r, db, c)
 	}
 
-	workers, err := worker.LoadWorkers(db)
-	if err != nil {
-		return sdk.WrapError(err, "getWorkerModels> cannot load workers")
+	workers, errl := worker.LoadWorkers(db)
+	if errl != nil {
+		return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
 	}
 
 	return WriteJSON(w, r, workers, http.StatusOK)

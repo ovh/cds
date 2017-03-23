@@ -12,13 +12,31 @@ type PipelineBuildJob struct {
 	Job             ExecutedJob `json:"job" db:"-"`
 	JobJSON         []byte      `json:"-" db:"job"`
 	Parameters      []Parameter `json:"parameters,omitempty" db:"-"`
-	ParametersJSON  []byte      `json:"-,omitempty" db:"parameters"`
+	ParametersJSON  []byte      `json:"-" db:"parameters"`
 	Status          string      `json:"status"  db:"status"`
 	Queued          time.Time   `json:"queued,omitempty" db:"queued"`
 	Start           time.Time   `json:"start,omitempty" db:"start"`
 	Done            time.Time   `json:"done,omitempty" db:"done"`
 	Model           string      `json:"model,omitempty" db:"model"`
 	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
+	BookedBy        Hatchery    `json:"bookedby" db:"-"`
+	SpawnInfos      []SpawnInfo `json:"spawninfos" db:"-"`
+	SpawnInfosJSON  []byte      `json:"-" db:"spawninfos"`
+}
+
+// SpawnInfo contains an information about spawning
+type SpawnInfo struct {
+	APITime    time.Time `json:"api_time,omitempty" db:"-"`
+	RemoteTime time.Time `json:"remote_time,omitempty" db:"-"`
+	Message    SpawnMsg  `json:"message,omitempty" db:"-"`
+	// UserMessage contains msg translated for end user
+	UserMessage string `json:"user_message,omitempty" db:"-"`
+}
+
+// SpawnMsg represents a msg for spawnInfo
+type SpawnMsg struct {
+	ID   string        `json:"id" db:"-"`
+	Args []interface{} `json:"args" db:"-"`
 }
 
 // ExecutedJob represents a running job
@@ -146,4 +164,13 @@ func GetBuildActionLog(projectKey, appName, pipelineName, buildID, pipelineActio
 		return buildState, err
 	}
 	return buildState, nil
+}
+
+// Translate translates messages in pipelineBuildJob
+func (p *PipelineBuildJob) Translate(lang string) {
+	for ki, info := range p.SpawnInfos {
+		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+		p.SpawnInfos[ki].UserMessage = m.String(lang)
+	}
+
 }

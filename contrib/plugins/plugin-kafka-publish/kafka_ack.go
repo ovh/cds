@@ -8,16 +8,22 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/fsamin/go-shredder"
 
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
 )
 
 //Wait for ACK to CDS through kafka. Entrypoint is the actionID from the context file. After a fimeout (seconds) it will return an error
-func ackFromKafka(kafka, topic, group, key string, timeout time.Duration, actionID int64) (*kafkapublisher.Ack, error) {
+func ackFromKafka(kafka, topic, group, user, password string, timeout time.Duration, actionID int64) (*kafkapublisher.Ack, error) {
 	//Create a new client
 	var config = sarama.NewConfig()
-	// Set key as the client id for authentication
-	config.ClientID = key
+	config.Net.TLS.Enable = true
+	config.Net.SASL.Enable = true
+	config.Net.SASL.User = user
+	config.Net.SASL.Password = password
+	config.ClientID = user
+	config.Producer.Return.Successes = true
+
 	client, err := sarama.NewClient([]string{kafka}, config)
 	if err != nil {
 		return nil, err
@@ -82,21 +88,72 @@ func ackFromKafka(kafka, topic, group, key string, timeout time.Duration, action
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
+	//This chunks list is for artifacts
+	chunks := shredder.Chunks{}
+
 	// Main routine, we will exit on error||timeout||ack
 	for {
 		select {
 		case msg := <-messagesChan:
-			ack := &kafkapublisher.Ack{}
-			if err := json.Unmarshal(msg, ack); err != nil {
-				return nil, err
-			}
-			if ack.Context.ActionID != actionID {
+			//If we recieve a "Chunk" Message
+			if kafkapublisher.IsChunk(msg) {
+				c, err := kafkapublisher.ReadBytes(msg)
+				if err != nil {
+					fmt.Printf("Unable to read bytes : %s\n", err)
+					continue
+				}
+				fmt.Println("Chunk received")
+				chunks = append(chunks, *c)
+
+				allChunks := shredder.Filter(chunks)
+				cs := allChunks[c.Ctx.UUID]
+
+				//If we received all chunks for a file, let save it on disk
+				if cs.Completed() {
+					aes, err := getAESEncryptionOptions(password)
+					if err != nil {
+						fmt.Printf("Error: %s\n", err)
+						continue
+					}
+					var opts = &shredder.Opts{
+						ChunkSize:     512 * 1024,
+						AESEncryption: aes,
+					}
+
+					content, err := shredder.Reassemble(cs, opts)
+					if err != nil {
+						fmt.Printf("Error: %s\n", err)
+						continue
+					}
+
+					filename, data, err := content.File()
+					if err != nil {
+						fmt.Printf("Error: %s\n", err)
+						continue
+					}
+
+					fmt.Printf("Receiving file : %s\n", filename)
+
+					if err := fileHandler(nil, filename, data); err != nil {
+						fmt.Printf("Error: %s\n", err)
+						continue
+					}
+					//File has been processed, remove data from memory
+					chunks.Delete(*c)
+				}
 				continue
+			} else {
+				ack := &kafkapublisher.Ack{}
+				if err := json.Unmarshal(msg, ack); err != nil {
+					fmt.Printf("Unable to parse ack: %s\n", err)
+					continue
+				}
+				if ack.Context.ActionID != actionID {
+					continue
+				}
+				//Yep we receive the right ack !
+				return ack, nil
 			}
-			//Yep we receive the right ack !
-			return ack, nil
-		case err := <-errorsChan:
-			return nil, err
 		case <-signals:
 			return nil, fmt.Errorf("Interrupted")
 		case <-timeoutChan:

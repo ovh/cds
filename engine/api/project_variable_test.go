@@ -1,16 +1,17 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_getVariableAuditInProjectHandler(t *testing.T) {
@@ -48,9 +49,9 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var audits []sdk.ProjectVariableAudit
-	tester.AddCall("Test_getSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t), iffy.UnmarshalResponse(&audits))
+	tester.AddCall("Test_getVariableAuditInProjectHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t), iffy.UnmarshalResponse(&audits))
 	tester.Run()
 
-	assert.Equal(t, audits[0].VariableBefore, nil)
+	assert.Nil(t, audits[0].VariableBefore)
 	assert.Equal(t, audits[0].VariableAfter.Name, "foo")
 }

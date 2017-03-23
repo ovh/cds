@@ -19,43 +19,34 @@ var hatcherySwarm *HatcherySwarm
 
 //HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
 type HatcherySwarm struct {
-	hatch              *sdk.Hatchery
-	dockerClient       *docker.Client
-	onlyWithServiceReq bool
-	maxContainers      int
-	defaultMemory      int
-	workerTTL          int
+	hatch         *sdk.Hatchery
+	dockerClient  *docker.Client
+	ratioService  int
+	maxContainers int
+	defaultMemory int
+	workerTTL     int
 }
 
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
-	var err error
-
-	h.dockerClient, err = docker.NewClientFromEnv()
-	if err != nil {
-		log.Critical("Unable to connect to a docker client")
-		return err
+	var errc error
+	h.dockerClient, errc = docker.NewClientFromEnv()
+	if errc != nil {
+		log.Critical("Unable to connect to a docker client:%s", errc)
+		return errc
 	}
 
 	if errPing := h.dockerClient.Ping(); errPing != nil {
-		log.Critical("Unable to ping docker host")
+		log.Critical("Unable to ping docker host:%s", errPing)
 		return errPing
 	}
 
-	// Register without declaring model
-	name, err := os.Hostname()
-	if err != nil {
-		log.Warning("Cannot retrieve hostname: %s\n", err)
-		name = "cds-hatchery"
-	}
-
-	name += "-swarm"
 	h.hatch = &sdk.Hatchery{
-		Name: name,
+		Name: hatchery.GenerateName("swarm", viper.GetString("name")),
 	}
 
 	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
-		log.Warning("Cannot register hatchery: %s\n", err)
+		log.Warning("Cannot register hatchery: %s", err)
 		return err
 	}
 
@@ -155,11 +146,11 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 }
 
 //SpawnWorker start a new docker container
-func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
+func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 
-	log.Notice("Spawning worker %s with requirements %v", name, req)
+	log.Notice("Spawning worker %s", name)
 
 	//Create a network
 	network := name + "-net"
@@ -168,60 +159,63 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms
 	//Memory for the worker
 	memory := int64(h.defaultMemory)
 
-	for _, r := range req {
-		if r.Type == sdk.MemoryRequirement {
-			var err error
-			memory, err = strconv.ParseInt(r.Value, 10, 64)
-			if err != nil {
-				log.Warning("SpawnWorker>Unable to parse memory requirement %s :s\n", memory, err)
-				return err
-			}
-		}
-	}
-
-	//Prepare worker services from requirements
 	services := []string{}
-	for _, r := range req {
-		if r.Type == sdk.ServiceRequirement {
-			//name= <alias> => the name of the host put in /etc/hosts of the worker
-			//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
-			tuple := strings.Split(r.Value, " ")
-			img := tuple[0]
-			env := []string{}
-			serviceMemory := int64(1024)
-			if len(tuple) > 1 {
-				env = append(env, tuple[1:]...)
-			}
-			//option for power user : set the service memory with CDS_SERVICE_MEMORY=1024
-			for _, e := range env {
-				if strings.HasPrefix(e, "CDS_SERVICE_MEMORY=") {
-					m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
-					i, err := strconv.Atoi(m)
-					if err != nil {
-						log.Warning("SpawnWorker> Unable to parse service option %s : %s", e, err)
-						continue
-					}
-					serviceMemory = int64(i)
-				}
-			}
-			serviceName := r.Name + "-" + name
 
-			//labels are used to make container cleanup easier. We "link" the service to its worker this way.
-			labels := map[string]string{
-				"service_worker": name,
-				"service_name":   serviceName,
+	if job != nil {
+		for _, r := range job.Job.Action.Requirements {
+			if r.Type == sdk.MemoryRequirement {
+				var err error
+				memory, err = strconv.ParseInt(r.Value, 10, 64)
+				if err != nil {
+					log.Warning("SpawnWorker>Unable to parse memory requirement %s :s", memory, err)
+					return err
+				}
+			} else if r.Type == sdk.ServiceRequirement {
+				//name= <alias> => the name of the host put in /etc/hosts of the worker
+				//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
+				tuple := strings.Split(r.Value, " ")
+				img := tuple[0]
+				env := []string{}
+				serviceMemory := int64(1024)
+				if len(tuple) > 1 {
+					env = append(env, tuple[1:]...)
+				}
+				//option for power user : set the service memory with CDS_SERVICE_MEMORY=1024
+				for _, e := range env {
+					if strings.HasPrefix(e, "CDS_SERVICE_MEMORY=") {
+						m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
+						i, err := strconv.Atoi(m)
+						if err != nil {
+							log.Warning("SpawnWorker> Unable to parse service option %s : %s", e, err)
+							continue
+						}
+						serviceMemory = int64(i)
+					}
+				}
+				serviceName := r.Name + "-" + name
+
+				//labels are used to make container cleanup easier. We "link" the service to its worker this way.
+				labels := map[string]string{
+					"service_worker": name,
+					"service_name":   serviceName,
+				}
+				//Start the services
+				if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, serviceMemory); err != nil {
+					log.Warning("SpawnWorker>Unable to start required container: %s", err)
+					return err
+				}
+				services = append(services, serviceName)
 			}
-			//Start the services
-			if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, serviceMemory); err != nil {
-				log.Warning("SpawnWorker>Unable to start required container: %s\n", err)
-				return err
-			}
-			services = append(services, serviceName)
 		}
 	}
 
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
 	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker", sdk.Host)}
+
+	var jobID int64
+	if job != nil {
+		jobID = job.ID
+	}
 
 	//CDS env needed by the worker binary
 	env := []string{
@@ -230,6 +224,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms
 		"CDS_KEY" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
+		"CDS_BOOKED_JOB_ID" + "=" + strconv.FormatInt(jobID, 10),
 		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
 		"CDS_SINGLE_USE=1",
 	}
@@ -243,7 +238,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms
 
 	//start the worker
 	if err := h.createAndStartContainer(name, model.Image, network, "worker", cmd, env, labels, memory); err != nil {
-		log.Warning("SpawnWorker> Unable to start container %s\n", err)
+		log.Warning("SpawnWorker> Unable to start container %s", err)
 	}
 
 	return nil
@@ -251,7 +246,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms
 
 //create the docker bridge
 func (h *HatcherySwarm) createNetwork(name string) error {
-	log.Debug("createAndStartContainer> Create network %s\n", name)
+	log.Debug("createAndStartContainer> Create network %s", name)
 	_, err := h.dockerClient.CreateNetwork(docker.CreateNetworkOptions{
 		Name:           name,
 		Driver:         "bridge",
@@ -299,41 +294,50 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 
 	c, err := h.dockerClient.CreateContainer(opts)
 	if err != nil {
-		log.Warning("startAndCreateContainer> Unable to create container %s\n", err)
+		log.Warning("startAndCreateContainer> Unable to create container with opts: %+v err:%s", opts, err)
 		return err
 	}
 
 	if err := h.dockerClient.StartContainer(c.ID, nil); err != nil {
-		log.Warning("startAndCreateContainer> Unable to start container %s\n", err)
+		log.Warning("startAndCreateContainer> Unable to start container %s err:%s", c.ID, err)
 		return err
 	}
 	return nil
 }
 
 // CanSpawn checks if the model can be spawned by this hatchery
-func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
+func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
 	if model.Type != sdk.Docker {
 		return false
 	}
 
 	//List all containers to check if we can spawn a new one
-	if cs, _ := h.dockerClient.ListContainers(docker.ListContainersOptions{}); len(cs) > h.maxContainers {
+	cs, errList := h.dockerClient.ListContainers(docker.ListContainersOptions{})
+	if errList != nil {
+		log.Warning("Unable to list containers: %s", errList)
+		return false
+	}
+
+	if len(cs) > h.maxContainers {
 		return false
 	}
 
 	//Get links from requirements
-	var atLeastOneLink bool
 	links := map[string]string{}
-	for _, r := range req {
+
+	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement {
-			atLeastOneLink = true
 			links[r.Name] = strings.Split(r.Value, " ")[0]
 		}
 	}
 
-	//This hatchery may only manage container with links
-	if (!atLeastOneLink) && h.onlyWithServiceReq {
-		return false
+	// hatcherySwarm.ratioService: Percent reserved for spwaning worker with service requirement
+	// if no link -> we need to check ratioService
+	if len(links) == 0 && len(cs) > 0 {
+		percentFree := 100 - (100 * len(cs) / h.maxContainers)
+		if percentFree <= hatcherySwarm.ratioService {
+			return false
+		}
 	}
 
 	log.Notice("CanSpawn> %s need %v", model.Name, links)
@@ -354,7 +358,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 		var errl error
 		images, errl = h.dockerClient.ListImages(docker.ListImagesOptions{})
 		if errl != nil {
-			log.Warning("Unable to get images : %s", errl)
+			log.Warning("CanSpawn> Unable to list images: %s", errl)
 		}
 	}
 
@@ -382,7 +386,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 		auth := docker.AuthConfiguration{}
 		log.Notice("CanSpawn> pulling image %s", model.Image)
 		if err := h.dockerClient.PullImage(opts, auth); err != nil {
-			log.Warning("Unable to pull image %s : %s", model.Image, err)
+			log.Warning("CanSpawn> Unable to pull image %s : %s", model.Image, err)
 			return false
 		}
 	}
@@ -412,7 +416,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
 			auth := docker.AuthConfiguration{}
 			log.Notice("CanSpawn> pulling image %s", i)
 			if err := h.dockerClient.PullImage(opts, auth); err != nil {
-				log.Warning("Unable to pull image %s : %s", i, err)
+				log.Warning("CanSpawn> Unable to pull image %s : %s", i, err)
 				return false
 			}
 		}
@@ -502,7 +506,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 				found = true
 				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
-					log.Info("Worker %s is disabled. Kill it with fire !\n", c.Names[0])
+					log.Info("Worker %s is disabled. Kill it with fire !", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break
 				}
@@ -516,8 +520,10 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 	//Delete the workers
 	for _, c := range oldContainers {
-		h.killAndRemove(c.ID)
-		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s\n", c.Names[0])
+		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s", c.Names[0])
+		if err := h.killAndRemove(c.ID); err != nil {
+			log.Warning("HatcherySwarm.killAwolWorker> Cannot killAndRemove worker id: %s, err:%s", c.ID, err)
+		}
 	}
 
 	var errLC error
@@ -542,7 +548,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 	for _, c := range oldContainers {
 		h.killAndRemove(c.ID)
-		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s\n", c.Names[0])
+		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s", c.Names[0])
 	}
 
 	//Checking networks

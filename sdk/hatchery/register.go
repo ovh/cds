@@ -6,32 +6,17 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"time"
 
+	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/facebookgo/httpcontrol"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
-// Interface describe an interface for each hatchery mode (mesos, local)
-type Interface interface {
-	Init() error
-	KillWorker(worker sdk.Worker) error
-	SpawnWorker(model *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error
-	CanSpawn(model *sdk.Model, req []sdk.Requirement) bool
-	WorkerStarted(model *sdk.Model) int
-	Hatchery() *sdk.Hatchery
-	ID() int64
-}
-
-var (
-	// Client is a CDS Client
-	Client sdk.HTTPClient
-)
-
-// Born creates hatchery
-func Born(h Interface, api, token string, provision int, requestSecondsTimeout int, insecureSkipVerifyTLS bool) {
+// Create creates hatchery
+func Create(h Interface, api, token string, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, warningSeconds, criticalSeconds int) {
 	Client = &http.Client{
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
@@ -45,159 +30,117 @@ func Born(h Interface, api, token string, provision int, requestSecondsTimeout i
 	sdk.Options(api, "", "", token)
 
 	if err := h.Init(); err != nil {
-		log.Critical("Init error: %s\n", err)
+		log.Critical("Create> Init error: %s\n", err)
 		os.Exit(10)
 	}
 
-	go hearbeat(h, token)
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Critical("Create> Cannot retrieve hostname: %s\n", err)
+		os.Exit(10)
+	}
 
+	go hearbeat(h, token, maxFailures)
+
+	var spawnIds []int64
+	var errR error
 	for {
 		time.Sleep(2 * time.Second)
 		if h.Hatchery() == nil || h.Hatchery().ID == 0 {
-			log.Debug("Born> continue")
+			log.Debug("Create> continue")
 			continue
 		}
 
-		if err := hatcheryRoutine(h, provision); err != nil {
-			log.Warning("Born> Error: %s\n", err)
+		spawnIds, errR = routine(h, provision, hostname, time.Now().Unix(), spawnIds, warningSeconds, criticalSeconds)
+		if errR != nil {
+			log.Warning("Create> Error: %s\n", errR)
 		}
 	}
-}
-
-func hatcheryRoutine(h Interface, provision int) error {
-	wms, err := sdk.GetWorkerModelStatus()
-	if err != nil {
-		log.Debug("hatcheryRoutine> err while GetWorkerModelStatus:%e\n", err)
-		return err
-	}
-
-	if len(wms) == 0 {
-		log.Warning("hatcheryRoutine> No model from GetWorkerModelStatus")
-	}
-
-	var sumProvisionning int
-
-	for _, ms := range wms {
-		// Provisionning
-		ms.WantedCount += int64(provision)
-		sumProvisionning += int(ms.WantedCount)
-
-		if ms.CurrentCount == ms.WantedCount {
-			// ok, do nothing
-			continue
-		}
-		m, err := sdk.GetWorkerModel(ms.ModelName)
-		if err != nil {
-			return fmt.Errorf("cannot get model named '%s' (%s)", ms.ModelName, err)
-		}
-
-		if !h.CanSpawn(m, ms.Requirements) {
-			continue
-		}
-
-		log.Debug("hatcheryRoutine> CurrentCount=%d WantedCount=%d BuildingCount=%d Requirements=%v", ms.CurrentCount, ms.WantedCount, ms.BuildingCount, ms.Requirements)
-
-		if ms.CurrentCount < ms.WantedCount {
-			diff := ms.WantedCount - ms.CurrentCount
-			// Check the number of worker started by hatchery
-			if ms.WantedCount < int64(h.WorkerStarted(m))-ms.BuildingCount {
-				// Ok so they are starting...
-				log.Notice("%d wanted, but %d (%d building) %s workers started already...\n", ms.WantedCount, h.WorkerStarted(m), ms.BuildingCount, ms.ModelName)
-				continue
-			}
-			log.Notice("I got to spawn %d %s worker ! (%d/%d)\n", diff, ms.ModelName, ms.CurrentCount, ms.WantedCount)
-
-			for i := 0; i < int(diff); i++ {
-				if errSpawn := h.SpawnWorker(m, ms.Requirements, wms); errSpawn != nil {
-					log.Warning("Cannot spawn %s: %s\n", ms.ModelName, errSpawn)
-					continue
-				}
-			}
-			continue
-		}
-
-		if ms.CurrentCount > ms.WantedCount {
-			diff := ms.CurrentCount - ms.WantedCount
-			if int(diff) < provision { // Chill...
-				continue
-			}
-			log.Notice("I got to kill %d %s worker !\n", diff, ms.ModelName)
-
-			if err := killWorker(h, m); err != nil {
-				log.Warning("hatcheryRoutine> Unable to kill worker %s", ms.ModelName)
-				return err
-			}
-			continue
-		}
-	}
-
-	if sumProvisionning == 0 {
-		log.Warning("hatcheryRoutine> Nothing to provision")
-	}
-
-	return nil
 }
 
 // Register calls CDS API to register current hatchery
 func Register(h *sdk.Hatchery, token string) error {
-
-	log.Notice("Register Hatchery %s\n", h.Name)
+	log.Notice("Register> Hatchery %s\n", h.Name)
 
 	h.UID = token
-	data, err := json.Marshal(h)
-	if err != nil {
-		return err
+	data, errm := json.Marshal(h)
+	if errm != nil {
+		return errm
 	}
 
-	data, code, err := sdk.Request("POST", "/hatchery", data)
-	if err != nil {
-		return err
+	data, code, errr := sdk.Request("POST", "/hatchery", data)
+	if errr != nil {
+		return errr
 	}
 
 	if code >= 300 {
 		return fmt.Errorf("Register> HTTP %d", code)
 	}
 
-	if err = json.Unmarshal(data, h); err != nil {
+	if err := json.Unmarshal(data, h); err != nil {
 		return err
 	}
 
+	// Here, h.UID contains token generated by API
 	sdk.Authorization(h.UID)
+
+	log.Notice("Register> Hatchery registered with id:%d\n", h.ID)
+
 	return nil
 }
 
-// CheckRequirement checks binary requirement in path
-func CheckRequirement(r sdk.Requirement) (bool, error) {
-	switch r.Type {
-	case sdk.BinaryRequirement:
-		_, err := exec.LookPath(r.Value)
-		if err != nil {
-			// Return nil because the error contains 'Exit status X', that's what we wanted
-			return false, nil
+// GenerateName generate a hatchery's name
+func GenerateName(add, name string) string {
+	if name == "" {
+		// Register without declaring model
+		var errHostname error
+		name, errHostname = os.Hostname()
+		if errHostname != nil {
+			log.Warning("Cannot retrieve hostname: %s", errHostname)
+			name = "cds-hatchery"
 		}
-		return true, nil
-	default:
-		return false, nil
+		name += "-" + namesgenerator.GetRandomName(0)
 	}
+
+	if add != "" {
+		name += "-" + add
+	}
+
+	return name
 }
 
-func hearbeat(m Interface, token string) {
+func hearbeat(m Interface, token string, maxFailures int) {
+	var failures int
 	for {
 		time.Sleep(5 * time.Second)
 		if m.Hatchery().ID == 0 {
-			log.Notice("Disconnected from CDS engine, trying to register...\n")
+			log.Notice("hearbeat> Disconnected from CDS engine, trying to register...\n")
 			if err := Register(m.Hatchery(), token); err != nil {
-				log.Notice("Cannot register: %s\n", err)
+				log.Notice("hearbeat> Cannot register: %s\n", err)
+				checkFailures(maxFailures, failures)
 				continue
 			}
-			log.Notice("Registered back: ID %d", m.Hatchery().Model.ID)
+			if m.Hatchery().ID == 0 {
+				log.Critical("hearbeat> Cannot register hatchery. ID %d", m.Hatchery().ID)
+				checkFailures(maxFailures, failures)
+				continue
+			}
+			log.Notice("hearbeat> Registered back: ID %d with model ID %d", m.Hatchery().ID, m.Hatchery().Model.ID)
 		}
 
-		_, _, err := sdk.Request("PUT", fmt.Sprintf("/hatchery/%d", m.Hatchery().ID), nil)
-		if err != nil {
+		if _, _, err := sdk.Request("PUT", fmt.Sprintf("/hatchery/%d", m.Hatchery().ID), nil); err != nil {
 			log.Notice("heartbeat> cannot refresh beat: %s\n", err)
 			m.Hatchery().ID = 0
+			checkFailures(maxFailures, failures)
 			continue
 		}
+		failures = 0
+	}
+}
+
+func checkFailures(maxFailures, nb int) {
+	if nb > maxFailures {
+		log.Critical("Too many failures on try register. This hatchery is killed")
+		os.Exit(10)
 	}
 }

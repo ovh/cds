@@ -32,20 +32,19 @@ import (
 func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, err := project.Load(db, key, &sdk.User{Admin: true})
-	if err != nil {
-		return err
+	proj, errl := project.Load(db, key, &sdk.User{Admin: true})
+	if errl != nil {
+		return errl
 	}
 
-	apps, err := application.LoadAll(db, key, &sdk.User{Admin: true})
-	if err != nil {
-		t.Logf("Cannot list app: %s", err)
-		return err
+	apps, errloadall := application.LoadAll(db, key, &sdk.User{Admin: true})
+	if errloadall != nil {
+		t.Logf("Cannot list app: %s", errloadall)
+		return errloadall
 	}
 	for _, app := range apps {
 		tx, _ := db.Begin()
-		err = application.DeleteApplication(tx, app.ID)
-		if err != nil {
+		if err := application.DeleteApplication(tx, app.ID); err != nil {
 			t.Logf("DeleteApplication: %s", err)
 			return err
 		}
@@ -53,14 +52,13 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	}
 
 	// Delete all pipelines
-	pips, err := pipeline.LoadPipelines(db, proj.ID, false, &sdk.User{Admin: true})
-	if err != nil {
-		t.Logf("ListPipelines: %s", err)
-		return err
+	pips, errload := pipeline.LoadPipelines(db, proj.ID, false, &sdk.User{Admin: true})
+	if errload != nil {
+		t.Logf("ListPipelines: %s", errload)
+		return errload
 	}
 	for _, pip := range pips {
-		err = pipeline.DeletePipeline(db, pip.ID, 1)
-		if err != nil {
+		if err := pipeline.DeletePipeline(db, pip.ID, 1); err != nil {
 			t.Logf("DeletePipeline: %s", err)
 			return err
 		}
@@ -77,8 +75,7 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	}
 
 	// Delete project
-	err = project.Delete(db, key)
-	if err != nil {
+	if err := project.Delete(db, key); err != nil {
 		t.Logf("RemoveProject: %s", err)
 		return err
 	}
@@ -114,6 +111,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
 	err = application.Insert(db, proj, app)
+	test.NoError(t, err)
 
 	env := &sdk.DefaultEnv
 

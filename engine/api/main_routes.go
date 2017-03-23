@@ -97,6 +97,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/variable/audit", GET(getVariablesAuditInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/variable/audit/{auditID}", PUT(restoreAuditHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", GET(getVariableInApplicationHandler), POST(addVariableInApplicationHandler), PUT(updateVariableInApplicationHandler), DELETE(deleteVariableFromApplicationHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", GET(getVariableAuditInApplicationHandler))
 
 	// Pipeline
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/history", GET(getPipelineHistoryHandler))
@@ -115,6 +116,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/runwithlastparent", POSTEXECUTE(runPipelineWithLastParentHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/rollback", POSTEXECUTE(rollbackPipelineHandler))
 	router.Handle("/project/{permProjectKey}/pipeline", GET(getPipelinesHandler), POST(addPipeline))
+	router.Handle("/project/{permProjectKey}/pipeline/import", POST(importPipelineHandler))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/application", GET(getApplicationUsingPipelineHandler))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/group", POST(addGroupInPipelineHandler), PUT(updateGroupsOnPipelineHandler))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/group/{group}", PUT(updateGroupRoleOnPipelineHandler), DELETE(deleteGroupFromPipelineHandler))
@@ -151,6 +153,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/group/{group}", PUT(updateGroupRoleOnEnvironmentHandler), DELETE(deleteGroupFromEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/variable", GET(getVariablesInEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}", GET(getVariableInEnvironmentHandler), POST(addVariableInEnvironmentHandler), PUT(updateVariableInEnvironmentHandler), DELETE(deleteVariableFromEnvironmentHandler))
+	router.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}/audit", GET(getVariableAuditInEnvironmentHandler))
 
 	// Artifacts
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/{tag}", GET(listArtifactsHandler))
@@ -171,7 +174,9 @@ func (router *Router) init() {
 	// Build queue
 	router.Handle("/queue", GET(getQueueHandler))
 	router.Handle("/queue/requirements/errors", POST(requirementsErrorHandler))
-	router.Handle("/queue/{id}/take", POST(takeActionBuildHandler))
+	router.Handle("/queue/{id}/take", POST(takePipelineBuildJobHandler))
+	router.Handle("/queue/{id}/book", NeedHatchery(), POST(bookPipelineBuildJobHandler))
+	router.Handle("/queue/{id}/spawn/infos", NeedHatchery(), POST(addSpawnInfosPipelineBuildJobHandler))
 	router.Handle("/queue/{id}/result", POST(addQueueResultHandler))
 	router.Handle("/build/{id}/log", POST(addBuildLogHandler))
 	router.Handle("/build/{id}/step", POST(updateStepStatusHandler))
@@ -200,7 +205,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/detach", POST(detachRepositoriesManager))
 	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager", GET(getRepositoriesManagerForApplicationsHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook", POST(addHookOnRepositoriesManagerHandler))
-	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/repositories_manager/{name}/hook/{hookId}", DELETE(deleteHookOnRepositoriesManagerHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook/{hookId}", DELETE(deleteHookOnRepositoriesManagerHandler))
 
 	//Suggest
 	router.Handle("/suggest/variable/{permProjectKey}", GET(getVariablesHandler))

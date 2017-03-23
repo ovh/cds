@@ -171,7 +171,7 @@ func LoadRecentPipelineBuild(db gorp.SqlExecutor, args ...FuncArg) ([]sdk.Pipeli
 	return pbs, nil
 }
 
-// LoadRecentPipelineBuild retrieves pipelines in database having a build running or finished
+// LoadUserRecentPipelineBuild retrieves pipelines in database having a build running or finished
 // less than a minute ago
 func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
@@ -327,7 +327,7 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 		Pipeline: sdk.Pipeline{
 			ID:         pbResult.PipelineID,
 			Name:       pbResult.PipelineName,
-			Type:       sdk.PipelineType(pbResult.PipelineType),
+			Type:       pbResult.PipelineType,
 			ProjectKey: pbResult.ProjectKey,
 			ProjectID:  pbResult.ProjectID,
 		},
@@ -422,7 +422,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
 		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID)
 		if errl != nil {
-			log.Critical("UpdatePipelineBuildStatus> error while loading repoManger for appID %s err:%s", pb.Application.ID, errl)
+			log.Critical("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
 		}
 		pb.Application.RepositoryFullname = rfn
 		pb.Application.RepositoriesManager = rm
@@ -456,7 +456,7 @@ func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
 	return errDelete
 }
 
-// GetLastBuildNumber returns the last build number at the time of query.
+// GetLastBuildNumberInTx returns the last build number at the time of query.
 // Should be used only for non-sensitive query
 func GetLastBuildNumberInTx(db *gorp.DbMap, pipID, appID, envID int64) (int64, error) {
 	// JIRA CD-1164: When starting a lot of pipeline in a short time,
@@ -515,9 +515,9 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 	})
 
 	// Update pb in database
-	data, errJson := json.Marshal(params)
-	if errJson != nil {
-		return errJson
+	data, errj := json.Marshal(params)
+	if errj != nil {
+		return errj
 	}
 
 	query = `UPDATE pipeline_build SET args = $1 WHERE id = $2`
@@ -1185,7 +1185,6 @@ func RestartPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 				if err := DeleteBuildLogs(db, pbJob.ID); err != nil {
 					return err
 				}
-
 			}
 			stage.PipelineBuildJobs = nil
 		}

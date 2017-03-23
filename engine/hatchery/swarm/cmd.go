@@ -12,8 +12,8 @@ import (
 func init() {
 	hatcherySwarm = &HatcherySwarm{}
 
-	Cmd.Flags().BoolVar(&hatcherySwarm.onlyWithServiceReq, "only-with-service-req", false, "")
-	viper.BindPFlag("only-with-service-req", Cmd.Flags().Lookup("only-with-service-req"))
+	Cmd.Flags().IntVar(&hatcherySwarm.ratioService, "ratio-service", 75, "Percent reserved for spwaning worker with service requirement")
+	viper.BindPFlag("ratio-service", Cmd.Flags().Lookup("ratio-service"))
 
 	Cmd.Flags().IntVar(&hatcherySwarm.maxContainers, "max-containers", 10, "")
 	viper.BindPFlag("max-containers", Cmd.Flags().Lookup("max-containers"))
@@ -23,6 +23,12 @@ func init() {
 
 	Cmd.Flags().IntVar(&hatcherySwarm.workerTTL, "worker-ttl", 10, "Worker TTL (minutes)")
 	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
+
+	Cmd.Flags().Int("spawn-threshold-critical", 20, "log critical if spawn take more than this value (in seconds)")
+	viper.BindPFlag("spawn-threshold-critical", Cmd.Flags().Lookup("spawn-threshold-critical"))
+
+	Cmd.Flags().Int("spawn-threshold-warning", 4, "log warning if spawn take more than this value (in seconds)")
+	viper.BindPFlag("spawn-threshold-warning", Cmd.Flags().Lookup("spawn-threshold-warning"))
 }
 
 // Cmd configures comamnd for HatcherySwarm
@@ -38,14 +44,24 @@ You should export DOCKER_TLS_VERIFY and DOCKER_CERT_PATH
 $ cds generate token --group shared.infra --expiration persistent
 2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4
 
-$ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> --token=<token> 
+$ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> --token=<token>
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Born(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetBool("insecure"))
+		hatchery.Create(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"), viper.GetInt("spawn-threshold-warning"), viper.GetInt("spawn-threshold-critical"))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		hatcherySwarm.onlyWithServiceReq = viper.GetBool("only-with-service-req")
+		if viper.GetInt("max-containers") <= 0 {
+			sdk.Exit("max-containers must be > 0")
+		}
+		if viper.GetInt("worker-ttl") <= 0 {
+			sdk.Exit("worker-ttl must be > 0")
+		}
+		if viper.GetInt("worker-memory") <= 1 {
+			sdk.Exit("worker-memory must be > 1")
+		}
+
+		hatcherySwarm.ratioService = viper.GetInt("ratio-service")
 		hatcherySwarm.maxContainers = viper.GetInt("max-containers")
 		hatcherySwarm.defaultMemory = viper.GetInt("worker-memory")
 		hatcherySwarm.workerTTL = viper.GetInt("worker-ttl")

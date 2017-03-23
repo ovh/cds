@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -42,13 +41,17 @@ func (hd *HatcheryDocker) Hatchery() *sdk.Hatchery {
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirement are not supported
-func (hd *HatcheryDocker) CanSpawn(model *sdk.Model, req []sdk.Requirement) bool {
+func (hd *HatcheryDocker) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
 	if model.Type != sdk.Docker {
 		return false
 	}
-	if len(req) > 0 {
-		return false
+
+	for _, r := range job.Job.Action.Requirements {
+		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			return false
+		}
 	}
+
 	return true
 }
 
@@ -65,15 +68,8 @@ func (hd *HatcheryDocker) Init() error {
 		return fmt.Errorf("Docker not found on this host")
 	}
 
-	// Register without declaring model
-	name, err := os.Hostname()
-	if err != nil {
-		log.Warning("Cannot retrieve hostname: %s\n", err)
-		name = "cds-hatchery"
-	}
-	name += "-docker"
 	hd.hatch = &sdk.Hatchery{
-		Name: name,
+		Name: hatchery.GenerateName("docker", viper.GetString("name")),
 		UID:  viper.GetString("token"),
 	}
 
@@ -110,7 +106,6 @@ func (hd *HatcheryDocker) killAwolWorkerRoutine() {
 }
 
 func (hd *HatcheryDocker) killAwolWorker() {
-
 	apiworkers, err := sdk.GetWorkers()
 	if err != nil {
 		log.Warning("Cannot get workers: %s", err)
@@ -161,14 +156,11 @@ func (hd *HatcheryDocker) WorkerStarted(model *sdk.Model) int {
 			x++
 		}
 	}
-
 	return x
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement, wms []sdk.ModelStatus) error {
-	var err error
-
+func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) error {
 	if wm.Type != sdk.Docker {
 		return fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
@@ -177,11 +169,16 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement, wms 
 		return fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
 	}
 
-	name, err := randSeq(16)
-	if err != nil {
-		return fmt.Errorf("cannot create worker name: %s", err)
+	name, errs := randSeq(16)
+	if errs != nil {
+		return fmt.Errorf("cannot create worker name: %s", errs)
 	}
 	name = wm.Name + "-" + name
+
+	var jobID int64
+	if job != nil {
+		jobID = job.ID
+	}
 
 	var args []string
 	args = append(args, "run", "--rm", "-a", "STDOUT", "-a", "STDERR")
@@ -192,6 +189,7 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement, wms 
 	args = append(args, "-e", fmt.Sprintf("CDS_KEY=%s", viper.GetString("token")))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
+	args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", jobID))
 	if hd.addhost != "" {
 		args = append(args, fmt.Sprintf("--add-host=%s", hd.addhost))
 	}
@@ -201,8 +199,7 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, req []sdk.Requirement, wms 
 	cmd := exec.Command("docker", args...)
 	log.Debug("Running %s\n", cmd.Args)
 
-	err = cmd.Start()
-	if err != nil {
+	if err := cmd.Start(); err != nil {
 		return err
 	}
 	hd.Lock()
@@ -250,8 +247,7 @@ func (hd *HatcheryDocker) KillWorker(worker sdk.Worker) error {
 
 func randSeq(n int) (string, error) {
 	b := make([]byte, 64)
-	_, err := rand.Read(b)
-	if err != nil {
+	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 

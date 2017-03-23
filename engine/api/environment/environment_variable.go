@@ -161,7 +161,6 @@ func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetA
 	v := sdk.Variable{}
 	var clearVal sql.NullString
 	var cipherVal []byte
-	var typeVar string
 
 	c := structarg{}
 	for _, f := range args {
@@ -173,11 +172,9 @@ func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetA
 	          FROM environment_variable
 	          WHERE environment_id = $1 AND id = $2
 	          ORDER BY name`
-	if err := db.QueryRow(query, envID, varID).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &typeVar); err != nil {
+	if err := db.QueryRow(query, envID, varID).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &v.Type); err != nil {
 		return v, sdk.WrapError(err, "GetVariableByID> Cannot get variable %d", varID)
 	}
-
-	v.Type = sdk.VariableTypeFromString(typeVar)
 
 	if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
 		v.Value = string(cipherVal)
@@ -214,7 +211,7 @@ func GetVariable(db gorp.SqlExecutor, key, envName string, varName string, args 
 		return nil, err
 	}
 
-	v.Type = sdk.VariableTypeFromString(typeVar)
+	v.Type = typeVar
 
 	if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
 		v.Value = string(cipherVal)
@@ -257,7 +254,7 @@ func GetAllVariable(db gorp.SqlExecutor, key, envName string, args ...GetAllVari
 		if err != nil {
 			return nil, err
 		}
-		v.Type = sdk.VariableTypeFromString(typeVar)
+		v.Type = typeVar
 
 		if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
 			v.Value = string(cipherVal)
@@ -298,7 +295,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, environmentID int64, args ...GetAll
 		if err != nil {
 			return nil, err
 		}
-		v.Type = sdk.VariableTypeFromString(typeVar)
+		v.Type = typeVar
 		v.Value, err = secret.DecryptS(v.Type, clearVal, cipherVal, c.clearsecret)
 		if err != nil {
 			return nil, err
@@ -327,7 +324,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 	eva := &sdk.EnvironmentVariableAudit{
 		Author:        u.Username,
 		EnvironmentID: environmentID,
-		Type:          sdk.AUDIT_ADD,
+		Type:          sdk.AuditAdd,
 		VariableAfter: variable,
 		VariableID:    variable.ID,
 		Versionned:    time.Now(),
@@ -380,7 +377,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 	eva := &sdk.EnvironmentVariableAudit{
 		Author:         u.Username,
 		EnvironmentID:  envID,
-		Type:           sdk.AUDIT_UPDATE,
+		Type:           sdk.AuditUpdate,
 		VariableBefore: &varBefore,
 		VariableAfter:  variable,
 		VariableID:     variable.ID,
@@ -414,7 +411,7 @@ func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 	eva := &sdk.EnvironmentVariableAudit{
 		Author:         u.Username,
 		EnvironmentID:  envID,
-		Type:           sdk.AUDIT_DELETE,
+		Type:           sdk.AuditDelete,
 		VariableBefore: variable,
 		VariableID:     variable.ID,
 		Versionned:     time.Now(),
@@ -457,4 +454,29 @@ func InsertAudit(db gorp.SqlExecutor, eva *sdk.EnvironmentVariableAudit) error {
 	*eva = sdk.EnvironmentVariableAudit(dbEnvVarAudit)
 	return nil
 
+}
+
+// LoadVariableAudits Load audits for the given variable
+func LoadVariableAudits(db gorp.SqlExecutor, envID, varID int64) ([]sdk.EnvironmentVariableAudit, error) {
+	var res []dbEnvironmentVariableAudit
+	query := "SELECT * FROM environment_variable_audit WHERE environment_id = $1 AND variable_id = $2 ORDER BY versionned DESC"
+	if _, err := db.Select(&res, query, envID, varID); err != nil {
+		if err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+		if err != nil && err == sql.ErrNoRows {
+			return []sdk.EnvironmentVariableAudit{}, nil
+		}
+	}
+
+	evas := make([]sdk.EnvironmentVariableAudit, len(res))
+	for i := range res {
+		dbEva := &res[i]
+		if err := dbEva.PostGet(db); err != nil {
+			return nil, err
+		}
+		pva := sdk.EnvironmentVariableAudit(*dbEva)
+		evas[i] = pva
+	}
+	return evas, nil
 }

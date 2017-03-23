@@ -4,10 +4,10 @@ import "time"
 
 // Variable represent a variable for a project or pipeline
 type Variable struct {
-	ID    int64        `json:"id"`
-	Name  string       `json:"name"`
-	Value string       `json:"value"`
-	Type  VariableType `json:"type"`
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
+	Type  string `json:"type"`
 }
 
 // VariableAudit represent audit for a variable
@@ -18,23 +18,20 @@ type VariableAudit struct {
 	Author     string     `json:"author"`
 }
 
-// VariableType defines the types of project, application and environment variable
-type VariableType string
-
 // Different type of Variable
 const (
-	SecretVariable     VariableType = "password"
-	TextVariable       VariableType = "text"
-	StringVariable     VariableType = "string"
-	KeyVariable        VariableType = "key"
-	BooleanVariable    VariableType = "boolean"
-	NumberVariable     VariableType = "number"
-	RepositoryVariable VariableType = "repository"
+	SecretVariable     = "password"
+	TextVariable       = "text"
+	StringVariable     = "string"
+	KeyVariable        = "key"
+	BooleanVariable    = "boolean"
+	NumberVariable     = "number"
+	RepositoryVariable = "repository"
 )
 
 var (
 	// AvailableVariableType list all exising variable type in CDS
-	AvailableVariableType = []VariableType{
+	AvailableVariableType = []string{
 		SecretVariable,
 		TextVariable,
 		StringVariable,
@@ -44,8 +41,8 @@ var (
 	}
 )
 
-// NeedPlaceholder returns true if variable type is either secret or key
-func NeedPlaceholder(t VariableType) bool {
+// NeedPlaceholder returns true if variable type is either secret or key 
+func NeedPlaceholder(t string) bool {
 	switch t {
 	case SecretVariable, KeyVariable:
 		return true
@@ -54,23 +51,12 @@ func NeedPlaceholder(t VariableType) bool {
 	}
 }
 
-// VariableTypeFromString return a valid VariableType from a string
-// Defaults to String
-func VariableTypeFromString(in string) VariableType {
-	switch in {
-	case string(SecretVariable):
-		return SecretVariable
-	case string(TextVariable):
-		return TextVariable
-	case string(StringVariable):
-		return StringVariable
-	case string(KeyVariable):
-		return KeyVariable
-	case string(BooleanVariable):
-		return BooleanVariable
-	case string(NumberVariable):
-		return NumberVariable
-	default:
-		return StringVariable
+// VariablerFind return a variable given its name if it exists in array
+func VariablerFind(vars []Variable, s string) *Variable {
+	for _, v := range vars {
+		if v.Name == s {
+			return &v
+		}
 	}
+	return nil
 }

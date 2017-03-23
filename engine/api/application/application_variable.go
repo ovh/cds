@@ -170,7 +170,7 @@ func GetAllVariable(db gorp.SqlExecutor, key, appName string, args ...FuncArg) (
 		if err != nil {
 			return nil, err
 		}
-		v.Type = sdk.VariableTypeFromString(typeVar)
+		v.Type = typeVar
 
 		if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
 			v.Value = string(cipherVal)
@@ -256,7 +256,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncA
 		if err != nil {
 			return nil, err
 		}
-		v.Type = sdk.VariableTypeFromString(typeVar)
+		v.Type = typeVar
 		v.Value, err = secret.DecryptS(v.Type, clearVal, cipherVal, c.clearsecret)
 		if err != nil {
 			return nil, err
@@ -289,7 +289,7 @@ func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID: app.ID,
-		Type:          sdk.AUDIT_ADD,
+		Type:          sdk.AuditAdd,
 		Author:        u.Username,
 		VariableAfter: &variable,
 		VariableID:    variable.ID,
@@ -334,7 +334,7 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Var
 
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID:  app.ID,
-		Type:           sdk.AUDIT_UPDATE,
+		Type:           sdk.AuditUpdate,
 		Author:         u.Username,
 		VariableAfter:  variable,
 		VariableBefore: variableBefore,
@@ -369,7 +369,7 @@ func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Var
 
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID:  app.ID,
-		Type:           sdk.AUDIT_DELETE,
+		Type:           sdk.AuditDelete,
 		Author:         u.Username,
 		VariableBefore: variable,
 		VariableID:     variable.ID,
@@ -431,4 +431,29 @@ func InserAudit(db gorp.SqlExecutor, ava *sdk.ApplicationVariableAudit) error {
 	}
 	*ava = sdk.ApplicationVariableAudit(dbAppVarAudit)
 	return nil
+}
+
+// LoadVariableAudits Load audits for the given variable
+func LoadVariableAudits(db gorp.SqlExecutor, appID, varID int64) ([]sdk.ApplicationVariableAudit, error) {
+	var res []dbApplicationVariableAudit
+	query := "SELECT * FROM application_variable_audit WHERE application_id = $1 AND variable_id = $2 ORDER BY versionned DESC"
+	if _, err := db.Select(&res, query, appID, varID); err != nil {
+		if err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+		if err != nil && err == sql.ErrNoRows {
+			return []sdk.ApplicationVariableAudit{}, nil
+		}
+	}
+
+	avas := make([]sdk.ApplicationVariableAudit, len(res))
+	for i := range res {
+		dbAva := &res[i]
+		if err := dbAva.PostGet(db); err != nil {
+			return nil, err
+		}
+		ava := sdk.ApplicationVariableAudit(*dbAva)
+		avas[i] = ava
+	}
+	return avas, nil
 }

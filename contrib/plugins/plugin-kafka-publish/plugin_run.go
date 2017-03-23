@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"math"
 	"os"
@@ -10,12 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsamin/go-shredder"
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
 var (
-	version = "0.1"
+	version = "0.2"
 	job     plugin.IJob
 )
 
@@ -23,11 +25,13 @@ var (
 func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	job = j
 	kafka := job.Arguments().Get("kafkaAddresses")
-	key := job.Arguments().Get("kafkaKey")
+	user := job.Arguments().Get("kafkaUser")
+	password := job.Arguments().Get("kafkaPassword")
+	group := job.Arguments().Get("kafkaGroup")
 	topic := job.Arguments().Get("topic")
 
-	if key == "" || kafka == "" || topic == "" {
-		Logf("Kafka is not configured")
+	if user == "" || password == "" || kafka == "" || topic == "" {
+		Logf("Kafka is not configured : %+v", job.Arguments().Data)
 		return plugin.Fail
 	}
 
@@ -68,7 +72,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	//Send the context message
 	ctx := kafkapublisher.NewContext(job.ID(), files)
 
-	producer, err := initKafkaProducer(kafka, key)
+	producer, err := initKafkaProducer(kafka, user, password)
 	if err != nil {
 		Logf("Unable to connect to kafka : %s", err)
 		return plugin.Fail
@@ -89,27 +93,36 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 	//Send all the files
 	for _, f := range files {
-		kf, err := kafkapublisher.OpenFile(f)
-		kf.ContextID = &ctx.ActionID
+		aes, err := getAESEncryptionOptions(password)
 		if err != nil {
-			Logf("Unable to open file %s : %s", f, err)
+			Logf("Unable to shred file %s : %s", f, err)
+			return plugin.Fail
+		}
+		var opts = &shredder.Opts{
+			ChunkSize:     512 * 1024,
+			AESEncryption: aes,
+		}
+
+		//If provided use GPG encryption
+		if pubKey != "" {
+			opts.AESEncryption = nil
+			opts.GPGEncryption = &shredder.GPGEncryption{
+				PublicKey: []byte(pubKey),
+			}
+		}
+
+		chunks, err := shredder.ShredFile(f, fmt.Sprintf("%d", job.ID()), opts)
+		if err != nil {
+			Logf("Unable to shred file %s : %s", f, err)
 			return plugin.Fail
 		}
 
-		if pubKey == "" {
-			Logf("File %s won't be encrypted during transfer through kafka", f)
-		} else {
-			if err := kf.EncryptContent([]byte(pubKey)); err != nil {
-				Logf("Unable to encrypt file content %s : %s", f, err)
-				return plugin.Fail
-			}
-		}
-		chunks, err := kf.KafkaMessages(512)
+		datas, err := kafkapublisher.KafkaMessages(chunks)
 		if err != nil {
 			Logf("Unable to compute chunks for file %s : %s", f, err)
 			return plugin.Fail
 		}
-		if _, _, err := sendDataOnKafka(producer, topic, chunks); err != nil {
+		if _, _, err := sendDataOnKafka(producer, topic, datas); err != nil {
 			Logf("Unable to send chunks through kafka : %s", err)
 			return plugin.Fail
 		}
@@ -135,7 +148,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	defer ticker.Stop()
 
 	//Wait for ack
-	ack, err := ackFromKafka(kafka, ackTopic, "cds", key, time.Duration(timeout)*time.Second, job.ID())
+	ack, err := ackFromKafka(kafka, ackTopic, group, user, password, time.Duration(timeout)*time.Second, job.ID())
 	if err != nil {
 		Logf("Failed to get ack on topic %s: %s", ackTopic, err)
 		return plugin.Fail

@@ -627,15 +627,13 @@ func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 }
 
 func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 	appName := vars["permApplicationName"]
 
-	err := r.ParseForm()
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
 		log.Warning("getPipelineHistoryHandler> Cannot parse form: %s\n", err)
 		return sdk.ErrUnknownError
 	}
@@ -646,55 +644,54 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 
 	var limit int
 	if limitString != "" {
-		limit, err = strconv.Atoi(limitString)
-		if err != nil {
-			return err
+		var erra error
+		limit, erra = strconv.Atoi(limitString)
+		if erra != nil {
+			return erra
 		}
 	} else {
 		limit = 20
 	}
 
-	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if err != nil {
-		if err != sdk.ErrPipelineNotFound {
-			log.Warning("getPipelineHistoryHandler> Cannot load pipelines: %s\n", err)
+	p, errlp := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	if errlp != nil {
+		if errlp != sdk.ErrPipelineNotFound {
+			log.Warning("getPipelineHistoryHandler> Cannot load pipelines: %s\n", errlp)
 		}
-		return err
+		return errlp
 	}
 
-	a, err := application.LoadByName(db, projectKey, appName, c.User)
-	if err != nil {
-		if err != sdk.ErrApplicationNotFound {
-			log.Warning("getPipelineHistoryHandler> Cannot load application %s: %s\n", appName, err)
+	a, errln := application.LoadByName(db, projectKey, appName, c.User)
+	if errln != nil {
+		if errln != sdk.ErrApplicationNotFound {
+			log.Warning("getPipelineHistoryHandler> Cannot load application %s: %s\n", appName, errln)
 		}
-		return err
+		return errln
 	}
 
 	var env *sdk.Environment
 	if envName == "" || envName == sdk.DefaultEnv.Name {
 		env = &sdk.DefaultEnv
 	} else {
-		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
-		if err != nil {
-			if err != sdk.ErrNoEnvironment {
-				log.Warning("getPipelineHistoryHandler> Cannot load environment %s: %s\n", envName, err)
+		var errle error
+		env, errle = environment.LoadEnvironmentByName(db, projectKey, envName)
+		if errle != nil {
+			if errle != sdk.ErrNoEnvironment {
+				log.Warning("getPipelineHistoryHandler> Cannot load environment %s: %s\n", envName, errle)
 			}
-			return err
-
+			return errle
 		}
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
 		log.Warning("getPipelineHistoryHandler> No enought right on this environment %s: \n", envName)
 		return sdk.ErrForbidden
-
 	}
 
-	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName)
-	if err != nil {
-		log.Warning("getPipelineHistoryHandler> cannot load pipeline %s history: %s\n", p.Name, err)
-		return err
-
+	pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName)
+	if errl != nil {
+		log.Warning("getPipelineHistoryHandler> cannot load pipeline %s history: %s\n", p.Name, errl)
+		return errl
 	}
 
 	return WriteJSON(w, r, pbs, http.StatusOK)
@@ -787,6 +784,8 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	defer tx.Rollback()
 
+	job.Enabled = true
+	job.Action.Enabled = true
 	if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
 		log.Warning("addJoinedActionToPipelineHandler> Cannot insert job: %s\n", err)
 		return err

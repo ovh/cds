@@ -301,7 +301,7 @@ func (c *LDAPClient) Authentify(db gorp.SqlExecutor, username, password string) 
 		return c.local.Authentify(db, username, password)
 	}
 
-	log.Debug("LDAP> Bind sucessfull %s", username)
+	log.Debug("LDAP> Bind successful %s", username)
 
 	//Search user, refresh data and update database
 	if _, err := c.searchAndInsertOrUpdateUser(db, username); err != nil {

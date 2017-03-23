@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -32,6 +33,7 @@ func insertActionChild(db gorp.SqlExecutor, actionID int64, child sdk.Action, ex
 
 	// Insert all parameters
 	for i := range child.Parameters {
+		log.Debug("insertActionChild> %s : %v", child.Name, child.Parameters[i])
 		err = insertChildActionParameter(db, id, actionID, child.ID, child.Parameters[i])
 		if err != nil {
 			return err
@@ -135,7 +137,7 @@ func loadChildActionParameterValue(db gorp.SqlExecutor, edgeID int64) ([]sdk.Par
 		if err != nil {
 			return nil, err
 		}
-		p.Type = sdk.ParameterType(pType)
+		p.Type = pType
 		p.Value = val
 
 		params = append(params, p)

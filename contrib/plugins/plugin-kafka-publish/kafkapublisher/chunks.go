@@ -2,67 +2,129 @@ package kafkapublisher
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
-	"io"
-	"sort"
+
+	"github.com/fsamin/go-shredder"
 )
 
-// Read reads up to len(p) bytes into p. It returns the number of bytes read (0 <= n <= len(p)) and any error encountered.
-// Even if Read returns n < len(p), it may use all of p as scratch space during the call. If some data is available but not len(p) bytes, Read conventionally returns what is available instead of waiting for more.
-// When Read encounters an error or end-of-file condition after successfully reading n > 0 bytes, it returns the number of bytes read. It may return the (non-nil) error from the same call or return the error (and n == 0) from a subsequent call. An instance of this general case is that a Reader
-// returning a non-zero number of bytes at the end of the input stream may return either err == EOF or err == nil. The next Read should return 0, EOF.
-// Callers should always process the n > 0 bytes returned before considering the error err. Doing so correctly handles I/O errors that happen after reading some bytes and also both of the allowed EOF behaviors.
-func (c *Chunk) Read(p []byte) (n int, err error) {
-	if len(p) == 0 {
-		return 0, nil
+//MagicNumber is the magicNumber for chunks
+var MagicNumber = []byte("!!CDS!!")
+
+func contextData(ctx *shredder.Ctx) []byte {
+	r := []byte{}
+	uuidSize := make([]byte, 4)
+	binary.LittleEndian.PutUint32(uuidSize, uint32(len(ctx.UUID)))
+	r = append(r, []byte(uuidSize)...)
+	r = append(r, []byte(ctx.UUID)...)
+	chunksNumber := make([]byte, 4)
+	binary.LittleEndian.PutUint32(chunksNumber, uint32(ctx.ChunksNumber))
+	r = append(r, []byte(chunksNumber)...)
+	r = append(r, []byte(ctx.ContentType)...)
+	return r
+}
+
+//KafkaMessages returns bunch of bytes
+func KafkaMessages(chunks shredder.Chunks) ([][]byte, error) {
+	if len(chunks) == 0 {
+		return nil, nil
 	}
 
-	if len(c.Content) <= len(p) {
-		return copy(p, c.Content), io.EOF
-	}
+	ctx := chunks.Context()
+	headerData := contextData(ctx)
 
-	return copy(p, c.Content[:len(p)]), nil
-}
-
-//Close close the chunk
-func (c *Chunk) Close() error {
-	return nil
-}
-func (s Chunks) Len() int {
-	return len(s)
-}
-func (s Chunks) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-func (s Chunks) Less(i, j int) bool {
-	return s[i].Offset < s[j].Offset
-}
-
-//IsFileComplete checks if the chunks are enough to build the file
-func (s Chunks) IsFileComplete(f *File) bool {
-	return f.ChunksNumber == len(s)
-}
-
-//Reassemble compute the file content from a chunks list
-func (s Chunks) Reassemble(f *File) error {
-	sort.Sort(s)
-	//Check id and filenames
-	for _, c := range s {
-		if c.FileID != f.ID || c.Filename != f.Name {
-			return fmt.Errorf("Chunks doesn't match")
+	var res = [][]byte{}
+	for _, c := range chunks {
+		//Considering 4 bytes to store header size
+		headerSize := make([]byte, 4)
+		//Computing header size
+		buf := new(bytes.Buffer)
+		var num = uint32(len(headerData))
+		err := binary.Write(buf, binary.LittleEndian, num)
+		if err != nil {
+			return nil, err
 		}
+		headerSize = buf.Bytes()
+		//Push magic number
+		r := []byte{}
+		r = append(r, MagicNumber...)
+		//Push header size in bytes array
+		r = append(r, headerSize...)
+		//Push header data in bytes array
+		r = append(r, headerData...)
+		//Push chunck offset in bytes array
+		offset := make([]byte, 4)
+		binary.LittleEndian.PutUint32(offset, uint32(c.Offset))
+		r = append(r, offset...)
+		//Push chunck data in bytes array
+		r = append(r, c.Data...)
+		//Message ready
+		res = append(res, r)
+	}
+	return res, nil
+}
+
+//ReadBytes transform a bytes array in a Chunk struct
+func ReadBytes(b []byte) (*shredder.Chunk, error) {
+	//Read the magic number
+	magicNumber := b[:len(MagicNumber)]
+	if !bytes.Equal(magicNumber, MagicNumber) {
+		return nil, fmt.Errorf("Where is the magic number ?")
 	}
 
-	//Check chunks
-	if f.ChunksNumber != len(s) {
-		return fmt.Errorf("Missing chunks for file %s (%d %d)", f.Name, f.ChunksNumber, len(s))
+	//Thea the headersize
+	headerSizeBuff := b[len(MagicNumber) : len(MagicNumber)+4]
+	var headerSize uint32
+	if err := binary.Read(bytes.NewBuffer(headerSizeBuff), binary.LittleEndian, &headerSize); err != nil {
+		return nil, err
 	}
 
-	//Construct file
-	var content = []byte{}
-	for _, c := range s {
-		content = append(content, c.Content...)
+	//Read the the header data
+	headerData := b[len(MagicNumber)+4 : len(MagicNumber)+4+int(headerSize)]
+	//Read the UUID size
+	uuidSizeBuffer := headerData[:4]
+	var uuidSize uint32
+	if err := binary.Read(bytes.NewBuffer(uuidSizeBuffer), binary.LittleEndian, &uuidSize); err != nil {
+		return nil, err
 	}
-	f.Content = bytes.NewBuffer(content)
-	return nil
+	//Read the uuid
+	uuid := headerData[4 : 4+uuidSize]
+	//Read the chunksNumber
+	chunksNumberBuff := headerData[4+uuidSize : 4+4+uuidSize]
+	var chunksNumber uint32
+	if err := binary.Read(bytes.NewBuffer(chunksNumberBuff), binary.LittleEndian, &chunksNumber); err != nil {
+		return nil, err
+	}
+	//Read the ContentType
+	contentType := headerData[4+4+uuidSize:]
+
+	//Read the offset
+	//Read the UUID size
+	offsetBuffer := b[len(MagicNumber)+4+int(headerSize) : len(MagicNumber)+4+int(headerSize)+4]
+	var offset uint32
+	if err := binary.Read(bytes.NewBuffer(offsetBuffer), binary.LittleEndian, &offset); err != nil {
+		return nil, err
+	}
+
+	chunkData := b[len(MagicNumber)+4+int(headerSize)+4:]
+
+	ctx := &shredder.Ctx{
+		ContentType:  string(contentType),
+		UUID:         string(uuid),
+		ChunksNumber: int(chunksNumber),
+	}
+
+	c := &shredder.Chunk{
+		Ctx:    ctx,
+		Offset: int(offset),
+		Data:   chunkData,
+	}
+
+	return c, nil
+}
+
+//IsChunk test magic number is the bytes array
+func IsChunk(data []byte) bool {
+	magicNumber := data[:len(MagicNumber)]
+	return bytes.Equal(magicNumber, MagicNumber)
 }

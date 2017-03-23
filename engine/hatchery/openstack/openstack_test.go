@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -30,7 +31,7 @@ func TestCreateServer(t *testing.T) {
 		assert.NotNil(t, body)
 		t.Log(string(body))
 
-		assert.Equal(t, `{"server":{"id":"","name":"test","imageRef":"image","flavorRef":"flavor","user_data":"blabla\u0008labla","metadata":{"worker":"test"},"networks":[{"uuid":"network","fixed_ip":"192.168.0.1"}],"links":null,"status":"","key_name":"","addresses":null,"updated":"","personality":[{"path":"/worker","contents":"dGhpcyBpcyB0aGUgY29udGVudA=="}]}}`, string(body))
+		assert.Equal(t, `{"server":{"id":"","name":"test","imageRef":"image","flavorRef":"flavor","user_data":"blabla\u0008labla","metadata":{"hatcheryName":"test","worker":"test"},"networks":[{"uuid":"network","fixed_ip":"192.168.0.1"}],"links":null,"status":"","key_name":"","addresses":null,"updated":"","personality":[{"path":"/worker","contents":"dGhpcyBpcyB0aGUgY29udGVudA=="}]}}`, string(body))
 
 	})
 	http.Handle("/TestCreateServer/", router)
@@ -46,7 +47,8 @@ func TestCreateServer(t *testing.T) {
 		},
 	}
 
-	err := createServer(s.URL+"/TestCreateServer", "", "test", "image", "flavor", "network", "192.168.0.1", "blabla\blabla", p)
+	h := HatcheryCloud{hatch: &sdk.Hatchery{Name: "test"}}
+	err := h.createServer(s.URL+"/TestCreateServer", "", "test", "image", "flavor", "network", "192.168.0.1", "blabla\blabla", p)
 	test.NoError(t, err)
 
 	assert.NotZero(t, w.Code)

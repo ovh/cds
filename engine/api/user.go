@@ -24,32 +24,23 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	vars := mux.Vars(r)
 	username := vars["name"]
 
-	u, err := user.LoadUserWithoutAuth(db, username)
-	if err != nil {
-		log.Warning("deleteUserHandler> Cannot load user from db: %s\n", err)
-		return err
-
+	u, errLoad := user.LoadUserWithoutAuth(db, username)
+	if errLoad != nil {
+		return sdk.WrapError(errLoad, "deleteUserHandler> Cannot load user from db")
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deleteUserHandler> cannot start transaction: %s", err)
-		return err
-
+	tx, errb := db.Begin()
+	if errb != nil {
+		return sdk.WrapError(errb, "deleteUserHandler> cannot start transaction")
 	}
 	defer tx.Rollback()
 
-	err = user.DeleteUserWithDependencies(tx, u)
-	if err != nil {
-		return err
-
+	if err := user.DeleteUserWithDependencies(tx, u); err != nil {
+		return sdk.WrapError(err, "deleteUserHandler> cannot delete user")
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("deleteUserHandler> cannot commit transaction: %s", err)
-		return err
-
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "deleteUserHandler> cannot commit transaction")
 	}
 
 	return nil
@@ -62,13 +53,11 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 
 	u, err := user.LoadUserWithoutAuth(db, username)
 	if err != nil {
-		fmt.Printf("getUserHandler: Cannot load user from db: %s\n", err)
-		return err
+		return sdk.WrapError(err, "getUserHandler: Cannot load user from db")
 	}
 
 	if err = loadUserPermissions(db, u); err != nil {
-		fmt.Printf("getUserHandler: Cannot get user group and project from db: %s\n", err)
-		return err
+		return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
 	}
 
 	return WriteJSON(w, r, u, http.StatusOK)
@@ -76,7 +65,6 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 
 // getUserGroupsHandler returns groups of the user
 func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	log.Debug("getUserGroupsHandler> get groups for user %d", c.User.ID)
 
 	var groups, groupsAdmin []sdk.Group
@@ -118,11 +106,9 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	vars := mux.Vars(r)
 	username := vars["name"]
 
-	userDB, err := user.LoadUserWithoutAuth(db, username)
-	if err != nil {
-		fmt.Printf("getUserHandler: Cannot load user from db: %s\n", err)
-		return err
-
+	userDB, errload := user.LoadUserWithoutAuth(db, username)
+	if errload != nil {
+		return sdk.WrapError(errload, "getUserHandler: Cannot load user from db")
 	}
 
 	var userBody sdk.User
@@ -133,14 +119,11 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	userBody.ID = userDB.ID
 
 	if !user.IsValidEmail(userBody.Email) {
-		log.Warning("updateUserHandler: Email address %s is not valid", userBody.Email)
-		return sdk.ErrWrongRequest
+		return sdk.WrapError(sdk.ErrWrongRequest, "updateUserHandler: Email address %s is not valid", userBody.Email)
 	}
 
-	err = user.UpdateUser(db, userBody)
-	if err != nil {
-		log.Warning("updateUserHandler: Cannot update user table: %s", err)
-		return err
+	if err := user.UpdateUser(db, userBody); err != nil {
+		return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
 	}
 
 	return nil
@@ -150,10 +133,8 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 func GetUsers(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	users, err := user.LoadUsers(db)
 	if err != nil {
-		log.Warning("GetUsers: Cannot load user from db: %s\n", err)
-		return err
+		return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 	}
-
 	return WriteJSON(w, r, users, http.StatusOK)
 }
 
@@ -240,7 +221,6 @@ func ResetUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	//returns forbidden if LDAP mode is activated
 	if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
 		return sdk.ErrForbidden
-
 	}
 
 	// Get user name in URL
@@ -298,7 +278,6 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	//returns forbidden if LDAP mode is activated
 	if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
 		return sdk.ErrForbidden
-
 	}
 
 	// Get user name in URL

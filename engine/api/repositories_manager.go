@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
@@ -581,92 +582,69 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	rmName := vars["name"]
 	hookIDString := vars["hookId"]
 
-	hookID, err := strconv.ParseInt(hookIDString, 10, 64)
-	if err != nil {
-		return sdk.ErrInvalidID
-
+	hookID, errparse := strconv.ParseInt(hookIDString, 10, 64)
+	if errparse != nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "deleteHookOnRepositoriesManagerHandler> Unable to parse hook id")
 	}
 
-	app, err := application.LoadByName(db, projectKey, appName, c.User)
-	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Application not found %s", err)
-		return err
-
+	app, errload := application.LoadByName(db, projectKey, appName, c.User)
+	if errload != nil {
+		return sdk.WrapError(errload, "deleteHookOnRepositoriesManagerHandler> Application %s/%s not found ", projectKey, appName)
 	}
 
-	h, err := hook.LoadHook(db, hookID)
-	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot load hook %d: %s", hookID, err)
-		return err
-
+	h, errhook := hook.LoadHook(db, hookID)
+	if errhook != nil {
+		return sdk.WrapError(errhook, "deleteHookOnRepositoriesManagerHandler> Unable to load hook %d ", hookID)
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot start transaction: %s", err)
-		return err
-
+	tx, errtx := db.Begin()
+	if errtx != nil {
+		return sdk.WrapError(errtx, "deleteHookOnRepositoriesManagerHandler> Unable to start transaction")
 	}
 	defer tx.Rollback()
 
-	if err = hook.DeleteHook(tx, h.ID); err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot get hook: %s", err)
-		return err
-
+	if errdelete := hook.DeleteHook(tx, h.ID); errdelete != nil {
+		return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Unable to delete hook %d", h.ID)
 	}
 
-	if err = application.UpdateLastModified(tx, app, c.User); err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
-		return err
-
+	if errupdate := application.UpdateLastModified(tx, app, c.User); errupdate != nil {
+		return sdk.WrapError(errupdate, "deleteHookOnRepositoriesManagerHandler> Unable to update last modified")
 	}
 
-	if err = tx.Commit(); err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot commit transaction: %s", err)
-		return err
-
+	if errtx := tx.Commit(); errtx != nil {
+		return sdk.WrapError(errtx, "deleteHookOnRepositoriesManagerHandler> Unable to commit transaction")
 	}
 
-	app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
-	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot load hook from application %s: %s", app.Name, err)
-		return err
-
+	var errW error
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
 	}
 
-	b, e := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
-	if e != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s): %s", rmName, projectKey, appName, e)
-		return e
-
+	b, errcheck := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
+	if errcheck != nil {
+		return sdk.WrapError(errcheck, "deleteHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s)", rmName, projectKey, appName)
 	}
 
 	if !b {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Applicaiton %s is not attached to any repository", appName)
-		return sdk.ErrNoReposManagerClientAuth
-
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "deleteHookOnRepositoriesManagerHandler> Applicaiton %s is not attached to any repository", appName)
 	}
 
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-
+	client, errauth := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
+	if errauth != nil {
+		return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, rmName)
 	}
 
 	t := strings.Split(app.RepositoryFullname, "/")
 	if len(t) != 2 {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Application %s repository fullname is not valid %s", app.Name, app.RepositoryFullname)
-		return sdk.ErrRepoNotFound
+		return sdk.WrapError(sdk.ErrRepoNotFound, "deleteHookOnRepositoriesManagerHandler> Application %s repository fullname is not valid %s", app.Name, app.RepositoryFullname)
 	}
 
 	s := viper.GetString("api_url") + hook.HookLink
 	link := fmt.Sprintf(s, h.UID, t[0], t[1])
 
-	if err := client.DeleteHook(app.RepositoryFullname, link); err != nil {
-		log.Warning("deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash: %s", err)
-		return err
-
+	if errdelete := client.DeleteHook(app.RepositoryFullname, link); errdelete != nil {
+		return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash")
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)
