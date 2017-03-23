@@ -215,7 +215,7 @@ func queuePolling() {
 		}
 
 		firstViewQueue = false
-		time.Sleep(5 * time.Second)
+		time.Sleep(4 * time.Second)
 	}
 }
 

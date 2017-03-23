@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -35,7 +36,7 @@ func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
 }
 
 //PostGet is a DB Hook on PipelineBuildJob to get jobs and params as from JSON in DB
-func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
+func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor, now time.Time) error {
 	h := sdk.Hatchery{}
 	if cache.Get(keyBookJob(p.ID), &h) {
 		p.BookedBy = h
@@ -50,6 +51,8 @@ func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 	if err := json.Unmarshal(p.SpawnInfosJSON, &p.SpawnInfos); err != nil {
 		return err
 	}
+
+	p.QueuedSeconds = now.Unix() - p.Queued.Unix()
 
 	return nil
 }
