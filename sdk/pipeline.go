@@ -137,14 +137,13 @@ type RunRequest struct {
 func ListPipelines(projectKey string) ([]Pipeline, error) {
 	url := fmt.Sprintf("/project/%s/pipeline", projectKey)
 
-	data, _, err := Request("GET", url, nil)
-	if err != nil {
-		return nil, err
+	data, _, errr := Request("GET", url, nil)
+	if errr != nil {
+		return nil, errr
 	}
 
 	var pip []Pipeline
-	err = json.Unmarshal(data, &pip)
-	if err != nil {
+	if err := json.Unmarshal(data, &pip); err != nil {
 		return nil, err
 	}
 
@@ -154,19 +153,18 @@ func ListPipelines(projectKey string) ([]Pipeline, error) {
 // GetPipeline retrieves pipeline definition from CDS
 func GetPipeline(key, name string) (*Pipeline, error) {
 	path := fmt.Sprintf("/project/%s/pipeline/%s", key, name)
-	data, _, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
+	data, _, errr := Request("GET", path, nil)
+	if errr != nil {
+		return nil, errr
 	}
 
 	p := &Pipeline{}
-	err = json.Unmarshal(data, p)
-	if err != nil {
+	if err := json.Unmarshal(data, p); err != nil {
 		return nil, err
 	}
 
 	p.ProjectKey = key
-	return p, err
+	return p, nil
 }
 
 // AddPipeline creates a new empty pipeline
@@ -628,23 +626,23 @@ func UpdateParameterInPipeline(projectKey, pipelineName, paramName, paramValue, 
 		Description: paramDescription,
 	}
 
-	data, err := json.Marshal(newParam)
-	if err != nil {
-		return err
+	data, errm := json.Marshal(newParam)
+	if errm != nil {
+		return errm
 	}
 
 	path := fmt.Sprintf("/project/%s/pipeline/%s/parameter/%s", projectKey, pipelineName, paramName)
-	data, code, err := Request("PUT", path, data)
-	if err != nil {
-		return err
+	data, code, errr := Request("PUT", path, data)
+	if errr != nil {
+		return errr
 	}
 
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
+
+	if err := DecodeError(data); err != nil {
+		return err
 	}
 
 	return nil
@@ -653,17 +651,17 @@ func UpdateParameterInPipeline(projectKey, pipelineName, paramName, paramValue, 
 // RemoveParameterFromPipeline  remove a parameter from a pipeline
 func RemoveParameterFromPipeline(projectKey, pipelineName, paramName string) error {
 	path := fmt.Sprintf("/project/%s/pipeline/%s/parameter/%s", projectKey, pipelineName, paramName)
-	data, code, err := Request("DELETE", path, nil)
-	if err != nil {
-		return err
+	data, code, errr := Request("DELETE", path, nil)
+	if errr != nil {
+		return errr
 	}
 
 	if code != http.StatusCreated && code != http.StatusOK {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
+
+	if err := DecodeError(data); err != nil {
+		return err
 	}
 
 	return nil
@@ -683,16 +681,15 @@ func GetPipelineBuildStatus(proj, app, pip, env string, buildNumber int64) (Pipe
 			proj, app, pip, buildNumber, url.QueryEscape(env))
 	}
 
-	data, code, err := Request("GET", uri, nil)
-	if err != nil {
-		return pb, err
+	data, code, errr := Request("GET", uri, nil)
+	if errr != nil {
+		return pb, errr
 	}
 	if code >= 300 {
 		return pb, fmt.Errorf("HTTP %d", code)
 	}
 
-	err = json.Unmarshal(data, &pb)
-	if err != nil {
+	if err := json.Unmarshal(data, &pb); err != nil {
 		return pb, err
 	}
 
@@ -723,18 +720,57 @@ func GetBuildingPipelines() ([]PipelineBuild, error) {
 func GetBuildingPipelineByHash(hash string) ([]PipelineBuild, error) {
 	var pbs []PipelineBuild
 
-	data, code, err := Request("GET", "/mon/building/"+hash, nil)
-	if err != nil {
-		return nil, err
+	data, code, errr := Request("GET", "/mon/building/"+hash, nil)
+	if errr != nil {
+		return nil, errr
 	}
 	if code >= 300 {
 		return nil, fmt.Errorf("HTTP %d", code)
 	}
 
-	err = json.Unmarshal(data, &pbs)
-	if err != nil {
+	if err := json.Unmarshal(data, &pbs); err != nil {
 		return nil, err
 	}
 
 	return pbs, nil
+}
+
+// BookPipelineBuildJob books a job for a Hatchery
+func BookPipelineBuildJob(pipelineBuildJobID int64) error {
+	path := fmt.Sprintf("/queue/%d/book", pipelineBuildJobID)
+	data, code, err := Request("POST", path, nil)
+	if err != nil {
+		return fmt.Errorf("HTTP %d err:%s", code, err)
+	}
+	if code != http.StatusOK {
+		return fmt.Errorf("HTTP %d body:%s", code, string(data))
+	}
+	return nil
+}
+
+// AddSpawnInfosPipelineBuildJob books a job for a Hatchery
+func AddSpawnInfosPipelineBuildJob(pipelineBuildJobID int64, infos []SpawnInfo) error {
+	data, errm := json.Marshal(infos)
+	if errm != nil {
+		return errm
+	}
+
+	path := fmt.Sprintf("/queue/%d/spawn/infos", pipelineBuildJobID)
+	out, code, err := Request("POST", path, data)
+	if err != nil {
+		return fmt.Errorf("HTTP %d err:%s", code, err)
+	}
+	if code != http.StatusOK {
+		return fmt.Errorf("HTTP %d body:%s", code, string(out))
+	}
+	return nil
+}
+
+// Translate translates messages in pipelineBuild
+func (p *PipelineBuild) Translate(lang string) {
+	for ks := range p.Stages {
+		for kj := range p.Stages[ks].PipelineBuildJobs {
+			p.Stages[ks].PipelineBuildJobs[kj].Translate(lang)
+		}
+	}
 }

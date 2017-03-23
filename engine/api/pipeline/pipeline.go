@@ -197,14 +197,14 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 	var pip []sdk.Pipeline
 
 	var rows *sql.Rows
-	var err error
+	var errquery error
 
 	if user == nil || user.Admin {
 		query := `SELECT id, name, project_id, type, last_modified
 			  FROM pipeline
 			  WHERE project_id = $1
 			  ORDER BY pipeline.name`
-		rows, err = db.Query(query, projectID)
+		rows, errquery = db.Query(query, projectID)
 	} else {
 		query := `SELECT distinct(pipeline.id), pipeline.name, pipeline.project_id, pipeline.type, last_modified
 			  FROM pipeline
@@ -213,11 +213,11 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 			  WHERE group_user.user_id = $1
 			  AND pipeline.project_id = $2
 			  ORDER by pipeline.name`
-		rows, err = db.Query(query, user.ID, projectID)
+		rows, errquery = db.Query(query, user.ID, projectID)
 	}
 
-	if err != nil {
-		return nil, err
+	if errquery != nil {
+		return nil, errquery
 	}
 	defer rows.Close()
 
@@ -247,7 +247,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 		pip = append(pip, p)
 	}
 
-	return pip, err
+	return pip, nil
 }
 
 // LoadPipelineByGroup loads all pipelines where group has access
@@ -288,22 +288,22 @@ func updateParamInList(params []sdk.Parameter, paramAction sdk.Parameter) (bool,
 	return false, params
 }
 
+// LoadGroupByPipeline load group permission on one pipeline
 func LoadGroupByPipeline(db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
 	query := `SELECT "group".id,"group".name,pipeline_group.role FROM "group"
 	 		  JOIN pipeline_group ON pipeline_group.group_id = "group".id
 	 		  WHERE pipeline_group.pipeline_id = $1 ORDER BY "group".name ASC`
 
-	rows, err := db.Query(query, pipeline.ID)
-	if err != nil {
-		return err
+	rows, errq := db.Query(query, pipeline.ID)
+	if errq != nil {
+		return errq
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var group sdk.Group
 		var perm int
-		err = rows.Scan(&group.ID, &group.Name, &perm)
-		if err != nil {
+		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
 			return err
 		}
 		pipeline.GroupPermission = append(pipeline.GroupPermission, sdk.GroupPermission{

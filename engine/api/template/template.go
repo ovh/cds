@@ -4,7 +4,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/templateextension"
@@ -13,9 +12,8 @@ import (
 )
 
 // ApplyTemplate creates an application and configure it with given template
-func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]msg.Message, error) {
+func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]sdk.Message, error) {
 	var app *sdk.Application
-	var err error
 
 	if opts.TemplateName == templateextension.EmptyTemplate.Name {
 		app = &sdk.Application{
@@ -25,45 +23,46 @@ func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOpt
 
 	} else {
 		//Get the template
-		sdktmpl, err := templateextension.LoadByName(db, opts.TemplateName)
-		if err != nil {
-			return nil, err
+		sdktmpl, errl := templateextension.LoadByName(db, opts.TemplateName)
+		if errl != nil {
+			return nil, errl
 		}
 
 		// Get the go-plugin instance
-		templ, deferFunc, err := templateextension.Instance(sdktmpl, user, sessionKey)
+		templ, deferFunc, erri := templateextension.Instance(sdktmpl, user, sessionKey)
 		if deferFunc != nil {
 			defer deferFunc()
 		}
-		if err != nil {
-			log.Warning("ApplyTemplate> error getting template Extension instance : %s", err)
-			return nil, err
+		if erri != nil {
+			log.Warning("ApplyTemplate> error getting template Extension instance : %s", erri)
+			return nil, erri
 		}
 
 		// Apply the template
-		app, err = templateextension.Apply(db, templ, proj, opts.TemplateParams, opts.ApplicationName)
-		if err != nil {
-			log.Warning("ApplyTemplate> error applying template : %s", err)
-			return nil, err
+		var erra error
+		app, erra = templateextension.Apply(db, templ, proj, opts.TemplateParams, opts.ApplicationName)
+		if erra != nil {
+			log.Warning("ApplyTemplate> error applying template : %s", erra)
+			return nil, erra
 		}
 
 		deferFunc()
 	}
 
 	//Start a new transaction
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("ApplyTemplate> error beginning transaction : %s", err)
-		return nil, err
+	tx, errb := db.Begin()
+	if errb != nil {
+		log.Warning("ApplyTemplate> error beginning transaction : %s", errb)
+		return nil, errb
 	}
 
 	defer tx.Rollback()
 
 	// Import the application
 	done := make(chan bool)
-	msgChan := make(chan msg.Message)
-	msgList := []msg.Message{}
-	go func(array *[]msg.Message) {
+	msgChan := make(chan sdk.Message)
+	msgList := []sdk.Message{}
+	go func(array *[]sdk.Message) {
 		for {
 			m, more := <-msgChan
 			if !more {
@@ -101,7 +100,7 @@ func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOpt
 }
 
 // ApplyTemplateOnApplication configure an application it with given template
-func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Application, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]msg.Message, error) {
+func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Application, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]sdk.Message, error) {
 	//Get the template
 	sdktmpl, err := templateextension.LoadByName(db, opts.TemplateName)
 	if err != nil {
@@ -138,9 +137,9 @@ func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Appl
 	defer tx.Rollback()
 
 	done := make(chan bool)
-	msgChan := make(chan msg.Message)
-	msgList := []msg.Message{}
-	go func(array *[]msg.Message) {
+	msgChan := make(chan sdk.Message)
+	msgList := []sdk.Message{}
+	go func(array *[]sdk.Message) {
 		for {
 			m, more := <-msgChan
 			if !more {

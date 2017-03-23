@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
@@ -35,12 +36,21 @@ func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
 
 //PostGet is a DB Hook on PipelineBuildJob to get jobs and params as from JSON in DB
 func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
+	h := sdk.Hatchery{}
+	if cache.Get(keyBookJob(p.ID), &h) {
+		p.BookedBy = h
+	}
+
 	if err := json.Unmarshal(p.JobJSON, &p.Job); err != nil {
 		return err
 	}
 	if err := json.Unmarshal(p.ParametersJSON, &p.Parameters); err != nil {
 		return err
 	}
+	if err := json.Unmarshal(p.SpawnInfosJSON, &p.SpawnInfos); err != nil {
+		return err
+	}
+
 	return nil
 }
 

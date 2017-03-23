@@ -174,7 +174,9 @@ func (router *Router) init() {
 	// Build queue
 	router.Handle("/queue", GET(getQueueHandler))
 	router.Handle("/queue/requirements/errors", POST(requirementsErrorHandler))
-	router.Handle("/queue/{id}/take", POST(takeActionBuildHandler))
+	router.Handle("/queue/{id}/take", POST(takePipelineBuildJobHandler))
+	router.Handle("/queue/{id}/book", NeedHatchery(), POST(bookPipelineBuildJobHandler))
+	router.Handle("/queue/{id}/spawn/infos", NeedHatchery(), POST(addSpawnInfosPipelineBuildJobHandler))
 	router.Handle("/queue/{id}/result", POST(addQueueResultHandler))
 	router.Handle("/build/{id}/log", POST(addBuildLogHandler))
 	router.Handle("/build/{id}/step", POST(updateStepStatusHandler))

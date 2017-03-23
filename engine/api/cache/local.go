@@ -3,6 +3,7 @@ package cache
 import (
 	"container/list"
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
@@ -45,13 +46,12 @@ func (s *LocalStore) SetWithTTL(key string, value interface{}, ttl int) {
 	s.Mutex.Unlock()
 
 	if ttl > 0 {
-		go func(key string) {
+		go func(s *LocalStore, key string) {
 			time.Sleep(time.Duration(ttl) * time.Second)
-			log.Debug("Cache> Delete %s from cache after %d seconds", key, s.TTL)
 			s.Mutex.Lock()
 			delete(s.Data, key)
 			s.Mutex.Unlock()
-		}(key)
+		}(s, key)
 	}
 }
 
@@ -62,26 +62,38 @@ func (s *LocalStore) Set(key string, value interface{}) {
 
 //Delete a key from local store
 func (s *LocalStore) Delete(key string) {
+	s.Mutex.Lock()
 	delete(s.Data, key)
+	s.Mutex.Unlock()
 }
 
 //DeleteAll on locastore delete all the things
 func (s *LocalStore) DeleteAll(key string) {
-	s.Data = map[string][]byte{}
+	for k := range s.Data {
+		if key == k || (strings.HasSuffix(key, "*") && strings.HasPrefix(k, key[:len(key)-1])) {
+			s.Mutex.Lock()
+			delete(s.Data, k)
+			s.Mutex.Unlock()
+		}
+	}
 }
 
 //Enqueue pushes to queue
 func (s *LocalStore) Enqueue(queueName string, value interface{}) {
+	s.Mutex.Lock()
 	l := s.Queues[queueName]
 	if l == nil {
 		s.Queues[queueName] = &list.List{}
 		l = s.Queues[queueName]
 	}
+	s.Mutex.Unlock()
 	b, err := json.Marshal(value)
 	if err != nil {
 		return
 	}
+	s.Mutex.Lock()
 	l.PushFront(b)
+	s.Mutex.Unlock()
 }
 
 //Dequeue gets from queue This is blocking while there is nothing in the queue
@@ -98,7 +110,9 @@ func (s *LocalStore) Dequeue(queueName string, value interface{}) {
 			time.Sleep(500 * time.Millisecond)
 			e := l.Back()
 			if e != nil {
+				s.Mutex.Lock()
 				l.Remove(e)
+				s.Mutex.Unlock()
 				elemChan <- e
 				return
 			}

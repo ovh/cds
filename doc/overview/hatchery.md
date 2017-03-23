@@ -8,7 +8,7 @@ There is 5 modes for hatcheries:
 
  * Local (Start workers on a single host)
  * Local Docker (Start worker model instances on a single host)
- * Mesos (Start worker model instances on a mesos cluster)
+ * Marathon (Start worker model instances on a mesos cluster with marathon framework)
  * Swarm (Start worker on a docker swarm cluster)
  * Openstack (Start hosts on an openstack cluster)
 
@@ -30,7 +30,7 @@ Hatchery starts workers on Openstack servers using Openstack Nova. Setup tutoria
 
 ### Swarm mode
 
-The hatchery connects to a swarm cluster and starts workers inside containers. 
+The hatchery connects to a swarm cluster and starts workers inside containers.
 
 ## Admin hatchery
 

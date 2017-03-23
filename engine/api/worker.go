@@ -28,7 +28,7 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	var h *sdk.Hatchery
 	if params.Hatchery != 0 {
 		if err := hatchery.Exists(db, params.Hatchery); err != nil {
-			return sdk.WrapError(err, "registerWorkerHandler> Unable to check if hatchery (%d) exists on register worker %s (model:%s)", params.Hatchery, params.Name, params.Model)
+			return sdk.WrapError(err, "registerWorkerHandler> Unable to check if hatchery (%d) exists on register worker %s (model:%d)", params.Hatchery, params.Name, params.Model)
 		}
 
 		var errH error

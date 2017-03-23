@@ -289,7 +289,7 @@ func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID: app.ID,
-		Type:          sdk.AUDIT_ADD,
+		Type:          sdk.AuditAdd,
 		Author:        u.Username,
 		VariableAfter: &variable,
 		VariableID:    variable.ID,
@@ -334,7 +334,7 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Var
 
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID:  app.ID,
-		Type:           sdk.AUDIT_UPDATE,
+		Type:           sdk.AuditUpdate,
 		Author:         u.Username,
 		VariableAfter:  variable,
 		VariableBefore: variableBefore,
@@ -369,7 +369,7 @@ func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Var
 
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID:  app.ID,
-		Type:           sdk.AUDIT_DELETE,
+		Type:           sdk.AuditDelete,
 		Author:         u.Username,
 		VariableBefore: variable,
 		VariableID:     variable.ID,

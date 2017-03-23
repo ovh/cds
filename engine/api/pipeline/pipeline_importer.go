@@ -6,13 +6,12 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
 
 //ImportUpdate import and update the pipeline in the project
-func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- msg.Message, u *sdk.User) error {
+func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
 	t := time.Now()
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
@@ -43,7 +42,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 							return sdk.WrapError(err, "ImportUpdate> Unable to udapte group %s in %s", gp.Group.Name, pip.Name)
 						}
 						if msgChan != nil {
-							msgChan <- msg.New(msg.PipelineGroupUpdated, gp.Group.Name, pip.Name)
+							msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupUpdated, gp.Group.Name, pip.Name)
 						}
 					}
 					break
@@ -59,7 +58,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					return sdk.WrapError(err, "ImportUpdate> Unable to insert group %s in %s", gp.Group.Name, pip.Name)
 				}
 				if msgChan != nil {
-					msgChan <- msg.New(msg.PipelineGroupAdded, gp.Group.Name, pip.Name)
+					msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupAdded, gp.Group.Name, pip.Name)
 				}
 			}
 		}
@@ -79,7 +78,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					return sdk.WrapError(err, "ImportUpdate> Unable to delete group %s in %s", ogp.Group.Name, pip.Name)
 				}
 				if msgChan != nil {
-					msgChan <- msg.New(msg.PipelineGroupDeleted, ogp.Group.Name, pip.Name)
+					msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupDeleted, ogp.Group.Name, pip.Name)
 				}
 			}
 		}
@@ -117,11 +116,11 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", jobAction.Action.Name, pip.Name)
 				}
 				if msgChan != nil {
-					msgChan <- msg.New(msg.PipelineJobAdded, jobAction.Action.Name, s.Name)
+					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, jobAction.Action.Name, s.Name)
 				}
 			}
 			if msgChan != nil {
-				msgChan <- msg.New(msg.PipelineStageAdded, s.Name)
+				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageAdded, s.Name)
 			}
 		} else {
 			//Update
@@ -149,7 +148,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 							return sdk.WrapError(err, "ImportUpdate> Unable to update job %s in %s", j.Action.Name, pip.Name)
 						}
 						if msgChan != nil {
-							msgChan <- msg.New(msg.PipelineJobUpdated, j.Action.Name, s.Name)
+							msgChan <- sdk.NewMessage(sdk.MsgPipelineJobUpdated, j.Action.Name, s.Name)
 						}
 						jobFound = true
 						break
@@ -164,13 +163,13 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 						return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", j.Action.Name, pip.Name)
 					}
 					if msgChan != nil {
-						msgChan <- msg.New(msg.PipelineJobAdded, j.Action.Name, s.Name)
+						msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, j.Action.Name, s.Name)
 					}
 				}
 			}
 			//Update stage
 			if msgChan != nil {
-				msgChan <- msg.New(msg.PipelineStageUpdated, s.Name)
+				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageUpdated, s.Name)
 			}
 		}
 	}
@@ -191,14 +190,14 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					return sdk.WrapError(err, "ImportUpdate> Unable to delete job %s in %s", j.Action.Name, pip.Name)
 				}
 				if msgChan != nil {
-					msgChan <- msg.New(msg.PipelineJobDeleted, j.Action.Name, os.Name)
+					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, j.Action.Name, os.Name)
 				}
 			}
 			if err := DeleteStageByID(db, &os, u.ID); err != nil {
 				return sdk.WrapError(err, "ImportUpdate> Unable to delete stage %d", os.ID)
 			}
 			if msgChan != nil {
-				msgChan <- msg.New(msg.PipelineStageDeleted, os.Name)
+				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageDeleted, os.Name)
 			}
 		}
 	}
@@ -206,25 +205,25 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 }
 
 //Import insert the pipeline in the project
-func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- msg.Message) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
 
 	//Check if pipeline exists
-	ok, err := ExistPipeline(db, proj.ID, pip.Name)
-	if err != nil {
-		return sdk.WrapError(err, "Import> Unable to check if pipeline %s %s exists", proj.Name, pip.Name)
+	ok, errExist := ExistPipeline(db, proj.ID, pip.Name)
+	if errExist != nil {
+		return sdk.WrapError(errExist, "Import> Unable to check if pipeline %s %s exists", proj.Name, pip.Name)
 	}
 	if !ok {
 		if err := importNew(db, proj, pip); err != nil {
 			log.Debug("pipeline.Import> %s", err)
 			switch err.(type) {
-			case *msg.Errors:
+			case *sdk.Errors:
 				if msgChan != nil {
-					msgChan <- msg.New(msg.PipelineCreationAborted, pip.Name)
+					msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
 				}
-				for _, m := range *err.(*msg.Errors) {
+				for _, m := range *err.(*sdk.Errors) {
 					msgChan <- m
 				}
 				return sdk.ErrInvalidPipeline
@@ -233,7 +232,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 			}
 		}
 		if msgChan != nil {
-			msgChan <- msg.New(msg.PipelineCreated, pip.Name)
+			msgChan <- sdk.NewMessage(sdk.MsgPipelineCreated, pip.Name)
 		}
 	}
 	//Reload the pipeline
@@ -244,7 +243,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 	//Be confident: use the pipeline
 	*pip = *pip2
 	if ok {
-		msgChan <- msg.New(msg.PipelineExists, pip.Name)
+		msgChan <- sdk.NewMessage(sdk.MsgPipelineExists, pip.Name)
 	}
 	return nil
 }

@@ -7,7 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/hatchery/docker"
 	"github.com/ovh/cds/engine/hatchery/local"
-	"github.com/ovh/cds/engine/hatchery/mesos"
+	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/log"
@@ -20,7 +20,6 @@ var rootCmd = &cobra.Command{
 	Use:   "hatchery",
 	Short: "hatchery <mode> --api=<cds.domain> --token=<token>",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-
 		log.Initialize()
 		sdk.SetAgent(sdk.HatcheryAgent)
 
@@ -55,7 +54,7 @@ func main() {
 func addCommands() {
 	rootCmd.AddCommand(local.Cmd)
 	rootCmd.AddCommand(docker.Cmd)
-	rootCmd.AddCommand(mesos.Cmd)
+	rootCmd.AddCommand(marathon.Cmd)
 	rootCmd.AddCommand(swarm.Cmd)
 	rootCmd.AddCommand(openstack.Cmd)
 }
@@ -91,7 +90,12 @@ func addFlags() {
 	rootCmd.PersistentFlags().Int("max-worker", 10, "Maximum allowed simultaenous workers")
 	viper.BindPFlag("max-worker", rootCmd.PersistentFlags().Lookup("max-worker"))
 
+	rootCmd.PersistentFlags().Int("max-failures-heartbeat", 10, "Maximum allowed consecutives failures on heatbeat routine")
+	viper.BindPFlag("max-failures-heartbeat", rootCmd.PersistentFlags().Lookup("max-failures-heartbeat"))
+
 	rootCmd.PersistentFlags().BoolP("insecure", "k", false, `(SSL) This option explicitly allows hatchery to perform "insecure" SSL connections on CDS API.`)
 	viper.BindPFlag("insecure", rootCmd.PersistentFlags().Lookup("insecure"))
 
+	rootCmd.PersistentFlags().BoolP("name", "", false, `The name for hatchery <name>-cds-<type>`)
+	viper.BindPFlag("name", rootCmd.PersistentFlags().Lookup("name"))
 }
