@@ -100,8 +100,10 @@ func TestInsertWorkerModel(t *testing.T) {
 	group.InsertUserInGroup(db, g.ID, u.ID, false)
 
 	m3, err := LoadWorkerModelsByUser(db, u.ID)
+	if err != nil {
+		t.Fatalf("Cannot load worker model by user: %s", err)
+	}
 	assert.EqualValues(t, []sdk.Model{*m}, m3)
-
 }
 
 func TestLoadWorkerModel(t *testing.T) {
@@ -159,6 +161,9 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 	m := insertWorkerModel(t, db, "Foo", g.ID)
 
 	capa, err := LoadWorkerModelCapabilities(db, m.ID)
+	if err != nil {
+		t.Fatalf("Cannot load worker model capabilities: %s", err)
+	}
 	assert.EqualValues(t, m.Capabilities, capa)
 }
 
@@ -188,5 +193,4 @@ func TestUpdateWorkerModel(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m3.Type)
 	assert.Equal(t, 2, len(m3.Capabilities))
-
 }

@@ -61,6 +61,11 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 		return nil, errwm
 	}
 
+	if len(models) == 0 {
+		return nil, fmt.Errorf("routine> %d - No model returned by GetWorkerModels", timestamp)
+	}
+	log.Debug("routine> %d models received", len(models))
+
 	spawnedIDs := []int64{}
 	wg := &sync.WaitGroup{}
 

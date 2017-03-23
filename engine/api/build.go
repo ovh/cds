@@ -25,7 +25,6 @@ import (
 )
 
 func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
 	buildID, errr := requestVarInt(r, "id")
 	if errr != nil {
 		return sdk.WrapError(errr, "updateStepStatusHandler> Invalid id")

@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/log"
@@ -223,10 +224,19 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 		return getWorkerModel(w, r, db, c, name)
 	}
 
-	models, err := worker.LoadWorkerModelsByUser(db, c.User.ID)
-	if err != nil {
-		log.Warning("getWorkerModels> cannot load worker models: %s\n", err)
-		return err
+	models := []sdk.Model{}
+	if c.User != nil && c.User.ID > 0 {
+		var errbyuser error
+		models, errbyuser = worker.LoadWorkerModelsByUser(db, c.User.ID)
+		if errbyuser != nil {
+			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models by user %d", c.User.ID)
+		}
+	} else if c.Hatchery != nil && c.Hatchery.GroupID > 0 {
+		var errgroup error
+		models, errgroup = worker.LoadWorkerModelsUsableOnGroup(db, c.Hatchery.GroupID, group.SharedInfraGroup.ID)
+		if errgroup != nil {
+			return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", c.Hatchery.ID, c.Hatchery.GroupID)
+		}
 	}
 
 	log.Debug("getWorkerModels> %s", models)

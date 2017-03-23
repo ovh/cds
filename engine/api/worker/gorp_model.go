@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//WorkerModel is a gorp wrapper around sdk.Model
+// WorkerModel is a gorp wrapper around sdk.Model
 type WorkerModel sdk.Model
 
 //PostInsert is a DB Hook on WorkerModel
