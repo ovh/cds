@@ -53,7 +53,7 @@ func Create(h Interface, api, token string, provision int, requestSecondsTimeout
 
 		spawnIds, errR = routine(h, provision, hostname, time.Now().Unix(), spawnIds, warningSeconds, criticalSeconds)
 		if errR != nil {
-			log.Warning("Create> Error: %s\n", errR)
+			log.Warning("Error on routine: %s\n", errR)
 		}
 	}
 }

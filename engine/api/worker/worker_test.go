@@ -30,8 +30,8 @@ func TestInsertWorker(t *testing.T) {
 func TestDeletetWorker(t *testing.T) {
 	db := test.SetupPG(t)
 
-	workers, err := LoadWorkers(db)
-	test.NoError(t, err)
+	workers, errl := LoadWorkers(db)
+	test.NoError(t, errl)
 	for _, w := range workers {
 		DeleteWorker(db, w.ID)
 	}
@@ -45,7 +45,7 @@ func TestDeletetWorker(t *testing.T) {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 
-	if err = DeleteWorker(db, w.ID); err != nil {
+	if err := DeleteWorker(db, w.ID); err != nil {
 		t.Fatalf("Cannot delete worker: %s", err)
 	}
 }
@@ -53,8 +53,8 @@ func TestDeletetWorker(t *testing.T) {
 func TestLoadWorkers(t *testing.T) {
 	db := test.SetupPG(t)
 
-	workers, err := LoadWorkers(db)
-	test.NoError(t, err)
+	workers, errl := LoadWorkers(db)
+	test.NoError(t, errl)
 	for _, w := range workers {
 		DeleteWorker(db, w.ID)
 	}
@@ -76,9 +76,10 @@ func TestLoadWorkers(t *testing.T) {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
 
-	workers, err = LoadWorkers(db)
-	if err != nil {
-		t.Fatalf("Cannot load workers: %s", err)
+	var errlw error
+	workers, errlw = LoadWorkers(db)
+	if errlw != nil {
+		t.Fatalf("Cannot load workers: %s", errlw)
 	}
 
 	if len(workers) != 4 {

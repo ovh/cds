@@ -420,6 +420,28 @@ func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64) er
 	return err
 }
 
+// LoadWorkerModelsUsableOnGroup returns worker models for a group
+func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
+	ms := []WorkerModel{}
+	if _, err := db.Select(&ms, `
+		select * from worker_model
+		where group_id = $1
+		or group_id = $2
+		or $1 = $2
+		order by name
+		`, groupID, sharedinfraGroupID); err != nil {
+		return nil, err
+	}
+	models := []sdk.Model{}
+	for i := range ms {
+		if err := ms[i].PostSelect(db); err != nil {
+			return nil, err
+		}
+		models = append(models, sdk.Model(ms[i]))
+	}
+	return models, nil
+}
+
 // UpdateWorkerStatus changes worker status to Disabled
 func UpdateWorkerStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE id = $2`
