@@ -22,6 +22,10 @@ a.disabled:hover {
   }
 }
 
+input[disabled] {
+  background-color: #efefef !important;
+}
+
 .right.floated {
   float: right;
 }
@@ -435,3 +439,10 @@ $verticalTreeHeightLine: 40px;
     border-top-right-radius: 0px;
   }
 }
+
+
+// Toast global settings
+.toast-top-right {
+  top: $navbarHeight + 10px;
+}
+

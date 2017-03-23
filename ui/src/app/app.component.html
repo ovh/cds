@@ -4,7 +4,9 @@
     </div>
     <div class="page" [class.connected]="isConnected">
         <div class="content" [class.connected]="isConnected">
-            <toaster-container></toaster-container>
+            <div class="toast">
+                <toaster-container></toaster-container>
+            </div>
             <router-outlet></router-outlet>
         </div>
     </div>

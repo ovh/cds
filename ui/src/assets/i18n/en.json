@@ -157,7 +157,6 @@
   "navbar_feedback" : "Feedbacks",
   "navbar_groups" : "Groups",
   "navbar_projects_placeholder": "All Projects",
-  "navbar_recent_app" : "Last application viewed",
   "navbar_users" : "Users",
   "navbar_workers" : "Workers",
 
@@ -252,6 +251,7 @@
   "project_name" : "Project name",
   "project_name_error" : "project name is mandatory",
   "project_no_application" : "There is no application in this project",
+  "project_no_pipeline" : "There is no pipeline in this project",
   "project_permission_list_title" : "List of permissions on the project: ",
   "project_permission_form_title" : "Add a permission: ",
   "project_permission_form_wizard_title" : "Add an existing group: ",

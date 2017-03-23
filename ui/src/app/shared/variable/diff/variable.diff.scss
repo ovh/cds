@@ -5,6 +5,10 @@
 
   ul {
     list-style: none;
+
+    li {
+      word-break: break-all;
+    }
   }
 
   .add {
