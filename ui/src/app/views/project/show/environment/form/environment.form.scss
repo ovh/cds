@@ -1,7 +1,11 @@
 .ui.form {
-  .field {
-    .ui.button {
-      margin-top: 1.75em;
+  .fields {
+    margin-bottom: 0px;
+
+    .field {
+      .ui.button {
+        margin-top: 1.75em;
+      }
     }
   }
 }

@@ -7,9 +7,10 @@
     </div>
 </div>
 <div class="ui segment">
-    <div class="ui stackable four column grid">
+    <div class="ui stackable four column grid" *ngIf="project.pipelines && project.pipelines.length > 0">
         <div class="center aligned column" *ngFor="let pip of project.pipelines">
             <a [routerLink]="['./pipeline', pip.name]">{{pip.name}}</a>
         </div>
     </div>
+    <span *ngIf="!project.pipelines || project.pipelines.length === 0">{{ 'project_no_pipeline' | translate }}</span>
 </div>

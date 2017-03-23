@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, Output, EventEmitter} from '@angular/core';
 import {Environment} from '../../../../../../model/environment.model';
 import {Project} from '../../../../../../model/project.model';
 import {VariableEvent} from '../../../../../../shared/variable/variable.event.model';
@@ -29,6 +29,8 @@ export class ProjectEnvironmentComponent {
     }
     @Input() project: Project;
 
+    @Output() deletedEnv = new EventEmitter<string>();
+
     constructor(private _projectStore: ProjectStore, private _toast: ToastService, private _translate: TranslateService) {
     }
 
@@ -47,6 +49,7 @@ export class ProjectEnvironmentComponent {
         this._projectStore.deleteProjectEnvironment(this.project.key, this.editableEnvironment).subscribe(() => {
             this._toast.success('', this._translate.instant('environment_deleted'));
             this.loading = false;
+            this.deletedEnv.emit(this.editableEnvironment.name);
         }, () => {
             this.loading = false;
         });

@@ -20,6 +20,7 @@ export class ApplicationPipelineLinkComponent {
     @ViewChild('linkPipelineModal')
     modal: SemanticModalComponent;
 
+    loading = false;
     selectedPipelines = new Array<string>();
 
     constructor(private _appStore: ApplicationStore, private _translate: TranslateService, private _toastService: ToastService) {
@@ -29,12 +30,16 @@ export class ApplicationPipelineLinkComponent {
         if (this.selectedPipelines.length === 0) {
             return this.close();
         }
+        this.loading = true;
         this._appStore.attachPipelines(this.project.key, this.application.name, this.selectedPipelines).subscribe(() => {
             this._toastService.success('', this._translate.instant('application_pipelines_attached'));
             this.selectedPipelines = new Array<string>();
+            this.loading = false;
             if (this.modal) {
                 this.modal.hide();
             }
+        }, () => {
+            this.loading = false;
         });
     }
 

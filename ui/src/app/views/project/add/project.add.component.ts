@@ -92,6 +92,7 @@ export class ProjectAddComponent {
      * Create a new project
      */
     createProject(): void {
+        this.loading = true;
         this.nameError = false;
         this.keyError = false;
         this.groupError = false;
@@ -130,9 +131,14 @@ export class ProjectAddComponent {
             }
 
             this._projectStore.createProject(this.project).subscribe(p => {
+                this.loading = true;
                 this._toast.success('', this._translate.instant('project_added'));
                 this._router.navigate(['/project', p.key]);
+            }, () => {
+                this.loading = false;
             });
+        } else {
+            this.loading = false;
         }
     }
 

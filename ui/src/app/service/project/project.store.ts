@@ -28,8 +28,13 @@ export class ProjectStore {
     getProjectsList(): Observable<List<Project>> {
         // If Store not empty, get from it
         if (this._projectNav.getValue().size === 0) {
-            // else fill the store
+            // Get from localstorage
+            let localProjects: Array<Project> = JSON.parse(localStorage.getItem('CDS-PROJECT-LIST'));
+            this._projectNav.next(this._projectNav.getValue().push(...localProjects));
+
+            // Get from API
             this._projectService.getProjects().subscribe(res => {
+                localStorage.setItem('CDS-PROJECT-LIST', JSON.stringify(res));
                 let projects = this._projectNav.getValue();
                 res.forEach(function (p) {
                     projects = projects.push(p);

@@ -49,4 +49,11 @@ export class ParameterListComponent extends Table {
         this.event.emit(new ParameterEvent(type, param));
     }
 
+    getColspan(): number {
+        if (this.mode && this.mode === 'launcher') {
+            return 2;
+        }
+        return 4;
+    }
+
 }
