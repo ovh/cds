@@ -98,4 +98,7 @@ func addFlags() {
 
 	rootCmd.PersistentFlags().String("name", "", "The name for hatchery <name>-<type>")
 	viper.BindPFlag("name", rootCmd.PersistentFlags().Lookup("name"))
+
+	rootCmd.PersistentFlags().Int64("grace-time-queued", 4, "if worker is queued less than this value (seconds), hatchery does not take care of it")
+	viper.BindPFlag("grace-time-queued", rootCmd.PersistentFlags().Lookup("grace-time-queued"))
 }

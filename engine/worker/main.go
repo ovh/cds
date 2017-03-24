@@ -86,10 +86,6 @@ var mainCmd = &cobra.Command{
 			return
 		}
 
-		if !viper.GetBool("exit_on_end") && hatchery == 0 {
-			sdk.Exit("you could not use --exit-on-end=false on spawning a worker without a hatchery")
-		}
-
 		givenName := viper.GetString("name")
 		if givenName != "" {
 			name = givenName
@@ -153,9 +149,6 @@ func init() {
 	flags.Int("ttl", 30, "Worker time to live (minutes)")
 	viper.BindPFlag("ttl", flags.Lookup("ttl"))
 
-	flags.Bool("exit-on-end", true, "call os.Exit when worker finish his life")
-	viper.BindPFlag("exit_on_end", flags.Lookup("exit-on-end"))
-
 	flags.Int("heartbeat", 10, "Worker heartbeat frequency")
 	viper.BindPFlag("heartbeat", flags.Lookup("heartbeat"))
 
@@ -177,11 +170,6 @@ func main() {
 func queuePolling() {
 	firstViewQueue := true
 	for {
-		if !alive && !firstViewQueue {
-			log.Notice("I am old and waiting to be killed now")
-			time.Sleep(60 * time.Second)
-		}
-
 		if WorkerID == "" {
 			var info string
 			if bookedJobID > 0 {
@@ -200,11 +188,6 @@ func queuePolling() {
 		if nbActionsDone == 0 && startTimestamp.Add(time.Duration(viper.GetInt("ttl"))*time.Minute).Before(time.Now()) {
 			log.Notice("Time to exit.")
 			unregister()
-			if !viper.GetBool("exit_on_end") {
-				log.Notice("queuePolling> --exit-on-end is false, waiting 1h to be killed by hatchery")
-				time.Sleep(1 * time.Hour)
-			}
-			os.Exit(0)
 		}
 
 		checkQueue(bookedJobID)
@@ -335,8 +318,8 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		var errre error
 		_, code, errre = sdk.Request("POST", path, body)
 		if code == http.StatusNotFound {
-			unregister() // well...
 			log.Notice("takeJob> Cannot send build result: PipelineBuildJob does not exists anymore")
+			unregister() // well...
 			break
 		}
 		if errre == nil && code < 300 {
@@ -365,13 +348,6 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		if err := unregister(); err != nil {
 			log.Warning("takeJob> could not unregister: %s", err)
 		}
-		// then exit
-		log.Notice("takeJob> --single-use is on, exiting")
-		if !viper.GetBool("exit_on_end") {
-			log.Notice("takeJob> --exit-on-end is false, waiting to be killed by hatchery")
-			time.Sleep(1 * time.Hour)
-		}
-		os.Exit(0)
 	}
 
 }
@@ -403,6 +379,11 @@ func unregister() error {
 	if code > 300 {
 		return fmt.Errorf("HTTP %d", code)
 	}
-	alive = false
+
+	if viper.GetBool("single_use") {
+		log.Notice("queuePolling> waiting 30min to be killed by hatchery, if not killed, worker will exit")
+		time.Sleep(30 * time.Minute)
+		os.Exit(0)
+	}
 	return nil
 }

@@ -40,7 +40,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds int) ([]int64, error) {
+func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
 	defer logTime("routine", time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d", timestamp)
 
@@ -80,7 +80,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 				return
 			}
 
-			if job.QueuedSeconds < 4 {
+			if job.QueuedSeconds < int64(graceSeconds) {
 				log.Debug("routine> job %d is too fresh, queued since %d seconds, let existing waiting worker check it", job.ID, job.QueuedSeconds)
 				wg.Done()
 				return
