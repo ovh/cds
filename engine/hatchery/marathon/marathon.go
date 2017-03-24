@@ -209,7 +209,6 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 			"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
 			"CDS_HATCHERY":      fmt.Sprintf("%d", hatcheryID),
 			"CDS_BOOKED_JOB_ID": fmt.Sprintf("%d", job.ID),
-			"CDS_EXIT_ON_END":   "false",
 			"CDS_SINGLE_USE":    "1",
 			"CDS_TTL":           fmt.Sprintf("%d", m.workerTTL),
 		},
