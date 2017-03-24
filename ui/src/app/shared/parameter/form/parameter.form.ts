@@ -12,7 +12,7 @@ import {Project} from '../../../model/project.model';
 })
 export class ParameterFormComponent {
 
-    private parameterTypes: string[];
+    parameterTypes: string[];
     newParameter: Parameter;
 
     @Input() project: Project;

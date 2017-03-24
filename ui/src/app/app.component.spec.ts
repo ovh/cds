@@ -35,7 +35,7 @@ describe('App: CDS', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = <MockBackend>injector.get(XHRBackend);
         backend.connections.subscribe((c: MockConnection) => connection = c);
         authStore = injector.get(AuthentificationStore);
     });

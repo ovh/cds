@@ -1,8 +1,7 @@
-import {Component, Input, EventEmitter, OnInit, ViewChild} from '@angular/core';
+import {Component, Input, EventEmitter, OnInit, ViewChild, Output} from '@angular/core';
 import {SharedService} from '../../shared.service';
-import {Output} from '@angular/core/src/metadata/directives';
 import {Project} from '../../../model/project.model';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
+import {CodemirrorComponent} from 'ng2-codemirror';
 import {RepositoriesManager, Repository} from '../../../model/repositories.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 

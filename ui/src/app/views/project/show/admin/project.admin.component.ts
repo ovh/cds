@@ -1,5 +1,4 @@
-import {Component} from '@angular/core/src/metadata/directives';
-import {Input, ViewChild, OnInit} from '@angular/core';
+import {Input, ViewChild, OnInit, Component} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {ProjectStore} from '../../../../service/project/project.store';
 import {TranslateService} from 'ng2-translate';

@@ -4,14 +4,14 @@
 
     <i *ngIf="application" class="right chevron icon divider"></i>
     <i *ngIf="application" class="rocket icon"></i>
-    <a class="section" [class.active]="application && !pipeline && !action" (click)="navigateToApplication()">{{ application?.name}}</a>
+    <a class="section" [class.active]="application && !pipeline && !action" (click)="navigateToApplication(application?.name)">{{ application?.name}}</a>
     <sm-dropdown *ngIf="application">
         <sm-item *ngFor="let app of project.applications" (click)="navigateToApplication(app.name)">{{app.name}}</sm-item>
     </sm-dropdown>
 
     <i *ngIf="pipeline" class="right chevron icon divider"></i>
     <i *ngIf="pipeline" class="sitemap icon"></i>
-    <a class="section" [class.active]="pipeline && !action && !version" (click)="navigateToPipeline()">{{ pipeline?.name}}</a>
+    <a class="section" [class.active]="pipeline && !action && !version" (click)="navigateToPipeline(pipeline?.name)">{{ pipeline?.name}}</a>
     <sm-dropdown *ngIf="project && !application && pipeline">
         <sm-item *ngFor="let pip of project.pipelines" (click)="navigateToPipeline(pip.name)">{{pip.name}}</sm-item>
     </sm-dropdown>

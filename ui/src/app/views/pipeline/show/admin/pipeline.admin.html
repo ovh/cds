@@ -15,10 +15,5 @@
                 <button class="ui button green button" [class.disabled]="loading" type="submit">{{ 'btn_save' | translate }}</button>
             </div>
         </div>
-        <div class="eight wide column">
-            <div class="right aligned field">
-                <app-delete-button [loading]="loading" (event)="deleteApplication()"></app-delete-button>
-            </div>
-        </div>
     </div>
 </form>

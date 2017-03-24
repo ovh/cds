@@ -1,6 +1,5 @@
-import {Component, Input, EventEmitter, OnInit} from '@angular/core';
+import {Component, Input, EventEmitter, OnInit, Output} from '@angular/core';
 import {SharedService} from '../../shared.service';
-import {Output} from '@angular/core/src/metadata/directives';
 
 @Component({
     selector: 'app-variable-value',

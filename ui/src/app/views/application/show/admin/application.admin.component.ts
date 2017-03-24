@@ -1,6 +1,5 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild, Input} from '@angular/core';
 import {Application} from '../../../../model/application.model';
-import {Input} from '@angular/core/src/metadata/directives';
 import {ApplicationStore} from '../../../../service/application/application.store';
 import {TranslateService} from 'ng2-translate';
 import {Router} from '@angular/router';

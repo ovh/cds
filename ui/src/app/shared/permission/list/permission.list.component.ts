@@ -1,8 +1,7 @@
-import {Component} from '@angular/core/src/metadata/directives';
 import {Table} from '../../table/table';
 import {GroupPermission} from '../../../model/group.model';
 import {PermissionService} from '../permission.service';
-import {EventEmitter,  Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {PermissionEvent} from '../permission.event.model';
 
 @Component({

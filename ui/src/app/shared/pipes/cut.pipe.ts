@@ -1,5 +1,4 @@
-import {Pipe} from '@angular/core/src/metadata/directives';
-import {PipeTransform} from '@angular/core';
+import {Pipe, PipeTransform} from '@angular/core';
 
 @Pipe({name: 'cut'})
 export class CutPipe implements PipeTransform {
