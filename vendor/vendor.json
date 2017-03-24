@@ -673,6 +673,12 @@
 			"revisionTime": "2016-09-20T07:07:15Z"
 		},
 		{
+			"checksumSHA1": "um1W+OIBS3N+hqSxShnQBkXptrQ=",
+			"path": "github.com/phayes/permbits",
+			"revision": "32459f10421024707ff86077f4a582519ec29fb6",
+			"revisionTime": "2016-08-16T17:23:59Z"
+		},
+		{
 			"checksumSHA1": "BMjSRH5mPFsBz4Z1r9f/MzwVlXA=",
 			"path": "github.com/pierrec/lz4",
 			"revision": "5c9560bfa9ace2bf86080bf40d46b34ae44604df",
