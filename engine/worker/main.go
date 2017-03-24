@@ -354,6 +354,10 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 
 func heartbeat() {
 	for {
+		if !alive {
+			return
+		}
+
 		time.Sleep(time.Duration(viper.GetInt("heartbeat")) * time.Second)
 		if WorkerID == "" {
 			log.Notice("Disconnected from CDS engine, trying to register...")
@@ -372,6 +376,7 @@ func heartbeat() {
 }
 
 func unregister() error {
+	alive = false
 	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
 	if err != nil {
 		return err
