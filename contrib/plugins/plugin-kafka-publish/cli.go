@@ -42,6 +42,11 @@ func initCli(mainFunc func()) *cli.App {
 						Usage: " <file> Decrypt incomming with a private ARMOR GPG Key",
 						Value: "",
 					},
+					cli.StringFlag{
+						Name:  "exec",
+						Usage: " <script> Exec script on complete receive",
+						Value: "",
+					},
 				},
 				Action: listenAction,
 			},
