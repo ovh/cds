@@ -367,12 +367,10 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 	}
 
 	if err := json.Unmarshal([]byte(pbResult.Args), &pb.Parameters); err != nil {
-		log.Warning("scanPipelineBuild> Unable to Unmarshal parameter %s", pbResult.Args)
-		return nil, err
+		return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal parameter %s", pbResult.Args)
 	}
 	if err := json.Unmarshal([]byte(pbResult.Stages), &pb.Stages); err != nil {
-		log.Warning("scanPipelineBuild> Unable to Unmarshal stages %s", pbResult.Stages)
-		return nil, err
+		return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal stages %s", pbResult.Stages)
 	}
 
 	return &pb, nil

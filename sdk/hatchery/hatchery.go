@@ -40,7 +40,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds int) ([]int64, error) {
+func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
 	defer logTime("routine", time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d", timestamp)
 
@@ -61,6 +61,11 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 		return nil, errwm
 	}
 
+	if len(models) == 0 {
+		return nil, fmt.Errorf("routine> %d - No model returned by GetWorkerModels", timestamp)
+	}
+	log.Debug("routine> %d models received", len(models))
+
 	spawnedIDs := []int64{}
 	wg := &sync.WaitGroup{}
 
@@ -68,7 +73,20 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 		wg.Add(1)
 		go func(job *sdk.PipelineBuildJob) {
 			defer logTime(fmt.Sprintf("routine> job %d>", job.ID), time.Now(), warningSeconds, criticalSeconds)
-			log.Debug("routine> %d work on job %d", timestamp, job.ID)
+
+			if sdk.IsInArray(job.ID, lastSpawnedIDs) {
+				log.Debug("routine> job %d already spawned in previous routine", job.ID)
+				wg.Done()
+				return
+			}
+
+			if job.QueuedSeconds < int64(graceSeconds) {
+				log.Debug("routine> job %d is too fresh, queued since %d seconds, let existing waiting worker check it", job.ID, job.QueuedSeconds)
+				wg.Done()
+				return
+			}
+
+			log.Debug("routine> %d work on job %d queued since %d seconds", timestamp, job.ID, job.QueuedSeconds)
 			if job.BookedBy.ID != 0 {
 				t := "current hatchery"
 				if job.BookedBy.ID != h.Hatchery().ID {
@@ -96,12 +114,11 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 						},
 					}
 
-					errs := h.SpawnWorker(&model, job)
-					if errs != nil {
-						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, errs)
+					if err := h.SpawnWorker(&model, job); err != nil {
+						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, err)
 						infos = append(infos, sdk.SpawnInfo{
 							RemoteTime: time.Now(),
-							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errs.Error()}},
+							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), err.Error()}},
 						})
 						if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
 							log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job (err spawn)%d: %s", timestamp, job.ID, err)

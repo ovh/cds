@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -50,6 +51,8 @@ func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 	if err := json.Unmarshal(p.SpawnInfosJSON, &p.SpawnInfos); err != nil {
 		return err
 	}
+
+	p.QueuedSeconds = time.Now().Unix() - p.Queued.Unix()
 
 	return nil
 }

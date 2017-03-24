@@ -2,7 +2,6 @@ package worker
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -80,73 +79,27 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 	return &model, nil
 }
 
-// LoadWorkerModelsUsableOnGroup returns worker models for a group
-func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
-	if _, err := db.Select(&ms, `
-		select * from worker_model
-		where group_id = $1
-		or group_id = $2
-		or $1 = $2
-		order by name
-		`, groupID, sharedinfraGroupID); err != nil {
-		return nil, err
-	}
-	models := []sdk.Model{}
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
-			return nil, err
-		}
-		models = append(models, sdk.Model(ms[i]))
-	}
-	return models, nil
-}
-
-// LoadWorkerModelsByGroup returns worker models for a group
-func LoadWorkerModelsByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
-	if _, err := db.Select(&ms, "select * from worker_model where group_id = $1 order by name", groupID); err != nil {
-		return nil, err
-	}
-	models := []sdk.Model{}
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
-			return nil, err
-		}
-		models = append(models, sdk.Model(ms[i]))
-	}
-	return models, nil
-}
-
 // LoadWorkerModelsByUser returns worker models list according to user's groups
-func LoadWorkerModelsByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Model, error) {
+func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
 	ms := []WorkerModel{}
-	query := `	select *
-				from worker_model
-				where group_id in (select group_id from group_user where user_id = $1)
-				union
-				select * from worker_model
-				where group_id = $2
-				order by name`
-	if _, err := db.Select(&ms, query, userID, group.SharedInfraGroup.ID); err != nil {
-		return nil, err
-	}
-	models := []sdk.Model{}
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
+	if user.Admin {
+		query := `	select * from worker_model`
+		if _, err := db.Select(&ms, query); err != nil {
 			return nil, err
 		}
-		models = append(models, sdk.Model(ms[i]))
+	} else {
+		query := `	select *
+					from worker_model
+					where group_id in (select group_id from group_user where user_id = $1)
+					union
+					select * from worker_model
+					where group_id = $2
+					order by name`
+		if _, err := db.Select(&ms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
+			return nil, err
+		}
 	}
-	return models, nil
-}
 
-//LoadSharedWorkerModels returns worker models with group shared.infra
-func LoadSharedWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
-	if _, err := db.Select(&ms, `select * from worker_model where group_id = $1`, group.SharedInfraGroup.ID); err != nil {
-		return nil, err
-	}
 	models := []sdk.Model{}
 	for i := range ms {
 		if err := ms[i].PostSelect(db); err != nil {
@@ -172,7 +125,6 @@ func DeleteWorkerModel(db gorp.SqlExecutor, ID int64) error {
 
 // LoadWorkerModelCapabilities retrieves capabilities of given worker model
 func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Requirement, error) {
-	defer logTime("LoadWorkerModelCapabilities", time.Now())
 	query := `SELECT name, type, argument FROM worker_capability WHERE worker_model_id = $1 ORDER BY name`
 
 	rows, err := db.Query(query, workerID)
@@ -189,15 +141,7 @@ func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Req
 		}
 		capas = append(capas, c)
 	}
-
 	return capas, nil
-}
-
-func deleteAllWorkerCapabilities(db gorp.SqlExecutor, workerModelID int64) error {
-	query := `DELETE FROM worker_capability WHERE worker_model_id = $1`
-	_, err := db.Exec(query, workerModelID)
-	return err
-
 }
 
 // DeleteWorkerModelCapability removes a capability from existing worker model
@@ -234,55 +178,5 @@ func UpdateWorkerModelCapability(db gorp.SqlExecutor, capa sdk.Requirement, mode
 	if rows <= 0 {
 		return sdk.ErrNoWorkerModelCapa
 	}
-
 	return nil
-}
-
-// deprecatd
-func modelCanRun(db *gorp.DbMap, name string, req []sdk.Requirement, capa []sdk.Requirement) bool {
-	defer logTime("compareRequirements", time.Now())
-
-	m, err := LoadWorkerModelByName(db, name)
-	if err != nil {
-		log.Warning("modelCanRun> Unable to load model %s", name)
-		return false
-	}
-
-	for _, r := range req {
-		// service and memory requirements are only supported by docker model
-		if (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) && m.Type != sdk.Docker {
-			return false
-		}
-
-		found := false
-
-		// If requirement is a Model requirement, it's easy. It's either can or can't run
-		if r.Type == sdk.ModelRequirement {
-			return r.Value == name
-		}
-
-		// If requirement is an hostname requirement, it's for a specific worker
-		if r.Type == sdk.HostnameRequirement {
-			return false // TODO: update when hatchery in local mode declare an hostname capa
-		}
-
-		// Skip network access requirement as we can't check it
-		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			continue
-		}
-
-		// Check binary requirement against worker model capabilities
-		for _, c := range capa {
-			if r.Value == c.Value || r.Value == c.Name {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return false
-		}
-	}
-
-	return true
 }

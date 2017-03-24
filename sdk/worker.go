@@ -271,27 +271,6 @@ func DeleteWorkerCapability(workerModelID int64, capaName string) error {
 	return nil
 }
 
-// GetWorkerModelStatus retrieves from engine all worker model and their status
-func GetWorkerModelStatus() ([]ModelStatus, error) {
-	uri := fmt.Sprintf("/worker/status")
-
-	data, code, err := Request("GET", uri, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if code >= 300 {
-		return nil, fmt.Errorf("cds: api error (%d)", code)
-	}
-
-	var ms []ModelStatus
-	if err := json.Unmarshal(data, &ms); err != nil {
-		return nil, err
-	}
-
-	return ms, nil
-}
-
 // SetWorkerStatus update worker status
 func SetWorkerStatus(s Status) error {
 	var uri string

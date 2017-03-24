@@ -15,6 +15,7 @@ type PipelineBuildJob struct {
 	ParametersJSON  []byte      `json:"-" db:"parameters"`
 	Status          string      `json:"status"  db:"status"`
 	Queued          time.Time   `json:"queued,omitempty" db:"queued"`
+	QueuedSeconds   int64       `json:"queued_seconds,omitempty" db:"-"`
 	Start           time.Time   `json:"start,omitempty" db:"start"`
 	Done            time.Time   `json:"done,omitempty" db:"done"`
 	Model           string      `json:"model,omitempty" db:"model"`

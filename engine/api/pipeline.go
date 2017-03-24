@@ -634,8 +634,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	appName := vars["permApplicationName"]
 
 	if err := r.ParseForm(); err != nil {
-		log.Warning("getPipelineHistoryHandler> Cannot parse form: %s\n", err)
-		return sdk.ErrUnknownError
+		return sdk.WrapError(err, "getPipelineHistoryHandler> Cannot parse form")
 	}
 	envName := r.Form.Get("envName")
 	limitString := r.Form.Get("limit")
@@ -655,18 +654,12 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 
 	p, errlp := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if errlp != nil {
-		if errlp != sdk.ErrPipelineNotFound {
-			log.Warning("getPipelineHistoryHandler> Cannot load pipelines: %s\n", errlp)
-		}
-		return errlp
+		return sdk.WrapError(errlp, "getPipelineHistoryHandler> Cannot load pipelines")
 	}
 
 	a, errln := application.LoadByName(db, projectKey, appName, c.User)
 	if errln != nil {
-		if errln != sdk.ErrApplicationNotFound {
-			log.Warning("getPipelineHistoryHandler> Cannot load application %s: %s\n", appName, errln)
-		}
-		return errln
+		return sdk.WrapError(errln, "getPipelineHistoryHandler> Cannot load application %s", appName)
 	}
 
 	var env *sdk.Environment
@@ -676,22 +669,17 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		var errle error
 		env, errle = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if errle != nil {
-			if errle != sdk.ErrNoEnvironment {
-				log.Warning("getPipelineHistoryHandler> Cannot load environment %s: %s\n", envName, errle)
-			}
-			return errle
+			return sdk.WrapError(errle, "getPipelineHistoryHandler> Cannot load environment %s", envName)
 		}
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
-		log.Warning("getPipelineHistoryHandler> No enought right on this environment %s: \n", envName)
-		return sdk.ErrForbidden
+		return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s", envName)
 	}
 
 	pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName)
 	if errl != nil {
-		log.Warning("getPipelineHistoryHandler> cannot load pipeline %s history: %s\n", p.Name, errl)
-		return errl
+		return sdk.WrapError(errl, "getPipelineHistoryHandler> cannot load pipeline %s history", p.Name)
 	}
 
 	return WriteJSON(w, r, pbs, http.StatusOK)

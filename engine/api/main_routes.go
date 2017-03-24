@@ -231,7 +231,6 @@ func (router *Router) init() {
 
 	// Workers
 	router.Handle("/worker", Auth(false), GET(getWorkersHandler), POST(registerWorkerHandler))
-	router.Handle("/worker/status", GET(getWorkerModelStatus))
 	router.Handle("/worker/refresh", POST(refreshWorkerHandler))
 	router.Handle("/worker/checking", POST(workerCheckingHandler))
 	router.Handle("/worker/waiting", POST(workerWaitingHandler))

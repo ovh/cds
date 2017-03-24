@@ -314,7 +314,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	//List all containers to check if we can spawn a new one
 	cs, errList := h.dockerClient.ListContainers(docker.ListContainersOptions{})
 	if errList != nil {
-		log.Warning("Unable to list containers: %s", errList)
+		log.Critical("Unable to list containers: %s", errList)
 		return false
 	}
 
@@ -340,7 +340,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 		}
 	}
 
-	log.Notice("CanSpawn> %s need %v", model.Name, links)
+	log.Debug("CanSpawn> %s need %v", model.Name, links)
 
 	// If one image have a "latest" tag, we don't have to listImage
 	listImagesToDoForLinkedImages := true
@@ -423,7 +423,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	}
 
 	//Ready to spawn
-	log.Notice("CanSpawn> %s can be spawned", model.Name)
+	log.Debug("CanSpawn> %s can be spawned", model.Name)
 	return true
 }
 
