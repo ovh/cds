@@ -1,6 +1,5 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild, Input} from '@angular/core';
 import {Application} from '../../../../model/application.model';
-import {Input} from '@angular/core/src/metadata/directives';
 import {ApplicationStore} from '../../../../service/application/application.store';
 import {TranslateService} from 'ng2-translate';
 import {Router} from '@angular/router';
@@ -48,5 +47,15 @@ export class ApplicationAdminComponent implements OnInit {
                 this.loading = false;
             });
         }
+    }
+
+    deleteApplication(): void {
+        this.loading = true;
+        this._applicationStore.deleteApplication(this.project.key, this.application.name).subscribe(() => {
+            this.loading = false;
+            this._router.navigate(['/project', this.project.key]);
+        }, () => {
+            this.loading = false;
+        });
     }
 }

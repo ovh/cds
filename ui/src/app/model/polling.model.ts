@@ -7,6 +7,8 @@ export class RepositoryPoller {
     pipeline: Pipeline;
     enabled: boolean;
     date_creation: Date;
+    next_execution: RepositoryPollerExecution;
+
 
     // Ui params
     updating: boolean;
@@ -16,4 +18,8 @@ export class RepositoryPoller {
         this.name = '';
         this.enabled = true;
     }
+}
+
+export class RepositoryPollerExecution {
+    execution_planned_date: Date;
 }

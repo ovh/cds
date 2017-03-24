@@ -35,11 +35,7 @@ export class ProjectStore {
             // Get from API
             this._projectService.getProjects().subscribe(res => {
                 localStorage.setItem('CDS-PROJECT-LIST', JSON.stringify(res));
-                let projects = this._projectNav.getValue();
-                res.forEach(function (p) {
-                    projects = projects.push(p);
-                });
-                this._projectNav.next(projects);
+                this._projectNav.next(List(res));
             });
         }
         return new Observable<List<Project>>(fn => this._projectNav.subscribe(fn));

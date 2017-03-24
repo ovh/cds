@@ -1,7 +1,6 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, ViewChild, Input} from '@angular/core';
 import {RepositoriesManager} from '../../../../../../model/repositories.model';
 import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
-import {Input} from '@angular/core/src/metadata/directives';
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {TranslateService} from 'ng2-translate/ng2-translate';
 import {ToastService} from '../../../../../../shared/toast/ToastService';

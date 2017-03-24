@@ -1,11 +1,9 @@
-import {Component, OnInit} from '@angular/core';
-import {Input} from '@angular/core/src/metadata/directives';
+import {Component, OnInit, Input, ViewChild} from '@angular/core';
 import {Application} from '../../../../../model/application.model';
 import {RepoManagerService} from '../../../../../service/repomanager/project.repomanager.service';
 import {Repository} from '../../../../../model/repositories.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {Project} from '../../../../../model/project.model';
-import {ViewChild} from '@angular/core/src/metadata/di';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';

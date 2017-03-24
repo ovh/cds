@@ -14,11 +14,11 @@
                 <i class="sitemap icon"></i>
                 {{ 'common_pipeline' | translate }}
             </a>
-            <a sm-item [class.active]="selectedTab === 'commit'" (click)="(commits && commits.length > 0)?showTab('commit') : showTab(selectedTab)" [class.disabled]="!commits || commits.length === 0">
+            <!--a sm-item [class.active]="selectedTab === 'commit'" (click)="(commits && commits.length > 0)?showTab('commit') : showTab(selectedTab)" [class.disabled]="!commits || commits.length === 0">
                 <span *ngIf="commits">{{ commits.length + ' '}}</span>
                 <span *ngIf="commits && commits.length > 1">{{ 'common_commits' | translate }}</span>
                 <span *ngIf="!commits || (commits && commits.length < 2)">{{ 'common_commit' | translate }}</span>
-            </a>
+            </a-->
             <a sm-item [class.active]="selectedTab === 'test'" (click)="(nbTests > 0)?showTab('test') : showTab(selectedTab)" [class.disabled]="nbTests === 0">
                 <span *ngIf="nbTests > 1">{{ 'common_tests' | translate }}</span>
                 <span *ngIf="nbTests < 2">{{ 'common_test' | translate }}</span>
@@ -50,9 +50,9 @@
                 <div *ngSwitchCase="'artifact'">
                     <app-artifact-list [artifacts]="currentBuild?.artifacts"></app-artifact-list>
                 </div>
-                <div *ngSwitchCase="'commit'">
+                <!--div *ngSwitchCase="'commit'">
                     <app-commit-list [commits]="commits"></app-commit-list>
-                </div>
+                </div-->
                 <div *ngSwitchCase="'history'">
                     <app-history [history]="histories" [currentBuild]="currentBuild" *ngIf="histories"></app-history>
                 </div>

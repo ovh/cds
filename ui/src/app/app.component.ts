@@ -1,4 +1,4 @@
-import {Component, Type, OnInit, NgZone} from '@angular/core';
+import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from 'ng2-translate';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {environment} from '../environments/environment';
@@ -11,7 +11,7 @@ import {Subscription} from 'rxjs/Rx';
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-export class AppComponent extends Type implements OnInit {
+export class AppComponent  implements OnInit {
 
     open: boolean;
     isConnected = false;
@@ -21,7 +21,6 @@ export class AppComponent extends Type implements OnInit {
 
     constructor(private _translate: TranslateService,
                 private _authStore: AuthentificationStore, private _warnStore: WarningStore) {
-        super();
         this.zone = new NgZone({enableLongStackTrace: false});
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');

@@ -11,7 +11,7 @@
                 <div class="seven wide inline field">
                     <label class="labelPadding">{{'common_description' | translate}}</label>
                     <textarea [disabled]="!edit" name="actionDescription" [(ngModel)]="editableAction.description"
-                              rows="{{getDescriptionHeight(editableAction.description)}}"
+                              rows="{{getDescriptionHeight()}}"
                               (keydown)="editableAction.hasChanged = true"></textarea>
                 </div>
                 <div class="one wide inline field">

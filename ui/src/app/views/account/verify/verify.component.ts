@@ -1,7 +1,6 @@
-import {Component} from '@angular/core/src/metadata/directives';
 import {ActivatedRoute, Params, Router} from '@angular/router';
 import {UserService} from '../../../service/user/user.service';
-import {OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {User} from '../../../model/user.model';
 import {AccountComponent} from '../account.component';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';

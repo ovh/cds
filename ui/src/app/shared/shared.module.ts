@@ -2,7 +2,7 @@ import {NgModule, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {VariableComponent} from './variable/list/variable.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {TranslateModule} from 'ng2-translate';
-import {PrettyJsonModule} from 'angular2-prettyjson';
+import {PrettyJsonModule} from 'angular2-prettyjson.fake';
 import {NgSemanticModule} from 'ng-semantic/ng-semantic';
 import {NgForNumber} from './pipes/ngfor.number.pipe';
 import {VariableValueComponent} from './variable/value/variable.value.component';
@@ -27,7 +27,7 @@ import {WarningModalComponent} from './modal/warning/warning.component';
 import {CommonModule} from '@angular/common';
 import {CutPipe} from './pipes/cut.pipe';
 import {MomentModule} from 'angular2-moment';
-import {CodemirrorModule} from 'ng2-codemirror-typescript/Codemirror';
+import {CodemirrorModule} from 'ng2-codemirror';
 import {GroupFormComponent} from './group/form/group.form.component';
 import {MarkdownModule} from 'angular2-markdown';
 import {HistoryComponent} from './history/history.component';
@@ -40,6 +40,8 @@ import {ActionStepFormComponent} from './action/step/form/step.form.component';
 import {TruncatePipe} from './pipes/truncate.pipe';
 import {VariableAuditComponent} from './variable/audit/audit.component';
 import {VariableDiffComponent} from './variable/diff/variable.diff.component';
+import {ZoneContentComponent} from './zone/zone-content/content.component';
+import {ZoneComponent} from './zone/zone.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -73,6 +75,8 @@ import {VariableDiffComponent} from './variable/diff/variable.diff.component';
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
+        ZoneComponent,
+        ZoneContentComponent
     ],
     providers: [
         DurationService,
@@ -114,7 +118,9 @@ import {VariableDiffComponent} from './variable/diff/variable.diff.component';
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
-        WarningModalComponent
+        WarningModalComponent,
+        ZoneComponent,
+        ZoneContentComponent
     ]
 })
 export class SharedModule {

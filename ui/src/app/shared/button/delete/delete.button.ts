@@ -1,5 +1,4 @@
-import {Component, } from '@angular/core/src/metadata/directives';
-import {EventEmitter, Output, Input} from '@angular/core';
+import {EventEmitter, Output, Input, Component} from '@angular/core';
 
 @Component({
     selector: 'app-delete-button',

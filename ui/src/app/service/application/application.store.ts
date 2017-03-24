@@ -159,9 +159,21 @@ export class ApplicationStore {
      */
     deleteApplication(key: string, appName: string): Observable<boolean> {
         return this._applicationService.deleteApplication(key, appName).map(res => {
+
+            // Remove from application cache
             let cache = this._application.getValue();
             let appKey = key + '-' + appName;
             this._application.next(cache.delete(appKey));
+
+            // Remove from recent application
+            let recentApp = this._recentApplications.getValue().toArray();
+            recentApp.forEach((app, index) => {
+               if (app.name === appName && app.project_key === key) {
+                   recentApp.splice(index, 1);
+               }
+            });
+            this._recentApplications.next(List(recentApp));
+
             return res;
         });
     }

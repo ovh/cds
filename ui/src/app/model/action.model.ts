@@ -4,7 +4,7 @@ import {Parameter} from './parameter.model';
 export class Action {
     id: number;
     name: string;
-    type: ActionType;
+    type: string;
     description: string;
     requirements: Array<Requirement>;
     parameters: Array<Parameter>;
@@ -15,11 +15,4 @@ export class Action {
 
     // UI parameter
     hasChanged: boolean;
-}
-
-export enum ActionType {
-    'Default',
-    'Builtin',
-    'Plugin',
-    'Joined'
 }
