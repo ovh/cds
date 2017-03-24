@@ -60,6 +60,8 @@ var mainCmd = &cobra.Command{
 		log.Initialize()
 
 		log.Notice("What a good time to be alive")
+		alive = true
+
 		var err error
 
 		name, err = os.Hostname()
