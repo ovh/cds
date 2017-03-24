@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"strconv"
@@ -15,7 +17,7 @@ import (
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
 )
 
-func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey, gpgPassphrase []byte) error {
+func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey, gpgPassphrase []byte, execScript string) error {
 	//Create a new client
 	var config = sarama.NewConfig()
 	config.Net.TLS.Enable = true
@@ -164,6 +166,24 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 					//File has been processed, remove data from memory
 					delete(contexts, c.Ctx.UUID)
 					fmt.Printf("Context %d successfully closed\n", ctx.ActionID)
+
+					if execScript != "" {
+						cmd := exec.Command(execScript, getCtxFileName(ctx))
+						var stdOut = new(bytes.Buffer)
+						var stdErr = new(bytes.Buffer)
+						cmd.Stdout = stdOut
+						cmd.Stderr = stdErr
+						if err := cmd.Run(); err != nil {
+							fmt.Printf("Error with Exec: %s : %s\n", execScript, err)
+						}
+						if len(stdOut.String()) > 0 {
+							fmt.Println(stdOut.String())
+						}
+						if len(stdErr.String()) > 0 {
+							fmt.Println(stdErr.String())
+						}
+					}
+
 				}
 				continue
 			}
@@ -240,7 +260,7 @@ func fileHandler(ctx *kafkapublisher.Context, filename string, data []byte) erro
 
 	//Write the Context file
 	if ctx.IsComplete() {
-		name := "cds-action-" + strconv.Itoa(int(ctx.ActionID)) + ".json"
+		name := getCtxFileName(ctx)
 		buff, err := json.Marshal(ctx)
 		if err != nil {
 			return err
@@ -252,4 +272,8 @@ func fileHandler(ctx *kafkapublisher.Context, filename string, data []byte) erro
 	}
 
 	return nil
+}
+
+func getCtxFileName(ctx *kafkapublisher.Context) string {
+	return "cds-action-" + strconv.Itoa(int(ctx.ActionID)) + ".json"
 }
