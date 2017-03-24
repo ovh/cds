@@ -273,7 +273,6 @@ func AddSpawnInfosPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, infos []s
 	if err := db.SelectOne(&pbJobGorp, `SELECT * FROM pipeline_build_job WHERE id = $1 FOR UPDATE`, pbJobID); err != nil {
 		return nil, err
 	}
-
 	if err := pbJobGorp.PostGet(db); err != nil {
 		return nil, err
 	}

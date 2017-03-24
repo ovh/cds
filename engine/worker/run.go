@@ -78,7 +78,7 @@ func startAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int,
 		}
 	}
 
-	return runAction(a, pipBuildJob, stepOrder, stepName)
+	return runJob(a, pipBuildJob, stepOrder, stepName)
 }
 
 func replaceBuildVariablesPlaceholder(a *sdk.Action) {
@@ -90,7 +90,7 @@ func replaceBuildVariablesPlaceholder(a *sdk.Action) {
 	}
 }
 
-func runAction(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, stepName string) sdk.Result {
+func runJob(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, stepName string) sdk.Result {
 	// Replace build variable placeholder that may have been added by last step
 	replaceBuildVariablesPlaceholder(a)
 
