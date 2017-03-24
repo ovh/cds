@@ -80,7 +80,7 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
-func LoadWorkerModelsByUser(db gorp.SqlExecutor, user sdk.User) ([]sdk.Model, error) {
+func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
 	ms := []WorkerModel{}
 	if user.Admin {
 		query := `	select * from worker_model`

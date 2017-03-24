@@ -36,7 +36,7 @@ func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
 }
 
 //PostGet is a DB Hook on PipelineBuildJob to get jobs and params as from JSON in DB
-func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor, now time.Time) error {
+func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 	h := sdk.Hatchery{}
 	if cache.Get(keyBookJob(p.ID), &h) {
 		p.BookedBy = h
@@ -52,7 +52,7 @@ func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor, now time.Time) error {
 		return err
 	}
 
-	p.QueuedSeconds = now.Unix() - p.Queued.Unix()
+	p.QueuedSeconds = time.Now().Unix() - p.Queued.Unix()
 
 	return nil
 }

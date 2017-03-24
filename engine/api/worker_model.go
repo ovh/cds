@@ -201,7 +201,7 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	models := []sdk.Model{}
 	if c.User != nil && c.User.ID > 0 {
 		var errbyuser error
-		models, errbyuser = worker.LoadWorkerModelsByUser(db, *c.User)
+		models, errbyuser = worker.LoadWorkerModelsByUser(db, c.User)
 		if errbyuser != nil {
 			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", c.User.ID)
 		}
