@@ -354,7 +354,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 
 func heartbeat() {
 	for {
-		if !alive {
+		if !alive && viper.GetBool("single_use") {
 			return
 		}
 
