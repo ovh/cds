@@ -177,9 +177,9 @@ with, for instance `myScript.sh` as following :
     cat $1
 ```
 
-It run this script with the context file as first argument. SO you can get the json file, parse it and do what you whant with all the files.
+It run this script with the context file as first argument. So you can get the json file, parse it and do what you whant with all the files and artifacts.
 
-Our examples will prompt:
+Our example will prompt:
 
 ```shell
     $ plugin-kafka-publish listen kafka.queue.ovh.net:9000 myapp.my-topic myapp.my-topic.cds.group myapp.my-topic.cds my-user  ************************ --pgp-decrypt ~/gpg.priv.asc --exec ./myScript.sh
