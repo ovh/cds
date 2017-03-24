@@ -49,4 +49,14 @@ export class ApplicationAdminComponent implements OnInit {
             });
         }
     }
+
+    deleteApplication(): void {
+        this.loading = true;
+        this._applicationStore.deleteApplication(this.project.key, this.application.name).subscribe(() => {
+            this.loading = false;
+            this._router.navigate(['/project', this.project.key]);
+        }, () => {
+            this.loading = false;
+        });
+    }
 }

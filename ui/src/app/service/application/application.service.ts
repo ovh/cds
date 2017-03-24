@@ -73,7 +73,7 @@ export class ApplicationService {
      * @returns {Observable<boolean>}
      */
     deleteApplication(key: string, appName: string): Observable<boolean> {
-        return this._http.delete('/project/' + key + '/application' + appName).map(res => {
+        return this._http.delete('/project/' + key + '/application/' + appName).map(res => {
             return true;
         });
     }

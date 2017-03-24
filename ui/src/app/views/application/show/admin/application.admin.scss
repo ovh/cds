@@ -1,3 +1,19 @@
 .applicationRepo {
   margin-top : 50px;
 }
+.ui.inverted.attached  {
+  border-color: #DB2828;
+}
+
+.ui.grid {
+  .column {
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+  }
+}
+
+.ui.form .fields {
+  margin-bottom: 0px;
+}

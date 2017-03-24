@@ -18,6 +18,9 @@
             <div class="two wide center field">
                 <button class="ui green button" name="btnrename" [class.loading]="loading">{{ 'btn_rename' | translate }}</button>
             </div>
+            <div class="ten wide right aligned field">
+                <app-delete-button [loading]="loading" (event)="deleteApplication()"></app-delete-button>
+            </div>
         </div>
     </form>
     <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitProjectUpdate(true)" #updateWarning></app-warning-modal>

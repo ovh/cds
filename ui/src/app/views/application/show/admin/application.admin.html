@@ -1,26 +1,44 @@
 <div id="ApplicationAdmin">
-    <h4>{{ 'application_rename_title' | translate }}</h4>
-    <form class="ui form" (ngSubmit)="onSubmitApplicationUpdate()" #applicationUpdateFrom="ngForm">
-        <div class="fields">
-            <div class="six wide field">
-                <input type="text" name="formApplicationUpdateName" [(ngModel)]="newName" required #formApplicationUpdateName="ngModel"
-                       pattern="[a-zA-Z0-9._-]*"
-                       [disabled]="loading"
-                >
-                <div *ngIf="!formApplicationUpdateName.valid && !formApplicationUpdateName.pristine"
-                     class="ui error message">
-                    <p>{{'application_update_name_error' | translate}}</p>
+    <app-zone header="{{ 'application_rename_title' | translate }}">
+        <app-zone-content class="bottom">
+            <form class="ui form" #applicationUpdateFrom="ngForm">
+                <div class="fields">
+                    <div class="eight wide field">
+                        <input type="text" name="formApplicationUpdateName" [(ngModel)]="newName" required #formApplicationUpdateName="ngModel"
+                               pattern="[a-zA-Z0-9._-]*"
+                               [disabled]="loading"
+                        >
+                        <div *ngIf="!formApplicationUpdateName.valid && !formApplicationUpdateName.pristine"
+                             class="ui error message">
+                            <p>{{'application_update_name_error' | translate}}</p>
+                        </div>
+                    </div>
+                    <div class="eight wide right aligned field">
+                        <button class="ui green button" [class.loading]="loading" name="updateNameButton" (click)="onSubmitApplicationUpdate()">{{ 'btn_rename' | translate }}
+                        </button>
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitApplicationUpdate(true)" #updateWarning></app-warning-modal>
+                    </div>
+
+                </div>
+            </form>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'application_repo_title' | translate }}">
+        <app-zone-content class="bottom">
+            <app-application-repo [project]="project" [application]="application"></app-application-repo>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'application_danger_zone' | translate }}" headerClass="red inverted">
+        <app-zone-content class="bottom">
+            <div class="ui grid">
+                <div class="eight wide column">
+                    <div class="title">{{ 'application_delete_label' | translate}}</div>
+                    <div class="description">{{ 'application_delete_description' | translate}}</div>
+                </div>
+                <div class="eight wide right aligned column">
+                    <app-delete-button [loading]="loading" (event)="deleteApplication()"></app-delete-button>
                 </div>
             </div>
-            <div class="two wide center field">
-                <button class="ui green button" [class.loading]="loading" name="updateNameButton">{{ 'btn_rename' | translate }}
-                </button>
-                <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitApplicationUpdate(true)" #updateWarning></app-warning-modal>
-            </div>
-        </div>
-    </form>
-    <div class="applicationRepo">
-        <h4>{{ 'application_repo_title' | translate }}</h4>
-        <app-application-repo [project]="project" [application]="application"></app-application-repo>
-    </div>
+        </app-zone-content>
+    </app-zone>
 </div>

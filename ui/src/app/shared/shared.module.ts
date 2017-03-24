@@ -40,6 +40,8 @@ import {ActionStepFormComponent} from './action/step/form/step.form.component';
 import {TruncatePipe} from './pipes/truncate.pipe';
 import {VariableAuditComponent} from './variable/audit/audit.component';
 import {VariableDiffComponent} from './variable/diff/variable.diff.component';
+import {ZoneContentComponent} from './zone/zone-content/content.component';
+import {ZoneComponent} from './zone/zone.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -73,6 +75,8 @@ import {VariableDiffComponent} from './variable/diff/variable.diff.component';
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
+        ZoneComponent,
+        ZoneContentComponent
     ],
     providers: [
         DurationService,
@@ -114,7 +118,9 @@ import {VariableDiffComponent} from './variable/diff/variable.diff.component';
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
-        WarningModalComponent
+        WarningModalComponent,
+        ZoneComponent,
+        ZoneContentComponent
     ]
 })
 export class SharedModule {
