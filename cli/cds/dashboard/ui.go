@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gizak/termui"
+	"github.com/skratchdot/open-golang/open"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -47,11 +48,12 @@ type Termui struct {
 	buildingPipelines []*termui.Row
 
 	// status
-	infoQueue    string
-	distribQueue map[string]int64
-	queue        *ScrollableList
-	queueSelect  *ScrollableList
-	status       *termui.Par
+	infoQueue          string
+	distribQueue       map[string]int64
+	queue              *ScrollableList
+	queueSelect        *ScrollableList
+	queueCurrentJobURL string
+	status             *termui.Par
 
 	// mutex
 	sync.Mutex
@@ -251,6 +253,12 @@ func (ui *Termui) init() {
 				}
 				break
 			}
+		}
+	})
+
+	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) {
+		if ui.current == StatusView {
+			open.Run(ui.queueCurrentJobURL)
 		}
 	})
 

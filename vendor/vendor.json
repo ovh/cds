@@ -741,6 +741,12 @@
 			"revisionTime": "2017-01-14T04:11:58Z"
 		},
 		{
+			"checksumSHA1": "h/HMhokbQHTdLUbruoBBTee+NYw=",
+			"path": "github.com/skratchdot/open-golang/open",
+			"revision": "75fb7ed4208cf72d323d7d02fd1a5964a7a9073c",
+			"revisionTime": "2016-03-02T14:40:31Z"
+		},
+		{
 			"checksumSHA1": "4FUjSj4CbaZxSPOGl2zwfyaSFWI=",
 			"path": "github.com/smartystreets/assertions",
 			"revision": "15adfb6b24e2f2a9ecc821eaeabcc90064e4e3e7",

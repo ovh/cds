@@ -59,13 +59,23 @@ func (ui *Termui) showStatus() {
 
 	ui.distribQueue = make(map[string]int64)
 
-	go ui.updateQueue()
+	baseURL := "http://cds.ui/"
+	urlUI, err := sdk.GetConfigUser()
+	if err != nil {
+		ui.msg.Text = err.Error()
+	}
+
+	if b, ok := urlUI[sdk.ConfigURLUIKey]; ok {
+		baseURL = b
+	}
+
+	go ui.updateQueue(baseURL)
 	ui.updateVersion()
 	termui.Clear()
 	ui.draw(0)
 }
 
-func (ui *Termui) updateQueue() {
+func (ui *Termui) updateQueue(baseURL string) {
 	for {
 		time.Sleep(2 * time.Second)
 
@@ -98,6 +108,7 @@ func (ui *Termui) updateQueue() {
 			prj := getVarsInPbj("cds.project", job.Parameters)
 			app := getVarsInPbj("cds.application", job.Parameters)
 			pip := getVarsInPbj("cds.pipeline", job.Parameters)
+			build := getVarsInPbj("cds.buildNumber", job.Parameters)
 			env := getVarsInPbj("cds.environment", job.Parameters)
 			bra := getVarsInPbj("git.branch", job.Parameters)
 			duration := time.Since(job.Queued)
@@ -134,17 +145,19 @@ func (ui *Termui) updateQueue() {
 				if job.BookedBy.ID != 0 {
 					booked = fmt.Sprintf(" booked by hatchery %s with id %d", job.BookedBy.Name, job.BookedBy.ID)
 				}
-
+				u := computeURL(baseURL, prj, app, pip, build, env)
 				infos := []string{
 					fmt.Sprintf("[job:%d%s](bg-default)", job.ID, booked),
 					fmt.Sprintf("[project:%s application:%s pipeline:%s env:%s branch:%s](bg-default)", prj, app, pip, env, bra),
 					fmt.Sprintf("[requirements:%s](bg-default)", req),
+					fmt.Sprintf("[%s](bg-default)", u),
 					fmt.Sprintf("[spawninfos:](bg-default)"),
 				}
 				for _, s := range job.SpawnInfos {
 					infos = append(infos, fmt.Sprintf("[%s  %s](bg-default)", s.APITime, s.UserMessage))
 				}
 				ui.queueSelect.Items = infos
+				ui.queueCurrentJobURL = u
 			}
 		}
 		ui.queue.Items = items
@@ -156,6 +169,12 @@ func (ui *Termui) updateQueue() {
 		ui.infoQueue = t
 		termui.Render()
 	}
+}
+
+func computeURL(baseURL, prj, app, pip, build, env string) string {
+	return fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%s?env=%s",
+		baseURL, prj, app, pip, build, env,
+	)
 }
 
 func pad(t string, size int) string {
