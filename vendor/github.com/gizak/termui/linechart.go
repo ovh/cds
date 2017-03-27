@@ -1,4 +1,4 @@
-// Copyright 2016 Zack Guo <gizak@icloud.com>. All rights reserved.
+// Copyright 2017 Zack Guo <zack.y.guo@gmail.com>. All rights reserved.
 // Use of this source code is governed by a MIT license that can
 // be found in the LICENSE file.
 
@@ -35,7 +35,7 @@ var braillePatterns = map[[2]int]rune{
 var lSingleBraille = [4]rune{'\u2840', '⠄', '⠂', '⠁'}
 var rSingleBraille = [4]rune{'\u2880', '⠠', '⠐', '⠈'}
 
-// LineChart has two modes: braille(default) and dot. Using braille gives 2x capicity as dot mode,
+// LineChart has two modes: braille(default) and dot. Using braille gives 2x capacity as dot mode,
 // because one braille char can represent two data points.
 /*
   lc := termui.NewLineChart()
@@ -69,6 +69,7 @@ type LineChart struct {
 	labelYSpace   int
 	maxY          float64
 	minY          float64
+	autoLabels    bool
 }
 
 // NewLineChart returns a new LineChart with current theme.
@@ -86,7 +87,7 @@ func NewLineChart() *LineChart {
 }
 
 // one cell contains two data points
-// so the capicity is 2x as dot-mode
+// so the capacity is 2x as dot-mode
 func (lc *LineChart) renderBraille() Buffer {
 	buf := NewBuffer()
 
@@ -211,7 +212,8 @@ func (lc *LineChart) calcLabelY() {
 
 func (lc *LineChart) calcLayout() {
 	// set datalabels if it is not provided
-	if lc.DataLabels == nil || len(lc.DataLabels) == 0 {
+	if (lc.DataLabels == nil || len(lc.DataLabels) == 0) || lc.autoLabels {
+		lc.autoLabels = true
 		lc.DataLabels = make([]string, len(lc.Data))
 		for i := range lc.Data {
 			lc.DataLabels[i] = fmt.Sprint(i)

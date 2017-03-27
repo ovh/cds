@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gizak/termui"
+	"github.com/skratchdot/open-golang/open"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -47,11 +48,12 @@ type Termui struct {
 	buildingPipelines []*termui.Row
 
 	// status
-	workers              *termui.MBarChart
-	totalBuildingWorkers int64
-	maxBuildingWorkers   int64
-	queue                *termui.Par
-	status               *termui.Par
+	infoQueue          string
+	distribQueue       map[string]int64
+	queue              *ScrollableList
+	queueSelect        *ScrollableList
+	queueCurrentJobURL string
+	status             *termui.Par
 
 	// mutex
 	sync.Mutex
@@ -131,7 +133,10 @@ func (ui *Termui) init() {
 	})
 
 	termui.Handle("/sys/kbd/<down>", func(e termui.Event) {
-		if ui.current == DashboardView {
+		switch ui.current {
+		case StatusView:
+			ui.queue.CursorDown()
+		case DashboardView:
 			switch ui.selected {
 			case ProjectSelected:
 				ui.selectedProject++
@@ -162,7 +167,10 @@ func (ui *Termui) init() {
 		}
 	})
 	termui.Handle("/sys/kbd/<up>", func(e termui.Event) {
-		if ui.current == DashboardView {
+		switch ui.current {
+		case StatusView:
+			ui.queue.CursorUp()
+		case DashboardView:
 			switch ui.selected {
 			case ProjectSelected:
 				ui.selectedProject--
@@ -248,6 +256,12 @@ func (ui *Termui) init() {
 		}
 	})
 
+	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) {
+		if ui.current == StatusView {
+			open.Run(ui.queueCurrentJobURL)
+		}
+	})
+
 	ui.initHeader()
 	ui.initProjects()
 	ui.initMsg()
@@ -258,12 +272,6 @@ func (ui *Termui) init() {
 func (ui *Termui) draw(i int) {
 	ui.Lock()
 	defer ui.Unlock()
-
-	switch ui.current {
-	case "status":
-		ui.drawStatus()
-		break
-	}
 
 	// Add a moving part to check that ui is not frozen
 	ui.header.Text = fmt.Sprintf("(h)ome | (d)ashboard | (m)onitoring | (s)tatus | (q)uit | %s", time.Now().String()[11:19])

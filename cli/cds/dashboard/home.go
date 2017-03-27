@@ -35,6 +35,9 @@ func (ui *Termui) showHome() {
 
 	type 'd' to view your CDS dashboard
 	type 'm' to monitor your building pipelines
+	type 's' to monitor CDS Queue
+
+	type 'q' to quit
 	`, sdk.VERSION)
 
 	termui.Clear()

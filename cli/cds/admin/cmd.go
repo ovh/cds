@@ -7,7 +7,6 @@ import (
 	"github.com/ovh/cds/cli/cds/admin/importer"
 	"github.com/ovh/cds/cli/cds/admin/maintenance"
 	"github.com/ovh/cds/cli/cds/admin/plugin"
-	"github.com/ovh/cds/cli/cds/admin/queue"
 	"github.com/ovh/cds/cli/cds/admin/repositoriesmanager"
 	"github.com/ovh/cds/cli/cds/admin/template"
 	"github.com/ovh/cds/cli/cds/admin/user"
@@ -29,7 +28,6 @@ func init() {
 	rootCmd.AddCommand(repositoriesmanager.Cmd())
 	rootCmd.AddCommand(template.Cmd())
 	rootCmd.AddCommand(user.Cmd())
-	rootCmd.AddCommand(queue.Cmd())
 	rootCmd.AddCommand(warning.Cmd())
 }
 
