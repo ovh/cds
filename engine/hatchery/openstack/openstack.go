@@ -61,12 +61,14 @@ func (h *HatcheryCloud) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
+// ModelType returns type of hatchery
+func (*HatcheryCloud) ModelType() string {
+	return sdk.Openstack
+}
+
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryCloud) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-	if model.Type != sdk.Openstack {
-		return false
-	}
 	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false

@@ -18,6 +18,7 @@ type Interface interface {
 	CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool
 	WorkerStarted(model *sdk.Model) int
 	Hatchery() *sdk.Hatchery
+	ModelType() string
 	ID() int64
 }
 
@@ -144,10 +145,33 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 
 	wg.Wait()
 
+	provisioning(h, timestamp, provision, models)
 	return spawnedIDs, nil
 }
 
+func provisioning(h Interface, timestamp int64, provision int, models []sdk.Model) {
+	if provision == 0 {
+		log.Debug("provisioning> no provisioning to do")
+	}
+
+	for k := range models {
+		if h.WorkerStarted(&models[k]) < provision {
+			if models[k].Type == h.ModelType() {
+				go func(m sdk.Model) {
+					if err := h.SpawnWorker(&m, nil); err != nil {
+						log.Warning("provisioning> %d - cannot spawn worker for privioning: %s", timestamp, m.Name, err)
+					}
+				}(models[k])
+			}
+		}
+	}
+}
+
 func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostname string) bool {
+	if model.Type != h.ModelType() {
+		return false
+	}
+
 	if !h.CanSpawn(model, job) {
 		return false
 	}

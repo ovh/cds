@@ -63,12 +63,14 @@ func (m *HatcheryMarathon) KillWorker(worker sdk.Worker) error {
 	return err
 }
 
+// ModelType returns type of hatchery
+func (*HatcheryMarathon) ModelType() string {
+	return sdk.Docker
+}
+
 // CanSpawn return wether or not hatchery can spawn model
 // requirements services are not supported
 func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-	if model.Type != sdk.Docker {
-		return false
-	}
 	//Service requirement are not supported
 	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement {
@@ -159,15 +161,32 @@ func (m *HatcheryMarathon) Init() error {
 
 func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryID int64, job *sdk.PipelineBuildJob) error {
 	var logJob string
-	if job != nil {
-		logJob = fmt.Sprintf("for job %d,", job.ID)
-	}
 
 	// Estimate needed memory, we will set 110% of required memory
 	memory := m.defaultMemory
+
+	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
+	instance := 1
+	mem := float64(memory * 110 / 100)
+	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	forcePull := strings.HasSuffix(model.Image, ":latest")
+
+	env := map[string]string{
+		"CDS_API":        sdk.Host,
+		"CDS_KEY":        m.token,
+		"CDS_NAME":       workerName,
+		"CDS_MODEL":      fmt.Sprintf("%d", model.ID),
+		"CDS_HATCHERY":   fmt.Sprintf("%d", hatcheryID),
+		"CDS_SINGLE_USE": "1",
+		"CDS_TTL":        fmt.Sprintf("%d", m.workerTTL),
+	}
+
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
 	if job != nil {
+		logJob = fmt.Sprintf("for job %d,", job.ID)
+		env["CDS_BOOKED_JOB_ID"] = fmt.Sprintf("%d", job.ID)
+
 		for _, r := range job.Job.Action.Requirements {
 			if r.Name == sdk.ServiceRequirement {
 				return fmt.Errorf("spawnMarathonDockerWorker> %s service requirement not supported", logJob)
@@ -184,12 +203,6 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 		}
 	}
 
-	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
-	instance := 1
-	mem := float64(memory * 110 / 100)
-	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
-	forcePull := strings.HasSuffix(model.Image, ":latest")
-
 	application := &marathon.Application{
 		ID:  fmt.Sprintf("%s/%s", m.marathonID, workerName),
 		Cmd: &cmd,
@@ -201,17 +214,8 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 			},
 			Type: "DOCKER",
 		},
-		CPUs: 0.5,
-		Env: &map[string]string{
-			"CDS_API":           sdk.Host,
-			"CDS_KEY":           m.token,
-			"CDS_NAME":          workerName,
-			"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
-			"CDS_HATCHERY":      fmt.Sprintf("%d", hatcheryID),
-			"CDS_BOOKED_JOB_ID": fmt.Sprintf("%d", job.ID),
-			"CDS_SINGLE_USE":    "1",
-			"CDS_TTL":           fmt.Sprintf("%d", m.workerTTL),
-		},
+		CPUs:      0.5,
+		Env:       &env,
 		Instances: &instance,
 		Mem:       &mem,
 		Labels:    &hatcheryMarathon.marathonLabels,

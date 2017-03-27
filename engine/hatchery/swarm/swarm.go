@@ -212,11 +212,6 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
 	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker", sdk.Host)}
 
-	var jobID int64
-	if job != nil {
-		jobID = job.ID
-	}
-
 	//CDS env needed by the worker binary
 	env := []string{
 		"CDS_API" + "=" + sdk.Host,
@@ -224,9 +219,12 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		"CDS_KEY" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
-		"CDS_BOOKED_JOB_ID" + "=" + strconv.FormatInt(jobID, 10),
 		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
 		"CDS_SINGLE_USE=1",
+	}
+
+	if job != nil {
+		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(job.ID, 10))
 	}
 
 	//labels are used to make container cleanup easier
@@ -305,12 +303,13 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 	return nil
 }
 
+// ModelType returns type of hatchery
+func (*HatcherySwarm) ModelType() string {
+	return sdk.Docker
+}
+
 // CanSpawn checks if the model can be spawned by this hatchery
 func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-	if model.Type != sdk.Docker {
-		return false
-	}
-
 	//List all containers to check if we can spawn a new one
 	cs, errList := h.dockerClient.ListContainers(docker.ListContainersOptions{})
 	if errList != nil {
