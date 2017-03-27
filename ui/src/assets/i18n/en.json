@@ -207,7 +207,7 @@
   "pipeline_create" : "Create a pipeline",
   "pipeline_deleted" : "Pipeline deleted",
   "pipeline_delete_label" : "Delete pipeline",
-  "pipeline_delete_description" : "Once you delete a pipeline, there is no going back. Please be certain..",
+  "pipeline_delete_description" : "Once you delete a pipeline, there is no going back. Please be certain.",
   "pipeline_label_detach" : "Delete the pipeline from the application",
   "pipeline_label_edit" : "Edit the pipeline",
   "pipeline_label_rollback" : "Rollback",
