@@ -11,13 +11,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/spf13/viper"
-
-	"sync"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
