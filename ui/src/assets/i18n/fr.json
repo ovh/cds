@@ -19,7 +19,7 @@
 
   "application_create" : "Créer une application",
   "application_created" : "Application créée",
-  "application_danger_zone" : "Zone dangereuse",
+  "application_deleted" : "Application supprimé",
   "application_delete_label" : "Suppression de l'application",
   "application_delete_description" : "Une fois l'application supprimée, il n'y a pas de retour arrière. Reflechissez bien.",
   "application_name" : "Nom de l'application",
@@ -123,6 +123,8 @@
   "common_url" : "URL",
   "common_yes" : "Oui",
 
+  "danger_zone" : "Zone dangereuse",
+
   "environment_created" : "Environnement créé",
   "environment_create_placeholder" : "Nouvel environnement",
   "environment_deleted" : "Environnement supprimé",
@@ -203,6 +205,9 @@
   "pipeline_added" : "Pipeline créé",
   "pipeline_attach_application" : "Lier le pipeline à des applications",
   "pipeline_create" : "Créer un pipeline",
+  "pipeline_deleted" : "Pipeline supprimé",
+  "pipeline_delete_label" : "Suppression du pipeline",
+  "pipeline_delete_description" : "Une fois le pipeline supprimé, il n'y a pas de retour arrière. Reflechissez bien.",
   "pipeline_label_detach" : "Supprimer le pipeline de l'application",
   "pipeline_label_edit" : "Editer le pipeline",
   "pipeline_label_rollback" : "Effectuer un rollback",
@@ -245,6 +250,9 @@
   "project_add_ssh_key" : "Générer une clé ssh",
   "project_applications_list" : "Liste des applications du projet : ",
   "project_create" : "Création d'un projet",
+  "project_deleted" : "Projet supprimé",
+  "project_delete_label" : "Suppression du projet",
+  "project_delete_description" : "Une fois le projet supprimé, il n'y a pas de retour arrière. Reflechissez bien.",
   "project_env_form_title" : "Ajouter un environment : ",
   "project_env_list_title" : "Liste des environments : ",
   "project_groups_error" : "Il doit y avoir au moins un groupe avec le droit d'écriture",
