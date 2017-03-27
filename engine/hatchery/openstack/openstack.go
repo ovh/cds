@@ -30,10 +30,8 @@ var mapWorkerBinaries = map[string][]byte{}
 type HatcheryCloud struct {
 	hatch     *sdk.Hatchery
 	token     *Token
-	servers   []Server
 	networkID string
 	ips       []string
-	images    []Image
 	flavors   []Flavor
 	networks  []Network
 
@@ -103,11 +101,6 @@ func (h *HatcheryCloud) Init() error {
 
 	log.Debug("NewOpenstackStore> Got token %dchar at %s", len(h.token.ID), h.endpoint)
 
-	var erri error
-	h.images, erri = getImages(h.endpoint, h.token.ID)
-	if erri != nil {
-		log.Warning("Error getting images: %s", erri)
-	}
 	var errf error
 	h.flavors, errf = getFlavors(h.endpoint, h.token.ID)
 	if errf != nil {
@@ -152,12 +145,14 @@ func (h *HatcheryCloud) killDisabledWorkers() {
 			continue
 		}
 
+		servers := h.getServers()
+
 		for _, w := range workers {
 			if w.Status != sdk.StatusDisabled {
 				continue
 			}
 
-			for _, s := range h.servers {
+			for _, s := range servers {
 				if s.Name == w.Name {
 					log.Notice("Deleting disabled worker %s", w.Name)
 					err := deleteServer(h.endpoint, h.token.ID, s.ID)
@@ -174,7 +169,7 @@ func (h *HatcheryCloud) killErrorServers() {
 	for {
 		time.Sleep(30 * time.Second)
 
-		for _, s := range h.servers {
+		for _, s := range h.getServers() {
 			//Remove server without IP Address
 			if s.Status == "ACTIVE" {
 				t, err := time.Parse(time.RFC3339, s.Updated)
@@ -216,7 +211,7 @@ func (h *HatcheryCloud) killAwolServers() {
 			continue
 		}
 
-		for _, s := range h.servers {
+		for _, s := range h.getServers() {
 			log.Debug("killAwolServers> Checking %s (%s) %v", s.Name, s.ImageRef, s.Metadata)
 			if s.Status == "BUILD" {
 				continue
@@ -274,7 +269,7 @@ func (h *HatcheryCloud) refreshTokenRoutine() {
 // not necessarily register on CDS yet
 func (h *HatcheryCloud) WorkerStarted(model *sdk.Model) int {
 	var x int
-	for _, s := range h.servers {
+	for _, s := range h.getServers() {
 		if strings.Contains(s.Name, strings.ToLower(model.Name)) {
 			x++
 		}
@@ -286,7 +281,7 @@ func (h *HatcheryCloud) WorkerStarted(model *sdk.Model) int {
 // KillWorker delete cloud instances
 func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 	log.Notice("KillWorker> Kill %s", worker.Name)
-	for _, s := range h.servers {
+	for _, s := range h.getServers() {
 		if s.Name == worker.Name {
 			if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 				return err
@@ -307,7 +302,7 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		return fmt.Errorf("hatchery disconnected from engine")
 	}
 
-	if len(h.servers) == viper.GetInt("max-worker") {
+	if len(h.getServers()) == viper.GetInt("max-worker") {
 		log.Info("MaxWorker limit (%d) reached", viper.GetInt("max-worker"))
 		return nil
 	}
@@ -408,24 +403,22 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 	if err := h.createServer(h.endpoint, h.token.ID, name, imageID, flavorID, h.networkID, ip, udata64, personnality); err != nil {
 		return err
 	}
-	// update server cache
-	servers, errs := h.getServers(h.endpoint, h.token.ID)
-	if errs != nil {
-		log.Warning("SpawnWorker> Cannot get servers: %s", errs)
-		return nil
-	}
-	h.servers = servers
 	return nil
 }
 
 // Find image ID from image name
 func (h *HatcheryCloud) imageID(img string) (string, error) {
-	for _, i := range h.images {
+	images, erri := getImages(h.endpoint, h.token.ID)
+	if erri != nil {
+		log.Warning("imageID> Error getting images: %s", erri)
+	}
+
+	for _, i := range images {
 		if i.Name == img {
 			return i.ID, nil
 		}
 	}
-	return "", fmt.Errorf("image '%s' not found", img)
+	return "", fmt.Errorf("imageID> image '%s' not found", img)
 }
 
 // Find flavor ID from flavor name
@@ -452,7 +445,8 @@ func (h *HatcheryCloud) getNetworkID(network string) (string, error) {
 func (h *HatcheryCloud) findAvailableIP() (string, error) {
 	var building, foundfree int
 
-	for _, s := range h.servers {
+	servers := h.getServers()
+	for _, s := range servers {
 		if s.Status != "ACTIVE" {
 			building++
 		}
@@ -460,7 +454,7 @@ func (h *HatcheryCloud) findAvailableIP() (string, error) {
 	freeIP := []string{}
 	for _, ip := range h.ips {
 		free := true
-		for _, s := range h.servers {
+		for _, s := range servers {
 			if len(s.Addresses) == 0 {
 				continue
 			}
@@ -490,15 +484,9 @@ func (h *HatcheryCloud) findAvailableIP() (string, error) {
 func (h *HatcheryCloud) updateServerList() {
 	for {
 		time.Sleep(2 * time.Second)
-		servers, err := h.getServers(h.endpoint, h.token.ID)
-		if err != nil {
-			log.Warning("updateServerList> Cannot get servers: %s", err)
-			continue
-		}
-
 		var out string
-		var active, building int
-		for _, s := range servers {
+		var active, building, total int
+		for _, s := range h.getServers() {
 			out += fmt.Sprintf("- [%s] %s:%s (", s.Updated, s.Status, s.Name)
 			for network, addr := range s.Addresses {
 				out += fmt.Sprintf("%s:%s", network, addr[0].Addr)
@@ -510,9 +498,9 @@ func (h *HatcheryCloud) updateServerList() {
 			case serverStatusActive:
 				active++
 			}
+			total++
 		}
-		h.servers = servers
-		log.Notice("Got %d servers (%d actives, %d booting)", len(servers), active, building)
+		log.Notice("Got %d servers (%d actives, %d booting)", total, active, building)
 		log.Debug(out)
 	}
 }
@@ -759,15 +747,23 @@ func getFlavors(endpoint string, token string) ([]Flavor, error) {
 	return s.Flavors, nil
 }
 
-func (h *HatcheryCloud) getServers(endpoint, token string) ([]Server, error) {
-	uri := fmt.Sprintf("%s/servers/detail", endpoint)
+func (h *HatcheryCloud) getServers() []Server {
+	servers, err := h.getServersRequest()
+	if err != nil {
+		log.Warning("getServers> error: %s", err)
+	}
+	return servers
+}
+
+func (h *HatcheryCloud) getServersRequest() ([]Server, error) {
+	uri := fmt.Sprintf("%s/servers/detail", h.endpoint)
 	req, errRequest := http.NewRequest("GET", uri, nil)
 	if errRequest != nil {
 		return nil, errRequest
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Token", token)
+	req.Header.Set("X-Auth-Token", h.token.ID)
 
 	resp, errDo := hatchery.Client.Do(req)
 	if errDo != nil {
