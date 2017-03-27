@@ -41,6 +41,12 @@
 			"revisionTime": "2015-01-07T20:56:47Z"
 		},
 		{
+			"checksumSHA1": "ta8SSP0z1c4mWWiJc9srvj2WirE=",
+			"path": "github.com/bgentry/speakeasy",
+			"revision": "a1ccbf2c40dfc8ce514b5c5c6e6d1429ea6880da",
+			"revisionTime": "2016-08-13T19:06:34Z"
+		},
+		{
 			"checksumSHA1": "+D61wl+LRZs+8zSrbXAu62G3NfE=",
 			"path": "github.com/briandowns/spinner",
 			"revision": "cd65e8bd7da20cdcee450f7cbdd9cc04f78bc02f",
@@ -575,6 +581,12 @@
 			"revisionTime": "2016-01-26T18:01:36Z"
 		},
 		{
+			"checksumSHA1": "7hln62oZPZmyqEmgXaybf9WxQ7A=",
+			"path": "github.com/maruel/panicparse/stack",
+			"revision": "25bcac0d793cf4109483505a0d66e066a3a90a80",
+			"revisionTime": "2017-02-27T22:23:42Z"
+		},
+		{
 			"checksumSHA1": "6wAWOVRtaH7hX48hmw9o7noyy5Q=",
 			"path": "github.com/mattn/go-colorable",
 			"revision": "9056b7a9f2d1f2d96498d6d146acd1f9d5ed3d59",
@@ -1045,6 +1057,12 @@
 			"path": "gopkg.in/redis.v4/internal/proto",
 			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
 			"revisionTime": "2016-08-23T11:40:42Z"
+		},
+		{
+			"checksumSHA1": "/1TzqyoYSSdEkFrZG20XoNGwD8o=",
+			"path": "gopkg.in/urfave/cli.v1",
+			"revision": "a14d7d367bc02b1f57d88de97926727f2d936387",
+			"revisionTime": "2016-08-29T00:43:50Z"
 		},
 		{
 			"checksumSHA1": "12GqsW8PiRPnezDDy0v4brZrndM=",
