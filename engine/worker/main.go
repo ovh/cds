@@ -389,8 +389,12 @@ func unregister() error {
 	}
 
 	if viper.GetBool("single_use") {
-		log.Notice("queuePolling> waiting 30min to be killed by hatchery, if not killed, worker will exit")
-		time.Sleep(30 * time.Minute)
+		if hatchery > 0 {
+			log.Notice("unregister> waiting 30min to be killed by hatchery, if not killed, worker will exit")
+			time.Sleep(30 * time.Minute)
+		}
+		log.Notice("unregister> worker will exit")
+		time.Sleep(3 * time.Second)
 		os.Exit(0)
 	}
 	return nil
