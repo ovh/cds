@@ -21,8 +21,7 @@ func (ui *Termui) showMonitoring() {
 	ui.monitoring = termui.NewRow()
 	termui.Body.AddRows(
 		termui.NewRow(
-			termui.NewCol(6, 0, ui.header),
-			termui.NewCol(6, 0, ui.msg),
+			termui.NewCol(12, 0, ui.header),
 		),
 		ui.monitoring,
 	)
@@ -107,15 +106,15 @@ func (ui *Termui) updateMonitoringPipeline() {
 			begin := time.Now()
 			pbs, err := sdk.GetBuildingPipelines()
 			if err != nil {
-				ui.msg.Text = fmt.Sprintf("Cannot load building pipeline: %s", err.Error())
+				ui.msg = fmt.Sprintf("Cannot load building pipeline: %s", err.Error())
 				continue
 			}
-			ui.msg.Text = fmt.Sprintf("Delay: %s", time.Since(begin).String())
+			ui.msg = fmt.Sprintf("Delay: %s", time.Since(begin).String())
 
 			ui.pbs = pbs
 			ui.drawMonitoringPipelines()
-		} // !for
-	}() // !func
+		}
+	}()
 
 }
 
