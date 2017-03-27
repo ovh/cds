@@ -19,7 +19,7 @@
 
   "application_create" : "Créer une application",
   "application_created" : "Application créée",
-  "application_deleted" : "Application supprimé",
+  "application_deleted" : "Application supprimée",
   "application_delete_label" : "Suppression de l'application",
   "application_delete_description" : "Une fois l'application supprimée, il n'y a pas de retour possible.",
   "application_name" : "Nom de l'application",
