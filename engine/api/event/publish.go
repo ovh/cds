@@ -36,6 +36,7 @@ func PublishActionBuild(pb *sdk.PipelineBuild, pbJob *sdk.PipelineBuildJob) {
 	e := sdk.EventJob{
 		Version:         pb.Version,
 		JobName:         pbJob.Job.Action.Name,
+		JobID:           pbJob.Job.PipelineActionID,
 		Status:          sdk.StatusFromString(pbJob.Status),
 		Queued:          pbJob.Queued.Unix(),
 		Start:           pbJob.Start.Unix(),
