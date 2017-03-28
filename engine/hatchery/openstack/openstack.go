@@ -305,6 +305,8 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
 func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
+	log.Notice("SpawnWorker> %s", model.Name)
+
 	var err error
 	var omd sdk.OpenstackModelData
 
@@ -758,29 +760,36 @@ func getFlavors(endpoint string, token string) ([]Flavor, error) {
 
 //This a embeded cache for servers list
 var servers = struct {
-	mu   sync.Mutex
+	mu   sync.RWMutex
 	list []Server
 }{
-	mu:   sync.Mutex{},
+	mu:   sync.RWMutex{},
 	list: []Server{},
 }
 
 func (h *HatcheryCloud) getServers() []Server {
-	servers.mu.Lock()
-	defer servers.mu.Unlock()
+	t := time.Now()
 
-	if len(servers.list) == 0 {
+	defer log.Debug("getServers() : %d s", time.Since(t).Seconds())
+
+	servers.mu.RLock()
+	nbServers := len(servers.list)
+	servers.mu.RUnlock()
+
+	if nbServers == 0 {
 		s, err := h.getServersRequest()
 		if err != nil {
 			log.Warning("getServers> error: %s", err)
 		}
+		servers.mu.Lock()
 		servers.list = s
+		servers.mu.Unlock()
 		//Remove data from the cache after 2 seconds
-		defer func() {
+		go func() {
 			time.Sleep(2 * time.Second)
 			servers.mu.Lock()
-			defer servers.mu.Unlock()
 			servers.list = []Server{}
+			servers.mu.Unlock()
 		}()
 	}
 
