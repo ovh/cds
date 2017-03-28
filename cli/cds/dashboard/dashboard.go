@@ -14,13 +14,11 @@ func (ui *Termui) showDashboard() {
 	ui.current = DashboardView
 	termui.Body.Rows = nil
 
-	//ui.logs = termui.NewPar("Logs")
 	ui.dashboard = termui.NewRow()
 	ui.appsLayout = termui.NewCol(10, 0)
 	termui.Body.AddRows(
 		termui.NewRow(
-			termui.NewCol(6, 0, ui.header),
-			termui.NewCol(6, 0, ui.msg),
+			termui.NewCol(12, 0, ui.header),
 		),
 		ui.dashboard,
 	)
@@ -163,12 +161,10 @@ func (ui *Termui) updateLogs(index int, height int, pbJob sdk.PipelineBuildJob) 
 }
 
 func (ui *Termui) getLogs(proj, app, env, pip string) {
-	//	ui.msg.Text = fmt.Sprintf("Loading logs of %s/%s/%s-%s...", proj, app, pip, env)
-
 	// Get build state
 	state, err := sdk.GetBuildState(proj, app, pip, env, "last")
 	if err != nil {
-		ui.msg.Text = fmt.Sprintf("Cannot get build state for %s/%s/%s: %s\n", proj, app, pip, err)
+		ui.msg = fmt.Sprintf("[Cannot get build state for %s/%s/%s: %s](bg-red)", proj, app, pip, err)
 		return
 	}
 
@@ -196,7 +192,7 @@ func (ui *Termui) getLogs(proj, app, env, pip string) {
 		ui.logs[i].Border = false
 	}
 
-	ui.msg.Text = fmt.Sprintf("Logs loaded. Hit <tab> to select, then <j><k>")
+	ui.msg = fmt.Sprintf("Logs loaded. Hit <tab> to select, then <j><k>")
 }
 
 func (ui *Termui) drawApplications() {
@@ -355,10 +351,10 @@ func (ui *Termui) updateProjects() {
 			begin := time.Now()
 			projects, err := sdk.ListProject(sdk.WithApplicationStatus())
 			if err != nil {
-				ui.msg.Text = err.Error()
+				ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 				continue
 			}
-			ui.msg.Text = fmt.Sprintf("Delay: %s", time.Since(begin).String())
+			ui.msg = fmt.Sprintf("[Delay: %s](fg-cyan)", time.Since(begin).String())
 
 			ui.proj = projects
 			ui.drawProjects()

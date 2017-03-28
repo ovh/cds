@@ -14,40 +14,34 @@ func (ui *Termui) showStatus() {
 	ui.current = StatusView
 	termui.Body.Rows = nil
 
-	p := termui.NewPar("")
-	p.Height = 3
-	p.TextFgColor = termui.ColorWhite
-	p.BorderLabel = "Status"
-	p.BorderFg = termui.ColorCyan
-	ui.status = p
-
 	ui.queue = NewScrollableList()
 	ui.queue.ItemFgColor = termui.ColorWhite
 	ui.queue.ItemBgColor = termui.ColorBlack
 
 	ui.queue.BorderLabel = "Queue"
-	ui.queue.Height = termui.TermHeight() - 16
+	ui.queue.Height = termui.TermHeight() - 11
 	ui.queue.Width = termui.TermWidth()
 	ui.queue.Items = []string{"Loading..."}
+	ui.queue.BorderBottom = false
+	ui.queue.BorderLeft = false
+	ui.queue.BorderRight = false
 
 	ui.queueSelect = NewScrollableList()
 	ui.queueSelect.ItemFgColor = termui.ColorWhite
 	ui.queueSelect.ItemBgColor = termui.ColorBlack
 
 	ui.queueSelect.BorderLabel = "Job selected"
-	ui.queueSelect.Height = 10
+	ui.queueSelect.Height = 11
 	ui.queueSelect.Width = termui.TermWidth()
 	ui.queueSelect.Items = []string{"[select a job](fg-cyan,bg-default)"}
+	ui.queueSelect.BorderBottom = false
+	ui.queueSelect.BorderLeft = false
+	ui.queueSelect.BorderRight = false
 
 	termui.Body.AddRows(
 		termui.NewRow(
-			termui.NewCol(6, 0, ui.header),
-			termui.NewCol(6, 0, ui.msg),
+			termui.NewCol(12, 0, ui.header),
 		),
-	)
-
-	termui.Body.AddRows(
-		termui.NewCol(12, 0, p),
 	)
 
 	termui.Body.AddRows(
@@ -62,7 +56,7 @@ func (ui *Termui) showStatus() {
 	baseURL := "http://cds.ui/"
 	urlUI, err := sdk.GetConfigUser()
 	if err != nil {
-		ui.msg.Text = err.Error()
+		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 	}
 
 	if b, ok := urlUI[sdk.ConfigURLUIKey]; ok {
@@ -70,7 +64,6 @@ func (ui *Termui) showStatus() {
 	}
 
 	go ui.updateQueue(baseURL)
-	ui.updateVersion()
 	termui.Clear()
 	ui.draw(0)
 }
@@ -83,11 +76,14 @@ func (ui *Termui) updateQueue(baseURL string) {
 			return
 		}
 
+		start := time.Now()
 		pbJobs, err := sdk.GetBuildQueue()
 		if err != nil {
-			ui.msg.Text = err.Error()
+			ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 			continue
 		}
+		elapsed := time.Since(start)
+		ui.msg = fmt.Sprintf("[getQueue in %s](fg-cyan)", sdk.Round(elapsed, time.Millisecond).String())
 
 		if err != nil {
 			sdk.Exit("Error: %s\n", err)
@@ -97,7 +93,7 @@ func (ui *Termui) updateQueue(baseURL string) {
 		booked := make(map[string]int)
 
 		items := []string{
-			fmt.Sprintf("[  %s %s%s %s➤ %s ➤ %s ➤ %s ➤ %s %s](fg-cyan,bg-default)", pad("since", 9), pad("booked", 40), pad("job", 13), pad("project", 7), pad("application", 15), pad("pipeline", 15), pad("enviromnent", 10), pad("branch", 8), "requirements"),
+			fmt.Sprintf("[  %s %s%s %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("since", 9), pad("booked", 27), pad("job", 7), pad("project/application", 35), pad("pipeline/branch/env", 33), "requirements"),
 		}
 
 		for i, job := range pbJobs {
@@ -118,9 +114,9 @@ func (ui *Termui) updateQueue(baseURL string) {
 
 			row := make([]string, 5)
 			var c string
-			if duration > 20*time.Second {
+			if duration > 60*time.Second {
 				c = "bg-red"
-			} else if duration > 10*time.Second {
+			} else if duration > 15*time.Second {
 				c = "bg-yellow"
 			} else {
 				c = "bg-default"
@@ -128,14 +124,14 @@ func (ui *Termui) updateQueue(baseURL string) {
 			row[0] = pad(fmt.Sprintf(sdk.Round(duration, time.Second).String()), 9)
 
 			if job.BookedBy.ID != 0 {
-				row[1] = pad(fmt.Sprintf(" BOOKED(%s.%d) ", job.BookedBy.Name, job.BookedBy.ID), 40)
+				row[1] = pad(fmt.Sprintf(" %s.%d ", job.BookedBy.Name, job.BookedBy.ID), 27)
 				booked[fmt.Sprintf("%s.%d", job.BookedBy.Name, job.BookedBy.ID)] = booked[job.BookedBy.Name] + 1
 			} else {
-				row[1] = pad("", 40)
+				row[1] = pad("", 27)
 			}
-			row[2] = pad(fmt.Sprintf("job:%d", job.ID), 13)
-			row[3] = fmt.Sprintf("%s ➤ %s ➤ %s ➤ %s ➤ %s", pad(prj, 6), pad(app, 15), pad(pip, 15), pad(env, 10), pad(bra, 8))
-			row[4] = fmt.Sprintf("%s", req)
+			row[2] = pad(fmt.Sprintf("%d", job.ID), 7)
+			row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 35), pad(pip+"/"+bra+"/"+env, 33))
+			row[4] = fmt.Sprintf("➤ %s", req)
 
 			item := fmt.Sprintf("  [%s](%s)[%s %s %s %s](bg-default)", row[0], c, row[1], row[2], row[3], row[4])
 			items = append(items, item)
@@ -162,11 +158,11 @@ func (ui *Termui) updateQueue(baseURL string) {
 		}
 		ui.queue.Items = items
 
-		t := fmt.Sprintf("queue:%d max:%s | ", len(pbJobs), sdk.Round(maxQueued, time.Second).String())
+		t := fmt.Sprintf(" queue:%d max:%s ", len(pbJobs), sdk.Round(maxQueued, time.Second).String())
 		for name, total := range booked {
 			t += fmt.Sprintf("%s:%d ", name, total)
 		}
-		ui.infoQueue = t
+		ui.queue.BorderLabel = t
 		termui.Render()
 	}
 }
@@ -191,33 +187,4 @@ func getVarsInPbj(key string, ps []sdk.Parameter) string {
 		}
 	}
 	return ""
-}
-
-func (ui *Termui) updateVersion() {
-	version, err := sdk.GetVersion()
-	if err != nil {
-		ui.status.Text = fmt.Sprintf("CDS is down (%s)", err)
-	}
-	ui.status.Text = fmt.Sprintf("CDS is up and running (%s)", version)
-
-	go func() {
-		for {
-			time.Sleep(2 * time.Second)
-
-			if ui.current != StatusView {
-				return
-			}
-
-			if ui.queue == nil {
-				continue
-			}
-
-			version, err := sdk.GetVersion()
-			if err != nil {
-				ui.status.Text = fmt.Sprintf("CDS is down (%s)", err)
-				continue
-			}
-			ui.status.Text = fmt.Sprintf("CDS is up and running (%s) | %s", version, ui.infoQueue)
-		}
-	}()
 }
