@@ -14,7 +14,6 @@ func (ui *Termui) showDashboard() {
 	ui.current = DashboardView
 	termui.Body.Rows = nil
 
-	//ui.logs = termui.NewPar("Logs")
 	ui.dashboard = termui.NewRow()
 	ui.appsLayout = termui.NewCol(10, 0)
 	termui.Body.AddRows(
@@ -162,8 +161,6 @@ func (ui *Termui) updateLogs(index int, height int, pbJob sdk.PipelineBuildJob) 
 }
 
 func (ui *Termui) getLogs(proj, app, env, pip string) {
-	//	ui.msg = fmt.Sprintf("Loading logs of %s/%s/%s-%s...", proj, app, pip, env)
-
 	// Get build state
 	state, err := sdk.GetBuildState(proj, app, pip, env, "last")
 	if err != nil {
