@@ -305,7 +305,11 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
 func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
-	log.Notice("SpawnWorker> %s", model.Name)
+	if job != nil {
+		log.Notice("spawnWorker> spawning worker %s for job %d", model.Name, job.ID)
+	} else {
+		log.Notice("spawnWorker> spawning worker %s ", model.Name)
+	}
 
 	var err error
 	var omd sdk.OpenstackModelData
