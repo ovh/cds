@@ -167,7 +167,6 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 
 	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
 	instance := 1
-	mem := float64(memory * 110 / 100)
 	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	forcePull := strings.HasSuffix(model.Image, ":latest")
 
@@ -202,6 +201,8 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 			}
 		}
 	}
+
+	mem := float64(memory * 110 / 100)
 
 	application := &marathon.Application{
 		ID:  fmt.Sprintf("%s/%s", m.marathonID, workerName),
