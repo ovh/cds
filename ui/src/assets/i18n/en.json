@@ -19,7 +19,7 @@
 
   "application_create" : "Create a new application",
   "application_created" : "Application created",
-  "application_danger_zone" : "Danger Zone",
+  "application_deleted" : "Application deleted",
   "application_delete_label" : "Delete application",
   "application_delete_description" : "Once you delete an application, there is no going back. Please be certain.",
   "application_name" : "Application name",
@@ -123,6 +123,8 @@
   "common_url" : "URL",
   "common_yes" : "Yes",
 
+  "danger_zone" : "Danger Zone",
+
   "environment_created" : "Environment added",
   "environment_create_placeholder" : "New environment",
   "environment_deleted" : "Environment deleted",
@@ -203,6 +205,9 @@
   "pipeline_added" : "Pipeline added",
   "pipeline_attach_application" : "Link pipeline to applications",
   "pipeline_create" : "Create a pipeline",
+  "pipeline_deleted" : "Pipeline deleted",
+  "pipeline_delete_label" : "Delete pipeline",
+  "pipeline_delete_description" : "Once you delete a pipeline, there is no going back. Please be certain.",
   "pipeline_label_detach" : "Delete the pipeline from the application",
   "pipeline_label_edit" : "Edit the pipeline",
   "pipeline_label_rollback" : "Rollback",
@@ -245,6 +250,9 @@
   "project_add_ssh_key" : "Generate a ssh key",
   "project_applications_list" : "List of applications in the project: ",
   "project_create" : "Create a new project",
+  "project_deleted" : "Project deleted",
+  "project_delete_label" : "Delete project",
+  "project_delete_description" : "Once you delete a project, there is no going back. Please be certain.",
   "project_env_form_title" : "Add an environment: ",
   "project_env_list_title" : "Environments List: ",
   "project_groups_error" : "A project must have at least one group with write permission",

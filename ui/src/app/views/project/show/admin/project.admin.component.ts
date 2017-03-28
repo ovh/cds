@@ -42,4 +42,14 @@ export class ProjectAdminComponent implements OnInit {
         }
     };
 
+    deleteProject(): void {
+        this._projectStore.deleteProject(this.project.key).subscribe(() => {
+            this.loading = false;
+            this._toast.success('', this._translate.instant('project_deleted'));
+            this._router.navigate(['/home']);
+        }, () => {
+            this.loading = false;
+        });
+    }
+
 }

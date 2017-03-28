@@ -53,6 +53,7 @@ export class ApplicationAdminComponent implements OnInit {
         this.loading = true;
         this._applicationStore.deleteApplication(this.project.key, this.application.name).subscribe(() => {
             this.loading = false;
+            this._toast.success('', this._translate.instant('application_deleted'));
             this._router.navigate(['/project', this.project.key]);
         }, () => {
             this.loading = false;

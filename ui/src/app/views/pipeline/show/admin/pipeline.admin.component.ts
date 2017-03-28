@@ -41,7 +41,7 @@ export class PipelineAdminComponent implements OnInit {
         }
     }
 
-    updatePipeline() {
+    updatePipeline(): void {
         this.loading = true;
         this._pipStore.updatePipeline(this.project.key, this.oldName, this.editablePipeline).subscribe(() => {
             this.loading = false;
@@ -49,6 +49,20 @@ export class PipelineAdminComponent implements OnInit {
             this._router.navigate(
                 ['project', this.project.key, 'pipeline', this.editablePipeline.name],
                 { queryParams: { 'tab' : 'advanced' }}
+            );
+        }, () => {
+            this.loading = false;
+        });
+    }
+
+    deletePipeline(): void {
+        this.loading = true;
+        this._pipStore.deletePipeline(this.project.key, this.editablePipeline.name).subscribe(() => {
+            this.loading = false;
+            this._toast.success('', this._translate.instant('pipeline_deleted'));
+            this._router.navigate(
+                ['project', this.project.key],
+                { queryParams: { 'tab' : 'pipelines' }}
             );
         }, () => {
             this.loading = false;

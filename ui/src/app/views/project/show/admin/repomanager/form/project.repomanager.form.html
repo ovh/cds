@@ -1,11 +1,11 @@
 <form class="ui form" *ngIf="ready" (ngSubmit)="create(verificationModal)" novalidate>
     <div class="fields">
-        <div class="four wide field">
+        <div class="seven wide field">
             <sm-select [(model)]="selectedRepo" [disabled]="connectLoading">
                 <option *ngFor="let r of reposManagerList" value="{{r.name}}">{{r.name}}</option>
             </sm-select>
         </div>
-        <div class="two wide center field">
+        <div class="nine wide right aligned field">
             <button type="submit" [class.disabled]="!selectedRepo" class="ui green button" [class.loading]="connectLoading" name="addrepo">
                 {{ 'btn_link' | translate }}
             </button>
