@@ -11,14 +11,16 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
+	"github.com/spf13/viper"
+
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/spf13/viper"
 )
 
 var hatcheryOpenStack *HatcheryCloud
@@ -97,8 +99,8 @@ func (h *HatcheryCloud) Init() error {
 	if errt != nil {
 		return errt
 	}
-	go h.refreshTokenRoutine()
 
+	h.refreshToken()
 	log.Debug("NewOpenstackStore> Got token %dchar at %s", len(h.token.ID), h.endpoint)
 
 	var errf error
@@ -127,73 +129,90 @@ func (h *HatcheryCloud) Init() error {
 		os.Exit(10)
 	}
 
-	go h.updateServerList()
-	go h.killAwolServers()
-	go h.killErrorServers()
-	go h.killDisabledWorkers()
+	go h.main()
 
 	return nil
 }
 
-func (h *HatcheryCloud) killDisabledWorkers() {
-	for {
-		time.Sleep(30 * time.Second)
+func (h *HatcheryCloud) main() {
+	serverListTick := time.NewTicker(10 * time.Second).C
+	killAwolServersTick := time.NewTicker(30 * time.Second).C
+	killErrorServersTick := time.NewTicker(60 * time.Second).C
+	killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
+	refreshTokenTick := time.NewTicker(20 * time.Hour).C
 
-		workers, err := sdk.GetWorkers()
-		if err != nil {
-			log.Warning("Cannot fetch worker list: %s", err)
+	for {
+		select {
+
+		case <-serverListTick:
+			h.updateServerList()
+
+		case <-killAwolServersTick:
+			h.killAwolServers()
+
+		case <-killErrorServersTick:
+			h.killErrorServers()
+
+		case <-killDisabledWorkersTick:
+			h.killDisabledWorkers()
+
+		case <-refreshTokenTick:
+			h.refreshToken()
+		}
+	}
+}
+
+func (h *HatcheryCloud) killDisabledWorkers() {
+	workers, err := sdk.GetWorkers()
+	if err != nil {
+		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
+		return
+	}
+	servers := h.getServers()
+
+	for _, w := range workers {
+		if w.Status != sdk.StatusDisabled {
 			continue
 		}
 
-		servers := h.getServers()
-
-		for _, w := range workers {
-			if w.Status != sdk.StatusDisabled {
-				continue
-			}
-
-			for _, s := range servers {
-				if s.Name == w.Name {
-					log.Notice("Deleting disabled worker %s", w.Name)
-					err := deleteServer(h.endpoint, h.token.ID, s.ID)
-					if err != nil {
-						log.Warning("Cannot remove server %s: %s", s.Name, err)
-					}
-				}
-			}
-		}
-	} // !for
-}
-
-func (h *HatcheryCloud) killErrorServers() {
-	for {
-		time.Sleep(30 * time.Second)
-
-		for _, s := range h.getServers() {
-			//Remove server without IP Address
-			if s.Status == "ACTIVE" {
-				t, err := time.Parse(time.RFC3339, s.Updated)
-				if err != nil {
-					log.Warning("Cannot parse last update: %s", err)
-					break
-				}
-
-				if len(s.Addresses) == 0 && time.Since(t) > 6*time.Minute {
-					log.Notice("Deleting server %s without IP Address", s.Name)
-					err := deleteServer(h.endpoint, h.token.ID, s.ID)
-					if err != nil {
-						log.Warning("Cannot remove server %s: %s", s.Name, err)
-					}
-				}
-			}
-
-			//Remove Error server
-			if s.Status == "ERROR" {
-				log.Notice("Deleting server %s in error", s.Name)
+		for _, s := range servers {
+			if s.Name == w.Name {
+				log.Notice("Deleting disabled worker %s", w.Name)
 				err := deleteServer(h.endpoint, h.token.ID, s.ID)
 				if err != nil {
 					log.Warning("Cannot remove server %s: %s", s.Name, err)
+					continue
 				}
+			}
+		}
+	}
+}
+
+func (h *HatcheryCloud) killErrorServers() {
+	for _, s := range h.getServers() {
+		//Remove server without IP Address
+		if s.Status == "ACTIVE" {
+			t, err := time.Parse(time.RFC3339, s.Updated)
+			if err != nil {
+				log.Warning("killErrorServers> Cannot parse last update: %s", err)
+				continue
+			}
+
+			if len(s.Addresses) == 0 && time.Since(t) > 6*time.Minute {
+				log.Notice("Deleting server %s without IP Address", s.Name)
+				if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
+					log.Warning("Cannot remove server %s: %s", s.Name, err)
+					continue
+				}
+			}
+		}
+
+		//Remove Error server
+		if s.Status == "ERROR" {
+			log.Notice("Deleting server %s in error", s.Name)
+			if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
+				log.Warning("Cannot remove server %s: %s", s.Name, err)
+				continue
 			}
 		}
 	}
@@ -202,67 +221,58 @@ func (h *HatcheryCloud) killErrorServers() {
 func (h *HatcheryCloud) killAwolServers() {
 	var found bool
 
-	for {
-		time.Sleep(10 * time.Second)
+	workers, err := sdk.GetWorkers()
+	if err != nil {
+		log.Warning("killAwolServers> Cannot fetch worker list: %s", err)
+		return
+	}
 
-		workers, err := sdk.GetWorkers()
-		if err != nil {
-			log.Warning("Cannot fetch worker list: %s", err)
+	for _, s := range h.getServers() {
+		log.Debug("killAwolServers> Checking %s (%s) %v", s.Name, s.ImageRef, s.Metadata)
+		if s.Status == "BUILD" {
 			continue
 		}
-
-		for _, s := range h.getServers() {
-			log.Debug("killAwolServers> Checking %s (%s) %v", s.Name, s.ImageRef, s.Metadata)
-			if s.Status == "BUILD" {
-				continue
-			}
-			found = false
-			for _, w := range workers {
-				if w.Name == s.Name {
-					found = true
-					break
-				}
-			}
-
-			if found {
-				continue
-			}
-
-			workerHatcheryName, _ := s.Metadata["hatcheryName"]
-			_, ok := s.Metadata["worker"]
-
-			t, err := time.Parse(time.RFC3339, s.Updated)
-			if err != nil {
-				log.Warning("Cannot parse last update: %s", err)
+		found = false
+		for _, w := range workers {
+			if w.Name == s.Name {
+				found = true
 				break
 			}
-
-			log.Debug("killAwolServers> Deleting %s (%s) %v ? : %v %v hatcheryName:%s %v", s.Name, s.ImageRef, s.Metadata, ok, (time.Since(t) > 6*time.Minute), workerHatcheryName, (workerHatcheryName == h.Hatchery().Name))
-
-			// Delete workers, if not identified by CDS API
-			// Wait for 6 minutes, to avoid killing worker babies
-			if (workerHatcheryName == "" || workerHatcheryName == h.Hatchery().Name) && ok && time.Since(t) > 6*time.Minute {
-				log.Notice("killAwolServers> %s last update: %s", s.Name, time.Since(t))
-				if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
-					log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
-				}
-			}
 		}
 
-	} // !for
-}
-
-func (h *HatcheryCloud) refreshTokenRoutine() {
-	for {
-		time.Sleep(20 * time.Hour)
-		tk, endpoint, err := getToken(h.user, h.password, h.address, h.tenant, h.region)
-		if err != nil {
-			log.Critical("refreshTokenRoutine> Cannot refresh token: %s", err)
+		if found {
 			continue
 		}
-		h.token = tk
-		h.endpoint = endpoint
+
+		workerHatcheryName, _ := s.Metadata["hatcheryName"]
+		_, ok := s.Metadata["worker"]
+
+		t, err := time.Parse(time.RFC3339, s.Updated)
+		if err != nil {
+			log.Warning("Cannot parse last update: %s", err)
+			break
+		}
+
+		log.Debug("killAwolServers> Deleting %s (%s) %v ? : %v %v hatcheryName:%s %v", s.Name, s.ImageRef, s.Metadata, ok, (time.Since(t) > 6*time.Minute), workerHatcheryName, (workerHatcheryName == h.Hatchery().Name))
+
+		// Delete workers, if not identified by CDS API
+		// Wait for 6 minutes, to avoid killing worker babies
+		if (workerHatcheryName == "" || workerHatcheryName == h.Hatchery().Name) && ok && time.Since(t) > 6*time.Minute {
+			log.Notice("killAwolServers> %s last update: %s", s.Name, time.Since(t))
+			if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
+				log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
+			}
+		}
 	}
+}
+
+func (h *HatcheryCloud) refreshToken() {
+	tk, endpoint, err := getToken(h.user, h.password, h.address, h.tenant, h.region)
+	if err != nil {
+		log.Critical("refreshToken> Cannot refresh token: %s", err)
+	}
+	h.token = tk
+	h.endpoint = endpoint
 }
 
 // WorkerStarted returns the number of instances of given model started but
@@ -482,27 +492,26 @@ func (h *HatcheryCloud) findAvailableIP() (string, error) {
 }
 
 func (h *HatcheryCloud) updateServerList() {
-	for {
-		time.Sleep(2 * time.Second)
-		var out string
-		var active, building, total int
-		for _, s := range h.getServers() {
-			out += fmt.Sprintf("- [%s] %s:%s (", s.Updated, s.Status, s.Name)
-			for network, addr := range s.Addresses {
-				out += fmt.Sprintf("%s:%s", network, addr[0].Addr)
-			}
-			out += fmt.Sprintf(")")
-			switch s.Status {
-			case serverStatusBuild:
-				building++
-			case serverStatusActive:
-				active++
-			}
-			total++
+
+	var out string
+	var active, building, total int
+	for _, s := range h.getServers() {
+		out += fmt.Sprintf("- [%s] %s:%s (", s.Updated, s.Status, s.Name)
+		for network, addr := range s.Addresses {
+			out += fmt.Sprintf("%s:%s", network, addr[0].Addr)
 		}
-		log.Notice("Got %d servers (%d actives, %d booting)", total, active, building)
-		log.Debug(out)
+		out += fmt.Sprintf(")")
+		switch s.Status {
+		case serverStatusBuild:
+			building++
+		case serverStatusActive:
+			active++
+		}
+		total++
 	}
+	log.Notice("Got %d servers (%d actives, %d booting)", total, active, building)
+	log.Debug(out)
+
 }
 
 //////////// OPENSTACK HANDLERS //////////
@@ -747,12 +756,35 @@ func getFlavors(endpoint string, token string) ([]Flavor, error) {
 	return s.Flavors, nil
 }
 
+//This a embeded cache for servers list
+var servers = struct {
+	mu   sync.Mutex
+	list []Server
+}{
+	mu:   sync.Mutex{},
+	list: []Server{},
+}
+
 func (h *HatcheryCloud) getServers() []Server {
-	servers, err := h.getServersRequest()
-	if err != nil {
-		log.Warning("getServers> error: %s", err)
+	servers.mu.Lock()
+	defer servers.mu.Unlock()
+
+	if len(servers.list) == 0 {
+		s, err := h.getServersRequest()
+		if err != nil {
+			log.Warning("getServers> error: %s", err)
+		}
+		servers.list = s
+		//Remove data from the cache after 2 seconds
+		defer func() {
+			time.Sleep(2 * time.Second)
+			servers.mu.Lock()
+			defer servers.mu.Unlock()
+			servers.list = []Server{}
+		}()
 	}
-	return servers
+
+	return servers.list
 }
 
 func (h *HatcheryCloud) getServersRequest() ([]Server, error) {
