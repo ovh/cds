@@ -505,6 +505,11 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 		queue, errQ = pipeline.LoadUserWaitingQueue(db, c.User)
 	}
 
+	lang := r.Header.Get("Accept-Language")
+	for p := range queue {
+		queue[p].Translate(lang)
+	}
+
 	if errQ != nil {
 		return sdk.WrapError(errQ, "getQueueHandler> Cannot load queue from db: %s", errQ)
 	}
