@@ -148,17 +148,13 @@ func (h *HatcheryCloud) main() {
 			h.updateServerList()
 
 		case <-killAwolServersTick:
-			if err := h.killAwolServers(); err != nil {
-				log.Warning(err.Error())
-			}
+			h.killAwolServers()
 
 		case <-killErrorServersTick:
 			h.killErrorServers()
 
 		case <-killDisabledWorkersTick:
-			if err := h.killDisabledWorkers(); err != nil {
-				log.Warning(err.Error())
-			}
+			h.killDisabledWorkers()
 
 		case <-refreshTokenTick:
 			h.refreshToken()
@@ -166,10 +162,11 @@ func (h *HatcheryCloud) main() {
 	}
 }
 
-func (h *HatcheryCloud) killDisabledWorkers() error {
+func (h *HatcheryCloud) killDisabledWorkers() {
 	workers, err := sdk.GetWorkers()
 	if err != nil {
-		return sdk.WrapError(err, "killDisabledWorkers> Cannot fetch worker list")
+		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
+		return
 	}
 	servers := h.getServers()
 
@@ -189,7 +186,6 @@ func (h *HatcheryCloud) killDisabledWorkers() error {
 			}
 		}
 	}
-	return nil
 }
 
 func (h *HatcheryCloud) killErrorServers() {
@@ -198,7 +194,7 @@ func (h *HatcheryCloud) killErrorServers() {
 		if s.Status == "ACTIVE" {
 			t, err := time.Parse(time.RFC3339, s.Updated)
 			if err != nil {
-				log.Warning("killErrorServers> Cannot parse last update : %s", err)
+				log.Warning("killErrorServers> Cannot parse last update: %s", err)
 				continue
 			}
 
@@ -222,12 +218,13 @@ func (h *HatcheryCloud) killErrorServers() {
 	}
 }
 
-func (h *HatcheryCloud) killAwolServers() error {
+func (h *HatcheryCloud) killAwolServers() {
 	var found bool
 
 	workers, err := sdk.GetWorkers()
 	if err != nil {
-		return sdk.WrapError(err, "killAwolServers> Cannot fetch worker list")
+		log.Warning("killAwolServers> Cannot fetch worker list: %s", err)
+		return
 	}
 
 	for _, s := range h.getServers() {
@@ -267,7 +264,6 @@ func (h *HatcheryCloud) killAwolServers() error {
 			}
 		}
 	}
-	return nil
 }
 
 func (h *HatcheryCloud) refreshToken() {
