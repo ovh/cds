@@ -51,6 +51,8 @@ type Termui struct {
 	distribQueue       map[string]int64
 	queue              *ScrollableList
 	queueSelect        *ScrollableList
+	statusWorkers      *termui.List
+	status             *termui.List
 	queueCurrentJobURL string
 
 	// mutex
