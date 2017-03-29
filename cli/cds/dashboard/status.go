@@ -118,6 +118,8 @@ func (ui *Termui) updateStatus() string {
 			strings.HasPrefix(l, "Uptime") ||
 			strings.HasPrefix(l, "Nb of Panics: 0") ||
 			strings.HasPrefix(l, "Secret Backend") ||
+			strings.HasPrefix(l, "Cache: local") ||
+			strings.HasPrefix(l, "Session-Store: In Memory") ||
 			strings.Contains(l, "OK") {
 			items = append(items, l)
 		} else {
@@ -138,9 +140,9 @@ func (ui *Termui) updateQueueWorkers() string {
 	elapsed := time.Since(start)
 	msg := fmt.Sprintf("[getWorkers in %s](fg-cyan)", sdk.Round(elapsed, time.Millisecond).String())
 
-	items := []string{}
+	ids, items, statusTitle := []string{}, []string{}, []string{}
 	hatcheries := make(map[string]map[string]int64)
-	var ids []string
+	status := make(map[string]int)
 
 	for _, w := range workers {
 		var id string
@@ -155,6 +157,11 @@ func (ui *Termui) updateQueueWorkers() string {
 			ids = append(ids, id)
 		}
 		hatcheries[id][w.Status.String()] = hatcheries[id][w.Status.String()] + 1
+
+		if _, ok := status[w.Status.String()]; !ok {
+			statusTitle = append(statusTitle, w.Status.String())
+		}
+		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
 	sort.Strings(ids)
@@ -168,6 +175,12 @@ func (ui *Termui) updateQueueWorkers() string {
 		items = append(items, t)
 	}
 	ui.statusWorkers.Items = items
+	sort.Strings(statusTitle)
+	title := " workers "
+	for _, s := range statusTitle {
+		title += fmt.Sprintf("%s:%d ", s, status[s])
+	}
+	ui.statusWorkers.BorderLabel = title
 	return msg
 }
 
