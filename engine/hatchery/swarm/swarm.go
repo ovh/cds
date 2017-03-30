@@ -313,11 +313,12 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	//List all containers to check if we can spawn a new one
 	cs, errList := h.dockerClient.ListContainers(docker.ListContainersOptions{})
 	if errList != nil {
-		log.Critical("Unable to list containers: %s", errList)
+		log.Critical("CanSpawn> Unable to list containers: %s", errList)
 		return false
 	}
 
 	if len(cs) > h.maxContainers {
+		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.maxContainers)
 		return false
 	}
 
@@ -335,6 +336,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	if len(links) == 0 && len(cs) > 0 {
 		percentFree := 100 - (100 * len(cs) / h.maxContainers)
 		if percentFree <= hatcherySwarm.ratioService {
+			log.Notice("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, hatcherySwarm.ratioService)
 			return false
 		}
 	}
