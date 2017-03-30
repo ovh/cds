@@ -96,50 +96,53 @@ func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error)
 }
 
 func (h *HatcherySwarm) killAndRemove(ID string) error {
-	container, err := h.dockerClient.InspectContainer(ID)
-	if err != nil {
-		return sdk.WrapError(err, "killAndRemove> cannot InspectContainer")
-	}
 
-	network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
-	if err != nil {
-		return sdk.WrapError(err, "killAndRemove> cannot NetworkInfo")
-	}
+	/*
 
-	if netname, ok := network.Labels["worker_net"]; ok {
-		log.Notice("killAndRemove> Remove network %s", netname)
-		for id := range network.Containers {
-			log.Notice("killAndRemove> Remove container %s", id)
-			if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
-				ID:     id,
-				Signal: docker.SIGKILL,
-			}); err != nil {
-				log.Info("killAndRemove> Unable to kill container %s", err)
-				continue
+		container, err := h.dockerClient.InspectContainer(ID)
+		if err != nil {
+			return sdk.WrapError(err, "killAndRemove> cannot InspectContainer")
+		}
+
+			network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
+			if err != nil {
+				return sdk.WrapError(err, "killAndRemove> cannot NetworkInfo")
 			}
 
-			if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-				ID:            id,
-				RemoveVolumes: true,
-				Force:         true,
-			}); err != nil {
-				log.Warning("killAndRemove> Unable to remove container %s", err)
-			}
-		}
-	} else {
-		log.Notice("Remove container %s", ID)
-		if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
-			ID:     ID,
-			Signal: docker.SIGKILL,
-		}); err != nil {
-			log.Warning("killAndRemove> Unable to kill container %s", err)
-		}
+			if netname, ok := network.Labels["worker_net"]; ok {
+				log.Notice("killAndRemove> Remove network %s", netname)
+				for id := range network.Containers {
+					log.Notice("killAndRemove> Remove container %s", id)
+					if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
+						ID:     id,
+						Signal: docker.SIGKILL,
+					}); err != nil {
+						log.Info("killAndRemove> Unable to kill container %s", err)
+						continue
+					}
 
-		if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-			ID: ID,
-		}); err != nil {
-			log.Warning("killAndRemove> Unable to remove container %s", err)
-		}
+					if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
+						ID:            id,
+						RemoveVolumes: true,
+						Force:         true,
+					}); err != nil {
+						log.Warning("killAndRemove> Unable to remove container %s", err)
+					}
+				}
+			} else {
+	*/
+	log.Notice("killAndRemove> Remove container %s", ID)
+	if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
+		ID:     ID,
+		Signal: docker.SIGKILL,
+	}); err != nil {
+		log.Warning("killAndRemove> Unable to kill container %s", err)
+	}
+
+	if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
+		ID: ID,
+	}); err != nil {
+		log.Warning("killAndRemove> Unable to remove container %s", err)
 	}
 
 	return nil
