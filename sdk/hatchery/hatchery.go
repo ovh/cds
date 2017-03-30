@@ -45,6 +45,11 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 	defer logTime("routine", time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d", timestamp)
 
+	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
+		log.Debug("Create> continue")
+		return nil, nil
+	}
+
 	jobs, errbq := sdk.GetBuildQueue()
 	if errbq != nil {
 		log.Critical("routine> %d error on GetBuildQueue:%e", timestamp, errbq)
@@ -145,13 +150,19 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 
 	wg.Wait()
 
-	provisioning(h, timestamp, provision, models)
 	return spawnedIDs, nil
 }
 
-func provisioning(h Interface, timestamp int64, provision int, models []sdk.Model) {
+func provisioning(h Interface, provision int) {
 	if provision == 0 {
 		log.Debug("provisioning> no provisioning to do")
+		return
+	}
+
+	models, errwm := sdk.GetWorkerModels()
+	if errwm != nil {
+		log.Debug("provisioning> error on GetWorkerModels:%e", errwm)
+		return
 	}
 
 	for k := range models {
@@ -159,7 +170,7 @@ func provisioning(h Interface, timestamp int64, provision int, models []sdk.Mode
 			if models[k].Type == h.ModelType() {
 				go func(m sdk.Model) {
 					if err := h.SpawnWorker(&m, nil); err != nil {
-						log.Warning("provisioning> %d - cannot spawn worker for privioning: %s", timestamp, m.Name, err)
+						log.Warning("provisioning> cannot spawn worker for provisioning: %s", m.Name, err)
 					}
 				}(models[k])
 			}
@@ -172,20 +183,16 @@ func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostnam
 		return false
 	}
 
-	if !h.CanSpawn(model, job) {
-		return false
-	}
-
 	// Common check
 	for _, r := range job.Job.Action.Requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
-		if r.Type == sdk.ModelRequirement {
-			return r.Value == model.Name
+		if r.Type == sdk.ModelRequirement && r.Value != model.Name {
+			return false
 		}
 
 		// If requirement is an hostname requirement, it's for a specific worker
-		if r.Type == sdk.HostnameRequirement {
-			return r.Value == hostname
+		if r.Type == sdk.HostnameRequirement && r.Value != hostname {
+			return false
 		}
 
 		// service and memory requirements are only supported by docker model
@@ -213,7 +220,7 @@ func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostnam
 		}
 	}
 
-	return true
+	return h.CanSpawn(model, job)
 }
 
 func logTime(name string, then time.Time, warningSeconds, criticalSeconds int) {
