@@ -8,6 +8,9 @@ import {Parameter} from '../../../model/parameter.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {Environment} from '../../../model/environment.model';
+import {Project} from '../../../model/project.model';
+import {ToastService} from '../../../shared/toast/ToastService';
+import {TranslateService} from 'ng2-translate';
 
 @Component({
     selector: 'app-run-summary',
@@ -19,6 +22,8 @@ export class RunSummaryComponent implements OnInit {
     @Input() currentBuild: PipelineBuild;
     @Input() duration: string;
     @Input() application: Application;
+    @Input() project: Project;
+
 
     // For run NEw
 
@@ -33,7 +38,10 @@ export class RunSummaryComponent implements OnInit {
     parent: WorkflowItem;
     currentWI: WorkflowItem;
 
-    constructor(private _appPipService: ApplicationPipelineService, private _router: Router, private _pipStore: PipelineStore) {
+    loading = false;
+
+    constructor(private _appPipService: ApplicationPipelineService, private _router: Router, private _pipStore: PipelineStore,
+        private _toastSerivce: ToastService, private _translate: TranslateService) {
     }
 
     ngOnInit(): void {
@@ -75,13 +83,17 @@ export class RunSummaryComponent implements OnInit {
     }
 
     runAgain(): void {
+        this.loading = true;
         this._appPipService.runAgain(
             this.currentBuild.pipeline.projectKey,
             this.currentBuild.application.name,
             this.currentBuild.pipeline.name,
             this.currentBuild.build_number,
             this.currentBuild.environment.name).subscribe(pb => {
-            this.navigateToBuild(pb);
+                this.loading = false;
+                this.navigateToBuild(pb);
+        }, () => {
+                this.loading = false;
         });
     }
 
@@ -101,8 +113,19 @@ export class RunSummaryComponent implements OnInit {
         ], queryParams);
     }
 
-    runNew(): void {
+    stop(): void {
+        this.loading = true;
+        this._appPipService.stop(this.project.key, this.currentBuild.application.name,
+            this.currentBuild.pipeline.name, this.currentBuild.build_number, this.currentBuild.environment.name).subscribe( () => {
+            this.loading = false;
+            this._toastSerivce.success('', this._translate.instant('pipeline_stop'));
+        }, () => {
+            this.loading = false;
+        });
+    }
 
+    runNew(): void {
+        this.loading = true;
         // ReInit
         this.launchPipelineParams = new Array<Parameter>();
         this.launchParentBuildNumber = undefined;
@@ -128,24 +151,31 @@ export class RunSummaryComponent implements OnInit {
                     } else {
                         this.launchPipelineParams = Pipeline.mergeParams(pipeline.parameters, []);
                     }
+
+                    // Init parent version
+                    if (this.parent && this.currentWI.trigger.id > 0) {
+                        this._appPipService.buildHistory(
+                            this.currentBuild.pipeline.projectKey, this.currentWI.trigger.src_application.name,
+                            this.currentWI.trigger.src_pipeline.name,
+                            this.currentWI.trigger.src_environment.name, 20, 'Success', this.currentBuild.trigger.vcs_branch)
+                            .subscribe(pbs => {
+                                this.loading = false;
+                                this.launchOldBuilds = pbs;
+                                this.launchParentBuildNumber = pbs[0].build_number;
+                            }, () => {
+                                this.loading = false;
+                            });
+                    }
+                    setTimeout(() => {
+                        this.launchModal.show({autofocus: false, closable: false, observeChanges: true});
+                    }, 100);
                 }
+            }, () => {
+                this.loading = false;
             });
 
-            // Init parent version
-            if (this.parent && this.currentWI.trigger.id > 0) {
-                this._appPipService.buildHistory(
-                    this.currentBuild.pipeline.projectKey, this.currentWI.trigger.src_application.name,
-                    this.currentWI.trigger.src_pipeline.name,
-                    this.currentWI.trigger.src_environment.name, 20, 'Success', this.currentBuild.trigger.vcs_branch)
-                    .subscribe(pbs => {
-                        this.launchOldBuilds = pbs;
-                        this.launchParentBuildNumber = pbs[0].build_number;
-                    });
-            }
-            setTimeout(() => {
-                this.launchModal.show({autofocus: false, closable: false, observeChanges: true});
-            }, 100);
         } else {
+            this.loading = false;
             console.log('Error loading modal');
         }
     }

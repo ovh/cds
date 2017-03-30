@@ -139,7 +139,7 @@
   "group_name" : "Group name",
   "group_permission" : "Group permission",
 
-  "hook_create_title" : "Create a hook",
+  "hook_create_label" : "Create a hook",
   "hook_deleted" : "Hook deleted",
   "hook_edit_title" : "Hook edition: {{app}} / {{pip}}",
   "hook_link_label" : "Hook url",
@@ -212,8 +212,10 @@
   "pipeline_label_edit" : "Edit the pipeline",
   "pipeline_label_rollback" : "Rollback",
   "pipeline_label_run" : "Run pipeline",
-  "pipeline_label_run_again" : "Run again",
+  "pipeline_label_run_again" : "Run failed stage",
+  "pipeline_label_run_new" : "Run pipeline again",
   "pipeline_label_run_with_parameter" : "Run pipeline with parameters",
+  "pipeline_label_stop" : "Stop pipeline",
   "pipeline_name": "Pipeline name",
   "pipeline_name_error" : "Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-",
   "pipeline_parameters_list_title" : "List of pipeline parameters: ",
@@ -221,6 +223,7 @@
   "pipeline_parent_version" : "Parent pipeline version",
   "pipeline_permission_list_title" : "List of pipeline permissions: ",
   "pipeline_permission_form_title" : "Add a permission: ",
+  "pipeline_stop" : "Pipeline has been stopped",
   "pipeline_type" : "Type of pipeline",
   "pipeline_updated" : "Pipeline updated",
 

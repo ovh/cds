@@ -29,8 +29,8 @@ export class ApplicationWorkflowService {
      */
     getVersions(key: string, appName: string, branchName: string): Observable<Array<number>> {
         let options = new RequestOptions();
-        options.search = new URLSearchParams();
-        options.search.set('branch', branchName);
+        options.params = new URLSearchParams();
+        options.params.set('branch', branchName);
         return this._http.get('/project/' + key + '/application/' + appName + '/version', options).map(res => res.json());
     }
 }
