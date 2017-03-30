@@ -1106,7 +1106,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		}
 	}
 
-	if err := pipeline.StopPipelineBuild(db, pb.ID); err != nil {
+	if err := pipeline.StopPipelineBuild(db, pb); err != nil {
 		log.Warning("stopPipelineBuildHandler> Cannot stop pb: %s\n", err)
 		return err
 	}

@@ -10,9 +10,7 @@ import (
 type PipelineBuildJob struct {
 	ID              int64       `json:"id" db:"id"`
 	Job             ExecutedJob `json:"job" db:"-"`
-	JobJSON         []byte      `json:"-" db:"job"`
 	Parameters      []Parameter `json:"parameters,omitempty" db:"-"`
-	ParametersJSON  []byte      `json:"-" db:"parameters"`
 	Status          string      `json:"status"  db:"status"`
 	Queued          time.Time   `json:"queued,omitempty" db:"queued"`
 	QueuedSeconds   int64       `json:"queued_seconds,omitempty" db:"-"`
@@ -22,7 +20,6 @@ type PipelineBuildJob struct {
 	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
 	BookedBy        Hatchery    `json:"bookedby" db:"-"`
 	SpawnInfos      []SpawnInfo `json:"spawninfos" db:"-"`
-	SpawnInfosJSON  []byte      `json:"-" db:"spawninfos"`
 }
 
 // SpawnInfo contains an information about spawning
