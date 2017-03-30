@@ -31,6 +31,8 @@ type Network struct {
 	Internal   bool
 	EnableIPv6 bool `json:"EnableIPv6"`
 	Labels     map[string]string
+	Attachable bool
+	Ingress    bool
 }
 
 // Endpoint contains network resources allocated and used for a container in a network
@@ -39,6 +41,7 @@ type Network struct {
 type Endpoint struct {
 	Name        string
 	ID          string `json:"EndpointID"`
+	EndpointID  string
 	MacAddress  string
 	IPv4Address string
 	IPv6Address string
