@@ -43,8 +43,8 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 }
 
 func routine(h Interface, maxWorkers, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
-	defer logTime("routine", time.Now(), warningSeconds, criticalSeconds)
-	log.Debug("routine> %d", timestamp)
+	defer logTime(fmt.Sprintf("routine> %d", timestamp), time.Now(), warningSeconds, criticalSeconds)
+	log.Debug("routine> %d enter", timestamp)
 
 	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
 		log.Debug("Create> continue")
@@ -56,6 +56,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 		log.Notice("routine> %d max workers reached. current:%d max:%d", timestamp, workersStarted, maxWorkers)
 		return nil, nil
 	}
+	log.Debug("routine> %d - workers already started:%d", timestamp, workersStarted)
 
 	jobs, errbq := sdk.GetBuildQueue()
 	if errbq != nil {
@@ -67,6 +68,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 		log.Debug("routine> %d - Job queue is empty", timestamp)
 		return nil, nil
 	}
+	log.Debug("routine> %d - Job queue size:%d", timestamp, len(jobs))
 
 	models, errwm := sdk.GetWorkerModels()
 	if errwm != nil {
@@ -77,7 +79,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 	if len(models) == 0 {
 		return nil, fmt.Errorf("routine> %d - No model returned by GetWorkerModels", timestamp)
 	}
-	log.Debug("routine> %d models received", len(models))
+	log.Debug("routine> %d - models received: %d", timestamp, len(models))
 
 	spawnedIDs := []int64{}
 	wg := &sync.WaitGroup{}
@@ -88,27 +90,27 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 		if nToRun < 0 { // should never occur, just to be sure
 			nToRun = 1
 		}
-		log.Debug("routine> %d - work only on %d jobs from queue. queue size:%d workersStarted:%d maxWorkers:%d", timestamp, nToRun, len(jobs), workersStarted, maxWorkers)
+		log.Info("routine> %d - work only on %d jobs from queue. queue size:%d workersStarted:%d maxWorkers:%d", timestamp, nToRun, len(jobs), workersStarted, maxWorkers)
 	}
 
 	for i := range jobs[:nToRun] {
 		wg.Add(1)
 		go func(job *sdk.PipelineBuildJob) {
-			defer logTime(fmt.Sprintf("routine> job %d>", job.ID), time.Now(), warningSeconds, criticalSeconds)
+			defer logTime(fmt.Sprintf("routine> %d - job %d>", timestamp, job.ID), time.Now(), warningSeconds, criticalSeconds)
 
 			if sdk.IsInArray(job.ID, lastSpawnedIDs) {
-				log.Debug("routine> job %d already spawned in previous routine", job.ID)
+				log.Debug("routine> %d - job %d already spawned in previous routine", timestamp, job.ID)
 				wg.Done()
 				return
 			}
 
 			if job.QueuedSeconds < int64(graceSeconds) {
-				log.Debug("routine> job %d is too fresh, queued since %d seconds, let existing waiting worker check it", job.ID, job.QueuedSeconds)
+				log.Debug("routine> %d - job %d is too fresh, queued since %d seconds, let existing waiting worker check it", timestamp, job.ID, job.QueuedSeconds)
 				wg.Done()
 				return
 			}
 
-			log.Debug("routine> %d work on job %d queued since %d seconds", timestamp, job.ID, job.QueuedSeconds)
+			log.Debug("routine> %d - work on job %d queued since %d seconds", timestamp, job.ID, job.QueuedSeconds)
 			if job.BookedBy.ID != 0 {
 				t := "current hatchery"
 				if job.BookedBy.ID != h.Hatchery().ID {
@@ -123,7 +125,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 				if canRunJob(h, job, &model, hostname) {
 					if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
 						// perhaps already booked by another hatchery
-						log.Debug("routine> %d cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
+						log.Debug("routine> %d - cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
 						break // go to next job
 					}
 					log.Debug("routine> %d - send book job %d %s by hatchery %d", timestamp, job.ID, model.Name, h.Hatchery().ID)
