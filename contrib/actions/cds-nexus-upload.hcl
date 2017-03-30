@@ -8,6 +8,7 @@ requirements = {
 		type = "binary"
 		value = "bash"
 	}
+<<<<<<< HEAD
 	"curl" = {
 		type= "binary"
 		value = "curl"
@@ -25,10 +26,18 @@ parameters = {
 		type = "string"
 		description = "Password for nexus"
 		value = "{{.cds.proj.nexus.password}}"
+=======
+	"login" = {
+		type = "string"
+	}
+	"password" = {
+		type = "string"
+>>>>>>> 71710b70412dcb368f25b92164778354dfce7a3f
 	}
 	"url" = {
 		type = "string"
 		description = "Nexus URL"
+<<<<<<< HEAD
 		value = "{{.cds.proj.nexus.url}}"
 	}
 	"repository" = {
@@ -42,15 +51,30 @@ parameters = {
 	"groupId" = {
 		type = "string"
 		description = "Group id of the artifact"
+=======
+	}
+	"repository" = {
+		type = "string"
+	}
+	"extension" = {
+		type = "string"
+	}
+	"groupId" = {
+		type = "string"
+>>>>>>> 71710b70412dcb368f25b92164778354dfce7a3f
 		value = "{{.cds.application}}"
 	}
 	"artifactId" = {
 		type = "string"
+<<<<<<< HEAD
 		description = "Artifact id of the artifact"
+=======
+>>>>>>> 71710b70412dcb368f25b92164778354dfce7a3f
 		value = "{{.cds.application}}"
 	}
 	"version" = {
 		type = "string"
+<<<<<<< HEAD
 		description = "Version of the artifact. Supports resolving of "LATEST", "RELEASE" and snapshot versions ("1.0-SNAPSHOT") too."
 		value = "{{.cds.build.VERSION}}"
 	}
@@ -64,12 +88,30 @@ parameters = {
 	}
 }
 
+=======
+		value = "{{.cds.build.VERSION}}"
+	}
+	"file" = {
+		type = "string"
+	}
+	"packaging" = {
+		type = "string"
+	}
+}
+
+// Parameters
+parameters = {
+	
+}
+
+>>>>>>> 71710b70412dcb368f25b92164778354dfce7a3f
 // Steps
 steps = [{
 	script = <<EOF
 #!/bin/bash
 set -e
 
+<<<<<<< HEAD
 echo "Upload to Nexus ({{.url}}) on repository {{.repository}}"
 
 for file in `ls {{.files}}`
@@ -82,5 +124,11 @@ do
 	fi
 done
 
+=======
+echo "action git from directory"
+pwd
+echo "Upload to Nexus ({{.url}}) on repository {{.repository}}"
+curl -F r={{.repository}} -F hasPom=false -F e={{.extension}} -F g="{{.groupId}}" -F a="{{.artifactId}}" -F v="{{.version}}" -F p={{.packaging}} -F file={{.file}} -u {{.login}}:{{.password}} {{.url}}
+>>>>>>> 71710b70412dcb368f25b92164778354dfce7a3f
 EOF
 	}]
