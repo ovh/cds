@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -25,9 +24,6 @@ func DeletePipelineBuildJob(db gorp.SqlExecutor, pipelineBuildID int64) error {
 // InsertPipelineBuildJob Insert a new job in the queue
 func InsertPipelineBuildJob(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJob) error {
 	dbmodel := PipelineBuildJob(*pbJob)
-	dbmodel.JobJSON = []byte("[]")
-	dbmodel.ParametersJSON = []byte("[]")
-	dbmodel.SpawnInfosJSON = []byte("[]")
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}
@@ -78,32 +74,18 @@ func GetWaitingPipelineBuildJob(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, er
 	return pbJobs, nil
 }
 
-// GetWaitingPipelineBuildJobForGroup Get waiting pipeline build job for the given group
-func GetWaitingPipelineBuildJobForGroup(db gorp.SqlExecutor, groupID, sharedInfraGroupID int64) ([]sdk.PipelineBuildJob, error) {
-	var pbJobsGorp []PipelineBuildJob
-	query := `
-		SELECT distinct pipeline_build_job.*
+// GetPipelineBuildJobForUpdate Get pipeline build job
+func GetPipelineBuildJobForUpdate(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, error) {
+	var pbJobGorp PipelineBuildJob
+	if err := db.SelectOne(&pbJobGorp, `
+		SELECT *
 		FROM pipeline_build_job
-		JOIN pipeline_build ON pipeline_build.id = pipeline_build_job.pipeline_build_id
-		JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline_build.pipeline_id
-		WHERE pipeline_build_job.status = $1
-		AND (
-			pipeline_group.group_id = $2
-			OR
-			$3 = $2
-		)`
-
-	if _, err := db.Select(&pbJobsGorp, query, sdk.StatusWaiting.String(), groupID, sharedInfraGroupID); err != nil {
+		WHERE id = $1 FOR UPDATE
+	`, id); err != nil {
 		return nil, err
 	}
-	var pbJobs []sdk.PipelineBuildJob
-	for _, j := range pbJobsGorp {
-		if err := j.PostGet(db); err != nil {
-			return nil, err
-		}
-		pbJobs = append(pbJobs, sdk.PipelineBuildJob(j))
-	}
-	return pbJobs, nil
+	pbJob := sdk.PipelineBuildJob(pbJobGorp)
+	return &pbJob, nil
 }
 
 // GetPipelineBuildJob Get pipeline build job
@@ -114,9 +96,6 @@ func GetPipelineBuildJob(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, 
 		FROM pipeline_build_job
 		WHERE id = $1
 	`, id); err != nil {
-		return nil, err
-	}
-	if err := pbJobGorp.PostGet(db); err != nil {
 		return nil, err
 	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
@@ -210,45 +189,32 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 
 // TakePipelineBuildJob Take an action build for update
 func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, workerName string, infos []sdk.SpawnInfo) (*sdk.PipelineBuildJob, error) {
-	var pbJobGorp PipelineBuildJob
-	if err := db.SelectOne(&pbJobGorp, `
-		SELECT *
-		FROM pipeline_build_job
-		WHERE id = $1 FOR UPDATE
-	`, pbJobID); err != nil {
-		return nil, err
+	pbJob, err := GetPipelineBuildJobForUpdate(db, pbJobID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "TakePipelineBuildJob> Cannot load pipelien build job")
 	}
-
-	if pbJobGorp.Status != sdk.StatusWaiting.String() {
+	if pbJob.Status != sdk.StatusWaiting.String() {
 		k := keyBookJob(pbJobID)
 		h := sdk.Hatchery{}
 		if cache.Get(k, &h) {
-			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status and was booked by hatchery %d. Current status:%s", pbJobID, h.ID, pbJobGorp.Status)
+			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status and was booked by hatchery %d. Current status:%s", pbJobID, h.ID, pbJob.Status)
 		}
-		return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status. Current status:%s", pbJobID, pbJobGorp.Status)
+		return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status. Current status:%s", pbJobID, pbJob.Status)
 	}
 
-	pbJobGorp.Model = model
-	pbJobGorp.Job.WorkerName = workerName
-	var errm error
-	pbJobGorp.JobJSON, errm = json.Marshal(pbJobGorp.Job)
-	if errm != nil {
-		return nil, errm
-	}
-	pbJobGorp.Start = time.Now()
-	pbJobGorp.Status = sdk.StatusBuilding.String()
+	pbJob.Model = model
+	pbJob.Job.WorkerName = workerName
+	pbJob.Start = time.Now()
+	pbJob.Status = sdk.StatusBuilding.String()
 
-	if err := prepareSpawnInfos(&pbJobGorp, infos); err != nil {
-		return nil, err
+	if err := prepareSpawnInfos(pbJob, infos); err != nil {
+		return nil, sdk.WrapError(err, "TakePipelineBuildJob> Cannot prepare swpan infos")
 	}
 
-	if _, err := db.Update(&pbJobGorp); err != nil {
-		log.Warning("Cannot update model on pipeline build job: %s", err)
-		return nil, err
+	if err := UpdatePipelineBuildJob(db, pbJob); err != nil {
+		return nil, sdk.WrapError(err, "TakePipelineBuildJob>Cannot update model on pipeline build job")
 	}
-
-	pbJob := sdk.PipelineBuildJob(pbJobGorp)
-	return &pbJob, nil
+	return pbJob, nil
 }
 
 func keyBookJob(pbJobID int64) string {
@@ -269,42 +235,29 @@ func BookPipelineBuildJob(pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery,
 
 // AddSpawnInfosPipelineBuildJob saves spawn info before starting worker
 func AddSpawnInfosPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, infos []sdk.SpawnInfo) (*sdk.PipelineBuildJob, error) {
-	var pbJobGorp PipelineBuildJob
-	if err := db.SelectOne(&pbJobGorp, `SELECT * FROM pipeline_build_job WHERE id = $1 FOR UPDATE`, pbJobID); err != nil {
-		return nil, err
+	pbJob, err := GetPipelineBuildJobForUpdate(db, pbJobID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "AddSpawnInfosPipelineBuildJob> Cannot load pipeline build job")
 	}
-	if err := pbJobGorp.PostGet(db); err != nil {
-		return nil, err
-	}
-
-	if err := prepareSpawnInfos(&pbJobGorp, infos); err != nil {
-		return nil, err
+	if err := prepareSpawnInfos(pbJob, infos); err != nil {
+		return nil, sdk.WrapError(err, "AddSpawnInfosPipelineBuildJob> Cannot prepare swpan infos")
 	}
 
-	query := "update pipeline_build_job set spawninfos = $1 where id = $2"
-	if _, err := db.Exec(query, pbJobGorp.SpawnInfosJSON, pbJobGorp.ID); err != nil {
-		return nil, err
+	if err := UpdatePipelineBuildJob(db, pbJob); err != nil {
+		return nil, sdk.WrapError(err, "AddSpawnInfosPipelineBuildJob> Cannot update pipeline build job")
 	}
-
-	pbJob := sdk.PipelineBuildJob(pbJobGorp)
-	return &pbJob, nil
+	return pbJob, nil
 }
 
-func prepareSpawnInfos(pbJobGorp *PipelineBuildJob, infos []sdk.SpawnInfo) error {
+func prepareSpawnInfos(pbJob *sdk.PipelineBuildJob, infos []sdk.SpawnInfo) error {
 	now := time.Now()
 	for _, info := range infos {
-		pbJobGorp.SpawnInfos = append(pbJobGorp.SpawnInfos, sdk.SpawnInfo{
+		pbJob.SpawnInfos = append(pbJob.SpawnInfos, sdk.SpawnInfo{
 			APITime:    now,
 			RemoteTime: info.RemoteTime,
 			Message:    info.Message,
 		})
 	}
-
-	spawninfos, errspawn := json.Marshal(pbJobGorp.SpawnInfos)
-	if errspawn != nil {
-		return errspawn
-	}
-	pbJobGorp.SpawnInfosJSON = spawninfos
 	return nil
 }
 
@@ -333,11 +286,29 @@ func RestartPipelineBuildJob(db gorp.SqlExecutor, pbJobID int64) error {
 }
 
 // StopBuildingPipelineBuildJob Stop running pipeline build job
-func StopBuildingPipelineBuildJob(db gorp.SqlExecutor, pbID int64) error {
-	query := `UPDATE pipeline_build_job SET status = $1, done = now() WHERE pipeline_build_id = $2 AND status IN ( $3, $4 )`
-	_, err := db.Exec(query, string(sdk.StatusFail), pbID, string(sdk.StatusBuilding), string(sdk.StatusWaiting))
+func StopBuildingPipelineBuildJob(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
+	pbJobs, err := GetPipelineBuildJobByPipelineBuildID(db, pb.ID)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "StopBuildingPipelineBuildJob> Cannot get pipeline build job")
+	}
+	for j := range pbJobs {
+		pbJ := &pbJobs[j]
+		if pbJ.Status == string(sdk.StatusBuilding) || pbJ.Status == string(sdk.StatusWaiting) {
+			pbJ.Job.Reason = "Job has been stopped"
+			pbJ.Status = string(sdk.StatusFail)
+		}
+
+		for i := range pbJ.Job.StepStatus {
+			ss := &pbJ.Job.StepStatus[i]
+			if ss.Status == sdk.StatusBuilding.String() {
+				ss.Status = "Fail"
+			}
+		}
+
+		if err := UpdatePipelineBuildJobStatus(db, pbJ, sdk.StatusFail); err != nil {
+			return sdk.WrapError(err, "StopBuildingPipelineBuildJob> Cannot stop pipeline build job")
+		}
+
 	}
 	return nil
 }

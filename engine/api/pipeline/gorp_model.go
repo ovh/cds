@@ -27,11 +27,40 @@ func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
 	if errJob != nil {
 		return errJob
 	}
+	spawn, errS := json.Marshal(p.SpawnInfos)
+	if errS != nil {
+		return errS
+	}
 
-	query := "update pipeline_build_job set parameters = $1, job = $2 where id = $3"
-	if _, err := s.Exec(query, params, job, p.ID); err != nil {
+	query := "update pipeline_build_job set parameters = $1, job = $2, spawninfos = $4 where id = $3"
+	if _, err := s.Exec(query, params, job, p.ID, spawn); err != nil {
 		return err
 	}
+	return nil
+}
+
+//PostUpdate is a DB Hook on PipelineBuildJob to store JSON in DB
+func (p *PipelineBuildJob) PostUpdate(s gorp.SqlExecutor) error {
+	jobJSON, err := json.Marshal(p.Job)
+	if err != nil {
+		return err
+	}
+
+	paramsJSON, errP := json.Marshal(p.Parameters)
+	if errP != nil {
+		return errP
+	}
+
+	spawnJSON, errJ := json.Marshal(p.SpawnInfos)
+	if errJ != nil {
+		return errJ
+	}
+
+	query := "update pipeline_build_job set job = $2, parameters = $3, spawninfos= $4 where id = $1"
+	if _, err := s.Exec(query, p.ID, jobJSON, paramsJSON, spawnJSON); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -42,13 +71,19 @@ func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 		p.BookedBy = h
 	}
 
-	if err := json.Unmarshal(p.JobJSON, &p.Job); err != nil {
+	query := "SELECT job, parameters, spawninfos FROM pipeline_build_job WHERE id = $1"
+	var params, job, spawn []byte
+	if err := s.QueryRow(query, p.ID).Scan(&job, &params, &spawn); err != nil {
 		return err
 	}
-	if err := json.Unmarshal(p.ParametersJSON, &p.Parameters); err != nil {
+
+	if err := json.Unmarshal(job, &p.Job); err != nil {
 		return err
 	}
-	if err := json.Unmarshal(p.SpawnInfosJSON, &p.SpawnInfos); err != nil {
+	if err := json.Unmarshal(params, &p.Parameters); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(spawn, &p.SpawnInfos); err != nil {
 		return err
 	}
 

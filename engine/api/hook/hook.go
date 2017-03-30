@@ -266,6 +266,13 @@ func deleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
 				}
 			}
 		}
+
+		// Stop building pipeline
+		if err := pipeline.StopPipelineBuild(db, &pb); err != nil {
+			log.Warning("deleteBranchBuilds> Cannot stop pipeline")
+			continue
+		}
+
 	}
 	// Now select all related build in pipeline build
 	query := `SELECT id FROM pipeline_build WHERE vcs_changes_branch = $1 AND application_id = $2`

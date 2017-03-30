@@ -1161,12 +1161,29 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 }
 
 // StopPipelineBuild fails all currently building actions
-func StopPipelineBuild(db gorp.SqlExecutor, pbID int64) error {
+func StopPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 
-	if err := StopBuildingPipelineBuildJob(db, pbID); err != nil {
+	if err := StopBuildingPipelineBuildJob(db, pb); err != nil {
 		return err
 	}
-	// TODO: Add log to inform user
+
+	//Get the history
+	var previous *sdk.PipelineBuild
+	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", pb.Trigger.VCSChangesBranch)
+	if err != nil {
+		log.Critical("StopPipelineBuild> error while loading previous pipeline build")
+	}
+	//Be sure to get the previous one
+	if len(history) == 2 {
+		for i := range history {
+			if previous == nil || previous.BuildNumber > history[i].BuildNumber {
+				previous = &history[i]
+			}
+		}
+	}
+	// Send stop event
+	event.PublishPipelineBuild(db, pb, previous)
+
 	return nil
 }
 
