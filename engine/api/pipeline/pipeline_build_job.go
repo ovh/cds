@@ -74,7 +74,7 @@ func GetWaitingPipelineBuildJob(db gorp.SqlExecutor) ([]sdk.PipelineBuildJob, er
 	return pbJobs, nil
 }
 
-// GetPipelineBuildJob Get pipeline build job
+// GetPipelineBuildJobForUpdate Get pipeline build job
 func GetPipelineBuildJobForUpdate(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuildJob, error) {
 	var pbJobGorp PipelineBuildJob
 	if err := db.SelectOne(&pbJobGorp, `
