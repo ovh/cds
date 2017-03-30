@@ -263,9 +263,20 @@ func (m *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
 	return m.client.ListApplications(values)
 }
 
-// WorkerStarted returns the number of instances of given model started but
+// WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (m *HatcheryMarathon) WorkerStarted(model *sdk.Model) int {
+func (m *HatcheryMarathon) WorkersStarted() int {
+	apps, err := m.listApplications(hatcheryMarathon.marathonID)
+	if err != nil {
+		log.Warning("WorkersStarted> error on list applications err:%s", err)
+		return 0
+	}
+	return len(apps)
+}
+
+// WorkersStartedByModel returns the number of instances of given model started but
+// not necessarily register on CDS yet
+func (m *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 	apps, err := m.listApplications(hatcheryMarathon.marathonID)
 	if err != nil {
 		return 0

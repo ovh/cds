@@ -16,7 +16,8 @@ type Interface interface {
 	KillWorker(worker sdk.Worker) error
 	SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error
 	CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool
-	WorkerStarted(model *sdk.Model) int
+	WorkersStartedByModel(model *sdk.Model) int
+	WorkersStarted() int
 	Hatchery() *sdk.Hatchery
 	ModelType() string
 	ID() int64
@@ -41,12 +42,18 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
+func routine(h Interface, maxWorkers, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
 	defer logTime("routine", time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d", timestamp)
 
 	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
 		log.Debug("Create> continue")
+		return nil, nil
+	}
+
+	workersStarted := h.WorkersStarted()
+	if workersStarted > maxWorkers {
+		log.Notice("routine> %d max workers reached. current:%d max:%d", timestamp, workersStarted, maxWorkers)
 		return nil, nil
 	}
 
@@ -75,7 +82,16 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 	spawnedIDs := []int64{}
 	wg := &sync.WaitGroup{}
 
-	for i := range jobs {
+	nToRun := len(jobs)
+	if len(jobs) > maxWorkers-workersStarted {
+		nToRun = maxWorkers - workersStarted
+		if nToRun < 0 { // should never occur, just to be sure
+			nToRun = 1
+		}
+		log.Debug("routine> %d - work only on %d jobs from queue. queue size:%d workersStarted:%d maxWorkers:%d", timestamp, nToRun, len(jobs), workersStarted, maxWorkers)
+	}
+
+	for i := range jobs[:nToRun] {
 		wg.Add(1)
 		go func(job *sdk.PipelineBuildJob) {
 			defer logTime(fmt.Sprintf("routine> job %d>", job.ID), time.Now(), warningSeconds, criticalSeconds)
@@ -166,7 +182,7 @@ func provisioning(h Interface, provision int) {
 	}
 
 	for k := range models {
-		if h.WorkerStarted(&models[k]) < provision {
+		if h.WorkersStartedByModel(&models[k]) < provision {
 			if models[k].Type == h.ModelType() {
 				go func(m sdk.Model) {
 					if err := h.SpawnWorker(&m, nil); err != nil {

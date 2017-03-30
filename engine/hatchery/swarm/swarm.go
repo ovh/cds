@@ -466,11 +466,22 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	return true
 }
 
-// WorkerStarted returns the number of started workers
-func (h *HatcherySwarm) WorkerStarted(model *sdk.Model) int {
+// WorkersStarted returns the number of instances started but
+// not necessarily register on CDS yet
+func (h *HatcherySwarm) WorkersStarted() int {
 	containers, errList := h.getContainers()
 	if errList != nil {
-		log.Critical("WorkerStarted> Unable to list containers: %s", errList)
+		log.Critical("WorkersStarted> Unable to list containers: %s", errList)
+		return 0
+	}
+	return len(containers)
+}
+
+// WorkersStartedByModel returns the number of started workers
+func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
+	containers, errList := h.getContainers()
+	if errList != nil {
+		log.Critical("WorkersStartedByModel> Unable to list containers: %s", errList)
 		return 0
 	}
 
@@ -482,8 +493,7 @@ func (h *HatcherySwarm) WorkerStarted(model *sdk.Model) int {
 		}
 	}
 
-	log.Notice("WorkerStarted> %s \t %d", model.Name, len(list))
-
+	log.Debug("WorkersStartedByModel> %s \t %d", model.Name, len(list))
 	return len(list)
 }
 
