@@ -189,6 +189,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if c.Worker != nil {
 			if err := worker.RefreshWorker(db, c.Worker.ID); err != nil {
+				log.Warning("Router> Unable to refresh worker : %s", err)
 				WriteError(w, req, err)
 				return
 			}
