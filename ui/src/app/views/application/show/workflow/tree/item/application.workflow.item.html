@@ -95,7 +95,7 @@
                 <a sm-item class="item" (click)="runWithParameters()">{{ 'pipeline_label_run_with_parameter' | translate }}</a>
                 <a sm-item class="item" (click)="rollback()">{{ 'pipeline_label_rollback' | translate }}</a>
                 <div class="divider" *ngIf="application.permission === 7"></div>
-                <a sm-item class="item" (click)="detachPipeline(workflowItem.pipeline)" *ngIf="application.permission === 7">{{
+                <a sm-item class="item" (click)="openDetachPipelineModal()" *ngIf="application.permission === 7 && application.id === workflowItem.application.id">{{
                     'pipeline_label_detach' | translate }}</a>
                 <a sm-item class="item" (click)="editPipeline()" *ngIf="application.permission === 7">{{ 'pipeline_label_edit' | translate
                     }}</a>
@@ -194,5 +194,15 @@
     <modal-actions>
         <div class="ui grey button" (click)="launchModal.hide()">{{ 'btn_cancel' | translate }}</div>
         <div class="ui green button" (click)="runManual()">{{ 'btn_run' | translate }}</div>
+    </modal-actions>
+</sm-modal>
+<!-- Detach pipeline modal -->
+<sm-modal title="{{ 'application_detach_pipeline' | translate}}" class="fluid" #detachPipelineModal>
+    <modal-content>
+        <app-application-pipeline-detach [application]="application" [pipeline]="workflowItem.pipeline"></app-application-pipeline-detach>
+    </modal-content>
+    <modal-actions>
+        <div class="ui grey button" (click)="detachPipelineModal.hide()">{{ 'btn_cancel' | translate }}</div>
+        <div class="ui green button" (click)="detachPipeline(workflowItem.pipeline)">{{ 'btn_run' | translate }}</div>
     </modal-actions>
 </sm-modal>

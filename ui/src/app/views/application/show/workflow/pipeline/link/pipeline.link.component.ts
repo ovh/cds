@@ -1,11 +1,11 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {Application} from '../../../../../model/application.model';
-import {Project} from '../../../../../model/project.model';
+import {Application} from '../../../../../../model/application.model';
+import {Project} from '../../../../../../model/project.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Pipeline} from '../../../../../model/pipeline.model';
-import {ApplicationStore} from '../../../../../service/application/application.store';
+import {Pipeline} from '../../../../../../model/pipeline.model';
+import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {TranslateService} from 'ng2-translate';
-import {ToastService} from '../../../../../shared/toast/ToastService';
+import {ToastService} from '../../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-pipeline-link',
