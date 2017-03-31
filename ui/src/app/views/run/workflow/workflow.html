@@ -42,6 +42,9 @@
             <div class="column">
                 <div class="log" *ngIf="selectedPipJob">
                     <ul>
+                        <li>
+                            <app-spawn-info [spawnInfos]="selectedPipJob.spawninfos"></app-spawn-info>
+                        </li>
                         <li *ngFor="let step of selectedPipJob.job.action.actions; let i = index">
                             <app-step-log
                                     [application]="application"

@@ -9,6 +9,7 @@ import {TestsResultComponent} from './test/tests.component';
 import {TestTableComponent} from './test/table/test.table.component';
 import {SharedModule} from '../../shared/shared.module';
 import {RunSummaryComponent} from './summary/run.summary.component';
+import {SpawnInfoComponent} from './workflow/swpaninfo/spawninfo.component';
 
 @NgModule({
     declarations: [
@@ -17,6 +18,7 @@ import {RunSummaryComponent} from './summary/run.summary.component';
         ArtifactListComponent,
         CommitListComponent,
         RunSummaryComponent,
+        SpawnInfoComponent,
         StepLogComponent,
         TestsResultComponent,
         TestTableComponent

@@ -153,6 +153,7 @@
   "job_add_step" : "Add a step",
   "job_delete" : "Delete job",
   "job_save" : "Save job",
+  "job_spawn_title" : "Information",
 
   "navbar_actions" : "Actions",
   "navbar_applications_placeholder" : "Applications",
