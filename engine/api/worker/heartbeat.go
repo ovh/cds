@@ -8,10 +8,9 @@ import (
 )
 
 // WorkerHeartbeatTimeout defines the number of seconds allowed for workers to refresh their beat
-var WorkerHeartbeatTimeout = 30.0
+var WorkerHeartbeatTimeout = 60.0
 
 // Heartbeat runs in a goroutine and check last beat from all workers
-// on a 10s basis
 func Heartbeat() {
 	// If this goroutine exit, then it's a crash
 	defer log.Fatalf("Goroutine of worker.Heartbeat exited - Exit CDS Engine")
