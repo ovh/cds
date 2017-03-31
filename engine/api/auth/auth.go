@@ -227,7 +227,7 @@ func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *context.Ctx) error {
 
 	w, err := GetWorker(db, workerID)
 	if err != nil {
-		return nil
+		return err
 	}
 	ctx.User = &sdk.User{Username: w.Name}
 	ctx.Worker = w

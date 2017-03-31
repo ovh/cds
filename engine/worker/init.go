@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 
@@ -21,28 +20,28 @@ func initViper() {
 	var errN error
 	name, errN = os.Hostname()
 	if errN != nil {
-		log.Notice("Cannot retrieve hostname: %s", errN)
-		return
+		log.Critical("Cannot retrieve hostname: %s", errN)
+		os.Exit(1)
 	}
 
 	hatchS := viper.GetString("hatchery")
 	var errH error
 	hatchery, errH = strconv.ParseInt(hatchS, 10, 64)
 	if errH != nil {
-		log.Warning("WARNING: Invalid hatchery ID (%s)", errH)
-		os.Exit(1)
+		log.Critical("WARNING: Invalid hatchery ID (%s)", errH)
+		os.Exit(2)
 	}
 
 	api = viper.GetString("api")
 	if api == "" {
-		fmt.Printf("--api not provided, aborting.")
-		os.Exit(2)
+		log.Critical("--api not provided, aborting.")
+		os.Exit(3)
 	}
 
 	key = viper.GetString("key")
 	if key == "" {
-		fmt.Printf("--key not provided, aborting.")
-		os.Exit(3)
+		log.Critical("--key not provided, aborting.")
+		os.Exit(4)
 	}
 
 	givenName := viper.GetString("name")
@@ -68,6 +67,7 @@ type grpcCreds struct {
 	Name, Token string
 }
 
+// GetRequestMetadata gets the request metadata as a map from a grpcCreds.
 func (c *grpcCreds) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
 	return map[string]string{
 		"name":  c.Name,
@@ -75,6 +75,7 @@ func (c *grpcCreds) GetRequestMetadata(context.Context, ...string) (map[string]s
 	}, nil
 }
 
+// RequireTransportSecurity indicates whether the credentials requires transport security.
 func (c *grpcCreds) RequireTransportSecurity() bool {
 	return !viper.GetBool("grpc_insecure")
 }

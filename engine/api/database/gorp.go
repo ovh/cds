@@ -48,8 +48,10 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 	return dbmap
 }
 
+// TypeConverter is a converter type to assign to gorp
 type TypeConverter struct{}
 
+// ToDb is called by gorp to serialize custom types to database values
 func (c *TypeConverter) ToDb(val interface{}) (interface{}, error) {
 	switch t := val.(type) {
 	case timestamp.Timestamp:
@@ -63,6 +65,7 @@ func (c *TypeConverter) ToDb(val interface{}) (interface{}, error) {
 	return val, nil
 }
 
+// FromDb is called by gorp to deserialize database values to custom types
 func (c *TypeConverter) FromDb(target interface{}) (gorp.CustomScanner, bool) {
 	switch t := target.(type) {
 	case *time.Time:
