@@ -9,6 +9,14 @@ export class ApplicationPipelineService {
     constructor(private _http: Http) {
     }
 
+    stop(key: string, appName: string, pipName: string, buildNumber: number, envName: string): Observable<boolean> {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/stop';
+        let options = new RequestOptions();
+        options.params = new URLSearchParams();
+        options.params.set('envName', envName);
+        return this._http.post(url, null, options).map(res => true);
+    }
+
     /**
      * Restart a build
      * @param key Project unique key
@@ -21,8 +29,8 @@ export class ApplicationPipelineService {
     runAgain(key: string, appName: string, pipName: string, buildNumber: number, envName: string): Observable<PipelineBuild> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/restart';
         let options = new RequestOptions();
-        options.search = new URLSearchParams();
-        options.search.set('envName', envName);
+        options.params = new URLSearchParams();
+        options.params.set('envName', envName);
         return this._http.post(url, null, options).map(res => res.json());
     }
 
@@ -68,11 +76,11 @@ export class ApplicationPipelineService {
                  envName: string, limit: number, status: string, branchName: string): Observable<Array<PipelineBuild>> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/history';
         let options = new RequestOptions();
-        options.search = new URLSearchParams();
-        options.search.set('envName', envName);
-        options.search.set('limit', String(limit));
-        options.search.set('status', status);
-        options.search.set('branchName', branchName);
+        options.params = new URLSearchParams();
+        options.params.set('envName', envName);
+        options.params.set('limit', String(limit));
+        options.params.set('status', status);
+        options.params.set('branchName', branchName);
         return this._http.get(url, options).map(res => res.json());
     }
 }

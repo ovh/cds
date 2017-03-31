@@ -34,7 +34,7 @@ export class ProjectService {
     getProjects(): Observable<Project[]> {
         let params: URLSearchParams = new URLSearchParams();
         params.set('application', 'true');
-        return this._http.get('/project', {search: params}).map(res => {
+        return this._http.get('/project', {params: params}).map(res => {
             return res.json();
         });
     }

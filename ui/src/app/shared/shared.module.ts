@@ -27,7 +27,7 @@ import {WarningModalComponent} from './modal/warning/warning.component';
 import {CommonModule} from '@angular/common';
 import {CutPipe} from './pipes/cut.pipe';
 import {MomentModule} from 'angular2-moment';
-import {CodemirrorModule} from 'ng2-codemirror';
+import {CodemirrorModule} from 'ng2-codemirror-typescript/Codemirror';
 import {GroupFormComponent} from './group/form/group.form.component';
 import {MarkdownModule} from 'angular2-markdown';
 import {HistoryComponent} from './history/history.component';

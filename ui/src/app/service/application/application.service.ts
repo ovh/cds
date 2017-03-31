@@ -26,12 +26,12 @@ export class ApplicationService {
      */
     getApplication(key: string, appName: string): Observable<Application> {
         let options = new RequestOptions();
-        options.search = new URLSearchParams();
-        options.search.set('withPollers', 'true');
-        options.search.set('withHooks', 'true');
-        options.search.set('withWorkflow', 'true');
-        options.search.set('withNotifs', 'true');
-        options.search.set('withRepoMan', 'true');
+        options.params = new URLSearchParams();
+        options.params.set('withPollers', 'true');
+        options.params.set('withHooks', 'true');
+        options.params.set('withWorkflow', 'true');
+        options.params.set('withNotifs', 'true');
+        options.params.set('withRepoMan', 'true');
         return this._http.get('/project/' + key + '/application/' + appName, options).map(res => res.json());
     }
 
@@ -328,8 +328,8 @@ export class ApplicationService {
      */
     deleteNotification(key: string, appName: string, pipName: string, envName?: string): Observable<Application> {
         let options = new RequestOptions();
-        options.search = new URLSearchParams();
-        options.search.set('envName', envName);
+        options.params = new URLSearchParams();
+        options.params.set('envName', envName);
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
         return this._http.delete(url, options).map(res => res.json());
     }
@@ -364,8 +364,8 @@ export class ApplicationService {
      */
     addScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
         let options = new RequestOptions();
-        options.search = new URLSearchParams();
-        options.search.set('envName', scheduler.environment_name);
+        options.params = new URLSearchParams();
+        options.params.set('envName', scheduler.environment_name);
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler';
         return this._http.post(url, scheduler, options).map(res => res.json());
 

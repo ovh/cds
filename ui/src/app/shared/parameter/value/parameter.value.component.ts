@@ -1,7 +1,7 @@
 import {Component, Input, EventEmitter, OnInit, ViewChild, Output} from '@angular/core';
 import {SharedService} from '../../shared.service';
 import {Project} from '../../../model/project.model';
-import {CodemirrorComponent} from 'ng2-codemirror';
+import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {RepositoriesManager, Repository} from '../../../model/repositories.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 
@@ -51,7 +51,7 @@ export class ParameterValueComponent implements OnInit {
 
     constructor(public _sharedService: SharedService, private _repoManagerService: RepoManagerService) {
         this.codeMirrorConfig = {
-            mode: 'perl',
+            mode: 'shell',
             lineWrapping: true,
             lineNumbers: true
         };
