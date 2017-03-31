@@ -63,12 +63,14 @@ func (m *HatcheryMarathon) KillWorker(worker sdk.Worker) error {
 	return err
 }
 
+// ModelType returns type of hatchery
+func (*HatcheryMarathon) ModelType() string {
+	return sdk.Docker
+}
+
 // CanSpawn return wether or not hatchery can spawn model
 // requirements services are not supported
 func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-	if model.Type != sdk.Docker {
-		return false
-	}
 	//Service requirement are not supported
 	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement {
@@ -77,97 +79,65 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 		}
 	}
 
+	deployments, errd := m.client.Deployments()
+	if errd != nil {
+		log.Notice("CanSpawn> Error on m.client.Deployments() : %s", errd)
+		return false
+	}
+	// Do not DOS marathon, if deployment queue is longer than 10
+	if len(deployments) >= 10 {
+		log.Notice("CanSpawn> %d item in deployment queue, waiting", len(deployments))
+		return false
+	}
+
+	apps, err := m.listApplications(m.marathonID)
+	if err != nil {
+		log.Notice("CanSpawn> Error on m.listApplications() : %s", errd)
+		return false
+	}
+	if len(apps) >= viper.GetInt("max-worker") {
+		log.Notice("CanSpawn> max number of containers reached, aborting. Current: %d. Max: %d", len(apps), viper.GetInt("max-worker"))
+		return false
+	}
+
 	return true
 }
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
 func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
-	if model.Type != sdk.Docker {
-		return fmt.Errorf("spawnWorker> model %s not handled for hatchery marathon", model.Type)
-	}
-
 	if job != nil {
 		log.Notice("spawnWorker> spawning worker %s (%s) for job %d", model.Name, model.Image, job.ID)
 	} else {
 		log.Notice("spawnWorker> spawning worker %s (%s)", model.Name, model.Image)
 	}
 
-	deployments, errd := m.client.Deployments()
-	if errd != nil {
-		return errd
-	}
-	// Do not DOS marathon, if deployment queue is longer than 10, wait
-	if len(deployments) >= 10 {
-		log.Notice("spawnWorker> %d item in deployment queue, waiting", len(deployments))
-		time.Sleep(2 * time.Second)
-		return nil
-	}
-
-	apps, err := m.listApplications(m.marathonID)
-	if err != nil {
-		return err
-	}
-	if len(apps) >= viper.GetInt("max-worker") {
-		return fmt.Errorf("spawnWorker> max number of containers reached, aborting")
-	}
-
-	return m.spawnMarathonDockerWorker(model, m.hatch.ID, job)
-}
-
-func (m *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
-	values := url.Values{}
-	values.Set("embed", "apps.counts")
-	values.Set("id", hatcheryMarathon.marathonID)
-	return m.client.ListApplications(values)
-}
-
-// WorkerStarted returns the number of instances of given model started but
-// not necessarily register on CDS yet
-func (m *HatcheryMarathon) WorkerStarted(model *sdk.Model) int {
-	apps, err := m.listApplications(hatcheryMarathon.marathonID)
-	if err != nil {
-		return 0
-	}
-
-	var x int
-	for _, app := range apps {
-		if strings.Contains(app, strings.ToLower(model.Name)) {
-			x++
-		}
-	}
-
-	return x
-}
-
-// Init only starts killing routine of worker not registered
-func (m *HatcheryMarathon) Init() error {
-	// Register without declaring model
-	m.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("marathon", viper.GetString("name")),
-		UID:  viper.GetString("token"),
-	}
-
-	if err := hatchery.Register(m.hatch, viper.GetString("token")); err != nil {
-		log.Warning("Cannot register hatchery: %s", err)
-	}
-
-	// Start cleaning routines
-	m.startKillAwolWorkerRoutine()
-	return nil
-}
-
-func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryID int64, job *sdk.PipelineBuildJob) error {
 	var logJob string
-	if job != nil {
-		logJob = fmt.Sprintf("for job %d,", job.ID)
-	}
 
 	// Estimate needed memory, we will set 110% of required memory
 	memory := m.defaultMemory
+
+	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
+	instance := 1
+	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	forcePull := strings.HasSuffix(model.Image, ":latest")
+
+	env := map[string]string{
+		"CDS_API":        sdk.Host,
+		"CDS_KEY":        m.token,
+		"CDS_NAME":       workerName,
+		"CDS_MODEL":      fmt.Sprintf("%d", model.ID),
+		"CDS_HATCHERY":   fmt.Sprintf("%d", m.hatch.ID),
+		"CDS_SINGLE_USE": "1",
+		"CDS_TTL":        fmt.Sprintf("%d", m.workerTTL),
+	}
+
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
 	if job != nil {
+		logJob = fmt.Sprintf("for job %d,", job.ID)
+		env["CDS_BOOKED_JOB_ID"] = fmt.Sprintf("%d", job.ID)
+
 		for _, r := range job.Job.Action.Requirements {
 			if r.Name == sdk.ServiceRequirement {
 				return fmt.Errorf("spawnMarathonDockerWorker> %s service requirement not supported", logJob)
@@ -184,11 +154,7 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 		}
 	}
 
-	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
-	instance := 1
 	mem := float64(memory * 110 / 100)
-	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
-	forcePull := strings.HasSuffix(model.Image, ":latest")
 
 	application := &marathon.Application{
 		ID:  fmt.Sprintf("%s/%s", m.marathonID, workerName),
@@ -201,17 +167,8 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 			},
 			Type: "DOCKER",
 		},
-		CPUs: 0.5,
-		Env: &map[string]string{
-			"CDS_API":           sdk.Host,
-			"CDS_KEY":           m.token,
-			"CDS_NAME":          workerName,
-			"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
-			"CDS_HATCHERY":      fmt.Sprintf("%d", hatcheryID),
-			"CDS_BOOKED_JOB_ID": fmt.Sprintf("%d", job.ID),
-			"CDS_SINGLE_USE":    "1",
-			"CDS_TTL":           fmt.Sprintf("%d", m.workerTTL),
-		},
+		CPUs:      0.5,
+		Env:       &env,
 		Instances: &instance,
 		Mem:       &mem,
 		Labels:    &hatcheryMarathon.marathonLabels,
@@ -297,6 +254,59 @@ func (m *HatcheryMarathon) spawnMarathonDockerWorker(model *sdk.Model, hatcheryI
 	}
 
 	return fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
+}
+
+func (m *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
+	values := url.Values{}
+	values.Set("embed", "apps.counts")
+	values.Set("id", hatcheryMarathon.marathonID)
+	return m.client.ListApplications(values)
+}
+
+// WorkersStarted returns the number of instances started but
+// not necessarily register on CDS yet
+func (m *HatcheryMarathon) WorkersStarted() int {
+	apps, err := m.listApplications(hatcheryMarathon.marathonID)
+	if err != nil {
+		log.Warning("WorkersStarted> error on list applications err:%s", err)
+		return 0
+	}
+	return len(apps)
+}
+
+// WorkersStartedByModel returns the number of instances of given model started but
+// not necessarily register on CDS yet
+func (m *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
+	apps, err := m.listApplications(hatcheryMarathon.marathonID)
+	if err != nil {
+		return 0
+	}
+
+	var x int
+	for _, app := range apps {
+		if strings.Contains(app, strings.ToLower(model.Name)) {
+			x++
+		}
+	}
+
+	return x
+}
+
+// Init only starts killing routine of worker not registered
+func (m *HatcheryMarathon) Init() error {
+	// Register without declaring model
+	m.hatch = &sdk.Hatchery{
+		Name: hatchery.GenerateName("marathon", viper.GetString("name")),
+		UID:  viper.GetString("token"),
+	}
+
+	if err := hatchery.Register(m.hatch, viper.GetString("token")); err != nil {
+		log.Warning("Cannot register hatchery: %s", err)
+	}
+
+	// Start cleaning routines
+	m.startKillAwolWorkerRoutine()
+	return nil
 }
 
 func (m *HatcheryMarathon) startKillAwolWorkerRoutine() {

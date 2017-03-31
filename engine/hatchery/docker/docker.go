@@ -39,13 +39,14 @@ func (hd *HatcheryDocker) Hatchery() *sdk.Hatchery {
 	return hd.hatch
 }
 
+// ModelType returns type of hatchery
+func (*HatcheryDocker) ModelType() string {
+	return sdk.Docker
+}
+
 // CanSpawn return wether or not hatchery can spawn model
 // requirement are not supported
 func (hd *HatcheryDocker) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-	if model.Type != sdk.Docker {
-		return false
-	}
-
 	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false
@@ -147,9 +148,15 @@ func (hd *HatcheryDocker) killAwolWorker() {
 	}
 }
 
-// WorkerStarted returns the number of instances of given model started but
+// WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (hd *HatcheryDocker) WorkerStarted(model *sdk.Model) int {
+func (hd *HatcheryDocker) WorkersStarted() int {
+	return len(hd.workers)
+}
+
+// WorkersStartedByModel returns the number of instances of given model started but
+// not necessarily register on CDS yet
+func (hd *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 	var x int
 	for name := range hd.workers {
 		if strings.Contains(name, model.Name) {
@@ -175,11 +182,6 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) 
 	}
 	name = wm.Name + "-" + name
 
-	var jobID int64
-	if job != nil {
-		jobID = job.ID
-	}
-
 	var args []string
 	args = append(args, "run", "--rm", "-a", "STDOUT", "-a", "STDERR")
 	args = append(args, fmt.Sprintf("--name=%s", name))
@@ -189,7 +191,11 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) 
 	args = append(args, "-e", fmt.Sprintf("CDS_KEY=%s", viper.GetString("token")))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
-	args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", jobID))
+
+	if job != nil {
+		args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", job.ID))
+	}
+
 	if hd.addhost != "" {
 		args = append(args, fmt.Sprintf("--add-host=%s", hd.addhost))
 	}

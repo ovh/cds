@@ -3,9 +3,9 @@ package dashboard
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/gizak/termui"
+	"github.com/skratchdot/open-golang/open"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -13,7 +13,7 @@ import (
 // Termui wrapper designed for dashboard creation
 type Termui struct {
 	header *termui.Par
-	msg    *termui.Par
+	msg    string
 
 	current string
 
@@ -47,11 +47,13 @@ type Termui struct {
 	buildingPipelines []*termui.Row
 
 	// status
-	workers              *termui.MBarChart
-	totalBuildingWorkers int64
-	maxBuildingWorkers   int64
-	queue                *termui.Par
-	status               *termui.Par
+	infoQueue          string
+	distribQueue       map[string]int64
+	queue              *ScrollableList
+	queueSelect        *ScrollableList
+	statusWorkers      *termui.List
+	status             *termui.List
+	queueCurrentJobURL string
 
 	// mutex
 	sync.Mutex
@@ -70,13 +72,10 @@ const (
 )
 
 func (ui *Termui) init() {
-	// Initialize termui
-	err := termui.Init()
-	if err != nil {
+	if err := termui.Init(); err != nil {
 		panic(err)
 	}
 
-	// Setup handlers
 	termui.Handle("/timer/1s", func(e termui.Event) {
 		t := e.Data.(termui.EvtTimer)
 		ui.draw(int(t.Count))
@@ -87,7 +86,7 @@ func (ui *Termui) init() {
 	})
 
 	termui.Handle("/sys/kbd", func(e termui.Event) {
-		ui.msg.Text = fmt.Sprintf("No command for %v", e)
+		ui.msg = fmt.Sprintf("No command for %v", e)
 	})
 
 	termui.Handle("/sys/kbd/h", func(termui.Event) {
@@ -131,7 +130,10 @@ func (ui *Termui) init() {
 	})
 
 	termui.Handle("/sys/kbd/<down>", func(e termui.Event) {
-		if ui.current == DashboardView {
+		switch ui.current {
+		case StatusView:
+			ui.queue.CursorDown()
+		case DashboardView:
 			switch ui.selected {
 			case ProjectSelected:
 				ui.selectedProject++
@@ -162,7 +164,10 @@ func (ui *Termui) init() {
 		}
 	})
 	termui.Handle("/sys/kbd/<up>", func(e termui.Event) {
-		if ui.current == DashboardView {
+		switch ui.current {
+		case StatusView:
+			ui.queue.CursorUp()
+		case DashboardView:
 			switch ui.selected {
 			case ProjectSelected:
 				ui.selectedProject--
@@ -235,7 +240,6 @@ func (ui *Termui) init() {
 				break
 			case PipelineSelected:
 				if ui.selectedPipeline == ui.pipCount {
-
 					ui.selected = LogsSelected
 					ui.selectedLogs = 1
 					ui.drawProjects()
@@ -248,9 +252,14 @@ func (ui *Termui) init() {
 		}
 	})
 
-	ui.initHeader()
+	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) {
+		if ui.current == StatusView {
+			open.Run(ui.queueCurrentJobURL)
+		}
+	})
+
 	ui.initProjects()
-	ui.initMsg()
+	ui.initHeader()
 
 	ui.showHome()
 }
@@ -259,36 +268,18 @@ func (ui *Termui) draw(i int) {
 	ui.Lock()
 	defer ui.Unlock()
 
-	switch ui.current {
-	case "status":
-		ui.drawStatus()
-		break
-	}
-
-	// Add a moving part to check that ui is not frozen
-	ui.header.Text = fmt.Sprintf("(h)ome | (d)ashboard | (m)onitoring | (s)tatus | (q)uit | %s", time.Now().String()[11:19])
-
+	ui.header.Text = " [CDS | (h)ome | (d)ashboard | (m)onitoring | (s)tatus | (q)uit](fg-cyan) | " + ui.msg
 	// calculate layout
 	termui.Body.Align()
 	termui.Render(termui.Body)
 }
 
 func (ui *Termui) initHeader() {
-	p := termui.NewPar("(h)ome | (d)ashboard | (m)onitoring | (s)tatus | (q)uit")
-	p.Height = 3
-	p.TextFgColor = termui.ColorWhite
-	p.BorderLabel = "Menu"
-	p.BorderFg = termui.ColorCyan
-
-	ui.header = p
-}
-
-func (ui *Termui) initMsg() {
 	p := termui.NewPar("")
-	p.Height = 3
+	p.Height = 1
 	p.TextFgColor = termui.ColorWhite
 	p.BorderLabel = ""
 	p.BorderFg = termui.ColorCyan
-
-	ui.msg = p
+	p.Border = false
+	ui.header = p
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
@@ -59,12 +60,9 @@ func (h *HatcherySwarm) Init() error {
 // KillWorker kill the worker
 func (h *HatcherySwarm) KillWorker(worker sdk.Worker) error {
 	log.Warning("killing container %s", worker.Name)
-	containers, err := h.dockerClient.ListContainers(docker.ListContainersOptions{
-		All: true,
-	})
-
-	if err != nil {
-		return err
+	containers, errC := h.getContainers()
+	if errC != nil {
+		return sdk.WrapError(errC, "KillWorker> Cannot list containers")
 	}
 
 	for i := range containers {
@@ -77,13 +75,50 @@ func (h *HatcherySwarm) KillWorker(worker sdk.Worker) error {
 	return nil
 }
 
-func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error) {
-	containers, err := h.dockerClient.ListContainers(docker.ListContainersOptions{
-		All: true,
-	})
+//This a embeded cache for containers list
+var containersCache = struct {
+	mu   sync.RWMutex
+	list []docker.APIContainers
+}{
+	mu:   sync.RWMutex{},
+	list: []docker.APIContainers{},
+}
 
+func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
+	t := time.Now()
+
+	defer log.Debug("getContainers() : %d s", time.Since(t).Seconds())
+
+	containersCache.mu.RLock()
+	nbServers := len(containersCache.list)
+	containersCache.mu.RUnlock()
+
+	if nbServers == 0 {
+		s, err := h.dockerClient.ListContainers(docker.ListContainersOptions{
+			All: true,
+		})
+		if err != nil {
+			return nil, sdk.WrapError(err, "getContainers> error: %s")
+		}
+		containersCache.mu.Lock()
+		containersCache.list = s
+		containersCache.mu.Unlock()
+		//Remove data from the cache after 2 seconds
+		go func() {
+			time.Sleep(2 * time.Second)
+			containersCache.mu.Lock()
+			containersCache.list = []docker.APIContainers{}
+			containersCache.mu.Unlock()
+		}()
+	}
+
+	return containersCache.list, nil
+}
+
+func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error) {
+	containers, err := h.getContainers()
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "getContainer> cannot getContainers")
 	}
 
 	for i := range containers {
@@ -96,50 +131,53 @@ func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error)
 }
 
 func (h *HatcherySwarm) killAndRemove(ID string) error {
-	container, err := h.dockerClient.InspectContainer(ID)
-	if err != nil {
-		return err
-	}
 
-	network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
-	if err != nil {
-		return err
-	}
+	/*
 
-	if netname, ok := network.Labels["worker_net"]; ok {
-		log.Notice("Remove network %s", netname)
-		for id := range network.Containers {
-			log.Notice("Remove container %s", id)
-			if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
-				ID:     id,
-				Signal: docker.SIGKILL,
-			}); err != nil {
-				log.Info("Unable to kill container %s", err)
-				continue
+		container, err := h.dockerClient.InspectContainer(ID)
+		if err != nil {
+			return sdk.WrapError(err, "killAndRemove> cannot InspectContainer")
+		}
+
+			network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
+			if err != nil {
+				return sdk.WrapError(err, "killAndRemove> cannot NetworkInfo")
 			}
 
-			if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-				ID:            id,
-				RemoveVolumes: true,
-				Force:         true,
-			}); err != nil {
-				log.Warning("Unable to remove container %s", err)
-			}
-		}
-	} else {
-		log.Notice("Remove container %s", ID)
-		if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
-			ID:     ID,
-			Signal: docker.SIGKILL,
-		}); err != nil {
-			log.Warning("Unable to kill container %s", err)
-		}
+			if netname, ok := network.Labels["worker_net"]; ok {
+				log.Notice("killAndRemove> Remove network %s", netname)
+				for id := range network.Containers {
+					log.Notice("killAndRemove> Remove container %s", id)
+					if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
+						ID:     id,
+						Signal: docker.SIGKILL,
+					}); err != nil {
+						log.Info("killAndRemove> Unable to kill container %s", err)
+						continue
+					}
 
-		if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-			ID: ID,
-		}); err != nil {
-			log.Warning("Unable to remove container %s", err)
-		}
+					if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
+						ID:            id,
+						RemoveVolumes: true,
+						Force:         true,
+					}); err != nil {
+						log.Warning("killAndRemove> Unable to remove container %s", err)
+					}
+				}
+			} else {
+	*/
+	log.Notice("killAndRemove>Remove container %s", ID)
+	if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
+		ID:     ID,
+		Signal: docker.SIGKILL,
+	}); err != nil {
+		log.Warning("killAndRemove> Unable to kill container %s", err)
+	}
+
+	if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
+		ID: ID,
+	}); err != nil {
+		log.Warning("killAndRemove> Unable to remove container %s", err)
 	}
 
 	return nil
@@ -212,11 +250,6 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
 	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker", sdk.Host)}
 
-	var jobID int64
-	if job != nil {
-		jobID = job.ID
-	}
-
 	//CDS env needed by the worker binary
 	env := []string{
 		"CDS_API" + "=" + sdk.Host,
@@ -224,9 +257,12 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		"CDS_KEY" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
-		"CDS_BOOKED_JOB_ID" + "=" + strconv.FormatInt(jobID, 10),
 		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
 		"CDS_SINGLE_USE=1",
+	}
+
+	if job != nil {
+		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(job.ID, 10))
 	}
 
 	//labels are used to make container cleanup easier
@@ -305,20 +341,22 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 	return nil
 }
 
+// ModelType returns type of hatchery
+func (*HatcherySwarm) ModelType() string {
+	return sdk.Docker
+}
+
 // CanSpawn checks if the model can be spawned by this hatchery
 func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-	if model.Type != sdk.Docker {
-		return false
-	}
-
 	//List all containers to check if we can spawn a new one
-	cs, errList := h.dockerClient.ListContainers(docker.ListContainersOptions{})
+	cs, errList := h.getContainers()
 	if errList != nil {
-		log.Critical("Unable to list containers: %s", errList)
+		log.Critical("CanSpawn> Unable to list containers: %s", errList)
 		return false
 	}
 
 	if len(cs) > h.maxContainers {
+		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.maxContainers)
 		return false
 	}
 
@@ -336,6 +374,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	if len(links) == 0 && len(cs) > 0 {
 		percentFree := 100 - (100 * len(cs) / h.maxContainers)
 		if percentFree <= hatcherySwarm.ratioService {
+			log.Notice("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, hatcherySwarm.ratioService)
 			return false
 		}
 	}
@@ -427,15 +466,23 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	return true
 }
 
-// WorkerStarted returns the number of started workers
-func (h *HatcherySwarm) WorkerStarted(model *sdk.Model) int {
-	if model.Type != sdk.Docker {
+// WorkersStarted returns the number of instances started but
+// not necessarily register on CDS yet
+func (h *HatcherySwarm) WorkersStarted() int {
+	containers, errList := h.getContainers()
+	if errList != nil {
+		log.Critical("WorkersStarted> Unable to list containers: %s", errList)
 		return 0
 	}
+	return len(containers)
+}
 
-	containers, err := h.dockerClient.ListContainers(docker.ListContainersOptions{})
-	if err != nil {
-		log.Warning("WorkerStarted> error listing containers : %s", err)
+// WorkersStartedByModel returns the number of started workers
+func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
+	containers, errList := h.getContainers()
+	if errList != nil {
+		log.Critical("WorkersStartedByModel> Unable to list containers: %s", errList)
+		return 0
 	}
 
 	list := []string{}
@@ -446,8 +493,7 @@ func (h *HatcherySwarm) WorkerStarted(model *sdk.Model) int {
 		}
 	}
 
-	log.Notice("WorkerStarted> %s \t %d", model.Name, len(list))
-
+	log.Debug("WorkersStartedByModel> %s \t %d", model.Name, len(list))
 	return len(list)
 }
 
@@ -474,15 +520,13 @@ func (h *HatcherySwarm) killAwolWorkerRoutine() {
 func (h *HatcherySwarm) killAwolWorker() {
 	apiworkers, err := sdk.GetWorkers()
 	if err != nil {
-		log.Warning("Cannot get workers: %s", err)
+		log.Warning("killAwolWorker> Cannot get workers: %s", err)
 		os.Exit(1)
 	}
 
-	containers, errList := h.dockerClient.ListContainers(docker.ListContainersOptions{
-		All: true,
-	})
+	containers, errList := h.getContainers()
 	if errList != nil {
-		log.Warning("Cannot list containers: %s", errList)
+		log.Warning("killAwolWorker> Cannot list containers: %s", errList)
 		os.Exit(1)
 	}
 
@@ -506,7 +550,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 				found = true
 				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
-					log.Info("Worker %s is disabled. Kill it with fire !", c.Names[0])
+					log.Info("killAwolWorker> Worker %s is disabled. Kill it with fire !", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break
 				}
@@ -520,19 +564,17 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 	//Delete the workers
 	for _, c := range oldContainers {
-		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s", c.Names[0])
+		log.Notice("killAwolWorker> Delete worker %s", c.Names[0])
 		if err := h.killAndRemove(c.ID); err != nil {
-			log.Warning("HatcherySwarm.killAwolWorker> Cannot killAndRemove worker id: %s, err:%s", c.ID, err)
+			log.Warning("killAwolWorker> Cannot killAndRemove worker id: %s, err:%s", c.ID, err)
 		}
 	}
 
-	var errLC error
-	containers, errLC = h.dockerClient.ListContainers(docker.ListContainersOptions{
-		All: true,
-	})
-	if errLC != nil {
-		log.Warning("Cannot get containers: %s", errLC)
-		return
+	var errC error
+	containers, errC = h.getContainers()
+	if errC != nil {
+		log.Warning("killAwolWorker> Cannot list containers: %s", errC)
+		os.Exit(1)
 	}
 
 	//Checking services
@@ -548,13 +590,13 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 	for _, c := range oldContainers {
 		h.killAndRemove(c.ID)
-		log.Notice("HatcherySwarm.killAwolWorker> Delete worker %s", c.Names[0])
+		log.Notice("killAwolWorker> Delete worker %s", c.Names[0])
 	}
 
 	//Checking networks
 	nets, errLN := h.dockerClient.ListNetworks()
 	if errLN != nil {
-		log.Warning("Cannot get networks: %s", errLN)
+		log.Warning("killAwolWorker> Cannot get networks: %s", errLN)
 		return
 	}
 
@@ -571,9 +613,9 @@ func (h *HatcherySwarm) killAwolWorker() {
 			continue
 		}
 
-		log.Notice("HatcherySwarm.killAwolWorker> Delete network %s", n.Name)
+		log.Notice("killAwolWorker> Delete network %s", n.Name)
 		if err := h.dockerClient.RemoveNetwork(n.ID); err != nil {
-			log.Warning("HatcherySwarm.killAwolWorker> Unable to delete network %s", n.Name)
+			log.Warning("killAwolWorker> Unable to delete network %s", n.Name)
 		}
 	}
 }

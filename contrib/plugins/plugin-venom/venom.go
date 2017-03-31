@@ -44,6 +44,8 @@ func (s VenomPlugin) Parameters() plugin.Parameters {
 	params.Add("exclude", plugin.TextParameter, "Exclude some files, one file per line", "")
 	params.Add("parallel", plugin.StringParameter, "Launch Test Suites in parallel. Enter here number of routines", "2")
 	params.Add("output", plugin.StringParameter, "Directory where output xunit result file", ".")
+	params.Add("details", plugin.StringParameter, "Output Details Level: low, medium, high", "low")
+	params.Add("loglevel", plugin.StringParameter, "Log Level: debug, info, warn or error", "error")
 	return params
 }
 
@@ -54,6 +56,8 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	exclude := a.Arguments().Get("exclude")
 	parallel := a.Arguments().Get("parallel")
 	output := a.Arguments().Get("output")
+	details := a.Arguments().Get("details")
+	loglevel := a.Arguments().Get("loglevel")
 
 	if path == "" {
 		path = "."
@@ -81,7 +85,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	}
 
 	start := time.Now()
-	tests, err := venom.Process([]string{path}, a.Arguments().Data, []string{exclude}, p, "error", "low")
+	tests, err := venom.Process([]string{path}, a.Arguments().Data, []string{exclude}, p, loglevel, details)
 	if err != nil {
 		plugin.SendLog(a, "PLUGIN", "Fail on venom: %s", err)
 		return plugin.Fail

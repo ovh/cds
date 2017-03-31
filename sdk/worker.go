@@ -67,15 +67,14 @@ type OpenstackModelData struct {
 
 // GetWorkers retrieves from engine all worker the user has access to
 func GetWorkers(models ...string) ([]Worker, error) {
-
 	if len(models) != 0 {
 		return nil, fmt.Errorf("not implemented")
 	}
 
 	uri := "/worker"
-	data, code, err := Request("GET", uri, nil)
-	if err != nil {
-		return nil, err
+	data, code, errr := Request("GET", uri, nil)
+	if errr != nil {
+		return nil, errr
 	}
 
 	if code != 200 {
@@ -83,8 +82,7 @@ func GetWorkers(models ...string) ([]Worker, error) {
 	}
 
 	var workers []Worker
-	err = json.Unmarshal(data, &workers)
-	if err != nil {
+	if err := json.Unmarshal(data, &workers); err != nil {
 		return nil, err
 	}
 

@@ -41,6 +41,12 @@
 			"revisionTime": "2015-01-07T20:56:47Z"
 		},
 		{
+			"checksumSHA1": "ta8SSP0z1c4mWWiJc9srvj2WirE=",
+			"path": "github.com/bgentry/speakeasy",
+			"revision": "a1ccbf2c40dfc8ce514b5c5c6e6d1429ea6880da",
+			"revisionTime": "2016-08-13T19:06:34Z"
+		},
+		{
 			"checksumSHA1": "+D61wl+LRZs+8zSrbXAu62G3NfE=",
 			"path": "github.com/briandowns/spinner",
 			"revision": "cd65e8bd7da20cdcee450f7cbdd9cc04f78bc02f",
@@ -283,10 +289,10 @@
 			"revisionTime": "2016-10-13T01:22:19Z"
 		},
 		{
-			"checksumSHA1": "hkqmhIE6SrFrv5L9xlKmXHgMxL0=",
+			"checksumSHA1": "DG6hthmfdziVR23DRCqZkaYTDKc=",
 			"path": "github.com/fsouza/go-dockerclient",
-			"revision": "4a934a8fd3ec3d4f84d9dcd8b47e7b277918c366",
-			"revisionTime": "2016-12-16T02:05:17Z"
+			"revision": "87c7e50e0bcf800ed863c3c3b0fbcc67e3029140",
+			"revisionTime": "2017-03-16T00:43:41Z"
 		},
 		{
 			"checksumSHA1": "tWl4FiCrXxC4bMPn9euCOER0pHI=",
@@ -313,10 +319,10 @@
 			"revisionTime": "2016-12-04T22:13:08Z"
 		},
 		{
-			"checksumSHA1": "KcpIgCyZpUBT4vRsMz++B6KNnMY=",
+			"checksumSHA1": "JKdm3GGQbs6xCWirksZzjLDZHQ0=",
 			"path": "github.com/gizak/termui",
-			"revision": "a7e3aeef4cdf9fa2edb723b1541cb69b7bb089ea",
-			"revisionTime": "2016-10-24T02:17:13Z"
+			"revision": "798ffb9cbbe4073ef1f88e6069ca4a2c6aa6676b",
+			"revisionTime": "2017-03-06T11:53:53Z"
 		},
 		{
 			"checksumSHA1": "sd74nfsZXvigcGBf1gDXYzO2AKY=",
@@ -575,6 +581,12 @@
 			"revisionTime": "2016-01-26T18:01:36Z"
 		},
 		{
+			"checksumSHA1": "7hln62oZPZmyqEmgXaybf9WxQ7A=",
+			"path": "github.com/maruel/panicparse/stack",
+			"revision": "25bcac0d793cf4109483505a0d66e066a3a90a80",
+			"revisionTime": "2017-02-27T22:23:42Z"
+		},
+		{
 			"checksumSHA1": "6wAWOVRtaH7hX48hmw9o7noyy5Q=",
 			"path": "github.com/mattn/go-colorable",
 			"revision": "9056b7a9f2d1f2d96498d6d146acd1f9d5ed3d59",
@@ -739,6 +751,12 @@
 			"path": "github.com/sethgrid/pester",
 			"revision": "f1c8b772fdecdd20f483653d18619d41b25ef934",
 			"revisionTime": "2017-01-14T04:11:58Z"
+		},
+		{
+			"checksumSHA1": "h/HMhokbQHTdLUbruoBBTee+NYw=",
+			"path": "github.com/skratchdot/open-golang/open",
+			"revision": "75fb7ed4208cf72d323d7d02fd1a5964a7a9073c",
+			"revisionTime": "2016-03-02T14:40:31Z"
 		},
 		{
 			"checksumSHA1": "4FUjSj4CbaZxSPOGl2zwfyaSFWI=",
@@ -1039,6 +1057,12 @@
 			"path": "gopkg.in/redis.v4/internal/proto",
 			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
 			"revisionTime": "2016-08-23T11:40:42Z"
+		},
+		{
+			"checksumSHA1": "/1TzqyoYSSdEkFrZG20XoNGwD8o=",
+			"path": "gopkg.in/urfave/cli.v1",
+			"revision": "a14d7d367bc02b1f57d88de97926727f2d936387",
+			"revisionTime": "2016-08-29T00:43:50Z"
 		},
 		{
 			"checksumSHA1": "12GqsW8PiRPnezDDy0v4brZrndM=",

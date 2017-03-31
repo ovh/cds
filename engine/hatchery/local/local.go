@@ -39,6 +39,11 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
+// ModelType returns type of hatchery
+func (*HatcheryLocal) ModelType() string {
+	return sdk.HostProcess
+}
+
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
@@ -81,11 +86,6 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
 
-	var jobID int64
-	if job != nil {
-		jobID = job.ID
-	}
-
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", sdk.Host))
 	args = append(args, fmt.Sprintf("--key=%s", viper.GetString("token")))
@@ -93,8 +93,11 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
-	args = append(args, fmt.Sprintf("--booked-job-id=%d", jobID))
 	args = append(args, "--single-use")
+
+	if job != nil {
+		args = append(args, fmt.Sprintf("--booked-job-id=%d", job.ID))
+	}
 
 	cmd := exec.Command("worker", args...)
 
@@ -121,9 +124,15 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	return nil
 }
 
-// WorkerStarted returns the number of instances of given model started but
+// WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryLocal) WorkerStarted(model *sdk.Model) int {
+func (h *HatcheryLocal) WorkersStarted() int {
+	return len(h.workers)
+}
+
+// WorkersStartedByModel returns the number of instances of given model started but
+// not necessarily register on CDS yet
+func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
 	h.localWorkerIndexCleanup()
 	var x int
 	for name := range h.workers {

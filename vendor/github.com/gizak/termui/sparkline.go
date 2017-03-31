@@ -1,4 +1,4 @@
-// Copyright 2016 Zack Guo <gizak@icloud.com>. All rights reserved.
+// Copyright 2017 Zack Guo <zack.y.guo@gmail.com>. All rights reserved.
 // Use of this source code is governed by a MIT license that can
 // be found in the LICENSE file.
 
@@ -51,7 +51,7 @@ func NewSparkline() Sparkline {
 		LineColor:  ThemeAttr("sparkline.line.fg")}
 }
 
-// NewSparklines return a new *Spaklines with given Sparkline(s), you can always add a new Sparkline later.
+// NewSparklines return a new *Sparklines with given Sparkline(s), you can always add a new Sparkline later.
 func NewSparklines(ss ...Sparkline) *Sparklines {
 	s := &Sparklines{Block: *NewBlock(), Lines: ss}
 	return s

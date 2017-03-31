@@ -16,8 +16,10 @@ type Interface interface {
 	KillWorker(worker sdk.Worker) error
 	SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error
 	CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool
-	WorkerStarted(model *sdk.Model) int
+	WorkersStartedByModel(model *sdk.Model) int
+	WorkersStarted() int
 	Hatchery() *sdk.Hatchery
+	ModelType() string
 	ID() int64
 }
 
@@ -40,9 +42,21 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func routine(h Interface, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
-	defer logTime("routine", time.Now(), warningSeconds, criticalSeconds)
-	log.Debug("routine> %d", timestamp)
+func routine(h Interface, maxWorkers, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
+	defer logTime(fmt.Sprintf("routine> %d", timestamp), time.Now(), warningSeconds, criticalSeconds)
+	log.Debug("routine> %d enter", timestamp)
+
+	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
+		log.Debug("Create> continue")
+		return nil, nil
+	}
+
+	workersStarted := h.WorkersStarted()
+	if workersStarted > maxWorkers {
+		log.Notice("routine> %d max workers reached. current:%d max:%d", timestamp, workersStarted, maxWorkers)
+		return nil, nil
+	}
+	log.Debug("routine> %d - workers already started:%d", timestamp, workersStarted)
 
 	jobs, errbq := sdk.GetBuildQueue()
 	if errbq != nil {
@@ -54,6 +68,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 		log.Debug("routine> %d - Job queue is empty", timestamp)
 		return nil, nil
 	}
+	log.Debug("routine> %d - Job queue size:%d", timestamp, len(jobs))
 
 	models, errwm := sdk.GetWorkerModels()
 	if errwm != nil {
@@ -64,29 +79,38 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 	if len(models) == 0 {
 		return nil, fmt.Errorf("routine> %d - No model returned by GetWorkerModels", timestamp)
 	}
-	log.Debug("routine> %d models received", len(models))
+	log.Debug("routine> %d - models received: %d", timestamp, len(models))
 
 	spawnedIDs := []int64{}
 	wg := &sync.WaitGroup{}
 
-	for i := range jobs {
+	nToRun := len(jobs)
+	if len(jobs) > maxWorkers-workersStarted {
+		nToRun = maxWorkers - workersStarted
+		if nToRun < 0 { // should never occur, just to be sure
+			nToRun = 1
+		}
+		log.Info("routine> %d - work only on %d jobs from queue. queue size:%d workersStarted:%d maxWorkers:%d", timestamp, nToRun, len(jobs), workersStarted, maxWorkers)
+	}
+
+	for i := range jobs[:nToRun] {
 		wg.Add(1)
 		go func(job *sdk.PipelineBuildJob) {
-			defer logTime(fmt.Sprintf("routine> job %d>", job.ID), time.Now(), warningSeconds, criticalSeconds)
+			defer logTime(fmt.Sprintf("routine> %d - job %d>", timestamp, job.ID), time.Now(), warningSeconds, criticalSeconds)
 
 			if sdk.IsInArray(job.ID, lastSpawnedIDs) {
-				log.Debug("routine> job %d already spawned in previous routine", job.ID)
+				log.Debug("routine> %d - job %d already spawned in previous routine", timestamp, job.ID)
 				wg.Done()
 				return
 			}
 
 			if job.QueuedSeconds < int64(graceSeconds) {
-				log.Debug("routine> job %d is too fresh, queued since %d seconds, let existing waiting worker check it", job.ID, job.QueuedSeconds)
+				log.Debug("routine> %d - job %d is too fresh, queued since %d seconds, let existing waiting worker check it", timestamp, job.ID, job.QueuedSeconds)
 				wg.Done()
 				return
 			}
 
-			log.Debug("routine> %d work on job %d queued since %d seconds", timestamp, job.ID, job.QueuedSeconds)
+			log.Debug("routine> %d - work on job %d queued since %d seconds", timestamp, job.ID, job.QueuedSeconds)
 			if job.BookedBy.ID != 0 {
 				t := "current hatchery"
 				if job.BookedBy.ID != h.Hatchery().ID {
@@ -101,7 +125,7 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 				if canRunJob(h, job, &model, hostname) {
 					if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
 						// perhaps already booked by another hatchery
-						log.Debug("routine> %d cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
+						log.Debug("routine> %d - cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
 						break // go to next job
 					}
 					log.Debug("routine> %d - send book job %d %s by hatchery %d", timestamp, job.ID, model.Name, h.Hatchery().ID)
@@ -147,21 +171,46 @@ func routine(h Interface, provision int, hostname string, timestamp int64, lastS
 	return spawnedIDs, nil
 }
 
+func provisioning(h Interface, provision int) {
+	if provision == 0 {
+		log.Debug("provisioning> no provisioning to do")
+		return
+	}
+
+	models, errwm := sdk.GetWorkerModels()
+	if errwm != nil {
+		log.Debug("provisioning> error on GetWorkerModels:%e", errwm)
+		return
+	}
+
+	for k := range models {
+		if h.WorkersStartedByModel(&models[k]) < provision {
+			if models[k].Type == h.ModelType() {
+				go func(m sdk.Model) {
+					if err := h.SpawnWorker(&m, nil); err != nil {
+						log.Warning("provisioning> cannot spawn worker for provisioning: %s", m.Name, err)
+					}
+				}(models[k])
+			}
+		}
+	}
+}
+
 func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostname string) bool {
-	if !h.CanSpawn(model, job) {
+	if model.Type != h.ModelType() {
 		return false
 	}
 
 	// Common check
 	for _, r := range job.Job.Action.Requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
-		if r.Type == sdk.ModelRequirement {
-			return r.Value == model.Name
+		if r.Type == sdk.ModelRequirement && r.Value != model.Name {
+			return false
 		}
 
 		// If requirement is an hostname requirement, it's for a specific worker
-		if r.Type == sdk.HostnameRequirement {
-			return r.Value == hostname
+		if r.Type == sdk.HostnameRequirement && r.Value != hostname {
+			return false
 		}
 
 		// service and memory requirements are only supported by docker model
@@ -189,7 +238,7 @@ func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostnam
 		}
 	}
 
-	return true
+	return h.CanSpawn(model, job)
 }
 
 func logTime(name string, then time.Time, warningSeconds, criticalSeconds int) {

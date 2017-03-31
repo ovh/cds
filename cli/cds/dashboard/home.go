@@ -17,8 +17,7 @@ func (ui *Termui) showHome() {
 	ui.dashboard = termui.NewRow()
 	termui.Body.AddRows(
 		termui.NewRow(
-			termui.NewCol(6, 0, ui.header),
-			termui.NewCol(6, 0, ui.msg),
+			termui.NewCol(12, 0, ui.header),
 		),
 		termui.NewRow(
 			termui.NewCol(8, 2, ui.welcomeText),
@@ -35,6 +34,9 @@ func (ui *Termui) showHome() {
 
 	type 'd' to view your CDS dashboard
 	type 'm' to monitor your building pipelines
+	type 's' to monitor CDS Queue
+
+	type 'q' to quit
 	`, sdk.VERSION)
 
 	termui.Clear()

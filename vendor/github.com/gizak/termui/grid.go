@@ -1,4 +1,4 @@
-// Copyright 2016 Zack Guo <gizak@icloud.com>. All rights reserved.
+// Copyright 2017 Zack Guo <zack.y.guo@gmail.com>. All rights reserved.
 // Use of this source code is governed by a MIT license that can
 // be found in the LICENSE file.
 
@@ -48,7 +48,7 @@ func (r *Row) assignWidth(w int) {
 
 	accW := 0                            // acc span and offset
 	calcW := make([]int, len(r.Cols))    // calculated width
-	calcOftX := make([]int, len(r.Cols)) // computated start position of x
+	calcOftX := make([]int, len(r.Cols)) // computed start position of x
 
 	for i, c := range r.Cols {
 		accW += c.Span + c.Offset
@@ -266,7 +266,7 @@ func (g *Grid) Align() {
 	}
 }
 
-// Buffer implments Bufferer interface.
+// Buffer implements Bufferer interface.
 func (g Grid) Buffer() Buffer {
 	buf := NewBuffer()
 
