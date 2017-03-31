@@ -7,9 +7,9 @@ import (
 )
 
 func TestReadURL(t *testing.T) {
-	b, f, err := ReadURL("https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl", "hcl")
+	b, _, _ := ReadURL("https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl", "hcl")
 	assert.True(t, len(b) > 0)
 
-	b, f, err = ReadURL("https://raw.githubusercontent.com/ovh/tat/master/.travis.yml", "yml")
+	b, _, _ = ReadURL("https://raw.githubusercontent.com/ovh/tat/master/.travis.yml", "yml")
 	assert.True(t, len(b) > 0)
 }
