@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/spf13/viper"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 )
 
 type gorpLogger struct {
