@@ -110,13 +110,13 @@ func request(method string, path string, args []byte) ([]byte, int, error) {
 // Log struct holds a single line of build log
 type Log struct {
 	ID                 int64                `json:"id"`
-	PipelineBuildJobID int64                `json:"pipeline_build_job_id"`
-	PipelineBuildID    int64                `json:"pipeline_build_id"`
+	PipelineBuildJobID int64                `json:"pipelineBuildJobID"`
+	PipelineBuildID    int64                `json:"pipelineBuildID"`
 	Start              *timestamp.Timestamp `json:"start"`
-	LastModified       *timestamp.Timestamp `json:"last_modified"`
+	LastModified       *timestamp.Timestamp `json:"lastModified"`
 	Done               *timestamp.Timestamp `json:"done"`
-	StepOrder          int                  `json:"step_order"`
-	Value              string               `json:"value"`
+	StepOrder          int                  `json:"stepOrder"`
+	Value              string               `json:"val"`
 }
 
 //SendLog send logs to CDS engine for the current
