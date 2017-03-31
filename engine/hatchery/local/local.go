@@ -124,9 +124,15 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	return nil
 }
 
-// WorkerStarted returns the number of instances of given model started but
+// WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryLocal) WorkerStarted(model *sdk.Model) int {
+func (h *HatcheryLocal) WorkersStarted() int {
+	return len(h.workers)
+}
+
+// WorkersStartedByModel returns the number of instances of given model started but
+// not necessarily register on CDS yet
+func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
 	h.localWorkerIndexCleanup()
 	var x int
 	for name := range h.workers {

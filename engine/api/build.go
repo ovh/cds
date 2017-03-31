@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -52,11 +51,6 @@ func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		pbJob.Job.StepStatus = append(pbJob.Job.StepStatus, step)
 	}
 
-	var errmarshal error
-	pbJob.JobJSON, errmarshal = json.Marshal(pbJob.Job)
-	if errmarshal != nil {
-		return sdk.WrapError(sdk.ErrWrongRequest, "updateStepStatusHandler> Error while unmarshal job: %s", errmarshal)
-	}
 	if err := pipeline.UpdatePipelineBuildJob(db, pbJob); err != nil {
 		log.Warning("updateStepStatusHandler> Cannot update pipeline build job: %s", err)
 		return err
@@ -503,6 +497,11 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 		queue, errQ = pipeline.LoadGroupWaitingQueue(db, c.Worker.GroupID)
 	default:
 		queue, errQ = pipeline.LoadUserWaitingQueue(db, c.User)
+	}
+
+	lang := r.Header.Get("Accept-Language")
+	for p := range queue {
+		queue[p].Translate(lang)
 	}
 
 	if errQ != nil {

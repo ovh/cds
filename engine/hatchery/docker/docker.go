@@ -148,9 +148,15 @@ func (hd *HatcheryDocker) killAwolWorker() {
 	}
 }
 
-// WorkerStarted returns the number of instances of given model started but
+// WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (hd *HatcheryDocker) WorkerStarted(model *sdk.Model) int {
+func (hd *HatcheryDocker) WorkersStarted() int {
+	return len(hd.workers)
+}
+
+// WorkersStartedByModel returns the number of instances of given model started but
+// not necessarily register on CDS yet
+func (hd *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 	var x int
 	for name := range hd.workers {
 		if strings.Contains(name, model.Name) {
