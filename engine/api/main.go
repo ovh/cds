@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -264,8 +265,16 @@ var mainCmd = &cobra.Command{
 			MaxHeaderBytes: 1 << 20,
 		}
 
-		log.Notice("Listening on :%s\n", viper.GetString("listen_port"))
 		event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", viper.GetString("listen_port"))})
+
+		go func() {
+			//TLS is disabled for the moment. We need to serve TLS on HTTP too
+			if err := grpc.Init(viper.GetInt("grpc_port"), false, "", ""); err != nil {
+				log.Fatalf("Cannot start grpc cds-server: %s", err)
+			}
+		}()
+
+		log.Notice("Starting HTTP Server on port %s", viper.GetString("listen_port"))
 		if err := s.ListenAndServe(); err != nil {
 			log.Fatalf("Cannot start cds-server: %s\n", err)
 		}

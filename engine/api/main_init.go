@@ -42,8 +42,11 @@ func init() {
 	flags.String("api-url", "", "CDS API Base URL")
 	viper.BindPFlag("api_url", flags.Lookup("api-url"))
 
-	flags.String("listen-port", "8081", "CDS Engine Listen Port")
+	flags.String("listen-port", "8081", "CDS Engine HTTP(S) Port")
 	viper.BindPFlag("listen_port", flags.Lookup("listen-port"))
+
+	flags.Int("grpc-port", 8082, "CDS Engine GRPC Port")
+	viper.BindPFlag("grpc_port", flags.Lookup("grpc-port"))
 
 	flags.String("artifact-mode", "filesystem", "Artifact Mode: openstack or filesystem")
 	flags.String("artifact-address", "", "Artifact Adress: used with --artifact-mode=openstask")
