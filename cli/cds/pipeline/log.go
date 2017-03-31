@@ -61,8 +61,8 @@ func showBuildPipeline(cmd *cobra.Command, args []string) {
 	fmt.Fprintln(w, strings.Join(titles, "\t"))
 
 	for l := range logChan {
-		if len(l.Value) > 0 {
-			valueSplitted := strings.Split(l.Value, "\n")
+		if len(l.Val) > 0 {
+			valueSplitted := strings.Split(l.Val, "\n")
 			for _, v := range valueSplitted {
 				fmt.Fprintf(w, "%s\t%d-%d\t%s\n",
 					l.LastModified.String(),
@@ -74,7 +74,7 @@ func showBuildPipeline(cmd *cobra.Command, args []string) {
 			}
 
 			// Exit 1 if pipeline fail
-			if l.ID == 0 && strings.Contains(l.Value, statusFail) {
+			if l.Id == 0 && strings.Contains(l.Val, statusFail) {
 				sdk.Exit("")
 			}
 		}

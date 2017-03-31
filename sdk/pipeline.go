@@ -403,23 +403,23 @@ func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, fo
 				logs = logs[currentStep:]
 
 				// remove line already displayed on current step
-				if currentStepPosition <= len(logs[0].Value) {
-					logs[0].Value = logs[0].Value[currentStepPosition:]
+				if currentStepPosition <= len(logs[0].Val) {
+					logs[0].Val = logs[0].Val[currentStepPosition:]
 				}
 
 				// Update data
 
 				// If stay on same stage
 				if currentStep == totalStepsReturn-1 {
-					currentStepPosition += len(logs[len(logs)-1].Value)
+					currentStepPosition += len(logs[len(logs)-1].Val)
 				} else {
-					currentStepPosition = len(logs[len(logs)-1].Value)
+					currentStepPosition = len(logs[len(logs)-1].Val)
 				}
 				currentStep = totalStepsReturn - 1
 
 				for i := range logs {
 					ch <- logs[i]
-					if logs[i].ID != 0 {
+					if logs[i].Id != 0 {
 						continue
 					}
 

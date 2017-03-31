@@ -72,12 +72,12 @@ func applyTemplate(projectKey string, name string, build sdk.Template) {
 				fmt.Fprintf(w, "%s\t%d\t%s",
 					[]byte(l.LastModified.String())[:19],
 					l.StepOrder,
-					l.Value,
+					l.Val,
 				)
 				w.Flush()
 
 				// Exit 1 if pipeline fail
-				if l.ID == 0 && strings.Contains(l.Value, "status: Fail") {
+				if l.Id == 0 && strings.Contains(l.Val, "status: Fail") {
 					sdk.Exit("")
 				}
 			}
