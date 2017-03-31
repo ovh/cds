@@ -1023,16 +1023,16 @@
 			"revisionTime": "2016-10-19T17:38:27Z"
 		},
 		{
-			"checksumSHA1": "9jjO5GjLa0XF/nfWihF02RoH4qc=",
+			"checksumSHA1": "Y+HGqEkYM15ir+J93MEaHdyFy0c=",
 			"path": "golang.org/x/net/context",
-			"revision": "04557861f124410b768b1ba5bb3a91b705afbfc6",
-			"revisionTime": "2016-06-26T22:23:32Z"
+			"revision": "ffcf1bedda3b04ebb15a168a59800a73d6dc0f4d",
+			"revisionTime": "2017-03-29T01:43:45Z"
 		},
 		{
-			"checksumSHA1": "Do+l129/Bafh54VFaquooqtCcfk=",
+			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
 			"path": "golang.org/x/net/context/ctxhttp",
-			"revision": "04557861f124410b768b1ba5bb3a91b705afbfc6",
-			"revisionTime": "2016-06-26T22:23:32Z"
+			"revision": "ffcf1bedda3b04ebb15a168a59800a73d6dc0f4d",
+			"revisionTime": "2017-03-29T01:43:45Z"
 		},
 		{
 			"checksumSHA1": "cdT+oqPhYKGf3r+HkPo51IauZnA=",
