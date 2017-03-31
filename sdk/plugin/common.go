@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
 //HTTP Constants
@@ -107,14 +109,14 @@ func request(method string, path string, args []byte) ([]byte, int, error) {
 
 // Log struct holds a single line of build log
 type Log struct {
-	ID                 int64     `json:"id"`
-	PipelineBuildJobID int64     `json:"pipeline_build_job_id"`
-	PipelineBuildID    int64     `json:"pipeline_build_id"`
-	Start              time.Time `json:"start"`
-	LastModified       time.Time `json:"last_modified"`
-	Done               time.Time `json:"done"`
-	StepOrder          int       `json:"step_order"`
-	Value              string    `json:"value"`
+	ID                 int64                `json:"id"`
+	PipelineBuildJobID int64                `json:"pipeline_build_job_id"`
+	PipelineBuildID    int64                `json:"pipeline_build_id"`
+	Start              *timestamp.Timestamp `json:"start"`
+	LastModified       *timestamp.Timestamp `json:"last_modified"`
+	Done               *timestamp.Timestamp `json:"done"`
+	StepOrder          int                  `json:"step_order"`
+	Value              string               `json:"value"`
 }
 
 //SendLog send logs to CDS engine for the current
@@ -125,14 +127,17 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 	}
 	Trace.Printf(format+"\n", i)
 
+	now, _ := ptypes.TimestampProto(time.Now())
+
 	s := fmt.Sprintf(format, i...)
 	l := Log{
 		PipelineBuildJobID: j.ID(),
 		PipelineBuildID:    j.PipelineBuildID(),
-		Start:              time.Now(),
+		Start:              now,
 		StepOrder:          j.StepOrder(),
 		Value:              s,
-		LastModified:       time.Now(),
+		LastModified:       now,
+		Done:               &timestamp.Timestamp{},
 	}
 
 	data, err := json.Marshal(l)

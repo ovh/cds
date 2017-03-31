@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var versionCmd = &cobra.Command{
+var cmdVersion = &cobra.Command{
 	Use:     "version",
 	Aliases: []string{"v"},
 	Short:   "Print the version number",

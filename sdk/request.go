@@ -46,11 +46,13 @@ var (
 // InitEndpoint force sdk package request to given endpoint
 func InitEndpoint(en string) {
 	Host = en
+	skipReadConfig = true
 }
 
 // Authorization set authorization header for all next call
 func Authorization(h string) {
 	hash = h
+	skipReadConfig = true
 }
 
 // Agent describe the type of authentication method to use
@@ -76,6 +78,10 @@ func SetRetry(n int) {
 // If CDS_SKIP_VERIFY is present, use a specific http client
 // with TLS InsecureSkipVerify enabled
 func init() {
+	if val := os.Getenv("CDS_VERBOSE"); val == "true" {
+		verbose = true
+	}
+
 	agent = SDKAgent
 	retry = 10
 	skip := os.Getenv("CDS_SKIP_VERIFY")
@@ -220,6 +226,10 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		os.Exit(1)
 	}
 
+	if verbose {
+		log.Printf("Request %s Body : %s", Host+path, string(args))
+	}
+
 	for i := 0; i < retry; i++ {
 		var req *http.Request
 		if args != nil {
@@ -238,7 +248,7 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		}
 
 		if verbose {
-			log.Printf("Call %s %s\n", method, req.URL.String())
+
 		}
 
 		//No auth on /login route

@@ -152,8 +152,8 @@ func streamResponse(ch chan sdk.Log) {
 	fmt.Fprintln(w, strings.Join(titles, "\t"))
 
 	for l := range ch {
-		if l.Value != "" {
-			vSplitted := strings.Split(l.Value, "\n")
+		if l.Val != "" {
+			vSplitted := strings.Split(l.Val, "\n")
 			for _, line := range vSplitted {
 				line = strings.Trim(line, " ")
 				if line != "" {
@@ -167,7 +167,7 @@ func streamResponse(ch chan sdk.Log) {
 				}
 			}
 			// Exit 1 if pipeline fail
-			if l.ID == 0 && strings.Contains(l.Value, statusFail) {
+			if l.Id == 0 && strings.Contains(l.Val, statusFail) {
 				sdk.Exit("")
 			}
 		}

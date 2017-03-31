@@ -186,16 +186,12 @@ func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, 
 	return false
 }
 
-func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *context.Ctx) error {
-	id, err := base64.StdEncoding.DecodeString(auth)
-	if err != nil {
-		return fmt.Errorf("bad worker key syntax: %s", err)
-	}
-	workerID := string(id)
-
+//GetWorker returns the worker instance from its id
+func GetWorker(db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
 	// Load worker
 	var w *sdk.Worker
 	var oldWorker sdk.Worker
+
 	// Try to load worker from cache
 	key := cache.Key("worker", workerID)
 	cache.Get(key, &oldWorker)
@@ -203,20 +199,38 @@ func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *context.Ctx) error {
 	if oldWorker.ID != "" {
 		w = &oldWorker
 	}
+
 	// Else load it from DB
 	if w == nil {
+		var err error
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
-			return fmt.Errorf("cannot load worker: %s", err)
+			return nil, fmt.Errorf("cannot load worker: %s", err)
 		}
 		putWorkerInCache = true
 	}
 
-	ctx.User = &sdk.User{Username: w.Name}
-	ctx.Worker = w
 	if putWorkerInCache {
 		//Set the worker in cache
 		cache.Set(key, *w)
 	}
+
+	return w, nil
+}
+
+func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *context.Ctx) error {
+	id, err := base64.StdEncoding.DecodeString(auth)
+	if err != nil {
+		return fmt.Errorf("bad worker key syntax: %s", err)
+	}
+	workerID := string(id)
+
+	w, err := GetWorker(db, workerID)
+	if err != nil {
+		return err
+	}
+	ctx.User = &sdk.User{Username: w.Name}
+	ctx.Worker = w
+
 	return nil
 }

@@ -188,10 +188,16 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		}
 
 		if c.Worker != nil {
+			if err := worker.RefreshWorker(db, c.Worker.ID); err != nil {
+				WriteError(w, req, err)
+				return
+			}
+
 			g, err := loadGroupPermissions(db, c.Worker.GroupID)
 			if err != nil {
 				log.Warning("Router> cannot load group permissions : %s", err)
 				WriteError(w, req, sdk.ErrUnauthorized)
+				return
 			}
 			c.User.Groups = append(c.User.Groups, *g)
 
@@ -201,6 +207,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				if err != nil {
 					log.Warning("Router> cannot load worker: %s", err)
 					WriteError(w, req, sdk.ErrUnauthorized)
+					return
 				}
 
 				//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
@@ -212,6 +219,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 					if errLoad2 != nil {
 						log.Warning("checkWorkerAuth> Cannot load group: %s\n", errLoad2)
 						WriteError(w, req, sdk.ErrUnauthorized)
+						return
 					}
 					//Anyway, add the group of the model as a group of the user
 					c.User.Groups = append(c.User.Groups, *modelGroup)
