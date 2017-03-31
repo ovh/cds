@@ -45,11 +45,16 @@
             </td>
             <td class="center"  *ngIf="mode !=='launcher'">
                 <ng-container *ngIf="mode === 'edit'">
-                    <button *ngIf="p.hasChanged" class="ui green button" [class.loading]="p.updating" [class.disabled]="p.updating" name="btnupdatevparam" (click)="sendEvent('update', p)">
-                        <i class="save icon"></i>
-                        {{ 'btn_save' | translate}}
-                    </button>
-                    <app-delete-button *ngIf="!p.hasChanged" (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
+                    <div *ngIf="p.hasChanged;then save;else remove"></div>
+                    <ng-template #save>
+                        <button class="ui green button" [class.loading]="p.updating" [class.disabled]="p.updating" name="btnupdatevparam" (click)="sendEvent('update', p)">
+                            <i class="save icon"></i>
+                            {{ 'btn_save' | translate}}
+                        </button>
+                    </ng-template>
+                    <ng-template #remove>
+                        <app-delete-button (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
+                    </ng-template>
                 </ng-container>
 
             </td>

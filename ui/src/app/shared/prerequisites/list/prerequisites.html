@@ -13,10 +13,15 @@
                 {{p.parameter}}
             </td>
             <td>
-                <div class="ui form" *ngIf="edit">
-                    <input [(ngModel)]="p.expected_value" name="value" (keydown)="update(p)">
-                </div>
-                <span *ngIf="!edit">{{p.expected_value}}</span>
+                <div *ngIf="edit;then wValue;else rValue"></div>
+                <ng-template #wValue>
+                    <div class="ui form">
+                        <input [(ngModel)]="p.expected_value" name="value" (keydown)="update(p)">
+                    </div>
+                </ng-template>
+                <ng-template #rValue>
+                    <span>{{p.expected_value}}</span>
+                </ng-template>
             </td>
             <td class="center">
                 <ng-container *ngIf="edit">

@@ -5,10 +5,15 @@
                    (keydown)="hasChanged = true">
         </div>
         <div class="eight wide right aligned field">
-            <button *ngIf="hasChanged" (click)="renameEnvironment()" type="button" name="renamebtn" class="ui green button"
-                    [class.loading]="loading" [class.disabled]="loading"><i class="save icon"></i>{{ 'btn_rename' | translate}}
-            </button>
-            <app-delete-button *ngIf="!hasChanged" [loading]="loading" (event)="deleteEnvironment()"></app-delete-button>
+            <div *ngIf="hasChanged;then rename;else delete"></div>
+            <ng-template #rename>
+                <button (click)="renameEnvironment()" type="button" name="renamebtn" class="ui green button"
+                        [class.loading]="loading" [class.disabled]="loading"><i class="save icon"></i>{{ 'btn_rename' | translate}}
+                </button>
+            </ng-template>
+            <ng-template #delete>
+                <app-delete-button [loading]="loading" (event)="deleteEnvironment()"></app-delete-button>
+            </ng-template>
         </div>
     </div>
 </form>

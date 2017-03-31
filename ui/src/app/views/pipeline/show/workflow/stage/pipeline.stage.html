@@ -42,10 +42,16 @@
                 </sm-modal>
             </div>
             <div class="three wide right aligned field" *ngIf="pipeline.permission === 7">
-                <div class="ui green button" *ngIf="editableStage.hasChanged" (click)="stageEvent('update')"><i class="save icon"></i>{{ 'btn_save'
-                    | translate }}
-                </div>
-                <app-delete-button *ngIf="!editableStage.hasChanged" (event)="stageEvent('delete')"></app-delete-button>
+                <div *ngIf="editableStage.hasChanged;then save;else remove"></div>
+                <ng-template #save>
+                    <div class="ui green button" (click)="stageEvent('update')"><i class="save icon"></i>{{ 'btn_save'
+                        | translate }}
+                    </div>
+                </ng-template>
+                <ng-template #remove>
+                    <app-delete-button (event)="stageEvent('delete')"></app-delete-button>
+                </ng-template>
+
             </div>
         </div>
     </div>

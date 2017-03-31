@@ -1,46 +1,52 @@
-<div id="PipelineShow" *ngIf="pipeline">
-    <div class="CDSbreadcrumb">
-        <app-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application" [version]="version" [buildNumber]="buildNumber" [envName]="envName" [branch]="branch"></app-breadcrumb>
-    </div>
-    <div class="CDSmenu">
-        <sm-menu title="" class="pointing secondary">
-            <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')"><i class="sitemap icon"></i>{{ 'common_pipeline' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'parameters'" (click)="showTab('parameters')"><i class="font icon"></i>{{ 'common_parameters' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')"><i class="users icon"></i>{{ 'common_permissions' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="pipeline.permission === 7"><i class="graduation icon"></i>{{ 'common_advanced' | translate }}</a>
-        </sm-menu>
-    </div>
+<div *ngIf="pipeline;then showPipeline; else loadPipeline"></div>
+<ng-template #showPipeline>
+    <div id="PipelineShow">
+        <div class="CDSbreadcrumb">
+            <app-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application" [version]="version" [buildNumber]="buildNumber" [envName]="envName" [branch]="branch"></app-breadcrumb>
+        </div>
+        <div class="CDSmenu">
+            <sm-menu title="" class="pointing secondary">
+                <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')"><i class="sitemap icon"></i>{{ 'common_pipeline' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'parameters'" (click)="showTab('parameters')"><i class="font icon"></i>{{ 'common_parameters' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')"><i class="users icon"></i>{{ 'common_permissions' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="pipeline.permission === 7"><i class="graduation icon"></i>{{ 'common_advanced' | translate }}</a>
+            </sm-menu>
+        </div>
 
-    <div class="scrollingContent">
-        <div class="paddingContent">
-            <div class="viewContent" [ngSwitch]="selectedTab">
-                <div *ngSwitchCase="'pipeline'">
-                    <app-pipeline-workflow [project]="project" [pipeline]="pipeline"></app-pipeline-workflow>
-                </div>
-                <div *ngSwitchCase="'parameters'">
-                    <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
-                    <app-parameter-list (event)="parameterEvent($event)" [project]="project" [parameters]="pipeline.parameters" [mode]="pipeline.permission === 7? 'edit': 'ro'"></app-parameter-list>
-                    <ng-container *ngIf="pipeline.permission === 7">
-                        <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
-                        <app-parameter-form [project]="project" [loading]="paramFormLoading" (createParameterEvent)="parameterEvent($event)"></app-parameter-form>
-                    </ng-container>
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="parameterEvent($event, true)" #paramWarning></app-warning-modal>
+        <div class="scrollingContent">
+            <div class="paddingContent">
+                <div class="viewContent" [ngSwitch]="selectedTab">
+                    <div *ngSwitchCase="'pipeline'">
+                        <app-pipeline-workflow [project]="project" [pipeline]="pipeline"></app-pipeline-workflow>
+                    </div>
+                    <div *ngSwitchCase="'parameters'">
+                        <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
+                        <app-parameter-list (event)="parameterEvent($event)" [project]="project" [parameters]="pipeline.parameters" [mode]="pipeline.permission === 7? 'edit': 'ro'"></app-parameter-list>
+                        <ng-container *ngIf="pipeline.permission === 7">
+                            <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
+                            <app-parameter-form [project]="project" [loading]="paramFormLoading" (createParameterEvent)="parameterEvent($event)"></app-parameter-form>
+                        </ng-container>
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="parameterEvent($event, true)" #paramWarning></app-warning-modal>
 
-                </div>
-                <div *ngSwitchCase="'permissions'">
-                    <h3>{{ 'pipeline_permission_list_title' | translate }}</h3>
-                    <app-permission-list [permissions]="pipeline.groups" [edit]="pipeline.permission === 7" (event)="groupEvent($event)"></app-permission-list>
-                    <ng-container *ngIf="pipeline.permission === 7">
-                        <h3>{{ 'pipeline_permission_form_title' | translate }}</h3>
-                        <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
-                    </ng-container>
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
-                </div>
-                <div *ngSwitchCase="'advanced'">
-                    <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
+                    </div>
+                    <div *ngSwitchCase="'permissions'">
+                        <h3>{{ 'pipeline_permission_list_title' | translate }}</h3>
+                        <app-permission-list [permissions]="pipeline.groups" [edit]="pipeline.permission === 7" (event)="groupEvent($event)"></app-permission-list>
+                        <ng-container *ngIf="pipeline.permission === 7">
+                            <h3>{{ 'pipeline_permission_form_title' | translate }}</h3>
+                            <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
+                        </ng-container>
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
+                    </div>
+                    <div *ngSwitchCase="'advanced'">
+                        <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<div class="ui text active loader" *ngIf="!pipeline">Loading pipeline...</div>
+</ng-template>
+<ng-template #loadPipeline>
+    <div class="ui text active loader">Loading pipeline...</div>
+</ng-template>
+

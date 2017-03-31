@@ -4,9 +4,14 @@
             <div class="fields">
                 <div class="six wide inline field">
                     <label>{{'common_name' | translate}}</label>
-                    <input *ngIf="edit" type="text" name="actionName" [(ngModel)]="editableAction.name"
-                           (keydown)="editableAction.hasChanged = true">
-                    <span *ngIf="!edit" class="inline">{{editableAction.name}}</span>
+                    <div *ngIf="edit; then wAction; else rAction"></div>
+                    <ng-template #wAction>
+                        <input type="text" name="actionName" [(ngModel)]="editableAction.name"
+                               (keydown)="editableAction.hasChanged = true">
+                    </ng-template>
+                    <ng-template #rAction>
+                        <span class="inline">{{editableAction.name}}</span>
+                    </ng-template>
                 </div>
                 <div class="seven wide inline field">
                     <label class="labelPadding">{{'common_description' | translate}}</label>

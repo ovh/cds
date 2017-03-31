@@ -143,10 +143,14 @@ export interface Log {
     pipeline_build_id: number;
     timestamp: number;
     step_order: number;
-    value: string;
-    start: number;
+    val: string;
+    start: LogDate;
     last_modified: number;
     done: number;
+}
+
+export class LogDate {
+    seconds: number;
 }
 
 export class PipelineBuildTrigger {

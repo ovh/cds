@@ -35,11 +35,17 @@
                 <div class="ui input field" *ngIf="mode === 'ro'">{{v.value}}</div>
             </td>
             <td class="center" *ngIf="mode === 'edit'">
-                <button *ngIf="v.hasChanged" class="ui green button" [class.loading]="v.updating" [class.disabled]="v.updating" name="btnupdatevar" (click)="sendEvent('update', v)">
-                    <i class="save icon"></i>
-                    {{ 'btn_save' | translate}}
-                </button>
-                <app-delete-button *ngIf="!v.hasChanged" (event)="sendEvent('delete', v)" [loading]="v.updating"></app-delete-button>
+                <div *ngIf="v.hasChanged;then save;else remove"></div>
+                <ng-template #save>
+                    <button class="ui green button" [class.loading]="v.updating" [class.disabled]="v.updating" name="btnupdatevar" (click)="sendEvent('update', v)">
+                        <i class="save icon"></i>
+                        {{ 'btn_save' | translate}}
+                    </button>
+                </ng-template>
+                <ng-template #remove>
+                    <app-delete-button (event)="sendEvent('delete', v)" [loading]="v.updating"></app-delete-button>
+                </ng-template>
+
             </td>
         </tr>
         </tbody>

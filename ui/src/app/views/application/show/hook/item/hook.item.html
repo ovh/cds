@@ -19,7 +19,13 @@
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="close()">{{ 'btn_cancel' | translate }}</button>
-        <app-delete-button *ngIf="!editableHook?.hasChanged" (event)="deleteHook()" [loading]="editableHook?.updating"></app-delete-button>
-        <button class="ui green button" (click)="updateHook()" [class.loading]="editableHook?.updating" *ngIf="editableHook?.hasChanged">{{ 'btn_save' | translate }}</button>
+        <div *ngIf="editableHook?.hasChanged;then update;else remove"></div>
+        <ng-template #remove>
+            <app-delete-button (event)="deleteHook()" [loading]="editableHook?.updating"></app-delete-button>
+        </ng-template>
+        <ng-template #update>
+            <button class="ui green button" (click)="updateHook()" [class.loading]="editableHook?.updating">{{ 'btn_save' | translate }}</button>
+        </ng-template>
+
     </modal-actions>
 </sm-modal>
