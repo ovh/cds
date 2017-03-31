@@ -27,7 +27,7 @@ func InsertLog(db gorp.SqlExecutor, l *sdk.Log) error {
 }
 
 // LoadStepLogs load log for the given pipeline build job at the given step
-func LoadStepLogs(db gorp.SqlExecutor, pipJobID int64, stepOrder int) (*sdk.Log, error) {
+func LoadStepLogs(db gorp.SqlExecutor, pipJobID int64, stepOrder int64) (*sdk.Log, error) {
 	var logGorp Log
 	query := `
 		SELECT *
@@ -106,7 +106,8 @@ func DeleteBuildLogsByPipelineBuildID(db gorp.SqlExecutor, pipID int64) error {
 	return err
 }
 
-func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBuild, pipelineActionID int64, stepOrder int) (*sdk.BuildState, error) {
+//LoadPipelineStepBuildLogs loads build logs
+func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBuild, pipelineActionID, stepOrder int64) (*sdk.BuildState, error) {
 	var stepStatus string
 
 	// Found pipeline buid job from pipelineActionID
@@ -116,7 +117,7 @@ func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineB
 			if pbJob.Job.PipelineActionID == pipelineActionID {
 				currentPbJob = &pbJob
 				for _, step := range pbJob.Job.StepStatus {
-					if step.StepOrder == stepOrder {
+					if step.StepOrder == int(stepOrder) {
 						stepStatus = step.Status
 						break
 					}

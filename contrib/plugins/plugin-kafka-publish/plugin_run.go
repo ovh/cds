@@ -55,19 +55,20 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	if err != nil {
 		return plugin.Fail
 	}
+	files := []string{messageFile}
 
 	//Check if every file exist
 	artifactsList := job.Arguments().Get("artifacts")
-	artifacts := strings.Split(artifactsList, ",")
-	for _, f := range artifacts {
-		if _, err := os.Stat(f); os.IsNotExist(err) {
-			Logf("%s : no such file", f)
-			return plugin.Fail
+	if strings.TrimSpace(artifactsList) != "" {
+		artifacts := strings.Split(artifactsList, ",")
+		for _, f := range artifacts {
+			if _, err := os.Stat(f); os.IsNotExist(err) {
+				Logf("%s : no such file", f)
+				return plugin.Fail
+			}
 		}
+		files = append(files, artifacts...)
 	}
-
-	files := []string{messageFile}
-	files = append(files, artifacts...)
 
 	//Send the context message
 	ctx := kafkapublisher.NewContext(job.ID(), files)

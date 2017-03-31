@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -28,7 +27,7 @@ func getStepBuildLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	pipelineActionIDString := vars["actionID"]
 	stepOrderString := vars["stepOrder"]
 
-	stepOrder, errInt := strconv.Atoi(stepOrderString)
+	stepOrder, errInt := strconv.ParseInt(stepOrderString, 10, 64)
 	if errInt != nil {
 		return sdk.ErrWrongRequest
 	}
@@ -281,29 +280,13 @@ func getPipelineBuildJobLogsHandler(w http.ResponseWriter, r *http.Request, db *
 func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	var logs sdk.Log
 	if err := UnmarshalBody(r, &logs); err != nil {
-		return err
+		return sdk.WrapError(err, "addBuildLogHandler>> Unable to parse body")
 	}
 
-	existingLogs, errLog := pipeline.LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
-	if errLog != nil && errLog != sql.ErrNoRows {
-		log.Warning("addBuildLogHandler> Cannot load existing logs: %s\n", errLog)
-		return errLog
+	if err := pipeline.AddBuildLog(db, &logs); err != nil {
+		return sdk.WrapError(err, "addBuildLogHandler")
 	}
 
-	if existingLogs == nil {
-		if err := pipeline.InsertLog(db, &logs); err != nil {
-			log.Warning("addBuildLogHandler> Cannot insert log:  %s\n", err)
-			return err
-		}
-	} else {
-		existingLogs.Value += logs.Value
-		existingLogs.LastModified = logs.LastModified
-		existingLogs.Done = logs.Done
-		if err := pipeline.UpdateLog(db, existingLogs); err != nil {
-			log.Warning("addBuildLogHandler> Cannot update log:  %s\n", err)
-			return err
-		}
-	}
 	return nil
 }
 

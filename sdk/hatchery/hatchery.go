@@ -122,7 +122,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 			}
 
 			for _, model := range models {
-				if canRunJob(h, job, &model, hostname) {
+				if canRunJob(h, timestamp, job, &model, hostname) {
 					if err := sdk.BookPipelineBuildJob(job.ID); err != nil {
 						// perhaps already booked by another hatchery
 						log.Debug("routine> %d - cannot book job %d %s: %s", timestamp, job.ID, model.Name, err)
@@ -196,7 +196,7 @@ func provisioning(h Interface, provision int) {
 	}
 }
 
-func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostname string) bool {
+func canRunJob(h Interface, timestamp int64, job *sdk.PipelineBuildJob, model *sdk.Model, hostname string) bool {
 	if model.Type != h.ModelType() {
 		return false
 	}
@@ -205,36 +205,42 @@ func canRunJob(h Interface, job *sdk.PipelineBuildJob, model *sdk.Model, hostnam
 	for _, r := range job.Job.Action.Requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
 		if r.Type == sdk.ModelRequirement && r.Value != model.Name {
+			log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", timestamp, job.ID, r.Value, model.Name)
 			return false
 		}
 
 		// If requirement is an hostname requirement, it's for a specific worker
 		if r.Type == sdk.HostnameRequirement && r.Value != hostname {
+			log.Debug("canRunJob> %d - job %d - hostname requirement r.Value(%s) != hostname(%s)", timestamp, job.ID, r.Value, hostname)
 			return false
 		}
 
 		// service and memory requirements are only supported by docker model
 		if model.Type != sdk.Docker && (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) {
+			log.Debug("canRunJob> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", timestamp, job.ID, model.Type)
 			return false
 		}
-
-		found := false
 
 		// Skip network access requirement as we can't check it
 		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			log.Debug("canRunJob> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", timestamp, job.ID, model.Type)
 			continue
 		}
 
-		// Check binary requirement against worker model capabilities
-		for _, c := range model.Capabilities {
-			if r.Value == c.Value || r.Value == c.Name {
-				found = true
-				break
+		if r.Type == sdk.BinaryRequirement {
+			found := false
+			// Check binary requirement against worker model capabilities
+			for _, c := range model.Capabilities {
+				if r.Value == c.Value || r.Value == c.Name {
+					found = true
+					break
+				}
 			}
-		}
 
-		if !found {
-			return false
+			if !found {
+				log.Debug("canRunJob> %d - job %d - model(%s) does not have binary %s(%s) for this job.", timestamp, job.ID, model.Name, r.Name, r.Value)
+				return false
+			}
 		}
 	}
 

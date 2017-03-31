@@ -2,29 +2,21 @@ package sdk
 
 import (
 	"time"
-)
 
-// Log struct holds a single line of build log
-type Log struct {
-	ID                 int64     `json:"id" db:"id"`
-	PipelineBuildJobID int64     `json:"pipeline_build_job_id" db:"pipeline_build_job_id"`
-	PipelineBuildID    int64     `json:"pipeline_build_id" db:"pipeline_build_id"`
-	Start              time.Time `json:"start" db:"start"`
-	LastModified       time.Time `json:"last_modified" db:"last_modified"`
-	Done               time.Time `json:"done" db:"done"`
-	StepOrder          int       `json:"step_order" db:"step_order"`
-	Value              string    `json:"value" db:"value"`
-}
+	"github.com/golang/protobuf/ptypes"
+)
 
 // NewLog returns a log struct
 func NewLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int) *Log {
+	//There cant be any error since we are using time.Now which is obviously a real and valide timestamp
+	now, _ := ptypes.TimestampProto(time.Now())
 	l := &Log{
 		PipelineBuildJobID: pipJobID,
 		PipelineBuildID:    pipelineBuildID,
-		Start:              time.Now(),
-		StepOrder:          stepOrder,
-		Value:              value,
-		LastModified:       time.Now(),
+		Start:              now,
+		StepOrder:          int64(stepOrder),
+		Val:                value,
+		LastModified:       now,
 	}
 
 	return l

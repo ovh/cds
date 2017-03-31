@@ -6,12 +6,12 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadAllActionRequirements retrieves all requirements in database
+// LoadAllBinaryRequirements retrieves all requirements in database
 // Used by worker to automatically declare most capabilities
-func LoadAllActionRequirements(db gorp.SqlExecutor) ([]sdk.Requirement, error) {
+func LoadAllBinaryRequirements(db gorp.SqlExecutor) ([]sdk.Requirement, error) {
 	var req []sdk.Requirement
 
-	query := `SELECT name, type, value FROM action_requirement`
+	query := `SELECT distinct value FROM action_requirement where type = 'binary'`
 	rows, errQ := db.Query(query)
 	if errQ != nil {
 		return nil, errQ
@@ -19,10 +19,17 @@ func LoadAllActionRequirements(db gorp.SqlExecutor) ([]sdk.Requirement, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var r sdk.Requirement
-		if err := rows.Scan(&r.Name, &r.Type, &r.Value); err != nil {
+		var value string
+		if err := rows.Scan(&value); err != nil {
 			return nil, err
 		}
+
+		var r = sdk.Requirement{
+			Name:  value,
+			Type:  sdk.BinaryRequirement,
+			Value: value,
+		}
+
 		req = append(req, r)
 	}
 

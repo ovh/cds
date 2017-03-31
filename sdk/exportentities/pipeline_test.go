@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
@@ -408,9 +407,7 @@ func TestExportPipeline_YAML(t *testing.T) {
 		p1 := Pipeline{}
 		test.NoError(t, yaml.Unmarshal(b, &p1))
 
-		m1, _ := dump.Sdump(&p1)
-		m2, _ := dump.Sdump(p)
-		assert.Equal(t, m2, m1)
+		test.Equal(t, p, p1)
 	}
 }
 
@@ -424,9 +421,7 @@ func TestExportPipeline_JSON(t *testing.T) {
 		p1 := Pipeline{}
 		test.NoError(t, json.Unmarshal(b, &p1))
 
-		m1, _ := dump.Sdump(p1)
-		m2, _ := dump.Sdump(p)
-		assert.Equal(t, m2, m1)
+		test.Equal(t, p, p1)
 	}
 }
 

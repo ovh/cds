@@ -216,19 +216,22 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error)
 
 // RefreshWorker Update worker last_beat
 func RefreshWorker(db gorp.SqlExecutor, workerID string) error {
+	log.Info("RefreshWorker> worker %s heartbeat", workerID)
 	query := `UPDATE worker SET last_beat = $1 WHERE id = $2`
 	res, err := db.Exec(query, time.Now(), workerID)
 	if err != nil {
+		log.Warning("RefreshWorker> Unable to update worker : %s", workerID)
 		return err
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
+		log.Warning("RefreshWorker> Unable to refresh worker : %s", workerID)
 		return err
 	}
 
 	if n != 1 {
-		return fmt.Errorf("cds: cannot refresh worker '%s', not found", workerID)
+		return sdk.NewError(sdk.ErrNotFound, fmt.Errorf("cds: cannot refresh worker '%s', not found", workerID))
 	}
 
 	return nil

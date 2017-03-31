@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/list"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -17,6 +16,29 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/vcs"
 )
+
+func processPipelineBuildJobParameter(pbJob *sdk.PipelineBuildJob, secrets []sdk.Variable) {
+	for i := range pbJob.Parameters {
+		keepReplacing := true
+		for keepReplacing {
+			t := pbJob.Parameters[i].Value
+
+			for _, p := range pbJob.Parameters {
+				pbJob.Parameters[i].Value = strings.Replace(pbJob.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
+			}
+
+			for _, p := range secrets {
+				pbJob.Parameters[i].Value = strings.Replace(pbJob.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
+			}
+
+			// If parameters wasn't updated, consider it done
+			if pbJob.Parameters[i].Value == t {
+				keepReplacing = false
+			}
+		}
+	}
+	return
+}
 
 // ProcessActionVariables replaces all placeholders inside action recursively using
 // - parent parameters
@@ -221,104 +243,6 @@ func updateStepStatus(pbJobID int64, stepOrder int, status string) error {
 	return nil
 }
 
-var logsecrets []sdk.Variable
-
-func sendLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int, final bool) error {
-	for i := range logsecrets {
-		if len(logsecrets[i].Value) >= 6 {
-			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
-		}
-	}
-
-	l := sdk.NewLog(pipJobID, value, pipelineBuildID, stepOrder)
-	if final {
-		l.Done = time.Now()
-	}
-	logChan <- *l
-	return nil
-}
-
-func logger(inputChan chan sdk.Log) {
-	llist := list.New()
-
-	for {
-		select {
-		case l, ok := <-inputChan:
-			if ok {
-				llist.PushBack(l)
-			}
-			break
-		case <-time.After(1 * time.Second):
-
-			var logs []*sdk.Log
-
-			var currentStepLog *sdk.Log
-			// While list is not empty
-			for llist.Len() > 0 {
-				// get older log line
-				l := llist.Front().Value.(sdk.Log)
-				llist.Remove(llist.Front())
-
-				// then count how many lines are exactly the same
-				count := 1
-				for llist.Len() > 0 {
-					n := llist.Front().Value.(sdk.Log)
-					if string(n.Value) != string(l.Value) {
-						break
-					}
-					count++
-					llist.Remove(llist.Front())
-				}
-
-				// and if count > 1, then add it at the beginning of the log
-				if count > 1 {
-					l.Value = fmt.Sprintf("[x%d] %s", count, l.Value)
-				}
-				// and append to the logs batch
-				l.Value = strings.Trim(strings.Replace(l.Value, "\n", " ", -1), " \t\n") + "\n"
-
-				// First log
-				if currentStepLog == nil {
-					currentStepLog = &l
-				} else if l.StepOrder == currentStepLog.StepOrder {
-					currentStepLog.Value += l.Value
-					currentStepLog.LastModified = l.LastModified
-					currentStepLog.Done = l.Done
-				} else {
-					// new Step
-					logs = append(logs, currentStepLog)
-					currentStepLog = &l
-
-				}
-			}
-
-			// insert last step
-			if currentStepLog != nil {
-				logs = append(logs, currentStepLog)
-			}
-
-			if len(logs) == 0 {
-				continue
-			}
-
-			for _, l := range logs {
-				// Buffer log list is empty, sending batch to API
-				data, err := json.Marshal(l)
-				if err != nil {
-					fmt.Printf("Error: cannot marshal logs: %s\n", err)
-					continue
-				}
-
-				path := fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
-				if _, _, err := sdk.Request("POST", path, data); err != nil {
-					fmt.Printf("error: cannot send logs: %s\n", err)
-					continue
-				}
-			}
-		}
-	}
-}
-
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
 func setupBuildDirectory(wd string) error {
 	if err := os.MkdirAll(wd, 0755); err != nil {
@@ -368,6 +292,8 @@ func workingDirectory(basedir string, jobInfo *worker.PipelineBuildJobInfo) stri
 
 func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
+	processPipelineBuildJobParameter(&pbji.PipelineBuildJob, pbji.Secrets)
+
 	if err := processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob, pbji.Secrets); err != nil {
 		log.Warning("run> Cannot process action %s parameters: %s\n", pbji.PipelineBuildJob.Job.Action.Name, err)
 		return sdk.Result{Status: sdk.StatusFail}
