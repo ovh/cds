@@ -15,14 +15,19 @@
                 </div>
             </td>
             <td>
-                <div class="ui form" *ngIf="edit">
-                    <sm-select class="search" [disabled]="gp.updating" [(model)]="gp.permission" (modelChange)="castPermission(gp)" (onChange)="gp.hasChanged = true">
-                        <option *ngFor="let p of permissionsList" [value]="p.value">{{p.name | translate}}</option>
-                    </sm-select>
-                </div>
-                <div class="ui fluid input" *ngIf="!edit">
-                    {{ getPermissionName(gp.permission) | translate }}
-                </div>
+                <div *ngIf="edit;then wPermission;else rPermission"></div>
+                <ng-template #wPermission>
+                    <div class="ui form">
+                        <sm-select class="search" [disabled]="gp.updating" [(model)]="gp.permission" (modelChange)="castPermission(gp)" (onChange)="gp.hasChanged = true">
+                            <option *ngFor="let p of permissionsList" [value]="p.value">{{p.name | translate}}</option>
+                        </sm-select>
+                    </div>
+                </ng-template>
+                <ng-template #rPermission>
+                    <div class="ui fluid input">
+                        {{ getPermissionName(gp.permission) | translate }}
+                    </div>
+                </ng-template>
             </td>
             <td class="center">
                 <ng-container *ngIf="edit">

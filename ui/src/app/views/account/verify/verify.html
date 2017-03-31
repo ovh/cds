@@ -1,21 +1,27 @@
 <div id="verifyComponent">
     <img id ="logo" class="ui centered image" src="assets/images/cds.png">
     <div class="ui two column centered grid">
-        <div class="column" *ngIf="!showErrorMessage">
-            <h3 class="ui top block attached header">
-                {{ 'account_verify_title' | translate }}
-            </h3>
-            <div class="ui attached segment word-break-all">
-                <pre [innerHtml]="userVerified | prettyjson"></pre>
+        <div *ngIf="showErrorMessage;then error;else noerror"></div>
+        <ng-template #noerror>
+            <div class="column">
+                <h3 class="ui top block attached header">
+                    {{ 'account_verify_title' | translate }}
+                </h3>
+                <div class="ui attached segment word-break-all">
+                    <pre [innerHtml]="userVerified | prettyjson"></pre>
+                </div>
+                <div class="ui bottom attached segment">
+                    <button id="loginButton" class="ui button green" type="button" (click)="signIn()">{{ 'account_login_btn_connect' | translate }}</button>
+                </div>
             </div>
-            <div class="ui bottom attached segment">
-                <button id="loginButton" class="ui button green" type="button" (click)="signIn()">{{ 'account_login_btn_connect' | translate }}</button>
+        </ng-template>
+        <ng-template #error>
+            <div class="column">
+                <div class="ui red message">
+                    {{ 'account_verify_error' | translate }}
+                </div>
             </div>
-        </div>
-        <div class="column" *ngIf="showErrorMessage">
-            <div class="ui red message">
-                {{ 'account_verify_error' | translate }}
-            </div>
-        </div>
+        </ng-template>
+
     </div>
 </div>

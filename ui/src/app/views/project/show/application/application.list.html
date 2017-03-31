@@ -7,10 +7,15 @@
     </div>
 </div>
 <div class="ui segment">
-    <div class="ui stackable four column grid" *ngIf="project.applications && project.applications.length > 0">
-        <div class="center aligned column" *ngFor="let app of project.applications">
-            <a [routerLink]="['./application', app.name]">{{app.name}}</a>
+    <div *ngIf="project.applications && project.applications.length > 0;then applications;else noapplications"></div>
+    <ng-template #applications>
+        <div class="ui stackable four column grid">
+            <div class="center aligned column" *ngFor="let app of project.applications">
+                <a [routerLink]="['./application', app.name]">{{app.name}}</a>
+            </div>
         </div>
-    </div>
-    <span *ngIf="!project.applications || project.applications.length === 0">{{ 'project_no_application' | translate }}</span>
+    </ng-template>
+    <ng-template #noapplications>
+        <span>{{ 'project_no_application' | translate }}</span>
+    </ng-template>
 </div>

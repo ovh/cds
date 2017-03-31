@@ -1,4 +1,6 @@
-<div id="ProjectShow" *ngIf="project">
+<div *ngIf="project; then projectPart;else loadingPart"></div>
+<ng-template #projectPart>
+    <div id="ProjectShow">
     <div class="CDSbreadcrumb">
         <app-breadcrumb [project]="project"></app-breadcrumb>
     </div>
@@ -64,4 +66,7 @@
         </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!project">Loading project...</div>
+</ng-template>
+<ng-template #loadingPart>
+    <div class="ui text active loader">Loading project...</div>
+</ng-template>

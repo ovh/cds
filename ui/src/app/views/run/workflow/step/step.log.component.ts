@@ -90,6 +90,6 @@ export class StepLogComponent implements OnInit, OnDestroy {
     }
 
     getLogs() {
-        return ansi_up.ansi_to_html(this.logs.value);
+        return ansi_up.ansi_to_html(this.logs.val);
     }
 }

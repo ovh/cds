@@ -25,7 +25,12 @@
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="close()">{{ 'btn_cancel' | translate }}</button>
-        <app-delete-button *ngIf="!editablePoller?.hasChanged" (event)="deletePoller()" [loading]="editablePoller?.updating"></app-delete-button>
-        <button class="ui green button" (click)="updatePoller()" [class.loading]="editablePoller?.updating" *ngIf="editablePoller?.hasChanged">{{ 'btn_save' | translate }}</button>
+        <div *ngIf="editablePoller?.hasChanged; then update;else remove"></div>
+        <ng-template #remove>
+            <app-delete-button (event)="deletePoller()" [loading]="editablePoller?.updating"></app-delete-button>
+        </ng-template>
+        <ng-template #update>
+            <button class="ui green button" (click)="updatePoller()" [class.loading]="editablePoller?.updating">{{ 'btn_save' | translate }}</button>
+        </ng-template>
     </modal-actions>
 </sm-modal>
