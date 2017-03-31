@@ -275,16 +275,22 @@ func (h *HatcheryCloud) refreshToken() {
 	h.endpoint = endpoint
 }
 
-// WorkerStarted returns the number of instances of given model started but
+// WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryCloud) WorkerStarted(model *sdk.Model) int {
+func (h *HatcheryCloud) WorkersStarted() int {
+	return len(h.getServers())
+}
+
+// WorkersStartedByModel returns the number of instances of given model started but
+// not necessarily register on CDS yet
+func (h *HatcheryCloud) WorkersStartedByModel(model *sdk.Model) int {
 	var x int
 	for _, s := range h.getServers() {
 		if strings.Contains(s.Name, strings.ToLower(model.Name)) {
 			x++
 		}
 	}
-	log.Info("WorkerStarted> %s : %d", model.Name, x)
+	log.Info("WorkersStartedByModel> %s : %d", model.Name, x)
 	return x
 }
 

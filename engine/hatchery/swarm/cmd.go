@@ -48,7 +48,19 @@ $ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> -
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Create(hatcherySwarm, viper.GetString("api"), viper.GetString("token"), viper.GetInt("provision"), viper.GetInt("request-api-timeout"), viper.GetInt("max-failures-heartbeat"), viper.GetBool("insecure"), viper.GetInt("spawn-threshold-warning"), viper.GetInt("spawn-threshold-critical"), viper.GetInt("grace-time-queued"))
+		hatchery.Create(hatcherySwarm,
+			viper.GetString("api"),
+			viper.GetString("token"),
+			viper.GetInt("max-worker"),
+			viper.GetInt("provision"),
+			viper.GetInt("request-api-timeout"),
+			viper.GetInt("max-failures-heartbeat"),
+			viper.GetBool("insecure"),
+			viper.GetInt("provision-seconds"),
+			viper.GetInt("spawn-threshold-warning"),
+			viper.GetInt("spawn-threshold-critical"),
+			viper.GetInt("grace-time-queued"),
+		)
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if viper.GetInt("max-containers") <= 0 {
