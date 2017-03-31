@@ -122,6 +122,13 @@ export class PipelineBuildJob {
     done: number;
     model: number;
     pipeline_build_id: number;
+    spawninfos: Array<SpawnInfo>;
+}
+
+export class SpawnInfo {
+    api_time: Date;
+    remote_time: Date;
+    user_message: string;
 }
 
 
