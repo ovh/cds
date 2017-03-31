@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package grpc;
+
+import "github.com/ovh/cds/sdk/log.proto";
+import "google/protobuf/empty.proto";
+
+// BuildLog is the GRPC service for http handler "/build/{id}/log"
+// Generate code with "protoc --proto_path=${GOPATH}/src:. --go_out=plugins=grpc:. *.proto"
+service BuildLog {
+    rpc AddBuildLog(stream github.com.ovh.cds.sdk.Log) returns (google.protobuf.Empty) {}
+}
