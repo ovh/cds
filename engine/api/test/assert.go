@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -70,16 +71,33 @@ func Equal(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
 
 // DeepEquals returns equality between 2 elements using github.com/fsamin/go-dump
 func DeepEquals(a, b interface{}) bool {
-	s1, err := dump.Sdump(a)
+	m1, err := dump.ToMap(a)
 	if err != nil {
 		return false
 	}
-	s2, err := dump.Sdump(b)
+	m2, err := dump.ToMap(b)
 	if err != nil {
 		return false
 	}
 
-	return s1 == s2
+	for k, v := range m1 {
+		if v2, ok := m2[k]; !ok {
+			fmt.Printf("%s not found\n", k)
+			return false
+		} else if v != v2 {
+			return false
+		}
+	}
+
+	for k, v := range m2 {
+		if v2, ok := m1[k]; !ok {
+			return false
+		} else if v != v2 {
+			return false
+		}
+	}
+
+	return true
 }
 
 // EqualValuesWithoutOrder checks equality between two slices without respecting slide order

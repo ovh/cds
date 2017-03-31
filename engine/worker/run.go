@@ -17,6 +17,29 @@ import (
 	"github.com/ovh/cds/sdk/vcs"
 )
 
+func processPipelineBuildJobParameter(pbJob *sdk.PipelineBuildJob, secrets []sdk.Variable) {
+	for i := range pbJob.Parameters {
+		keepReplacing := true
+		for keepReplacing {
+			t := pbJob.Parameters[i].Value
+
+			for _, p := range pbJob.Parameters {
+				pbJob.Parameters[i].Value = strings.Replace(pbJob.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
+			}
+
+			for _, p := range secrets {
+				pbJob.Parameters[i].Value = strings.Replace(pbJob.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
+			}
+
+			// If parameters wasn't updated, consider it done
+			if pbJob.Parameters[i].Value == t {
+				keepReplacing = false
+			}
+		}
+	}
+	return
+}
+
 // ProcessActionVariables replaces all placeholders inside action recursively using
 // - parent parameters
 // - action build arguments
@@ -269,6 +292,8 @@ func workingDirectory(basedir string, jobInfo *worker.PipelineBuildJobInfo) stri
 
 func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
+	processPipelineBuildJobParameter(&pbji.PipelineBuildJob, pbji.Secrets)
+
 	if err := processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob, pbji.Secrets); err != nil {
 		log.Warning("run> Cannot process action %s parameters: %s\n", pbji.PipelineBuildJob.Job.Action.Name, err)
 		return sdk.Result{Status: sdk.StatusFail}

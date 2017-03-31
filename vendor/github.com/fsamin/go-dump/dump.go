@@ -1,7 +1,6 @@
 package dump
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -89,11 +88,15 @@ func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
 	if formatters == nil {
 		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
 	}
-	var buf bytes.Buffer
-	if err := Fdump(&buf, i, formatters...); err != nil {
+	m, err := ToMap(i, formatters...)
+	if err != nil {
 		return "", err
 	}
-	return buf.String(), nil
+	res := ""
+	for k, v := range m {
+		res += fmt.Sprintf("%s: %s\n", k, v)
+	}
+	return res, nil
 }
 
 func fdumpStructField(w map[string]string, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
@@ -140,7 +143,6 @@ func fdumpStructField(w map[string]string, s reflect.Value, roots []string, form
 					}
 				}
 				k := fmt.Sprintf("%s.%s", strings.Join(sliceFormat(roots, formatters), "."), format(s.Type().Field(i).Name, formatters))
-				fmt.Printf("Structfield : %s : %v\n", k, data)
 				w[k] = fmt.Sprintf("%v", data)
 			}
 		}
@@ -191,7 +193,6 @@ func fdumpStruct(w map[string]string, i interface{}, roots []string, formatters 
 				}
 			}
 			k := fmt.Sprintf("%s.%s", strings.Join(sliceFormat(roots, formatters), "."), format(s.Type().Name(), formatters))
-			fmt.Printf("Struct : %s : %v\n", k, data)
 			w[k] = fmt.Sprintf("%v", data)
 		}
 		return nil
@@ -253,7 +254,6 @@ func fDumpArray(w map[string]string, i interface{}, roots []string, formatters .
 				}
 
 				k := strings.Join(sliceFormat(croots, formatters), ".")
-				fmt.Printf("Array : %s : %v\n", k, data)
 				w[k] = fmt.Sprintf("%v", data)
 			}
 		}
@@ -295,7 +295,6 @@ func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...
 				}
 			}
 			k := strings.Join(sliceFormat(roots, formatters), ".")
-			fmt.Printf("Map : %s : %v (%v)\n", k, value.Interface(), value.Type())
 			w[k] = fmt.Sprintf("%v", value.Interface())
 		}
 	}
@@ -341,6 +340,16 @@ func sliceFormat(s []string, formatters []KeyFormatterFunc) []string {
 func format(s string, formatters []KeyFormatterFunc) string {
 	for _, f := range formatters {
 		s = f(s)
+	}
+	return s
+}
+
+// MustSdump is a helper that wraps a call to a function returning (string, error)
+// and panics if the error is non-nil.
+func MustSdump(i interface{}, formatters ...KeyFormatterFunc) string {
+	s, err := Sdump(i, formatters...)
+	if err != nil {
+		panic(err)
 	}
 	return s
 }
