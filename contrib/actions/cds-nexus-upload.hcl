@@ -51,7 +51,7 @@ parameters = {
 	}
 	"version" = {
 		type = "string"
-		description = "Version of the artifact. Supports resolving of "LATEST", "RELEASE" and snapshot versions ("1.0-SNAPSHOT") too."
+		description = "Version of the artifact. Supports resolving of 'LATEST', 'RELEASE' and snapshot versions ('1.0-SNAPSHOT') too."
 		value = "{{.cds.build.VERSION}}"
 	}
 	"files" = {
