@@ -76,7 +76,7 @@ for file in `ls {{.files}}`
 do
 	if [ -f $file ]
 	then
-	    curl -F r={{.repository}} -F hasPom=false -F e={{.extension}} -F g="{{.groupId}}" -F a="{{.artifactId}}" -F v="{{.version}}" -F p={{.packaging}} -F file=$file -u {{.login}}:{{.password}} {{.url}}
+	    curl -F r="{{.repository}}" -F hasPom=false -F e="{{.extension}}" -F g="{{.groupId}}" -F a="{{.artifactId}}" -F v="{{.version}}" -F p="{{.packaging}}" -F file="@$file" -u {{.login}}:{{.password}} {{.url}}
 	else
 		echo "File $file does not exist"
 	fi
