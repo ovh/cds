@@ -240,6 +240,8 @@
   "pipeline_run_test_skipped_title" : " test ignoré",
   "pipeline_run_test_testcase_name" : "Nom du testcase",
 
+  "pipeline_stage_moved" : "Stage déplacé",
+
   "poller_added" : "Poller ajouté",
   "poller_create_label" : "Créer un poller",
   "poller_deleted" : "Poller supprimé",

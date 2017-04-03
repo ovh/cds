@@ -339,4 +339,16 @@ export class PipelineStore {
         }
         return pipeline;
     }
+
+    /**
+     * Move a stage
+     * @param key Project unique key
+     * @param name Pipeline name
+     * @param stageMoved Stage to move
+     */
+    moveStage(key: string, pipName: string, stageMoved: Stage) {
+        return this._pipelineService.moveStage(key, pipName, stageMoved).map( pip => {
+           return this.refreshPipelineStageCache(key, pipName, pip);
+        });
+    }
 }
