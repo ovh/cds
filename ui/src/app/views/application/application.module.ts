@@ -11,13 +11,14 @@ import {ApplicationWorkflowItemComponent} from './show/workflow/tree/item/applic
 import {ApplicationTriggerComponent} from './show/workflow/trigger/trigger.component';
 import {ApplicationNotificationListComponent} from './show/notifications/list/notification.list.component';
 import {ApplicationNotificationFormModalComponent} from './show/notifications/form/notification.form.component';
-import {ApplicationPipelineLinkComponent} from './show/workflow/pipeline/pipeline.link.component';
+import {ApplicationPipelineLinkComponent} from './show/workflow/pipeline/link/pipeline.link.component';
 import {ApplicationSchedulerItemComponent} from './show/scheduler/item/scheduler.item.component';
 import {ApplicationSchedulerFormComponent} from './show/scheduler/form/scheduler.form.component';
 import {ApplicationHookItemComponent} from './show/hook/item/hook.item.component';
 import {ApplicationPollerItemComponent} from './show/poller/item/poller.item.component';
 import {ApplicationHookItemFormComponent} from './show/hook/edit/item.form.component';
 import {ApplicationPollerFormComponent} from './show/poller/edit/poller.edit.component';
+import {ApplicationPipelineDetachComponent} from './show/workflow/pipeline/detach/pipeline.detach.component';
 
 @NgModule({
     declarations: [
@@ -27,6 +28,7 @@ import {ApplicationPollerFormComponent} from './show/poller/edit/poller.edit.com
         ApplicationHookItemFormComponent,
         ApplicationNotificationFormModalComponent,
         ApplicationNotificationListComponent,
+        ApplicationPipelineDetachComponent,
         ApplicationPipelineLinkComponent,
         ApplicationPollerItemComponent,
         ApplicationPollerFormComponent,

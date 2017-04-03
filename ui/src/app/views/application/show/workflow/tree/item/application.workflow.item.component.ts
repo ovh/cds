@@ -54,6 +54,10 @@ export class ApplicationWorkflowItemComponent {
     createSchedulerModal: SemanticModalComponent;
     newScheduler: Scheduler;
 
+    // Detach pipeline
+    @ViewChild('detachPipelineModal')
+    detachModalPipelineModal: SemanticModalComponent;
+
     constructor(private _router: Router, private _appPipService: ApplicationPipelineService, private _pipStore: PipelineStore,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService) {
     }
@@ -289,6 +293,12 @@ export class ApplicationWorkflowItemComponent {
         }
     }
 
+    openDetachPipelineModal(): void {
+        if (this.detachModalPipelineModal) {
+            this.detachModalPipelineModal.show({autofocus: false, closable: false, observeChanges: true});
+        }
+    }
+
     createScheduler(scheduler: Scheduler): void {
         this._appStore.addScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
             .subscribe(() => {
@@ -331,6 +341,9 @@ export class ApplicationWorkflowItemComponent {
     detachPipeline(p: Pipeline): void {
         this._appStore.detachPipeline(this.project.key, this.application.name, p.name).subscribe(() => {
             this._toast.success('', this._translate.instant('application_pipeline_detached'));
+            if (this.detachModalPipelineModal) {
+                this.detachModalPipelineModal.hide();
+            }
         });
     }
 

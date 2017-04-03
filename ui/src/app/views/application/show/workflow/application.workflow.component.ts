@@ -4,7 +4,7 @@ import {Application} from '../../../../model/application.model';
 import {Project} from '../../../../model/project.model';
 import {WorkflowItem} from '../../../../model/application.workflow.model';
 import {PipelineType, PipelineBuild} from '../../../../model/pipeline.model';
-import {ApplicationPipelineLinkComponent} from './pipeline/pipeline.link.component';
+import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
 import {Branch} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
 
