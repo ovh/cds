@@ -1,0 +1,27 @@
+<div class="diff">
+    <ul>
+        <li>
+            <span class="key">{{ ('variable_name' | translate) + ': '}}</span>
+            <span class="normal" *ngIf="type === 'update' && variableAfter.name === variableBefore.name">{{variableAfter.name}}</span>
+            <span class="delete" *ngIf="type === 'delete' || (type === 'update' && variableAfter.name !== variableBefore.name)">{{variableBefore.name}}</span>
+            <span class="add" *ngIf="type === 'add' || (type === 'update' && variableAfter.name !== variableBefore.name)">{{variableAfter.name}}</span>
+        </li>
+
+
+        <li>
+            <span class="key">{{ ('variable_type' | translate) + ': '}}</span>
+            <span class="normal" *ngIf="type === 'update' && variableAfter.type === variableBefore.type">{{variableAfter.type}}</span>
+            <span class="delete" *ngIf="type === 'delete' || (type === 'update' && variableAfter.type !== variableBefore.type)">{{variableBefore.type}}</span>
+            <span class="add" *ngIf="type === 'add' || (type === 'update' && variableAfter.type !== variableBefore.type)">{{variableAfter.type}}</span>
+        </li>
+
+
+        <li>
+            <span class="key">{{ ('variable_value' | translate) + ': '}}</span>
+            <span class="normal" *ngIf="type === 'update' && variableAfter.value === variableBefore.value">{{variableAfter.value}}</span>
+            <span class="delete" *ngIf="type === 'delete' || (type === 'update' && variableAfter.value !== variableBefore.value)">{{variableBefore.value}}</span>
+            <span class="add" *ngIf="type === 'add' || (type === 'update' && variableAfter.value !== variableBefore.value)">{{variableAfter.value}}</span>
+        </li>
+
+    </ul>
+</div>

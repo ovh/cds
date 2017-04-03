@@ -1,0 +1,24 @@
+@import "../../../../common";
+.diff {
+  font-family: monospace, monospace;
+  font-size: 1em;
+
+  ul {
+    list-style: none;
+
+    li {
+      word-break: break-all;
+    }
+  }
+
+  .add {
+    color: green;
+  }
+  .key {
+    color: black;
+  }
+  .delete {
+    color: red;
+    text-decoration: line-through;
+  }
+}

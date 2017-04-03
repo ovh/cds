@@ -1,0 +1,23 @@
+@import '../../../../../common';
+
+.ui.attached.segment {
+  background-color: white;
+}
+
+
+.step.active {
+  background-color: $cds_color_teal !important;
+  .title {
+    color: white;
+  }
+
+}
+.step.active::after {
+  background-color: $cds_color_teal !important;
+}
+
+.step.off {
+  .title {
+    color: rgba(040, 40, 40, 0.3);
+  }
+}

@@ -1,0 +1,47 @@
+<div id="projectAdmin">
+    <app-zone header="{{ 'project_rename_title' | translate }}">
+        <app-zone-content class="bottom">
+            <form class="ui form" (ngSubmit)="onSubmitProjectUpdate()" #projectUpdateFrom="ngForm">
+                <div class="fields">
+                    <div class="seven wide field">
+                        <input type="text" name="formProjectUpdateName"
+                               placeholder="{{ 'project_name' | translate}}"
+                               [(ngModel)]="project.name"
+                               [disabled]="loading"
+                               required
+                               #formProjectUpdateName="ngModel"
+                               pattern="[a-zA-Z0-9]*">
+                        <div *ngIf="!formProjectUpdateName.valid && !formProjectUpdateName.pristine"
+                             class="ui error message">
+                            <p>{{'project_update_name_error' | translate}}</p>
+                        </div>
+                    </div>
+                    <div class="nine wide right aligned field">
+                        <button class="ui green button" name="btnrename" [class.loading]="loading">{{ 'btn_rename' | translate }}</button>
+                    </div>
+                </div>
+            </form>
+            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitProjectUpdate(true)" #updateWarning></app-warning-modal>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'project_repoman_title' | translate }}">
+        <app-zone-content class="bottom">
+            <app-project-repomanager-form [project]="project"></app-project-repomanager-form>
+            <app-project-repomanager-list *ngIf="project.repositories_manager && project.repositories_manager.length > 0"
+                                          [project]="project" [reposmanagers]="project.repositories_manager"></app-project-repomanager-list>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">
+        <app-zone-content class="bottom">
+            <div class="ui grid">
+                <div class="eight wide column">
+                    <div class="title">{{ 'project_delete_label' | translate}}</div>
+                    <div class="description">{{ 'project_delete_description' | translate}}</div>
+                </div>
+                <div class="eight wide right aligned column">
+                    <app-delete-button [loading]="loading" (event)="deleteProject()"></app-delete-button>
+                </div>
+            </div>
+        </app-zone-content>
+    </app-zone>
+</div>

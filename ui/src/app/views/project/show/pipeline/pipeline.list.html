@@ -1,0 +1,21 @@
+<div class="ui grid">
+    <div class="eight wide column">
+        <h3>{{ 'project_pipelines_list' | translate }}</h3>
+    </div>
+    <div class="right aligned eight wide column" *ngIf="project.permission === 7">
+        <a class="ui blue button" [routerLink]="['./pipeline']">{{ 'pipeline_create' | translate }}</a>
+    </div>
+</div>
+<div class="ui segment">
+    <div *ngIf="project.pipelines && project.pipelines.length > 0;then pipelines; else nopipelines"></div>
+    <ng-template #pipelines>
+        <div class="ui stackable four column grid">
+            <div class="center aligned column" *ngFor="let pip of project.pipelines">
+                <a [routerLink]="['./pipeline', pip.name]">{{pip.name}}</a>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #nopipelines>
+        <span>{{ 'project_no_pipeline' | translate }}</span>
+    </ng-template>
+</div>

@@ -1,0 +1,32 @@
+@import '../common';
+#AppComponent {
+  height: 100%;
+
+  #navbar {
+    padding: 0px;
+    width: 100%;
+    position: fixed;
+    display: none;
+    z-index: 200;
+  }
+
+  #navbar.connected {
+    display: inherit;
+  }
+
+  .page.connected  {
+    padding-top: $navbarHeight;
+  }
+
+  .page {
+    height: inherit;
+    z-index: 0;
+
+    .content {
+      height: inherit;
+      margin-left: $sidebarCloseWidth;
+      transition: all .4s ease 0s;
+      padding-top: 0px;
+    }
+  }
+}
