@@ -6,8 +6,6 @@
         404 index.html
     }
 
-    log / stdout
-
     proxy /cdsapi {$BACKEND_HOST} {
         without /cdsapi
         header_upstream Authorization {>Authorization}

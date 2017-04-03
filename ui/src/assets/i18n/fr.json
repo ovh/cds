@@ -66,6 +66,7 @@
   "artifact_tag" : "Tag",
 
   "audit_change": "Modification",
+  "audit_no": "Aucun audit pour cette variable",
   "audit_time_author": "Heure de modification",
   "audit_title_variable": "Historique des modifications",
 
