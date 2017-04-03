@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, DoCheck} from '@angular/core';
+import {Component, DoCheck, Input, OnInit, OnDestroy} from '@angular/core';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
@@ -15,7 +15,7 @@ declare var _: any;
     templateUrl: './pipeline.workflow.html',
     styleUrls: ['./pipeline.workflow.scss']
 })
-export class PipelineWorkflowComponent implements DoCheck, OnInit {
+export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
 
     selectedStage: Stage;
     oldLastModifiedDate: number;
@@ -29,14 +29,14 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
             },
-            accepts: function(el, target, source, sibling) {
+            accepts: function (el, target, source, sibling) {
                 if (sibling === null) {
                     return false;
                 }
                 return true;
             }
         });
-        dragulaService.drop.subscribe( v => {
+        dragulaService.drop.subscribe(v => {
             setTimeout(() => {
                 let stageMovedBuildOrder = Number(v[1].id.replace('step', ''));
                 let stageMoved: Stage;
@@ -52,6 +52,11 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit {
                 });
             });
         });
+    }
+
+    ngOnDestroy() {
+        this.dragulaService.destroy('bag-stage');
+
     }
 
     /**

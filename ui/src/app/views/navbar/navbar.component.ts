@@ -93,6 +93,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      * Navigate to the selected application.
      */
     navigateToApplication(route: string): void {
+        if (route === '#NOAPP#') {
+            return;
+        }
         this.selectedApplicationName = '#NOAPP#';
         this._router.navigate([route]);
     }
@@ -110,9 +113,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             let apps = new Array<Application>();
             if (this.navProjects) {
                 this.navProjects.toArray().forEach(p => {
-                   apps.push(...p.applications.filter(app => {
-                       return app.name.toLocaleLowerCase().indexOf(event.toLowerCase()) !== -1;
-                   }));
+                    if (p.applications) {
+                        apps.push(...p.applications.filter(app => {
+                            return app.name.toLocaleLowerCase().indexOf(event.toLowerCase()) !== -1;
+                        }));
+                    }
                 });
             }
             this.listApplications = apps;
