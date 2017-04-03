@@ -1162,7 +1162,6 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 
 // StopPipelineBuild fails all currently building actions
 func StopPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
-
 	if err := StopBuildingPipelineBuildJob(db, pb); err != nil {
 		return err
 	}

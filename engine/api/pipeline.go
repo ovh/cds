@@ -1032,38 +1032,27 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
 	pipName := vars["permPipelineKey"]
-	buildNumberS := vars["build"]
 
-	err := r.ParseForm()
-	if err != nil {
-		log.Warning("stopPipelineBuildHandler> Cannot parse form: %s\n", err)
-		return sdk.ErrUnknownError
-
+	if err := r.ParseForm(); err != nil {
+		return sdk.WrapError(sdk.ErrUnknownError, "stopPipelineBuildHandler> Cannot parse form")
 	}
 	envName := r.Form.Get("envName")
 
-	buildNumber, err := strconv.ParseInt(buildNumberS, 10, 64)
+	buildNumber, err := requestVarInt(r, "build")
 	if err != nil {
-		log.Warning("stopPipelineBuildHandler> buildNumber is not a int: %s\n", err)
-		return sdk.ErrInvalidID
-
+		return sdk.WrapError(err, "stopPipelineBuildHandler> invalid build number")
 	}
 
-	// Load pipeline
 	pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
 	if err != nil {
-		log.Warning("stopPipelineBuildHandler> Cannot load pipeline: %s\n", err)
-		return err
+		return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load pipeline")
 	}
 
-	// Load application
 	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
-		log.Warning("stopPipelineBuildHandler> Cannot load application: %s\n", err)
-		return err
+		return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load application")
 	}
 
-	// Load environment
 	if pip.Type != sdk.BuildPipeline && (envName == "" || envName == sdk.DefaultEnv.Name) {
 		return sdk.ErrNoEnvironmentProvided
 	}
@@ -1072,14 +1061,12 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	if pip.Type != sdk.BuildPipeline {
 		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if err != nil {
-			log.Warning("stopPipelineBuildHandler> Cannot load environment %s: %s\n", envName, err)
-			return err
+			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load environment %s", envName)
 		}
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
-		log.Warning("stopPipelineBuildHandler> You do not have Execution Right on this environment %s\n", env.Name)
-		return sdk.ErrForbidden
+		return sdk.WrapError(sdk.ErrForbidden, "stopPipelineBuildHandler> You do not have Execution Right on this environment %s", env.Name)
 	}
 
 	pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID, env.ID, buildNumber)
@@ -1088,8 +1075,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		if err == sdk.ErrNoPipelineBuild {
 			errFinal = sdk.ErrBuildArchived
 		}
-		log.Warning("stopPipelineBuildHandler> Cannot load pipeline Build: %s\n", errFinal)
-		return errFinal
+		return sdk.WrapError(errFinal, "stopPipelineBuildHandler> Cannot load pipeline Build")
 	}
 
 	// Disable building worker
@@ -1100,15 +1086,13 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 
 		for _, pipJob := range s.PipelineBuildJobs {
 			if err := worker.DisableBuildingWorker(db, pipJob.ID); err != nil {
-				log.Warning("stopPipelineBuildHandler> Cannot stop worker for pipeline build [%d-%d]: %s\n", pb.ID, pipJob.ID, err)
-				return err
+				return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop worker for pipeline build [%d-%d]", pb.ID, pipJob.ID)
 			}
 		}
 	}
 
 	if err := pipeline.StopPipelineBuild(db, pb); err != nil {
-		log.Warning("stopPipelineBuildHandler> Cannot stop pb: %s\n", err)
-		return err
+		return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop pipeline build")
 	}
 
 	k := cache.Key("application", projectKey, "builds", "*")

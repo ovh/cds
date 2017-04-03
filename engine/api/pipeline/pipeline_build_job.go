@@ -308,7 +308,6 @@ func StopBuildingPipelineBuildJob(db gorp.SqlExecutor, pb *sdk.PipelineBuild) er
 		if err := UpdatePipelineBuildJobStatus(db, pbJ, sdk.StatusFail); err != nil {
 			return sdk.WrapError(err, "StopBuildingPipelineBuildJob> Cannot stop pipeline build job")
 		}
-
 	}
 	return nil
 }
@@ -341,7 +340,7 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 		pbJob.Status = status.String()
 
 	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped:
-		if currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
+		if currentStatus != string(sdk.StatusWaiting) && currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
 			log.Info("UpdatePipelineBuildJobStatus> Status is %s, cannot update %d to %s", currentStatus, pbJob.ID, status)
 			// too late, Nate
 			return nil
