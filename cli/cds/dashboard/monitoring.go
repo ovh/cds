@@ -20,10 +20,13 @@ func (ui *Termui) showMonitoring() {
 	ui.queue.ItemFgColor = termui.ColorWhite
 	ui.queue.ItemBgColor = termui.ColorBlack
 
-	heightBottom := 13
-
+	heightBottom := 16
+	heightQueue := ((termui.TermHeight() - heightBottom) / 2) - 3
+	if heightQueue <= 0 {
+		heightQueue = 4
+	}
 	ui.queue.BorderLabel = " Queue "
-	ui.queue.Height = (termui.TermHeight() - heightBottom) / 2
+	ui.queue.Height = heightQueue
 	ui.queue.Width = termui.TermWidth()
 	ui.queue.Items = []string{"Loading..."}
 	ui.queue.BorderBottom = false
@@ -36,8 +39,12 @@ func (ui *Termui) showMonitoring() {
 	ui.building.ItemFgColor = termui.ColorWhite
 	ui.building.ItemBgColor = termui.ColorBlack
 
+	heightBuilding := ((termui.TermHeight() - heightBottom) / 2) + 3
+	if heightBuilding <= 0 {
+		heightBuilding = 3
+	}
 	ui.building.BorderLabel = " Building "
-	ui.building.Height = (termui.TermHeight() - heightBottom) / 2
+	ui.building.Height = heightBuilding
 	ui.building.Width = termui.TermWidth()
 	ui.building.Items = []string{"Loading..."}
 	ui.building.BorderBottom = false
@@ -259,13 +266,27 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 	elapsed := time.Since(start)
 	msg := fmt.Sprintf("[getBuildingPipelines %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
-	items := []string{fmt.Sprintf("[  %s➤ %s➤ %s➤ %s](fg-cyan,bg-default)", pad("project/application", 35), pad("pipeline", 25), pad("branch/env", 19), "jobs")}
+	items := []string{fmt.Sprintf("[  %s➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("project/application", 35), pad("pipeline", 25), pad("branch/env", 19), "stage: jobs...")}
 	for i, pb := range pbs {
 		t := ui.pipelineLine(pb.Application.ProjectKey, pb.Application, pb)
 		for _, s := range pb.Stages {
-			t += "[ ➤](fg-cyan,bg-default)"
-			for _, pbj := range s.PipelineBuildJobs {
-				t += jobLine(pbj.Job.Action.Name, pbj.Status)
+			switch s.Status {
+			case sdk.StatusWaiting:
+				t += fmt.Sprintf("[ ➤ %s ](fg-yellow,bg-default)", s.Name)
+			case sdk.StatusBuilding:
+				t += fmt.Sprintf("[ ➤ %s ](fg-blue,bg-default)", s.Name)
+				if len(s.PipelineBuildJobs) > 0 {
+					t += "[:](bg-default)"
+				}
+				for _, pbj := range s.PipelineBuildJobs {
+					t += jobLine(pbj.Job.Action.Name, pbj.Status)
+				}
+			case sdk.StatusSuccess:
+				t += fmt.Sprintf("[ ➤ %s ](fg-green,bg-default)", s.Name)
+			case sdk.StatusFail:
+				t += fmt.Sprintf("[ ➤ %s ](fg-red,bg-default)", s.Name)
+			default:
+				t += fmt.Sprintf("[ ➤ %s %s ](fg-grey,bg-default)", s.Name, s.Status)
 			}
 		}
 		items = append(items, t)
@@ -300,7 +321,7 @@ func (ui *Termui) pipelineLine(projKey string, app sdk.Application, pb sdk.Pipel
 		txt = koChar
 	}
 
-	txt = fmt.Sprintf("%s[ %s](bg-default)[➤](fg-cyan,bg-default)[%s ](bg-default)[➤](fg-cyan,bg-default)[%s](bg-default)", txt, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
+	txt = fmt.Sprintf("%s[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", txt, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
 	return txt
 }
 
@@ -314,8 +335,10 @@ func jobLine(name string, status string) string {
 		return fmt.Sprintf("[ [%s]](fg-blue,bg-default)", name)
 	case string(sdk.StatusWaiting):
 		return fmt.Sprintf("[ [%s]](fg-yellow,bg-default)", name)
+	case string(sdk.StatusDisabled):
+		return fmt.Sprintf("[ [%s-%s]](fg-grey,bg-default)", name, status)
 	default:
-		return fmt.Sprintf("[ [%s]](fg-black,bg-default)", name)
+		return fmt.Sprintf("[ [%s-%s]](fg-white,bg-default)", name, status)
 	}
 }
 
