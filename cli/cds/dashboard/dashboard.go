@@ -196,9 +196,6 @@ func (ui *Termui) getLogs(proj, app, env, pip string) {
 }
 
 func (ui *Termui) drawApplications() {
-	ui.Lock()
-	defer ui.Unlock()
-
 	if len(ui.proj) == 0 || ui.selectedProject <= 0 {
 		return
 	}
