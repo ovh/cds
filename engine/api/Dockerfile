@@ -1,0 +1,13 @@
+FROM debian:jessie
+RUN apt-get update && \
+    apt-get install -y curl wget ca-certificates && \
+    mkdir /app && cd /app && \
+    curl -s https://api.github.com/repos/ovh/cds/releases | grep browser_download_url | grep "/api" | head -n 1 | cut -d '"' -f 4 | xargs wget && \
+    curl -s https://api.github.com/repos/ovh/cds/releases | grep browser_download_url | grep "/hatchery" | head -n 1 | cut -d '"' -f 4 | xargs wget && \
+    curl -s https://api.github.com/repos/ovh/cds/releases | grep browser_download_url | grep "/worker" | head -n 1 | cut -d '"' -f 4 | xargs wget && \
+    curl -s https://api.github.com/repos/ovh/cds/releases | grep browser_download_url | grep "/worker.exe" | head -n 1 | cut -d '"' -f 4 | xargs wget && \
+    chmod +x api && \
+    chown -R nobody:nogroup /app && \
+    rm -rf /var/lib/apt/lists/*
+USER nobody
+CMD ["/app/api"]
