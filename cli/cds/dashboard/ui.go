@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/gizak/termui"
 	"github.com/skratchdot/open-golang/open"
@@ -38,37 +37,31 @@ type Termui struct {
 	pipelines        [5][]*termui.Gauge
 
 	// monitoring
-	monitoring *termui.Row
-	titles     []*termui.Par
-	actions    [5][]*termui.Par
-	rowCount   int
-	pbs        []sdk.PipelineBuild
-
-	buildingPipelines []*termui.Row
-
-	// status
-	infoQueue          string
-	distribQueue       map[string]int64
-	queue              *ScrollableList
-	queueSelect        *ScrollableList
-	statusWorkers      *termui.List
-	status             *termui.List
-	queueCurrentJobURL string
-
-	// mutex
-	sync.Mutex
+	queue                   *ScrollableList
+	building                *ScrollableList
+	statusWorkerList        *ScrollableList
+	statusHatcheriesWorkers *ScrollableList
+	statusWorkerModels      *ScrollableList
+	status                  *ScrollableList
+	currentURL              string
 }
 
 // Constants for each view of cds ui
 const (
 	HomeView         = "home"
 	DashboardView    = "dashboard"
-	MonitoringView   = "monitoring"
-	StatusView       = "status"
 	ProjectSelected  = "project"
 	AppSelected      = "app"
 	PipelineSelected = "pipeline"
 	LogsSelected     = "logs"
+
+	QueueSelected             = "queue"
+	BuildingSelected          = "building"
+	WorkersListSelected       = "workersList"
+	WorkerModelsSelected      = "workerModels"
+	HatcheriesWorkersSelected = "hatcheriesWorkers"
+	StatusSelected            = "status"
+	MonitoringView            = "monitoring"
 )
 
 func (ui *Termui) init() {
@@ -100,13 +93,8 @@ func (ui *Termui) init() {
 	})
 
 	termui.Handle("/sys/kbd/m", func(e termui.Event) {
-		ui.current = "monitoring"
+		ui.current = MonitoringView
 		ui.showMonitoring()
-	})
-
-	termui.Handle("/sys/kbd/s", func(e termui.Event) {
-		ui.current = "status"
-		ui.showStatus()
 	})
 
 	termui.Handle("/sys/kbd/k", func(e termui.Event) {
@@ -126,13 +114,15 @@ func (ui *Termui) init() {
 			ui.selected = LogsSelected
 			ui.selectedLogs = 1
 			ui.drawProjects()
+		} else if ui.current == MonitoringView {
+			ui.monitoringSelectNext()
 		}
 	})
 
 	termui.Handle("/sys/kbd/<down>", func(e termui.Event) {
 		switch ui.current {
-		case StatusView:
-			ui.queue.CursorDown()
+		case MonitoringView:
+			ui.monitoringCursorDown()
 		case DashboardView:
 			switch ui.selected {
 			case ProjectSelected:
@@ -165,8 +155,8 @@ func (ui *Termui) init() {
 	})
 	termui.Handle("/sys/kbd/<up>", func(e termui.Event) {
 		switch ui.current {
-		case StatusView:
-			ui.queue.CursorUp()
+		case MonitoringView:
+			ui.monitoringCursorUp()
 		case DashboardView:
 			switch ui.selected {
 			case ProjectSelected:
@@ -253,8 +243,8 @@ func (ui *Termui) init() {
 	})
 
 	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) {
-		if ui.current == StatusView {
-			open.Run(ui.queueCurrentJobURL)
+		if ui.current == MonitoringView && ui.currentURL != "" {
+			open.Run(ui.currentURL)
 		}
 	})
 
@@ -265,11 +255,7 @@ func (ui *Termui) init() {
 }
 
 func (ui *Termui) draw(i int) {
-	ui.Lock()
-	defer ui.Unlock()
-
-	ui.header.Text = " [CDS | (h)ome | (d)ashboard | (m)onitoring | (s)tatus | (q)uit](fg-cyan) | " + ui.msg
-	// calculate layout
+	ui.header.Text = " [CDS | (h)ome | (d)ashboard | (m)onitoring | (q)uit](fg-cyan) | " + ui.msg
 	termui.Body.Align()
 	termui.Render(termui.Body)
 }
