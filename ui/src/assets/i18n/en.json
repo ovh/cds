@@ -40,7 +40,7 @@
   "application_pipeline_already_linked" : "Already linked pipeline",
   "application_pipelines_attached" : "Pipelines has been linked to the application",
   "application_pipeline_detached" : "Pipeline has been detached from application",
-  "application_pipeline_detached_no_trigger" : "It will not delete any trigger",
+  "application_pipeline_detached_no_trigger" : "It won't delete any trigger",
   "application_pipeline_detached_trigger" : "It will delete the following trigger",
   "application_pipeline_detached_triggers" : "It will delete the following triggers",
   "application_pipeline_linkable" : "Linkable pipelines",
