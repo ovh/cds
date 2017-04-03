@@ -144,7 +144,7 @@ func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, hea
 func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
 	authHeaderValue := headers.Get("Authorization")
 	if authHeaderValue == "" {
-		log.Notice("ReloadUserPersistentSession> No Authorization Header")
+		log.Warning("ReloadUserPersistentSession> No Authorization Header")
 		return false
 	}
 	// Split Basic and (user:pass)64
