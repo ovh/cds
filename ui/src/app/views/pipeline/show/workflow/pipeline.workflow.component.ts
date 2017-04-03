@@ -5,6 +5,7 @@ import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {Stage} from '../../../../model/stage.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
+import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 
 
 declare var _: any;
@@ -23,7 +24,34 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit {
     @Input() pipeline: Pipeline;
 
     constructor(private _pipelineStore: PipelineStore, private _toast: ToastService,
-                private _translate: TranslateService) {
+                private _translate: TranslateService, private dragulaService: DragulaService) {
+        dragulaService.setOptions('bag-stage', {
+            moves: function (el, source, handle) {
+                return handle.classList.contains('move');
+            },
+            accepts: function(el, target, source, sibling) {
+                if (sibling === null) {
+                    return false;
+                }
+                return true;
+            }
+        });
+        dragulaService.drop.subscribe( v => {
+            setTimeout(() => {
+                let stageMovedBuildOrder = Number(v[1].id.replace('step', ''));
+                let stageMoved: Stage;
+                for (let i = 0; i < this.pipeline.stages.length; i++) {
+                    if (this.pipeline.stages[i].build_order === stageMovedBuildOrder) {
+                        stageMoved = this.pipeline.stages[i];
+                        stageMoved.build_order = i + 1;
+                        break;
+                    }
+                }
+                this._pipelineStore.moveStage(this.project.key, this.pipeline.name, stageMoved).subscribe(() => {
+                    this._toast.success('', this._translate.instant('pipeline_stage_moved'));
+                });
+            });
+        });
     }
 
     /**

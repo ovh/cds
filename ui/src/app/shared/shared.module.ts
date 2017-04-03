@@ -94,6 +94,7 @@ import {ZoneComponent} from './zone/zone.component';
         CommonModule,
         CutPipe,
         DeleteButtonComponent,
+        DragulaModule,
         FormsModule,
         GroupFormComponent,
         HistoryComponent,

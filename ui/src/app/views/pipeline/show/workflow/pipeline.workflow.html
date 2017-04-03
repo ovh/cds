@@ -1,10 +1,11 @@
-<div class="ui top attached steps">
-  <div class="step" *ngFor="let s of pipeline.stages" [class.active]="selectedStage?.id === s.id"
-      [class.off]="!s.enabled">
-    <div class="content">
-      <a class="title pointing" (click)="selectedStage = s">{{s.name}}</a>
+<div class="ui top attached steps dragula-container" [dragula]="'bag-stage'" [dragulaModel]="pipeline.stages">
+    <div id="step{{s.build_order}}" class="step" *ngFor="let s of pipeline.stages" [class.active]="selectedStage?.id === s.id"
+        [class.off]="!s.enabled">
+      <div class="content">
+        <i class="move icon" *ngIf="pipeline.permission === 7"></i>
+        <a class="title pointing" (click)="selectedStage = s">{{s.name}}</a>
+      </div>
     </div>
-  </div>
   <div class="step" *ngIf="pipeline.permission === 7">
     <div class="content">
       <div class="title">

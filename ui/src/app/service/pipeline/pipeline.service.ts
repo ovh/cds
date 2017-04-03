@@ -214,4 +214,13 @@ export class PipelineService {
         return this._http.delete('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name).map(res => res.json());
     }
 
+    /**
+     * Call api to move a stage
+     * @param key Project key
+     * @param pipName Pipeline Name
+     * @param stage stage to move
+     */
+    moveStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
+        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/stage/move', stage).map(res => res.json());
+    }
 }
