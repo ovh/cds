@@ -255,7 +255,7 @@ func (ui *Termui) init() {
 }
 
 func (ui *Termui) draw(i int) {
-	ui.header.Text = " [CDS | (h)ome | (d)ashboard | (s)tatus | (q)uit](fg-cyan) | " + ui.msg
+	ui.header.Text = " [CDS | (h)ome | (d)ashboard | (m)onitoring | (q)uit](fg-cyan) | " + ui.msg
 	termui.Body.Align()
 	termui.Render(termui.Body)
 }
