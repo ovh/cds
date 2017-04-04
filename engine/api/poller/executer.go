@@ -25,7 +25,7 @@ func Executer(DBFunc func() *gorp.DbMap) {
 			continue
 		}
 		if len(exs) > 0 {
-			log.Info("poller.Executer> %d has been executed", len(exs))
+			log.Debug("poller.Executer> %d has been executed", len(exs))
 		}
 	}
 }
@@ -134,7 +134,7 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
 			e.PipelineBuildVersions[event.Branch.ID+"/"+event.Commit.Hash[:7]] = pb.Version
 		} else {
-			log.Info("Polling.triggerPipelines> Did not trigger %s/%s/%s\n", projectKey, poller.Application.RepositoryFullname, event.Branch.ID)
+			log.Debug("Polling.triggerPipelines> Did not trigger %s/%s/%s\n", projectKey, poller.Application.RepositoryFullname, event.Branch.ID)
 		}
 	}
 

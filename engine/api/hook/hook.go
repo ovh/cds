@@ -352,7 +352,7 @@ func Recovery(h ReceivedHook, err error) {
 	log.Debug("hook.Recovery> %s", h.Repository)
 	switch err.(type) {
 	case sdk.Error:
-		log.Notice("hook.Recovery> %s is not handled", h.Repository)
+		log.Info("hook.Recovery> %s is not handled", h.Repository)
 		return
 	default:
 
@@ -370,7 +370,7 @@ func Recovery(h ReceivedHook, err error) {
 		"database/sql: internal sentinel error: conn is busy":
 		log.Debug("hook.Recovery> Save %s/%s/%s for recover", h.ProjectKey, h.Repository, h.Hash)
 	default:
-		log.Notice("hook.Recovery> %s is not handled", s)
+		log.Info("hook.Recovery> %s is not handled", s)
 		return
 	}
 

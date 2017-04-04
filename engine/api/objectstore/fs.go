@@ -16,7 +16,7 @@ type FilesystemStore struct {
 
 // NewFilesystemStore creates a new ObjectStore with filesystem driver
 func NewFilesystemStore(basedir string) (*FilesystemStore, error) {
-	log.Notice("Objectstore> Initialize Filesystem driver on directory: %s", basedir)
+	log.Info("Objectstore> Initialize Filesystem driver on directory: %s", basedir)
 	if basedir == "" {
 		return nil, fmt.Errorf("artifact storage is filesystem, but --artifact-basedir is not provided")
 	}

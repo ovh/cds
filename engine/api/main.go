@@ -50,8 +50,7 @@ var mainCmd = &cobra.Command{
 		viper.SetEnvPrefix("cds")
 		viper.AutomaticEnv()
 
-		log.Initialize()
-		log.Notice("Starting CDS server...\n")
+		log.Info("Starting CDS server...\n")
 
 		startupTime = time.Now()
 
@@ -117,10 +116,6 @@ var mainCmd = &cobra.Command{
 			log.Warning("Cannot connect to database: %s\n", err)
 		}
 		if db != nil {
-			if viper.GetBool("db_logging") {
-				log.UseDatabaseLogger(db)
-			}
-
 			if err = bootstrap.InitiliazeDB(database.GetDBMap); err != nil {
 				log.Critical("Cannot setup databases: %s\n", err)
 			}
@@ -191,10 +186,10 @@ var mainCmd = &cobra.Command{
 		default:
 			authMode = "local"
 			if viper.GetString("auth_local_mode") == "basic" {
-				log.Notice("Authentitication mode: Basic\n")
+				log.Info("Authentitication mode: Basic\n")
 				localCLientAuthMode = auth.LocalClientBasicAuthMode
 			} else {
-				log.Notice("Authentitication mode: Session\n")
+				log.Info("Authentitication mode: Session\n")
 				localCLientAuthMode = auth.LocalClientSessionMode
 			}
 		}
@@ -230,7 +225,6 @@ var mainCmd = &cobra.Command{
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller(database.GetDBMap)
 		go hatchery.Heartbeat(database.GetDBMap)
-		go log.RemovalRoutine(database.DB)
 		go auditCleanerRoutine(database.GetDBMap)
 
 		go repositoriesmanager.ReceiveEvents()
@@ -274,7 +268,7 @@ var mainCmd = &cobra.Command{
 			}
 		}()
 
-		log.Notice("Starting HTTP Server on port %s", viper.GetString("listen_port"))
+		log.Info("Starting HTTP Server on port %s", viper.GetString("listen_port"))
 		if err := s.ListenAndServe(); err != nil {
 			log.Fatalf("Cannot start cds-server: %s\n", err)
 		}

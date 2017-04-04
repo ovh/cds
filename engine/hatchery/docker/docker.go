@@ -90,7 +90,7 @@ func (hd *HatcheryDocker) workerIndexCleanupRoutine() {
 
 		for name, cmd := range hd.workers {
 			if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
-				log.Info("HatcheryDocker.IndexCleanup: removing exited %s\n", name)
+				log.Debug("HatcheryDocker.IndexCleanup: removing exited %s\n", name)
 				delete(hd.workers, name)
 				break
 			}
@@ -115,13 +115,13 @@ func (hd *HatcheryDocker) killAwolWorker() {
 
 	hd.Lock()
 	defer hd.Unlock()
-	log.Info("Hatchery has %d processes in index\n", len(hd.workers))
+	log.Debug("Hatchery has %d processes in index\n", len(hd.workers))
 
 	for name, cmd := range hd.workers {
 		for _, n := range apiworkers {
 			// If worker is disabled, kill it
 			if n.Name == name && n.Status == sdk.StatusDisabled {
-				log.Info("Worker %s is disabled. Kill it with fire !\n", name)
+				log.Debug("Worker %s is disabled. Kill it with fire !\n", name)
 
 				// if process not killed, kill it
 				if cmd.ProcessState == nil || (cmd.ProcessState != nil && !cmd.ProcessState.Exited()) {
@@ -141,7 +141,7 @@ func (hd *HatcheryDocker) killAwolWorker() {
 				}()
 
 				delete(hd.workers, name)
-				log.Notice("HatcheryDocker.killAwolWorker> Killed disabled worker %s\n", name)
+				log.Info("HatcheryDocker.killAwolWorker> Killed disabled worker %s\n", name)
 				return
 			}
 		}
@@ -230,7 +230,7 @@ func (hd *HatcheryDocker) KillWorker(worker sdk.Worker) error {
 
 	for name, cmd := range hd.workers {
 		if worker.Name == name {
-			log.Info("HatcheryDocker.KillWorker> %s\n", name)
+			log.Debug("HatcheryDocker.KillWorker> %s\n", name)
 			err := cmd.Process.Kill()
 			if err != nil {
 				return err

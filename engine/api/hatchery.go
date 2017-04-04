@@ -36,7 +36,7 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		return err
 	}
 
-	log.Info("registerHatchery> Welcome %d", hatch.ID)
+	log.Debug("registerHatchery> Welcome %d", hatch.ID)
 
 	return WriteJSON(w, r, hatch, http.StatusOK)
 }

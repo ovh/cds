@@ -341,7 +341,7 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 
 	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped:
 		if currentStatus != string(sdk.StatusWaiting) && currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
-			log.Info("UpdatePipelineBuildJobStatus> Status is %s, cannot update %d to %s", currentStatus, pbJob.ID, status)
+			log.Debug("UpdatePipelineBuildJobStatus> Status is %s, cannot update %d to %s", currentStatus, pbJob.ID, status)
 			// too late, Nate
 			return nil
 		}

@@ -104,8 +104,8 @@ func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer file.Close()
 
-	log.Info("Uploaded template %s", templ.Identifier)
-	log.Info("Template params %v", params)
+	log.Debug("Uploaded template %s", templ.Identifier)
+	log.Debug("Template params %v", params)
 
 	//Check actions
 	for _, a := range templ.Actions {

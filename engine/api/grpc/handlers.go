@@ -11,7 +11,7 @@ import (
 type handlers struct{}
 
 func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
-	log.Info("grpc.AddBuildLog> started stream")
+	log.Debug("grpc.AddBuildLog> started stream")
 	for {
 		in, err := stream.Recv()
 		if err == io.EOF {

@@ -881,7 +881,7 @@ func CheckPrerequisites(t sdk.PipelineTrigger, pb *sdk.PipelineBuild) (bool, err
 
 		if !found { // Not even found...
 			prerequisitesOK = false
-			log.Notice("CheckPrerequisites> Prereq on '%s', not found\n", p.Parameter)
+			log.Info("CheckPrerequisites> Prereq on '%s', not found\n", p.Parameter)
 			break
 		}
 	}

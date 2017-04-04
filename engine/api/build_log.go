@@ -289,34 +289,3 @@ func addBuildLogHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 	return nil
 }
-
-func setEngineLogLevel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
-	// Get log level in URL
-	vars := mux.Vars(r)
-	lvl := vars["level"]
-
-	switch lvl {
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-		break
-	case "info":
-		log.SetLevel(log.InfoLevel)
-		break
-	case "notice":
-		log.SetLevel(log.NoticeLevel)
-		break
-	case "warning":
-		log.SetLevel(log.WarningLevel)
-		break
-	case "critical":
-		log.SetLevel(log.CriticalLevel)
-		break
-
-	default:
-		log.Warning("setEngineLogLevel> Unknown log level %s\n", lvl)
-		return sdk.ErrWrongRequest
-
-	}
-	return nil
-}

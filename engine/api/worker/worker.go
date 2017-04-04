@@ -39,7 +39,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 	var st, name string
 	var pbJobID sql.NullInt64
 	if err := tx.QueryRow(query, id).Scan(&name, &st, &pbJobID); err != nil {
-		log.Info("DeleteWorker[%d]> Cannot lock worker: %s\n", id, err)
+		log.Debug("DeleteWorker[%d]> Cannot lock worker: %s\n", id, err)
 		return nil
 	}
 
@@ -50,11 +50,11 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but action_build_id is NULL!\n", name)
 		}
 
-		log.Notice("Worker %s crashed while building %d !\n", name, pbJobID.Int64)
+		log.Info("Worker %s crashed while building %d !\n", name, pbJobID.Int64)
 		if err := pipeline.RestartPipelineBuildJob(tx, pbJobID.Int64); err != nil {
 			log.Critical("DeleteWorker[%d]> Cannot restart pipeline build job: %s\n", id, err)
 		} else {
-			log.Notice("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash\n", id, pbJobID.Int64)
+			log.Info("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash\n", id, pbJobID.Int64)
 		}
 	}
 
@@ -215,7 +215,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error)
 
 // RefreshWorker Update worker last_beat
 func RefreshWorker(db gorp.SqlExecutor, workerID string) error {
-	log.Info("RefreshWorker> worker %s heartbeat", workerID)
+	log.Debug("RefreshWorker> worker %s heartbeat", workerID)
 	query := `UPDATE worker SET last_beat = $1 WHERE id = $2`
 	res, err := db.Exec(query, time.Now(), workerID)
 	if err != nil {
@@ -383,7 +383,7 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 					query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
 					if _, err := ntx.Exec(query, modelID, b, b, string(sdk.BinaryRequirement)); err != nil {
 						//Ignore errors because we let the database to check constraints...
-						log.Info("registerWorker> Cannot insert into worker_capability: %s\n", err)
+						log.Debug("registerWorker> Cannot insert into worker_capability: %s\n", err)
 						return
 					}
 				}

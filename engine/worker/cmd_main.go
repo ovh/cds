@@ -66,7 +66,7 @@ func cmdMain() *cobra.Command {
 
 func mainCommandRun(cmd *cobra.Command, args []string) {
 	initViper()
-	log.Notice("What a good time to be alive")
+	log.Info("What a good time to be alive")
 
 	alive = true
 
@@ -113,9 +113,9 @@ func mainCommandRun(cmd *cobra.Command, args []string) {
 				if bookedJobID > 0 {
 					info = fmt.Sprintf(", I was born to work on job %d", bookedJobID)
 				}
-				log.Notice("Registering on CDS engine%s", info)
+				log.Info("Registering on CDS engine%s", info)
 				if err := register(api, name, key); err != nil {
-					log.Notice("Cannot register: %s", err)
+					log.Info("Cannot register: %s", err)
 					continue
 				}
 				alive = true
@@ -123,7 +123,7 @@ func mainCommandRun(cmd *cobra.Command, args []string) {
 
 		case <-suicideTick:
 			if nbActionsDone == 0 {
-				log.Notice("Time to exit.")
+				log.Info("Time to exit.")
 				unregister()
 			}
 

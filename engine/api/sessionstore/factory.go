@@ -12,7 +12,7 @@ var Status string
 
 //Get is a factory
 func Get(mode, redisHost, redisPassword string, ttl int) (Store, error) {
-	log.Notice("SessionStore> Intializing store (%s)\n", mode)
+	log.Info("SessionStore> Intializing store (%s)\n", mode)
 	switch mode {
 	case "redis":
 		Status = "Redis "

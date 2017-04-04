@@ -127,7 +127,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 		return err
 	}
 
-	log.Info("SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
+	log.Debug("SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
 
 	return nil
 }

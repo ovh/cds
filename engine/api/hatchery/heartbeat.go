@@ -34,7 +34,7 @@ func Heartbeat(DBFunc func() *gorp.DbMap) {
 					log.Warning("HatcheryHeartbeat> Cannot delete hatchery %d: %s\n", w[i].ID, err)
 					continue
 				}
-				log.Info("HatcheryHeartbeat> Hatchery %s removed.\n", w[i].Name)
+				log.Debug("HatcheryHeartbeat> Hatchery %s removed.\n", w[i].Name)
 			}
 		}
 		time.Sleep(5 * time.Second)

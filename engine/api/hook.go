@@ -244,7 +244,7 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		return nil
 	}
 
-	log.Info("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)
+	log.Debug("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)
 	found := false
 	//begin a tx
 	tx, err := db.Begin()
@@ -294,7 +294,7 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		if ok {
 			log.Debug("processHook> Triggered %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
 		} else {
-			log.Notice("processHook> Did not trigger %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
+			log.Info("processHook> Did not trigger %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
 		}
 	}
 

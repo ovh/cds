@@ -53,7 +53,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 
 	workersStarted := h.WorkersStarted()
 	if workersStarted > maxWorkers {
-		log.Notice("routine> %d max workers reached. current:%d max:%d", timestamp, workersStarted, maxWorkers)
+		log.Info("routine> %d max workers reached. current:%d max:%d", timestamp, workersStarted, maxWorkers)
 		return nil, nil
 	}
 	log.Debug("routine> %d - workers already started:%d", timestamp, workersStarted)
@@ -90,7 +90,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 		if nToRun < 0 { // should never occur, just to be sure
 			nToRun = 1
 		}
-		log.Info("routine> %d - work only on %d jobs from queue. queue size:%d workersStarted:%d maxWorkers:%d", timestamp, nToRun, len(jobs), workersStarted, maxWorkers)
+		log.Debug("routine> %d - work only on %d jobs from queue. queue size:%d workersStarted:%d maxWorkers:%d", timestamp, nToRun, len(jobs), workersStarted, maxWorkers)
 	}
 
 	for i := range jobs[:nToRun] {

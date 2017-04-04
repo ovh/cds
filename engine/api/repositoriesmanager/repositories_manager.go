@@ -54,14 +54,14 @@ func Initialize(o InitializeOpts) error {
 		}
 		for _, rm := range repositoriesManager {
 			var found bool
-			log.Notice("RepositoriesManager> Searching key for %s \n", rm.Name)
+			log.Info("RepositoriesManager> Searching key for %s \n", rm.Name)
 			s := fmt.Sprintf("cds/repositoriesmanager-secrets-%s-", rm.Name)
 			rmSecrets := map[string]string{}
 			all, _ := secrets.All()
 			for k, v := range all {
 				if strings.HasPrefix(k, s) {
 					found = true
-					log.Notice("RepositoriesManager> Found a key for %s\n", rm.Name)
+					log.Info("RepositoriesManager> Found a key for %s\n", rm.Name)
 					rmSecrets[strings.Replace(k, s, "", -1)] = v
 				}
 			}
@@ -105,7 +105,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		stash.DisableSetStatus = options.DisableStashSetStatus
 
 		if stash.DisableSetStatus {
-			log.Info("RepositoriesManager> ⚠ Stash Statuses are disabled")
+			log.Debug("RepositoriesManager> ⚠ Stash Statuses are disabled")
 		}
 
 		rm := sdk.RepositoriesManager{
@@ -172,11 +172,11 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		github.DisableStatusURL = options.DisableGithubStatusURL
 
 		if github.DisableSetStatus {
-			log.Info("RepositoriesManager> ⚠ Github Statuses are disabled")
+			log.Debug("RepositoriesManager> ⚠ Github Statuses are disabled")
 		}
 
 		if github.DisableStatusURL {
-			log.Info("RepositoriesManager> ⚠ Github Statuses URL are disabled")
+			log.Debug("RepositoriesManager> ⚠ Github Statuses URL are disabled")
 		}
 
 		if withHook == nil {
@@ -215,7 +215,7 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 			return fmt.Errorf("Cannot init %s. Missing private key", privateKey)
 		}
 		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "privateKey"))
-		log.Notice("RepositoriesManager> Writing stash private key %s", path)
+		log.Info("RepositoriesManager> Writing stash private key %s", path)
 		if err := ioutil.WriteFile(path, []byte(privateKey), 0600); err != nil {
 			log.Warning("RepositoriesManager> Unable to write stash private key %s : %s", path, err)
 			return err
@@ -234,7 +234,7 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 			return fmt.Errorf("Cannot init %s. Missing client secret", clientSecret)
 		}
 		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "clientSecret"))
-		log.Notice("RepositoriesManager> Writing github client secret %s", path)
+		log.Info("RepositoriesManager> Writing github client secret %s", path)
 		if err := ioutil.WriteFile(path, []byte(clientSecret), 0600); err != nil {
 			log.Warning("RepositoriesManager> Unable to write stash private key %s : %s", path, err)
 			return err

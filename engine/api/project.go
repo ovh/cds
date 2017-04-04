@@ -236,7 +236,7 @@ func deleteProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		log.Warning("deleteProject: Cannot commit transaction: %s\n", err)
 		return err
 	}
-	log.Notice("Project %s deleted.\n", p.Name)
+	log.Info("Project %s deleted.\n", p.Name)
 
 	return nil
 

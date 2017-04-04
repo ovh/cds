@@ -293,7 +293,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	defer tx.Rollback()
 
 	// Schedule pipeline for build
-	log.Info("runPipelineHandler> Scheduling %s/%s/%s[%s] with %d params, version 0",
+	log.Debug("runPipelineHandler> Scheduling %s/%s/%s[%s] with %d params, version 0",
 		projectKey, app.Name, pipelineName, envDest.Name, len(request.Params))
 	log.Debug("runPipelineHandler> Pipeline trigger by %s - %d", c.User.ID, request.ParentPipelineID)
 	trigger := sdk.PipelineBuildTrigger{
@@ -407,7 +407,7 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return err
 	}
 
-	log.Notice("deletePipelineActionHandler> Deleting action %d in %s/%s\n", pipelineActionID, vars["key"], vars["permPipelineKey"])
+	log.Info("deletePipelineActionHandler> Deleting action %d in %s/%s\n", pipelineActionID, vars["key"], vars["permPipelineKey"])
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -1384,9 +1384,9 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 	}
 
 	if prev == nil {
-		log.Info("getPipelineBuildCommitsHandler> No previous build was found for branch %s", cur.Branch)
+		log.Debug("getPipelineBuildCommitsHandler> No previous build was found for branch %s", cur.Branch)
 	} else {
-		log.Info("getPipelineBuildCommitsHandler> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+		log.Debug("getPipelineBuildCommitsHandler> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
 	}
 
 	//If there is not difference between the previous build and the current build
@@ -1409,7 +1409,7 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 
 	if cur.Hash != "" {
 		//If we only get current pipeline build hash
-		log.Info("getPipelineBuildCommitsHandler>  Looking for every commit until %s ", cur.Hash)
+		log.Debug("getPipelineBuildCommitsHandler>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
 		if err != nil {
 			log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)

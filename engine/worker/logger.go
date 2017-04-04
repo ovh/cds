@@ -124,7 +124,7 @@ func logger(inputChan chan sdk.Log) {
 }
 
 func grpcLogger(inputChan chan sdk.Log) error {
-	log.Notice("Logging through grpc")
+	log.Info("Logging through grpc")
 	client := grpc.NewBuildLogClient(grpcConn)
 	stream, err := client.AddBuildLog(context.Background())
 	if err != nil {

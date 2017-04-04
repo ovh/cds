@@ -22,7 +22,7 @@ func Init(port int, tls bool, certFile, keyFile string) error {
 		return err
 	}
 
-	log.Notice("Starting GRPC services on port %d", port)
+	log.Info("Starting GRPC services on port %d", port)
 
 	opts := []grpc.ServerOption{
 		grpc.StreamInterceptor(streamInterceptor),

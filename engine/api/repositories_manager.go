@@ -138,7 +138,7 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 		return sdk.ErrNoReposManagerAuth
 
 	}
-	log.Notice("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", projectKey, token, url)
+	log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", projectKey, token, url)
 
 	data := map[string]string{
 		"project_key":          projectKey,
@@ -187,7 +187,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 
 	}
 
-	log.Notice("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
+	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
 	result := map[string]string{
 		"project_key":          projectKey,
 		"repositories_manager": rmName,
@@ -246,7 +246,7 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 
 	}
 
-	log.Notice("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
+	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
 	result := map[string]string{
 		"project_key":          projectKey,
 		"repositories_manager": rmName,

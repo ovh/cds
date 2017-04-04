@@ -30,7 +30,7 @@ func server() (int, error) {
 		return 0, err
 	}
 
-	log.Notice("Export variable HTTP server: %s\n", listener.Addr().String())
+	log.Info("Export variable HTTP server: %s\n", listener.Addr().String())
 	r := mux.NewRouter()
 	r.HandleFunc("/var", addBuildVarHandler)
 	r.HandleFunc("/upload", uploadHandler)

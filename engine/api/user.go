@@ -346,7 +346,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 
 	var logFromCLI bool
 	if r.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-		log.Notice("LoginUser> login from CLI")
+		log.Info("LoginUser> login from CLI")
 		logFromCLI = true
 	}
 

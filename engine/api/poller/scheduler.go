@@ -44,7 +44,7 @@ func SchedulerRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, string, erro
 	execs := []sdk.RepositoryPollerExecution{}
 	for i := range ps {
 		p := &ps[i]
-		log.Info("poller.Scheduler.Run> Checking poller %s/%s", p.Application.Name, p.Pipeline.Name)
+		log.Debug("poller.Scheduler.Run> Checking poller %s/%s", p.Application.Name, p.Pipeline.Name)
 
 		//Skip disabled scheduler
 		if !p.Enabled {
@@ -53,7 +53,7 @@ func SchedulerRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, string, erro
 
 		//Skip if there is a pending execution
 		if next, _ := LoadNextExecution(tx, p.ApplicationID, p.PipelineID); next != nil {
-			log.Info("poller.Scheduler.Run> Poller has already a pending execution")
+			log.Debug("poller.Scheduler.Run> Poller has already a pending execution")
 			continue
 		}
 

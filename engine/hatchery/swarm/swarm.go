@@ -51,7 +51,7 @@ func (h *HatcherySwarm) Init() error {
 		return err
 	}
 
-	log.Notice("Swarm Hatchery ready to run !")
+	log.Info("Swarm Hatchery ready to run !")
 
 	go h.killAwolWorkerRoutine()
 	return nil
@@ -145,14 +145,14 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			}
 
 			if netname, ok := network.Labels["worker_net"]; ok {
-				log.Notice("killAndRemove> Remove network %s", netname)
+				log.Info("killAndRemove> Remove network %s", netname)
 				for id := range network.Containers {
-					log.Notice("killAndRemove> Remove container %s", id)
+					log.Info("killAndRemove> Remove container %s", id)
 					if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
 						ID:     id,
 						Signal: docker.SIGKILL,
 					}); err != nil {
-						log.Info("killAndRemove> Unable to kill container %s", err)
+						log.Debug("killAndRemove> Unable to kill container %s", err)
 						continue
 					}
 
@@ -166,7 +166,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 				}
 			} else {
 	*/
-	log.Notice("killAndRemove>Remove container %s", ID)
+	log.Info("killAndRemove>Remove container %s", ID)
 	if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
 		ID:     ID,
 		Signal: docker.SIGKILL,
@@ -188,7 +188,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 
-	log.Notice("Spawning worker %s", name)
+	log.Info("Spawning worker %s", name)
 
 	//Create a network
 	network := name + "-net"
@@ -308,7 +308,7 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 		//Moaaaaar memory
 		memory = memory * 110 / 100
 	}
-	log.Notice("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", name, image, network, networkAlias, memory)
+	log.Info("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", name, image, network, networkAlias, memory)
 	opts := docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
@@ -374,7 +374,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	if len(links) == 0 && len(cs) > 0 {
 		percentFree := 100 - (100 * len(cs) / h.maxContainers)
 		if percentFree <= hatcherySwarm.ratioService {
-			log.Notice("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, hatcherySwarm.ratioService)
+			log.Info("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, hatcherySwarm.ratioService)
 			return false
 		}
 	}
@@ -423,7 +423,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 			OutputStream: nil,
 		}
 		auth := docker.AuthConfiguration{}
-		log.Notice("CanSpawn> pulling image %s", model.Image)
+		log.Info("CanSpawn> pulling image %s", model.Image)
 		if err := h.dockerClient.PullImage(opts, auth); err != nil {
 			log.Warning("CanSpawn> Unable to pull image %s : %s", model.Image, err)
 			return false
@@ -453,7 +453,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 				OutputStream: nil,
 			}
 			auth := docker.AuthConfiguration{}
-			log.Notice("CanSpawn> pulling image %s", i)
+			log.Info("CanSpawn> pulling image %s", i)
 			if err := h.dockerClient.PullImage(opts, auth); err != nil {
 				log.Warning("CanSpawn> Unable to pull image %s : %s", i, err)
 				return false
@@ -487,7 +487,7 @@ func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
 
 	list := []string{}
 	for _, c := range containers {
-		log.Info("Container : %s %s [%s]", c.ID, c.Image, c.Status)
+		log.Debug("Container : %s %s [%s]", c.ID, c.Image, c.Status)
 		if c.Image == model.Image {
 			list = append(list, c.ID)
 		}
@@ -550,7 +550,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 				found = true
 				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
-					log.Info("killAwolWorker> Worker %s is disabled. Kill it with fire !", c.Names[0])
+					log.Debug("killAwolWorker> Worker %s is disabled. Kill it with fire !", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break
 				}
@@ -564,7 +564,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 	//Delete the workers
 	for _, c := range oldContainers {
-		log.Notice("killAwolWorker> Delete worker %s", c.Names[0])
+		log.Info("killAwolWorker> Delete worker %s", c.Names[0])
 		if err := h.killAndRemove(c.ID); err != nil {
 			log.Warning("killAwolWorker> Cannot killAndRemove worker id: %s, err:%s", c.ID, err)
 		}
@@ -590,7 +590,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 	for _, c := range oldContainers {
 		h.killAndRemove(c.ID)
-		log.Notice("killAwolWorker> Delete worker %s", c.Names[0])
+		log.Info("killAwolWorker> Delete worker %s", c.Names[0])
 	}
 
 	//Checking networks
@@ -613,7 +613,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 			continue
 		}
 
-		log.Notice("killAwolWorker> Delete network %s", n.Name)
+		log.Info("killAwolWorker> Delete network %s", n.Name)
 		if err := h.dockerClient.RemoveNetwork(n.ID); err != nil {
 			log.Warning("killAwolWorker> Unable to delete network %s", n.Name)
 		}

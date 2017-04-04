@@ -49,7 +49,7 @@ func (b *Broker) Start() {
 				// There is a new client attached and we
 				// want to start sending them messages.
 				b.clients[s] = true
-				log.Notice("Added new client")
+				log.Info("Added new client")
 
 			case s := <-b.defunctClients:
 
@@ -58,7 +58,7 @@ func (b *Broker) Start() {
 				delete(b.clients, s)
 				close(s)
 
-				log.Notice("Removed client")
+				log.Info("Removed client")
 
 			case msg := <-b.messages:
 
@@ -68,7 +68,7 @@ func (b *Broker) Start() {
 				for s := range b.clients {
 					s <- msg
 				}
-				log.Notice("Broadcast message to %d clients", len(b.clients))
+				log.Info("Broadcast message to %d clients", len(b.clients))
 			}
 		}
 	}()
@@ -101,7 +101,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		// Remove this client from the map of attached clients
 		// when `EventHandler` exits.
 		b.defunctClients <- messageChan
-		log.Notice("HTTP connection just closed.")
+		log.Info("HTTP connection just closed.")
 	}()
 
 	// Set the headers related to event streaming.
@@ -145,7 +145,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	// Done.
-	log.Notice("Finished HTTP request at ", r.URL.Path)
+	log.Info("Finished HTTP request at ", r.URL.Path)
 
 	return nil
 }

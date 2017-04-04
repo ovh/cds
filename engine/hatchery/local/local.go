@@ -68,7 +68,7 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 	for name, cmd := range h.workers {
 		if worker.Name == name {
-			log.Notice("KillLocalWorker> Killing %s", worker.Name)
+			log.Info("KillLocalWorker> Killing %s", worker.Name)
 			return cmd.Process.Kill()
 		}
 	}
@@ -195,7 +195,7 @@ func (h *HatcheryLocal) Init() error {
 		},
 	}
 
-	log.Notice("Call hatchery.Register Init()")
+	log.Info("Call hatchery.Register Init()")
 
 	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
 		log.Warning("Cannot register hatchery: %s", err)
@@ -258,7 +258,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		// Worker not found on api side. kill it
 		if w.Name == "" {
 			w.Name = name
-			log.Notice("Killing AWOL worker %s", w.Name)
+			log.Info("Killing AWOL worker %s", w.Name)
 			if err := h.KillWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
@@ -267,7 +267,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		}
 		// Worker is disabled. kill it
 		if w.Status == sdk.StatusDisabled {
-			log.Notice("Killing disabled worker %s", w.Name)
+			log.Info("Killing disabled worker %s", w.Name)
 
 			if err := h.KillWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)

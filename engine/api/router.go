@@ -95,7 +95,7 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				} else {
 					dur := time.Since(*lastPanic)
 					if dur.Minutes() > float64(2) {
-						log.Notice("[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
+						log.Info("[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
 						nbPanic = 0
 					}
 				}
@@ -245,7 +245,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		defer func() {
 			end := time.Now()
 			latency := end.Sub(start)
-			log.Info("%-7s | %13v | %v", req.Method, latency, req.URL)
+			log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
 		}()
 
 		if req.Method == "GET" && rc.get != nil {

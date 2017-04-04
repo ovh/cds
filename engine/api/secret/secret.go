@@ -65,7 +65,7 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 		Client = filesecretbackend.Client(opts)
 	} else {
 		//Load the secretbackend plugin
-		log.Notice("Loading Secret Backend Plugin %s", secretBackendBinary)
+		log.Info("Loading Secret Backend Plugin %s", secretBackendBinary)
 		client := secretbackend.NewClient(secretBackendBinary, opts)
 		Client, err = client.Instance()
 		if err != nil {
@@ -106,7 +106,7 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 		return nil
 	}
 
-	log.Notice("secret.Init> Database credentials found")
+	log.Info("secret.Init> Database credentials found")
 	SecretUsername = cdsDBCred.User
 	SecretPassword = cdsDBCred.Password
 

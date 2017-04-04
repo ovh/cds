@@ -76,7 +76,7 @@ func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string
 					log.Warning("hook> Cannot check %s/%s for commit %s by %s : %s (%s)", projectData.Key, a.Name, hash, author, commit.Message, err)
 				}
 				if match {
-					log.Notice("hook> Skipping build of %s/%s for commit %s by %s", projectData.Key, a.Name, hash, author)
+					log.Info("hook> Skipping build of %s/%s for commit %s by %s", projectData.Key, a.Name, hash, author)
 					return false, nil
 				}
 			}

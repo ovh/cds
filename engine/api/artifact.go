@@ -160,7 +160,7 @@ func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return err
 	}
 
-	log.Info("downloadArtifactHandler: Serving %+v\n", art)
+	log.Debug("downloadArtifactHandler: Serving %+v\n", art)
 
 	w.Header().Add("Content-Type", "application/octet-stream")
 	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
@@ -301,7 +301,7 @@ func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *g
 	w.Header().Add("Content-Type", "application/octet-stream")
 	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-	log.Info("downloadArtifactDirectHandler: Serving %+v\n", art)
+	log.Debug("downloadArtifactDirectHandler: Serving %+v\n", art)
 	err = artifact.StreamFile(w, *art)
 	if err != nil {
 		log.Warning("downloadArtifactDirectHandler: Cannot stream artifact %s-%s-%s-%s-%s file: %s\n", art.Project, art.Application, art.Environment, art.Pipeline, art.Tag, err)

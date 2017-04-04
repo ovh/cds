@@ -39,7 +39,7 @@ func DeletePipelineActionByStage(db gorp.SqlExecutor, stageID int64, userID int6
 		if actionType != sdk.JoinedAction {
 			continue
 		}
-		log.Info("DeletePipelineActionByStage> Deleting action %d\n", id)
+		log.Debug("DeletePipelineActionByStage> Deleting action %d\n", id)
 		if err := action.DeleteAction(db, id, userID); err != nil {
 			return err
 		}
