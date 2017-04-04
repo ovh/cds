@@ -49,6 +49,12 @@ var mainCmd = &cobra.Command{
 	Short: "CDS Engine",
 	Run: func(cmd *cobra.Command, args []string) {
 		initConfig()
+
+		//Check the first config key
+		if viper.GetString(viperURLAPI) == "" {
+			sdk.Exit("Your CDS configuration seems to not be set. Please use environment variables, file or etcd to set your configuration.")
+		}
+
 		log.Initialize()
 		log.Notice("Starting CDS server...\n")
 
