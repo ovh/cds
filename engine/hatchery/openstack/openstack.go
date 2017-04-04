@@ -198,7 +198,7 @@ func (h *HatcheryCloud) killErrorServers() {
 				continue
 			}
 
-			if len(s.Addresses) == 0 && time.Since(t) > 6*time.Minute {
+			if len(s.Addresses) == 0 && time.Since(t) > 10*time.Minute {
 				log.Notice("Deleting server %s without IP Address", s.Name)
 				if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 					log.Warning("Cannot remove server %s: %s", s.Name, err)
@@ -253,11 +253,11 @@ func (h *HatcheryCloud) killAwolServers() {
 			break
 		}
 
-		log.Debug("killAwolServers> Deleting %s (%s) %v ? : %v %v hatcheryName:%s %v", s.Name, s.ImageRef, s.Metadata, ok, (time.Since(t) > 6*time.Minute), workerHatcheryName, (workerHatcheryName == h.Hatchery().Name))
+		log.Debug("killAwolServers> Deleting %s (%s) %v ? : %v %v hatcheryName:%s %v", s.Name, s.ImageRef, s.Metadata, ok, (time.Since(t) > 10*time.Minute), workerHatcheryName, (workerHatcheryName == h.Hatchery().Name))
 
 		// Delete workers, if not identified by CDS API
 		// Wait for 6 minutes, to avoid killing worker babies
-		if (workerHatcheryName == "" || workerHatcheryName == h.Hatchery().Name) && ok && time.Since(t) > 6*time.Minute {
+		if (workerHatcheryName == "" || workerHatcheryName == h.Hatchery().Name) && ok && time.Since(t) > 10*time.Minute {
 			log.Notice("killAwolServers> %s last update: %s", s.Name, time.Since(t))
 			if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 				log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
