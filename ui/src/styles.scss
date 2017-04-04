@@ -375,6 +375,11 @@ $verticalTreeHeightLine: 40px;
   position: relative;
 }
 
+.tree.hierarchical ul li {
+  padding-top: 27px;
+}
+
+
 .tree.hierarchical li::before, .tree.hierarchical li::after {
   content: '';
   position: absolute;

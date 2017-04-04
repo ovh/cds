@@ -25,6 +25,7 @@ export class Trigger {
     updating: boolean;
 
     constructor() {
+        this.id = 0;
         this.dest_application = new Application();
         this.dest_pipeline = new Pipeline();
         this.dest_environment = new Environment();
