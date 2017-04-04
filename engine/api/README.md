@@ -5,7 +5,7 @@ To start CDS api, the only mandatory dependency is a PostgreSQL database and a p
 
 There is are two ways to set up CDS:
 
-- as [https://github.com/toml-lang/toml](toml) configuration
+- as [toml](https://github.com/toml-lang/toml) configuration
 - over environment variables.
 
 ## CDS API Third-parties
@@ -17,7 +17,7 @@ At the minimum, CDS needs a PostgreSQL Database >= 9.4. But for serious usage yo
 - A SMTP Server for mails
 - A [Kafka](https://kafka.apache.org/) Broker to manage CDS event
 - A [Openstack Swift](https://docs.openstack.org/developer/swift/) Tenant to store builds artifacts
-- A [Vault](https://www.vaultproject.io/)server for cipher and app keys
+- A [Vault](https://www.vaultproject.io/) server for cipher and app keys
 
 See Configuration template for more details
 

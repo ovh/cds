@@ -44,9 +44,9 @@ A Go SDK is available at github.com/ovh/cds/sdk. It provide helper functions for
 
 ## Links
 
--OVH home (us): https://www.ovh.com/us/
--OVH home (fr): https://www.ovh.com/fr/
--OVH community: https://community.ovh.com/c/open-source/continuous-delivery-service
+* OVH home (us): https://www.ovh.com/us/
+* OVH home (fr): https://www.ovh.com/fr/
+* OVH community: https://community.ovh.com/c/open-source/continuous-delivery-service
 
 ## License
 
