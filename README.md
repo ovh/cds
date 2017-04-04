@@ -16,7 +16,7 @@ CDS is composend of several components/
 
 ### API
 
-The core component of CDS: https://github.com/ovh/cds/tree/master/engine/api
+The core component of CDS: (engine/api)
 
 ### WebUI
 
