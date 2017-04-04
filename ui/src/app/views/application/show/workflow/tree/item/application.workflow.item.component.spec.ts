@@ -13,7 +13,7 @@ import {Injector} from '@angular/core';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
 import {Router, NavigationExtras} from '@angular/router';
 import {Observable} from 'rxjs/Rx';
-import {PipelineBuild, Pipeline, PipelineRunRequest} from '../../../../../../model/pipeline.model';
+import {PipelineBuild, Pipeline, PipelineRunRequest, PipelineBuildTrigger} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {Application} from '../../../../../../model/application.model';
 import {TranslateParser, TranslateService, TranslateLoader} from 'ng2-translate';
@@ -116,6 +116,9 @@ describe('CDS: Application Workflow Item', () => {
             pb.application = workflowItem.application;
             pb.pipeline = workflowItem.pipeline;
             pb.environment = workflowItem.environment;
+            pb.version = 12;
+            pb.trigger = new PipelineBuildTrigger();
+            pb.trigger.vcs_branch = 'master';
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
@@ -198,6 +201,9 @@ describe('CDS: Application Workflow Item', () => {
             pb.application = workflowItem.application;
             pb.pipeline = workflowItem.pipeline;
             pb.environment = workflowItem.environment;
+            pb.version = 12;
+            pb.trigger = new PipelineBuildTrigger();
+            pb.trigger.vcs_branch = 'toto';
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
