@@ -1,0 +1,14 @@
+@import '../../../../common';
+
+.audits {
+  line-height: 1rem;
+}
+
+.table tbody tr td {
+  padding-bottom: 0px;
+  padding-top: 0px;
+}
+
+.ui.table thead th.pl50 {
+  padding-left: 50px;
+}

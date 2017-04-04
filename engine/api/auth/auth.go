@@ -30,7 +30,7 @@ type Driver interface {
 
 //GetDriver is a factory
 func GetDriver(mode string, options interface{}, storeOptions sessionstore.Options) (Driver, error) {
-	log.Notice("Auth> Intializing driver (%s)\n", mode)
+	log.Notice("Auth> Intializing driver (%s)", mode)
 	store, err := sessionstore.Get(storeOptions.Mode, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get AuthDriver : %s\n", err)
@@ -45,10 +45,10 @@ func GetDriver(mode string, options interface{}, storeOptions sessionstore.Optio
 	}
 
 	if d == nil {
-		return nil, errors.New("Unable to get AuthDriver")
+		return nil, errors.New("GetDriver> Unable to get AuthDriver (nil)")
 	}
 	if err := d.Open(options, store); err != nil {
-		return nil, fmt.Errorf("Unable to get AuthDriver : %s\n", err)
+		return nil, sdk.WrapError(err, "GetDriver> Unable to get AuthDriver")
 	}
 	return d, nil
 }
@@ -74,7 +74,7 @@ func NewPersistentSession(db gorp.SqlExecutor, d Driver, u *sdk.User) (sessionst
 	if errSession != nil {
 		return "", errSession
 	}
-	log.Notice("Auth> New Persistent Session for %s", u.Username)
+	log.Notice("NewPersistentSession> New Persistent Session for %s", u.Username)
 	newToken := sdk.UserToken{
 		Token:     string(t),
 		Timestamp: time.Now().Unix(),
@@ -89,7 +89,7 @@ func NewPersistentSession(db gorp.SqlExecutor, d Driver, u *sdk.User) (sessionst
 	if errStore != nil {
 		return "", errStore
 	}
-	log.Notice("Auth> New Session for %s", u.Username)
+	log.Notice("NewPersistentSession> New Session for %s", u.Username)
 	d.Store().Set(session, "username", u.Username)
 
 	return session, nil
@@ -131,7 +131,7 @@ func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, hea
 			//Set user in ctx
 			u, err := user.LoadUserWithoutAuth(db, usr)
 			if err != nil {
-				log.Warning("Auth> Unable to load user %s", usr)
+				log.Warning("getUserPersistentSession> Unable to load user %s", usr)
 				return false
 			}
 			ctx.User = u
@@ -144,7 +144,7 @@ func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, hea
 func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
 	authHeaderValue := headers.Get("Authorization")
 	if authHeaderValue == "" {
-		log.Notice("Auth> No Authorization Header\n")
+		log.Warning("ReloadUserPersistentSession> No Authorization Header")
 		return false
 	}
 	// Split Basic and (user:pass)64
@@ -182,7 +182,7 @@ func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, 
 		}
 	}
 
-	log.Warning("ReloadUserPersistentSession> failed")
+	log.Warning("ReloadUserPersistentSession> failed for username:%s", u.Username)
 	return false
 }
 

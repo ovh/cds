@@ -1,0 +1,38 @@
+<div class="pipelineAdmin">
+    <app-zone header="aAA">
+        <app-zone-content>
+            <form class="ui form" (ngSubmit)="updatePipeline()" #projectUpdateFrom="ngForm">
+                <div class="fields">
+                    <div class="eight wide field">
+                        <label>{{ 'pipeline_name' | translate}}</label>
+                        <input type="text" [(ngModel)]="editablePipeline.name" name="pipname" [disabled]="loading">
+                    </div>
+                </div>
+                <div class="fields">
+                    <div class="eight wide field">
+                        <label>{{ 'pipeline_type' | translate }}</label>
+                        <sm-select class="search fluid" [disabled]="loading" [(model)]="editablePipeline.type" *ngIf="pipelineTypes.length > 0">
+                            <option *ngFor="let t of pipelineTypes" value="{{t}}">{{t}}</option>
+                        </sm-select>
+                    </div>
+                    <div class="eight wide bottom aligned field">
+                        <button class="ui button green button" [class.disabled]="loading" type="submit">{{ 'btn_save' | translate }}</button>
+                    </div>
+                </div>
+            </form>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">
+        <app-zone-content class="bottom">
+            <div class="ui grid">
+                <div class="eight wide column">
+                    <div class="title">{{ 'pipeline_delete_label' | translate}}</div>
+                    <div class="description">{{ 'pipeline_delete_description' | translate}}</div>
+                </div>
+                <div class="eight wide right aligned column">
+                    <app-delete-button [loading]="loading" (event)="deletePipeline()"></app-delete-button>
+                </div>
+            </div>
+        </app-zone-content>
+    </app-zone>
+</div>

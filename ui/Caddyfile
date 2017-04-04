@@ -1,0 +1,26 @@
+:2015 {
+    ext .html
+    gzip
+
+    errors {
+        404 index.html
+    }
+
+    proxy /cdsapi {$BACKEND_HOST} {
+        without /cdsapi
+        header_upstream Authorization {>Authorization}
+        header_upstream Session-Token {>Session-Token}
+    }
+
+    proxy /assets/worker/shared/cdsapi {$BACKEND_HOST} {
+        without /assets/worker/shared/cdsapi
+        header_upstream Authorization {>Authorization}
+        header_upstream Session-Token {>Session-Token}
+    }
+
+    proxy /assets/worker/web/cdsapi {$BACKEND_HOST} {
+        without /assets/worker/web/cdsapi
+        header_upstream Authorization {>Authorization}
+        header_upstream Session-Token {>Session-Token}
+    }
+}

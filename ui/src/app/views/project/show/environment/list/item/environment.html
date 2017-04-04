@@ -1,0 +1,28 @@
+<form class="ui form" *ngIf="editableEnvironment.permission === 7">
+    <div class="fields">
+        <div class="eight wide field">
+            <input class="ui input" type="text" name="envname" [(ngModel)]="editableEnvironment.name" [disabled]="loading"
+                   (keydown)="hasChanged = true">
+        </div>
+        <div class="eight wide right aligned field">
+            <div *ngIf="hasChanged;then rename;else delete"></div>
+            <ng-template #rename>
+                <button (click)="renameEnvironment()" type="button" name="renamebtn" class="ui green button"
+                        [class.loading]="loading" [class.disabled]="loading"><i class="save icon"></i>{{ 'btn_rename' | translate}}
+                </button>
+            </ng-template>
+            <ng-template #delete>
+                <app-delete-button [loading]="loading" (event)="deleteEnvironment()"></app-delete-button>
+            </ng-template>
+        </div>
+    </div>
+</form>
+<ng-container *ngIf="editableEnvironment.permission === 7">
+    <h3>{{ 'environment_variable_form_title' | translate }}</h3>
+    <app-variable-form [loading]="addVarLoading" (createVariableEvent)="variableEvent($event)"></app-variable-form>
+</ng-container>
+<h3>{{ 'environment_variable_list_title' | translate }}</h3>
+<app-variable [variables]="editableEnvironment.variables" (event)="variableEvent($event)"
+              [mode]="editableEnvironment.permission === 7?'edit':'ro'" [maxPerPage]="8" [environment]="editableEnvironment" [project]="project" auditContext="environment"></app-variable>
+
+
