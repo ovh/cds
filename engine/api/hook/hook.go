@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -18,6 +17,12 @@ import (
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 )
+
+var apiURL string
+
+func Init(url string) {
+	apiURL = apiURL
+}
 
 //ReceivedHook is a temporary struct to manage received hook
 type ReceivedHook struct {
@@ -157,7 +162,7 @@ func LoadApplicationHooks(db gorp.SqlExecutor, applicationID int64) ([]sdk.Hook,
 		if err != nil {
 			return hooks, err
 		}
-		link := viper.GetString("api_url") + HookLink
+		link := apiURL + HookLink
 		h.Link = fmt.Sprintf(link, h.UID, h.Project, h.Repository)
 		hooks = append(hooks, h)
 	}
@@ -183,7 +188,7 @@ func LoadPipelineHooks(db gorp.SqlExecutor, pipelineID int64, applicationID int6
 		if err = rows.Scan(&h.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.UID, &h.Enabled); err != nil {
 			return nil, err
 		}
-		link := viper.GetString("api_url") + HookLink
+		link := apiURL + HookLink
 		h.Link = fmt.Sprintf(link, h.UID, h.Project, h.Repository)
 		hooks = append(hooks, h)
 	}
@@ -334,7 +339,7 @@ func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesMana
 		return nil, err
 	}
 
-	s := viper.GetString("api_url") + HookLink
+	s := apiURL + HookLink
 	link := fmt.Sprintf(s, h.UID, t[0], t[1])
 
 	h.Link = link

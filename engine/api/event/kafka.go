@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Shopify/sarama"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
@@ -45,7 +44,7 @@ func (c *KafkaClient) initialize(options interface{}) (Broker, error) {
 	c.options = conf
 
 	if err := c.initProducer(); err != nil {
-		return nil, fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", err.Error(), viper.GetString("event_kafka_broker_addresses"), viper.GetString("event_kafka_user"))
+		return nil, fmt.Errorf("initKafka> Error with init sarama:%s (newSyncPoducer on %s user:%s)", err.Error(), conf.BrokerAddresses, conf.User)
 	}
 
 	return c, nil

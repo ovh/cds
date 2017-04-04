@@ -33,6 +33,8 @@ type InitializeOpts struct {
 	DisableStashSetStatus  bool
 	DisableGithubSetStatus bool
 	DisableGithubStatusURL bool
+	GithubSecret           string
+	StashPrivateKey        string
 }
 
 //Initialize initialize private keys stored in Vault
@@ -42,7 +44,14 @@ type InitializeOpts struct {
 func Initialize(o InitializeOpts) error {
 	options = o
 
-	if db := database.DBMap(database.DB()); db != nil {
+	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
+	repostash.Init(o.APIBaseURL, o.UIBaseURL)
+
+	_db := database.DB()
+	if _db == nil {
+		return fmt.Errorf("Unable to init repositories manager")
+	}
+	if db := database.DBMap(_db); db != nil {
 		secrets := o.SecretClient.GetSecrets()
 		if secrets.Err() != nil {
 			return secrets.Err()

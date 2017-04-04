@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/spf13/viper"
 )
 
 func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.TemplateExtension, []sdk.TemplateParam, io.ReadCloser, func(), error) {
@@ -327,7 +328,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	// Apply the template
 	log.Debug("applyTemplateHandler> applyTemplate")
-	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey)
+	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
 	if err != nil {
 		return err
 
@@ -403,7 +404,7 @@ func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, d
 	}
 
 	//Apply the template
-	msg, err := template.ApplyTemplateOnApplication(db, proj, app, opts, c.User, sessionKey)
+	msg, err := template.ApplyTemplateOnApplication(db, proj, app, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
 	if err != nil {
 		return err
 

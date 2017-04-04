@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -12,6 +13,18 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/spf13/viper"
+)
+
+const (
+	viperDBUser     = "db.user"
+	viperDBPassword = "db.password"
+	viperDBName     = "db.name"
+	viperDBHost     = "db.host"
+	viperDBPort     = "db.port"
+	viperDBSSLMode  = "db.sslmode"
+	viperDBMaxConn  = "db.maxconn"
+	viperDBTimeout  = "db.timeout"
 )
 
 //DBCmd is the root command for database management
@@ -43,6 +56,7 @@ var statusCmd = &cobra.Command{
 }
 
 var (
+	cfgFile             string
 	sqlMigrateDir       string
 	sqlMigrateDryRun    bool
 	sqlMigrateLimitUp   int
@@ -65,6 +79,24 @@ func init() {
 	statusCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 }
 
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	if cfgFile != "" { // enable ability to specify config file via flag
+		viper.SetConfigFile(cfgFile)
+	}
+
+	viper.SetConfigName("api.config") // name of config file (without extension)
+	viper.AddConfigPath("$HOME/.cds") // adding home directory as first search path
+	viper.AutomaticEnv()              // read in environment variables that match
+	viper.SetEnvPrefix("cds")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." and "-" by "_" for env variable lookup
+
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
+}
+
 type statusRow struct {
 	Id        string
 	Migrated  bool
@@ -72,19 +104,30 @@ type statusRow struct {
 }
 
 func upgradeCmdFunc(cmd *cobra.Command, args []string) {
+	initConfig()
 	if err := ApplyMigrations(migrate.Up, sqlMigrateDryRun, sqlMigrateLimitUp); err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
 }
 
 func downgradeCmdFunc(cmd *cobra.Command, args []string) {
+	initConfig()
 	if err := ApplyMigrations(migrate.Down, sqlMigrateDryRun, sqlMigrateLimitDown); err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
 }
 
 func statusCmdFunc(cmd *cobra.Command, args []string) {
-	db, err := Init()
+	initConfig()
+	db, err := Init(
+		viper.GetString(viperDBUser),
+		viper.GetString(viperDBPassword),
+		viper.GetString(viperDBName),
+		viper.GetString(viperDBHost),
+		viper.GetString(viperDBPort),
+		viper.GetString(viperDBSSLMode),
+		viper.GetInt(viperDBTimeout),
+		viper.GetInt(viperDBMaxConn))
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
@@ -143,7 +186,15 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
-	db, err := Init()
+	db, err := Init(
+		viper.GetString(viperDBUser),
+		viper.GetString(viperDBPassword),
+		viper.GetString(viperDBName),
+		viper.GetString(viperDBHost),
+		viper.GetString(viperDBPort),
+		viper.GetString(viperDBSSLMode),
+		viper.GetInt(viperDBTimeout),
+		viper.GetInt(viperDBMaxConn))
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}

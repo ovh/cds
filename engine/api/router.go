@@ -12,6 +12,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/context"
@@ -84,7 +85,16 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				log.Critical("[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
 
 				//Reinit database connection
-				if _, e := database.Init(); e != nil {
+				if _, e := database.Init(
+					viper.GetString(viperDBUser),
+					viper.GetString(viperDBPassword),
+					viper.GetString(viperDBName),
+					viper.GetString(viperDBHost),
+					viper.GetString(viperDBPort),
+					viper.GetString(viperDBSSLMode),
+					viper.GetInt(viperDBTimeout),
+					viper.GetInt(viperDBMaxConn),
+				); e != nil {
 					log.Critical("[PANIC_RECOVERY] Unable to reinit db connection : %s", e)
 				}
 
