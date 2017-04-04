@@ -20,7 +20,7 @@ var rootCmd = &cobra.Command{
 	Use:   "hatchery",
 	Short: "hatchery <mode> --api=<cds.domain> --token=<token>",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Initialize()
+		log.Initialize(viper.GetString("log_level"))
 		sdk.SetAgent(sdk.HatcheryAgent)
 
 		if viper.GetInt("max-worker") < 1 {

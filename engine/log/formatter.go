@@ -147,7 +147,9 @@ func (f *TextFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys 
 		messageFormat = fmt.Sprintf("%%-%ds", f.SpacePadding)
 	}
 
-	if f.DisableTimestamp {
+	//fmt.Fprintf(b, "%s%s%s %s%+5s%s%s "+messageFormat, ansi.LightCyan, entry.Time.Format(timestampFormat), reset, levelColor, levelText, reset, prefix, message)
+	fmt.Fprintf(b, "%s"+messageFormat)
+	/*if f.DisableTimestamp {
 		fmt.Fprintf(b, "%s%s %s%+5s%s%s "+messageFormat, ansi.LightCyan, reset, levelColor, levelText, reset, prefix, message)
 	} else {
 		if f.ShortTimestamp {
@@ -156,6 +158,7 @@ func (f *TextFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys 
 			fmt.Fprintf(b, "%s%s%s %s%+5s%s%s "+messageFormat, ansi.LightCyan, entry.Time.Format(timestampFormat), reset, levelColor, levelText, reset, prefix, message)
 		}
 	}
+	*/
 	for _, k := range keys {
 		v := entry.Data[k]
 		fmt.Fprintf(b, " %s%s%s=%+v", levelColor, k, reset, v)

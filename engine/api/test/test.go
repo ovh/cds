@@ -38,7 +38,7 @@ func init() {
 		flag.String("dbPort", "15432", "port")
 		flag.String("sslMode", "disable", "ssl mode")
 
-		log.SetLevel(log.DebugLevel)
+		log.Initialize("debug")
 		flag.Parse()
 	}
 }
@@ -55,7 +55,6 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	dbPort = flag.Lookup("dbPort").Value.String()
 	dbSSLMode = flag.Lookup("sslMode").Value.String()
 
-	log.SetLogger(t)
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")
 		return nil

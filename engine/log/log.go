@@ -2,11 +2,11 @@ package log
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
-func init() {
-	switch viper.GetString("log_level") {
+// Initialize init log level
+func Initialize(level string) {
+	switch level {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
 	case "info":
@@ -21,11 +21,12 @@ func init() {
 
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
-	if values != nil {
+	log.Debugf(format, values)
+	/*if values != nil {
 		log.Debugf(format, values)
 	} else {
-		log.Debug(format, values)
-	}
+		log.Debug(format)
+	}*/
 }
 
 // Info prints information log
@@ -33,7 +34,7 @@ func Info(format string, values ...interface{}) {
 	if values != nil {
 		log.Infof(format, values)
 	} else {
-		log.Info(format, values)
+		log.Info(format)
 	}
 }
 
@@ -51,7 +52,7 @@ func Critical(format string, values ...interface{}) {
 	if values != nil {
 		log.Errorf(format, values)
 	} else {
-		log.Error(format, values)
+		log.Error(format)
 	}
 }
 
@@ -60,6 +61,6 @@ func Fatalf(format string, values ...interface{}) {
 	if values != nil {
 		log.Fatalf(format, values)
 	} else {
-		log.Fatal(format, values)
+		log.Fatal(format)
 	}
 }
