@@ -286,7 +286,7 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 			case sdk.StatusFail:
 				t += fmt.Sprintf("[ ➤ %s ](fg-red,bg-default)", s.Name)
 			default:
-				t += fmt.Sprintf("[ ➤ %s %s ](fg-grey,bg-default)", s.Name, s.Status)
+				t += fmt.Sprintf("[ ➤ %s %s ](fg-cyan,bg-default)", s.Name, s.Status)
 			}
 		}
 		items = append(items, t)
@@ -336,7 +336,7 @@ func jobLine(name string, status string) string {
 	case string(sdk.StatusWaiting):
 		return fmt.Sprintf("[ [%s]](fg-yellow,bg-default)", name)
 	case string(sdk.StatusDisabled):
-		return fmt.Sprintf("[ [%s-%s]](fg-grey,bg-default)", name, status)
+		return fmt.Sprintf("[ [%s-%s]](fg-cyan,bg-default)", name, status)
 	default:
 		return fmt.Sprintf("[ [%s-%s]](fg-white,bg-default)", name, status)
 	}
