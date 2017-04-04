@@ -13,7 +13,7 @@ import {Injector} from '@angular/core';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
 import {Router, NavigationExtras} from '@angular/router';
 import {Observable} from 'rxjs/Rx';
-import {PipelineBuild, Pipeline, PipelineRunRequest} from '../../../../../../model/pipeline.model';
+import {PipelineBuild, Pipeline, PipelineRunRequest, PipelineBuildTrigger} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {Application} from '../../../../../../model/application.model';
 import {TranslateParser, TranslateService, TranslateLoader} from 'ng2-translate';
@@ -116,6 +116,9 @@ describe('CDS: Application Workflow Item', () => {
             pb.application = workflowItem.application;
             pb.pipeline = workflowItem.pipeline;
             pb.environment = workflowItem.environment;
+            pb.version = 12;
+            pb.trigger = new PipelineBuildTrigger();
+            pb.trigger.vcs_branch = 'master';
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
@@ -123,6 +126,11 @@ describe('CDS: Application Workflow Item', () => {
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
         request.parameters = workflowItem.trigger.parameters;
+        let p = new Parameter();
+        p.name = 'git.branch';
+        p.value = 'master';
+        p.type = 'string';
+        request.parameters.push(p);
         request.parent_application_id = 1;
         request.parent_build_number = 123;
         request.parent_environment_id = 3;
@@ -138,7 +146,7 @@ describe('CDS: Application Workflow Item', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        let appFilter = {branch: 'master'};
+        let appFilter = {branch: 'toto'};
         fixture.componentInstance.applicationFilter = appFilter;
 
         let workflowItem = new WorkflowItem();
@@ -193,6 +201,9 @@ describe('CDS: Application Workflow Item', () => {
             pb.application = workflowItem.application;
             pb.pipeline = workflowItem.pipeline;
             pb.environment = workflowItem.environment;
+            pb.version = 12;
+            pb.trigger = new PipelineBuildTrigger();
+            pb.trigger.vcs_branch = 'toto';
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
@@ -200,6 +211,11 @@ describe('CDS: Application Workflow Item', () => {
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
         request.parameters = workflowItem.pipeline.parameters;
+        let p = new Parameter();
+        p.name = 'git.branch';
+        p.value = 'toto';
+        p.type = 'string';
+        request.parameters.push(p);
 
         expect(appPipStore.run).toHaveBeenCalledWith('key1', 'app1', 'pip1', request);
     }));

@@ -149,7 +149,6 @@ export class ActionComponent implements OnDestroy {
                     }
                 } else {
                     let index = this.nonFinalSteps.indexOf(event.step);
-                    console.log('Non final step:' + index);
                     if (index >= 0 ) {
                         this.nonFinalSteps.splice(index, 1);
                     }

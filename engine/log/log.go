@@ -21,46 +21,25 @@ func Initialize(level string) {
 
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
-	log.Debugf(format, values)
-	/*if values != nil {
-		log.Debugf(format, values)
-	} else {
-		log.Debug(format)
-	}*/
+	log.Debugf(format, values...)
 }
 
 // Info prints information log
 func Info(format string, values ...interface{}) {
-	if values != nil {
-		log.Infof(format, values)
-	} else {
-		log.Info(format)
-	}
+	log.Infof(format, values...)
 }
 
 // Warning prints warnings for user
 func Warning(format string, values ...interface{}) {
-	if values != nil {
-		log.Warnf(format, values)
-	} else {
-		log.Warn(format)
-	}
+	log.Warnf(format, values...)
 }
 
 // Critical prints error informations
 func Critical(format string, values ...interface{}) {
-	if values != nil {
-		log.Errorf(format, values)
-	} else {
-		log.Error(format)
-	}
+	log.Errorf(format, values...)
 }
 
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
-	if values != nil {
-		log.Fatalf(format, values)
-	} else {
-		log.Fatal(format)
-	}
+	log.Fatalf(format, values...)
 }
