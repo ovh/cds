@@ -241,6 +241,12 @@
 			"revisionTime": "2016-01-04T19:15:39Z"
 		},
 		{
+			"checksumSHA1": "zLRMD29twG3fr3jbEUFLPGy5IlU=",
+			"path": "github.com/eapache/go-resiliency/retrier",
+			"revision": "b86b1ec0dd4209a588dc1285cdd471e73525c0b3",
+			"revisionTime": "2016-01-04T19:15:39Z"
+		},
+		{
 			"checksumSHA1": "WHl96RVZlOOdF4Lb1OOadMpw8ls=",
 			"path": "github.com/eapache/go-xerial-snappy",
 			"revision": "bb955e01b9346ac19dc29eb16586c90ded99a98c",
