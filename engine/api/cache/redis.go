@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 
 	"gopkg.in/redis.v4"
 )

@@ -8,7 +8,7 @@ import (
 	"github.com/go-stash/go-stash/oauth1"
 	"github.com/go-stash/go-stash/stash"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 

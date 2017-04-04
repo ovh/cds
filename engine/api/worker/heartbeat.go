@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // WorkerHeartbeatTimeout defines the number of seconds allowed for workers to refresh their beat

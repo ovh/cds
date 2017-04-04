@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // HatcheryHeartbeatTimeout defines the number of seconds allowed for hatcheries to refresh their beat

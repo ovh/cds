@@ -3,7 +3,7 @@ package repogithub
 import (
 	"flag"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func init() {

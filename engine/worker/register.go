@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/viper"
 )

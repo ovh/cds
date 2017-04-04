@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Status : local ok redis

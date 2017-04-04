@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // FilesystemStore implements ObjectStore interface with filesystem driver

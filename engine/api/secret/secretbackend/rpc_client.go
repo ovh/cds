@@ -3,7 +3,7 @@ package secretbackend
 import (
 	"net/rpc"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //RPCClient is the struct used by the CDS engine

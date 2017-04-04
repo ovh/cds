@@ -12,7 +12,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 
 	"github.com/ovh/cds/engine/api/grpc"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 

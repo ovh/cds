@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/vcs"
 	"github.com/ovh/cds/sdk/vcs/git"

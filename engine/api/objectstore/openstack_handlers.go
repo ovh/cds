@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (ops *OpenstackStore) refreshTokenRoutine() {

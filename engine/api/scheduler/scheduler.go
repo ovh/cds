@@ -7,7 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorhill/cronexpr"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 

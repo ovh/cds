@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/cobra"
 )
 
