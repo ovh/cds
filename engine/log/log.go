@@ -16,7 +16,7 @@ func Initialize(level string) {
 	default:
 		log.SetLevel(log.InfoLevel)
 	}
-	log.SetFormatter(&TextFormatter{})
+	log.SetFormatter(&CDSFormatter{})
 }
 
 // Debug prints debug log
