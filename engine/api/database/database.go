@@ -28,6 +28,9 @@ var (
 // DB returns the current sql.DB object
 func DB() *sql.DB {
 	if db == nil {
+		if dbName == "" {
+			return nil
+		}
 		_, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
 		if err != nil {
 			log.Printf("Database> cannot init db connection : %s\n", err)
