@@ -112,7 +112,7 @@
             </sm-dropdown>
         </div>
         <div class="manual trigger">
-            <i class="hand paper icon" aria-hidden="true" *ngIf="workflowItem.trigger.id !== 0 && workflowItem.trigger.manual"></i>
+            <i class="hand paper icon" aria-hidden="true" *ngIf="workflowItem.trigger && workflowItem.trigger.id !== 0 && workflowItem.trigger.manual"></i>
         </div>
 
     </div>

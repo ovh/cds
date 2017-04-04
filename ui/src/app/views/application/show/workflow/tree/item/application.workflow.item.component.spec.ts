@@ -123,6 +123,11 @@ describe('CDS: Application Workflow Item', () => {
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
         request.parameters = workflowItem.trigger.parameters;
+        let p = new Parameter();
+        p.name = 'git.branch';
+        p.value = 'master';
+        p.type = 'string';
+        request.parameters.push(p);
         request.parent_application_id = 1;
         request.parent_build_number = 123;
         request.parent_environment_id = 3;
@@ -138,7 +143,7 @@ describe('CDS: Application Workflow Item', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        let appFilter = {branch: 'master'};
+        let appFilter = {branch: 'toto'};
         fixture.componentInstance.applicationFilter = appFilter;
 
         let workflowItem = new WorkflowItem();
@@ -200,6 +205,11 @@ describe('CDS: Application Workflow Item', () => {
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
         request.parameters = workflowItem.pipeline.parameters;
+        let p = new Parameter();
+        p.name = 'git.branch';
+        p.value = 'toto';
+        p.type = 'string';
+        request.parameters.push(p);
 
         expect(appPipStore.run).toHaveBeenCalledWith('key1', 'app1', 'pip1', request);
     }));
