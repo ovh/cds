@@ -50,7 +50,7 @@ var mainCmd = &cobra.Command{
 		viper.SetEnvPrefix("cds")
 		viper.AutomaticEnv()
 		log.Initialize(&log.Conf{Level: viper.GetString("log_level")})
-		log.Info("Starting CDS server...\n")
+		log.Info("Starting CDS server...")
 
 		startupTime = time.Now()
 
@@ -67,7 +67,7 @@ var mainCmd = &cobra.Command{
 			secretBackendOptionsMap[t[0]] = t[1]
 		}
 		if err := secret.Init(secretBackend, secretBackendOptionsMap); err != nil {
-			log.Critical("Cannot initialize secret manager: %s\n", err)
+			log.Critical("Cannot initialize secret manager: %s", err)
 		}
 
 		if secret.SecretUsername != "" {
@@ -78,7 +78,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		if err := mail.CheckMailConfiguration(); err != nil {
-			log.Fatalf("SMTP configuration error: %s\n", err)
+			log.Fatalf("SMTP configuration error: %s", err)
 		}
 
 		var objectstoreKind objectstore.Kind
@@ -108,16 +108,16 @@ var mainCmd = &cobra.Command{
 		}
 
 		if err := objectstore.Initialize(cfg); err != nil {
-			log.Fatalf("Cannot initialize storage: %s\n", err)
+			log.Fatalf("Cannot initialize storage: %s", err)
 		}
 
 		db, err := database.Init()
 		if err != nil {
-			log.Warning("Cannot connect to database: %s\n", err)
+			log.Warning("Cannot connect to database: %s", err)
 		}
 		if db != nil {
 			if err = bootstrap.InitiliazeDB(database.GetDBMap); err != nil {
-				log.Critical("Cannot setup databases: %s\n", err)
+				log.Critical("Cannot setup databases: %s", err)
 			}
 
 			// Gracefully shutdown sql connections
@@ -127,7 +127,7 @@ var mainCmd = &cobra.Command{
 			signal.Notify(c, syscall.SIGKILL)
 			go func() {
 				<-c
-				log.Warning("Cleanup SQL connections\n")
+				log.Warning("Cleanup SQL connections")
 				db.Close()
 				event.Publish(sdk.EventEngine{Message: "shutdown"})
 				event.Close()
@@ -152,7 +152,7 @@ var mainCmd = &cobra.Command{
 		baseURL = viper.GetString("base_url")
 
 		if err := group.Initialize(database.DBMap(db), viper.GetString("default_group")); err != nil {
-			log.Critical("Cannot initialize groups: %s\n", err)
+			log.Critical("Cannot initialize groups: %s", err)
 		}
 
 		//Intialize repositories manager
@@ -166,7 +166,7 @@ var mainCmd = &cobra.Command{
 			DisableStashSetStatus:  viper.GetBool("no_stash_status"),
 		}
 		if err := repositoriesmanager.Initialize(rmInitOpts); err != nil {
-			log.Warning("Error initializing repositories manager connections: %s\n", err)
+			log.Warning("Error initializing repositories manager connections: %s", err)
 		}
 
 		// Initialize the auth driver
@@ -186,10 +186,10 @@ var mainCmd = &cobra.Command{
 		default:
 			authMode = "local"
 			if viper.GetString("auth_local_mode") == "basic" {
-				log.Info("Authentitication mode: Basic\n")
+				log.Info("Authentitication mode: Basic")
 				localCLientAuthMode = auth.LocalClientBasicAuthMode
 			} else {
-				log.Info("Authentitication mode: Session\n")
+				log.Info("Authentitication mode: Session")
 				localCLientAuthMode = auth.LocalClientSessionMode
 			}
 		}
@@ -270,7 +270,7 @@ var mainCmd = &cobra.Command{
 
 		log.Info("Starting HTTP Server on port %s", viper.GetString("listen_port"))
 		if err := s.ListenAndServe(); err != nil {
-			log.Fatalf("Cannot start cds-server: %s\n", err)
+			log.Fatalf("Cannot start cds-server: %s", err)
 		}
 	},
 }

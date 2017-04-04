@@ -15,7 +15,14 @@ func initViper() {
 	viper.SetEnvPrefix("cds")
 	viper.AutomaticEnv()
 
-	log.Initialize(&log.Conf{Level: viper.GetString("log_level")})
+	log.Initialize(&log.Conf{
+		Level:             viper.GetString("log_level"),
+		GraylogProtocol:   viper.GetString("graylog_protocol"),
+		GraylogHost:       viper.GetString("graylog_host"),
+		GraylogPort:       viper.GetString("graylog_port"),
+		GraylogExtraKey:   viper.GetString("graylog_extra_key"),
+		GraylogExtraValue: viper.GetString("graylog_extra_value"),
+	})
 
 	var errN error
 	name, errN = os.Hostname()

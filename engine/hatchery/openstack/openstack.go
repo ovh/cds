@@ -374,6 +374,20 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		return err
 	}
 
+	graylog := ""
+	if viper.GetString("graylog_host") != "" {
+		graylog += fmt.Sprintf("--graylog-host=%s ", viper.GetString("graylog_host"))
+	}
+	if viper.GetString("graylog_port") != "" {
+		graylog += fmt.Sprintf("--graylog-port=%s ", viper.GetString("graylog_port"))
+	}
+	if viper.GetString("graylog_extra_key") != "" {
+		graylog += fmt.Sprintf("--graylog-extra-key=%s ", viper.GetString("graylog_extra_key"))
+	}
+	if viper.GetString("graylog_extra_value") != "" {
+		graylog += fmt.Sprintf("--graylog-extra-value=%s ", viper.GetString("graylog_extra_value"))
+	}
+
 	// Add curl of worker
 	udataBegin := `#!/bin/sh
 set +e
@@ -381,9 +395,9 @@ set +e
 	udataEnd := `
 cd $HOME
 # Download and start worker with curl
-curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 0 -C - >> /tmp/user_data 2>&1
+curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
 chmod +x worker
-CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --booked-job-id={{.JobID}} --single-use --ttl={{.TTL}} && exit 0
+CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --booked-job-id={{.JobID}} --single-use --ttl={{.TTL}} {{.Graylog}} && exit 0
 `
 	var udata = udataBegin + string(udataModel) + udataEnd
 
@@ -404,6 +418,7 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Hatchery int64
 		JobID    int64
 		TTL      int
+		Graylog  string
 	}{
 		API:      viper.GetString("api"),
 		Name:     name,
@@ -412,6 +427,7 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Hatchery: h.hatch.ID,
 		JobID:    jobID,
 		TTL:      h.workerTTL,
+		Graylog:  graylog,
 	}
 	var buffer bytes.Buffer
 	if err = tmpl.Execute(&buffer, udataParam); err != nil {

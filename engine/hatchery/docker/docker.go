@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/viper"
 )
 
@@ -191,6 +191,10 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) 
 	args = append(args, "-e", fmt.Sprintf("CDS_KEY=%s", viper.GetString("token")))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
+	args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_HOST=%s", viper.GetString("graylog_host")))
+	args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_PORT=%s", viper.GetString("graylog_port")))
+	args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_KEY=%s", viper.GetString("graylog_extra_key")))
+	args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_VALUE=%s", viper.GetString("graylog_extra_value")))
 
 	if job != nil {
 		args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", job.ID))

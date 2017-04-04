@@ -14,9 +14,9 @@ import (
 	"github.com/gambol99/go-marathon"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var hatcheryMarathon *HatcheryMarathon
@@ -123,13 +123,17 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	forcePull := strings.HasSuffix(model.Image, ":latest")
 
 	env := map[string]string{
-		"CDS_API":        sdk.Host,
-		"CDS_KEY":        m.token,
-		"CDS_NAME":       workerName,
-		"CDS_MODEL":      fmt.Sprintf("%d", model.ID),
-		"CDS_HATCHERY":   fmt.Sprintf("%d", m.hatch.ID),
-		"CDS_SINGLE_USE": "1",
-		"CDS_TTL":        fmt.Sprintf("%d", m.workerTTL),
+		"CDS_API":                 sdk.Host,
+		"CDS_KEY":                 m.token,
+		"CDS_NAME":                workerName,
+		"CDS_MODEL":               fmt.Sprintf("%d", model.ID),
+		"CDS_HATCHERY":            fmt.Sprintf("%d", m.hatch.ID),
+		"CDS_SINGLE_USE":          "1",
+		"CDS_TTL":                 fmt.Sprintf("%d", m.workerTTL),
+		"CDS_GRAYLOG_HOST":        viper.GetString("graylog_host"),
+		"CDS_GRAYLOG_PORT":        viper.GetString("graylog_port"),
+		"CDS_GRAYLOG_EXTRA_KEY":   viper.GetString("graylog_extra_key"),
+		"CDS_GRAYLOG_EXTRA_VALUE": viper.GetString("graylog_extra_value"),
 	}
 
 	//Check if there is a memory requirement
