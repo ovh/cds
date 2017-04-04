@@ -276,7 +276,7 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 			case sdk.StatusBuilding:
 				t += fmt.Sprintf("[ ➤ %s ](fg-blue,bg-default)", s.Name)
 				if len(s.PipelineBuildJobs) > 0 {
-					t += "[:](bg-default)"
+					t += "[:](fg-cyan,bg-default)"
 				}
 				for _, pbj := range s.PipelineBuildJobs {
 					t += jobLine(pbj.Job.Action.Name, pbj.Status)
