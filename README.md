@@ -16,15 +16,15 @@ CDS is composend of several components/
 
 ### API
 
-The core component of CDS: (engine/api)
+The core component of CDS: [read more](/engine/api)
 
 ### WebUI
 
-CDS Web UI: https://github.com/ovh/cds/tree/master/ui
+CDS Web UI: [read more](ui)
 
 ### CLI
 
-CDS Command line interface: https://github.com/ovh/cds/tree/master/cli/cds
+CDS Command line interface: [read more](cli/cds)
 
 ### Worker
 
@@ -36,7 +36,7 @@ In CDS, a hatchery is an agent which spawn workers: [read more](/doc/overview/ha
 
 ### Contrib
 
-Actions, Plugins, Templates, uServices are under : https://github.com/ovh/cds/tree/master/contrib
+Actions, Plugins, Templates, uServices are under : [read more](contrib)
 
 ### SDK
 
