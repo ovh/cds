@@ -28,11 +28,11 @@ CDS Command line interface: https://github.com/ovh/cds/tree/master/cli/cds
 
 ### Worker
 
-In CDS, a worker is the agent executing actions pushed in queue by CDS engine: [read more](/doc/overview/worker.md)
+In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](/doc/overview/worker.md)
 
 ### Hatchery
 
-In CDS, a hatchery is the agent which spawn workers: [read more](/doc/overview/hatchery.md)
+In CDS, a hatchery is an agent which spawn workers: [read more](/doc/overview/hatchery.md)
 
 ### Contrib
 
