@@ -111,6 +111,10 @@
                     translate }}</a>
             </sm-dropdown>
         </div>
+        <div class="manual trigger">
+            <i class="hand paper icon" aria-hidden="true" *ngIf="workflowItem.trigger.id !== 0 && workflowItem.trigger.manual"></i>
+        </div>
+
     </div>
 </div>
 <!-- Create scheduler modal -->
