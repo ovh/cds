@@ -101,6 +101,12 @@ export class ApplicationWorkflowItemComponent {
             return this.runWithParameters();
         }
 
+        let branchParam = new Parameter();
+        branchParam.name = 'git.branch';
+        branchParam.type = 'string';
+        branchParam.value = currentBranch;
+        runRequest.parameters.push(branchParam)
+
         // Run pipeline
         this._appPipService.run(
             this.workflowItem.project.key,
