@@ -38,7 +38,7 @@ func init() {
 		flag.String("dbPort", "15432", "port")
 		flag.String("sslMode", "disable", "ssl mode")
 
-		log.Initialize("debug")
+		log.Initialize(&log.Conf{Level: "debug"})
 		flag.Parse()
 	}
 }

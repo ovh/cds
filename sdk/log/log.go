@@ -1,12 +1,27 @@
 package log
 
 import (
+	"crypto/tls"
+	"fmt"
+	"io/ioutil"
+
 	log "github.com/Sirupsen/logrus"
+	loghook "github.com/ovh/logrus-ovh-hook"
 )
 
+// Conf contains log configuration
+type Conf struct {
+	Level             string
+	GraylogHost       string
+	GraylogPort       string
+	GraylogProtocol   string
+	GraylogExtraKey   string
+	GraylogExtraValue string
+}
+
 // Initialize init log level
-func Initialize(level string) {
-	switch level {
+func Initialize(conf *Conf) {
+	switch conf.Level {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
 	case "info":
@@ -17,6 +32,30 @@ func Initialize(level string) {
 		log.SetLevel(log.InfoLevel)
 	}
 	log.SetFormatter(&CDSFormatter{})
+
+	if conf.GraylogHost != "" && conf.GraylogPort != "" {
+		graylogcfg := &loghook.Config{
+			Addr:      fmt.Sprintf("%s:%s", conf.GraylogHost, conf.GraylogPort),
+			Protocol:  conf.GraylogProtocol,
+			TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
+		}
+
+		var extra map[string]interface{}
+		if conf.GraylogExtraKey != "" && conf.GraylogExtraValue != "" {
+			extra = map[string]interface{}{
+				conf.GraylogExtraKey: conf.GraylogExtraValue,
+			}
+		}
+
+		h, err := loghook.NewHook(graylogcfg, extra)
+
+		if err != nil {
+			log.Errorf("Error while initialize graylog hook: %s", err)
+		} else {
+			log.AddHook(h)
+			log.SetOutput(ioutil.Discard)
+		}
+	}
 }
 
 // Debug prints debug log

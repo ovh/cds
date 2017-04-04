@@ -49,7 +49,7 @@ var mainCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		viper.SetEnvPrefix("cds")
 		viper.AutomaticEnv()
-		log.Initialize(viper.GetString("log_level"))
+		log.Initialize(&log.Conf{Level: viper.GetString("log_level")})
 		log.Info("Starting CDS server...\n")
 
 		startupTime = time.Now()

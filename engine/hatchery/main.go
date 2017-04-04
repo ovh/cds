@@ -10,8 +10,8 @@ import (
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -20,7 +20,7 @@ var rootCmd = &cobra.Command{
 	Use:   "hatchery",
 	Short: "hatchery <mode> --api=<cds.domain> --token=<token>",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Initialize(viper.GetString("log_level"))
+		log.Initialize(&log.Conf{Level: viper.GetString("log_level")})
 		sdk.SetAgent(sdk.HatcheryAgent)
 
 		if viper.GetInt("max-worker") < 1 {

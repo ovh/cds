@@ -15,7 +15,7 @@ func initViper() {
 	viper.SetEnvPrefix("cds")
 	viper.AutomaticEnv()
 
-	log.Initialize(viper.GetString("log_level"))
+	log.Initialize(&log.Conf{Level: viper.GetString("log_level")})
 
 	var errN error
 	name, errN = os.Hostname()
