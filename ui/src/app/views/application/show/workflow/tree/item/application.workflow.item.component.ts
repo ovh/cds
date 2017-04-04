@@ -105,7 +105,7 @@ export class ApplicationWorkflowItemComponent {
         branchParam.name = 'git.branch';
         branchParam.type = 'string';
         branchParam.value = currentBranch;
-        runRequest.parameters.push(branchParam)
+        runRequest.parameters.push(branchParam);
 
         // Run pipeline
         this._appPipService.run(
@@ -119,12 +119,9 @@ export class ApplicationWorkflowItemComponent {
 
     navigateToBuild(pb: PipelineBuild): void {
         let queryParams = {queryParams: {envName: pb.environment.name}};
-        if (this.applicationFilter.branch !== '') {
-            queryParams.queryParams['branch'] = this.applicationFilter.branch;
-        }
-        if (this.applicationFilter.version !== 0) {
-            queryParams.queryParams['version'] = this.applicationFilter.version;
-        }
+        queryParams.queryParams['branch'] = pb.trigger.vcs_branch;
+        queryParams.queryParams['version'] = pb.version;
+
         this._router.navigate([
             '/project', this.workflowItem.project.key,
             'application', pb.application.name,
