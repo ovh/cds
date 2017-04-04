@@ -258,11 +258,20 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
-		"CDS_GRAYLOG_HOST" + "=" + viper.GetString("graylog_host"),
-		"CDS_GRAYLOG_PORT" + "=" + viper.GetString("graylog_port"),
-		"CDS_GRAYLOG_EXTRA_KEY" + "=" + viper.GetString("graylog_extra_key"),
-		"CDS_GRAYLOG_EXTRA_VALUE" + "=" + viper.GetString("graylog_extra_value"),
 		"CDS_SINGLE_USE=1",
+	}
+
+	if viper.GetString("graylog_host") != "" {
+		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("graylog_host"))
+	}
+	if viper.GetString("graylog_port") != "" {
+		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("graylog_port"))
+	}
+	if viper.GetString("graylog_extra_key") != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("graylog_extra_key"))
+	}
+	if viper.GetString("graylog_extra_value") != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("graylog_extra_value"))
 	}
 
 	if job != nil {
