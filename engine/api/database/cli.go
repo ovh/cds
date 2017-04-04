@@ -63,7 +63,30 @@ var (
 	sqlMigrateLimitDown int
 )
 
+func setFlags(cmd *cobra.Command) {
+	pflags := cmd.Flags()
+	pflags.String("db-user", "cds", "DB User")
+	pflags.String("db-password", "", "DB Password")
+	pflags.String("db-name", "cds", "DB Name")
+	pflags.String("db-host", "localhost", "DB Host")
+	pflags.String("db-port", "5432", "DB Port")
+	pflags.String("db-sslmode", "require", "DB SSL Mode: require (default), verify-full, or disable")
+	pflags.Int("db-maxconn", 20, "DB Max connection")
+	pflags.Int("db-timeout", 3000, "Statement timeout value")
+	viper.BindPFlag(viperDBUser, pflags.Lookup("db-user"))
+	viper.BindPFlag(viperDBPassword, pflags.Lookup("db-password"))
+	viper.BindPFlag(viperDBName, pflags.Lookup("db-name"))
+	viper.BindPFlag(viperDBHost, pflags.Lookup("db-host"))
+	viper.BindPFlag(viperDBPort, pflags.Lookup("db-port"))
+	viper.BindPFlag(viperDBSSLMode, pflags.Lookup("db-sslmode"))
+	viper.BindPFlag(viperDBMaxConn, pflags.Lookup("db-maxconn"))
+	viper.BindPFlag(viperDBTimeout, pflags.Lookup("db-timeout"))
+}
+
 func init() {
+	setFlags(upgradeCmd)
+	setFlags(downgradeCmd)
+	setFlags(statusCmd)
 	DBCmd.AddCommand(upgradeCmd)
 	DBCmd.AddCommand(downgradeCmd)
 	DBCmd.AddCommand(statusCmd)
