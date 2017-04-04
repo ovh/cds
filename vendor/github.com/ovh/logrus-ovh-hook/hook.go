@@ -3,7 +3,6 @@ package logrus_ovh
 import (
 	"crypto/tls"
 	"fmt"
-	"log/syslog"
 	"os"
 	"strings"
 	"sync"
@@ -13,14 +12,31 @@ import (
 	"github.com/eapache/go-resiliency/retrier"
 )
 
+type Priority int
+
+const (
+	// Severity.
+
+	// From /usr/include/sys/syslog.h.
+	// These are the same on Linux, BSD, and OS X.
+	LOG_EMERG Priority = iota
+	LOG_ALERT
+	LOG_CRIT
+	LOG_ERR
+	LOG_WARNING
+	LOG_NOTICE
+	LOG_INFO
+	LOG_DEBUG
+)
+
 // priorities maps logrus log levels to syslog severity
-var priorities = map[logrus.Level]syslog.Priority{
-	logrus.PanicLevel: syslog.LOG_ALERT,
-	logrus.FatalLevel: syslog.LOG_CRIT,
-	logrus.ErrorLevel: syslog.LOG_ERR,
-	logrus.WarnLevel:  syslog.LOG_WARNING,
-	logrus.InfoLevel:  syslog.LOG_INFO,
-	logrus.DebugLevel: syslog.LOG_DEBUG,
+var priorities = map[logrus.Level]Priority{
+	logrus.PanicLevel: LOG_ALERT,
+	logrus.FatalLevel: LOG_CRIT,
+	logrus.ErrorLevel: LOG_ERR,
+	logrus.WarnLevel:  LOG_WARNING,
+	logrus.InfoLevel:  LOG_INFO,
+	logrus.DebugLevel: LOG_DEBUG,
 }
 
 // SendPolicy defines the policy to use when the buffer is full (drop, block, flush, ...)
