@@ -654,6 +654,12 @@
 			"revisionTime": "2017-03-01T09:08:17Z"
 		},
 		{
+			"checksumSHA1": "hBgLmZ/4mCxmnH88mqFKBkpJFUY=",
+			"path": "github.com/mgutz/ansi",
+			"revision": "c286dcecd19ff979eeb73ea444e479b903f2cfcb",
+			"revisionTime": "2015-09-14T16:22:38Z"
+		},
+		{
 			"checksumSHA1": "V/quM7+em2ByJbWBLOsEwnY3j/Q=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/mitchellh/go-homedir",
 			"path": "github.com/mitchellh/go-homedir",
