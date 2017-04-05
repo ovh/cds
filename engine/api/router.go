@@ -153,7 +153,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		w.Header().Add("Access-Control-Allow-Methods", "GET,OPTIONS,PUT,POST,DELETE")
 		w.Header().Add("Access-Control-Allow-Headers", "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id")
 		w.Header().Add("Access-Control-Expose-Headers", "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id")
-		w.Header().Add("Api-Time", time.Now().Format(time.RFC3339))
+		w.Header().Add("X-Api-Time", time.Now().Format(time.RFC3339))
 
 		c := &context.Ctx{}
 
