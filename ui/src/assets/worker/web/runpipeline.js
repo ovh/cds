@@ -25,7 +25,7 @@ function loadBuild (user, session, api) {
             var response = httpCall(url, api, user, session);
             postMessage(response);
             var jsonPb = JSON.parse(response);
-            if (jsonPb.status !== 'Building') {
+            if (jsonPb && jsonPb.status !== 'Building') {
                 close();
             }
         }, 2000);

@@ -49,7 +49,22 @@ var (
 	sqlMigrateLimitDown int
 )
 
+func setFlags(cmd *cobra.Command) {
+	pflags := cmd.Flags()
+	pflags.StringVarP(&dbUser, "db-user", "", "cds", "DB User")
+	pflags.StringVarP(&dbPassword, "db-password", "", "", "DB Password")
+	pflags.StringVarP(&dbName, "db-name", "", "cds", "DB Name")
+	pflags.StringVarP(&dbHost, "db-host", "", "localhost", "DB Host")
+	pflags.StringVarP(&dbPort, "db-port", "", "5432", "DB Port")
+	pflags.StringVarP(&dbSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
+	pflags.IntVarP(&dbMaxConn, "db-maxconn", "", 20, "DB Max connection")
+	pflags.IntVarP(&dbTimeout, "db-timeout", "", 3000, "Statement timeout value")
+}
+
 func init() {
+	setFlags(upgradeCmd)
+	setFlags(downgradeCmd)
+	setFlags(statusCmd)
 	DBCmd.AddCommand(upgradeCmd)
 	DBCmd.AddCommand(downgradeCmd)
 	DBCmd.AddCommand(statusCmd)
@@ -84,7 +99,7 @@ func downgradeCmdFunc(cmd *cobra.Command, args []string) {
 }
 
 func statusCmdFunc(cmd *cobra.Command, args []string) {
-	db, err := Init()
+	db, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
@@ -143,7 +158,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
-	db, err := Init()
+	db, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}

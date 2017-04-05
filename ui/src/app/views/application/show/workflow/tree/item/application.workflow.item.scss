@@ -33,6 +33,12 @@ $itemWidthDepth8: 220px;
       font-weight: bold;
     }
 
+    .manual.trigger {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+    }
+
     // segment containers
     .ui.compact.segments {
       width: 100%;
@@ -142,10 +148,20 @@ $itemWidthDepth8: 220px;
 
 .ui.one.column.grid.hierarchical .column {
   padding-bottom: 0px;
+
+  .manual.trigger {
+    top: 7px;
+    left: -20px;
+  }
 }
 
 .ui.one.column.grid.horizontal {
   display: inline-block;
+
+  .column .manual.trigger {
+    top: 20px;
+    left: -20px;
+  }
 }
 
 .ui.one.column.grid.vertical {
@@ -153,6 +169,10 @@ $itemWidthDepth8: 220px;
   margin-right: auto;
 
   .column {
+    .manual.trigger {
+      top: -10px;
+      left: 52%;
+    }
     .ui.segment {
       margin-bottom: 0px;
     }

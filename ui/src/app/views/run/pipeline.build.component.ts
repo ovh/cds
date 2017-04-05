@@ -74,9 +74,9 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 this.appVersionFilter = q['version'];
             }
             if (q['ts'] && this.project && this.application && this.currentBuildNumber) {
+                this.startWorker();
                 this.currentBuild = undefined;
                 this.histories = undefined;
-                this.startWorker();
             }
         });
         this._activatedRoute.params.subscribe(params => {
@@ -92,6 +92,9 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     startWorker(): void {
         if (this.workerSubscription) {
             this.workerSubscription.unsubscribe();
+        }
+        if (this.worker) {
+            this.worker.stop();
         }
         this.worker = new CDSWorker('./assets/worker/web/runpipeline.js');
         this.worker.start({

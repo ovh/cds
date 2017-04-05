@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -77,7 +76,7 @@ func Get(name, path string) (*sdk.TemplateExtension, []sdk.TemplateParam, error)
 }
 
 //Instance returns the template instance
-func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.SessionKey) (template.Interface, func(), error) {
+func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.SessionKey, apiURL string) (template.Interface, func(), error) {
 	//Fetch fro mobject store
 	buf, err := objectstore.FetchTemplateExtension(*tmpl)
 	if err != nil {
@@ -122,7 +121,7 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 
 	//FIXME: export tls feature will impact this
 	log.Debug("Instance>  %s:%s", u.Username, string(sessionKey))
-	client := template.NewClient(tmpl.Name, f.Name(), u.Username+":"+string(sessionKey), "http://"+hostname+":"+viper.GetString("listen_port"), true)
+	client := template.NewClient(tmpl.Name, f.Name(), u.Username+":"+string(sessionKey), apiURL, true)
 	deferFunc = func() {
 		client.Kill()
 		os.RemoveAll(f.Name())

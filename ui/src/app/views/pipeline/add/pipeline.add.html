@@ -1,5 +1,4 @@
-<div *ngIf="ready;then createPipeline;else loadingArea"></div>
-<ng-template #createPipeline>
+<div *ngIf="ready;else loadingArea">
     <div id="AddPipeline">
         <div class="ui form">
             <h2>{{ 'pipeline_create' | translate }}</h2>
@@ -28,15 +27,15 @@
                     </div>
                     <div class="field">
                         <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'pipelines'}">{{ 'btn_cancel' | translate }}</a>
-                        <button class="ui green right floated button" [class.loading]="loadingCreate" (click)="createPipeline()"
-                                [class.disabled]="!newPipeline.name || newPipeline.name === ''">{{ 'btn_create' | translate }}
+                        <button class="ui green right floated button" [class.loading]="loadingCreate" [class.disabled]="!newPipeline.name || newPipeline.name === ''"
+                                (click)="createPipeline()">{{ 'btn_create' | translate }}
                         </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</ng-template>
+</div>
 <ng-template #loadingArea>
     <div class="ui text active loader">Loading..</div>
 </ng-template>

@@ -24,8 +24,6 @@ export class ApplicationPollerFormComponent implements OnInit {
             this._appStore.getApplications(this.project.key, this.application.name).first().subscribe( apps => {
                 let appKey = this.project.key + '-' + this.application.name;
                 if (apps.get(appKey)) {
-                    console.log(this.application);
-                    console.log(apps.get(appKey));
                     this.application = apps.get(appKey);
                 }
             });

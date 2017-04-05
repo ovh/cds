@@ -33,6 +33,8 @@ type InitializeOpts struct {
 	DisableStashSetStatus  bool
 	DisableGithubSetStatus bool
 	DisableGithubStatusURL bool
+	GithubSecret           string
+	StashPrivateKey        string
 }
 
 //Initialize initialize private keys stored in Vault
@@ -41,8 +43,14 @@ type InitializeOpts struct {
 //is stored in a secret name "repositoriesmanager-secrets-github.com/ovh-privateKey"
 func Initialize(o InitializeOpts) error {
 	options = o
+	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
+	repostash.Init(o.APIBaseURL, o.UIBaseURL)
 
-	if db := database.DBMap(database.DB()); db != nil {
+	_db := database.DB()
+	if _db == nil {
+		return fmt.Errorf("Unable to init repositories manager")
+	}
+	if db := database.DBMap(_db); db != nil {
 		secrets := o.SecretClient.GetSecrets()
 		if secrets.Err() != nil {
 			return secrets.Err()
@@ -63,6 +71,26 @@ func Initialize(o InitializeOpts) error {
 					found = true
 					log.Notice("RepositoriesManager> Found a key for %s\n", rm.Name)
 					rmSecrets[strings.Replace(k, s, "", -1)] = v
+				}
+			}
+			if !found {
+				switch rm.Type {
+				case sdk.Stash:
+					if o.StashPrivateKey != "" {
+						log.Notice("RepositoriesManager> Found a key for %s\n", rm.Name)
+						btes, err := ioutil.ReadFile(o.StashPrivateKey)
+						if err != nil {
+							log.Warning("RepositoriesManager> Unable to load private key %s : %s", o.StashPrivateKey, err)
+						}
+						rmSecrets["privatekey"] = string(btes)
+						found = true
+					}
+				case sdk.Github:
+					if o.GithubSecret != "" {
+						log.Notice("RepositoriesManager> Found a key for %s\n", rm.Name)
+						rmSecrets["client-secret"] = o.GithubSecret
+						found = true
+					}
 				}
 			}
 			if found {
