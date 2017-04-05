@@ -15,7 +15,7 @@ At the minimum, CDS needs a PostgreSQL Database >= 9.4. But for serious usage yo
 - A [Redis](https://redis.io) server or sentinels based cluster used as a cache and session store
 - A LDAP Server for authentication
 - A SMTP Server for mails
-- A [Kafka](https://kafka.apache.org/) Broker to manage CDS event
+- A [Kafka](https://kafka.apache.org/) Broker to manage CDS events
 - A [Openstack Swift](https://docs.openstack.org/developer/swift/) Tenant to store builds artifacts
 - A [Vault](https://www.vaultproject.io/) server for cipher and app keys
 
@@ -23,7 +23,7 @@ See Configuration template for more details
 
 ## Database management
 
-CDS provide all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the `api` binary.
+CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the `api` binary.
 
 ### Creation
 

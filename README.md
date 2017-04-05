@@ -40,7 +40,7 @@ Actions, Plugins, Templates, uServices are under : [read more](contrib)
 
 ### SDK
 
-A Go SDK is available at github.com/ovh/cds/sdk. It provide helper functions for all API handlers, with embedded authentification mechanism.
+A Go(lang) SDK is available at github.com/ovh/cds/sdk. It provides helper functions for all API handlers, with embedded authentification mechanism.
 
 ## Links
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
@@ -24,7 +25,6 @@ import (
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/spf13/viper"
 )
 
 func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.TemplateExtension, []sdk.TemplateParam, io.ReadCloser, func(), error) {

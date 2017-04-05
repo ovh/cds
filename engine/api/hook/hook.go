@@ -20,8 +20,9 @@ import (
 
 var apiURL string
 
+// Init initialize the hook package
 func Init(url string) {
-	apiURL = apiURL
+	apiURL = url
 }
 
 //ReceivedHook is a temporary struct to manage received hook

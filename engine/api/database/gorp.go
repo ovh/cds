@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"os"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-
-	"os"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 )
