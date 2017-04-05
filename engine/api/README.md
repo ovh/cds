@@ -48,7 +48,7 @@ $ $PATH_TO_CDS/api database upgrade --db-host <host> --db-host <port> --db-passw
 
 ## TOML Configuration
 
-The toml configuration can ve provided by a file or via [https://www.consul.io](consul k/v store).
+The toml configuration can be provided by a file or via [https://www.consul.io](consul k/v store).
 
 ### Start CDS with local configuration file
 
