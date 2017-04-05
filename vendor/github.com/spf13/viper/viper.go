@@ -40,6 +40,11 @@ import (
 
 var v *Viper
 
+type RemoteResponse struct {
+	Value []byte
+	Error error
+}
+
 func init() {
 	v = New()
 }
@@ -47,6 +52,7 @@ func init() {
 type remoteConfigFactory interface {
 	Get(rp RemoteProvider) (io.Reader, error)
 	Watch(rp RemoteProvider) (io.Reader, error)
+	WatchChannel(rp RemoteProvider) (<-chan *RemoteResponse, chan bool)
 }
 
 // RemoteConfig is optional, see the remote package
@@ -576,6 +582,7 @@ func GetViper() *Viper {
 }
 
 // Get can retrieve any value given the key to use.
+// Get is case-insensitive for a key.
 // Get has the behavior of returning the value associated with the first
 // place from where it is set. Viper will check in the following order:
 // override, flag, env, config file, key/value store, default
@@ -619,6 +626,7 @@ func (v *Viper) Get(key string) interface{} {
 }
 
 // Sub returns new Viper instance representing a sub tree of this instance.
+// Sub is case-insensitive for a key.
 func Sub(key string) *Viper { return v.Sub(key) }
 func (v *Viper) Sub(key string) *Viper {
 	subv := New()
@@ -956,6 +964,7 @@ func (v *Viper) find(lcaseKey string) interface{} {
 }
 
 // IsSet checks to see if the key has been set in any of the data locations.
+// IsSet is case-insensitive for a key.
 func IsSet(key string) bool { return v.IsSet(key) }
 func (v *Viper) IsSet(key string) bool {
 	lcaseKey := strings.ToLower(key)
@@ -1037,11 +1046,13 @@ func (v *Viper) InConfig(key string) bool {
 }
 
 // SetDefault sets the default value for this key.
+// SetDefault is case-insensitive for a key.
 // Default only used when no value is provided by the user via flag, config or ENV.
 func SetDefault(key string, value interface{}) { v.SetDefault(key, value) }
 func (v *Viper) SetDefault(key string, value interface{}) {
 	// If alias passed in, then set the proper default
 	key = v.realKey(strings.ToLower(key))
+	value = toCaseInsensitiveValue(value)
 
 	path := strings.Split(key, v.keyDelim)
 	lastKey := strings.ToLower(path[len(path)-1])
@@ -1052,12 +1063,14 @@ func (v *Viper) SetDefault(key string, value interface{}) {
 }
 
 // Set sets the value for the key in the override regiser.
+// Set is case-insensitive for a key.
 // Will be used instead of values obtained via
 // flags, config file, ENV, default, or key/value store.
 func Set(key string, value interface{}) { v.Set(key, value) }
 func (v *Viper) Set(key string, value interface{}) {
 	// If alias passed in, then set the proper override
 	key = v.realKey(strings.ToLower(key))
+	value = toCaseInsensitiveValue(value)
 
 	path := strings.Split(key, v.keyDelim)
 	lastKey := strings.ToLower(path[len(path)-1])
@@ -1086,22 +1099,28 @@ func (v *Viper) ReadInConfig() error {
 		return err
 	}
 
-	v.config = make(map[string]interface{})
+	config := make(map[string]interface{})
 
-	return v.unmarshalReader(bytes.NewReader(file), v.config)
+	err = v.unmarshalReader(bytes.NewReader(file), config)
+	if err != nil {
+		return err
+	}
+
+	v.config = config
+	return nil
 }
 
 // MergeInConfig merges a new configuration with an existing config.
 func MergeInConfig() error { return v.MergeInConfig() }
 func (v *Viper) MergeInConfig() error {
 	jww.INFO.Println("Attempting to merge in config file")
-	if !stringInSlice(v.getConfigType(), SupportedExts) {
-		return UnsupportedConfigError(v.getConfigType())
-	}
-
 	filename, err := v.getConfigFile()
 	if err != nil {
 		return err
+	}
+
+	if !stringInSlice(v.getConfigType(), SupportedExts) {
+		return UnsupportedConfigError(v.getConfigType())
 	}
 
 	file, err := afero.ReadFile(v.fs, filename)
@@ -1155,6 +1174,14 @@ func castToMapStringInterface(
 }
 
 func castMapStringToMapInterface(src map[string]string) map[string]interface{} {
+	tgt := map[string]interface{}{}
+	for k, v := range src {
+		tgt[k] = v
+	}
+	return tgt
+}
+
+func castMapFlagToMapInterface(src map[string]FlagValue) map[string]interface{} {
 	tgt := map[string]interface{}{}
 	for k, v := range src {
 		tgt[k] = v
@@ -1234,6 +1261,10 @@ func (v *Viper) WatchRemoteConfig() error {
 	return v.watchKeyValueConfig()
 }
 
+func (v *Viper) WatchRemoteConfigOnChannel() error {
+	return v.watchKeyValueConfigOnChannel()
+}
+
 // Unmarshall a Reader into a map.
 // Should probably be an unexported function.
 func unmarshalReader(in io.Reader, c map[string]interface{}) error {
@@ -1260,6 +1291,7 @@ func (v *Viper) getKeyValueConfig() error {
 	for _, rp := range v.remoteProviders {
 		val, err := v.getRemoteConfig(rp)
 		if err != nil {
+			fmt.Println(err)
 			continue
 		}
 		v.kvstore = val
@@ -1275,6 +1307,23 @@ func (v *Viper) getRemoteConfig(provider RemoteProvider) (map[string]interface{}
 	}
 	err = v.unmarshalReader(reader, v.kvstore)
 	return v.kvstore, err
+}
+
+// Retrieve the first found remote configuration.
+func (v *Viper) watchKeyValueConfigOnChannel() error {
+	for _, rp := range v.remoteProviders {
+		respc, _ := RemoteConfig.WatchChannel(rp)
+		//Todo: Add quit channel
+		go func(rc <-chan *RemoteResponse) {
+			for {
+				b := <-rc
+				reader := bytes.NewReader(b.Value)
+				v.unmarshalReader(reader, v.kvstore)
+			}
+		}(respc)
+		return nil
+	}
+	return RemoteConfigError("No Files Found")
 }
 
 // Retrieve the first found remote configuration.
@@ -1307,8 +1356,8 @@ func (v *Viper) AllKeys() []string {
 	// add all paths, by order of descending priority to ensure correct shadowing
 	m = v.flattenAndMergeMap(m, castMapStringToMapInterface(v.aliases), "")
 	m = v.flattenAndMergeMap(m, v.override, "")
-	m = v.mergeFlatMap(m, v.pflags)
-	m = v.mergeFlatMap(m, v.env)
+	m = v.mergeFlatMap(m, castMapFlagToMapInterface(v.pflags))
+	m = v.mergeFlatMap(m, castMapStringToMapInterface(v.env))
 	m = v.flattenAndMergeMap(m, v.config, "")
 	m = v.flattenAndMergeMap(m, v.kvstore, "")
 	m = v.flattenAndMergeMap(m, v.defaults, "")
@@ -1360,16 +1409,7 @@ func (v *Viper) flattenAndMergeMap(shadow map[string]bool, m map[string]interfac
 
 // mergeFlatMap merges the given maps, excluding values of the second map
 // shadowed by values from the first map.
-func (v *Viper) mergeFlatMap(shadow map[string]bool, mi interface{}) map[string]bool {
-	// unify input map
-	var m map[string]interface{}
-	switch mi.(type) {
-	case map[string]string, map[string]FlagValue:
-		m = cast.ToStringMap(mi)
-	default:
-		return shadow
-	}
-
+func (v *Viper) mergeFlatMap(shadow map[string]bool, m map[string]interface{}) map[string]bool {
 	// scan keys
 outer:
 	for k, _ := range m {

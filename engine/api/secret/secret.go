@@ -12,8 +12,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/spf13/viper"
-
 	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
 	"github.com/ovh/cds/engine/api/secret/secretbackend"
 	"github.com/ovh/cds/engine/log"
@@ -53,7 +51,7 @@ type databaseCredentials struct {
 
 // Init password manager
 // if secretBackendBinary is empty, use default AES key and default file secret backend
-func Init(secretBackendBinary string, opts map[string]string) error {
+func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]string) error {
 	//Initializing secret backend
 	var err error
 	if secretBackendBinary == "" {
@@ -80,6 +78,16 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 	}
 
 	//If key hasn't been initilized with default key
+	if cipherKey != "" {
+		if len(cipherKey) > 32 {
+			key = []byte(cipherKey[:32])
+		} else {
+			key = []byte(cipherKey)
+			for len(key) != 32 {
+				key = append(key, '\x00')
+			}
+		}
+	}
 	if len(key) == 0 {
 		aesKey, _ := secrets.Get("cds/aes-key")
 		if aesKey == "" {
@@ -90,13 +98,13 @@ func Init(secretBackendBinary string, opts map[string]string) error {
 
 	}
 
-	dbKey := viper.GetString("DB_SECRET")
-	if dbKey == "" {
+	//dbSecret default is cds/db
+	if dbSecret == "" {
 		return nil
 	}
-	cdsDBCredS, _ := secrets.Get(dbKey)
+	cdsDBCredS, _ := secrets.Get(dbSecret)
 	if cdsDBCredS == "" {
-		log.Critical("secret.Init> %s not found", dbKey)
+		log.Critical("secret.Init> %s not found", dbSecret)
 		return nil
 	}
 

@@ -9,8 +9,6 @@ import (
 	"net/smtp"
 	"text/template"
 
-	"github.com/spf13/viper"
-
 	"github.com/ovh/cds/engine/log"
 )
 
@@ -19,7 +17,7 @@ type emailParam struct {
 }
 
 var smtpUser, smtpPassword, smtpFrom, smtpHost, smtpPort string
-var smtpTLS bool
+var smtpTLS, smtpEnable bool
 
 const templateSignedUP = `Welcome to CDS,
 
@@ -33,45 +31,26 @@ Regards,
 CDS Team
 `
 
+// Init initializes configuration
+func Init(user, password, from, host, port string, tls, disable bool) {
+	smtpUser = user
+	smtpPassword = password
+	smtpFrom = from
+	smtpPort = port
+	smtpTLS = tls
+	smtpEnable = !disable
+}
+
 // Status verification of smtp configuration, returns OK or KO
 func Status() string {
-	if err := CheckMailConfiguration(); err != nil {
-		return fmt.Sprintf("KO %s", err)
-	}
-
 	if _, err := smtpClient(); err != nil {
 		return fmt.Sprintf("KO (%s)", err)
 	}
 	return "OK"
 }
 
-//CheckMailConfiguration verification of smtp configuration
-func CheckMailConfiguration() error {
-	smtpUser = viper.GetString("smtp_user")
-	smtpPassword = viper.GetString("smtp_password")
-
-	smtpFrom = viper.GetString("smtp_from")
-	if smtpFrom == "" && !viper.GetBool("no_smtp") {
-		return errors.New("SMTP_FROM should not be empty")
-	}
-
-	smtpHost = viper.GetString("smtp_host")
-	if smtpHost == "" && !viper.GetBool("no_smtp") {
-		return errors.New("SMTP_HOST should not be empty")
-	}
-
-	smtpPort = viper.GetString("smtp_port")
-	if smtpPort == "" && !viper.GetBool("no_smtp") {
-		return errors.New("SMTP_PORT should not be empty")
-	}
-
-	smtpTLS = viper.GetBool("smtp_tls")
-
-	return nil
-}
-
 func smtpClient() (*smtp.Client, error) {
-	if (smtpHost == "" || smtpPort == "") || viper.GetBool("no_smtp") {
+	if smtpHost == "" || smtpPort == "" || !smtpEnable {
 		return nil, errors.New("No SMTP configuration")
 	}
 
@@ -130,7 +109,7 @@ func SendMailVerifyToken(userMail, username, token, callback string) error {
 		return err
 	}
 	subject := "Welcome to CDS"
-	if viper.GetBool("no_smtp") {
+	if !smtpEnable {
 		fmt.Println("##### NO SMTP DISPLAY MAIL IN CONSOLE ######")
 		fmt.Printf("Subject:%s\n", subject)
 		fmt.Printf("Text:%s\n", mailContent.Bytes())

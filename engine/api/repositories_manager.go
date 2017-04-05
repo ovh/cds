@@ -451,7 +451,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	for _, h := range app.Hooks {
-		s := viper.GetString("api_url") + hook.HookLink
+		s := viper.GetString(viperURLAPI) + hook.HookLink
 		link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
 
 		if err = client.DeleteHook(h.Project+"/"+h.Repository, link); err != nil {
@@ -640,7 +640,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 		return sdk.WrapError(sdk.ErrRepoNotFound, "deleteHookOnRepositoriesManagerHandler> Application %s repository fullname is not valid %s", app.Name, app.RepositoryFullname)
 	}
 
-	s := viper.GetString("api_url") + hook.HookLink
+	s := viper.GetString(viperURLAPI) + hook.HookLink
 	link := fmt.Sprintf(s, h.UID, t[0], t[1])
 
 	if errdelete := client.DeleteHook(app.RepositoryFullname, link); errdelete != nil {

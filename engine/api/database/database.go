@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/go-gorp/gorp"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -18,6 +17,8 @@ var (
 	dbHost           string
 	dbPort           string
 	dbSSLMode        string
+	dbTimeout        int
+	dbMaxConn        int
 	db               *sql.DB
 	mutex            = &sync.Mutex{}
 	SecretDBUser     string
@@ -27,7 +28,10 @@ var (
 // DB returns the current sql.DB object
 func DB() *sql.DB {
 	if db == nil {
-		_, err := Init()
+		if dbName == "" {
+			return nil
+		}
+		_, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
 		if err != nil {
 			log.Printf("Database> cannot init db connection : %s\n", err)
 			return nil
@@ -52,26 +56,29 @@ func Set(d *sql.DB) {
 }
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
-func Init() (*sql.DB, error) {
+func Init(user, password, name, host, port, sslmode string, timeout, maxconn int) (*sql.DB, error) {
+	fmt.Printf("user=%s password=%s name=%s host=%s port=%s sslmode=%s", user, password, name, host, port, sslmode)
 	mutex.Lock()
 	defer mutex.Unlock()
 
 	// Try to close before reinit
 	if db != nil {
 		if err := db.Close(); err != nil {
-			log.Printf("[CRITICAL] cannot close connection to DB : %s", err)
+			log.Printf("[CRITICAL]cannot close connection to DB : %s", err)
 		}
 	}
 
 	var err error
 
 	dbDriver = "postgres"
-	dbUser = viper.GetString("db_user")
-	dbPassword = viper.GetString("db_password")
-	dbName = viper.GetString("db_name")
-	dbHost = viper.GetString("db_host")
-	dbPort = viper.GetString("db_port")
-	dbSSLMode = viper.GetString("db_sslmode")
+	dbUser = user
+	dbPassword = password
+	dbName = name
+	dbHost = host
+	dbPort = port
+	dbSSLMode = sslmode
+	dbTimeout = timeout
+	dbMaxConn = maxconn
 
 	if dbUser == "" ||
 		dbPassword == "" ||
@@ -89,7 +96,6 @@ func Init() (*sql.DB, error) {
 		dbPassword = SecretDBPassword
 	}
 
-	timeout := viper.GetInt("db_timeout")
 	if timeout < 200 || timeout > 15000 {
 		timeout = 3000
 	}
@@ -98,7 +104,6 @@ func Init() (*sql.DB, error) {
 	// statement_timeout in milliseconds
 	// yeah...
 	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=%d", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, timeout)
-
 	db, err = sql.Open(dbDriver, dsn)
 	if err != nil {
 		db = nil
@@ -111,12 +116,8 @@ func Init() (*sql.DB, error) {
 		return nil, err
 	}
 
-	max := viper.GetInt("db_maxconn")
-	if max <= 0 || max > 100 {
-		max = 20
-	}
-	db.SetMaxOpenConns(max)
-	db.SetMaxIdleConns(int(max / 2))
+	db.SetMaxOpenConns(maxconn)
+	db.SetMaxIdleConns(int(maxconn / 2))
 
 	return db, nil
 }

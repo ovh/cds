@@ -23,7 +23,9 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/mail"
+	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
@@ -39,7 +41,6 @@ import (
 )
 
 var startupTime time.Time
-var b *Broker
 var baseURL string
 var localCLientAuthMode = auth.LocalClientBasicAuthMode
 
@@ -47,8 +48,12 @@ var mainCmd = &cobra.Command{
 	Use:   "api",
 	Short: "CDS Engine",
 	Run: func(cmd *cobra.Command, args []string) {
-		viper.SetEnvPrefix("cds")
-		viper.AutomaticEnv()
+		initConfig()
+
+		//Check the first config key
+		if viper.GetString(viperURLAPI) == "" {
+			sdk.Exit("Your CDS configuration seems to not be set. Please use environment variables, file or etcd to set your configuration.")
+		}
 
 		log.Initialize()
 		log.Notice("Starting CDS server...\n")
@@ -56,8 +61,8 @@ var mainCmd = &cobra.Command{
 		startupTime = time.Now()
 
 		//Initialize secret driver
-		secretBackend := viper.GetString("secret_backend")
-		secretBackendOptions := viper.GetStringSlice("secret_backend_option")
+		secretBackend := viper.GetString(viperServerSecretBackend)
+		secretBackendOptions := viper.GetStringSlice(viperServerSecretBackendOption)
 		secretBackendOptionsMap := map[string]string{}
 		for _, o := range secretBackendOptions {
 			if !strings.Contains(o, "=") {
@@ -67,10 +72,9 @@ var mainCmd = &cobra.Command{
 			t := strings.Split(o, "=")
 			secretBackendOptionsMap[t[0]] = t[1]
 		}
-		if err := secret.Init(secretBackend, secretBackendOptionsMap); err != nil {
+		if err := secret.Init(viper.GetString(viperDBSecret), viper.GetString(viperServerSecretKey), secretBackend, secretBackendOptionsMap); err != nil {
 			log.Critical("Cannot initialize secret manager: %s\n", err)
 		}
-
 		if secret.SecretUsername != "" {
 			database.SecretDBUser = secret.SecretUsername
 		}
@@ -78,32 +82,38 @@ var mainCmd = &cobra.Command{
 			database.SecretDBPassword = secret.SecretPassword
 		}
 
-		if err := mail.CheckMailConfiguration(); err != nil {
-			log.Fatalf("SMTP configuration error: %s\n", err)
-		}
+		//Initialize mail package
+		mail.Init(viper.GetString(viperSMTPUser),
+			viper.GetString(viperSMTPPassword),
+			viper.GetString(viperSMTPFrom),
+			viper.GetString(viperSMTPHost),
+			viper.GetString(viperSMTPPort),
+			viper.GetBool(viperSMTPTLS),
+			viper.GetBool(viperSMTPDisable))
 
+		//Initialize artifacts storage
 		var objectstoreKind objectstore.Kind
-		switch viper.GetString("artifact_mode") {
+		switch viper.GetString(viperArtifactMode) {
 		case "openstack", "swift":
 			objectstoreKind = objectstore.Openstack
-		case "filesystem":
+		case "filesystem", "local":
 			objectstoreKind = objectstore.Filesystem
 		default:
-			log.Fatalf("Unsupported objectore mode : %s", viper.GetString("artifact_mode"))
+			log.Fatalf("Unsupported objecstore mode : %s", viper.GetString(viperArtifactMode))
 		}
 
 		cfg := objectstore.Config{
 			Kind: objectstoreKind,
 			Options: objectstore.ConfigOptions{
 				Openstack: objectstore.ConfigOptionsOpenstack{
-					Address:  viper.GetString("artifact_address"),
-					Username: viper.GetString("artifact_user"),
-					Password: viper.GetString("artifact_password"),
-					Tenant:   viper.GetString("artifact_tenant"),
-					Region:   viper.GetString("artifact_region"),
+					Address:  viper.GetString(viperArtifactOSURL),
+					Username: viper.GetString(viperArtifactOSUsername),
+					Password: viper.GetString(viperArtifactOSPassword),
+					Tenant:   viper.GetString(viperArtifactOSTenant),
+					Region:   viper.GetString(viperArtifactOSRegion),
 				},
 				Filesystem: objectstore.ConfigOptionsFilesystem{
-					Basedir: viper.GetString("artifact_basedir"),
+					Basedir: viper.GetString(viperArtifactLocalBasedir),
 				},
 			},
 		}
@@ -112,85 +122,89 @@ var mainCmd = &cobra.Command{
 			log.Fatalf("Cannot initialize storage: %s\n", err)
 		}
 
-		db, err := database.Init()
+		//Intialize database
+		db, err := database.Init(
+			viper.GetString(viperDBUser),
+			viper.GetString(viperDBPassword),
+			viper.GetString(viperDBName),
+			viper.GetString(viperDBHost),
+			viper.GetString(viperDBPort),
+			viper.GetString(viperDBSSLMode),
+			viper.GetInt(viperDBTimeout),
+			viper.GetInt(viperDBMaxConn),
+		)
 		if err != nil {
 			log.Warning("Cannot connect to database: %s\n", err)
-		}
-		if db != nil {
-			if viper.GetBool("db_logging") {
-				log.UseDatabaseLogger(db)
-			}
-
-			if err = bootstrap.InitiliazeDB(database.GetDBMap); err != nil {
-				log.Critical("Cannot setup databases: %s\n", err)
-			}
-
-			// Gracefully shutdown sql connections
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, os.Interrupt)
-			signal.Notify(c, syscall.SIGTERM)
-			signal.Notify(c, syscall.SIGKILL)
-			go func() {
-				<-c
-				log.Warning("Cleanup SQL connections\n")
-				db.Close()
-				event.Publish(sdk.EventEngine{Message: "shutdown"})
-				event.Close()
-				os.Exit(0)
-			}()
+			os.Exit(3)
 		}
 
-		// Make a new Broker instance
-		b = &Broker{
-			make(map[chan string]bool),
-			make(chan (chan string)),
-			make(chan (chan string)),
-			make(chan string),
+		if viper.GetBool(viperLogDBLogging) {
+			log.UseDatabaseLogger(db)
 		}
 
-		b.Start()
+		if err = bootstrap.InitiliazeDB(database.GetDBMap); err != nil {
+			log.Critical("Cannot setup databases: %s\n", err)
+		}
+
+		// Gracefully shutdown sql connections
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
+		signal.Notify(c, syscall.SIGTERM)
+		signal.Notify(c, syscall.SIGKILL)
+		go func() {
+			<-c
+			log.Warning("Cleanup SQL connections\n")
+			db.Close()
+			event.Publish(sdk.EventEngine{Message: "shutdown"})
+			event.Close()
+			os.Exit(0)
+		}()
 
 		router = &Router{
 			mux: mux.NewRouter(),
 		}
 		router.init()
-		baseURL = viper.GetString("base_url")
-
-		if err := group.Initialize(database.DBMap(db), viper.GetString("default_group")); err != nil {
-			log.Critical("Cannot initialize groups: %s\n", err)
-		}
+		baseURL = viper.GetString(viperURLUI)
 
 		//Intialize repositories manager
 		rmInitOpts := repositoriesmanager.InitializeOpts{
 			SecretClient:           secret.Client,
-			KeysDirectory:          viper.GetString("keys_directory"),
+			KeysDirectory:          viper.GetString(viperKeysDirectory),
 			UIBaseURL:              baseURL,
-			APIBaseURL:             viper.GetString("api_url"),
-			DisableGithubSetStatus: viper.GetBool("no_github_status"),
-			DisableGithubStatusURL: viper.GetBool("no_github_status_url"),
-			DisableStashSetStatus:  viper.GetBool("no_stash_status"),
+			APIBaseURL:             viper.GetString(viperURLAPI),
+			DisableGithubSetStatus: viper.GetBool(viperVCSRepoGithubStatusDisabled),
+			DisableGithubStatusURL: viper.GetBool(viperVCSRepoGithubStatusURLDisabled),
+			DisableStashSetStatus:  viper.GetBool(viperVCSRepoBitbucketStatusDisabled),
+			GithubSecret:           viper.GetString(viperVCSRepoGithubSecret),
+			StashPrivateKey:        viper.GetString(viperVCSRepoBitbucketPrivateKey),
 		}
 		if err := repositoriesmanager.Initialize(rmInitOpts); err != nil {
 			log.Warning("Error initializing repositories manager connections: %s\n", err)
 		}
 
+		//Initiliaze hook package
+		hook.Init(viper.GetString(viperURLAPI))
+
+		//Intialize notification package
+		notification.Init(viper.GetString(viperURLAPI), baseURL)
+
 		// Initialize the auth driver
 		var authMode string
 		var authOptions interface{}
-		switch viper.GetBool("ldap_enable") {
+		switch viper.GetBool(viperAuthLDAPEnable) {
 		case true:
 			authMode = "ldap"
 			authOptions = auth.LDAPConfig{
-				Host:         viper.GetString("ldap_host"),
-				Port:         viper.GetInt("ldap_port"),
-				Base:         viper.GetString("ldap_base"),
-				DN:           viper.GetString("ldap_dn"),
-				SSL:          viper.GetBool("ldap_ssl"),
-				UserFullname: viper.GetString("ldap_user_fullname"),
+				Host:         viper.GetString(viperAuthLDAPHost),
+				Port:         viper.GetInt(viperAuthLDAPPort),
+				Base:         viper.GetString(viperAuthLDAPBase),
+				DN:           viper.GetString(viperAuthLDAPDN),
+				SSL:          viper.GetBool(viperAuthLDAPSSL),
+				UserFullname: viper.GetString(viperAuthLDAPFullname),
 			}
 		default:
 			authMode = "local"
-			if viper.GetString("auth_local_mode") == "basic" {
+			if viper.GetString(viperAuthMode) == "basic" {
 				log.Notice("Authentitication mode: Basic\n")
 				localCLientAuthMode = auth.LocalClientBasicAuthMode
 			} else {
@@ -200,22 +214,22 @@ var mainCmd = &cobra.Command{
 		}
 
 		storeOptions := sessionstore.Options{
-			Mode:          viper.GetString("cache"),
-			TTL:           viper.GetInt("session_ttl"),
-			RedisHost:     viper.GetString("redis_host"),
-			RedisPassword: viper.GetString("redis_password"),
+			Mode:          viper.GetString(viperCacheMode),
+			TTL:           viper.GetInt(viperCacheTTL),
+			RedisHost:     viper.GetString(viperCacheRedisHost),
+			RedisPassword: viper.GetString(viperCacheRedisPassword),
 		}
 
 		router.authDriver, _ = auth.GetDriver(authMode, authOptions, storeOptions)
 
-		cache.Initialize(viper.GetString("cache"), viper.GetString("redis_host"), viper.GetString("redis_password"), viper.GetInt("cache_ttl"))
+		cache.Initialize(viper.GetString(viperCacheMode), viper.GetString(viperCacheRedisHost), viper.GetString(viperCacheRedisPassword), viper.GetInt(viperCacheTTL))
 
 		kafkaOptions := event.KafkaConfig{
-			Enabled:         viper.GetBool("event_kafka_enabled"),
-			BrokerAddresses: viper.GetString("event_kafka_broker_addresses"),
-			User:            viper.GetString("event_kafka_user"),
-			Password:        viper.GetString("event_kafka_password"),
-			Topic:           viper.GetString("event_kafka_topic"),
+			Enabled:         viper.GetBool(viperEventsKafkaEnabled),
+			BrokerAddresses: viper.GetString(viperEventsKafkaBroker),
+			User:            viper.GetString(viperEventsKafkaUser),
+			Password:        viper.GetString(viperEventsKafkaPassword),
+			Topic:           viper.GetString(viperEventsKafkaTopic),
 		}
 		if err := event.Initialize(kafkaOptions); err != nil {
 			log.Warning("⚠ Error while initializing event system: %s", err)
@@ -225,6 +239,10 @@ var mainCmd = &cobra.Command{
 
 		if err := worker.Initialize(); err != nil {
 			log.Warning("⚠ Error while initializing workers routine: %s", err)
+		}
+
+		if err := group.Initialize(database.DBMap(db), viper.GetString(viperAuthDefaultGroup)); err != nil {
+			log.Critical("Cannot initialize groups: %s\n", err)
 		}
 
 		go queue.Pipelines()
@@ -239,42 +257,42 @@ var mainCmd = &cobra.Command{
 		go action.RequirementsCacheLoader(5, database.GetDBMap)
 		go hookRecoverer(database.GetDBMap)
 
-		if !viper.GetBool("no_repo_cache_loader") {
+		if !viper.GetBool(viperVCSRepoCacheLoaderDisabled) {
 			go repositoriesmanager.RepositoriesCacheLoader(30)
 		} else {
 			log.Warning("⚠ Repositories cache loader is disabled")
 		}
 
-		if !viper.GetBool("no_repo_polling") {
+		if !viper.GetBool(viperVCSPollingDisabled) {
 			go poller.Initialize(database.GetDBMap, 10)
 		} else {
 			log.Warning("⚠ Repositories polling is disabled")
 		}
 
-		if !viper.GetBool("no_scheduler") {
+		if !viper.GetBool(viperSchedulersDisabled) {
 			go scheduler.Initialize(database.GetDBMap, 10)
 		} else {
 			log.Warning("⚠ Cron Scheduler is disabled")
 		}
 
 		s := &http.Server{
-			Addr:           ":" + viper.GetString("listen_port"),
+			Addr:           ":" + viper.GetString(viperServerHTTPPort),
 			Handler:        router.mux,
 			ReadTimeout:    10 * time.Minute,
 			WriteTimeout:   10 * time.Minute,
 			MaxHeaderBytes: 1 << 20,
 		}
 
-		event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", viper.GetString("listen_port"))})
+		event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", viper.GetString(viperServerHTTPPort))})
 
 		go func() {
 			//TLS is disabled for the moment. We need to serve TLS on HTTP too
-			if err := grpc.Init(viper.GetInt("grpc_port"), false, "", ""); err != nil {
+			if err := grpc.Init(viper.GetInt(viperServerGRPCPort), false, "", ""); err != nil {
 				log.Fatalf("Cannot start grpc cds-server: %s", err)
 			}
 		}()
 
-		log.Notice("Starting HTTP Server on port %s", viper.GetString("listen_port"))
+		log.Notice("Starting HTTP Server on port %s", viper.GetString(viperServerHTTPPort))
 		if err := s.ListenAndServe(); err != nil {
 			log.Fatalf("Cannot start cds-server: %s\n", err)
 		}

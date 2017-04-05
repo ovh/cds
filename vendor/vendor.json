@@ -909,10 +909,16 @@
 			"revisionTime": "2016-10-18T23:08:44Z"
 		},
 		{
-			"checksumSHA1": "2EeKIC5kUssQK8g49DOa78FoMgs=",
+			"checksumSHA1": "izVU6j6QQkUnVzStaKUWnXrgDdY=",
 			"path": "github.com/spf13/viper",
-			"revision": "50515b700e02658272117a72bd641b6b7f1222e5",
-			"revisionTime": "2016-10-14T09:24:45Z"
+			"revision": "84f94806c67f59dd7ae87bc5351f7a9c94a4558d",
+			"revisionTime": "2017-03-15T13:43:09Z"
+		},
+		{
+			"checksumSHA1": "85Ogt6qK8TRMRZGHe72v6WutGgQ=",
+			"path": "github.com/spf13/viper/remote",
+			"revision": "84f94806c67f59dd7ae87bc5351f7a9c94a4558d",
+			"revisionTime": "2017-03-15T13:43:09Z"
 		},
 		{
 			"checksumSHA1": "iydUphwYqZRq3WhstEdGsbvBAKs=",
@@ -943,6 +949,12 @@
 			"path": "github.com/xeipuuv/gojsonschema",
 			"revision": "f06f290571ce81ab347174c6f7ad2e1865af41a7",
 			"revisionTime": "2016-12-31T05:55:40Z"
+		},
+		{
+			"checksumSHA1": "+LK6jdiDR3a/HF8SoN5Mf+XftU0=",
+			"path": "github.com/xordataexchange/crypt/config",
+			"revision": "749e360c8f236773f28fc6d3ddfce4a470795227",
+			"revisionTime": "2015-05-23T23:00:31Z"
 		},
 		{
 			"checksumSHA1": "TT1rac6kpQp2vz24m5yDGUNQ/QQ=",

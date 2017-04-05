@@ -40,7 +40,12 @@ type Logger interface {
 
 // Initialize initializes log level with flag --log-level
 func Initialize() {
-	switch viper.GetString("log_level") {
+	logLevel := viper.GetString("log_level")
+	if logLevel == "" {
+		logLevel = viper.GetString("log.level")
+	}
+
+	switch logLevel {
 	case "debug":
 		SetLevel(DebugLevel)
 	case "info":
@@ -52,7 +57,7 @@ func Initialize() {
 	case "notice":
 		SetLevel(NoticeLevel)
 	default:
-		fmt.Fprintf(os.Stderr, "Invalid Log Level %s", viper.GetString("log_level"))
+		fmt.Fprintf(os.Stderr, "Invalid Log Level %s", logLevel)
 		os.Exit(1)
 	}
 }
