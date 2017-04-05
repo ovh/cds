@@ -136,11 +136,12 @@ type ConfigOptions struct {
 
 // ConfigOptionsOpenstack is used by ConfigOptions
 type ConfigOptionsOpenstack struct {
-	Address  string
-	Username string
-	Password string
-	Tenant   string
-	Region   string
+	Address         string
+	Username        string
+	Password        string
+	Tenant          string
+	Region          string
+	ContainerPrefix string
 }
 
 // ConfigOptionsFilesystem is used by ConfigOptions
@@ -151,12 +152,13 @@ type ConfigOptionsFilesystem struct {
 // New initialise a new ArtifactStorage
 func New(cfg Config) (Driver, error) {
 	switch cfg.Kind {
-	case Openstack:
+	case Openstack, Swift:
 		return NewOpenstackStore(cfg.Options.Openstack.Address,
 			cfg.Options.Openstack.Username,
 			cfg.Options.Openstack.Password,
 			cfg.Options.Openstack.Tenant,
-			cfg.Options.Openstack.Region)
+			cfg.Options.Openstack.Region,
+			cfg.Options.Openstack.ContainerPrefix)
 	case Filesystem:
 		return NewFilesystemStore(cfg.Options.Filesystem.Basedir)
 	default:

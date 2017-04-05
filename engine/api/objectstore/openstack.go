@@ -11,18 +11,19 @@ import (
 
 // OpenstackStore implements ObjectStore interface with openstack implementation
 type OpenstackStore struct {
-	address  string
-	user     string
-	password string
-	tenant   string
-	region   string
-	token    *Token
-	endpoint string
+	address         string
+	user            string
+	password        string
+	tenant          string
+	region          string
+	token           *Token
+	endpoint        string
+	containerprefix string
 }
 
 // NewOpenstackStore create a new ObjectStore with openstack driver and check configuration
-func NewOpenstackStore(address, user, password, tenant, region string) (*OpenstackStore, error) {
-	log.Notice("Objectstore> Initialize Swift(Openstack) driver on address: %s, tenant: %s, region: %s", address, tenant, region)
+func NewOpenstackStore(address, user, password, tenant, region, containerprefix string) (*OpenstackStore, error) {
+	log.Notice("Objectstore> Initialize Swift(Openstack) driver on address: %s, tenant: %s, region: %s, prefix: %s", address, tenant, region, containerprefix)
 	if address == "" {
 		return nil, fmt.Errorf("artifact storage is openstack, but flag --artifact_address is not provided")
 	}
@@ -40,11 +41,12 @@ func NewOpenstackStore(address, user, password, tenant, region string) (*Opensta
 	}
 
 	ops := &OpenstackStore{
-		address:  address,
-		user:     user,
-		password: password,
-		tenant:   tenant,
-		region:   region,
+		address:         address,
+		user:            user,
+		password:        password,
+		tenant:          tenant,
+		region:          region,
+		containerprefix: containerprefix,
 	}
 
 	var err error
@@ -68,12 +70,12 @@ func (ops *OpenstackStore) Status() string {
 
 // Delete should delete on openstack
 func (ops *OpenstackStore) Delete(o Object) error {
-	return deleteObject(ops.token.ID, ops.endpoint, o.GetPath(), o.GetName())
+	return deleteObject(ops.token.ID, ops.endpoint, ops.containerprefix+o.GetPath(), o.GetName())
 }
 
 // Store stores in openstack
 func (ops *OpenstackStore) Store(o Object, data io.ReadCloser) (string, error) {
-	container := o.GetPath()
+	container := ops.containerprefix + o.GetPath()
 	object := o.GetName()
 
 	ops.escape(container, object)
@@ -99,7 +101,7 @@ func (ops *OpenstackStore) Store(o Object, data io.ReadCloser) (string, error) {
 
 // Fetch lookup on openstack to fetch data
 func (ops *OpenstackStore) Fetch(o Object) (io.ReadCloser, error) {
-	container := o.GetPath()
+	container := ops.containerprefix + o.GetPath()
 	object := o.GetName()
 	ops.escape(container, object)
 
