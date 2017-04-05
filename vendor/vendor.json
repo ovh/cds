@@ -379,6 +379,12 @@
 			"revisionTime": "2017-01-11T10:11:55Z"
 		},
 		{
+			"checksumSHA1": "VMPjzdEjS4TvwM41fcWr5dnb4Eo=",
+			"path": "github.com/google/gops/agent",
+			"revision": "e1d23454034a34648ae16bce17e428ae38ddc1d8",
+			"revisionTime": "2017-03-02T19:52:43Z"
+		},
+		{
 			"checksumSHA1": "5DBIm/bJOKLR3CbQH6wIELQDLlQ=",
 			"path": "github.com/gorhill/cronexpr",
 			"revision": "d520615e531a6bf3fb69406b9eba718261285ec8",
