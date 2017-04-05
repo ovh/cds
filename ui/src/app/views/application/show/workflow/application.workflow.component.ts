@@ -1,9 +1,9 @@
-import {Component, OnInit, Input, Output, EventEmitter, NgZone, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, NgZone, OnInit, Output, ViewChild} from '@angular/core';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {Application} from '../../../../model/application.model';
 import {Project} from '../../../../model/project.model';
 import {WorkflowItem} from '../../../../model/application.workflow.model';
-import {PipelineType, PipelineBuild} from '../../../../model/pipeline.model';
+import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
 import {Branch} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
@@ -31,7 +31,7 @@ export class ApplicationWorkflowComponent implements OnInit {
 
     // Filter values
     branches: Array<Branch>;
-    versions: Array<string|number>;
+    versions: Array<string | number>;
 
     // Modal Component to link pipeline
     @ViewChild('linkPipelineComponent')
@@ -49,10 +49,11 @@ export class ApplicationWorkflowComponent implements OnInit {
             this.branches = branches;
 
             this.branches.forEach(b => {
-                if (b.default || (this.applicationFilter.branch === '' && b.display_id === 'master')) {
+                if (b.default && (!this.applicationFilter.branch || this.applicationFilter === '')) {
                     this.applicationFilter.branch = b.display_id;
                 }
             });
+
             this.loadVersions(this.project.key, this.application.name);
         });
     }
@@ -178,12 +179,12 @@ export class ApplicationWorkflowComponent implements OnInit {
      */
     updateSchedulers(w: WorkflowItem, app: Application): void {
         w.schedulers.forEach(s => {
-           let sInApp = app.schedulers.find(sc => {
-               return sc.id === s.id;
-           });
-           if (sInApp && sInApp.next_execution) {
-               s.next_execution = sInApp.next_execution;
-           }
+            let sInApp = app.schedulers.find(sc => {
+                return sc.id === s.id;
+            });
+            if (sInApp && sInApp.next_execution) {
+                s.next_execution = sInApp.next_execution;
+            }
         });
     }
 
@@ -209,7 +210,7 @@ export class ApplicationWorkflowComponent implements OnInit {
             this.applicationFilter.version = 0;
         }
         this._router.navigate(['/project/', this.project.key, 'application', this.application.name],
-            {queryParams: { tab: 'workflow', branch: this.applicationFilter.branch, version: this.applicationFilter.version}});
+            {queryParams: {tab: 'workflow', branch: this.applicationFilter.branch, version: this.applicationFilter.version}});
         this.changeWorkerEvent.emit(true);
         this.clearTree(this.application.workflows);
     }

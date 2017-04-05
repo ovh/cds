@@ -86,7 +86,7 @@ describe('CDS: Application Workflow', () => {
         fixture.componentInstance.ngOnInit();
 
         // Check
-        expect(fixture.componentInstance.applicationFilter.branch).toBe('branche1');
+        expect(fixture.componentInstance.applicationFilter.branch).toBe('foo');
         expect(JSON.stringify(fixture.componentInstance.versions)).toBe(JSON.stringify([' ', 1, 2, 3]));
         expect(JSON.stringify(fixture.componentInstance.branches)).toBe(JSON.stringify([
             {'default': false, 'display_id': ' '},

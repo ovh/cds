@@ -225,7 +225,6 @@ mode = "local"
     region = "<OS_REGION_NAME>"
     containerprefix = "" # Use if your want to prefix containers
 
-
 #######################
 # CDS Events Settings #
 #######################
