@@ -719,9 +719,9 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	if client != nil {
 		//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
 		//buildNumber, pipelineID, applicationID, environmentID
-		cur, prev, errcurrentbuild := CurrentAndPreviousPipelineBuildNumberAndHash(tx, int64(buildNumber), p.ID, app.ID, env.ID)
+		cur, prev, errcurrentbuild := CurrentAndPreviousPipelineBuildNumberAndHash(tx, pb.BuildNumber, p.ID, app.ID, env.ID)
 		if errcurrentbuild != nil {
-			log.Warning("InsertPipelineBuild> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", buildNumber, p.ID, app.ID, env.ID, errcurrentbuild)
+			log.Warning("InsertPipelineBuild> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", pb.BuildNumber, p.ID, app.ID, env.ID, errcurrentbuild)
 		} else {
 			if prev == nil {
 				log.Info("InsertPipelineBuild> No previous build was found for branch %s", cur.Branch)
