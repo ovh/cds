@@ -19,6 +19,20 @@ type Conf struct {
 	GraylogExtraValue string
 }
 
+var (
+	logger Logger
+)
+
+// Logger defines the logs levels used
+type Logger interface {
+	Logf(fmt string, values ...interface{})
+}
+
+// SetLogger override private logger reference
+func SetLogger(l Logger) {
+	logger = l
+}
+
 // Initialize init log level
 func Initialize(conf *Conf) {
 	switch conf.Level {
@@ -60,25 +74,45 @@ func Initialize(conf *Conf) {
 
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
-	log.Debugf(format, values...)
+	if logger != nil {
+		logger.Logf("[DEBUG]    "+format, values...)
+	} else {
+		log.Debugf(format, values...)
+	}
 }
 
 // Info prints information log
 func Info(format string, values ...interface{}) {
-	log.Infof(format, values...)
+	if logger != nil {
+		logger.Logf("[INFO]    "+format, values...)
+	} else {
+		log.Infof(format, values...)
+	}
 }
 
 // Warning prints warnings for user
 func Warning(format string, values ...interface{}) {
-	log.Warnf(format, values...)
+	if logger != nil {
+		logger.Logf("[WARN]    "+format, values...)
+	} else {
+		log.Warnf(format, values...)
+	}
 }
 
 // Critical prints error informations
 func Critical(format string, values ...interface{}) {
-	log.Errorf(format, values...)
+	if logger != nil {
+		logger.Logf("[ERROR]    "+format, values...)
+	} else {
+		log.Errorf(format, values...)
+	}
 }
 
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
-	log.Fatalf(format, values...)
+	if logger != nil {
+		logger.Logf("[FATAL]    "+format, values...)
+	} else {
+		log.Fatalf(format, values...)
+	}
 }

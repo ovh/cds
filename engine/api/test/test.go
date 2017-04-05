@@ -53,6 +53,8 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	dbPort = flag.Lookup("dbPort").Value.String()
 	dbSSLMode = flag.Lookup("sslMode").Value.String()
 
+	log.SetLogger(t)
+
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")
 		return nil
