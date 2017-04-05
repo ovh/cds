@@ -30,11 +30,10 @@ function loadLog (user, session, api) {
         }
         postMessage(httpCall(url, api, user, session));
         setInterval(function () {
-
             var stepLogs = httpCall(url, api, user, session);
             postMessage(stepLogs);
             var jsonLogs = JSON.parse(stepLogs);
-            if (jsonLogs.status !== 'Building') {
+            if (jsonLogs && jsonLogs.status !== 'Building') {
                 close();
             }
         }, 2000);
