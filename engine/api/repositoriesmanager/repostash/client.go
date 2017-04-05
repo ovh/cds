@@ -10,7 +10,6 @@ import (
 	"github.com/facebookgo/httpcontrol"
 	"github.com/go-stash/go-stash/stash"
 	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk/log"
@@ -373,7 +372,7 @@ func (s *StashClient) SetStatus(event sdk.Event) error {
 
 	// project/CDS/application/cds2tat/pipeline/monPipeline/build/855?env=monEnvi
 	url := fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
-		viper.GetString("base_url"),
+		uiURL,
 		cdsProject,
 		cdsApplication,
 		cdsPipelineName,

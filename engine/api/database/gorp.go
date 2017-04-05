@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"os"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 )
@@ -34,7 +34,7 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}, TypeConverter: new(TypeConverter)}
 
-	if viper.GetBool("gorp_trace") {
+	if os.Getenv("gorp_trace") == "true" {
 		dbmap.TraceOn("[GORP]     Query>", gorpLogger{})
 	}
 

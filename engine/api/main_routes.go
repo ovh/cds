@@ -28,10 +28,10 @@ func (router *Router) init() {
 	router.Handle("/plugin/download/{name}", GET(downloadPluginHandler))
 
 	// Download file
-	router.ServeAbsoluteFile("/download/cli/x86_64", path.Join(viper.GetString("download_directory"), "cds"), "cds")
-	router.ServeAbsoluteFile("/download/worker/x86_64", path.Join(viper.GetString("download_directory"), "worker"), "worker")
-	router.ServeAbsoluteFile("/download/worker/windows_x86_64", path.Join(viper.GetString("download_directory"), "worker.exe"), "worker.exe")
-	router.ServeAbsoluteFile("/download/hatchery/x86_64", path.Join(viper.GetString("download_directory"), "hatchery", "x86_64"), "hatchery")
+	router.ServeAbsoluteFile("/download/cli/x86_64", path.Join(viper.GetString(viperDownloadDirectory), "cds"), "cds")
+	router.ServeAbsoluteFile("/download/worker/x86_64", path.Join(viper.GetString(viperDownloadDirectory), "worker"), "worker")
+	router.ServeAbsoluteFile("/download/worker/windows_x86_64", path.Join(viper.GetString(viperDownloadDirectory), "worker.exe"), "worker.exe")
+	router.ServeAbsoluteFile("/download/hatchery/x86_64", path.Join(viper.GetString(viperDownloadDirectory), "hatchery", "x86_64"), "hatchery")
 
 	// Group
 	router.Handle("/group", GET(getGroups), POST(addGroupHandler))

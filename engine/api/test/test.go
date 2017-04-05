@@ -1,9 +1,7 @@
 package test
 
 import (
-	"database/sql"
 	"flag"
-	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -59,10 +57,8 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 		t.Skip("This should be run with a database")
 		return nil
 	}
-	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=5000", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode)
-
 	if database.DB() == nil {
-		db, err := sql.Open(DBDriver, dsn)
+		db, err := database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s\n", err)
 			return nil

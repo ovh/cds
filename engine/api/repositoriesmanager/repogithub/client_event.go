@@ -8,7 +8,6 @@ import (
 	"net/url"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
@@ -57,7 +56,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	}
 
 	url := fmt.Sprintf("%s#/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
-		viper.GetString("base_url"),
+		uiURL,
 		eventpb.ProjectKey,
 		eventpb.ApplicationName,
 		eventpb.PipelineName,

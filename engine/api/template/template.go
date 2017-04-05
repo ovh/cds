@@ -12,15 +12,13 @@ import (
 )
 
 // ApplyTemplate creates an application and configure it with given template
-func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]sdk.Message, error) {
+func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey, apiURL string) ([]sdk.Message, error) {
 	var app *sdk.Application
-
 	if opts.TemplateName == templateextension.EmptyTemplate.Name {
 		app = &sdk.Application{
 			Name:              opts.ApplicationName,
 			ApplicationGroups: proj.ProjectGroups,
 		}
-
 	} else {
 		//Get the template
 		sdktmpl, errl := templateextension.LoadByName(db, opts.TemplateName)
@@ -29,7 +27,7 @@ func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOpt
 		}
 
 		// Get the go-plugin instance
-		templ, deferFunc, erri := templateextension.Instance(sdktmpl, user, sessionKey)
+		templ, deferFunc, erri := templateextension.Instance(sdktmpl, user, sessionKey, apiURL)
 		if deferFunc != nil {
 			defer deferFunc()
 		}
@@ -100,7 +98,7 @@ func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOpt
 }
 
 // ApplyTemplateOnApplication configure an application it with given template
-func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Application, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey) ([]sdk.Message, error) {
+func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Application, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey, apiURL string) ([]sdk.Message, error) {
 	//Get the template
 	sdktmpl, err := templateextension.LoadByName(db, opts.TemplateName)
 	if err != nil {
@@ -108,7 +106,7 @@ func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Appl
 	}
 
 	// Get the go-plugin instance
-	templ, deferFunc, err := templateextension.Instance(sdktmpl, user, sessionKey)
+	templ, deferFunc, err := templateextension.Instance(sdktmpl, user, sessionKey, apiURL)
 	if deferFunc != nil {
 		defer deferFunc()
 	}

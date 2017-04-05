@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
@@ -327,7 +328,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	// Apply the template
 	log.Debug("applyTemplateHandler> applyTemplate")
-	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey)
+	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
 	if err != nil {
 		return err
 
@@ -403,7 +404,7 @@ func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, d
 	}
 
 	//Apply the template
-	msg, err := template.ApplyTemplateOnApplication(db, proj, app, opts, c.User, sessionKey)
+	msg, err := template.ApplyTemplateOnApplication(db, proj, app, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
 	if err != nil {
 		return err
 

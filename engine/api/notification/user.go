@@ -7,12 +7,22 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
+
+var (
+	apiURL string
+	uiURL  string
+)
+
+// Init initializes notification package
+func Init(apiurl, uiurl string) {
+	apiURL = apiurl
+	uiURL = uiurl
+}
 
 // GetUserEvents returns event from user notification
 func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) []sdk.EventNotif {
@@ -34,7 +44,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 	}
 	params["cds.status"] = pb.Status.String()
 	//Set PipelineBuild UI URL
-	params["cds.buildURL"] = fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s&tab=detail", viper.GetString("base_url"), pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
+	params["cds.buildURL"] = fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s&tab=detail", uiURL, pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
 	//find author (triggeredBy user or changes author)
 	if pb.Trigger.TriggeredBy != nil {
 		params["cds.author"] = pb.Trigger.TriggeredBy.Username
