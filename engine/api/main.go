@@ -110,11 +110,12 @@ var mainCmd = &cobra.Command{
 			Kind: objectstoreKind,
 			Options: objectstore.ConfigOptions{
 				Openstack: objectstore.ConfigOptionsOpenstack{
-					Address:  viper.GetString(viperArtifactOSURL),
-					Username: viper.GetString(viperArtifactOSUsername),
-					Password: viper.GetString(viperArtifactOSPassword),
-					Tenant:   viper.GetString(viperArtifactOSTenant),
-					Region:   viper.GetString(viperArtifactOSRegion),
+					Address:         viper.GetString(viperArtifactOSURL),
+					Username:        viper.GetString(viperArtifactOSUsername),
+					Password:        viper.GetString(viperArtifactOSPassword),
+					Tenant:          viper.GetString(viperArtifactOSTenant),
+					Region:          viper.GetString(viperArtifactOSRegion),
+					ContainerPrefix: viper.GetString(viperArtifactOSContainerPrefix),
 				},
 				Filesystem: objectstore.ConfigOptionsFilesystem{
 					Basedir: viper.GetString(viperArtifactLocalBasedir),
