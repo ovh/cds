@@ -84,9 +84,9 @@ var (
 )
 
 func init() {
-	mainCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
-	mainCmd.PersistentFlags().StringVar(&remoteCfg, "remote-config", "", "consul configuration store")
-	mainCmd.PersistentFlags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "consul configuration store key")
+	mainCmd.Flags().StringVar(&cfgFile, "config", "", "config file")
+	mainCmd.Flags().StringVar(&remoteCfg, "remote-config", "", "consul configuration store")
+	mainCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "consul configuration store key")
 
 	//Database command
 	mainCmd.AddCommand(database.DBCmd)

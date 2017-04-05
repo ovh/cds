@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -13,18 +12,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/spf13/viper"
-)
-
-const (
-	viperDBUser     = "db.user"
-	viperDBPassword = "db.password"
-	viperDBName     = "db.name"
-	viperDBHost     = "db.host"
-	viperDBPort     = "db.port"
-	viperDBSSLMode  = "db.sslmode"
-	viperDBMaxConn  = "db.maxconn"
-	viperDBTimeout  = "db.timeout"
 )
 
 //DBCmd is the root command for database management
@@ -64,22 +51,14 @@ var (
 
 func setFlags(cmd *cobra.Command) {
 	pflags := cmd.Flags()
-	pflags.String("db-user", "cds", "DB User")
-	pflags.String("db-password", "", "DB Password")
-	pflags.String("db-name", "cds", "DB Name")
-	pflags.String("db-host", "localhost", "DB Host")
-	pflags.String("db-port", "5432", "DB Port")
-	pflags.String("db-sslmode", "require", "DB SSL Mode: require (default), verify-full, or disable")
-	pflags.Int("db-maxconn", 20, "DB Max connection")
-	pflags.Int("db-timeout", 3000, "Statement timeout value")
-	viper.BindPFlag(viperDBUser, pflags.Lookup("db-user"))
-	viper.BindPFlag(viperDBPassword, pflags.Lookup("db-password"))
-	viper.BindPFlag(viperDBName, pflags.Lookup("db-name"))
-	viper.BindPFlag(viperDBHost, pflags.Lookup("db-host"))
-	viper.BindPFlag(viperDBPort, pflags.Lookup("db-port"))
-	viper.BindPFlag(viperDBSSLMode, pflags.Lookup("db-sslmode"))
-	viper.BindPFlag(viperDBMaxConn, pflags.Lookup("db-maxconn"))
-	viper.BindPFlag(viperDBTimeout, pflags.Lookup("db-timeout"))
+	pflags.StringVarP(&dbUser, "db-user", "", "cds", "DB User")
+	pflags.StringVarP(&dbPassword, "db-password", "", "", "DB Password")
+	pflags.StringVarP(&dbName, "db-name", "", "cds", "DB Name")
+	pflags.StringVarP(&dbHost, "db-host", "", "localhost", "DB Host")
+	pflags.StringVarP(&dbPort, "db-port", "", "5432", "DB Port")
+	pflags.StringVarP(&dbSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
+	pflags.IntVarP(&dbMaxConn, "db-maxconn", "", 20, "DB Max connection")
+	pflags.IntVarP(&dbTimeout, "db-timeout", "", 3000, "Statement timeout value")
 }
 
 func init() {
@@ -101,18 +80,6 @@ func init() {
 	statusCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	viper.AutomaticEnv() // read in environment variables that match
-	viper.SetEnvPrefix("cds")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." and "-" by "_" for env variable lookup
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
-}
-
 type statusRow struct {
 	Id        string
 	Migrated  bool
@@ -132,16 +99,7 @@ func downgradeCmdFunc(cmd *cobra.Command, args []string) {
 }
 
 func statusCmdFunc(cmd *cobra.Command, args []string) {
-	db, err := Init(
-		viper.GetString(viperDBUser),
-		viper.GetString(viperDBPassword),
-		viper.GetString(viperDBName),
-		viper.GetString(viperDBHost),
-		viper.GetString(viperDBPort),
-		viper.GetString(viperDBSSLMode),
-		viper.GetInt(viperDBTimeout),
-		viper.GetInt(viperDBMaxConn))
-
+	db, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
@@ -200,16 +158,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
-	db, err := Init(
-		viper.GetString(viperDBUser),
-		viper.GetString(viperDBPassword),
-		viper.GetString(viperDBName),
-		viper.GetString(viperDBHost),
-		viper.GetString(viperDBPort),
-		viper.GetString(viperDBSSLMode),
-		viper.GetInt(viperDBTimeout),
-		viper.GetInt(viperDBMaxConn))
-
+	db, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
