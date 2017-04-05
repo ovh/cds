@@ -36,6 +36,7 @@ type PipelineBuildDbResult struct {
 	Status                string         `db:"status"`
 	Args                  string         `db:"args"`
 	Stages                string         `db:"stages"`
+	Commits               string         `db:"commits"`
 	Start                 time.Time      `db:"start"`
 	Done                  pq.NullTime    `db:"done"`
 	ManualTrigger         bool           `db:"manual_trigger"`
@@ -55,7 +56,7 @@ const (
 			pb.id as id, pb.application_id as appID, pb.pipeline_id as pipID, pb.environment_id as envID,
 			application.name as appName, pipeline.name as pipName, pipeline.type as pipType, environment.name as envName,
 			pb.build_number as build_number, pb.version as version, pb.status as status,
-			pb.args as args, pb.stages as stages,
+			pb.args as args, pb.stages as stages, pb.commits as commits,
 			pb.start as start, pb.done as done,
 			pb.manual_trigger as manual_trigger, pb.triggered_by as triggered_by,
 			pb.vcs_changes_branch as vcs_branch, pb.vcs_changes_hash as vcs_hash, pb.vcs_changes_author as vcs_author,
@@ -371,6 +372,11 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 	}
 	if err := json.Unmarshal([]byte(pbResult.Stages), &pb.Stages); err != nil {
 		return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal stages %s", pbResult.Stages)
+	}
+	if pbResult.Commits != "" {
+		if err := json.Unmarshal([]byte(pbResult.Commits), &pb.Commits); err != nil {
+			return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal commits %s", pbResult.Commits)
+		}
 	}
 
 	return &pb, nil
@@ -715,18 +721,18 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		//buildNumber, pipelineID, applicationID, environmentID
 		cur, prev, errcurrentbuild := CurrentAndPreviousPipelineBuildNumberAndHash(tx, int64(buildNumber), p.ID, app.ID, env.ID)
 		if errcurrentbuild != nil {
-			log.Warning("getPipelineBuildCommitsHandler> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", buildNumber, p.ID, app.ID, env.ID, errcurrentbuild)
+			log.Warning("InsertPipelineBuild> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", buildNumber, p.ID, app.ID, env.ID, errcurrentbuild)
 		} else {
 			if prev == nil {
-				log.Info("getPipelineBuildCommitsHandler> No previous build was found for branch %s", cur.Branch)
+				log.Info("InsertPipelineBuild> No previous build was found for branch %s", cur.Branch)
 			} else {
-				log.Info("getPipelineBuildCommitsHandler> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+				log.Info("InsertPipelineBuild> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
 			}
 			if prev != nil && cur != nil && cur.Hash != "" && prev.Hash != "" {
 				//If we are lucky, return a true diff
 				commits, errcommits := client.Commits(app.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
 				if errcommits != nil {
-					log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", errcommits)
+					log.Warning("InsertPipelineBuild> Cannot get commits: %s", errcommits)
 				} else {
 					if err := updatePipelineBuildCommits(tx, pb.ID, commits); err != nil {
 						return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to update commits list in pipeline build")
@@ -734,10 +740,10 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 				}
 			} else if cur.Hash != "" {
 				//If we only get current pipeline build hash
-				log.Info("getPipelineBuildCommitsHandler>  Looking for every commit until %s ", cur.Hash)
+				log.Info("InsertPipelineBuild>  Looking for every commit until %s ", cur.Hash)
 				c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
 				if err != nil {
-					log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
+					log.Warning("InsertPipelineBuild> Cannot get commits: %s", err)
 				} else {
 					if err := updatePipelineBuildCommits(tx, pb.ID, c); err != nil {
 						return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to update commits list in pipeline build")
@@ -821,6 +827,7 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 }
 
 func updatePipelineBuildCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
+	log.Debug("updatePipelineBuildCommits> Updating %d commits for pipeline_build #%d", len(commits), id)
 	commitsBtes, errMarshal := json.Marshal(commits)
 	if errMarshal != nil {
 		return sdk.WrapError(errMarshal, "insertPipelineBuild> Unable to marshal commits")
