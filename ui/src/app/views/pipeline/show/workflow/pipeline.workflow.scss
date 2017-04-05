@@ -1,5 +1,7 @@
 @import '../../../../../common';
-
+.steps {
+  overflow-x: auto;
+}
 .ui.attached.segment {
   background-color: white;
 }
