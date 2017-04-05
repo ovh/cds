@@ -41,7 +41,6 @@ export class PipelineRunWorkflowComponent {
     }
 
     initData(): void {
-        console.log('Reinit des datas');
         delete this.currentBuild;
         delete this.selectedPipJob;
         delete this.jobSelected;
@@ -52,7 +51,6 @@ export class PipelineRunWorkflowComponent {
     }
 
     refreshBuild(data: PipelineBuild): void {
-        console.log(data);
         this.currentBuild = data;
         // Set selected job if needed or refresh step_status
         if (this.currentBuild.stages) {
