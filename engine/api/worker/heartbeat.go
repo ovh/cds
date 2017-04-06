@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // WorkerHeartbeatTimeout defines the number of seconds allowed for workers to refresh their beat
@@ -26,7 +26,7 @@ func Heartbeat() {
 			}
 
 			for i := range w {
-				log.Info("WorkerHeartbeat> Delete worker %s[%s] LastBeat:%d hatchery:%d status:%s", w[i].Name, w[i].ID, w[i].LastBeat, w[i].HatcheryID, w[i].Status)
+				log.Debug("WorkerHeartbeat> Delete worker %s[%s] LastBeat:%d hatchery:%d status:%s", w[i].Name, w[i].ID, w[i].LastBeat, w[i].HatcheryID, w[i].Status)
 				if err = DeleteWorker(database.DBMap(db), w[i].ID); err != nil {
 					log.Warning("WorkerHeartbeat> Cannot delete worker %s: %s", w[i].ID, err)
 					continue

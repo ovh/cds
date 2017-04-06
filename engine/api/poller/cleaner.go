@@ -5,13 +5,13 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
 //Cleaner is the cleaner main goroutine
 func Cleaner(DBFunc func() *gorp.DbMap, nbToKeep int) {
-	defer log.Critical("poller.Cleaner> has been exited !")
+	defer log.Error("poller.Cleaner> has been exited !")
 	for {
 		time.Sleep(30 * time.Minute)
 		if _, err := CleanerRun(DBFunc(), nbToKeep); err != nil {
@@ -53,7 +53,7 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.RepositoryPollerExecution, 
 				break
 			}
 			if err := DeleteExecution(tx, &exs[i]); err != nil {
-				log.Critical("poller.CleanerRun> Unable to delete execution %d : %s", exs[i].ID, err)
+				log.Error("poller.CleanerRun> Unable to delete execution %d : %s", exs[i].ID, err)
 			}
 			nbDeleted++
 			deleted = append(deleted, exs[i])

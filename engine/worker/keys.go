@@ -6,7 +6,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -63,7 +63,7 @@ func setupSSHKey(vars []sdk.Variable, keypath string) error {
 		if v.Type != sdk.KeyVariable {
 			continue
 		}
-		log.Notice("SSH> Got %s !\n", v.Name)
+		log.Info("SSH> Got %s !\n", v.Name)
 
 		var keyprio int
 		var prefix string

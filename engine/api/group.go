@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -257,7 +257,7 @@ func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return err
 	}
 
-	log.Notice("User %s removed from group %s\n", userName, name)
+	log.Info("User %s removed from group %s\n", userName, name)
 	return nil
 }
 

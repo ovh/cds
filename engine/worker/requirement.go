@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
@@ -27,8 +27,8 @@ var requirementCheckFuncs = map[string]func(r sdk.Requirement) (bool, error){
 func checkRequirement(r sdk.Requirement) (bool, error) {
 	check := requirementCheckFuncs[r.Type]
 	if check == nil {
-		log.Printf("checkRequirement> Unknown type of requirement: %s\n", r.Type)
-		log.Printf("checkRequirement> Support requirements are : %v", requirementCheckFuncs)
+		log.Warning("checkRequirement> Unknown type of requirement: %s\n", r.Type)
+		log.Warning("checkRequirement> Support requirements are : %v", requirementCheckFuncs)
 		return false, fmt.Errorf("unknown type of requirement %s", r.Type)
 	}
 	return check(r)
@@ -52,10 +52,10 @@ func checkPluginRequirement(r sdk.Requirement) (bool, error) {
 
 	_plugin, err := pluginClient.Instance()
 	if err != nil {
-		log.Printf("[WARNING] Error Checkin %s requirement : %s", r.Name, err)
+		log.Warning("[WARNING] Error Checkin %s requirement : %s", r.Name, err)
 		return false, err
 	}
-	log.Printf("[NOTICE] Plugin %s successfully started", _plugin.Name())
+	log.Warning("[NOTICE] Plugin %s successfully started", _plugin.Name())
 
 	return true, nil
 }
@@ -107,7 +107,7 @@ func checkNetworkAccessRequirement(r sdk.Requirement) (bool, error) {
 
 func checkServiceRequirement(r sdk.Requirement) (bool, error) {
 	if _, err := net.LookupIP(r.Name); err != nil {
-		log.Printf("Error checking requirement : %s\n", err)
+		log.Warning("Error checking requirement : %s\n", err)
 		return false, nil
 	}
 

@@ -12,7 +12,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -297,7 +297,7 @@ func (s *StashClient) CreateHook(repo, url string) error {
 	if len(t) != 2 {
 		return fmt.Errorf("fullname %s must be <project>/<slug>", repo)
 	}
-	log.Notice("CreateHook> Ask Stash to create Hook on %s/%s (%s): %s", t[0], t[1], stashHookKey, url)
+	log.Info("CreateHook> Ask Stash to create Hook on %s/%s (%s): %s", t[0], t[1], stashHookKey, url)
 	h, err := s.client.Hooks.CreateHook(t[0], t[1], stashHookKey, "POST", url, branchFilter, tagFilter, userFilter)
 	if err != nil {
 		if strings.Contains(err.Error(), "Unauthorized") {
@@ -305,7 +305,7 @@ func (s *StashClient) CreateHook(repo, url string) error {
 		}
 		return err
 	}
-	log.Notice("CreateHook> Hook created %s", h)
+	log.Info("CreateHook> Hook created %s", h)
 	return nil
 }
 
@@ -315,14 +315,14 @@ func (s *StashClient) DeleteHook(repo, url string) error {
 	if len(t) != 2 {
 		return fmt.Errorf("fullname %s must be <project>/<slug>", repo)
 	}
-	log.Notice("DeleteHook> Ask Stash to delete Hook on %s/%s (%s) : %s", t[0], t[1], stashHookKey, url)
+	log.Info("DeleteHook> Ask Stash to delete Hook on %s/%s (%s) : %s", t[0], t[1], stashHookKey, url)
 	if err := s.client.Hooks.DeleteHook(t[0], t[1], stashHookKey, url); err != nil {
 		if strings.Contains(err.Error(), "Unauthorized") {
 			return sdk.ErrNoReposManagerClientAuth
 		}
 		return err
 	}
-	log.Notice("DeleteHook> Hook successfully deleted")
+	log.Info("DeleteHook> Hook successfully deleted")
 	return nil
 }
 

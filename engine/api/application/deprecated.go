@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 

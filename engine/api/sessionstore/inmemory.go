@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -36,7 +36,7 @@ func (s *InMemory) New(k SessionKey) (SessionKey, error) {
 
 	go func(k SessionKey) {
 		time.Sleep(time.Duration(s.ttl) * time.Minute)
-		log.Notice("session> delete session %s after %d minutes", k, s.ttl)
+		log.Info("session> delete session %s after %d minutes", k, s.ttl)
 		s.lock.Lock()
 		delete(s.data, k)
 		s.lock.Unlock()

@@ -6,7 +6,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -65,7 +65,7 @@ func RepositoriesCacheLoader(delay int) {
 						}
 						var repos []sdk.VCSRepo
 						cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
-						log.Info("RepositoriesCacheLoader> Loading repos for %s on %s", projectKey, rmName)
+						log.Debug("RepositoriesCacheLoader> Loading repos for %s on %s", projectKey, rmName)
 						repos, err = client.Repos()
 						if err != nil {
 							log.Warning("RepositoriesCacheLoader> Unable to get repos %s : %s : %s", rmName, projectKey, err)

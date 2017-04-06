@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -244,7 +244,7 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		return nil
 	}
 
-	log.Info("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)
+	log.Debug("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)
 	found := false
 	//begin a tx
 	tx, err := db.Begin()
@@ -294,12 +294,12 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		if ok {
 			log.Debug("processHook> Triggered %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
 		} else {
-			log.Notice("processHook> Did not trigger %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
+			log.Info("processHook> Did not trigger %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Critical("processHook> Cannot commit tx; %s", err)
+		log.Error("processHook> Cannot commit tx; %s", err)
 		return err
 	}
 

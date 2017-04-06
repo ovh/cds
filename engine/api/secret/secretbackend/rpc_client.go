@@ -3,7 +3,7 @@ package secretbackend
 import (
 	"net/rpc"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //RPCClient is the struct used by the CDS engine
@@ -16,7 +16,7 @@ func (c *RPCClient) Init(opts MapVar) error {
 	var resp string
 	err := c.client.Call("Plugin.Init", &opts, &resp)
 	if err != nil {
-		log.Critical("[ERROR] SecretBackend.Init rpc failed: %s", err)
+		log.Error("[ERROR] SecretBackend.Init rpc failed: %s", err)
 	}
 	return err
 }
@@ -26,7 +26,7 @@ func (c *RPCClient) Name() string {
 	var resp string
 	err := c.client.Call("Plugin.Name", new(interface{}), &resp)
 	if err != nil {
-		log.Critical("[ERROR] SecretBackend.Name rpc failed: %s", err)
+		log.Error("[ERROR] SecretBackend.Name rpc failed: %s", err)
 		panic(err)
 	}
 	return resp
@@ -38,7 +38,7 @@ func (c *RPCClient) GetSecrets() Secrets {
 	err := c.client.Call("Plugin.GetSecrets", new(interface{}), &resp)
 	if err != nil {
 		resp.Error = err
-		log.Critical("[ERROR] SecretBackend.GetSecrets rpc failed: %s", err)
+		log.Error("[ERROR] SecretBackend.GetSecrets rpc failed: %s", err)
 	}
 	return *resp
 }

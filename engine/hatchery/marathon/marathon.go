@@ -14,9 +14,9 @@ import (
 	"github.com/gambol99/go-marathon"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var hatcheryMarathon *HatcheryMarathon
@@ -57,7 +57,7 @@ func (m *HatcheryMarathon) Hatchery() *sdk.Hatchery {
 // KillWorker deletes an application on mesos via marathon
 func (m *HatcheryMarathon) KillWorker(worker sdk.Worker) error {
 	appID := path.Join(hatcheryMarathon.marathonID, worker.Name)
-	log.Notice("KillWorker> Killing %s", appID)
+	log.Info("KillWorker> Killing %s", appID)
 
 	_, err := m.client.DeleteApplication(appID, true)
 	return err
@@ -74,29 +74,29 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 	//Service requirement are not supported
 	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement {
-			log.Notice("CanSpawn> Job %d has a service requirement. Marathon can't spawn a worker for this job", job.ID)
+			log.Info("CanSpawn> Job %d has a service requirement. Marathon can't spawn a worker for this job", job.ID)
 			return false
 		}
 	}
 
 	deployments, errd := m.client.Deployments()
 	if errd != nil {
-		log.Notice("CanSpawn> Error on m.client.Deployments() : %s", errd)
+		log.Info("CanSpawn> Error on m.client.Deployments() : %s", errd)
 		return false
 	}
 	// Do not DOS marathon, if deployment queue is longer than 10
 	if len(deployments) >= 10 {
-		log.Notice("CanSpawn> %d item in deployment queue, waiting", len(deployments))
+		log.Info("CanSpawn> %d item in deployment queue, waiting", len(deployments))
 		return false
 	}
 
 	apps, err := m.listApplications(m.marathonID)
 	if err != nil {
-		log.Notice("CanSpawn> Error on m.listApplications() : %s", errd)
+		log.Info("CanSpawn> Error on m.listApplications() : %s", errd)
 		return false
 	}
 	if len(apps) >= viper.GetInt("max-worker") {
-		log.Notice("CanSpawn> max number of containers reached, aborting. Current: %d. Max: %d", len(apps), viper.GetInt("max-worker"))
+		log.Info("CanSpawn> max number of containers reached, aborting. Current: %d. Max: %d", len(apps), viper.GetInt("max-worker"))
 		return false
 	}
 
@@ -107,9 +107,9 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 // requirements services are not supported
 func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
 	if job != nil {
-		log.Notice("spawnWorker> spawning worker %s (%s) for job %d", model.Name, model.Image, job.ID)
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d", model.Name, model.Image, job.ID)
 	} else {
-		log.Notice("spawnWorker> spawning worker %s (%s)", model.Name, model.Image)
+		log.Info("spawnWorker> spawning worker %s (%s)", model.Name, model.Image)
 	}
 
 	var logJob string
@@ -130,6 +130,19 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 		"CDS_HATCHERY":   fmt.Sprintf("%d", m.hatch.ID),
 		"CDS_SINGLE_USE": "1",
 		"CDS_TTL":        fmt.Sprintf("%d", m.workerTTL),
+	}
+
+	if viper.GetString("graylog_host") != "" {
+		env["CDS_GRAYLOG_HOST"] = viper.GetString("graylog_host")
+	}
+	if viper.GetString("graylog_port") != "" {
+		env["CDS_GRAYLOG_PORT"] = viper.GetString("graylog_port")
+	}
+	if viper.GetString("graylog_extra_key") != "" {
+		env["CDS_GRAYLOG_EXTRA_KEY"] = viper.GetString("graylog_extra_key")
+	}
+	if viper.GetString("graylog_extra_value") != "" {
+		env["CDS_GRAYLOG_EXTRA_VALUE"] = viper.GetString("graylog_extra_value")
 	}
 
 	//Check if there is a memory requirement
@@ -348,7 +361,7 @@ func (m *HatcheryMarathon) killDisabledWorkers() error {
 		// check that there is a worker matching
 		for _, app := range apps {
 			if strings.HasSuffix(app, w.Name) {
-				log.Notice("killing disabled worker %s", app)
+				log.Info("killing disabled worker %s", app)
 				if _, err := m.client.DeleteApplication(app, true); err != nil {
 					log.Warning("killDisabledWorkers> Error while delete app %s err:%s", app, err)
 					// continue to next app
@@ -405,7 +418,7 @@ func (m *HatcheryMarathon) killAwolWorkers() error {
 
 		// then if it's not found, kill it !
 		if !found && time.Since(t) > 1*time.Minute {
-			log.Notice("killAwolWorkers> killing awol worker %s", app.ID)
+			log.Info("killAwolWorkers> killing awol worker %s", app.ID)
 			if _, err := m.client.DeleteApplication(app.ID, true); err != nil {
 				log.Warning("killAwolWorkers> Error while delete app %s err:%s", app.ID, err)
 				// continue to next app

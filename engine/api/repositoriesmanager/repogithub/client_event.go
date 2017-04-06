@@ -9,7 +9,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -126,7 +126,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 		return err
 	}
 
-	log.Info("SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
+	log.Debug("SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
 
 	return nil
 }

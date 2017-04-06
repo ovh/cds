@@ -5,13 +5,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type handlers struct{}
 
 func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
-	log.Info("grpc.AddBuildLog> started stream")
+	log.Debug("grpc.AddBuildLog> started stream")
 	for {
 		in, err := stream.Recv()
 		if err == io.EOF {

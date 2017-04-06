@@ -1,7 +1,7 @@
 package hatchery
 
 import (
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,10 +30,10 @@ func killWorker(h Interface, model *sdk.Model) error {
 			if err := sdk.DisableWorker(worker.ID); err != nil {
 				return err
 			}
-			log.Notice("KillWorker> Disabled %s\n", worker.Name)
+			log.Info("KillWorker> Disabled %s\n", worker.Name)
 			return h.KillWorker(worker)
 		}
-		log.Notice("KillWorker> Cannot kill building worker %s\n", worker.Name)
+		log.Info("KillWorker> Cannot kill building worker %s\n", worker.Name)
 	}
 
 	return nil

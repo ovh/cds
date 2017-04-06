@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -393,7 +393,7 @@ func (g *GithubClient) RateLimit() error {
 		return err
 	}
 	if rateLimit.Rate.Remaining < 100 {
-		log.Critical("Github Rate Limit nearly exceeded %v", rateLimit)
+		log.Error("Github Rate Limit nearly exceeded %v", rateLimit)
 		return ErrorRateLimit
 	}
 	return nil

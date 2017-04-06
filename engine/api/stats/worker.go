@@ -7,7 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -25,7 +25,7 @@ func StartRoutine() {
 			if db != nil {
 				err := createTodaysRow(db)
 				if err != nil {
-					log.Critical("StatsRoutine: Cannot create today's row: %s\n", err)
+					log.Error("StatsRoutine: Cannot create today's row: %s\n", err)
 					continue
 				}
 
@@ -58,7 +58,7 @@ func updateWorkerStats(db gorp.SqlExecutor) error {
 	}
 
 	if ra > 1 {
-		log.Critical("updateWorkerStats> Bug in the matrice ! multiple (%d) rows with same date", ra)
+		log.Error("updateWorkerStats> Bug in the matrice ! multiple (%d) rows with same date", ra)
 	}
 
 	return nil
@@ -80,7 +80,7 @@ func updatePipelineStats(db gorp.SqlExecutor) error {
 	}
 
 	if ra > 1 {
-		log.Critical("updatePipelineStats> Bug in the matrice ! multiple (%d) rows with same date", ra)
+		log.Error("updatePipelineStats> Bug in the matrice ! multiple (%d) rows with same date", ra)
 	}
 
 	return nil

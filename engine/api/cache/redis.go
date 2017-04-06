@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 
 	"gopkg.in/redis.v4"
 )
@@ -55,7 +55,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 //Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) bool {
 	if s.Client == nil {
-		log.Critical("redis> cannot get redis client")
+		log.Error("redis> cannot get redis client")
 		return false
 	}
 	val, err := s.Client.Get(key).Result()
@@ -76,7 +76,7 @@ func (s *RedisStore) Get(key string, value interface{}) bool {
 //SetWithTTL a value in local store (0 for eternity)
 func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 	if s.Client == nil {
-		log.Critical("redis> cannot get redis client")
+		log.Error("redis> cannot get redis client")
 		return
 	}
 	b, err := json.Marshal(value)
@@ -96,7 +96,7 @@ func (s *RedisStore) Set(key string, value interface{}) {
 //Delete a key in redis
 func (s *RedisStore) Delete(key string) {
 	if s.Client == nil {
-		log.Critical("redis> cannot get redis client")
+		log.Error("redis> cannot get redis client")
 		return
 	}
 	if err := s.Client.Del(key).Err(); err != nil {
@@ -107,7 +107,7 @@ func (s *RedisStore) Delete(key string) {
 //DeleteAll delete all mathing keys in redis
 func (s *RedisStore) DeleteAll(pattern string) {
 	if s.Client == nil {
-		log.Critical("redis> cannot get redis client")
+		log.Error("redis> cannot get redis client")
 		return
 	}
 	keys, err := s.Client.Keys(pattern).Result()
@@ -126,7 +126,7 @@ func (s *RedisStore) DeleteAll(pattern string) {
 //Enqueue pushes to queue
 func (s *RedisStore) Enqueue(queueName string, value interface{}) {
 	if s.Client == nil {
-		log.Critical("redis> cannot get redis client")
+		log.Error("redis> cannot get redis client")
 		return
 	}
 	b, err := json.Marshal(value)
@@ -141,7 +141,7 @@ func (s *RedisStore) Enqueue(queueName string, value interface{}) {
 //Dequeue gets from queue This is blocking while there is nothing in the queue
 func (s *RedisStore) Dequeue(queueName string, value interface{}) {
 	if s.Client == nil {
-		log.Critical("redis> cannot get redis client")
+		log.Error("redis> cannot get redis client")
 		return
 	}
 	res, err := s.Client.BRPop(0, queueName).Result()

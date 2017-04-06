@@ -18,9 +18,9 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var hatcheryOpenStack *HatcheryCloud
@@ -177,7 +177,7 @@ func (h *HatcheryCloud) killDisabledWorkers() {
 
 		for _, s := range servers {
 			if s.Name == w.Name {
-				log.Notice("Deleting disabled worker %s", w.Name)
+				log.Info("Deleting disabled worker %s", w.Name)
 				err := deleteServer(h.endpoint, h.token.ID, s.ID)
 				if err != nil {
 					log.Warning("Cannot remove server %s: %s", s.Name, err)
@@ -199,7 +199,7 @@ func (h *HatcheryCloud) killErrorServers() {
 			}
 
 			if len(s.Addresses) == 0 && time.Since(t) > 10*time.Minute {
-				log.Notice("Deleting server %s without IP Address", s.Name)
+				log.Info("Deleting server %s without IP Address", s.Name)
 				if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 					log.Warning("Cannot remove server %s: %s", s.Name, err)
 					continue
@@ -209,7 +209,7 @@ func (h *HatcheryCloud) killErrorServers() {
 
 		//Remove Error server
 		if s.Status == "ERROR" {
-			log.Notice("Deleting server %s in error", s.Name)
+			log.Info("Deleting server %s in error", s.Name)
 			if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 				log.Warning("Cannot remove server %s: %s", s.Name, err)
 				continue
@@ -258,7 +258,7 @@ func (h *HatcheryCloud) killAwolServers() {
 		// Delete workers, if not identified by CDS API
 		// Wait for 6 minutes, to avoid killing worker babies
 		if (workerHatcheryName == "" || workerHatcheryName == h.Hatchery().Name) && ok && time.Since(t) > 10*time.Minute {
-			log.Notice("killAwolServers> %s last update: %s", s.Name, time.Since(t))
+			log.Info("killAwolServers> %s last update: %s", s.Name, time.Since(t))
 			if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 				log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
 			}
@@ -269,7 +269,7 @@ func (h *HatcheryCloud) killAwolServers() {
 func (h *HatcheryCloud) refreshToken() {
 	tk, endpoint, err := getToken(h.user, h.password, h.address, h.tenant, h.region)
 	if err != nil {
-		log.Critical("refreshToken> Cannot refresh token: %s", err)
+		log.Error("refreshToken> Cannot refresh token: %s", err)
 	}
 	h.token = tk
 	h.endpoint = endpoint
@@ -290,13 +290,13 @@ func (h *HatcheryCloud) WorkersStartedByModel(model *sdk.Model) int {
 			x++
 		}
 	}
-	log.Info("WorkersStartedByModel> %s : %d", model.Name, x)
+	log.Debug("WorkersStartedByModel> %s : %d", model.Name, x)
 	return x
 }
 
 // KillWorker delete cloud instances
 func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
-	log.Notice("KillWorker> Kill %s", worker.Name)
+	log.Info("KillWorker> Kill %s", worker.Name)
 	for _, s := range h.getServers() {
 		if s.Name == worker.Name {
 			if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
@@ -312,9 +312,9 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 // requirements are not supported
 func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
 	if job != nil {
-		log.Notice("spawnWorker> spawning worker %s for job %d", model.Name, job.ID)
+		log.Info("spawnWorker> spawning worker %s for job %d", model.Name, job.ID)
 	} else {
-		log.Notice("spawnWorker> spawning worker %s ", model.Name)
+		log.Info("spawnWorker> spawning worker %s ", model.Name)
 	}
 
 	var err error
@@ -325,7 +325,7 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 	}
 
 	if len(h.getServers()) == viper.GetInt("max-worker") {
-		log.Info("MaxWorker limit (%d) reached", viper.GetInt("max-worker"))
+		log.Debug("MaxWorker limit (%d) reached", viper.GetInt("max-worker"))
 		return nil
 	}
 
@@ -374,6 +374,20 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		return err
 	}
 
+	graylog := ""
+	if viper.GetString("graylog_host") != "" {
+		graylog += fmt.Sprintf("--graylog-host=%s ", viper.GetString("graylog_host"))
+	}
+	if viper.GetString("graylog_port") != "" {
+		graylog += fmt.Sprintf("--graylog-port=%s ", viper.GetString("graylog_port"))
+	}
+	if viper.GetString("graylog_extra_key") != "" {
+		graylog += fmt.Sprintf("--graylog-extra-key=%s ", viper.GetString("graylog_extra_key"))
+	}
+	if viper.GetString("graylog_extra_value") != "" {
+		graylog += fmt.Sprintf("--graylog-extra-value=%s ", viper.GetString("graylog_extra_value"))
+	}
+
 	// Add curl of worker
 	udataBegin := `#!/bin/sh
 set +e
@@ -381,9 +395,9 @@ set +e
 	udataEnd := `
 cd $HOME
 # Download and start worker with curl
-curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 0 -C - >> /tmp/user_data 2>&1
+curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
 chmod +x worker
-CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --booked-job-id={{.JobID}} --single-use --ttl={{.TTL}} && exit 0
+CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --booked-job-id={{.JobID}} --single-use --ttl={{.TTL}} {{.Graylog}} && exit 0
 `
 	var udata = udataBegin + string(udataModel) + udataEnd
 
@@ -404,6 +418,7 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Hatchery int64
 		JobID    int64
 		TTL      int
+		Graylog  string
 	}{
 		API:      viper.GetString("api"),
 		Name:     name,
@@ -412,6 +427,7 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Hatchery: h.hatch.ID,
 		JobID:    jobID,
 		TTL:      h.workerTTL,
+		Graylog:  graylog,
 	}
 	var buffer bytes.Buffer
 	if err = tmpl.Execute(&buffer, udataParam); err != nil {
@@ -521,7 +537,7 @@ func (h *HatcheryCloud) updateServerList() {
 		}
 		total++
 	}
-	log.Notice("Got %d servers (%d actives, %d booting)", total, active, building)
+	log.Info("Got %d servers (%d actives, %d booting)", total, active, building)
 	log.Debug(out)
 
 }
@@ -655,7 +671,7 @@ func (f *File) MarshalJSON() ([]byte, error) {
 }
 
 func (h *HatcheryCloud) createServer(endpoint, token, name, image, flavor, network, ip, udata string, personality Personality) error {
-	log.Notice("Create server %s %s", name, ip)
+	log.Info("Create server %s %s", name, ip)
 	uri := fmt.Sprintf("%s/servers", endpoint)
 
 	s := Server{
@@ -946,14 +962,14 @@ func getToken(user string, password string, url string, project string, region s
 
 	data, err := json.Marshal(a)
 	if err != nil {
-		log.Critical("getToken> Marshal> %s", err)
+		log.Error("getToken> Marshal> %s", err)
 		return nil, endpoint, err
 	}
 
 	uri := fmt.Sprintf("%s/v2.0/tokens", url)
 	req, err := http.NewRequest("POST", uri, bytes.NewReader(data))
 	if err != nil {
-		log.Critical("getToken> newRequest> %s", err)
+		log.Error("getToken> newRequest> %s", err)
 		return nil, endpoint, err
 	}
 
@@ -962,24 +978,24 @@ func getToken(user string, password string, url string, project string, region s
 
 	resp, err := hatchery.Client.Do(req)
 	if err != nil {
-		log.Critical("getToken> Do> %s", err)
+		log.Error("getToken> Do> %s", err)
 		return nil, endpoint, err
 	}
 
 	contentType := strings.ToLower(resp.Header.Get("Content-Type"))
 	if strings.Contains(contentType, "json") != true {
-		log.Critical("getToken> contains> %s", err)
+		log.Error("getToken> contains> %s", err)
 		return nil, endpoint, fmt.Errorf("err (%s): header Content-Type is not JSON (%s)", contentType, resp.Status)
 	}
 
 	rbody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Critical("getToken> readall> %s", err)
+		log.Error("getToken> readall> %s", err)
 		return nil, endpoint, fmt.Errorf("cannot read body")
 	}
 
 	if resp.StatusCode >= 400 {
-		log.Critical("getToken> statuscode> user %s, password %s, url %s, project %s, region %s", user, password, url, project, region)
+		log.Error("getToken> statuscode> user %s, password %s, url %s, project %s, region %s", user, password, url, project, region)
 		return nil, endpoint, unmarshalOpenstackError(rbody, resp.Status)
 	}
 
@@ -1056,7 +1072,7 @@ func IPinRange(IPrange string) ([]string, error) {
 
 	var ips []string
 	for ip2 := ip.Mask(ipnet.Mask); ipnet.Contains(ip2); inc(ip2) {
-		log.Notice("Adding %s to IP pool", ip2)
+		log.Info("Adding %s to IP pool", ip2)
 		ips = append(ips, ip2.String())
 	}
 
