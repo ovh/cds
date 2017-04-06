@@ -299,7 +299,7 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Critical("processHook> Cannot commit tx; %s", err)
+		log.Error("processHook> Cannot commit tx; %s", err)
 		return err
 	}
 

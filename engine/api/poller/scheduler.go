@@ -16,11 +16,11 @@ var (
 
 //Scheduler is the goroutine which compute date of next execution for pipeline scheduler
 func Scheduler(DBFunc func() *gorp.DbMap) {
-	defer log.Critical("poller.Scheduler> has been exited !")
+	defer log.Error("poller.Scheduler> has been exited !")
 	for {
 		_, status, err := SchedulerRun(DBFunc())
 		if err != nil {
-			log.Critical("poller.Scheduler> %s: %s", status, err)
+			log.Error("poller.Scheduler> %s: %s", status, err)
 		}
 		pollerStatus = status
 		time.Sleep(10 * time.Second)

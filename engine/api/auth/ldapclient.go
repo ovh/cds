@@ -78,14 +78,14 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 	if !c.conf.SSL {
 		c.conn, err = ldap.Dial("tcp", address)
 		if err != nil {
-			log.Critical("Auth> Cannot dial %s : %s", address, err)
+			log.Error("Auth> Cannot dial %s : %s", address, err)
 			return sdk.ErrLDAPConn
 		}
 
 		// Reconnect with TLS
 		err = c.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 		if err != nil {
-			log.Critical("Auth> Cannot start TLS %s : %s", address, err)
+			log.Error("Auth> Cannot start TLS %s : %s", address, err)
 			return sdk.ErrLDAPConn
 		}
 	} else {
@@ -95,7 +95,7 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 			InsecureSkipVerify: false,
 		})
 		if err != nil {
-			log.Critical("Auth> Cannot dial TLS (InsecureSkipVerify=false) %s : %s", address, err)
+			log.Error("Auth> Cannot dial TLS (InsecureSkipVerify=false) %s : %s", address, err)
 			return sdk.ErrLDAPConn
 		}
 	}
@@ -227,7 +227,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 	}
 
 	if len(entry) > 1 {
-		log.Critical("LDAP> Search error %s: multiple values", search)
+		log.Error("LDAP> Search error %s: multiple values", search)
 		return nil, fmt.Errorf("LDAP Search error %s: multiple values", search)
 	}
 
@@ -261,7 +261,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 	//Execute template to compute fullname
 	tmpl, err := template.New("userfullname").Parse(c.conf.UserFullname)
 	if err != nil {
-		log.Critical("LDAP> Error with user fullname template %s : %s", c.conf.UserFullname, err)
+		log.Error("LDAP> Error with user fullname template %s : %s", c.conf.UserFullname, err)
 		tmpl, _ = template.New("userfullname").Parse("{{.givenName}}")
 	}
 	bufFullname := new(bytes.Buffer)
@@ -275,13 +275,13 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 			EmailVerified: true,
 		}
 		if err := user.InsertUser(db, u, a); err != nil {
-			log.Critical("LDAP> Error inserting user %s: %s", username, err)
+			log.Error("LDAP> Error inserting user %s: %s", username, err)
 			return nil, err
 		}
 		u.Auth = *a
 	} else {
 		if err := user.UpdateUser(db, *u); err != nil {
-			log.Critical("LDAP> Unable to update user %s : %s", username, err)
+			log.Error("LDAP> Unable to update user %s : %s", username, err)
 			return nil, err
 		}
 	}

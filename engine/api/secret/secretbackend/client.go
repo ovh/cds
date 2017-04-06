@@ -50,7 +50,7 @@ func (p Client) get() (Driver, error) {
 	// Request the plugin
 	raw, err := rpcClient.Dispense(p.name)
 	if err != nil {
-		log.Critical("Unable to dispense plugin %s (%s) : %s", p.name, p.pluginBinary, err)
+		log.Error("Unable to dispense plugin %s (%s) : %s", p.name, p.pluginBinary, err)
 		return nil, err
 	}
 

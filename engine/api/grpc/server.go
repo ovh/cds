@@ -66,7 +66,7 @@ func authorize(ctx context.Context) error {
 		if len(md["name"]) > 0 && len(md["token"]) > 0 {
 			w, err := auth.GetWorker(database.GetDBMap(), md["token"][0])
 			if err != nil {
-				log.Critical("grpc.authorize> Unable to get worker %v:%v => %s", md["name"], md["token"], err)
+				log.Error("grpc.authorize> Unable to get worker %v:%v => %s", md["name"], md["token"], err)
 				return sdk.ErrServiceUnavailable
 			}
 			if w == nil {

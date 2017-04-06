@@ -19,7 +19,7 @@ func (ops *OpenstackStore) refreshTokenRoutine() {
 
 		tk, endpoint, err := getToken(ops.user, ops.password, ops.address, ops.tenant, ops.region)
 		if err != nil {
-			log.Critical("refreshTokenRoutine> Cannot refresh token: %s\n", err)
+			log.Error("refreshTokenRoutine> Cannot refresh token: %s\n", err)
 			continue
 		}
 		ops.token = tk

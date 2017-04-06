@@ -29,7 +29,7 @@ func GenerateToken() (string, error) {
 	bs := make([]byte, size)
 	_, err := rand.Read(bs)
 	if err != nil {
-		log.Critical("GenerateToken: rand.Read failed: %s\n", err)
+		log.Error("GenerateToken: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)

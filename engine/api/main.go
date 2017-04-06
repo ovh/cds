@@ -77,7 +77,7 @@ var mainCmd = &cobra.Command{
 			secretBackendOptionsMap[t[0]] = t[1]
 		}
 		if err := secret.Init(viper.GetString(viperDBSecret), viper.GetString(viperServerSecretKey), secretBackend, secretBackendOptionsMap); err != nil {
-			log.Critical("Cannot initialize secret manager: %s", err)
+			log.Error("Cannot initialize secret manager: %s", err)
 		}
 		if secret.SecretUsername != "" {
 			database.SecretDBUser = secret.SecretUsername
@@ -144,7 +144,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		if err = bootstrap.InitiliazeDB(database.GetDBMap); err != nil {
-			log.Critical("Cannot setup databases: %s", err)
+			log.Error("Cannot setup databases: %s", err)
 		}
 
 		// Gracefully shutdown sql connections
@@ -244,7 +244,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		if err := group.Initialize(database.DBMap(db), viper.GetString(viperAuthDefaultGroup)); err != nil {
-			log.Critical("Cannot initialize groups: %s", err)
+			log.Error("Cannot initialize groups: %s", err)
 		}
 
 		go queue.Pipelines()

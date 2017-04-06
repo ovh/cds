@@ -52,7 +52,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 
 		log.Info("Worker %s crashed while building %d !\n", name, pbJobID.Int64)
 		if err := pipeline.RestartPipelineBuildJob(tx, pbJobID.Int64); err != nil {
-			log.Critical("DeleteWorker[%d]> Cannot restart pipeline build job: %s\n", id, err)
+			log.Error("DeleteWorker[%d]> Cannot restart pipeline build job: %s\n", id, err)
 		} else {
 			log.Info("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash\n", id, pbJobID.Int64)
 		}
@@ -241,7 +241,7 @@ func generateID() (string, error) {
 	bs := make([]byte, size)
 	_, err := rand.Read(bs)
 	if err != nil {
-		log.Critical("generateID: rand.Read failed: %s\n", err)
+		log.Error("generateID: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
@@ -459,7 +459,7 @@ func UpdateWorkerStatus(db gorp.SqlExecutor, workerID string, status sdk.Status)
 	}
 
 	if rowsAffected > 1 {
-		log.Critical("UpdateWorkerStatus: Multiple (%d) rows affected ! (id=%s)\n", rowsAffected, workerID)
+		log.Error("UpdateWorkerStatus: Multiple (%d) rows affected ! (id=%s)\n", rowsAffected, workerID)
 	}
 
 	if rowsAffected == 0 {

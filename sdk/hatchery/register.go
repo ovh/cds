@@ -30,13 +30,13 @@ func Create(h Interface, api, token string, maxWorkers, provision int, requestSe
 	sdk.Options(api, "", "", token)
 
 	if err := h.Init(); err != nil {
-		log.Critical("Create> Init error: %s", err)
+		log.Error("Create> Init error: %s", err)
 		os.Exit(10)
 	}
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Critical("Create> Cannot retrieve hostname: %s", err)
+		log.Error("Create> Cannot retrieve hostname: %s", err)
 		os.Exit(10)
 	}
 
@@ -123,7 +123,7 @@ func hearbeat(m Interface, token string, maxFailures int) {
 				continue
 			}
 			if m.Hatchery().ID == 0 {
-				log.Critical("hearbeat> Cannot register hatchery. ID %d", m.Hatchery().ID)
+				log.Error("hearbeat> Cannot register hatchery. ID %d", m.Hatchery().ID)
 				checkFailures(maxFailures, failures)
 				continue
 			}
@@ -142,7 +142,7 @@ func hearbeat(m Interface, token string, maxFailures int) {
 
 func checkFailures(maxFailures, nb int) {
 	if nb > maxFailures {
-		log.Critical("Too many failures on try register. This hatchery is killed")
+		log.Error("Too many failures on try register. This hatchery is killed")
 		os.Exit(10)
 	}
 }

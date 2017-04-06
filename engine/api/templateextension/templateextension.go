@@ -91,7 +91,7 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 
 	tmp, err := ioutil.TempDir("", "cds-template")
 	if err != nil {
-		log.Critical("Instance> %s", err)
+		log.Error("Instance> %s", err)
 		return nil, nil, err
 	}
 	deferFunc := func() {
@@ -103,12 +103,12 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 	tmpfn := filepath.Join(tmp, fmt.Sprintf("template-%d", tmpl.ID))
 	f, err := os.OpenFile(tmpfn, os.O_WRONLY|os.O_CREATE, 0700)
 	if err != nil {
-		log.Critical("Instance> %s", err)
+		log.Error("Instance> %s", err)
 		return nil, deferFunc, err
 	}
 
 	if _, err := io.Copy(f, bytes.NewBuffer(btes)); err != nil {
-		log.Critical("Instance> %s", err)
+		log.Error("Instance> %s", err)
 		return nil, deferFunc, err
 	}
 	f.Close()

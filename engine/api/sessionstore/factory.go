@@ -18,7 +18,7 @@ func Get(mode, redisHost, redisPassword string, ttl int) (Store, error) {
 		Status = "Redis "
 		r, err := NewRedis(redisHost, redisPassword, ttl)
 		if err != nil {
-			log.Critical("sessionstore.factory> unable to connect to redis %s : %s", redisHost, err)
+			log.Error("sessionstore.factory> unable to connect to redis %s : %s", redisHost, err)
 			Status += "KO"
 		} else {
 			Status = "OK"

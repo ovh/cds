@@ -159,7 +159,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	errURI := r.FormValue("error_uri")
 
 	if cberr != "" {
-		log.Critical("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
+		log.Error("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
 		return fmt.Errorf("OAuth Error %s", cberr)
 	}
 

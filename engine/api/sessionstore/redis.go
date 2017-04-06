@@ -22,7 +22,7 @@ func (s *Redis) vacuumCleaner() {
 	for {
 		keys, err := s.store.Client.Keys("session:*:data").Result()
 		if err != nil {
-			log.Critical("RedisSessionStore> Unable to get keys in store : %s", err)
+			log.Error("RedisSessionStore> Unable to get keys in store : %s", err)
 		}
 		for _, k := range keys {
 			sessionKey := strings.Replace(k, ":data", "", -1)
@@ -32,7 +32,7 @@ func (s *Redis) vacuumCleaner() {
 			}
 			if !sessionExist {
 				if err := s.store.Client.Del(k).Err(); err != nil {
-					log.Critical("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
+					log.Error("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
 				}
 			}
 		}
@@ -63,13 +63,13 @@ func (s *Redis) New(k SessionKey) (SessionKey, error) {
 	}
 
 	if err != nil {
-		log.Critical("Redis> unable to generate session key : %s", err)
+		log.Error("Redis> unable to generate session key : %s", err)
 		return "", err
 	}
 	key := cache.Key("session", string(token))
 	//Store in redis
 	if err := s.store.Client.Set(key, 1, time.Duration(s.ttl)*time.Minute).Err(); err != nil {
-		log.Critical("Redis> unable create redis session %s : %s", key, err)
+		log.Error("Redis> unable create redis session %s : %s", key, err)
 		return "", err
 	}
 	return token, nil

@@ -60,7 +60,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 
 	jobs, errbq := sdk.GetBuildQueue()
 	if errbq != nil {
-		log.Critical("routine> %d error on GetBuildQueue:%e", timestamp, errbq)
+		log.Error("routine> %d error on GetBuildQueue:%e", timestamp, errbq)
 		return nil, errbq
 	}
 
@@ -250,7 +250,7 @@ func canRunJob(h Interface, timestamp int64, job *sdk.PipelineBuildJob, model *s
 func logTime(name string, then time.Time, warningSeconds, criticalSeconds int) {
 	d := time.Since(then)
 	if d > time.Duration(criticalSeconds)*time.Second {
-		log.Critical("%s took %s to execute", name, d)
+		log.Error("%s took %s to execute", name, d)
 		return
 	}
 

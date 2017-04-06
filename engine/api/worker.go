@@ -127,7 +127,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 						}
 					}
 					if attempts > 100 {
-						log.Critical("disableWorkerHandler> Unable to disabled worker %s %s", w.ID, w.Name)
+						log.Error("disableWorkerHandler> Unable to disabled worker %s %s", w.ID, w.Name)
 						return
 					}
 				}

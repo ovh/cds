@@ -45,11 +45,11 @@ func Initialize(mode, redisHost, redisPassword string, TTL int) {
 		s, err = NewRedisStore(redisHost, redisPassword, TTL)
 		if err != nil {
 			Status += " KO"
-			log.Critical("cache> Cannot init redis cache (Host=%s, TTL=%d seconds): %s", redisHost, TTL, err)
+			log.Error("cache> Cannot init redis cache (Host=%s, TTL=%d seconds): %s", redisHost, TTL, err)
 		}
 		Status += " OK"
 	default:
-		log.Critical("Cache> Unsupported cache mode : %s", mode)
+		log.Error("Cache> Unsupported cache mode : %s", mode)
 		Status = "KO"
 	}
 }

@@ -34,12 +34,12 @@ func DB() *sql.DB {
 		}
 		_, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
 		if err != nil {
-			log.Critical("Database> cannot init db connection : %s", err)
+			log.Error("Database> cannot init db connection : %s", err)
 			return nil
 		}
 	}
 	if err := db.Ping(); err != nil {
-		log.Critical("Database> cannot ping db : %s", err)
+		log.Error("Database> cannot ping db : %s", err)
 		db = nil
 		return nil
 	}
@@ -65,7 +65,7 @@ func Init(user, password, name, host, port, sslmode string, timeout, maxconn int
 	// Try to close before reinit
 	if db != nil {
 		if err := db.Close(); err != nil {
-			log.Critical("Cannot close connection to DB : %s", err)
+			log.Error("Cannot close connection to DB : %s", err)
 		}
 	}
 
@@ -108,7 +108,7 @@ func Init(user, password, name, host, port, sslmode string, timeout, maxconn int
 	db, err = sql.Open(dbDriver, dsn)
 	if err != nil {
 		db = nil
-		log.Critical("Cannot open database: %s", err)
+		log.Error("Cannot open database: %s", err)
 		return nil, err
 	}
 

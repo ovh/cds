@@ -29,7 +29,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 	//Load notif
 	userNotifs, errLoad := LoadUserNotificationSettings(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if errLoad != nil {
-		log.Critical("notification.GetUserEvents> error while loading user notification settings: %s", errLoad)
+		log.Error("notification.GetUserEvents> error while loading user notification settings: %s", errLoad)
 		return nil
 	}
 	if userNotifs == nil {
@@ -60,13 +60,13 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 			case sdk.JabberUserNotification:
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
-					log.Critical("notification.GetUserEvents> cannot deal with %s", notif)
+					log.Error("notification.GetUserEvents> cannot deal with %s", notif)
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
 					u, errPerm := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
 					if errPerm != nil {
-						log.Critical("notification[Jabber].SendPipelineBuild> error while loading permission:%s", errPerm.Error())
+						log.Error("notification[Jabber].SendPipelineBuild> error while loading permission:%s", errPerm.Error())
 					}
 					for i := range u {
 						jn.Recipients = append(jn.Recipients, u[i].Username)
@@ -76,7 +76,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 				if jn.SendToGroups {
 					u, errEnv := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
 					if errEnv != nil {
-						log.Critical("notification[Jabber].SendPipelineBuild> error while loading permission:%s", errEnv.Error())
+						log.Error("notification[Jabber].SendPipelineBuild> error while loading permission:%s", errEnv.Error())
 					}
 					for i := range u {
 						jn.Recipients = append(jn.Recipients, u[i].Username)
@@ -96,13 +96,13 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 			case sdk.EmailUserNotification:
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
-					log.Critical("notification.GetUserEvents> cannot deal with %s", notif)
+					log.Error("notification.GetUserEvents> cannot deal with %s", notif)
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
 					u, errEnv := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
 					if errEnv != nil {
-						log.Critical("notification[Email].SendPipelineBuild> error while loading permission:%s", errEnv.Error())
+						log.Error("notification[Email].SendPipelineBuild> error while loading permission:%s", errEnv.Error())
 						return nil
 					}
 					for i := range u {
@@ -368,7 +368,7 @@ func InsertOrUpdateUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, e
 
 	var nb int
 	if err := db.QueryRow(query, appID, pipID, envID).Scan(&nb); err != nil {
-		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error counting application_pipeline_notif %d %d %d: %s", appID, pipID, envID, err)
+		log.Error("notification.InsertOrUpdateUserNotificationSettings> Error counting application_pipeline_notif %d %d %d: %s", appID, pipID, envID, err)
 		return err
 	}
 	var appPipelineID int64
@@ -386,7 +386,7 @@ func InsertOrUpdateUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, e
 			RETURNING application_pipeline_id
 		`
 		if err := db.QueryRow(query, appID, pipID, envID).Scan(&appPipelineID); err != nil {
-			log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error inserting application_pipeline_notif %d %d %d: %s", appID, pipID, envID, err)
+			log.Error("notification.InsertOrUpdateUserNotificationSettings> Error inserting application_pipeline_notif %d %d %d: %s", appID, pipID, envID, err)
 			return err
 		}
 	}
@@ -398,7 +398,7 @@ func InsertOrUpdateUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, e
 
 	bytes, err := json.Marshal(notif.Notifications)
 	if err != nil {
-		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error marshalling notifications settings: %s", err)
+		log.Error("notification.InsertOrUpdateUserNotificationSettings> Error marshalling notifications settings: %s", err)
 		return err
 	}
 
@@ -413,11 +413,11 @@ func InsertOrUpdateUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, e
 	`
 	res, err := db.Exec(query, appID, pipID, envID, string(bytes))
 	if err != nil {
-		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error updating notifications settings %d %d %d: %s", appID, pipID, envID, err)
+		log.Error("notification.InsertOrUpdateUserNotificationSettings> Error updating notifications settings %d %d %d: %s", appID, pipID, envID, err)
 		return err
 	}
 	if i, _ := res.RowsAffected(); i != 1 {
-		log.Critical("notification.InsertOrUpdateUserNotificationSettings> Error updating notifications settings %d %d %d : %d rows updated", appID, pipID, envID, i)
+		log.Error("notification.InsertOrUpdateUserNotificationSettings> Error updating notifications settings %d %d %d : %d rows updated", appID, pipID, envID, i)
 		return fmt.Errorf("Error updating notifications settings %d %d %d : %d rows updated", appID, pipID, envID, i)
 	}
 

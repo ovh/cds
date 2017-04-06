@@ -27,7 +27,7 @@ func initViper() {
 	var errN error
 	name, errN = os.Hostname()
 	if errN != nil {
-		log.Critical("Cannot retrieve hostname: %s", errN)
+		log.Error("Cannot retrieve hostname: %s", errN)
 		os.Exit(1)
 	}
 
@@ -35,19 +35,19 @@ func initViper() {
 	var errH error
 	hatchery, errH = strconv.ParseInt(hatchS, 10, 64)
 	if errH != nil {
-		log.Critical("WARNING: Invalid hatchery ID (%s)", errH)
+		log.Error("WARNING: Invalid hatchery ID (%s)", errH)
 		os.Exit(2)
 	}
 
 	api = viper.GetString("api")
 	if api == "" {
-		log.Critical("--api not provided, aborting.")
+		log.Error("--api not provided, aborting.")
 		os.Exit(3)
 	}
 
 	key = viper.GetString("key")
 	if key == "" {
-		log.Critical("--key not provided, aborting.")
+		log.Error("--key not provided, aborting.")
 		os.Exit(4)
 	}
 
@@ -64,7 +64,7 @@ func initViper() {
 func initServer() {
 	port, err := server()
 	if err != nil {
-		log.Critical("cannot bind port for worker export: %s", err)
+		log.Error("cannot bind port for worker export: %s", err)
 		os.Exit(1)
 	}
 	exportport = port
@@ -104,7 +104,7 @@ func initGRPCConn() {
 		var err error
 		grpcConn, err = grpc.Dial(grpcAddress, opts...)
 		if err != nil {
-			log.Critical("Unable to connect to GRPC API %s: %s", grpcAddress, err)
+			log.Error("Unable to connect to GRPC API %s: %s", grpcAddress, err)
 		}
 	}
 }

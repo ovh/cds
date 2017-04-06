@@ -19,11 +19,11 @@ func cmdRegister() *cobra.Command {
 func cmdRegisterRun(cmd *cobra.Command, args []string) {
 	initViper()
 	if err := register(api, name, key); err != nil {
-		log.Critical("Unable to register worker: %s", err)
+		log.Error("Unable to register worker: %s", err)
 		os.Exit(1)
 	}
 	if err := unregister(); err != nil {
-		log.Critical("Unable to unregister worker: %s", err)
+		log.Error("Unable to unregister worker: %s", err)
 		os.Exit(1)
 	}
 }

@@ -393,7 +393,7 @@ func (g *GithubClient) RateLimit() error {
 		return err
 	}
 	if rateLimit.Rate.Remaining < 100 {
-		log.Critical("Github Rate Limit nearly exceeded %v", rateLimit)
+		log.Error("Github Rate Limit nearly exceeded %v", rateLimit)
 		return ErrorRateLimit
 	}
 	return nil

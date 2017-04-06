@@ -128,7 +128,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	path = fmt.Sprintf("/queue/%d/result", b.ID)
 	body, errm := json.MarshalIndent(res, " ", " ")
 	if errm != nil {
-		log.Critical("takeJob> Cannot marshal result: %s", errm)
+		log.Error("takeJob> Cannot marshal result: %s", errm)
 		unregister()
 		return
 	}

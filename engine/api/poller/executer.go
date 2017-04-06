@@ -16,7 +16,7 @@ import (
 
 //Executer is the goroutine which run the pipelines
 func Executer(DBFunc func() *gorp.DbMap) {
-	defer log.Critical("poller.Executer> has been exited !")
+	defer log.Error("poller.Executer> has been exited !")
 	for {
 		time.Sleep(5 * time.Second)
 		exs, err := ExecuterRun(DBFunc())
@@ -51,7 +51,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, error) {
 func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 	tx, errb := db.Begin()
 	if errb != nil {
-		log.Critical("poller.ExecuterRun> %s", errb)
+		log.Error("poller.ExecuterRun> %s", errb)
 		return
 	}
 
@@ -64,11 +64,11 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 
 	p, errl := LoadByApplicationAndPipeline(tx, e.ApplicationID, e.PipelineID)
 	if errl != nil {
-		log.Critical("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, errl)
+		log.Error("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, errl)
 		return
 	}
 	if err := executerProcess(tx, p, e); err != nil {
-		log.Critical("poller.ExecuterRun> Unable to process %v : %s", e, err)
+		log.Error("poller.ExecuterRun> Unable to process %v : %s", e, err)
 		return
 	}
 

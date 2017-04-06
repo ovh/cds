@@ -47,7 +47,7 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 
 	tmp, err := ioutil.TempDir("", "cds-template")
 	if err != nil {
-		log.Critical("fileUploadAndGetTemplate> %s", err)
+		log.Error("fileUploadAndGetTemplate> %s", err)
 		return nil, nil, nil, nil, err
 	}
 	deferFunc := func() {
@@ -59,7 +59,7 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 	tmpfn := filepath.Join(tmp, filename)
 	f, err := os.OpenFile(tmpfn, os.O_WRONLY|os.O_CREATE, 0700)
 	if err != nil {
-		log.Critical("fileUploadAndGetTemplate> %s", err)
+		log.Error("fileUploadAndGetTemplate> %s", err)
 		return nil, nil, nil, deferFunc, err
 	}
 
@@ -69,7 +69,7 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 
 	content, err := os.Open(tmpfn)
 	if err != nil {
-		log.Critical("fileUploadAndGetTemplate> %s", err)
+		log.Error("fileUploadAndGetTemplate> %s", err)
 		return nil, nil, nil, deferFunc, err
 	}
 
@@ -321,7 +321,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	// Create a session for current user
 	sessionKey, err := auth.NewSession(router.authDriver, c.User)
 	if err != nil {
-		log.Critical("applyTemplateHandler> Error while creating new session: %s\n", err)
+		log.Error("applyTemplateHandler> Error while creating new session: %s\n", err)
 		return err
 
 	}
@@ -398,7 +398,7 @@ func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, d
 	//Create a session for current user
 	sessionKey, err := auth.NewSession(router.authDriver, c.User)
 	if err != nil {
-		log.Critical("Instance> Error while creating new session: %s\n", err)
+		log.Error("Instance> Error while creating new session: %s\n", err)
 		return err
 
 	}

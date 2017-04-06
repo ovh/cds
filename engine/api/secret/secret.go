@@ -73,7 +73,7 @@ func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]strin
 
 	secrets := Client.GetSecrets()
 	if secrets.Err() != nil {
-		log.Critical("Error: %v", secrets.Err())
+		log.Error("Error: %v", secrets.Err())
 		return secrets.Err()
 	}
 
@@ -91,7 +91,7 @@ func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]strin
 	if len(key) == 0 {
 		aesKey, _ := secrets.Get("cds/aes-key")
 		if aesKey == "" {
-			log.Critical("secret.Init> cds/aes-key not found\n")
+			log.Error("secret.Init> cds/aes-key not found\n")
 			return sdk.ErrSecretKeyFetchFailed
 		}
 		key = []byte(aesKey)
@@ -104,13 +104,13 @@ func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]strin
 	}
 	cdsDBCredS, _ := secrets.Get(dbSecret)
 	if cdsDBCredS == "" {
-		log.Critical("secret.Init> %s not found", dbSecret)
+		log.Error("secret.Init> %s not found", dbSecret)
 		return nil
 	}
 
 	var cdsDBCred = databaseCredentials{}
 	if err := json.Unmarshal([]byte(cdsDBCredS), &cdsDBCred); err != nil {
-		log.Critical("secret.Init> Unable to unmarshal secret %s", err)
+		log.Error("secret.Init> Unable to unmarshal secret %s", err)
 		return nil
 	}
 
@@ -126,7 +126,7 @@ func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]strin
 func Encrypt(data []byte) ([]byte, error) {
 	// Check key is ready
 	if key == nil {
-		log.Critical("Missing key, init failed?")
+		log.Error("Missing key, init failed?")
 		return nil, sdk.ErrSecretKeyFetchFailed
 	}
 	// generate nonce
@@ -162,12 +162,12 @@ func Decrypt(data []byte) ([]byte, error) {
 	data = []byte(strings.TrimPrefix(string(data), prefix))
 
 	if key == nil {
-		log.Critical("Missing key, init failed?")
+		log.Error("Missing key, init failed?")
 		return nil, sdk.ErrSecretKeyFetchFailed
 	}
 
 	if len(data) < (nonceSize + macSize) {
-		log.Critical("cannot decrypt secret, got invalid data")
+		log.Error("cannot decrypt secret, got invalid data")
 		return nil, sdk.ErrInvalidSecretFormat
 	}
 
@@ -237,7 +237,7 @@ func EncryptS(ptype string, value string) (sql.NullString, []byte, error) {
 
 	// Check their is no bug and data is not a password placholder
 	if value == sdk.PasswordPlaceholder {
-		log.Critical("secret.Encrypt> Don't encrypt PasswordPlaceholder !\n")
+		log.Error("secret.Encrypt> Don't encrypt PasswordPlaceholder !\n")
 		return n, nil, sdk.ErrInvalidSecretValue
 	}
 

@@ -281,7 +281,7 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}}
 
 	if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, pbJob.ID, infos); err != nil {
-		log.Critical("addQueueResultHandler> Cannot save spawn info job %d: %s", pbJob.ID, err)
+		log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", pbJob.ID, err)
 		return err
 	}
 
@@ -432,7 +432,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 			continue
 		}
 		if s.Value == sdk.PasswordPlaceholder {
-			log.Critical("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
+			log.Error("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
 			return nil, fmt.Errorf("Loaded placeholder for %s", s.Name)
 		}
 		s.Name = "cds.proj." + s.Name
@@ -449,7 +449,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 			continue
 		}
 		if s.Value == sdk.PasswordPlaceholder {
-			log.Critical("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
+			log.Error("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
 			return nil, fmt.Errorf("Loaded placeholder for %s", s.Name)
 		}
 		s.Name = "cds.app." + s.Name
@@ -466,7 +466,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 			continue
 		}
 		if s.Value == sdk.PasswordPlaceholder {
-			log.Critical("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
+			log.Error("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
 			return nil, fmt.Errorf("Loaded placeholder for %s", s.Name)
 		}
 		s.Name = "cds.env." + s.Name

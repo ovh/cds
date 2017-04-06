@@ -20,7 +20,7 @@ func Scheduler(DBFunc func() *gorp.DbMap) {
 		_, status, err := Run(DBFunc())
 
 		if err != nil {
-			log.Critical("%s: %s", status, err)
+			log.Error("%s: %s", status, err)
 		}
 		schedulerStatus = status
 	}

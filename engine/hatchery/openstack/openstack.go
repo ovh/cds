@@ -269,7 +269,7 @@ func (h *HatcheryCloud) killAwolServers() {
 func (h *HatcheryCloud) refreshToken() {
 	tk, endpoint, err := getToken(h.user, h.password, h.address, h.tenant, h.region)
 	if err != nil {
-		log.Critical("refreshToken> Cannot refresh token: %s", err)
+		log.Error("refreshToken> Cannot refresh token: %s", err)
 	}
 	h.token = tk
 	h.endpoint = endpoint
@@ -962,14 +962,14 @@ func getToken(user string, password string, url string, project string, region s
 
 	data, err := json.Marshal(a)
 	if err != nil {
-		log.Critical("getToken> Marshal> %s", err)
+		log.Error("getToken> Marshal> %s", err)
 		return nil, endpoint, err
 	}
 
 	uri := fmt.Sprintf("%s/v2.0/tokens", url)
 	req, err := http.NewRequest("POST", uri, bytes.NewReader(data))
 	if err != nil {
-		log.Critical("getToken> newRequest> %s", err)
+		log.Error("getToken> newRequest> %s", err)
 		return nil, endpoint, err
 	}
 
@@ -978,24 +978,24 @@ func getToken(user string, password string, url string, project string, region s
 
 	resp, err := hatchery.Client.Do(req)
 	if err != nil {
-		log.Critical("getToken> Do> %s", err)
+		log.Error("getToken> Do> %s", err)
 		return nil, endpoint, err
 	}
 
 	contentType := strings.ToLower(resp.Header.Get("Content-Type"))
 	if strings.Contains(contentType, "json") != true {
-		log.Critical("getToken> contains> %s", err)
+		log.Error("getToken> contains> %s", err)
 		return nil, endpoint, fmt.Errorf("err (%s): header Content-Type is not JSON (%s)", contentType, resp.Status)
 	}
 
 	rbody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Critical("getToken> readall> %s", err)
+		log.Error("getToken> readall> %s", err)
 		return nil, endpoint, fmt.Errorf("cannot read body")
 	}
 
 	if resp.StatusCode >= 400 {
-		log.Critical("getToken> statuscode> user %s, password %s, url %s, project %s, region %s", user, password, url, project, region)
+		log.Error("getToken> statuscode> user %s, password %s, url %s, project %s, region %s", user, password, url, project, region)
 		return nil, endpoint, unmarshalOpenstackError(rbody, resp.Status)
 	}
 

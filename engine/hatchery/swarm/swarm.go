@@ -33,12 +33,12 @@ func (h *HatcherySwarm) Init() error {
 	var errc error
 	h.dockerClient, errc = docker.NewClientFromEnv()
 	if errc != nil {
-		log.Critical("Unable to connect to a docker client:%s", errc)
+		log.Error("Unable to connect to a docker client:%s", errc)
 		return errc
 	}
 
 	if errPing := h.dockerClient.Ping(); errPing != nil {
-		log.Critical("Unable to ping docker host:%s", errPing)
+		log.Error("Unable to ping docker host:%s", errPing)
 		return errPing
 	}
 
@@ -364,7 +364,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	//List all containers to check if we can spawn a new one
 	cs, errList := h.getContainers()
 	if errList != nil {
-		log.Critical("CanSpawn> Unable to list containers: %s", errList)
+		log.Error("CanSpawn> Unable to list containers: %s", errList)
 		return false
 	}
 
@@ -484,7 +484,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 func (h *HatcherySwarm) WorkersStarted() int {
 	containers, errList := h.getContainers()
 	if errList != nil {
-		log.Critical("WorkersStarted> Unable to list containers: %s", errList)
+		log.Error("WorkersStarted> Unable to list containers: %s", errList)
 		return 0
 	}
 	return len(containers)
@@ -494,7 +494,7 @@ func (h *HatcherySwarm) WorkersStarted() int {
 func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
 	containers, errList := h.getContainers()
 	if errList != nil {
-		log.Critical("WorkersStartedByModel> Unable to list containers: %s", errList)
+		log.Error("WorkersStartedByModel> Unable to list containers: %s", errList)
 		return 0
 	}
 
