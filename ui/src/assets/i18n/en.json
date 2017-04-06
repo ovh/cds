@@ -57,10 +57,10 @@
   "application_update_ok" : "Application has been updated",
   "application_variable_list_title" : "List of application variables: ",
   "application_variable_form_title" : "Add a new variable: ",
-  "application_workflow_branch_title" : "Branch filter: ",
+  "application_workflow_branch_title" : "Branch: ",
   "application_workflow_orientation_title" : "Workflow orientation: ",
   "application_workflow_pipeline_add" : "Attach a pipeline",
-  "application_workflow_version_title" : "Version filter: ",
+  "application_workflow_version_title" : "Version: ",
 
   "artifact_name" : "Artifact name",
   "artifact_tag" : "Tag",
