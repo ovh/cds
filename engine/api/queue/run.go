@@ -74,8 +74,7 @@ func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, p
 
 	go func() {
 		db := database.GetDBMap()
-		_, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, env, pb)
-		if err != nil {
+		if _, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, env, pb); err != nil {
 			log.Warning("scheduler.Run> Unable to update pipeline build commits : %s", err)
 		}
 	}()
