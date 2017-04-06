@@ -1312,6 +1312,11 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 
 	}
 
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "getPipelineBuildCommitsHandler> Unable to load project %s", projectKey)
+	}
+
 	if err := r.ParseForm(); err != nil {
 		log.Warning("getPipelineBuildCommitsHandler> Cannot parse form: %s\n", err)
 		return sdk.ErrUnknownError
@@ -1352,6 +1357,12 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 		return sdk.ErrApplicationNotFound
 	}
 
+	//Load the pipeline build
+	pb, errpb := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID, env.ID, int64(buildNumber))
+	if errpb != nil {
+		return sdk.WrapError(errpb, "getPipelineBuildCommitsHandler>")
+	}
+
 	//Check it the application is attached to a repository
 	if app.RepositoriesManager == nil {
 		return sdk.ErrNoReposManagerClientAuth
@@ -1367,75 +1378,9 @@ func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *
 		return sdk.ErrNoReposManagerClientAuth
 	}
 
-	//Get the RepositoriesManager Client
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
+	cm, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, env, pb)
 	if err != nil {
-		log.Warning("getPipelineBuildCommitsHandler> Cannot get client: %s", err)
-		return sdk.ErrNoReposManagerClientAuth
+		return sdk.WrapError(err, "getPipelineBuildCommitsHandler> UpdatePipelineBuildCommits failed")
 	}
-
-	//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
-	//buildNumber, pipelineID, applicationID, environmentID
-	cur, prev, err := pipeline.CurrentAndPreviousPipelineBuildNumberAndHash(db, int64(buildNumber), pip.ID, app.ID, env.ID)
-
-	if err != nil {
-		log.Warning("getPipelineBuildCommitsHandler> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", buildNumber, pip.ID, app.ID, env.ID, err)
-		return err
-	}
-
-	if prev == nil {
-		log.Info("getPipelineBuildCommitsHandler> No previous build was found for branch %s", cur.Branch)
-	} else {
-		log.Info("getPipelineBuildCommitsHandler> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
-	}
-
-	//If there is not difference between the previous build and the current build
-	if prev != nil && cur.Hash == prev.Hash {
-		return WriteJSON(w, r, []sdk.VCSCommit{}, http.StatusOK)
-
-	}
-
-	if prev != nil && cur.Hash != "" && prev.Hash != "" {
-		//If we are lucky, return a true diff
-		commits, err := client.Commits(app.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
-		if err != nil {
-			log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
-			return err
-
-		}
-		return WriteJSON(w, r, commits, http.StatusOK)
-
-	}
-
-	if cur.Hash != "" {
-		//If we only get current pipeline build hash
-		log.Info("getPipelineBuildCommitsHandler>  Looking for every commit until %s ", cur.Hash)
-		c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
-		if err != nil {
-			log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
-			return err
-
-		}
-		return WriteJSON(w, r, c, http.StatusOK)
-	}
-
-	//If we only have the current branch, search for the branch
-	br, err := client.Branch(app.RepositoryFullname, cur.Branch)
-	if err != nil {
-		log.Warning("getPipelineBuildCommitsHandler> Cannot get branch: %s", err)
-		return err
-
-	}
-	if br.LatestCommit == "" {
-		log.Warning("getPipelineBuildCommitsHandler> Branch or lastest commit not found")
-		return sdk.ErrNoBranch
-	}
-	//and return the last commit of the branch
-	log.Debug("get the last commit : %s", br.LatestCommit)
-	cm, err := client.Commit(app.RepositoryFullname, br.LatestCommit)
-	if err != nil {
-		log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
-		return err
-	}
-	return WriteJSON(w, r, []sdk.VCSCommit{cm}, http.StatusOK)
+	return WriteJSON(w, r, cm, http.StatusOK)
 }

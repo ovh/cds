@@ -550,6 +550,89 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 	return nil
 }
 
+// UpdatePipelineBuildCommits gets and update commit for given pipeline build
+func UpdatePipelineBuildCommits(db gorp.SqlExecutor, p *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, pb *sdk.PipelineBuild) ([]sdk.VCSCommit, error) {
+	res := []sdk.VCSCommit{}
+
+	//Get the RepositoriesManager Client
+	client, err := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name)
+	if err != nil {
+		log.Warning("UpdatePipelineBuildCommits> Cannot get client: %s", err)
+		return nil, sdk.ErrNoReposManagerClientAuth
+	}
+
+	//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
+	//buildNumber, pipelineID, applicationID, environmentID
+	cur, prev, err := CurrentAndPreviousPipelineBuildNumberAndHash(db, pb.BuildNumber, pip.ID, app.ID, env.ID)
+	if err != nil {
+		log.Warning("UpdatePipelineBuildCommits> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", pb.BuildNumber, pip.ID, app.ID, env.ID, err)
+		return nil, err
+	}
+
+	if prev == nil {
+		log.Info("UpdatePipelineBuildCommits> No previous build was found for branch %s", cur.Branch)
+	} else {
+		log.Info("UpdatePipelineBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+	}
+
+	//If there is not difference between the previous build and the current build
+	if prev != nil && cur.Hash == prev.Hash {
+		goto end
+	}
+
+	if prev != nil && cur.Hash != "" && prev.Hash != "" {
+		//If we are lucky, return a true diff
+		commits, err := client.Commits(app.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
+		if err != nil {
+			log.Warning("UpdatePipelineBuildCommits> Cannot get commits: %s", err)
+			return nil, err
+		}
+		res = commits
+		goto end
+	}
+
+	if cur.Hash != "" {
+		//If we only get current pipeline build hash
+		log.Info("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
+		c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
+		if err != nil {
+			log.Warning("UpdatePipelineBuildCommits> Cannot get commits: %s", err)
+			return nil, err
+		}
+		res = c
+		goto end
+	}
+
+	if cur.Branch != "" {
+		//If we only have the current branch, search for the branch
+		br, err := client.Branch(app.RepositoryFullname, cur.Branch)
+		if err != nil {
+			log.Warning("UpdatePipelineBuildCommits> Cannot get branch: %s", err)
+			return nil, err
+		}
+		if br.LatestCommit == "" {
+			log.Warning("UpdatePipelineBuildCommits> Branch or lastest commit not found")
+			return nil, sdk.ErrNoBranch
+		}
+
+		//and return the last commit of the branch
+		log.Debug("get the last commit : %s", br.LatestCommit)
+		cm, err := client.Commit(app.RepositoryFullname, br.LatestCommit)
+		if err != nil {
+			log.Warning("UpdatePipelineBuildCommits> Cannot get commits: %s", err)
+			return nil, err
+		}
+		res = []sdk.VCSCommit{cm}
+	}
+
+end:
+	if err := updatePipelineBuildCommits(db, pb.ID, res); err != nil {
+		log.Warning("UpdatePipelineBuildCommits> Unable to update pipeline build commit : %s", err)
+	}
+
+	return res, nil
+}
+
 // InsertPipelineBuild insert build informations in database so Scheduler can pick it up
 func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipeline, app *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (*sdk.PipelineBuild, error) {
 	var buildNumber int64
@@ -661,14 +744,12 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		}
 	}
 
-	var lastCommit sdk.VCSCommit
 	//Retreive commit information
 	if client != nil && pb.Trigger.VCSChangesHash != "" {
 		commit, err := client.Commit(app.RepositoryFullname, pb.Trigger.VCSChangesHash)
 		if err != nil {
 			log.Warning("InsertPipelineBuild> Cannot get commit: %s\n", err)
 		} else {
-			lastCommit = commit
 			sdk.AddParameter(&params, "git.author", sdk.StringParameter, commit.Author.Name)
 			sdk.AddParameter(&params, "git.message", sdk.StringParameter, commit.Message)
 			pb.Trigger.VCSChangesAuthor = commit.Author.Name
@@ -713,48 +794,6 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	//Insert pipeline build
 	if err := insertPipelineBuild(tx, string(argsJSON), app.ID, p.ID, &pb, env.ID, string(stages), []sdk.VCSCommit{}); err != nil {
 		return nil, sdk.WrapError(err, "InsertPipelineBuild> Cannot insert pipeline build")
-	}
-
-	//Retrieve commits
-	if client != nil {
-		//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
-		//buildNumber, pipelineID, applicationID, environmentID
-		cur, prev, errcurrentbuild := CurrentAndPreviousPipelineBuildNumberAndHash(tx, pb.BuildNumber, p.ID, app.ID, env.ID)
-		if errcurrentbuild != nil {
-			log.Warning("InsertPipelineBuild> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", pb.BuildNumber, p.ID, app.ID, env.ID, errcurrentbuild)
-		} else {
-			if prev == nil {
-				log.Info("InsertPipelineBuild> No previous build was found for branch %s", cur.Branch)
-			} else {
-				log.Info("InsertPipelineBuild> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
-			}
-			if prev != nil && cur != nil && cur.Hash != "" && prev.Hash != "" {
-				//If we are lucky, return a true diff
-				commits, errcommits := client.Commits(app.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
-				if errcommits != nil {
-					log.Warning("InsertPipelineBuild> Cannot get commits: %s", errcommits)
-				} else {
-					if err := updatePipelineBuildCommits(tx, pb.ID, commits); err != nil {
-						return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to update commits list in pipeline build")
-					}
-				}
-			} else if cur.Hash != "" {
-				//If we only get current pipeline build hash
-				log.Info("InsertPipelineBuild>  Looking for every commit until %s ", cur.Hash)
-				c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
-				if err != nil {
-					log.Warning("InsertPipelineBuild> Cannot get commits: %s", err)
-				} else {
-					if err := updatePipelineBuildCommits(tx, pb.ID, c); err != nil {
-						return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to update commits list in pipeline build")
-					}
-				}
-			} else {
-				if err := updatePipelineBuildCommits(tx, pb.ID, []sdk.VCSCommit{lastCommit}); err != nil {
-					return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to update commits list in pipeline build")
-				}
-			}
-		}
 	}
 
 	pb.Status = sdk.StatusBuilding

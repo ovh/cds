@@ -71,5 +71,12 @@ func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, p
 		return nil, err
 	}
 
+	go func() {
+		_, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, env, pb)
+		if err != nil {
+			log.Warning("scheduler.Run> Unable to update pipeline build commits : %s", err)
+		}
+	}()
+
 	return pb, nil
 }
