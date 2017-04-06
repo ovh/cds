@@ -553,81 +553,65 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 // UpdatePipelineBuildCommits gets and update commit for given pipeline build
 func UpdatePipelineBuildCommits(db gorp.SqlExecutor, p *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, pb *sdk.PipelineBuild) ([]sdk.VCSCommit, error) {
 	res := []sdk.VCSCommit{}
-
 	//Get the RepositoriesManager Client
-	client, err := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name)
-	if err != nil {
-		log.Warning("UpdatePipelineBuildCommits> Cannot get client: %s", err)
-		return nil, sdk.ErrNoReposManagerClientAuth
+	client, errclient := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name)
+	if errclient != nil {
+		return nil, sdk.WrapError(errclient, "UpdatePipelineBuildCommits> Cannot get client")
 	}
 
 	//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
 	//buildNumber, pipelineID, applicationID, environmentID
-	cur, prev, err := CurrentAndPreviousPipelineBuildNumberAndHash(db, pb.BuildNumber, pip.ID, app.ID, env.ID)
-	if err != nil {
-		log.Warning("UpdatePipelineBuildCommits> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)  : %s ", pb.BuildNumber, pip.ID, app.ID, env.ID, err)
-		return nil, err
+	cur, prev, errcurr := CurrentAndPreviousPipelineBuildNumberAndHash(db, pb.BuildNumber, pip.ID, app.ID, env.ID)
+	if errcurr != nil {
+		return nil, sdk.WrapError(errcurr, "UpdatePipelineBuildCommits> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)", pb.BuildNumber, pip.ID, app.ID, env.ID)
 	}
 
-	if prev == nil {
-		log.Info("UpdatePipelineBuildCommits> No previous build was found for branch %s", cur.Branch)
-	} else {
-		log.Info("UpdatePipelineBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+	if log.IsDebug() {
+		if prev == nil {
+			log.Debug("UpdatePipelineBuildCommits> No previous build was found for branch %s", cur.Branch)
+		} else {
+			log.Debug("UpdatePipelineBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+		}
 	}
 
-	//If there is not difference between the previous build and the current build
 	if prev != nil && cur.Hash == prev.Hash {
-		goto end
-	}
-
-	if prev != nil && cur.Hash != "" && prev.Hash != "" {
+		log.Debug("UpdatePipelineBuildCommits> there is not difference between the previous build and the current build")
+	} else if prev != nil && cur.Hash != "" && prev.Hash != "" {
 		//If we are lucky, return a true diff
 		commits, err := client.Commits(app.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
 		if err != nil {
-			log.Warning("UpdatePipelineBuildCommits> Cannot get commits: %s", err)
-			return nil, err
+			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
 		}
 		res = commits
-		goto end
-	}
-
-	if cur.Hash != "" {
+	} else if cur.Hash != "" {
 		//If we only get current pipeline build hash
 		log.Info("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
 		if err != nil {
-			log.Warning("UpdatePipelineBuildCommits> Cannot get commits: %s", err)
-			return nil, err
+			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
 		}
 		res = c
-		goto end
-	}
-
-	if cur.Branch != "" {
+	} else {
 		//If we only have the current branch, search for the branch
 		br, err := client.Branch(app.RepositoryFullname, cur.Branch)
 		if err != nil {
-			log.Warning("UpdatePipelineBuildCommits> Cannot get branch: %s", err)
-			return nil, err
+			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get branch %s", cur.Branch)
 		}
 		if br.LatestCommit == "" {
-			log.Warning("UpdatePipelineBuildCommits> Branch or lastest commit not found")
-			return nil, sdk.ErrNoBranch
+			return nil, sdk.WrapError(sdk.ErrNoBranch, "UpdatePipelineBuildCommits> Branch or lastest commit not found")
 		}
 
 		//and return the last commit of the branch
 		log.Debug("get the last commit : %s", br.LatestCommit)
-		cm, err := client.Commit(app.RepositoryFullname, br.LatestCommit)
-		if err != nil {
-			log.Warning("UpdatePipelineBuildCommits> Cannot get commits: %s", err)
-			return nil, err
+		cm, errcm := client.Commit(app.RepositoryFullname, br.LatestCommit)
+		if errcm != nil {
+			return nil, sdk.WrapError(errcm, "UpdatePipelineBuildCommits> Cannot get commits")
 		}
 		res = []sdk.VCSCommit{cm}
 	}
 
-end:
 	if err := updatePipelineBuildCommits(db, pb.ID, res); err != nil {
-		log.Warning("UpdatePipelineBuildCommits> Unable to update pipeline build commit : %s", err)
+		return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Unable to update pipeline build commit")
 	}
 
 	return res, nil
