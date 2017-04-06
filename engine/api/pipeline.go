@@ -856,6 +856,8 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer tx.Rollback()
 
+	log.Debug("updateJoinedAction> UpdateActionDB %d", a.ID)
+
 	if err := action.UpdateActionDB(tx, &a, c.User.ID); err != nil {
 		log.Warning("updateJoinedAction> cannot update action: %s\n", err)
 		return err
@@ -868,6 +870,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 	}
 
+	log.Debug("updateJoinedAction> CheckAction %d", a.ID)
 	warnings, err := sanity.CheckAction(tx, proj, pip, a.ID)
 	if err != nil {
 		log.Warning("updateJoinedAction> Cannot check action %d requirements: %s\n", a.ID, err)
