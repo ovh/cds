@@ -1256,7 +1256,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	if len(pbs) != 1 {
-		log.Warning("getPipelineCommitsHandler> There is no previous build")
+		log.Debug("getPipelineCommitsHandler> There is no previous build")
 		return WriteJSON(w, r, commits, http.StatusOK)
 	}
 
@@ -1267,30 +1267,29 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	if !b && app.RepositoryFullname == "" {
-		log.Warning("getPipelineCommitsHandler> No repository on the application %s", appName)
+		log.Debug("getPipelineCommitsHandler> No repository on the application %s", appName)
 		return WriteJSON(w, r, commits, http.StatusOK)
 	}
 
 	//Get the RepositoriesManager Client
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
-	if err != nil {
-		log.Warning("getPipelineCommitsHandler> Cannot get client: %s", err)
-		return sdk.ErrNoReposManagerClientAuth
+	client, errclient := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
+	if errclient != nil {
+		return sdk.WrapError(errclient, "getPipelineCommitsHandler> Cannot get client")
 	}
 
 	if pbs[0].Trigger.VCSChangesHash == "" {
-		log.Warning("getPipelineCommitsHandler>No hash on the previous run %d", pbs[0].ID)
+		log.Debug("getPipelineCommitsHandler>No hash on the previous run %d", pbs[0].ID)
 		return WriteJSON(w, r, commits, http.StatusOK)
 	}
 
 	//If we are lucky, return a true diff
-	commits, err = client.Commits(app.RepositoryFullname, pbs[0].Trigger.VCSChangesBranch, pbs[0].Trigger.VCSChangesHash, hash)
-	if err != nil {
-		log.Warning("getPipelineBuildCommitsHandler> Cannot get commits: %s", err)
-		return err
+	var errcommits error
+	commits, errcommits = client.Commits(app.RepositoryFullname, pbs[0].Trigger.VCSChangesBranch, pbs[0].Trigger.VCSChangesHash, hash)
+	if errcommits != nil {
+		return sdk.WrapError(errcommits, "getPipelineBuildCommitsHandler> Cannot get commits")
 	}
-	return WriteJSON(w, r, commits, http.StatusOK)
 
+	return WriteJSON(w, r, commits, http.StatusOK)
 }
 
 func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
