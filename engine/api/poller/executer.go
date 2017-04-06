@@ -188,5 +188,10 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 		return nil, err
 	}
 
+	//Update pipeline build commits
+	if _, err := pipeline.UpdatePipelineBuildCommits(tx, proj, &poller.Pipeline, &poller.Application, &sdk.DefaultEnv, pb); err != nil {
+		return nil, sdk.WrapError(err, "scheduler.Run> Unable to update pipeline build commits")
+	}
+
 	return pb, nil
 }

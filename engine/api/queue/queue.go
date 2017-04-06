@@ -193,6 +193,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 			log.Warning("addJobToQueue> Cannot insert job in queue for pipeline build %d: %s\n", pb.ID, err)
 			return err
 		}
+
 		event.PublishActionBuild(pb, &pbJob)
 		stage.PipelineBuildJobs = append(stage.PipelineBuildJobs, pbJob)
 	}

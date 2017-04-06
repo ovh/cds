@@ -86,9 +86,13 @@ func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string
 	}
 
 	// FIXME add possibility to trigger a pipeline on a specific env
-	_, err = pipeline.InsertPipelineBuild(tx, projectData, p, a, applicationPipelineArgs, args, &sdk.DefaultEnv, 0, trigger)
-	if err != nil {
-		return false, err
+	pb, errpb := pipeline.InsertPipelineBuild(tx, projectData, p, a, applicationPipelineArgs, args, &sdk.DefaultEnv, 0, trigger)
+	if errpb != nil {
+		return false, sdk.WrapError(errpb, "hook> Unable to insert pipeline build")
+	}
+
+	if _, err := pipeline.UpdatePipelineBuildCommits(tx, projectData, p, a, &sdk.DefaultEnv, pb); err != nil {
+		return false, sdk.WrapError(err, "hook> Unable to update pipeline build commits")
 	}
 
 	return true, nil
