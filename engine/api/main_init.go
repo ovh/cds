@@ -62,6 +62,7 @@ const (
 	viperArtifactOSPassword             = "artifact.openstack.password"
 	viperArtifactOSTenant               = "artifact.openstack.tenant"
 	viperArtifactOSRegion               = "artifact.openstack.region"
+	viperArtifactOSContainerPrefix      = "artifact.openstack.containerprefix"
 	viperEventsKafkaEnabled             = "events.kafka.enabled"
 	viperEventsKafkaBroker              = "events.kafka.broker"
 	viperEventsKafkaTopic               = "events.kafka.topic"
@@ -184,6 +185,7 @@ const tmpl = `###################################
 # CDS_ARTIFACT_OPENSTACK_PASSWORD
 # CDS_ARTIFACT_OPENSTACK_TENANT
 # CDS_ARTIFACT_OPENSTACK_REGION
+# CDS_ARTIFACT_OPENSTACK_CONTAINERPREFIX
 # CDS_EVENTS_KAFKA_ENABLED
 # CDS_EVENTS_KAFKA_BROKER
 # CDS_EVENTS_KAFKA_TOPIC
@@ -324,6 +326,7 @@ mode = "local"
     password = "<OS_PASSWORD>"
     tenant = "<OS_TENANT_NAME>"
     region = "<OS_REGION_NAME>"
+	containerprefix = "" # Use if your want to prefix containers
 
 #######################
 # CDS Events Settings #
