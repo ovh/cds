@@ -15,6 +15,8 @@ import {ProjectEnvironmentListComponent} from './environment.list.component';
 import {ToasterService} from 'angular2-toaster';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {VariableService} from '../../../../../service/variable/variable.service';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Observable} from 'rxjs/Rx';
 
 describe('CDS: Environment List Component', () => {
 
@@ -31,12 +33,16 @@ describe('CDS: Environment List Component', () => {
                 ToastService,
                 TranslateLoader,
                 TranslateParser,
-                VariableService
+                VariableService,
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes},
+                { provide: Router, useClass: MockRouter},
             ],
             imports : [
                 ProjectModule,
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([
+                    { path: 'project/:key', component: ProjectEnvironmentListComponent },
+                ])
             ]
         });
 
@@ -53,6 +59,7 @@ describe('CDS: Environment List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+
         let project = new Project();
         project.key = 'key1';
 
@@ -63,8 +70,21 @@ describe('CDS: Environment List Component', () => {
         project.environments = envs;
 
         fixture.componentInstance.project = project;
-
         fixture.componentInstance.ngOnInit();
     }));
 });
+
+class MockActivatedRoutes extends ActivatedRoute {
+    constructor() {
+        super();
+
+        this.queryParams = Observable.of({envName: 'prod'});
+    }
+}
+
+class MockRouter {
+    public navigate() {
+    }
+}
+
 
