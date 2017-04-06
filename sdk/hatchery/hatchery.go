@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -53,14 +53,14 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 
 	workersStarted := h.WorkersStarted()
 	if workersStarted > maxWorkers {
-		log.Notice("routine> %d max workers reached. current:%d max:%d", timestamp, workersStarted, maxWorkers)
+		log.Info("routine> %d max workers reached. current:%d max:%d", timestamp, workersStarted, maxWorkers)
 		return nil, nil
 	}
 	log.Debug("routine> %d - workers already started:%d", timestamp, workersStarted)
 
 	jobs, errbq := sdk.GetBuildQueue()
 	if errbq != nil {
-		log.Critical("routine> %d error on GetBuildQueue:%e", timestamp, errbq)
+		log.Error("routine> %d error on GetBuildQueue:%e", timestamp, errbq)
 		return nil, errbq
 	}
 
@@ -90,7 +90,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 		if nToRun < 0 { // should never occur, just to be sure
 			nToRun = 1
 		}
-		log.Info("routine> %d - work only on %d jobs from queue. queue size:%d workersStarted:%d maxWorkers:%d", timestamp, nToRun, len(jobs), workersStarted, maxWorkers)
+		log.Debug("routine> %d - work only on %d jobs from queue. queue size:%d workersStarted:%d maxWorkers:%d", timestamp, nToRun, len(jobs), workersStarted, maxWorkers)
 	}
 
 	for i := range jobs[:nToRun] {
@@ -250,7 +250,7 @@ func canRunJob(h Interface, timestamp int64, job *sdk.PipelineBuildJob, model *s
 func logTime(name string, then time.Time, warningSeconds, criticalSeconds int) {
 	d := time.Since(then)
 	if d > time.Duration(criticalSeconds)*time.Second {
-		log.Critical("%s took %s to execute", name, d)
+		log.Error("%s took %s to execute", name, d)
 		return
 	}
 

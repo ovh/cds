@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 

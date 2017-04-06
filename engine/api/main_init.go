@@ -23,7 +23,6 @@ const (
 	viperServerSecretBackend            = "server.secrets.backend"
 	viperServerSecretBackendOption      = "server.secrets.backend.option"
 	viperLogLevel                       = "log.level"
-	viperLogDBLogging                   = "log.db"
 	viperDBUser                         = "db.user"
 	viperDBPassword                     = "db.password"
 	viperDBName                         = "db.name"
@@ -70,7 +69,7 @@ const (
 	viperEventsKafkaPassword            = "events.kafka.password"
 	viperSchedulersDisabled             = "schedulers.disabled"
 	viperVCSPollingDisabled             = "vcs.polling.disabled"
-	viperVCSRepoCacheLoaderDisabled     = "vcs.repositories.cacherloader.disabled"
+	viperVCSRepoCacheLoaderDisabled     = "vcs.repositories.cacheloader_disabled"
 	viperVCSRepoGithubStatusDisabled    = "vcs.repositories.github.statuses_disabled"
 	viperVCSRepoGithubStatusURLDisabled = "vcs.repositories.github.statuses_url_disabled"
 	viperVCSRepoGithubSecret            = "vcs.repositories.github.clientsecret"
@@ -235,7 +234,7 @@ keys = "/app/keys"
 
     [server.secrets]
     key = ""
-    # Uncomment this two lines to user a secret backend manager such as Vault. 
+    # Uncomment this two lines to user a secret backend manager such as Vault.
 	# More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
     # backend = "path/to/secret-backend-vault"
     # backendoptions = "vault_addr=https://vault.mydomain.net:8200 vault_token=09d1f099-3d41-666e-8337-492226789599 vault_namespace=/secret/cds"
@@ -362,6 +361,6 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     clientsecret = "" # You can define here your github client secret if you don't use secret-backend-manager
 
     [vcs.repositories.bitbucket]
-    statuses_disabled = false 
+    statuses_disabled = false
     privatekey = "" # You can define here your bickcket private key if you don't use secret-backend-manager
 `

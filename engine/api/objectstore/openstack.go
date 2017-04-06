@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // OpenstackStore implements ObjectStore interface with openstack implementation
@@ -23,7 +23,7 @@ type OpenstackStore struct {
 
 // NewOpenstackStore create a new ObjectStore with openstack driver and check configuration
 func NewOpenstackStore(address, user, password, tenant, region, containerprefix string) (*OpenstackStore, error) {
-	log.Notice("Objectstore> Initialize Swift(Openstack) driver on address: %s, tenant: %s, region: %s, prefix: %s", address, tenant, region, containerprefix)
+	log.Info("Objectstore> Initialize Swift(Openstack) driver on address: %s, tenant: %s, region: %s, prefix: %s", address, tenant, region, containerprefix)
 	if address == "" {
 		return nil, fmt.Errorf("artifact storage is openstack, but flag --artifact_address is not provided")
 	}
@@ -80,7 +80,7 @@ func (ops *OpenstackStore) Store(o Object, data io.ReadCloser) (string, error) {
 
 	ops.escape(container, object)
 
-	log.Info("OpenstackStore> Storing /%s/%s\n", container, object)
+	log.Debug("OpenstackStore> Storing /%s/%s\n", container, object)
 
 	// Create container if it doesn't exist
 	err := createContainer(ops.token.ID, ops.endpoint, container)
@@ -105,7 +105,7 @@ func (ops *OpenstackStore) Fetch(o Object) (io.ReadCloser, error) {
 	object := o.GetName()
 	ops.escape(container, object)
 
-	log.Info("OpenstackStore> Fetching /%s/%s\n", container, object)
+	log.Debug("OpenstackStore> Fetching /%s/%s\n", container, object)
 
 	data, err := fetchObject(ops.token.ID, ops.endpoint, container, object)
 	if err != nil {

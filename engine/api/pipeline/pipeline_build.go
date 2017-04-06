@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -408,7 +408,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	var previous *sdk.PipelineBuild
 	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch)
 	if err != nil {
-		log.Critical("UpdatePipelineBuildStatusAndStage> error while loading previous pipeline build")
+		log.Error("UpdatePipelineBuildStatusAndStage> error while loading previous pipeline build")
 	}
 	//Be sure to get the previous one
 	if len(history) == 2 {
@@ -426,7 +426,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
 		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID)
 		if errl != nil {
-			log.Critical("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
+			log.Error("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
 		}
 		pb.Application.RepositoryFullname = rfn
 		pb.Application.RepositoriesManager = rm
@@ -807,7 +807,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	var previous *sdk.PipelineBuild
 	history, err := LoadPipelineBuildsByApplicationAndPipeline(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch)
 	if err != nil {
-		log.Critical("InsertPipelineBuild> error while loading previous pipeline build: %s", err)
+		log.Error("InsertPipelineBuild> error while loading previous pipeline build: %s", err)
 	}
 	//Be sure to get the previous one
 	if len(history) == 2 {
@@ -1263,7 +1263,7 @@ func StopPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 	var previous *sdk.PipelineBuild
 	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", pb.Trigger.VCSChangesBranch)
 	if err != nil {
-		log.Critical("StopPipelineBuild> error while loading previous pipeline build")
+		log.Error("StopPipelineBuild> error while loading previous pipeline build")
 	}
 	//Be sure to get the previous one
 	if len(history) == 2 {

@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/queue"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -45,7 +45,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 	//Process all
 	for i := range exs {
 		if err := executerProcess(tx, &exs[i]); err != nil {
-			log.Critical("ExecuterRun> Unable to process %v : %s", exs[i], err)
+			log.Error("ExecuterRun> Unable to process %v : %s", exs[i], err)
 		}
 	}
 

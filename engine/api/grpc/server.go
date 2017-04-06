@@ -11,7 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -22,7 +22,7 @@ func Init(port int, tls bool, certFile, keyFile string) error {
 		return err
 	}
 
-	log.Notice("Starting GRPC services on port %d", port)
+	log.Info("Starting GRPC services on port %d", port)
 
 	opts := []grpc.ServerOption{
 		grpc.StreamInterceptor(streamInterceptor),
@@ -66,7 +66,7 @@ func authorize(ctx context.Context) error {
 		if len(md["name"]) > 0 && len(md["token"]) > 0 {
 			w, err := auth.GetWorker(database.GetDBMap(), md["token"][0])
 			if err != nil {
-				log.Critical("grpc.authorize> Unable to get worker %v:%v => %s", md["name"], md["token"], err)
+				log.Error("grpc.authorize> Unable to get worker %v:%v => %s", md["name"], md["token"], err)
 				return sdk.ErrServiceUnavailable
 			}
 			if w == nil {

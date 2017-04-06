@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -56,7 +56,7 @@ func checkPermission(routeVar map[string]string, c *context.Ctx, permission int)
 	permissionOk := true
 	for key, value := range routeVar {
 		if permFunc, ok := permissionMapFunction[key]; ok {
-			log.Info("Check permission for %s", key)
+			log.Debug("Check permission for %s", key)
 			permissionOk = permFunc(value, c, permission, routeVar)
 			if !permissionOk {
 				return permissionOk

@@ -10,9 +10,9 @@ import (
 
 	"github.com/docker/docker/pkg/namesgenerator"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/viper"
 )
 
@@ -68,7 +68,7 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 	for name, cmd := range h.workers {
 		if worker.Name == name {
-			log.Notice("KillLocalWorker> Killing %s", worker.Name)
+			log.Info("KillLocalWorker> Killing %s", worker.Name)
 			return cmd.Process.Kill()
 		}
 	}
@@ -93,6 +93,20 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
+
+	if viper.GetString("graylog_host") != "" {
+		args = append(args, fmt.Sprintf("--graylog-host=%s", viper.GetString("graylog_host")))
+	}
+	if viper.GetString("graylog_port") != "" {
+		args = append(args, fmt.Sprintf("--graylog-port=%s", viper.GetString("graylog_port")))
+	}
+	if viper.GetString("graylog_extra_key") != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", viper.GetString("graylog_extra_key")))
+	}
+	if viper.GetString("graylog_extra_value") != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", viper.GetString("graylog_extra_value")))
+	}
+
 	args = append(args, "--single-use")
 
 	if job != nil {
@@ -195,7 +209,7 @@ func (h *HatcheryLocal) Init() error {
 		},
 	}
 
-	log.Notice("Call hatchery.Register Init()")
+	log.Info("Call hatchery.Register Init()")
 
 	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
 		log.Warning("Cannot register hatchery: %s", err)
@@ -258,7 +272,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		// Worker not found on api side. kill it
 		if w.Name == "" {
 			w.Name = name
-			log.Notice("Killing AWOL worker %s", w.Name)
+			log.Info("Killing AWOL worker %s", w.Name)
 			if err := h.KillWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
@@ -267,7 +281,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		}
 		// Worker is disabled. kill it
 		if w.Status == sdk.StatusDisabled {
-			log.Notice("Killing disabled worker %s", w.Name)
+			log.Info("Killing disabled worker %s", w.Name)
 
 			if err := h.KillWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)

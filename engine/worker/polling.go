@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -34,7 +34,7 @@ func checkQueue(bookedJobID int64) {
 		return
 	}
 
-	log.Notice("checkQueue> %d actions in queue", len(queue))
+	log.Info("checkQueue> %d actions in queue", len(queue))
 
 	//Set the status to checking to avoid beeing killed while checking queue, actions and requirements
 	sdk.SetWorkerStatus(sdk.StatusChecking)
@@ -46,7 +46,7 @@ func checkQueue(bookedJobID int64) {
 
 		requirementsOK := true
 		// Check requirement
-		log.Notice("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)
+		log.Info("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)
 		for _, r := range queue[i].Job.Action.Requirements {
 			ok, err := checkRequirement(r)
 			if err != nil {
@@ -65,17 +65,17 @@ func checkQueue(bookedJobID int64) {
 			if queue[i].ID != bookedJobID {
 				t = ", this was my booked job"
 			}
-			log.Notice("checkQueue> Taking job %d%s", queue[i].ID, t)
+			log.Info("checkQueue> Taking job %d%s", queue[i].ID, t)
 			takeJob(queue[i], queue[i].ID == bookedJobID)
 		}
 	}
 
 	if bookedJobID > 0 {
-		log.Notice("checkQueue> worker born for work on job %d but job is not found in queue", bookedJobID)
+		log.Info("checkQueue> worker born for work on job %d but job is not found in queue", bookedJobID)
 	}
 
 	if !viper.GetBool("single_use") {
-		log.Notice("checkQueue> Nothing to do...")
+		log.Info("checkQueue> Nothing to do...")
 	}
 }
 
@@ -92,7 +92,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 
 	bodyTake, errm := json.Marshal(in)
 	if errm != nil {
-		log.Notice("takeJob> Cannot marshal body: %s", errm)
+		log.Info("takeJob> Cannot marshal body: %s", errm)
 	}
 
 	nbActionsDone++
@@ -101,7 +101,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	path := fmt.Sprintf("/queue/%d/take", b.ID)
 	data, code, errr := sdk.Request("POST", path, bodyTake)
 	if errr != nil {
-		log.Notice("takeJob> Cannot take action %d : %s", b.Job.PipelineActionID, errr)
+		log.Info("takeJob> Cannot take action %d : %s", b.Job.PipelineActionID, errr)
 		return
 	}
 	if code != http.StatusOK {
@@ -110,7 +110,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 
 	pbji := worker.PipelineBuildJobInfo{}
 	if err := json.Unmarshal([]byte(data), &pbji); err != nil {
-		log.Notice("takeJob> Cannot unmarshal action: %s", err)
+		log.Info("takeJob> Cannot unmarshal action: %s", err)
 		return
 	}
 
@@ -128,7 +128,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	path = fmt.Sprintf("/queue/%d/result", b.ID)
 	body, errm := json.MarshalIndent(res, " ", " ")
 	if errm != nil {
-		log.Critical("takeJob> Cannot marshal result: %s", errm)
+		log.Error("takeJob> Cannot marshal result: %s", errm)
 		unregister()
 		return
 	}
@@ -139,7 +139,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		var errre error
 		_, code, errre = sdk.Request("POST", path, body)
 		if code == http.StatusNotFound {
-			log.Notice("takeJob> Cannot send build result: PipelineBuildJob does not exists anymore")
+			log.Info("takeJob> Cannot send build result: PipelineBuildJob does not exists anymore")
 			unregister() // well...
 			break
 		}
@@ -157,7 +157,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		time.Sleep(5 * time.Second)
 		isThereAnyHopeLeft--
 		if isThereAnyHopeLeft < 0 {
-			log.Notice("takeJob> Could not send built result 10 times, giving up")
+			log.Info("takeJob> Could not send built result 10 times, giving up")
 			break
 		}
 	}

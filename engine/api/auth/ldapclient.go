@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -56,7 +56,7 @@ type Entry struct {
 
 //Open open a true LDAP connection
 func (c *LDAPClient) Open(options interface{}, store sessionstore.Store) error {
-	log.Notice("Auth> Connecting to session store")
+	log.Info("Auth> Connecting to session store")
 	c.store = store
 	//LDAP Client needs a local client to check local users
 	c.local = &LocalClient{}
@@ -74,28 +74,28 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 
 	address := fmt.Sprintf("%s:%d", c.conf.Host, c.conf.Port)
 
-	log.Notice("Auth> Preparing connection to LDAP server: %s", address)
+	log.Info("Auth> Preparing connection to LDAP server: %s", address)
 	if !c.conf.SSL {
 		c.conn, err = ldap.Dial("tcp", address)
 		if err != nil {
-			log.Critical("Auth> Cannot dial %s : %s", address, err)
+			log.Error("Auth> Cannot dial %s : %s", address, err)
 			return sdk.ErrLDAPConn
 		}
 
 		// Reconnect with TLS
 		err = c.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 		if err != nil {
-			log.Critical("Auth> Cannot start TLS %s : %s", address, err)
+			log.Error("Auth> Cannot start TLS %s : %s", address, err)
 			return sdk.ErrLDAPConn
 		}
 	} else {
-		log.Notice("Auth> Connecting to LDAP server")
+		log.Info("Auth> Connecting to LDAP server")
 		c.conn, err = ldap.DialTLS("tcp", address, &tls.Config{
 			ServerName:         c.conf.Host,
 			InsecureSkipVerify: false,
 		})
 		if err != nil {
-			log.Critical("Auth> Cannot dial TLS (InsecureSkipVerify=false) %s : %s", address, err)
+			log.Error("Auth> Cannot dial TLS (InsecureSkipVerify=false) %s : %s", address, err)
 			return sdk.ErrLDAPConn
 		}
 	}
@@ -111,7 +111,7 @@ func shoudRetry(err error) bool {
 		return false
 	}
 	if ldapErr.ResultCode == ldap.ErrorNetwork {
-		log.Notice("LDAP> Retry")
+		log.Info("LDAP> Retry")
 		return true
 	}
 	return false
@@ -227,7 +227,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 	}
 
 	if len(entry) > 1 {
-		log.Critical("LDAP> Search error %s: multiple values", search)
+		log.Error("LDAP> Search error %s: multiple values", search)
 		return nil, fmt.Errorf("LDAP Search error %s: multiple values", search)
 	}
 
@@ -261,7 +261,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 	//Execute template to compute fullname
 	tmpl, err := template.New("userfullname").Parse(c.conf.UserFullname)
 	if err != nil {
-		log.Critical("LDAP> Error with user fullname template %s : %s", c.conf.UserFullname, err)
+		log.Error("LDAP> Error with user fullname template %s : %s", c.conf.UserFullname, err)
 		tmpl, _ = template.New("userfullname").Parse("{{.givenName}}")
 	}
 	bufFullname := new(bytes.Buffer)
@@ -275,13 +275,13 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 			EmailVerified: true,
 		}
 		if err := user.InsertUser(db, u, a); err != nil {
-			log.Critical("LDAP> Error inserting user %s: %s", username, err)
+			log.Error("LDAP> Error inserting user %s: %s", username, err)
 			return nil, err
 		}
 		u.Auth = *a
 	} else {
 		if err := user.UpdateUser(db, *u); err != nil {
-			log.Critical("LDAP> Unable to update user %s : %s", username, err)
+			log.Error("LDAP> Unable to update user %s : %s", username, err)
 			return nil, err
 		}
 	}

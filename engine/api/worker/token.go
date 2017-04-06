@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -29,7 +29,7 @@ func GenerateToken() (string, error) {
 	bs := make([]byte, size)
 	_, err := rand.Read(bs)
 	if err != nil {
-		log.Critical("GenerateToken: rand.Read failed: %s\n", err)
+		log.Error("GenerateToken: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)

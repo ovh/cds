@@ -10,13 +10,13 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
 //Executer is the goroutine which run the pipelines
 func Executer(DBFunc func() *gorp.DbMap) {
-	defer log.Critical("poller.Executer> has been exited !")
+	defer log.Error("poller.Executer> has been exited !")
 	for {
 		time.Sleep(5 * time.Second)
 		exs, err := ExecuterRun(DBFunc())
@@ -25,7 +25,7 @@ func Executer(DBFunc func() *gorp.DbMap) {
 			continue
 		}
 		if len(exs) > 0 {
-			log.Info("poller.Executer> %d has been executed", len(exs))
+			log.Debug("poller.Executer> %d has been executed", len(exs))
 		}
 	}
 }
@@ -51,7 +51,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, error) {
 func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 	tx, errb := db.Begin()
 	if errb != nil {
-		log.Critical("poller.ExecuterRun> %s", errb)
+		log.Error("poller.ExecuterRun> %s", errb)
 		return
 	}
 
@@ -64,11 +64,11 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 
 	p, errl := LoadByApplicationAndPipeline(tx, e.ApplicationID, e.PipelineID)
 	if errl != nil {
-		log.Critical("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, errl)
+		log.Error("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, errl)
 		return
 	}
 	if err := executerProcess(tx, p, e); err != nil {
-		log.Critical("poller.ExecuterRun> Unable to process %v : %s", e, err)
+		log.Error("poller.ExecuterRun> Unable to process %v : %s", e, err)
 		return
 	}
 
@@ -134,7 +134,7 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
 			e.PipelineBuildVersions[event.Branch.ID+"/"+event.Commit.Hash[:7]] = pb.Version
 		} else {
-			log.Info("Polling.triggerPipelines> Did not trigger %s/%s/%s\n", projectKey, poller.Application.RepositoryFullname, event.Branch.ID)
+			log.Debug("Polling.triggerPipelines> Did not trigger %s/%s/%s\n", projectKey, poller.Application.RepositoryFullname, event.Branch.ID)
 		}
 	}
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/Shopify/sarama"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -74,7 +74,7 @@ func (c *KafkaClient) initProducer() error {
 		return fmt.Errorf("initKafka> Error with init sarama:%s (newSyncProducer on %s user:%s)", errp.Error(), c.options.BrokerAddresses, c.options.User)
 	}
 
-	log.Info("initKafka> Kafka used at %s on topic:%s", c.options.BrokerAddresses, c.options.Topic)
+	log.Debug("initKafka> Kafka used at %s on topic:%s", c.options.BrokerAddresses, c.options.Topic)
 	c.producer = producer
 	return nil
 }

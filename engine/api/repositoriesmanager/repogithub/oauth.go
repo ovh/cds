@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -29,7 +29,7 @@ func generateHash() (string, error) {
 	size := 128
 	bs := make([]byte, size)
 	if _, err := rand.Read(bs); err != nil {
-		log.Critical("generateID: rand.Read failed: %s\n", err)
+		log.Error("generateID: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
@@ -62,7 +62,7 @@ func New(ClientID, ClientSecret, AuthorizationCallbackURL string) *GithubConsume
 func (g *GithubConsumer) getClientSecretValue() ([]byte, error) {
 	b, err := ioutil.ReadFile(g.ClientSecret)
 	if err != nil {
-		log.Critical("GithubConsumer> Unable to read client secret value %s : %s", g.ClientSecret, err)
+		log.Error("GithubConsumer> Unable to read client secret value %s : %s", g.ClientSecret, err)
 		return nil, err
 	}
 	b = bytes.Replace(b, []byte{'\n'}, []byte{}, -1)

@@ -10,8 +10,8 @@ import (
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -20,7 +20,15 @@ var rootCmd = &cobra.Command{
 	Use:   "hatchery",
 	Short: "hatchery <mode> --api=<cds.domain> --token=<token>",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Initialize()
+		log.Initialize(&log.Conf{
+			Level:             viper.GetString("log_level"),
+			GraylogProtocol:   viper.GetString("graylog_protocol"),
+			GraylogHost:       viper.GetString("graylog_host"),
+			GraylogPort:       viper.GetString("graylog_port"),
+			GraylogExtraKey:   viper.GetString("graylog_extra_key"),
+			GraylogExtraValue: viper.GetString("graylog_extra_value"),
+		})
+
 		sdk.SetAgent(sdk.HatcheryAgent)
 
 		if viper.GetInt("max-worker") < 1 {
@@ -104,4 +112,19 @@ func addFlags() {
 
 	rootCmd.PersistentFlags().Int64("grace-time-queued", 4, "if worker is queued less than this value (seconds), hatchery does not take care of it")
 	viper.BindPFlag("grace-time-queued", rootCmd.PersistentFlags().Lookup("grace-time-queued"))
+
+	rootCmd.PersistentFlags().String("graylog-protocol", "", "Ex: --graylog-protocol=xxxx-yyyy")
+	viper.BindPFlag("graylog_protocol", rootCmd.PersistentFlags().Lookup("graylog-protocol"))
+
+	rootCmd.PersistentFlags().String("graylog-host", "", "Ex: --graylog-host=xxxx-yyyy")
+	viper.BindPFlag("graylog_host", rootCmd.PersistentFlags().Lookup("graylog-host"))
+
+	rootCmd.PersistentFlags().String("graylog-port", "", "Ex: --graylog-port=12202")
+	viper.BindPFlag("graylog_port", rootCmd.PersistentFlags().Lookup("graylog-port"))
+
+	rootCmd.PersistentFlags().String("graylog-extra-key", "", "Ex: --graylog-extra-key=xxxx-yyyy")
+	viper.BindPFlag("graylog_extra_key", rootCmd.PersistentFlags().Lookup("graylog-extra-key"))
+
+	rootCmd.PersistentFlags().String("graylog-extra-value", "", "Ex: --graylog-extra-value=xxxx-yyyy")
+	viper.BindPFlag("graylog_extra_value", rootCmd.PersistentFlags().Lookup("graylog-extra-value"))
 }

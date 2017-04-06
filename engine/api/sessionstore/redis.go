@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -18,11 +18,11 @@ type Redis struct {
 
 //Keep redis in good health and remove HSet for expired session
 func (s *Redis) vacuumCleaner() {
-	log.Notice("Redis> Starting Session Vaccum Cleaner")
+	log.Info("Redis> Starting Session Vaccum Cleaner")
 	for {
 		keys, err := s.store.Client.Keys("session:*:data").Result()
 		if err != nil {
-			log.Critical("RedisSessionStore> Unable to get keys in store : %s", err)
+			log.Error("RedisSessionStore> Unable to get keys in store : %s", err)
 		}
 		for _, k := range keys {
 			sessionKey := strings.Replace(k, ":data", "", -1)
@@ -32,7 +32,7 @@ func (s *Redis) vacuumCleaner() {
 			}
 			if !sessionExist {
 				if err := s.store.Client.Del(k).Err(); err != nil {
-					log.Critical("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
+					log.Error("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
 				}
 			}
 		}
@@ -46,7 +46,7 @@ func NewRedis(redisHost, redisPassword string, ttl int) (*Redis, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Notice("Redis> Store ready")
+	log.Info("Redis> Store ready")
 	redisStore := &Redis{ttl * 1440, r}
 	go redisStore.vacuumCleaner()
 	return redisStore, nil
@@ -63,13 +63,13 @@ func (s *Redis) New(k SessionKey) (SessionKey, error) {
 	}
 
 	if err != nil {
-		log.Critical("Redis> unable to generate session key : %s", err)
+		log.Error("Redis> unable to generate session key : %s", err)
 		return "", err
 	}
 	key := cache.Key("session", string(token))
 	//Store in redis
 	if err := s.store.Client.Set(key, 1, time.Duration(s.ttl)*time.Minute).Err(); err != nil {
-		log.Critical("Redis> unable create redis session %s : %s", key, err)
+		log.Error("Redis> unable create redis session %s : %s", key, err)
 		return "", err
 	}
 	return token, nil

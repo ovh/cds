@@ -9,7 +9,7 @@ import (
 	"net/smtp"
 	"text/template"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type emailParam struct {

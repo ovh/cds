@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -22,7 +22,7 @@ type LocalClient struct {
 
 //Open nothing
 func (c *LocalClient) Open(options interface{}, store sessionstore.Store) error {
-	log.Notice("Auth> Connecting to session store")
+	log.Info("Auth> Connecting to session store")
 	c.store = store
 	return nil
 }

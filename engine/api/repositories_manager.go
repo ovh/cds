@@ -24,7 +24,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -138,7 +138,7 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 		return sdk.ErrNoReposManagerAuth
 
 	}
-	log.Notice("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", projectKey, token, url)
+	log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", projectKey, token, url)
 
 	data := map[string]string{
 		"project_key":          projectKey,
@@ -159,7 +159,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	errURI := r.FormValue("error_uri")
 
 	if cberr != "" {
-		log.Critical("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
+		log.Error("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
 		return fmt.Errorf("OAuth Error %s", cberr)
 	}
 
@@ -187,7 +187,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 
 	}
 
-	log.Notice("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
+	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
 	result := map[string]string{
 		"project_key":          projectKey,
 		"repositories_manager": rmName,
@@ -246,7 +246,7 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 
 	}
 
-	log.Notice("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
+	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
 	result := map[string]string{
 		"project_key":          projectKey,
 		"repositories_manager": rmName,

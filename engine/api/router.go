@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -79,10 +79,10 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				default:
 					err = sdk.ErrUnknownError
 				}
-				log.Critical("[PANIC_RECOVERY] Panic occured on %s:%s, recover %s", req.Method, req.URL.String(), err)
+				log.Error("[PANIC_RECOVERY] Panic occured on %s:%s, recover %s", req.Method, req.URL.String(), err)
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, true)
-				log.Critical("[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
+				log.Error("[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
 
 				//Reinit database connection
 				if _, e := database.Init(
@@ -95,7 +95,7 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					viper.GetInt(viperDBTimeout),
 					viper.GetInt(viperDBMaxConn),
 				); e != nil {
-					log.Critical("[PANIC_RECOVERY] Unable to reinit db connection : %s", e)
+					log.Error("[PANIC_RECOVERY] Unable to reinit db connection : %s", e)
 				}
 
 				//Checking if there are two much panics in two minutes
@@ -105,7 +105,7 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				} else {
 					dur := time.Since(*lastPanic)
 					if dur.Minutes() > float64(2) {
-						log.Notice("[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
+						log.Info("[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
 						nbPanic = 0
 					}
 				}
@@ -116,7 +116,7 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				//If two much panic, change the status of /mon/status with panicked = true
 				if nbPanic > nbPanicsBeforeFail {
 					panicked = true
-					log.Critical("[PANIC_RECOVERY] RESTART NEEDED")
+					log.Error("[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
 				WriteError(w, req, err)
@@ -256,7 +256,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		defer func() {
 			end := time.Now()
 			latency := end.Sub(start)
-			log.Info("%-7s | %13v | %v", req.Method, latency, req.URL)
+			log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
 		}()
 
 		if req.Method == "GET" && rc.get != nil {

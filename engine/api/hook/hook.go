@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -227,7 +227,7 @@ func generateHash() (string, error) {
 	bs := make([]byte, size)
 	_, err := rand.Read(bs)
 	if err != nil {
-		log.Critical("generateID: rand.Read failed: %s\n", err)
+		log.Error("generateID: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
@@ -358,7 +358,7 @@ func Recovery(h ReceivedHook, err error) {
 	log.Debug("hook.Recovery> %s", h.Repository)
 	switch err.(type) {
 	case sdk.Error:
-		log.Notice("hook.Recovery> %s is not handled", h.Repository)
+		log.Info("hook.Recovery> %s is not handled", h.Repository)
 		return
 	default:
 
@@ -376,7 +376,7 @@ func Recovery(h ReceivedHook, err error) {
 		"database/sql: internal sentinel error: conn is busy":
 		log.Debug("hook.Recovery> Save %s/%s/%s for recover", h.ProjectKey, h.Repository, h.Hash)
 	default:
-		log.Notice("hook.Recovery> %s is not handled", s)
+		log.Info("hook.Recovery> %s is not handled", s)
 		return
 	}
 

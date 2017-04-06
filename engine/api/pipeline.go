@@ -22,8 +22,8 @@ import (
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -293,7 +293,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	defer tx.Rollback()
 
 	// Schedule pipeline for build
-	log.Info("runPipelineHandler> Scheduling %s/%s/%s[%s] with %d params, version 0",
+	log.Debug("runPipelineHandler> Scheduling %s/%s/%s[%s] with %d params, version 0",
 		projectKey, app.Name, pipelineName, envDest.Name, len(request.Params))
 	log.Debug("runPipelineHandler> Pipeline trigger by %s - %d", c.User.ID, request.ParentPipelineID)
 	trigger := sdk.PipelineBuildTrigger{
@@ -407,7 +407,7 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return err
 	}
 
-	log.Notice("deletePipelineActionHandler> Deleting action %d in %s/%s\n", pipelineActionID, vars["key"], vars["permPipelineKey"])
+	log.Info("deletePipelineActionHandler> Deleting action %d in %s/%s\n", pipelineActionID, vars["key"], vars["permPipelineKey"])
 
 	tx, err := db.Begin()
 	if err != nil {

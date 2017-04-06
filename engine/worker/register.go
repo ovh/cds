@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/viper"
 )
 
 // Workers need to register to main api so they can run actions
 func register(cdsURI string, name string, uk string) error {
-	log.Notice("Registering [%s] at [%s]\n", name, cdsURI)
+	log.Info("Registering [%s] at [%s]\n", name, cdsURI)
 
 	sdk.InitEndpoint(cdsURI)
 	sdk.Authorization(WorkerID)
@@ -39,13 +39,13 @@ func register(cdsURI string, name string, uk string) error {
 
 	body, errM := json.Marshal(in)
 	if errM != nil {
-		log.Notice("register: Cannot marshal body: %s", errM)
+		log.Info("register: Cannot marshal body: %s", errM)
 		return errM
 	}
 
 	data, code, errR := sdk.Request("POST", "/worker", body)
 	if errR != nil {
-		log.Notice("Cannot register worker: %s", errR)
+		log.Info("Cannot register worker: %s", errR)
 		return errR
 	}
 
@@ -64,7 +64,7 @@ func register(cdsURI string, name string, uk string) error {
 	WorkerID = w.ID
 	sdk.Authorization(w.ID)
 	initGRPCConn()
-	log.Notice("Registered: %s\n", data)
+	log.Info("Registered: %s\n", data)
 
 	if !w.Uptodate {
 		log.Warning("-=-=-=-=- Please update your worker binary -=-=-=-=-")
@@ -85,10 +85,10 @@ func unregister() error {
 
 	if viper.GetBool("single_use") {
 		if hatchery > 0 {
-			log.Notice("unregister> waiting 30min to be killed by hatchery, if not killed, worker will exit")
+			log.Info("unregister> waiting 30min to be killed by hatchery, if not killed, worker will exit")
 			time.Sleep(30 * time.Minute)
 		}
-		log.Notice("unregister> worker will exit")
+		log.Info("unregister> worker will exit")
 		time.Sleep(3 * time.Second)
 		os.Exit(0)
 	}
