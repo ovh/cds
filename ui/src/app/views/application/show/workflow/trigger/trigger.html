@@ -22,6 +22,11 @@
         </sm-select>
     </div>
 </div>
+<div class="ui checkbox" *ngIf="trigger">
+    <input type="checkbox" name="manual" [(ngModel)]="trigger.manual"
+           (change)="trigger.hasChanged = true" [disabled]="mode !== 'edit'">
+    <label>{{ 'trigger_manual_label' | translate }}</label>
+</div>
 <h4 *ngIf="trigger && trigger.parameters && trigger.parameters.length > 0">{{ 'trigger_list_parameter_title' | translate}}</h4>
 <app-parameter-list *ngIf="trigger && trigger.parameters && trigger.parameters.length > 0"
                     [parameters]="trigger.parameters" mode="launcher" (event)="trigger.hasChanged = true"></app-parameter-list>
@@ -31,6 +36,7 @@
 <app-prerequisites-list
         *ngIf="trigger && trigger.prerequisites && trigger.prerequisites.length > 0"
         [prerequisites]="trigger.prerequisites"
+        [edit]="mode === 'edit'"
         (event)="prerequisiteEvent($event)"></app-prerequisites-list>
 <h4 *ngIf="refPrerequisites && trigger &&  ( !trigger.prerequisites || trigger.prerequisites.length !== refPrerequisites.length)">
     {{ 'trigger_add_prerequisite_title' | translate}}

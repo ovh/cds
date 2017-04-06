@@ -333,6 +333,7 @@
   "trigger_list_prerequisite_title" : "Run conditions",
   "trigger_label_new" : "Create a trigger",
   "trigger_label_edit" : "Edit trigger",
+  "trigger_manual_label" : "Manual trigger",
   "trigger_to_title" : "Triggered pipeline",
   "trigger_updated" : "Trigger updated",
 

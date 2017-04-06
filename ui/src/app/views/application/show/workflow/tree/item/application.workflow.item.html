@@ -112,7 +112,10 @@
             </sm-dropdown>
         </div>
         <div class="manual trigger">
-            <i class="hand paper icon" aria-hidden="true" *ngIf="workflowItem.trigger && workflowItem.trigger.id !== 0 && workflowItem.trigger.manual"></i>
+            <button class="ui trigger button" (click)="openEditTriggerModal()">
+                <i class="video play icon" *ngIf="workflowItem.trigger && workflowItem.trigger.id !== 0 && !workflowItem.trigger.manual"></i>
+                <i class="pause circle icon" aria-hidden="true" *ngIf="workflowItem.trigger && workflowItem.trigger.id !== 0 && workflowItem.trigger.manual"></i>
+            </button>
         </div>
 
     </div>

@@ -332,6 +332,7 @@
   "trigger_list_parameter_title" : "Liste des paramètres du pipeline",
   "trigger_list_prerequisite_title" : "Conditions de lancement",
   "trigger_label_new" : "Créer un trigger",
+  "trigger_manual_label" : "Déclenchement manuel",
   "trigger_label_edit" : "Edition du trigger",
   "trigger_to_title" : "Pipeline à déclencher",
   "trigger_updated" : "Trigger mis à jour",
