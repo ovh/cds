@@ -58,7 +58,6 @@ func Set(d *sql.DB) {
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
 func Init(user, password, name, host, port, sslmode string, timeout, maxconn int) (*sql.DB, error) {
-	fmt.Printf("user=%s password=%s name=%s host=%s port=%s sslmode=%s", user, password, name, host, port, sslmode)
 	mutex.Lock()
 	defer mutex.Unlock()
 
