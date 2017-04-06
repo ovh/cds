@@ -1,6 +1,6 @@
 name: Create project/application/pipeline
 vars:
-  ui.url: '{{.cds.env.ui_url}}'
+  ui.url: '{{.cds.build.url}}'
   ui.user: '{{.cds.build.user}}'
   ui.password: '{{.cds.build.user_password}}'
 testcases:
