@@ -145,7 +145,6 @@ const tmpl = `###################################
 # CDS_SERVER_SECRETS_BACKEND
 # CDS_SERVER_SECRETS_BACKEND_OPTION
 # CDS_LOG_LEVEL
-# CDS_LOG_DB
 # CDS_DB_USER
 # CDS_DB_PASSWORD
 # CDS_DB_NAME
@@ -213,8 +212,8 @@ ui = "http://localhost:8080"
 #####################
 # Define log levels and hooks
 [log]
+# debug, info, warning or error
 level = "info"
-db = false
 
 # CDS needs local directories to store temporary data (keys) and serve cds binaries such as hatcheries and workers (download)
 [directories]
@@ -235,7 +234,7 @@ keys = "/app/keys"
     [server.secrets]
     key = ""
     # Uncomment this two lines to user a secret backend manager such as Vault.
-	# More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
+    # More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
     # backend = "path/to/secret-backend-vault"
     # backendoptions = "vault_addr=https://vault.mydomain.net:8200 vault_token=09d1f099-3d41-666e-8337-492226789599 vault_namespace=/secret/cds"
 
@@ -252,6 +251,7 @@ port = 5432
 sslmode = "disable"
 maxconn = 20
 timeout = 3000
+
 # Uncomment this to retreive database credentials from secret-backend
 # secret = "cds/db"
 # The value must be as below
@@ -269,7 +269,7 @@ timeout = 3000
 #mode = "redis"
 mode = "local"
 ttl = 60
-	# Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
+    # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
     [cache.redis]
     host = "localhost:6379" # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
     password = "your password"
@@ -325,7 +325,7 @@ mode = "local"
     password = "<OS_PASSWORD>"
     tenant = "<OS_TENANT_NAME>"
     region = "<OS_REGION_NAME>"
-	containerprefix = "" # Use if your want to prefix containers
+    containerprefix = "" # Use if your want to prefix containers
 
 #######################
 # CDS Events Settings #
