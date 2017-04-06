@@ -15,8 +15,8 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // PipelineBuildDbResult Gorp result when select a pipeline build
@@ -570,12 +570,10 @@ func UpdatePipelineBuildCommits(db gorp.SqlExecutor, p *sdk.Project, pip *sdk.Pi
 		return nil, sdk.WrapError(errcurr, "UpdatePipelineBuildCommits> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)", pb.BuildNumber, pip.ID, app.ID, env.ID)
 	}
 
-	if log.IsDebug() {
-		if prev == nil {
-			log.Debug("UpdatePipelineBuildCommits> No previous build was found for branch %s", cur.Branch)
-		} else {
-			log.Debug("UpdatePipelineBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
-		}
+	if prev == nil {
+		log.Debug("UpdatePipelineBuildCommits> No previous build was found for branch %s", cur.Branch)
+	} else {
+		log.Debug("UpdatePipelineBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
 	}
 
 	if prev != nil && cur.Hash == prev.Hash {
