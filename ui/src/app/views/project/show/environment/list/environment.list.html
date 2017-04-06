@@ -4,7 +4,7 @@
             <div class="step" *ngFor="let e of project.environments; let i = index"
                  [class.active]="selectedEnv.name === e.name">
                 <div class="content">
-                    <a class="title pointing" (click)="selectedEnv = e">{{e.name}}</a>
+                    <a class="title pointing" (click)="selectNewEnv(e.name)">{{e.name}}</a>
                 </div>
             </div>
             <div class="step" *ngIf="project.permission === 7">

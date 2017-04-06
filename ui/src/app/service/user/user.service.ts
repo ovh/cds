@@ -47,7 +47,7 @@ export class UserService {
     resetPassword(user: User, href: string) {
         let request = {
             user: user,
-            callback: href + '/account/verify/%s/%s'
+            callback: href + 'account/verify/%s/%s'
         };
         return this._http.post('/user/' + user.username + '/reset', request).map(res => {
             return true;
@@ -62,7 +62,7 @@ export class UserService {
     signup(user: User, href: string): Observable<Boolean> {
         let request = {
             user: user,
-            callback: href + '/account/verify/%s/%s'
+            callback: href + 'account/verify/%s/%s'
         };
         return this._http.post('/user/signup', request).map(res => {
             return true;

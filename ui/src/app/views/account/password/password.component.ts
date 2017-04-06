@@ -22,7 +22,12 @@ export class PasswordComponent extends AccountComponent {
     }
 
     resetPassword() {
-        this._userService.resetPassword(this.user, location.origin).subscribe(res => {
+        let bases = document.getElementsByTagName('base');
+        let baseHref = null;
+        if (bases.length > 0) {
+            baseHref = bases[0].href;
+        }
+        this._userService.resetPassword(this.user, baseHref).subscribe(() => {
             this.showWaitingMessage = true;
         });
     }
