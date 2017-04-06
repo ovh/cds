@@ -27,7 +27,7 @@ testcases:
     screenshot: CreateProjPipEnv_TypeLogin.jpg
   - action:
       click:
-        find: '#loginButton'
+        find: 'button#loginButton'
         wait: 2
     screenshot: CreateProjPipEnv_submitLogin.jpg
   - action:
