@@ -1208,19 +1208,16 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	pipName := vars["permPipelineKey"]
 
 	if err := r.ParseForm(); err != nil {
-		log.Warning("getPipelineCommitsHandler> Cannot parse form: %s\n", err)
-		return sdk.ErrUnknownError
+		return sdk.WrapError(sdk.ErrUnknownError, "getPipelineCommitsHandler> Cannot parse form")
 
 	}
 	envName := r.Form.Get("envName")
 	hash := r.Form.Get("hash")
 
 	// Load pipeline
-	pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
-	if err != nil {
-		log.Warning("getPipelineCommitsHandler> Cannot load pipeline: %s\n", err)
-		return err
-
+	pip, errpip := pipeline.LoadPipeline(db, projectKey, pipName, false)
+	if errpip != nil {
+		return sdk.WrapError(errpip, "getPipelineCommitsHandler> Cannot load pipeline")
 	}
 
 	//Load the environment
@@ -1228,23 +1225,21 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	if envName == "" || envName == sdk.DefaultEnv.Name {
 		env = &sdk.DefaultEnv
 	} else {
+		var err error
 		env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
 		if err != nil {
-			log.Warning("getPipelineCommitsHandler> Cannot load environment %s: %s\n", envName, err)
-			return err
-
+			return sdk.WrapError(err, "getPipelineCommitsHandler> Cannot load environment %s", envName)
 		}
 	}
 
 	if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
-		log.Warning("getPipelineCommitsHandler> No enought right on this environment %s: \n", envName)
-		return sdk.ErrForbidden
+		return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enought right on this environment %s (user=%s)", envName, c.User.Username)
 	}
 
 	//Load the application
-	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager)
-	if err != nil {
-		return err
+	app, errapp := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager)
+	if errapp != nil {
+		return sdk.WrapError(errapp, "getPipelineCommitsHandler> Unable to load application %s", appName)
 	}
 
 	commits := []sdk.VCSCommit{}
@@ -1255,17 +1250,14 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return WriteJSON(w, r, commits, http.StatusOK)
 	}
 
-	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
-	if err != nil {
-		log.Warning("getPipelineCommitsHandler> Cannot load pipeline build %s: \n", err)
-		return err
-
+	pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
+	if errpb != nil {
+		return sdk.WrapError(errpb, "getPipelineCommitsHandler> Cannot load pipeline build")
 	}
 
 	if len(pbs) != 1 {
 		log.Warning("getPipelineCommitsHandler> There is no previous build")
 		return WriteJSON(w, r, commits, http.StatusOK)
-
 	}
 
 	b, e := repositoriesmanager.CheckApplicationIsAttached(db, app.RepositoriesManager.Name, projectKey, appName)
