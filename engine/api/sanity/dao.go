@@ -238,7 +238,7 @@ func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, acti
 		}
 
 		if _, err = tx.Exec(query, projectID, appID, w.Pipeline.ID, w.Action.ID, w.ID, string(mParam)); err != nil {
-			return err
+			return sdk.WrapError(err, "InsertActionWarnings> Error with query: %s %d %d %d %d %d %s", query, projectID, appID, w.Pipeline.ID, w.Action.ID, w.ID, string(mParam))
 		}
 	}
 
