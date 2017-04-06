@@ -16,11 +16,11 @@ CDS is composend of several components/
 
 ### API
 
-The core component of CDS: [read more](/engine/api)
+The core component of CDS: [read more](/engine/api/README.md)
 
 ### WebUI
 
-CDS Web UI: [read more](ui)
+CDS Web UI: [read more](ui/README.md)
 
 ### CLI
 
@@ -41,6 +41,8 @@ Actions, Plugins, Templates, uServices are under : [read more](contrib)
 ### SDK
 
 A Go(lang) SDK is available at github.com/ovh/cds/sdk. It provides helper functions for all API handlers, with embedded authentification mechanism.
+
+[![GoDoc](https://godoc.org/github.com/ovh/cds/sdk?status.svg)](https://godoc.org/github.com/ovh/cds/sdk)
 
 ## Links
 
