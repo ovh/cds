@@ -552,6 +552,10 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 
 // UpdatePipelineBuildCommits gets and update commit for given pipeline build
 func UpdatePipelineBuildCommits(db gorp.SqlExecutor, p *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, pb *sdk.PipelineBuild) ([]sdk.VCSCommit, error) {
+	if app.RepositoriesManager == nil {
+		return nil, nil
+	}
+
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
 	client, errclient := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name)
