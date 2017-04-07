@@ -18,8 +18,7 @@
                                     <div class="job ui segment pointing"
                                          [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
                                          [class.success]="mapJobStatus[j.pipeline_action_id] === 'Success'"
-                                         [class.inactive]="mapJobStatus[j.pipeline_action_id] === 'Disabled'"
-                                         [class.inactive]="mapJobStatus[j.pipeline_action_id] === 'Skipped'"
+                                         [class.inactive]="mapJobStatus[j.pipeline_action_id] === 'Disabled' || mapJobStatus[j.pipeline_action_id] === 'Skipped'"
                                          [class.fail]="mapJobStatus[j.pipeline_action_id] === 'Fail'"
                                          [class.building]="mapJobStatus[j.pipeline_action_id] === 'Building'"
                                          (click)="selectedJob(j, stage)">
