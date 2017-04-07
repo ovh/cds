@@ -3,6 +3,7 @@ vars:
   ui.url: '{{.cds.build.url}}'
   ui.user: '{{.cds.build.user}}'
   ui.password: '{{.cds.build.user_password}}'
+  ui.project: 'UIE2E'
 testcases:
 - name: CreateProjAppPip
   context:
@@ -10,6 +11,9 @@ testcases:
     width: 1920
     height: 1080
     driver: chrome
+    args:
+    - 'disable-gpu'
+    - 'no-sandbox'
   steps:
   - action:
       navigate:
@@ -38,7 +42,7 @@ testcases:
   - action:
       fill:
       - find: input[name="projectname"]
-        text: uie2eProject
+        text: '{{.ui.project}}'
       - find: '#PermissionGroupName input.search'
         text: CDS_TEAM
       - find: '#PermissionGroupLevel input.search'
