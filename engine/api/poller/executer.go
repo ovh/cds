@@ -171,6 +171,8 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 		}
 	}
 
+	log.Debug("Polling.triggerPipelines> %d pipelines triggered", len(pbs))
+
 	return pbs, nil
 }
 
