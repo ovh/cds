@@ -52,7 +52,7 @@ var mainCmd = &cobra.Command{
 
 		//Check the first config key
 		if viper.GetString(viperURLAPI) == "" {
-			sdk.Exit("Your CDS configuration seems to not be set. Please use environment variables, file or etcd to set your configuration.")
+			sdk.Exit("Your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration.")
 		}
 
 		logLevel := viper.GetString("log_level")

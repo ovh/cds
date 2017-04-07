@@ -3,8 +3,6 @@ package secret
 import (
 	"flag"
 	"fmt"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 func init() {
@@ -18,7 +16,5 @@ func init() {
 		flag.String("dbPort", "15432", "port")
 		flag.String("sslMode", "disable", "ssl mode")
 		flag.Parse()
-
-		log.SetLevel(log.DebugLevel)
 	}
 }
