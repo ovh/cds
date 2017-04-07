@@ -4,12 +4,11 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // RunPipeline  the given pipeline with the given parameters
@@ -71,13 +70,6 @@ func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, p
 		log.Warning("scheduler.Run> Cannot start pipeline %s: %s\n", pipelineName, err)
 		return nil, err
 	}
-
-	go func() {
-		db := database.GetDBMap()
-		if _, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, env, pb); err != nil {
-			log.Warning("scheduler.Run> Unable to update pipeline build commits : %s", err)
-		}
-	}()
 
 	return pb, nil
 }

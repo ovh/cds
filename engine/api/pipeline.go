@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -36,6 +37,12 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	var request sdk.RunRequest
 	if err := UnmarshalBody(r, &request); err != nil {
 		return err
+	}
+
+	//Load the project
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "rollbackPipelineHandler> Unable to load project %s", projectKey)
 	}
 
 	// Load application
@@ -106,11 +113,17 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		log.Warning("rollbackPipelineHandler> Cannot commit tx: %s", err)
 		return err
 	}
+
+	go func() {
+		db := database.GetDBMap()
+		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, env, newPb); err != nil {
+			log.Warning("scheduler.Run> Unable to update pipeline build commits : %s", err)
+		}
+	}()
 
 	k := cache.Key("application", projectKey, "builds", "*")
 	cache.DeleteAll(k)
@@ -241,6 +254,12 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	pipelineName := vars["permPipelineKey"]
 	appName := vars["permApplicationName"]
 
+	//Load the project
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "rollbackPipelineHandler> Unable to load project %s", projectKey)
+	}
+
 	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		if err != sdk.ErrApplicationNotFound {
@@ -307,6 +326,11 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		trigger.VCSChangesBranch = parentPipelineBuild.Trigger.VCSChangesBranch
 	}
 
+	env, errenv := environment.LoadEnvironmentByName(db, projectKey, envDest.Name)
+	if errenv != nil {
+		return sdk.WrapError(errenv, "runPipelineHandler> Unable to load env %s %s", projectKey, envDest.Name)
+	}
+
 	pb, err := queue.RunPipeline(tx, projectKey, app, pipelineName, envDest.Name, request.Params, version, trigger, c.User)
 	if err != nil {
 		return sdk.WrapError(err, "runPipelineHandler> Cannot run pipeline")
@@ -315,6 +339,13 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "runPipelineHandler> Cannot commit tx")
 	}
+
+	go func() {
+		db := database.GetDBMap()
+		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, env, pb); err != nil {
+			log.Warning("runPipelineHandler> Unable to update pipeline build commits : %s", err)
+		}
+	}()
 
 	return WriteJSON(w, r, pb, http.StatusOK)
 }
