@@ -8,9 +8,10 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/queue"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Executer is the goroutine which run the pipelines
@@ -71,6 +72,12 @@ func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) err
 		return err
 	}
 
+	//Load the project
+	proj, errproj := project.Load(db, app.ProjectKey, nil)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "executerProcess> Unable to load project %s", app.ProjectKey)
+	}
+
 	//Load pipeline
 	pip, err := pipeline.LoadPipelineByID(db, s.PipelineID, true)
 	if err != nil {
@@ -91,6 +98,11 @@ func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) err
 
 	if err != nil {
 		return err
+	}
+
+	//UpdatePipelineBuildCommits
+	if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, env, pb); err != nil {
+		log.Warning("executerProcess> Unable to update pipeline build commits : %s", err)
 	}
 
 	//References pipeline build version in execution

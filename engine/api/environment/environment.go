@@ -11,8 +11,8 @@ import (
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadEnvironments load all environment from the given project
@@ -107,6 +107,10 @@ func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error
 
 // LoadEnvironmentByName load the given environment
 func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sdk.Environment, error) {
+	if envName == sdk.DefaultEnv.Name {
+		return &sdk.DefaultEnv, nil
+	}
+
 	var env sdk.Environment
 	query := `SELECT environment.id, environment.name
 		  FROM environment
