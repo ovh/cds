@@ -79,7 +79,7 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 	}
 
 	//Update pipeline build commits
-	app, errapp := application.LoadByID(db, e.ApplicationID, nil)
+	app, errapp := application.LoadByID(db, e.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
 	if errapp != nil {
 		log.Warning("poller.ExecuterRun> Unable to load application : %s", errapp)
 		return
@@ -99,8 +99,11 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 
 	for _, pb := range pbs {
 		//Update pipeline build commits
-		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, &sdk.DefaultEnv, &pb); err != nil {
+		log.Debug("poller.ExecuterRun> get commits for pipeline build %d: %#v", pb.ID, pb)
+		if commits, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, &sdk.DefaultEnv, &pb); err != nil {
 			log.Warning("poller.ExecuterRun> Unable to update pipeline build commits")
+		} else {
+			log.Debug("poller.ExecuterRun> %d commits for pipeline build %d", len(commits), pb.ID)
 		}
 	}
 }
@@ -169,6 +172,8 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 			log.Debug("Polling.triggerPipelines> Did not trigger %s/%s/%s\n", projectKey, poller.Application.RepositoryFullname, event.Branch.ID)
 		}
 	}
+
+	log.Debug("Polling.triggerPipelines> %d pipelines triggered", len(pbs))
 
 	return pbs, nil
 }
