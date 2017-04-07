@@ -36,6 +36,7 @@ func Init(user, password, from, host, port string, tls, disable bool) {
 	smtpUser = user
 	smtpPassword = password
 	smtpFrom = from
+	smtpHost = host
 	smtpPort = port
 	smtpTLS = tls
 	smtpEnable = !disable
