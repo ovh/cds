@@ -99,6 +99,7 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 
 	for _, pb := range pbs {
 		//Update pipeline build commits
+		log.Debug("poller.ExecuterRun> get commits for pipeline build %d", pb.ID)
 		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, &sdk.DefaultEnv, &pb); err != nil {
 			log.Warning("poller.ExecuterRun> Unable to update pipeline build commits")
 		}
