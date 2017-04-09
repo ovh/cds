@@ -28,7 +28,7 @@ func init() {
 	Cmd.Flags().StringVar(&hatcheryOpenStack.network, "openstack-network", "Ext-Net", "")
 	viper.BindPFlag("openstack-network", Cmd.Flags().Lookup("openstack-network"))
 
-	Cmd.Flags().String("openstack-ip-range", "Ext-Net", "")
+	Cmd.Flags().String("openstack-ip-range", "", "")
 	viper.BindPFlag("openstack-ip-range", Cmd.Flags().Lookup("openstack-ip-range"))
 
 	Cmd.Flags().IntVar(&hatcheryOpenStack.workerTTL, "worker-ttl", 30, "Worker TTL (minutes)")
