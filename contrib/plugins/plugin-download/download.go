@@ -23,7 +23,7 @@ func (d DownloadPlugin) Parameters() plugin.Parameters {
 	params := plugin.NewParameters()
 	params.Add("url", plugin.StringParameter, "the url of your file", "{{.cds.app.downloadUrl}}")
 	params.Add("filepath", plugin.StringParameter, "the destination of your file to be copied", ".")
-	params.Add("headers", plugin.StringParameter, "the destination of your file to be copied", "")
+	params.Add("headers", plugin.StringParameter, `specific headers to add to your request ("headerName"="value" newline separated list)`, "")
 
 	return params
 }
@@ -32,6 +32,7 @@ func (d DownloadPlugin) Parameters() plugin.Parameters {
 func (d DownloadPlugin) Run(a plugin.IJob) plugin.Result {
 	filepath := a.Arguments().Get("filepath")
 	url := a.Arguments().Get("url")
+	headers := a.Arguments().Get("headers")
 
 	// Create the file
 	file, err := os.Create(filepath)
@@ -45,7 +46,17 @@ func (d DownloadPlugin) Run(a plugin.IJob) plugin.Result {
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
-	resp, err := httpClient.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+
+	req.Header = parseHeaders(headers)
+
+	if err != nil {
+		plugin.SendLog(a, "Error to create request with URL %s : %s", url, err)
+		return plugin.Fail
+	}
+
+	resp, err := httpClient.Do(req)
+
 	if err != nil {
 		plugin.SendLog(a, "Error to download the file on URL %s : %s", url, err)
 		return plugin.Fail
@@ -61,9 +72,9 @@ func (d DownloadPlugin) Run(a plugin.IJob) plugin.Result {
 	return plugin.Success
 }
 
-func getHeaders(hParams string) http.Header {
-	var headers http.Header
-	regx := regexp.MustCompile(`(?g)"(.+)"="(.+)"`)
+func parseHeaders(hParams string) http.Header {
+	headers := http.Header{}
+	regx := regexp.MustCompile(`"(.+)"="(.+)"`)
 	subStrList := regx.FindAllStringSubmatch(hParams, -1)
 
 	for _, subStr := range subStrList {

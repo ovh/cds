@@ -7,6 +7,7 @@ CDS plugin to download a file from an URL
 Make sure go is installed and properly configured ($GOPATH must be set)
 
 ```shell
+$ go test ./...
 $ go build
 ```
 
@@ -27,4 +28,4 @@ As CDS admin:
 
 - **url** : The url of your file.
 - **filepath** : The destination of your file to be copied.
-- **headers** : Headers to pass on the download request (headerKey=value newline separated list)
+- **headers** : Headers to pass on the download request ("headerName"="value" newline separated list)
