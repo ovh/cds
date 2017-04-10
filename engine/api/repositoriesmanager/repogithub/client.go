@@ -430,9 +430,7 @@ func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
 		if e.CreatedAt.After(dateRef) {
-			if e.Type == "PushEvent" || e.Type == "CreateEvent" { //May be we should manage PullRequestEvent; payload.action = opened
-				events = append(events, e)
-			}
+			events = append(events, e)
 		}
 	}
 
@@ -448,11 +446,14 @@ func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 }
 
 //PushEvents returns push events as commits
-func (g *GithubClient) PushEvents(iEvents []interface{}, fullname string, dateRef time.Time) ([]sdk.VCSPushEvent, error) {
+func (g *GithubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPushEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
-		events = append(events, i.(Event))
+		e := i.(Event)
+		if e.Type == "PushEvent" {
+			events = append(events, e)
+		}
 	}
 
 	lastCommitPerBranch := map[string]sdk.VCSCommit{}
@@ -493,4 +494,61 @@ func (g *GithubClient) PushEvents(iEvents []interface{}, fullname string, dateRe
 	}
 
 	return res, nil
+}
+
+//CreateEvents checks create events from a event list
+func (g *GithubClient) CreateEvents(fullname string, iEvents []interface{}) ([]sdk.VCSCreateEvent, error) {
+	events := Events{}
+	//Cast all the events
+	for _, i := range iEvents {
+		e := i.(Event)
+		if e.Type == "CreateEvent" {
+			events = append(events, e)
+		}
+	}
+
+	res := []sdk.VCSCreateEvent{}
+	for _, e := range events {
+		b := e.Payload.Ref
+		branch, err := g.Branch(fullname, b)
+		if err != nil {
+			log.Warning("GithubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			continue
+		}
+		event := sdk.VCSCreateEvent{
+			Branch: branch,
+		}
+
+		c, err := g.Commit(fullname, branch.LatestCommit)
+		if err != nil {
+			log.Warning("GithubClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
+			continue
+		}
+		event.Commit = c
+
+		res = append(res, event)
+	}
+
+	log.Debug("GithubClient.CreateEvents> found %d create events : %#v", len(res), res)
+
+	return res, nil
+}
+
+//DeleteEvents checks delete events from a event list
+func (g *GithubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]sdk.VCSDeleteEvent, error) {
+	events := Events{}
+	//Cast all the events
+	for _, i := range iEvents {
+		e := i.(Event)
+		if e.Type == "DeleteEvent" {
+			events = append(events, e)
+		}
+	}
+
+	return nil, nil
+}
+
+//PullRequestEvents checks pull request events from a event list
+func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+	return nil, nil
 }

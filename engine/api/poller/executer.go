@@ -122,7 +122,24 @@ func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 		return nil, err
 	}
 
-	e.PushEvents, pollingDelay, err = client.PushEvents(p.Application.RepositoryFullname, p.DateCreation)
+	var events = []interface{}{}
+	events, pollingDelay, err = client.GetEvents(p.Application.RepositoryFullname, p.DateCreation)
+	e.PushEvents, err = client.PushEvents(p.Application.RepositoryFullname, events)
+	if err != nil {
+		e.Error = err.Error()
+	}
+
+	e.CreateEvents, err = client.CreateEvents(p.Application.RepositoryFullname, events)
+	if err != nil {
+		e.Error = err.Error()
+	}
+
+	e.DeleteEvents, err = client.DeleteEvents(p.Application.RepositoryFullname, events)
+	if err != nil {
+		e.Error = err.Error()
+	}
+
+	e.PullRequestEvents, err = client.PullRequestEvents(p.Application.RepositoryFullname, events)
 	if err != nil {
 		e.Error = err.Error()
 	}

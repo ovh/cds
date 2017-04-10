@@ -12,8 +12,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const stashHookKey string = "de.aeffle.stash.plugin.stash-http-get-post-receive-hook%3Ahttp-get-post-receive-hook"
@@ -326,9 +326,29 @@ func (s *StashClient) DeleteHook(repo, url string) error {
 	return nil
 }
 
-//PushEvents is not implemented
-func (s *StashClient) PushEvents(repo string, dateRef time.Time) ([]sdk.VCSPushEvent, time.Duration, error) {
+//GetEvents is not implemented
+func (s *StashClient) GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error) {
 	return nil, 0.0, fmt.Errorf("Not implemented on stash")
+}
+
+//PushEvents is not implemented
+func (s *StashClient) PushEvents(string, []interface{}) ([]sdk.VCSPushEvent, error) {
+	return nil, fmt.Errorf("Not implemented on stash")
+}
+
+//CreateEvents is not implemented
+func (s *StashClient) CreateEvents(string, []interface{}) ([]sdk.VCSCreateEvent, error) {
+	return nil, fmt.Errorf("Not implemented on stash")
+}
+
+//DeleteEvents is not implemented
+func (s *StashClient) DeleteEvents(string, []interface{}) ([]sdk.VCSDeleteEvent, error) {
+	return nil, fmt.Errorf("Not implemented on stash")
+}
+
+//PullRequestEvents is not implemented
+func (s *StashClient) PullRequestEvents(string, []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+	return nil, fmt.Errorf("Not implemented on stash")
 }
 
 const (
