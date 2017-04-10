@@ -142,7 +142,7 @@ export class RunSummaryComponent implements OnInit {
             this.launchGitParams.push(gitBranchParam);
 
             // Init pipeline parameters
-            this._pipStore.getPipelines(this.currentBuild.pipeline.projectKey, this.currentBuild.pipeline.name).subscribe(pips => {
+            this._pipStore.getPipelines(this.currentBuild.pipeline.projectKey, this.currentBuild.pipeline.name).first().subscribe(pips => {
                 let pipKey = this.currentBuild.pipeline.projectKey + '-' + this.currentBuild.pipeline.name;
                 if (pips && pips.get(pipKey)) {
                     let pipeline = pips.get(pipKey);
