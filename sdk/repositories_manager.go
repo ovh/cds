@@ -298,7 +298,11 @@ type RepositoriesManagerClient interface {
 	DeleteHook(repo, url string) error
 
 	//Events
-	PushEvents(repo string, dateRef time.Time) ([]VCSPushEvent, time.Duration, error)
+	GetEvents(repo string, dateRef time.Time) ([]interface{}, error)
+	PushEvents([]interface{}, time.Time) ([]VCSPushEvent, error)
+	CreateEvents([]interface{}, time.Time) ([]VCSCreateEvent, error)
+	DeleteEvents([]interface{}, time.Time) ([]VCSDeleteEvent, error)
+	PullRequestEvents([]interface{}, time.Time) ([]VCSPullRequestEvent, error)
 
 	// Set build status on repository
 	SetStatus(event Event) error
@@ -344,4 +348,24 @@ type VCSBranch struct {
 type VCSPushEvent struct {
 	Branch VCSBranch `json:"branch"`
 	Commit VCSCommit `json:"commit"`
+}
+
+//VCSCreateEvent represents a push events for polling
+type VCSCreateEvent struct {
+	Branch VCSBranch `json:"branch"`
+}
+
+//VCSDeleteEvent represents a push events for polling
+type VCSDeleteEvent struct {
+	Branch VCSBranch `json:"branch"`
+}
+
+//VCSPullRequestEvent represents a push events for polling
+type VCSPullRequestEvent struct {
+	Action string       `json:"action"` // opened | closed
+	URL    string       `json:"url"`
+	User   VCSAuthor    `json:"user"`
+	Head   VCSPushEvent `json:"head"`
+	Base   VCSPushEvent `json:"base"`
+	Branch VCSBranch    `json:"branch"`
 }

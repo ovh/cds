@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // GithubClient is a github.com wrapper for CDS RepositoriesManagerClient interface
@@ -399,22 +399,22 @@ func (g *GithubClient) RateLimit() error {
 	return nil
 }
 
-//PushEvents returns push events as commits
-func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCSPushEvent, time.Duration, error) {
-	log.Debug("GithubClient.PushEvents> loading events for %s after %v", fullname, dateRef)
-	var events = []Event{}
+//GetEvents calls Github et returns GithubEvents as []interface{}
+func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
+	log.Debug("GithubClient.GetEvents> loading events for %s after %v", fullname, dateRef)
+	var events = []interface{}{}
 
 	interval := 60 * time.Second
 
 	status, body, headers, err := g.get("/repos/" + fullname + "/events")
 	if err != nil {
-		log.Warning("GithubClient.PushEvents> Error %s", err)
+		log.Warning("GithubClient.GetEvents> Error %s", err)
 		return nil, interval, err
 	}
 
 	if status >= http.StatusBadRequest {
 		err := sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
-		log.Warning("GithubClient.PushEvents> Error http %s", err)
+		log.Warning("GithubClient.GetEvents> Error http %s", err)
 		return nil, interval, err
 	}
 
@@ -424,7 +424,7 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 
 	nextEvents := []Event{}
 	if err := json.Unmarshal(body, &nextEvents); err != nil {
-		log.Warning("GithubClient.PushEvents> Unable to parse github events: %s", err)
+		log.Warning("GithubClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
@@ -442,6 +442,17 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 		if err == nil {
 			interval = time.Duration(f) * time.Second
 		}
+	}
+
+	return events, interval, nil
+}
+
+//PushEvents returns push events as commits
+func (g *GithubClient) PushEvents(iEvents []interface{}, fullname string, dateRef time.Time) ([]sdk.VCSPushEvent, error) {
+	events := Events{}
+	//Cast all the events
+	for _, i := range iEvents {
+		events = append(events, i.(Event))
 	}
 
 	lastCommitPerBranch := map[string]sdk.VCSCommit{}
@@ -481,5 +492,5 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 		})
 	}
 
-	return res, interval, nil
+	return res, nil
 }
