@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
+	"time"
 
 	"github.com/ovh/cds/sdk/plugin"
 )
@@ -21,6 +23,7 @@ func (d DownloadPlugin) Parameters() plugin.Parameters {
 	params := plugin.NewParameters()
 	params.Add("url", plugin.StringParameter, "the url of your file", "{{.cds.app.downloadUrl}}")
 	params.Add("filepath", plugin.StringParameter, "the destination of your file to be copied", ".")
+	params.Add("headers", plugin.StringParameter, "the destination of your file to be copied", "")
 
 	return params
 }
@@ -39,7 +42,10 @@ func (d DownloadPlugin) Run(a plugin.IJob) plugin.Result {
 	defer file.Close()
 
 	// Download from URL
-	resp, err := http.Get(url)
+	httpClient := &http.Client{
+		Timeout: time.Second * 10,
+	}
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		plugin.SendLog(a, "Error to download the file on URL %s : %s", url, err)
 		return plugin.Fail
@@ -47,13 +53,28 @@ func (d DownloadPlugin) Run(a plugin.IJob) plugin.Result {
 	defer resp.Body.Close()
 
 	// Copy file in the right directory
-	_, err = io.Copy(file, resp.Body)
-	if err != nil {
+	if _, err = io.Copy(file, resp.Body); err != nil {
 		plugin.SendLog(a, "Error to copy the file on URL %s : %s", url, err)
 		return plugin.Fail
 	}
 
 	return plugin.Success
+}
+
+func getHeaders(hParams string) http.Header {
+	var headers http.Header
+	regx := regexp.MustCompile(`(?g)"(.+)"="(.+)"`)
+	subStrList := regx.FindAllStringSubmatch(hParams, -1)
+
+	for _, subStr := range subStrList {
+		if len(subStr) < 3 {
+			continue
+		}
+
+		headers.Add(subStr[1], subStr[2])
+	}
+
+	return headers
 }
 
 func main() {
