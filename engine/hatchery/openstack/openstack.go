@@ -30,22 +30,22 @@ var mapWorkerBinaries = map[string][]byte{}
 // HatcheryCloud spawns instances of worker model with type 'ISO'
 // by startup up virtual machines on /cloud
 type HatcheryCloud struct {
-	hatch     *sdk.Hatchery
-	token     *Token
-	networkID string
-	ips       []string
-	flavors   []Flavor
-	networks  []Network
+	hatch      *sdk.Hatchery
+	token      *Token
+	ips        []string
+	flavors    []Flavor
+	networks   []Network
+	networkIDs []string
 
 	// User provided parameters
-	address   string
-	user      string
-	password  string
-	endpoint  string
-	tenant    string
-	region    string
-	network   string
-	workerTTL int
+	address       string
+	user          string
+	password      string
+	endpoint      string
+	tenant        string
+	region        string
+	networkString string
+	workerTTL     int
 }
 
 // ID returns hatchery id
@@ -113,10 +113,13 @@ func (h *HatcheryCloud) Init() error {
 	if errn != nil {
 		log.Warning("Error getting networks: %s", errn)
 	}
-	var errni error
-	h.networkID, errni = h.getNetworkID(h.network)
-	if errni != nil {
-		return fmt.Errorf("cannot find network '%s'", h.network)
+
+	for _, network := range strings.Split(h.networkString, ",") {
+		networkID, errni := h.getNetworkID(network)
+		if errni != nil {
+			return fmt.Errorf("cannot find network '%s'", network)
+		}
+		h.networkIDs = append(h.networkIDs, networkID)
 	}
 
 	//Download the worker binary witch should be injected in servers
@@ -438,7 +441,7 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 	udata64 := base64.StdEncoding.EncodeToString([]byte(buffer.String()))
 
 	// Create openstack vm
-	if err := h.createServer(h.endpoint, h.token.ID, name, imageID, flavorID, h.networkID, ip, udata64, personnality); err != nil {
+	if err := h.createServer(h.endpoint, h.token.ID, name, imageID, flavorID, ip, udata64, h.networkIDs, personnality); err != nil {
 		return err
 	}
 	return nil
@@ -496,9 +499,11 @@ func (h *HatcheryCloud) findAvailableIP() (string, error) {
 			if len(s.Addresses) == 0 {
 				continue
 			}
-			for _, a := range s.Addresses[h.network] {
-				if a.Addr == ip {
-					free = false
+			for _, network := range h.networkIDs {
+				for _, a := range s.Addresses[network] {
+					if a.Addr == ip {
+						free = false
+					}
 				}
 			}
 			if !free {
@@ -670,7 +675,7 @@ func (f *File) MarshalJSON() ([]byte, error) {
 	return json.Marshal(file)
 }
 
-func (h *HatcheryCloud) createServer(endpoint, token, name, image, flavor, network, ip, udata string, personality Personality) error {
+func (h *HatcheryCloud) createServer(endpoint, token, name, image, flavor, ip, udata string, networks []string, personality Personality) error {
 	log.Info("Create server %s %s", name, ip)
 	uri := fmt.Sprintf("%s/servers", endpoint)
 
@@ -683,7 +688,10 @@ func (h *HatcheryCloud) createServer(endpoint, token, name, image, flavor, netwo
 		Personality: personality,
 	}
 
-	s.Networks = append(s.Networks, Network{UUID: network, FixedIP: ip})
+	for _, n := range networks {
+		s.Networks = append(s.Networks, Network{UUID: n, FixedIP: ip})
+	}
+
 	body := struct {
 		Server Server `json:"server"`
 	}{

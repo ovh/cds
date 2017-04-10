@@ -25,7 +25,7 @@ func init() {
 	Cmd.Flags().StringVar(&hatcheryOpenStack.region, "openstack-region", "", "")
 	viper.BindPFlag("openstack-region", Cmd.Flags().Lookup("openstack-region"))
 
-	Cmd.Flags().StringVar(&hatcheryOpenStack.network, "openstack-network", "Ext-Net", "")
+	Cmd.Flags().StringVar(&hatcheryOpenStack.networkString, "openstack-network", "Ext-Net", "")
 	viper.BindPFlag("openstack-network", Cmd.Flags().Lookup("openstack-network"))
 
 	Cmd.Flags().String("openstack-ip-range", "", "")
