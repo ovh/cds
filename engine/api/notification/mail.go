@@ -4,8 +4,8 @@ import (
 	"bytes"
 
 	"github.com/ovh/cds/engine/api/mail"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // SendMailNotif Send user notification by mail

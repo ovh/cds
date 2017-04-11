@@ -12,8 +12,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const stashHookKey string = "de.aeffle.stash.plugin.stash-http-get-post-receive-hook%3Ahttp-get-post-receive-hook"

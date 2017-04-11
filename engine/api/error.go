@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // WriteError is a helper function to return error in a language the called understand

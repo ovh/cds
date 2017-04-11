@@ -23,8 +23,8 @@ import (
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
