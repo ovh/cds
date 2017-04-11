@@ -43,15 +43,18 @@ type RepositoryPoller struct {
 
 //RepositoryPollerExecution is a polling execution
 type RepositoryPollerExecution struct {
-	ID                    int64            `json:"id" db:"id"`
-	ApplicationID         int64            `json:"-" db:"application_id"`
-	PipelineID            int64            `json:"-" db:"pipeline_id"`
-	ExecutionPlannedDate  time.Time        `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
-	ExecutionDate         *time.Time       `json:"execution_date" db:"execution_date"`
-	Executed              bool             `json:"executed" db:"executed"`
-	PipelineBuildVersions map[string]int64 `json:"pipeline_build_version" db:"-"`
-	PushEvents            []VCSPushEvent   `json:"push_events" db:"-"`
-	Error                 string           `json:"error" db:"error"`
+	ID                    int64                 `json:"id" db:"id"`
+	ApplicationID         int64                 `json:"-" db:"application_id"`
+	PipelineID            int64                 `json:"-" db:"pipeline_id"`
+	ExecutionPlannedDate  time.Time             `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
+	ExecutionDate         *time.Time            `json:"execution_date" db:"execution_date"`
+	Executed              bool                  `json:"executed" db:"executed"`
+	PipelineBuildVersions map[string]int64      `json:"pipeline_build_version" db:"-"`
+	PushEvents            []VCSPushEvent        `json:"push_events" db:"-"`
+	CreateEvents          []VCSCreateEvent      `json:"create_events" db:"-"`
+	DeleteEvents          []VCSDeleteEvent      `json:"delete_events" db:"-"`
+	PullRequestEvents     []VCSPullRequestEvent `json:"pullrequest_events" db:"-"`
+	Error                 string                `json:"error" db:"error"`
 }
 
 //RepositoriesManagerDriver is the consumer interface
@@ -298,7 +301,11 @@ type RepositoriesManagerClient interface {
 	DeleteHook(repo, url string) error
 
 	//Events
-	PushEvents(repo string, dateRef time.Time) ([]VCSPushEvent, time.Duration, error)
+	GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error)
+	PushEvents(string, []interface{}) ([]VCSPushEvent, error)
+	CreateEvents(string, []interface{}) ([]VCSCreateEvent, error)
+	DeleteEvents(string, []interface{}) ([]VCSDeleteEvent, error)
+	PullRequestEvents(string, []interface{}) ([]VCSPullRequestEvent, error)
 
 	// Set build status on repository
 	SetStatus(event Event) error
@@ -344,4 +351,22 @@ type VCSBranch struct {
 type VCSPushEvent struct {
 	Branch VCSBranch `json:"branch"`
 	Commit VCSCommit `json:"commit"`
+}
+
+//VCSCreateEvent represents a push events for polling
+type VCSCreateEvent VCSPushEvent
+
+//VCSDeleteEvent represents a push events for polling
+type VCSDeleteEvent struct {
+	Branch VCSBranch `json:"branch"`
+}
+
+//VCSPullRequestEvent represents a push events for polling
+type VCSPullRequestEvent struct {
+	Action string       `json:"action"` // opened | closed
+	URL    string       `json:"url"`
+	User   VCSAuthor    `json:"user"`
+	Head   VCSPushEvent `json:"head"`
+	Base   VCSPushEvent `json:"base"`
+	Branch VCSBranch    `json:"branch"`
 }

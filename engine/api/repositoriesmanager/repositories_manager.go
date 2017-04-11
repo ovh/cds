@@ -199,14 +199,6 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		github.DisableSetStatus = options.DisableGithubSetStatus
 		github.DisableStatusURL = options.DisableGithubStatusURL
 
-		if github.DisableSetStatus {
-			log.Debug("RepositoriesManager> ⚠ Github Statuses are disabled")
-		}
-
-		if github.DisableStatusURL {
-			log.Debug("RepositoriesManager> ⚠ Github Statuses URL are disabled")
-		}
-
 		if withHook == nil {
 			log.Debug("with hooks : default")
 			b := github.HooksSupported()
