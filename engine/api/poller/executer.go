@@ -1,12 +1,11 @@
 package poller
 
 import (
+	"database/sql"
 	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"database/sql"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -129,6 +128,10 @@ func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 
 	var events = []interface{}{}
 	events, pollingDelay, err = client.GetEvents(p.Application.RepositoryFullname, p.DateCreation)
+	if err != nil {
+		log.Warning("Polling> Unable to get events for %s %s : %s\n", projectKey, rm.Name, err)
+		return nil, err
+	}
 	e.PushEvents, err = client.PushEvents(p.Application.RepositoryFullname, events)
 	if err != nil {
 		e.Error = err.Error()
