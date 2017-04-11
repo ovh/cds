@@ -228,6 +228,7 @@
   "pipeline_name_error" : "Le nom du pipeline est invalide. Pattern autorisé : a-zA-Z0-9._-",
   "pipeline_parameters_list_title" : "Liste des paramètres du pipeline : ",
   "pipeline_parameters_form_title" : "Ajouter un paramètre : ",
+  "pipeline_parent_commit_to_deploy" : "Liste des commits",
   "pipeline_parent_version" : "Version du pipeline parent",
   "pipeline_permission_list_title" : "Liste des permissions sur le pipeline : ",
   "pipeline_permission_form_title" : "Autoriser un groupe : ",

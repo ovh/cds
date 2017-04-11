@@ -228,6 +228,7 @@
   "pipeline_name_error" : "Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-",
   "pipeline_parameters_list_title" : "List of pipeline parameters: ",
   "pipeline_parameters_form_title" : "Add a parameter: ",
+  "pipeline_parent_commit_to_deploy" : "Commits list",
   "pipeline_parent_version" : "Parent pipeline version",
   "pipeline_permission_list_title" : "List of pipeline permissions: ",
   "pipeline_permission_form_title" : "Add a permission: ",
