@@ -15,7 +15,7 @@ import (
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
 func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
-  
+
 	// Select root trigger element + non triggered pipeline
 	query := `
 		SELECT  projID, projName,

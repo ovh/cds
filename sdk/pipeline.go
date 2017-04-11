@@ -128,6 +128,7 @@ type RunRequest struct {
 	Params              []Parameter `json:"parameters,omitempty"`
 	Env                 Environment `json:"env,omitempty"`
 	ParentBuildNumber   int64       `json:"parent_build_number,omitempty"`
+	ParentVersion       int64       `json:"parent_version,omitempty"`
 	ParentPipelineID    int64       `json:"parent_pipeline_id,omitempty"`
 	ParentEnvironmentID int64       `json:"parent_environment_id,omitempty"`
 	ParentApplicationID int64       `json:"parent_application_id,omitempty"`

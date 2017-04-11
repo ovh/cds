@@ -12,8 +12,8 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -161,7 +161,7 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	}
 
 	if err = tx.Commit(); err != nil {
-		return sdk.WrapError(err,"updatePollerHandler> cannot commit transaction" )
+		return sdk.WrapError(err, "updatePollerHandler> cannot commit transaction")
 	}
 
 	app.RepositoryPollers, err = poller.LoadByApplication(db, app.ID)
@@ -190,7 +190,7 @@ func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *go
 	a.RepositoryPollers, err = poller.LoadByApplication(db, a.ID)
 	if err != nil {
 		log.Warning("getApplicationHooksHandler> cannot load application poller %s/%s: %s\n", projectName, appName, err)
-		return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application poller %s/%s", projectName, appName,)
+		return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application poller %s/%s", projectName, appName)
 	}
 
 	return WriteJSON(w, r, a.RepositoryPollers, http.StatusOK)

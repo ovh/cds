@@ -3,8 +3,8 @@ package pipeline
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdateLog Update a pipeline build step log

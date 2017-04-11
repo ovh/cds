@@ -7,8 +7,8 @@ import (
 
 	"github.com/Shopify/sarama"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var producer sarama.SyncProducer

@@ -210,7 +210,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		PipelineStageID: stage.ID,
 		Action: sdk.Action{
 			Enabled: true,
-			Name: "myJob",
+			Name:    "myJob",
 		},
 	}
 	test.NoError(t, pipeline.InsertJob(db, job, stage.ID, pip))

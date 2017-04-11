@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Interface describe an interface for each hatchery mode (mesos, local)
