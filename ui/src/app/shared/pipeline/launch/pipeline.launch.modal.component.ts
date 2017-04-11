@@ -31,7 +31,7 @@ export class PipelineLaunchModalComponent {
     launchParentBuildNumber = 0;
     launchOldBuilds: Array<PipelineBuild>;
 
-    commits: {[key: string]: Array<Commit>};
+    commits: {[key: string]: Array<Commit>} = {};
     currentHash: string;
     loadingCommits = false;
 
