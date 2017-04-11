@@ -1,7 +1,6 @@
 import {NgModule, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {PipelineRunWorkflowComponent} from './workflow/workflow.component';
 import {ArtifactListComponent} from './artifact/artifact.list.component';
-import {CommitListComponent} from './commit/commit.list.component';
 import {applicationRunRouting} from './application.run.routing';
 import {ApplicationPipelineBuildComponent} from './pipeline.build.component';
 import {StepLogComponent} from './workflow/step/step.log.component';
@@ -16,7 +15,6 @@ import {SpawnInfoComponent} from './workflow/swpaninfo/spawninfo.component';
         ApplicationPipelineBuildComponent,
         PipelineRunWorkflowComponent,
         ArtifactListComponent,
-        CommitListComponent,
         RunSummaryComponent,
         SpawnInfoComponent,
         StepLogComponent,

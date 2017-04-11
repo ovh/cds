@@ -7,6 +7,7 @@ import {Project} from '../../../model/project.model';
 import {WorkflowItem} from '../../../model/application.workflow.model';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {Environment} from '../../../model/environment.model';
+import {Commit} from '../../../model/repositories.model';
 
 @Component({
     selector: 'app-pipeline-launch-modal',
@@ -29,6 +30,10 @@ export class PipelineLaunchModalComponent {
     launchPipelineParams: Array<Parameter>;
     launchParentBuildNumber = 0;
     launchOldBuilds: Array<PipelineBuild>;
+
+    commits: {[key: string]: Array<Commit>};
+    currentHash: string;
+    loadingCommits = false;
 
     constructor(private _pipStore: PipelineStore, private _appPipService: ApplicationPipelineService) { }
 
@@ -67,6 +72,7 @@ export class PipelineLaunchModalComponent {
                 .subscribe(pbs => {
                     this.launchOldBuilds = pbs;
                     this.launchParentBuildNumber = pbs[0].build_number;
+                    this.loadCommits();
                 });
         }
         setTimeout(() => {
@@ -102,5 +108,20 @@ export class PipelineLaunchModalComponent {
             this.workflowItem.pipeline.name, request).subscribe(pipelineBuild => {
                 this.pipelineRunEvent.emit(pipelineBuild);
         });
+    }
+
+    loadCommits() {
+        let pb = this.launchOldBuilds.find(p => {
+            return p.build_number === Number(this.launchParentBuildNumber);
+        });
+        this.currentHash = pb.trigger.vcs_hash;
+        if (this.currentHash && this.currentHash !== '' && !this.commits[pb.trigger.vcs_hash]) {
+            // Load commits
+            this.loadingCommits = true;
+            this._appPipService.getCommits(this.project.key, this.workflowItem.application.name, this.workflowItem.pipeline.name,
+                this.workflowItem.environment.name, this.currentHash).subscribe(cs => {
+                    this.commits[this.currentHash] = cs;
+            });
+        }
     }
 }

@@ -5,9 +5,23 @@
             <ng-template #parent>
                 <div class="field">
                     <label>{{ 'pipeline_parent_version' | translate }}</label>
-                    <sm-select class="fluid search" [disabled]="loading" name="envname" [(model)]="launchParentVersion">
+                    <sm-select class="fluid search" [disabled]="loading" name="envname" [(model)]="launchParentBuildNumber" (modelChange)="loadCommits()">
                         <option *ngFor="let pb of launchOldBuilds" [value]="pb.build_number">{{pb.version}}</option>
                     </sm-select>
+                </div>
+                <div class="field" *ngIf="currentHash">
+                    <label>{{ 'pipeline_parent_commit_to_deploy' | translate}}</label>
+                    <ng-container *ngIf="commits[currentHash] && !loadingCommits && commits[currentHash].length > 0">
+                        <app-commit-list [commits]="commits[currentHash]"></app-commit-list>
+                    </ng-container>
+                    <ng-container *ngIf="commits[currentHash] && !loadingCommits && commits[currentHash].length === 0">
+                        <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+                            {{ 'pipeline_commit_no' | translate }}
+                        </div>
+                    </ng-container>
+                    <ng-container *ngIf="loadingCommits">
+                        <div class="ui active text loader">{{ 'pipeline_commits_loading' | translate}}</div>
+                    </ng-container>
                 </div>
             </ng-template>
             <ng-template #orphan>

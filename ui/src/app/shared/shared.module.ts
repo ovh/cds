@@ -43,6 +43,7 @@ import {VariableDiffComponent} from './variable/diff/variable.diff.component';
 import {ZoneContentComponent} from './zone/zone-content/content.component';
 import {ZoneComponent} from './zone/zone.component';
 import {PipelineLaunchModalComponent} from './pipeline/launch/pipeline.launch.modal.component';
+import {CommitListComponent} from './commit/commit.list.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -52,6 +53,7 @@ import {PipelineLaunchModalComponent} from './pipeline/launch/pipeline.launch.mo
         ActionStepComponent,
         ActionStepFormComponent,
         BreadcrumbComponent,
+        CommitListComponent,
         CutPipe,
         DeleteButtonComponent,
         GroupFormComponent,
@@ -93,6 +95,7 @@ import {PipelineLaunchModalComponent} from './pipeline/launch/pipeline.launch.mo
         ActionComponent,
         BreadcrumbComponent,
         CodemirrorModule,
+        CommitListComponent,
         CommonModule,
         CutPipe,
         DeleteButtonComponent,
