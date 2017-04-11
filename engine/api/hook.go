@@ -304,7 +304,7 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		}
 
 		go func(h *sdk.Hook) {
-			app, errapp := application.LoadByID(db, h.ApplicationID, nil)
+			app, errapp := application.LoadByID(db, h.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
 			if errapp != nil {
 				log.Warning("processHook> Unable to load application %s", errapp)
 			}

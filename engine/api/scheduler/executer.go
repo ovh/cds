@@ -65,7 +65,12 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 			log.Warning("ExecuterRun> Unable to load project: %s", err)
 		}
 
-		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, &pb.Pipeline, &pb.Application, &pb.Environment, &pb); err != nil {
+		app, errapp := application.LoadByID(db, pb.Application.ID, nil, application.LoadOptions.WithRepositoryManager)
+		if errapp != nil {
+			log.Warning("ExecuterRun> Unable to load app: %s", errapp)
+		}
+
+		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, &pb.Pipeline, app, &pb.Environment, &pb); err != nil {
 			log.Warning("ExecuterRun> Unable to update pipeline build commits : %s", err)
 		}
 	}
