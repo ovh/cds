@@ -64,7 +64,7 @@ func (d DownloadPlugin) Run(a plugin.IJob) plugin.Result {
 	defer resp.Body.Close()
 
 	// Copy file in the right directory
-	if _, err = io.Copy(file, resp.Body); err != nil {
+	if _, err := io.Copy(file, resp.Body); err != nil {
 		plugin.SendLog(a, "Error to copy the file on URL %s : %s", url, err)
 		return plugin.Fail
 	}
