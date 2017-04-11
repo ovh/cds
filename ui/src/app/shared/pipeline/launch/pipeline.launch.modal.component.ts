@@ -120,7 +120,10 @@ export class PipelineLaunchModalComponent {
             this.loadingCommits = true;
             this._appPipService.getCommits(this.project.key, this.workflowItem.application.name, this.workflowItem.pipeline.name,
                 this.workflowItem.environment.name, this.currentHash).subscribe(cs => {
+                this.loadingCommits = false;
                     this.commits[this.currentHash] = cs;
+            }, () => {
+                this.loadingCommits = false;
             });
         }
     }
