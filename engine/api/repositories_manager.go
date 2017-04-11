@@ -337,7 +337,7 @@ func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
-	if sync == true {
+	if sync {
 		cache.Delete(cacheKey)
 	}
 
