@@ -128,7 +128,7 @@ func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 
 	var events = []interface{}{}
 	events, pollingDelay, err = client.GetEvents(p.Application.RepositoryFullname, p.DateCreation)
-	if err != nil {
+	if err != nil && err.Error() != "No new events" {
 		log.Warning("Polling> Unable to get events for %s %s : %s\n", projectKey, rm.Name, err)
 		return nil, err
 	}

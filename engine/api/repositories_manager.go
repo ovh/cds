@@ -329,23 +329,25 @@ func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
 
+	sync := FormBool(r, "synchronize")
+
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
 	if err != nil {
-		log.Warning("getReposFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+	}
 
+	cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
+	if sync {
+		cache.Delete(cacheKey)
 	}
 
 	var repos []sdk.VCSRepo
-	cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
-	cache.Get(cacheKey, &repos)
-	if repos == nil || len(repos) == 0 {
+	if !cache.Get(cacheKey, &repos) {
 		log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
 		repos, err = client.Repos()
 	}
 	if err != nil {
-		log.Warning("getReposFromRepositoriesManagerHandler> Cannot get repos: %s", err)
-		return err
+		return sdk.WrapError(err, "getReposFromRepositoriesManagerHandler> Cannot get repos")
 
 	}
 	return WriteJSON(w, r, repos, http.StatusOK)
