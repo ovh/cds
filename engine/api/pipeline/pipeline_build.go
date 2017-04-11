@@ -203,7 +203,7 @@ func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.Pipel
 // LoadPipelineBuildByApplicationPipelineEnvVersion Load pipeine build from application, pipeline, environment, version
 func LoadPipelineBuildByApplicationPipelineEnvVersion(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, version int64, limit int) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
-		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.version = $4
+		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.version = $4 ORDER by pb.id desc
 `
 
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
