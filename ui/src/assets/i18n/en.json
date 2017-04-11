@@ -211,6 +211,8 @@
   "pipeline_added" : "Pipeline added",
   "pipeline_attach_application" : "Link pipeline to applications",
   "pipeline_create" : "Create a pipeline",
+  "pipeline_commits_loading" : "Loading commits...",
+  "pipeline_commit_no" : "No new commit",
   "pipeline_deleted" : "Pipeline deleted",
   "pipeline_delete_label" : "Delete pipeline",
   "pipeline_delete_description" : "Once you delete a pipeline, there is no going back. Please be certain.",

@@ -211,6 +211,8 @@
   "pipeline_added" : "Pipeline créé",
   "pipeline_attach_application" : "Lier le pipeline à des applications",
   "pipeline_create" : "Créer un pipeline",
+  "pipeline_commits_loading" : "Récupération des commits...",
+  "pipeline_commit_no" : "Aucun nouveau commit",
   "pipeline_deleted" : "Pipeline supprimé",
   "pipeline_delete_label" : "Suppression du pipeline",
   "pipeline_delete_description" : "Une fois le pipeline supprimé, il n'y a pas de retour possible.",

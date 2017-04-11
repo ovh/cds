@@ -132,7 +132,7 @@ export class ApplicationWorkflowItemComponent {
 
     runWithParameters(): void {
         if (this.launchPipelineModal) {
-            this.launchPipelineModal.show({autofocus: false, closable: false});
+            this.launchPipelineModal.show({autofocus: false, closable: false, observeChanges: true});
         }
     }
 

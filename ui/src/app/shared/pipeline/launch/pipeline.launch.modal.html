@@ -15,12 +15,14 @@
                         <app-commit-list [commits]="commits[currentHash]"></app-commit-list>
                     </ng-container>
                     <ng-container *ngIf="commits[currentHash] && !loadingCommits && commits[currentHash].length === 0">
-                        <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+                        <div class="ui info message">
                             {{ 'pipeline_commit_no' | translate }}
                         </div>
                     </ng-container>
                     <ng-container *ngIf="loadingCommits">
-                        <div class="ui active text loader">{{ 'pipeline_commits_loading' | translate}}</div>
+                        <div class="ui info message">
+                            {{ 'pipeline_commits_loading' | translate }}
+                        </div>
                     </ng-container>
                 </div>
             </ng-template>
