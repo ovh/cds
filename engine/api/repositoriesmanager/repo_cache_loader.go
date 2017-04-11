@@ -72,7 +72,7 @@ func RepositoriesCacheLoader(delay int) {
 							continue
 						}
 						cache.SetWithTTL(cacheKey, &repos, 0)
-						time.Sleep(20 * time.Millisecond)
+						time.Sleep(2 * time.Second)
 					}
 				}
 				cache.Delete(loaderKey)
