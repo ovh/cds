@@ -6,8 +6,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //RepositoriesCacheLoader has to be launched as a goroutine. It will scan all repositories manager
@@ -72,7 +72,7 @@ func RepositoriesCacheLoader(delay int) {
 							continue
 						}
 						cache.SetWithTTL(cacheKey, &repos, 0)
-						time.Sleep(20 * time.Millisecond)
+						time.Sleep(2 * time.Second)
 					}
 				}
 				cache.Delete(loaderKey)
