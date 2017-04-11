@@ -6,6 +6,7 @@ import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {Artifact} from './artifact.model';
 import {Job} from './job.model';
+import {Commit} from './repositories.model';
 
 export class Pipeline {
     id: number;
@@ -96,6 +97,7 @@ export class PipelineBuild {
     trigger: PipelineBuildTrigger;
     artifacts: Array<Artifact>;
     tests: Tests;
+    commits: Array<Commit>;
 
     public static GetTriggerSource(pb: PipelineBuild): string {
         if (pb.trigger.scheduled_trigger) {
