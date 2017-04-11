@@ -8,8 +8,8 @@ import (
 	"github.com/go-stash/go-stash/oauth1"
 	"github.com/go-stash/go-stash/stash"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //StashConsumer embeds a stash oauth1 consumer

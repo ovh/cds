@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // SharedInfraGroupName is the name of the builtin group used to share infrastructure between projects

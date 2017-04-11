@@ -18,8 +18,8 @@ import (
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {

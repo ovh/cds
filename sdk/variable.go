@@ -41,7 +41,7 @@ var (
 	}
 )
 
-// NeedPlaceholder returns true if variable type is either secret or key 
+// NeedPlaceholder returns true if variable type is either secret or key
 func NeedPlaceholder(t string) bool {
 	switch t {
 	case SecretVariable, KeyVariable:

@@ -9,8 +9,8 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // generateTokenHandler allows a user to generate a token associated to a group permission

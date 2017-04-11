@@ -9,8 +9,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //SetStatus Users with push access can create commit statuses for a given ref:

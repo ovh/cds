@@ -8,8 +8,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {

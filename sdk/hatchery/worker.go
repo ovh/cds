@@ -1,8 +1,8 @@
 package hatchery
 
 import (
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // killWorker gets all workers spawned by current hatchery

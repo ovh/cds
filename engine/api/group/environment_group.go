@@ -3,8 +3,8 @@ package group
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadAllEnvironmentGroupByRole load all group for the given environment and role

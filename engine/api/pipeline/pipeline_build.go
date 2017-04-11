@@ -200,6 +200,34 @@ func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.Pipel
 	return pbs, nil
 }
 
+// LoadPipelineBuildByApplicationPipelineEnvVersion Load pipeine build from application, pipeline, environment, version
+func LoadPipelineBuildByApplicationPipelineEnvVersion(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, version int64, limit int) ([]sdk.PipelineBuild, error) {
+	whereCondition := `
+		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.version = $4 ORDER by pb.id desc
+`
+
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var rows []PipelineBuildDbResult
+	_, err := db.Select(&rows, query, applicationID, pipelineID, environmentID, version)
+	if err != nil {
+		return nil, err
+	}
+
+	pbs := []sdk.PipelineBuild{}
+	for _, r := range rows {
+		pb, errScan := scanPipelineBuild(r)
+		if errScan != nil {
+			return nil, errScan
+		}
+		pbs = append(pbs, *pb)
+	}
+	if len(pbs) > limit {
+		pbs = pbs[:limit]
+	}
+	return pbs, nil
+}
+
+// LoadPipelineBuildByApplicationPipelineEnvBuildNumber Load pipeine build from application, pipeline, environment, buildnumber
 func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, buildNumber int64) (*sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.build_number = $4
