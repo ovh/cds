@@ -354,10 +354,7 @@ type VCSPushEvent struct {
 }
 
 //VCSCreateEvent represents a push events for polling
-type VCSCreateEvent struct {
-	Branch VCSBranch `json:"branch"`
-	Commit VCSCommit `json:"commit"`
-}
+type VCSCreateEvent VCSPushEvent
 
 //VCSDeleteEvent represents a push events for polling
 type VCSDeleteEvent struct {

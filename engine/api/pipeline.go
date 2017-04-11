@@ -22,7 +22,6 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/trigger"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -1119,7 +1118,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		}
 
 		for _, pipJob := range s.PipelineBuildJobs {
-			if err := worker.DisableBuildingWorker(db, pipJob.ID); err != nil {
+			if err := pipeline.DisableBuildingWorker(db, pipJob.ID); err != nil {
 				return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop worker for pipeline build [%d-%d]", pb.ID, pipJob.ID)
 			}
 		}

@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"database/sql"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -174,7 +176,7 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 	for _, event := range e.PushEvents {
 		pb, err := triggerPipeline(tx, rm, poller, event, proj)
 		if err != nil {
-			log.Warning("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
+			log.Error("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
 			return nil, err
 		}
 
@@ -182,8 +184,29 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
 			e.PipelineBuildVersions[event.Branch.ID+"/"+event.Commit.Hash[:7]] = pb.Version
 			pbs = append(pbs, *pb)
-		} else {
-			log.Debug("Polling.triggerPipelines> Did not trigger %s/%s/%s\n", projectKey, poller.Application.RepositoryFullname, event.Branch.ID)
+		}
+	}
+
+	for _, event := range e.CreateEvents {
+		pb, err := triggerPipeline(tx, rm, poller, sdk.VCSPushEvent(event), proj)
+		if err != nil {
+			log.Error("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
+			return nil, err
+		}
+
+		if pb != nil {
+			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
+			e.PipelineBuildVersions[event.Branch.ID+"/"+event.Commit.Hash[:7]] = pb.Version
+			pbs = append(pbs, *pb)
+		}
+	}
+
+	for _, e := range e.DeleteEvents {
+		if err := pipeline.DeleteBranchBuilds(tx, poller.Application.ID, e.Branch.DisplayID); err != nil {
+			if err != sql.ErrNoRows {
+				log.Error("Polling.triggerPipelines> cannot delete pipeline build for branch %s: %s", e.Branch.DisplayID, err)
+				return nil, err
+			}
 		}
 	}
 

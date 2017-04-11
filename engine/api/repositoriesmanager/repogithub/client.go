@@ -429,8 +429,33 @@ func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 	}
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
+		var skipEvent bool
 		if e.CreatedAt.After(dateRef) {
-			events = append(events, e)
+			for i := range events {
+				e1 := events[i].(Event)
+				if e.Payload.Ref == e1.Payload.Ref {
+					if e.Type == "DeleteEvent" && e1.Type == "CreateEvent" {
+						//Delete event after create event
+						if e.CreatedAt.After(e1.CreatedAt.Time) {
+							skipEvent = true
+						} else {
+							//Avoid delete
+							events = append(events[:i], events[i+1:]...)
+						}
+						break
+					} else if e.Type == "CreateEvent" && e1.Type == "DeleteEvent" {
+						//Delete event before create event
+						if e.CreatedAt.After(e1.CreatedAt.Time) {
+							events = append(events[:i], events[i+1:]...)
+						}
+						break
+					}
+				}
+			}
+
+			if !skipEvent {
+				events = append(events, e)
+			}
 		}
 	}
 
@@ -545,7 +570,18 @@ func (g *GithubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]s
 		}
 	}
 
-	return nil, nil
+	res := []sdk.VCSDeleteEvent{}
+	for _, e := range events {
+		event := sdk.VCSDeleteEvent{
+			Branch: sdk.VCSBranch{
+				DisplayID: e.Payload.Ref,
+			},
+		}
+		res = append(res, event)
+	}
+
+	log.Debug("GithubClient.DeleteEvents> found %d delete events : %#v", len(res), res)
+	return res, nil
 }
 
 //PullRequestEvents checks pull request events from a event list

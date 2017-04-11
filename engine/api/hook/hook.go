@@ -13,9 +13,8 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var apiURL string
@@ -239,67 +238,11 @@ func generateHash() (string, error) {
 
 // DeleteBranchBuilds deletes all builds related to given branch in given applications in pipeline_build
 func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) error {
-
 	for i := range hooks {
-		err := deleteBranchBuilds(db, hooks[i].ApplicationID, branch)
-		if err != nil {
-			log.Warning("DeleteBranchBuilds> Cannot delete branch builds for branch %s in %d\n", branch, hooks[i].ApplicationID)
+		if err := pipeline.DeleteBranchBuilds(db, hooks[i].ApplicationID, branch); err != nil {
+			return sdk.WrapError(err, "DeleteBranchBuilds> Cannot delete branch builds for branch %s in %d", branch, hooks[i].ApplicationID)
 		}
 	}
-	return nil
-}
-
-func deleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
-
-	pbs, errPB := pipeline.LoadPipelineBuildByApplicationAndBranch(db, appID, branch)
-	if errPB != nil {
-		return errPB
-	}
-
-	// Disabled building worker
-	for _, pb := range pbs {
-		if pb.Status != sdk.StatusBuilding {
-			continue
-		}
-		for _, s := range pb.Stages {
-			if s.Status != sdk.StatusBuilding {
-				continue
-			}
-			for _, pbJob := range s.PipelineBuildJobs {
-				if err := worker.DisableBuildingWorker(db, pbJob.ID); err != nil {
-					log.Warning("deleteBranchBuilds> Cannot disabled worker")
-					return err
-				}
-			}
-		}
-
-		// Stop building pipeline
-		if err := pipeline.StopPipelineBuild(db, &pb); err != nil {
-			log.Warning("deleteBranchBuilds> Cannot stop pipeline")
-			continue
-		}
-
-	}
-	// Now select all related build in pipeline build
-	query := `SELECT id FROM pipeline_build WHERE vcs_changes_branch = $1 AND application_id = $2`
-	rows, err := db.Query(query, branch, appID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			return err
-		}
-
-		if err := pipeline.DeletePipelineBuildByID(db, id); err != nil {
-			log.Warning("deleteBranchBuilds> Cannot delete PipelineBuild %d: %s\n", id, err)
-		}
-	}
-	rows.Close()
-
 	return nil
 }
 
