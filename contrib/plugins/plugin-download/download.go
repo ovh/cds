@@ -23,7 +23,7 @@ func (d DownloadPlugin) Parameters() plugin.Parameters {
 	params := plugin.NewParameters()
 	params.Add("url", plugin.StringParameter, "the url of your file", "{{.cds.app.downloadUrl}}")
 	params.Add("filepath", plugin.StringParameter, "the destination of your file to be copied", ".")
-	params.Add("headers", plugin.StringParameter, `specific headers to add to your request ("headerName"="value" newline separated list)`, "")
+	params.Add("headers", plugin.TextParameter, `specific headers to add to your request ("headerName"="value" newline separated list)`, "")
 
 	return params
 }
