@@ -3,9 +3,8 @@ import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
-import {SharedModule} from '../../../shared/shared.module';
 import {CommitListComponent} from './commit.list.component';
-import {ApplicationRunModule} from '../application.run.module';
+import {SharedModule} from '../shared.module';
 
 describe('CDS: Commit List', () => {
 
@@ -20,7 +19,6 @@ describe('CDS: Commit List', () => {
                 TranslateParser,
             ],
             imports: [
-                ApplicationRunModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule
             ]

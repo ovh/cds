@@ -6,6 +6,7 @@ import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {Artifact} from './artifact.model';
 import {Job} from './job.model';
+import {Commit} from './repositories.model';
 
 export class Pipeline {
     id: number;
@@ -70,10 +71,11 @@ export class Pipeline {
 export class PipelineRunRequest {
     parameters: Array<Parameter>;
     env: Environment;
-    parent_build_number: number;
+    parent_build_number: number; // instead of version
     parent_pipeline_id: number;
     parent_environment_id: number;
     parent_application_id: number;
+    parent_version: number; // instead of build_number
 
     constructor() {
         this.parameters = new Array<Parameter>();
@@ -95,6 +97,7 @@ export class PipelineBuild {
     trigger: PipelineBuildTrigger;
     artifacts: Array<Artifact>;
     tests: Tests;
+    commits: Array<Commit>;
 
     public static GetTriggerSource(pb: PipelineBuild): string {
         if (pb.trigger.scheduled_trigger) {
