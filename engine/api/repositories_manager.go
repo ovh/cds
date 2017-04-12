@@ -345,6 +345,7 @@ func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	if !cache.Get(cacheKey, &repos) {
 		log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
 		repos, err = client.Repos()
+		cache.SetWithTTL(cacheKey, repos, 0)
 	}
 	if err != nil {
 		return sdk.WrapError(err, "getReposFromRepositoriesManagerHandler> Cannot get repos")
