@@ -27,7 +27,7 @@ type MarathonPlugin struct {
 	plugin.Common
 }
 
-//Name return plugin names. It must me the same as the binary file
+//Name return plugin name. It must me the same as the binary file
 func (m MarathonPlugin) Name() string {
 	return "plugin-marathon"
 }
