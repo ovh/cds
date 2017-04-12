@@ -258,12 +258,6 @@ var mainCmd = &cobra.Command{
 		go action.RequirementsCacheLoader(5, database.GetDBMap)
 		go hookRecoverer(database.GetDBMap)
 
-		if !viper.GetBool(viperVCSRepoCacheLoaderDisabled) {
-			go repositoriesmanager.RepositoriesCacheLoader(30)
-		} else {
-			log.Warning("⚠ Repositories cache loader is disabled")
-		}
-
 		if !viper.GetBool(viperVCSPollingDisabled) {
 			go poller.Initialize(database.GetDBMap, 10)
 		} else {
