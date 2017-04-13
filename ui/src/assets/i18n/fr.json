@@ -73,6 +73,7 @@
   "btn_cancel" : "Annuler",
   "btn_continue" : "Continuer",
   "btn_create" : "Créer",
+  "btn_detach" : "Détacher le pipeline",
   "btn_delete" : "Supprimer",
   "btn_link" : "Connecter",
   "btn_or" : "ou",
@@ -236,6 +237,8 @@
   "pipeline_type" : "Type de pipeline",
   "pipeline_updated" : "Pipeline mis à jour",
 
+  "pipeline_run_test_filter_empty" : "Il n'y a aucun test correspondant au filter {{criteria}}",
+  "pipeline_run_test_no_error" : "Tous les tests sont en succès",
   "pipeline_run_test_total_title_s" : " tests",
   "pipeline_run_test_total_title" : " test",
   "pipeline_run_test_failed_title_s" : " tests en erreur",
