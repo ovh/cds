@@ -10,13 +10,25 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
+//DownloadPlugin is a plugin to download a file from an URL
 type DownloadPlugin struct {
 	plugin.Common
 }
 
-func (d DownloadPlugin) Name() string        { return "download" }
-func (d DownloadPlugin) Description() string { return "This is a plugin to download file from URL" }
-func (d DownloadPlugin) Author() string      { return "Benjamin COENEN <benjamin.coenen@corp.ovh.com>" }
+//Name return plugin name. It must me the same as the binary file
+func (d DownloadPlugin) Name() string {
+	return "plugin-download"
+}
+
+//Description explains the purpose of the plugin
+func (d DownloadPlugin) Description() string {
+	return "This is a plugin to download file from URL"
+}
+
+//Author of the plugin
+func (d DownloadPlugin) Author() string {
+	return "Benjamin COENEN <benjamin.coenen@corp.ovh.com>"
+}
 
 // Parameters return parameters description
 func (d DownloadPlugin) Parameters() plugin.Parameters {
