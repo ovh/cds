@@ -30,6 +30,7 @@ import {ApplicationTemplateService} from './application/application.template.ser
 import {ProjectAuditService} from './project/project.audit.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {ApplicationAuditService} from './application/application.audit.service';
+import {WorkerModelService} from './worker/worker.model.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -70,7 +71,8 @@ export class ServicesModule {
                     provide: Http,
                     useFactory: (httpFactory),
                     deps: [XHRBackend, RequestOptions, ToastService, AuthentificationStore, Router]
-                }
+                },
+                WorkerModelService
             ]
         };
     }
@@ -111,5 +113,6 @@ export {
     UserService,
     VariableService,
     WarningStore,
+    WorkerModelService,
     Http
 }

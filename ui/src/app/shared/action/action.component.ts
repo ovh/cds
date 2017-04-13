@@ -10,6 +10,8 @@ import {ActionStore} from '../../service/action/action.store';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {Project} from '../../model/project.model';
 import {StepEvent} from './step/step.event';
+import {WorkerModelService} from '../../service/worker/worker.model.service';
+import {WorkerModel} from '../../model/worker.model';
 
 declare var _: any;
 
