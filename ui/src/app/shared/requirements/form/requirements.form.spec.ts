@@ -12,8 +12,9 @@ import {RequirementsFormComponent} from './requirements.form.component';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {RequirementStore} from '../../../service/worker/requirement/requirement.store';
+import {WorkerModelService} from '../../../service/worker/worker.model.service';
 
-describe('CDS: Variable From Component', () => {
+describe('CDS: Requirement Form Component', () => {
 
     let injector: Injector;
     let backend: MockBackend;
@@ -26,6 +27,7 @@ describe('CDS: Variable From Component', () => {
                 RequirementService,
                 RequirementStore,
                 TranslateService,
+                WorkerModelService,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser

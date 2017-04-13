@@ -9,7 +9,10 @@
             </sm-select>
         </div>
         <div class="five wide field">
-            <input name="value" [(ngModel)]="newRequirement.value" placeholder="{{ 'requirement_value' | translate }}" (keyup)="setName($event)">
+            <input name="value" [(ngModel)]="newRequirement.value" placeholder="{{ 'requirement_value' | translate }}" (keyup)="setName($event)" *ngIf="newRequirement.type !== 'model'">
+            <sm-select class="search" [(model)]="newRequirement.value" *ngIf="newRequirement.type === 'model'" placeholder="{{ 'requirement_value' | translate }}">
+                <option *ngFor="let m of workerModels" value="{{m.name}}">{{m.name}}</option>
+            </sm-select>
         </div>
         <div class="three wide center field">
             <button class="ui blue icon button" (click)="addRequirement()"><i class="plus icon"></i></button>
