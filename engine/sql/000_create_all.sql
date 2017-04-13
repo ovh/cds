@@ -141,9 +141,6 @@ CREATE TABLE IF NOT EXISTS "worker" (id TEXT PRIMARY KEY, name TEXT, last_beat T
 CREATE TABLE IF NOT EXISTS "worker_capability" (worker_model_id INT, type TEXT, name TEXT, argument TEXT);
 CREATE TABLE IF NOT EXISTS "worker_model" (id BIGSERIAL PRIMARY KEY, type TEXT, name TEXT, image TEXT, created_by JSONB, GROUP_ID BIGINT, OWNER_ID BIGINT);
 
-GRANT SELECT, INSERT, UPDATE, DELETE on ALL TABLES IN SCHEMA public TO "cds";
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "cds";
-
 -- ACTION REQUIREMENT
 select create_index('action_requirement', 'IDX_ACTION_REQUIREMENT_ACTION_ID', 'action_id');
 
