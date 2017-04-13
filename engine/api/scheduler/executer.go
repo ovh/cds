@@ -50,7 +50,9 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 		if err != nil {
 			log.Error("ExecuterRun> Unable to process %v : %s", exs[i], err)
 		}
-		pbs = append(pbs, *pb)
+		if pb != nil {
+			pbs = append(pbs, *pb)
+		}
 	}
 
 	//Commit
