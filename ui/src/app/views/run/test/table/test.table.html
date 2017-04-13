@@ -1,5 +1,5 @@
 <div class="testcase">
-    <table class="ui fixed celled table">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th>{{ 'pipeline_run_test_testcase_name' | translate }}</th>
@@ -7,10 +7,13 @@
         </thead>
         <tbody>
         <ng-container *ngFor="let tc of getDataForCurrentPage()">
-            <tr >
+            <tr>
                 <td>
-                    <i class="unhide icon pointing" (click)="tc.displayed = true" *ngIf="!tc.displayed"></i>
-                    <i class="hide icon pointing" (click)="tc.displayed = false" *ngIf="tc.displayed"></i>
+                    <i class="unhide icon pointing" (click)="tc.displayed = true" *ngIf="!tc.displayed && filter !== 'all'"></i>
+                    <i class="hide icon pointing" (click)="tc.displayed = false" *ngIf="tc.displayed  && filter !== 'all'"></i>
+                    <i class="green check icon" *ngIf="filter === 'all' && !tc.errors && !tc.failures"></i>
+                    <i class="red remove circle icon" *ngIf="filter === 'all' && ( (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))"></i>
+                    <i class="grey ban icon" *ngIf="filter === 'all' && tc.skipped"></i>
                     {{tc.name}}
                 </td>
             </tr>
@@ -29,7 +32,7 @@
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
         <tr>
-            <th colspan="2">
+            <th colspan="1">
                 <div class="ui right floated pagination menu" >
                     <a class="icon item" (click)="downPage()">
                         <i class="left chevron icon"></i>
@@ -43,4 +46,16 @@
         </tr>
         </tfoot>
     </table>
+    <ng-container *ngIf="getDataForCurrentPage().length === 0">
+        <ng-container *ngIf="filter === 'error';else msg">
+            <div class="big msgEmpty">
+                <i class="thumbs up green icon" style=""></i> {{ 'pipeline_run_test_no_error' | translate }}
+            </div>
+        </ng-container>
+        <ng-template #msg>
+            <div class="ui info message msgEmpty" *ngIf="getDataForCurrentPage().length === 0">
+                {{ 'pipeline_run_test_filter_empty' | translate: { criteria: filter } }}
+            </div>
+        </ng-template>
+    </ng-container>
 </div>
