@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // IsAttached checks if an application is attach to a pipeline given its name
@@ -218,6 +219,57 @@ func RemovePipeline(db gorp.SqlExecutor, key, appName, pipelineName string) erro
 	if err != nil {
 		return err
 	}
+
+	// Delete scheduler
+	query = `
+		DELETE 	FROM pipeline_scheduler
+		USING	application, project, pipeline
+		WHERE 	pipeline_scheduler.application_id = application.id 
+		AND 	pipeline_scheduler.pipeline_id = pipeline.id 
+		AND 	application.project_id = project.id 
+	    AND 	application.name = $1 
+		AND 	project.projectKey = $2 
+		AND  	pipeline.name = $3`
+	res, err := db.Exec(query, appName, key, pipelineName)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	log.Debug("RemovePipeline> removed %d pipeline_scheduler", n)
+
+	// Delete poller
+	query = `
+		DELETE 	FROM poller
+		USING	application, project, pipeline
+		WHERE 	poller.application_id = application.id 
+		AND 	poller.pipeline_id = pipeline.id
+		AND 	application.project_id = project.id 
+	    AND 	application.name = $1 
+		AND 	project.projectKey = $2 
+		AND  	pipeline.name = $3`
+	res, err = db.Exec(query, appName, key, pipelineName)
+	if err != nil {
+		return err
+	}
+	n, _ = res.RowsAffected()
+	log.Debug("RemovePipeline> removed %d poller", n)
+
+	// Delete poller_execution
+	query = `
+		DELETE 	FROM poller_execution
+		USING	application, project, pipeline
+		WHERE 	poller_execution.application_id = application.id 
+		AND 	poller_execution.pipeline_id = pipeline.id
+		AND 	application.project_id = project.id 
+	    AND 	application.name = $1 
+		AND 	project.projectKey = $2 
+		AND  	pipeline.name = $3`
+	res, err = db.Exec(query, appName, key, pipelineName)
+	if err != nil {
+		return err
+	}
+	n, _ = res.RowsAffected()
+	log.Debug("RemovePipeline> removed %d poller_execution", n)
 
 	// Delete application_pipeline link
 	query = `DELETE FROM application_pipeline
