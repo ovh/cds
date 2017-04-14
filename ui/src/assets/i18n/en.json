@@ -247,6 +247,7 @@
   "pipeline_run_test_skipped_title" : " test skipped",
   "pipeline_run_test_testcase_name" : "Testcase name",
 
+  "pipeline_stage_edit" : "Edit stage",
   "pipeline_stage_moved" : "Stage moved",
 
   "poller_added" : "Poller added",
@@ -256,6 +257,7 @@
   "poller_updated" : "Poller updated",
   "poller_workflow_label" : "Poller: ",
 
+  "prerequisite_add": "Add a run prerequisite",
   "prerequisite_no" : "There is no run prerequisite",
   "prerequisite_parameter_name" : "parameter name",
   "prerequisite_title" : "Run prerequisite",

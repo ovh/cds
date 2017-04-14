@@ -27,7 +27,7 @@
                     </div>
                 </div>
                 <div class="two wide right aligned field labelPadding">
-                    <a class="pointing" (click)="requirementModal.show({inverted: true})">{{ editableAction.requirements.length + ' '}}{{
+                    <a class="pointing" (click)="requirementModal.show({inverted: false, closable: false})">{{ editableAction.requirements.length + ' '}}{{
                         'common_requirements' | translate }}</a>
                     <sm-modal class="large" title="{{ 'common_requirements' | translate }}" #requirementModal>
                         <modal-content>
