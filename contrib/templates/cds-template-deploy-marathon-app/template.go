@@ -17,7 +17,15 @@ func (t *TemplateMarathonApp) Name() string {
 
 // Description of this template
 func (t *TemplateMarathonApp) Description() string {
-	return "Deploy a marathon application"
+	return `
+This template creates:
+- a deployment pipeline with one stage, containing and one job
+- job calls plugin-marathon
+- an application with a variable named "marathon.config"
+- uses environment variables marathonHost, password and user
+
+Please update Application / Environment Variables after creating application.
+`
 }
 
 // Identifier of this template
