@@ -58,6 +58,22 @@ input[disabled] {
 
 // Override semantic-ui color to apply CDS theme
 
+// icon
+
+.ui {
+  i.icon.blue {
+    color: $cds_color_teal !important;
+  } 
+
+  i.icon.red {
+    color: $cds_color_red !important;
+  }
+
+  i.icon.green {
+    color: $cds_color_green !important;
+  }
+}
+
 // Segment
 
 .ui.green.segment {
