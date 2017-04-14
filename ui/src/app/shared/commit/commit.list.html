@@ -11,11 +11,12 @@
         <tbody>
         <tr *ngFor="let c of getDataForCurrentPage()">
             <td valign="middle">
-                <img [src]="c.author.avatar">
-                <div class="author">
-                    {{ c.author.displayName }}
+                <div class="vcenter">
+                    <img [src]="c.author.avatar">
+                    <div class="author">
+                        {{ c.author.displayName }}
+                    </div>
                 </div>
-
             </td>
             <td>
                 <a [href]="c.url">{{ c.id | cut : 7 }}</a>

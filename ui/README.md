@@ -16,3 +16,15 @@ API Url can be change here: src/environments/environment.ts .
 ## Running unit tests
 
 Run `npm test` to execute the unit tests.
+
+## Running e2e tests
+
+Export template files:
+
+`export templateLogin=$(cat login.template)`
+
+`export templateCreateProject=$(cat create.project.template)`
+
+Run test: 
+
+`venom run loginUser.yml --var cds.build.url=<your_cds_ui_url> --var cds.build.user=<your_cds_user> --var cds.build.user_password=<your_cds_password> --output-dir results --details low`

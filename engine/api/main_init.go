@@ -69,7 +69,6 @@ const (
 	viperEventsKafkaPassword            = "events.kafka.password"
 	viperSchedulersDisabled             = "schedulers.disabled"
 	viperVCSPollingDisabled             = "vcs.polling.disabled"
-	viperVCSRepoCacheLoaderDisabled     = "vcs.repositories.cacheloader_disabled"
 	viperVCSRepoGithubStatusDisabled    = "vcs.repositories.github.statuses_disabled"
 	viperVCSRepoGithubStatusURLDisabled = "vcs.repositories.github.statuses_url_disabled"
 	viperVCSRepoGithubSecret            = "vcs.repositories.github.clientsecret"
@@ -191,7 +190,6 @@ const tmpl = `###################################
 # CDS_EVENTS_KAFKA_PASSWORD
 # CDS_SCHEDULERS_DISABLED
 # CDS_VCS_POLLING_DISABLED
-# CDS_VCS_REPOSITORIES_CACHERLOADER_DISABLED
 # CDS_VCS_REPOSITORIES_GITHUB_STATUSES_DISABLED
 # CDS_VCS_REPOSITORIES_GITHUB_STATUSES_URL_DISABLED
 # CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET
@@ -353,7 +351,6 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     disabled = false #This is mainly for dev purpose, you should not have to change it
 
     [vcs.repositories]
-    cacheloader_disabled = false #This is mainly for dev purpose, you should not have to change it
 
     [vcs.repositories.github]
     statuses_disabled = false # Set to true if you don't want CDS to push statuses on Github API

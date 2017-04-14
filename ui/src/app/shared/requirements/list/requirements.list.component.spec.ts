@@ -12,6 +12,7 @@ import {RequirementsListComponent} from './requirements.list.component';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {RequirementStore} from '../../../service/worker/requirement/requirement.store';
+import {WorkerModelService} from '../../../service/worker/worker.model.service';
 
 describe('CDS: Requirement List Component', () => {
 
@@ -27,6 +28,7 @@ describe('CDS: Requirement List Component', () => {
                 RequirementService,
                 TranslateService,
                 RequirementStore,
+                WorkerModelService,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
             ],
