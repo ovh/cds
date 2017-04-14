@@ -1,4 +1,4 @@
-import {Component, DoCheck, Input, OnInit, OnDestroy} from '@angular/core';
+import {Component, DoCheck, Input, OnInit, OnDestroy, ViewChild} from '@angular/core';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
@@ -6,6 +6,7 @@ import {Stage} from '../../../../model/stage.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
+import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 
 
 declare var _: any;
@@ -18,10 +19,14 @@ declare var _: any;
 export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
 
     selectedStage: Stage;
+    editableStage: Stage;
     oldLastModifiedDate: number;
 
     @Input() project: Project;
     @Input() pipeline: Pipeline;
+
+    @ViewChild('editStageModal')
+    editStageModal: SemanticModalComponent;
 
     constructor(private _pipelineStore: PipelineStore, private _toast: ToastService,
                 private _translate: TranslateService, private dragulaService: DragulaService) {
@@ -91,6 +96,10 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
         }
     }
 
+    toggleEdit(s: Stage, b: boolean): void {
+        s.edit = b;
+    }
+
     /**
      * Add a stage.
      */
@@ -106,5 +115,31 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
             this._toast.success('', this._translate.instant('step_added'));
             this.selectedStage = this.pipeline.stages[this.pipeline.stages.length - 1];
         });
+    }
+
+    /**
+     * Event on stage
+     * @param type Type of event (update/delete)
+     */
+    stageEvent(type: string): void {
+        switch (type) {
+            case 'update':
+                this._pipelineStore.updateStage(this.project.key, this.pipeline.name, this.editableStage).subscribe(() => {
+                    this._toast.success('', this._translate.instant('stage_updated'));
+                });
+                break;
+            case 'delete':
+                this._pipelineStore.removeStage(this.project.key, this.pipeline.name, this.editableStage).subscribe(() => {
+                    this._toast.success('', this._translate.instant('stage_deleted'));
+                });
+                break;
+        }
+    }
+
+    openEditModal(s: Stage): void {
+        this.editableStage = _.cloneDeep(s);
+        if (this.editStageModal) {
+            this.editStageModal.show({autofocus: false, closable: false, observeChanges: true});
+        }
     }
 }

@@ -247,6 +247,7 @@
   "pipeline_run_test_skipped_title" : " test ignoré",
   "pipeline_run_test_testcase_name" : "Nom du testcase",
 
+  "pipeline_stage_edit" : "Edition du stage",
   "pipeline_stage_moved" : "Stage déplacé",
 
   "poller_added" : "Poller ajouté",
@@ -256,6 +257,7 @@
   "poller_updated" : "Poller mis à jour",
   "poller_workflow_label" : "Poller : ",
 
+  "prerequisite_add": "Ajouter une condition de lancement",
   "prerequisite_no" : "Aucune condition de lancement n'est définie",
   "prerequisite_parameter_name" : "Nom du paramètre",
   "prerequisite_title" : "Condition de lancement",

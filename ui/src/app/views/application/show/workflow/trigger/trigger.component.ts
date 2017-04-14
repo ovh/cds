@@ -22,6 +22,7 @@ export class ApplicationTriggerComponent {
 
     // Project data
     @Input() project: Project;
+
     // create/edit
     @Input() mode: string;
 
