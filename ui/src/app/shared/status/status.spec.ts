@@ -107,7 +107,7 @@ describe('CDS: Parameter Value Component', () => {
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.wait.orange.icon')).toBeTruthy('Waiting icon not displayed');
+        expect(compiled.querySelector('.wait.blue.icon')).toBeTruthy('Waiting icon not displayed');
     }));
 
 

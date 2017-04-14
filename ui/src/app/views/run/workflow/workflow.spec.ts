@@ -59,7 +59,7 @@ describe('CDS: Pipeline Run Workflow', () => {
         expect(compiled.querySelectorAll('.ban.grey.icon').length).toBe(2);
         expect(compiled.querySelectorAll('.check.green.icon').length).toBe(1);
         expect(compiled.querySelectorAll('.remove.red.icon').length).toBe(1);
-        expect(compiled.querySelectorAll('.wait.orange.icon').length).toBe(1);
+        expect(compiled.querySelectorAll('.wait.blue.icon').length).toBe(1);
         expect(compiled.querySelectorAll('.ui.small.active.inline.blue.loader').length).toBe(1);
 
 
