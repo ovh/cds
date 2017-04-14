@@ -14,6 +14,7 @@ import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {ApplicationStore} from '../../service/application/application.store';
 import {ApplicationService} from '../../service/application/application.service';
 import {Project} from '../../model/project.model';
+import {LanguageStore} from '../../service/language/language.store';
 
 describe('CDS: Navbar Component', () => {
 
@@ -36,6 +37,7 @@ describe('CDS: Navbar Component', () => {
                 ApplicationStore,
                 ApplicationService,
                 TranslateParser,
+                LanguageStore
             ],
             imports: [
                 SharedModule,

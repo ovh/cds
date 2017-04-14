@@ -451,3 +451,16 @@ $verticalTreeHeightLine: 40px;
   top: $navbarHeight + 10px;
 }
 
+// Hack navbar select language
+.ui.dropdown.languageSelect {
+  min-width: 1em;
+  border: none;
+  .dropdown.icon {
+    display: none;
+  }
+  padding-right: 1em;
+
+  > .text > .flag {
+    margin-right: 0em;
+  }
+}

@@ -31,6 +31,7 @@ import {ProjectAuditService} from './project/project.audit.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {ApplicationAuditService} from './application/application.audit.service';
 import {WorkerModelService} from './worker/worker.model.service';
+import {LanguageStore} from './language/language.store';
 
 @NgModule({})
 export class ServicesModule {
@@ -53,6 +54,7 @@ export class ServicesModule {
                 CanActivateAuthRoute,
                 EnvironmentAuditService,
                 GroupService,
+                LanguageStore,
                 ParameterService,
                 PipelineResolver,
                 PipelineService,
@@ -102,6 +104,7 @@ export {
     CanActivateAuthRoute,
     EnvironmentAuditService,
     GroupService,
+    LanguageStore,
     ParameterService,
     PipelineResolver,
     PipelineStore,
