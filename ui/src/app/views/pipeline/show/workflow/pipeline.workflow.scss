@@ -1,25 +1,43 @@
 @import '../../../../../common';
-.steps {
-  overflow-x: auto;
-}
+
 .ui.attached.segment {
   background-color: white;
 }
 
+.steps {
+  overflow-x: auto;
 
-.step.active {
-  background-color: $cds_color_teal !important;
-  .title {
-    color: white;
+  .step {
+    .content {
+      i.move.icon {
+        position: absolute;
+        left: 15px;
+      }
+      i.write.icon {
+        position: absolute;
+        top: 15px;
+        right: 10px;
+      }
+    }
   }
 
-}
-.step.active::after {
-  background-color: $cds_color_teal !important;
-}
+  .step.active {
+    background-color: $cds_color_teal !important;
+    .title {
+      color: white;
+    }
 
-.step.off {
-  .title {
-    color: rgba(040, 40, 40, 0.3);
+  }
+  .step.active::after {
+    background-color: $cds_color_teal !important;
+  }
+
+  .step.off {
+    .title {
+      color: rgba(040, 40, 40, 0.3);
+    }
   }
 }
+
+
+

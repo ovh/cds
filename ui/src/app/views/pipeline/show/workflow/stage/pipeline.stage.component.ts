@@ -2,7 +2,6 @@ import {Component, Input, OnInit, DoCheck} from '@angular/core';
 import {Pipeline} from '../../../../../model/pipeline.model';
 import {Stage} from '../../../../../model/stage.model';
 import {Prerequisite} from '../../../../../model/prerequisite.model';
-import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
 import {ActionEvent} from '../../../../../shared/action/action.event.model';
 import {PipelineStore} from '../../../../../service/pipeline/pipeline.store';
 import {Project} from '../../../../../model/project.model';
@@ -21,7 +20,6 @@ export class PipelineStageComponent implements OnInit, DoCheck {
 
     selectedJob: Job;
     editableStage: Stage;
-    availablePrerequisites: Array<Prerequisite>;
     currentStageID: number;
 
     @Input() pipeline: Pipeline;
@@ -39,7 +37,6 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     }
 
     ngOnInit(): void {
-        this.initPrerequisites();
         if (this.editableStage && this.editableStage.jobs && this.editableStage.jobs.length > 0) {
             this.selectJob(this.editableStage.jobs[0]);
         }
@@ -61,51 +58,11 @@ export class PipelineStageComponent implements OnInit, DoCheck {
         }
     }
 
-    private initPrerequisites() {
-        if (!this.availablePrerequisites) {
-            this.availablePrerequisites = new Array<Prerequisite>();
-        }
-        this.availablePrerequisites.push({
-            parameter: 'git.branch',
-            expected_value: ''
-        });
 
-        if (this.pipeline.parameters) {
-            this.pipeline.parameters.forEach(p => {
-                this.availablePrerequisites.push({
-                    parameter: p.name,
-                    expected_value: ''
-                });
-            });
-        }
-    }
 
     selectJob(j: Job) {
         this.selectedJob = j;
         this.selectedJob.action.enabled = j.enabled;
-    }
-
-
-    prerequisiteEvent(event: PrerequisiteEvent): void {
-        this.editableStage.hasChanged = true;
-        switch (event.type) {
-            case 'add':
-                if (!this.editableStage.prerequisites) {
-                    this.editableStage.prerequisites = new Array<Prerequisite>();
-                }
-
-                let indexAdd = this.editableStage.prerequisites.findIndex(p => p.parameter === event.prerequisite.parameter);
-                if (indexAdd === -1) {
-                    this.editableStage.prerequisites.push(_.cloneDeep(event.prerequisite));
-                }
-                break;
-            case 'delete':
-                let indexDelete = this.editableStage.prerequisites.findIndex(p => p.parameter === event.prerequisite.parameter);
-                if (indexDelete > -1) {
-                    this.editableStage.prerequisites.splice(indexDelete, 1);
-                }
-                break;
-        }
     }
 
     addJob(): void {
@@ -150,25 +107,6 @@ export class PipelineStageComponent implements OnInit, DoCheck {
                 this._pipelineStore.removeJob(this.project.key, this.pipeline.name, this.editableStage.id, job).subscribe(() => {
                     this._toast.success('', this._translate.instant('stage_job_deleted'));
                     this.selectedJob = undefined;
-                });
-                break;
-        }
-    }
-
-    /**
-     * Event on stage
-     * @param type Type of event (update/delete)
-     */
-    stageEvent(type: string): void {
-        switch (type) {
-            case 'update':
-                this._pipelineStore.updateStage(this.project.key, this.pipeline.name, this.editableStage).subscribe(() => {
-                    this._toast.success('', this._translate.instant('stage_updated'));
-                });
-                break;
-            case 'delete':
-                this._pipelineStore.removeStage(this.project.key, this.pipeline.name, this.editableStage).subscribe(() => {
-                    this._toast.success('', this._translate.instant('stage_deleted'));
                 });
                 break;
         }

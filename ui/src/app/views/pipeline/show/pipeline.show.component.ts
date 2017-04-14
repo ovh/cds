@@ -10,6 +10,7 @@ import {TranslateService} from 'ng2-translate/ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
 import {Application} from '../../../model/application.model';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -24,6 +25,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     project: Project;
     pipeline: Pipeline;
     pipelineSubscriber: Subscription;
+
+    applications: Array<Application> = new Array<Application>();
 
     // optionnal application data
     application: Application;
@@ -41,7 +44,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     selectedTab = 'pipeline';
 
     constructor(private _routeActivated: ActivatedRoute, private _pipStore: PipelineStore,
-        private _router: Router, private _toast: ToastService, public _translate: TranslateService) {
+        private _router: Router, private _toast: ToastService, public _translate: TranslateService,
+        private _appPipService: ApplicationPipelineService) {
         this.project = this._routeActivated.snapshot.data['project'];
         if (this._routeActivated.snapshot.data['application']) {
             this.application = this._routeActivated.snapshot.data['application'];
@@ -97,6 +101,9 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                     if (pipelineUpdated && !pipelineUpdated.externalChange &&
                         (!this.pipeline || this.pipeline.last_modified < pipelineUpdated.last_modified)) {
                         this.pipeline = pipelineUpdated;
+                        this._appPipService.getApplicationFromPipeline(this.project.key, this.pipeline.name).first().subscribe(apps => {
+                            this.applications = apps;
+                        });
                     } else if (pipelineUpdated && pipelineUpdated.externalChange) {
                         // TODO show warning
                     }

@@ -120,7 +120,7 @@ describe('CDS: Stage', () => {
 
     }));
 
-    it('should load component + select 1st job + init available prerequisite', fakeAsync(() => {
+    it('should load component + select 1st job ', fakeAsync(() => {
         let call = 0;
         // Mock Http
         backend.connections.subscribe(connection => {
@@ -164,53 +164,9 @@ describe('CDS: Stage', () => {
         fixture.componentInstance.ngOnInit();
 
         expect(fixture.componentInstance.selectedJob.action.name).toBe('act1');
-        expect(fixture.componentInstance.availablePrerequisites.length).toBe(2);
-        expect(fixture.componentInstance.availablePrerequisites[0].parameter).toBe('git.branch');
-        expect(fixture.componentInstance.availablePrerequisites[1].parameter).toBe('param1');
     }));
 
-    it('should add and delete prerequisite', fakeAsync(() => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "app1" }'})));
-                    break;
-            }
 
-        });
-
-        // Create component
-        let fixture = TestBed.createComponent(PipelineStageComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        // Init stage
-        let s = new Stage();
-        fixture.componentInstance.editableStage = s;
-
-        let eventAdd = new PrerequisiteEvent('add', new Prerequisite());
-        eventAdd.prerequisite.parameter = 'git.branch';
-        eventAdd.prerequisite.expected_value = 'master';
-
-        fixture.componentInstance.prerequisiteEvent(eventAdd);
-        // add twice
-        fixture.componentInstance.prerequisiteEvent(eventAdd);
-
-        expect(fixture.componentInstance.editableStage.prerequisites.length).toBe(1, 'Must have 1 prerequisite');
-        expect(fixture.componentInstance.editableStage.prerequisites[0].parameter).toBe('git.branch');
-        expect(fixture.componentInstance.editableStage.prerequisites[0].expected_value).toBe('master');
-
-
-        let eventDelete = new PrerequisiteEvent('delete', eventAdd.prerequisite);
-        fixture.componentInstance.prerequisiteEvent(eventDelete);
-        expect(fixture.componentInstance.editableStage.prerequisites.length).toBe(0, 'Must have 0 prerequisite');
-    }));
 
     it('should add/update/delete a job', fakeAsync(() => {
         let call = 0;
@@ -272,53 +228,6 @@ describe('CDS: Stage', () => {
         fixture.componentInstance.jobEvent(event);
 
         expect(pipStore.removeJob).toHaveBeenCalledWith('key', 'pip', 123, jobToAdd);
-
-    }));
-    it('should update/delete a stage', fakeAsync( () => {
-
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "pip", "stages": [] }'})));
-        });
-
-        // Create component
-        let fixture = TestBed.createComponent(PipelineStageComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        // Init stage
-        let s = new Stage();
-        s.id = 123;
-        fixture.componentInstance.editableStage = s;
-
-        // Init project
-        let proj = new Project();
-        proj.key = 'key';
-        fixture.componentInstance.project = proj;
-
-        // Init pipeline
-        let pip = new Pipeline();
-        pip.name = 'pip';
-        fixture.componentInstance.pipeline = pip;
-
-        // UPDATE
-
-        let pipStore = injector.get(PipelineStore);
-        spyOn(pipStore, 'updateStage').and.callFake(() => {
-            return Observable.of(pip);
-        });
-        fixture.componentInstance.stageEvent('update');
-        expect(pipStore.updateStage).toHaveBeenCalledWith('key', 'pip', s);
-
-        // DELETE
-
-        spyOn(pipStore, 'removeStage').and.callFake(() => {
-            return Observable.of(pip);
-        });
-
-        fixture.componentInstance.stageEvent('delete');
-        expect(pipStore.removeStage).toHaveBeenCalledWith('key', 'pip', s);
 
     }));
 });
