@@ -17,7 +17,7 @@ func (t *TemplateOnlyGitCloneJob) Description() string {
 	return `
 This template creates:
 - a build pipeline with	one stage, containing one job
-- job contains 2 steps: CDS_GitClone and a empty script.
+- job contains 2 steps: GitClone and a empty script.
 
 Pipeline name contains Application name.
 If you want to make a reusable pipeline, please consider updating this name after creating application.
@@ -49,7 +49,7 @@ func (t *TemplateOnlyGitCloneJob) Parameters() []sdk.TemplateParam {
 
 func (t *TemplateOnlyGitCloneJob) ActionsNeeded() []string {
 	return []string{
-		"CDS_GitClone",
+		"GitClone",
 	}
 }
 
@@ -65,7 +65,7 @@ func (t *TemplateOnlyGitCloneJob) Apply(opts template.IApplyOptions) (sdk.Applic
 			Name: "Compile",
 			Actions: []sdk.Action{
 				sdk.Action{
-					Name: "CDS_GitClone",
+					Name: "GitClone",
 				},
 				sdk.NewActionScript(`#!/bin/bash
 
