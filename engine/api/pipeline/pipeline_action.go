@@ -206,7 +206,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 			var found bool
 			for x := range step.Parameters {
 				sp := &step.Parameters[x]
-				if strings.ToLower(sp.Name) == strings.ToLower(a.Name) {
+				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
 					found = true
 					break
 				}
