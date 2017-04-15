@@ -17,12 +17,12 @@ func (t *TemplateCDSPlugin) Description() string {
 	return `
 This template creates a pipeline for building CDS Plugin with:
 - A "Commit Stage" with one job "Compile"
-- Job contains two steps: CDS_GitClone and CDS_GoBuild
+- Job contains two steps: GitClone and CDS_GoBuild
 `
 }
 
 func (t *TemplateCDSPlugin) Identifier() string {
-	return "github.com/ovh/cds/contrib/templates/cds-template-cds-plugin/TemplateCDSPlugin"
+	return "github.com/ovh/cds/contrib/plugins/cds-template-cds-plugin/TemplateCDSPlugin"
 }
 
 func (t *TemplateCDSPlugin) Author() string {
@@ -44,15 +44,15 @@ func (t *TemplateCDSPlugin) Parameters() []sdk.TemplateParam {
 		{
 			Name:        "package.root",
 			Type:        sdk.StringVariable,
-			Value:       "github.com/your-orga/your-repo",
+			Value:       "github.com/ovh/cds",
 			Description: "example: github.com/ovh/cds",
 		},
 		{
-			Name:  "directory",
+			Name:  "package.sub",
 			Type:  sdk.StringVariable,
 			Value: "contrib/plugins/{{.cds.application}}",
 			Description: `Directory inside your repository where is the plugin.
-Enter "contrib/plugins" for github.com/ovh/cds/contrib/plugins/your-plugin
+Enter "contrib/plugins/your-plugin" for github.com/ovh/cds/contrib/plugins/your-plugin
 			`,
 		},
 	}
@@ -60,7 +60,7 @@ Enter "contrib/plugins" for github.com/ovh/cds/contrib/plugins/your-plugin
 
 func (t *TemplateCDSPlugin) ActionsNeeded() []string {
 	return []string{
-		"CDS_GitClone",
+		"GitClone",
 		"CDS_GoBuild",
 	}
 }
@@ -78,7 +78,7 @@ func (t *TemplateCDSPlugin) Apply(opts template.IApplyOptions) (sdk.Application,
 			Name: "Compile CDS Plugin",
 			Actions: []sdk.Action{
 				sdk.Action{
-					Name: "CDS_GitClone",
+					Name: "GitClone",
 					Parameters: []sdk.Parameter{
 						{Name: "directory", Value: "./go/src/{{.cds.app.package.root}}"},
 					},
@@ -86,8 +86,10 @@ func (t *TemplateCDSPlugin) Apply(opts template.IApplyOptions) (sdk.Application,
 				sdk.Action{
 					Name: "CDS_GoBuild",
 					Parameters: []sdk.Parameter{
-						{Name: "package", Value: "./go/src/{{.cds.app.package.root}}/{{.cds.app.directory}}"},
+						{Name: "gopath", Value: "$HOME/go"}, // a gopath can't be relative "./go", so use $HOME/go
+						{Name: "package", Value: "{{.cds.app.package.root}}/{{.cds.app.package.sub}}"},
 						{Name: "binary", Value: "{{.cds.application}}"},
+						{Name: "artifactUpload", Value: "true", Type: sdk.BooleanVariable},
 					},
 				},
 			},
@@ -104,14 +106,14 @@ func (t *TemplateCDSPlugin) Apply(opts template.IApplyOptions) (sdk.Application,
 	a.Variable = []sdk.Variable{
 		{Name: "repo", Value: opts.Parameters().Get("repo"), Type: sdk.StringVariable},
 		{Name: "package.root", Value: opts.Parameters().Get("package.root"), Type: sdk.StringVariable},
-		{Name: "directory", Value: opts.Parameters().Get("directory"), Type: sdk.StringVariable},
+		{Name: "package.sub", Value: opts.Parameters().Get("package.sub"), Type: sdk.StringVariable},
 	}
 
 	/* Assemble Pipeline */
 	a.Pipelines = []sdk.ApplicationPipeline{
 		{
 			Pipeline: sdk.Pipeline{
-				Name:   "build",
+				Name:   "cds-plugin-build",
 				Type:   sdk.BuildPipeline,
 				Stages: []sdk.Stage{compileStage},
 			},

@@ -6,17 +6,23 @@ This template creates a pipeline for building CDS Plugin.
 
 Template contains:
 - A "Commit Stage" with one job "Compile"
-- Job contains two steps: CDS_GitClone and CDS_GoBuild
+- Job contains two steps: GitClone and CDS_GoBuild
+
+Once builded, you can download then import your plugin with CDS CLI:
+
+```bash
+cds admin plugins add your-plugin
+```
 
 ## Manual Build
 
 ```bash
-cd $GOPATH/src/github.com/ovh/cds/contrib/templates/template-cds-plugin
+cd $GOPATH/src/github.com/ovh/cds/contrib/templates/cds-template-cds-plugin
 go build
 
 # Create template on cds
-cds templates add template-cds-plugin
+cds templates add cds-template-cds-plugin
 
 # Or Upload existing template on cds
-cds templates update template-cds-plugin template-cds-plugin
+cds templates update cds-template-cds-plugin cds-template-cds-plugin
 ``
