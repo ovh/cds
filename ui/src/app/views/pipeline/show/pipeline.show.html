@@ -50,7 +50,7 @@
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                     </div>
                     <div *ngSwitchCase="'applications'">
-                        <h3>{{ 'pipeliline_application' | translate }}</h3>
+                        <h3>{{ 'pipeline_application' | translate }}</h3>
                         <app-pipeline-application [project]="project" [applications]="applications"></app-pipeline-application>
                     </div>
                     <div *ngSwitchCase="'advanced'">
@@ -64,4 +64,3 @@
 <ng-template #loadPipeline>
     <div class="ui text active loader">Loading pipeline...</div>
 </ng-template>
-

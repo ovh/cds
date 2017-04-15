@@ -210,6 +210,7 @@
   "permission_updated" : "Permission updated",
 
   "pipeline_added" : "Pipeline added",
+  "pipeline_application" : "Applications using this pipeline",
   "pipeline_attach_application" : "Link pipeline to applications",
   "pipeline_create" : "Create a pipeline",
   "pipeline_commits_loading" : "Loading commits...",
