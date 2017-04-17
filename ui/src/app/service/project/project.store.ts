@@ -123,6 +123,20 @@ export class ProjectStore {
 
     /**
      *
+     * @param key of the project
+     * @param appName the name of the application to delete
+     */
+    deleteApplication(key: string, appName: string): void {
+        let cache = this._projectCache.getValue();
+        let projectToUpdate = cache.get(key);
+        if (projectToUpdate) {
+            projectToUpdate.applications = projectToUpdate.applications.filter((app) => app.name !== appName);
+            this._projectCache.next(cache.set(key, projectToUpdate));
+        }
+    }
+
+    /**
+     *
      * @param key
      * @param applications
      */

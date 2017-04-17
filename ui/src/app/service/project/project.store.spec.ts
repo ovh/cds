@@ -191,6 +191,44 @@ describe('CDS: project Store', () => {
         expect(projectAppChecked).toBeTruthy();
     }));
 
+    it('should delete application in Project', async( () => {
+        let call = 0;
+        // Mock Http project request
+        backend.connections.subscribe(connection => {
+            connection.mockRespond(new Response(new ResponseOptions({body: `{ 
+                "key": "key1", 
+                "name": "myProject", 
+                "applications" : [
+                    { "name": "app1" },
+                    { "name": "app2" },
+                    { "name": "app3" }
+                ]
+            }`})));
+        });
+
+        // Create project
+        let p = createProject('key1', 'myProject');
+        projectStore.createProject(p).subscribe( () => {});
+
+        let projectChecked = false;
+        projectStore.getProjects('key1').subscribe(projs => {
+            expect(projs.get('key1').applications.length).toBe(3, 'Wrong number of applications. Must be 3.');
+            projectChecked = true;
+        }).unsubscribe();
+        expect(projectChecked).toBeTruthy();
+
+        projectStore.deleteApplication('key1', 'app2');
+
+        let projectAppChecked = false;
+        projectStore.getProjects('key1').subscribe(projs => {
+            expect(projs.get('key1').applications.length).toBe(2, 'Wrong number of applications. Must be 2.');
+            expect(projs.get('key1').applications.findIndex((app) => app.name === 'app2')).toBe(-1,
+                'Application named app2 isn\'t removed');
+            projectAppChecked = true;
+        }).unsubscribe();
+        expect(projectAppChecked).toBeTruthy();
+    }));
+
     it('should update Project', async( () => {
         let call = 0;
         // Mock Http project request
