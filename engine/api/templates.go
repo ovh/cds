@@ -283,8 +283,7 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	tpl, err := templateextension.LoadByType(db, "BUILD")
 	if err != nil {
-		return err
-
+		return sdk.WrapError(err, "getBuildTemplatesHandler> error on loadByType")
 	}
 	return WriteJSON(w, r, tpl, http.StatusOK)
 }
@@ -292,8 +291,7 @@ func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	tpl, err := templateextension.LoadByType(db, "DEPLOY")
 	if err != nil {
-		return err
-
+		return sdk.WrapError(err, "getDeployTemplatesHandler> error on loadByType")
 	}
 	return WriteJSON(w, r, tpl, http.StatusOK)
 }
@@ -303,13 +301,12 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	projectKey := vars["permProjectKey"]
 
 	// Load the project
-	proj, err := project.Load(db, projectKey, c.User,
+	proj, errload := project.Load(db, projectKey, c.User,
 		project.LoadOptions.Default,
 		project.LoadOptions.WithEnvironments,
 		project.LoadOptions.WithGroups)
-	if err != nil {
-		log.Warning("applyTemplatesHandler> Cannot load project %s: %s\n", projectKey, err)
-		return err
+	if errload != nil {
+		return sdk.WrapError(errload, "applyTemplatesHandler> Cannot load project %s", projectKey)
 	}
 
 	// Parse body to sdk.ApplyTemplatesOptions
@@ -319,19 +316,16 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	// Create a session for current user
-	sessionKey, err := auth.NewSession(router.authDriver, c.User)
-	if err != nil {
-		log.Error("applyTemplateHandler> Error while creating new session: %s\n", err)
-		return err
-
+	sessionKey, errnew := auth.NewSession(router.authDriver, c.User)
+	if errnew != nil {
+		return sdk.WrapError(errnew, "applyTemplateHandler> Error while creating new session")
 	}
 
 	// Apply the template
 	log.Debug("applyTemplateHandler> applyTemplate")
-	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
-	if err != nil {
-		return err
-
+	msg, errapply := template.ApplyTemplate(db, proj, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
+	if errapply != nil {
+		return sdk.WrapError(errapply, "applyTemplateHandler> Error while applyTemplate")
 	}
 
 	al := r.Header.Get("Accept-Language")
@@ -344,23 +338,18 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	log.Debug("applyTemplatesHandler> Check warnings on project")
 	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
-		log.Warning("applyTemplatesHandler> Cannot check warnings: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
 	}
 
 	apps, errApp := application.LoadAll(db, proj.Key, c.User, application.LoadOptions.WithVariables)
 	if errApp != nil {
-		log.Warning("applyTemplatesHandler> Cannot load applications: %s\n", err)
-		return err
-
+		return sdk.WrapError(errApp, "applyTemplatesHandler> Cannot load applications")
 	}
 	proj.Applications = apps
 
 	for _, a := range apps {
 		if err := sanity.CheckApplication(db, proj, &a); err != nil {
-			log.Warning("applyTemplatesHandler> Cannot check application sanity: %s\n", err)
-			return err
+			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check application sanity")
 		}
 	}
 
