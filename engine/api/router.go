@@ -270,6 +270,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			if err := rc.post(w, req, db, c); err != nil {
 				WriteError(w, req, err)
 			}
+			deleteUserPermissionCache(c)
 			return
 		}
 
@@ -277,6 +278,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			if err := rc.put(w, req, db, c); err != nil {
 				WriteError(w, req, err)
 			}
+			deleteUserPermissionCache(c)
 			return
 		}
 
@@ -284,6 +286,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			if err := rc.deleteHandler(w, req, db, c); err != nil {
 				WriteError(w, req, err)
 			}
+			deleteUserPermissionCache(c)
 			return
 		}
 		WriteError(w, req, sdk.ErrNotFound)
