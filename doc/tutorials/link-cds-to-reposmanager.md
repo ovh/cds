@@ -25,7 +25,7 @@ You need to perform the following steps :
  - Stash admin privileges
  - A RSA Key Pair
 
-### Create a CDS application in Stash
+### Create a CDS application in Stash / BitBucket
 In Stash go to *Administration Settings* / *Application Links*. Create a new Application with :
 
  - Name : **CDS**
