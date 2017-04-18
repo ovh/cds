@@ -72,7 +72,7 @@ On the next page Github give you a **Client ID** and a **Client Secret**
 With CDS CLI run :
 
  ```
- $ cds admin reposmanager add GITHUB github.com http://github.com client-id=<your_client_id> client-secret=client-secret
+ $ cds admin reposmanager add GITHUB github http://github.com client-id=<your_client_id> client-secret=client-secret
  ```
 
 And follow instructions.
