@@ -25,7 +25,7 @@ You need to perform the following steps :
  - Stash admin privileges
  - A RSA Key Pair
 
-### Create a CDS application in Stash
+### Create a CDS application in Stash / BitBucket
 In Stash go to *Administration Settings* / *Application Links*. Create a new Application with :
 
  - Name : **CDS**
@@ -72,14 +72,21 @@ On the next page Github give you a **Client ID** and a **Client Secret**
 With CDS CLI run :
 
  ```
- $ cds admin reposmanager add GITHUB github.com http://github.com client-id=<your_client_id> client-secret=client-secret
+ $ cds admin reposmanager add GITHUB github http://github.com client-id=<your_client_id> client-secret=<client-secret>
  ```
 
-And follow instructions.
-
+If you use Vault as Secret Manager:
 Set in Vault you CDS **Client Secret** in a secret named : `cds/repositoriesmanager-secrets-github.com.net-client-secret`
 
-Restart CDS.
+If you're not using vault:
+Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with `<client-secret>`:
+
+```toml
+[vcs.repositories.github]
+clientsecret = "<client-secret>"
+```
+
+Then restart CDS.
 
 Now check everything is OK with :
  ```
