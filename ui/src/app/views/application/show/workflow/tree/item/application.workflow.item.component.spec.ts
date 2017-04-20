@@ -27,6 +27,7 @@ import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {Scheduler} from '../../../../../../model/scheduler.model';
+import {NotificationService} from '../../../../../../service/notification/notification.service';
 
 describe('CDS: Application Workflow Item', () => {
 
@@ -41,7 +42,7 @@ describe('CDS: Application Workflow Item', () => {
                 TranslateParser, TranslateService, TranslateLoader,
                 PipelineStore, PipelineService,
                 ApplicationStore, ApplicationService,
-                ProjectStore, ProjectService,
+                ProjectStore, ProjectService, NotificationService,
                 {provide: ToastService, useClass: MockToast}
             ],
             imports: [
