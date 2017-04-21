@@ -1,5 +1,7 @@
 # CDS: Continuous Delivery Service
 
+[![Join the chat at https://gitter.im/ovh-cds/Lobby](https://badges.gitter.im/ovh-cds/Lobby.svg)](https://gitter.im/ovh-cds/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 <img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo-background.png" width="25%">
 
 CDS is a pipeline based Continuous Delivery Service written in Go(lang).
