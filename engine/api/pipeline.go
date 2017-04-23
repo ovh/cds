@@ -234,8 +234,7 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 
 	builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch)
 	if err != nil {
-		log.Warning("runPipelineWithLastParentHandler> Unable to find any successfull pipeline build")
-		return sdk.ErrNoParentBuildFound
+		return sdk.WrapError(sdk.ErrNoParentBuildFound, "runPipelineWithLastParentHandler> Unable to find any successful pipeline build")
 	}
 	if len(builds) == 0 {
 		return sdk.ErrNoPipelineBuild
@@ -951,47 +950,33 @@ func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	pipName := vars["permPipelineKey"]
 	actionIDString := vars["actionID"]
 
-	actionID, err := strconv.ParseInt(actionIDString, 10, 60)
-	if err != nil {
-		log.Warning("deleteJoinedAction> Action ID must be an int: %s\n", err)
-		return sdk.ErrInvalidID
-
+	actionID, errp := strconv.ParseInt(actionIDString, 10, 60)
+	if errp != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "deleteJoinedAction> Action ID %s must be an int", actionIDString)
 	}
 
-	pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
-	if err != nil {
-		log.Warning("deleteJoinedAction> Cannot load pipeline %s for project %s: %s\n", pipName, projectKey, err)
-		return sdk.ErrPipelineNotFound
-
+	pip, errload := pipeline.LoadPipeline(db, projectKey, pipName, false)
+	if errload != nil {
+		return sdk.WrapError(sdk.ErrPipelineNotFound, "deleteJoinedAction> Cannot load pipeline %s for project %s, err:%s", pipName, projectKey, errload)
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deleteJoinedAction> Cannot start transaction: %s", err)
-		return err
-
+	tx, errb := db.Begin()
+	if errb != nil {
+		return sdk.WrapError(errb, "deleteJoinedAction> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
-	err = action.DeleteAction(db, actionID, c.User.ID)
-	if err != nil {
-		log.Warning("deleteJoinedAction> Cannot delete joined action: %s\n", err)
-		return err
-
+	if err := action.DeleteAction(db, actionID, c.User.ID); err != nil {
+		return sdk.WrapError(err, "deleteJoinedAction> Cannot delete joined action")
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pip)
-	if err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
 		log.Warning("deleteJoinedAction> Cannot update last_modified pipeline date: %s", err)
 		return err
-
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("deleteJoinedAction> Cannot commit transation: %s", err)
-		return err
-
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "deleteJoinedAction> Cannot commit transaction")
 	}
 
 	k := cache.Key("application", projectKey, "*")

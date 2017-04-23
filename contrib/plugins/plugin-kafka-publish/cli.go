@@ -39,7 +39,7 @@ func initCli(mainFunc func()) *cli.App {
 				Flags: []cli.Flag{
 					cli.StringFlag{
 						Name:  "pgp-decrypt",
-						Usage: " <file> Decrypt incomming with a private ARMOR GPG Key",
+						Usage: " <file> Decrypt incoming with a private ARMOR GPG Key",
 						Value: "",
 					},
 					cli.StringFlag{

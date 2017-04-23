@@ -16,7 +16,7 @@ type awolPipelineBuildJob struct {
 
 // AWOLPipelineKiller will search in database for actions :
 // - Having building status
-// - Without any logs ouput in the last 15 minutes
+// - Without any logs output in the last 15 minutes
 func AWOLPipelineKiller(DBFunc func() *gorp.DbMap) {
 	// If this goroutine exits, then it's a crash
 	defer log.Fatalf("Goroutine of pipeline.AWOLPipelineKiller exited - Exit CDS Engine")

@@ -89,7 +89,7 @@ export class ApplicationPipelineService {
     /**
      * Get list of commits from given hash.
      * @param key Project unique key
-     * @param appName Applicaiton name
+     * @param appName Application name
      * @param pipName Pipeline name
      * @param envName Environment name
      * @param hash hash

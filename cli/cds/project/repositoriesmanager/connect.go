@@ -47,5 +47,5 @@ func connectReposManager(cmd *cobra.Command, args []string) {
 	if err != nil {
 		sdk.Exit("✘ Error: %s\n", err)
 	}
-	fmt.Printf("✔ Connection successfull to %s \n - access token: %s\n - secret: %s\n", rmName, access, secret)
+	fmt.Printf("✔ Connection successful to %s \n - access token: %s\n - secret: %s\n", rmName, access, secret)
 }

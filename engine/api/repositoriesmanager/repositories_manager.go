@@ -113,7 +113,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 	case sdk.Stash:
 		//we have to compute the StashConsumer
 		var stash *repostash.StashConsumer
-		//Check if it isn't comming from the DB
+		//Check if it isn't coming from the DB
 		if id == 0 || consumerData == "" {
 			//Check args
 			if len(args) != 1 || args["key"] == "" {
@@ -149,7 +149,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 	case sdk.Github:
 		var github *repogithub.GithubConsumer
 		var withHook, withPolling *bool
-		//Check if it isn't comming from the DB
+		//Check if it isn't coming from the DB
 		if id == 0 || consumerData == "" {
 			//Check args
 			if len(args) < 2 || args["client-id"] == "" || args["client-secret"] == "" {
@@ -227,7 +227,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 	return nil, fmt.Errorf("Unknown type %s. Cannot instanciate repositories manager t=%s id=%d name=%s url=%s args=%s consumerData=%s", t, t, id, name, URL, args, consumerData)
 }
 
-//Init initializes all repositories with secrets comming from Vault
+//Init initializes all repositories with secrets coming from Vault
 func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, directory string, secrets map[string]string) error {
 	if rm.Type == sdk.Stash {
 		privateKey := secrets["privatekey"]

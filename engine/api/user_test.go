@@ -61,7 +61,7 @@ func TestVerifyUserToken(t *testing.T) {
 	}
 }
 
-// TestWrongTokenUser  test token verificaiton when token is wrong
+// TestWrongTokenUser  test token verification when token is wrong
 func TestWrongTokenUser(t *testing.T) {
 	db := test.SetupPG(t)
 	u := &sdk.User{

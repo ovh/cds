@@ -18,7 +18,7 @@ type Redis struct {
 
 //Keep redis in good health and remove HSet for expired session
 func (s *Redis) vacuumCleaner() {
-	log.Info("Redis> Starting Session Vaccum Cleaner")
+	log.Info("Redis> Starting Session Vacuum Cleaner")
 	for {
 		keys, err := s.store.Client.Keys("session:*:data").Result()
 		if err != nil {

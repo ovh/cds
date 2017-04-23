@@ -87,7 +87,7 @@ func LoginUser(username, password string) (bool, *UserAPIResponse, error) {
 
 	loginResponse := &UserAPIResponse{}
 	if err := json.Unmarshal(data, loginResponse); err != nil {
-		return false, nil, fmt.Errorf("Error unmarshalling reponse: %s", err)
+		return false, nil, fmt.Errorf("Error unmarshalling response: %s", err)
 	}
 
 	return true, loginResponse, nil
@@ -219,7 +219,7 @@ func VerifyUser(name, token string) (UserAPIResponse, error) {
 
 	err = json.Unmarshal(data, &confirmResponse)
 	if err != nil {
-		return confirmResponse, fmt.Errorf("Error unmarshalling reponse: %s", err)
+		return confirmResponse, fmt.Errorf("Error unmarshalling response: %s", err)
 	}
 
 	return confirmResponse, nil

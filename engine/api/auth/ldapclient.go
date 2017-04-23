@@ -238,7 +238,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 		return u, nil
 	}
 
-	//If user doesn't exist and search was'nt successfull => exist
+	//If user doesn't exist and search was'nt successful => exist
 	if errSearch != nil {
 		log.Warning("LDAP> Search error %s: %s", search, errSearch)
 		return nil, errSearch
@@ -327,7 +327,7 @@ func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.D
 			}
 			return nil
 		}
-		//Check if its comming from CLI
+		//Check if its coming from CLI
 		if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 			if getUserPersistentSession(db, c.Store(), headers, ctx) {
 				return nil

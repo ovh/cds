@@ -98,7 +98,7 @@ func addFlags() {
 	rootCmd.PersistentFlags().Int("provision-seconds", 30, "Check provisioning each n Seconds")
 	viper.BindPFlag("provision-seconds", rootCmd.PersistentFlags().Lookup("provision-seconds"))
 
-	rootCmd.PersistentFlags().Int("max-worker", 10, "Maximum allowed simultaenous workers")
+	rootCmd.PersistentFlags().Int("max-worker", 10, "Maximum allowed simultaneous workers")
 	viper.BindPFlag("max-worker", rootCmd.PersistentFlags().Lookup("max-worker"))
 
 	rootCmd.PersistentFlags().Int("max-failures-heartbeat", 10, "Maximum allowed consecutives failures on heatbeat routine")
