@@ -36,7 +36,7 @@ func checkQueue(bookedJobID int64) {
 
 	log.Info("checkQueue> %d actions in queue", len(queue))
 
-	//Set the status to checking to avoid beeing killed while checking queue, actions and requirements
+	//Set the status to checking to avoid being killed while checking queue, actions and requirements
 	sdk.SetWorkerStatus(sdk.StatusChecking)
 
 	for i := range queue {

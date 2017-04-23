@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	// AvailableVariableType list all exising variable type in CDS
+	// AvailableVariableType list all existing variable type in CDS
 	AvailableVariableType = []string{
 		SecretVariable,
 		TextVariable,

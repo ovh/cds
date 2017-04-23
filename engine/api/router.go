@@ -79,7 +79,7 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				default:
 					err = sdk.ErrUnknownError
 				}
-				log.Error("[PANIC_RECOVERY] Panic occured on %s:%s, recover %s", req.Method, req.URL.String(), err)
+				log.Error("[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, true)
 				log.Error("[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)

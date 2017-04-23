@@ -74,10 +74,10 @@ func UpdateGroupRoleInEnvironment(db gorp.SqlExecutor, key, envName, groupName s
 
 	// Update project
 	query = `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE id IN (
-			SELECT id 
+			SELECT id
 			FROM project
 			WHERE projectKey = $1
 		)
@@ -90,14 +90,14 @@ func UpdateGroupRoleInEnvironment(db gorp.SqlExecutor, key, envName, groupName s
 func DeleteAllGroupFromEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 	// Update environment
 	query := `
-		UPDATE environment 
+		UPDATE environment
 		SET last_modified = current_timestamp
 		WHERE id = $1
 	`
 	if _, err := db.Exec(query, environmentID); err != nil {
 		return err
 	}
-	//Delete assocation
+	//Delete association
 	query = `DELETE FROM environment_group
 		  WHERE environment_id=$1`
 	_, err := db.Exec(query, environmentID)
@@ -108,10 +108,10 @@ func DeleteAllGroupFromEnvironment(db gorp.SqlExecutor, environmentID int64) err
 func DeleteGroupFromEnvironment(db gorp.SqlExecutor, key, envName, groupName string) error {
 	// Update project
 	query := `
-		UPDATE project 
+		UPDATE project
 		SET last_modified = current_timestamp
 		WHERE id IN (
-			SELECT id 
+			SELECT id
 			FROM project
 			WHERE projectKey = $1
 		)

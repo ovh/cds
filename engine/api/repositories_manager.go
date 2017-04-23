@@ -630,7 +630,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if !b {
-		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "deleteHookOnRepositoriesManagerHandler> Applicaiton %s is not attached to any repository", appName)
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "deleteHookOnRepositoriesManagerHandler> Application %s is not attached to any repository", appName)
 	}
 
 	client, errauth := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)

@@ -40,7 +40,7 @@ func infoAction(c *cli.Context) error {
 	return nil
 }
 
-//This will listen kafka topic forever and manage all incomming context, file and chunks
+//This will listen kafka topic forever and manage all incoming context, file and chunks
 func listenAction(c *cli.Context) error {
 	args := []string{c.Args().First()}
 	args = append(args, c.Args().Tail()...)
@@ -175,7 +175,7 @@ func ackAction(c *cli.Context) error {
 		}
 	}
 
-	//Prepare the ack object wich will be send to kafka
+	//Prepare the ack object which will be send to kafka
 	ack := kafkapublisher.Ack{
 		Context: *ctx,
 		Result:  result,

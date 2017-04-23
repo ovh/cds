@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-//LocalClient is a auth driver wich store all in database
+//LocalClient is a auth driver which store all in database
 type LocalClient struct {
 	store sessionstore.Store
 }
@@ -91,7 +91,7 @@ func (c *LocalClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.
 				}
 				return nil
 			}
-			//Check if its comming from CLI
+			//Check if its coming from CLI
 			if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 				if getUserPersistentSession(db, c.Store(), headers, ctx) {
 					return nil

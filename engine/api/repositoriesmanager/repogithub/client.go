@@ -40,7 +40,7 @@ func (g *GithubClient) Repos() ([]sdk.VCSRepo, error) {
 			}
 			nextRepos := []Repository{}
 
-			//Github may return 304 status because we are using conditionnal request with ETag based headers
+			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
 				cache.Get(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), &repos)
@@ -115,7 +115,7 @@ func (g *GithubClient) repoByFullname(fullname string) (Repository, error) {
 	}
 	repo := Repository{}
 
-	//Github may return 304 status because we are using conditionnal request with ETag based headers
+	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		cache.Get(cache.Key("reposmanager", "github", "repo", g.OAuthToken, url), &repo)
@@ -154,7 +154,7 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			}
 			nextBranches := []Branch{}
 
-			//Github may return 304 status because we are using conditionnal request with ETag based headers
+			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
 				cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
@@ -268,7 +268,7 @@ func (g *GithubClient) User(username string) (User, error) {
 	}
 	user := User{}
 
-	//Github may return 304 status because we are using conditionnal request with ETag based headers
+	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		cache.Get(cache.Key("reposmanager", "github", "users", g.OAuthToken, url), &user)
@@ -336,7 +336,7 @@ func (g *GithubClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	}
 	c := Commit{}
 
-	//Github may return 304 status because we are using conditionnal request with ETag based headers
+	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		cache.Get(cache.Key("reposmanager", "github", "commit", g.OAuthToken, url), &c)

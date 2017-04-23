@@ -250,7 +250,7 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 		return err
 	}
 
-	// FINALY delete environment
+	// FINALLY delete environment
 	query = `DELETE FROM environment WHERE id=$1`
 	if _, err := db.Exec(query, environmentID); err != nil {
 		if err, ok := err.(*pq.Error); ok {

@@ -32,7 +32,7 @@ type PipelineTrigger struct {
 	LastModified  int64          `json:"last_modified"`
 }
 
-// GetTriggers retrieves all ouput triggers of a pipeline
+// GetTriggers retrieves all output triggers of a pipeline
 func GetTriggers(project, app, pipeline, env string) ([]PipelineTrigger, error) {
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/trigger", project, app, pipeline)
 
@@ -58,7 +58,7 @@ func GetTriggers(project, app, pipeline, env string) ([]PipelineTrigger, error) 
 	return triggers, nil
 }
 
-// GetTriggersAsSource retrieves all ouput triggers of a pipeline
+// GetTriggersAsSource retrieves all output triggers of a pipeline
 func GetTriggersAsSource(project, app, pipeline, env string) ([]PipelineTrigger, error) {
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/trigger/source", project, app, pipeline)
 
