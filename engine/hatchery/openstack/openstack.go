@@ -155,15 +155,19 @@ func (h *HatcheryCloud) Init() error {
 // this func is called once, when hatchery is starting
 func (h *HatcheryCloud) initIPStatus() {
 	servers := h.getServers()
+	log.Info("initIPStatus> %d servers", len(servers))
 	for ip := range ipsInfos.ips {
 		for _, s := range servers {
 			if len(s.Addresses) == 0 {
+				log.Info("initIPStatus> server %s - 0 addr", s.Name)
 				continue
 			}
 			for _, network := range h.networkIDs {
+				log.Info("initIPStatus> server %s - work on %s", s.Name, network)
 				for _, a := range s.Addresses[network] {
+					log.Info("initIPStatus> server %s - adress %s (checking %s)", s.Name, a.Addr, ip)
 					if a.Addr != "" && a.Addr == ip {
-						log.Info("initIPStatus> worker %s use IP: %s", s.Name, a.Addr)
+						log.Info("initIPStatus> worker %s - use IP: %s", s.Name, a.Addr)
 						ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
 					}
 				}
