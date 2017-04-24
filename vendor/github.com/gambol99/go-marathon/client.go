@@ -311,6 +311,7 @@ func (r *marathonClient) buildAPIRequest(method, uri string, reader io.Reader) (
 	// Grab a member from the cluster
 	member, err = r.hosts.getMember()
 	if err != nil {
+		defer r.hosts.healthCheckAllNodes()
 		return nil, "", ErrMarathonDown
 	}
 
