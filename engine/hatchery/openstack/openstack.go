@@ -157,6 +157,7 @@ func (h *HatcheryCloud) initIPStatus() {
 	servers := h.getServers()
 	log.Info("initIPStatus> %d servers", len(servers))
 	for ip := range ipsInfos.ips {
+		log.Info("initIPStatus> checking %s", ip)
 		for _, s := range servers {
 			if len(s.Addresses) == 0 {
 				log.Info("initIPStatus> server %s - 0 addr", s.Name)
