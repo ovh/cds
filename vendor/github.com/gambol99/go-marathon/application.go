@@ -62,6 +62,7 @@ type Application struct {
 	Constraints                *[][]string          `json:"constraints,omitempty"`
 	Container                  *Container           `json:"container,omitempty"`
 	CPUs                       float64              `json:"cpus,omitempty"`
+	GPUs                       *float64             `json:"gpus,omitempty"`
 	Disk                       *float64             `json:"disk,omitempty"`
 	Env                        *map[string]string   `json:"env,omitempty"`
 	Executor                   *string              `json:"executor,omitempty"`
@@ -177,6 +178,22 @@ func (r *Application) Command(cmd string) *Application {
 //		cpu:	the CPU shared (check Docker docs) per instance
 func (r *Application) CPU(cpu float64) *Application {
 	r.CPUs = cpu
+	return r
+}
+
+// SetGPUs set the amount of GPU per instance which is assigned to the application
+//		gpu:	the GPU (check MESOS docs) per instance
+func (r *Application) SetGPUs(gpu float64) *Application {
+	r.GPUs = &gpu
+	return r
+}
+
+// EmptyGPUs explicitly empties GPUs -- use this if you need to empty
+// gpus of an application that already has gpus set (setting port definitions to nil will
+// keep the current value)
+func (r *Application) EmptyGPUs() *Application {
+	g := 0.0
+	r.GPUs = &g
 	return r
 }
 
