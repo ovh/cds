@@ -50,14 +50,15 @@ type HatcheryCloud struct {
 	networkIDs []string
 
 	// User provided parameters
-	address       string
-	user          string
-	password      string
-	endpoint      string
-	tenant        string
-	region        string
-	networkString string
-	workerTTL     int
+	address        string
+	user           string
+	password       string
+	endpoint       string
+	tenant         string
+	region         string
+	networkString  string
+	networksString []string
+	workerTTL      int
 }
 
 // ID returns hatchery id
@@ -127,6 +128,7 @@ func (h *HatcheryCloud) Init() error {
 	}
 
 	for _, network := range strings.Split(h.networkString, ",") {
+		h.networksString = append(h.networksString, network)
 		networkID, errni := h.getNetworkID(network)
 		if errni != nil {
 			return fmt.Errorf("cannot find network '%s'", network)
@@ -163,10 +165,10 @@ func (h *HatcheryCloud) initIPStatus() {
 				log.Info("initIPStatus> server %s - 0 addr", s.Name)
 				continue
 			}
-			for _, network := range h.networkIDs {
-				log.Info("initIPStatus> server %s - work on %s - srv: %+v", s.Name, network, s)
+			for _, network := range h.networksString {
+				log.Debug("initIPStatus> server %s - work on %s", s.Name, network)
 				for _, a := range s.Addresses[network] {
-					log.Info("initIPStatus> server %s - address %s (checking %s)", s.Name, a.Addr, ip)
+					log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, a.Addr, ip)
 					if a.Addr != "" && a.Addr == ip {
 						log.Info("initIPStatus> worker %s - use IP: %s", s.Name, a.Addr)
 						ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
@@ -554,7 +556,7 @@ func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
 			if len(s.Addresses) == 0 {
 				continue
 			}
-			for _, network := range h.networkIDs {
+			for _, network := range h.networksString {
 				for _, a := range s.Addresses[network] {
 					if a.Addr == ip {
 						free = false
