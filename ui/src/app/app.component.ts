@@ -1,4 +1,4 @@
-import {Component, OnInit, NgZone,} from '@angular/core';
+import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from 'ng2-translate';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {environment} from '../environments/environment';
@@ -23,7 +23,7 @@ export class AppComponent  implements OnInit {
     versionWorker: CDSWorker;
     zone: NgZone;
 
-    currentVersion: number = 0;
+    currentVersion = 0;
     showUIUpdatedBanner = false;
 
     warningWorkerSubscription: Subscription;
@@ -92,7 +92,10 @@ export class AppComponent  implements OnInit {
     startWarningWorker(): void {
         this.stopWarningWorker();
         this.warningWorker = new CDSWorker('./assets/worker/web/warning.js');
-        this.warningWorker.start({ 'user': this._authStore.getUser(), 'session': this._authStore.getSessionToken(), 'api': environment.apiURL});
+        this.warningWorker.start({
+            'user': this._authStore.getUser(),
+            'session': this._authStore.getSessionToken(),
+            'api': environment.apiURL});
         this.warningWorker.response().subscribe( msg => {
             if (msg) {
                 this.zone.run(() => {
@@ -125,6 +128,6 @@ export class AppComponent  implements OnInit {
     refresh(): void {
         this.zone.runOutsideAngular(() => {
             location.reload(true);
-        })
+        });
     }
 }
