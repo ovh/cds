@@ -182,6 +182,8 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
     }
 
     ngOnDestroy() {
-        this.notificationSubscription.unsubscribe();
+        if (this.notificationSubscription) {
+            this.notificationSubscription.unsubscribe();
+        }
     }
 }

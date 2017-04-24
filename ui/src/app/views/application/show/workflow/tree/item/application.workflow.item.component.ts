@@ -326,6 +326,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.notificationSubscription.unsubscribe();
+        if (this.notificationSubscription) {
+            this.notificationSubscription.unsubscribe();
+        }
     }
 }
