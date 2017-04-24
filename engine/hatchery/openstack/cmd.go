@@ -100,10 +100,12 @@ $ CDS_OPENSTACK_USER=<user> CDS_OPENSTACK_TENANT=<tenant> CDS_OPENSTACK_AUTH_END
 		}
 
 		if viper.GetString("openstack-ip-range") != "" {
-			var err error
-			hatcheryOpenStack.ips, err = IPinRanges(viper.GetString("openstack-ip-range"))
+			ips, err := IPinRanges(viper.GetString("openstack-ip-range"))
 			if err != nil {
 				sdk.Exit("flag or environmnent variable openstack-ip-range error: %s\n", err)
+			}
+			for _, ip := range ips {
+				ipsInfos.ips[ip] = ipInfos{}
 			}
 		}
 	},
