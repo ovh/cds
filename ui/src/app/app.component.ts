@@ -54,7 +54,7 @@ export class AppComponent  implements OnInit {
         this._authStore.getUserlst().subscribe(user => {
             if (!user) {
                 this.isConnected = false;
-                this.stopWarningWorker();
+                this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
             } else {
                 this.isConnected = true;
                 this.startWarningWorker();
@@ -63,24 +63,12 @@ export class AppComponent  implements OnInit {
         });
     }
 
-    stopVersionWorker(): void {
-        if (this.versionWorker) {
-            this.versionWorker.stop();
+    stopWorker(w: CDSWorker, s: Subscription): void {
+        if (w) {
+            w.stop();
         }
-        if (this.versionWorkerSubscription) {
-            this.versionWorkerSubscription.unsubscribe();
-        }
-    }
-
-    /**
-     * Stop worker that are pulling warnings.
-     */
-    stopWarningWorker(): void {
-        if (this.warningWorker) {
-            this.warningWorker.stop();
-        }
-        if (this.warningWorkerSubscription) {
-            this.warningWorkerSubscription.unsubscribe();
+        if (s) {
+            s.unsubscribe();
         }
     }
 
@@ -90,7 +78,7 @@ export class AppComponent  implements OnInit {
      * SharedWorker for the others  (worker shared between tabs)
      */
     startWarningWorker(): void {
-        this.stopWarningWorker();
+        this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
         this.warningWorker = new CDSWorker('./assets/worker/web/warning.js');
         this.warningWorker.start({
             'user': this._authStore.getUser(),
@@ -106,11 +94,11 @@ export class AppComponent  implements OnInit {
     }
 
     startVersionWorker(): void {
-        this.stopVersionWorker();
+        this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
         this.versionWorker = new CDSWorker('./assets/worker/web/version.js');
         this.versionWorker.start({});
         this.versionWorker.response().subscribe( msg => {
-            if (msg !== null) {
+            if (msg !== null && msg !== undefined) {
                 this.zone.run(() => {
                     let versionJSON = JSON.parse(msg).version;
                     if (this.currentVersion === 0) {
