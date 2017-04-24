@@ -10,7 +10,7 @@ fi;
 cd assets
 if [ ! -z ${BUILD_NUMBER} ]; then
     echo "replace base url with ${VERSION}"
-    sed -i "s#VERSION#$BUILD_NUMBER#" version.json
+    sed -i "s#0#$BUILD_NUMBER#" version.json
 fi;
 
 echo "################"

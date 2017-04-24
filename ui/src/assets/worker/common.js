@@ -6,7 +6,7 @@ function httpCall (path, host, user, session) {
         xhr.open('GET', host + path, false, null, null);
         if (session) {
             xhr.setRequestHeader("Session-Token", session);
-        } else {
+        } else if (user) {
             xhr.setRequestHeader("Authorization", "Basic " + user.token);
         }
 

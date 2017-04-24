@@ -358,6 +358,8 @@
   "variable_updated" : "Variable mise à jour",
   "variable_value" : "Valeur",
 
+  "ui_updated" : "L'interface vient d'être mise à jour. Merci de cliquer ici pour rafraichir votre page.",
+
   "user_label_fullname": "Nom complet de l'utilisateur",
   "user_label_username": "Nom d'utilisateur",
   "user_label_password": "Mot de passe",
