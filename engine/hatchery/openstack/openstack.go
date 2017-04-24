@@ -164,9 +164,9 @@ func (h *HatcheryCloud) initIPStatus() {
 				continue
 			}
 			for _, network := range h.networkIDs {
-				log.Info("initIPStatus> server %s - work on %s", s.Name, network)
+				log.Info("initIPStatus> server %s - work on %s - srv: %+v", s.Name, network, s)
 				for _, a := range s.Addresses[network] {
-					log.Info("initIPStatus> server %s - adress %s (checking %s)", s.Name, a.Addr, ip)
+					log.Info("initIPStatus> server %s - address %s (checking %s)", s.Name, a.Addr, ip)
 					if a.Addr != "" && a.Addr == ip {
 						log.Info("initIPStatus> worker %s - use IP: %s", s.Name, a.Addr)
 						ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
