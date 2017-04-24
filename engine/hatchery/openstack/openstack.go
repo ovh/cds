@@ -497,8 +497,8 @@ func (h *HatcheryCloud) getNetworkID(network string) (string, error) {
 func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
 	servers := h.getServers()
 
-	ipsInfos.mu.RLock()
-	defer ipsInfos.mu.RUnlock()
+	ipsInfos.mu.Lock()
+	defer ipsInfos.mu.Unlock()
 	for ip, infos := range ipsInfos.ips {
 		// ip used less than 10s
 		// 10s max to display worker name on nova list after call create
