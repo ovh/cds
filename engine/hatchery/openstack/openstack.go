@@ -144,9 +144,32 @@ func (h *HatcheryCloud) Init() error {
 		os.Exit(10)
 	}
 
+	h.initIPStatus()
 	go h.main()
 
 	return nil
+}
+
+// initIPStatus initializes ipsInfos to
+// add workername on ip belong to openstack-ip-range
+// this func is called once, when hatchery is starting
+func (h *HatcheryCloud) initIPStatus() {
+	servers := h.getServers()
+	for ip := range ipsInfos.ips {
+		for _, s := range servers {
+			if len(s.Addresses) == 0 {
+				continue
+			}
+			for _, network := range h.networkIDs {
+				for _, a := range s.Addresses[network] {
+					if a.Addr != "" && a.Addr == ip {
+						log.Info("initIPStatus> worker %s use IP: %s", s.Name, a.Addr)
+						ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
+					}
+				}
+			}
+		}
+	}
 }
 
 func (h *HatcheryCloud) main() {
@@ -193,8 +216,7 @@ func (h *HatcheryCloud) killDisabledWorkers() {
 		for _, s := range servers {
 			if s.Name == w.Name {
 				log.Info("Deleting disabled worker %s", w.Name)
-				err := deleteServer(h.endpoint, h.token.ID, s.ID)
-				if err != nil {
+				if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 					log.Warning("Cannot remove server %s: %s", s.Name, err)
 					continue
 				}
