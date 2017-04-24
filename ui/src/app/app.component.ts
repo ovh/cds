@@ -6,6 +6,7 @@ import {WarningStore} from './service/warning/warning.store';
 import {CDSWorker} from './shared/worker/worker';
 import {Subscription} from 'rxjs/Rx';
 import {LanguageStore} from './service/language/language.store';
+import {NotificationService} from './service/notification/notification.service';
 
 @Component({
     selector: 'app-root',
@@ -22,7 +23,8 @@ export class AppComponent  implements OnInit, OnDestroy {
     zone: NgZone;
 
     constructor(private _translate: TranslateService, private _language: LanguageStore,
-                private _authStore: AuthentificationStore, private _warnStore: WarningStore) {
+                private _authStore: AuthentificationStore, private _warnStore: WarningStore,
+                private _notification: NotificationService) {
         this.zone = new NgZone({enableLongStackTrace: false});
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');
@@ -36,6 +38,8 @@ export class AppComponent  implements OnInit, OnDestroy {
                 _language.set(browserLang.match(/en|fr/) ? browserLang : 'en');
             }
         });
+
+        this._notification.requestPermission();
     }
 
     ngOnDestroy(): void {

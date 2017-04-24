@@ -1,7 +1,9 @@
-import {Component, Input, ViewChild} from '@angular/core';
+import {Component, Input, ViewChild, DoCheck, OnDestroy} from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
 import {WorkflowItem} from '../../../../../../model/application.workflow.model';
 import {Application} from '../../../../../../model/application.model';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
+import {NotificationService} from '../../../../../../service/notification/notification.service';
 import {Router} from '@angular/router';
 import {PipelineRunRequest, PipelineBuild, Pipeline} from '../../../../../../model/pipeline.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
@@ -25,14 +27,14 @@ declare var _: any;
     templateUrl: './application.workflow.item.html',
     styleUrls: ['./application.workflow.item.scss']
 })
-export class ApplicationWorkflowItemComponent {
+export class ApplicationWorkflowItemComponent implements DoCheck, OnDestroy {
 
     @Input() project: Project;
     @Input() workflowItem: WorkflowItem;
     @Input() orientation: string;
     @Input() application: Application;
     @Input() applicationFilter: any;
-
+    oldPipelineStatus: string;
     // Triggers modals
     @ViewChild('editTriggerModal')
     editTriggerModal: SemanticModalComponent;
@@ -54,8 +56,11 @@ export class ApplicationWorkflowItemComponent {
     @ViewChild('detachPipelineModal')
     detachModalPipelineModal: SemanticModalComponent;
 
+    notificationSubscription: Subscription;
+
     constructor(private _router: Router, private _appPipService: ApplicationPipelineService, private _pipStore: PipelineStore,
-                private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService) {
+                private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
+                private _notification: NotificationService) {
     }
 
 
@@ -287,5 +292,40 @@ export class ApplicationWorkflowItemComponent {
 
     getTriggerSource(pb: PipelineBuild): string {
         return PipelineBuild.GetTriggerSource(pb);
+    }
+
+    handleNotification(pipeline: Pipeline): void {
+        switch (pipeline.last_pipeline_build.status) {
+        case 'Success':
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
+                pipelineName: pipeline.name
+            })).subscribe();
+            break;
+        case 'Failing':
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
+                pipelineName: pipeline.name
+            })).subscribe();
+            break;
+        }
+    }
+
+    ngDoCheck() {
+        if (this.workflowItem.pipeline && this.workflowItem.pipeline.last_pipeline_build &&
+            this.workflowItem.pipeline.last_pipeline_build.status) {
+
+            if (!this.oldPipelineStatus) {
+                this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
+            }
+
+            if (this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status) {
+                this.handleNotification(this.workflowItem.pipeline);
+            }
+
+            this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
+        }
+    }
+
+    ngOnDestroy() {
+        this.notificationSubscription.unsubscribe();
     }
 }

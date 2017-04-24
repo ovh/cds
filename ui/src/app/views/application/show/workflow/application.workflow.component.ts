@@ -118,6 +118,7 @@ export class ApplicationWorkflowComponent implements OnInit {
             let pipelineBuildUpdated = app.pipelines_build.filter(
                 pb => pb.pipeline.id === w.pipeline.id && pb.environment.id === w.environment.id
             );
+
             // If pipeline found : update it
             if (pipelineBuildUpdated && pipelineBuildUpdated.length === 1) {
                 w.pipeline.last_pipeline_build = pipelineBuildUpdated[0];

@@ -32,6 +32,7 @@ import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {ApplicationAuditService} from './application/application.audit.service';
 import {WorkerModelService} from './worker/worker.model.service';
 import {LanguageStore} from './language/language.store';
+import {NotificationService} from './notification/notification.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -55,6 +56,7 @@ export class ServicesModule {
                 EnvironmentAuditService,
                 GroupService,
                 LanguageStore,
+                NotificationService,
                 ParameterService,
                 PipelineResolver,
                 PipelineService,

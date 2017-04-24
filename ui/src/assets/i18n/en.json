@@ -177,6 +177,8 @@
   "notifications_no" : "There is no notification",
   "notification_on_pipeline_s" : "On pipelines: ",
   "notification_on_pipeline" : "On pipeline: ",
+  "notification_on_pipeline_success" : "Your pipeline '{{pipelineName}}' has been successfully executed",
+  "notification_on_pipeline_failing" : "Your pipeline '{{pipelineName}}' has not been successfully executed",
   "notification_on_environment_s" : "On environments: ",
   "notification_on_environment" : "On environment: ",
   "notification_on_failure" : "Send on failure",
