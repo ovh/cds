@@ -2,6 +2,10 @@
     <div id="navbar" [class.connected]="isConnected">
         <app-navbar></app-navbar>
     </div>
+    <div id="banner" class="pointing" (click)="refresh()">
+            {{ 'ui_updated' | translate }}
+    </div>
+
     <div class="page" [class.connected]="isConnected">
         <div class="content" [class.connected]="isConnected">
             <div class="toast">
