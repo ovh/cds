@@ -78,21 +78,21 @@ func Get(name, path string) (*sdk.TemplateExtension, []sdk.TemplateParam, error)
 //Instance returns the template instance
 func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.SessionKey, apiURL string) (template.Interface, func(), error) {
 	//Fetch fro mobject store
-	buf, err := objectstore.FetchTemplateExtension(*tmpl)
-	if err != nil {
-		return nil, nil, err
+	buf, errf := objectstore.FetchTemplateExtension(*tmpl)
+	if errf != nil {
+		return nil, nil, errf
 	}
 
 	//Read the buffer
-	btes, err := ioutil.ReadAll(buf)
-	if err != nil {
-		return nil, nil, err
+	btes, errr := ioutil.ReadAll(buf)
+	if errr != nil {
+		return nil, nil, errr
 	}
 
-	tmp, err := ioutil.TempDir("", "cds-template")
-	if err != nil {
-		log.Error("Instance> %s", err)
-		return nil, nil, err
+	tmp, errt := ioutil.TempDir("", "cds-template")
+	if errt != nil {
+		log.Error("Instance> %s", errt)
+		return nil, nil, errt
 	}
 	deferFunc := func() {
 		log.Debug("Instance> deleting file %s", tmp)
@@ -101,10 +101,10 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 
 	log.Debug("Instance> creating temporary directory")
 	tmpfn := filepath.Join(tmp, fmt.Sprintf("template-%d", tmpl.ID))
-	f, err := os.OpenFile(tmpfn, os.O_WRONLY|os.O_CREATE, 0700)
-	if err != nil {
-		log.Error("Instance> %s", err)
-		return nil, deferFunc, err
+	f, erro := os.OpenFile(tmpfn, os.O_WRONLY|os.O_CREATE, 0700)
+	if erro != nil {
+		log.Error("Instance> %s", erro)
+		return nil, deferFunc, erro
 	}
 
 	if _, err := io.Copy(f, bytes.NewBuffer(btes)); err != nil {
@@ -112,12 +112,6 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 		return nil, deferFunc, err
 	}
 	f.Close()
-
-	//The template will call local API
-	hostname, _ := os.Hostname()
-	if hostname == "" {
-		hostname = "127.0.0.1"
-	}
 
 	//FIXME: export tls feature will impact this
 	log.Debug("Instance>  %s:%s", u.Username, string(sessionKey))

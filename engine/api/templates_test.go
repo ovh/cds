@@ -145,6 +145,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
@@ -165,6 +166,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
@@ -268,6 +270,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
@@ -290,6 +293,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("DELETE", uri, nil)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
@@ -375,6 +379,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
@@ -395,6 +400,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
@@ -447,6 +453,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("PUT", uri, bodyBuf)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
@@ -541,6 +548,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
@@ -561,6 +569,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
@@ -669,6 +678,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
@@ -727,6 +737,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("POST", uri, bodyBuf)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
@@ -753,6 +764,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	bodyBuf = bytes.NewBuffer(btes)
 	req, err = http.NewRequest("POST", uri, bodyBuf)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	req.Header.Add("Content-Type", contentType)
