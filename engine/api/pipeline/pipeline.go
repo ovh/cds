@@ -349,8 +349,8 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 }
 
 // InsertPipeline inserts pipeline informations in database
-func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
-	query := `INSERT INTO pipeline (name, project_id, type, last_modified) VALUES ($1,$2,$3, current_timestamp) RETURNING id, last_modified`
+func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline, u *sdk.User) error {
+	query := `INSERT INTO pipeline (name, project_id, type, last_modified) VALUES ($1,$2,$3, current_timestamp) RETURNING id`
 
 	if p.Name == "" {
 		return sdk.ErrInvalidName
@@ -364,11 +364,9 @@ func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 		return sdk.ErrInvalidProject
 	}
 
-	var lastModified time.Time
-	if err := db.QueryRow(query, p.Name, p.ProjectID, string(p.Type)).Scan(&p.ID, &lastModified); err != nil {
+	if err := db.QueryRow(query, p.Name, p.ProjectID, string(p.Type)).Scan(&p.ID); err != nil {
 		return err
 	}
-	p.LastModified = lastModified.Unix()
 
 	for i := range p.Parameter {
 		if err := InsertParameterInPipeline(db, p.ID, &p.Parameter[i]); err != nil {
@@ -376,7 +374,7 @@ func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 		}
 	}
 
-	return nil
+	return UpdateLastModified(db, u, p)
 }
 
 // ExistPipeline Check if the given pipeline exist in database

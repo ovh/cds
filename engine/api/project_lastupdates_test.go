@@ -81,14 +81,14 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -104,6 +104,8 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 
 	url := fmt.Sprintf("/project_lastupdates_test/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
+
+	test.NoError(t, loadUserPermissions(db, u))
 
 	c := &context.Ctx{
 		User: u,
@@ -179,14 +181,14 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -205,12 +207,14 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	test.NoError(t, application.Insert(db, proj, app2))
+	test.NoError(t, application.Insert(db, proj, app2, u))
 	test.NoError(t, group.InsertGroupInApplication(db, app2.ID, g.ID, 4))
 	test.NoError(t, group.InsertGroupInPipeline(db, pip.ID, g.ID, 4))
 
 	url := fmt.Sprintf("/project_lastupdates_test1/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
+
+	test.NoError(t, loadUserPermissions(db, u))
 
 	c := &context.Ctx{
 		User: u,
@@ -292,14 +296,14 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -322,7 +326,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(db, proj, app2)
+	err = application.Insert(db, proj, app2, u)
 	test.NoError(t, err)
 	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
 	test.NoError(t, err)
@@ -331,6 +335,8 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 
 	url := fmt.Sprintf("/project_lastupdates_test2/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
+
+	test.NoError(t, loadUserPermissions(db, u))
 
 	c := &context.Ctx{
 		User: u,
@@ -416,7 +422,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err := pipeline.InsertPipeline(db, pip)
+	err := pipeline.InsertPipeline(db, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -424,7 +430,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(db, proj, app)
+	err = application.Insert(db, proj, app, u)
 	test.NoError(t, err)
 
 	//Create a group
@@ -450,7 +456,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(db, proj, app2)
+	err = application.Insert(db, proj, app2, u)
 	test.NoError(t, err)
 	test.NoError(t, project.UpdateLastModified(db, nil, proj))
 	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
@@ -461,6 +467,8 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	url := fmt.Sprintf("/project_lastupdates_test3/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("If-Modified-Since", since.Format(time.RFC1123))
+
+	test.NoError(t, loadUserPermissions(db, u))
 
 	c := &context.Ctx{
 		User: u,
@@ -536,7 +544,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.InsertPipeline(db, pip)
+	err = pipeline.InsertPipeline(db, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -544,7 +552,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(db, proj, app)
+	err = application.Insert(db, proj, app, u)
 	test.NoError(t, err)
 
 	//Create a group
@@ -567,7 +575,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(db, proj, app2)
+	err = application.Insert(db, proj, app2, u)
 
 	test.NoError(t, err)
 	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
@@ -582,6 +590,8 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 	since := time.Now()
 
 	req.Header.Set("If-Modified-Since", since.Format(time.RFC1123))
+
+	test.NoError(t, loadUserPermissions(db, u))
 
 	c := &context.Ctx{
 		User: u,

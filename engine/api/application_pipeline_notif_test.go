@@ -102,7 +102,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err := pipeline.InsertPipeline(db, pip)
+	err := pipeline.InsertPipeline(db, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -110,7 +110,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(db, proj, app)
+	err = application.Insert(db, proj, app, u)
 	test.NoError(t, err)
 
 	env := &sdk.DefaultEnv
@@ -593,7 +593,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 
 	app := &sdk.Application{Name: assets.RandomString(t, 10)}
 
-	err := application.Insert(db, p, app)
+	err := application.Insert(db, p, app, u)
 	test.NoError(t, err)
 
 	pip := &sdk.Pipeline{
@@ -601,7 +601,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 		Type:      "build",
 		ProjectID: p.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip)
+	err = pipeline.InsertPipeline(db, pip, u)
 	test.NoError(t, err)
 
 	_, err = application.AttachPipeline(db, app.ID, pip.ID)

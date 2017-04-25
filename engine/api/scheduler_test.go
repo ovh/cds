@@ -43,7 +43,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -52,7 +52,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -131,7 +131,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -140,7 +140,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -195,7 +195,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -204,7 +204,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -275,7 +275,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -284,7 +284,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

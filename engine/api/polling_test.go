@@ -80,14 +80,14 @@ func TestAddPollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
 	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -152,14 +152,14 @@ func TestUpdatePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
 	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -245,14 +245,14 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
 	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -341,14 +341,14 @@ func TestGetPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
 	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -433,14 +433,14 @@ func TestDeletePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
 	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)

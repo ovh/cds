@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -54,6 +55,8 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	dbSSLMode = flag.Lookup("sslMode").Value.String()
 
 	log.SetLogger(t)
+
+	cache.Initialize("local", "", "", 30)
 
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")

@@ -718,7 +718,7 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	defer tx.Rollback()
 
 	//Insert application in database
-	if err := application.Insert(tx, proj, &app); err != nil {
+	if err := application.Insert(tx, proj, &app, c.User); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline: %s\n", err)
 		return err
 

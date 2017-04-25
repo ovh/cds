@@ -20,7 +20,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
 
 	actual, err := application.LoadByName(db, key, "my-app", nil)
 	test.NoError(t, err)
@@ -38,7 +38,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
@@ -60,7 +60,7 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
 
 	actual, err := application.LoadByID(db, app.ID, nil)
 	test.NoError(t, err)
@@ -79,7 +79,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
@@ -111,8 +111,8 @@ func TestLoadAllAsAdmin(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
-	test.NoError(t, application.Insert(db, proj, &app2))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
+	test.NoError(t, application.Insert(db, proj, &app2, nil))
 
 	actual, err := application.LoadAll(db, proj.Key, nil)
 	test.NoError(t, err)
@@ -137,8 +137,8 @@ func TestLoadAllAsUser(t *testing.T) {
 		Name: "my-app2",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
-	test.NoError(t, application.Insert(db, proj, &app2))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
+	test.NoError(t, application.Insert(db, proj, &app2, nil))
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 

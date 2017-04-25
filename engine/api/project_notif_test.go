@@ -36,7 +36,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	test.NoError(t, group.InsertUserInGroup(db, p.ProjectGroups[0].Group.ID, u.ID, true))
 
 	app := &sdk.Application{Name: assets.RandomString(t, 10)}
-	err := application.Insert(db, p, app)
+	err := application.Insert(db, p, app, u)
 	test.NoError(t, err)
 	test.NoError(t, group.InsertGroupInApplication(db, app.ID, p.ProjectGroups[0].Group.ID, 7))
 
@@ -45,7 +45,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 		Type:      "build",
 		ProjectID: p.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip)
+	err = pipeline.InsertPipeline(db, pip, nil)
 	test.NoError(t, err)
 	test.NoError(t, group.InsertGroupInPipeline(db, pip.ID, p.ProjectGroups[0].Group.ID, 7))
 

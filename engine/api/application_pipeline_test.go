@@ -39,7 +39,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,7 +51,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip2); err != nil {
+	if err := pipeline.InsertPipeline(db, pip2, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,7 +60,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

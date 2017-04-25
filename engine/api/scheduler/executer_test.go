@@ -29,7 +29,7 @@ func TestExecuterRun(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -38,7 +38,7 @@ func TestExecuterRun(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

@@ -205,7 +205,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 }
 
 //Import insert the pipeline in the project
-func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
@@ -216,7 +216,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 		return sdk.WrapError(errExist, "Import> Unable to check if pipeline %s %s exists", proj.Name, pip.Name)
 	}
 	if !ok {
-		if err := importNew(db, proj, pip); err != nil {
+		if err := importNew(db, proj, pip, u); err != nil {
 			log.Debug("pipeline.Import> %s", err)
 			switch err.(type) {
 			case *sdk.Errors:
@@ -248,10 +248,10 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 	return nil
 }
 
-func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline) error {
+func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.User) error {
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
-	if err := InsertPipeline(db, pip); err != nil {
+	if err := InsertPipeline(db, pip, u); err != nil {
 		return err
 	}
 
