@@ -30,7 +30,7 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 	for _, g := range user.Groups {
 		for _, pg := range g.ProjectGroups {
 			t, s := getLastModified(cache.Key("lastModified", pg.Project.Key))
-			if s != "" && t != 0 {
+			if s != "" && t != 0 && t > since.Unix() {
 				mapRes[pg.Project.Key] = &sdk.ProjectLastUpdates{
 					sdk.LastModification{
 						Name:         pg.Project.Key,
@@ -46,7 +46,7 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 
 		for _, ag := range g.ApplicationGroups {
 			t, s := getLastModified(cache.Key("lastModified", ag.Application.ProjectKey, "application", ag.Application.Name))
-			if s != "" && t != 0 {
+			if s != "" && t != 0 && t > since.Unix() {
 				proj := mapRes[ag.Application.ProjectKey]
 				if proj != nil {
 					proj.Applications = append(proj.Applications, sdk.LastModification{
@@ -60,7 +60,7 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 
 		for _, pg := range g.PipelineGroups {
 			t, s := getLastModified(cache.Key("lastModified", pg.Pipeline.ProjectKey, "pipeline", pg.Pipeline.Name))
-			if s != "" && t != 0 {
+			if s != "" && t != 0 && t > since.Unix() {
 				proj := mapRes[pg.Pipeline.ProjectKey]
 				if proj != nil {
 					proj.Pipelines = append(proj.Pipelines, sdk.LastModification{
@@ -74,7 +74,7 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 
 		for _, eg := range g.EnvironmentGroups {
 			t, s := getLastModified(cache.Key("lastModified", eg.Environment.ProjectKey, "environment", eg.Environment.Name))
-			if s != "" && t != 0 {
+			if s != "" && t != 0 && t > since.Unix() {
 				proj := mapRes[eg.Environment.ProjectKey]
 				if proj != nil {
 					proj.Environments = append(proj.Environments, sdk.LastModification{
