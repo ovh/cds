@@ -23,6 +23,7 @@ type ActionScript struct {
 		Final            bool                         `json:"final"`
 		ArtifactUpload   map[string]string            `json:"artifactUpload,omitempty"`
 		ArtifactDownload map[string]string            `json:"artifactDownload,omitempty"`
+		GitClone         map[string]string            `json:"gitClone,omitempty"`
 		Script           string                       `json:"script,omitempty"`
 		JUnitReport      string                       `json:"jUnitReport,omitempty"`
 		Plugin           map[string]map[string]string `json:"plugin,omitempty"`
@@ -57,6 +58,16 @@ func NewStepJUnitReport(s string) Action {
 				Type:  StringParameter,
 			},
 		},
+	}
+	return newAction
+}
+
+// NewStepGitClone returns an action (basically used as a step of a job) of GitClone type
+func NewStepGitClone(v map[string]string) Action {
+	newAction := Action{
+		Name:       GitCloneAction,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
 	}
 	return newAction
 }
@@ -174,6 +185,12 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 		//Action builtin = ArtifactDownload
 		if v.ArtifactDownload != nil {
 			newAction = NewStepArtifactDownload(v.ArtifactDownload)
+			goto next
+		}
+
+		//Action builtin = GitClone
+		if v.GitClone != nil {
+			newAction = NewStepGitClone(v.GitClone)
 			goto next
 		}
 
