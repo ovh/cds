@@ -226,7 +226,7 @@
   "pipeline_job_variable_cds" : "CDS Variables",
   "pipeline_job_variable_env" : "Environment variables",
   "pipeline_job_variable_git" : "Git variables",
-  "pipeline_job_variable_parent" : "Parent pipleine variables",
+  "pipeline_job_variable_parent" : "Parent pipeline variables",
   "pipeline_job_variable_pip" : "Pipeline variables",
   "pipeline_job_variable_project" : "Project variables",
   "pipeline_job_variables_show_title" : "Display job variables",
