@@ -27,25 +27,38 @@ var hatcheryOpenStack *HatcheryCloud
 
 var mapWorkerBinaries = map[string][]byte{}
 
+type ipInfos struct {
+	workerName     string
+	dateLastBooked time.Time
+}
+
+var ipsInfos = struct {
+	mu  sync.RWMutex
+	ips map[string]ipInfos
+}{
+	mu:  sync.RWMutex{},
+	ips: map[string]ipInfos{},
+}
+
 // HatcheryCloud spawns instances of worker model with type 'ISO'
 // by startup up virtual machines on /cloud
 type HatcheryCloud struct {
 	hatch      *sdk.Hatchery
 	token      *Token
-	ips        []string
 	flavors    []Flavor
 	networks   []Network
 	networkIDs []string
 
 	// User provided parameters
-	address       string
-	user          string
-	password      string
-	endpoint      string
-	tenant        string
-	region        string
-	networkString string
-	workerTTL     int
+	address        string
+	user           string
+	password       string
+	endpoint       string
+	tenant         string
+	region         string
+	networkString  string
+	networksString []string
+	workerTTL      int
 }
 
 // ID returns hatchery id
@@ -115,6 +128,7 @@ func (h *HatcheryCloud) Init() error {
 	}
 
 	for _, network := range strings.Split(h.networkString, ",") {
+		h.networksString = append(h.networksString, network)
 		networkID, errni := h.getNetworkID(network)
 		if errni != nil {
 			return fmt.Errorf("cannot find network '%s'", network)
@@ -132,9 +146,37 @@ func (h *HatcheryCloud) Init() error {
 		os.Exit(10)
 	}
 
+	h.initIPStatus()
 	go h.main()
 
 	return nil
+}
+
+// initIPStatus initializes ipsInfos to
+// add workername on ip belong to openstack-ip-range
+// this func is called once, when hatchery is starting
+func (h *HatcheryCloud) initIPStatus() {
+	servers := h.getServers()
+	log.Info("initIPStatus> %d servers", len(servers))
+	for ip := range ipsInfos.ips {
+		log.Info("initIPStatus> checking %s", ip)
+		for _, s := range servers {
+			if len(s.Addresses) == 0 {
+				log.Info("initIPStatus> server %s - 0 addr", s.Name)
+				continue
+			}
+			for _, network := range h.networksString {
+				log.Debug("initIPStatus> server %s - work on %s", s.Name, network)
+				for _, a := range s.Addresses[network] {
+					log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, a.Addr, ip)
+					if a.Addr != "" && a.Addr == ip {
+						log.Info("initIPStatus> worker %s - use IP: %s", s.Name, a.Addr)
+						ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
+					}
+				}
+			}
+		}
+	}
 }
 
 func (h *HatcheryCloud) main() {
@@ -181,8 +223,7 @@ func (h *HatcheryCloud) killDisabledWorkers() {
 		for _, s := range servers {
 			if s.Name == w.Name {
 				log.Info("Deleting disabled worker %s", w.Name)
-				err := deleteServer(h.endpoint, h.token.ID, s.ID)
-				if err != nil {
+				if err := deleteServer(h.endpoint, h.token.ID, s.ID); err != nil {
 					log.Warning("Cannot remove server %s: %s", s.Name, err)
 					continue
 				}
@@ -320,7 +361,6 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		log.Info("spawnWorker> spawning worker %s ", model.Name)
 	}
 
-	var err error
 	var omd sdk.OpenstackModelData
 
 	if h.hatch == nil {
@@ -332,7 +372,7 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		return nil
 	}
 
-	if err = json.Unmarshal([]byte(model.Image), &omd); err != nil {
+	if err := json.Unmarshal([]byte(model.Image), &omd); err != nil {
 		return err
 	}
 
@@ -358,18 +398,18 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 	}*/
 	personnality := []*File{}
 
-	// Ip len(h.ips) > 0, specify one of those
+	//generate a pretty cool name
+	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
+
+	// Ip len(ipsInfos.ips) > 0, specify one of those
 	var ip string
-	if len(h.ips) > 0 {
-		ip, err = h.findAvailableIP()
+	if len(ipsInfos.ips) > 0 {
+		ip, err = h.findAvailableIP(name)
 		log.Debug("Found %s as first available IP", ip)
 		if err != nil {
 			return err
 		}
 	}
-
-	//generate a pretty cool name
-	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
 
 	// Decode base64 given user data
 	udataModel, err := base64.StdEncoding.DecodeString(omd.UserData)
@@ -433,7 +473,7 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		Graylog:  graylog,
 	}
 	var buffer bytes.Buffer
-	if err = tmpl.Execute(&buffer, udataParam); err != nil {
+	if err := tmpl.Execute(&buffer, udataParam); err != nil {
 		return err
 	}
 
@@ -483,23 +523,40 @@ func (h *HatcheryCloud) getNetworkID(network string) (string, error) {
 }
 
 // for each ip in the range, look for the first free ones
-func (h *HatcheryCloud) findAvailableIP() (string, error) {
-	var building, foundfree int
-
+func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
 	servers := h.getServers()
-	for _, s := range servers {
-		if s.Status != "ACTIVE" {
-			building++
+
+	ipsInfos.mu.Lock()
+	defer ipsInfos.mu.Unlock()
+	for ip, infos := range ipsInfos.ips {
+		// ip used less than 10s
+		// 10s max to display worker name on nova list after call create
+		if time.Since(infos.dateLastBooked) < 10*time.Second {
+			continue
+		}
+		found := false
+		for _, srv := range servers {
+			if infos.workerName == srv.Name {
+				found = true
+			}
+		}
+		if !found {
+			infos.workerName = ""
+			ipsInfos.ips[ip] = infos
 		}
 	}
+
 	freeIP := []string{}
-	for _, ip := range h.ips {
+	for ip := range ipsInfos.ips {
 		free := true
+		if ipsInfos.ips[ip].workerName != "" {
+			continue // ip already used by a worker
+		}
 		for _, s := range servers {
 			if len(s.Addresses) == 0 {
 				continue
 			}
-			for _, network := range h.networkIDs {
+			for _, network := range h.networksString {
 				for _, a := range s.Addresses[network] {
 					if a.Addr == ip {
 						free = false
@@ -511,21 +568,25 @@ func (h *HatcheryCloud) findAvailableIP() (string, error) {
 			}
 		}
 		if free {
-			foundfree++
-			if foundfree > building {
-				freeIP = append(freeIP, ip)
-			}
+			freeIP = append(freeIP, ip)
 		}
 	}
 
 	if len(freeIP) == 0 {
 		return "", fmt.Errorf("No IP left")
 	}
-	return freeIP[rand.Intn(len(freeIP))], nil
+
+	ipToBook := freeIP[rand.Intn(len(freeIP))]
+	infos := ipInfos{
+		workerName:     workerName,
+		dateLastBooked: time.Now(),
+	}
+	ipsInfos.ips[ipToBook] = infos
+
+	return ipToBook, nil
 }
 
 func (h *HatcheryCloud) updateServerList() {
-
 	var out string
 	var active, building, total int
 	for _, s := range h.getServers() {
@@ -784,8 +845,7 @@ func getFlavors(endpoint string, token string) ([]Flavor, error) {
 		Flavors []Flavor `json:"flavors"`
 	}{}
 
-	err = json.Unmarshal(rbody, &s)
-	if err != nil {
+	if err := json.Unmarshal(rbody, &s); err != nil {
 		return nil, err
 	}
 
@@ -834,7 +894,7 @@ func (h *HatcheryCloud) getServersRequest() ([]Server, error) {
 	uri := fmt.Sprintf("%s/servers/detail", h.endpoint)
 	req, errRequest := http.NewRequest("GET", uri, nil)
 	if errRequest != nil {
-		return nil, errRequest
+		return nil, sdk.WrapError(errRequest, "getServersRequest> error on newRequest")
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -842,28 +902,28 @@ func (h *HatcheryCloud) getServersRequest() ([]Server, error) {
 
 	resp, errDo := hatchery.Client.Do(req)
 	if errDo != nil {
-		return nil, errDo
+		return nil, sdk.WrapError(errDo, "getServersRequest> error on hatchery.Client.Do")
 	}
 
 	if resp.StatusCode >= 400 {
-		rbody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read body")
+		rbody, errr := ioutil.ReadAll(resp.Body)
+		if errr != nil {
+			return nil, sdk.WrapError(errr, "getServersRequest> cannot read body (code >=400)")
 		}
 		return nil, unmarshalOpenstackError(rbody, resp.Status)
 	}
 
-	rbody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read body")
+	rbody, errr := ioutil.ReadAll(resp.Body)
+	if errr != nil {
+		return nil, sdk.WrapError(errr, "getServersRequest> cannot read body")
 	}
 
 	var s struct {
 		Servers []Server `json:"servers"`
 	}
 
-	if err = json.Unmarshal(rbody, &s); err != nil {
-		return nil, err
+	if err := json.Unmarshal(rbody, &s); err != nil {
+		return nil, sdk.WrapError(errr, "getServersRequest> cannot unmarshal")
 	}
 
 	// Remove servers without "worker" tag
@@ -1066,7 +1126,6 @@ func IPinRanges(IPranges string) ([]string, error) {
 		}
 		ips = append(ips, i...)
 	}
-
 	return ips, nil
 }
 
