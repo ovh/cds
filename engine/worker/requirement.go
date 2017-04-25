@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/shirou/gopsutil/mem"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
@@ -115,10 +117,12 @@ func checkServiceRequirement(r sdk.Requirement) (bool, error) {
 }
 
 func checkMemoryRequirement(r sdk.Requirement) (bool, error) {
-	totalMemory, err := systemTotalMemory()
+	v, err := mem.VirtualMemory()
 	if err != nil {
 		return false, err
 	}
+	totalMemory := v.Total
+
 	neededMemory, err := strconv.ParseInt(r.Value, 10, 64)
 	if err != nil {
 		return false, err
