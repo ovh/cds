@@ -2,7 +2,6 @@ package repositoriesmanager
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
