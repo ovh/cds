@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
@@ -137,6 +138,15 @@ func Update(db gorp.SqlExecutor, proj *sdk.Project) error {
 // UpdateLastModified updates last_modified date on a project given its key
 func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) error {
 	t := time.Now()
+
+	if u != nil {
+		cache.SetWithTTL(cache.Key("lastModified", proj.Key), sdk.LastModification{
+			Name:         proj.Key,
+			Username:     u.Username,
+			LastModified: t.Unix(),
+		}, 0)
+	}
+
 	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
 	proj.LastModified = t
 	return err

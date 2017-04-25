@@ -315,9 +315,17 @@ func LoadGroupByPipeline(db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
 }
 
 // UpdateLastModified updates last_modified on pipeline
-func UpdateLastModified(db gorp.SqlExecutor, id int64) error {
+func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, pip *sdk.Pipeline) error {
+	if u != nil {
+		cache.SetWithTTL(cache.Key("lastModified", pip.ProjectKey, "pipeline", pip.Name), sdk.LastModification{
+			Name:         pip.Name,
+			Username:     u.Username,
+			LastModified: time.Now().Unix(),
+		}, 0)
+	}
+
 	query := `UPDATE pipeline SET last_modified = current_timestamp WHERE id=$1`
-	_, err := db.Exec(query, id)
+	_, err := db.Exec(query, pip.ID)
 	return err
 }
 

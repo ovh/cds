@@ -873,7 +873,7 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.ScheduledTrigger, stages, commitsBtes)
 
 	if err := statement.Scan(&pb.ID); err != nil {
-		return sdk.WrapError(err, "insertPipelineBuild> Unable to insert pipeline_build : App:%d,Pip:%d,Env:%s", applicationID, pipelineID, envID)
+		return sdk.WrapError(err, "insertPipelineBuild> Unable to insert pipeline_build : App:%d,Pip:%d,Env:%d", applicationID, pipelineID, envID)
 	}
 
 	return nil
