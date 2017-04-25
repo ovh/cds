@@ -37,7 +37,7 @@
                 </span>
             </td>
             <td class="wide" [class.four]="mode !== 'launcher'" [class.eight]="mode === 'launcher'">
-                <app-parameter-value [project]="project" [edit]="mode !== 'ro' && mode !== 'job'"  [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true"></app-parameter-value>
+                <app-parameter-value [project]="project" [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'"  [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true"></app-parameter-value>
             </td>
             <td *ngIf="mode !== 'launcher' && mode !== 'job'">
                 <textarea *ngIf="mode !== launcher && p.description && p.description !== ''" class="ui textarea" [class.lock]="mode !== 'edit'" [(ngModel)]="p.description" rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'"></textarea>
