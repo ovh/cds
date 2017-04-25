@@ -134,7 +134,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 	test.NoError(t, err)
 
 	assert.Equal(t, 1, len(lastUpdates))
-	assert.Equal(t, proj.Key, lastUpdates[0].Key)
+	assert.Equal(t, proj.Name, lastUpdates[0].Name)
 	assert.NotZero(t, lastUpdates[0].LastModified)
 	assert.Equal(t, 1, len(lastUpdates[0].Applications))
 	assert.Equal(t, 1, len(lastUpdates[0].Pipelines))
@@ -241,7 +241,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	test.NoError(t, err)
 
 	assert.Equal(t, 1, len(lastUpdates))
-	assert.Equal(t, proj.Key, lastUpdates[0].Key)
+	assert.Equal(t, proj.Name, lastUpdates[0].Name)
 	assert.NotZero(t, lastUpdates[0].LastModified)
 	assert.Equal(t, 2, len(lastUpdates[0].Applications))
 	assert.Equal(t, 1, len(lastUpdates[0].Pipelines))
@@ -362,8 +362,8 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 
 	assert.Equal(t, 2, len(lastUpdates))
 	for _, p := range lastUpdates {
-		if p.Key == proj.Key {
-			assert.Equal(t, proj.Key, p.Key)
+		if p.Name == proj.Name {
+			assert.Equal(t, proj.Name, p.Name)
 			assert.NotZero(t, p.LastModified)
 			assert.Equal(t, 2, len(p.Applications))
 			assert.Equal(t, 1, len(p.Pipelines))
@@ -374,7 +374,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 			assert.NotZero(t, p.Applications[1].LastModified)
 			assert.NotZero(t, p.Pipelines[0].LastModified)
 		} else {
-			assert.Equal(t, proj2.Key, p.Key)
+			assert.Equal(t, proj2.Name, p.Name)
 			assert.Equal(t, 0, len(p.Applications))
 			assert.Equal(t, 0, len(p.Pipelines))
 		}
@@ -492,7 +492,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	test.NoError(t, err)
 
 	assert.Equal(t, 1, len(lastUpdates))
-	assert.Equal(t, proj.Key, lastUpdates[0].Key)
+	assert.Equal(t, proj.Name, lastUpdates[0].Name)
 	assert.NotZero(t, lastUpdates[0].LastModified)
 	assert.Equal(t, 1, len(lastUpdates[0].Applications))
 	assert.Equal(t, 0, len(lastUpdates[0].Pipelines))
