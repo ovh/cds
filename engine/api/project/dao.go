@@ -110,18 +110,18 @@ func Delete(db gorp.SqlExecutor, key string) error {
 }
 
 // Insert a new project in database
-func Insert(db gorp.SqlExecutor, proj *sdk.Project) error {
+func Insert(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	if err := db.Insert(&dbProj); err != nil {
 		return err
 	}
 	*proj = sdk.Project(dbProj)
-	return nil
+	return UpdateLastModified(db, u, proj)
 }
 
 // Update a new project in database
-func Update(db gorp.SqlExecutor, proj *sdk.Project) error {
+func Update(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	n, err := db.Update(&dbProj)
@@ -132,7 +132,7 @@ func Update(db gorp.SqlExecutor, proj *sdk.Project) error {
 		return sdk.ErrNoProject
 	}
 	*proj = sdk.Project(dbProj)
-	return nil
+	return UpdateLastModified(db, u, proj)
 }
 
 // UpdateLastModified updates last_modified date on a project given its key

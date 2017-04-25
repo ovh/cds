@@ -36,7 +36,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -132,7 +132,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

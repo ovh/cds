@@ -33,7 +33,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -112,7 +112,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	env := &sdk.Environment{
 		Name:      pkey + "-env",
@@ -185,7 +185,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -265,7 +265,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

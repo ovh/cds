@@ -14,7 +14,7 @@ func TestVariableInProject(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	// 1. Create project
-	project1 := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	project1 := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), nil)
 
 	// 2. Insert new variable
 	var1 := &sdk.Variable{

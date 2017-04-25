@@ -18,7 +18,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -72,7 +72,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -143,7 +143,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -249,7 +249,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -385,7 +385,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -443,7 +443,7 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

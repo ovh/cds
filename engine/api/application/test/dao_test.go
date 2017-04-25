@@ -15,7 +15,7 @@ import (
 func TestLoadByNameAsAdmin(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -33,7 +33,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 func TestLoadByNameAsUser(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -42,7 +42,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, c.User, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, u, proj.ProjectGroups...))
 
 	actual, err := application.LoadByName(db, key, "my-app", u)
 	assert.NoError(t, err)
@@ -55,7 +55,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 func TestLoadByIDAsAdmin(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -73,7 +73,8 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 func TestLoadByIDAsUser(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -82,7 +83,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, c.User, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, u, proj.ProjectGroups...))
 
 	actual, err := application.LoadByID(db, app.ID, u)
 	assert.NoError(t, err)
@@ -95,7 +96,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 func TestLoadAllAsAdmin(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 		Metadata: sdk.Metadata{
@@ -127,7 +128,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 func TestLoadAllAsUser(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -141,7 +142,7 @@ func TestLoadAllAsUser(t *testing.T) {
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, c.User, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, u, proj.ProjectGroups...))
 
 	actual, err := application.LoadAll(db, proj.Key, u)
 	test.NoError(t, err)

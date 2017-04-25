@@ -32,7 +32,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	assert.NotZero(t, pass)
 
 	// Create project
-	p := assets.InsertTestProject(t, db, strings.ToUpper(assets.RandomString(t, 4)), assets.RandomString(t, 10))
+	p := assets.InsertTestProject(t, db, strings.ToUpper(assets.RandomString(t, 4)), assets.RandomString(t, 10), u)
 	test.NoError(t, group.InsertUserInGroup(db, p.ProjectGroups[0].Group.ID, u.ID, true))
 
 	app := &sdk.Application{Name: assets.RandomString(t, 10)}

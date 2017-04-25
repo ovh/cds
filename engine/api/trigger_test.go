@@ -30,7 +30,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -116,7 +116,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -210,7 +210,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1

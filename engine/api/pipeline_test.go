@@ -23,7 +23,7 @@ import (
 
 func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
 	pkey := assets.RandomString(t, 10)
-	projectFoo := assets.InsertTestProject(t, db, pkey, pkey)
+	projectFoo := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	p := &sdk.Pipeline{
 		Name:      name,
@@ -50,7 +50,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, db)
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -128,7 +128,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline

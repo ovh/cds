@@ -86,13 +86,13 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *gorp.DbMap, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment, *sdk.User)) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
+	u, p := assets.InsertAdminUser(t, db)
+	u.Auth.HashedPassword = p
+
 	_ = deleteAll(t, db, "TEST_APP_PIPELINE_NOTIF")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_APP_PIPELINE_NOTIF", "TEST_APP_PIPELINE_NOTIF")
-
-	u, p := assets.InsertAdminUser(t, db)
-	u.Auth.HashedPassword = p
+	proj := assets.InsertTestProject(t, db, "TEST_APP_PIPELINE_NOTIF", "TEST_APP_PIPELINE_NOTIF", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -589,7 +589,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 	assert.NotZero(t, pass)
 
 	// Create project
-	p := assets.InsertTestProject(t, db, strings.ToUpper(assets.RandomString(t, 4)), assets.RandomString(t, 10))
+	p := assets.InsertTestProject(t, db, strings.ToUpper(assets.RandomString(t, 4)), assets.RandomString(t, 10), u)
 
 	app := &sdk.Application{Name: assets.RandomString(t, 10)}
 
