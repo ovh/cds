@@ -42,7 +42,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, c.User, proj.ProjectGroups...))
 
 	actual, err := application.LoadByName(db, key, "my-app", u)
 	assert.NoError(t, err)
@@ -82,7 +82,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, c.User, proj.ProjectGroups...))
 
 	actual, err := application.LoadByID(db, app.ID, u)
 	assert.NoError(t, err)
@@ -141,7 +141,7 @@ func TestLoadAllAsUser(t *testing.T) {
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, c.User, proj.ProjectGroups...))
 
 	actual, err := application.LoadAll(db, proj.Key, u)
 	test.NoError(t, err)

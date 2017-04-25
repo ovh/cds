@@ -336,7 +336,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return err
 	}
 
-	if err := application.AddGroup(tx, proj, &app, proj.ProjectGroups...); err != nil {
+	if err := application.AddGroup(tx, proj, &app, c.User, proj.ProjectGroups...); err != nil {
 		log.Warning("addApplicationHandler> Cannot add groups on application: %s\n", err)
 		return err
 	}
@@ -541,7 +541,7 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 	}
 
 	// Insert Permission
-	if err := application.AddGroup(db, proj, newApp, newApp.ApplicationGroups...); err != nil {
+	if err := application.AddGroup(db, proj, newApp, u, newApp.ApplicationGroups...); err != nil {
 		return err
 	}
 
