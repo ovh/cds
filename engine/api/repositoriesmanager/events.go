@@ -31,7 +31,7 @@ func ReceiveEvents() {
 
 func retryEvent(e *sdk.Event) {
 	e.Attempts++
-	if e.Attempts > 3 {
+	if e.Attempts > 2 {
 		log.Error("ReceiveEvents> Aborting event processing %v", e)
 		return
 	}
