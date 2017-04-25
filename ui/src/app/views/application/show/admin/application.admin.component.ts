@@ -1,6 +1,7 @@
 import {Component, OnInit, ViewChild, Input} from '@angular/core';
 import {Application} from '../../../../model/application.model';
 import {ApplicationStore} from '../../../../service/application/application.store';
+import {ProjectStore} from '../../../../service/project/project.store';
 import {TranslateService} from 'ng2-translate';
 import {Router} from '@angular/router';
 import {ToastService} from '../../../../shared/toast/ToastService';
@@ -22,7 +23,7 @@ export class ApplicationAdminComponent implements OnInit {
     newName: string;
     public loading = false;
 
-    constructor(private _applicationStore: ApplicationStore, private _toast: ToastService,
+    constructor(private _applicationStore: ApplicationStore, private _projectStore: ProjectStore, private _toast: ToastService,
                 public _translate: TranslateService, private _router: Router) {
     }
 
@@ -51,6 +52,8 @@ export class ApplicationAdminComponent implements OnInit {
 
     deleteApplication(): void {
         this.loading = true;
+
+        this._projectStore.deleteApplication(this.project.key, this.application.name);
         this._applicationStore.deleteApplication(this.project.key, this.application.name).subscribe(() => {
             this.loading = false;
             this._toast.success('', this._translate.instant('application_deleted'));
