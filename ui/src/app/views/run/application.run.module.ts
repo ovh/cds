@@ -8,13 +8,15 @@ import {TestsResultComponent} from './test/tests.component';
 import {TestTableComponent} from './test/table/test.table.component';
 import {SharedModule} from '../../shared/shared.module';
 import {RunSummaryComponent} from './summary/run.summary.component';
-import {SpawnInfoComponent} from './workflow/swpaninfo/spawninfo.component';
+import {SpawnInfoComponent} from './workflow/spwaninfo/spawninfo.component';
+import {JobVariableComponent} from './workflow/variables/job.variables.component';
 
 @NgModule({
     declarations: [
         ApplicationPipelineBuildComponent,
         PipelineRunWorkflowComponent,
         ArtifactListComponent,
+        JobVariableComponent,
         RunSummaryComponent,
         SpawnInfoComponent,
         StepLogComponent,
