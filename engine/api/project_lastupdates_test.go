@@ -458,7 +458,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
 	err = application.Insert(db, proj, app2, u)
 	test.NoError(t, err)
-	test.NoError(t, project.UpdateLastModified(db, nil, proj))
+	test.NoError(t, project.UpdateLastModified(db, u, proj))
 	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
 	test.NoError(t, err)
 	err = group.InsertGroupInPipeline(db, pip.ID, g.ID, 4)
