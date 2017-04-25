@@ -8,9 +8,10 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/queue"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Executer is the goroutine which run the pipelines
@@ -42,10 +43,15 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 		return nil, err
 	}
 
+	var pbs []sdk.PipelineBuild
 	//Process all
 	for i := range exs {
-		if err := executerProcess(tx, &exs[i]); err != nil {
-			log.Critical("ExecuterRun> Unable to process %v : %s", exs[i], err)
+		pb, err := executerProcess(tx, &exs[i])
+		if err != nil {
+			log.Error("ExecuterRun> Unable to process %v : %s", exs[i], err)
+		}
+		if pb != nil {
+			pbs = append(pbs, *pb)
 		}
 	}
 
@@ -55,32 +61,48 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 		return nil, err
 	}
 
+	for _, pb := range pbs {
+		proj, errproj := project.Load(db, pb.Application.ProjectKey, nil)
+		if errproj != nil {
+			log.Warning("ExecuterRun> Unable to load project: %s", err)
+		}
+
+		app, errapp := application.LoadByID(db, pb.Application.ID, nil, application.LoadOptions.WithRepositoryManager)
+		if errapp != nil {
+			log.Warning("ExecuterRun> Unable to load app: %s", errapp)
+		}
+
+		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, &pb.Pipeline, app, &pb.Environment, &pb); err != nil {
+			log.Warning("ExecuterRun> Unable to update pipeline build commits : %s", err)
+		}
+	}
+
 	return exs, nil
 }
 
-func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) error {
+func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) (*sdk.PipelineBuild, error) {
 	//Load the scheduler
 	s, err := Load(db, e.PipelineSchedulerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//Load application
 	app, err := application.LoadByID(db, s.ApplicationID, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//Load pipeline
 	pip, err := pipeline.LoadPipelineByID(db, s.PipelineID, true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//Load environnement
 	env, err := environment.LoadEnvironmentByID(db, s.EnvironmentID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//Create a new pipeline build
@@ -90,7 +112,7 @@ func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) err
 	}, nil)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//References pipeline build version in execution
@@ -100,5 +122,9 @@ func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) err
 	e.Executed = true
 
 	//Update execution in database
-	return UpdateExecution(db, e)
+	if err := UpdateExecution(db, e); err != nil {
+		return nil, err
+	}
+
+	return pb, nil
 }

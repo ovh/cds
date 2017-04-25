@@ -10,5 +10,7 @@ export class TestsResultComponent {
 
     @Input() tests: Tests;
 
+    filter = 'error';
+
     constructor() { }
 }

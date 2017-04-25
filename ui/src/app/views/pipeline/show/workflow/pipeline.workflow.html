@@ -1,9 +1,10 @@
 <div class="ui top attached steps dragula-container" [dragula]="'bag-stage'" [dragulaModel]="pipeline.stages">
     <div id="step{{s.build_order}}" class="step" *ngFor="let s of pipeline.stages" [class.active]="selectedStage?.id === s.id"
-        [class.off]="!s.enabled">
+        [class.off]="!s.enabled" (mouseenter)="toggleEdit(s, true)" (mouseleave)="toggleEdit(s, false)">
       <div class="content">
         <i class="move icon" *ngIf="pipeline.permission === 7"></i>
         <a class="title pointing" (click)="selectedStage = s">{{s.name}}</a>
+        <i class="write icon" *ngIf="s.edit" (click)="openEditModal(s)"></i>
       </div>
     </div>
   <div class="step" *ngIf="pipeline.permission === 7">
@@ -19,3 +20,14 @@
 <div class="ui attached segment" *ngIf="pipeline.stages && pipeline.stages.length > 0 && selectedStage">
   <app-pipeline-stage [project]="project" [pipeline]="pipeline" [stage]="selectedStage"></app-pipeline-stage>
 </div>
+
+<sm-modal title="{{ 'pipeline_stage_edit' | translate }}" class="fluid" #editStageModal>
+  <modal-content>
+    <app-pipeline-stage-form [project]="project" [pipeline]="pipeline" [stage]="editableStage"></app-pipeline-stage-form>
+  </modal-content>
+  <modal-actions>
+    <button class="ui grey button" (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
+    <button class="ui green button" (click)="stageEvent('update')" *ngIf="editableStage?.hasChanged">{{ 'btn_save' | translate }}</button>
+    <app-delete-button (event)="stageEvent('delete')" *ngIf="!editableStage?.hasChanged"></app-delete-button>
+  </modal-actions>
+</sm-modal>

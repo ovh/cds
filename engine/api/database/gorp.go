@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"os"
 	"time"
 
@@ -12,13 +11,14 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type gorpLogger struct {
 }
 
 func (g gorpLogger) Printf(format string, v ...interface{}) {
-	log.Printf(format, v...)
+	log.Debug(format, v...)
 }
 
 var (

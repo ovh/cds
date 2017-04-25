@@ -24,8 +24,8 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -138,7 +138,7 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 		return sdk.ErrNoReposManagerAuth
 
 	}
-	log.Notice("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", projectKey, token, url)
+	log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", projectKey, token, url)
 
 	data := map[string]string{
 		"project_key":          projectKey,
@@ -159,7 +159,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	errURI := r.FormValue("error_uri")
 
 	if cberr != "" {
-		log.Critical("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
+		log.Error("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
 		return fmt.Errorf("OAuth Error %s", cberr)
 	}
 
@@ -187,7 +187,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 
 	}
 
-	log.Notice("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
+	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
 	result := map[string]string{
 		"project_key":          projectKey,
 		"repositories_manager": rmName,
@@ -246,7 +246,7 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 
 	}
 
-	log.Notice("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
+	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
 	result := map[string]string{
 		"project_key":          projectKey,
 		"repositories_manager": rmName,
@@ -329,23 +329,26 @@ func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
 
+	sync := FormBool(r, "synchronize")
+
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
 	if err != nil {
-		log.Warning("getReposFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+	}
 
+	cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
+	if sync {
+		cache.Delete(cacheKey)
 	}
 
 	var repos []sdk.VCSRepo
-	cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
-	cache.Get(cacheKey, &repos)
-	if repos == nil || len(repos) == 0 {
+	if !cache.Get(cacheKey, &repos) {
 		log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
 		repos, err = client.Repos()
+		cache.SetWithTTL(cacheKey, repos, 0)
 	}
 	if err != nil {
-		log.Warning("getReposFromRepositoriesManagerHandler> Cannot get repos: %s", err)
-		return err
+		return sdk.WrapError(err, "getReposFromRepositoriesManagerHandler> Cannot get repos")
 
 	}
 	return WriteJSON(w, r, repos, http.StatusOK)
@@ -627,7 +630,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if !b {
-		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "deleteHookOnRepositoriesManagerHandler> Applicaiton %s is not attached to any repository", appName)
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "deleteHookOnRepositoriesManagerHandler> Application %s is not attached to any repository", appName)
 	}
 
 	client, errauth := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)

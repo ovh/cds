@@ -15,7 +15,7 @@ func (t *TemplatePlain) Name() string {
 
 func (t *TemplatePlain) Description() string {
 	return `
-This sample template create
+This template creates:
 - a build pipeline with	two stages: Commit Stage and Packaging Stage
 - a deploy pipeline with one stage: Deploy Stage
 

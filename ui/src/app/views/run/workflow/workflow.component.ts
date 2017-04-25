@@ -1,17 +1,21 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, OnDestroy} from '@angular/core';
+import {TranslateService} from 'ng2-translate';
+import {Subscription} from 'rxjs/Subscription';
 import {Pipeline, PipelineBuild, PipelineBuildJob} from '../../../model/pipeline.model';
 import {Stage} from '../../../model/stage.model';
 import {Job} from '../../../model/job.model';
 import {Project} from '../../../model/project.model';
 import {Application} from '../../../model/application.model';
 import {DurationService} from '../../../shared/duration/duration.service';
+import {NotificationService} from '../../../service/notification/notification.service';
+
 
 @Component({
     selector: 'app-pipeline-run-workflow',
     templateUrl: './workflow.html',
     styleUrls: ['./workflow.scss']
 })
-export class PipelineRunWorkflowComponent {
+export class PipelineRunWorkflowComponent implements OnDestroy {
 
     @Input() previousBuild: PipelineBuild;
     @Input() application: Application;
@@ -28,6 +32,7 @@ export class PipelineRunWorkflowComponent {
     }
 
     currentBuild: PipelineBuild;
+    notificationSubscription: Subscription;
 
     selectedPipJob: PipelineBuildJob;
     jobSelected: Job;
@@ -36,7 +41,8 @@ export class PipelineRunWorkflowComponent {
     mapJobProgression: { [key: number]: number };
     mapJobDuration: { [key: number]: string };
 
-    constructor(private _durationService: DurationService) {
+    constructor(private _durationService: DurationService, private _translate: TranslateService,
+        private _notification: NotificationService) {
         this.initData();
     }
 
@@ -52,6 +58,10 @@ export class PipelineRunWorkflowComponent {
 
     refreshBuild(data: PipelineBuild): void {
         this.currentBuild = data;
+
+        if (this.previousBuild && this.previousBuild.id !== this.currentBuild.id && this.currentBuild.status !== 'Building') {
+            this.handleNotification(this.currentBuild);
+        }
         // Set selected job if needed or refresh step_status
         if (this.currentBuild.stages) {
             this.currentBuild.stages.forEach((s, sIndex) => {
@@ -92,6 +102,21 @@ export class PipelineRunWorkflowComponent {
                     });
                 }
             });
+        }
+    }
+
+    handleNotification(pipelineBuild: PipelineBuild): void {
+        switch (pipelineBuild.status) {
+        case 'Success':
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
+                pipelineName: pipelineBuild.pipeline.name
+            })).subscribe();
+            break;
+        case 'Failing':
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
+                pipelineName: pipelineBuild.pipeline.name
+            })).subscribe();
+            break;
         }
     }
 
@@ -153,6 +178,12 @@ export class PipelineRunWorkflowComponent {
                     this.selectedPipJob = b;
                 }
             });
+        }
+    }
+
+    ngOnDestroy() {
+        if (this.notificationSubscription) {
+            this.notificationSubscription.unsubscribe();
         }
     }
 }

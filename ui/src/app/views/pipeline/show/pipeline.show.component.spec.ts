@@ -21,6 +21,7 @@ import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 
 describe('CDS: Pipeline Show', () => {
 
@@ -36,6 +37,7 @@ describe('CDS: Pipeline Show', () => {
                 PipelineStore,
                 ProjectService,
                 ProjectStore,
+                ApplicationPipelineService,
                 {provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 {provide: ToastService, useClass: MockToast},
                 TranslateService,

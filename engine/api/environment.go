@@ -13,8 +13,8 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -327,7 +327,7 @@ func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 
-	log.Notice("Environment %s deleted.\n", environmentName)
+	log.Info("Environment %s deleted.\n", environmentName)
 	var errEnvs error
 	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
 	if errEnvs != nil {

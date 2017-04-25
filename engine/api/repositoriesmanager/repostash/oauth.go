@@ -8,8 +8,8 @@ import (
 	"github.com/go-stash/go-stash/oauth1"
 	"github.com/go-stash/go-stash/stash"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //StashConsumer embeds a stash oauth1 consumer
@@ -46,7 +46,7 @@ func (s *StashConsumer) Data() string {
 }
 
 func (s *StashConsumer) requestToken() (*oauth1.RequestToken, error) {
-	log.Notice("%s\n", s.consumer)
+	log.Info("%s\n", s.consumer)
 	token, err := s.consumer.RequestToken()
 	if err != nil {
 		log.Warning("requestToken>%s\n", err)

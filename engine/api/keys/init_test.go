@@ -1,10 +1,6 @@
 package keys
 
-import (
-	"flag"
-
-	"github.com/ovh/cds/engine/log"
-)
+import "flag"
 
 func init() {
 	if flag.Lookup("dbDriver") == nil {
@@ -16,7 +12,5 @@ func init() {
 		flag.String("dbPort", "15432", "port")
 		flag.String("sslMode", "disable", "ssl mode")
 		flag.Parse()
-
-		log.SetLevel(log.DebugLevel)
 	}
 }

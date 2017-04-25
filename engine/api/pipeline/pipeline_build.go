@@ -15,8 +15,8 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // PipelineBuildDbResult Gorp result when select a pipeline build
@@ -36,6 +36,7 @@ type PipelineBuildDbResult struct {
 	Status                string         `db:"status"`
 	Args                  string         `db:"args"`
 	Stages                string         `db:"stages"`
+	Commits               string         `db:"commits"`
 	Start                 time.Time      `db:"start"`
 	Done                  pq.NullTime    `db:"done"`
 	ManualTrigger         bool           `db:"manual_trigger"`
@@ -55,7 +56,7 @@ const (
 			pb.id as id, pb.application_id as appID, pb.pipeline_id as pipID, pb.environment_id as envID,
 			application.name as appName, pipeline.name as pipName, pipeline.type as pipType, environment.name as envName,
 			pb.build_number as build_number, pb.version as version, pb.status as status,
-			pb.args as args, pb.stages as stages,
+			pb.args as args, pb.stages as stages, pb.commits as commits,
 			pb.start as start, pb.done as done,
 			pb.manual_trigger as manual_trigger, pb.triggered_by as triggered_by,
 			pb.vcs_changes_branch as vcs_branch, pb.vcs_changes_hash as vcs_hash, pb.vcs_changes_author as vcs_author,
@@ -199,6 +200,34 @@ func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.Pipel
 	return pbs, nil
 }
 
+// LoadPipelineBuildByApplicationPipelineEnvVersion Load pipeine build from application, pipeline, environment, version
+func LoadPipelineBuildByApplicationPipelineEnvVersion(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, version int64, limit int) ([]sdk.PipelineBuild, error) {
+	whereCondition := `
+		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.version = $4 ORDER by pb.id desc
+`
+
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var rows []PipelineBuildDbResult
+	_, err := db.Select(&rows, query, applicationID, pipelineID, environmentID, version)
+	if err != nil {
+		return nil, err
+	}
+
+	pbs := []sdk.PipelineBuild{}
+	for _, r := range rows {
+		pb, errScan := scanPipelineBuild(r)
+		if errScan != nil {
+			return nil, errScan
+		}
+		pbs = append(pbs, *pb)
+	}
+	if len(pbs) > limit {
+		pbs = pbs[:limit]
+	}
+	return pbs, nil
+}
+
+// LoadPipelineBuildByApplicationPipelineEnvBuildNumber Load pipeine build from application, pipeline, environment, buildnumber
 func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, buildNumber int64) (*sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.build_number = $4
@@ -372,6 +401,11 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 	if err := json.Unmarshal([]byte(pbResult.Stages), &pb.Stages); err != nil {
 		return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal stages %s", pbResult.Stages)
 	}
+	if pbResult.Commits != "" {
+		if err := json.Unmarshal([]byte(pbResult.Commits), &pb.Commits); err != nil {
+			return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal commits %s", pbResult.Commits)
+		}
+	}
 
 	return &pb, nil
 }
@@ -402,7 +436,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	var previous *sdk.PipelineBuild
 	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch)
 	if err != nil {
-		log.Critical("UpdatePipelineBuildStatusAndStage> error while loading previous pipeline build")
+		log.Error("UpdatePipelineBuildStatusAndStage> error while loading previous pipeline build")
 	}
 	//Be sure to get the previous one
 	if len(history) == 2 {
@@ -420,7 +454,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
 		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID)
 		if errl != nil {
-			log.Critical("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
+			log.Error("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
 		}
 		pb.Application.RepositoryFullname = rfn
 		pb.Application.RepositoriesManager = rm
@@ -542,6 +576,75 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 		}
 	}
 	return nil
+}
+
+// UpdatePipelineBuildCommits gets and update commit for given pipeline build
+func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, pb *sdk.PipelineBuild) ([]sdk.VCSCommit, error) {
+	if app.RepositoriesManager == nil {
+		return nil, nil
+	}
+
+	res := []sdk.VCSCommit{}
+	//Get the RepositoriesManager Client
+	client, errclient := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name)
+	if errclient != nil {
+		return nil, sdk.WrapError(errclient, "UpdatePipelineBuildCommits> Cannot get client")
+	}
+
+	//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
+	//buildNumber, pipelineID, applicationID, environmentID
+	cur, prev, errcurr := CurrentAndPreviousPipelineBuildNumberAndHash(db, pb.BuildNumber, pip.ID, app.ID, env.ID)
+	if errcurr != nil {
+		return nil, sdk.WrapError(errcurr, "UpdatePipelineBuildCommits> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)", pb.BuildNumber, pip.ID, app.ID, env.ID)
+	}
+
+	if prev == nil {
+		log.Debug("UpdatePipelineBuildCommits> No previous build was found for branch %s", cur.Branch)
+	} else {
+		log.Debug("UpdatePipelineBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+	}
+
+	if prev != nil && cur.Hash == prev.Hash {
+		log.Debug("UpdatePipelineBuildCommits> there is not difference between the previous build and the current build")
+	} else if prev != nil && cur.Hash != "" && prev.Hash != "" {
+		//If we are lucky, return a true diff
+		commits, err := client.Commits(app.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
+		if err != nil {
+			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
+		}
+		res = commits
+	} else if cur.Hash != "" {
+		//If we only get current pipeline build hash
+		log.Info("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
+		c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
+		if err != nil {
+			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
+		}
+		res = c
+	} else {
+		//If we only have the current branch, search for the branch
+		br, err := client.Branch(app.RepositoryFullname, cur.Branch)
+		if err != nil {
+			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get branch %s", cur.Branch)
+		}
+		if br.LatestCommit == "" {
+			return nil, sdk.WrapError(sdk.ErrNoBranch, "UpdatePipelineBuildCommits> Branch or lastest commit not found")
+		}
+
+		//and return the last commit of the branch
+		log.Debug("get the last commit : %s", br.LatestCommit)
+		cm, errcm := client.Commit(app.RepositoryFullname, br.LatestCommit)
+		if errcm != nil {
+			return nil, sdk.WrapError(errcm, "UpdatePipelineBuildCommits> Cannot get commits")
+		}
+		res = []sdk.VCSCommit{cm}
+	}
+
+	if err := updatePipelineBuildCommits(db, pb.ID, res); err != nil {
+		return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Unable to update pipeline build commit")
+	}
+
+	return res, nil
 }
 
 // InsertPipelineBuild insert build informations in database so Scheduler can pick it up
@@ -668,10 +771,10 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	}
 
 	// Process Pipeline Argument
-	mapVar, err := ProcessPipelineBuildVariables(p.Parameter, applicationPipelineArgs, params)
-	if err != nil {
-		log.Warning("InsertPipelineBuild> Cannot process args: %s\n", err)
-		return nil, err
+	mapVar, errprocess := ProcessPipelineBuildVariables(p.Parameter, applicationPipelineArgs, params)
+	if errprocess != nil {
+		log.Warning("InsertPipelineBuild> Cannot process args: %s\n", errprocess)
+		return nil, errprocess
 	}
 
 	// sdk.Build should have sdk.Variable instead of []string
@@ -680,14 +783,13 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		argsFinal = append(argsFinal, v)
 	}
 
-	argsJSON, err := json.Marshal(argsFinal)
-	if err != nil {
-		log.Warning("InsertPipelineBuild> Cannot marshal build parameters: %s\n", err)
-		return nil, err
+	argsJSON, errmarshal := json.Marshal(argsFinal)
+	if errmarshal != nil {
+		return nil, sdk.WrapError(errmarshal, "InsertPipelineBuild> Cannot marshal build parameters")
 	}
 
 	if err := LoadPipelineStage(tx, p); err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to load pipeline stages")
 	}
 
 	// Init Action build
@@ -700,13 +802,12 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 	stages, errJSON := json.Marshal(p.Stages)
 	if errJSON != nil {
-		return nil, errJSON
+		return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to marshall stages")
 	}
 
-	err = insertPipelineBuild(tx, string(argsJSON), app.ID, p.ID, &pb, env.ID, string(stages))
-	if err != nil {
-		log.Warning("InsertPipelineBuild> Cannot insert pipeline build: %s\n", err)
-		return nil, err
+	//Insert pipeline build
+	if err := insertPipelineBuild(tx, string(argsJSON), app.ID, p.ID, &pb, env.ID, string(stages), []sdk.VCSCommit{}); err != nil {
+		return nil, sdk.WrapError(err, "InsertPipelineBuild> Cannot insert pipeline build")
 	}
 
 	pb.Status = sdk.StatusBuilding
@@ -732,7 +833,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	var previous *sdk.PipelineBuild
 	history, err := LoadPipelineBuildsByApplicationAndPipeline(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch)
 	if err != nil {
-		log.Critical("InsertPipelineBuild> error while loading previous pipeline build: %s", err)
+		log.Error("InsertPipelineBuild> error while loading previous pipeline build: %s", err)
 	}
 	//Be sure to get the previous one
 	if len(history) == 2 {
@@ -747,9 +848,9 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	return &pb, nil
 }
 
-func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipelineID int64, pb *sdk.PipelineBuild, envID int64, stages string) error {
-	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id,environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, scheduled_trigger, stages)
-						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`
+func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipelineID int64, pb *sdk.PipelineBuild, envID int64, stages string, commits []sdk.VCSCommit) error {
+	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id,environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, scheduled_trigger, stages, commits)
+						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`
 
 	var triggeredBy, parentPipelineID int64
 	if pb.Trigger.TriggeredBy != nil {
@@ -759,17 +860,35 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 		parentPipelineID = pb.Trigger.ParentPipelineBuild.ID
 	}
 
+	commitsBtes, errMarshal := json.Marshal(commits)
+	if errMarshal != nil {
+		return sdk.WrapError(errMarshal, "insertPipelineBuild> Unable to marshal commits")
+	}
+
 	statement := db.QueryRow(
 		query, pipelineID, pb.BuildNumber, pb.Version, sdk.StatusBuilding.String(),
 		args, time.Now(), applicationID, envID, time.Now(), pb.Trigger.ManualTrigger,
 		sql.NullInt64{Int64: triggeredBy, Valid: triggeredBy != 0},
 		sql.NullInt64{Int64: parentPipelineID, Valid: parentPipelineID != 0},
-		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.ScheduledTrigger, stages)
-	err := statement.Scan(&pb.ID)
-	if err != nil {
-		return fmt.Errorf("App:%d,Pip:%d,Env:%d> %s", applicationID, pipelineID, envID, err)
+		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.ScheduledTrigger, stages, commitsBtes)
+
+	if err := statement.Scan(&pb.ID); err != nil {
+		return sdk.WrapError(err, "insertPipelineBuild> Unable to insert pipeline_build : App:%d,Pip:%d,Env:%s", applicationID, pipelineID, envID)
 	}
 
+	return nil
+}
+
+func updatePipelineBuildCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
+	log.Debug("updatePipelineBuildCommits> Updating %d commits for pipeline_build #%d", len(commits), id)
+	commitsBtes, errMarshal := json.Marshal(commits)
+	if errMarshal != nil {
+		return sdk.WrapError(errMarshal, "insertPipelineBuild> Unable to marshal commits")
+	}
+
+	if _, err := db.Exec("UPDATE pipeline_build SET commits = $1 where id = $2", commitsBtes, id); err != nil {
+		return sdk.WrapError(errMarshal, "insertPipelineBuild> Unable to update pipeline_build id=%d", id)
+	}
 	return nil
 }
 
@@ -1170,7 +1289,7 @@ func StopPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 	var previous *sdk.PipelineBuild
 	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", pb.Trigger.VCSChangesBranch)
 	if err != nil {
-		log.Critical("StopPipelineBuild> error while loading previous pipeline build")
+		log.Error("StopPipelineBuild> error while loading previous pipeline build")
 	}
 	//Be sure to get the previous one
 	if len(history) == 2 {
@@ -1245,5 +1364,56 @@ func RestartPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 		return err
 	}
 
+	return nil
+}
+
+//DeleteBranchBuilds deletes all pipelines build for a given branch
+func DeleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
+	log.Debug("DeleteBranchBuilds> appID=%d branch=%s", appID, branch)
+
+	pbs, errPB := LoadPipelineBuildByApplicationAndBranch(db, appID, branch)
+	if errPB != nil {
+		return errPB
+	}
+
+	// Disabled building worker
+	for _, pb := range pbs {
+		if pb.Status != sdk.StatusBuilding {
+			continue
+		}
+		for _, s := range pb.Stages {
+			if s.Status != sdk.StatusBuilding {
+				continue
+			}
+			for _, pbJob := range s.PipelineBuildJobs {
+				if err := DisableBuildingWorker(db, pbJob.ID); err != nil {
+					log.Error("deleteBranchBuilds> Cannot disabled worker")
+					continue
+				}
+			}
+		}
+
+		// Stop building pipeline
+		if err := StopPipelineBuild(db, &pb); err != nil {
+			log.Error("deleteBranchBuilds> Cannot stop pipeline")
+			continue
+		}
+
+		// Delete the pipeline build
+		if err := DeletePipelineBuildByID(db, pb.ID); err != nil {
+			log.Error("deleteBranchBuilds> Cannot delete PipelineBuild %d: %s\n", pb.ID, err)
+			continue
+		}
+	}
+
+	return nil
+}
+
+// DisableBuildingWorker Disable all workers working on given pipeline build job
+func DisableBuildingWorker(db gorp.SqlExecutor, pipJobID int64) error {
+	query := `UPDATE worker set status=$1, action_build_id = NULL where action_build_id = $2`
+	if _, err := db.Exec(query, sdk.StatusDisabled.String(), pipJobID); err != nil {
+		return sdk.WrapError(err, "DisableBuildingWorker> Error while disabling building worker")
+	}
 	return nil
 }

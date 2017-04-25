@@ -11,8 +11,8 @@ import (
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadEnvironments load all environment from the given project
@@ -107,6 +107,10 @@ func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error
 
 // LoadEnvironmentByName load the given environment
 func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sdk.Environment, error) {
+	if envName == sdk.DefaultEnv.Name {
+		return &sdk.DefaultEnv, nil
+	}
+
 	var env sdk.Environment
 	query := `SELECT environment.id, environment.name
 		  FROM environment
@@ -246,7 +250,7 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 		return err
 	}
 
-	// FINALY delete environment
+	// FINALLY delete environment
 	query = `DELETE FROM environment WHERE id=$1`
 	if _, err := db.Exec(query, environmentID); err != nil {
 		if err, ok := err.(*pq.Error); ok {

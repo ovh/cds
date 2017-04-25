@@ -84,7 +84,7 @@ In a terminal
 
 #### Listen for incoming CDS data
 
-In a terminal, go to the working directory in wich you want to receive all CDS Data and run:
+In a terminal, go to the working directory in which you want to receive all CDS Data and run:
 
 ```shell
     $ plugin-kafka-publish listen <kafka address> <topic> <group> <kafka user> <kafka password> --pgp-decrypt ~/gpg.priv.as
@@ -139,7 +139,7 @@ In the current directory. a new file and a new directory have been created :
 ```
 
 The JSON file is the CDS context. It says that the context is related to `action_id=1220` is CDS Engine, and files are stored in `1220` directory. Files are `message` and `file_1`.
-From the consummer side, if you need to trigger a piece of script, you should just have to watch for new incomming json file.
+From the consummer side, if you need to trigger a piece of script, you should just have to watch for new incoming json file.
 
 The listener will never delete files, so have to do it by yourself.
 

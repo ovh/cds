@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Status : local ok redis
@@ -32,7 +32,7 @@ func Initialize(mode, redisHost, redisPassword string, TTL int) {
 	Status = mode
 	switch mode {
 	case "local":
-		log.Notice("Cache> Initialize local cache (TTL=%d seconds)", TTL)
+		log.Info("Cache> Initialize local cache (TTL=%d seconds)", TTL)
 		s = &LocalStore{
 			Mutex:  &sync.Mutex{},
 			Data:   map[string][]byte{},
@@ -40,16 +40,16 @@ func Initialize(mode, redisHost, redisPassword string, TTL int) {
 			TTL:    TTL,
 		}
 	case "redis":
-		log.Notice("Cache> Initialize redis cache (Host=%s, TTL=%d seconds)", redisHost, TTL)
+		log.Info("Cache> Initialize redis cache (Host=%s, TTL=%d seconds)", redisHost, TTL)
 		var err error
 		s, err = NewRedisStore(redisHost, redisPassword, TTL)
 		if err != nil {
 			Status += " KO"
-			log.Critical("cache> Cannot init redis cache (Host=%s, TTL=%d seconds): %s", redisHost, TTL, err)
+			log.Error("cache> Cannot init redis cache (Host=%s, TTL=%d seconds): %s", redisHost, TTL, err)
 		}
 		Status += " OK"
 	default:
-		log.Critical("Cache> Unsupported cache mode : %s", mode)
+		log.Error("Cache> Unsupported cache mode : %s", mode)
 		Status = "KO"
 	}
 }

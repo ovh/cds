@@ -18,8 +18,8 @@ import (
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -41,48 +41,48 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 
 	// Version
 	output = append(output, fmt.Sprintf("Version: %s", internal.VERSION))
-	log.Info("Status> Version: %s", internal.VERSION)
+	log.Debug("Status> Version: %s", internal.VERSION)
 
 	// Uptime
 	output = append(output, fmt.Sprintf("Uptime: %s", time.Since(startupTime)))
-	log.Info("Status> Uptime: %s", time.Since(startupTime))
+	log.Debug("Status> Uptime: %s", time.Since(startupTime))
 
 	//Nb Panics
 	output = append(output, fmt.Sprintf("Nb of Panics: %d", nbPanic))
-	log.Info("Status> Nb of Panics: %d", nbPanic)
+	log.Debug("Status> Nb of Panics: %d", nbPanic)
 
 	// Check vault
 	output = append(output, fmt.Sprintf("Secret Backend: %s", secret.Status()))
-	log.Info("Status> Secret Backend: %s", secret.Status())
+	log.Debug("Status> Secret Backend: %s", secret.Status())
 
 	// Check Scheduler
 	output = append(output, fmt.Sprintf("Scheduler: %s", scheduler.Status()))
-	log.Info("Status> Scheduler: %s", scheduler.Status())
+	log.Debug("Status> Scheduler: %s", scheduler.Status())
 
 	// Check Event
 	output = append(output, fmt.Sprintf("Event: %s", event.Status()))
-	log.Info("Status> Event: %s", event.Status())
+	log.Debug("Status> Event: %s", event.Status())
 
 	// Check redis
 	output = append(output, fmt.Sprintf("Cache: %s", cache.Status))
-	log.Info("Status> Cache: %s", cache.Status)
+	log.Debug("Status> Cache: %s", cache.Status)
 
 	// Check session-store
 	output = append(output, fmt.Sprintf("Session-Store: %s", sessionstore.Status))
-	log.Info("Status> Session-Store: %s", sessionstore.Status)
+	log.Debug("Status> Session-Store: %s", sessionstore.Status)
 
 	// Check object-store
 	output = append(output, fmt.Sprintf("Object-Store: %s", objectstore.Status()))
-	log.Info("Status> Object-Store: %s", objectstore.Status())
+	log.Debug("Status> Object-Store: %s", objectstore.Status())
 
 	// Check mail
 	mailStatus := mail.Status()
 	output = append(output, fmt.Sprintf("SMTP: %s", mailStatus))
-	log.Info("Status> SMTP: %s", mailStatus)
+	log.Debug("Status> SMTP: %s", mailStatus)
 
 	// Check database
 	output = append(output, database.Status())
-	log.Info("Status> %s", database.Status())
+	log.Debug("Status> %s", database.Status())
 
 	var status = http.StatusOK
 	if panicked {

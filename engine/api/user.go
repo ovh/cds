@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -15,8 +14,8 @@ import (
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // DeleteUserHandler removes a user
@@ -292,7 +291,6 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	// Load user
 	u, err := user.LoadUserAndAuth(db, name)
 	if err != nil {
-		fmt.Printf("ConfirmUser: Cannot load %s: %s\n", name, err)
 		return sdk.ErrInvalidUsername
 	}
 
@@ -319,7 +317,7 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	if _, local := router.authDriver.(*auth.LocalClient); !local || localCLientAuthMode != auth.LocalClientBasicAuthMode {
 		sessionKey, err := auth.NewSession(router.authDriver, u)
 		if err != nil {
-			log.Critical("Auth> Error while creating new session: %s\n", err)
+			log.Error("Auth> Error while creating new session: %s\n", err)
 		}
 
 		if sessionKey != "" {
@@ -346,7 +344,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 
 	var logFromCLI bool
 	if r.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-		log.Notice("LoginUser> login from CLI")
+		log.Info("LoginUser> login from CLI")
 		logFromCLI = true
 	}
 
@@ -390,13 +388,13 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 			//Standard login, new session
 			sessionKey, errs = auth.NewSession(router.authDriver, u)
 			if errs != nil {
-				log.Critical("Auth> Error while creating new session: %s\n", errs)
+				log.Error("Auth> Error while creating new session: %s\n", errs)
 			}
 		} else {
 			//CLI login, generate user key as persistent session
 			sessionKey, errs = auth.NewPersistentSession(db, router.authDriver, u)
 			if errs != nil {
-				log.Critical("Auth> Error while creating new session: %s\n", errs)
+				log.Error("Auth> Error while creating new session: %s\n", errs)
 			}
 		}
 

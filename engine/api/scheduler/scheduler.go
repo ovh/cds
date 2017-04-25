@@ -7,8 +7,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorhill/cronexpr"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var schedulerStatus = "Not Running"
@@ -20,7 +20,7 @@ func Scheduler(DBFunc func() *gorp.DbMap) {
 		_, status, err := Run(DBFunc())
 
 		if err != nil {
-			log.Critical("%s: %s", status, err)
+			log.Error("%s: %s", status, err)
 		}
 		schedulerStatus = status
 	}

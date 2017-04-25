@@ -7,12 +7,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // TriggerPipeline linked to received hook
-func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string, author string, p *sdk.Pipeline, projectData *sdk.Project) (bool, error) {
+func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string, author string, p *sdk.Pipeline, projectData *sdk.Project) (*sdk.PipelineBuild, error) {
 
 	// Create pipeline args
 	var args []sdk.Parameter
@@ -40,18 +40,18 @@ func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string
 	// Load pipeline Argument
 	parameters, err := pipeline.GetAllParametersInPipeline(tx, p.ID)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	p.Parameter = parameters
 
 	// get application
 	a, err := LoadByID(tx, h.ApplicationID, nil, LoadOptions.WithRepositoryManager, LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	applicationPipelineArgs, err := GetAllPipelineParam(tx, h.ApplicationID, p.ID)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	trigger := sdk.PipelineBuildTrigger{
@@ -76,8 +76,8 @@ func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string
 					log.Warning("hook> Cannot check %s/%s for commit %s by %s : %s (%s)", projectData.Key, a.Name, hash, author, commit.Message, err)
 				}
 				if match {
-					log.Notice("hook> Skipping build of %s/%s for commit %s by %s", projectData.Key, a.Name, hash, author)
-					return false, nil
+					log.Info("hook> Skipping build of %s/%s for commit %s by %s", projectData.Key, a.Name, hash, author)
+					return nil, nil
 				}
 			}
 		} else {
@@ -86,10 +86,10 @@ func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string
 	}
 
 	// FIXME add possibility to trigger a pipeline on a specific env
-	_, err = pipeline.InsertPipelineBuild(tx, projectData, p, a, applicationPipelineArgs, args, &sdk.DefaultEnv, 0, trigger)
-	if err != nil {
-		return false, err
+	pb, errpb := pipeline.InsertPipelineBuild(tx, projectData, p, a, applicationPipelineArgs, args, &sdk.DefaultEnv, 0, trigger)
+	if errpb != nil {
+		return nil, sdk.WrapError(errpb, "hook> Unable to insert pipeline build")
 	}
 
-	return true, nil
+	return pb, nil
 }

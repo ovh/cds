@@ -1,6 +1,6 @@
 ## Introduction
 
-This tutorial will guide through the setup of a functionnal building pipeline.
+This tutorial will guide through the setup of a functional building pipeline.
 
 Have you created your account ? If no, see the [quickstart](/doc/overview/quickstart.md).
 

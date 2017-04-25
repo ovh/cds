@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // GithubClient is a github.com wrapper for CDS RepositoriesManagerClient interface
@@ -40,7 +40,7 @@ func (g *GithubClient) Repos() ([]sdk.VCSRepo, error) {
 			}
 			nextRepos := []Repository{}
 
-			//Github may return 304 status because we are using conditionnal request with ETag based headers
+			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
 				cache.Get(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), &repos)
@@ -115,7 +115,7 @@ func (g *GithubClient) repoByFullname(fullname string) (Repository, error) {
 	}
 	repo := Repository{}
 
-	//Github may return 304 status because we are using conditionnal request with ETag based headers
+	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		cache.Get(cache.Key("reposmanager", "github", "repo", g.OAuthToken, url), &repo)
@@ -154,7 +154,7 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			}
 			nextBranches := []Branch{}
 
-			//Github may return 304 status because we are using conditionnal request with ETag based headers
+			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
 				cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
@@ -268,7 +268,7 @@ func (g *GithubClient) User(username string) (User, error) {
 	}
 	user := User{}
 
-	//Github may return 304 status because we are using conditionnal request with ETag based headers
+	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		cache.Get(cache.Key("reposmanager", "github", "users", g.OAuthToken, url), &user)
@@ -336,7 +336,7 @@ func (g *GithubClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	}
 	c := Commit{}
 
-	//Github may return 304 status because we are using conditionnal request with ETag based headers
+	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		cache.Get(cache.Key("reposmanager", "github", "commit", g.OAuthToken, url), &c)
@@ -393,28 +393,28 @@ func (g *GithubClient) RateLimit() error {
 		return err
 	}
 	if rateLimit.Rate.Remaining < 100 {
-		log.Critical("Github Rate Limit nearly exceeded %v", rateLimit)
+		log.Error("Github Rate Limit nearly exceeded %v", rateLimit)
 		return ErrorRateLimit
 	}
 	return nil
 }
 
-//PushEvents returns push events as commits
-func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCSPushEvent, time.Duration, error) {
-	log.Debug("GithubClient.PushEvents> loading events for %s after %v", fullname, dateRef)
-	var events = []Event{}
+//GetEvents calls Github et returns GithubEvents as []interface{}
+func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
+	log.Debug("GithubClient.GetEvents> loading events for %s after %v", fullname, dateRef)
+	var events = []interface{}{}
 
 	interval := 60 * time.Second
 
 	status, body, headers, err := g.get("/repos/" + fullname + "/events")
 	if err != nil {
-		log.Warning("GithubClient.PushEvents> Error %s", err)
+		log.Warning("GithubClient.GetEvents> Error %s", err)
 		return nil, interval, err
 	}
 
 	if status >= http.StatusBadRequest {
 		err := sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
-		log.Warning("GithubClient.PushEvents> Error http %s", err)
+		log.Warning("GithubClient.GetEvents> Error http %s", err)
 		return nil, interval, err
 	}
 
@@ -424,13 +424,36 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 
 	nextEvents := []Event{}
 	if err := json.Unmarshal(body, &nextEvents); err != nil {
-		log.Warning("GithubClient.PushEvents> Unable to parse github events: %s", err)
+		log.Warning("GithubClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
+		var skipEvent bool
 		if e.CreatedAt.After(dateRef) {
-			if e.Type == "PushEvent" || e.Type == "CreateEvent" { //May be we should manage PullRequestEvent; payload.action = opened
+			for i := range events {
+				e1 := events[i].(Event)
+				if e.Payload.Ref == e1.Payload.Ref {
+					if e.Type == "DeleteEvent" && e1.Type == "CreateEvent" {
+						//Delete event after create event
+						if e.CreatedAt.After(e1.CreatedAt.Time) {
+							skipEvent = true
+						} else {
+							//Avoid delete
+							events = append(events[:i], events[i+1:]...)
+						}
+						break
+					} else if e.Type == "CreateEvent" && e1.Type == "DeleteEvent" {
+						//Delete event before create event
+						if e.CreatedAt.After(e1.CreatedAt.Time) {
+							events = append(events[:i], events[i+1:]...)
+						}
+						break
+					}
+				}
+			}
+
+			if !skipEvent {
 				events = append(events, e)
 			}
 		}
@@ -441,6 +464,20 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 		f, err := strconv.ParseFloat(headers.Get("X-Poll-Interval"), 64)
 		if err == nil {
 			interval = time.Duration(f) * time.Second
+		}
+	}
+
+	return events, interval, nil
+}
+
+//PushEvents returns push events as commits
+func (g *GithubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPushEvent, error) {
+	events := Events{}
+	//Cast all the events
+	for _, i := range iEvents {
+		e := i.(Event)
+		if e.Type == "PushEvent" {
+			events = append(events, e)
 		}
 	}
 
@@ -481,5 +518,73 @@ func (g *GithubClient) PushEvents(fullname string, dateRef time.Time) ([]sdk.VCS
 		})
 	}
 
-	return res, interval, nil
+	return res, nil
+}
+
+//CreateEvents checks create events from a event list
+func (g *GithubClient) CreateEvents(fullname string, iEvents []interface{}) ([]sdk.VCSCreateEvent, error) {
+	events := Events{}
+	//Cast all the events
+	for _, i := range iEvents {
+		e := i.(Event)
+		if e.Type == "CreateEvent" {
+			events = append(events, e)
+		}
+	}
+
+	res := []sdk.VCSCreateEvent{}
+	for _, e := range events {
+		b := e.Payload.Ref
+		branch, err := g.Branch(fullname, b)
+		if err != nil {
+			log.Warning("GithubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			continue
+		}
+		event := sdk.VCSCreateEvent{
+			Branch: branch,
+		}
+
+		c, err := g.Commit(fullname, branch.LatestCommit)
+		if err != nil {
+			log.Warning("GithubClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
+			continue
+		}
+		event.Commit = c
+
+		res = append(res, event)
+	}
+
+	log.Debug("GithubClient.CreateEvents> found %d create events : %#v", len(res), res)
+
+	return res, nil
+}
+
+//DeleteEvents checks delete events from a event list
+func (g *GithubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]sdk.VCSDeleteEvent, error) {
+	events := Events{}
+	//Cast all the events
+	for _, i := range iEvents {
+		e := i.(Event)
+		if e.Type == "DeleteEvent" {
+			events = append(events, e)
+		}
+	}
+
+	res := []sdk.VCSDeleteEvent{}
+	for _, e := range events {
+		event := sdk.VCSDeleteEvent{
+			Branch: sdk.VCSBranch{
+				DisplayID: e.Payload.Ref,
+			},
+		}
+		res = append(res, event)
+	}
+
+	log.Debug("GithubClient.DeleteEvents> found %d delete events : %#v", len(res), res)
+	return res, nil
+}
+
+//PullRequestEvents checks pull request events from a event list
+func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+	return nil, nil
 }

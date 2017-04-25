@@ -9,7 +9,7 @@ import (
 	"net/smtp"
 	"text/template"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type emailParam struct {
@@ -36,6 +36,7 @@ func Init(user, password, from, host, port string, tls, disable bool) {
 	smtpUser = user
 	smtpPassword = password
 	smtpFrom = from
+	smtpHost = host
 	smtpPort = port
 	smtpTLS = tls
 	smtpEnable = !disable

@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func cmdMain() *cobra.Command {
@@ -61,12 +61,27 @@ func cmdMain() *cobra.Command {
 	flags.Bool("grpc-insecure", false, "Disable GRPC TLS encryption")
 	viper.BindPFlag("grpc_insecure", flags.Lookup("grpc-insecure"))
 
+	flags.String("graylog-protocol", "", "Ex: --graylog-protocol=xxxx-yyyy")
+	viper.BindPFlag("graylog_protocol", flags.Lookup("graylog-protocol"))
+
+	flags.String("graylog-host", "", "Ex: --graylog-host=xxxx-yyyy")
+	viper.BindPFlag("graylog_host", flags.Lookup("graylog-host"))
+
+	flags.String("graylog-port", "", "Ex: --graylog-port=12202")
+	viper.BindPFlag("graylog_port", flags.Lookup("graylog-port"))
+
+	flags.String("graylog-extra-key", "", "Ex: --graylog-extra-key=xxxx-yyyy")
+	viper.BindPFlag("graylog_extra_key", flags.Lookup("graylog-extra-key"))
+
+	flags.String("graylog-extra-value", "", "Ex: --graylog-extra-value=xxxx-yyyy")
+	viper.BindPFlag("graylog_extra_value", flags.Lookup("graylog-extra-value"))
+
 	return mainCmd
 }
 
 func mainCommandRun(cmd *cobra.Command, args []string) {
 	initViper()
-	log.Notice("What a good time to be alive")
+	log.Info("What a good time to be alive")
 
 	alive = true
 
@@ -113,9 +128,9 @@ func mainCommandRun(cmd *cobra.Command, args []string) {
 				if bookedJobID > 0 {
 					info = fmt.Sprintf(", I was born to work on job %d", bookedJobID)
 				}
-				log.Notice("Registering on CDS engine%s", info)
+				log.Info("Registering on CDS engine%s", info)
 				if err := register(api, name, key); err != nil {
-					log.Notice("Cannot register: %s", err)
+					log.Info("Cannot register: %s", err)
 					continue
 				}
 				alive = true
@@ -123,7 +138,7 @@ func mainCommandRun(cmd *cobra.Command, args []string) {
 
 		case <-suicideTick:
 			if nbActionsDone == 0 {
-				log.Notice("Time to exit.")
+				log.Info("Time to exit.")
 				unregister()
 			}
 

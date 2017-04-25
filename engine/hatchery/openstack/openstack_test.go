@@ -48,7 +48,7 @@ func TestCreateServer(t *testing.T) {
 	}
 
 	h := HatcheryCloud{hatch: &sdk.Hatchery{Name: "test"}}
-	err := h.createServer(s.URL+"/TestCreateServer", "", "test", "image", "flavor", "network", "192.168.0.1", "blabla\blabla", p)
+	err := h.createServer(s.URL+"/TestCreateServer", "", "test", "image", "flavor", "192.168.0.1", "blabla\blabla", []string{"network"}, p)
 	test.NoError(t, err)
 
 	assert.NotZero(t, w.Code)

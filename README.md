@@ -1,6 +1,9 @@
 # CDS: Continuous Delivery Service
 
-<img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo-background.png">
+[![Join the chat at https://gitter.im/ovh-cds/Lobby](https://badges.gitter.im/ovh-cds/Lobby.svg)](https://gitter.im/ovh-cds/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ovh/cds)](https://goreportcard.com/report/github.com/ovh/cds)
+
+<img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo-background.png" width="25%">
 
 CDS is a pipeline based Continuous Delivery Service written in Go(lang).
 
@@ -16,11 +19,11 @@ CDS is composend of several components/
 
 ### API
 
-The core component of CDS: [read more](/engine/api)
+The core component of CDS: [read more](/engine/api/README.md)
 
 ### WebUI
 
-CDS Web UI: [read more](ui)
+CDS Web UI: [read more](ui/README.md)
 
 ### CLI
 
@@ -41,6 +44,8 @@ Actions, Plugins, Templates, uServices are under : [read more](contrib)
 ### SDK
 
 A Go(lang) SDK is available at github.com/ovh/cds/sdk. It provides helper functions for all API handlers, with embedded authentification mechanism.
+
+[![GoDoc](https://godoc.org/github.com/ovh/cds/sdk?status.svg)](https://godoc.org/github.com/ovh/cds/sdk)
 
 ## Links
 

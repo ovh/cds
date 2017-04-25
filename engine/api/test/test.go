@@ -12,7 +12,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //DBDriver is exported for testing purpose
@@ -36,7 +36,7 @@ func init() {
 		flag.String("dbPort", "15432", "port")
 		flag.String("sslMode", "disable", "ssl mode")
 
-		log.SetLevel(log.DebugLevel)
+		log.Initialize(&log.Conf{Level: "debug"})
 		flag.Parse()
 	}
 }
@@ -54,6 +54,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	dbSSLMode = flag.Lookup("sslMode").Value.String()
 
 	log.SetLogger(t)
+
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")
 		return nil

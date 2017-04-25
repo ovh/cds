@@ -15,8 +15,8 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
 	"github.com/ovh/cds/engine/api/secret/secretbackend"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -62,14 +62,14 @@ func Initialize(o InitializeOpts) error {
 		}
 		for _, rm := range repositoriesManager {
 			var found bool
-			log.Notice("RepositoriesManager> Searching key for %s \n", rm.Name)
+			log.Info("RepositoriesManager> Searching key for %s", rm.Name)
 			s := fmt.Sprintf("cds/repositoriesmanager-secrets-%s-", rm.Name)
 			rmSecrets := map[string]string{}
 			all, _ := secrets.All()
 			for k, v := range all {
 				if strings.HasPrefix(k, s) {
 					found = true
-					log.Notice("RepositoriesManager> Found a key for %s\n", rm.Name)
+					log.Info("RepositoriesManager> Found a key for %s", rm.Name)
 					rmSecrets[strings.Replace(k, s, "", -1)] = v
 				}
 			}
@@ -77,7 +77,7 @@ func Initialize(o InitializeOpts) error {
 				switch rm.Type {
 				case sdk.Stash:
 					if o.StashPrivateKey != "" {
-						log.Notice("RepositoriesManager> Found a key for %s\n", rm.Name)
+						log.Info("RepositoriesManager> Found a key for %s", rm.Name)
 						btes, err := ioutil.ReadFile(o.StashPrivateKey)
 						if err != nil {
 							log.Warning("RepositoriesManager> Unable to load private key %s : %s", o.StashPrivateKey, err)
@@ -87,7 +87,7 @@ func Initialize(o InitializeOpts) error {
 					}
 				case sdk.Github:
 					if o.GithubSecret != "" {
-						log.Notice("RepositoriesManager> Found a key for %s\n", rm.Name)
+						log.Info("RepositoriesManager> Found a key for %s", rm.Name)
 						rmSecrets["client-secret"] = o.GithubSecret
 						found = true
 					}
@@ -95,10 +95,10 @@ func Initialize(o InitializeOpts) error {
 			}
 			if found {
 				if err := initRepositoriesManager(db, &rm, o.KeysDirectory, rmSecrets); err != nil {
-					log.Warning("RepositoriesManager> Unable init %s \n", rm.Name)
+					log.Warning("RepositoriesManager> Unable init %s", rm.Name)
 				}
 			} else {
-				log.Warning("RepositoriesManager> Unable to find key for %s \n", rm.Name)
+				log.Warning("RepositoriesManager> Unable to find key for %s", rm.Name)
 			}
 		}
 		initialized = true
@@ -113,7 +113,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 	case sdk.Stash:
 		//we have to compute the StashConsumer
 		var stash *repostash.StashConsumer
-		//Check if it isn't comming from the DB
+		//Check if it isn't coming from the DB
 		if id == 0 || consumerData == "" {
 			//Check args
 			if len(args) != 1 || args["key"] == "" {
@@ -133,7 +133,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		stash.DisableSetStatus = options.DisableStashSetStatus
 
 		if stash.DisableSetStatus {
-			log.Info("RepositoriesManager> ⚠ Stash Statuses are disabled")
+			log.Debug("RepositoriesManager> ⚠ Stash Statuses are disabled")
 		}
 
 		rm := sdk.RepositoriesManager{
@@ -149,7 +149,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 	case sdk.Github:
 		var github *repogithub.GithubConsumer
 		var withHook, withPolling *bool
-		//Check if it isn't comming from the DB
+		//Check if it isn't coming from the DB
 		if id == 0 || consumerData == "" {
 			//Check args
 			if len(args) < 2 || args["client-id"] == "" || args["client-secret"] == "" {
@@ -199,22 +199,14 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		github.DisableSetStatus = options.DisableGithubSetStatus
 		github.DisableStatusURL = options.DisableGithubStatusURL
 
-		if github.DisableSetStatus {
-			log.Info("RepositoriesManager> ⚠ Github Statuses are disabled")
-		}
-
-		if github.DisableStatusURL {
-			log.Info("RepositoriesManager> ⚠ Github Statuses URL are disabled")
-		}
-
 		if withHook == nil {
-			log.Debug("with hooks : default\n")
+			log.Debug("with hooks : default")
 			b := github.HooksSupported()
 			withHook = &b
 		}
 		github.WithHooks = *withHook
 		if withPolling == nil {
-			log.Debug("with polling : default\n")
+			log.Debug("with polling : default")
 			b := github.PollingSupported()
 			withPolling = &b
 		}
@@ -235,7 +227,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 	return nil, fmt.Errorf("Unknown type %s. Cannot instanciate repositories manager t=%s id=%d name=%s url=%s args=%s consumerData=%s", t, t, id, name, URL, args, consumerData)
 }
 
-//Init initializes all repositories with secrets comming from Vault
+//Init initializes all repositories with secrets coming from Vault
 func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, directory string, secrets map[string]string) error {
 	if rm.Type == sdk.Stash {
 		privateKey := secrets["privatekey"]
@@ -243,7 +235,7 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 			return fmt.Errorf("Cannot init %s. Missing private key", privateKey)
 		}
 		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "privateKey"))
-		log.Notice("RepositoriesManager> Writing stash private key %s", path)
+		log.Info("RepositoriesManager> Writing stash private key %s", path)
 		if err := ioutil.WriteFile(path, []byte(privateKey), 0600); err != nil {
 			log.Warning("RepositoriesManager> Unable to write stash private key %s : %s", path, err)
 			return err
@@ -262,7 +254,7 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 			return fmt.Errorf("Cannot init %s. Missing client secret", clientSecret)
 		}
 		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "clientSecret"))
-		log.Notice("RepositoriesManager> Writing github client secret %s", path)
+		log.Info("RepositoriesManager> Writing github client secret %s", path)
 		if err := ioutil.WriteFile(path, []byte(clientSecret), 0600); err != nil {
 			log.Warning("RepositoriesManager> Unable to write stash private key %s : %s", path, err)
 			return err

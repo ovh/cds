@@ -12,8 +12,8 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -236,7 +236,7 @@ func deleteProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		log.Warning("deleteProject: Cannot commit transaction: %s\n", err)
 		return err
 	}
-	log.Notice("Project %s deleted.\n", p.Name)
+	log.Info("Project %s deleted.\n", p.Name)
 
 	return nil
 

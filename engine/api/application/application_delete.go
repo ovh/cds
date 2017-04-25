@@ -7,7 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/trigger"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // DeleteApplication Delete the given application
@@ -33,6 +33,7 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	}
 
 	// Delete pipeline builds
+	//FIXME
 	var ids []int64
 	query = `SELECT id FROM pipeline_build WHERE application_id = $1`
 	rows, err := db.Query(query, applicationID)

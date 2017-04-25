@@ -12,8 +12,8 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 
 	"github.com/ovh/cds/engine/api/grpc"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var logsecrets []sdk.Variable
@@ -38,7 +38,7 @@ func sendLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int,
 func logger(inputChan chan sdk.Log) {
 	if grpcConn != nil {
 		if err := grpcLogger(inputChan); err != nil {
-			log.Critical("Unable to start grpc logger : %s", err)
+			log.Error("Unable to start grpc logger : %s", err)
 		} else {
 			return
 		}
@@ -124,7 +124,7 @@ func logger(inputChan chan sdk.Log) {
 }
 
 func grpcLogger(inputChan chan sdk.Log) error {
-	log.Notice("Logging through grpc")
+	log.Info("Logging through grpc")
 	client := grpc.NewBuildLogClient(grpcConn)
 	stream, err := client.AddBuildLog(context.Background())
 	if err != nil {
@@ -135,7 +135,7 @@ func grpcLogger(inputChan chan sdk.Log) error {
 		l, ok := <-inputChan
 		if ok {
 			if err := stream.Send(&l); err != nil {
-				log.Critical("grpcLogger> Error sending message : %s", err)
+				log.Error("grpcLogger> Error sending message : %s", err)
 				//Close all
 				stream.CloseSend()
 				grpcConn.Close()

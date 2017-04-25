@@ -24,7 +24,7 @@ In CDS, stages are executed sequentially if the previous stage is successfull.
 
 You can define trigger conditions on a stage, to enable it on certain conditions. For instance, you want to run the *Compile Stage* and *Analysis & Unit Tests stage* on all branches but the *Packaging Stage* on branches master and develop only.
 
-A **Stage** is a set of jobs wich will be run in parallel.
+A **Stage** is a set of jobs which will be run in parallel.
 
 ### Jobs
 

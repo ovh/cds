@@ -12,8 +12,8 @@ import (
 
 	"github.com/kardianos/osext"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
@@ -111,7 +111,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 		res.Status = sdk.StatusFail
 		return res
 	}
-	log.Notice("runScriptAction> %s %s", shell, strings.Trim(fmt.Sprint(opts), "[]"))
+	log.Info("runScriptAction> %s %s", shell, strings.Trim(fmt.Sprint(opts), "[]"))
 	cmd := exec.Command(shell, opts...)
 	res.Status = sdk.StatusUnknown
 
@@ -161,7 +161,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 		res.Status = sdk.StatusFail
 		return res
 	}
-	log.Notice("Worker binary path: %s\n", path.Dir(workerpath))
+	log.Info("Worker binary path: %s\n", path.Dir(workerpath))
 
 	for i := range cmd.Env {
 		if strings.HasPrefix(cmd.Env[i], "PATH") {
@@ -200,7 +200,7 @@ func runScriptAction(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) s
 				close(outchan)
 				return
 			}
-			log.Info(">Line: %s", line)
+			log.Debug(">Line: %s", line)
 			sendLog(pbJob.ID, line, pbJob.PipelineBuildID, stepOrder, false)
 		}
 	}()

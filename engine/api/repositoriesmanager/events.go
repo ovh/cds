@@ -9,8 +9,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //ReceiveEvents has to be launched as a goroutine.
@@ -21,7 +21,7 @@ func ReceiveEvents() {
 		db := database.DBMap(database.DB())
 		if db != nil {
 			if err := processEvent(db, e); err != nil {
-				log.Critical("ReceiveEvents> err while processing %s : %v", err, e)
+				log.Error("ReceiveEvents> err while processing %s : %v", err, e)
 				retryEvent(&e)
 			}
 			continue
@@ -33,7 +33,7 @@ func ReceiveEvents() {
 func retryEvent(e *sdk.Event) {
 	e.Attempts++
 	if e.Attempts >= 3 {
-		log.Critical("ReceiveEvents> Aborting event processing %v", e)
+		log.Error("ReceiveEvents> Aborting event processing %v", e)
 		return
 	}
 	time.Sleep(5 * time.Second)
@@ -49,7 +49,7 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
 
 	var eventpb sdk.EventPipelineBuild
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		log.Critical("Error during consumption: %s", err)
+		log.Error("Error during consumption: %s", err)
 		return err
 	}
 

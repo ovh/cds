@@ -9,8 +9,8 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -36,7 +36,7 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		return err
 	}
 
-	log.Info("registerHatchery> Welcome %d", hatch.ID)
+	log.Debug("registerHatchery> Welcome %d", hatch.ID)
 
 	return WriteJSON(w, r, hatch, http.StatusOK)
 }

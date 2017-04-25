@@ -12,8 +12,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // PipelineBuildJobInfo is returned to worker in answer to takePipelineBuildJobHandler
@@ -39,7 +39,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 	var st, name string
 	var pbJobID sql.NullInt64
 	if err := tx.QueryRow(query, id).Scan(&name, &st, &pbJobID); err != nil {
-		log.Info("DeleteWorker[%d]> Cannot lock worker: %s\n", id, err)
+		log.Debug("DeleteWorker[%d]> Cannot lock worker: %s\n", id, err)
 		return nil
 	}
 
@@ -50,11 +50,11 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but action_build_id is NULL!\n", name)
 		}
 
-		log.Notice("Worker %s crashed while building %d !\n", name, pbJobID.Int64)
+		log.Info("Worker %s crashed while building %d !\n", name, pbJobID.Int64)
 		if err := pipeline.RestartPipelineBuildJob(tx, pbJobID.Int64); err != nil {
-			log.Critical("DeleteWorker[%d]> Cannot restart pipeline build job: %s\n", id, err)
+			log.Error("DeleteWorker[%d]> Cannot restart pipeline build job: %s\n", id, err)
 		} else {
-			log.Notice("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash\n", id, pbJobID.Int64)
+			log.Info("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash\n", id, pbJobID.Int64)
 		}
 	}
 
@@ -121,15 +121,6 @@ func LoadWorkersByModel(db gorp.SqlExecutor, modelID int64) ([]sdk.Worker, error
 	}
 
 	return w, nil
-}
-
-// DisableBuildingWorker Disable all workers working on given pipeline build job
-func DisableBuildingWorker(db gorp.SqlExecutor, pipJobID int64) error {
-	query := `UPDATE worker set status=$1, action_build_id = NULL where action_build_id = $2`
-	if _, err := db.Exec(query, sdk.StatusDisabled.String(), pipJobID); err != nil {
-		return sdk.WrapError(err, "DisableBuildingWorker> Error while disabling building worker")
-	}
-	return nil
 }
 
 // LoadWorkersByPipelineJobID load all workers in db by pipeline job id
@@ -215,7 +206,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error)
 
 // RefreshWorker Update worker last_beat
 func RefreshWorker(db gorp.SqlExecutor, workerID string) error {
-	log.Info("RefreshWorker> worker %s heartbeat", workerID)
+	log.Debug("RefreshWorker> worker %s heartbeat", workerID)
 	query := `UPDATE worker SET last_beat = $1 WHERE id = $2`
 	res, err := db.Exec(query, time.Now(), workerID)
 	if err != nil {
@@ -241,7 +232,7 @@ func generateID() (string, error) {
 	bs := make([]byte, size)
 	_, err := rand.Read(bs)
 	if err != nil {
-		log.Critical("generateID: rand.Read failed: %s\n", err)
+		log.Error("generateID: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
@@ -383,7 +374,7 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 					query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
 					if _, err := ntx.Exec(query, modelID, b, b, string(sdk.BinaryRequirement)); err != nil {
 						//Ignore errors because we let the database to check constraints...
-						log.Info("registerWorker> Cannot insert into worker_capability: %s\n", err)
+						log.Debug("registerWorker> Cannot insert into worker_capability: %s\n", err)
 						return
 					}
 				}
@@ -459,7 +450,7 @@ func UpdateWorkerStatus(db gorp.SqlExecutor, workerID string, status sdk.Status)
 	}
 
 	if rowsAffected > 1 {
-		log.Critical("UpdateWorkerStatus: Multiple (%d) rows affected ! (id=%s)\n", rowsAffected, workerID)
+		log.Error("UpdateWorkerStatus: Multiple (%d) rows affected ! (id=%s)\n", rowsAffected, workerID)
 	}
 
 	if rowsAffected == 0 {

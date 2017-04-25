@@ -48,7 +48,7 @@ $ $PATH_TO_CDS/api database upgrade --db-host <host> --db-host <port> --db-passw
 
 ## TOML Configuration
 
-The toml configuration can be provided by a file or via [https://www.consul.io](consul k/v store).
+The toml configuration can be provided by a file or via [consul k/v store](https://www.consul.io).
 
 ### Start CDS with local configuration file
 
@@ -112,7 +112,6 @@ ui = "http://localhost:8080"
 # Define log levels and hooks
 [log]
 level = "info"
-db = false
 
 # CDS needs local directories to store temporary data (keys) and serve cds binaries such as hatcheries and workers (download)
 [directories]
@@ -132,7 +131,7 @@ keys = "/app/keys"
 
     [server.secrets]
     key = ""
-    # Uncomment this two lines to user a secret backend manager such as Vault. 
+    # Uncomment this two lines to user a secret backend manager such as Vault.
 	# More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
     # backend = "path/to/secret-backend-vault"
     # backendoptions = "vault_addr=https://vault.mydomain.net:8200 vault_token=09d1f099-3d41-666e-8337-492226789599 vault_namespace=/secret/cds"
@@ -251,7 +250,6 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     disabled = false #This is mainly for dev purpose, you should not have to change it
 
     [vcs.repositories]
-    cacheloader_disabled = false #This is mainly for dev purpose, you should not have to change it
 
     [vcs.repositories.github]
     statuses_disabled = false # Set to true if you don't want CDS to push statuses on Github API
@@ -259,7 +257,7 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     clientsecret = "" # You can define here your github client secret if you don't use secret-backend-manager
 
     [vcs.repositories.bitbucket]
-    statuses_disabled = false 
+    statuses_disabled = false
     privatekey = "" # You can define here your bickcket private key if you don't use secret-backend-manager
 ```
 
@@ -275,7 +273,6 @@ CDS_SERVER_SECRETS_KEY
 CDS_SERVER_SECRETS_BACKEND
 CDS_SERVER_SECRETS_BACKEND_OPTION
 CDS_LOG_LEVEL
-CDS_LOG_DB
 CDS_DB_USER
 CDS_DB_PASSWORD
 CDS_DB_NAME
@@ -322,7 +319,6 @@ CDS_EVENTS_KAFKA_USER
 CDS_EVENTS_KAFKA_PASSWORD
 CDS_SCHEDULERS_DISABLED
 CDS_VCS_POLLING_DISABLED
-CDS_VCS_REPOSITORIES_CACHERLOADER_DISABLED
 CDS_VCS_REPOSITORIES_GITHUB_STATUSES_DISABLED
 CDS_VCS_REPOSITORIES_GITHUB_STATUSES_URL_DISABLED
 CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET

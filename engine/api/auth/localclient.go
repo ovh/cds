@@ -11,18 +11,18 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
-//LocalClient is a auth driver wich store all in database
+//LocalClient is a auth driver which store all in database
 type LocalClient struct {
 	store sessionstore.Store
 }
 
 //Open nothing
 func (c *LocalClient) Open(options interface{}, store sessionstore.Store) error {
-	log.Notice("Auth> Connecting to session store")
+	log.Info("Auth> Connecting to session store")
 	c.store = store
 	return nil
 }
@@ -91,7 +91,7 @@ func (c *LocalClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.
 				}
 				return nil
 			}
-			//Check if its comming from CLI
+			//Check if its coming from CLI
 			if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 				if getUserPersistentSession(db, c.Store(), headers, ctx) {
 					return nil

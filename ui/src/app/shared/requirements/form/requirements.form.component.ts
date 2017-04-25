@@ -2,6 +2,8 @@ import {Component, Output, EventEmitter} from '@angular/core';
 import {RequirementStore} from '../../../service/worker/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
+import {WorkerModelService} from '../../../service/worker/worker.model.service';
+import {WorkerModel} from '../../../model/worker.model';
 
 @Component({
     selector: 'app-requirements-form',
@@ -15,11 +17,16 @@ export class RequirementsFormComponent {
     newRequirement: Requirement = new Requirement('binary');
     availableRequirements: Array<string>;
     isWriting = false;
+    workerModels: Array<WorkerModel>;
 
-    constructor(private _requirementStore: RequirementStore) {
+    constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         this._requirementStore.getAvailableRequirements().subscribe(r => {
             this.availableRequirements = new Array<string>();
             this.availableRequirements.push(...r.toArray());
+        });
+
+        this._workerModelService.getWorkerModel().first().subscribe( wms => {
+            this.workerModels = wms;
         });
     }
 

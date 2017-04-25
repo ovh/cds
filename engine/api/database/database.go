@@ -3,10 +3,11 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -33,12 +34,12 @@ func DB() *sql.DB {
 		}
 		_, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
 		if err != nil {
-			log.Printf("Database> cannot init db connection : %s\n", err)
+			log.Error("Database> cannot init db connection : %s", err)
 			return nil
 		}
 	}
 	if err := db.Ping(); err != nil {
-		log.Printf("Database> cannot ping db : %s\n", err)
+		log.Error("Database> cannot ping db : %s", err)
 		db = nil
 		return nil
 	}
@@ -57,14 +58,13 @@ func Set(d *sql.DB) {
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
 func Init(user, password, name, host, port, sslmode string, timeout, maxconn int) (*sql.DB, error) {
-	fmt.Printf("user=%s password=%s name=%s host=%s port=%s sslmode=%s", user, password, name, host, port, sslmode)
 	mutex.Lock()
 	defer mutex.Unlock()
 
 	// Try to close before reinit
 	if db != nil {
 		if err := db.Close(); err != nil {
-			log.Printf("[CRITICAL]cannot close connection to DB : %s", err)
+			log.Error("Cannot close connection to DB : %s", err)
 		}
 	}
 
@@ -107,7 +107,7 @@ func Init(user, password, name, host, port, sslmode string, timeout, maxconn int
 	db, err = sql.Open(dbDriver, dsn)
 	if err != nil {
 		db = nil
-		log.Printf("Cannot open database: %s\n", err)
+		log.Error("Cannot open database: %s", err)
 		return nil, err
 	}
 

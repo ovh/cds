@@ -9,13 +9,28 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //checkGitVariables needs full loaded project, pipeline
 func checkGitVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) []sdk.Warning {
 	var warnings []sdk.Warning
+
+	var errrepos error
+	p.ReposManager, errrepos = repositoriesmanager.LoadAllForProject(db, p.Key)
+	if errrepos != nil {
+		log.Warning("checkGitVariables> Unable to load reposmanager for project %s : %s", p.Key, errrepos)
+		return nil
+	}
+
+	var errapps error
+	p.Applications, errapps = application.LoadAll(db, p.Key, nil, application.LoadOptions.WithPipelines, application.LoadOptions.WithVariables)
+	if errapps != nil {
+		log.Warning("checkGitVariables> Unable to load applications for project %s : %s", p.Key, errapps)
+		return nil
+	}
 
 	var foundGitURLVar bool
 	for _, v := range vars {
@@ -77,10 +92,10 @@ func checkGitVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, pip *
 			w.Action.ID = a.ID
 			warnings = append(warnings, w)
 		} else {
-			for _, a := range p.Applications {
+			for _, app := range p.Applications {
 				ok, _ := application.IsAttached(db, p.ID, a.ID, pip.Name)
 				if ok {
-					if a.RepositoriesManager == nil || a.RepositoryFullname == "" {
+					if app.RepositoriesManager == nil || app.RepositoryFullname == "" {
 						w := sdk.Warning{
 							ID: GitURLWithoutLinkedRepository,
 							MessageParam: map[string]string{

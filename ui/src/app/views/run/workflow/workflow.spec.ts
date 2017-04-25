@@ -12,6 +12,7 @@ import {Stage} from '../../../model/stage.model';
 import {Job} from '../../../model/job.model';
 import {Action} from '../../../model/action.model';
 import {ApplicationRunModule} from '../application.run.module';
+import {NotificationService} from '../../../service/notification/notification.service';
 
 describe('CDS: Pipeline Run Workflow', () => {
 
@@ -24,6 +25,7 @@ describe('CDS: Pipeline Run Workflow', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
+                NotificationService
             ],
             imports: [
                 ApplicationRunModule,
@@ -59,7 +61,7 @@ describe('CDS: Pipeline Run Workflow', () => {
         expect(compiled.querySelectorAll('.ban.grey.icon').length).toBe(2);
         expect(compiled.querySelectorAll('.check.green.icon').length).toBe(1);
         expect(compiled.querySelectorAll('.remove.red.icon').length).toBe(1);
-        expect(compiled.querySelectorAll('.wait.orange.icon').length).toBe(1);
+        expect(compiled.querySelectorAll('.wait.blue.icon').length).toBe(1);
         expect(compiled.querySelectorAll('.ui.small.active.inline.blue.loader').length).toBe(1);
 
 

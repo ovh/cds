@@ -15,8 +15,8 @@ import (
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
@@ -241,7 +241,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	assert.Equal(t, len(app.Workflows), 1)
 	assert.Equal(t, len(app.Workflows[0].Schedulers), 1)
-	s = &app.Workflows[0].Schedulers[0]
+	// scheduler is here: &app.Workflows[0].Schedulers[0]
 
 	scheduler.Run(db)
 	scheduler.ExecuterRun(db)

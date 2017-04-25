@@ -1,11 +1,11 @@
 package secretbackend
 
 import (
-	"log"
 	"os/exec"
 	"path"
 
 	"github.com/hashicorp/go-plugin"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Client must be used from client side to call the plugin. It's managing plugin instanciation and initializing
@@ -50,7 +50,7 @@ func (p Client) get() (Driver, error) {
 	// Request the plugin
 	raw, err := rpcClient.Dispense(p.name)
 	if err != nil {
-		log.Printf("[CRITICAL] unable to dispense plugin %s (%s) : %s", p.name, p.pluginBinary, err)
+		log.Error("Unable to dispense plugin %s (%s) : %s", p.name, p.pluginBinary, err)
 		return nil, err
 	}
 

@@ -1,4 +1,4 @@
-import {Component, OnInit, AfterViewInit} from '@angular/core';
+import {Component, OnInit, AfterViewInit, OnDestroy} from '@angular/core';
 import {ProjectStore} from '../../service/project/project.store';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {Project} from '../../model/project.model';
@@ -7,13 +7,15 @@ import {Application} from '../../model/application.model';
 import {Router} from '@angular/router';
 import {TranslateService} from 'ng2-translate';
 import {List} from 'immutable';
+import {LanguageStore} from '../../service/language/language.store';
+import {Subscription} from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-navbar',
     templateUrl: './navbar.html',
     styleUrls: ['./navbar.scss']
 })
-export class NavbarComponent implements OnInit, AfterViewInit {
+export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // flag to indicate that the component is ready to use
     public ready = false;
@@ -26,12 +28,29 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     selectedApplicationName: string;
     listApplications: Array<Application>;
 
+    currentCountry: string;
+    langSubscrition: Subscription;
+
     constructor(private _projectStore: ProjectStore,
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
-                private _router: Router,
+                private _router: Router, private _language: LanguageStore,
                 private _translate: TranslateService) {
         this.selectedProjectKey = '#NOPROJECT#';
+
+        this.langSubscrition = this._language.get().subscribe(l => {
+            this.currentCountry = l;
+        });
+    }
+
+    changeCountry() {
+        this._language.set(this.currentCountry);
+    }
+
+    ngOnDestroy() {
+        if (this.langSubscrition) {
+            this.langSubscrition.unsubscribe();
+        }
     }
 
     ngAfterViewInit () {

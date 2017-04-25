@@ -9,6 +9,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -36,7 +39,7 @@ func GeneratePassword() (string, string, error) {
 func IsCheckValid(clear, hashField string) bool {
 	_, salt, hashedInDB, err := splitHash(hashField)
 	if err != nil {
-		fmt.Printf("Invalid Hash field in db : %s\n", err)
+		log.Warning("Invalid Hash field in db : %s", err)
 		return false
 	}
 	hashed := hashPassword(clear, salt)
@@ -59,8 +62,7 @@ func generateSalt() (string, error) {
 	salt := make([]byte, pwSaltBytes)
 	_, err := io.ReadFull(rand.Reader, salt)
 	if err != nil {
-		fmt.Printf("GenerateSalt: Error generating salt: %s\n", err)
-		return "", err
+		return "", sdk.WrapError(err, "GenerateSalt: Error generating salt")
 	}
 	return hex.EncodeToString(salt), nil
 }

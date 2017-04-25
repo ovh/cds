@@ -36,8 +36,8 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var startupTime time.Time
@@ -52,11 +52,15 @@ var mainCmd = &cobra.Command{
 
 		//Check the first config key
 		if viper.GetString(viperURLAPI) == "" {
-			sdk.Exit("Your CDS configuration seems to not be set. Please use environment variables, file or etcd to set your configuration.")
+			sdk.Exit("Your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration.")
 		}
 
-		log.Initialize()
-		log.Notice("Starting CDS server...\n")
+		logLevel := viper.GetString("log_level")
+		if logLevel == "" {
+			logLevel = viper.GetString("log.level")
+		}
+		log.Initialize(&log.Conf{Level: logLevel})
+		log.Info("Starting CDS server...")
 
 		startupTime = time.Now()
 
@@ -73,7 +77,7 @@ var mainCmd = &cobra.Command{
 			secretBackendOptionsMap[t[0]] = t[1]
 		}
 		if err := secret.Init(viper.GetString(viperDBSecret), viper.GetString(viperServerSecretKey), secretBackend, secretBackendOptionsMap); err != nil {
-			log.Critical("Cannot initialize secret manager: %s\n", err)
+			log.Error("Cannot initialize secret manager: %s", err)
 		}
 		if secret.SecretUsername != "" {
 			database.SecretDBUser = secret.SecretUsername
@@ -120,7 +124,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		if err := objectstore.Initialize(cfg); err != nil {
-			log.Fatalf("Cannot initialize storage: %s\n", err)
+			log.Fatalf("Cannot initialize storage: %s", err)
 		}
 
 		//Intialize database
@@ -135,16 +139,12 @@ var mainCmd = &cobra.Command{
 			viper.GetInt(viperDBMaxConn),
 		)
 		if err != nil {
-			log.Warning("Cannot connect to database: %s\n", err)
+			log.Warning("Cannot connect to database: %s", err)
 			os.Exit(3)
 		}
 
-		if viper.GetBool(viperLogDBLogging) {
-			log.UseDatabaseLogger(db)
-		}
-
 		if err = bootstrap.InitiliazeDB(database.GetDBMap); err != nil {
-			log.Critical("Cannot setup databases: %s\n", err)
+			log.Error("Cannot setup databases: %s", err)
 		}
 
 		// Gracefully shutdown sql connections
@@ -154,7 +154,7 @@ var mainCmd = &cobra.Command{
 		signal.Notify(c, syscall.SIGKILL)
 		go func() {
 			<-c
-			log.Warning("Cleanup SQL connections\n")
+			log.Warning("Cleanup SQL connections")
 			db.Close()
 			event.Publish(sdk.EventEngine{Message: "shutdown"})
 			event.Close()
@@ -165,6 +165,7 @@ var mainCmd = &cobra.Command{
 			mux: mux.NewRouter(),
 		}
 		router.init()
+
 		baseURL = viper.GetString(viperURLUI)
 
 		//Intialize repositories manager
@@ -180,7 +181,7 @@ var mainCmd = &cobra.Command{
 			StashPrivateKey:        viper.GetString(viperVCSRepoBitbucketPrivateKey),
 		}
 		if err := repositoriesmanager.Initialize(rmInitOpts); err != nil {
-			log.Warning("Error initializing repositories manager connections: %s\n", err)
+			log.Warning("Error initializing repositories manager connections: %s", err)
 		}
 
 		//Initiliaze hook package
@@ -206,10 +207,10 @@ var mainCmd = &cobra.Command{
 		default:
 			authMode = "local"
 			if viper.GetString(viperAuthMode) == "basic" {
-				log.Notice("Authentitication mode: Basic\n")
+				log.Info("Authentitication mode: Basic")
 				localCLientAuthMode = auth.LocalClientBasicAuthMode
 			} else {
-				log.Notice("Authentitication mode: Session\n")
+				log.Info("Authentitication mode: Session")
 				localCLientAuthMode = auth.LocalClientSessionMode
 			}
 		}
@@ -243,13 +244,12 @@ var mainCmd = &cobra.Command{
 		}
 
 		if err := group.Initialize(database.DBMap(db), viper.GetString(viperAuthDefaultGroup)); err != nil {
-			log.Critical("Cannot initialize groups: %s\n", err)
+			log.Error("Cannot initialize groups: %s", err)
 		}
 
 		go queue.Pipelines()
 		go pipeline.AWOLPipelineKiller(database.GetDBMap)
 		go hatchery.Heartbeat(database.GetDBMap)
-		go log.RemovalRoutine(database.DB)
 		go auditCleanerRoutine(database.GetDBMap)
 
 		go repositoriesmanager.ReceiveEvents()
@@ -257,12 +257,6 @@ var mainCmd = &cobra.Command{
 		go stats.StartRoutine()
 		go action.RequirementsCacheLoader(5, database.GetDBMap)
 		go hookRecoverer(database.GetDBMap)
-
-		if !viper.GetBool(viperVCSRepoCacheLoaderDisabled) {
-			go repositoriesmanager.RepositoriesCacheLoader(30)
-		} else {
-			log.Warning("⚠ Repositories cache loader is disabled")
-		}
 
 		if !viper.GetBool(viperVCSPollingDisabled) {
 			go poller.Initialize(database.GetDBMap, 10)
@@ -293,9 +287,9 @@ var mainCmd = &cobra.Command{
 			}
 		}()
 
-		log.Notice("Starting HTTP Server on port %s", viper.GetString(viperServerHTTPPort))
+		log.Info("Starting HTTP Server on port %s", viper.GetString(viperServerHTTPPort))
 		if err := s.ListenAndServe(); err != nil {
-			log.Fatalf("Cannot start cds-server: %s\n", err)
+			log.Fatalf("Cannot start cds-server: %s", err)
 		}
 	},
 }

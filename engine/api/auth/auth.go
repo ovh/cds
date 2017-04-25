@@ -15,8 +15,8 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Driver is an interface to all auth method (local, ldap and beyond...)
@@ -30,7 +30,7 @@ type Driver interface {
 
 //GetDriver is a factory
 func GetDriver(mode string, options interface{}, storeOptions sessionstore.Options) (Driver, error) {
-	log.Notice("Auth> Intializing driver (%s)", mode)
+	log.Info("Auth> Intializing driver (%s)", mode)
 	store, err := sessionstore.Get(storeOptions.Mode, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get AuthDriver : %s\n", err)
@@ -59,7 +59,7 @@ func NewSession(d Driver, u *sdk.User) (sessionstore.SessionKey, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Notice("Auth> New Session for %s", u.Username)
+	log.Info("Auth> New Session for %s", u.Username)
 	d.Store().Set(session, "username", u.Username)
 	return session, err
 }
@@ -74,7 +74,7 @@ func NewPersistentSession(db gorp.SqlExecutor, d Driver, u *sdk.User) (sessionst
 	if errSession != nil {
 		return "", errSession
 	}
-	log.Notice("NewPersistentSession> New Persistent Session for %s", u.Username)
+	log.Info("NewPersistentSession> New Persistent Session for %s", u.Username)
 	newToken := sdk.UserToken{
 		Token:     string(t),
 		Timestamp: time.Now().Unix(),
@@ -89,7 +89,7 @@ func NewPersistentSession(db gorp.SqlExecutor, d Driver, u *sdk.User) (sessionst
 	if errStore != nil {
 		return "", errStore
 	}
-	log.Notice("NewPersistentSession> New Session for %s", u.Username)
+	log.Info("NewPersistentSession> New Session for %s", u.Username)
 	d.Store().Set(session, "username", u.Username)
 
 	return session, nil

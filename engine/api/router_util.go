@@ -10,9 +10,18 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
+
+func deleteUserPermissionCache(c *context.Ctx) {
+	if c.User != nil {
+		k := cache.Key("users", c.User.Username, "permissions")
+		cache.Delete(k)
+	}
+}
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
 func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {

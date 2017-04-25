@@ -128,6 +128,17 @@ func (c *cluster) markDown(endpoint string) {
 	}
 }
 
+// healthCheckAllNodes performs a health check on all nodes
+func (c *cluster) healthCheckAllNodes() {
+	c.RLock()
+	members := c.members
+	c.RUnlock()
+
+	for _, n := range members {
+		c.healthCheckNode(n)
+	}
+}
+
 // healthCheckNode performs a health check on the node and when active updates the status
 func (c *cluster) healthCheckNode(node *member) {
 	// step: wait for the node to become active ... we are assuming a /ping is enough here

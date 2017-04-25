@@ -17,8 +17,8 @@ import (
 	"github.com/ovh/cds/engine/api/actionplugin"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
@@ -42,7 +42,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 
 	tmp, err := ioutil.TempDir("", "cds-plugin")
 	if err != nil {
-		log.Critical("fileUploadAndGetPlugin> %s", err)
+		log.Error("fileUploadAndGetPlugin> %s", err)
 		return nil, nil, nil, nil, err
 	}
 	deferFunc := func() {
@@ -54,7 +54,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	tmpfn := filepath.Join(tmp, filename)
 	f, err := os.OpenFile(tmpfn, os.O_WRONLY|os.O_CREATE, 0700)
 	if err != nil {
-		log.Critical("fileUploadAndGetPlugin> %s", err)
+		log.Error("fileUploadAndGetPlugin> %s", err)
 		return nil, nil, nil, deferFunc, err
 	}
 
@@ -64,7 +64,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 
 	content, err := os.Open(tmpfn)
 	if err != nil {
-		log.Critical("fileUploadAndGetPlugin> %s", err)
+		log.Error("fileUploadAndGetPlugin> %s", err)
 		return nil, nil, nil, deferFunc, err
 	}
 

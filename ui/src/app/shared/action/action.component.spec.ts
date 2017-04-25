@@ -22,6 +22,7 @@ import {ActionService} from '../../service/action/action.service';
 import {Injector} from '@angular/core';
 import {RepoManagerService} from '../../service/repomanager/project.repomanager.service';
 import {StepEvent} from './step/step.event';
+import {WorkerModelService} from '../../service/worker/worker.model.service';
 
 describe('CDS: Action Component', () => {
 
@@ -41,6 +42,7 @@ describe('CDS: Action Component', () => {
                 RepoManagerService,
                 ActionStore,
                 ActionService,
+                WorkerModelService,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser

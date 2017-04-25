@@ -14,4 +14,5 @@ export class Stage {
 
   // UI params
   hasChanged: boolean;
+  edit: boolean;
 }

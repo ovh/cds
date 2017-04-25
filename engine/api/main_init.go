@@ -23,7 +23,6 @@ const (
 	viperServerSecretBackend            = "server.secrets.backend"
 	viperServerSecretBackendOption      = "server.secrets.backend.option"
 	viperLogLevel                       = "log.level"
-	viperLogDBLogging                   = "log.db"
 	viperDBUser                         = "db.user"
 	viperDBPassword                     = "db.password"
 	viperDBName                         = "db.name"
@@ -70,7 +69,6 @@ const (
 	viperEventsKafkaPassword            = "events.kafka.password"
 	viperSchedulersDisabled             = "schedulers.disabled"
 	viperVCSPollingDisabled             = "vcs.polling.disabled"
-	viperVCSRepoCacheLoaderDisabled     = "vcs.repositories.cacherloader.disabled"
 	viperVCSRepoGithubStatusDisabled    = "vcs.repositories.github.statuses_disabled"
 	viperVCSRepoGithubStatusURLDisabled = "vcs.repositories.github.statuses_url_disabled"
 	viperVCSRepoGithubSecret            = "vcs.repositories.github.clientsecret"
@@ -146,7 +144,6 @@ const tmpl = `###################################
 # CDS_SERVER_SECRETS_BACKEND
 # CDS_SERVER_SECRETS_BACKEND_OPTION
 # CDS_LOG_LEVEL
-# CDS_LOG_DB
 # CDS_DB_USER
 # CDS_DB_PASSWORD
 # CDS_DB_NAME
@@ -193,7 +190,6 @@ const tmpl = `###################################
 # CDS_EVENTS_KAFKA_PASSWORD
 # CDS_SCHEDULERS_DISABLED
 # CDS_VCS_POLLING_DISABLED
-# CDS_VCS_REPOSITORIES_CACHERLOADER_DISABLED
 # CDS_VCS_REPOSITORIES_GITHUB_STATUSES_DISABLED
 # CDS_VCS_REPOSITORIES_GITHUB_STATUSES_URL_DISABLED
 # CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET
@@ -214,8 +210,8 @@ ui = "http://localhost:8080"
 #####################
 # Define log levels and hooks
 [log]
+# debug, info, warning or error
 level = "info"
-db = false
 
 # CDS needs local directories to store temporary data (keys) and serve cds binaries such as hatcheries and workers (download)
 [directories]
@@ -235,8 +231,8 @@ keys = "/app/keys"
 
     [server.secrets]
     key = ""
-    # Uncomment this two lines to user a secret backend manager such as Vault. 
-	# More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
+    # Uncomment this two lines to user a secret backend manager such as Vault.
+    # More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
     # backend = "path/to/secret-backend-vault"
     # backendoptions = "vault_addr=https://vault.mydomain.net:8200 vault_token=09d1f099-3d41-666e-8337-492226789599 vault_namespace=/secret/cds"
 
@@ -253,6 +249,7 @@ port = 5432
 sslmode = "disable"
 maxconn = 20
 timeout = 3000
+
 # Uncomment this to retreive database credentials from secret-backend
 # secret = "cds/db"
 # The value must be as below
@@ -270,7 +267,7 @@ timeout = 3000
 #mode = "redis"
 mode = "local"
 ttl = 60
-	# Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
+    # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
     [cache.redis]
     host = "localhost:6379" # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
     password = "your password"
@@ -326,7 +323,7 @@ mode = "local"
     password = "<OS_PASSWORD>"
     tenant = "<OS_TENANT_NAME>"
     region = "<OS_REGION_NAME>"
-	containerprefix = "" # Use if your want to prefix containers
+    containerprefix = "" # Use if your want to prefix containers
 
 #######################
 # CDS Events Settings #
@@ -354,7 +351,6 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     disabled = false #This is mainly for dev purpose, you should not have to change it
 
     [vcs.repositories]
-    cacheloader_disabled = false #This is mainly for dev purpose, you should not have to change it
 
     [vcs.repositories.github]
     statuses_disabled = false # Set to true if you don't want CDS to push statuses on Github API
@@ -362,6 +358,6 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     clientsecret = "" # You can define here your github client secret if you don't use secret-backend-manager
 
     [vcs.repositories.bitbucket]
-    statuses_disabled = false 
+    statuses_disabled = false
     privatekey = "" # You can define here your bickcket private key if you don't use secret-backend-manager
 `

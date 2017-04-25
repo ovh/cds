@@ -13,8 +13,8 @@ import (
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/internal"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -127,7 +127,7 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 						}
 					}
 					if attempts > 100 {
-						log.Critical("disableWorkerHandler> Unable to disabled worker %s %s", w.ID, w.Name)
+						log.Error("disableWorkerHandler> Unable to disabled worker %s %s", w.ID, w.Name)
 						return
 					}
 				}
@@ -174,7 +174,7 @@ func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	if wk.Status != sdk.StatusWaiting {
-		log.Info("workerCheckingHandler> Worker %s cannot be Checking. Current status: %s", wk.Name, wk.Status)
+		log.Debug("workerCheckingHandler> Worker %s cannot be Checking. Current status: %s", wk.Name, wk.Status)
 		return nil
 	}
 
@@ -196,7 +196,7 @@ func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	if wk.Status != sdk.StatusChecking && wk.Status != sdk.StatusBuilding {
-		log.Info("workerWaitingHandler> Worker %s cannot be Waiting. Current status: %s", wk.Name, wk.Status)
+		log.Debug("workerWaitingHandler> Worker %s cannot be Waiting. Current status: %s", wk.Name, wk.Status)
 		return nil
 	}
 

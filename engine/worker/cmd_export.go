@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var cmdExport = &cobra.Command{
@@ -108,7 +108,7 @@ func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 		err = fmt.Errorf("HTTP %d", code)
 	}
 	if err != nil {
-		log.Critical("addBuildVarHandler> Cannot export variable: %s", err)
+		log.Error("addBuildVarHandler> Cannot export variable: %s", err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

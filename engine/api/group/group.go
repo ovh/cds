@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // DeleteGroupAndDependencies deletes group and all subsequent group_project, pipeline_project

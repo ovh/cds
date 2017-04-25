@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // SharedInfraGroupName is the name of the builtin group used to share infrastructure between projects
@@ -59,7 +59,7 @@ func Initialize(db *gorp.DbMap, defaultGroupName string) error {
 	var errlg error
 	SharedInfraGroup, errlg = LoadGroup(db, SharedInfraGroupName)
 	if errlg != nil {
-		log.Critical("group.Initialize> Cannot load shared infra group: %s\n", errlg)
+		log.Error("group.Initialize> Cannot load shared infra group: %s\n", errlg)
 		return errlg
 	}
 	//Inject SharedInfraGroup.ID in permission package
@@ -68,7 +68,7 @@ func Initialize(db *gorp.DbMap, defaultGroupName string) error {
 	if defaultGroupName != "" {
 		g, errld := LoadGroup(db, defaultGroupName)
 		if errld != nil {
-			log.Critical("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
+			log.Error("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
 			return errld
 		}
 		defaultGroupID = g.ID

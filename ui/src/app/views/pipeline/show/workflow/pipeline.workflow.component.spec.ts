@@ -120,6 +120,53 @@ describe('CDS: Pipeline Workflow', () => {
         expect(fixture.componentInstance.selectedStage).toBe(s);
 
     }));
+
+    it('should update/delete a stage', fakeAsync( () => {
+
+        let call = 0;
+        // Mock Http
+        backend.connections.subscribe(connection => {
+            connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "pip", "stages": [] }'})));
+        });
+
+        // Create component
+        let fixture = TestBed.createComponent(PipelineWorkflowComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
+
+        // Init stage
+        let s = new Stage();
+        s.id = 123;
+        fixture.componentInstance.editableStage = s;
+
+        // Init project
+        let proj = new Project();
+        proj.key = 'key';
+        fixture.componentInstance.project = proj;
+
+        // Init pipeline
+        let pip = new Pipeline();
+        pip.name = 'pip';
+        fixture.componentInstance.pipeline = pip;
+
+        // UPDATE
+        let pipStore = injector.get(PipelineStore);
+        spyOn(pipStore, 'updateStage').and.callFake(() => {
+            return Observable.of(pip);
+        });
+        fixture.componentInstance.stageEvent('update');
+        expect(pipStore.updateStage).toHaveBeenCalledWith('key', 'pip', s);
+
+        // DELETE
+
+        spyOn(pipStore, 'removeStage').and.callFake(() => {
+            return Observable.of(pip);
+        });
+
+        fixture.componentInstance.stageEvent('delete');
+        expect(pipStore.removeStage).toHaveBeenCalledWith('key', 'pip', s);
+
+    }));
 });
 
 class MockToast {

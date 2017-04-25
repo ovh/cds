@@ -42,6 +42,8 @@ import {VariableAuditComponent} from './variable/audit/audit.component';
 import {VariableDiffComponent} from './variable/diff/variable.diff.component';
 import {ZoneContentComponent} from './zone/zone-content/content.component';
 import {ZoneComponent} from './zone/zone.component';
+import {PipelineLaunchModalComponent} from './pipeline/launch/pipeline.launch.modal.component';
+import {CommitListComponent} from './commit/commit.list.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -51,6 +53,7 @@ import {ZoneComponent} from './zone/zone.component';
         ActionStepComponent,
         ActionStepFormComponent,
         BreadcrumbComponent,
+        CommitListComponent,
         CutPipe,
         DeleteButtonComponent,
         GroupFormComponent,
@@ -64,6 +67,7 @@ import {ZoneComponent} from './zone/zone.component';
         PermissionFormComponent,
         PermissionListComponent,
         PrerequisiteComponent,
+        PipelineLaunchModalComponent,
         PrerequisitesFormComponent,
         RequirementsListComponent,
         RequirementsFormComponent,
@@ -91,6 +95,7 @@ import {ZoneComponent} from './zone/zone.component';
         ActionComponent,
         BreadcrumbComponent,
         CodemirrorModule,
+        CommitListComponent,
         CommonModule,
         CutPipe,
         DeleteButtonComponent,
@@ -112,6 +117,7 @@ import {ZoneComponent} from './zone/zone.component';
         PrettyJsonModule,
         PrerequisiteComponent,
         PrerequisitesFormComponent,
+        PipelineLaunchModalComponent,
         ReactiveFormsModule,
         StatusIconComponent,
         TranslateModule,

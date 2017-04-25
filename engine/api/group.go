@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -10,8 +9,8 @@ import (
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -216,7 +215,6 @@ func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 		return err
 	}
 
-	fmt.Printf("POST /group: Group %s added\n", g.Name)
 	w.WriteHeader(http.StatusCreated)
 	return nil
 }
@@ -257,7 +255,7 @@ func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return err
 	}
 
-	log.Notice("User %s removed from group %s\n", userName, name)
+	log.Info("User %s removed from group %s\n", userName, name)
 	return nil
 }
 

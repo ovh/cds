@@ -34,9 +34,25 @@ $itemWidthDepth8: 220px;
     }
 
     .manual.trigger {
+      z-index: 1;
       position: absolute;
       left: 0px;
       top: 0px;
+
+      button {
+        padding: 0;
+        font-size:  1.5rem;
+        background: none;
+        margin: 0;
+        .icon {
+          opacity: 1;
+          min-height: 21px;
+          background-color: $greyBackground;
+          color: $cds_trigger_color;
+        }
+      }
+
+
     }
 
     // segment containers
@@ -150,8 +166,8 @@ $itemWidthDepth8: 220px;
   padding-bottom: 0px;
 
   .manual.trigger {
-    top: 7px;
-    left: -20px;
+    top: 35px;
+    left: -15px;
   }
 }
 
@@ -159,7 +175,7 @@ $itemWidthDepth8: 220px;
   display: inline-block;
 
   .column .manual.trigger {
-    top: 20px;
+    top: 37px;
     left: -20px;
   }
 }
@@ -170,8 +186,8 @@ $itemWidthDepth8: 220px;
 
   .column {
     .manual.trigger {
-      top: -10px;
-      left: 52%;
+      top: -15px;
+      left: 48.5%;
     }
     .ui.segment {
       margin-bottom: 0px;

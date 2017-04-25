@@ -8,8 +8,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // DeletePipelineActionByStage Delete all action from a stage
@@ -39,7 +39,7 @@ func DeletePipelineActionByStage(db gorp.SqlExecutor, stageID int64, userID int6
 		if actionType != sdk.JoinedAction {
 			continue
 		}
-		log.Info("DeletePipelineActionByStage> Deleting action %d\n", id)
+		log.Debug("DeletePipelineActionByStage> Deleting action %d\n", id)
 		if err := action.DeleteAction(db, id, userID); err != nil {
 			return err
 		}
@@ -206,7 +206,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 			var found bool
 			for x := range step.Parameters {
 				sp := &step.Parameters[x]
-				if strings.ToLower(sp.Name) == strings.ToLower(a.Name) {
+				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
 					found = true
 					break
 				}

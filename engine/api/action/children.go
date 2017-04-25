@@ -2,11 +2,12 @@ package action
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func insertEdge(db gorp.SqlExecutor, parentID, childID int64, execOrder int, final, enabled bool) (int64, error) {
@@ -33,9 +34,13 @@ func insertActionChild(db gorp.SqlExecutor, actionID int64, child sdk.Action, ex
 
 	// Insert all parameters
 	for i := range child.Parameters {
+		// parameter type list: if value is "aa;bb;cc" -> take first, so "aa"
+		if child.Parameters[i].Type == sdk.ListParameter && strings.Contains(child.Parameters[i].Value, ";") {
+			child.Parameters[i].Value = strings.Split(child.Parameters[i].Value, ";")[0]
+		}
+
 		log.Debug("insertActionChild> %s : %v", child.Name, child.Parameters[i])
-		err = insertChildActionParameter(db, id, actionID, child.ID, child.Parameters[i])
-		if err != nil {
+		if err := insertChildActionParameter(db, id, actionID, child.ID, child.Parameters[i]); err != nil {
 			return err
 		}
 	}
@@ -44,7 +49,6 @@ func insertActionChild(db gorp.SqlExecutor, actionID int64, child sdk.Action, ex
 }
 
 func insertChildActionParameter(db gorp.SqlExecutor, edgeID, parentID, childID int64, param sdk.Parameter) error {
-
 	query := `INSERT INTO action_edge_parameter (
 					action_edge_id,
 					name,
@@ -52,11 +56,9 @@ func insertChildActionParameter(db gorp.SqlExecutor, edgeID, parentID, childID i
 					value,
 					description) VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := db.Exec(query, edgeID, param.Name, string(param.Type), param.Value, param.Description)
-	if err != nil {
+	if _, err := db.Exec(query, edgeID, param.Name, string(param.Type), param.Value, param.Description); err != nil {
 		return err
 	}
-
 	return nil
 }
 

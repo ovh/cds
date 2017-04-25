@@ -58,6 +58,22 @@ input[disabled] {
 
 // Override semantic-ui color to apply CDS theme
 
+// icon
+
+.ui {
+  i.icon.blue {
+    color: $cds_color_teal !important;
+  } 
+
+  i.icon.red {
+    color: $cds_color_red !important;
+  }
+
+  i.icon.green {
+    color: $cds_color_green !important;
+  }
+}
+
 // Segment
 
 .ui.green.segment {
@@ -241,10 +257,10 @@ input[disabled] {
 .tree.horizontal li::before {
   content: '';
   position: absolute;
-  top: 40px;
+  top: 46px;
   left: 0px;
-  border-top: 4px solid $cds_color_teal;
-  border-left: 4px solid $cds_color_teal;
+  border-top: 4px solid $cds_trigger_color;
+  border-left: 4px solid $cds_trigger_color;
   height: 100%;
   width: 80px;
 }
@@ -297,7 +313,7 @@ $verticalTreeHeightLine: 40px;
   position: absolute;
   top: 0;
   right: 50%;
-  border-top: 4px solid $cds_color_teal;
+  border-top: 4px solid $cds_trigger_color;
   width: 50%;
   height: $verticalTreeHeightLine;
 }
@@ -305,7 +321,7 @@ $verticalTreeHeightLine: 40px;
 .tree.vertical li::after {
   right: auto;
   left: 50%;
-  border-left: 4px solid $cds_color_teal;
+  border-left: 4px solid $cds_trigger_color;
 }
 
 .tree.vertical li:only-child::after, .tree.vertical li:only-child::before {
@@ -317,7 +333,7 @@ $verticalTreeHeightLine: 40px;
 }
 
 .tree.vertical ul > li:last-child::before {
-  border-right: 4px solid $cds_color_teal;
+  border-right: 4px solid $cds_trigger_color;
   border-radius: 0 5px 0 0;
   -webkit-border-radius: 0 5px 0 0;
   -moz-border-radius: 0 5px 0 0;
@@ -333,7 +349,7 @@ $verticalTreeHeightLine: 40px;
   position: absolute;
   top: 0;
   left: 50%;
-  border-left: 4px solid #4fa3e3;
+  border-left: 4px solid $cds_trigger_color;
   width: 0;
   height: $verticalTreeHeightLine;
 }
@@ -343,7 +359,7 @@ $verticalTreeHeightLine: 40px;
   position: absolute;
   top: 0;
   left: 50%;
-  border-left: 4px solid $cds_color_teal;
+  border-left: 4px solid $cds_trigger_color;
   width: 0;
   height: $verticalTreeHeightLine;
 }
@@ -388,15 +404,15 @@ $verticalTreeHeightLine: 40px;
 
 /* horizontal line on inner list items */
 .tree.hierarchical li::before {
-  border-top: 4px solid $cds_color_teal;
-  top: 40px;
+  border-top: 4px solid $cds_trigger_color;
+  top: 58px;
   width: 50px;
   height: 0;
 }
 
 /* vertical line on list items */
 .tree.hierarchical li:after {
-  border-left: 4px solid $cds_color_teal;
+  border-left: 4px solid $cds_trigger_color;
   height: 100%;
   width: 0px;
   top: -10px;
@@ -404,10 +420,10 @@ $verticalTreeHeightLine: 40px;
 
 /* vertical line on list items */
 .tree.hierarchical li.last:after {
-  border-left: 4px solid $cds_color_teal;
-  height: 50px;
+  border-left: 4px solid $cds_trigger_color;
+  height: 58px;
   width: 0px;
-  top: -10px;
+  top: 0px;
 }
 
 /* lower line on list items from the first level because they don't have parents */
@@ -451,3 +467,16 @@ $verticalTreeHeightLine: 40px;
   top: $navbarHeight + 10px;
 }
 
+// Hack navbar select language
+.ui.dropdown.languageSelect {
+  min-width: 1em;
+  border: none;
+  .dropdown.icon {
+    display: none;
+  }
+  padding-right: 1em;
+
+  > .text > .flag {
+    margin-right: 0em;
+  }
+}

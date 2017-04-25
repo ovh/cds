@@ -17,8 +17,8 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -244,16 +244,17 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		return nil
 	}
 
-	log.Info("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)
+	log.Debug("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)
 	found := false
-	//begin a tx
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
 
 	for i := range hooks {
+		//begin a tx
+		tx, err := db.Begin()
+		if err != nil {
+			return err
+		}
+		defer tx.Rollback()
+
 		if !hooks[i].Enabled {
 			continue
 		}
@@ -286,21 +287,32 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		}
 		projectData.Variable = projectsVar
 
-		ok, err := application.TriggerPipeline(tx, hooks[i], h.Branch, h.Hash, h.Author, p, projectData)
+		pb, err := application.TriggerPipeline(tx, hooks[i], h.Branch, h.Hash, h.Author, p, projectData)
 		if err != nil {
 			log.Warning("processHook> cannot trigger pipeline %d: %s\n", hooks[i].Pipeline.ID, err)
 			return err
 		}
-		if ok {
+		if pb != nil {
 			log.Debug("processHook> Triggered %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
 		} else {
-			log.Notice("processHook> Did not trigger %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
+			log.Info("processHook> Did not trigger %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
 		}
-	}
 
-	if err := tx.Commit(); err != nil {
-		log.Critical("processHook> Cannot commit tx; %s", err)
-		return err
+		if err := tx.Commit(); err != nil {
+			log.Error("processHook> Cannot commit tx; %s", err)
+			return err
+		}
+
+		go func(h *sdk.Hook) {
+			app, errapp := application.LoadByID(db, h.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
+			if errapp != nil {
+				log.Warning("processHook> Unable to load application %s", errapp)
+			}
+
+			if _, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
+				log.Warning("processHook> Unable to update pipeline build commits: %s", err)
+			}
+		}(&hooks[i])
 	}
 
 	if !found {

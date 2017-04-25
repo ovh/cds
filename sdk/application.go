@@ -162,7 +162,6 @@ func GetApplication(pk, name string, opts ...RequestModifier) (*Application, err
 	}
 
 	if err := json.Unmarshal(data, &a); err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

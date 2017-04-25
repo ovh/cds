@@ -8,8 +8,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -103,7 +103,7 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	}
 	defer tx.Rollback()
 
-	// Check with exising parameter to know whether parameter has been deleted, update or added
+	// Check with existing parameter to know whether parameter has been deleted, update or added
 	var deleted, updated, added []sdk.Parameter
 	var found bool
 	for _, p := range pip.Parameter {

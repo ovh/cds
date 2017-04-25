@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Cleaner is the cleaner main goroutine
@@ -56,7 +56,7 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution,
 				break
 			}
 			if err := DeleteExecution(tx, &exs[i]); err != nil {
-				log.Critical("CleanerRun> Unable to delete execution %d", exs[i].ID)
+				log.Error("CleanerRun> Unable to delete execution %d", exs[i].ID)
 			}
 			nbDeleted++
 			deleted = append(deleted, exs[i])

@@ -14,6 +14,16 @@
     display: inherit;
   }
 
+  #banner {
+    height: 50px;
+    margin-top: $navbarHeight;
+    background-color: $cds_color_red;
+    text-align: center;
+    line-height: 50px;
+    color: white;
+    font-weight: 600;
+  }
+
   .page.connected  {
     padding-top: $navbarHeight;
   }

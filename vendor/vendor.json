@@ -29,10 +29,10 @@
 			"revisionTime": "2016-12-20T18:06:09Z"
 		},
 		{
-			"checksumSHA1": "htjvdG/znrHmFYRQBqA2vHrJsF4=",
+			"checksumSHA1": "ZKxETlJdB2XubMrZnXB0FQimVA8=",
 			"path": "github.com/Sirupsen/logrus",
-			"revision": "f3cfb454f4c209e6668c95216c4744b8fddb2356",
-			"revisionTime": "2016-06-01T11:32:10Z"
+			"revision": "10f801ebc38b33738c9d17d50860f484a0988ff5",
+			"revisionTime": "2017-03-17T14:32:14Z"
 		},
 		{
 			"checksumSHA1": "mEPx03tDisj6nvPDxzIeb1gt4xg=",
@@ -241,6 +241,12 @@
 			"revisionTime": "2016-01-04T19:15:39Z"
 		},
 		{
+			"checksumSHA1": "zLRMD29twG3fr3jbEUFLPGy5IlU=",
+			"path": "github.com/eapache/go-resiliency/retrier",
+			"revision": "b86b1ec0dd4209a588dc1285cdd471e73525c0b3",
+			"revisionTime": "2016-01-04T19:15:39Z"
+		},
+		{
 			"checksumSHA1": "WHl96RVZlOOdF4Lb1OOadMpw8ls=",
 			"path": "github.com/eapache/go-xerial-snappy",
 			"revision": "bb955e01b9346ac19dc29eb16586c90ded99a98c",
@@ -295,10 +301,10 @@
 			"revisionTime": "2017-03-16T00:43:41Z"
 		},
 		{
-			"checksumSHA1": "tWl4FiCrXxC4bMPn9euCOER0pHI=",
+			"checksumSHA1": "189Oi0abcrqXWak89uQYR1Q66kY=",
 			"path": "github.com/gambol99/go-marathon",
-			"revision": "ced60055f074477c61ef886423f317acfd8fbf4a",
-			"revisionTime": "2017-03-02T00:54:11Z"
+			"revision": "cf631873b8c2d4cd3a348a65129951bfc00d9b82",
+			"revisionTime": "2017-04-10T16:10:28Z"
 		},
 		{
 			"checksumSHA1": "RsNwOto8G8aXIiRrlFn4dtU9q/g=",
@@ -648,6 +654,12 @@
 			"revisionTime": "2017-03-01T09:08:17Z"
 		},
 		{
+			"checksumSHA1": "hBgLmZ/4mCxmnH88mqFKBkpJFUY=",
+			"path": "github.com/mgutz/ansi",
+			"revision": "c286dcecd19ff979eeb73ea444e479b903f2cfcb",
+			"revisionTime": "2015-09-14T16:22:38Z"
+		},
+		{
 			"checksumSHA1": "V/quM7+em2ByJbWBLOsEwnY3j/Q=",
 			"origin": "github.com/hashicorp/vault/vendor/github.com/mitchellh/go-homedir",
 			"path": "github.com/mitchellh/go-homedir",
@@ -695,6 +707,12 @@
 			"path": "github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher",
 			"revision": "da051b318c8dc7603008739bf5a78d2df1001d4c",
 			"revisionTime": "2017-03-01T09:08:17Z"
+		},
+		{
+			"checksumSHA1": "RyZVPXHMl03jL1O4q93AhVMA2JE=",
+			"path": "github.com/ovh/logrus-ovh-hook",
+			"revision": "f70db37f6f7c7cc9d5a772f0749e3d5389a2afb5",
+			"revisionTime": "2017-04-04T20:09:27Z"
 		},
 		{
 			"checksumSHA1": "BGY2jbzYUHUdxy3d58QUZ7FrUmY=",

@@ -7,8 +7,8 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var hostname, cdsname string

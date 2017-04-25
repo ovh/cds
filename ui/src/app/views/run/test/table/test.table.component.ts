@@ -18,11 +18,12 @@ export class TestTableComponent extends Table {
     @Input('statusFilter')
     set statusFilter(status: string) {
         this.filter = status;
-       this.updateFilteredTests();
+        this.updateFilteredTests();
     }
 
     constructor() {
         super();
+        this.nbElementsByPage = 20;
     }
 
     getData(): any[] {
@@ -34,16 +35,31 @@ export class TestTableComponent extends Table {
 
     updateFilteredTests(): void {
         this.filteredTests = new Array<TestCase>();
-        if (this.filter === 'error') {
-            if (this.tests) {
-                this.tests.forEach(ts => {
-                    if (ts.errors > 0 || ts.failures > 0) {
-                        this.filteredTests.push(...ts.tests.filter(tc => {
-                            return (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0);
-                        }));
-                    }
-                });
-            }
+        switch (this.filter) {
+            case 'error':
+                if (this.tests) {
+                    this.tests.forEach(ts => {
+                        if (ts.errors > 0 || ts.failures > 0) {
+                            this.filteredTests.push(...ts.tests.filter(tc => {
+                                return (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0);
+                            }));
+                        }
+                    });
+                }
+                break;
+            case 'skipped':
+                if (this.tests) {
+                    this.tests.forEach(ts => {
+                        this.filteredTests.push(...ts.tests.filter(tc => tc.skipped > 0));
+                    });
+                }
+                break;
+            default:
+                if (this.tests) {
+                    this.tests.forEach(ts => {
+                        this.filteredTests.push(...ts.tests);
+                    });
+                }
         }
     }
 

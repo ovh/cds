@@ -9,8 +9,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadArtifactByHash retrieves an artiface using its download hash
@@ -204,8 +204,7 @@ func insertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, enviro
 			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 	_, err = db.Exec(query, art.Name, art.Tag, pipelineID, applicationID, art.BuildNumber, environmentID, art.DownloadHash, art.Size, art.Perm, art.MD5sum, art.ObjectPath)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return sdk.WrapError(err, "insertArtifact> Unable to insert artifact")
 	}
 	return nil
 }

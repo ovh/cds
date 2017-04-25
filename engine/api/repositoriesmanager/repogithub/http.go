@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/log"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/facebookgo/httpcontrol"
 )
@@ -185,7 +185,7 @@ func (c *GithubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	case http.StatusMovedPermanently, http.StatusTemporaryRedirect, http.StatusFound:
 		location := res.Header.Get("Location")
 		if location != "" {
-			log.Info("Github API>> Reponse Follow redirect :%s", location)
+			log.Debug("Github API>> Response Follow redirect :%s", location)
 			return c.get(location)
 		}
 	case http.StatusUnauthorized:

@@ -1,7 +1,9 @@
-import {Component, Input, ViewChild} from '@angular/core';
+import {Component, Input, ViewChild, DoCheck} from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
 import {WorkflowItem} from '../../../../../../model/application.workflow.model';
 import {Application} from '../../../../../../model/application.model';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
+import {NotificationService} from '../../../../../../service/notification/notification.service';
 import {Router} from '@angular/router';
 import {PipelineRunRequest, PipelineBuild, Pipeline} from '../../../../../../model/pipeline.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
@@ -12,10 +14,12 @@ import {Environment} from '../../../../../../model/environment.model';
 import {Trigger} from '../../../../../../model/trigger.model';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
+import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
 import {TranslateService} from 'ng2-translate';
 import {Scheduler} from '../../../../../../model/scheduler.model';
 import {Hook} from '../../../../../../model/hook.model';
 import {RepositoryPoller} from '../../../../../../model/polling.model';
+import {PipelineLaunchModalComponent} from '../../../../../../shared/pipeline/launch/pipeline.launch.modal.component';
 
 declare var _: any;
 
@@ -24,23 +28,15 @@ declare var _: any;
     templateUrl: './application.workflow.item.html',
     styleUrls: ['./application.workflow.item.scss']
 })
-export class ApplicationWorkflowItemComponent {
+@AutoUnsubscribe()
+export class ApplicationWorkflowItemComponent implements DoCheck {
 
     @Input() project: Project;
     @Input() workflowItem: WorkflowItem;
     @Input() orientation: string;
     @Input() application: Application;
     @Input() applicationFilter: any;
-
-    @ViewChild('launchModal')
-    launchModal: SemanticModalComponent;
-
-    // Manual Launch data
-    launchGitParams: Array<Parameter>;
-    launchPipelineParams: Array<Parameter>;
-    launchParentBuildNumber = 0;
-    launchOldBuilds: Array<PipelineBuild>;
-
+    oldPipelineStatus: string;
     // Triggers modals
     @ViewChild('editTriggerModal')
     editTriggerModal: SemanticModalComponent;
@@ -48,6 +44,10 @@ export class ApplicationWorkflowItemComponent {
     createTriggerModal: SemanticModalComponent;
     triggerInModal: Trigger;
     triggerLoading = false;
+
+    // Run pipeline modal
+    @ViewChild('pipelineLaunchModal')
+    launchPipelineModal: PipelineLaunchModalComponent;
 
     // scheduler
     @ViewChild('createSchedulerModal')
@@ -58,8 +58,11 @@ export class ApplicationWorkflowItemComponent {
     @ViewChild('detachPipelineModal')
     detachModalPipelineModal: SemanticModalComponent;
 
+    notificationSubscription: Subscription;
+
     constructor(private _router: Router, private _appPipService: ApplicationPipelineService, private _pipStore: PipelineStore,
-                private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService) {
+                private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
+                private _notification: NotificationService) {
     }
 
 
@@ -118,6 +121,10 @@ export class ApplicationWorkflowItemComponent {
     }
 
     navigateToBuild(pb: PipelineBuild): void {
+        if (this.launchPipelineModal) {
+            this.launchPipelineModal.hide();
+        }
+
         let queryParams = {queryParams: {envName: pb.environment.name}};
         queryParams.queryParams['branch'] = pb.trigger.vcs_branch;
         queryParams.queryParams['version'] = pb.version;
@@ -131,74 +138,9 @@ export class ApplicationWorkflowItemComponent {
     }
 
     runWithParameters(): void {
-        // ReInit
-        this.launchPipelineParams = new Array<Parameter>();
-        this.launchParentBuildNumber = undefined;
-        this.launchOldBuilds = new Array<PipelineBuild>();
-        this.launchGitParams = new Array<Parameter>();
-
-        if (this.launchModal) {
-            // Init Git parameters
-            let gitBranchParam: Parameter = new Parameter();
-            gitBranchParam.name = 'git.branch';
-            gitBranchParam.value = this.applicationFilter.branch;
-            gitBranchParam.description = 'Git branch to use';
-            gitBranchParam.type = 'string';
-            this.launchGitParams.push(gitBranchParam);
-
-            // Init pipeline parameters
-            this._pipStore.getPipelines(this.project.key, this.workflowItem.pipeline.name).subscribe(pips => {
-                let pipKey = this.project.key + '-' + this.workflowItem.pipeline.name;
-                if (pips && pips.get(pipKey)) {
-                    let pipeline = pips.get(pipKey);
-                    if (this.workflowItem.trigger) {
-                        this.launchPipelineParams = Pipeline.mergeParams(pipeline.parameters, this.workflowItem.trigger.parameters);
-                    } else {
-                        this.launchPipelineParams = Pipeline.mergeParams(pipeline.parameters, []);
-                    }
-                }
-            });
-
-            // Init parent version
-            if (this.workflowItem.parent && this.workflowItem.trigger.id > 0) {
-                this._appPipService.buildHistory(
-                    this.project.key, this.workflowItem.trigger.src_application.name, this.workflowItem.trigger.src_pipeline.name,
-                    this.workflowItem.trigger.src_environment.name, 20, 'Success', this.applicationFilter.branch)
-                    .subscribe(pbs => {
-                        this.launchOldBuilds = pbs;
-                        this.launchParentBuildNumber = pbs[0].build_number;
-                    });
-            }
-            setTimeout(() => {
-                this.launchModal.show({autofocus: false, closable: false});
-            }, 100);
-        } else {
-            console.log('Error loading modal');
+        if (this.launchPipelineModal) {
+            this.launchPipelineModal.show({autofocus: false, closable: false, observeChanges: true});
         }
-    }
-
-    runManual() {
-        let request: PipelineRunRequest = new PipelineRunRequest();
-        request.parameters = this.launchPipelineParams;
-        request.env = new Environment();
-        request.env = this.workflowItem.environment;
-
-        if (this.workflowItem.parent) {
-            request.parent_application_id = this.workflowItem.parent.application_id;
-            request.parent_pipeline_id = this.workflowItem.parent.pipeline_id;
-            request.parent_environment_id = this.workflowItem.parent.environment_id;
-            request.parent_build_number = this.launchParentBuildNumber;
-        } else {
-            request.parameters.push(...this.launchGitParams);
-        }
-        this.launchModal.hide();
-        // Run pipeline
-        this._appPipService.run(
-            this.workflowItem.project.key,
-            this.workflowItem.application.name,
-            this.workflowItem.pipeline.name, request).subscribe(pipelineBuild => {
-            this.navigateToBuild(pipelineBuild);
-        });
     }
 
     rollback(): void {
@@ -352,5 +294,36 @@ export class ApplicationWorkflowItemComponent {
 
     getTriggerSource(pb: PipelineBuild): string {
         return PipelineBuild.GetTriggerSource(pb);
+    }
+
+    handleNotification(pipeline: Pipeline): void {
+        switch (pipeline.last_pipeline_build.status) {
+        case 'Success':
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
+                pipelineName: pipeline.name
+            })).subscribe();
+            break;
+        case 'Failing':
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
+                pipelineName: pipeline.name
+            })).subscribe();
+            break;
+        }
+    }
+
+    ngDoCheck() {
+        if (this.workflowItem.pipeline && this.workflowItem.pipeline.last_pipeline_build &&
+            this.workflowItem.pipeline.last_pipeline_build.status) {
+
+            if (!this.oldPipelineStatus) {
+                this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
+            }
+
+            if (this.oldPipelineStatus === 'Building' && this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status) {
+                this.handleNotification(this.workflowItem.pipeline);
+            }
+
+            this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
+        }
     }
 }
