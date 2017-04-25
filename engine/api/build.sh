@@ -17,3 +17,5 @@ for GOOS in windows darwin linux freebsd; do
         go build -ldflags "-X main.VERSION={{.cds.proj.version}}+{{.cds.version}}" -o bin/${outfile}
     done
 done
+
+cd .. && tar czf api/bin/sql.tar.gz sql
