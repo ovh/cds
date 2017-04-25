@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild, DoCheck, OnDestroy} from '@angular/core';
+import {Component, Input, ViewChild, DoCheck} from '@angular/core';
 import {Subscription} from 'rxjs/Subscription';
 import {WorkflowItem} from '../../../../../../model/application.workflow.model';
 import {Application} from '../../../../../../model/application.model';
@@ -14,6 +14,7 @@ import {Environment} from '../../../../../../model/environment.model';
 import {Trigger} from '../../../../../../model/trigger.model';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
+import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
 import {TranslateService} from 'ng2-translate';
 import {Scheduler} from '../../../../../../model/scheduler.model';
 import {Hook} from '../../../../../../model/hook.model';
@@ -27,7 +28,8 @@ declare var _: any;
     templateUrl: './application.workflow.item.html',
     styleUrls: ['./application.workflow.item.scss']
 })
-export class ApplicationWorkflowItemComponent implements DoCheck, OnDestroy {
+@AutoUnsubscribe()
+export class ApplicationWorkflowItemComponent implements DoCheck {
 
     @Input() project: Project;
     @Input() workflowItem: WorkflowItem;
@@ -317,17 +319,11 @@ export class ApplicationWorkflowItemComponent implements DoCheck, OnDestroy {
                 this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
             }
 
-            if (this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status) {
+            if (this.oldPipelineStatus === 'Building' && this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status) {
                 this.handleNotification(this.workflowItem.pipeline);
             }
 
             this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
-        }
-    }
-
-    ngOnDestroy() {
-        if (this.notificationSubscription) {
-            this.notificationSubscription.unsubscribe();
         }
     }
 }
