@@ -7,16 +7,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func getLastModified(k string) (int64, string) {
 	m := &sdk.LastModification{}
 	if cache.Get(k, m) {
-		log.Debug("getLastModified> %s : %#v", k, m)
 		return m.LastModified, m.Username
-	} else {
-		log.Debug("getLastModified> %s not found", k)
 	}
 	return 0, ""
 }
