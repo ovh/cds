@@ -8,4 +8,5 @@ RUN apt-get update && \
     chown -R nobody:nogroup /app && \
     rm -rf /var/lib/apt/lists/*
 USER nobody
+WORKDIR /app
 CMD ["/app/worker-linux-amd64"]
