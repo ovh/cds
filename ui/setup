@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd /data
+cd /app
 
 if [ ! -z ${BASE_URL} ]; then
     echo "replace base url with ${BASE_URL}"
@@ -16,4 +16,4 @@ fi;
 echo "################"
 echo "S.T.A.R.T.I.N.G"
 echo "################"
-cd /data && ./caddy
+cd /app && ./caddy
