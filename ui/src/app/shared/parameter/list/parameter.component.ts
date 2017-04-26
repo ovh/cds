@@ -16,7 +16,7 @@ export class ParameterListComponent extends Table {
     @Input() parameters: Array<Parameter>;
     @Input() project: Project;
 
-    // edit/launcher/ro
+    // edit/launcher/ro/job
     @Input() mode = 'edit';
     @Output() event = new EventEmitter<ParameterEvent>();
 
@@ -34,6 +34,13 @@ export class ParameterListComponent extends Table {
         } else {
             this.ready = true;
         }
+    }
+
+    getDataForCurrentPage(): any[] {
+        if (this.mode === 'job') {
+            return this.getData();
+        }
+        return super.getDataForCurrentPage();
     }
 
     getData(): any[] {

@@ -71,6 +71,7 @@
   "audit_title_variable": "Historique des modifications",
 
   "btn_cancel" : "Annuler",
+  "btn_close" : "Fermer",
   "btn_continue" : "Continuer",
   "btn_create" : "Créer",
   "btn_detach" : "Détacher le pipeline",
@@ -202,7 +203,7 @@
   "parameter_no" : "Il n'y a aucun paramètre défini",
   "parameter_type" : "Type",
   "parameter_updated" : "Paramètre mis à jour",
-  "parameter_value" : "Valeur par défaut",
+  "parameter_value" : "Valeur",
 
   "permission_added" : "Permission ajoutée",
   "permission_deleted" : "Permission supprimée",
@@ -220,6 +221,16 @@
   "pipeline_deleted" : "Pipeline supprimé",
   "pipeline_delete_label" : "Suppression du pipeline",
   "pipeline_delete_description" : "Une fois le pipeline supprimé, il n'y a pas de retour possible.",
+  "pipeline_job_variable_app" : "Variables d'application",
+  "pipeline_job_variable_build" : "Variables de build",
+  "pipeline_job_variable_cds" : "Variables CDS",
+  "pipeline_job_variable_env" : "Variables d'environnement",
+  "pipeline_job_variable_git" : "Variables git",
+  "pipeline_job_variable_parent" : "Variables du pipeline parent",
+  "pipeline_job_variable_pip" : "Variables de pipeline",
+  "pipeline_job_variable_project" : "Variables de projet",
+  "pipeline_job_variables_show_title" : "Afficher les variables du job",
+  "pipeline_job_variable_title" : "Variables du job",
   "pipeline_label_detach" : "Supprimer le pipeline de l'application",
   "pipeline_label_edit" : "Editer le pipeline",
   "pipeline_label_rollback" : "Effectuer un rollback",
@@ -357,6 +368,8 @@
   "variable_type" : "Type de variable",
   "variable_updated" : "Variable mise à jour",
   "variable_value" : "Valeur",
+
+  "ui_updated" : "L'interface vient d'être mise à jour. Merci de cliquer ici pour rafraichir votre page.",
 
   "user_label_fullname": "Nom complet de l'utilisateur",
   "user_label_username": "Nom d'utilisateur",

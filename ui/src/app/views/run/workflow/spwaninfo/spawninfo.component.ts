@@ -1,5 +1,7 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, ViewChild} from '@angular/core';
 import {SpawnInfo} from '../../../../model/pipeline.model';
+import {Parameter} from '../../../../model/parameter.model';
+import {JobVariableComponent} from '../variables/job.variables.component';
 
 declare var ansi_up: any;
 
@@ -11,6 +13,10 @@ declare var ansi_up: any;
 export class SpawnInfoComponent {
 
     @Input() spawnInfos: Array<SpawnInfo>;
+    @Input() variables: Array<Parameter>;
+
+    @ViewChild('jobVariable')
+    jobVariable: JobVariableComponent;
 
     show = true;
 
@@ -28,5 +34,11 @@ export class SpawnInfoComponent {
             });
         }
         return ansi_up.ansi_to_html(msg);
+    }
+
+    openVariableModal(): void {
+        if (this.jobVariable) {
+            this.jobVariable.show({autofocus: false, closable: false, observeChanges: true});
+        }
     }
 }

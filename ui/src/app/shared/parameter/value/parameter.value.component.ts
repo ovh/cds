@@ -48,6 +48,8 @@ export class ParameterValueComponent implements OnInit {
     selectedRepo: Repository;
     loadingRepos: boolean;
 
+    list: Array<string>;
+
 
     constructor(public _sharedService: SharedService, private _repoManagerService: RepoManagerService) {
         this.codeMirrorConfig = {
@@ -60,6 +62,10 @@ export class ParameterValueComponent implements OnInit {
     ngOnInit(): void {
         if (this.type === 'boolean') {
             this.value = (this.value === 'true');
+        }
+        if (this.type === 'list' && !this.editList) {
+            this.list = (<string>this.value).split(';');
+            this.value = this.list[0];
         }
     }
 
