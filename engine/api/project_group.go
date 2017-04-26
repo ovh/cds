@@ -309,7 +309,7 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 					return err
 
 				}
-			} else if err := application.AddGroup(db, p, &app, groupProject); err != nil {
+			} else if err := application.AddGroup(db, p, &app, c.User, groupProject); err != nil {
 				log.Warning("AddGroupInProject: Cannot insert group %s on application %s: %s\n", g.Name, app.Name, err)
 				return err
 			}

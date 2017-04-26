@@ -114,7 +114,7 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	} else if exist {
 		globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan, c.User)
 	} else {
-		globalError = pipeline.Import(tx, proj, pip, msgChan)
+		globalError = pipeline.Import(tx, proj, pip, msgChan, c.User)
 	}
 
 	close(msgChan)

@@ -72,7 +72,7 @@ func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
 }
 
 // AddGroup Link the given groups and the given application
-func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, groupPermission ...sdk.GroupPermission) error {
+func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, u *sdk.User, groupPermission ...sdk.GroupPermission) error {
 	for i := range groupPermission {
 		gp := &groupPermission[i]
 		g := &gp.Group
@@ -134,7 +134,7 @@ func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, groupP
 					return err
 				}
 
-				if err := pipeline.UpdateLastModified(db, p.Pipeline.ID); err != nil {
+				if err := pipeline.UpdateLastModified(db, u, &p.Pipeline); err != nil {
 					log.Warning("AddGroup> Cannot update pipeline %s:  %s\n", p.Pipeline.Name, err)
 					return err
 				}
@@ -156,7 +156,7 @@ func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, groupP
 							return err
 						}
 
-						if err := environment.UpdateLastModified(db, t.DestEnvironment.ID); err != nil {
+						if err := environment.UpdateLastModified(db, u, &t.DestEnvironment); err != nil {
 							log.Warning("AddGroup> Cannot update env %s:  %s\n", t.DestEnvironment.Name, err)
 							return err
 						}
@@ -175,7 +175,7 @@ func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, groupP
 							return err
 						}
 
-						if err := environment.UpdateLastModified(db, t.SrcEnvironment.ID); err != nil {
+						if err := environment.UpdateLastModified(db, u, &t.SrcEnvironment); err != nil {
 							log.Warning("AddGroup> Cannot update env %s:  %s\n", t.SrcEnvironment.Name, err)
 							return err
 						}

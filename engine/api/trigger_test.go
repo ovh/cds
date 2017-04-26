@@ -30,7 +30,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -41,7 +41,7 @@ func TestAddTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip1))
+	test.NoError(t, pipeline.InsertPipeline(db, pip1, u))
 
 	//4. Create Pipeline 2
 	pipelineKey2 := assets.RandomString(t, 10)
@@ -51,7 +51,7 @@ func TestAddTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(db, pip2)
+	err := pipeline.InsertPipeline(db, pip2, u)
 	test.NoError(t, err)
 
 	//5. Create Application
@@ -59,7 +59,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(db, proj, app)
+	err = application.Insert(db, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -116,7 +116,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -127,7 +127,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(db, pip1)
+	err := pipeline.InsertPipeline(db, pip1, u)
 	test.NoError(t, err)
 
 	//4. Create Pipeline 2
@@ -138,7 +138,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip2)
+	err = pipeline.InsertPipeline(db, pip2, u)
 	test.NoError(t, err)
 
 	//5. Create Application
@@ -146,7 +146,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(db, proj, app)
+	err = application.Insert(db, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -210,7 +210,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -221,7 +221,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(db, pip1)
+	err := pipeline.InsertPipeline(db, pip1, u)
 
 	//4. Create Pipeline 2
 	pipelineKey2 := assets.RandomString(t, 10)
@@ -231,14 +231,14 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip2)
+	err = pipeline.InsertPipeline(db, pip2, u)
 
 	//5. Create Application
 	applicationName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(db, proj, app)
+	err = application.Insert(db, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1

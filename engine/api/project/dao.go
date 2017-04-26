@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
@@ -109,18 +110,18 @@ func Delete(db gorp.SqlExecutor, key string) error {
 }
 
 // Insert a new project in database
-func Insert(db gorp.SqlExecutor, proj *sdk.Project) error {
+func Insert(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	if err := db.Insert(&dbProj); err != nil {
 		return err
 	}
 	*proj = sdk.Project(dbProj)
-	return nil
+	return UpdateLastModified(db, u, proj)
 }
 
 // Update a new project in database
-func Update(db gorp.SqlExecutor, proj *sdk.Project) error {
+func Update(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	n, err := db.Update(&dbProj)
@@ -131,12 +132,21 @@ func Update(db gorp.SqlExecutor, proj *sdk.Project) error {
 		return sdk.ErrNoProject
 	}
 	*proj = sdk.Project(dbProj)
-	return nil
+	return UpdateLastModified(db, u, proj)
 }
 
 // UpdateLastModified updates last_modified date on a project given its key
 func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) error {
 	t := time.Now()
+
+	if u != nil {
+		cache.SetWithTTL(cache.Key("lastModified", proj.Key), sdk.LastModification{
+			Name:         proj.Key,
+			Username:     u.Username,
+			LastModified: t.Unix(),
+		}, 0)
+	}
+
 	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
 	proj.LastModified = t
 	return err

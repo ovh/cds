@@ -207,11 +207,11 @@ func TestLoadUserWithGroup(t *testing.T) {
 	project.Delete(db, project1.Key)
 	project.Delete(db, project2.Key)
 
-	err = project.Insert(db, project1)
+	err = project.Insert(db, project1, u)
 	if err != nil {
 		t.Fatalf("cannot insert project1: %s", err)
 	}
-	err = project.Insert(db, project2)
+	err = project.Insert(db, project2, u)
 	if err != nil {
 		t.Fatalf("cannot insert project2: %s", err)
 	}
@@ -222,7 +222,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Type:      sdk.BuildPipeline,
 	}
 
-	err = pipeline.InsertPipeline(db, pipelinePip1)
+	err = pipeline.InsertPipeline(db, pipelinePip1, nil)
 	if err != nil {
 		t.Fatalf("cannot insert pipeline: %s", err)
 	}

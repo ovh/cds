@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -166,7 +167,7 @@ func unwrap(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, dbApp *dbAp
 }
 
 // Insert add an application id database
-func Insert(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application) error {
+func Insert(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
 	app.ProjectID = proj.ID
 	app.ProjectKey = proj.Key
 	app.LastModified = time.Now()
@@ -175,11 +176,11 @@ func Insert(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application) error 
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
 	}
 	*app = sdk.Application(dbApp)
-	return nil
+	return UpdateLastModified(db, app, u)
 }
 
 // Update updates application id database
-func Update(db gorp.SqlExecutor, app *sdk.Application) error {
+func Update(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
 	app.LastModified = time.Now()
 	dbApp := dbApplication(*app)
 	n, err := db.Update(&dbApp)
@@ -189,7 +190,7 @@ func Update(db gorp.SqlExecutor, app *sdk.Application) error {
 	if n == 0 {
 		return sdk.WrapError(sdk.ErrApplicationNotFound, "application.Update %s(%d)", app.Name, app.ID)
 	}
-	return nil
+	return UpdateLastModified(db, app, u)
 }
 
 // UpdateLastModified Update last_modified column in application table
@@ -202,6 +203,15 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) 
 	if err == nil {
 		app.LastModified = lastModified
 	}
+
+	if u != nil {
+		cache.SetWithTTL(cache.Key("lastModified", app.ProjectKey, "application", app.Name), sdk.LastModification{
+			Name:         app.Name,
+			Username:     u.Username,
+			LastModified: lastModified.Unix(),
+		}, 0)
+	}
+
 	return sdk.WrapError(err, "application.UpdateLastModified %s(%d)", app.Name, app.ID)
 }
 

@@ -63,7 +63,7 @@ func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 	// Update in DB is made given the primary key
 	proj.ID = p.ID
-	if errUp := project.Update(db, proj); errUp != nil {
+	if errUp := project.Update(db, proj, c.User); errUp != nil {
 		log.Warning("updateProject: Cannot update project %s : %s\n", key, errUp)
 		return errUp
 	}
@@ -97,49 +97,38 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	//Unmarshal data
 	p := &sdk.Project{}
 	if err := UnmarshalBody(r, p); err != nil {
-		return err
+		return sdk.WrapError(err, "AddProject> Unable to unmarshal body")
 	}
 
 	// check projectKey pattern
 	if rgxp := regexp.MustCompile(sdk.ProjectKeyPattern); !rgxp.MatchString(p.Key) {
-		log.Warning("AddProject: Project key %s do not respect pattern %s", p.Key, sdk.ProjectKeyPattern)
-		return sdk.ErrInvalidProjectKey
+		return sdk.WrapError(sdk.ErrInvalidProjectKey, "AddProject> Project key %s do not respect pattern %s")
 	}
 
 	//check project Name
 	if p.Name == "" {
-		log.Warning("AddProject: Project name must no be empty")
-		return sdk.ErrInvalidProjectName
-
+		return sdk.WrapError(sdk.ErrInvalidProjectName, "AddProject> Project name must no be empty")
 	}
 
 	// Check that project does not already exists
 	exist, errExist := project.Exist(db, p.Key)
 	if errExist != nil {
-		log.Warning("AddProject: Cannot check if project %s exist: %s\n", p.Key, errExist)
-		return errExist
+		return sdk.WrapError(errExist, "AddProject>  Cannot check if project %s exist", p.Key)
 	}
 
 	if exist {
-		log.Warning("AddProject: Project %s already exists\n", p.Key)
-		// Write nice error message here
-		return sdk.ErrConflict
-
+		return sdk.WrapError(sdk.ErrConflict, "AddProject> Project %s already exists\n", p.Key)
 	}
 
 	//Create a project within a transaction
 	tx, errBegin := db.Begin()
 	defer tx.Rollback()
 	if errBegin != nil {
-		log.Warning("AddProject: Cannot start transaction: %s\n", errBegin)
-		return errBegin
-
+		return sdk.WrapError(errBegin, "AddProject> Cannot start tx")
 	}
 
-	if err := project.Insert(tx, p); err != nil {
-		log.Warning("AddProject: Cannot insert project: %s\n", err)
-		return err
-
+	if err := project.Insert(tx, p, c.User); err != nil {
+		return sdk.WrapError(err, "AddProject> Cannot insert project")
 	}
 
 	// Add group
@@ -157,7 +146,6 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		if err := group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission); err != nil {
 			log.Warning("addProject: Cannot add group %s in project %s:  %s\n", groupPermission.Group.Name, p.Name, err)
 			return err
-
 		}
 
 		// Add user in group
@@ -165,7 +153,6 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 			if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, c.User.ID, true); err != nil {
 				log.Warning("addProject: Cannot add user %s in group %s:  %s\n", c.User.Username, groupPermission.Group.Name, err)
 				return err
-
 			}
 		}
 	}

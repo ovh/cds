@@ -29,7 +29,7 @@ func RandomString(t *testing.T, strlen int) string {
 }
 
 // InsertTestProject create a test project
-func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string) *sdk.Project {
+func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string, u *sdk.User) *sdk.Project {
 	proj := sdk.Project{
 		Key:  key,
 		Name: name,
@@ -46,7 +46,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string) *sdk.Proj
 		return nil
 	}
 
-	if err := project.Insert(db, &proj); err != nil {
+	if err := project.Insert(db, &proj, u); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 		return nil
 	}

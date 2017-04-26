@@ -29,7 +29,7 @@ func TestAddJobHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -40,7 +40,7 @@ func TestAddJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -98,7 +98,7 @@ func TestUpdateJobHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -109,7 +109,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -182,7 +182,7 @@ func TestDeleteJobHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -193,7 +193,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
