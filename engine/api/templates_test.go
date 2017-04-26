@@ -698,7 +698,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Insert a new project
 	pKey := assets.RandomString(t, 10)
-	p := assets.InsertTestProject(t, db, pKey, pKey)
+	p := assets.InsertTestProject(t, db, pKey, pKey, u)
 	//Insert a Production environment
 	environment.InsertEnvironment(db, &sdk.Environment{
 		ProjectKey: pKey,

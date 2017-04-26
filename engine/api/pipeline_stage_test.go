@@ -18,7 +18,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -28,7 +28,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -72,7 +72,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -82,7 +82,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -143,7 +143,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -153,7 +153,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//Insert Stage
 	stage0 := &sdk.Stage{
@@ -249,7 +249,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -259,7 +259,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -385,7 +385,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -395,7 +395,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -443,7 +443,7 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
+	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -453,7 +453,7 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{

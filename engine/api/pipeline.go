@@ -585,7 +585,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	defer tx.Rollback()
 
 	p.ProjectID = project.ID
-	if err := pipeline.InsertPipeline(tx, &p); err != nil {
+	if err := pipeline.InsertPipeline(tx, &p, c.User); err != nil {
 		log.Warning("addPipelineHandler> Cannot insert pipeline: %s\n", err)
 		return err
 	}

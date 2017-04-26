@@ -57,8 +57,8 @@ func TestLoadAll(t *testing.T) {
 		t.Fatalf("Cannot insert group : %s", err)
 	}
 
-	test.NoError(t, Insert(db, &proj))
-	test.NoError(t, Insert(db, &proj1))
+	test.NoError(t, Insert(db, &proj, nil))
+	test.NoError(t, Insert(db, &proj1, nil))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 

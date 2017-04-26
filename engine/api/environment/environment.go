@@ -9,6 +9,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
@@ -317,9 +318,17 @@ func DeleteAllEnvironment(db gorp.SqlExecutor, projectID int64) error {
 }
 
 // UpdateLastModified updates last_modified on environment
-func UpdateLastModified(db gorp.SqlExecutor, id int64) error {
+func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, env *sdk.Environment) error {
+	if u != nil {
+		cache.SetWithTTL(cache.Key("lastModified", env.ProjectKey, "environment", env.Name), sdk.LastModification{
+			Name:         env.Name,
+			Username:     u.Username,
+			LastModified: time.Now().Unix(),
+		}, 0)
+	}
+
 	query := `UPDATE environment SET last_modified = current_timestamp WHERE id=$1`
-	_, err := db.Exec(query, id)
+	_, err := db.Exec(query, env.ID)
 	return err
 }
 

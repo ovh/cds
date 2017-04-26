@@ -36,7 +36,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -46,7 +46,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -55,7 +55,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,7 +132,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -142,7 +142,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -151,7 +151,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

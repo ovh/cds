@@ -23,7 +23,7 @@ import (
 
 func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
 	pkey := assets.RandomString(t, 10)
-	projectFoo := assets.InsertTestProject(t, db, pkey, pkey)
+	projectFoo := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	p := &sdk.Pipeline{
 		Name:      name,
@@ -35,8 +35,8 @@ func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project
 		Name: "App1",
 	}
 
-	test.NoError(t, application.Insert(db, projectFoo, app))
-	test.NoError(t, pipeline.InsertPipeline(db, p))
+	test.NoError(t, application.Insert(db, projectFoo, app, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, p, nil))
 
 	return projectFoo, p, app
 }
@@ -50,7 +50,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(t, db)
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -61,14 +61,14 @@ func Test_runPipelineHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
 	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -128,7 +128,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -139,14 +139,14 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
 	appName := assets.RandomString(t, 10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(db, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(db, app.ID, pip.ID)
@@ -205,14 +205,14 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip2)
+	err = pipeline.InsertPipeline(db, pip2, u)
 	test.NoError(t, err)
 
 	//11. Insert another Application
 	app2 := &sdk.Application{
 		Name: assets.RandomString(t, 10),
 	}
-	err = application.Insert(db, proj, app2)
+	err = application.Insert(db, proj, app2, nil)
 
 	//12. Attach pipeline to application
 	_, err = application.AttachPipeline(db, app2.ID, pip2.ID)

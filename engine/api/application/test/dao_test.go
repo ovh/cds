@@ -15,12 +15,12 @@ import (
 func TestLoadByNameAsAdmin(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
 
 	actual, err := application.LoadByName(db, key, "my-app", nil)
 	test.NoError(t, err)
@@ -33,16 +33,16 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 func TestLoadByNameAsUser(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, u, proj.ProjectGroups...))
 
 	actual, err := application.LoadByName(db, key, "my-app", u)
 	assert.NoError(t, err)
@@ -55,12 +55,12 @@ func TestLoadByNameAsUser(t *testing.T) {
 func TestLoadByIDAsAdmin(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
 
 	actual, err := application.LoadByID(db, app.ID, nil)
 	test.NoError(t, err)
@@ -73,16 +73,17 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 func TestLoadByIDAsUser(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, u, proj.ProjectGroups...))
 
 	actual, err := application.LoadByID(db, app.ID, u)
 	assert.NoError(t, err)
@@ -95,7 +96,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 func TestLoadAllAsAdmin(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 		Metadata: sdk.Metadata{
@@ -110,8 +111,8 @@ func TestLoadAllAsAdmin(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
-	test.NoError(t, application.Insert(db, proj, &app2))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
+	test.NoError(t, application.Insert(db, proj, &app2, nil))
 
 	actual, err := application.LoadAll(db, proj.Key, nil)
 	test.NoError(t, err)
@@ -127,7 +128,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 func TestLoadAllAsUser(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, key, key)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -136,12 +137,12 @@ func TestLoadAllAsUser(t *testing.T) {
 		Name: "my-app2",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app))
-	test.NoError(t, application.Insert(db, proj, &app2))
+	test.NoError(t, application.Insert(db, proj, &app, nil))
+	test.NoError(t, application.Insert(db, proj, &app2, nil))
 
 	u, _ := assets.InsertLambaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, proj, &app, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, proj, &app, u, proj.ProjectGroups...))
 
 	actual, err := application.LoadAll(db, proj.Key, u)
 	test.NoError(t, err)

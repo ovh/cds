@@ -326,7 +326,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	defer tx.Rollback()
 
-	if err := application.Insert(tx, proj, &app); err != nil {
+	if err := application.Insert(tx, proj, &app, c.User); err != nil {
 		log.Warning("addApplicationHandler> Cannot insert pipeline: %s\n", err)
 		return err
 	}
@@ -336,7 +336,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return err
 	}
 
-	if err := application.AddGroup(tx, proj, &app, proj.ProjectGroups...); err != nil {
+	if err := application.AddGroup(tx, proj, &app, c.User, proj.ProjectGroups...); err != nil {
 		log.Warning("addApplicationHandler> Cannot add groups on application: %s\n", err)
 		return err
 	}
@@ -466,7 +466,7 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 	newApp.ApplicationGroups = appToClone.ApplicationGroups
 
 	// Create Application
-	if err := application.Insert(db, proj, newApp); err != nil {
+	if err := application.Insert(db, proj, newApp, u); err != nil {
 		return err
 	}
 
@@ -541,7 +541,7 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 	}
 
 	// Insert Permission
-	if err := application.AddGroup(db, proj, newApp, newApp.ApplicationGroups...); err != nil {
+	if err := application.AddGroup(db, proj, newApp, u, newApp.ApplicationGroups...); err != nil {
 		return err
 	}
 
@@ -599,7 +599,7 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 	defer tx.Rollback()
-	if err := application.Update(tx, app); err != nil {
+	if err := application.Update(tx, app, c.User); err != nil {
 		log.Warning("updateApplicationHandler> Cannot delete application %s: %s\n", applicationName, err)
 		return err
 	}

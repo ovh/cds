@@ -41,18 +41,19 @@ type ProjectVariableAudit struct {
 // Metadata represents metadata
 type Metadata map[string]string
 
+//LastModification is stored in cache and used for ProjectLastUpdates computing
+type LastModification struct {
+	Name         string `json:"name"`
+	Username     string `json:"username"`
+	LastModified int64  `json:"last_modified"`
+}
+
 //ProjectLastUpdates update times of project, application and pipelines
 type ProjectLastUpdates struct {
-	Key          string `json:"key"`
-	LastModified int64  `json:"last_modified"`
-	Applications []struct {
-		Name         string `json:"name"`
-		LastModified int64  `json:"last_modified"`
-	} `json:"applications"`
-	Pipelines []struct {
-		Name         string `json:"name"`
-		LastModified int64  `json:"last_modified"`
-	} `json:"pipelines"`
+	LastModification
+	Applications []LastModification `json:"applications"`
+	Pipelines    []LastModification `json:"pipelines"`
+	Environments []LastModification `json:"environments"`
 }
 
 // ProjectKeyPattern  pattern for project key

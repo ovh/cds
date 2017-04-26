@@ -16,7 +16,7 @@ import (
 //Import is able to create a new application and all its components
 func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, u *sdk.User, msgChan chan<- sdk.Message) error {
 	//Save application in database
-	if err := Insert(db, proj, app); err != nil {
+	if err := Insert(db, proj, app, u); err != nil {
 		return sdk.WrapError(err, "application.Import")
 	}
 
@@ -48,7 +48,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 			return err
 		}
 		log.Debug("application.Import> Insert group %d in application", g.ID)
-		if err := AddGroup(db, proj, app, app.ApplicationGroups[i]); err != nil {
+		if err := AddGroup(db, proj, app, u, app.ApplicationGroups[i]); err != nil {
 			return err
 		}
 		if msgChan != nil {
@@ -109,7 +109,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 	for i := range app.Pipelines {
 		//Import pipeline
 		log.Debug("application.Import> Import pipeline %s", app.Pipelines[i].Pipeline.Name)
-		if err := pipeline.Import(db, proj, &app.Pipelines[i].Pipeline, msgChan); err != nil {
+		if err := pipeline.Import(db, proj, &app.Pipelines[i].Pipeline, msgChan, u); err != nil {
 			return err
 		}
 

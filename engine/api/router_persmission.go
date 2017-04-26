@@ -35,7 +35,7 @@ func loadUserPermissions(db gorp.SqlExecutor, user *sdk.User) error {
 			var group sdk.Group
 			var admin bool
 			if err := rows.Scan(&group.ID, &group.Name, &admin); err != nil {
-				return sdk.WrapError(err, "loadUserPermissions> Unable scanr groups %s", user.Username)
+				return sdk.WrapError(err, "loadUserPermissions> Unable scan groups %s", user.Username)
 			}
 			if err := project.LoadPermissions(db, &group); err != nil {
 				return sdk.WrapError(err, "loadUserPermissions> Unable to load project permissions for %s", user.Username)

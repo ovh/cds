@@ -718,7 +718,7 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	defer tx.Rollback()
 
 	//Insert application in database
-	if err := application.Insert(tx, proj, &app); err != nil {
+	if err := application.Insert(tx, proj, &app, c.User); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline: %s\n", err)
 		return err
 
@@ -731,7 +731,7 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	}
 
 	//Add the  groups on the application
-	if err := application.AddGroup(tx, proj, &app, proj.ProjectGroups...); err != nil {
+	if err := application.AddGroup(tx, proj, &app, c.User, proj.ProjectGroups...); err != nil {
 		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot add groups on application: %s\n", err)
 		return err
 	}

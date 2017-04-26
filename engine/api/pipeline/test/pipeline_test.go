@@ -59,7 +59,7 @@ func TestInsertPipeline(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if err := pipeline.InsertPipeline(db, tt.p); (err != nil) != tt.wantErr {
+		if err := pipeline.InsertPipeline(db, tt.p, nil); (err != nil) != tt.wantErr {
 			t.Errorf("%q. InsertPipeline() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 	}
@@ -95,7 +95,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	pip1, err := pipeline.LoadPipeline(db, p.Key, "Name", true)
 	test.NoError(t, err)

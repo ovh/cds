@@ -72,6 +72,7 @@ func Set(key string, value interface{}) {
 
 //SetWithTTL something in the cache with a specific TTL (second).
 func SetWithTTL(key string, value interface{}, ttl int) {
+	log.Debug("SetWithTTL> %s %#v", key, value)
 	if s == nil {
 		return
 	}

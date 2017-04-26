@@ -122,7 +122,7 @@ func updateGroupsInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot delete groups from application %s", appName)
 	}
 
-	if err := application.AddGroup(tx, proj, app, groupsPermission...); err != nil {
+	if err := application.AddGroup(tx, proj, app, c.User, groupsPermission...); err != nil {
 		return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot add groups in application %s", app.Name)
 	}
 
@@ -174,7 +174,7 @@ func addGroupInApplicationHandler(w http.ResponseWriter, r *http.Request, db *go
 	}
 	defer tx.Rollback()
 
-	if err := application.AddGroup(tx, proj, app, groupPermission); err != nil {
+	if err := application.AddGroup(tx, proj, app, c.User, groupPermission); err != nil {
 		return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot add group %s in application %s", g.Name, app.Name)
 	}
 
