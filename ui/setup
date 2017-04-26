@@ -8,9 +8,9 @@ if [ ! -z ${BASE_URL} ]; then
 fi;
 
 cd assets
-if [ ! -z ${BUILD_NUMBER} ]; then
+if [ ! -z ${VERSION} ]; then
     echo "replace base url with ${VERSION}"
-    sed -i "s#0#$BUILD_NUMBER#" version.json
+    sed -i "s#0#$VERSION#" version.json
 fi;
 
 echo "################"
