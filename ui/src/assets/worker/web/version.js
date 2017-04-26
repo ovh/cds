@@ -7,6 +7,6 @@ onmessage = function (e) {
 function loadVersion () {
     setInterval(function () {
         var date = new Date();
-        postMessage(httpCall('assets/version.json?ts=' + date.getTime(), '/'));
+        postMessage(httpCall('assets/version.json?ts=' + date.getTime(), '../../../'));
     }, 10000);
 }
