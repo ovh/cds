@@ -101,6 +101,34 @@ steps  = [{
 	assert.Equal(t, "*.xml", a.Actions[0].Parameters[0].Value)
 }
 
+func TestTestLoadFromActionScriptWithGitClone(t *testing.T) {
+	b := []byte(`
+steps  = [{
+	gitClone = {
+			directory = "./src"
+			url = "{{.git.url}}"
+			commit = "{{.git.hash}}"
+			branch = "{{.git.branch}}"
+	}
+}]`)
+
+	a, err := NewActionFromScript(b)
+	assert.NotNil(t, a)
+	assert.NoError(t, err)
+	t.Logf("Action : %v", a)
+
+	assert.Equal(t, GitCloneAction, a.Actions[0].Name)
+	assert.Equal(t, BuiltinAction, a.Actions[0].Type)
+	assert.Equal(t, "directory", a.Actions[0].Parameters[0].Name)
+	assert.Equal(t, "./src", a.Actions[0].Parameters[0].Value)
+	assert.Equal(t, "url", a.Actions[0].Parameters[1].Name)
+	assert.Equal(t, "{{.git.url}}", a.Actions[0].Parameters[1].Value)
+	assert.Equal(t, "commit", a.Actions[0].Parameters[2].Name)
+	assert.Equal(t, "{{.git.hash}}", a.Actions[0].Parameters[2].Value)
+	assert.Equal(t, "branch", a.Actions[0].Parameters[3].Name)
+	assert.Equal(t, "{{.git.branch}}", a.Actions[0].Parameters[3].Value)
+}
+
 func TestTestLoadFromActionScriptWithArtifactUpload(t *testing.T) {
 	b := []byte(`
 steps  = [{
