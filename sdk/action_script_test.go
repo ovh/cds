@@ -119,14 +119,21 @@ steps  = [{
 
 	assert.Equal(t, GitCloneAction, a.Actions[0].Name)
 	assert.Equal(t, BuiltinAction, a.Actions[0].Type)
-	assert.Equal(t, "directory", a.Actions[0].Parameters[0].Name)
-	assert.Equal(t, "./src", a.Actions[0].Parameters[0].Value)
-	assert.Equal(t, "url", a.Actions[0].Parameters[1].Name)
-	assert.Equal(t, "{{.git.url}}", a.Actions[0].Parameters[1].Value)
-	assert.Equal(t, "commit", a.Actions[0].Parameters[2].Name)
-	assert.Equal(t, "{{.git.hash}}", a.Actions[0].Parameters[2].Value)
-	assert.Equal(t, "branch", a.Actions[0].Parameters[3].Name)
-	assert.Equal(t, "{{.git.branch}}", a.Actions[0].Parameters[3].Value)
+
+	for i := 0; i < 4; i++ {
+		name := a.Actions[0].Parameters[i].Name
+		v := a.Actions[0].Parameters[i].Value
+		switch name {
+		case "directory":
+			assert.Equal(t, "./src", v)
+		case "url":
+			assert.Equal(t, "{{.git.url}}", v)
+		case "commit":
+			assert.Equal(t, "{{.git.hash}}", v)
+		case "branch":
+			assert.Equal(t, "{{.git.branch}}", v)
+		}
+	}
 }
 
 func TestTestLoadFromActionScriptWithArtifactUpload(t *testing.T) {
