@@ -29,7 +29,7 @@ func TestInsert(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -48,7 +48,7 @@ func TestInsert(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(db, proj, app, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -96,7 +96,7 @@ func TestUpdate(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -115,7 +115,7 @@ func TestUpdate(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(db, proj, app, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -180,7 +180,7 @@ func TestGetByApplication(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -199,7 +199,7 @@ func TestGetByApplication(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(db, proj, app, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -243,7 +243,7 @@ func TestGetByPipeline(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -262,7 +262,7 @@ func TestGetByPipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(db, proj, app, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -306,7 +306,7 @@ func TestGetByApplicationPipeline(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -325,7 +325,7 @@ func TestGetByApplicationPipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(db, proj, app, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -369,7 +369,7 @@ func TestGetByApplicationPipelineEnv(t *testing.T) {
 
 	//Insert Project
 	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -388,7 +388,7 @@ func TestGetByApplicationPipelineEnv(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(db, proj, app, nil); err != nil {
 		t.Fatal(err)
 	}
 
