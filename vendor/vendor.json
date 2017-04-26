@@ -861,6 +861,12 @@
 			"revisionTime": "2017-01-14T04:11:58Z"
 		},
 		{
+			"checksumSHA1": "hKDsT0KAOtA7UqiXYdO0RahnQZ8=",
+			"path": "github.com/shirou/gopsutil/internal/common",
+			"revision": "e49a95f3d5f824c3f9875ca49e54e4fef17f82cf",
+			"revisionTime": "2017-04-06T13:17:56Z"
+		},
+		{
 			"checksumSHA1": "zkNNauN735M7Jghr+MsARbb+/xQ=",
 			"path": "github.com/shirou/gopsutil/mem",
 			"revision": "e49a95f3d5f824c3f9875ca49e54e4fef17f82cf",
