@@ -25,7 +25,7 @@ func TestImportInto_Variable(t *testing.T) {
 
 	project.Delete(db, proj.Key)
 
-	test.NoError(t, project.Insert(db, &proj))
+	test.NoError(t, project.Insert(db, &proj, nil))
 
 	env := sdk.Environment{
 		Name:      "testenv",
