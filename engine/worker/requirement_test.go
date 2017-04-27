@@ -8,7 +8,6 @@ import (
 )
 
 func TestCheckRequirement(t *testing.T) {
-
 	r := sdk.Requirement{
 		Name:  "Go",
 		Type:  sdk.BinaryRequirement,
@@ -31,11 +30,9 @@ func TestCheckRequirement(t *testing.T) {
 	if ok {
 		t.Fatalf("Requirement foo should not be ok")
 	}
-
 }
 
 func TestCheckHostnameRequirement(t *testing.T) {
-
 	h, err := os.Hostname()
 	if err != nil {
 		// Meh, no way to test it
@@ -65,11 +62,9 @@ func TestCheckHostnameRequirement(t *testing.T) {
 	if ok {
 		t.Fatalf("Requirement should not be ok")
 	}
-
 }
 
 func TestNetworkAccessRequirement(t *testing.T) {
-
 	r := sdk.Requirement{
 		Type:  sdk.NetworkAccessRequirement,
 		Value: "google.com:443",
@@ -93,5 +88,4 @@ func TestNetworkAccessRequirement(t *testing.T) {
 	if ok {
 		t.Fatalf("Requirement should not be ok")
 	}
-
 }

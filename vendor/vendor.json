@@ -17,10 +17,10 @@
 			"revisionTime": "2016-12-27T08:34:17Z"
 		},
 		{
-			"checksumSHA1": "vzPNBiOJFecKT9FA6aAtmOjRlgs=",
+			"checksumSHA1": "L9njXCkN30+qHaLayiiA2Q9jDlY=",
 			"path": "github.com/Microsoft/go-winio",
-			"revision": "ce2922f643c8fd76b46cadc7f404a06282678b34",
-			"revisionTime": "2016-06-21T21:14:38Z"
+			"revision": "fff283ad5116362ca252298cfc9b95828956d85d",
+			"revisionTime": "2017-02-01T00:43:30Z"
 		},
 		{
 			"checksumSHA1": "kTlNdyZIhQxOA+kQKpoQaptbNhE=",
@@ -859,6 +859,18 @@
 			"path": "github.com/sethgrid/pester",
 			"revision": "f1c8b772fdecdd20f483653d18619d41b25ef934",
 			"revisionTime": "2017-01-14T04:11:58Z"
+		},
+		{
+			"checksumSHA1": "hKDsT0KAOtA7UqiXYdO0RahnQZ8=",
+			"path": "github.com/shirou/gopsutil/internal/common",
+			"revision": "e49a95f3d5f824c3f9875ca49e54e4fef17f82cf",
+			"revisionTime": "2017-04-06T13:17:56Z"
+		},
+		{
+			"checksumSHA1": "zkNNauN735M7Jghr+MsARbb+/xQ=",
+			"path": "github.com/shirou/gopsutil/mem",
+			"revision": "e49a95f3d5f824c3f9875ca49e54e4fef17f82cf",
+			"revisionTime": "2017-04-06T13:17:56Z"
 		},
 		{
 			"checksumSHA1": "h/HMhokbQHTdLUbruoBBTee+NYw=",
