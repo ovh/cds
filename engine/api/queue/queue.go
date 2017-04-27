@@ -149,7 +149,6 @@ func runPipeline(db *gorp.DbMap, pbID int64) {
 	if pb.Status == sdk.StatusSuccess {
 		if err := pipelineBuildEnd(tx, pb); err != nil {
 			log.Warning("RunActions> Cannot execute pipelineBuildEnd: %s", err)
-			return
 		}
 	}
 
