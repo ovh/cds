@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 
@@ -37,7 +36,7 @@ type Executor struct {
 	URL           string      `json:"url" yaml:"url"`
 	Path          string      `json:"path" yaml:"path"`
 	Body          string      `json:"body" yaml:"body"`
-    BodyFile      string      `json:"bodyfile" yaml:"bodyfile"`
+	BodyFile      string      `json:"bodyfile" yaml:"bodyfile"`
 	MultipartForm interface{} `json:"multipart_form" yaml:"multipart_form"`
 	Headers       Headers     `json:"headers" yaml:"headers"`
 }
@@ -61,7 +60,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor
@@ -138,15 +137,15 @@ func (e Executor) getRequest() (*http.Request, error) {
 	if e.Body != "" {
 		body = bytes.NewBuffer([]byte(e.Body))
 	} else if e.BodyFile != "" {
-        path := string(e.BodyFile)
-        if _, err := os.Stat(path); !os.IsNotExist(err) {
-            temp, err := ioutil.ReadFile(path)
-            if err != nil {
-                return nil, err
-            }
-            body = bytes.NewBuffer(temp)
-        }
-    } else if e.MultipartForm != nil {
+		path := string(e.BodyFile)
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			temp, err := ioutil.ReadFile(path)
+			if err != nil {
+				return nil, err
+			}
+			body = bytes.NewBuffer(temp)
+		}
+	} else if e.MultipartForm != nil {
 		form, ok := e.MultipartForm.(map[interface{}]interface{})
 		if !ok {
 			return nil, fmt.Errorf("'multipart_form' should be a map")

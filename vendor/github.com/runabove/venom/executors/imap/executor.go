@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/yesnault/go-imap/imap"
@@ -62,18 +61,13 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(ctx venom.TestCaseContext, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 	var t Executor
 	if err := mapstructure.Decode(step, &t); err != nil {
 		return nil, err
 	}
 
 	start := time.Now()
-
-	if l.Level == log.DebugLevel {
-		imapLogMask = imap.LogConn | imap.LogState | imap.LogCmd
-		imapSafeLogMask = imap.LogConn | imap.LogState
-	}
 
 	result := Result{Executor: t}
 	find, errs := t.getMail(l)
@@ -95,7 +89,7 @@ func (Executor) Run(ctx venom.TestCaseContext, l *log.Entry, step venom.TestStep
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
 
-func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
+func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 	if e.SearchFrom == "" && e.SearchSubject == "" {
 		return nil, fmt.Errorf("You have to use searchfrom and/or searchsubject")
 	}
@@ -225,7 +219,7 @@ func connect(host, port, imapUsername, imapPassword string) (*imap.Client, error
 	return c, nil
 }
 
-func fetch(c *imap.Client, box string, nb uint32, l *log.Entry) ([]imap.Response, error) {
+func fetch(c *imap.Client, box string, nb uint32, l venom.Logger) ([]imap.Response, error) {
 	l.Debugf("call Select")
 	if _, err := c.Select(box, true); err != nil {
 		l.Errorf("Error with select %s", err.Error())
