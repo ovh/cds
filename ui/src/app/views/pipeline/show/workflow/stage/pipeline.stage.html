@@ -26,6 +26,7 @@
     </div>
     <div class="thirteen wide stretched column">
         <app-action *ngIf="selectedJob" [edit]="pipeline.permission === 7" [project]="project" [action]="selectedJob.action"
+                    [suggest]="suggest"
                     (actionEvent)="jobEvent($event)"></app-action>
     </div>
 </div>

@@ -18,7 +18,7 @@
   </div>
 </div>
 <div class="ui attached segment" *ngIf="pipeline.stages && pipeline.stages.length > 0 && selectedStage">
-  <app-pipeline-stage [project]="project" [pipeline]="pipeline" [stage]="selectedStage"></app-pipeline-stage>
+  <app-pipeline-stage [project]="project" [pipeline]="pipeline" [stage]="selectedStage" [suggest]="suggest"></app-pipeline-stage>
 </div>
 
 <sm-modal title="{{ 'pipeline_stage_edit' | translate }}" class="fluid" #editStageModal>

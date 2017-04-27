@@ -19,6 +19,7 @@ export class ParameterValueComponent implements OnInit {
     @Input() value: string|number|boolean;
     @Input() editList = true;
     @Input() edit = true;
+    @Input() suggest: Array<string>;
     @Input('project')
     set project(data: Project) {
         this.repositoriesManager = new Array<RepositoriesManager>();
@@ -97,6 +98,16 @@ export class ParameterValueComponent implements OnInit {
         if (this.codemirror && this.codemirror.instance && this.codemirror.instance.options.mode !== this.codeMirrorConfig.mode) {
             this.codemirror.instance.setOption('mode', this.codeMirrorConfig.mode);
         }
+        this.codemirror.instance.on('keyup', (cm, event) => {
+           if (!cm.state.completionActive && event.keyCode !== 13) {
+               CodeMirror.showHint(cm, CodeMirror.hint.cds, {
+                   completeSingle: true,
+                   closeCharacters: / /,
+                   cdsCompletionList: this.suggest,
+                   specialChars: ''
+               });
+           }
+        });
     }
 
     updateRepoManager(name: string): void {

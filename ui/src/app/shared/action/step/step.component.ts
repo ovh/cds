@@ -12,6 +12,7 @@ export class ActionStepComponent {
     @Input() action: Action;
     @Input() step: Action;
     @Input() edit: boolean;
+    @Input() suggest: Array<string>;
 
     @Output() removeEvent = new EventEmitter<StepEvent>();
 

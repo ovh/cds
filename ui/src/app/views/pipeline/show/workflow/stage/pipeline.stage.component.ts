@@ -24,6 +24,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
 
     @Input() pipeline: Pipeline;
     @Input() project: Project;
+    @Input() suggest: Array<string>;
 
     @Input()
     set stage(data: Stage) {

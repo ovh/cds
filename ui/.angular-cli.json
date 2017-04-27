@@ -21,6 +21,7 @@
       "styles": [
         "../node_modules/dragula/dist/dragula.css",
         "../node_modules/codemirror/lib/codemirror.css",
+        "../node_modules/codemirror/addon/hint/show-hint.css",
         "../node_modules/semantic-ui/dist/semantic.css",
         "../node_modules/angular2-toaster/toaster.css",
         "../node_modules/font-awesome/css/font-awesome.css",
@@ -42,6 +43,8 @@
         "../node_modules/codemirror/mode/css/css.js",
         "../node_modules/codemirror/mode/powershell/powershell.js",
         "../node_modules/codemirror/mode/python/python.js",
+        "../node_modules/codemirror/addon/hint/show-hint.js",
+        "../resources/cds-hint.js",
         "../node_modules/ansi_up/ansi_up.js",
         "../node_modules/duration-js/duration.js"
       ],

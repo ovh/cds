@@ -16,6 +16,7 @@ export class ParameterFormComponent {
     newParameter: Parameter;
 
     @Input() project: Project;
+    @Input() suggest: Array<string>;
     @ViewChild('selectType') selectType: ElementRef;
 
     @Output() createParameterEvent = new EventEmitter<ParameterEvent>();

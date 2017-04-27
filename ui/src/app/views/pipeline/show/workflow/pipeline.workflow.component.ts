@@ -7,6 +7,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {VariableService} from '../../../../service/variable/variable.service';
 
 
 declare var _: any;
@@ -21,6 +22,7 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
     selectedStage: Stage;
     editableStage: Stage;
     oldLastModifiedDate: number;
+    suggest: Array<string>;
 
     @Input() project: Project;
     @Input() pipeline: Pipeline;
@@ -29,7 +31,8 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
     editStageModal: SemanticModalComponent;
 
     constructor(private _pipelineStore: PipelineStore, private _toast: ToastService,
-                private _translate: TranslateService, private dragulaService: DragulaService) {
+                private _translate: TranslateService, private dragulaService: DragulaService,
+                private _varService: VariableService) {
         dragulaService.setOptions('bag-stage', {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
@@ -72,6 +75,8 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
             this.selectedStage = this.pipeline.stages[0];
         }
         this.oldLastModifiedDate = this.pipeline.last_modified;
+
+        this._varService.getContextVariable(this.project.key).first().subscribe(s => this.suggest = s);
     }
 
     /**
