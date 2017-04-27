@@ -480,3 +480,17 @@ $verticalTreeHeightLine: 40px;
     margin-right: 0em;
   }
 }
+
+.ngui-auto-complete-wrapper {
+  z-index: 99999;
+}
+
+ngui-auto-complete {
+  height:200px;
+  overflow-y: auto;
+  z-index: 2000 !important;
+}
+ngui-auto-complete .no-match-found {
+  display: none;
+  border: none;
+};
