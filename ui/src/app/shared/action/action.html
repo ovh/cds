@@ -91,7 +91,7 @@
     <div class="ui segment" *ngIf="finalSteps.length > 0" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-final'" [dragulaModel]="finalSteps" *ngIf="finalSteps">
             <div *ngFor="let step of finalSteps" class="step" [class.off]="!step.enabled">
-                <app-action-step [action]="editableAction" [step]="step" [edit]="edit"
+                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest"
                                  (removeEvent)="stepManagement($event)"></app-action-step>
                 <hr>
             </div>

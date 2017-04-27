@@ -15,6 +15,7 @@ export class ParameterListComponent extends Table {
 
     @Input() parameters: Array<Parameter>;
     @Input() project: Project;
+    @Input() suggest: Array<string>;
 
     // edit/launcher/ro/job
     @Input() mode = 'edit';

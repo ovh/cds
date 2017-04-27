@@ -26,7 +26,7 @@
 <ng-container *ngFor="let p of step.parameters">
     <label style="display: inline"><b>{{p.name + ' :'}}</b></label>
     <div style="display: inline">
-        <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value"
+        <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
                              (valueUpdating)="action.hasChanged = true"></app-parameter-value>
     </div>
 </ng-container>

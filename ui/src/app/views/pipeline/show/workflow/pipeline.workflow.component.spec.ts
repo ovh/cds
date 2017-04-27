@@ -17,6 +17,7 @@ import {SharedModule} from '../../../../shared/shared.module';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Stage} from '../../../../model/stage.model';
+import {VariableService} from '../../../../service/variable/variable.service';
 
 describe('CDS: Pipeline Workflow', () => {
 
@@ -35,7 +36,8 @@ describe('CDS: Pipeline Workflow', () => {
                 { provide: ToastService, useClass: MockToast},
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                VariableService
             ],
             imports : [
                 PipelineModule,

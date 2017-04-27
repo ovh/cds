@@ -32,4 +32,13 @@ export class VariableService {
             return this.variablesType;
         });
     }
+
+    /**
+     * Get all available variable
+     * @param key
+     * @returns {Observable<Array<string>>}
+     */
+    getContextVariable(key: string): Observable<Array<string>> {
+        return this._http.get('/suggest/variable/' + key).map(res => res.json());
+    }
 }
