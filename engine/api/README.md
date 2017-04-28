@@ -238,7 +238,7 @@ ttl = 60
     # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
     [cache.redis]
     host = "localhost:6379" # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
-    password = "your password"
+    password = "cds"
 
 ##############################
 # CDS Authentication Settings#
