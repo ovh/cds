@@ -8,13 +8,14 @@ CREATE TABLE IF NOT EXISTS "workflow" (
 
 SELECT create_index('workflow', 'IDX_WORKFLOW_NAME', 'name');
 SELECT create_foreign_key('FK_WORKFLOW_PROJECT', 'workflow', 'project', 'project_id', 'id');
-SELECT create_foreign_key('FK_WORKFLOW_ROOT_NODE', 'workflow', 'workflow_node', 'root_node_id', 'id');
 
 CREATE TABLE IF NOT EXISTS "workflow_node" (
     id BIGSERIAL PRIMARY KEY,
     workflow_id BIGINT NOT NULL,
     pipeline_id BIGINT NOT NULL
 );
+
+SELECT create_foreign_key('FK_WORKFLOW_ROOT_NODE', 'workflow', 'workflow_node', 'root_node_id', 'id');
 
 SELECT create_foreign_key('FK_WORKFLOW_NODE_WORKFLOW', 'workflow_node', 'workflow', 'workflow_id', 'id');
 SELECT create_foreign_key('FK_WORKFLOW_NODE_PIPELINE', 'workflow_node', 'pipeline', 'pipeline_id', 'id');
