@@ -41,6 +41,15 @@ SELECT create_foreign_key('FK_WORKFLOW_CONTEXT_WORKFLOW_NODE', 'workflow_node_co
 SELECT create_foreign_key('FK_WORKFLOW_NODE_APPLICATION', 'workflow_node_context', 'application', 'application_id', 'id');
 SELECT create_foreign_key('FK_WORKFLOW_NODE_ENVIRONMENT', 'workflow_node_context', 'environment', 'environment_id', 'id');
 
+CREATE TABLE IF NOT EXISTS "workflow_hook_model" (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    image TEXT NOT NULL,
+    command TEXT NOT NULL,
+    default_config JSONB
+);
+
 CREATE TABLE IF NOT EXISTS "workflow_node_hook" (
     id BIGSERIAL PRIMARY KEY,
     uuid TEXT UNIQUE NOT NULL,
@@ -53,15 +62,6 @@ CREATE TABLE IF NOT EXISTS "workflow_node_hook" (
 SELECT create_index('workflow_node_hook', 'IDX_WORKFLOW_NODE_HOOK_UUID', 'uuid');
 SELECT create_foreign_key('FK_WORKFLOW_NODE_HOOK_WORKFLOW_NODE', 'workflow_node_hook', 'workflow_node', 'workflow_node_id', 'id');
 SELECT create_foreign_key('FK_WORKFLOW_NODE_HOOK_WORKFLOW_HOOK_MODEL', 'workflow_node_hook', 'workflow_hook_model', 'workflow_hook_model_id', 'id');
-
-CREATE TABLE IF NOT EXISTS "workflow_hook_model" (
-    id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL,
-    image TEXT NOT NULL,
-    command TEXT NOT NULL,
-    default_config JSONB
-);
 
 -- +migrate Down
 DROP TABLE workflow_hook_model;
