@@ -138,11 +138,15 @@ var mainCmd = &cobra.Command{
 			viper.GetInt(viperDBMaxConn),
 		)
 		if err != nil {
-			log.Warning("Cannot connect to database: %s", err)
+			log.Error("Cannot connect to database: %s", err)
 			os.Exit(3)
 		}
 
-		if err := bootstrap.InitiliazeDB(viper.GetString(viperAuthDefaultGroup), viper.GetString(viperAuthSharedInfraToken), database.GetDBMap); err != nil {
+		defaultValues := bootstrap.DefaultValues{
+			DefaultGroupName: viper.GetString(viperAuthDefaultGroup),
+			SharedInfraToken: viper.GetString(viperAuthSharedInfraToken),
+		}
+		if err := bootstrap.InitiliazeDB(defaultValues, database.GetDBMap); err != nil {
 			log.Error("Cannot setup databases: %s", err)
 		}
 

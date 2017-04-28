@@ -12,8 +12,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// DefaultValues contains default user values for init DB
+type DefaultValues struct {
+	DefaultGroupName string
+	SharedInfraToken string
+}
+
 //InitiliazeDB inits the database
-func InitiliazeDB(defaultGroupName string, sharedInfraToken string, DBFunc func() *gorp.DbMap) error {
+func InitiliazeDB(defaultValues DefaultValues, DBFunc func() *gorp.DbMap) error {
 	dbGorp := DBFunc()
 	if err := action.CreateBuiltinArtifactActions(dbGorp); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin Artifact actions")
@@ -23,8 +29,8 @@ func InitiliazeDB(defaultGroupName string, sharedInfraToken string, DBFunc func(
 		return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group", group.SharedInfraGroupName)
 	}
 
-	if strings.TrimSpace(defaultGroupName) != "" {
-		if err := group.CreateDefaultGroup(dbGorp, defaultGroupName); err != nil {
+	if strings.TrimSpace(defaultValues.DefaultGroupName) != "" {
+		if err := group.CreateDefaultGroup(dbGorp, defaultValues.DefaultGroupName); err != nil {
 			return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group")
 		}
 	}
@@ -37,11 +43,11 @@ func InitiliazeDB(defaultGroupName string, sharedInfraToken string, DBFunc func(
 		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin environments")
 	}
 
-	if err := group.InitializeDefaultGroupName(dbGorp, defaultGroupName); err != nil {
+	if err := group.InitializeDefaultGroupName(dbGorp, defaultValues.DefaultGroupName); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot InitializeDefaultGroupName")
 	}
 
-	if err := token.Initialize(dbGorp, sharedInfraToken); err != nil {
+	if err := token.Initialize(dbGorp, defaultValues.SharedInfraToken); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot InitializeDefaultGroupName")
 	}
 

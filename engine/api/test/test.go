@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
@@ -41,10 +42,10 @@ func init() {
 	}
 }
 
-type bootstrap func(string, string, func() *gorp.DbMap) error
+type bootstrapf func(bootstrap.DefaultValues, func() *gorp.DbMap) error
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
+func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 	DBDriver = flag.Lookup("dbDriver").Value.String()
 	dbUser = flag.Lookup("dbUser").Value.String()
 	dbPassword = flag.Lookup("dbPassword").Value.String()
@@ -91,7 +92,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f("", sdk.RandomString(32), database.GetDBMap); err != nil {
+		if err := f(bootstrap.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, database.GetDBMap); err != nil {
 			return nil
 		}
 	}
