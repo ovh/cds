@@ -142,7 +142,7 @@ func (c *LDAPClient) Store() sessionstore.Store {
 //Bind binds
 func (c *LDAPClient) Bind(username, password string) error {
 	bindRequest := fmt.Sprintf(c.conf.DN, username)
-	bindRequest = strings.Replace(bindRequest, "{{.ldap-base}}", c.conf.Base, -1)
+	bindRequest = strings.Replace(bindRequest, "{{.ldapBase}}", c.conf.Base, -1)
 	log.Debug("LDAP> Bind user %s", bindRequest)
 
 	if err := c.conn.Bind(bindRequest, password); err != nil {

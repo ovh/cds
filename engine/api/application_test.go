@@ -27,14 +27,14 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip1 := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -46,7 +46,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	}
 
 	//4. Create Pipeline 2
-	pipelineKey = assets.RandomString(t, 10)
+	pipelineKey = sdk.RandomString(10)
 	pip2 := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -58,7 +58,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	}
 
 	//5. Create Pipeline 3
-	pipelineKey = assets.RandomString(t, 10)
+	pipelineKey = sdk.RandomString(10)
 	pip3 := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -69,7 +69,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	// 6. Create application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}

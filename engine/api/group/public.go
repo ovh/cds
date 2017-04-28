@@ -17,61 +17,56 @@ var SharedInfraGroup *sdk.Group
 
 var defaultGroupID int64
 
-// CreateDefaultGlobalGroup creates a group 'public' where every user will be
-func CreateDefaultGlobalGroup(db *gorp.DbMap) error {
-
+// CreateDefaultGroup creates a group 'public' where every user will be
+func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
-	err := db.QueryRow(query, SharedInfraGroupName).Scan(&id)
-	if err == sql.ErrNoRows {
+	if err := db.QueryRow(query, groupName).Scan(&id); err == sql.ErrNoRows {
+		log.Info("CreateDefaultGroup> create %s group in DB", groupName)
 		query = `INSERT INTO "group" (name) VALUES ($1)`
-		_, err = db.Exec(query, SharedInfraGroupName)
-		if err != nil {
+		if _, err := db.Exec(query, groupName); err != nil {
 			return err
 		}
+	} else {
+		log.Info("CreateDefaultGroup> group %s already exist", groupName)
 	}
-
 	return nil
 }
 
 // AddAdminInGlobalGroup insert into new admin into global group as group admin
 func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
-
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
-	err := db.QueryRow(query, SharedInfraGroupName).Scan(&id)
-	if err != nil {
+	if err := db.QueryRow(query, SharedInfraGroupName).Scan(&id); err != nil {
 		return err
 	}
 
 	query = `INSERT INTO group_user (group_id, user_id, group_admin) VALUES ($1, $2, true)`
-	_, err = db.Exec(query, id, userID)
-	if err != nil {
+	if _, err := db.Exec(query, id, userID); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-// Initialize initializes sharedInfraGroup and Default Group
-func Initialize(db *gorp.DbMap, defaultGroupName string) error {
+// InitializeDefaultGroupName initializes sharedInfraGroup and Default Group
+func InitializeDefaultGroupName(db *gorp.DbMap, defaultGroupName string) error {
 	//Load the famous sharedInfraGroup
-	var errlg error
-	SharedInfraGroup, errlg = LoadGroup(db, SharedInfraGroupName)
-	if errlg != nil {
-		log.Error("group.Initialize> Cannot load shared infra group: %s\n", errlg)
-		return errlg
+	var errlsg error
+	SharedInfraGroup, errlsg = LoadGroup(db, SharedInfraGroupName)
+	if errlsg != nil {
+		return sdk.WrapError(errlsg, "group.InitializeDefaultGroupName> Cannot load shared infra group")
 	}
 	//Inject SharedInfraGroup.ID in permission package
 	permission.SharedInfraGroupID = SharedInfraGroup.ID
 
 	if defaultGroupName != "" {
-		g, errld := LoadGroup(db, defaultGroupName)
-		if errld != nil {
-			log.Error("group.Initialize> Cannot load default group '%s': %s\n", defaultGroupName, errld)
-			return errld
+		defaultGroup, errldg := LoadGroup(db, defaultGroupName)
+		if errldg != nil {
+			return sdk.WrapError(errldg, "group.InitializeDefaultGroupName> Cannot load %s group", defaultGroupName)
 		}
-		defaultGroupID = g.ID
+
+		defaultGroupID = defaultGroup.ID
 	}
+
 	return nil
 }

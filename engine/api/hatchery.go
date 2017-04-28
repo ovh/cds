@@ -8,7 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -21,7 +21,7 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	}
 
 	// Load token
-	tk, err := worker.LoadToken(db, hatch.UID)
+	tk, err := token.LoadToken(db, hatch.UID)
 	if err != nil {
 		log.Warning("registerHatchery: Invalid token> %s\n", err)
 		return sdk.ErrUnauthorized

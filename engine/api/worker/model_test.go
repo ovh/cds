@@ -82,7 +82,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	}
 	assert.EqualValues(t, m, m1)
 
-	s := test.RandomString(t, 10)
+	s := sdk.RandomString(10)
 	_, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
 		Admin:    false,

@@ -48,7 +48,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -94,7 +94,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -206,11 +206,11 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user
-	u, pass := assets.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -255,11 +255,11 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user
-	u, pass := assets.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -308,12 +308,12 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create group
 	g1 := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	if err := group.InsertGroup(db, g1); err != nil {
@@ -321,7 +321,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -370,11 +370,11 @@ func Test_updateWorkerModel(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user
-	u, pass := assets.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -459,11 +459,11 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user
-	u, pass := assets.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -531,7 +531,7 @@ func Test_getWorkerModel(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -595,7 +595,7 @@ func Test_getWorkerModels(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
