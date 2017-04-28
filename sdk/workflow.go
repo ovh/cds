@@ -24,6 +24,7 @@ type WorkflowNode struct {
 type WorkflowNodeTrigger struct {
 	ID                 int64                      `json:"id" db:"id"`
 	WorkflowNodeID     int64                      `json:"workflow_node_id" db:"workflow_node_id"`
+	WorkflowNode       *WorkflowNode              `json:"workflow_node" db:"-"`
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
 	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`
