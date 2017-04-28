@@ -23,10 +23,14 @@
         </div>
     </div>
 </div>
-<ng-container *ngFor="let p of step.parameters">
-    <label style="display: inline"><b>{{p.name + ' :'}}</b></label>
-    <div style="display: inline">
-        <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
-                             (valueUpdating)="action.hasChanged = true"></app-parameter-value>
+<div class="ui stackable grid">
+    <div class="row" *ngFor="let p of step.parameters">
+        <div class="two wide column">
+            <label><b>{{p.name}}</b></label>
+        </div>
+        <div class="fourteen wide column">
+            <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
+                                 (valueUpdating)="action.hasChanged = true"></app-parameter-value>
+        </div>
     </div>
-</ng-container>
+</div>
