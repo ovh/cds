@@ -53,7 +53,7 @@
 
 
                                         <div class="field" *ngIf="parameters && parameters.length > 0">
-                                            <app-parameter-list [parameters]="parameters" mode="launcher"></app-parameter-list>
+                                            <app-parameter-list [parameters]="parameters" mode="launcher" [project]="project" [suggest]="suggestion"></app-parameter-list>
                                         </div>
                                         <div class="field" *ngIf="variables && variables.length > 0">
                                             <app-variable [variables]="variables" mode="launcher"></app-variable>

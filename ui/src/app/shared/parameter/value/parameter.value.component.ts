@@ -20,6 +20,7 @@ export class ParameterValueComponent implements OnInit {
     @Input() editList = true;
     @Input() edit = true;
     @Input() suggest: Array<string> = new Array<string>();
+    @Input() projectKey: string;
     @Input('project')
     set project(data: Project) {
         this.repositoriesManager = new Array<RepositoriesManager>();
@@ -30,9 +31,10 @@ export class ParameterValueComponent implements OnInit {
             name: 'Git Url'
         });
         if (data && data.repositories_manager) {
-            this.repositoriesManager = _.cloneDeep(data.repositories_manager);
+            this.repositoriesManager.push(..._.cloneDeep(data.repositories_manager));
         }
         this.selectedRepoManager = this.repositoriesManager[0];
+        this.projectKey = data.key;
     }
 
     @Output() valueChange = new EventEmitter<string|number|boolean>();
@@ -46,7 +48,7 @@ export class ParameterValueComponent implements OnInit {
     repositoriesManager: Array<RepositoriesManager>;
     repositories: Array<Repository>;
     selectedRepoManager: RepositoriesManager;
-    selectedRepo: Repository;
+    selectedRepo: string;
     loadingRepos: boolean;
 
     list: Array<string>;
@@ -111,10 +113,14 @@ export class ParameterValueComponent implements OnInit {
 
     updateRepoManager(name: string): void {
         this.selectedRepoManager = this.repositoriesManager.find(r => r.name === name);
+        if (this.selectedRepoManager.url !== 'Git') {
+            this.updateListRepo();
+        }
     }
 
     valueRepoChanged(name): void {
-        this.value = this.selectedRepoManager.name + '##' + this.selectedRepo.name;
+        this.value = this.selectedRepoManager.name + '##' + name;
+        this.valueChanged();
     }
 
     /**
@@ -123,8 +129,10 @@ export class ParameterValueComponent implements OnInit {
     updateListRepo(): void {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
-            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager.name)
+            delete this.selectedRepo;
+            this._repoManagerService.getRepositories(this.projectKey, this.selectedRepoManager.name)
                 .subscribe( repos => {
+                    this.selectedRepo = repos[0].fullname;
                     this.repositories = repos;
                     this.loadingRepos = false;
                 }, () => {
