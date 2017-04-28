@@ -1,13 +1,13 @@
 ## What is CDS?
 
 CDS is a Continuous Delivery solution with an architecture featuring:
- 
+
  * A complete isolation between tenants
  * High availability oriented architecture
  * Automatic scaling
  * Automation oriented with iso-feature API, CLI and WebUI
 
-Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a [hatchery](/doc/overview/hatchery.md). 
+Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a [hatchery](/doc/overview/hatchery.md).
 
 CDS exposes an API available to [workers](/doc/overview/worker.md) and humans through cli or WebUI.
 
@@ -33,7 +33,7 @@ An application is composed of one or multiple pipelines, that can be triggered:
   * Declaration of worker models (specific hosts, docker image, openstack recipe)
   * Conditional build path depending of build parameters (ie: git branch)
 
-### Deployment 
+### Deployment
 
   * Completely cross platform workers (built in Go) without any dependency
   * Support for deployment environments (different sets of variable for the same deployment pipeline)
@@ -58,17 +58,14 @@ On this view, you can see how an application attaches pipelines and environment 
 
 ### Action requirements and worker capabilities
 
-CDS is built on simples principes: 
+CDS is built on simples principles:
 
  * Any client operation is an Action and has requirements.
  * Every worker registered has capabilities and build if and only if all requirements are met.
 
-
 ![Action and Workers](/doc/img/action-worker.png)
 
-
-Relation between workers and actions. 
-
+Relation between workers and actions.
 
 ### Harness PaaS with worker models and [hatcheries](/doc/overview/hatchery.md)
 
@@ -93,4 +90,5 @@ We wanted a CD ecosystem where workers are easy to setup anywhere.
 
 ## Next Steps
 
+ * [Run with Docker-Compose](/doc/tutorials/run-with-docker-compose.md)
  * [Quick start](/doc/overview/quickstart.md)
