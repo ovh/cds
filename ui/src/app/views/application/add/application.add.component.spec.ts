@@ -23,6 +23,7 @@ import {Template, ApplyTemplateRequest} from '../../../model/template.model';
 import {Parameter} from '../../../model/parameter.model';
 import {Application} from '../../../model/application.model';
 import {Variable} from '../../../model/variable.model';
+import {VariableService} from '../../../service/variable/variable.service';
 
 describe('CDS: Application Add Component', () => {
 
@@ -49,7 +50,8 @@ describe('CDS: Application Add Component', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                ApplicationTemplateService
+                ApplicationTemplateService,
+                VariableService
             ],
             imports : [
                 ApplicationModule,
