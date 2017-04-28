@@ -219,7 +219,7 @@ An executor have to implement this interface
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(ctx context.Content, *log.Entry, TestStep) (ExecutorResult, error)
+	Run(ctx context.Content, venom.Logger, TestStep) (ExecutorResult, error)
 }
 ```
 
@@ -257,7 +257,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor

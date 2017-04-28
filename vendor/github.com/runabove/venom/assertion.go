@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/smartystreets/assertions"
@@ -26,7 +25,7 @@ func (t *testingT) Error(args ...interface{}) {
 }
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) (bool, []Failure, []Failure, string, string) {
+func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) (bool, []Failure, []Failure, string, string) {
 	isOK, errors, failures, systemout, systemerr := applyAssertions(*executorResult, step, defaultAssertions, l)
 	if !isOK {
 		return isOK, errors, failures, systemout, systemerr
@@ -40,7 +39,7 @@ func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertion
 	return isOKExtract, errors, failures, systemout, systemerr
 }
 
-func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) (bool, []Failure, []Failure, string, string) {
+func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) (bool, []Failure, []Failure, string, string) {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -78,7 +77,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 	return isOK, errors, failures, systemout, systemerr
 }
 
-func check(assertion string, executorResult ExecutorResult, l *log.Entry) (*Failure, *Failure) {
+func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {
 	assert := strings.Split(assertion, " ")
 	if len(assert) < 2 {
 		return &Failure{Value: fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert))}, nil

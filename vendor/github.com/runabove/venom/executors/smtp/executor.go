@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 
@@ -50,7 +49,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 	var t Executor
 	if err := mapstructure.Decode(step, &t); err != nil {
 		return nil, err
@@ -72,7 +71,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step ve
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
 
-func (e *Executor) sendEmail(l *log.Entry) error {
+func (e *Executor) sendEmail(l venom.Logger) error {
 	if e.To == "" {
 		return fmt.Errorf("Invalid To")
 	}
