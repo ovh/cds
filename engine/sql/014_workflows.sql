@@ -14,7 +14,7 @@ begin
 
   if l_count = 0 then
      execute 'alter table "' || table_name_child || '" ADD CONSTRAINT ' || fk_name || ' FOREIGN KEY(' || column_name_child || ') REFERENCES "' || table_name_parent || '"(' || column_name_parent || ') ON DELETE CASCADE';   
-     select create_index(table_name_child, 'IDX_' || fk_name, column_name_child);
+     execute create_index(table_name_child, 'IDX_' || fk_name, column_name_child);
   end if; 
 end;
 $$ LANGUAGE plpgsql;
