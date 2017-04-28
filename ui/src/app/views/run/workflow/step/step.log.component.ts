@@ -71,7 +71,9 @@ export class StepLogComponent implements OnInit, OnDestroy {
                 if (msg) {
                     let build: BuildResult = JSON.parse(msg);
                     this.zone.run(() => {
-                        this.logs = build.step_logs;
+                        if (build.step_logs) {
+                            this.logs = build.step_logs;
+                        }
                     });
                 }
 

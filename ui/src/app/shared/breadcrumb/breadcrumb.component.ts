@@ -73,6 +73,7 @@ export class BreadcrumbComponent {
     navigateToBuild(): void {
         let queryParams = { queryParams: {}};
         queryParams.queryParams['envName'] = this.envName;
+        queryParams.queryParams['branch'] = this.branch;
         this._router.navigate([
             '/project',  this.project.key,
             'application', this.application.name,
