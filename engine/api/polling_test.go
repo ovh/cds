@@ -73,7 +73,7 @@ func TestAddPollerHandler(t *testing.T) {
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -83,7 +83,7 @@ func TestAddPollerHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -145,7 +145,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -155,7 +155,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -238,7 +238,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -248,7 +248,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -334,7 +334,7 @@ func TestGetPollersHandler(t *testing.T) {
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -344,7 +344,7 @@ func TestGetPollersHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -426,7 +426,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -436,7 +436,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}

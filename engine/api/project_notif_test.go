@@ -32,16 +32,16 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	assert.NotZero(t, pass)
 
 	// Create project
-	p := assets.InsertTestProject(t, db, strings.ToUpper(assets.RandomString(t, 4)), assets.RandomString(t, 10), u)
+	p := assets.InsertTestProject(t, db, strings.ToUpper(sdk.RandomString(4)), sdk.RandomString(10), u)
 	test.NoError(t, group.InsertUserInGroup(db, p.ProjectGroups[0].Group.ID, u.ID, true))
 
-	app := &sdk.Application{Name: assets.RandomString(t, 10)}
+	app := &sdk.Application{Name: sdk.RandomString(10)}
 	err := application.Insert(db, p, app, u)
 	test.NoError(t, err)
 	test.NoError(t, group.InsertGroupInApplication(db, app.ID, p.ProjectGroups[0].Group.ID, 7))
 
 	pip := &sdk.Pipeline{
-		Name:      assets.RandomString(t, 10),
+		Name:      sdk.RandomString(10),
 		Type:      "build",
 		ProjectID: p.ID,
 	}

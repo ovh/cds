@@ -8,7 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,12 +30,12 @@ func generateTokenHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return sdk.WrapError(err, "generateTokenHandler> cannot load group '%s'", groupName)
 	}
 
-	tk, err := worker.GenerateToken()
+	tk, err := token.GenerateToken()
 	if err != nil {
 		return sdk.WrapError(err, "generateTokenHandler: cannot generate key")
 	}
 
-	if err := worker.InsertToken(db, g.ID, tk, exp); err != nil {
+	if err := token.InsertToken(db, g.ID, tk, exp); err != nil {
 		return sdk.WrapError(err, "generateTokenHandler> cannot insert new key")
 	}
 

@@ -1,4 +1,4 @@
-package worker
+package token
 
 import (
 	"crypto/rand"

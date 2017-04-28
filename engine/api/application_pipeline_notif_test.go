@@ -589,15 +589,15 @@ func Test_addNotificationsHandler(t *testing.T) {
 	assert.NotZero(t, pass)
 
 	// Create project
-	p := assets.InsertTestProject(t, db, strings.ToUpper(assets.RandomString(t, 4)), assets.RandomString(t, 10), u)
+	p := assets.InsertTestProject(t, db, strings.ToUpper(sdk.RandomString(4)), sdk.RandomString(10), u)
 
-	app := &sdk.Application{Name: assets.RandomString(t, 10)}
+	app := &sdk.Application{Name: sdk.RandomString(10)}
 
 	err := application.Insert(db, p, app, u)
 	test.NoError(t, err)
 
 	pip := &sdk.Pipeline{
-		Name:      assets.RandomString(t, 10),
+		Name:      sdk.RandomString(10),
 		Type:      "build",
 		ProjectID: p.ID,
 	}

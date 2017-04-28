@@ -32,7 +32,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
@@ -111,7 +111,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	env := &sdk.Environment{
@@ -184,7 +184,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
@@ -264,7 +264,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline

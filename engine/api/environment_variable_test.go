@@ -30,7 +30,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -94,7 +94,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -166,7 +166,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -231,7 +231,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -289,7 +289,7 @@ func TestGetEnvironmentsAuditHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -340,7 +340,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -431,7 +431,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	// Insert env

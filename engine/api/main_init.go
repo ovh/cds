@@ -12,7 +12,7 @@ import (
 	_ "github.com/spf13/viper/remote"
 
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -130,7 +130,7 @@ func generateConfigTemplate() {
 		AuthSharedInfraToken string
 	}
 
-	token, err := worker.GenerateToken()
+	token, err := token.GenerateToken()
 	if err != nil {
 		fmt.Println("generateConfigTemplate> cannot generate token")
 		os.Exit(1)

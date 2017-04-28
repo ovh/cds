@@ -18,19 +18,19 @@ var SharedInfraGroup *sdk.Group
 var defaultGroupID int64
 
 // CreateDefaultGroup creates a group 'public' where every user will be
-func CreateDefaultGroup(db *gorp.DbMap, groupName string) (int64, error) {
+func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
 	if err := db.QueryRow(query, groupName).Scan(&id); err == sql.ErrNoRows {
 		log.Info("CreateDefaultGroup> create %s group in DB", groupName)
 		query = `INSERT INTO "group" (name) VALUES ($1)`
 		if _, err := db.Exec(query, groupName); err != nil {
-			return 0, err
+			return err
 		}
 	} else {
 		log.Info("CreateDefaultGroup> group %s already exist", groupName)
 	}
-	return id, nil
+	return nil
 }
 
 // AddAdminInGlobalGroup insert into new admin into global group as group admin

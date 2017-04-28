@@ -18,7 +18,7 @@ func TestExecuterRun(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline

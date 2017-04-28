@@ -27,11 +27,11 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	app := &sdk.Application{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 	if err := application.Insert(db, proj, app, u); err != nil {
 		t.Fatal(err)

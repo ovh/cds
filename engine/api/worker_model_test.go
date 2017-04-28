@@ -206,7 +206,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user
@@ -255,7 +255,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user
@@ -308,12 +308,12 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create group
 	g1 := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	if err := group.InsertGroup(db, g1); err != nil {
@@ -370,7 +370,7 @@ func Test_updateWorkerModel(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user
@@ -459,7 +459,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user

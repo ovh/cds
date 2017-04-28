@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/sdk"
 )
 
 func Test_getWorkflowsHandler(t *testing.T) {
@@ -22,7 +23,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -48,7 +49,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -74,7 +75,7 @@ func Test_postWorkflowHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -100,7 +101,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -126,7 +127,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -152,7 +153,7 @@ func Test_postWorkflowNodeHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -179,7 +180,7 @@ func Test_putWorkflowNodeHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -206,7 +207,7 @@ func Test_deleteWorkflowNodeHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -233,7 +234,7 @@ func Test_postWorkflowNodeHookHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -259,7 +260,7 @@ func Test_putWorkflowNodeHookHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 	//Prepare request
 	vars := map[string]string{
@@ -286,7 +287,7 @@ func Test_deleteWorkflowNodeHookHandler(t *testing.T) {
 	// Init user
 	u, pass := assets.InsertAdminUser(t, db)
 	// Init project
-	key := test.RandomString(t, 10)
+	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 
 	//Prepare request

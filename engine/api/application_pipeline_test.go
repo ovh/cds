@@ -28,7 +28,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline

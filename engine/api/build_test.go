@@ -35,7 +35,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
@@ -118,7 +118,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	u, _ := assets.InsertAdminUser(db)
 
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 	if err := group.InsertGroup(db, g); err != nil {
 		t.Fatal(err)
@@ -131,7 +131,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline

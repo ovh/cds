@@ -22,7 +22,7 @@ func Test_getPublicGroups(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user

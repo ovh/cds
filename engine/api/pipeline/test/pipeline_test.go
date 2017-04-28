@@ -13,7 +13,7 @@ import (
 
 func TestInsertPipeline(t *testing.T) {
 	db := test.SetupPG(t)
-	pk := assets.RandomString(t, 8)
+	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
 		Key:  pk,
@@ -67,7 +67,7 @@ func TestInsertPipeline(t *testing.T) {
 
 func TestInsertPipelineWithParemeters(t *testing.T) {
 	db := test.SetupPG(t)
-	pk := assets.RandomString(t, 8)
+	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
 		Key:  pk,
