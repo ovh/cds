@@ -1,4 +1,4 @@
-## Installation
+## Run with Docker-Compose
 
 The [docker-compose.yml](/docker-compose.yml) contains:
 - cds-db service with a postgresql
@@ -28,7 +28,7 @@ docker-compose logs cds_cds-db_1
 docker-compose up --no-recreate cds-migrate
 # You should have this log: "cds_cds-migrate_1 exited with code 0"
 
-# run last API, UI and Hatchery
+# run last API and UI
 docker-compose up cds-api cds-ui
 
 ```
@@ -60,10 +60,11 @@ Run pipeline. As you can see now, you pipeline is in "waiting status". You have
 to run a CDS Worker or a CDS Hatchery which aims to create workers.
 
 Let's run an hatchery with docker-compose. Two ways:
-- a containers with a hatchery "local". Workers will be spawn inside this container.
-- a containers with a hatchery "swarm". Each workerswill be in their own container.
+- a containers with a hatchery `local`. Workers will be spawn inside this container.
+- a containers with a hatchery `swarm`. Each worker will be in their own container.
 
 If your host expose docker API, you can run `docker-compose up cds-hatchery-swarm`
+
 Otherwise, you can run `docker-compose up cds-hatchery-local`
 
 *Running a hatchery "local" in a container is not recommanded. Use this way only for test purpose*.
