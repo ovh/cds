@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -138,13 +140,18 @@ func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineB
 
 	// Get the logs for the given pbJob
 	logs, errLog := LoadStepLogs(db, currentPbJob.ID, stepOrder)
-	if errLog != nil {
+	if errLog != nil && errLog != sql.ErrNoRows {
 		return nil, errLog
+	}
+
+	var buildLog sdk.Log
+	if logs != nil {
+		buildLog = *logs
 	}
 
 	result := &sdk.BuildState{
 		Status:   sdk.StatusFromString(stepStatus),
-		StepLogs: *logs,
+		StepLogs: buildLog,
 	}
 	return result, nil
 }
