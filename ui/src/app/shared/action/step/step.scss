@@ -2,3 +2,10 @@
   margin-right: 10px !important;
   cursor: hand;
 }
+
+.ui.grid {
+  .row {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+}

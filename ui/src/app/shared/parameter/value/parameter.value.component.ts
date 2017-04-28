@@ -19,7 +19,7 @@ export class ParameterValueComponent implements OnInit {
     @Input() value: string|number|boolean;
     @Input() editList = true;
     @Input() edit = true;
-    @Input() suggest: Array<string>;
+    @Input() suggest: Array<string> = new Array<string>();
     @Input('project')
     set project(data: Project) {
         this.repositoriesManager = new Array<RepositoriesManager>();
@@ -50,7 +50,6 @@ export class ParameterValueComponent implements OnInit {
     loadingRepos: boolean;
 
     list: Array<string>;
-
 
     constructor(public _sharedService: SharedService, private _repoManagerService: RepoManagerService) {
         this.codeMirrorConfig = {

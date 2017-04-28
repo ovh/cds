@@ -44,10 +44,11 @@ import {ZoneContentComponent} from './zone/zone-content/content.component';
 import {ZoneComponent} from './zone/zone.component';
 import {PipelineLaunchModalComponent} from './pipeline/launch/pipeline.launch.modal.component';
 import {CommitListComponent} from './commit/commit.list.component';
+import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
-        PrettyJsonModule, CodemirrorModule, ReactiveFormsModule, MarkdownModule ],
+        PrettyJsonModule, CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule ],
     declarations: [
         ActionComponent,
         ActionStepComponent,
