@@ -34,7 +34,10 @@ export class ParameterValueComponent implements OnInit {
             this.repositoriesManager.push(..._.cloneDeep(data.repositories_manager));
         }
         this.selectedRepoManager = this.repositoriesManager[0];
-        this.projectKey = data.key;
+        if (data) {
+            this.projectKey = data.key;
+        }
+
     }
 
     @Output() valueChange = new EventEmitter<string|number|boolean>();
