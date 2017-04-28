@@ -14,7 +14,7 @@ services:
       - "6379:6379"
 
   cds-migrate:
-    image: ovhcom/cds-api:0.7.0
+    image: ovhcom/cds-api:latest
     command: /app/api-linux-amd64 database upgrade --db-host cds-db --db-user cds --db-password cds --db-name cds --db-sslmode disable  --migrate-dir /app/sql
     environment:
       CDS_DB_HOST: cds-db
@@ -27,7 +27,7 @@ services:
        - cds-db
 
   cds-api:
-    image: ovhcom/cds-api:0.7.0
+    image: ovhcom/cds-api:latest
     command: bash -c "sleep 10 ; /app/api-linux-amd64"
     volumes:
       - cds-artefacts-volume:/app/artefacts
@@ -78,7 +78,7 @@ services:
        - cds-cache
 
   cds-ui:
-    image: ovhcom/cds-ui:0.7.0
+    image: ovhcom/cds-ui:latest
     environment:
       BACKEND_HOST: localhost:8081
       BASE_URL: /
