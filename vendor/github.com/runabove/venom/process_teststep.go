@@ -8,14 +8,15 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func runTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l *log.Entry, detailsLevel string) {
-
+//RunTestStep executes a venom testcase is a venom context
+func RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l Logger, detailsLevel string) ExecutorResult {
 	var isOK bool
 	var errors []Failure
 	var failures []Failure
 	var systemerr, systemout string
 
 	var retry int
+	var result ExecutorResult
 
 	for retry = 0; retry <= e.retry && !isOK; retry++ {
 		if retry > 1 && !isOK {
@@ -23,7 +24,8 @@ func runTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 			time.Sleep(time.Duration(e.delay) * time.Second)
 		}
 
-		result, err := runTestStepExecutor(tcc, e, ts, step, templater, l)
+		var err error
+		result, err = runTestStepExecutor(tcc, e, ts, step, templater, l)
 
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
@@ -54,9 +56,11 @@ func runTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 	}
 	tc.Systemout.Value += systemout
 	tc.Systemerr.Value += systemerr
+
+	return result
 }
 
-func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, step TestStep, templater *Templater, l *log.Entry) (ExecutorResult, error) {
+func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, step TestStep, templater *Templater, l Logger) (ExecutorResult, error) {
 	if e.timeout == 0 {
 		return e.executor.Run(tcc, l, step)
 	}
@@ -66,7 +70,7 @@ func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, st
 
 	ch := make(chan ExecutorResult)
 	cherr := make(chan error)
-	go func(tcc TestCaseContext, e *executorWrap, step TestStep, l *log.Entry) {
+	go func(tcc TestCaseContext, e *ExecutorWrap, step TestStep, l Logger) {
 		result, err := e.executor.Run(tcc, l, step)
 		if err != nil {
 			cherr <- err

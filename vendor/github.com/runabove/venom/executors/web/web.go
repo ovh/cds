@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sclevine/agouti"
@@ -40,7 +39,7 @@ type Result struct {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 	var ctx *webctx.WebTestCaseContext
 	switch testCaseContext.(type) {
 	case *webctx.WebTestCaseContext:
@@ -59,13 +58,16 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step ve
 	r := &Result{Executor: t}
 
 	// Check action to realise
-	if t.Action.Click != "" {
-		s, err := find(ctx.Page, t.Action.Click, r)
+	if t.Action.Click != nil {
+		s, err := find(ctx.Page, t.Action.Click.Find, r)
 		if err != nil {
 			return nil, err
 		}
 		if err := s.Click(); err != nil {
 			return nil, err
+		}
+		if t.Action.Click.Wait != 0 {
+			time.Sleep(time.Duration(t.Action.Click.Wait) * time.Second)
 		}
 	} else if t.Action.Fill != nil {
 		for _, f := range t.Action.Fill {
@@ -83,9 +85,17 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step ve
 		if err != nil {
 			return nil, err
 		}
-	} else if t.Action.Navigate != "" {
-		if err := ctx.Page.Navigate(t.Action.Navigate); err != nil {
+	} else if t.Action.Navigate != nil {
+		if err := ctx.Page.Navigate(t.Action.Navigate.Url); err != nil {
 			return nil, err
+		}
+		if t.Action.Navigate.Reset {
+			if err := ctx.Page.Reset(); err != nil {
+				return nil, err
+			}
+			if err := ctx.Page.Navigate(t.Action.Navigate.Url); err != nil {
+				return nil, err
+			}
 		}
 	}
 

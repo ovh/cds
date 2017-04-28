@@ -45,7 +45,7 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 	}
 }
 
-func runTestCases(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel string, l *log.Entry) {
+func runTestCases(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel string, l Logger) {
 	for i, tc := range ts.TestCases {
 		if tc.Skipped == 0 {
 			runTestCase(ts, &tc, bars, l, detailsLevel)

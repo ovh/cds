@@ -49,12 +49,24 @@ module.exports = function (config) {
         colors: true,
         logLevel: config.LOG_INFO,
         autoWatch: true,
-        //browsers: ['Chrome'],
-        browsers: ['PhantomJS'],
+        browsers: ['ChromeHeadless'],
         browserNoActivityTimeout: 60000,
         singleRun: false,
         phantomjsLauncher: {
             exitOnResourceError: false
-        }
+        },
+        customLaunchers: {
+            ChromeHeadless: {
+                base: 'Chrome',
+                flags: [
+                    '--no-sandbox',
+                    // See https://chromium.googlesource.com/chromium/src/+/lkgr/headless/README.md
+                    '--headless',
+                    '--disable-gpu',
+                    // Without a remote debugging port, Google Chrome exits immediately.
+                    ' --remote-debugging-port=9222',
+                ]
+            }
+        },
     });
 };
