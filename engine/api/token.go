@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // generateTokenHandler allows a user to generate a token associated to a group permission
@@ -23,29 +22,21 @@ func generateTokenHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	exp, err := sdk.ExpirationFromString(expiration)
 	if err != nil {
-		log.Warning("generateTokenHandler> '%s' -> %s\n", expiration, err)
-		return err
-
+		return sdk.WrapError(err, "generateTokenHandler> '%s'", expiration)
 	}
 
 	g, err := group.LoadGroup(db, groupName)
 	if err != nil {
-		log.Warning("generateTokenHandler> cannot load group '%s': %s\n", groupName, err)
-		return err
-
+		return sdk.WrapError(err, "generateTokenHandler> cannot load group '%s'", groupName)
 	}
 
 	tk, err := worker.GenerateToken()
 	if err != nil {
-		log.Warning("generateTokenHandler: cannot generate key: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "generateTokenHandler: cannot generate key")
 	}
 
 	if err := worker.InsertToken(db, g.ID, tk, exp); err != nil {
-		log.Warning("generateTokenHandler> cannot insert new key: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "generateTokenHandler> cannot insert new key")
 	}
 
 	s := map[string]string{

@@ -26,7 +26,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), nil)
@@ -74,7 +74,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), nil)
@@ -133,7 +133,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), nil)
@@ -184,7 +184,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), nil)
@@ -228,7 +228,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), nil)
@@ -273,7 +273,7 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), nil)

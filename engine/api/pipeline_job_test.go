@@ -26,7 +26,7 @@ func TestAddJobHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
@@ -95,7 +95,7 @@ func TestUpdateJobHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
@@ -179,7 +179,7 @@ func TestDeleteJobHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)

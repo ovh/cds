@@ -2,17 +2,16 @@ package test
 
 import (
 	"flag"
-	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
 	"testing"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -42,7 +41,7 @@ func init() {
 	}
 }
 
-type bootstrap func(func() *gorp.DbMap) error
+type bootstrap func(string, string, func() *gorp.DbMap) error
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
@@ -65,12 +64,12 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 	if database.DB() == nil {
 		db, err := database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
 		if err != nil {
-			t.Fatalf("Cannot open database: %s\n", err)
+			t.Fatalf("Cannot open database: %s", err)
 			return nil
 		}
 
 		if err = db.Ping(); err != nil {
-			t.Fatalf("Cannot ping database: %s\n", err)
+			t.Fatalf("Cannot ping database: %s", err)
 			return nil
 		}
 		database.Set(db)
@@ -85,28 +84,17 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
 		signal.Notify(c, syscall.SIGKILL)
 		go func() {
 			<-c
-			log.Warning("Cleanup SQL connections\n")
+			log.Warning("Cleanup SQL connections")
 			db.Close()
 			os.Exit(0)
 		}()
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f(database.GetDBMap); err != nil {
+		if err := f("", sdk.RandomString(32), database.GetDBMap); err != nil {
 			return nil
 		}
 	}
 
 	return database.DBMap(database.DB())
-}
-
-// RandomString have to be used only for tests
-func RandomString(t *testing.T, strlen int) string {
-	rand.Seed(time.Now().UTC().UnixNano())
-	const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
-	result := make([]byte, strlen)
-	for i := 0; i < strlen; i++ {
-		result[i] = chars[rand.Intn(len(chars))]
-	}
-	return string(result)
 }

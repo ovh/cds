@@ -26,7 +26,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -105,7 +105,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -178,7 +178,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -258,7 +258,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)

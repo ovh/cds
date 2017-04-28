@@ -97,6 +97,70 @@ Reading configuration from localhost:8500
 # CDS Configuration file template #
 ###################################
 # Please update this file with your own settings
+#
+# Note that you can override the configuration file with environments variables
+# CDS_URL_API
+# CDS_URL_UI
+# CDS_SERVER_HTTP_PORT
+# CDS_SERVER_HTTP_SESSIONTTL
+# CDS_SERVER_GRPC_PORT
+# CDS_SERVER_SECRETS_KEY
+# CDS_SERVER_SECRETS_BACKEND
+# CDS_SERVER_SECRETS_BACKEND_OPTION
+# CDS_LOG_LEVEL
+# CDS_DB_USER
+# CDS_DB_PASSWORD
+# CDS_DB_NAME
+# CDS_DB_HOST
+# CDS_DB_PORT
+# CDS_DB_SSLMODE
+# CDS_DB_MAXCONN
+# CDS_DB_TIMEOUT
+# CDS_DB_SECRET
+# CDS_CACHE_MODE
+# CDS_CACHE_TTL
+# CDS_CACHE_REDIS_HOST
+# CDS_CACHE_REDIS_PASSWORD
+# CDS_DIRECTORIES_DOWNLOAD
+# CDS_DIRECTORIES_KEYS
+# CDS_AUTH_LOCALMODE
+# CDS_AUTH_LDAP_ENABLE
+# CDS_AUTH_LDAP_HOST
+# CDS_AUTH_LDAP_PORT
+# CDS_AUTH_LDAP_SSL
+# CDS_AUTH_LDAP_BASE
+# CDS_AUTH_LDAP_DN
+# CDS_AUTH_LDAP_FULLNAME
+# CDS_AUTH_DEFAULTGROUP
+# CDS_AUTH_SHAREDINFRA_TOKEN
+# CDS_SMTP_DISABLE
+# CDS_SMTP_HOST
+# CDS_SMTP_PORT
+# CDS_SMTP_TLS
+# CDS_SMTP_USER
+# CDS_SMTP_PASSWORD
+# CDS_SMTP_FROM
+# CDS_ARTIFACT_MODE
+# CDS_ARTIFACT_LOCAL_BASEDIR
+# CDS_ARTIFACT_OPENSTACK_URL
+# CDS_ARTIFACT_OPENSTACK_USERNAME
+# CDS_ARTIFACT_OPENSTACK_PASSWORD
+# CDS_ARTIFACT_OPENSTACK_TENANT
+# CDS_ARTIFACT_OPENSTACK_REGION
+# CDS_ARTIFACT_OPENSTACK_CONTAINERPREFIX
+# CDS_EVENTS_KAFKA_ENABLED
+# CDS_EVENTS_KAFKA_BROKER
+# CDS_EVENTS_KAFKA_TOPIC
+# CDS_EVENTS_KAFKA_USER
+# CDS_EVENTS_KAFKA_PASSWORD
+# CDS_SCHEDULERS_DISABLED
+# CDS_VCS_POLLING_DISABLED
+# CDS_VCS_REPOSITORIES_GITHUB_STATUSES_DISABLED
+# CDS_VCS_REPOSITORIES_GITHUB_STATUSES_URL_DISABLED
+# CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET
+# CDS_VCS_REPOSITORIES_BITBUCKET_STATUSES_DISABLED
+# CDS_VCS_REPOSITORIES_BITBUCKET_PRIVATEKEY
+
 
 #####################
 # CDS URLs Settings #
@@ -111,6 +175,7 @@ ui = "http://localhost:8080"
 #####################
 # Define log levels and hooks
 [log]
+# debug, info, warning or error
 level = "info"
 
 # CDS needs local directories to store temporary data (keys) and serve cds binaries such as hatcheries and workers (download)
@@ -130,9 +195,11 @@ keys = "/app/keys"
     port = 8082
 
     [server.secrets]
-    key = ""
+		# AES Cypher key for database encryption. 32 char.
+		# This is mandatory
+    key = "changeitchangeitchangeitchangeit"
     # Uncomment this two lines to user a secret backend manager such as Vault.
-	# More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
+    # More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
     # backend = "path/to/secret-backend-vault"
     # backendoptions = "vault_addr=https://vault.mydomain.net:8200 vault_token=09d1f099-3d41-666e-8337-492226789599 vault_namespace=/secret/cds"
 
@@ -149,6 +216,7 @@ port = 5432
 sslmode = "disable"
 maxconn = 20
 timeout = 3000
+
 # Uncomment this to retreive database credentials from secret-backend
 # secret = "cds/db"
 # The value must be as below
@@ -166,7 +234,8 @@ timeout = 3000
 #mode = "redis"
 mode = "local"
 ttl = 60
-	# Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
+
+    # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
     [cache.redis]
     host = "localhost:6379" # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
     password = "your password"
@@ -177,21 +246,28 @@ ttl = 60
 [auth]
 # The default group is the group in which every new user will be granted at signup
 defaultgroup = ""
+
 # If Authentication is CDS local, you can switch between session based auth or basic auth
 # localmode = "basic"
 localmode = "session"
 
-[auth.ldap]
-enable = false
-host = "<LDAP-server>"
-port = 636
-ssl = true
-# LDAP Base
-base = ""
-# LDAP Bind DN
-dn = "uid=%s,ou=people,{{.ldap-base}}"
-# Define CDS user fullname from LDAP attribute
-fullname = "{{.givenName}} {{.sn}}"
+	[auth.sharedinfra]
+	# Token for shared.infra group. This value will be used when shared.infra will be created
+	# at first CDS launch. This token can be used by CDS CLI, Hatchery, etc...
+	# This is mandatory. 64 char
+	token = "changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit"
+
+	[auth.ldap]
+	enable = false
+	host = "<LDAP-server>"
+	port = 636
+	ssl = true
+	# LDAP Base
+	base = ""
+	# LDAP Bind DN
+	dn = "uid=%s,ou=people,{{.ldapBase}}"
+	# Define CDS user fullname from LDAP attribute
+	fullname = "{{.givenName}} {{.sn}}"
 
 #####################
 # CDS SMTP Settings #
@@ -259,70 +335,4 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     [vcs.repositories.bitbucket]
     statuses_disabled = false
     privatekey = "" # You can define here your bickcket private key if you don't use secret-backend-manager
-```
-
-## Environment Variable Configuration
-
-```bash
-CDS_URL_API
-CDS_URL_UI
-CDS_SERVER_HTTP_PORT
-CDS_SERVER_HTTP_SESSIONTTL
-CDS_SERVER_GRPC_PORT
-CDS_SERVER_SECRETS_KEY
-CDS_SERVER_SECRETS_BACKEND
-CDS_SERVER_SECRETS_BACKEND_OPTION
-CDS_LOG_LEVEL
-CDS_DB_USER
-CDS_DB_PASSWORD
-CDS_DB_NAME
-CDS_DB_HOST
-CDS_DB_PORT
-CDS_DB_SSLMODE
-CDS_DB_MAXCONN
-CDS_DB_TIMEOUT
-CDS_DB_SECRET
-CDS_CACHE_MODE
-CDS_CACHE_TTL
-CDS_CACHE_REDIS_HOST
-CDS_CACHE_REDIS_PASSWORD
-CDS_DIRECTORIES_DOWNLOAD
-CDS_DIRECTORIES_KEYS
-CDS_AUTH_LOCALMODE
-CDS_AUTH_LDAP_ENABLE
-CDS_AUTH_LDAP_HOST
-CDS_AUTH_LDAP_PORT
-CDS_AUTH_LDAP_SSL
-CDS_AUTH_LDAP_BASE
-CDS_AUTH_LDAP_DN
-CDS_AUTH_LDAP_FULLNAME
-CDS_AUTH_DEFAULTGROUP
-CDS_SMTP_DISABLE
-CDS_SMTP_HOST
-CDS_SMTP_PORT
-CDS_SMTP_TLS
-CDS_SMTP_USER
-CDS_SMTP_PASSWORD
-CDS_SMTP_FROM
-CDS_ARTIFACT_MODE
-CDS_ARTIFACT_LOCAL_BASEDIR
-CDS_ARTIFACT_OPENSTACK_URL
-CDS_ARTIFACT_OPENSTACK_USERNAME
-CDS_ARTIFACT_OPENSTACK_PASSWORD
-CDS_ARTIFACT_OPENSTACK_TENANT
-CDS_ARTIFACT_OPENSTACK_REGION
-CDS_ARTIFACT_OPENSTACK_CONTAINERPREFIX
-CDS_EVENTS_KAFKA_ENABLED
-CDS_EVENTS_KAFKA_BROKER
-CDS_EVENTS_KAFKA_TOPIC
-CDS_EVENTS_KAFKA_USER
-CDS_EVENTS_KAFKA_PASSWORD
-CDS_SCHEDULERS_DISABLED
-CDS_VCS_POLLING_DISABLED
-CDS_VCS_REPOSITORIES_GITHUB_STATUSES_DISABLED
-CDS_VCS_REPOSITORIES_GITHUB_STATUSES_URL_DISABLED
-CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET
-CDS_VCS_REPOSITORIES_BITBUCKET_STATUSES_DISABLED
-CDS_VCS_REPOSITORIES_BITBUCKET_PRIVATEKEY
-
 ```

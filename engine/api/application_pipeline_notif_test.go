@@ -86,7 +86,7 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *gorp.DbMap, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment, *sdk.User)) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	u, p := assets.InsertAdminUser(t, db)
+	u, p := assets.InsertAdminUser(db)
 	u.Auth.HashedPassword = p
 
 	_ = deleteAll(t, db, "TEST_APP_PIPELINE_NOTIF")
@@ -580,7 +580,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)

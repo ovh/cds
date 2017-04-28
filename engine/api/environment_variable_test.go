@@ -27,7 +27,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
@@ -91,7 +91,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
@@ -163,7 +163,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
@@ -228,7 +228,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
@@ -286,7 +286,7 @@ func TestGetEnvironmentsAuditHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
@@ -337,7 +337,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
@@ -425,7 +425,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)

@@ -66,7 +66,7 @@ func TestAddPollerHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -138,7 +138,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	router.init()
 
 	//1. Crerouter.ate admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -231,7 +231,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -327,7 +327,7 @@ func TestGetPollersHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -419,7 +419,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)

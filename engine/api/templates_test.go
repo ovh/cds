@@ -41,7 +41,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -91,7 +91,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -216,7 +216,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -327,7 +327,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -496,7 +496,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -624,7 +624,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	 */
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)

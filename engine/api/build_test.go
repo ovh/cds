@@ -29,7 +29,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -115,7 +115,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(db)
 
 	g := &sdk.Group{
 		Name: assets.RandomString(t, 10),

@@ -48,7 +48,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -94,7 +94,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -531,7 +531,7 @@ func Test_getWorkerModel(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -595,7 +595,7 @@ func Test_getWorkerModels(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 

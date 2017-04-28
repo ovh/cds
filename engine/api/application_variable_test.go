@@ -21,7 +21,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)

@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
+	"text/template"
 
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -47,6 +50,7 @@ const (
 	viperAuthLDAPDN                     = "auth.ldap.dn"
 	viperAuthLDAPFullname               = "auth.ldap.fullname"
 	viperAuthDefaultGroup               = "auth.defaultgroup"
+	viperAuthSharedInfraToken           = "auth.sharedinfra.token"
 	viperSMTPDisable                    = "smtp.disable"
 	viperSMTPHost                       = "smtp.host"
 	viperSMTPPort                       = "smtp.port"
@@ -121,9 +125,35 @@ func initConfig() {
 }
 
 func generateConfigTemplate() {
+	type defaultValues struct {
+		ServerSecretsKey     string
+		AuthSharedInfraToken string
+	}
+
+	token, err := worker.GenerateToken()
+	if err != nil {
+		fmt.Println("generateConfigTemplate> cannot generate token")
+		os.Exit(1)
+	}
+
+	v := defaultValues{
+		ServerSecretsKey:     sdk.RandomString(32),
+		AuthSharedInfraToken: token,
+	}
+	tmpl, err := template.New("test").Parse(tmpl)
+	if err != nil {
+		fmt.Println("Error new: ", err)
+		os.Exit(1)
+	}
+	var tpl bytes.Buffer
+	if err := tmpl.Execute(&tpl, v); err != nil {
+		fmt.Println("Error execute: ", err)
+		os.Exit(1)
+	}
+
 	fmt.Println("Generating default config file", cfgFile)
-	if err := ioutil.WriteFile(cfgFile, []byte(tmpl), os.FileMode(0600)); err != nil {
-		fmt.Println("Error: ", err)
+	if err := ioutil.WriteFile(cfgFile, tpl.Bytes(), os.FileMode(0600)); err != nil {
+		fmt.Println("Error write file: ", err)
 		os.Exit(1)
 	}
 	os.Exit(0)
@@ -168,6 +198,7 @@ const tmpl = `###################################
 # CDS_AUTH_LDAP_DN
 # CDS_AUTH_LDAP_FULLNAME
 # CDS_AUTH_DEFAULTGROUP
+# CDS_AUTH_SHAREDINFRA_TOKEN
 # CDS_SMTP_DISABLE
 # CDS_SMTP_HOST
 # CDS_SMTP_PORT
@@ -230,7 +261,9 @@ keys = "/app/keys"
     port = 8082
 
     [server.secrets]
-    key = ""
+		# AES Cypher key for database encryption. 32 char.
+		# This is mandatory
+    key = "{{.ServerSecretsKey}}"
     # Uncomment this two lines to user a secret backend manager such as Vault.
     # More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
     # backend = "path/to/secret-backend-vault"
@@ -267,6 +300,7 @@ timeout = 3000
 #mode = "redis"
 mode = "local"
 ttl = 60
+
     # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
     [cache.redis]
     host = "localhost:6379" # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
@@ -278,21 +312,28 @@ ttl = 60
 [auth]
 # The default group is the group in which every new user will be granted at signup
 defaultgroup = ""
+
 # If Authentication is CDS local, you can switch between session based auth or basic auth
 # localmode = "basic"
 localmode = "session"
 
-[auth.ldap]
-enable = false
-host = "<LDAP-server>"
-port = 636
-ssl = true
-# LDAP Base
-base = ""
-# LDAP Bind DN
-dn = "uid=%s,ou=people,{{.ldap-base}}"
-# Define CDS user fullname from LDAP attribute
-fullname = "{{.givenName}} {{.sn}}"
+	[auth.sharedinfra]
+	# Token for shared.infra group. This value will be used when shared.infra will be created
+	# at first CDS launch. This token can be used by CDS CLI, Hatchery, etc...
+	# This is mandatory. 64 char
+	token = "{{.AuthSharedInfraToken}}"
+
+	[auth.ldap]
+	enable = false
+	host = "<LDAP-server>"
+	port = 636
+	ssl = true
+	# LDAP Base
+	base = ""
+	# LDAP Bind DN
+	dn = "uid=%s,ou=people,{{"{{"}}.ldapBase{{"}}"}}"
+	# Define CDS user fullname from LDAP attribute
+	fullname = "{{"{{"}}.givenName{{"}}"}} {{"{{"}}.sn{{"}}"}}"
 
 #####################
 # CDS SMTP Settings #
