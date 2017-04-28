@@ -5,7 +5,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -26,7 +25,7 @@ func TestImportInto_Variable(t *testing.T) {
 
 	project.Delete(db, proj.Key)
 
-	test.NoError(t, project.Insert(db, &proj))
+	test.NoError(t, project.Insert(db, &proj, nil))
 
 	env := sdk.Environment{
 		Name:      "testenv",
@@ -83,8 +82,8 @@ func TestImportInto_Variable(t *testing.T) {
 		},
 	}
 
-	allMsg := []msg.Message{}
-	msgChan := make(chan msg.Message)
+	allMsg := []sdk.Message{}
+	msgChan := make(chan sdk.Message)
 	done := make(chan bool)
 
 	go func() {
@@ -150,7 +149,7 @@ func TestImportInto_Group(t *testing.T) {
 
 	project.Delete(db, proj.Key)
 
-	test.NoError(t, project.Insert(db, &proj))
+	test.NoError(t, project.Insert(db, &proj, nil))
 
 	oldEnv, _ := environment.LoadEnvironmentByName(db, proj.Key, "testenv")
 	if oldEnv != nil {
@@ -209,8 +208,8 @@ func TestImportInto_Group(t *testing.T) {
 		},
 	}
 
-	allMsg := []msg.Message{}
-	msgChan := make(chan msg.Message)
+	allMsg := []sdk.Message{}
+	msgChan := make(chan sdk.Message)
 	done := make(chan bool)
 
 	go func() {

@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/msg"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -32,7 +31,7 @@ type testcase struct {
 }
 
 func testImportUpdate(t *testing.T, db gorp.SqlExecutor, tt testcase) {
-	msgChan := make(chan msg.Message, 1)
+	msgChan := make(chan sdk.Message, 1)
 	done := make(chan bool)
 
 	go func() {
@@ -92,7 +91,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey)
+			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -131,7 +130,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey)
+			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -187,7 +186,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey)
+			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -231,7 +230,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey)
+			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -274,7 +273,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey)
+			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -359,7 +358,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey)
+			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -439,7 +438,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey)
+			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key

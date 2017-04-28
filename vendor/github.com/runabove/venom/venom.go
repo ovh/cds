@@ -15,7 +15,7 @@ import (
 // Version of Venom
 // One Line for this, used by release.sh script
 // Keep "const Version on one line"
-const Version = "0.0.3"
+const Version = "0.0.6"
 
 // PrintFunc used by venom to print output
 var PrintFunc = fmt.Printf
@@ -36,9 +36,9 @@ func RegisterExecutor(name string, e Executor) {
 	executors[name] = e
 }
 
-// getExecutorWrap initializes a test by name
+// WrapExecutor initializes a test by name
 // no type -> exec is default
-func getExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWrap, error) {
+func WrapExecutor(t map[string]interface{}, tcc TestCaseContext) (*ExecutorWrap, error) {
 	var name string
 	var retry, delay, timeout int
 
@@ -66,7 +66,7 @@ func getExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWr
 	}
 
 	if e, ok := executors[name]; ok {
-		ew := &executorWrap{
+		ew := &ExecutorWrap{
 			executor: e,
 			retry:    retry,
 			delay:    delay,
@@ -83,9 +83,9 @@ func RegisterTestCaseContext(name string, tcc TestCaseContext) {
 	contexts[name] = tcc
 }
 
-// getContextWrap initializes a context for a testcase
+// ContextWrap initializes a context for a testcase
 // no type -> parent context
-func getContextWrap(tc *TestCase) (TestCaseContext, error) {
+func ContextWrap(tc *TestCase) (TestCaseContext, error) {
 	if tc.Context == nil {
 		return contexts["default"], nil
 	}

@@ -1,10 +1,6 @@
 package venom
 
-import (
-	"encoding/xml"
-
-	log "github.com/Sirupsen/logrus"
-)
+import "encoding/xml"
 
 const (
 	// DetailsLow prints only summary results
@@ -34,7 +30,7 @@ type StepExtracts struct {
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(TestCaseContext, *log.Entry, TestStep) (ExecutorResult, error)
+	Run(TestCaseContext, Logger, TestStep) (ExecutorResult, error)
 }
 
 // TestCaseContext represents the context of a testcase
@@ -62,8 +58,8 @@ func (t *CommonTestCaseContext) GetName() string {
 	return t.Name
 }
 
-// executorWrap contains an executor implementation and some attributes
-type executorWrap struct {
+// ExecutorWrap contains an executor implementation and some attributes
+type ExecutorWrap struct {
 	executor Executor
 	retry    int // nb retry a test case if it is in failure.
 	delay    int // delay between two retries
@@ -144,4 +140,14 @@ type Failure struct {
 // InnerResult is used by TestCase
 type InnerResult struct {
 	Value string `xml:",cdata" json:"value" yaml:"value"`
+}
+
+//Logger is basicaly an interface for logrus.Entry
+type Logger interface {
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalf(format string, args ...interface{})
 }

@@ -5,12 +5,11 @@ import (
 	"regexp"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/mitchellh/mapstructure"
 )
 
 // applyExtracts try to run extract on step, return true if all extracts are OK, false otherwise
-func applyExtracts(executorResult *ExecutorResult, step TestStep, l *log.Entry) (bool, []Failure, []Failure) {
+func applyExtracts(executorResult *ExecutorResult, step TestStep, l Logger) (bool, []Failure, []Failure) {
 	var se StepExtracts
 	var errors []Failure
 	var failures []Failure
@@ -56,7 +55,7 @@ func transformPattern(pattern string) string {
 	return p
 }
 
-func checkExtracts(pattern, instring string, executorResult *ExecutorResult, l *log.Entry) (*Failure, *Failure) {
+func checkExtracts(pattern, instring string, executorResult *ExecutorResult, l Logger) (*Failure, *Failure) {
 	r := regexp.MustCompile(pattern)
 	match := r.FindStringSubmatch(instring)
 	if match == nil {

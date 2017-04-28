@@ -15,6 +15,8 @@ const Name = "web"
 const (
 	Width  = "width"
 	Height = "height"
+	Driver = "driver"
+	Args   = "args"
 )
 
 // New returns a new TestCaseContext
@@ -34,8 +36,36 @@ type WebTestCaseContext struct {
 // BuildContext build context of type web.
 // It creates a new browser
 func (tcc *WebTestCaseContext) Init() error {
-	// Init web driver
-	tcc.wd = agouti.PhantomJS()
+
+	var driver string
+	if _, ok := tcc.TestCase.Context[Driver]; !ok {
+		driver = "phantomjs"
+	} else {
+		driver = tcc.TestCase.Context[Driver].(string)
+	}
+
+	args := []string{}
+	if _, ok := tcc.TestCase.Context[Args]; ok {
+		switch tcc.TestCase.Context[Args].(type) {
+		case []interface{}:
+			for _, v := range tcc.TestCase.Context[Args].([]interface{}) {
+				args = append(args, v.(string))
+			}
+		}
+	}
+	switch driver {
+	case "chrome":
+		tcc.wd = agouti.ChromeDriver(agouti.Desired(
+			agouti.Capabilities{
+				"chromeOptions": map[string][]string{
+					"args": args,
+				},
+			}),
+		)
+	default:
+		tcc.wd = agouti.PhantomJS()
+	}
+
 	if err := tcc.wd.Start(); err != nil {
 		return fmt.Errorf("Cannot start web driver %s", err)
 	}
