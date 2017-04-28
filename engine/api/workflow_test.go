@@ -21,7 +21,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowsHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -47,7 +47,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -73,7 +73,7 @@ func Test_postWorkflowHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -99,7 +99,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_putWorkflowHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -125,7 +125,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkflowHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -151,7 +151,7 @@ func Test_postWorkflowNodeHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowNodeHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -178,7 +178,7 @@ func Test_putWorkflowNodeHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_putWorkflowNodeHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -205,7 +205,7 @@ func Test_deleteWorkflowNodeHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkflowNodeHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -232,7 +232,7 @@ func Test_postWorkflowNodeHookHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowNodeHookHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -258,7 +258,7 @@ func Test_putWorkflowNodeHookHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_putWorkflowNodeHookHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -285,7 +285,7 @@ func Test_deleteWorkflowNodeHookHandler(t *testing.T) {
 	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkflowNodeHookHandler"}
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)

@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
@@ -78,7 +79,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := worker.InsertToken(db, g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(db, g.ID, "test-key", sdk.Persistent); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
@@ -173,7 +174,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := worker.InsertToken(db, g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(db, g.ID, "test-key", sdk.Persistent); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 

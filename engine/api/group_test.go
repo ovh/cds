@@ -26,7 +26,7 @@ func Test_getPublicGroups(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 

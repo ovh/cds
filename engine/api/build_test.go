@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -185,11 +185,11 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	h := http.Header{}
 	h.Set("User-Agent", string(sdk.HatcheryAgent))
 
-	tk, errg := worker.GenerateToken()
+	tk, errg := token.GenerateToken()
 	if errg != nil {
 		t.Fatal(errg)
 	}
-	if err := worker.InsertToken(db, g.ID, tk, sdk.Daily); err != nil {
+	if err := token.InsertToken(db, g.ID, tk, sdk.Daily); err != nil {
 		t.Fatal(err)
 	}
 

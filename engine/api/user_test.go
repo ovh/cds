@@ -283,7 +283,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	u, pass := assets.InsertLambaUser(t, db, g1, g2)
+	u, pass := assets.InsertLambaUser(db, g1, g2)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
