@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ApplyTemplateRequest, Template} from '../../../model/template.model';
 import {ApplicationTemplateService} from '../../../service/application/application.template.service';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -9,6 +9,7 @@ import {ApplicationStore} from '../../../service/application/application.store';
 import {Parameter} from '../../../model/parameter.model';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
+import {VariableService} from '../../../service/variable/variable.service';
 
 declare var _: any;
 
@@ -17,7 +18,7 @@ declare var _: any;
     templateUrl: './application.add.html',
     styleUrls: ['./application.add.scss']
 })
-export class ApplicationAddComponent {
+export class ApplicationAddComponent implements OnInit {
 
     ready = false;
     project: Project;
@@ -35,9 +36,11 @@ export class ApplicationAddComponent {
     applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     appPatternError = false;
 
+    suggestion: Array<string>;
+
     constructor(private _appTemplateService: ApplicationTemplateService, private _activatedRoute: ActivatedRoute,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
-                private _router: Router) {
+                private _router: Router, private _varService: VariableService) {
         this._activatedRoute.data.subscribe( datas => {
             this.project = datas['project'];
         });
@@ -45,6 +48,12 @@ export class ApplicationAddComponent {
         this._appTemplateService.getTemplates().subscribe(templates => {
             this.ready = true;
             this.templates = templates;
+        });
+    }
+
+    ngOnInit(): void {
+        this._varService.getContextVariable(this.project.key).first().subscribe( s => {
+            this.suggestion = s;
         });
     }
 

@@ -34,13 +34,14 @@
             <option *ngFor="let r of repositoriesManager" value="{{r.name}}">{{r.name}}</option>
         </sm-select>
         <sm-select *ngIf="selectedRepoManager && selectedRepoManager.name !== 'Git Url'"
-                (modelChange)="valueRepoChanged()"
+                   placeholder="Loading..."
+                (modelChange)="valueRepoChanged($event)"
                 [(model)]="selectedRepo"
                 class="search item"
-                [disabled]="loadingBtn">
+                [disabled]="loadingRepos">
             <option *ngFor="let r of repositories"  value="{{r.fullname}}">{{r.fullname}}</option>
         </sm-select>
-        <input type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="{{'parameter_git_url' | translate }}">
+        <input *ngIf="selectedRepoManager && selectedRepoManager.name === 'Git Url'" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="{{'parameter_git_url' | translate }}">
     </div>
     <div *ngSwitchDefault class="ui fluid input">
         <input auto-complete autocomplete="off" type="text" [(ngModel)]="value"
