@@ -23,7 +23,7 @@ docker-compose up --no-recreate -d cds-db
 
 # check if db is UP
 # check if last log is "LOG:  database system is ready to accept connections"
-docker-compose logs cds_cds-db_1
+docker-compose logs
 
 docker-compose up --no-recreate cds-migrate
 # You should have this log: "cds_cds-migrate_1 exited with code 0"
