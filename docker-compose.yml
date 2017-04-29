@@ -21,7 +21,7 @@ services:
 
   cds-api:
     image: ovhcom/cds-api:latest
-    command: /app/api-linux-amd64
+    command: sh -c "mv worker-linux-amd64 worker && ./api-linux-amd64"
     volumes:
       - cds-artefacts-volume:/app/artefacts
     environment:
@@ -84,12 +84,10 @@ services:
     image: ovhcom/cds-hatchery:latest
     command: /app/hatchery-linux-amd64 swarm
     environment:
-      CDS_LOG_LEVEL: notice
       CDS_RATIO_SERVICE: 50
       CDS_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       DOCKER_HOST: tcp://${HOSTNAME}:2375
       CDS_API: http://cds-api:8081
-      CDS_NAME: ${HOSTNAME}-swarm
       CDS_MAX_WORKER: 2
       CDS_MAX_CONTAINERS: 4
       CDS_PROVISION: 0
@@ -99,11 +97,10 @@ services:
 
   cds-hatchery-local:
     image: ovhcom/cds-hatchery:latest
-    command: /app/hatchery-linux-amd64 local
+    command: sh -c "wget http://cds-api:8081/download/worker/x86_64 -O worker && chmod +x worker && PATH=$PATH:. hatchery-linux-amd64 local"
     environment:
       CDS_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       CDS_API: http://cds-api:8081
-      CDS_NAME: ${HOSTNAME}-local
     links:
        - cds-api
 
