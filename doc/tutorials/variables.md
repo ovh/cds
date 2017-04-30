@@ -1,6 +1,6 @@
 ## Variable scopes
 
-In CDS, it is possible to defines variables at different levels:
+In CDS, it is possible to define variables at different levels:
 
 - Project
 - Environment
@@ -19,11 +19,11 @@ Existing variable types:
 
 ## Placeholder format
 
-All variables in CDS can be invoked by using the simple “{{.VAR}}” format. To simplify usage between all variable sources, we have defined the following prefixes:
+All variables in CDS can be invoked using the simple "{{.VAR}}" format. To simplify the use between all the variable sources, we have defined the following prefixes:
 
 - Action variable: “{{.VAR}}”
 - Builtin CDS: “{{.cds.VAR}}”
-- Git hook: “{{.git.VAR}}”
+- Git: “{{.git.VAR}}”
 - Pipeline: “{{.cds.pip.VAR}}”
 - Application: “{{.cds.app.VAR}}”
 - Environment: “{{.cds.env.VAR}}”
@@ -33,10 +33,12 @@ All variables in CDS can be invoked by using the simple “{{.VAR}}” format. T
 
 Here is the list of builtin variables, generated for every build:
 
-- ”{{.cds.pipeline}}” The name of the current pipeline
-- ”{{.cds.application}}” The name of the current application
 - ”{{.cds.project}}” The name of the current project
 - ”{{.cds.environment}}” The name of the current environment
+- ”{{.cds.application}}” The name of the current application
+- ”{{.cds.pipeline}}” The name of the current pipeline
+- ”{{.cds.stage}}” The name of the current stage
+- ”{{.cds.job}}” The name of the current job
 - ”{{.cds.version}}” The number of the current version
 - ”{{.cds.parent.application}}” The name of the application that triggered the current build
 - ”{{.cds.parent.pipeline}}” The name of the pipeline that triggered the current build
@@ -46,14 +48,38 @@ Here is the list of builtin variables, generated for every build:
 
 ## The .version variable
 
+`{{.cds.version}}`
+
 CDS version is a builtin variable equals to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to testing and deployment pipelines.
+
+## Export a variable inside a step
+
+In a step of type `script`, you can export variable as:
+
+```bash
+$ worker export varname thevalue
+```
+
+You can now use `{{.cds.build.varname}}` in further steps and stages.
+
+## Shell Environment Variable
+
+All CDS variables, except `password type` can use used as plain environment variable.
+
+Theses lines will have the same output
+
+```bash
+echo '{{.cds.parent.application}}'
+echo $CDS_PARENT_APPLICATION
+```
 
 ## Git variables
 
 Here is the list of git variables:
 
 - ”{{.git.hash}}”
+- "{{.git.url}}"
+- "{{.git.http_url}}"
 - ”{{.git.branch}}”
 - ”{{.git.author}}”
-- ”{{.git.project}}”
-- ”{{.git.repository}}”
+- "{{.git.message}}"
