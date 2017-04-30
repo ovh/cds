@@ -118,8 +118,8 @@ Clone a repository into a new directory.`
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "directory",
-		Description: "The name of a new directory to clone into.",
-		Value:       "",
+		Description: "The name of a directory to clone into.",
+		Value:       "{{.cds.workspace}}",
 		Type:        sdk.StringParameter,
 	})
 	gitclone.Requirement("git", sdk.BinaryRequirement, "git")
