@@ -341,6 +341,13 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 		}
 	}
 
+	//Add working directory as job parameter
+	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+		Name:  "cds.workspace",
+		Type:  sdk.StringParameter,
+		Value: wd,
+	})
+
 	// Setup user ssh keys
 	keysDirectory = workingDirectory(basedir, pbji)
 	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
