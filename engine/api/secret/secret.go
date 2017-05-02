@@ -48,12 +48,12 @@ type databaseCredentials struct {
 	Type     string             `json:"type"`
 }
 
-// Init password manager
-// if secretBackendBinary is empty, use default AES key and default file secret backend
+// Init secrets: cipherKey and dbSecrets
+// cipherKey and dbSecrets can be set from viper configuration
+// They can be overrided by secrets backend
+// Default secrets backend if filesecretbackend
 func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]string) error {
-	if cipherKey == "" {
-		return fmt.Errorf("secret.Init> cipher key is empty. Please check your configuration")
-	}
+	key = []byte(cipherKey)
 
 	//Initializing secret backend
 	var err error
@@ -71,31 +71,27 @@ func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]strin
 			return err
 		}
 	}
-
+	// Get all secrets
 	secrets := Client.GetSecrets()
 	if secrets.Err() != nil {
 		log.Error("Error: %v", secrets.Err())
 		return secrets.Err()
 	}
+	//Get the key from secret backend
+	aesKey, _ := secrets.Get("cds/aes-key")
+	if aesKey != "" {
+		key = []byte(aesKey)
+	}
 
 	//If key hasn't been initilized with default key
-	if cipherKey != "" {
-		if len(cipherKey) > 32 {
-			key = []byte(cipherKey[:32])
+	if len(key) != 0 {
+		if len(key) > 32 {
+			key = []byte(key[:32])
 		} else {
-			key = []byte(cipherKey)
 			for len(key) != 32 {
 				key = append(key, '\x00')
 			}
 		}
-	}
-	if len(key) == 0 {
-		aesKey, _ := secrets.Get("cds/aes-key")
-		if aesKey == "" {
-			log.Error("secret.Init> cds/aes-key not found")
-			return sdk.ErrSecretKeyFetchFailed
-		}
-		key = []byte(aesKey)
 	}
 
 	//dbSecret default is cds/db
