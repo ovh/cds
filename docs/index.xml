@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>CDS Documentation</title>
+    <link>https://ovh.github.com/cds/</link>
+    <description>Recent content on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.com/cds/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>About CDS</title>
+      <link>https://ovh.github.com/cds/getting-started/about-cds/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/about-cds/</guid>
+      <description>What is CDS? CDS is a Continuous Delivery solution with an architecture featuring:
+ A complete isolation between tenants High availability oriented architecture Automatic scaling Automation oriented with iso-feature API, CLI and WebUI  Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a hatchery.
+CDS exposes an API available to workers and humans through cli or WebUI.</description>
+    </item>
+    
+    <item>
+      <title>Concepts</title>
+      <link>https://ovh.github.com/cds/getting-started/concepts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/concepts/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Pipeline</title>
+      <link>https://ovh.github.com/cds/getting-started/concepts/pipeline/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/concepts/pipeline/</guid>
+      <description>A pipeline describes how things need to be executed in order to achieve wanted result. In CDS, a pipeline a defined on a project and can be used on several applications inside the same project.
+A pipeline is structured in sequential stages containing one or multiple concurrent jobs.
+In CDS there is several types of pipeline : build, testing and deployment. In Pipeline configuration file, default type is build.</description>
+    </item>
+    
+    <item>
+      <title>Stage</title>
+      <link>https://ovh.github.com/cds/getting-started/concepts/stage/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/concepts/stage/</guid>
+      <description>Usually in CDS a build pipeline is structured of the following stages :
+ Compile stage : Build the binaries Analysis &amp;amp; Unit Tests stage : Run all unit tests and analyse code quality Packaging stage : Build the final package, Virtual Machine Image or Docker Image.  In CDS, stages are executed sequentially if the previous stage is successfull.
+You can define trigger conditions on a stage, to enable it on certain conditions.</description>
+    </item>
+    
+    <item>
+      <title>Job</title>
+      <link>https://ovh.github.com/cds/getting-started/concepts/job/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/concepts/job/</guid>
+      <description>The Job is more important concept in CDS. It will be composed of steps which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job.
+A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the requirements you define on your job.</description>
+    </item>
+    
+    <item>
+      <title>Step</title>
+      <link>https://ovh.github.com/cds/getting-started/concepts/step/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/concepts/step/</guid>
+      <description>The steps of a job is the list of the different operation performed by the CDS worker. Each steps is based on an Action which is defined by CDS. The list of all actions is defined on *&amp;lt;your cds url ui&amp;gt;/#/action*. On the very first step failed, the job is marked as Failed and execution is stopped.
+You can define a Step as final. It mean that even if the job is failed, the step will be executed.</description>
+    </item>
+    
+    <item>
+      <title>Worker</title>
+      <link>https://ovh.github.com/cds/getting-started/concepts/worker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/concepts/worker/</guid>
+      <description>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
+Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip;</description>
+    </item>
+    
+    <item>
+      <title>Actions</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Advanced</title>
+      <link>https://ovh.github.com/cds/advanced/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Artifact Download</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-download/</guid>
+      <description> Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
+This action can be used to get artifact uploaded by the Artifact Upload action
+Action Parameter  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example of Job Configuration  Download artifact from the parent pipeline   Download artifact from the previous stage  </description>
+    </item>
+    
+    <item>
+      <title>Artifact Upload</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-upload/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-upload/</guid>
+      <description> Artifact Upload Action Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
+This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.
+Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  Example of Job Configuration  With a tag to indicate the build version   With a latest tag  </description>
+    </item>
+    
+    <item>
+      <title>Bitbucket</title>
+      <link>https://ovh.github.com/cds/advanced/repositories_manager/bitbucket/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/repositories_manager/bitbucket/</guid>
+      <description>Authorize CDS on your Bitbucket instance You need to perform the following steps :
+ Bitbucket admin privileges A RSA Key Pair  Create a CDS application in BitBucket In Bitbucket go to Administration Settings / Application Links. Create a new Application with :
+ Name : CDS Type : Generic Application Application URL : Your CDS URL Display URL : Your CDS URL  On this application, you just have to set up OAuth Incoming Authentication :</description>
+    </item>
+    
+    <item>
+      <title>Building Pipelines</title>
+      <link>https://ovh.github.com/cds/building-pipelines/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Built-in Actions</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Docker Compose</title>
+      <link>https://ovh.github.com/cds/getting-started/installation/docker-compose/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/installation/docker-compose/</guid>
+      <description>Run with Docker-Compose The docker-compose.yml contains:
+ cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables. cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user.</description>
+    </item>
+    
+    <item>
+      <title>Getting started</title>
+      <link>https://ovh.github.com/cds/getting-started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/</guid>
+      <description>Discover what is CDS and the core-concepts behind it.
+About CDS Concepts Installation  </description>
+    </item>
+    
+    <item>
+      <title>GitClone</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/</guid>
+      <description> GitClone is a builtin action, you can&amp;rsquo;t modify it.
+This action can be used to perform a Git Clone.
+Git Clone will be done with a depth of 1.
+You can use a privateKey, this is usually a project or application variable of type key. {{.cds.app.a-key.pub}}
+Parameters  url - mandatory privateKey - optional user - optional password - optional branch - optional commit - optional directory - optional - name of repository per default  </description>
+    </item>
+    
+    <item>
+      <title>Github</title>
+      <link>https://ovh.github.com/cds/advanced/repositories_manager/github/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/repositories_manager/github/</guid>
+      <description>Authorize CDS on Github Create a CDS application on Github Go to https://github.com/settings/developers and Register a new application: set an application name, the url and a description. Dont set up Authorization callback URL.
+On the next page Github give you a Client ID and a Client Secret
+Connect CDS To Github With CDS CLI run :
+ $ cds admin reposmanager add GITHUB github http://github.com client-id=&amp;lt;your_client_id&amp;gt; client-secret=&amp;lt;client-secret&amp;gt;  If you use Vault as Secret Manager: Set in Vault you CDS Client Secret in a secret named : cds/repositoriesmanager-secrets-github.</description>
+    </item>
+    
+    <item>
+      <title>Hatcheries</title>
+      <link>https://ovh.github.com/cds/advanced/hatcheries/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/hatcheries/</guid>
+      <description>Hatchery is a binary dedicated to spawn and kill worker in accordance with build queue needs.
+An hatchery is started with permissions to build all pipelines accessible from a given group, using token generated by user.
+There are 5 modes for hatcheries:
+ Local (Start workers on a single host) Local Docker (Start worker model instances on a single host) Marathon (Start worker model instances on a mesos cluster with marathon framework) Swarm (Start worker on a docker swarm cluster) Openstack (Start hosts on an openstack cluster)  Local mode Hatchery starts workers directly as local process.</description>
+    </item>
+    
+    <item>
+      <title>Hatchery Openstack</title>
+      <link>https://ovh.github.com/cds/advanced/hatcheries/openstack/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/hatcheries/openstack/</guid>
+      <description>CDS build using OVH.com Openstack infrastructure
+Create Openstack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;Openstack item.
+You will be able to create an Openstack user, enter description (name and password will be generated).
+Add Openstack worker model We need to define an Openstack worker model to have Openstack hatchery booting workers.
+We will create a model called docker:
+ With low hardware capacity (vps-ssd-1) On Debian 8 With docker ready to use Git installed  First, define a udata file.</description>
+    </item>
+    
+    <item>
+      <title>Installation</title>
+      <link>https://ovh.github.com/cds/getting-started/installation/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/installation/</guid>
+      <description> Docker Compose  </description>
+    </item>
+    
+    <item>
+      <title>Plugins Actions</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Repositories Manager</title>
+      <link>https://ovh.github.com/cds/advanced/repositories_manager/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/repositories_manager/</guid>
+      <description>CDS can be linked to following repositories manager :
+ Atlassian Stash Github  It allows you to enable some CDS features such as :
+ Create application in CDS from Stash or Github Attach an application to its Stash or Github repository Fully automatic hook management Branch filtering on application workflows Commit logs on pipeline build details  Go through this tutorial to enable the link between repositories managers and CDS.</description>
+    </item>
+    
+    <item>
+      <title>Variables</title>
+      <link>https://ovh.github.com/cds/building-pipelines/variables/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/variables/</guid>
+      <description>In CDS, it is possible to define variables at different levels:
+ Project Environment Application  Variable types Existing variable types:
+ String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
+ Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.</description>
+    </item>
+    
+    <item>
+      <title>header</title>
+      <link>https://ovh.github.com/cds/_header/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/_header/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>plugin-download</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/</guid>
+      <description>More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-group-tmpl</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/</guid>
+      <description>More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-kafka-publish</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/</guid>
+      <description>More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-marathon</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</guid>
+      <description>More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-ssh-cmd</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/</guid>
+      <description>More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-tmpl</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/</guid>
+      <description>More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-venom</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/</guid>
+      <description>CDS plugin run venom https://github.com/runabove/venom
+Parameters  path : Path containers yml venom files exclude : exclude some files, one file per line parallel : Launch Test Suites in parallel, default: 2 output : Directory where output xunit result file  Add an extra step of type &amp;ldquo;junit&amp;rdquo; on your job to view results on CDS UI.
+More More documentation on Github</description>
+    </item>
+    
+  </channel>
+</rss>
