@@ -105,6 +105,7 @@ var (
 	ErrJobAlreadyBooked                      = &Error{ID: 89, Status: http.StatusConflict}
 	ErrPipelineBuildNotFound                 = &Error{ID: 90, Status: http.StatusNotFound}
 	ErrAlreadyTaken                          = &Error{ID: 91, Status: http.StatusGone}
+	ErrWorkflowNotFound                      = &Error{ID: 92, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -201,6 +202,7 @@ You can safely use them in a String or Text parameter`,
 	ErrJobAlreadyBooked.ID:                      "Job already booked",
 	ErrPipelineBuildNotFound.ID:                 "Pipeline build not found",
 	ErrAlreadyTaken.ID:                          "This job is already taken by another worker",
+	ErrWorkflowNotFound.ID:                      "Workflow not found",
 }
 
 var errorsFrench = map[int]string{
@@ -297,6 +299,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrJobAlreadyBooked.ID:                      "Le job est déjà réservé",
 	ErrPipelineBuildNotFound.ID:                 "Le pipeline build n'a pu être trouvé",
 	ErrAlreadyTaken.ID:                          "Ce job est déjà en cours de traitement par un autre worker",
+	ErrWorkflowNotFound.ID:                      "Workflow introuvable",
 }
 
 var errorsLanguages = []map[int]string{
