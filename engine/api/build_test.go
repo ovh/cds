@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -29,13 +29,13 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
@@ -115,10 +115,10 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(db)
 
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 	if err := group.InsertGroup(db, g); err != nil {
 		t.Fatal(err)
@@ -131,7 +131,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	tester := iffy.NewTester(t, router.mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
 
 	//Insert Pipeline
@@ -185,11 +185,11 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	h := http.Header{}
 	h.Set("User-Agent", string(sdk.HatcheryAgent))
 
-	tk, errg := worker.GenerateToken()
+	tk, errg := token.GenerateToken()
 	if errg != nil {
 		t.Fatal(errg)
 	}
-	if err := worker.InsertToken(db, g.ID, tk, sdk.Daily); err != nil {
+	if err := token.InsertToken(db, g.ID, tk, sdk.Daily); err != nil {
 		t.Fatal(err)
 	}
 

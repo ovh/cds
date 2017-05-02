@@ -1,0 +1,109 @@
+version: '3'
+
+services:
+  cds-db:
+    image: postgres:9.6.2
+    environment:
+      POSTGRES_PASSWORD: cds
+      POSTGRES_USER: cds
+
+  cds-cache:
+    image: redis:alpine
+    command: redis-server --requirepass cds
+    ports:
+      - "6379:6379"
+
+  cds-migrate:
+    image: ovhcom/cds-api:latest
+    command: /app/api-linux-amd64 database upgrade --db-host cds-db --db-user cds --db-password cds --db-name cds --db-sslmode disable  --migrate-dir /app/sql
+    links:
+       - cds-db
+
+  cds-api:
+    image: ovhcom/cds-api:latest
+    command: sh -c "mv worker-linux-amd64 worker && ./api-linux-amd64"
+    volumes:
+      - cds-artefacts-volume:/app/artefacts
+    environment:
+      CDS_VCS_REPOSITORIES_GITHUB_STATUSES_URL_DISABLED: "true"
+      CDS_VCS_REPOSITORIES_GITHUB_STATUSES_DISABLED: "true"
+      CDS_VCS_REPOSITORIES_CACHERLOADER_DISABLED: "true"
+      CDS_VCS_REPOSITORIES_BITBUCKET_STATUSES_DISABLED: "true"
+      CDS_DB_HOST: cds-db
+      CDS_DB_PASSWORD: cds
+      CDS_DB_TIMEOUT: 10000
+      CDS_DB_USER: cds
+      CDS_DB_NAME: cds
+      CDS_DB_MAXCONN: 40
+      CDS_DB_PORT: 5432
+      CDS_DB_SSLMODE: disable
+      CDS_URL_API: ${HOSTNAME}:8081
+      CDS_URL_UI: ${HOSTNAME}:8080
+      CDS_SMTP_DISABLE: "true"
+      CDS_SMTP_TLS: "false"
+      CDS_SMTP_FROM: noreply.cds@foo.cds
+      CDS_SMTP_HOST: smtp.foo.cds
+      CDS_SMTP_PORT: 25
+      CDS_AUTH_LOCALMODE: session
+      CDS_AUTH_LDAP_ENABLE: "false"
+      CDS_AUTH_DEFAULTGROUP: cdsdemo
+      CDS_LOG_LEVEL: info
+      CDS_SERVER_HTTP_SESSIONTTL: 600
+      CDS_CACHE_TTL: 60
+      CDS_CACHE_REDIS_HOST: cds-cache:6379
+      CDS_CACHE_REDIS_PASSWORD: cds
+      CDS_CACHE_MODE: redis
+      CDS_DIRECTORIES_DOWNLOAD: /app
+      CDS_VCS_POLLING_DISABLED: "false"
+      CDS_SERVER_HTTP_PORT: 8081
+      CDS_SERVER_GRPC_PORT: 8082
+      CDS_SCHEDULERS_DISABLED: "false"
+      CDS_DIRECTORIES_KEYS: /app/keys
+      CDS_ARTIFACT_MODE: local
+      CDS_ARTIFACT_LOCAL_BASEDIR: /app/artefacts
+      CDS_AUTH_SHAREDINFRA_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+      CDS_SERVER_SECRETS_KEY: changeitchangeitchangeitchangeit
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+    links:
+       - cds-db
+       - cds-cache
+
+  cds-ui:
+    image: ovhcom/cds-ui:latest
+    environment:
+      BACKEND_HOST: ${HOSTNAME}:8081
+      BASE_URL: /
+    ports:
+      - "2015:2015"
+    links:
+       - cds-api
+
+  cds-hatchery-swarm:
+    image: ovhcom/cds-hatchery:latest
+    command: /app/hatchery-linux-amd64 swarm
+    environment:
+      CDS_RATIO_SERVICE: 50
+      CDS_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+      DOCKER_HOST: tcp://${HOSTNAME}:2375
+      CDS_API: http://cds-api:8081
+      CDS_MAX_WORKER: 2
+      CDS_MAX_CONTAINERS: 4
+      CDS_PROVISION: 0
+      CDS_REQUEST_API_TIMEOUT: 120
+    links:
+       - cds-api
+
+  cds-hatchery-local:
+    image: ovhcom/cds-hatchery:latest
+    command: sh -c "wget http://cds-api:8081/download/worker/x86_64 -O worker && chmod +x worker && PATH=$PATH:. hatchery-linux-amd64 local"
+    environment:
+      CDS_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+      CDS_API: http://cds-api:8081
+    links:
+       - cds-api
+
+volumes:
+  cds-artefacts-volume:
+    driver: local

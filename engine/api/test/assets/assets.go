@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"math/rand"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/group"
@@ -16,17 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
-
-// RandomString have to be used only for tests
-func RandomString(t *testing.T, strlen int) string {
-	rand.Seed(time.Now().UTC().UnixNano())
-	const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
-	result := make([]byte, strlen)
-	for i := 0; i < strlen; i++ {
-		result[i] = chars[rand.Intn(len(chars))]
-	}
-	return string(result)
-}
 
 // InsertTestProject create a test project
 func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string, u *sdk.User) *sdk.Project {
@@ -71,8 +58,8 @@ func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, key string) error {
 }
 
 // InsertAdminUser have to be used only for tests
-func InsertAdminUser(t *testing.T, db *gorp.DbMap) (*sdk.User, string) {
-	s := RandomString(t, 10)
+func InsertAdminUser(db *gorp.DbMap) (*sdk.User, string) {
+	s := sdk.RandomString(10)
 	password, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
 		Admin:    true,
@@ -90,8 +77,8 @@ func InsertAdminUser(t *testing.T, db *gorp.DbMap) (*sdk.User, string) {
 }
 
 // InsertLambaUser have to be used only for tests
-func InsertLambaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
-	s := RandomString(t, 10)
+func InsertLambaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
+	s := sdk.RandomString(10)
 	password, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
 		Admin:    false,

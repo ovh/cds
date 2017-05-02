@@ -28,7 +28,6 @@ const (
 var (
 	key                            []byte
 	prefix                         = "3DICC3It"
-	defaultKey                     = []byte("78eKVxCGLm6gwoH9LAQ15ZD5AOABo1Xf")
 	testingPrefix                  = "3IFCC4Ib"
 	SecretUsername, SecretPassword string
 	//Client is a shared instance
@@ -52,12 +51,14 @@ type databaseCredentials struct {
 // Init password manager
 // if secretBackendBinary is empty, use default AES key and default file secret backend
 func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]string) error {
+	if cipherKey == "" {
+		return fmt.Errorf("secret.Init> cipher key is empty. Please check your configuration")
+	}
+
 	//Initializing secret backend
 	var err error
 	if secretBackendBinary == "" {
 		//Default is embedded file secretbackend
-		log.Warning("Using default AES key")
-		key = defaultKey
 		prefix = testingPrefix
 		log.Warning("Using default file secret backend")
 		Client = filesecretbackend.Client(opts)
@@ -91,11 +92,10 @@ func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]strin
 	if len(key) == 0 {
 		aesKey, _ := secrets.Get("cds/aes-key")
 		if aesKey == "" {
-			log.Error("secret.Init> cds/aes-key not found\n")
+			log.Error("secret.Init> cds/aes-key not found")
 			return sdk.ErrSecretKeyFetchFailed
 		}
 		key = []byte(aesKey)
-
 	}
 
 	//dbSecret default is cds/db

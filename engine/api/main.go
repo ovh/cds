@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/hook"
@@ -139,11 +138,15 @@ var mainCmd = &cobra.Command{
 			viper.GetInt(viperDBMaxConn),
 		)
 		if err != nil {
-			log.Warning("Cannot connect to database: %s", err)
+			log.Error("Cannot connect to database: %s", err)
 			os.Exit(3)
 		}
 
-		if err = bootstrap.InitiliazeDB(database.GetDBMap); err != nil {
+		defaultValues := bootstrap.DefaultValues{
+			DefaultGroupName: viper.GetString(viperAuthDefaultGroup),
+			SharedInfraToken: viper.GetString(viperAuthSharedInfraToken),
+		}
+		if err := bootstrap.InitiliazeDB(defaultValues, database.GetDBMap); err != nil {
 			log.Error("Cannot setup databases: %s", err)
 		}
 
@@ -241,10 +244,6 @@ var mainCmd = &cobra.Command{
 
 		if err := worker.Initialize(); err != nil {
 			log.Warning("⚠ Error while initializing workers routine: %s", err)
-		}
-
-		if err := group.Initialize(database.DBMap(db), viper.GetString(viperAuthDefaultGroup)); err != nil {
-			log.Error("Cannot initialize groups: %s", err)
 		}
 
 		go queue.Pipelines()

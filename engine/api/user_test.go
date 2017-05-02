@@ -196,11 +196,11 @@ func TestLoadUserWithGroup(t *testing.T) {
 	}
 
 	project1 := &sdk.Project{
-		Key:  assets.RandomString(t, 10),
+		Key:  sdk.RandomString(10),
 		Name: "foo",
 	}
 	project2 := &sdk.Project{
-		Key:  assets.RandomString(t, 10),
+		Key:  sdk.RandomString(10),
 		Name: "bar",
 	}
 
@@ -228,7 +228,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 	}
 
 	groupInsert := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	err = group.InsertGroup(db, groupInsert)
@@ -276,14 +276,14 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	router.init()
 
 	g1 := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	g2 := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
-	u, pass := assets.InsertLambaUser(t, db, g1, g2)
+	u, pass := assets.InsertLambaUser(db, g1, g2)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 

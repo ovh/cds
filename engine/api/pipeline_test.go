@@ -22,7 +22,7 @@ import (
 )
 
 func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	projectFoo := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	p := &sdk.Pipeline{
@@ -48,13 +48,13 @@ func Test_runPipelineHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -64,7 +64,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -125,14 +125,14 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(db)
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10), u)
+	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
@@ -142,7 +142,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
@@ -200,7 +200,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 
 	//10. Create another Pipeline
 	pip2 := &sdk.Pipeline{
-		Name:       assets.RandomString(t, 10),
+		Name:       sdk.RandomString(10),
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
@@ -210,7 +210,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 
 	//11. Insert another Application
 	app2 := &sdk.Application{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 	err = application.Insert(db, proj, app2, nil)
 

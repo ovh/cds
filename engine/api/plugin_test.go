@@ -159,7 +159,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(db)
 	if err := actionplugin.Delete(db, "dummy", u.ID); err != nil {
 		t.Log(err)
 	}
@@ -223,7 +223,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(db)
 	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy1", dummyBinaryFile)
@@ -265,7 +265,7 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(db)
 	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
@@ -315,7 +315,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(db)
 	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
@@ -378,7 +378,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	}
 	objectstore.Initialize(cfg)
 
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(db)
 	actionplugin.Delete(db, "dummy", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)

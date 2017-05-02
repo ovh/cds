@@ -250,14 +250,12 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) er
 func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
 	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name)
 	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rm.Name, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "CreateHook> Cannot get client, got  %s %s", projectKey, rm.Name)
 	}
 
 	t := strings.Split(repoFullName, "/")
 	if len(t) != 2 {
-		log.Warning("CreateHook> Wrong repo fullname %s.", repoFullName)
-		return nil, fmt.Errorf("CreateHook> Wrong repo fullname %s.", repoFullName)
+		return nil, sdk.WrapError(fmt.Errorf("CreateHook> Wrong repo fullname %s.", repoFullName), "")
 	}
 
 	var h sdk.Hook
@@ -273,14 +271,11 @@ func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesMana
 			Repository:    t[1],
 			Enabled:       true,
 		}
-		err = InsertHook(tx, &h)
-		if err != nil {
-			log.Warning("addHookOnRepositoriesManagerHandler> Cannot insert hook: %s", err)
-			return nil, err
+		if err := InsertHook(tx, &h); err != nil {
+			return nil, sdk.WrapError(err, "CreateHook> Cannot insert hook")
 		}
 	} else if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot get hook: %s", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "CreateHook> Cannot get hook")
 	}
 
 	s := apiURL + HookLink
@@ -288,10 +283,14 @@ func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesMana
 
 	h.Link = link
 
-	err = client.CreateHook(repoFullName, link)
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot create hook on stash: %s", err)
-		return nil, err
+	if err := client.CreateHook(repoFullName, link); err != nil {
+		log.Warning("Cannot create hook on repository manager: %s", err)
+		if !strings.Contains(err.Error(), "Not yet implemented") {
+			return nil, sdk.WrapError(err, "CreateHook> Cannot create hook on repository manager")
+		}
+		if err := DeleteHook(tx, h.ID); err != nil {
+			return nil, sdk.WrapError(err, "CreateHook> Cannot rollback hook creation")
+		}
 	}
 	return &h, nil
 }

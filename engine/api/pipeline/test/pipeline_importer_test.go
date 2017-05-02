@@ -77,7 +77,7 @@ func TestImportUpdate(t *testing.T) {
 		t.FailNow()
 	}
 
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(db)
 
 	//Define the testscases
 	var test1 = testcase{
@@ -85,7 +85,7 @@ func TestImportUpdate(t *testing.T) {
 		wantErr: false,
 		args: args{
 			u:    u,
-			pkey: assets.RandomString(t, 7),
+			pkey: sdk.RandomString(7),
 			pip: &sdk.Pipeline{
 				Type: sdk.BuildPipeline,
 			},
@@ -124,7 +124,7 @@ func TestImportUpdate(t *testing.T) {
 		wantErr: false,
 		args: args{
 			u:    u,
-			pkey: assets.RandomString(t, 7),
+			pkey: sdk.RandomString(7),
 			pip: &sdk.Pipeline{
 				Type: sdk.BuildPipeline,
 			},
@@ -180,7 +180,7 @@ func TestImportUpdate(t *testing.T) {
 		wantErr: false,
 		args: args{
 			u:    u,
-			pkey: assets.RandomString(t, 7),
+			pkey: sdk.RandomString(7),
 			pip: &sdk.Pipeline{
 				Type: sdk.BuildPipeline,
 			},
@@ -224,7 +224,7 @@ func TestImportUpdate(t *testing.T) {
 		wantErr: false,
 		args: args{
 			u:    u,
-			pkey: assets.RandomString(t, 7),
+			pkey: sdk.RandomString(7),
 			pip: &sdk.Pipeline{
 				Type: sdk.BuildPipeline,
 			},
@@ -267,7 +267,7 @@ func TestImportUpdate(t *testing.T) {
 		wantErr: false,
 		args: args{
 			u:    u,
-			pkey: assets.RandomString(t, 7),
+			pkey: sdk.RandomString(7),
 			pip: &sdk.Pipeline{
 				Type: sdk.BuildPipeline,
 			},
@@ -352,7 +352,7 @@ func TestImportUpdate(t *testing.T) {
 		wantErr: false,
 		args: args{
 			u:    u,
-			pkey: assets.RandomString(t, 7),
+			pkey: sdk.RandomString(7),
 			pip: &sdk.Pipeline{
 				Type: sdk.BuildPipeline,
 			},
@@ -432,7 +432,7 @@ func TestImportUpdate(t *testing.T) {
 		wantErr: false,
 		args: args{
 			u:    u,
-			pkey: assets.RandomString(t, 7),
+			pkey: sdk.RandomString(7),
 			pip: &sdk.Pipeline{
 				Type: sdk.BuildPipeline,
 			},

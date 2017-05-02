@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -268,7 +269,7 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 	}
 
 	// Load token
-	t, errL := LoadToken(db, key)
+	t, errL := token.LoadToken(db, key)
 	if errL != nil {
 		log.Warning("RegisterWorker> Cannot register worker. Caused by : %s", errL)
 		return nil, errL

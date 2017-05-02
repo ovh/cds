@@ -28,7 +28,7 @@ func TestInsert(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
@@ -95,7 +95,7 @@ func TestUpdate(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
@@ -179,7 +179,7 @@ func TestGetByApplication(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
@@ -242,7 +242,7 @@ func TestGetByPipeline(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
@@ -305,7 +305,7 @@ func TestGetByApplicationPipeline(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline
@@ -368,7 +368,7 @@ func TestGetByApplicationPipelineEnv(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
+	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
 	//Insert Pipeline

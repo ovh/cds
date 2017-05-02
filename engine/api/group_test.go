@@ -22,11 +22,11 @@ func Test_getPublicGroups(t *testing.T) {
 
 	//Create group
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	//Create user
-	u, pass := assets.InsertLambaUser(t, db, g)
+	u, pass := assets.InsertLambaUser(db, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
