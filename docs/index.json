@@ -1,0 +1,267 @@
+[
+{
+	"uri": "/getting-started/about-cds/",
+	"title": "About CDS",
+	"tags": [],
+	"description": "",
+	"content": "What is CDS? CDS is a Continuous Delivery solution with an architecture featuring: A complete isolation between tenants High availability oriented architecture Automatic scaling Automation oriented with iso-feature API, CLI and WebUI Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a hatchery. CDS exposes an API available to workers and humans through cli or WebUI. What does CDS do? Basically, CDS allows users to create building and delivery pipelines for all your applications. An application is composed of one or multiple pipelines, that can be triggered: manually by VCS change by another pipeline by a hook General Creation of build and deployment pipelines Simple organisation by projects and applications Artifact storage available trough UI, API and CLI Reusable build and deployment Actions Packaging Declaration of worker models (specific hosts, docker image, openstack recipe) Conditional build path depending of build parameters (ie: git branch) Deployment Completely cross platform workers (built in Go) without any dependency Support for deployment environments (different sets of variable for the same deployment pipeline) Basic principles A action will start on any worker matching all its requirements Every action runs in a different worker, all build data needed for the next step should be uploaded as artifact It is possible to run some of your pipelines on-premise, some on CDS workers "
+},
+{
+	"uri": "/getting-started/concepts/",
+	"title": "Concepts",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/getting-started/concepts/pipeline/",
+	"title": "Pipeline",
+	"tags": [],
+	"description": "",
+	"content": "A pipeline describes how things need to be executed in order to achieve wanted result. In CDS, a pipeline a defined on a project and can be used on several applications inside the same project. A pipeline is structured in sequential stages containing one or multiple concurrent jobs. In CDS there is several types of pipeline : build, testing and deployment. In Pipeline configuration file, default type is build. The goal is to make your pipeline the more reusable as possible. It have to be able to build, test or deploy all the tiers, services or micro-services of your project. You can also define ACL on a pipeline. Triggers Example "
+},
+{
+	"uri": "/getting-started/concepts/stage/",
+	"title": "Stage",
+	"tags": [],
+	"description": "",
+	"content": "Usually in CDS a build pipeline is structured of the following stages : Compile stage : Build the binaries Analysis &amp;amp; Unit Tests stage : Run all unit tests and analyse code quality Packaging stage : Build the final package, Virtual Machine Image or Docker Image. In CDS, stages are executed sequentially if the previous stage is successfull. You can define trigger conditions on a stage, to enable it on certain conditions. For instance, you want to run the Compile Stage and Analysis &amp;amp; Unit Tests stage on all branches but the Packaging Stage on branches master and develop only. A Stage is a set of jobs which will be run in parallel. "
+},
+{
+	"uri": "/getting-started/concepts/job/",
+	"title": "Job",
+	"tags": [],
+	"description": "",
+	"content": "The Job is more important concept in CDS. It will be composed of steps which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job. A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the requirements you define on your job. You can set as many requirements as you want, following those rules : Only one model can be set as requirement Only one hostname can be set as requirement Memory and Services requirements are availabe only on Docker models If you want to share files or artifact between jobs, stages or pipelines you have to use Artifact upload and Artifact download. You can also share variable between stages, see variables tutorial for more details. "
+},
+{
+	"uri": "/getting-started/concepts/step/",
+	"title": "Step",
+	"tags": [],
+	"description": "",
+	"content": "The steps of a job is the list of the different operation performed by the CDS worker. Each steps is based on an Action which is defined by CDS. The list of all actions is defined on *&amp;lt;your cds url ui&amp;gt;/#/action*. On the very first step failed, the job is marked as Failed and execution is stopped. You can define a Step as final. It mean that even if the job is failed, the step will be executed. The final steps are executed after all other steps. "
+},
+{
+	"uri": "/getting-started/concepts/worker/",
+	"title": "Worker",
+	"tags": [],
+	"description": "",
+	"content": "A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker. Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip; What is a worker Basically, a worker is a binary. This binary can be launched inside a Docker Containers, or on a Host (as VM Openstack). Worker cycle of life If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contains a sane installation of &amp;ldquo;curl&amp;rdquo;. So, in the case of a worker model of type &amp;ldquo;docker&amp;rdquo;, the docker image must contains curl in PATH. "
+},
+{
+	"uri": "/",
+	"title": "",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/building-pipelines/actions/",
+	"title": "Actions",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/advanced/",
+	"title": "Advanced",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/advanced/",
+	"title": "Advanceds",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/building-pipelines/actions/builtin/artifact-download/",
+	"title": "Artifact Download",
+	"tags": [],
+	"description": "",
+	"content": "Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it. This action can be used to get artifact uploaded by the Artifact Upload action Action Parameter application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded Example of Job Configuration Download artifact from the parent pipeline Download artifact from the previous stage "
+},
+{
+	"uri": "/building-pipelines/actions/builtin/artifact-upload/",
+	"title": "Artifact Upload",
+	"tags": [],
+	"description": "",
+	"content": "Artifact Upload Action Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it. This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages. Action Parameter path: Path of file to upload tag: Tag to apply to your file. Example of Job Configuration With a tag to indicate the build version With a latest tag "
+},
+{
+	"uri": "/advanced/repositories_manager/bitbucket/",
+	"title": "Bitbucket",
+	"tags": [],
+	"description": "",
+	"content": "Authorize CDS on your Bitbucket instance You need to perform the following steps : Bitbucket admin privileges A RSA Key Pair Create a CDS application in BitBucket In Bitbucket go to Administration Settings / Application Links. Create a new Application with : Name : CDS Type : Generic Application Application URL : Your CDS URL Display URL : Your CDS URL On this application, you just have to set up OAuth Incoming Authentication : Consumer Key : CDS Consumer Name : CDS Public Key : Your CDS RSA public key Consumer Callback URL : None Allow 2-Legged OAuth : false Execute as : None Allow user impersonation through 2-Legged OAuth : false Connect CDS To Bitbucket With CDS CLI run : $ cds admin reposmanager add STASH mystash.mynetwork.net http://mystash.mynetwork.net key=privatekey And follow instructions. Set in Vault you CDS private key in a secret named : cds/repositoriesmanager-secrets-mystash.mynetwork.net-privatekey Restart CDS. Now check everything is OK with : $ cds admin reposmanager list "
+},
+{
+	"uri": "/building-pipelines/",
+	"title": "Building Pipelines",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/building-pipelines/",
+	"title": "Building-pipelines",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/building-pipelines/actions/builtin/",
+	"title": "Built-in Actions",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/categories/",
+	"title": "Categories",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/getting-started/installation/docker-compose/",
+	"title": "Docker Compose",
+	"tags": [],
+	"description": "",
+	"content": "Run with Docker-Compose The docker-compose.yml contains: cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables. cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation. How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API and UI $ docker-compose up cds-api cds-ui Open a browser on http://localhost:2015, then register a new user. As there is no SMTP server configured in docker-compose.yml file, run docker-compose logs to get URL for validate the registration. Prepare Project, Pipeline and Application On UI http://localhost:2015: Create a project Create an application, with an void pipeline Create a pipeline, attached to application On Pipeline, add a stage and a job Inside job, add a step of type &amp;ldquo;script&amp;rdquo; In script content, add theses lines: #!/bin/bash set -ex echo &amp;quot;foo&amp;quot; sleep 10 echo &amp;quot;bar&amp;quot; Run Pipeline Run pipeline. As you can see now, you pipeline is in &amp;ldquo;waiting status&amp;rdquo;. You have to run a CDS Worker or a CDS Hatchery which aims to create workers. Let&amp;rsquo;s run an hatchery with docker-compose. We will spawn a containers with a hatchery in local mode. Workers will be spawn inside this container. $ docker-compose up cds-hatchery-local Running a hatchery &amp;ldquo;local&amp;rdquo; in a container is not recommanded. Use this way only for test purpose. After running this Hatchery, a worker will be spawned. Your pipeline will be in &amp;ldquo;Building&amp;rdquo;, then &amp;ldquo;Success&amp;rdquo; status. Hatchery Docker Swarm The docker-compose.yml runs hatchery belonging to the shared.infra groups. A local hatchery spawn worker on same host than hatchery. This is usually useful for specific cases, as running job on specific hardware. But this hatchery does not make it possible to respect the isolation of workpaces of workers as they share the same workspace. There is another hatchery configured in docker-compose.yml file: a &amp;lsquo;swarm hatchery&amp;rsquo; Please check that your docker installation allows docker API calls on tcp://${HOSTNAME}:2375 Otherwise, please update environment variable DOCKER_HOST: tcp://${HOSTNAME}:2375 in docker-compose.yml $ docker-compose up cds-hatchery-swarm A swarm hatchery spwan CDS Worker inside dedicated container. This ensures isolation of the workspaces and resources. Next with Actions, Plugins and Templates You can download CDS CLI from https://github.com/ovh/cds/releases Run: $ mv cds-linux-amd64 cds $ chmod +x cds $ ./cds login # enter: http://${HOSTNAME}:8081 as CDS Endpoint Import actions, example: $ cds action add --url https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl Import plugins, example: # download plugin-download-linux-amd64 from https://github.com/ovh/cds/releases $ cds admin plugin add ./plugin-download-linux-amd64 Import templates, example: # download cds-template-plain-linux-amd64 from https://github.com/ovh/cds/releases $ cds admin templates add ./cds-template-plain-linux-amd64 Go further First pipeline with CDS CLI read more How to use Openstack infrastructure to spawn CDS container read more Link CDS to a repository manager, as Github or Bitbucket read more Learn more about CDS variables read more "
+},
+{
+	"uri": "/getting-started/",
+	"title": "Getting started",
+	"tags": [],
+	"description": "",
+	"content": "Discover what is CDS and the core-concepts behind it. About CDS Concepts Installation "
+},
+{
+	"uri": "/getting-started/",
+	"title": "Getting-starteds",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/building-pipelines/actions/builtin/gitclone/",
+	"title": "GitClone",
+	"tags": [],
+	"description": "",
+	"content": "GitClone is a builtin action, you can&amp;rsquo;t modify it. This action can be used to perform a Git Clone. Git Clone will be done with a depth of 1. You can use a privateKey, this is usually a project or application variable of type key. {{.cds.app.a-key.pub}} Parameters url - mandatory privateKey - optional user - optional password - optional branch - optional commit - optional directory - optional - name of repository per default "
+},
+{
+	"uri": "/advanced/repositories_manager/github/",
+	"title": "Github",
+	"tags": [],
+	"description": "",
+	"content": "Authorize CDS on Github Create a CDS application on Github Go to https://github.com/settings/developers and Register a new application: set an application name, the url and a description. Dont set up Authorization callback URL. On the next page Github give you a Client ID and a Client Secret Connect CDS To Github With CDS CLI run : $ cds admin reposmanager add GITHUB github http://github.com client-id=&amp;lt;your_client_id&amp;gt; client-secret=&amp;lt;client-secret&amp;gt; If you use Vault as Secret Manager: Set in Vault you CDS Client Secret in a secret named : cds/repositoriesmanager-secrets-github.com.net-client-secret If you&amp;rsquo;re not using vault: Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with &amp;lt;client-secret&amp;gt;: [vcs.repositories.github] clientsecret = &amp;quot;&amp;lt;client-secret&amp;gt;&amp;quot; Then restart CDS. Now check everything is OK with : $ cds admin reposmanager list "
+},
+{
+	"uri": "/advanced/hatcheries/",
+	"title": "Hatcheries",
+	"tags": [],
+	"description": "",
+	"content": "Hatchery is a binary dedicated to spawn and kill worker in accordance with build queue needs. An hatchery is started with permissions to build all pipelines accessible from a given group, using token generated by user. There are 5 modes for hatcheries: Local (Start workers on a single host) Local Docker (Start worker model instances on a single host) Marathon (Start worker model instances on a mesos cluster with marathon framework) Swarm (Start worker on a docker swarm cluster) Openstack (Start hosts on an openstack cluster) Local mode Hatchery starts workers directly as local process. Docker mode Hatchery starts workers inside docker containers on the same host. Marathon mode Hatchery starts workers inside containers on a mesos cluster using Marathon API. Openstack mode Hatchery starts workers on Openstack servers using Openstack Nova. Swarm mode The hatchery connects to a swarm cluster and starts workers inside containers. Admin hatchery As a CDS administrator, it is possible to generate an access token for all projects using the shared.infra group. This group is builtin to CDS, and has the following properties: All CDS administrators are administrator of this group At pipeline creation, this group is added with Read/Execution permission automatically This means that by default, an hatchery using a token generated for this group will be able to build all pipelines. Should a user want to avoid building on shared infrastructure, he only need to remove access of shared.infra group to his pipeline. "
+},
+{
+	"uri": "/advanced/hatcheries/openstack/",
+	"title": "Hatchery Openstack",
+	"tags": [],
+	"description": "",
+	"content": "CDS build using OVH.com Openstack infrastructure Create Openstack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;Openstack item. You will be able to create an Openstack user, enter description (name and password will be generated). Add Openstack worker model We need to define an Openstack worker model to have Openstack hatchery booting workers. We will create a model called docker: With low hardware capacity (vps-ssd-1) On Debian 8 With docker ready to use Git installed First, define a udata file. It is a shell script executed just after the boot sequence complete. Our docker udata will look like this: # Install docker cd $HOME sudo apt-get -y --force-yes update &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 apt-get install -y --force-yes apt-transport-https ca-certificates &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D sudo mkdir -p /etc/apt/sources.list.d sudo sh -c &amp;quot;echo deb https://apt.dockerproject.org/repo debian-jessie main &amp;gt; /etc/apt/sources.list.d/docker.list&amp;quot; sudo apt-get -y --force-yes update &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-cache policy docker-engine &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-get install -y --force-yes docker-engine &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo service docker start &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 # Non-root access sudo groupadd docker &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo gpasswd -a ${USER} docker &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo service docker restart &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 # Basic build binaries sudo apt-get -y --force-yes install curl git &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-get -y --force-yes install binutils &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 Last step, define worker model in cds: $ cds worker model add docker openstack --image=&amp;quot;Debian 8&amp;quot; --flavor=&amp;quot;vps-ssd-1&amp;quot; --userdata=&amp;quot;./docker.udata&amp;quot; Declare docker and git capabilities $ cds worker model capability add docker docker binary docker $ cds worker model capability add docker git binary git Start Opentack hatchery Generate a token for group: $ cds generate token -g shared.infra -e persistent fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92 Then start hatchery: OPENSTACK_USER=&amp;lt;user&amp;gt; OPENSTACK_TENANT=&amp;lt;tenant&amp;gt; OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net OPENSTACK_PASSWORD=&amp;lt;password&amp;gt; OPENSTACK_REGION=SBG1 hatchery openstack \ --api=https://api.domain \ --max-worker=10 \ --provision=1 \ --token=fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92 This hatchery will now start worker of model &amp;lsquo;docker&amp;rsquo; on OVH.com Openstack infrastructure when a pipeline is in queue with requirement docker. "
+},
+{
+	"uri": "/getting-started/installation/",
+	"title": "Installation",
+	"tags": [],
+	"description": "",
+	"content": "Docker Compose "
+},
+{
+	"uri": "/building-pipelines/actions/plugins/",
+	"title": "Plugins Actions",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/advanced/repositories_manager/",
+	"title": "Repositories Manager",
+	"tags": [],
+	"description": "",
+	"content": "CDS can be linked to following repositories manager : Atlassian Stash Github It allows you to enable some CDS features such as : Create application in CDS from Stash or Github Attach an application to its Stash or Github repository Fully automatic hook management Branch filtering on application workflows Commit logs on pipeline build details Go through this tutorial to enable the link between repositories managers and CDS. You need CDS admin privileges to perform the following steps. Download and install properly the CDS CLI. "
+},
+{
+	"uri": "/tags/",
+	"title": "Tags",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/building-pipelines/variables/",
+	"title": "Variables",
+	"tags": [],
+	"description": "",
+	"content": "In CDS, it is possible to define variables at different levels: Project Environment Application Variable types Existing variable types: String Text Boolean Number Password Key Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes: Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.cds.app.VAR}} Environment: {{.cds.env.VAR}} Project: {{.cds.proj.VAR}} Exported variable at build time: {{.cds.build.VAR}} Builtin variables Here is the list of builtin variables, generated for every build: {{.cds.project}} The name of the current project {{.cds.environment}} The name of the current environment {{.cds.application}} The name of the current application {{.cds.pipeline}} The name of the current pipeline {{.cds.stage}} The name of the current stage {{.cds.job}} The name of the current job {{.cds.workspace}} Current job&amp;rsquo;s workspace. It&amp;rsquo;s a directory. In a step script, {{.cds.workspace}} == $HOME {{.cds.version}} The number of the current version {{.cds.parent.application}} The name of the application that triggered the current build {{.cds.parent.pipeline}} The name of the pipeline that triggered the current build {{.cds.triggered_by.email}} Email of the user that run the current build {{.cds.triggered_by.fullname}} Full name of the user that run the current build {{.cds.triggered_by.username}} User that run the current build The .version variable {{.cds.version}} CDS version is a builtin variable equals to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to testing and deployment pipelines. Export a variable inside a step In a step of type script, you can export variable as: $ worker export varname thevalue You can now use {{.cds.build.varname}} in further steps and stages. Shell Environment Variable All CDS variables, except password type can use used as plain environment variable. Theses lines will have the same output echo &#39;{{.cds.parent.application}}&#39; echo $CDS_PARENT_APPLICATION Git variables Here is the list of git variables: {{.git.hash}} {{.git.url}} {{.git.http_url}} {{.git.branch}} {{.git.author}} {{.git.message}} "
+},
+{
+	"uri": "/_header/",
+	"title": "header",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/building-pipelines/actions/plugins/plugin-download/",
+	"title": "plugin-download",
+	"tags": [],
+	"description": "",
+	"content": "More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/actions/plugins/plugin-group-tmpl/",
+	"title": "plugin-group-tmpl",
+	"tags": [],
+	"description": "",
+	"content": "More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/actions/plugins/plugin-kafka-publish/",
+	"title": "plugin-kafka-publish",
+	"tags": [],
+	"description": "",
+	"content": "More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/actions/plugins/plugin-marathon/",
+	"title": "plugin-marathon",
+	"tags": [],
+	"description": "",
+	"content": "More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/actions/plugins/plugin-ssh-cmd/",
+	"title": "plugin-ssh-cmd",
+	"tags": [],
+	"description": "",
+	"content": "More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/actions/plugins/plugin-tmpl/",
+	"title": "plugin-tmpl",
+	"tags": [],
+	"description": "",
+	"content": "More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/actions/plugins/plugin-venom/",
+	"title": "plugin-venom",
+	"tags": [],
+	"description": "",
+	"content": "CDS plugin run venom https://github.com/runabove/venom Parameters path : Path containers yml venom files exclude : exclude some files, one file per line parallel : Launch Test Suites in parallel, default: 2 output : Directory where output xunit result file Add an extra step of type &amp;ldquo;junit&amp;rdquo; on your job to view results on CDS UI. More More documentation on Github "
+}]

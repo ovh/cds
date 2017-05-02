@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/about-cds/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/concepts/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/concepts/pipeline/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/concepts/stage/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/concepts/job/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/concepts/step/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/concepts/worker/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-download/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-upload/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/repositories_manager/bitbucket/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/installation/docker-compose/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/repositories_manager/github/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/hatcheries/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/hatcheries/openstack/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/installation/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/repositories_manager/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tags/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/variables/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/_header/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/</loc>
+  </url>
+  
+</urlset>
