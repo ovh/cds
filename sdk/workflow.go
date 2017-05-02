@@ -4,8 +4,9 @@ package sdk
 type Workflow struct {
 	ID         int64         `json:"id" db:"id"`
 	Name       string        `json:"name" db:"name"`
-	ProjectID  int64         `json:"-" db:"project_id"`
-	ProjectKey int64         `json:"project_key" db:"-"`
+	ProjectID  int64         `json:"project_id" db:"project_id"`
+	ProjectKey string        `json:"project_key" db:"-"`
+	RootID     int64         `json:"root_id" db:"root_node_id"`
 	Root       *WorkflowNode `json:"root" db:"-"`
 }
 
@@ -41,7 +42,7 @@ type WorkflowTriggerCondition struct {
 type WorkflowNodeContext struct {
 	ID             int64        `json:"id" db:"id"`
 	WorkflowNodeID int64        `json:"workflow_node_id" db:"workflow_node_id"`
-	ApplicationID  int64        `json:"-" db:"pipeline_id"`
+	ApplicationID  int64        `json:"-" db:"application_id"`
 	Application    *Application `json:"application" db:"-"`
 	Environment    *Environment `json:"environment" db:"-"`
 	EnvironmentID  int64        `json:"-" db:"environment_id"`
