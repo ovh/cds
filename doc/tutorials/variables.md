@@ -19,32 +19,33 @@ Existing variable types:
 
 ## Placeholder format
 
-All variables in CDS can be invoked using the simple "{{.VAR}}" format. To simplify the use between all the variable sources, we have defined the following prefixes:
+All variables in CDS can be invoked using the simple `{{.VAR}}` format. To simplify the use between all the variable sources, we have defined the following prefixes:
 
-- Action variable: “{{.VAR}}”
-- Builtin CDS: “{{.cds.VAR}}”
-- Git: “{{.git.VAR}}”
-- Pipeline: “{{.cds.pip.VAR}}”
-- Application: “{{.cds.app.VAR}}”
-- Environment: “{{.cds.env.VAR}}”
-- Project: “{{.cds.proj.VAR}}”
+- Action variable: `{{.VAR}}`
+- Builtin CDS: `{{.cds.VAR}}`
+- Git: `{{.git.VAR}}`
+- Pipeline: `{{.cds.pip.VAR}}`
+- Application: `{{.cds.app.VAR}}`
+- Environment: `{{.cds.env.VAR}}`
+- Project: `{{.cds.proj.VAR}}`
 
 ## Builtin variables
 
 Here is the list of builtin variables, generated for every build:
 
-- ”{{.cds.project}}” The name of the current project
-- ”{{.cds.environment}}” The name of the current environment
-- ”{{.cds.application}}” The name of the current application
-- ”{{.cds.pipeline}}” The name of the current pipeline
-- ”{{.cds.stage}}” The name of the current stage
-- ”{{.cds.job}}” The name of the current job
-- ”{{.cds.version}}” The number of the current version
-- ”{{.cds.parent.application}}” The name of the application that triggered the current build
-- ”{{.cds.parent.pipeline}}” The name of the pipeline that triggered the current build
-- ”{{.cds.triggered_by.email}}” Email of the user that run the current build
-- ”{{.cds.triggered_by.fullname}}” Full name of the user that run the current build
-- ”{{.cds.triggered_by.username}}” User that run the current build
+- `{{.cds.project}}` The name of the current project
+- `{{.cds.environment}}` The name of the current environment
+- `{{.cds.application}}` The name of the current application
+- `{{.cds.pipeline}}` The name of the current pipeline
+- `{{.cds.stage}}` The name of the current stage
+- `{{.cds.job}}` The name of the current job
+- `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step script, `{{.cds.workspace}}` == $HOME
+- `{{.cds.version}}` The number of the current version
+- `{{.cds.parent.application}}` The name of the application that triggered the current build
+- `{{.cds.parent.pipeline}}` The name of the pipeline that triggered the current build
+- `{{.cds.triggered_by.email}}` Email of the user that run the current build
+- `{{.cds.triggered_by.fullname}}` Full name of the user that run the current build
+- `{{.cds.triggered_by.username}}` User that run the current build
 
 ## The .version variable
 
@@ -77,9 +78,9 @@ echo $CDS_PARENT_APPLICATION
 
 Here is the list of git variables:
 
-- ”{{.git.hash}}”
-- "{{.git.url}}"
-- "{{.git.http_url}}"
-- ”{{.git.branch}}”
-- ”{{.git.author}}”
-- "{{.git.message}}"
+- `{{.git.hash}}`
+- `{{.git.url}}`
+- `{{.git.http_url}}`
+- `{{.git.branch}}`
+- `{{.git.author}}`
+- `{{.git.message}}`
