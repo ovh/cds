@@ -16,6 +16,9 @@ import (
 	"github.com/facebookgo/httpcontrol"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //HTTP Constants
@@ -35,7 +38,22 @@ var (
 )
 
 //Common is the base plugin struct every plugin should be composed by
-type Common struct{}
+type Common struct {
+	Name        string
+	Description string
+	Parameters  Parameters
+	Author      string
+	Format      string `json:"-" yaml:"-" xml:"-"`
+}
+
+// Plugin have to be implemented by Plugins
+type Plugin interface {
+	Name() string
+	Description() string
+	Author() string
+	Parameters() Parameters
+	Run(a IJob) Result
+}
 
 //SetTrace is for debug
 func SetTrace(traceHandle io.Writer) {
@@ -66,6 +84,56 @@ func (p *Common) Init(o IOptions) string {
 		}
 	}
 	return "plugin: initialized on " + o.GetURL()
+}
+
+// Main func call by plugin, display info only
+func Main(p Plugin) {
+	var format string
+	var cmdInfo = &cobra.Command{
+		Use:   "info",
+		Short: "Print plugin Information anything to the screen: info --format <yml>",
+		Run: func(cmd *cobra.Command, args []string) {
+			if format != "markdown" {
+				if err := sdk.Output(format, p, fmt.Printf); err != nil {
+					fmt.Printf("Error:%s", err)
+				}
+				return
+			}
+			fmt.Print(InfoMarkdown(p))
+		},
+	}
+
+	cmdInfo.Flags().StringVarP(&format, "format", "", "markdown", "--format:yaml, json, xml, markdown")
+
+	var rootCmd = &cobra.Command{}
+	rootCmd.AddCommand(cmdInfo)
+	rootCmd.Execute()
+}
+
+// InfoMarkdown returns string formatted with markdown
+func InfoMarkdown(pl Plugin) string {
+	var sp string
+	for k, v := range pl.Parameters().DataDescription {
+		sp += fmt.Sprintf("* **%s**: %s\n", k, v)
+	}
+
+	info := fmt.Sprintf(`
+%s
+
+## Parameters
+
+%s
+
+## More
+
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/%s/README.md)
+
+`,
+		pl.Description(),
+		sp,
+		pl.Name())
+
+	return info
 }
 
 // request executes an authentificated HTTP request on $path given $method
@@ -146,8 +214,7 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 	}
 
 	path := fmt.Sprintf("/build/%d/log", j.ID())
-	_, _, err = request("POST", path, data)
-	if err != nil {
+	if _, _, err := request("POST", path, data); err != nil {
 		return err
 	}
 	return nil

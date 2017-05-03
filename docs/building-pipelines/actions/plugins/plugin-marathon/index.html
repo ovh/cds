@@ -94,6 +94,17 @@
                 
                 
                 
+                <li data-nav-id="/building-pipelines/actions/user-actions/" class="dd-item 
+                     
+                    ">
+                    <a href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">User Actions</a>
+                
+
+                    
+                </li>
+                
+                
+                
                 <li data-nav-id="/building-pipelines/actions/plugins/" class="dd-item 
                      
                     parent">
@@ -281,10 +292,8 @@
 <ul>
 <li>
 <ul>
-<li>
-<ul>
+<li><a href="#parameters">Parameters</a></li>
 <li><a href="#more">More</a></li>
-</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -302,9 +311,26 @@
 
 
 
-<h3 id="more">More</h3>
+<p>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
+Your marathon.json file can be templated with cds variables &ldquo;{{.cds.variables}}&rdquo;. Enable &ldquo;waitForDeployment&rdquo; option to ensure deployment is successfull.</p>
 
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-marathon.md">Github</a></p>
+<h2 id="parameters">Parameters</h2>
+
+<ul>
+<li><strong>password</strong>: Marathon Password (please use project, application or environment variables)</li>
+<li><strong>configuration</strong>: Marathon application configuration file (json format)</li>
+<li><strong>waitForDeployment</strong>: Wait for instances deployment.
+If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result.
+If not set, CDS will consider a successful result if marathon accepts the provided configuration.</li>
+<li><strong>insecureSkipVerify</strong>: Skip SSL Verify if you want to use self-signed certificate</li>
+<li><strong>timeout</strong>: Marathon deployment timeout (seconds). Used only if &ldquo;waitForDeployment&rdquo; is true.</li>
+<li><strong>url</strong>: Marathon URL <a href="http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083">http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083</a></li>
+<li><strong>user</strong>: Marathon User (please use project, application or environment variables)</li>
+</ul>
+
+<h2 id="more">More</h2>
+
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-marathon/README.md">Github</a></p>
 
 
 <footer class=" footline" >

@@ -10,12 +10,6 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-// Plugin name for CDS
-const PluginName = "plugin-tmpl"
-
-// Plugin identifier for logs
-var PluginIdentifier = strings.ToUpper(PluginName)
-
 // Plugin is the tmpl plugin implementation for CDS
 type Plugin struct {
 	plugin.Common
@@ -23,7 +17,7 @@ type Plugin struct {
 
 // Name returns the plugin name
 func (p Plugin) Name() string {
-	return PluginName
+	return "plugin-tmpl"
 }
 
 // Description returns the plugin's description

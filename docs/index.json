@@ -116,7 +116,7 @@
 	"title": "Built-in Actions",
 	"tags": [],
 	"description": "",
-	"content": ""
+	"content": "User actions use built-in action(s) and / or other existing action(s). There can be created by CLI and / or Web UI. User actions from CDS Contributions : Artifact Download Artifact Upload GitClone JUnit Script "
 },
 {
 	"uri": "/categories/",
@@ -151,7 +151,7 @@
 	"title": "GitClone",
 	"tags": [],
 	"description": "",
-	"content": "GitClone is a builtin action, you can&amp;rsquo;t modify it. This action can be used to perform a Git Clone. Git Clone will be done with a depth of 1. You can use a privateKey, this is usually a project or application variable of type key. {{.cds.app.a-key.pub}} Parameters url - mandatory privateKey - optional user - optional password - optional branch - optional commit - optional directory - optional - name of repository per default "
+	"content": "GitClone is a builtin action, you can&amp;rsquo;t modify it. This action clone a repository into a new directory. Git Clone will be done with a depth of 1. You can use a privateKey, this is usually a project or application variable of type key. {{.cds.app.a-key.pub}} Parameters url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository. privateKey - optional - the private key to be able to git clone from ssh user - optional - the user to be able to git clone from https with authentication password - optional - the password to be able to git clone from https with authentication branch - optional - Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.git.branch}} branch instead. commit - optional - the current branch head (HEAD) to the commit directory - optional - the name of a directory to clone into. "
 },
 {
 	"uri": "/advanced/repositories_manager/github/",
@@ -182,11 +182,18 @@
 	"content": "Docker Compose "
 },
 {
+	"uri": "/building-pipelines/actions/builtin/junit/",
+	"title": "JUnit",
+	"tags": [],
+	"description": "",
+	"content": "JUnit is a builtin action, you can&amp;rsquo;t modify it. This action parse given file to extract Unit Test results. Parameters path: Path to junit xml file "
+},
+{
 	"uri": "/building-pipelines/actions/plugins/",
 	"title": "Plugins Actions",
 	"tags": [],
 	"description": "",
-	"content": ""
+	"content": "CDS Plugin System lets users develop complex actions. See How to write a plugin CDS Administrators have to import plugins on CDS to let user use them. Plugins from CDS Contributions: plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ssh-cmd plugin-tmpl plugin-venom "
 },
 {
 	"uri": "/advanced/repositories_manager/",
@@ -196,6 +203,13 @@
 	"content": "CDS can be linked to following repositories manager : Atlassian Stash Github It allows you to enable some CDS features such as : Create application in CDS from Stash or Github Attach an application to its Stash or Github repository Fully automatic hook management Branch filtering on application workflows Commit logs on pipeline build details Go through this tutorial to enable the link between repositories managers and CDS. You need CDS admin privileges to perform the following steps. Download and install properly the CDS CLI. "
 },
 {
+	"uri": "/building-pipelines/actions/builtin/script/",
+	"title": "Script",
+	"tags": [],
+	"description": "",
+	"content": "Script is a builtin action, you can&amp;rsquo;t modify it. This action execute a script, written in script attribute Parameters script: Content of your script. You can put #!/bin/bash or #!/bin/perl at first line. Make sure that the binary used is in the pre-requisites of action "
+},
+{
 	"uri": "/tags/",
 	"title": "Tags",
 	"tags": [],
@@ -203,11 +217,46 @@
 	"content": ""
 },
 {
+	"uri": "/building-pipelines/actions/user-actions/",
+	"title": "User Actions",
+	"tags": [],
+	"description": "",
+	"content": "CDS User Actions are developed in CDS. There are available on all CDS Installation. Built-in actions : cds-docker-package cds-nexus-upload cds-perl-test "
+},
+{
 	"uri": "/building-pipelines/variables/",
 	"title": "Variables",
 	"tags": [],
 	"description": "",
 	"content": "In CDS, it is possible to define variables at different levels: Project Environment Application Variable types Existing variable types: String Text Boolean Number Password Key Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes: Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.cds.app.VAR}} Environment: {{.cds.env.VAR}} Project: {{.cds.proj.VAR}} Exported variable at build time: {{.cds.build.VAR}} Builtin variables Here is the list of builtin variables, generated for every build: {{.cds.project}} The name of the current project {{.cds.environment}} The name of the current environment {{.cds.application}} The name of the current application {{.cds.pipeline}} The name of the current pipeline {{.cds.stage}} The name of the current stage {{.cds.job}} The name of the current job {{.cds.workspace}} Current job&amp;rsquo;s workspace. It&amp;rsquo;s a directory. In a step script, {{.cds.workspace}} == $HOME {{.cds.version}} The number of the current version {{.cds.parent.application}} The name of the application that triggered the current build {{.cds.parent.pipeline}} The name of the pipeline that triggered the current build {{.cds.triggered_by.email}} Email of the user that run the current build {{.cds.triggered_by.fullname}} Full name of the user that run the current build {{.cds.triggered_by.username}} User that run the current build The .version variable {{.cds.version}} CDS version is a builtin variable equals to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to testing and deployment pipelines. Export a variable inside a step In a step of type script, you can export variable as: $ worker export varname thevalue You can now use {{.cds.build.varname}} in further steps and stages. Shell Environment Variable All CDS variables, except password type can use used as plain environment variable. Theses lines will have the same output echo &#39;{{.cds.parent.application}}&#39; echo $CDS_PARENT_APPLICATION Git variables Here is the list of git variables: {{.git.hash}} {{.git.url}} {{.git.http_url}} {{.git.branch}} {{.git.author}} {{.git.message}} "
+},
+{
+	"uri": "/advanced/write-plugin/",
+	"title": "Write a Plugin",
+	"tags": [],
+	"description": "",
+	"content": "A CDS worker executes job, and job is composed of steps. A step is : a builtin action, as GitClone, etc&amp;hellip; read more a user action read more a Plugin Action A Plugin is a Golang Binary. Take a look at https://github.com/ovh/cds/tree/master/sdk/plugin/dummy/dummy_plugin.go Contribute on https://github.com/ovh/cds/tree/master/contrib/plugins "
+},
+{
+	"uri": "/building-pipelines/actions/user/cds-docker-package/",
+	"title": "cds-docker-package",
+	"tags": [],
+	"description": "",
+	"content": "Build image and push it to docker repository Parameters dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.cds.version}},latest dockerfileDirectory: Directory which contains your Dockerfile. Requirements docker: type:binary Value:docker bash: type:binary Value:bash More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/actions/user/cds-nexus-upload/",
+	"title": "cds-nexus-upload",
+	"tags": [],
+	"description": "",
+	"content": "Upload file on Nexus Parameters artifactId: Artifact id of the artifact login: Login for nexus password: Password for nexus groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload packaging: Packaging type of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact Requirements bash: type:binary Value:bash curl: type:binary Value:curl More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/actions/user/cds-perl-test/",
+	"title": "cds-perl-test",
+	"tags": [],
+	"description": "",
+	"content": "Test with prove on perl source code Parameters testDirectory: Directory where is Perl Source Code Requirements prove: type:binary Value:prove perl: type:binary Value:perl bash: type:binary Value:bash More documentation on Github "
 },
 {
 	"uri": "/_header/",
@@ -221,47 +270,47 @@
 	"title": "plugin-download",
 	"tags": [],
 	"description": "",
-	"content": "More More documentation on Github "
+	"content": "This is a plugin to download file from URL Parameters url: the url of your file filepath: the destination of your file to be copied headers: specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list) More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-group-tmpl/",
 	"title": "plugin-group-tmpl",
 	"tags": [],
 	"description": "",
-	"content": "More More documentation on Github "
+	"content": "This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template. Parameters applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-kafka-publish/",
 	"title": "plugin-kafka-publish",
 	"tags": [],
 	"description": "",
-	"content": "More More documentation on Github "
+	"content": "This action helps you to send data through Kafka across every network. You are able to send a custom &amp;ldquo;message&amp;rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consummer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin. Parameters message: Kafka Message kafkaPassword: Kafka Password topic: Kafka Topic publicKey: GPG Public Key (ASCII armored format) waitForAckTimeout: Ack timeout (seconds). Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. kafkaUser: Kafka User kafkaGroup: Kafka Consumer Group (used for acknowledgment) kafkaAddresses: Kafka Addresses artifacts: Artifacts list (comma separated) waitForAck: Wait for Ack waitForAckTopic: Kafka Topic. Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-marathon/",
 	"title": "plugin-marathon",
 	"tags": [],
 	"description": "",
-	"content": "More More documentation on Github "
+	"content": "This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment. Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull. Parameters password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result. If not set, CDS will consider a successful result if marathon accepts the provided configuration. insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true. url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 user: Marathon User (please use project, application or environment variables) More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-ssh-cmd/",
 	"title": "plugin-ssh-cmd",
 	"tags": [],
 	"description": "",
-	"content": "More More documentation on Github "
+	"content": "This plugin helps you to run cmd on remote server over ssh. Parameters privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-tmpl/",
 	"title": "plugin-tmpl",
 	"tags": [],
 	"description": "",
-	"content": "More More documentation on Github "
+	"content": "This action helps you generates a file using a template file and text/template golang package. Check documentation on text/template for more information https://golang.org/pkg/text/template. Parameters file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list) More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-venom/",
 	"title": "plugin-venom",
 	"tags": [],
 	"description": "",
-	"content": "CDS plugin run venom https://github.com/runabove/venom Parameters path : Path containers yml venom files exclude : exclude some files, one file per line parallel : Launch Test Suites in parallel, default: 2 output : Directory where output xunit result file Add an extra step of type &amp;ldquo;junit&amp;rdquo; on your job to view results on CDS UI. More More documentation on Github "
+	"content": "This plugin helps you to run venom. Venom: https://github.com/runabove/venom. Add an extra step of type junit on your job to view tests results on CDS UI. Parameters exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml More More documentation on Github "
 }]

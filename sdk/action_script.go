@@ -219,6 +219,46 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 	return &a, nil
 }
 
+// ActionInfoMarkdown returns string formatted with markdown
+func ActionInfoMarkdown(a *Action, filename string) string {
+	var sp, rq string
+	for _, p := range a.Parameters {
+		sp += fmt.Sprintf("* **%s**: %s\n", p.Name, p.Description)
+	}
+	if sp == "" {
+		sp = "No Parameter"
+	}
+
+	for _, r := range a.Requirements {
+		rq += fmt.Sprintf("* **%s**: type: %s Value: %s\n", r.Name, r.Type, r.Value)
+	}
+
+	if rq == "" {
+		rq = "No Requirement"
+	}
+
+	info := fmt.Sprintf(`
+%s
+
+## Parameters
+
+%s
+
+## Requirements
+
+%s
+
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/%s)
+
+`,
+		a.Description,
+		sp,
+		rq,
+		filename)
+
+	return info
+}
+
 func loadRemoteScript(url string) (*Action, error) {
 	client := &http.Client{
 		Transport: &httpcontrol.Transport{

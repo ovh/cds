@@ -98,6 +98,5 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 }
 
 func main() {
-	p := VenomPlugin{}
-	plugin.Serve(&p)
+	plugin.Main(VenomPlugin{})
 }

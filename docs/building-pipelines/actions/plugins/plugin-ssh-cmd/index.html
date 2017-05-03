@@ -94,6 +94,17 @@
                 
                 
                 
+                <li data-nav-id="/building-pipelines/actions/user-actions/" class="dd-item 
+                     
+                    ">
+                    <a href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">User Actions</a>
+                
+
+                    
+                </li>
+                
+                
+                
                 <li data-nav-id="/building-pipelines/actions/plugins/" class="dd-item 
                      
                     parent">
@@ -281,10 +292,8 @@
 <ul>
 <li>
 <ul>
-<li>
-<ul>
+<li><a href="#parameters">Parameters</a></li>
 <li><a href="#more">More</a></li>
-</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -302,9 +311,22 @@
 
 
 
-<h3 id="more">More</h3>
+<p>This plugin helps you to run cmd on remote server over ssh.</p>
 
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-ssh-cmd.md">Github</a></p>
+<h2 id="parameters">Parameters</h2>
+
+<ul>
+<li><strong>privateKey</strong>: SSH RSA private key</li>
+<li><strong>hostnames</strong>: Hostnames (comma separated values)</li>
+<li><strong>command</strong>: Command</li>
+<li><strong>timeout</strong>: Timeout (seconds)</li>
+<li><strong>commandTimeout</strong>: Command Timeout (seconds)</li>
+<li><strong>username</strong>: Username</li>
+</ul>
+
+<h2 id="more">More</h2>
+
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-ssh-cmd/README.md">Github</a></p>
 
 
 <footer class=" footline" >

@@ -242,7 +242,10 @@ Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/builtin/">Built-in Actions</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/builtin/">&raquo;</a></p>
+        <p>User actions use built-in action(s) and / or other existing action(s).
+There can be created by CLI and / or Web UI.
+User actions from CDS Contributions :
+Artifact Download Artifact Upload GitClone JUnit Script  <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/builtin/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -263,11 +266,34 @@ Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/">GitClone</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> GitClone is a builtin action, you can&rsquo;t modify it.
-This action can be used to perform a Git Clone.
+        <p>GitClone is a builtin action, you can&rsquo;t modify it.
+This action clone a repository into a new directory.
 Git Clone will be done with a depth of 1.
 You can use a privateKey, this is usually a project or application variable of type key. {{.cds.app.a-key.pub}}
-Parameters  url - mandatory privateKey - optional user - optional password - optional branch - optional commit - optional directory - optional - name of repository per default   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/">&raquo;</a></p>
+Parameters  url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/">JUnit</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p> JUnit is a builtin action, you can&rsquo;t modify it.
+This action parse given file to extract Unit Test results.
+Parameters  path: Path to junit xml file   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -288,7 +314,58 @@ Parameters  url - mandatory privateKey - optional user - optional password - opt
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/">Plugins Actions</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/">&raquo;</a></p>
+        <p>CDS Plugin System lets users develop complex actions. See How to write a plugin
+CDS Administrators have to import plugins on CDS to let user use them.
+Plugins from CDS Contributions:
+plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ssh-cmd plugin-tmpl plugin-venom  <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/builtin/script/">Script</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>Script is a builtin action, you can&rsquo;t modify it.
+This action execute a script, written in script attribute
+Parameters  script: Content of your script. You can put  #!/bin/bash  or
+#!/bin/perl  at first line.
+Make sure that the binary used is in the pre-requisites of action <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/builtin/script/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">User Actions</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>CDS User Actions are developed in CDS. There are available on all CDS Installation.
+Built-in actions :
+cds-docker-package cds-nexus-upload cds-perl-test  <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -313,69 +390,6 @@ Parameters  url - mandatory privateKey - optional user - optional password - opt
  Project Environment Application  Variable types Existing variable types:
  String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
  Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/variables/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/">plugin-download</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/">plugin-group-tmpl</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/">plugin-kafka-publish</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
