@@ -125,7 +125,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 }
 
-func TestInsertComplexeWorkflowWith(t *testing.T) {
+func TestInsertComplexeWorkflow(t *testing.T) {
 	db := test.SetupPG(t)
 
 	key := sdk.RandomString(10)
@@ -218,6 +218,8 @@ func TestInsertComplexeWorkflowWith(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.ID, w1.Root.Pipeline.ID)
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
+
+	Sort(&w)
 
 	assertEqualNode(t, w.Root, w1.Root)
 
