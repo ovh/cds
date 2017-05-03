@@ -91,7 +91,6 @@ func load(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) (
 	}
 
 	res := sdk.Workflow(dbRes)
-	var errPK error
 	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
 	if err := loadWorkflowRoot(db, &res, u); err != nil {
 		return nil, err
