@@ -2,12 +2,13 @@ package sdk
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID         int64         `json:"id" db:"id"`
-	Name       string        `json:"name" db:"name"`
-	ProjectID  int64         `json:"project_id" db:"project_id"`
-	ProjectKey string        `json:"project_key" db:"-"`
-	RootID     int64         `json:"root_id" db:"root_node_id"`
-	Root       *WorkflowNode `json:"root" db:"-"`
+	ID          int64         `json:"id" db:"id"`
+	Name        string        `json:"name" db:"name"`
+	Description string        `json:"description" db:"description"`
+	ProjectID   int64         `json:"project_id" db:"project_id"`
+	ProjectKey  string        `json:"project_key" db:"-"`
+	RootID      int64         `json:"root_id" db:"root_node_id"`
+	Root        *WorkflowNode `json:"root" db:"-"`
 }
 
 //WorkflowNode represents a node in w workflow tree
@@ -25,7 +26,6 @@ type WorkflowNode struct {
 type WorkflowNodeTrigger struct {
 	ID                 int64                      `json:"id" db:"id"`
 	WorkflowNodeID     int64                      `json:"workflow_node_id" db:"workflow_node_id"`
-	WorkflowNode       *WorkflowNode              `json:"workflow_node" db:"-"`
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
 	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`
@@ -51,7 +51,7 @@ type WorkflowNodeContext struct {
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
 type WorkflowNodeHook struct {
 	ID                  int64                      `json:"id" db:"id"`
-	UUID                string                     `json:"string" db:"string"`
+	UUID                string                     `json:"uuid" db:"uuid"`
 	WorkflowNodeID      int64                      `json:"-" db:"workflow_node_id"`
 	WorkflowHookModelID int64                      `json:"-" db:"workflow_hook_model_id"`
 	WorkflowHookModel   WorkflowHookModel          `json:"model" db:"-"`
