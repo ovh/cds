@@ -326,5 +326,5 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 	t.Logf("%s", dump.MustSdump(w2))
 
-	test.NoError(t, Delete(db, w2, nil))
+	test.NoError(t, Delete(db, w2))
 }

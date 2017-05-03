@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS "workflow" (
     project_id BIGINT NOT NULL,
     name TEXT NOT NULL,
     description TEXT NOT NULL,
+    last_modified TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
     root_node_id BIGINT
 );
 

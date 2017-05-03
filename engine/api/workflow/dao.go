@@ -7,7 +7,10 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"fmt"
+
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
@@ -103,6 +106,7 @@ func load(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) (
 
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	w.LastModified = time.Now()
 	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id) VALUES ($1, $2, $3) RETURNING id", w.Name, w.Description, w.ProjectID).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
@@ -119,6 +123,7 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 
 // Update updates a workflow
 func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	w.LastModified = time.Now()
 	dbw := Workflow(*w)
 	if _, err := db.Update(&dbw); err != nil {
 		return sdk.WrapError(err, "Update> Unable to update workflow")
@@ -130,16 +135,41 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 }
 
 // Delete workflow
-func Delete(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+func Delete(db gorp.SqlExecutor, w *sdk.Workflow) error {
+	//Detach root from workflow
+	if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
+		return sdk.WrapError(err, "Delete> Unable to detache workflow root")
+	}
+
+	//Delete root
 	if err := DeleteNode(db, w.Root); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow root")
 	}
 
+	//Delete workflow
 	dbw := Workflow(*w)
 	if _, err := db.Delete(&dbw); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow")
 	}
 
+	return nil
+}
+
+// UpdateLastModified updates the workflow
+func UpdateLastModified(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	t := time.Now()
+
+	if u != nil {
+		cache.SetWithTTL(cache.Key("lastModified", "workflow", fmt.Sprintf("%d", w.ID)), sdk.LastModification{
+			Name:         w.Name,
+			Username:     u.Username,
+			LastModified: t.Unix(),
+		}, 0)
+	}
+
+	if _, err := db.Exec("update workflow set last_modified = $2 where id = $1", w.ID, t); err != nil {
+		return sdk.WrapError(err, "UpdateLastModified> Unable to update workflow")
+	}
 	return nil
 }
 
