@@ -2,11 +2,10 @@
 draft = false
 title = "Worker"
 
-weight = 5
-
 [menu.main]
-parent = "concepts"
-identifier = "concepts-worker"
+parent = "advanced"
+identifier = "advanced-worker"
+weight = 5
 
 +++
 
@@ -25,3 +24,17 @@ Basically, a worker is a binary. This binary can be launched inside a Docker Con
 If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contains a sane installation of "curl".
 
 So, in the case of a worker model of type "docker", the docker image must contains `curl` in PATH.
+
+#### Why would you need to setup your own worker ?
+
+There is several cases where one would need to setup his own worker:
+
+ * Perform incremental build
+ * Build on a specific architecture
+ * Perform integration tests in a specific network
+
+### How does this work ?
+
+Workers authenticate on CDS with a [token]({{< relref "token.md" >}}) and have the same permissions as the user who generated it.
+
+Bottom line, if you can access the application, your worker will too.

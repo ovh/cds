@@ -28,7 +28,7 @@ func helpAction(c *cli.Context) error {
 
 //This shows information about the plugin
 func infoAction(c *cli.Context) error {
-	fmt.Print(plugin.InfoMarkdown(KafkaPlugin{}))
+	fmt.Print(plugin.InfoMarkdown(&KafkaPlugin{}))
 	return nil
 }
 

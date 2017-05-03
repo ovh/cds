@@ -2,7 +2,7 @@
 
 set -e
 
-function generateUserActionDocumentation {
+function generateUserActionsDocumentation {
   for action in `ls ../../contrib/actions/*.hcl`; do
 
   filename=$(basename "$action")
@@ -29,7 +29,7 @@ EOF
   done;
 }
 
-function generatePluginDocumentation {
+function generatePluginsDocumentation {
   for plugin in `ls ../../contrib/plugins/`; do
 
   if [[ "${plugin}" != plugin-* ]]; then
@@ -66,9 +66,46 @@ EOF
   done;
 }
 
-generateUserActionDocumentation
+function generateTemplatesDocumentation {
+  for template in `ls ../../contrib/templates/`; do
 
-generatePluginDocumentation
+  if [[ "${template}" != cds-template-* ]]; then
+    echo "skip ../../contrib/templates/${template}"
+    continue;
+  fi
+
+  OLD=`pwd`
+  TEMPLATE_FILE="$OLD/content/building-pipelines/templates/${template}.md"
+
+  cd ../../contrib/templates/${template}
+
+  echo "Compile template ${template}"
+  go build
+
+  echo "generate ${TEMPLATE_FILE}"
+
+cat << EOF > ${TEMPLATE_FILE}
++++
+title = "${template}"
+chapter = true
+
+[menu.main]
+parent = "templates"
+identifier = "${template}"
+
++++
+EOF
+
+  ./${template} info >> $TEMPLATE_FILE
+
+  cd $OLD
+
+  done;
+}
+
+generateUserActionsDocumentation
+generatePluginsDocumentation
+generateTemplatesDocumentation
 
 hugo -d ../
 hugo server

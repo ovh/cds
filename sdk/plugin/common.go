@@ -46,15 +46,6 @@ type Common struct {
 	Format      string `json:"-" yaml:"-" xml:"-"`
 }
 
-// Plugin have to be implemented by Plugins
-type Plugin interface {
-	Name() string
-	Description() string
-	Author() string
-	Parameters() Parameters
-	Run(a IJob) Result
-}
-
 //SetTrace is for debug
 func SetTrace(traceHandle io.Writer) {
 	Trace = log.New(traceHandle, "TRACE: ", log.Ldate|log.Ltime)
@@ -87,7 +78,7 @@ func (p *Common) Init(o IOptions) string {
 }
 
 // Main func call by plugin, display info only
-func Main(p Plugin) {
+func Main(p CDSAction) {
 	var format string
 	var cmdInfo = &cobra.Command{
 		Use:   "info",
@@ -111,7 +102,7 @@ func Main(p Plugin) {
 }
 
 // InfoMarkdown returns string formatted with markdown
-func InfoMarkdown(pl Plugin) string {
+func InfoMarkdown(pl CDSAction) string {
 	var sp string
 	for k, v := range pl.Parameters().DataDescription {
 		sp += fmt.Sprintf("* **%s**: %s\n", k, v)

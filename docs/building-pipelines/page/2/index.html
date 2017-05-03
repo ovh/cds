@@ -79,6 +79,16 @@
             
             
             
+                <li data-nav-id="/building-pipelines/templates/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/building-pipelines/templates/">Templates</a>
+                
+                
+            </li>
+            
+            
+            
                 <li data-nav-id="/building-pipelines/variables/" class="dd-item {
                      
                     ">
@@ -98,6 +108,15 @@
     ">
     
     <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="" class="dd-item 
+     
+    ">
+    
+    <a href="">worker</a>
         
         
     </li>
@@ -163,7 +182,9 @@
 	
 	    <a class="newer-posts" href="https://ovh.github.com/cds/building-pipelines/">&larr; Pages suivantes</a>
 	
-	<span class="page-number">Page 2 sur 2</span>
+	<span class="page-number">Page 2 sur 3</span>
+	
+	    <a class="older-posts" href="https://ovh.github.com/cds/building-pipelines/page/3/">Pages précédents &rarr;</a>
 	
 </nav>
 
@@ -172,11 +193,35 @@
 
    <article class="post building-pipelines">
     <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/variables/">Variables</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>In CDS, it is possible to define variables at different levels:
+ Project Environment Application  Variable types Existing variable types:
+ String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
+ Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/variables/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/">cds-docker-package</a></h2>
     </header>
     <section class="post-excerpt">
         <p>Build image and push it to docker repository
-Parameters  dockerOpts: Docker options, Enter &ndash;no-cache &ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/">&raquo;</a></p>
+Parameters  dockerfileDirectory: Directory which contains your Dockerfile. dockerOpts: Docker options, Enter &ndash;no-cache &ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -198,7 +243,7 @@ Parameters  dockerOpts: Docker options, Enter &ndash;no-cache &ndash;pull if you
     </header>
     <section class="post-excerpt">
         <p>Upload file on Nexus
-Parameters  artifactId: Artifact id of the artifact login: Login for nexus password: Password for nexus groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. files: Regex of files you want to upload packaging: Packaging type of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/">&raquo;</a></p>
+Parameters  version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. files: Regex of files you want to upload login: Login for nexus password: Password for nexus groupId: Group id of the artifact artifactId: Artifact id of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact packaging: Packaging type of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -220,7 +265,123 @@ Parameters  artifactId: Artifact id of the artifact login: Login for nexus passw
     </header>
     <section class="post-excerpt">
         <p>Test with prove on perl source code
-Parameters  testDirectory: Directory where is Perl Source Code  Requirements  prove: type:binary Value:prove perl: type:binary Value:perl bash: type:binary Value:bash  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/">&raquo;</a></p>
+Parameters  testDirectory: Directory where is Perl Source Code  Requirements  perl: type:binary Value:perl bash: type:binary Value:bash prove: type:binary Value:prove  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-plugin/">cds-template-cds-plugin</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>This template creates a pipeline for building CDS Plugin with:
+ A &ldquo;Commit Stage&rdquo; with one job &ldquo;Compile&rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  repo: Your source code repository package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the plugin. Enter &ldquo;contrib/plugins/your-plugin&rdquo; for github.com/ovh/cds/contrib/plugins/your-plugin   More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-plugin/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-template/">cds-template-cds-template</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>This template creates a pipeline for building CDS Template with:
+ A &ldquo;Commit Stage&rdquo; with one job &ldquo;Compile&rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  repo: Your source code repository package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the template. Enter &ldquo;contrib/templates/your-plugin&rdquo; for github.com/ovh/cds/contrib/templates/your-plugin   More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-template/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-deploy-marathon-app/">cds-template-deploy-marathon-app</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>This template creates:
+ a deployment pipeline with one stage, containing and one job job calls plugin-marathon an application with a variable named &ldquo;marathon.config&rdquo; uses environment variables marathonHost, password and user  Please update Application / Environment Variables after creating application.
+Parameters  docker.image: Your docker image without the tag marathon.appID: Your marathon application ID marathon.config: Content of your marathon.json file  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-deploy-marathon-app/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-only-git-clone-job/">cds-template-only-git-clone-job</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>This template creates:
+ a build pipeline with one stage, containing one job job contains 2 steps: GitClone and a empty script.  Pipeline name contains Application name. If you want to make a reusable pipeline, please consider updating this name after creating application.
+Parameters  repo: Your source code repository  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-only-git-clone-job/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-plain/">cds-template-plain</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>This template creates:
+ a build pipeline with two stages: Commit Stage and Packaging Stage a deploy pipeline with one stage: Deploy Stage  Commit Stage :
+ run git clone run make build  Packaging Stage:
+ run docker build and docker push  Deploy Stage:
+ it&rsquo;s en empty script  Packaging and Deploy are optional.
+Parameters  repo: Your source code repository withPackage: Do you want a Docker Package? <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/templates/cds-template-plain/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -258,137 +419,6 @@ Parameters  url: the url of your file filepath: the destination of your file to 
 
 
 
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/">plugin-group-tmpl</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
-Parameters  applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension)  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/">plugin-kafka-publish</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This action helps you to send data through Kafka across every network. You are able to send a custom &ldquo;message&rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/">plugin-marathon</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment. Your marathon.json file can be templated with cds variables &ldquo;{{.cds.variables}}&rdquo;. Enable &ldquo;waitForDeployment&rdquo; option to ensure deployment is successfull.
-Parameters  password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/">plugin-ssh-cmd</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This plugin helps you to run cmd on remote server over ssh.
-Parameters  privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/">plugin-tmpl</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This action helps you generates a file using a template file and text/template golang package. Check documentation on text/template for more information https://golang.org/pkg/text/template.
-Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/">plugin-venom</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This plugin helps you to run venom. Venom: https://github.com/runabove/venom. Add an extra step of type junit on your job to view tests results on CDS UI.
-Parameters  exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
 
 <div style="margin-bottom:2rem"></div>
 
@@ -396,7 +426,9 @@ Parameters  exclude: Exclude some files, one file per line parallel: Launch Test
 	
 	    <a class="newer-posts" href="https://ovh.github.com/cds/building-pipelines/">&larr; Pages suivantes</a>
 	
-	<span class="page-number">Page 2 sur 2</span>
+	<span class="page-number">Page 2 sur 3</span>
+	
+	    <a class="older-posts" href="https://ovh.github.com/cds/building-pipelines/page/3/">Pages précédents &rarr;</a>
 	
 </nav>
 
@@ -439,6 +471,10 @@ Parameters  exclude: Exclude some files, one file per line parallel: Launch Test
                         
                             
                         
+                    
+                
+            
+                
                     
                 
             

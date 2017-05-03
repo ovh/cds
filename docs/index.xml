@@ -27,7 +27,10 @@ CDS exposes an API available to workers and humans through cli or WebUI.</descri
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/getting-started/concepts/</guid>
-      <description></description>
+      <description>Project A project contains applications, pipelines and environments.
+A project is the first level of permissions management. Any CDS application has to be created inside a project.
+The project key has to be unique amongst all projects in CDS.
+At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one.</description>
     </item>
     
     <item>
@@ -73,22 +76,14 @@ You can define a Step as final. It mean that even if the job is failed, the step
     </item>
     
     <item>
-      <title>Worker</title>
-      <link>https://ovh.github.com/cds/getting-started/concepts/worker/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.com/cds/getting-started/concepts/worker/</guid>
-      <description>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
-Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip;</description>
-    </item>
-    
-    <item>
       <title>Actions</title>
       <link>https://ovh.github.com/cds/building-pipelines/actions/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/</guid>
-      <description></description>
+      <description>Inside a Job, each steps is based on an action.
+Types of actions :
+ Built-in actions, available on each CDS Installation User actions, added by CDS Administrators for now Plugins actions, added by CDS Administrators  </description>
     </item>
     
     <item>
@@ -97,7 +92,7 @@ Building your own worker model enable you to integrate your own tools, or to cus
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/advanced/</guid>
-      <description></description>
+      <description> Hatcheries Repositories Manager Write a Plugin Worker  </description>
     </item>
     
     <item>
@@ -283,6 +278,27 @@ Make sure that the binary used is in the pre-requisites of action</description>
     </item>
     
     <item>
+      <title>Templates</title>
+      <link>https://ovh.github.com/cds/building-pipelines/templates/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/templates/</guid>
+      <description>Templates from CDS Contributions :
+cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-app cds-template-only-git-clone-job cds-template-plain </description>
+    </item>
+    
+    <item>
+      <title>Token</title>
+      <link>https://ovh.github.com/cds/advanced/worker/token/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/worker/token/</guid>
+      <description> Generate a worker key Purpose In order to start a worker, you need to provide a worker key to be able to build your pipelines.
+CLI Run the following command, replace yourgroup with your group
+$ cds generate token -g yourgroup -e persistent  </description>
+    </item>
+    
+    <item>
       <title>User Actions</title>
       <link>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -306,6 +322,27 @@ cds-docker-package cds-nexus-upload cds-perl-test </description>
     </item>
     
     <item>
+      <title>Worker</title>
+      <link>https://ovh.github.com/cds/advanced/worker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/worker/</guid>
+      <description>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
+Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip;</description>
+    </item>
+    
+    <item>
+      <title>Worker Setup</title>
+      <link>https://ovh.github.com/cds/advanced/worker/worker-setup/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/worker/worker-setup/</guid>
+      <description>Introduction Why would you need to setup your own worker ? There is several cases where one would need to setup his own worker:
+ Perform incremental build Build on a specific architecture Perform integration tests in a specific network  How does this work ? Workers authenticate on CDS with a worker key and have the same permissions as the user who generated the key.
+Bottom line, if you can access the application, your worker will too.</description>
+    </item>
+    
+    <item>
       <title>Write a Plugin</title>
       <link>https://ovh.github.com/cds/advanced/write-plugin/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -325,7 +362,7 @@ Contribute on https://github.com/ovh/cds/tree/master/contrib/plugins</descriptio
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/</guid>
       <description>Build image and push it to docker repository
-Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.</description>
+Parameters  dockerfileDirectory: Directory which contains your Dockerfile. dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.</description>
     </item>
     
     <item>
@@ -335,7 +372,7 @@ Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pul
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/</guid>
       <description>Upload file on Nexus
-Parameters  artifactId: Artifact id of the artifact login: Login for nexus password: Password for nexus groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload packaging: Packaging type of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
+Parameters  version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload login: Login for nexus password: Password for nexus groupId: Group id of the artifact artifactId: Artifact id of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact packaging: Packaging type of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
     </item>
     
     <item>
@@ -345,7 +382,63 @@ Parameters  artifactId: Artifact id of the artifact login: Login for nexus passw
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/</guid>
       <description>Test with prove on perl source code
-Parameters  testDirectory: Directory where is Perl Source Code  Requirements  prove: type:binary Value:prove perl: type:binary Value:perl bash: type:binary Value:bash  More documentation on Github</description>
+Parameters  testDirectory: Directory where is Perl Source Code  Requirements  perl: type:binary Value:perl bash: type:binary Value:bash prove: type:binary Value:prove  More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>cds-template-cds-plugin</title>
+      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-plugin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-plugin/</guid>
+      <description>This template creates a pipeline for building CDS Plugin with:
+ A &amp;ldquo;Commit Stage&amp;rdquo; with one job &amp;ldquo;Compile&amp;rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  repo: Your source code repository package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the plugin. Enter &amp;ldquo;contrib/plugins/your-plugin&amp;rdquo; for github.com/ovh/cds/contrib/plugins/your-plugin   More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>cds-template-cds-template</title>
+      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-template/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-template/</guid>
+      <description>This template creates a pipeline for building CDS Template with:
+ A &amp;ldquo;Commit Stage&amp;rdquo; with one job &amp;ldquo;Compile&amp;rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  repo: Your source code repository package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the template. Enter &amp;ldquo;contrib/templates/your-plugin&amp;rdquo; for github.com/ovh/cds/contrib/templates/your-plugin   More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>cds-template-deploy-marathon-app</title>
+      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-deploy-marathon-app/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-deploy-marathon-app/</guid>
+      <description>This template creates:
+ a deployment pipeline with one stage, containing and one job job calls plugin-marathon an application with a variable named &amp;ldquo;marathon.config&amp;rdquo; uses environment variables marathonHost, password and user  Please update Application / Environment Variables after creating application.
+Parameters  docker.image: Your docker image without the tag marathon.appID: Your marathon application ID marathon.config: Content of your marathon.json file  More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>cds-template-only-git-clone-job</title>
+      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-only-git-clone-job/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-only-git-clone-job/</guid>
+      <description>This template creates:
+ a build pipeline with one stage, containing one job job contains 2 steps: GitClone and a empty script.  Pipeline name contains Application name. If you want to make a reusable pipeline, please consider updating this name after creating application.
+Parameters  repo: Your source code repository  More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>cds-template-plain</title>
+      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-plain/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-plain/</guid>
+      <description>This template creates:
+ a build pipeline with two stages: Commit Stage and Packaging Stage a deploy pipeline with one stage: Deploy Stage  Commit Stage :
+ run git clone run make build  Packaging Stage:
+ run docker build and docker push  Deploy Stage:
+ it&amp;rsquo;s en empty script  Packaging and Deploy are optional.
+Parameters  repo: Your source code repository withPackage: Do you want a Docker Package?</description>
     </item>
     
     <item>
@@ -374,7 +467,7 @@ Parameters  url: the url of your file filepath: the destination of your file to 
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/</guid>
       <description>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
-Parameters  applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension)  More More documentation on Github</description>
+Parameters  output: Output path for generated file (default to .out or just trimming .tpl extension) applications: Applications file variables config: Template file to use  More More documentation on Github</description>
     </item>
     
     <item>
@@ -383,7 +476,8 @@ Parameters  applications: Applications file variables config: Template file to u
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/</guid>
-      <description>This action helps you to send data through Kafka across every network. You are able to send a custom &amp;ldquo;message&amp;rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.</description>
+      <description>This action helps you to send data through Kafka across every network.
+You are able to send a custom &amp;quot;message&amp;quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.</description>
     </item>
     
     <item>
@@ -392,8 +486,9 @@ Parameters  applications: Applications file variables config: Template file to u
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</guid>
-      <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment. Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull.
-Parameters  password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over.</description>
+      <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
+Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull.
+Parameters  user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over.</description>
     </item>
     
     <item>
@@ -403,7 +498,7 @@ Parameters  password: Marathon Password (please use project, application or envi
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/</guid>
       <description>This plugin helps you to run cmd on remote server over ssh.
-Parameters  privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username  More More documentation on Github</description>
+Parameters  command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values)  More More documentation on Github</description>
     </item>
     
     <item>
@@ -412,7 +507,8 @@ Parameters  privateKey: SSH RSA private key hostnames: Hostnames (comma separate
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/</guid>
-      <description>This action helps you generates a file using a template file and text/template golang package. Check documentation on text/template for more information https://golang.org/pkg/text/template.
+      <description>This action helps you generates a file using a template file and text/template golang package.
+Check documentation on text/template for more information https://golang.org/pkg/text/template.
 Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github</description>
     </item>
     
@@ -422,8 +518,9 @@ Parameters  file: Template file to use output: Output path for generated file (d
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/</guid>
-      <description>This plugin helps you to run venom. Venom: https://github.com/runabove/venom. Add an extra step of type junit on your job to view tests results on CDS UI.
-Parameters  exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files.</description>
+      <description>This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
+Add an extra step of type junit on your job to view tests results on CDS UI.
+Parameters  path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error  More More documentation on Github</description>
     </item>
     
   </channel>

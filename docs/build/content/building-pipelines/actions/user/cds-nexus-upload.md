@@ -12,16 +12,16 @@ Upload file on Nexus
 
 ## Parameters
 
-* **artifactId**: Artifact id of the artifact
+* **version**: Version of the artifact. Supports resolving of 'LATEST', 'RELEASE' and snapshot versions ('1.0-SNAPSHOT') too.
+* **files**: Regex of files you want to upload
 * **login**: Login for nexus
 * **password**: Password for nexus
 * **groupId**: Group id of the artifact
-* **version**: Version of the artifact. Supports resolving of 'LATEST', 'RELEASE' and snapshot versions ('1.0-SNAPSHOT') too.
-* **files**: Regex of files you want to upload
-* **packaging**: Packaging type of the artifact
+* **artifactId**: Artifact id of the artifact
 * **url**: Nexus URL
 * **repository**: Nexus repository that the artifact is contained in
 * **extension**: Extension of the artifact
+* **packaging**: Packaging type of the artifact
 
 
 ## Requirements

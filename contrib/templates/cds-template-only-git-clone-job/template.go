@@ -16,6 +16,7 @@ func (t *TemplateOnlyGitCloneJob) Name() string {
 func (t *TemplateOnlyGitCloneJob) Description() string {
 	return `
 This template creates:
+
 - a build pipeline with	one stage, containing one job
 - job contains 2 steps: GitClone and a empty script.
 
@@ -110,6 +111,5 @@ echo "TODO"`,
 }
 
 func main() {
-	p := TemplateOnlyGitCloneJob{}
-	template.Serve(&p)
+	template.Main(&TemplateOnlyGitCloneJob{})
 }

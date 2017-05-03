@@ -214,6 +214,16 @@
             
             
             
+                <li data-nav-id="/building-pipelines/templates/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/building-pipelines/templates/">Templates</a>
+                
+                
+            </li>
+            
+            
+            
                 <li data-nav-id="/building-pipelines/variables/" class="dd-item {
                      
                     ">
@@ -233,6 +243,15 @@
     ">
     
     <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="" class="dd-item 
+     
+    ">
+    
+    <a href="">worker</a>
         
         
     </li>
@@ -311,12 +330,14 @@
 
 
 
-<p>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
-Your marathon.json file can be templated with cds variables &ldquo;{{.cds.variables}}&rdquo;. Enable &ldquo;waitForDeployment&rdquo; option to ensure deployment is successfull.</p>
+<p>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.</p>
+
+<p>Your marathon.json file can be templated with cds variables &ldquo;{{.cds.variables}}&rdquo;. Enable &ldquo;waitForDeployment&rdquo; option to ensure deployment is successfull.</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>user</strong>: Marathon User (please use project, application or environment variables)</li>
 <li><strong>password</strong>: Marathon Password (please use project, application or environment variables)</li>
 <li><strong>configuration</strong>: Marathon application configuration file (json format)</li>
 <li><strong>waitForDeployment</strong>: Wait for instances deployment.
@@ -325,7 +346,6 @@ If not set, CDS will consider a successful result if marathon accepts the provid
 <li><strong>insecureSkipVerify</strong>: Skip SSL Verify if you want to use self-signed certificate</li>
 <li><strong>timeout</strong>: Marathon deployment timeout (seconds). Used only if &ldquo;waitForDeployment&rdquo; is true.</li>
 <li><strong>url</strong>: Marathon URL <a href="http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083">http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083</a></li>
-<li><strong>user</strong>: Marathon User (please use project, application or environment variables)</li>
 </ul>
 
 <h2 id="more">More</h2>

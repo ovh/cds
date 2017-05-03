@@ -170,6 +170,16 @@
             
             
             
+                <li data-nav-id="/building-pipelines/templates/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/building-pipelines/templates/">Templates</a>
+                
+                
+            </li>
+            
+            
+            
                 <li data-nav-id="/building-pipelines/variables/" class="dd-item {
                      
                     ">
@@ -189,6 +199,15 @@
     ">
     
     <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="" class="dd-item 
+     
+    ">
+    
+    <a href="">worker</a>
         
         
     </li>
@@ -272,6 +291,7 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>dockerfileDirectory</strong>: Directory which contains your Dockerfile.</li>
 <li><strong>dockerOpts</strong>: Docker options, Enter &ndash;no-cache &ndash;pull if you want for example</li>
 <li><strong>dockerRegistry</strong>: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag</li>
 <li><strong>imageName</strong>: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag</li>
@@ -279,7 +299,6 @@
 Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS.
 You can use many tags: firstTag,SecondTag
 Example : {{.cds.version}},latest</li>
-<li><strong>dockerfileDirectory</strong>: Directory which contains your Dockerfile.</li>
 </ul>
 
 <h2 id="requirements">Requirements</h2>

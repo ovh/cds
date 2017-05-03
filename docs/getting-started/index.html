@@ -112,6 +112,15 @@
         
     </li>
 
+    <li data-nav-id="" class="dd-item 
+     
+    ">
+    
+    <a href="">worker</a>
+        
+        
+    </li>
+
 
 
 
@@ -250,7 +259,10 @@ CDS exposes an API available to workers and humans through cli or WebUI. <a clas
         <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/concepts/">Concepts</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/">&raquo;</a></p>
+        <p>Project A project contains applications, pipelines and environments.
+A project is the first level of permissions management. Any CDS application has to be created inside a project.
+The project key has to be unique amongst all projects in CDS.
+At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one. <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -356,28 +368,6 @@ You can define a Step as final. It mean that even if the job is failed, the step
 
 
 
-   <article class="post getting-started">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/concepts/worker/">Worker</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
-Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &hellip; <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/worker/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
 
 <div style="margin-bottom:2rem"></div>
 
@@ -428,6 +418,10 @@ Building your own worker model enable you to integrate your own tools, or to cus
                         
                             
                         
+                    
+                
+            
+                
                     
                 
             

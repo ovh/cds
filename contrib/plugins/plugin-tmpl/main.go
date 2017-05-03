@@ -6,5 +6,5 @@ import (
 
 // Plugin entrypoint
 func main() {
-	plugin.Main(Plugin{})
+	plugin.Main(&Plugin{})
 }

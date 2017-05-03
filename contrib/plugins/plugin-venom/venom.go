@@ -29,7 +29,9 @@ func (s VenomPlugin) Name() string {
 
 // Description returns the plugin description
 func (s VenomPlugin) Description() string {
-	return "This plugin helps you to run venom. Venom: https://github.com/runabove/venom. Add an extra step of type junit on your job to view tests results on CDS UI."
+	return `This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
+
+Add an extra step of type junit on your job to view tests results on CDS UI.`
 }
 
 // Author returns the plugin author's name
@@ -98,5 +100,5 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 }
 
 func main() {
-	plugin.Main(VenomPlugin{})
+	plugin.Main(&VenomPlugin{})
 }

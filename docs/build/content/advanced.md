@@ -1,12 +1,11 @@
 +++
-draft = false
 title = "Advanced"
-description = ""
 
 [menu.main]
 parent = ""
 identifier = "advanced"
-weight = 10
+weight = 6
 
 +++
- 
+
+{{%children style="h2"%}}
