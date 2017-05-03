@@ -109,6 +109,10 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
+	if w.Root == nil {
+		return sdk.ErrWorkflowInvalidRoot
+	}
+
 	if err := insertOrUpdateNode(db, w, w.Root, u); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow root node")
 	}
