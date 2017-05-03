@@ -242,3 +242,88 @@ func assertEqualNode(t *testing.T, n1 *sdk.WorkflowNode, n2 *sdk.WorkflowNode) {
 	}
 
 }
+
+func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
+	db := test.SetupPG(t)
+
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip, nil))
+
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip2, nil))
+
+	app := sdk.Application{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "app1",
+	}
+
+	test.NoError(t, application.Insert(db, proj, &app, nil))
+
+	app2 := sdk.Application{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "app2",
+	}
+
+	test.NoError(t, application.Insert(db, proj, &app2, nil))
+
+	env := sdk.Environment{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "env1",
+	}
+
+	test.NoError(t, environment.InsertEnvironment(db, &env))
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Context: &sdk.WorkflowNodeContext{
+				Application: &app,
+				Environment: &env,
+			},
+		},
+	}
+
+	test.NoError(t, Insert(db, &w, nil))
+
+	w1, err := Load(db, key, "test_1", nil)
+	test.NoError(t, err)
+
+	t.Logf("%s", dump.MustSdump(w1))
+
+	w1.Name = "test_2"
+	w1.Root.PipelineID = pip2.ID
+	w1.Root.Context.ApplicationID = app2.ID
+
+	Update(db, w1, nil)
+
+	w2, err := Load(db, key, "test_2", nil)
+	test.NoError(t, err)
+
+	assert.Equal(t, w1.ID, w2.ID)
+	assert.Equal(t, w1.Root.Context.ApplicationID, w2.Root.Context.Application.ID)
+	assert.Equal(t, w1.Root.Context.EnvironmentID, w2.Root.Context.Environment.ID)
+
+	t.Logf("%s", dump.MustSdump(w2))
+
+}

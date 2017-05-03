@@ -148,13 +148,16 @@ func InsertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	}
 
 	//Delete old node
+	var isRoot bool
 	if oldNode != nil {
 		if w.Root.ID != n.ID {
 			if err := DeleteNode(db, oldNode); err != nil {
 				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow node %d", oldNode.ID)
 			}
 		} else {
+			isRoot = true
 			//Update the root node
+			log.Debug("InsertOrUpdateNode> Updating root node %d", oldNode.ID)
 			dbwn := Node(*n)
 			if _, err := db.Update(&dbwn); err != nil {
 				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow root node")
@@ -164,16 +167,17 @@ func InsertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 			}
 		}
 	}
-
-	//Insert new node
-	dbwn := Node(*n)
-	if err := db.Insert(&dbwn); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
+	if !isRoot {
+		//Insert new node
+		dbwn := Node(*n)
+		if err := db.Insert(&dbwn); err != nil {
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
+		}
+		n.ID = dbwn.ID
 	}
-	n.ID = dbwn.ID
 
 	//Insert context
-	n.Context.WorkflowNodeID = dbwn.ID
+	n.Context.WorkflowNodeID = n.ID
 	if err := db.QueryRow("INSERT INTO workflow_node_context (workflow_node_id) VALUES ($1) RETURNING id", n.Context.WorkflowNodeID).Scan(&n.Context.ID); err != nil {
 		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node context")
 	}
