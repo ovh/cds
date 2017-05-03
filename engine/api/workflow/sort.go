@@ -7,18 +7,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// Sort sorts all the workflow tree
 func Sort(w *sdk.Workflow) {
-	SortNode(w.Root)
+	sortNode(w.Root)
 }
 
-func SortNode(n *sdk.WorkflowNode) {
-	SortNodeHooks(n.Hooks)
-	SortNodeTriggers(n.Triggers)
+func sortNode(n *sdk.WorkflowNode) {
+	sortNodeHooks(n.Hooks)
+	sortNodeTriggers(n.Triggers)
 }
 
-func SortNodeHooks(hooks []sdk.WorkflowNodeHook) {
+func sortNodeHooks(hooks []sdk.WorkflowNodeHook) {
 	for _, h := range hooks {
-		SortConditions(h.Conditions)
+		sortConditions(h.Conditions)
 	}
 
 	sort.Slice(hooks, func(i, j int) bool {
@@ -26,10 +27,10 @@ func SortNodeHooks(hooks []sdk.WorkflowNodeHook) {
 	})
 }
 
-func SortNodeTriggers(triggers []sdk.WorkflowNodeTrigger) {
+func sortNodeTriggers(triggers []sdk.WorkflowNodeTrigger) {
 	for _, t := range triggers {
-		SortConditions(t.Conditions)
-		SortNodeHooks(t.WorkflowDestNode.Hooks)
+		sortConditions(t.Conditions)
+		sortNodeHooks(t.WorkflowDestNode.Hooks)
 	}
 
 	sort.Slice(triggers, func(i, j int) bool {
@@ -64,7 +65,7 @@ func SortNodeTriggers(triggers []sdk.WorkflowNodeTrigger) {
 	})
 }
 
-func SortConditions(conditions []sdk.WorkflowTriggerCondition) {
+func sortConditions(conditions []sdk.WorkflowTriggerCondition) {
 	sort.Slice(conditions, func(i, j int) bool {
 		return strings.Compare(conditions[i].Variable, conditions[j].Variable) < 0
 	})
