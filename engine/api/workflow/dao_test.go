@@ -226,8 +226,8 @@ func TestInsertComplexeWorkflowWith(t *testing.T) {
 }
 
 func assertEqualNode(t *testing.T, n1 *sdk.WorkflowNode, n2 *sdk.WorkflowNode) {
-	SortNode(n1)
-	SortNode(n2)
+	sortNode(n1)
+	sortNode(n2)
 
 	test.Equal(t, len(n1.Hooks), len(n2.Hooks))
 	test.Equal(t, len(n1.Triggers), len(n2.Triggers))
