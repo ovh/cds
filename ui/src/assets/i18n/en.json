@@ -90,6 +90,7 @@
 
   "common_action" : "Action",
   "common_advanced" : "Advanced",
+  "common_application": "Application",
   "common_applications" : "Applications",
   "common_artifact" : "Artifact",
   "common_artifacts" : "Artifacts",
@@ -385,7 +386,14 @@
   "wizard_app_template" : "Apply a template",
   "wizard_ssh_key_name" : "Ssh key name",
 
+  "workflow_added" : "Workflow added",
+  "workflow_create" : "Create a workflow",
+  "workflow_description" : "Workflow description",
+  "workflow_name" : "Workflow name",
   "workflow_orientation_horizontal" : "Horizontal",
   "workflow_orientation_vertical" : "Vertical",
-  "workflow_orientation_tree" : "Tree"
+  "workflow_orientation_tree" : "Tree",
+  "workflow_root_context_application" : "Application (optionnal)",
+  "workflow_root_context_environment" : "Environnment (optionnal)",
+  "workflow_root_context_pipeline" : "Pipeline"
 }

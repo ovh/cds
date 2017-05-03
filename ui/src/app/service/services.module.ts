@@ -33,6 +33,8 @@ import {ApplicationAuditService} from './application/application.audit.service';
 import {WorkerModelService} from './worker/worker.model.service';
 import {LanguageStore} from './language/language.store';
 import {NotificationService} from './notification/notification.service';
+import {WorkflowService} from './workflow/workflow.service';
+import {WorkflowStore} from './workflow/workflow.store';
 
 @NgModule({})
 export class ServicesModule {
@@ -71,12 +73,14 @@ export class ServicesModule {
                 UserService,
                 VariableService,
                 WarningStore,
+                WorkerModelService,
+                WorkflowService, WorkflowStore,
                 {
                     provide: Http,
                     useFactory: (httpFactory),
                     deps: [XHRBackend, RequestOptions, ToastService, AuthentificationStore, Router]
                 },
-                WorkerModelService
+
             ]
         };
     }
@@ -119,5 +123,6 @@ export {
     VariableService,
     WarningStore,
     WorkerModelService,
+    WorkflowStore,
     Http
 }
