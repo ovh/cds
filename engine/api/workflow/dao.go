@@ -84,6 +84,7 @@ func load(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) (
 	delta := time.Since(t0).Seconds()
 
 	log.Debug("Load> Load workflow (%s/%s)%d took %.3f seconds", res.ProjectKey, res.Name, res.ID, delta)
+	Sort(&res)
 	return &res, nil
 
 }
