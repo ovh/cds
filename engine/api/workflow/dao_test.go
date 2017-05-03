@@ -325,4 +325,6 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w1.Root.Context.EnvironmentID, w2.Root.Context.Environment.ID)
 
 	t.Logf("%s", dump.MustSdump(w2))
+
+	test.NoError(t, Delete(db, w2, nil))
 }

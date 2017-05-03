@@ -129,6 +129,20 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	return nil
 }
 
+// Delete workflow
+func Delete(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	if err := DeleteNode(db, w.Root); err != nil {
+		return sdk.WrapError(err, "Delete> Unable to delete workflow root")
+	}
+
+	dbw := Workflow(*w)
+	if _, err := db.Delete(&dbw); err != nil {
+		return sdk.WrapError(err, "Delete> Unable to delete workflow")
+	}
+
+	return nil
+}
+
 // InsertOrUpdateNode insert or update a node for the workflow
 func InsertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User) error {
 	n.WorkflowID = w.ID
