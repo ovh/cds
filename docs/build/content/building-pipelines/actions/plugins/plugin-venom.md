@@ -8,17 +8,19 @@ identifier = "plugin-venom"
 
 +++
 
-CDS plugin run venom https://github.com/runabove/venom
+This plugin helps you to run venom. Venom: https://github.com/runabove/venom. Add an extra step of type junit on your job to view tests results on CDS UI.
 
-### Parameters
+## Parameters
 
-- **path** : Path containers yml venom files
-- **exclude** : exclude some files, one file per line
-- **parallel** : Launch Test Suites in parallel, default: 2
-- **output** : Directory where output xunit result file
+* **exclude**: Exclude some files, one file per line
+* **parallel**: Launch Test Suites in parallel. Enter here number of routines
+* **output**: Directory where output xunit result file
+* **details**: Output Details Level: low, medium, high
+* **loglevel**: Log Level: debug, info, warn or error
+* **path**: Path containers yml venom files. Format: adirectory/, ./*aTest.yml, ./foo/b*/**/z*.yml
 
-Add an extra step of type "junit" on your job to view results on CDS UI.
 
-### More
+## More
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-venom.md)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-venom/README.md)
+

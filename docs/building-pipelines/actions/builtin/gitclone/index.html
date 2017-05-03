@@ -135,8 +135,41 @@
                         </li>
                         
                     
+                        
+                        <li data-nav-id="/building-pipelines/actions/builtin/junit/" class="dd-item 
+                             
+                            ">
+                            <a href="https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/">JUnit</a>
+                        
+
+                            
+                        </li>
+                        
+                    
+                        
+                        <li data-nav-id="/building-pipelines/actions/builtin/script/" class="dd-item 
+                             
+                            ">
+                            <a href="https://ovh.github.com/cds/building-pipelines/actions/builtin/script/">Script</a>
+                        
+
+                            
+                        </li>
+                        
+                    
                     </ul>
                     
+                    
+                </li>
+                
+                
+                
+                <li data-nav-id="/building-pipelines/actions/user-actions/" class="dd-item 
+                     
+                    ">
+                    <a href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">User Actions</a>
+                
+
                     
                 </li>
                 
@@ -257,7 +290,7 @@
 
 <p><strong>GitClone</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action can be used to perform a Git Clone.</p>
+<p>This action clone a repository into a new directory.</p>
 
 <p>Git Clone will be done with a <code>depth</code> of 1.</p>
 
@@ -266,13 +299,13 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>url - mandatory</li>
-<li>privateKey - optional</li>
-<li>user - optional</li>
-<li>password - optional</li>
-<li>branch - optional</li>
-<li>commit - optional</li>
-<li>directory - optional - name of repository per default</li>
+<li>url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.</li>
+<li>privateKey - optional - the private key to be able to git clone from ssh</li>
+<li>user - optional - the user to be able to git clone from https with authentication</li>
+<li>password - optional - the password to be able to git clone from https with authentication</li>
+<li>branch - optional - Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.git.branch}} branch instead.</li>
+<li>commit - optional - the current branch head (HEAD) to the commit</li>
+<li>directory - optional - the name of a directory to clone into.</li>
 </ul>
 
 
@@ -315,10 +348,32 @@
                     
                 
             
+                
+                    
+                        
+                        
+                            
+                                
+                            
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                            
+                        
+                    
+                
+            
 
             
                 <a class="nav nav-prev" href="https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-upload/" title="Artifact Upload"> <i class="fa fa-chevron-left"></i></a>
             
+            
+                <a class="nav nav-next" href="https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/" title="JUnit" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
             
         
     </div>

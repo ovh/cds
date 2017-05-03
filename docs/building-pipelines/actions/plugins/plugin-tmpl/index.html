@@ -94,6 +94,17 @@
                 
                 
                 
+                <li data-nav-id="/building-pipelines/actions/user-actions/" class="dd-item 
+                     
+                    ">
+                    <a href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">User Actions</a>
+                
+
+                    
+                </li>
+                
+                
+                
                 <li data-nav-id="/building-pipelines/actions/plugins/" class="dd-item 
                      
                     parent">
@@ -281,10 +292,8 @@
 <ul>
 <li>
 <ul>
-<li>
-<ul>
+<li><a href="#parameters">Parameters</a></li>
 <li><a href="#more">More</a></li>
-</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -302,9 +311,20 @@
 
 
 
-<h3 id="more">More</h3>
+<p>This action helps you generates a file using a template file and text/template golang package.
+Check documentation on text/template for more information <a href="https://golang.org/pkg/text/template">https://golang.org/pkg/text/template</a>.</p>
 
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-tmpl.md">Github</a></p>
+<h2 id="parameters">Parameters</h2>
+
+<ul>
+<li><strong>file</strong>: Template file to use</li>
+<li><strong>output</strong>: Output path for generated file (default to <file>.out or just trimming .tpl extension)</li>
+<li><strong>params</strong>: Parameters to pass on the template file (key=value newline separated list)</li>
+</ul>
+
+<h2 id="more">More</h2>
+
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-tmpl/README.md">Github</a></p>
 
 
 <footer class=" footline" >

@@ -8,7 +8,16 @@ identifier = "plugin-download"
 
 +++
 
-### More
+This is a plugin to download file from URL
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-download.md)
+## Parameters
+
+* **url**: the url of your file
+* **filepath**: the destination of your file to be copied
+* **headers**: specific headers to add to your request ("headerName"="value" newline separated list)
+
+
+## More
+
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-download/README.md)
 

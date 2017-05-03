@@ -1,24 +1,51 @@
 #!/bin/bash
 
-
 set -e
 
-for plugin in `ls ../../contrib/plugins/`; do
+function generateUserActionDocumentation {
+  for action in `ls ../../contrib/actions/*.hcl`; do
 
-# it's not a directory
-if [ ! -d "../../contrib/plugins/plugin/${plugin}" ]; then
-  continue;
-fi
+  filename=$(basename "$action")
+  actionName=${filename/.hcl/}
 
-PLUGIN_FILE="content/building-pipelines/actions/plugins/${plugin}.md"
+  ACTION_FILE="content/building-pipelines/actions/user/${actionName}.md"
 
-if [ -f ${PLUGIN_FILE} ]; then
-  continue;
-else
-  echo "file ${PLUGIN_FILE} already exists"
-fi;
+  echo "generate ${ACTION_FILE}"
 
-echo "generate ${PLUGIN_FILE}"
+cat << EOF > ${ACTION_FILE}
++++
+title = "${actionName}"
+chapter = true
+
+[menu.main]
+parent = "actions-user"
+identifier = "${actionName}"
+
++++
+EOF
+
+  cds action doc ../../contrib/actions/${action} >> $ACTION_FILE
+
+  done;
+}
+
+function generatePluginDocumentation {
+  for plugin in `ls ../../contrib/plugins/`; do
+
+  if [[ "${plugin}" != plugin-* ]]; then
+    echo "skip ../../contrib/plugins/${plugin}"
+    continue;
+  fi
+
+  OLD=`pwd`
+  PLUGIN_FILE="$OLD/content/building-pipelines/actions/plugins/${plugin}.md"
+
+  cd ../../contrib/plugins/${plugin}
+
+  echo "Compile plugin ${plugin}"
+  go build
+
+  echo "generate ${PLUGIN_FILE}"
 
 cat << EOF > ${PLUGIN_FILE}
 +++
@@ -30,13 +57,18 @@ parent = "actions-plugins"
 identifier = "${plugin}"
 
 +++
-
-### More
-
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/${plugin}.md)
-
 EOF
 
-done;
+  ./${plugin} info >> $PLUGIN_FILE
 
-hugo -d ../ ; hugo server
+  cd $OLD
+
+  done;
+}
+
+generateUserActionDocumentation
+
+generatePluginDocumentation
+
+hugo -d ../
+hugo server

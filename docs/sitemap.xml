@@ -110,6 +110,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/</loc>
   </url>
   
@@ -118,12 +122,36 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/script/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/tags/</loc>
     <priority>0</priority>
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/building-pipelines/variables/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/write-plugin/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/</loc>
   </url>
   
   <url>

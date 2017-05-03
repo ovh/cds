@@ -148,7 +148,10 @@ Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/</guid>
-      <description></description>
+      <description>User actions use built-in action(s) and / or other existing action(s).
+There can be created by CLI and / or Web UI.
+User actions from CDS Contributions :
+Artifact Download Artifact Upload GitClone JUnit Script </description>
     </item>
     
     <item>
@@ -178,11 +181,11 @@ About CDS Concepts Installation  </description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/</guid>
-      <description> GitClone is a builtin action, you can&amp;rsquo;t modify it.
-This action can be used to perform a Git Clone.
+      <description>GitClone is a builtin action, you can&amp;rsquo;t modify it.
+This action clone a repository into a new directory.
 Git Clone will be done with a depth of 1.
 You can use a privateKey, this is usually a project or application variable of type key. {{.cds.app.a-key.pub}}
-Parameters  url - mandatory privateKey - optional user - optional password - optional branch - optional commit - optional directory - optional - name of repository per default  </description>
+Parameters  url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.</description>
     </item>
     
     <item>
@@ -233,12 +236,26 @@ We will create a model called docker:
     </item>
     
     <item>
+      <title>JUnit</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/</guid>
+      <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
+This action parse given file to extract Unit Test results.
+Parameters  path: Path to junit xml file  </description>
+    </item>
+    
+    <item>
       <title>Plugins Actions</title>
       <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/</guid>
-      <description></description>
+      <description>CDS Plugin System lets users develop complex actions. See How to write a plugin
+CDS Administrators have to import plugins on CDS to let user use them.
+Plugins from CDS Contributions:
+plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ssh-cmd plugin-tmpl plugin-venom </description>
     </item>
     
     <item>
@@ -253,6 +270,30 @@ We will create a model called docker:
     </item>
     
     <item>
+      <title>Script</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/script/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/script/</guid>
+      <description>Script is a builtin action, you can&amp;rsquo;t modify it.
+This action execute a script, written in script attribute
+Parameters  script: Content of your script. You can put  #!/bin/bash  or
+#!/bin/perl  at first line.
+Make sure that the binary used is in the pre-requisites of action</description>
+    </item>
+    
+    <item>
+      <title>User Actions</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</guid>
+      <description>CDS User Actions are developed in CDS. There are available on all CDS Installation.
+Built-in actions :
+cds-docker-package cds-nexus-upload cds-perl-test </description>
+    </item>
+    
+    <item>
       <title>Variables</title>
       <link>https://ovh.github.com/cds/building-pipelines/variables/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -262,6 +303,49 @@ We will create a model called docker:
  Project Environment Application  Variable types Existing variable types:
  String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
  Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.</description>
+    </item>
+    
+    <item>
+      <title>Write a Plugin</title>
+      <link>https://ovh.github.com/cds/advanced/write-plugin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/advanced/write-plugin/</guid>
+      <description>A CDS worker executes job, and job is composed of steps.
+A step is :
+ a builtin action, as GitClone, etc&amp;hellip; read more a user action read more a Plugin Action  A Plugin is a Golang Binary.
+Take a look at https://github.com/ovh/cds/tree/master/sdk/plugin/dummy/dummy_plugin.go
+Contribute on https://github.com/ovh/cds/tree/master/contrib/plugins</description>
+    </item>
+    
+    <item>
+      <title>cds-docker-package</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/</guid>
+      <description>Build image and push it to docker repository
+Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.</description>
+    </item>
+    
+    <item>
+      <title>cds-nexus-upload</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/</guid>
+      <description>Upload file on Nexus
+Parameters  artifactId: Artifact id of the artifact login: Login for nexus password: Password for nexus groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload packaging: Packaging type of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>cds-perl-test</title>
+      <link>https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/</guid>
+      <description>Test with prove on perl source code
+Parameters  testDirectory: Directory where is Perl Source Code  Requirements  prove: type:binary Value:prove perl: type:binary Value:perl bash: type:binary Value:bash  More documentation on Github</description>
     </item>
     
     <item>
@@ -279,7 +363,8 @@ We will create a model called docker:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/</guid>
-      <description>More More documentation on Github</description>
+      <description>This is a plugin to download file from URL
+Parameters  url: the url of your file filepath: the destination of your file to be copied headers: specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list)  More More documentation on Github</description>
     </item>
     
     <item>
@@ -288,7 +373,8 @@ We will create a model called docker:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/</guid>
-      <description>More More documentation on Github</description>
+      <description>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
+Parameters  applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension)  More More documentation on Github</description>
     </item>
     
     <item>
@@ -297,7 +383,7 @@ We will create a model called docker:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/</guid>
-      <description>More More documentation on Github</description>
+      <description>This action helps you to send data through Kafka across every network. You are able to send a custom &amp;ldquo;message&amp;rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.</description>
     </item>
     
     <item>
@@ -306,7 +392,8 @@ We will create a model called docker:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</guid>
-      <description>More More documentation on Github</description>
+      <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment. Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull.
+Parameters  password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over.</description>
     </item>
     
     <item>
@@ -315,7 +402,8 @@ We will create a model called docker:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/</guid>
-      <description>More More documentation on Github</description>
+      <description>This plugin helps you to run cmd on remote server over ssh.
+Parameters  privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username  More More documentation on Github</description>
     </item>
     
     <item>
@@ -324,7 +412,8 @@ We will create a model called docker:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/</guid>
-      <description>More More documentation on Github</description>
+      <description>This action helps you generates a file using a template file and text/template golang package. Check documentation on text/template for more information https://golang.org/pkg/text/template.
+Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github</description>
     </item>
     
     <item>
@@ -333,9 +422,8 @@ We will create a model called docker:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/</guid>
-      <description>CDS plugin run venom https://github.com/runabove/venom
-Parameters  path : Path containers yml venom files exclude : exclude some files, one file per line parallel : Launch Test Suites in parallel, default: 2 output : Directory where output xunit result file  Add an extra step of type &amp;ldquo;junit&amp;rdquo; on your job to view results on CDS UI.
-More More documentation on Github</description>
+      <description>This plugin helps you to run venom. Venom: https://github.com/runabove/venom. Add an extra step of type junit on your job to view tests results on CDS UI.
+Parameters  exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files.</description>
     </item>
     
   </channel>

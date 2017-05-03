@@ -94,6 +94,17 @@
                 
                 
                 
+                <li data-nav-id="/building-pipelines/actions/user-actions/" class="dd-item 
+                     
+                    ">
+                    <a href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">User Actions</a>
+                
+
+                    
+                </li>
+                
+                
+                
                 <li data-nav-id="/building-pipelines/actions/plugins/" class="dd-item 
                      
                     parent">
@@ -281,11 +292,8 @@
 <ul>
 <li>
 <ul>
-<li>
-<ul>
 <li><a href="#parameters">Parameters</a></li>
 <li><a href="#more">More</a></li>
-</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -303,22 +311,22 @@
 
 
 
-<p>CDS plugin run venom <a href="https://github.com/runabove/venom">https://github.com/runabove/venom</a></p>
+<p>This plugin helps you to run venom. Venom: <a href="https://github.com/runabove/venom">https://github.com/runabove/venom</a>. Add an extra step of type junit on your job to view tests results on CDS UI.</p>
 
-<h3 id="parameters">Parameters</h3>
+<h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>path</strong> : Path containers yml venom files</li>
-<li><strong>exclude</strong> : exclude some files, one file per line</li>
-<li><strong>parallel</strong> : Launch Test Suites in parallel, default: 2</li>
-<li><strong>output</strong> : Directory where output xunit result file</li>
+<li><strong>exclude</strong>: Exclude some files, one file per line</li>
+<li><strong>parallel</strong>: Launch Test Suites in parallel. Enter here number of routines</li>
+<li><strong>output</strong>: Directory where output xunit result file</li>
+<li><strong>details</strong>: Output Details Level: low, medium, high</li>
+<li><strong>loglevel</strong>: Log Level: debug, info, warn or error</li>
+<li><strong>path</strong>: Path containers yml venom files. Format: adirectory/, ./<em>aTest.yml, ./foo/b</em>/*<em>/z</em>.yml</li>
 </ul>
 
-<p>Add an extra step of type &ldquo;junit&rdquo; on your job to view results on CDS UI.</p>
+<h2 id="more">More</h2>
 
-<h3 id="more">More</h3>
-
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-venom.md">Github</a></p>
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-venom/README.md">Github</a></p>
 
 
 <footer class=" footline" >
