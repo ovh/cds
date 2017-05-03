@@ -11,7 +11,7 @@
 	"title": "Concepts",
 	"tags": [],
 	"description": "",
-	"content": ""
+	"content": "Project A project contains applications, pipelines and environments. A project is the first level of permissions management. Any CDS application has to be created inside a project. The project key has to be unique amongst all projects in CDS. At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one. If the provided group does not exists, the group will be created with edition permissions on project and creating user will automatically join the group. Application An application represents a real world production unit. An application lives inside a project, has variables and can attach: Pipelines Environments Environment An environment is created inside a project and can be used by all applications inside given project. "
 },
 {
 	"uri": "/getting-started/concepts/pipeline/",
@@ -42,13 +42,6 @@
 	"content": "The steps of a job is the list of the different operation performed by the CDS worker. Each steps is based on an Action which is defined by CDS. The list of all actions is defined on *&amp;lt;your cds url ui&amp;gt;/#/action*. On the very first step failed, the job is marked as Failed and execution is stopped. You can define a Step as final. It mean that even if the job is failed, the step will be executed. The final steps are executed after all other steps. "
 },
 {
-	"uri": "/getting-started/concepts/worker/",
-	"title": "Worker",
-	"tags": [],
-	"description": "",
-	"content": "A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker. Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip; What is a worker Basically, a worker is a binary. This binary can be launched inside a Docker Containers, or on a Host (as VM Openstack). Worker cycle of life If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contains a sane installation of &amp;ldquo;curl&amp;rdquo;. So, in the case of a worker model of type &amp;ldquo;docker&amp;rdquo;, the docker image must contains curl in PATH. "
-},
-{
 	"uri": "/",
 	"title": "",
 	"tags": [],
@@ -60,14 +53,14 @@
 	"title": "Actions",
 	"tags": [],
 	"description": "",
-	"content": ""
+	"content": "Inside a Job, each steps is based on an action. Types of actions : Built-in actions, available on each CDS Installation User actions, added by CDS Administrators for now Plugins actions, added by CDS Administrators "
 },
 {
 	"uri": "/advanced/",
 	"title": "Advanced",
 	"tags": [],
 	"description": "",
-	"content": ""
+	"content": "Hatcheries Repositories Manager Write a Plugin Worker "
 },
 {
 	"uri": "/advanced/",
@@ -217,6 +210,20 @@
 	"content": ""
 },
 {
+	"uri": "/building-pipelines/templates/",
+	"title": "Templates",
+	"tags": [],
+	"description": "",
+	"content": "Templates from CDS Contributions : cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-app cds-template-only-git-clone-job cds-template-plain "
+},
+{
+	"uri": "/advanced/worker/token/",
+	"title": "Token",
+	"tags": [],
+	"description": "",
+	"content": "Generate a worker key Purpose In order to start a worker, you need to provide a worker key to be able to build your pipelines. CLI Run the following command, replace yourgroup with your group $ cds generate token -g yourgroup -e persistent "
+},
+{
 	"uri": "/building-pipelines/actions/user-actions/",
 	"title": "User Actions",
 	"tags": [],
@@ -231,6 +238,20 @@
 	"content": "In CDS, it is possible to define variables at different levels: Project Environment Application Variable types Existing variable types: String Text Boolean Number Password Key Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes: Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.cds.app.VAR}} Environment: {{.cds.env.VAR}} Project: {{.cds.proj.VAR}} Exported variable at build time: {{.cds.build.VAR}} Builtin variables Here is the list of builtin variables, generated for every build: {{.cds.project}} The name of the current project {{.cds.environment}} The name of the current environment {{.cds.application}} The name of the current application {{.cds.pipeline}} The name of the current pipeline {{.cds.stage}} The name of the current stage {{.cds.job}} The name of the current job {{.cds.workspace}} Current job&amp;rsquo;s workspace. It&amp;rsquo;s a directory. In a step script, {{.cds.workspace}} == $HOME {{.cds.version}} The number of the current version {{.cds.parent.application}} The name of the application that triggered the current build {{.cds.parent.pipeline}} The name of the pipeline that triggered the current build {{.cds.triggered_by.email}} Email of the user that run the current build {{.cds.triggered_by.fullname}} Full name of the user that run the current build {{.cds.triggered_by.username}} User that run the current build The .version variable {{.cds.version}} CDS version is a builtin variable equals to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to testing and deployment pipelines. Export a variable inside a step In a step of type script, you can export variable as: $ worker export varname thevalue You can now use {{.cds.build.varname}} in further steps and stages. Shell Environment Variable All CDS variables, except password type can use used as plain environment variable. Theses lines will have the same output echo &#39;{{.cds.parent.application}}&#39; echo $CDS_PARENT_APPLICATION Git variables Here is the list of git variables: {{.git.hash}} {{.git.url}} {{.git.http_url}} {{.git.branch}} {{.git.author}} {{.git.message}} "
 },
 {
+	"uri": "/advanced/worker/",
+	"title": "Worker",
+	"tags": [],
+	"description": "",
+	"content": "A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker. Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip; What is a worker Basically, a worker is a binary. This binary can be launched inside a Docker Containers, or on a Host (as VM Openstack). Worker cycle of life If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contains a sane installation of &amp;ldquo;curl&amp;rdquo;. So, in the case of a worker model of type &amp;ldquo;docker&amp;rdquo;, the docker image must contains curl in PATH. "
+},
+{
+	"uri": "/advanced/worker/worker-setup/",
+	"title": "Worker Setup",
+	"tags": [],
+	"description": "",
+	"content": "Introduction Why would you need to setup your own worker ? There is several cases where one would need to setup his own worker: Perform incremental build Build on a specific architecture Perform integration tests in a specific network How does this work ? Workers authenticate on CDS with a worker key and have the same permissions as the user who generated the key. Bottom line, if you can access the application, your worker will too. Linux Setup Download the binary Simple enough, run $ wget -nv https://your-cds-api/download/worker/`uname -m` -O worker Startup the worker $ worker --help CDS Worker Usage: worker [flags] worker [command] Available Commands: export worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt; upload worker upload --tag=&amp;lt;tag&amp;gt; &amp;lt;path&amp;gt; version Print the version number register worker register Flags: --api string URL of CDS API --basedir string Worker working directory --booked-job-id int Booked job id --graylog-extra-key string Ex: --graylog-extra-key=xxxx-yyyy --graylog-extra-value string Ex: --graylog-extra-value=xxxx-yyyy --graylog-host string Ex: --graylog-host=xxxx-yyyy --graylog-port string Ex: --graylog-port=12202 --graylog-protocol string Ex: --graylog-protocol=xxxx-yyyy --grpc-api string CDS GRPC tcp address --grpc-insecure Disable GRPC TLS encryption --hatchery int Hatchery spawing worker --key string CDS KEY --log-level string Log Level : debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --single-use Exit after executing an action --ttl int Worker time to live (minutes) (default 30) Use &amp;quot;worker [command] --help&amp;quot; for more information about a command. Mandatory parameters are &amp;ndash;api and &amp;ndash;key. The most basic way to start a worker is as following: $ worker --api=https://your-cds-api --key=NTU2ZmFiOGZmMzI5MGU1NzVmY2FhNThmOTY3NjFmMDVmNmIxOTFhNDViNjRjETCETC 2016/03/24 11:30:50 [NOTICE] What a good time to be alive 2016/03/24 11:30:50 [NOTICE] Disconnected from CDS engine, trying to register... 2016/03/24 11:30:50 [NOTICE] Registering [desk32345] at [https://your-cds-api] That&amp;rsquo;s it, you are done here. Windows Setup Download the binary Download the windows binary from https://github.com/ovh/cds/releases Prerequisites CDS Worker will launch Microsoft Powershell command. Please check Powershell is correctly installed and configured on your host. Every command CDS Worker will launch should be in the %PATH% variable. Do the following steps with the target User whom will run the CDS Worker. To be able to operate git clone commands, you have to follow next steps : Install Git https://git-scm.com/download/win Setup your system %PATH%, and add C:\Program Files\Git\mingw32\bin;C:\Program Files\Git\usr\bin In a Powershell Prompt, generate SSH keys to be able PS ssh-keygen In a Powsershell Prompt, run PS Set-ExecutionPolicy Unrestricted Add the public key as Access Key in every project in stash you will have to clone : * Stash &amp;gt; Project &amp;gt; Settings &amp;gt; Access Keys &amp;gt; Add Key * . Copy the id_rsa and id_rsa.pub from you C:\Users\&amp;lt;user&amp;gt;\.ssh\ directory to C:\Program Files\Git\etc\ssh\ (Optional, just for example here) Edit or Create the file C:\Program Files\Git\etc\ssh\ssh_config : Host your-bitbucket-host StrictHostKeyChecking no You may want to improve your Git Experience on your windows host : have a look to posh-git : https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell Trigger your pipeline on your Host If you want to force you pipeline execution on your host, add a &amp;ldquo;hostname&amp;rdquo; requirement on you pipeline and set it to the hostname of your windows host. "
+},
+{
 	"uri": "/advanced/write-plugin/",
 	"title": "Write a Plugin",
 	"tags": [],
@@ -242,21 +263,56 @@
 	"title": "cds-docker-package",
 	"tags": [],
 	"description": "",
-	"content": "Build image and push it to docker repository Parameters dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.cds.version}},latest dockerfileDirectory: Directory which contains your Dockerfile. Requirements docker: type:binary Value:docker bash: type:binary Value:bash More documentation on Github "
+	"content": "Build image and push it to docker repository Parameters dockerfileDirectory: Directory which contains your Dockerfile. dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.cds.version}},latest Requirements docker: type:binary Value:docker bash: type:binary Value:bash More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/user/cds-nexus-upload/",
 	"title": "cds-nexus-upload",
 	"tags": [],
 	"description": "",
-	"content": "Upload file on Nexus Parameters artifactId: Artifact id of the artifact login: Login for nexus password: Password for nexus groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload packaging: Packaging type of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact Requirements bash: type:binary Value:bash curl: type:binary Value:curl More documentation on Github "
+	"content": "Upload file on Nexus Parameters version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload login: Login for nexus password: Password for nexus groupId: Group id of the artifact artifactId: Artifact id of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact packaging: Packaging type of the artifact Requirements bash: type:binary Value:bash curl: type:binary Value:curl More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/user/cds-perl-test/",
 	"title": "cds-perl-test",
 	"tags": [],
 	"description": "",
-	"content": "Test with prove on perl source code Parameters testDirectory: Directory where is Perl Source Code Requirements prove: type:binary Value:prove perl: type:binary Value:perl bash: type:binary Value:bash More documentation on Github "
+	"content": "Test with prove on perl source code Parameters testDirectory: Directory where is Perl Source Code Requirements perl: type:binary Value:perl bash: type:binary Value:bash prove: type:binary Value:prove More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/templates/cds-template-cds-plugin/",
+	"title": "cds-template-cds-plugin",
+	"tags": [],
+	"description": "",
+	"content": "This template creates a pipeline for building CDS Plugin with: A &amp;ldquo;Commit Stage&amp;rdquo; with one job &amp;ldquo;Compile&amp;rdquo; Job contains two steps: GitClone and CDS_GoBuild Parameters repo: Your source code repository package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the plugin. Enter &amp;ldquo;contrib/plugins/your-plugin&amp;rdquo; for github.com/ovh/cds/contrib/plugins/your-plugin More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/templates/cds-template-cds-template/",
+	"title": "cds-template-cds-template",
+	"tags": [],
+	"description": "",
+	"content": "This template creates a pipeline for building CDS Template with: A &amp;ldquo;Commit Stage&amp;rdquo; with one job &amp;ldquo;Compile&amp;rdquo; Job contains two steps: GitClone and CDS_GoBuild Parameters repo: Your source code repository package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the template. Enter &amp;ldquo;contrib/templates/your-plugin&amp;rdquo; for github.com/ovh/cds/contrib/templates/your-plugin More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/templates/cds-template-deploy-marathon-app/",
+	"title": "cds-template-deploy-marathon-app",
+	"tags": [],
+	"description": "",
+	"content": "This template creates: a deployment pipeline with one stage, containing and one job job calls plugin-marathon an application with a variable named &amp;ldquo;marathon.config&amp;rdquo; uses environment variables marathonHost, password and user Please update Application / Environment Variables after creating application. Parameters docker.image: Your docker image without the tag marathon.appID: Your marathon application ID marathon.config: Content of your marathon.json file More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/templates/cds-template-only-git-clone-job/",
+	"title": "cds-template-only-git-clone-job",
+	"tags": [],
+	"description": "",
+	"content": "This template creates: a build pipeline with one stage, containing one job job contains 2 steps: GitClone and a empty script. Pipeline name contains Application name. If you want to make a reusable pipeline, please consider updating this name after creating application. Parameters repo: Your source code repository More More documentation on Github "
+},
+{
+	"uri": "/building-pipelines/templates/cds-template-plain/",
+	"title": "cds-template-plain",
+	"tags": [],
+	"description": "",
+	"content": "This template creates: a build pipeline with two stages: Commit Stage and Packaging Stage a deploy pipeline with one stage: Deploy Stage Commit Stage : run git clone run make build Packaging Stage: run docker build and docker push Deploy Stage: it&amp;rsquo;s en empty script Packaging and Deploy are optional. Parameters repo: Your source code repository withPackage: Do you want a Docker Package? withDeploy: Do you want an deploy Pipeline? More More documentation on Github "
 },
 {
 	"uri": "/_header/",
@@ -277,28 +333,28 @@
 	"title": "plugin-group-tmpl",
 	"tags": [],
 	"description": "",
-	"content": "This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template. Parameters applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) More More documentation on Github "
+	"content": "This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template. Parameters output: Output path for generated file (default to .out or just trimming .tpl extension) applications: Applications file variables config: Template file to use More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-kafka-publish/",
 	"title": "plugin-kafka-publish",
 	"tags": [],
 	"description": "",
-	"content": "This action helps you to send data through Kafka across every network. You are able to send a custom &amp;ldquo;message&amp;rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consummer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin. Parameters message: Kafka Message kafkaPassword: Kafka Password topic: Kafka Topic publicKey: GPG Public Key (ASCII armored format) waitForAckTimeout: Ack timeout (seconds). Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. kafkaUser: Kafka User kafkaGroup: Kafka Consumer Group (used for acknowledgment) kafkaAddresses: Kafka Addresses artifacts: Artifacts list (comma separated) waitForAck: Wait for Ack waitForAckTopic: Kafka Topic. Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. More More documentation on Github "
+	"content": "This action helps you to send data through Kafka across every network. You are able to send a custom &amp;quot;message&amp;quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consummer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin. Parameters kafkaUser: Kafka User kafkaPassword: Kafka Password publicKey: GPG Public Key (ASCII armored format) waitForAck: Wait for Ack waitForAckTopic: Kafka Topic. Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. waitForAckTimeout: Ack timeout (seconds). Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. message: Kafka Message kafkaGroup: Kafka Consumer Group (used for acknowledgment) kafkaAddresses: Kafka Addresses topic: Kafka Topic artifacts: Artifacts list (comma separated) More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-marathon/",
 	"title": "plugin-marathon",
 	"tags": [],
 	"description": "",
-	"content": "This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment. Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull. Parameters password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result. If not set, CDS will consider a successful result if marathon accepts the provided configuration. insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true. url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 user: Marathon User (please use project, application or environment variables) More More documentation on Github "
+	"content": "This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment. Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull. Parameters user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result. If not set, CDS will consider a successful result if marathon accepts the provided configuration. insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true. url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-ssh-cmd/",
 	"title": "plugin-ssh-cmd",
 	"tags": [],
 	"description": "",
-	"content": "This plugin helps you to run cmd on remote server over ssh. Parameters privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username More More documentation on Github "
+	"content": "This plugin helps you to run cmd on remote server over ssh. Parameters command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-tmpl/",
@@ -312,5 +368,5 @@
 	"title": "plugin-venom",
 	"tags": [],
 	"description": "",
-	"content": "This plugin helps you to run venom. Venom: https://github.com/runabove/venom. Add an extra step of type junit on your job to view tests results on CDS UI. Parameters exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml More More documentation on Github "
+	"content": "This plugin helps you to run venom. Venom: https://github.com/runabove/venom. Add an extra step of type junit on your job to view tests results on CDS UI. Parameters path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error More More documentation on Github "
 }]

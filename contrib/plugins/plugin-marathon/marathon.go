@@ -35,6 +35,7 @@ func (m MarathonPlugin) Name() string {
 //Description explains the purpose of the plugin
 func (m MarathonPlugin) Description() string {
 	return `This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
+
 Your marathon.json file can be templated with cds variables "{{.cds.variables}}". Enable "waitForDeployment" option to ensure deployment is successfull.`
 }
 
@@ -368,5 +369,5 @@ func parseApplicationConfigFile(a plugin.IJob, f string) (*marathon.Application,
 }
 
 func main() {
-	plugin.Main(MarathonPlugin{})
+	plugin.Main(&MarathonPlugin{})
 }

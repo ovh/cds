@@ -171,5 +171,5 @@ func (s SSHCmdPlugin) Run(a plugin.IJob) plugin.Result {
 }
 
 func main() {
-	plugin.Main(SSHCmdPlugin{})
+	plugin.Main(&SSHCmdPlugin{})
 }

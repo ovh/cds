@@ -214,6 +214,16 @@
             
             
             
+                <li data-nav-id="/building-pipelines/templates/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/building-pipelines/templates/">Templates</a>
+                
+                
+            </li>
+            
+            
+            
                 <li data-nav-id="/building-pipelines/variables/" class="dd-item {
                      
                     ">
@@ -233,6 +243,15 @@
     ">
     
     <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="" class="dd-item 
+     
+    ">
+    
+    <a href="">worker</a>
         
         
     </li>
@@ -311,24 +330,27 @@
 
 
 
-<p>This action helps you to send data through Kafka across every network.
-    You are able to send a custom &ldquo;message&rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase.
-    This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consummer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin.</p>
+<p>This action helps you to send data through Kafka across every network.</p>
+
+<pre><code>You are able to send a custom &quot;message&quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase.
+
+This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consummer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin.
+</code></pre>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>message</strong>: Kafka Message</li>
-<li><strong>kafkaPassword</strong>: Kafka Password</li>
-<li><strong>topic</strong>: Kafka Topic</li>
-<li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
-<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
 <li><strong>kafkaUser</strong>: Kafka User</li>
-<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
-<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
-<li><strong>artifacts</strong>: Artifacts list (comma separated)</li>
+<li><strong>kafkaPassword</strong>: Kafka Password</li>
+<li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
 <li><strong>waitForAck</strong>: Wait for Ack</li>
 <li><strong>waitForAckTopic</strong>: Kafka Topic. Used only if &ldquo;waitForAck&rdquo; is true.</li>
+<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
+<li><strong>message</strong>: Kafka Message</li>
+<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
+<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
+<li><strong>topic</strong>: Kafka Topic</li>
+<li><strong>artifacts</strong>: Artifacts list (comma separated)</li>
 </ul>
 
 <h2 id="more">More</h2>

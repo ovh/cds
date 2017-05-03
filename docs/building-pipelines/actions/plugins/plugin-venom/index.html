@@ -214,6 +214,16 @@
             
             
             
+                <li data-nav-id="/building-pipelines/templates/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/building-pipelines/templates/">Templates</a>
+                
+                
+            </li>
+            
+            
+            
                 <li data-nav-id="/building-pipelines/variables/" class="dd-item {
                      
                     ">
@@ -233,6 +243,15 @@
     ">
     
     <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="" class="dd-item 
+     
+    ">
+    
+    <a href="">worker</a>
         
         
     </li>
@@ -311,17 +330,19 @@
 
 
 
-<p>This plugin helps you to run venom. Venom: <a href="https://github.com/runabove/venom">https://github.com/runabove/venom</a>. Add an extra step of type junit on your job to view tests results on CDS UI.</p>
+<p>This plugin helps you to run venom. Venom: <a href="https://github.com/runabove/venom">https://github.com/runabove/venom</a>.</p>
+
+<p>Add an extra step of type junit on your job to view tests results on CDS UI.</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>path</strong>: Path containers yml venom files. Format: adirectory/, ./<em>aTest.yml, ./foo/b</em>/*<em>/z</em>.yml</li>
 <li><strong>exclude</strong>: Exclude some files, one file per line</li>
 <li><strong>parallel</strong>: Launch Test Suites in parallel. Enter here number of routines</li>
 <li><strong>output</strong>: Directory where output xunit result file</li>
 <li><strong>details</strong>: Output Details Level: low, medium, high</li>
 <li><strong>loglevel</strong>: Log Level: debug, info, warn or error</li>
-<li><strong>path</strong>: Path containers yml venom files. Format: adirectory/, ./<em>aTest.yml, ./foo/b</em>/*<em>/z</em>.yml</li>
 </ul>
 
 <h2 id="more">More</h2>

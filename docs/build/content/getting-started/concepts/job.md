@@ -14,12 +14,7 @@ The Job is more important concept in CDS. It will be composed of **steps** which
 
 ![Job](/images/concepts_job.png)
 
-A Job will be executed by a **worker**. CDS will choose and provision a worker for dependending of the **requirements** you define on your job.
-You can set as many requirements as you want, following those rules :
-
-- Only one model can be set as requirement
-- Only one hostname can be set as requirement
-- Memory and Services requirements are availabe only on Docker models
+A Job will be executed by a **worker**. CDS will choose and provision a worker for dependending of the [Requirements]({{< relref "artifact-upload.md" >}}) you define on your job.
 
 If you want to share files or artifact between jobs, stages or pipelines you have to use *Artifact upload* and *Artifact download*. You can also share variable between stages, see [variables tutorial](variables.md) for more details.
 

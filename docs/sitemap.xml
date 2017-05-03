@@ -26,10 +26,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/concepts/worker/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.com/cds/</loc>
   </url>
   
@@ -131,11 +127,27 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/templates/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/worker/token/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.com/cds/building-pipelines/variables/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/worker/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/advanced/worker/worker-setup/</loc>
   </url>
   
   <url>
@@ -152,6 +164,26 @@
   
   <url>
     <loc>https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-plugin/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-template/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-deploy-marathon-app/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-only-git-clone-job/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-plain/</loc>
   </url>
   
   <url>

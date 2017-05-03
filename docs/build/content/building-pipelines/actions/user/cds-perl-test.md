@@ -17,9 +17,9 @@ Test with prove on perl source code
 
 ## Requirements
 
-* **prove**: type:binary Value:prove
 * **perl**: type:binary Value:perl
 * **bash**: type:binary Value:bash
+* **prove**: type:binary Value:prove
 
 
 More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-perl-test.hcl)

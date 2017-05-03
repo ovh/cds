@@ -14,9 +14,9 @@ Check documentation on text/template for more information https://golang.org/pkg
 
 ## Parameters
 
+* **output**: Output path for generated file (default to <file>.out or just trimming .tpl extension)
 * **applications**: Applications file variables
 * **config**: Template file to use
-* **output**: Output path for generated file (default to <file>.out or just trimming .tpl extension)
 
 
 ## More

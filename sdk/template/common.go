@@ -2,19 +2,19 @@ package template
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk"
-
-	"github.com/ovh/cds/sdk/plugin"
-
-	"strings"
-
 	"github.com/facebookgo/httpcontrol"
+	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/plugin"
 )
 
 //HTTP Constants
@@ -72,4 +72,54 @@ func (p *Common) Init(o plugin.IOptions) string {
 	}
 
 	return "template: initialized on " + o.GetURL()
+}
+
+// Main func call by template, display info only
+func Main(p Interface) {
+	var format string
+	var cmdInfo = &cobra.Command{
+		Use:   "info",
+		Short: "Print plugin Information anything to the screen: info --format <yml>",
+		Run: func(cmd *cobra.Command, args []string) {
+			if format != "markdown" {
+				if err := sdk.Output(format, p, fmt.Printf); err != nil {
+					fmt.Printf("Error:%s", err)
+				}
+				return
+			}
+			fmt.Print(InfoMarkdown(p))
+		},
+	}
+
+	cmdInfo.Flags().StringVarP(&format, "format", "", "markdown", "--format:yaml, json, xml, markdown")
+
+	var rootCmd = &cobra.Command{}
+	rootCmd.AddCommand(cmdInfo)
+	rootCmd.Execute()
+}
+
+// InfoMarkdown returns string formatted with markdown
+func InfoMarkdown(t Interface) string {
+	var sp string
+	for _, v := range t.Parameters() {
+		sp += fmt.Sprintf("* **%s**: %s\n", v.Name, v.Description)
+	}
+
+	info := fmt.Sprintf(`
+%s
+
+## Parameters
+
+%s
+
+## More
+
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/templates/%s/README.md)
+
+`,
+		t.Description(),
+		sp,
+		t.Name())
+
+	return info
 }

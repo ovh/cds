@@ -127,17 +127,6 @@
                 </li>
                 
                 
-                
-                <li data-nav-id="/getting-started/concepts/worker/" class="dd-item 
-                     
-                    ">
-                    <a href="https://ovh.github.com/cds/getting-started/concepts/worker/">Worker</a>
-                
-
-                    
-                </li>
-                
-                
                 </ul>
                 
                 
@@ -173,6 +162,15 @@
     ">
     
     <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="" class="dd-item 
+     
+    ">
+    
+    <a href="">worker</a>
         
         
     </li>
@@ -228,7 +226,16 @@
               
                   <div class="progress">
     <div class="wrapper">
-
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#project">Project</a></li>
+<li><a href="#application">Application</a></li>
+<li><a href="#environment">Environment</a></li>
+</ul></li>
+</ul>
+</nav>
     </div>
 </div>
 
@@ -241,7 +248,34 @@
                 
 
 
+
+
 <p><img src="https://ovh.github.com/cds/images/concepts_prj.png" alt="Concepts" /></p>
+
+<h2 id="project">Project</h2>
+
+<p>A project contains applications, pipelines and environments.</p>
+
+<p>A project is the first level of permissions management. Any CDS application has to be created inside a project.</p>
+
+<p>The project key has to be unique amongst all projects in CDS.</p>
+
+<p>At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one.</p>
+
+<p>If the provided group does not exists, the group will be created with edition permissions on project and creating user will automatically join the group.</p>
+
+<h2 id="application">Application</h2>
+
+<p>An application represents a real world production unit. An application lives inside a project, has variables and can attach:</p>
+
+<ul>
+<li><a href="https://ovh.github.com/cds/getting-started/concepts/pipeline/">Pipelines</a></li>
+<li>Environments</li>
+</ul>
+
+<h2 id="environment">Environment</h2>
+
+<p>An environment is created inside a project and can be used by all applications inside given project.</p>
 
 
 <footer class=" footline" >

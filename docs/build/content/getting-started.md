@@ -1,7 +1,6 @@
 +++
-draft = false
 title = "Getting started"
-description = ""
+chapter = false
 
 [menu.main]
 parent = ""
