@@ -85,11 +85,13 @@ func Test_postWorkflowHandler(t *testing.T) {
 	uri := router.getRoute("POST", postWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	var workflowResponse sdk.Workflow
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &workflowResponse)
 	//Do the request
 	w := httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
+	assert.NotEqual(t, 0, workflowResponse.ID)
 }
 
 func Test_putWorkflowHandler(t *testing.T) {
