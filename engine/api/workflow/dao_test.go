@@ -317,7 +317,7 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 	Update(db, w1, nil)
 
-	w2, err := Load(db, key, "test_2", nil)
+	w2, err := LoadByID(db, w1.ID, nil)
 	test.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
@@ -325,5 +325,4 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w1.Root.Context.EnvironmentID, w2.Root.Context.Environment.ID)
 
 	t.Logf("%s", dump.MustSdump(w2))
-
 }

@@ -42,49 +42,65 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 	return res, nil
 }
 
+func loadWorkflowRoot(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	var err error
+	w.Root, err = LoadNode(db, w, w.RootID, u)
+	if err != nil {
+		if err == sdk.ErrWorkflowNodeNotFound {
+			log.Debug("Load> Unable to load root %d for workflow %d", w.RootID, w.ID)
+			return nil
+		}
+		return sdk.WrapError(err, "Load> Unable to load workflow root %d", w.RootID)
+	}
+	return nil
+}
+
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(db gorp.SqlExecutor, projectKey, name string, u *sdk.User) (*sdk.Workflow, error) {
-	t0 := time.Now()
-	dbRes := Workflow{}
-
 	query := `
 		select workflow.* 
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
 		and workflow.name = $2`
-
-	log.Debug("Load> %s, %s %s", query, projectKey, name)
-
-	if err := db.SelectOne(&dbRes, query, projectKey, name); err != nil {
+	res, err := load(db, u, query, projectKey, name)
+	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow %s in project %s", name, projectKey)
 	}
-
-	res := sdk.Workflow(dbRes)
-	res.ProjectKey = projectKey
-
-	var err error
-	res.Root, err = LoadNode(db, &res, res.RootID, u)
-	if err != nil {
-		if err == sdk.ErrWorkflowNodeNotFound {
-			log.Debug("Load> Unable to load root %d for workflow %d", res.RootID, res.ID)
-			return &res, nil
-		}
-		return nil, sdk.WrapError(err, "Load> Unable to load workflow root %s project %s", name, projectKey)
-	}
-
-	res.RootID = res.Root.ID
-
-	delta := time.Since(t0).Seconds()
-
-	log.Debug("Load> load %s/%s took %.3f seconds", projectKey, name, delta)
-
-	return &res, nil
+	return res, nil
 }
 
 // LoadByID loads a workflow for a given user (ie. checking permissions)
-func LoadByID(db gorp.SqlExecutor, id int64, name string, u *sdk.User) (*sdk.Workflow, error) {
-	return nil, nil
+func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User) (*sdk.Workflow, error) {
+	query := `
+		select * 
+		from workflow
+		where id = $1`
+	res, err := load(db, u, query, id)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Load> Unable to load workflow %d", id)
+	}
+	return res, nil
+}
+
+func load(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) (*sdk.Workflow, error) {
+	t0 := time.Now()
+	dbRes := Workflow{}
+	if err := db.SelectOne(&dbRes, query, args...); err != nil {
+		return nil, sdk.WrapError(err, "Load> Unable to load workflow")
+	}
+
+	res := sdk.Workflow(dbRes)
+	var errPK error
+	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
+	if err := loadWorkflowRoot(db, &res, u); err != nil {
+		return nil, err
+	}
+
+	delta := time.Since(t0).Seconds()
+	log.Debug("Load> Load workflow (%s/%s)%d took %.3f seconds", res.ProjectKey, res.Name, res.ID, delta)
+	return &res, nil
+
 }
 
 // Insert inserts a new workflow
@@ -100,7 +116,6 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	if _, err := db.Exec("UPDATE workflow SET root_node_id = $2 WHERE id = $1", w.ID, w.Root.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow (%#v, %d)", w.Root, w.ID)
 	}
-
 	return nil
 }
 
