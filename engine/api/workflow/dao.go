@@ -388,7 +388,7 @@ func DeleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
 	}
 
 	dbwn := Node(*node)
-	if _, err := db.Delete(dbwn); err != nil {
+	if _, err := db.Delete(&dbwn); err != nil {
 		return sdk.WrapError(err, "DeleteNode> Unable to delete node %d", dbwn.ID)
 	}
 
