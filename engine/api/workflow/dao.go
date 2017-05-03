@@ -267,7 +267,7 @@ func InsertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 		}
 	}
 
-	return nil
+	return UpdateLastModified(db, w, u)
 }
 
 // LoadNode loads a node in a workflow
