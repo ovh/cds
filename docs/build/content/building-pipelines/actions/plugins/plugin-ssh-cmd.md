@@ -1,6 +1,5 @@
 +++
 title = "plugin-ssh-cmd"
-chapter = true
 
 [menu.main]
 parent = "actions-plugins"

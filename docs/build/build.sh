@@ -15,7 +15,6 @@ function generateUserActionsDocumentation {
 cat << EOF > ${ACTION_FILE}
 +++
 title = "${actionName}"
-chapter = true
 
 [menu.main]
 parent = "actions-user"
@@ -50,7 +49,6 @@ function generatePluginsDocumentation {
 cat << EOF > ${PLUGIN_FILE}
 +++
 title = "${plugin}"
-chapter = true
 
 [menu.main]
 parent = "actions-plugins"

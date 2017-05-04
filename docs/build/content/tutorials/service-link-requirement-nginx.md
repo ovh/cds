@@ -1,10 +1,10 @@
 +++
 title = "Service Requirement Nginx"
+weight = 5
 
 [menu.main]
 parent = "tutorials"
 identifier = "tutorials-service-requirement"
-weight = 5
 
 +++
 

@@ -1,8 +1,6 @@
 +++
-draft = false
 title = "Concepts"
-
-weight = 1
+weight = 2
 
 [menu.main]
 parent = "getting-started"

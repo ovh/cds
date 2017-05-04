@@ -1,11 +1,10 @@
 +++
 title = "Repositories Manager"
-chapter = true
+weight = 2
 
 [menu.main]
 parent = "advanced"
 identifier = "repositories_manager"
-weight = 2
 
 +++
 

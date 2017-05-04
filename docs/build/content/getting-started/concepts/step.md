@@ -1,7 +1,5 @@
 +++
-draft = false
 title = "Step"
-
 weight = 4
 
 [menu.main]

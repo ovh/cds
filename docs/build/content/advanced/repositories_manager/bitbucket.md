@@ -1,10 +1,10 @@
 +++
 title = "Bitbucket"
+weight = 2
 
 [menu.main]
 parent = "repositories_manager"
 identifier = "repositories_manager_bitbucket"
-weight = 2
 
 +++
 

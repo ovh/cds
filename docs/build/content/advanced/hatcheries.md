@@ -1,11 +1,10 @@
 +++
 title = "Hatcheries"
-chapter = true
+weight = 1
 
 [menu.main]
 parent = "advanced"
 identifier = "hatcheries"
-weight = 2
 
 +++
 

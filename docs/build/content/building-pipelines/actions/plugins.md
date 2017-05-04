@@ -1,11 +1,10 @@
 +++
 title = "Plugins Actions"
-chapter = true
+weight = 2
 
 [menu.main]
 parent = "actions"
 identifier = "actions-plugins"
-weight = 2
 
 +++
 

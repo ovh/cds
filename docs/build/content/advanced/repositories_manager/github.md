@@ -1,10 +1,10 @@
 +++
 title = "Github"
+weight = 1
 
 [menu.main]
 parent = "repositories_manager"
 identifier = "repositories_manager_github"
-weight = 1
 
 +++
 

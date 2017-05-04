@@ -1,11 +1,10 @@
 +++
 title = "Write a Plugin"
-chapter = true
+weight = 3
 
 [menu.main]
 parent = "advanced"
 identifier = "advanced-write_plugin"
-weight = 3
 
 +++
 

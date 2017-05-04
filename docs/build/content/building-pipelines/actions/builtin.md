@@ -1,11 +1,10 @@
 +++
 title = "Built-in Actions"
-chapter = true
+weight = 1
 
 [menu.main]
 parent = "actions"
 identifier = "actions-builtin"
-weight = 1
 
 +++
 

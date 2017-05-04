@@ -1,11 +1,10 @@
 +++
 title = "User Actions"
-chapter = true
+weight = 1
 
 [menu.main]
 parent = "actions"
 identifier = "actions-user"
-weight = 1
 
 +++
 

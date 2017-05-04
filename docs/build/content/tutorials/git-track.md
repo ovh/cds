@@ -1,10 +1,10 @@
 +++
 title = "Git track "
+weight = 7
 
 [menu.main]
 parent = "tutorials"
 identifier = "tutorials-git-track"
-weight = 7
 
 +++
 

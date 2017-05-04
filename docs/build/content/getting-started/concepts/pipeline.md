@@ -1,7 +1,5 @@
 +++
-draft = false
 title = "Pipeline"
-
 weight = 1
 
 [menu.main]

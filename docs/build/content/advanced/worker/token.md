@@ -1,10 +1,10 @@
 +++
 title = "Token"
+weight = 3
 
 [menu.main]
 parent = "advanced-worker"
 identifier = "advanced-worker-token"
-weight = 3
 
 +++
 

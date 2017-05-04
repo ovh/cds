@@ -1,7 +1,5 @@
 +++
-draft = false
 title = "About CDS"
-
 weight = 1
 
 [menu.main]

@@ -1,10 +1,10 @@
 +++
 title = "Database Management"
+weight = 4
 
 [menu.main]
 parent = "installation"
 identifier = "database"
-weight = 4
 
 +++
 

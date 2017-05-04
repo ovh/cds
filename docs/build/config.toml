@@ -4,11 +4,7 @@ baseURL = "https://ovh.github.com/cds"
 theme = "docdock"
 canonifyurls = true
 
-
 [params]
 editURL = "https://github.com/ovh/cds/edit/master/docs/build/content/"
 noSearch = true
 noHomeIcon = true
-
-[outputs]
-home = [ "HTML", "RSS", "JSON"]

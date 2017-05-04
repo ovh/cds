@@ -1,11 +1,10 @@
 +++
 title = "Hatchery Openstack"
-chapter = true
+weight = 2
 
 [menu.main]
 parent = "hatcheries"
 identifier = "hatchery_openstack"
-weight = 2
 
 +++
 

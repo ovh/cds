@@ -1,6 +1,5 @@
 +++
 title = "plugin-download"
-chapter = true
 
 [menu.main]
 parent = "actions-plugins"
@@ -12,9 +11,9 @@ This is a plugin to download file from URL
 
 ## Parameters
 
-* **url**: the url of your file
 * **filepath**: the destination of your file to be copied
 * **headers**: specific headers to add to your request ("headerName"="value" newline separated list)
+* **url**: the url of your file
 
 
 ## More
