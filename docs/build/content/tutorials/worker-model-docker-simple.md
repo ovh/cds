@@ -1,5 +1,5 @@
 +++
-title = "Setup Worker Model Docker"
+title = "Setup Worker Model Docker Simple"
 
 [menu.main]
 parent = "tutorials"

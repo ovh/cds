@@ -1,9 +1,9 @@
 +++
-title = "Setup Worker Model Docker"
+title = "Setup Worker Model Docker Customized"
 
 [menu.main]
 parent = "tutorials"
-identifier = "tutorials-worker-model-docker"
+identifier = "tutorials-worker-model-docker-customized"
 weight = 3
 
 +++

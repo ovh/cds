@@ -32,7 +32,7 @@
 	"title": "Job",
 	"tags": [],
 	"description": "",
-	"content": "The Job is more important concept in CDS. It will be composed of steps which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job. A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the requirements you define on your job. You can set as many requirements as you want, following those rules : Only one model can be set as requirement Only one hostname can be set as requirement Memory and Services requirements are availabe only on Docker models If you want to share files or artifact between jobs, stages or pipelines you have to use Artifact upload and Artifact download. You can also share variable between stages, see variables tutorial for more details. "
+	"content": "The Job is more important concept in CDS. It will be composed of steps which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job. A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the Requirements you define on your job. If you want to share files or artifact between jobs, stages or pipelines you have to use Artifact upload and Artifact download. You can also share variable between stages, see variables tutorial for more details. "
 },
 {
 	"uri": "/getting-started/concepts/step/",
@@ -119,7 +119,7 @@
 	"content": ""
 },
 {
-	"uri": "/getting-started/installation/docker-compose/",
+	"uri": "/getting-started/installation/ready-to-run/docker-compose/",
 	"title": "Docker Compose",
 	"tags": [],
 	"description": "",
@@ -165,14 +165,14 @@
 	"title": "Hatchery Openstack",
 	"tags": [],
 	"description": "",
-	"content": "CDS build using OVH.com Openstack infrastructure Create Openstack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;Openstack item. You will be able to create an Openstack user, enter description (name and password will be generated). Add Openstack worker model We need to define an Openstack worker model to have Openstack hatchery booting workers. We will create a model called docker: With low hardware capacity (vps-ssd-1) On Debian 8 With docker ready to use Git installed First, define a udata file. It is a shell script executed just after the boot sequence complete. Our docker udata will look like this: # Install docker cd $HOME sudo apt-get -y --force-yes update &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 apt-get install -y --force-yes apt-transport-https ca-certificates &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D sudo mkdir -p /etc/apt/sources.list.d sudo sh -c &amp;quot;echo deb https://apt.dockerproject.org/repo debian-jessie main &amp;gt; /etc/apt/sources.list.d/docker.list&amp;quot; sudo apt-get -y --force-yes update &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-cache policy docker-engine &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-get install -y --force-yes docker-engine &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo service docker start &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 # Non-root access sudo groupadd docker &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo gpasswd -a ${USER} docker &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo service docker restart &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 # Basic build binaries sudo apt-get -y --force-yes install curl git &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-get -y --force-yes install binutils &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 Last step, define worker model in cds: $ cds worker model add docker openstack --image=&amp;quot;Debian 8&amp;quot; --flavor=&amp;quot;vps-ssd-1&amp;quot; --userdata=&amp;quot;./docker.udata&amp;quot; Declare docker and git capabilities $ cds worker model capability add docker docker binary docker $ cds worker model capability add docker git binary git Start Opentack hatchery Generate a token for group: $ cds generate token -g shared.infra -e persistent fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92 Then start hatchery: OPENSTACK_USER=&amp;lt;user&amp;gt; OPENSTACK_TENANT=&amp;lt;tenant&amp;gt; OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net OPENSTACK_PASSWORD=&amp;lt;password&amp;gt; OPENSTACK_REGION=SBG1 hatchery openstack \ --api=https://api.domain \ --max-worker=10 \ --provision=1 \ --token=fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92 This hatchery will now start worker of model &amp;lsquo;docker&amp;rsquo; on OVH.com Openstack infrastructure when a pipeline is in queue with requirement docker. "
+	"content": "CDS build using OVH.com Openstack infrastructure Start Opentack hatchery Generate a token for group: $ cds generate token -g shared.infra -e persistent fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92 Then start hatchery: OPENSTACK_USER=&amp;lt;user&amp;gt; OPENSTACK_TENANT=&amp;lt;tenant&amp;gt; OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net OPENSTACK_PASSWORD=&amp;lt;password&amp;gt; OPENSTACK_REGION=SBG1 hatchery openstack \ --api=https://api.domain \ --max-worker=10 \ --provision=1 \ --token=fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92 This hatchery will now start worker of model &amp;lsquo;docker&amp;rsquo; on OVH.com Openstack infrastructure when a pipeline is in queue with requirement docker. Setup a worker model See Tutorial "
 },
 {
 	"uri": "/getting-started/installation/",
 	"title": "Installation",
 	"tags": [],
 	"description": "",
-	"content": "Docker Compose "
+	"content": "Ready to RUN Requirements "
 },
 {
 	"uri": "/building-pipelines/actions/builtin/junit/",
@@ -189,6 +189,13 @@
 	"content": "CDS Plugin System lets users develop complex actions. See How to write a plugin CDS Administrators have to import plugins on CDS to let user use them. Plugins from CDS Contributions: plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ssh-cmd plugin-tmpl plugin-venom "
 },
 {
+	"uri": "/getting-started/installation/ready-to-run/",
+	"title": "Ready to RUN",
+	"tags": [],
+	"description": "",
+	"content": "Docker Compose "
+},
+{
 	"uri": "/advanced/repositories_manager/",
 	"title": "Repositories Manager",
 	"tags": [],
@@ -196,11 +203,60 @@
 	"content": "CDS can be linked to following repositories manager : Atlassian Stash Github It allows you to enable some CDS features such as : Create application in CDS from Stash or Github Attach an application to its Stash or Github repository Fully automatic hook management Branch filtering on application workflows Commit logs on pipeline build details Go through this tutorial to enable the link between repositories managers and CDS. You need CDS admin privileges to perform the following steps. Download and install properly the CDS CLI. "
 },
 {
+	"uri": "/building-pipelines/requirements/",
+	"title": "Requirements",
+	"tags": [],
+	"description": "",
+	"content": "A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the requirements you define on your job. You can set as many requirements as you want, following those rules : Only one model can be set as requirement Only one hostname can be set as requirement Memory and Services requirements are availabe only on Docker models Note on Service Requirement A Service in CDS is a docker container which is linked with your base image. To summarize, if you add mysql as service requirement to your pipeline job, the required image will then be used to create a container that is linked to the build container. How to When editing a pipeline job, choose your model as usual. Then add a new service requirement, the name you set will be the service&amp;rsquo;s hostname, set the docker image for the service as the value. When the pipeline will be triggered, a worker defined by the model will be spawned with a link (https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/) to the service you defined as requirement. Environment variables You can defined environment variables of the service by setting requirement value as : registry.ovh.net/official/postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword Tutorials Tutorial - Service Link Requirement Nginx Tutorial - Service Link Requirement PostgreSQL "
+},
+{
+	"uri": "/getting-started/installation/requirements/",
+	"title": "Requirements",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
 	"uri": "/building-pipelines/actions/builtin/script/",
 	"title": "Script",
 	"tags": [],
 	"description": "",
 	"content": "Script is a builtin action, you can&amp;rsquo;t modify it. This action execute a script, written in script attribute Parameters script: Content of your script. You can put #!/bin/bash or #!/bin/perl at first line. Make sure that the binary used is in the pre-requisites of action "
+},
+{
+	"uri": "/tutorials/service-link-requirement-nginx/",
+	"title": "Service Requirement Nginx",
+	"tags": [],
+	"description": "",
+	"content": "Add the service requirement Name: mypg. This will be the service hostname Type: service Value: nginx:1.11.1. This is the name of docker image to link to current job And a requirement model which allow you to execute apt-get install -y postgresql-client worker-model-docker-simple.md Add a step of type script docker image nginx:1.11.1 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx curl -v -X GET http://mynginx Execute Pipeline See output: "
+},
+{
+	"uri": "/tutorials/service-link-requirement-pg/",
+	"title": "Service Requirement PostgreSQL",
+	"tags": [],
+	"description": "",
+	"content": "Add the service requirement Requirement Service Name: mypg. This will be the service hostname Type: service Value: postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword. This is the name of docker image to link to current job And a requirement model which allow you to execute apt-get install -y postgresql-client, see HowTo Add a step of type script docker image postgres:9.5.3 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx #!/bin/bash set -ex apt-get update apt-get install -y postgresql-client PGPASSWORD=mypassword psql -U myuser -h mypg &amp;lt;&amp;lt;EOF \x SELECT version(); EOF Execute Pipeline See output: "
+},
+{
+	"uri": "/tutorials/worker-model-docker-customized/",
+	"title": "Setup Worker Model Docker Customized",
+	"tags": [],
+	"description": "",
+	"content": "A worker model of type docker can be spawned by a Hatchery Docker or Docker Swarm Create a customized Worker Model In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a grunt task (optionnally) requires fontforge and ttfautohint. The following tools must be included in the model: NodeJs and npm bower grunt-cli gulp-cli fontforge ttfautohint We will use the official nodejs image from Docker. In this image, there is already a user named node. For the example, we will compile ttfautohint. Prerequisite To build a Docker model, you need: your favorite text editor a sane installation of Docker https://docs.docker.com/engine/installation/ Dockerfile Copy this content in a file named Dockerfile # User official nodejs docker image FROM node:6.10.1 #Answer &#39;yes&#39; to each question ENV DEBIAN_FRONTEND noninteractive # Upgrade the debian packages RUN (apt-get update &amp;amp;&amp;amp; apt-get upgrade -y -q &amp;amp;&amp;amp; apt-get -y -q autoclean &amp;amp;&amp;amp; apt-get -y -q autoremove) #The official image comes with npm; so we can use it to install some packages RUN npm install -g grunt-cli gulp-cli bower # Install fontforge for our specific need RUN apt-get install -y fontforge # Install packages and compile ttfautohint (still for our specific need) RUN apt-get install -y libharfbuzz-dev libfreetype6-dev libqt4-dev\ &amp;amp;&amp;amp; cd /tmp \ &amp;amp;&amp;amp; curl -L http://download.savannah.gnu.org/releases/freetype/ttfautohint-1.6.tar.gz |tar xz\ &amp;amp;&amp;amp; cd ttfautohint-1.6\ &amp;amp;&amp;amp; ./configure\ &amp;amp;&amp;amp; make\ &amp;amp;&amp;amp; make install # Change user. If you do not specify this command, the user will be root, and in our case, # bower will shout as it cannot be launched by root USER node # Specify a working directory on which the current user has write access # Remember, a curl command will be, first, executed to download the worker WORKDIR /home/node Build it and push it from you shell, type the following command to build the Docker image: docker build --no-cache --pull -t registry.my.infra.net/my/beautiful/worker:latest . If you want to test it, you can lauch your docker in bash mode : docker run -it registry.my.infra.net/my/beautiful/worker:latest /bin/bash pwd fontforge -v exit Now push it docker push registry.my.infra.net/my/beautiful/worker:latest Register your model in CDS In the UI, click on the wheel on the hand right top corner and select *workers&amp;rdquo; (or go the the route #/worker) At the bottom of the page, fill the form Name of your worker My Beautiful type docker image registry.my.infra.net/my/beautiful/worker:latest Click on Add button and that&amp;rsquo;s it Now you can specify this model in prerequisite on your job. Create a new prerequisite of type &amp;ldquo;model&amp;rdquo;, then choose your worker model in list "
+},
+{
+	"uri": "/tutorials/worker-model-docker-simple/",
+	"title": "Setup Worker Model Docker Simple",
+	"tags": [],
+	"description": "",
+	"content": "A worker model of type docker can be spawned by a Hatchery Docker or Docker Swarm Register a worker Model from a existing Docker Image Docker Image golang:1.8.1 have a &amp;ldquo;curl&amp;rdquo; in $PATH, so it can be used as it is. In the UI, click on the wheel on the hand right top corner and select *workers&amp;rdquo; (or go the the route #/worker) At the bottom of the page, fill the form Name of your worker Golang-1.8.1 type docker image golang:1.8.1 Click on Add button and that&amp;rsquo;s it "
+},
+{
+	"uri": "/tutorials/worker-model-openstack/",
+	"title": "Setup Worker Model Openstack",
+	"tags": [],
+	"description": "",
+	"content": "CDS build using OVH.com Openstack infrastructure Create Openstack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;Openstack item. You will be able to create an Openstack user, enter description (name and password will be generated). Add Openstack worker model We need to define an Openstack worker model to have Openstack hatchery booting workers. We will create a model called docker: With low hardware capacity (vps-ssd-1) On Debian 8 With docker ready to use Git installed First, define a udata file. It is a shell script executed just after the boot sequence complete. Our docker udata will look like this: # Install docker cd $HOME sudo apt-get -y --force-yes update &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 apt-get install -y --force-yes apt-transport-https ca-certificates &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D sudo mkdir -p /etc/apt/sources.list.d sudo sh -c &amp;quot;echo deb https://apt.dockerproject.org/repo debian-jessie main &amp;gt; /etc/apt/sources.list.d/docker.list&amp;quot; sudo apt-get -y --force-yes update &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-cache policy docker-engine &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-get install -y --force-yes docker-engine &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo service docker start &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 # Non-root access sudo groupadd docker &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo gpasswd -a ${USER} docker &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo service docker restart &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 # Basic build binaries sudo apt-get -y --force-yes install curl git &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 sudo apt-get -y --force-yes install binutils &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 Last step, define worker model in cds: $ cds worker model add docker openstack --image=&amp;quot;Debian 8&amp;quot; --flavor=&amp;quot;vps-ssd-1&amp;quot; --userdata=&amp;quot;./docker.udata&amp;quot; Declare docker and git capabilities $ cds worker model capability add docker docker binary docker $ cds worker model capability add docker git binary git "
 },
 {
 	"uri": "/tags/",
@@ -221,7 +277,21 @@
 	"title": "Token",
 	"tags": [],
 	"description": "",
-	"content": "Generate a worker key Purpose In order to start a worker, you need to provide a worker key to be able to build your pipelines. CLI Run the following command, replace yourgroup with your group $ cds generate token -g yourgroup -e persistent "
+	"content": "Generate a Token Purpose In order to start a worker, you need to provide a worker key to be able to build your pipelines. CLI Run the following command, replace yourgroup with your group $ cds generate token -g yourgroup -e persistent "
+},
+{
+	"uri": "/tutorials/",
+	"title": "Tutorials",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/tutorials/",
+	"title": "Tutorials",
+	"tags": [],
+	"description": "",
+	"content": "Worker Setup Setup Worker Model Docker Simple Setup Worker Model Docker Customized Setup Worker Model Openstack Service Requirement Nginx Service Requirement PostgreSQL "
 },
 {
 	"uri": "/building-pipelines/actions/user-actions/",
@@ -242,14 +312,21 @@
 	"title": "Worker",
 	"tags": [],
 	"description": "",
-	"content": "A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker. Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip; What is a worker Basically, a worker is a binary. This binary can be launched inside a Docker Containers, or on a Host (as VM Openstack). Worker cycle of life If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contains a sane installation of &amp;ldquo;curl&amp;rdquo;. So, in the case of a worker model of type &amp;ldquo;docker&amp;rdquo;, the docker image must contains curl in PATH. "
+	"content": "A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker. Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip; What is a worker Basically, a worker is a binary. This binary can be launched inside a Docker Containers, or on a Host (as VM Openstack). Worker cycle of life If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contains a sane installation of &amp;ldquo;curl&amp;rdquo;. So, in the case of a worker model of type &amp;ldquo;docker&amp;rdquo;, the docker image must contains curl in PATH. Why would you need to setup your own worker ? There is several cases where one would need to setup his own worker: Perform incremental build Build on a specific architecture Perform integration tests in a specific network How does this work ? Workers authenticate on CDS with a token and have the same permissions as the user who generated it. Bottom line, if you can access the application, your worker will too. "
 },
 {
-	"uri": "/advanced/worker/worker-setup/",
+	"uri": "/advanced/worker/model/",
+	"title": "Worker Model",
+	"tags": [],
+	"description": "",
+	"content": "Purpose The goal of CDS is to start a worker when you need it and matching all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model. The goal of worker model is to describe the capabities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries. Types There is 2 types of worker models: Docker images, see how to create a worker model docker Openstack images, see how to create a worker model openstack Capabilities Capabilities have a name, a type and a value. Existing capabilities type are: Binary Network access Hostname Memory Service Behavior All registered CDS hatcheries get the number of instances of each model needed. They then start/kill worker accordingly. "
+},
+{
+	"uri": "/tutorials/worker-setup/",
 	"title": "Worker Setup",
 	"tags": [],
 	"description": "",
-	"content": "Introduction Why would you need to setup your own worker ? There is several cases where one would need to setup his own worker: Perform incremental build Build on a specific architecture Perform integration tests in a specific network How does this work ? Workers authenticate on CDS with a worker key and have the same permissions as the user who generated the key. Bottom line, if you can access the application, your worker will too. Linux Setup Download the binary Simple enough, run $ wget -nv https://your-cds-api/download/worker/`uname -m` -O worker Startup the worker $ worker --help CDS Worker Usage: worker [flags] worker [command] Available Commands: export worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt; upload worker upload --tag=&amp;lt;tag&amp;gt; &amp;lt;path&amp;gt; version Print the version number register worker register Flags: --api string URL of CDS API --basedir string Worker working directory --booked-job-id int Booked job id --graylog-extra-key string Ex: --graylog-extra-key=xxxx-yyyy --graylog-extra-value string Ex: --graylog-extra-value=xxxx-yyyy --graylog-host string Ex: --graylog-host=xxxx-yyyy --graylog-port string Ex: --graylog-port=12202 --graylog-protocol string Ex: --graylog-protocol=xxxx-yyyy --grpc-api string CDS GRPC tcp address --grpc-insecure Disable GRPC TLS encryption --hatchery int Hatchery spawing worker --key string CDS KEY --log-level string Log Level : debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --single-use Exit after executing an action --ttl int Worker time to live (minutes) (default 30) Use &amp;quot;worker [command] --help&amp;quot; for more information about a command. Mandatory parameters are &amp;ndash;api and &amp;ndash;key. The most basic way to start a worker is as following: $ worker --api=https://your-cds-api --key=NTU2ZmFiOGZmMzI5MGU1NzVmY2FhNThmOTY3NjFmMDVmNmIxOTFhNDViNjRjETCETC 2016/03/24 11:30:50 [NOTICE] What a good time to be alive 2016/03/24 11:30:50 [NOTICE] Disconnected from CDS engine, trying to register... 2016/03/24 11:30:50 [NOTICE] Registering [desk32345] at [https://your-cds-api] That&amp;rsquo;s it, you are done here. Windows Setup Download the binary Download the windows binary from https://github.com/ovh/cds/releases Prerequisites CDS Worker will launch Microsoft Powershell command. Please check Powershell is correctly installed and configured on your host. Every command CDS Worker will launch should be in the %PATH% variable. Do the following steps with the target User whom will run the CDS Worker. To be able to operate git clone commands, you have to follow next steps : Install Git https://git-scm.com/download/win Setup your system %PATH%, and add C:\Program Files\Git\mingw32\bin;C:\Program Files\Git\usr\bin In a Powershell Prompt, generate SSH keys to be able PS ssh-keygen In a Powsershell Prompt, run PS Set-ExecutionPolicy Unrestricted Add the public key as Access Key in every project in stash you will have to clone : * Stash &amp;gt; Project &amp;gt; Settings &amp;gt; Access Keys &amp;gt; Add Key * . Copy the id_rsa and id_rsa.pub from you C:\Users\&amp;lt;user&amp;gt;\.ssh\ directory to C:\Program Files\Git\etc\ssh\ (Optional, just for example here) Edit or Create the file C:\Program Files\Git\etc\ssh\ssh_config : Host your-bitbucket-host StrictHostKeyChecking no You may want to improve your Git Experience on your windows host : have a look to posh-git : https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell Trigger your pipeline on your Host If you want to force you pipeline execution on your host, add a &amp;ldquo;hostname&amp;rdquo; requirement on you pipeline and set it to the hostname of your windows host. "
+	"content": "Introduction Why would you need to setup your own worker ? There is several cases where one would need to setup his own worker: Perform incremental build Build on a specific architecture Perform integration tests in a specific network How does this work ? Workers authenticate on CDS with a token and have the same permissions as the user who generated it. Bottom line, if you can access the application, your worker will too. Linux Setup Download the binary Simple enough, run $ wget -nv https://your-cds-api/download/worker/`uname -m` -O worker or download from https://github.com/ovh/cds/releases Startup the worker $ worker --help CDS Worker Usage: worker [flags] worker [command] Available Commands: export worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt; upload worker upload --tag=&amp;lt;tag&amp;gt; &amp;lt;path&amp;gt; version Print the version number register worker register Flags: --api string URL of CDS API --basedir string Worker working directory --booked-job-id int Booked job id --graylog-extra-key string Ex: --graylog-extra-key=xxxx-yyyy --graylog-extra-value string Ex: --graylog-extra-value=xxxx-yyyy --graylog-host string Ex: --graylog-host=xxxx-yyyy --graylog-port string Ex: --graylog-port=12202 --graylog-protocol string Ex: --graylog-protocol=xxxx-yyyy --grpc-api string CDS GRPC tcp address --grpc-insecure Disable GRPC TLS encryption --hatchery int Hatchery spawing worker --key string CDS KEY --log-level string Log Level : debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --single-use Exit after executing an action --ttl int Worker time to live (minutes) (default 30) Use &amp;quot;worker [command] --help&amp;quot; for more information about a command. Mandatory parameters are &amp;ndash;api and &amp;ndash;key. The most basic way to start a worker is as following: $ worker --api=https://your-cds-api --key=NTU2ZmFiOGZmMzI5MGU1NzVmY2FhNThmOTY3NjFmMDVmNmIxOTFhNDViNjRjETCETC 2016/03/24 11:30:50 [NOTICE] What a good time to be alive 2016/03/24 11:30:50 [NOTICE] Disconnected from CDS engine, trying to register... 2016/03/24 11:30:50 [NOTICE] Registering [desk32345] at [https://your-cds-api] That&amp;rsquo;s it, you are done here. Windows Setup Download the binary Download the windows binary from https://github.com/ovh/cds/releases Prerequisites CDS Worker will launch Microsoft Powershell command. Please check Powershell is correctly installed and configured on your host. Every command CDS Worker will launch should be in the %PATH% variable. Do the following steps with the target User whom will run the CDS Worker. To be able to operate git clone commands, you have to follow next steps : Install Git https://git-scm.com/download/win Setup your system %PATH%, and add C:\Program Files\Git\mingw32\bin;C:\Program Files\Git\usr\bin In a Powershell Prompt, generate SSH keys to be able PS ssh-keygen In a Powsershell Prompt, run PS Set-ExecutionPolicy Unrestricted Add the public key as Access Key in every project in stash you will have to clone : * Stash &amp;gt; Project &amp;gt; Settings &amp;gt; Access Keys &amp;gt; Add Key * . Copy the id_rsa and id_rsa.pub from you C:\Users\&amp;lt;user&amp;gt;\.ssh\ directory to C:\Program Files\Git\etc\ssh\ (Optional, just for example here) Edit or Create the file C:\Program Files\Git\etc\ssh\ssh_config : Host your-bitbucket-host StrictHostKeyChecking no You may want to improve your Git Experience on your windows host : have a look to posh-git : https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell Trigger your pipeline on your Host If you want to force you pipeline execution on your host, add a &amp;ldquo;hostname&amp;rdquo; requirement on you pipeline and set it to the hostname of your windows host. "
 },
 {
 	"uri": "/advanced/write-plugin/",
@@ -270,7 +347,7 @@
 	"title": "cds-nexus-upload",
 	"tags": [],
 	"description": "",
-	"content": "Upload file on Nexus Parameters version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload login: Login for nexus password: Password for nexus groupId: Group id of the artifact artifactId: Artifact id of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact packaging: Packaging type of the artifact Requirements bash: type:binary Value:bash curl: type:binary Value:curl More documentation on Github "
+	"content": "Upload file on Nexus Parameters extension: Extension of the artifact files: Regex of files you want to upload packaging: Packaging type of the artifact groupId: Group id of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. login: Login for nexus password: Password for nexus url: Nexus URL repository: Nexus repository that the artifact is contained in Requirements bash: type:binary Value:bash curl: type:binary Value:curl More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/user/cds-perl-test/",
@@ -333,28 +410,28 @@
 	"title": "plugin-group-tmpl",
 	"tags": [],
 	"description": "",
-	"content": "This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template. Parameters output: Output path for generated file (default to .out or just trimming .tpl extension) applications: Applications file variables config: Template file to use More More documentation on Github "
+	"content": "This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template. Parameters config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) applications: Applications file variables More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-kafka-publish/",
 	"title": "plugin-kafka-publish",
 	"tags": [],
 	"description": "",
-	"content": "This action helps you to send data through Kafka across every network. You are able to send a custom &amp;quot;message&amp;quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consummer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin. Parameters kafkaUser: Kafka User kafkaPassword: Kafka Password publicKey: GPG Public Key (ASCII armored format) waitForAck: Wait for Ack waitForAckTopic: Kafka Topic. Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. waitForAckTimeout: Ack timeout (seconds). Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. message: Kafka Message kafkaGroup: Kafka Consumer Group (used for acknowledgment) kafkaAddresses: Kafka Addresses topic: Kafka Topic artifacts: Artifacts list (comma separated) More More documentation on Github "
+	"content": "This action helps you to send data through Kafka across every network. You are able to send a custom &amp;quot;message&amp;quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consummer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin. Parameters message: Kafka Message kafkaGroup: Kafka Consumer Group (used for acknowledgment) artifacts: Artifacts list (comma separated) waitForAck: Wait for Ack waitForAckTopic: Kafka Topic. Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. waitForAckTimeout: Ack timeout (seconds). Used only if &amp;ldquo;waitForAck&amp;rdquo; is true. kafkaUser: Kafka User kafkaPassword: Kafka Password kafkaAddresses: Kafka Addresses topic: Kafka Topic publicKey: GPG Public Key (ASCII armored format) More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-marathon/",
 	"title": "plugin-marathon",
 	"tags": [],
 	"description": "",
-	"content": "This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment. Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull. Parameters user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result. If not set, CDS will consider a successful result if marathon accepts the provided configuration. insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true. url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 More More documentation on Github "
+	"content": "This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment. Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull. Parameters timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true. url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result. If not set, CDS will consider a successful result if marathon accepts the provided configuration. insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-ssh-cmd/",
 	"title": "plugin-ssh-cmd",
 	"tags": [],
 	"description": "",
-	"content": "This plugin helps you to run cmd on remote server over ssh. Parameters command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) More More documentation on Github "
+	"content": "This plugin helps you to run cmd on remote server over ssh. Parameters username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) More More documentation on Github "
 },
 {
 	"uri": "/building-pipelines/actions/plugins/plugin-tmpl/",

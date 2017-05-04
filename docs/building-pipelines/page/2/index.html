@@ -98,6 +98,16 @@
             </li>
             
             
+            
+                <li data-nav-id="/building-pipelines/requirements/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/building-pipelines/requirements/">Requirements</a>
+                
+                
+            </li>
+            
+            
             </ul>
         
         
@@ -112,11 +122,11 @@
         
     </li>
 
-    <li data-nav-id="" class="dd-item 
+    <li data-nav-id="/tutorials/" class="dd-item 
      
     ">
     
-    <a href="">worker</a>
+    <a href="https://ovh.github.com/cds/tutorials/">Tutorials</a>
         
         
     </li>
@@ -193,6 +203,29 @@
 
    <article class="post building-pipelines">
     <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">User Actions</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>CDS User Actions are developed in CDS. There are available on all CDS Installation.
+Built-in actions :
+cds-docker-package cds-nexus-upload cds-perl-test  <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user-actions/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/variables/">Variables</a></h2>
     </header>
     <section class="post-excerpt">
@@ -243,7 +276,7 @@ Parameters  dockerfileDirectory: Directory which contains your Dockerfile. docke
     </header>
     <section class="post-excerpt">
         <p>Upload file on Nexus
-Parameters  version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. files: Regex of files you want to upload login: Login for nexus password: Password for nexus groupId: Group id of the artifact artifactId: Artifact id of the artifact url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact packaging: Packaging type of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/">&raquo;</a></p>
+Parameters  extension: Extension of the artifact files: Regex of files you want to upload packaging: Packaging type of the artifact groupId: Group id of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. login: Login for nexus password: Password for nexus url: Nexus URL repository: Nexus repository that the artifact is contained in  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -397,28 +430,6 @@ Parameters  repo: Your source code repository withPackage: Do you want a Docker 
 
 
 
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/">plugin-download</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This is a plugin to download file from URL
-Parameters  url: the url of your file filepath: the destination of your file to be copied headers: specific headers to add to your request (&ldquo;headerName&rdquo;=&ldquo;value&rdquo; newline separated list)  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
 
 <div style="margin-bottom:2rem"></div>
 
@@ -475,6 +486,11 @@ Parameters  url: the url of your file filepath: the destination of your file to 
                 
             
                 
+                    
+                        
+                        
+                            
+                        
                     
                 
             

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="generator" content="Hugo 0.20.6" />
+    <meta name="description" content="">
+
+
+    <link rel="shortcut icon" href="https://ovh.github.com/cds/images/favicon.png" type="image/x-icon" />
+
+    
+    <title>Setup Worker Model Docker Simple :: CDS Documentation</title>
+    <link href="https://ovh.github.com/cds/css/nucleus.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/hybrid.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/featherlight.min.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/perfect-scrollbar.min.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/horsey.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/theme.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/hugo-theme.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ovh.github.com/cds/css/bootstrap.min.css">
+    <script src="https://ovh.github.com/cds/js/jquery-2.x.min.js"></script>
+    <style type="text/css">:root #header + #content > #left > #rlblock_left
+    {display:none !important;}</style>
+    
+
+  </head>
+  <body class="" data-url="/tutorials/worker-model-docker-simple/">
+    <nav id="sidebar">
+  <div id="header-wrapper">
+    <div id="header">
+       
+	<p><img src="https://ovh.github.com/cds/images/cds-transparent.png?width=40px" alt="CDS" /></p>
+ 
+
+
+    </div>
+    
+</div>
+
+  <div class="highlightable">
+    <ul class="topics">
+    
+
+
+
+
+    <li data-nav-id="/getting-started/" class="dd-item 
+     
+    ">
+    
+    <a href="https://ovh.github.com/cds/getting-started/">Getting started</a>
+        
+        
+    </li>
+
+    <li data-nav-id="/building-pipelines/" class="dd-item 
+     
+    ">
+    
+    <a href="https://ovh.github.com/cds/building-pipelines/">Building Pipelines</a>
+        
+        
+    </li>
+
+    <li data-nav-id="/advanced/" class="dd-item 
+     
+    ">
+    
+    <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="/tutorials/" class="dd-item 
+     
+    parent">
+    
+    <a href="https://ovh.github.com/cds/tutorials/">Tutorials</a>
+        
+        
+        
+        
+        
+            <ul class="n1">
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-setup/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-setup/">Worker Setup</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-docker-simple/" class="dd-item {
+                    active 
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-docker-simple/">Setup Worker Model Docker Simple</a>
+                
+                
+                
+                
+                
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-docker-customized/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-docker-customized/">Setup Worker Model Docker Customized</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-openstack/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-openstack/">Setup Worker Model Openstack</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/service-link-requirement-nginx/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/service-link-requirement-nginx/">Service Requirement Nginx</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/service-link-requirement-pg/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/service-link-requirement-pg/">Service Requirement PostgreSQL</a>
+                
+                
+            </li>
+            
+            
+            </ul>
+        
+        
+    </li>
+
+
+
+
+
+    </ul>
+    
+     
+    <section id="footer">
+      
+    </section>
+  </div>
+</nav>
+
+        <section id="body">
+        <div id="overlay"></div>
+
+        <div class="padding highlightable">
+        
+          <div id="top-bar">
+              
+                
+                
+                
+              <div id="top-github-link">
+                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/build/content/tutorials/worker-model-docker-simple.md" target="blank">
+                    <i class="fa fa-code-fork"></i>
+                    Edit this page
+                  </a>
+              </div>
+                
+              
+              <div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+
+                  <span id="sidebar-toggle-span">
+                      <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                        <i class="fa fa-bars"></i>
+                      </a>
+                  </span>
+                  <span id="toc-menu"><a href=""><i class="fa fa-list-alt"></i></a></span>
+
+                      <a href="https://ovh.github.com/cds"> 
+                      <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span> 
+                      CDS Documentation</a> 
+                      
+                         / <a href='https://ovh.github.com/cds/tutorials/'>Tutorials</a> / <a href='https://ovh.github.com/cds/tutorials/worker-model-docker-simple/'>Setup Worker Model Docker Simple</a>
+                      
+                      
+              </div>
+              
+                  <div class="progress">
+    <div class="wrapper">
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#register-a-worker-model-from-a-existing-docker-image">Register a worker Model from a existing Docker Image</a></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+</div>
+
+            </div>
+        
+              
+            <div id="body-inner">
+              
+              <h1>Setup Worker Model Docker Simple</h1>
+                
+
+
+
+
+<p>A worker model of type <code>docker</code> can be spawned by a Hatchery Docker or Docker Swarm</p>
+
+<h2 id="register-a-worker-model-from-a-existing-docker-image">Register a worker Model from a existing Docker Image</h2>
+
+<p>Docker Image <em>golang:1.8.1</em> have a &ldquo;curl&rdquo; in $PATH, so it can be used as it is.</p>
+
+<ul>
+<li>In the UI, click on the wheel on the hand right top corner and select *workers&rdquo; (or go the the route <em>#/worker</em>)</li>
+<li>At the bottom of the page, fill the form
+
+<ul>
+<li>Name of your worker <em>Golang-1.8.1</em></li>
+<li>type <em>docker</em></li>
+<li>image <em>golang:1.8.1</em></li>
+</ul></li>
+<li>Click on <em>Add</em> button and that&rsquo;s it</li>
+</ul>
+
+
+<footer class=" footline" >
+	
+</footer>
+
+
+
+      </div>
+    </div>
+
+    
+ 
+    
+
+    <div id="navigation">
+        
+
+          
+        
+              
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
+                    
+                
+            
+                
+                    
+                        
+                        
+                            
+                                
+                            
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                            
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                            
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                            
+                        
+                    
+                
+            
+
+            
+                <a class="nav nav-prev" href="https://ovh.github.com/cds/tutorials/worker-setup/" title="Worker Setup"> <i class="fa fa-chevron-left"></i></a>
+            
+            
+                <a class="nav nav-next" href="https://ovh.github.com/cds/tutorials/worker-model-docker-customized/" title="Setup Worker Model Docker Customized" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
+            
+        
+    </div>
+
+    </section>
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>
+    <script src="https://ovh.github.com/cds/js/clipboard.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/perfect-scrollbar.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/perfect-scrollbar.jquery.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/jquery.sticky-kit.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/featherlight.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/html5shiv-printshiv.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="https://ovh.github.com/cds/js/modernizr.custom.71422.js"></script>
+    <script src="https://ovh.github.com/cds/js/learn.js"></script>
+    <script src="https://ovh.github.com/cds/js/hugo-learn.js"></script>
+
+    
+    <link href="https://ovh.github.com/cds/mermaid/mermaid.css" type="text/css" rel="stylesheet"/>
+    <script src="https://ovh.github.com/cds/mermaid/mermaid.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    
+
+    
+
+  </body>
+</html>
+

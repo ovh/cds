@@ -98,6 +98,16 @@
             </li>
             
             
+            
+                <li data-nav-id="/building-pipelines/requirements/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/building-pipelines/requirements/">Requirements</a>
+                
+                
+            </li>
+            
+            
             </ul>
         
         
@@ -112,11 +122,11 @@
         
     </li>
 
-    <li data-nav-id="" class="dd-item 
+    <li data-nav-id="/tutorials/" class="dd-item 
      
     ">
     
-    <a href="">worker</a>
+    <a href="https://ovh.github.com/cds/tutorials/">Tutorials</a>
         
         
     </li>
@@ -191,11 +201,33 @@
 
    <article class="post building-pipelines">
     <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/">plugin-download</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>This is a plugin to download file from URL
+Parameters  url: the url of your file filepath: the destination of your file to be copied headers: specific headers to add to your request (&ldquo;headerName&rdquo;=&ldquo;value&rdquo; newline separated list)  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/">plugin-group-tmpl</a></h2>
     </header>
     <section class="post-excerpt">
         <p>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
-Parameters  output: Output path for generated file (default to .out or just trimming .tpl extension) applications: Applications file variables config: Template file to use  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/">&raquo;</a></p>
+Parameters  config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) applications: Applications file variables  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -240,7 +272,7 @@ You are able to send a custom &quot;message&quot; file and all the artifacts you
     <section class="post-excerpt">
         <p>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
 Your marathon.json file can be templated with cds variables &ldquo;{{.cds.variables}}&rdquo;. Enable &ldquo;waitForDeployment&rdquo; option to ensure deployment is successfull.
-Parameters  user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/">&raquo;</a></p>
+Parameters  timeout: Marathon deployment timeout (seconds). Used only if &ldquo;waitForDeployment&rdquo; is true. url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -262,7 +294,7 @@ Parameters  user: Marathon User (please use project, application or environment 
     </header>
     <section class="post-excerpt">
         <p>This plugin helps you to run cmd on remote server over ssh.
-Parameters  command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values)  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/">&raquo;</a></p>
+Parameters  username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds)  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -378,6 +410,11 @@ Parameters  path: Path containers yml venom files. Format: adirectory/, ./aTest.
                 
             
                 
+                    
+                        
+                        
+                            
+                        
                     
                 
             

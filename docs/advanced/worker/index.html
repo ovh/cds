@@ -118,6 +118,33 @@
                 
                 
                 
+                <ul class="n2">
+                
+                
+                
+                <li data-nav-id="/advanced/worker/model/" class="dd-item 
+                     
+                    ">
+                    <a href="https://ovh.github.com/cds/advanced/worker/model/">Worker Model</a>
+                
+
+                    
+                </li>
+                
+                
+                
+                <li data-nav-id="/advanced/worker/token/" class="dd-item 
+                     
+                    ">
+                    <a href="https://ovh.github.com/cds/advanced/worker/token/">Token</a>
+                
+
+                    
+                </li>
+                
+                
+                </ul>
+                
                 
             </li>
             
@@ -127,11 +154,11 @@
         
     </li>
 
-    <li data-nav-id="" class="dd-item 
+    <li data-nav-id="/tutorials/" class="dd-item 
      
     ">
     
-    <a href="">worker</a>
+    <a href="https://ovh.github.com/cds/tutorials/">Tutorials</a>
         
         
     </li>
@@ -192,7 +219,14 @@
 <li>
 <ul>
 <li><a href="#what-is-a-worker">What is a worker</a></li>
-<li><a href="#worker-cycle-of-life">Worker cycle of life</a></li>
+<li><a href="#worker-cycle-of-life">Worker cycle of life</a>
+<ul>
+<li>
+<ul>
+<li><a href="#why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</a></li>
+</ul></li>
+<li><a href="#how-does-this-work">How does this work ?</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -225,6 +259,22 @@
 <p>If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contains a sane installation of &ldquo;curl&rdquo;.</p>
 
 <p>So, in the case of a worker model of type &ldquo;docker&rdquo;, the docker image must contains <code>curl</code> in PATH.</p>
+
+<h4 id="why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</h4>
+
+<p>There is several cases where one would need to setup his own worker:</p>
+
+<ul>
+<li>Perform incremental build</li>
+<li>Build on a specific architecture</li>
+<li>Perform integration tests in a specific network</li>
+</ul>
+
+<h3 id="how-does-this-work">How does this work ?</h3>
+
+<p>Workers authenticate on CDS with a <a href="https://ovh.github.com/cds/advanced/worker/token/">token</a> and have the same permissions as the user who generated it.</p>
+
+<p>Bottom line, if you can access the application, your worker will too.</p>
 
 
 <footer class=" footline" >

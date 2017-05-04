@@ -16,17 +16,17 @@ This action helps you to send data through Kafka across every network.
 
 ## Parameters
 
-* **kafkaUser**: Kafka User
-* **kafkaPassword**: Kafka Password
-* **publicKey**: GPG Public Key (ASCII armored format)
+* **message**: Kafka Message
+* **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
+* **artifacts**: Artifacts list (comma separated)
 * **waitForAck**: Wait for Ack
 * **waitForAckTopic**: Kafka Topic. Used only if "waitForAck" is true.
 * **waitForAckTimeout**: Ack timeout (seconds). Used only if "waitForAck" is true.
-* **message**: Kafka Message
-* **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
+* **kafkaUser**: Kafka User
+* **kafkaPassword**: Kafka Password
 * **kafkaAddresses**: Kafka Addresses
 * **topic**: Kafka Topic
-* **artifacts**: Artifacts list (comma separated)
+* **publicKey**: GPG Public Key (ASCII armored format)
 
 
 ## More
