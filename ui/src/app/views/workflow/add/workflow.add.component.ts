@@ -35,8 +35,8 @@ export class WorkflowAddComponent {
     createWorkflow(): void {
         this.loading = true;
         this._workflowStore.addWorkflow(this.project.key, this.workflow).first().subscribe(() => {
-            this.loading = false;
             this._toast.success('', this._translate.instant('workflow_added'));
+        }, () => {
         }, () => {
             this.loading = false;
         });

@@ -393,7 +393,7 @@
   "workflow_orientation_horizontal" : "Horizontale",
   "workflow_orientation_vertical" : "Verticale",
   "workflow_orientation_tree" : "Arborescence",
-  "workflow_root_context_application" : "Application (facultataif)",
+  "workflow_root_context_application" : "Application (facultatif)",
   "workflow_root_context_environment" : "Environnment (facultatif)",
   "workflow_root_context_pipeline" : "Pipeline"
 }
