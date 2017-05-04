@@ -73,7 +73,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/installation/docker-compose/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/installation/ready-to-run/docker-compose/</loc>
   </url>
   
   <url>
@@ -114,11 +114,43 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/getting-started/installation/ready-to-run/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/advanced/repositories_manager/</loc>
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/requirements/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/installation/requirements/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/script/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tutorials/service-link-requirement-nginx/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tutorials/service-link-requirement-pg/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tutorials/worker-model-docker-customized/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tutorials/worker-model-docker-simple/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tutorials/worker-model-openstack/</loc>
   </url>
   
   <url>
@@ -135,6 +167,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/tutorials/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tutorials/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</loc>
   </url>
   
@@ -147,7 +188,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/worker/worker-setup/</loc>
+    <loc>https://ovh.github.com/cds/advanced/worker/model/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tutorials/worker-setup/</loc>
   </url>
   
   <url>

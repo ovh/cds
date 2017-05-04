@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="generator" content="Hugo 0.20.6" />
+    <meta name="description" content="">
+
+
+    <link rel="shortcut icon" href="https://ovh.github.com/cds/images/favicon.png" type="image/x-icon" />
+
+    
+    <title>Setup Worker Model Openstack :: CDS Documentation</title>
+    <link href="https://ovh.github.com/cds/css/nucleus.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/hybrid.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/featherlight.min.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/perfect-scrollbar.min.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/horsey.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/theme.css" rel="stylesheet">
+    <link href="https://ovh.github.com/cds/css/hugo-theme.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ovh.github.com/cds/css/bootstrap.min.css">
+    <script src="https://ovh.github.com/cds/js/jquery-2.x.min.js"></script>
+    <style type="text/css">:root #header + #content > #left > #rlblock_left
+    {display:none !important;}</style>
+    
+
+  </head>
+  <body class="" data-url="/tutorials/worker-model-openstack/">
+    <nav id="sidebar">
+  <div id="header-wrapper">
+    <div id="header">
+       
+	<p><img src="https://ovh.github.com/cds/images/cds-transparent.png?width=40px" alt="CDS" /></p>
+ 
+
+
+    </div>
+    
+</div>
+
+  <div class="highlightable">
+    <ul class="topics">
+    
+
+
+
+
+    <li data-nav-id="/getting-started/" class="dd-item 
+     
+    ">
+    
+    <a href="https://ovh.github.com/cds/getting-started/">Getting started</a>
+        
+        
+    </li>
+
+    <li data-nav-id="/building-pipelines/" class="dd-item 
+     
+    ">
+    
+    <a href="https://ovh.github.com/cds/building-pipelines/">Building Pipelines</a>
+        
+        
+    </li>
+
+    <li data-nav-id="/advanced/" class="dd-item 
+     
+    ">
+    
+    <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="/tutorials/" class="dd-item 
+     
+    parent">
+    
+    <a href="https://ovh.github.com/cds/tutorials/">Tutorials</a>
+        
+        
+        
+        
+        
+            <ul class="n1">
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-setup/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-setup/">Worker Setup</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-docker-simple/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-docker-simple/">Setup Worker Model Docker Simple</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-docker-customized/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-docker-customized/">Setup Worker Model Docker Customized</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-openstack/" class="dd-item {
+                    active 
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-openstack/">Setup Worker Model Openstack</a>
+                
+                
+                
+                
+                
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/service-link-requirement-nginx/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/service-link-requirement-nginx/">Service Requirement Nginx</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/service-link-requirement-pg/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/service-link-requirement-pg/">Service Requirement PostgreSQL</a>
+                
+                
+            </li>
+            
+            
+            </ul>
+        
+        
+    </li>
+
+
+
+
+
+    </ul>
+    
+     
+    <section id="footer">
+      
+    </section>
+  </div>
+</nav>
+
+        <section id="body">
+        <div id="overlay"></div>
+
+        <div class="padding highlightable">
+        
+          <div id="top-bar">
+              
+                
+                
+                
+              <div id="top-github-link">
+                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/build/content/tutorials/worker-model-openstack.md" target="blank">
+                    <i class="fa fa-code-fork"></i>
+                    Edit this page
+                  </a>
+              </div>
+                
+              
+              <div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+
+                  <span id="sidebar-toggle-span">
+                      <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                        <i class="fa fa-bars"></i>
+                      </a>
+                  </span>
+                  <span id="toc-menu"><a href=""><i class="fa fa-list-alt"></i></a></span>
+
+                      <a href="https://ovh.github.com/cds"> 
+                      <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span> 
+                      CDS Documentation</a> 
+                      
+                         / <a href='https://ovh.github.com/cds/tutorials/'>Tutorials</a> / <a href='https://ovh.github.com/cds/tutorials/worker-model-openstack/'>Setup Worker Model Openstack</a>
+                      
+                      
+              </div>
+              
+                  <div class="progress">
+    <div class="wrapper">
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#create-openstack-user">Create Openstack user</a></li>
+<li><a href="#add-openstack-worker-model">Add Openstack worker model</a></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+</div>
+
+            </div>
+        
+              
+            <div id="body-inner">
+              
+              <h1>Setup Worker Model Openstack</h1>
+                
+
+
+
+
+<p>CDS build using OVH.com Openstack infrastructure</p>
+
+<h2 id="create-openstack-user">Create Openstack user</h2>
+
+<p>In OVH manager, in <a href="https://www.ovh.com/manager/cloud">cloud section</a>, click on the menu on the <em>Servers&gt;Openstack</em> item.</p>
+
+<p>You will be able to create an Openstack user, enter description (name and password will be generated).</p>
+
+<h2 id="add-openstack-worker-model">Add Openstack worker model</h2>
+
+<p>We need to define an Openstack worker model to have Openstack hatchery booting workers.</p>
+
+<p>We will create a model called docker:</p>
+
+<ul>
+<li>With low hardware capacity (vps-ssd-1)</li>
+<li>On Debian 8</li>
+<li>With docker ready to use</li>
+<li>Git installed</li>
+</ul>
+
+<p>First, define a udata file. It is a shell script executed just after the boot sequence complete. Our docker udata will look like this:</p>
+
+<pre><code class="language-bash"># Install docker
+cd $HOME
+sudo apt-get -y --force-yes update &gt;&gt; /tmp/user_data 2&gt;&amp;1
+apt-get install -y --force-yes apt-transport-https ca-certificates &gt;&gt; /tmp/user_data 2&gt;&amp;1
+apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+sudo mkdir -p /etc/apt/sources.list.d
+sudo sh -c &quot;echo deb https://apt.dockerproject.org/repo debian-jessie main &gt; /etc/apt/sources.list.d/docker.list&quot;
+sudo apt-get -y --force-yes update &gt;&gt; /tmp/user_data 2&gt;&amp;1
+sudo apt-cache policy docker-engine &gt;&gt; /tmp/user_data 2&gt;&amp;1
+sudo apt-get install -y --force-yes docker-engine &gt;&gt; /tmp/user_data 2&gt;&amp;1
+sudo service docker start &gt;&gt; /tmp/user_data 2&gt;&amp;1
+
+# Non-root access
+sudo groupadd docker &gt;&gt; /tmp/user_data 2&gt;&amp;1
+sudo gpasswd -a ${USER} docker &gt;&gt; /tmp/user_data 2&gt;&amp;1
+sudo service docker restart &gt;&gt; /tmp/user_data 2&gt;&amp;1
+
+# Basic build binaries
+sudo apt-get -y --force-yes install curl git &gt;&gt; /tmp/user_data 2&gt;&amp;1
+sudo apt-get -y --force-yes install binutils &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</code></pre>
+
+<p>Last step, define worker model in cds:</p>
+
+<pre><code class="language-bash">$ cds worker model add docker openstack --image=&quot;Debian 8&quot; --flavor=&quot;vps-ssd-1&quot; --userdata=&quot;./docker.udata&quot;
+</code></pre>
+
+<p>Declare docker and git capabilities</p>
+
+<pre><code class="language-shell">$ cds worker model capability add docker docker binary docker
+$ cds worker model capability add docker git binary git
+</code></pre>
+
+
+<footer class=" footline" >
+	
+</footer>
+
+
+
+      </div>
+    </div>
+
+    
+ 
+    
+
+    <div id="navigation">
+        
+
+          
+        
+              
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
+                    
+                
+            
+                
+                    
+                        
+                        
+                            
+                                
+                            
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                            
+                        
+                    
+                
+            
+
+            
+                <a class="nav nav-prev" href="https://ovh.github.com/cds/tutorials/worker-model-docker-customized/" title="Setup Worker Model Docker Customized"> <i class="fa fa-chevron-left"></i></a>
+            
+            
+                <a class="nav nav-next" href="https://ovh.github.com/cds/tutorials/service-link-requirement-nginx/" title="Service Requirement Nginx" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
+            
+        
+    </div>
+
+    </section>
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>
+    <script src="https://ovh.github.com/cds/js/clipboard.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/perfect-scrollbar.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/perfect-scrollbar.jquery.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/jquery.sticky-kit.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/featherlight.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/html5shiv-printshiv.min.js"></script>
+    <script src="https://ovh.github.com/cds/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="https://ovh.github.com/cds/js/modernizr.custom.71422.js"></script>
+    <script src="https://ovh.github.com/cds/js/learn.js"></script>
+    <script src="https://ovh.github.com/cds/js/hugo-learn.js"></script>
+
+    
+    <link href="https://ovh.github.com/cds/mermaid/mermaid.css" type="text/css" rel="stylesheet"/>
+    <script src="https://ovh.github.com/cds/mermaid/mermaid.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    
+
+    
+
+  </body>
+</html>
+

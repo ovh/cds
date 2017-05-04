@@ -1,6 +1,5 @@
 +++
 title = "Installation"
-chapter = true
 
 [menu.main]
 parent = "getting-started"

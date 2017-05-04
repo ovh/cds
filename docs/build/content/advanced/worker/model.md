@@ -3,7 +3,7 @@ title = "Worker Model"
 
 [menu.main]
 parent = "advanced-worker"
-identifier = "advanced-worker-model"
+identifier = "advanced-worker-model-simple"
 weight = 2
 
 +++
@@ -19,7 +19,7 @@ The goal of worker model is to describe the capabities of a given docker/iso ima
 
 There is 2 types of worker models:
 
- * Docker images, see [how to create a worker model docker]({{< relref "worker-model-docker.md" >}})
+ * Docker images, see [how to create a worker model docker]({{< relref "worker-model-docker-simple.md" >}})
  * Openstack images, see [how to create a worker model openstack]({{< relref "worker-model-openstack.md" >}})
 
 ### Capabilities

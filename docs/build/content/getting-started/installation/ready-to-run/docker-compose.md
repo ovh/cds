@@ -3,14 +3,14 @@ draft = false
 title = "Docker Compose"
 
 [menu.main]
-parent = "installation"
+parent = "ready-to-run"
 identifier = "docker-compose"
 
 +++
 
 ## Run with Docker-Compose
 
-The [docker-compose.yml](/docker-compose.yml) contains:
+The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) contains:
 
 - cds-db service with a postgresql
 - cds-cache service with a redis

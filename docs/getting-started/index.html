@@ -112,11 +112,11 @@
         
     </li>
 
-    <li data-nav-id="" class="dd-item 
+    <li data-nav-id="/tutorials/" class="dd-item 
      
     ">
     
-    <a href="">worker</a>
+    <a href="https://ovh.github.com/cds/tutorials/">Tutorials</a>
         
         
     </li>
@@ -189,12 +189,12 @@
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/docker-compose/">Docker Compose</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/ready-to-run/docker-compose/">Docker Compose</a></h2>
     </header>
     <section class="post-excerpt">
         <p>Run with Docker-Compose The docker-compose.yml contains:
  cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables. cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user. <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/docker-compose/">&raquo;</a></p>
+How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user. <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/ready-to-run/docker-compose/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -215,7 +215,49 @@ How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME
         <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/">Installation</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> Docker Compose   <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/">&raquo;</a></p>
+        <p> Ready to RUN Requirements   <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post getting-started">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/ready-to-run/">Ready to RUN</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p> Docker Compose   <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/ready-to-run/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post getting-started">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/requirements/">Requirements</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>   <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/requirements/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -330,7 +372,7 @@ You can define trigger conditions on a stage, to enable it on certain conditions
     </header>
     <section class="post-excerpt">
         <p>The Job is more important concept in CDS. It will be composed of steps which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job.
-A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the requirements you define on your job. <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/job/">&raquo;</a></p>
+A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the Requirements you define on your job. <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/job/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -422,6 +464,11 @@ You can define a Step as final. It mean that even if the job is failed, the step
                 
             
                 
+                    
+                        
+                        
+                            
+                        
                     
                 
             
