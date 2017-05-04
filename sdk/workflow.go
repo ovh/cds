@@ -19,10 +19,19 @@ type Workflow struct {
 
 //WorkflowNodeJoin aims to joins multiple node into multiple triggers
 type WorkflowNodeJoin struct {
-	ID            int64                 `json:"id" db:"id"`
-	WorkflowID    int64                 `json:"workflow_id" db:"workflow_id"`
-	SourceNodeIDs []int64               `json:"source_node_id" db:"-"`
-	Triggers      []WorkflowNodeTrigger `json:"triggers" db:"-"`
+	ID            int64                     `json:"id" db:"id"`
+	WorkflowID    int64                     `json:"workflow_id" db:"workflow_id"`
+	SourceNodeIDs []int64                   `json:"source_node_id" db:"-"`
+	Triggers      []WorkflowNodeJoinTrigger `json:"triggers" db:"-"`
+}
+
+//WorkflowNodeJoinTrigger is a trigger for joins
+type WorkflowNodeJoinTrigger struct {
+	ID                 int64                      `json:"id" db:"id"`
+	WorkflowNodeJoinID int64                      `json:"workflow_node_join_id" db:"join_id"`
+	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
+	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
+	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`
 }
 
 //WorkflowNode represents a node in w workflow tree
