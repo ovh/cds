@@ -73,7 +73,19 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/getting-started/installation/configuration/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/installation/database/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/getting-started/installation/ready-to-run/docker-compose/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/getting-started/installation/download/</loc>
   </url>
   
   <url>
@@ -83,6 +95,10 @@
   <url>
     <loc>https://ovh.github.com/cds/getting-started/</loc>
     <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.com/cds/tutorials/git-track/</loc>
   </url>
   
   <url>

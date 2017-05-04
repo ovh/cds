@@ -150,6 +150,31 @@ Artifact Download Artifact Upload GitClone JUnit Script </description>
     </item>
     
     <item>
+      <title>Configuration</title>
+      <link>https://ovh.github.com/cds/getting-started/installation/configuration/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/installation/configuration/</guid>
+      <description>The toml configuration can be provided by a file or via consul k/v store.
+Start CDS with local configuration file You can also generate a configuration file template with the following command.
+$ $PATH_TO_CDS/api --config my_conf_file.toml Generating default config file my_conf_file.toml  Edit this file.
+Run CDS
+$ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_file.toml 2017/04/04 16:33:17 [NOTICE] Starting CDS server... ...  Start CDS with Consul Upload your toml configuration to consul</description>
+    </item>
+    
+    <item>
+      <title>Database Management</title>
+      <link>https://ovh.github.com/cds/getting-started/installation/database/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/installation/database/</guid>
+      <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the api binary.
+Creation On a brand new database run the following command:
+$ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-host &amp;lt;port&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --limit 0  Upgrade On an existing database, run the following command on each CDS update:
+$ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-host &amp;lt;port&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt;  More details Read more about CDS Database Management</description>
+    </item>
+    
+    <item>
       <title>Docker Compose</title>
       <link>https://ovh.github.com/cds/getting-started/installation/ready-to-run/docker-compose/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -161,6 +186,15 @@ How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME
     </item>
     
     <item>
+      <title>Download</title>
+      <link>https://ovh.github.com/cds/getting-started/installation/download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/getting-started/installation/download/</guid>
+      <description>You&amp;rsquo;ll find last release of CDS on Github Releases</description>
+    </item>
+    
+    <item>
       <title>Getting started</title>
       <link>https://ovh.github.com/cds/getting-started/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -168,6 +202,20 @@ How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME
       <guid>https://ovh.github.com/cds/getting-started/</guid>
       <description>Discover what is CDS and the core-concepts behind it.
 About CDS Concepts Installation  </description>
+    </item>
+    
+    <item>
+      <title>Git track </title>
+      <link>https://ovh.github.com/cds/tutorials/git-track/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/tutorials/git-track/</guid>
+      <description>Introduction This tutorial introduce the cds track &amp;lt;git commit&amp;gt; function of CDS cli.
+Goal: Immediate feedback cds track aims to display in your terminal the status of the pipeline building code refered by given commit hash.
+Push your branch, start cds track and get immediate feedback.
+Git track will display all pipelines related to given hash.
+This means triggered testing and deployment pipelines will be displayed.
+Git alias sugar To enhance even more your daily routine, you can create a git alias:</description>
     </item>
     
     <item>
@@ -226,7 +274,7 @@ Setup a worker model See Tutorial</description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/getting-started/installation/</guid>
-      <description> Ready to RUN Requirements  </description>
+      <description> Requirements Download Configuration Database Management Ready to RUN  </description>
     </item>
     
     <item>
@@ -290,7 +338,10 @@ You can set as many requirements as you want, following those rules :
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/getting-started/installation/requirements/</guid>
-      <description>  </description>
+      <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
+There is are two ways to set up CDS:
+ as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4. But for serious usage your may need :
+ A Redis server or sentinels based cluster used as a cache and session store A LDAP Server for authentication A SMTP Server for mails A Kafka Broker to manage CDS events A Openstack Swift Tenant to store builds artifacts A Vault server for cipher and app keys A Consul to manage CDS Configuration  See Configuration template for more details</description>
     </item>
     
     <item>
@@ -393,7 +444,7 @@ $ cds generate token -g yourgroup -e persistent  </description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/tutorials/</guid>
-      <description> Worker Setup Setup Worker Model Docker Simple Setup Worker Model Docker Customized Setup Worker Model Openstack Service Requirement Nginx Service Requirement PostgreSQL  </description>
+      <description> Worker Setup Setup Worker Model Docker Simple Setup Worker Model Docker Customized Setup Worker Model Openstack Service Requirement Nginx Service Requirement PostgreSQL Git track   </description>
     </item>
     
     <item>
@@ -472,7 +523,7 @@ Contribute on https://github.com/ovh/cds/tree/master/contrib/plugins</descriptio
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/</guid>
       <description>Build image and push it to docker repository
-Parameters  dockerfileDirectory: Directory which contains your Dockerfile. dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.</description>
+Parameters  imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.cds.version}},latest dockerfileDirectory: Directory which contains your Dockerfile. dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry.</description>
     </item>
     
     <item>
@@ -482,7 +533,7 @@ Parameters  dockerfileDirectory: Directory which contains your Dockerfile. docke
       
       <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/</guid>
       <description>Upload file on Nexus
-Parameters  extension: Extension of the artifact files: Regex of files you want to upload packaging: Packaging type of the artifact groupId: Group id of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. login: Login for nexus password: Password for nexus url: Nexus URL repository: Nexus repository that the artifact is contained in  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
+Parameters  files: Regex of files you want to upload packaging: Packaging type of the artifact repository: Nexus repository that the artifact is contained in extension: Extension of the artifact artifactId: Artifact id of the artifact groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. login: Login for nexus password: Password for nexus url: Nexus URL  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
     </item>
     
     <item>
@@ -598,7 +649,7 @@ You are able to send a custom &amp;quot;message&amp;quot; file and all the artif
       <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</guid>
       <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
 Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull.
-Parameters  timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true. url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment.</description>
+Parameters  user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over.</description>
     </item>
     
     <item>

@@ -272,7 +272,7 @@ You are able to send a custom &quot;message&quot; file and all the artifacts you
     <section class="post-excerpt">
         <p>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
 Your marathon.json file can be templated with cds variables &ldquo;{{.cds.variables}}&rdquo;. Enable &ldquo;waitForDeployment&rdquo; option to ensure deployment is successfull.
-Parameters  timeout: Marathon deployment timeout (seconds). Used only if &ldquo;waitForDeployment&rdquo; is true. url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/">&raquo;</a></p>
+Parameters  user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
