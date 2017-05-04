@@ -83,7 +83,7 @@ func loadTriggers(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, 
 		t := sdk.WorkflowNodeTrigger(dbt)
 		if t.WorkflowDestNodeID != 0 {
 			//Load destination node
-			dest, err := LoadNode(db, w, t.WorkflowDestNodeID, u)
+			dest, err := loadNode(db, w, t.WorkflowDestNodeID, u)
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadTriggers> Unable to load destination node %d", t.WorkflowDestNodeID)
 			}
@@ -119,7 +119,7 @@ func loadTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, i
 	t := sdk.WorkflowNodeTrigger(dbtrigger)
 
 	if t.WorkflowDestNodeID != 0 {
-		dest, err := LoadNode(db, w, t.WorkflowDestNodeID, u)
+		dest, err := loadNode(db, w, t.WorkflowDestNodeID, u)
 		if err != nil {
 			return nil, sdk.WrapError(err, "LoadTrigger> Unable to load destination node %d", t.WorkflowDestNodeID)
 		}

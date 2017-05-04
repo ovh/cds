@@ -36,7 +36,7 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	//If the node got an ID; check it in database
 	if n.ID != 0 {
 		var err error
-		oldNode, err = LoadNode(db, w, n.ID, u)
+		oldNode, err = loadNode(db, w, n.ID, u)
 		if err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to load workflow node")
 		}
@@ -109,8 +109,8 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	return nil
 }
 
-// LoadNode loads a node in a workflow
-func LoadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk.WorkflowNode, error) {
+// loadNode loads a node in a workflow
+func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk.WorkflowNode, error) {
 	dbwn := Node{}
 	if err := db.SelectOne(&dbwn, "select * from workflow_node where workflow_id = $1 and id = $2", w.ID, id); err != nil {
 		if err == sql.ErrNoRows {

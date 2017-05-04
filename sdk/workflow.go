@@ -6,14 +6,23 @@ import (
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID           int64         `json:"id" db:"id"`
-	Name         string        `json:"name" db:"name"`
-	Description  string        `json:"description" db:"description"`
-	LastModified time.Time     `json:"last_modified" db:"last_modified"`
-	ProjectID    int64         `json:"project_id" db:"project_id"`
-	ProjectKey   string        `json:"project_key" db:"-"`
-	RootID       int64         `json:"root_id" db:"root_node_id"`
-	Root         *WorkflowNode `json:"root" db:"-"`
+	ID           int64              `json:"id" db:"id"`
+	Name         string             `json:"name" db:"name"`
+	Description  string             `json:"description" db:"description"`
+	LastModified time.Time          `json:"last_modified" db:"last_modified"`
+	ProjectID    int64              `json:"project_id" db:"project_id"`
+	ProjectKey   string             `json:"project_key" db:"-"`
+	RootID       int64              `json:"root_id" db:"root_node_id"`
+	Root         *WorkflowNode      `json:"root" db:"-"`
+	Joins        []WorkflowNodeJoin `json:"joins" db:"-"`
+}
+
+//WorkflowNodeJoin aims to joins multiple node into multiple triggers
+type WorkflowNodeJoin struct {
+	ID            int64                 `json:"id" db:"id"`
+	WorkflowID    int64                 `json:"workflow_id" db:"workflow_id"`
+	SourceNodeIDs []int64               `json:"source_node_id" db:"-"`
+	Triggers      []WorkflowNodeTrigger `json:"triggers" db:"-"`
 }
 
 //WorkflowNode represents a node in w workflow tree

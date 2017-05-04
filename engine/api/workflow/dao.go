@@ -91,7 +91,7 @@ func load(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) (
 
 func loadWorkflowRoot(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	var err error
-	w.Root, err = LoadNode(db, w, w.RootID, u)
+	w.Root, err = loadNode(db, w, w.RootID, u)
 	if err != nil {
 		if err == sdk.ErrWorkflowNodeNotFound {
 			log.Debug("Load> Unable to load root %d for workflow %d", w.RootID, w.ID)
