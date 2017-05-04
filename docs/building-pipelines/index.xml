@@ -12,10 +12,10 @@
     
     <item>
       <title>Artifact Download</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-download/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-download/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/</guid>
       <description> Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to get artifact uploaded by the Artifact Upload action
 Action Parameter  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example of Job Configuration  Download artifact from the parent pipeline   Download artifact from the previous stage  </description>
@@ -23,10 +23,10 @@ Action Parameter  application: Application from where artifacts will be download
     
     <item>
       <title>Artifact Upload</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-upload/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-upload/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/</guid>
       <description> Artifact Upload Action Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.
 Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  Example of Job Configuration  With a tag to indicate the build version   With a latest tag  </description>
@@ -34,10 +34,10 @@ Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  
     
     <item>
       <title>GitClone</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.gitclone/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.gitclone/</guid>
       <description>GitClone is a builtin action, you can&amp;rsquo;t modify it.
 This action clone a repository into a new directory.
 Git Clone will be done with a depth of 1.
@@ -47,10 +47,10 @@ Parameters  url - mandatory - URL must contain information about the transport p
     
     <item>
       <title>JUnit</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.junit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.junit/</guid>
       <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
 This action parse given file to extract Unit Test results.
 Parameters  path: Path to junit xml file  </description>
@@ -58,10 +58,10 @@ Parameters  path: Path to junit xml file  </description>
     
     <item>
       <title>Script</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/script/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.script/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/script/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.script/</guid>
       <description>Script is a builtin action, you can&amp;rsquo;t modify it.
 This action execute a script, written in script attribute
 Parameters  script: Content of your script. You can put  #!/bin/bash  or
@@ -71,60 +71,60 @@ Make sure that the binary used is in the pre-requisites of action</description>
     
     <item>
       <title>cds-docker-package</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/</guid>
       <description>Build image and push it to docker repository
 Parameters  dockerfileDirectory: Directory which contains your Dockerfile. dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.</description>
     </item>
     
     <item>
       <title>cds-nexus-upload</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/</guid>
       <description>Upload file on Nexus
-Parameters  url: Nexus URL repository: Nexus repository that the artifact is contained in groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. packaging: Packaging type of the artifact login: Login for nexus password: Password for nexus extension: Extension of the artifact artifactId: Artifact id of the artifact files: Regex of files you want to upload  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
+Parameters  packaging: Packaging type of the artifact password: Password for nexus url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload login: Login for nexus groupId: Group id of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
     </item>
     
     <item>
       <title>cds-perl-test</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/</guid>
       <description>Test with prove on perl source code
 Parameters  testDirectory: Directory where is Perl Source Code  Requirements  perl: type:binary Value:perl bash: type:binary Value:bash prove: type:binary Value:prove  More documentation on Github</description>
     </item>
     
     <item>
       <title>cds-template-cds-plugin</title>
-      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-plugin/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-plugin/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/</guid>
       <description>This template creates a pipeline for building CDS Plugin with:
  A &amp;ldquo;Commit Stage&amp;rdquo; with one job &amp;ldquo;Compile&amp;rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  repo: Your source code repository package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the plugin. Enter &amp;ldquo;contrib/plugins/your-plugin&amp;rdquo; for github.com/ovh/cds/contrib/plugins/your-plugin   More More documentation on Github</description>
     </item>
     
     <item>
       <title>cds-template-cds-template</title>
-      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-template/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-cds-template/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-template/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-cds-template/</guid>
       <description>This template creates a pipeline for building CDS Template with:
  A &amp;ldquo;Commit Stage&amp;rdquo; with one job &amp;ldquo;Compile&amp;rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  repo: Your source code repository package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the template. Enter &amp;ldquo;contrib/templates/your-plugin&amp;rdquo; for github.com/ovh/cds/contrib/templates/your-plugin   More More documentation on Github</description>
     </item>
     
     <item>
       <title>cds-template-deploy-marathon-app</title>
-      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-deploy-marathon-app/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-deploy-marathon-app/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-deploy-marathon-app/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-deploy-marathon-app/</guid>
       <description>This template creates:
  a deployment pipeline with one stage, containing and one job job calls plugin-marathon an application with a variable named &amp;ldquo;marathon.config&amp;rdquo; uses environment variables marathonHost, password and user  Please update Application / Environment Variables after creating application.
 Parameters  docker.image: Your docker image without the tag marathon.appID: Your marathon application ID marathon.config: Content of your marathon.json file  More More documentation on Github</description>
@@ -132,10 +132,10 @@ Parameters  docker.image: Your docker image without the tag marathon.appID: Your
     
     <item>
       <title>cds-template-only-git-clone-job</title>
-      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-only-git-clone-job/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-only-git-clone-job/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-only-git-clone-job/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-only-git-clone-job/</guid>
       <description>This template creates:
  a build pipeline with one stage, containing one job job contains 2 steps: GitClone and a empty script.  Pipeline name contains Application name. If you want to make a reusable pipeline, please consider updating this name after creating application.
 Parameters  repo: Your source code repository  More More documentation on Github</description>
@@ -143,10 +143,10 @@ Parameters  repo: Your source code repository  More More documentation on Github
     
     <item>
       <title>cds-template-plain</title>
-      <link>https://ovh.github.com/cds/building-pipelines/templates/cds-template-plain/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-plain/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/templates/cds-template-plain/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-plain/</guid>
       <description>This template creates:
  a build pipeline with two stages: Commit Stage and Packaging Stage a deploy pipeline with one stage: Deploy Stage  Commit Stage :
  run git clone run make build  Packaging Stage:
@@ -157,61 +157,61 @@ Parameters  repo: Your source code repository withPackage: Do you want a Docker 
     
     <item>
       <title>plugin-download</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-download/</guid>
       <description>This is a plugin to download file from URL
-Parameters  filepath: the destination of your file to be copied headers: specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list) url: the url of your file  More More documentation on Github</description>
+Parameters  url: the url of your file filepath: the destination of your file to be copied headers: specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list)  More More documentation on Github</description>
     </item>
     
     <item>
       <title>plugin-group-tmpl</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-group-tmpl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-group-tmpl/</guid>
       <description>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
 Parameters  config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) applications: Applications file variables  More More documentation on Github</description>
     </item>
     
     <item>
       <title>plugin-kafka-publish</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-kafka-publish/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-kafka-publish/</guid>
       <description>This action helps you to send data through Kafka across every network.
 You are able to send a custom &amp;quot;message&amp;quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consummer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.</description>
     </item>
     
     <item>
       <title>plugin-marathon</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-marathon/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-marathon/</guid>
       <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
 Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull.
-Parameters  user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment. If set, CDS will wait for all instances to be deployed until timeout is over.</description>
+Parameters  url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083 user: Marathon User (please use project, application or environment variables) password: Marathon Password (please use project, application or environment variables) configuration: Marathon application configuration file (json format) waitForDeployment: Wait for instances deployment.</description>
     </item>
     
     <item>
       <title>plugin-ssh-cmd</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/</guid>
       <description>This plugin helps you to run cmd on remote server over ssh.
-Parameters  username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds)  More More documentation on Github</description>
+Parameters  timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command  More More documentation on Github</description>
     </item>
     
     <item>
       <title>plugin-tmpl</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/</guid>
       <description>This action helps you generates a file using a template file and text/template golang package.
 Check documentation on text/template for more information https://golang.org/pkg/text/template.
 Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github</description>
@@ -219,21 +219,21 @@ Parameters  file: Template file to use output: Output path for generated file (d
     
     <item>
       <title>plugin-venom</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/</guid>
       <description>This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
 Add an extra step of type junit on your job to view tests results on CDS UI.
-Parameters  parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files. Format: adirectory/, .</description>
+Parameters  path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error  More More documentation on Github</description>
     </item>
     
     <item>
       <title>Built-in Actions</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/builtin/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/builtin/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin/</guid>
       <description>User actions use built-in action(s) and / or other existing action(s).
 There can be created by CLI and / or Web UI.
 User actions from CDS Contributions :
@@ -242,21 +242,30 @@ Artifact Download Artifact Upload GitClone JUnit Script </description>
     
     <item>
       <title>User Actions</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user-actions/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user-actions/</guid>
       <description>CDS User Actions are developed in CDS. There are available on all CDS Installation.
 Built-in actions :
 cds-docker-package cds-nexus-upload cds-perl-test </description>
     </item>
     
     <item>
-      <title>Plugins Actions</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/plugins/</link>
+      <title>Building Pipelines</title>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/plugins/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines/</guid>
+      <description> Actions Templates Variables Requirements  </description>
+    </item>
+    
+    <item>
+      <title>Plugins Actions</title>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins/</guid>
       <description>CDS Plugin System lets users develop complex actions. See How to write a plugin
 CDS Administrators have to import plugins on CDS to let user use them.
 Plugins from CDS Contributions:
@@ -265,10 +274,10 @@ plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ss
     
     <item>
       <title>Actions</title>
-      <link>https://ovh.github.com/cds/building-pipelines/actions/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/actions/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions/</guid>
       <description>Inside a Job, each steps is based on an action.
 Types of actions :
  Built-in actions, available on each CDS Installation User actions, added by CDS Administrators for now Plugins actions, added by CDS Administrators  </description>
@@ -276,20 +285,20 @@ Types of actions :
     
     <item>
       <title>Templates</title>
-      <link>https://ovh.github.com/cds/building-pipelines/templates/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/templates/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates/</guid>
       <description>Templates from CDS Contributions :
 cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-app cds-template-only-git-clone-job cds-template-plain </description>
     </item>
     
     <item>
       <title>Variables</title>
-      <link>https://ovh.github.com/cds/building-pipelines/variables/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.variables/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/variables/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.variables/</guid>
       <description>In CDS, it is possible to define variables at different levels:
  Project Environment Application  Variable types Existing variable types:
  String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
@@ -298,10 +307,10 @@ cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-a
     
     <item>
       <title>Requirements</title>
-      <link>https://ovh.github.com/cds/building-pipelines/requirements/</link>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.requirements/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.com/cds/building-pipelines/requirements/</guid>
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.requirements/</guid>
       <description>A Job will be executed by a worker.
 CDS will choose and provision a worker for dependending of the requirements you define on your job.
 You can set as many requirements as you want, following those rules :
