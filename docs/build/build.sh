@@ -8,7 +8,7 @@ function generateUserActionsDocumentation {
   filename=$(basename "$action")
   actionName=${filename/.hcl/}
 
-  ACTION_FILE="content/building-pipelines/actions/user/${actionName}.md"
+  ACTION_FILE="content/building-pipelines/building-pipelines.actions.user.${actionName}.md"
 
   echo "generate ${ACTION_FILE}"
 
@@ -37,7 +37,7 @@ function generatePluginsDocumentation {
   fi
 
   OLD=`pwd`
-  PLUGIN_FILE="$OLD/content/building-pipelines/actions/plugins/${plugin}.md"
+  PLUGIN_FILE="$OLD/content/building-pipelines/building-pipelines.actions.plugins.${plugin}.md"
 
   cd ../../contrib/plugins/${plugin}
 
@@ -73,7 +73,7 @@ function generateTemplatesDocumentation {
   fi
 
   OLD=`pwd`
-  TEMPLATE_FILE="$OLD/content/building-pipelines/templates/${template}.md"
+  TEMPLATE_FILE="$OLD/content/building-pipelines/building-pipelines.templates.${template}.md"
 
   cd ../../contrib/templates/${template}
 

@@ -52,74 +52,14 @@
     
     
 
-    <li data-nav-id="/getting-started/" class="dd-item 
-    active 
+    <li data-nav-id="/getting-started/getting-started/" class="dd-item 
+     
     ">
-        <a href="https://ovh.github.com/cds/getting-started/">
+        <a href="https://ovh.github.com/cds/getting-started/getting-started/">
             Getting started
             
         </a>
         
-            
-            
-            
-                <ul>
-                
-                
-                    
-                        
-    
-    
-
-    <li data-nav-id="/getting-started/about-cds/" class="dd-item 
-     
-    ">
-        <a href="https://ovh.github.com/cds/getting-started/about-cds/">
-            About CDS
-            
-        </a>
-        
-    </li>
-
-                    
-                
-                    
-                        
-    
-    
-
-    <li data-nav-id="/getting-started/concepts/" class="dd-item 
-     
-    ">
-        <a href="https://ovh.github.com/cds/getting-started/concepts/">
-            Concepts
-            
-        </a>
-        
-    </li>
-
-                    
-                
-                    
-                        
-    
-    
-
-    <li data-nav-id="/getting-started/installation/" class="dd-item 
-     
-    ">
-        <a href="https://ovh.github.com/cds/getting-started/installation/">
-            Installation
-            
-        </a>
-        
-    </li>
-
-                    
-                
-                </ul>
-             
-        
     </li>
 
         
@@ -127,10 +67,10 @@
     
     
 
-    <li data-nav-id="/building-pipelines/" class="dd-item 
+    <li data-nav-id="/building-pipelines/building-pipelines/" class="dd-item 
      
     ">
-        <a href="https://ovh.github.com/cds/building-pipelines/">
+        <a href="https://ovh.github.com/cds/building-pipelines/building-pipelines/">
             Building Pipelines
             
         </a>
@@ -142,10 +82,10 @@
     
     
 
-    <li data-nav-id="/advanced/" class="dd-item 
+    <li data-nav-id="/advanced/advanced/" class="dd-item 
      
     ">
-        <a href="https://ovh.github.com/cds/advanced/">
+        <a href="https://ovh.github.com/cds/advanced/advanced/">
             Advanced
             
         </a>
@@ -157,10 +97,10 @@
     
     
 
-    <li data-nav-id="/tutorials/" class="dd-item 
+    <li data-nav-id="/tutorials/tutorials/" class="dd-item 
      
     ">
-        <a href="https://ovh.github.com/cds/tutorials/">
+        <a href="https://ovh.github.com/cds/tutorials/tutorials/">
             Tutorials
             
         </a>
@@ -205,8 +145,6 @@
                       <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span> 
                       CDS Documentation</a> 
                       
-                         / <a href='https://ovh.github.com/cds/getting-started/'>Getting started</a>
-                      
                        > Getting-starteds
               </div>
               
@@ -242,12 +180,12 @@
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/ready-to-run/docker-compose/">Docker Compose</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.installation.ready-to-run.docker-compose/">Docker Compose</a></h2>
     </header>
     <section class="post-excerpt">
         <p>Run with Docker-Compose The docker-compose.yml contains:
  cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables. cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user. <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/ready-to-run/docker-compose/">&raquo;</a></p>
+How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user. <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.installation.ready-to-run.docker-compose/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -265,12 +203,12 @@ How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/concepts/stage/">Stage</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.concepts.stage/">Stage</a></h2>
     </header>
     <section class="post-excerpt">
         <p>Usually in CDS a build pipeline is structured of the following stages :
  Compile stage : Build the binaries Analysis &amp; Unit Tests stage : Run all unit tests and analyse code quality Packaging stage : Build the final package, Virtual Machine Image or Docker Image.  In CDS, stages are executed sequentially if the previous stage is successfull.
-You can define trigger conditions on a stage, to enable it on certain conditions. <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/stage/">&raquo;</a></p>
+You can define trigger conditions on a stage, to enable it on certain conditions. <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.concepts.stage/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -288,12 +226,12 @@ You can define trigger conditions on a stage, to enable it on certain conditions
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/about-cds/">About CDS</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.about-cds/">About CDS</a></h2>
     </header>
     <section class="post-excerpt">
         <p>What is CDS? CDS is a Continuous Delivery solution with an architecture featuring:
  A complete isolation between tenants High availability oriented architecture Automatic scaling Automation oriented with iso-feature API, CLI and WebUI  Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a hatchery.
-CDS exposes an API available to workers and humans through cli or WebUI. <a class="read-more" href="https://ovh.github.com/cds/getting-started/about-cds/">&raquo;</a></p>
+CDS exposes an API available to workers and humans through cli or WebUI. <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.about-cds/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -311,12 +249,34 @@ CDS exposes an API available to workers and humans through cli or WebUI. <a clas
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/concepts/pipeline/">Pipeline</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started/">Getting started</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>Discover what is CDS and the core-concepts behind it.
+About CDS Concepts Installation   <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post getting-started">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.concepts.pipeline/">Pipeline</a></h2>
     </header>
     <section class="post-excerpt">
         <p>A pipeline describes how things need to be executed in order to achieve wanted result. In CDS, a pipeline a defined on a project and can be used on several applications inside the same project.
 A pipeline is structured in sequential stages containing one or multiple concurrent jobs.
-In CDS there is several types of pipeline : build, testing and deployment. In Pipeline configuration file, default type is build. <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/pipeline/">&raquo;</a></p>
+In CDS there is several types of pipeline : build, testing and deployment. In Pipeline configuration file, default type is build. <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.concepts.pipeline/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -334,13 +294,13 @@ In CDS there is several types of pipeline : build, testing and deployment. In Pi
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/requirements/">Requirements</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.installation.requirements/">Requirements</a></h2>
     </header>
     <section class="post-excerpt">
         <p>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
  as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &gt;= 9.4. But for serious usage your may need :
- A Redis server or sentinels based cluster used as a cache and session store A LDAP Server for authentication A SMTP Server for mails A Kafka Broker to manage CDS events A Openstack Swift Tenant to store builds artifacts A Vault server for cipher and app keys A Consul to manage CDS Configuration  See Configuration template for more details <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/requirements/">&raquo;</a></p>
+ A Redis server or sentinels based cluster used as a cache and session store A LDAP Server for authentication A SMTP Server for mails A Kafka Broker to manage CDS events A Openstack Swift Tenant to store builds artifacts A Vault server for cipher and app keys A Consul to manage CDS Configuration  See Configuration template for more details <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.installation.requirements/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -358,13 +318,13 @@ There is are two ways to set up CDS:
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/concepts/">Concepts</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.concepts/">Concepts</a></h2>
     </header>
     <section class="post-excerpt">
         <p>Project A project contains applications, pipelines and environments.
 A project is the first level of permissions management. Any CDS application has to be created inside a project.
 The project key has to be unique amongst all projects in CDS.
-At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one. <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/">&raquo;</a></p>
+At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one. <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.concepts/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -382,10 +342,10 @@ At creation, a project has to have at least one group with edition permissions o
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/download/">Download</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.installation.download/">Download</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>You&rsquo;ll find last release of CDS on Github Releases <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/download/">&raquo;</a></p>
+        <p>You&rsquo;ll find last release of CDS on Github Releases <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.installation.download/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -403,14 +363,14 @@ At creation, a project has to have at least one group with edition permissions o
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/configuration/">Configuration</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.installation.configuration/">Configuration</a></h2>
     </header>
     <section class="post-excerpt">
         <p>The toml configuration can be provided by a file or via consul k/v store.
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
 $ $PATH_TO_CDS/api --config my_conf_file.toml Generating default config file my_conf_file.toml  Edit this file.
 Run CDS
-$ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_file.toml 2017/04/04 16:33:17 [NOTICE] Starting CDS server... ...  Start CDS with Consul Upload your toml configuration to consul <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/configuration/">&raquo;</a></p>
+$ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_file.toml 2017/04/04 16:33:17 [NOTICE] Starting CDS server... ...  Start CDS with Consul Upload your toml configuration to consul <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.installation.configuration/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -428,32 +388,10 @@ $ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/">Installation</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.installation/">Installation</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> Requirements Download Configuration Database Management Ready to RUN   <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post getting-started">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/concepts/job/">Job</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>The Job is more important concept in CDS. It will be composed of steps which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job.
-A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the Requirements you define on your job. <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/job/">&raquo;</a></p>
+        <p> Requirements Download Configuration Database Management Ready to RUN   <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.installation/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -496,48 +434,6 @@ A Job will be executed by a worker. CDS will choose and provision a worker for d
         
 
           
-        
-              
-            
-                
-                    
-                    
-                
-            
-                
-                    
-                        
-                        
-                            
-                                
-                            
-                        
-                    
-                
-            
-                
-                    
-                        
-                        
-                            
-                        
-                    
-                
-            
-                
-                    
-                        
-                        
-                            
-                        
-                    
-                
-            
-
-            
-            
-                <a class="nav nav-next" href="https://ovh.github.com/cds/building-pipelines/" title="Building Pipelines" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
-            
         
     </div>
 

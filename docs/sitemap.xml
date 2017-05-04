@@ -2,155 +2,155 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/about-cds/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.about-cds/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/repositories_manager/github/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.repositories_manager.github/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/hatcheries/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.hatcheries/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/concepts/pipeline/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.concepts.pipeline/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/installation/requirements/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.installation.requirements/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/user-actions/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user-actions/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/tutorials/worker-setup/</loc>
+    <loc>https://ovh.github.com/cds/tutorials/tutorials.worker-setup/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/repositories_manager/bitbucket/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.repositories_manager.bitbucket/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/concepts/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.concepts/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/installation/download/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.installation.download/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/hatcheries/openstack/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.hatcheries.openstack/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/repositories_manager/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.repositories_manager/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/tutorials/worker-model-docker-simple/</loc>
+    <loc>https://ovh.github.com/cds/tutorials/tutorials.worker-model-docker-simple/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/worker/model/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.worker.model/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/installation/configuration/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.installation.configuration/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/installation/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.installation/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/concepts/job/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.concepts.job/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/tutorials/worker-model-docker-customized/</loc>
+    <loc>https://ovh.github.com/cds/tutorials/tutorials.worker-model-docker-customized/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/worker/token/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.worker.token/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/write-plugin/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.write-plugin/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/installation/database/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.installation.database/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/tutorials/worker-model-openstack/</loc>
+    <loc>https://ovh.github.com/cds/tutorials/tutorials.worker-model-openstack/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/concepts/step/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.concepts.step/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/installation/ready-to-run/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.installation.ready-to-run/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/tutorials/service-link-requirement-nginx/</loc>
+    <loc>https://ovh.github.com/cds/tutorials/tutorials.service-link-requirement-nginx/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/templates/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/variables/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.variables/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/worker/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced.worker/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/advanced/</loc>
+    <loc>https://ovh.github.com/cds/advanced/advanced/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/requirements/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.requirements/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/tutorials/service-link-requirement-pg/</loc>
+    <loc>https://ovh.github.com/cds/tutorials/tutorials.service-link-requirement-pg/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/tutorials/git-track/</loc>
+    <loc>https://ovh.github.com/cds/tutorials/tutorials.git-track/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/tutorials/</loc>
+    <loc>https://ovh.github.com/cds/tutorials/tutorials/</loc>
   </url>
   
   <url>
@@ -163,11 +163,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-download/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/artifact-upload/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/</loc>
   </url>
   
   <url>
@@ -181,7 +181,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/installation/ready-to-run/docker-compose/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.installation.ready-to-run.docker-compose/</loc>
   </url>
   
   <url>
@@ -190,19 +190,19 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/gitclone/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.gitclone/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/junit/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.junit/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/builtin/script/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.script/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/getting-started/concepts/stage/</loc>
+    <loc>https://ovh.github.com/cds/getting-started/getting-started.concepts.stage/</loc>
   </url>
   
   <url>
@@ -216,35 +216,35 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/user/cds-perl-test/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-plugin/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-cds-template/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-cds-template/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-deploy-marathon-app/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-deploy-marathon-app/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-only-git-clone-job/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-only-git-clone-job/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/templates/cds-template-plain/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates.cds-template-plain/</loc>
   </url>
   
   <url>
@@ -252,31 +252,31 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-download/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-download/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-group-tmpl/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-group-tmpl/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-kafka-publish/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-kafka-publish/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-marathon/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-marathon/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-ssh-cmd/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-tmpl/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/actions/plugins/plugin-venom/</loc>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/</loc>
   </url>
   
 </urlset>

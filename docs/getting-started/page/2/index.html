@@ -52,74 +52,14 @@
     
     
 
-    <li data-nav-id="/getting-started/" class="dd-item 
-    active 
+    <li data-nav-id="/getting-started/getting-started/" class="dd-item 
+     
     ">
-        <a href="https://ovh.github.com/cds/getting-started/">
+        <a href="https://ovh.github.com/cds/getting-started/getting-started/">
             Getting started
             
         </a>
         
-            
-            
-            
-                <ul>
-                
-                
-                    
-                        
-    
-    
-
-    <li data-nav-id="/getting-started/about-cds/" class="dd-item 
-     
-    ">
-        <a href="https://ovh.github.com/cds/getting-started/about-cds/">
-            About CDS
-            
-        </a>
-        
-    </li>
-
-                    
-                
-                    
-                        
-    
-    
-
-    <li data-nav-id="/getting-started/concepts/" class="dd-item 
-     
-    ">
-        <a href="https://ovh.github.com/cds/getting-started/concepts/">
-            Concepts
-            
-        </a>
-        
-    </li>
-
-                    
-                
-                    
-                        
-    
-    
-
-    <li data-nav-id="/getting-started/installation/" class="dd-item 
-     
-    ">
-        <a href="https://ovh.github.com/cds/getting-started/installation/">
-            Installation
-            
-        </a>
-        
-    </li>
-
-                    
-                
-                </ul>
-             
-        
     </li>
 
         
@@ -127,10 +67,10 @@
     
     
 
-    <li data-nav-id="/building-pipelines/" class="dd-item 
+    <li data-nav-id="/building-pipelines/building-pipelines/" class="dd-item 
      
     ">
-        <a href="https://ovh.github.com/cds/building-pipelines/">
+        <a href="https://ovh.github.com/cds/building-pipelines/building-pipelines/">
             Building Pipelines
             
         </a>
@@ -142,10 +82,10 @@
     
     
 
-    <li data-nav-id="/advanced/" class="dd-item 
+    <li data-nav-id="/advanced/advanced/" class="dd-item 
      
     ">
-        <a href="https://ovh.github.com/cds/advanced/">
+        <a href="https://ovh.github.com/cds/advanced/advanced/">
             Advanced
             
         </a>
@@ -157,10 +97,10 @@
     
     
 
-    <li data-nav-id="/tutorials/" class="dd-item 
+    <li data-nav-id="/tutorials/tutorials/" class="dd-item 
      
     ">
-        <a href="https://ovh.github.com/cds/tutorials/">
+        <a href="https://ovh.github.com/cds/tutorials/tutorials/">
             Tutorials
             
         </a>
@@ -205,8 +145,6 @@
                       <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span> 
                       CDS Documentation</a> 
                       
-                         / <a href='https://ovh.github.com/cds/getting-started/'>Getting started</a> / <a href='https://ovh.github.com/cds/getting-started/'>Getting started</a>
-                      
                        > Getting-starteds
               </div>
               
@@ -242,13 +180,35 @@
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/database/">Database Management</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.concepts.job/">Job</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>The Job is more important concept in CDS. It will be composed of steps which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job.
+A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the Requirements you define on your job. <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.concepts.job/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post getting-started">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.installation.database/">Database Management</a></h2>
     </header>
     <section class="post-excerpt">
         <p>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the api binary.
 Creation On a brand new database run the following command:
 $ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-host &lt;port&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --limit 0  Upgrade On an existing database, run the following command on each CDS update:
-$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-host &lt;port&gt; --db-password &lt;password&gt; --db-name &lt;database&gt;  More details Read more about CDS Database Management <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/database/">&raquo;</a></p>
+$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-host &lt;port&gt; --db-password &lt;password&gt; --db-name &lt;database&gt;  More details Read more about CDS Database Management <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.installation.database/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -266,11 +226,11 @@ $ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-host &lt;port&gt
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/concepts/step/">Step</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.concepts.step/">Step</a></h2>
     </header>
     <section class="post-excerpt">
         <p>The steps of a job is the list of the different operation performed by the CDS worker. Each steps is based on an Action which is defined by CDS. The list of all actions is defined on *&lt;your cds url ui&gt;/#/action*. On the very first step failed, the job is marked as Failed and execution is stopped.
-You can define a Step as final. It mean that even if the job is failed, the step will be executed. <a class="read-more" href="https://ovh.github.com/cds/getting-started/concepts/step/">&raquo;</a></p>
+You can define a Step as final. It mean that even if the job is failed, the step will be executed. <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.concepts.step/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -288,10 +248,10 @@ You can define a Step as final. It mean that even if the job is failed, the step
 
    <article class="post getting-started">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/installation/ready-to-run/">Ready to RUN</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/getting-started/getting-started.installation.ready-to-run/">Ready to RUN</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> Docker Compose   <a class="read-more" href="https://ovh.github.com/cds/getting-started/installation/ready-to-run/">&raquo;</a></p>
+        <p> Docker Compose   <a class="read-more" href="https://ovh.github.com/cds/getting-started/getting-started.installation.ready-to-run/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -334,48 +294,6 @@ You can define a Step as final. It mean that even if the job is failed, the step
         
 
           
-        
-              
-            
-                
-                    
-                    
-                
-            
-                
-                    
-                        
-                        
-                            
-                        
-                    
-                
-            
-                
-                    
-                        
-                        
-                            
-                        
-                    
-                
-            
-                
-                    
-                        
-                        
-                            
-                        
-                    
-                
-            
-
-            
-                <a class="nav nav-prev" href="https://ovh.github.com/cds/tutorials/" title="Tutorials"> <i class="fa fa-chevron-left"></i></a>
-            
-            
-                <a class="nav nav-next" href="https://ovh.github.com/cds/building-pipelines/" title="Building Pipelines" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
-            
         
     </div>
 
