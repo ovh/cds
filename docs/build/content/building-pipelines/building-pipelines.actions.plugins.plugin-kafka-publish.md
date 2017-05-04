@@ -18,13 +18,13 @@ This action helps you to send data through Kafka across every network.
 * **message**: Kafka Message
 * **kafkaUser**: Kafka User
 * **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
+* **waitForAckTimeout**: Ack timeout (seconds). Used only if "waitForAck" is true.
+* **waitForAckTopic**: Kafka Topic. Used only if "waitForAck" is true.
+* **kafkaPassword**: Kafka Password
+* **kafkaAddresses**: Kafka Addresses
 * **topic**: Kafka Topic
 * **artifacts**: Artifacts list (comma separated)
 * **publicKey**: GPG Public Key (ASCII armored format)
-* **waitForAckTopic**: Kafka Topic. Used only if "waitForAck" is true.
-* **waitForAckTimeout**: Ack timeout (seconds). Used only if "waitForAck" is true.
-* **kafkaPassword**: Kafka Password
-* **kafkaAddresses**: Kafka Addresses
 * **waitForAck**: Wait for Ack
 
 

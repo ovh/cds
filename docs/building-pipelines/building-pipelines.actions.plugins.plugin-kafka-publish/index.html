@@ -383,11 +383,41 @@
         
         
         
+        <section id="shortcuts">
+            
+                <li class="" role="">
+                    <h3>More</h3>
+                    <a href="https://github.com/ovh/cds"><i class='fa fa-github'></i> CDS Source Code</a>
+                    
+                </li>
+            
+                <li class="" role="">
+                    
+                    <a href="https://github.com/ovh/cds/releases"><i class='fa fa-download'></i> CDS Releases</a>
+                    
+                </li>
+            
+                <li class="" role="">
+                    
+                    <a href="https://gitter.im/ovh-cds/Lobby"><i class='fa fa-commenting'></i> CDS Gitter</a>
+                    
+                </li>
+            
+        </section>    
+        
+        
+
+        
     </ul>
     
      
     <section id="footer">
-      
+      <section style="text-align:center">
+  <p>Built with <a href="http://gohugo.io/">Hugo</a> and <a href="https://github.com/vjeantet/hugo-theme-docdock">docdock theme</a></i></p>
+  <p>CDS is an <a href="https://github.com/ovh">OVH OSS</a></p>
+  <p><a href="https://ovh.com"><img src="https://ovh.github.io/tat/imgs/ovh-logo.png"></a></p>
+</section>
+
     </section>
   </div>
 </nav>
@@ -468,13 +498,13 @@ This action is a CDS Plugin packaged as a single binary file you can download an
 <li><strong>message</strong>: Kafka Message</li>
 <li><strong>kafkaUser</strong>: Kafka User</li>
 <li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
+<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
+<li><strong>waitForAckTopic</strong>: Kafka Topic. Used only if &ldquo;waitForAck&rdquo; is true.</li>
+<li><strong>kafkaPassword</strong>: Kafka Password</li>
+<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
 <li><strong>topic</strong>: Kafka Topic</li>
 <li><strong>artifacts</strong>: Artifacts list (comma separated)</li>
 <li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
-<li><strong>waitForAckTopic</strong>: Kafka Topic. Used only if &ldquo;waitForAck&rdquo; is true.</li>
-<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
-<li><strong>kafkaPassword</strong>: Kafka Password</li>
-<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
 <li><strong>waitForAck</strong>: Wait for Ack</li>
 </ul>
 

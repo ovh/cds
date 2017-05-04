@@ -86,7 +86,7 @@ Parameters  dockerfileDirectory: Directory which contains your Dockerfile. docke
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/</guid>
       <description>Upload file on Nexus
-Parameters  packaging: Packaging type of the artifact password: Password for nexus url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. files: Regex of files you want to upload login: Login for nexus groupId: Group id of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
+Parameters  files: Regex of files you want to upload login: Login for nexus url: Nexus URL extension: Extension of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. packaging: Packaging type of the artifact password: Password for nexus repository: Nexus repository that the artifact is contained in groupId: Group id of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
     </item>
     
     <item>
@@ -203,7 +203,7 @@ Parameters  url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http:/
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/</guid>
       <description>This plugin helps you to run cmd on remote server over ssh.
-Parameters  timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command  More More documentation on Github</description>
+Parameters  hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key  More More documentation on Github</description>
     </item>
     
     <item>
@@ -225,7 +225,7 @@ Parameters  file: Template file to use output: Output path for generated file (d
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/</guid>
       <description>This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
 Add an extra step of type junit on your job to view tests results on CDS UI.
-Parameters  path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error  More More documentation on Github</description>
+Parameters  loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high  More More documentation on Github</description>
     </item>
     
     <item>

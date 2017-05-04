@@ -114,11 +114,41 @@
         
         
         
+        <section id="shortcuts">
+            
+                <li class="" role="">
+                    <h3>More</h3>
+                    <a href="https://github.com/ovh/cds"><i class='fa fa-github'></i> CDS Source Code</a>
+                    
+                </li>
+            
+                <li class="" role="">
+                    
+                    <a href="https://github.com/ovh/cds/releases"><i class='fa fa-download'></i> CDS Releases</a>
+                    
+                </li>
+            
+                <li class="" role="">
+                    
+                    <a href="https://gitter.im/ovh-cds/Lobby"><i class='fa fa-commenting'></i> CDS Gitter</a>
+                    
+                </li>
+            
+        </section>    
+        
+        
+
+        
     </ul>
     
      
     <section id="footer">
-      
+      <section style="text-align:center">
+  <p>Built with <a href="http://gohugo.io/">Hugo</a> and <a href="https://github.com/vjeantet/hugo-theme-docdock">docdock theme</a></i></p>
+  <p>CDS is an <a href="https://github.com/ovh">OVH OSS</a></p>
+  <p><a href="https://ovh.com"><img src="https://ovh.github.io/tat/imgs/ovh-logo.png"></a></p>
+</section>
+
     </section>
   </div>
 </nav>
@@ -325,7 +355,7 @@ Parameters  dockerfileDirectory: Directory which contains your Dockerfile. docke
     </header>
     <section class="post-excerpt">
         <p>Upload file on Nexus
-Parameters  packaging: Packaging type of the artifact password: Password for nexus url: Nexus URL repository: Nexus repository that the artifact is contained in extension: Extension of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. files: Regex of files you want to upload login: Login for nexus groupId: Group id of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/">&raquo;</a></p>
+Parameters  files: Regex of files you want to upload login: Login for nexus url: Nexus URL extension: Extension of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. packaging: Packaging type of the artifact password: Password for nexus repository: Nexus repository that the artifact is contained in groupId: Group id of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          

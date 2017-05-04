@@ -114,11 +114,41 @@
         
         
         
+        <section id="shortcuts">
+            
+                <li class="" role="">
+                    <h3>More</h3>
+                    <a href="https://github.com/ovh/cds"><i class='fa fa-github'></i> CDS Source Code</a>
+                    
+                </li>
+            
+                <li class="" role="">
+                    
+                    <a href="https://github.com/ovh/cds/releases"><i class='fa fa-download'></i> CDS Releases</a>
+                    
+                </li>
+            
+                <li class="" role="">
+                    
+                    <a href="https://gitter.im/ovh-cds/Lobby"><i class='fa fa-commenting'></i> CDS Gitter</a>
+                    
+                </li>
+            
+        </section>    
+        
+        
+
+        
     </ul>
     
      
     <section id="footer">
-      
+      <section style="text-align:center">
+  <p>Built with <a href="http://gohugo.io/">Hugo</a> and <a href="https://github.com/vjeantet/hugo-theme-docdock">docdock theme</a></i></p>
+  <p>CDS is an <a href="https://github.com/ovh">OVH OSS</a></p>
+  <p><a href="https://ovh.com"><img src="https://ovh.github.io/tat/imgs/ovh-logo.png"></a></p>
+</section>
+
     </section>
   </div>
 </nav>
@@ -347,7 +377,7 @@ Parameters  url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http:/
     </header>
     <section class="post-excerpt">
         <p>This plugin helps you to run cmd on remote server over ssh.
-Parameters  timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values) command: Command  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/">&raquo;</a></p>
+Parameters  hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -393,7 +423,7 @@ Parameters  file: Template file to use output: Output path for generated file (d
     <section class="post-excerpt">
         <p>This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
 Add an extra step of type junit on your job to view tests results on CDS UI.
-Parameters  path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/">&raquo;</a></p>
+Parameters  loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high  More More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
