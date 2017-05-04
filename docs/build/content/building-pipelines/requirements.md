@@ -1,11 +1,10 @@
 +++
 title = "Requirements"
-chapter = false
+weight = 6
 
 [menu.main]
 parent = "building-pipelines"
 identifier = "requirements"
-weight = 6
 
 +++
 

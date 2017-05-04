@@ -1,6 +1,5 @@
 +++
 title = "cds-perl-test"
-chapter = true
 
 [menu.main]
 parent = "actions-user"

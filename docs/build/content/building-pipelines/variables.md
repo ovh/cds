@@ -1,11 +1,10 @@
 +++
 title = "Variables"
-chapter = true
+weight = 5
 
 [menu.main]
 parent = "building-pipelines"
 identifier = "variables"
-weight = 5
 
 +++
 

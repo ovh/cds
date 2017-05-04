@@ -1,7 +1,5 @@
 +++
-draft = false
 title = "Job"
-
 weight = 3
 
 [menu.main]

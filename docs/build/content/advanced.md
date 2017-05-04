@@ -1,10 +1,9 @@
 +++
 title = "Advanced"
+weight = 6
 
 [menu.main]
-parent = ""
 identifier = "advanced"
-weight = 6
 
 +++
 

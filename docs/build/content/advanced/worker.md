@@ -1,11 +1,10 @@
 +++
-draft = false
 title = "Worker"
+weight = 5
 
 [menu.main]
 parent = "advanced"
 identifier = "advanced-worker"
-weight = 5
 
 +++
 

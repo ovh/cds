@@ -1,8 +1,5 @@
 +++
-draft = false
 title = "Stage"
-
-weight = 2
 
 [menu.main]
 parent = "concepts"

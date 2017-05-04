@@ -1,12 +1,9 @@
 +++
-draft = false
 title = "Tutorials"
-description = ""
+weight = 7
 
 [menu.main]
-parent = ""
 identifier = "tutorials"
-weight = 7
 
 +++
 

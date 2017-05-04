@@ -1,10 +1,10 @@
 +++
 title = "Requirements"
+weight = 1
 
 [menu.main]
 parent = "installation"
 identifier = "installation-requirements"
-weight = 1
 
 +++
 

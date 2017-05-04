@@ -1,6 +1,5 @@
 +++
 title = "plugin-tmpl"
-chapter = true
 
 [menu.main]
 parent = "actions-plugins"

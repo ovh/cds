@@ -1,10 +1,10 @@
 +++
 title = "Setup Worker Model Docker Simple"
+weight = 2
 
 [menu.main]
 parent = "tutorials"
 identifier = "tutorials-worker-model-docker"
-weight = 2
 
 +++
 

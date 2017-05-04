@@ -1,10 +1,9 @@
 +++
 title = "Building Pipelines"
+weight = 2
 
 [menu.main]
-parent = ""
 identifier = "building-pipelines"
-weight = 2
 
 +++
 

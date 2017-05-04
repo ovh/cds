@@ -1,5 +1,4 @@
 +++
-draft = false
 title = "Docker Compose"
 
 [menu.main]

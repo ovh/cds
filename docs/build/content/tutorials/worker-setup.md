@@ -1,10 +1,10 @@
 +++
 title = "Worker Setup"
+weight = 1
 
 [menu.main]
 parent = "tutorials"
 identifier = "tutorials-worker-setup"
-weight = 1
 
 +++
 

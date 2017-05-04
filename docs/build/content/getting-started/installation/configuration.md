@@ -1,10 +1,10 @@
 +++
 title = "Configuration"
+weight = 3
 
 [menu.main]
 parent = "installation"
 identifier = "configuration"
-weight = 3
 
 +++
 

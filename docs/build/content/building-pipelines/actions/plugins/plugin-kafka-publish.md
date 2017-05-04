@@ -1,6 +1,5 @@
 +++
 title = "plugin-kafka-publish"
-chapter = true
 
 [menu.main]
 parent = "actions-plugins"
@@ -16,16 +15,16 @@ This action helps you to send data through Kafka across every network.
 
 ## Parameters
 
-* **waitForAckTopic**: Kafka Topic. Used only if "waitForAck" is true.
-* **message**: Kafka Message
-* **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
-* **kafkaAddresses**: Kafka Addresses
-* **artifacts**: Artifacts list (comma separated)
-* **publicKey**: GPG Public Key (ASCII armored format)
-* **waitForAck**: Wait for Ack
-* **kafkaUser**: Kafka User
 * **kafkaPassword**: Kafka Password
 * **topic**: Kafka Topic
+* **artifacts**: Artifacts list (comma separated)
+* **waitForAck**: Wait for Ack
+* **message**: Kafka Message
+* **kafkaUser**: Kafka User
+* **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
+* **kafkaAddresses**: Kafka Addresses
+* **publicKey**: GPG Public Key (ASCII armored format)
+* **waitForAckTopic**: Kafka Topic. Used only if "waitForAck" is true.
 * **waitForAckTimeout**: Ack timeout (seconds). Used only if "waitForAck" is true.
 
 

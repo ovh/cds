@@ -1,10 +1,10 @@
 +++
 title = "Worker Model"
+weight = 2
 
 [menu.main]
 parent = "advanced-worker"
 identifier = "advanced-worker-model-simple"
-weight = 2
 
 +++
 

@@ -1,10 +1,10 @@
 +++
 title = "Setup Worker Model Openstack"
+weight = 4
 
 [menu.main]
 parent = "tutorials"
 identifier = "tutorials-openstack"
-weight = 4
 
 +++
 

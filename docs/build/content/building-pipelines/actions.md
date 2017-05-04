@@ -1,11 +1,10 @@
 +++
 title = "Actions"
-chapter = false
+weight = 4
 
 [menu.main]
 parent = "building-pipelines"
 identifier = "actions"
-weight = 4
 
 +++
 

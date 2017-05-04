@@ -1,6 +1,5 @@
 +++
 title = "plugin-marathon"
-chapter = true
 
 [menu.main]
 parent = "actions-plugins"

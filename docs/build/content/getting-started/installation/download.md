@@ -1,10 +1,10 @@
 +++
 title = "Download"
+weight = 2
 
 [menu.main]
 parent = "installation"
 identifier = "installation-download"
-weight = 2
 
 +++
 

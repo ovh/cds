@@ -1,10 +1,10 @@
 +++
 title = "Service Requirement PostgreSQL"
+weight = 6
 
 [menu.main]
 parent = "tutorials"
 identifier = "tutorials-service-requirement-pg"
-weight = 6
 
 +++
 

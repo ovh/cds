@@ -1,11 +1,10 @@
 +++
 title = "Templates"
-chapter = false
+weight = 5
 
 [menu.main]
 parent = "building-pipelines"
 identifier = "templates"
-weight = 5
 
 +++
 
