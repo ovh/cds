@@ -47,7 +47,7 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	var isRoot bool
 	if oldNode != nil {
 		if w.Root.ID != n.ID {
-			if err := DeleteNode(db, oldNode); err != nil {
+			if err := deleteNode(db, oldNode); err != nil {
 				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow node %d", oldNode.ID)
 			}
 		} else {
@@ -185,8 +185,8 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 	return &wn, nil
 }
 
-//DeleteNode deletes nodes and all its children
-func DeleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
+//deleteNode deletes nodes and all its children
+func deleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
 	if err := DeleteNodeDependencies(db, node); err != nil {
 		return sdk.WrapError(err, "DeleteNode> Unable to delete node dependencies %d", node.ID)
 	}

@@ -143,7 +143,7 @@ func Delete(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	}
 
 	//Delete root
-	if err := DeleteNode(db, w.Root); err != nil {
+	if err := deleteNode(db, w.Root); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow root")
 	}
 
