@@ -20,11 +20,12 @@ end;
 $$ LANGUAGE plpgsql;
 -- +migrate StatementEnd
 
-
 CREATE TABLE IF NOT EXISTS "workflow" (
     id BIGSERIAL PRIMARY KEY,
     project_id BIGINT NOT NULL,
     name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    last_modified TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
     root_node_id BIGINT
 );
 
@@ -37,9 +38,9 @@ CREATE TABLE IF NOT EXISTS "workflow_node" (
     pipeline_id BIGINT NOT NULL
 );
 
-SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_ROOT_NODE', 'workflow', 'workflow_node', 'root_node_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_NODE_WORKFLOW', 'workflow_node', 'workflow', 'workflow_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_NODE_PIPELINE', 'workflow_node', 'pipeline', 'pipeline_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_ROOT_NODE', 'workflow', 'workflow_node', 'root_node_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_NODE_WORKFLOW', 'workflow_node', 'workflow', 'workflow_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_NODE_PIPELINE', 'workflow_node', 'pipeline', 'pipeline_id', 'id');
 
 CREATE TABLE IF NOT EXISTS "workflow_node_trigger" (
     id BIGSERIAL PRIMARY KEY,
@@ -82,13 +83,13 @@ CREATE TABLE IF NOT EXISTS "workflow_node_hook" (
 
 SELECT create_index('workflow_node_hook', 'IDX_WORKFLOW_NODE_HOOK_UUID', 'uuid');
 SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_NODE_HOOK_WORKFLOW_NODE', 'workflow_node_hook', 'workflow_node', 'workflow_node_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_NODE_HOOK_WORKFLOW_HOOK_MODEL', 'workflow_node_hook', 'workflow_hook_model', 'workflow_hook_model_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_NODE_HOOK_WORKFLOW_HOOK_MODEL', 'workflow_node_hook', 'workflow_hook_model', 'workflow_hook_model_id', 'id');
 
 -- +migrate Down
-DROP TABLE workflow_hook_model;
-DROP TABLE workflow_node_hook;
-DROP TABLE workflow_node_context;
-DROP TABLE workflow_node_trigger;
-DROP TABLE workflow_node;
-DROP TABLE workflow;
+DROP TABLE workflow_hook_model CASCADE;
+DROP TABLE workflow_node_hook CASCADE;
+DROP TABLE workflow_node_context CASCADE;
+DROP TABLE workflow_node_trigger CASCADE;
+DROP TABLE workflow_node CASCADE;
+DROP TABLE workflow CASCADE;
 
