@@ -10,7 +10,7 @@
     <link rel="shortcut icon" href="https://ovh.github.com/cds/images/favicon.png" type="image/x-icon" />
 
     
-    <title>gitClone :: CDS Documentation</title>
+    <title>Git track  :: CDS Documentation</title>
     <link href="https://ovh.github.com/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.com/cds/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://ovh.github.com/cds/css/hybrid.css" rel="stylesheet">
@@ -26,7 +26,7 @@
     
 
   </head>
-  <body class="" data-url="/building-pipelines/actions/actions/">
+  <body class="" data-url="/tutorials/git-track/">
     <nav id="sidebar">
   <div id="header-wrapper">
     <div id="header">
@@ -57,64 +57,9 @@
 
     <li data-nav-id="/building-pipelines/" class="dd-item 
      
-    parent">
+    ">
     
     <a href="https://ovh.github.com/cds/building-pipelines/">Building Pipelines</a>
-        
-        
-        
-        
-        
-            <ul class="n1">
-            
-            
-            
-                <li data-nav-id="/building-pipelines/actions/" class="dd-item {
-                     
-                    parent">
-                <a href="https://ovh.github.com/cds/building-pipelines/actions/">Actions</a>
-                
-                
-                
-                
-                
-                
-                <ul class="n2">
-                
-                
-                
-                <li data-nav-id="/building-pipelines/actions/actions/" class="dd-item 
-                    active 
-                    ">
-                    <a href="https://ovh.github.com/cds/building-pipelines/actions/actions/">gitClone</a>
-                
-
-                    
-                    
-                    
-                    
-                    
-                    
-                </li>
-                
-                
-                </ul>
-                
-                
-            </li>
-            
-            
-            
-                <li data-nav-id="/building-pipelines/variables/" class="dd-item {
-                     
-                    ">
-                <a href="https://ovh.github.com/cds/building-pipelines/variables/">Variables</a>
-                
-                
-            </li>
-            
-            
-            </ul>
         
         
     </li>
@@ -124,6 +69,99 @@
     ">
     
     <a href="https://ovh.github.com/cds/advanced/">Advanced</a>
+        
+        
+    </li>
+
+    <li data-nav-id="/tutorials/" class="dd-item 
+     
+    parent">
+    
+    <a href="https://ovh.github.com/cds/tutorials/">Tutorials</a>
+        
+        
+        
+        
+        
+            <ul class="n1">
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-setup/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-setup/">Worker Setup</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-docker-simple/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-docker-simple/">Setup Worker Model Docker Simple</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-docker-customized/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-docker-customized/">Setup Worker Model Docker Customized</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/worker-model-openstack/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/worker-model-openstack/">Setup Worker Model Openstack</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/service-link-requirement-nginx/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/service-link-requirement-nginx/">Service Requirement Nginx</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/service-link-requirement-pg/" class="dd-item {
+                     
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/service-link-requirement-pg/">Service Requirement PostgreSQL</a>
+                
+                
+            </li>
+            
+            
+            
+                <li data-nav-id="/tutorials/git-track/" class="dd-item {
+                    active 
+                    ">
+                <a href="https://ovh.github.com/cds/tutorials/git-track/">Git track </a>
+                
+                
+                
+                
+                
+                
+                
+            </li>
+            
+            
+            </ul>
         
         
     </li>
@@ -152,7 +190,7 @@
                 
                 
               <div id="top-github-link">
-                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/build/content/building-pipelines/actions/actions.md" target="blank">
+                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/build/content/tutorials/git-track.md" target="blank">
                     <i class="fa fa-code-fork"></i>
                     Edit this page
                   </a>
@@ -172,14 +210,26 @@
                       <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span> 
                       CDS Documentation</a> 
                       
-                         / <a href='https://ovh.github.com/cds/building-pipelines/'>Building Pipelines</a> / <a href='https://ovh.github.com/cds/building-pipelines/actions/'>Actions</a> / <a href='https://ovh.github.com/cds/building-pipelines/actions/actions/'>gitClone</a>
+                         / <a href='https://ovh.github.com/cds/tutorials/'>Tutorials</a> / <a href='https://ovh.github.com/cds/tutorials/git-track/'>Git track </a>
                       
                       
               </div>
               
                   <div class="progress">
     <div class="wrapper">
-
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+</ul></li>
+<li><a href="#goal-immediate-feedback">Goal: Immediate feedback</a></li>
+<li><a href="#git-alias-sugar">Git alias sugar</a></li>
+</ul></li>
+</ul>
+</nav>
     </div>
 </div>
 
@@ -188,11 +238,36 @@
               
             <div id="body-inner">
               
-              <h1>gitClone</h1>
+              <h1>Git track </h1>
                 
 
 
 
+
+<h3 id="introduction">Introduction</h3>
+
+<p>This tutorial introduce the <code>cds track &lt;git commit&gt;</code> function of CDS <a href="https://ovh.github.com/cds/cli">cli</a>.</p>
+
+<h2 id="goal-immediate-feedback">Goal: Immediate feedback</h2>
+
+<p>cds track aims to display in your terminal the status of the pipeline building code refered by given commit hash.</p>
+
+<p>Push your branch, start cds track and get immediate feedback.</p>
+
+<p>Git track will display all pipelines related to given hash.</p>
+
+<p>This means triggered testing and deployment pipelines will be displayed.</p>
+
+<p><img src="https://ovh.github.com/cds/images/tutorials_git_track.png" alt="git-track" /></p>
+
+<h2 id="git-alias-sugar">Git alias sugar</h2>
+
+<p>To enhance even more your daily routine, you can create a git alias:</p>
+
+<pre><code class="language-bash">$ cat ~/.gitconfig
+[alias]
+  track = !cds track $(git rev-parse HEAD)
+</code></pre>
 
 
 <footer class=" footline" >
@@ -217,10 +292,54 @@
             
                 
                     
+                        
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                    
+                
+            
+                
+                    
                     
                 
             
 
+            
+                <a class="nav nav-prev" href="https://ovh.github.com/cds/tutorials/service-link-requirement-pg/" title="Service Requirement PostgreSQL"> <i class="fa fa-chevron-left"></i></a>
             
             
         

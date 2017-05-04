@@ -254,7 +254,7 @@ cds-docker-package cds-nexus-upload cds-perl-test  <a class="read-more" href="ht
     </header>
     <section class="post-excerpt">
         <p>Build image and push it to docker repository
-Parameters  dockerfileDirectory: Directory which contains your Dockerfile. dockerOpts: Docker options, Enter &ndash;no-cache &ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/">&raquo;</a></p>
+Parameters  imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.cds.version}},latest dockerfileDirectory: Directory which contains your Dockerfile. dockerOpts: Docker options, Enter &ndash;no-cache &ndash;pull if you want for example dockerRegistry: Docker Registry. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-docker-package/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -276,7 +276,7 @@ Parameters  dockerfileDirectory: Directory which contains your Dockerfile. docke
     </header>
     <section class="post-excerpt">
         <p>Upload file on Nexus
-Parameters  extension: Extension of the artifact files: Regex of files you want to upload packaging: Packaging type of the artifact groupId: Group id of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. login: Login for nexus password: Password for nexus url: Nexus URL repository: Nexus repository that the artifact is contained in  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/">&raquo;</a></p>
+Parameters  files: Regex of files you want to upload packaging: Packaging type of the artifact repository: Nexus repository that the artifact is contained in extension: Extension of the artifact artifactId: Artifact id of the artifact groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. login: Login for nexus password: Password for nexus url: Nexus URL  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/actions/user/cds-nexus-upload/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
