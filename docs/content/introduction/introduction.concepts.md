@@ -25,7 +25,7 @@ If the provided group does not exists, the group will be created with edition pe
 
 An application represents a real world production unit. An application lives inside a project, has variables and can attach:
 
-* [Pipelines]({{< relref "getting-started.concepts.pipeline.md" >}})
+* [Pipelines]({{< relref "introduction.concepts.pipeline.md" >}})
 * Environments
 
 ## Environment

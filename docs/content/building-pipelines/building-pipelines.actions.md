@@ -9,7 +9,7 @@ identifier = "actions"
 +++
 
 
-Inside a [Job]({{< relref "getting-started.concepts.job.md" >}}), each [steps]({{< relref "getting-started.concepts.job.md" >}}) is based on an action.
+Inside a [Job]({{< relref "introduction.concepts.job.md" >}}), each [steps]({{< relref "introduction.concepts.job.md" >}}) is based on an action.
 
 Types of actions :
 

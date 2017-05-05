@@ -20,7 +20,7 @@ Type of requirements:
 - OS (Not yet implemented)
 - Architecture (Not yet implemented)
 
-A [Job]({{< relref "getting-started.concepts.job.md" >}}) will be executed by a **worker**.
+A [Job]({{< relref "introduction.concepts.job.md" >}}) will be executed by a **worker**.
 
 CDS will choose and provision a worker for dependending of the **requirements** you define on your job.
 
