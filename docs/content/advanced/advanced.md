@@ -7,4 +7,4 @@ identifier = "advanced"
 
 +++
 
-{{%children style="h2"%}}
+{{%children style="h4"%}}

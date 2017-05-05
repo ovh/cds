@@ -64,7 +64,7 @@ body #chapter h1 {
     }
 }
 a {
-    color: #2053AB;
+    color: #45a7c3;
 }
 a:hover {
     color: #0082a7;
@@ -105,11 +105,11 @@ textarea:hover, input[type="email"]:hover, input[type="number"]:hover, input[typ
     border-color: #c4c4c4;
 }
 textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[type="password"]:focus, input[type="search"]:focus, input[type="tel"]:focus, input[type="text"]:focus, input[type="url"]:focus, input[type="color"]:focus, input[type="date"]:focus, input[type="datetime"]:focus, input[type="datetime-local"]:focus, input[type="month"]:focus, input[type="time"]:focus, input[type="week"]:focus, select[multiple=multiple]:focus {
-    border-color: #2053AB;
+    border-color: #45a7c3;
     box-shadow: inset 0 1px 3px rgba(0,0,0,.06),0 0 5px rgba(0,169,218,.7)
 }
 #header-wrapper {
-    background: #2053AB;
+    background: #45a7c3;
     color: #fff;
     text-align: center;
     border-bottom: 1px solid #183f81;
@@ -1023,7 +1023,7 @@ pre .copy-to-clipboard:hover {
     text-align: right;
 }
 #sidebar ul li.visited > a .read-icon {
-    color: #2053AB;
+    color: #45a7c3;
     display: inline;
 }
 
