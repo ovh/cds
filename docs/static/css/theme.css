@@ -328,6 +328,10 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
     color: rgba(34,36,38,.15);
     display: inline;
 }
+#sidebar ul li > a .section-icon {
+    color: rgba(34,36,38,.15);
+    display: inline;
+}
 #sidebar ul li li {
     padding-left: 1rem;
     text-indent: 0.2rem;
@@ -1028,6 +1032,21 @@ pre .copy-to-clipboard:hover {
     text-align: right;
 }
 #sidebar ul li.visited > a .read-icon {
+    color: #344860;
+    display: inline;
+}
+#sidebar ul.topics > li > a .section-icon {
+    margin-top: 9px;
+}
+#sidebar ul li .section-icon {
+    display: none;
+    float: right;
+    font-size: 13px;
+    min-width: 16px;
+    margin: 4px 0 0 0;
+    text-align: right;
+}
+#sidebar ul li.visited > a .section-icon {
     color: #344860;
     display: inline;
 }
