@@ -8,6 +8,10 @@ identifier = "first-pipeline-ui"
 
 +++
 
+## 0 - Prerequisite
+
+You must have a CDS Running. See [Installation]({{< relref "installation.md" >}}) for more information.
+
 ## 1 - Create Project
 
 ![img](/images/building-pipelines.first-pipeline-ui-1-create-project.png)
@@ -18,7 +22,7 @@ identifier = "first-pipeline-ui"
 
 ![img](/images/building-pipelines.first-pipeline-ui-3-create-app.png)
 
-## 3 - Create Pipeline and Stage
+## 3 - Create Pipeline
 
 ![img](/images/building-pipelines.first-pipeline-ui-4-create-pipeline.png)
 
