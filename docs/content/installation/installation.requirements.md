@@ -38,7 +38,7 @@ See Configuration template for more details
 - Linux i386/amd64/arm(raspberry pi)
 - Windows/amd64
 - Darwin i386/amd64
-- OpenBDS amd64
+- OpenBSD amd64
 - Solaris amd64
 
 You'll find binaries for Linux amd64/arm, Windows amd64, Darwin amd64 and FreeBSD amd64 on [CDS Releases](https://github.com/ovh/cds/releases/latest)

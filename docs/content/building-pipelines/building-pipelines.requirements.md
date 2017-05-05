@@ -9,8 +9,18 @@ identifier = "requirements"
 +++
 
 
+Type of requirements:
 
-A [Job]({{< relref "building-pipelines.actions.builtin.artifact-upload.md" >}}) will be executed by a **worker**.
+- Binary
+- Model
+- Hostname
+- Network
+- Service
+- Memory
+- OS (Not yet implemented)
+- Architecture (Not yet implemented)
+
+A [Job]({{< relref "getting-started.concepts.job.md" >}}) will be executed by a **worker**.
 
 CDS will choose and provision a worker for dependending of the **requirements** you define on your job.
 
@@ -19,6 +29,12 @@ You can set as many requirements as you want, following those rules :
 - Only one model can be set as requirement
 - Only one hostname can be set as requirement
 - Memory and Services requirements are availabe only on Docker models
+
+## Screenshot
+
+Here a job with two requirements, Memory and Model:
+
+[img](/images/building-pipelines.requirements-show.png)
 
 
 ## Note on Service Requirement
@@ -29,7 +45,7 @@ A Service in CDS is a docker container which is linked with your base image. To 
 
 When editing a pipeline job, choose your model as usual. Then add a new  **service** requirement, the name you set will be the service's hostname, set the docker image for the service as the value.
 
-When the pipeline will be triggered, a worker defined by the model will be spawned with a link (https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/) to the service you defined as requirement.
+When the pipeline will be triggered, a worker defined by the model will be spawned with a [docker link](https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/) to the service you defined as requirement.
 
 #### Environment variables
 

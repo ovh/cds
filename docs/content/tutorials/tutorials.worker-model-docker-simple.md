@@ -1,5 +1,5 @@
 +++
-title = "Setup Worker Model Docker Simple"
+title = "Setup Worker Model From Docker Hub"
 weight = 2
 
 [menu.main]
@@ -8,7 +8,7 @@ identifier = "tutorials-worker-model-docker"
 
 +++
 
-A worker model of type `docker` can be spawned by a Hatchery Docker or Docker Swarm
+A worker model of type `docker` can be spawned by a Hatchery Docker or Docker Swarm.
 
 ## Register a worker Model from a existing Docker Image
 

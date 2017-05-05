@@ -1,5 +1,5 @@
 +++
-title = "Setup Worker Model Docker Customized"
+title = "Setup Docker Worker Model with your own image"
 weight = 3
 
 [menu.main]
@@ -10,7 +10,7 @@ identifier = "tutorials-worker-model-docker-customized"
 
 A worker model of type `docker` can be spawned by a Hatchery Docker or Docker Swarm
 
-## Create a customized Worker Model
+## Setup Docker Worker Model with your own image
 
 In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a `grunt` task (optionnally) requires `fontforge` and `ttfautohint`.
 

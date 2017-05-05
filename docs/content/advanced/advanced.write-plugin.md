@@ -1,6 +1,6 @@
 +++
 title = "Write a Plugin"
-weight = 3
+weight = 4
 
 [menu.main]
 parent = "advanced"

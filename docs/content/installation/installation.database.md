@@ -29,4 +29,4 @@ $ $PATH_TO_CDS/api database upgrade --db-host <host> --db-host <port> --db-passw
 
 ### More details
 
-[Read more about CDS Database Management](https://github.com/ovh/cds/tree/master/engine/sql)
+[Read more about CDS Database Management](https://github.com/ovh/cds/blob/master/engine/sql/README.md)

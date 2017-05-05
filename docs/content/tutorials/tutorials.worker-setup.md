@@ -102,16 +102,7 @@ To be able to operate git clone commands, you have to follow next steps :
 
  * Install Git ` https://git-scm.com/download/win `
  * Setup your system %PATH%, and add `C:\Program Files\Git\mingw32\bin;C:\Program Files\Git\usr\bin`
- * In a Powershell Prompt, generate SSH keys to be able `PS ssh-keygen`
  * In a Powsershell Prompt, run `PS Set-ExecutionPolicy Unrestricted`
- * Add the public key as **Access Key** in every project in stash you will have to clone : * Stash > Project > Settings > Access Keys > Add Key * .
- * Copy the `id_rsa` and `id_rsa.pub` from you `C:\Users\<user>\.ssh\` directory to `C:\Program Files\Git\etc\ssh\`
- * (Optional, just for example here) Edit or Create the file `C:\Program Files\Git\etc\ssh\ssh_config` :
-```
-  Host your-bitbucket-host
-      StrictHostKeyChecking no
-```
-
  * You may want to improve your Git Experience on your windows host : have a look to posh-git : https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell
 
 #### Trigger your pipeline on your Host

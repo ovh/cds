@@ -1,24 +1,21 @@
 +++
-title = "Token"
-weight = 3
+title = "Generate a Token"
+weight = 1
 
 [menu.main]
-parent = "advanced-worker"
+parent = "advanced"
 identifier = "advanced-worker-token"
 
 +++
 
-
-Generate a Token
-=====================
-
 ### Purpose
 
-In order to start a worker, you need to provide a worker key to be able to build your pipelines.
+In order to start a worker or a Hatchery, you need to provide a token to be able to register on CDS API.
 
 ### CLI
 
 Run the following command, replace yourgroup with your group
+
 ```bash
 $ cds generate token -g yourgroup -e persistent
 ```
