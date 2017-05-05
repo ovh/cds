@@ -1,9 +1,0 @@
-<form class="ui form" (ngSubmit)="createEnv()">
-    <div class="fields">
-        <div class="field">
-            <input class="ui input" type="text" name="name" [(ngModel)]="newEnvironment.name" [disabled]="loading" placeholder="{{'environment_create_placeholder' | translate }}">
-        </div>
-        <button type="submit" class="ui green icon button" [class.loading]="loading" [class.disabled]="loading || !newEnvironment.name || newEnvironment.name === ''">
-            <i class="plus circle icon"></i></button>
-    </div>
-</form>

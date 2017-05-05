@@ -1,5 +1,0 @@
-name: Version  Command TestSuite
-testcases:
-- name: cds version
-  steps:
-  - script: {{.cds.build.cds}} version

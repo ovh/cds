@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Installations on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/installation/</link>
+    <description>Recent content in Installations on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/installation/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Docker Compose</title>
+      <link>https://ovh.github.io/cds/installation/installation.ready-to-run.docker-compose/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/installation/installation.ready-to-run.docker-compose/</guid>
+      <description>Run with Docker-Compose The docker-compose.yml contains:
+ cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables. cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user.</description>
+    </item>
+    
+    <item>
+      <title>Requirements</title>
+      <link>https://ovh.github.io/cds/installation/installation.requirements/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/installation/installation.requirements/</guid>
+      <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
+There is are two ways to set up CDS:
+ as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4. But for serious usage your may need :
+ A Redis server or sentinels based cluster used as a cache and session store A LDAP Server for authentication A SMTP Server for mails A Kafka Broker to manage CDS events A Openstack Swift Tenant to store builds artifacts A Vault server for cipher and app keys A Consul to manage CDS Configuration  See Configuration template for more details</description>
+    </item>
+    
+    <item>
+      <title>Download</title>
+      <link>https://ovh.github.io/cds/installation/installation.download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/installation/installation.download/</guid>
+      <description>You&amp;rsquo;ll find last release of CDS on Github Releases</description>
+    </item>
+    
+    <item>
+      <title>Configuration</title>
+      <link>https://ovh.github.io/cds/installation/installation.configuration/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/installation/installation.configuration/</guid>
+      <description>The toml configuration can be provided by a file or via consul k/v store.
+Start CDS with local configuration file You can also generate a configuration file template with the following command.
+$ $PATH_TO_CDS/api --config my_conf_file.toml Generating default config file my_conf_file.toml  Edit this file.
+Run CDS
+$ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_file.toml 2017/04/04 16:33:17 [NOTICE] Starting CDS server... ...  Start CDS with Consul Upload your toml configuration to consul</description>
+    </item>
+    
+    <item>
+      <title>Database Management</title>
+      <link>https://ovh.github.io/cds/installation/installation.database/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/installation/installation.database/</guid>
+      <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the api binary.
+Creation On a brand new database run the following command:
+$ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-host &amp;lt;port&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --limit 0  Upgrade On an existing database, run the following command on each CDS update:
+$ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-host &amp;lt;port&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt;  More details Read more about CDS Database Management</description>
+    </item>
+    
+    <item>
+      <title>Installation</title>
+      <link>https://ovh.github.io/cds/installation/installation/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/installation/installation/</guid>
+      <description> Requirements Download Configuration Database Management Ready to RUN  </description>
+    </item>
+    
+    <item>
+      <title>Ready to RUN</title>
+      <link>https://ovh.github.io/cds/installation/installation.ready-to-run/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/installation/installation.ready-to-run/</guid>
+      <description> Docker Compose  </description>
+    </item>
+    
+  </channel>
+</rss>
