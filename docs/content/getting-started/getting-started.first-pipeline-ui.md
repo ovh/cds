@@ -1,9 +1,9 @@
 +++
-title = "First Pipeline"
-weight = 1
+title = "Getting Started"
+weight = 2
 
 [menu.main]
-parent = "getting-started"
+parent = ""
 identifier = "first-pipeline-ui"
 
 +++
