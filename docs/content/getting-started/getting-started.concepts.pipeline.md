@@ -12,7 +12,7 @@ identifier = "concepts-pipeline"
 
 A pipeline describes how things need to be executed in order to achieve wanted result. In CDS, a pipeline a defined on a project and can be used on several applications inside the same project.
 
-A pipeline is structured in sequential **stages** containing one or multiple concurrent **jobs**.
+A pipeline is structured in sequential **[stages]({{< relref "getting-started.concepts.stage.md" >}})** containing one or multiple concurrent **[jobs]({{< relref "getting-started.concepts.job.md" >}})**.
 
 In CDS there is several types of pipeline : **build**, **testing** and **deployment**. In Pipeline configuration file, default type is **build**.
 

@@ -11,14 +11,14 @@ Build image and push it to docker repository
 
 ## Parameters
 
-* **dockerfileDirectory**: Directory which contains your Dockerfile.
-* **dockerOpts**: Docker options, Enter --no-cache --pull if you want for example
-* **dockerRegistry**: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag
-* **imageName**: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag
 * **imageTag**: Tag of your docker image.
 Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS.
 You can use many tags: firstTag,SecondTag
 Example : {{.cds.version}},latest
+* **dockerfileDirectory**: Directory which contains your Dockerfile.
+* **dockerOpts**: Docker options, Enter --no-cache --pull if you want for example
+* **dockerRegistry**: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag
+* **imageName**: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag
 
 
 ## Requirements

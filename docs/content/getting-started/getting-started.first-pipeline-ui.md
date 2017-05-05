@@ -3,7 +3,7 @@ title = "First Pipeline with UI"
 weight = 1
 
 [menu.main]
-parent = "building-pipelines"
+parent = "getting-started"
 identifier = "first-pipeline-ui"
 
 +++

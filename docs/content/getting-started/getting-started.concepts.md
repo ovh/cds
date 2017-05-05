@@ -15,7 +15,7 @@ A project contains applications, pipelines and environments.
 
 A project is the first level of permissions management. Any CDS application has to be created inside a project.
 
-The project key has to be unique amongst all projects in CDS.
+The project key has to be unique among all projects in CDS.
 
 At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one.
 

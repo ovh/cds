@@ -1,9 +1,9 @@
 +++
 title = "Installation"
-weight = 3
+weight = 2
 
 [menu.main]
-parent = "getting-started"
+parent = ""
 identifier = "installation"
 
 +++
