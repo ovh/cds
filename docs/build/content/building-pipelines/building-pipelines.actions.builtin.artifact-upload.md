@@ -8,8 +8,6 @@ identifier = "builtin-artifact-upload"
 
 +++
 
-# Artifact Upload Action
-
 **Artifact Upload Action** is a builtin action, you can't modify it.
 
 This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.
@@ -18,12 +16,17 @@ This action can be used to upload artifact in CDS. This is the good way to share
 * path: Path of file to upload
 * tag: Tag to apply to your file.
 
-### Example of Job Configuration
+### Example
 
-* With a tag to indicate the build version
+* Create a file `myFile` and upload it.
 
-![img](/img/actions/artifact_upload_version.png)
+![img](/images/building-pipelines.actions.builtin.artifact-upload-job.png)
 
-* With a latest tag
 
-![img](/img/actions/artifact_upload_latest.png)
+* Launch pipeline, check logs
+
+![img](/images/building-pipelines.actions.builtin.artifact-upload-logs.png)
+
+* View artifact
+
+![img](/images/building-pipelines.actions.builtin.artifact-upload-view-artifact.png)

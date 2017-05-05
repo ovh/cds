@@ -1,5 +1,5 @@
 +++
-title = "Requirements"
+title = "Job's Requirements"
 weight = 6
 
 [menu.main]

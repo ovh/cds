@@ -16,9 +16,9 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/</guid>
-      <description> Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
+      <description>Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to get artifact uploaded by the Artifact Upload action
-Action Parameter  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example of Job Configuration  Download artifact from the parent pipeline   Download artifact from the previous stage  </description>
+Action Parameter  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
     </item>
     
     <item>
@@ -27,9 +27,9 @@ Action Parameter  application: Application from where artifacts will be download
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/</guid>
-      <description> Artifact Upload Action Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
+      <description> Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.
-Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  Example of Job Configuration  With a tag to indicate the build version   With a latest tag  </description>
+Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  </description>
     </item>
     
     <item>
@@ -53,7 +53,7 @@ Parameters  url - mandatory - URL must contain information about the transport p
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.junit/</guid>
       <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
 This action parse given file to extract Unit Test results.
-Parameters  path: Path to junit xml file  </description>
+Parameters  path: Path to junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
     </item>
     
     <item>
@@ -62,11 +62,13 @@ Parameters  path: Path to junit xml file  </description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.script/</guid>
-      <description>Script is a builtin action, you can&amp;rsquo;t modify it.
+      <description> Script is a builtin action, you can&amp;rsquo;t modify it.
 This action execute a script, written in script attribute
 Parameters  script: Content of your script. You can put  #!/bin/bash  or
 #!/bin/perl  at first line.
-Make sure that the binary used is in the pre-requisites of action</description>
+Make sure that the binary used is in the pre-requisites of action
+Variable You can use CDS Variables in a step script.
+Example  Job Configuration, a step with perl, another with bash   Launch pipeline, check logs  </description>
     </item>
     
     <item>
@@ -86,7 +88,7 @@ Parameters  dockerfileDirectory: Directory which contains your Dockerfile. docke
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/</guid>
       <description>Upload file on Nexus
-Parameters  files: Regex of files you want to upload login: Login for nexus url: Nexus URL extension: Extension of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. packaging: Packaging type of the artifact password: Password for nexus repository: Nexus repository that the artifact is contained in groupId: Group id of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
+Parameters  password: Password for nexus repository: Nexus repository that the artifact is contained in extension: Extension of the artifact groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.0-SNAPSHOT&amp;rsquo;) too. packaging: Packaging type of the artifact login: Login for nexus artifactId: Artifact id of the artifact files: Regex of files you want to upload url: Nexus URL  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github</description>
     </item>
     
     <item>
@@ -162,7 +164,7 @@ Parameters  repo: Your source code repository withPackage: Do you want a Docker 
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-download/</guid>
       <description>This is a plugin to download file from URL
-Parameters  url: the url of your file filepath: the destination of your file to be copied headers: specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list)  More More documentation on Github</description>
+Parameters  filepath: the destination of your file to be copied headers: specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list) url: the url of your file  More More documentation on Github</description>
     </item>
     
     <item>
@@ -203,7 +205,7 @@ Parameters  url: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http:/
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/</guid>
       <description>This plugin helps you to run cmd on remote server over ssh.
-Parameters  hostnames: Hostnames (comma separated values) command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key  More More documentation on Github</description>
+Parameters  command: Command timeout: Timeout (seconds) commandTimeout: Command Timeout (seconds) username: Username privateKey: SSH RSA private key hostnames: Hostnames (comma separated values)  More More documentation on Github</description>
     </item>
     
     <item>
@@ -214,7 +216,7 @@ Parameters  hostnames: Hostnames (comma separated values) command: Command timeo
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/</guid>
       <description>This action helps you generates a file using a template file and text/template golang package.
 Check documentation on text/template for more information https://golang.org/pkg/text/template.
-Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github</description>
+Parameters  params: Parameters to pass on the template file (key=value newline separated list) file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension)  More More documentation on Github</description>
     </item>
     
     <item>
@@ -225,7 +227,7 @@ Parameters  file: Template file to use output: Output path for generated file (d
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/</guid>
       <description>This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
 Add an extra step of type junit on your job to view tests results on CDS UI.
-Parameters  loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file details: Output Details Level: low, medium, high  More More documentation on Github</description>
+Parameters  details: Output Details Level: low, medium, high loglevel: Log Level: debug, info, warn or error path: Path containers yml venom files. Format: adirectory/, ./aTest.yml, ./foo/b/*/z.yml exclude: Exclude some files, one file per line parallel: Launch Test Suites in parallel. Enter here number of routines output: Directory where output xunit result file  More More documentation on Github</description>
     </item>
     
     <item>
@@ -238,6 +240,15 @@ Parameters  loglevel: Log Level: debug, info, warn or error path: Path container
 There can be created by CLI and / or Web UI.
 User actions from CDS Contributions :
 Artifact Download Artifact Upload GitClone JUnit Script </description>
+    </item>
+    
+    <item>
+      <title>First Pipeline with UI</title>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-ui/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-ui/</guid>
+      <description> 1 - Create Project 2 - Create Application 3 - Create Pipeline and Stage 4 - Create Stage and Job 5 - Run Pipeline  Click on &amp;ldquo;Play button&amp;rdquo;  </description>
     </item>
     
     <item>
@@ -257,7 +268,18 @@ cds-docker-package cds-nexus-upload cds-perl-test </description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines/</guid>
-      <description> Actions Templates Variables Requirements  </description>
+      <description> First Pipeline with UI First Pipeline with CLI Use Configuration File Actions Templates Variables Job&amp;#39;s Requirements  </description>
+    </item>
+    
+    <item>
+      <title>First Pipeline with CLI</title>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-cli/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-cli/</guid>
+      <description>Create a project The first step is to create your own Project. A project contains applications, pipelines and environments.
+You can use either the cli or the ui to create your project.
+$ cds project add TEST &amp;quot;My test project&amp;quot; test-team OK  Create a simple pipeline $ cds pipeline add TEST hello-pip Pipeline hello-pip created.  Create an application $ cds application add TEST hello-world Aplication hello-world created.  Configure your pipeline We will add a script action in pipeline saying &amp;ldquo;Hello World !</description>
     </item>
     
     <item>
@@ -270,6 +292,17 @@ cds-docker-package cds-nexus-upload cds-perl-test </description>
 CDS Administrators have to import plugins on CDS to let user use them.
 Plugins from CDS Contributions:
 plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ssh-cmd plugin-tmpl plugin-venom </description>
+    </item>
+    
+    <item>
+      <title>Use Configuration File</title>
+      <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.configuration-file/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.com/cds/building-pipelines/building-pipelines.configuration-file/</guid>
+      <description>You can define a pipeline both in json format or in yaml format. Default is yaml format.
+Basic configuration If you have a pretty simple build pipeline with one stage and one job. You can write such a configuration file
+steps: - script: echo I&#39;m the firt step - script: echo I&#39;m the second step  This defines a pipeline of type build (it&amp;rsquo;s the default type), nammed Build (the default name for a build Pipeline).</description>
     </item>
     
     <item>
@@ -306,7 +339,7 @@ cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-a
     </item>
     
     <item>
-      <title>Requirements</title>
+      <title>Job&#39;s Requirements</title>
       <link>https://ovh.github.com/cds/building-pipelines/building-pipelines.requirements/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
