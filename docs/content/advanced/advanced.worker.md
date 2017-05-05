@@ -1,6 +1,6 @@
 +++
 title = "Worker"
-weight = 5
+weight = 2
 
 [menu.main]
 parent = "advanced"

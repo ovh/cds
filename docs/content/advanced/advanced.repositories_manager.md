@@ -1,6 +1,6 @@
 +++
 title = "Repositories Manager"
-weight = 2
+weight = 3
 
 [menu.main]
 parent = "advanced"
@@ -11,13 +11,13 @@ identifier = "repositories_manager"
 
 CDS can be linked to following repositories manager :
 
- - **Atlassian Stash**
+ - **Atlassian Stash / Bitbucket**
  - **Github**
 
 It allows you to enable some CDS features such as :
 
- - Create application in CDS from Stash or Github
- - Attach an application to its Stash or Github repository
+ - Create application in CDS from Bitbucket or Github
+ - Attach an application to its Bitbucket or Github repository
  - Fully automatic hook management
  - Branch filtering on application workflows
  - Commit logs on pipeline build details

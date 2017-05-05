@@ -1,5 +1,5 @@
 +++
-title = "Setup Worker Model Openstack"
+title = "Setup Openstack Worker Model"
 weight = 4
 
 [menu.main]

@@ -1,5 +1,5 @@
 +++
-title = "Git track "
+title = "Track CDS Pipeline from Git command line "
 weight = 7
 
 [menu.main]

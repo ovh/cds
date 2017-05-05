@@ -1,5 +1,5 @@
 +++
-title = "First Pipeline with UI"
+title = "First Pipeline"
 weight = 1
 
 [menu.main]
