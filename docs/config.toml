@@ -5,7 +5,7 @@ theme = "docdock"
 canonifyurls = true
 
 [params]
-editURL = "https://github.com/ovh/cds/edit/master/docs/build/content/"
+editURL = "https://github.com/ovh/cds/edit/master/docs/content/"
 noSearch = true
 noHomeIcon = true
 
