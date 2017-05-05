@@ -10,7 +10,7 @@ identifier = "getting-started"
 
 ## What is CDS?
 
-Enterprise-Grade Continuous Delivery & DevOps Automation Opensource Platform
+Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform
 
  - Easy to deploy
  - Cloud native
@@ -52,6 +52,6 @@ An application is composed of one or multiple pipelines, that can be triggered:
 
 ## Basic principles
 
-- A action will start on any worker **matching all its requirements**
+- An action will start on any worker **matching all its requirements**
 - **Every action runs in a different worker**, all build data needed for the next step should be **uploaded as artifact**
 - It is possible to run some of your pipelines on-premise, some on CDS workers
