@@ -201,7 +201,9 @@
 	
 	    <a class="newer-posts" href="https://ovh.github.com/cds/building-pipelines/page/2/">&larr; Next Pages</a>
 	
-	<span class="page-number">Page 3 on 3</span>
+	<span class="page-number">Page 3 on 4</span>
+	
+	    <a class="older-posts" href="https://ovh.github.com/cds/building-pipelines/page/4/">Previous Pages &rarr;</a>
 	
 </nav>
 
@@ -217,6 +219,27 @@
 There can be created by CLI and / or Web UI.
 User actions from CDS Contributions :
 Artifact Download Artifact Upload GitClone JUnit Script  <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-ui/">First Pipeline with UI</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p> 1 - Create Project 2 - Create Application 3 - Create Pipeline and Stage 4 - Create Stage and Job 5 - Run Pipeline  Click on &ldquo;Play button&rdquo;   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-ui/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -260,7 +283,30 @@ cds-docker-package cds-nexus-upload cds-perl-test  <a class="read-more" href="ht
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/building-pipelines/">Building Pipelines</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> Actions Templates Variables Requirements   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines/">&raquo;</a></p>
+        <p> First Pipeline with UI First Pipeline with CLI Use Configuration File Actions Templates Variables Job&#39;s Requirements   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-cli/">First Pipeline with CLI</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>Create a project The first step is to create your own Project. A project contains applications, pipelines and environments.
+You can use either the cli or the ui to create your project.
+$ cds project add TEST &quot;My test project&quot; test-team OK  Create a simple pipeline $ cds pipeline add TEST hello-pip Pipeline hello-pip created.  Create an application $ cds application add TEST hello-world Aplication hello-world created.  Configure your pipeline We will add a script action in pipeline saying &ldquo;Hello World ! <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-cli/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -285,6 +331,29 @@ cds-docker-package cds-nexus-upload cds-perl-test  <a class="read-more" href="ht
 CDS Administrators have to import plugins on CDS to let user use them.
 Plugins from CDS Contributions:
 plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ssh-cmd plugin-tmpl plugin-venom  <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.plugins/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.configuration-file/">Use Configuration File</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>You can define a pipeline both in json format or in yaml format. Default is yaml format.
+Basic configuration If you have a pretty simple build pipeline with one stage and one job. You can write such a configuration file
+steps: - script: echo I'm the firt step - script: echo I'm the second step  This defines a pipeline of type build (it&rsquo;s the default type), nammed Build (the default name for a build Pipeline). <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.configuration-file/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -369,30 +438,6 @@ cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-a
 
 
 
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.requirements/">Requirements</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>A Job will be executed by a worker.
-CDS will choose and provision a worker for dependending of the requirements you define on your job.
-You can set as many requirements as you want, following those rules :
- Only one model can be set as requirement Only one hostname can be set as requirement Memory and Services requirements are availabe only on Docker models  Note on Service Requirement A Service in CDS is a docker container which is linked with your base image. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.requirements/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
 
 <div style="margin-bottom:2rem"></div>
 
@@ -400,7 +445,9 @@ You can set as many requirements as you want, following those rules :
 	
 	    <a class="newer-posts" href="https://ovh.github.com/cds/building-pipelines/page/2/">&larr; Next Pages</a>
 	
-	<span class="page-number">Page 3 on 3</span>
+	<span class="page-number">Page 3 on 4</span>
+	
+	    <a class="older-posts" href="https://ovh.github.com/cds/building-pipelines/page/4/">Previous Pages &rarr;</a>
 	
 </nav>
 

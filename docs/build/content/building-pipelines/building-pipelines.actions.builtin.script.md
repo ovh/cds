@@ -29,3 +29,19 @@ This action execute a script, written in script attribute
  at first line.
 
 Make sure that the binary used is in the pre-requisites of action
+
+#### Variable
+
+You can use [CDS Variables]({{< relref "building-pipelines.variables.md" >}}) in a step script.
+
+![img](/images/building-pipelines.actions.builtin.script-bash.png)
+
+### Example
+
+* Job Configuration, a step with perl, another with bash
+
+![img](/images/building-pipelines.actions.builtin.script-job.png)
+
+* Launch pipeline, check logs
+
+![img](/images/building-pipelines.actions.builtin.script-logs.png)

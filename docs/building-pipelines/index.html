@@ -199,7 +199,7 @@
 <div class="extra-pagination inner">
 <nav class="pagination" role="navigation">
 	
-	<span class="page-number">Page 1 on 3</span>
+	<span class="page-number">Page 1 on 4</span>
 	
 	    <a class="older-posts" href="https://ovh.github.com/cds/building-pipelines/page/2/">Previous Pages &rarr;</a>
 	
@@ -213,9 +213,9 @@
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/">Artifact Download</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> Artifact Download Action is a builtin action, you can&rsquo;t modify it.
+        <p>Artifact Download Action is a builtin action, you can&rsquo;t modify it.
 This action can be used to get artifact uploaded by the Artifact Upload action
-Action Parameter  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example of Job Configuration  Download artifact from the parent pipeline   Download artifact from the previous stage   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/">&raquo;</a></p>
+Action Parameter  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact. <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -236,9 +236,9 @@ Action Parameter  application: Application from where artifacts will be download
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/">Artifact Upload</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> Artifact Upload Action Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
+        <p> Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
 This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.
-Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  Example of Job Configuration  With a tag to indicate the build version   With a latest tag   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/">&raquo;</a></p>
+Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -286,7 +286,7 @@ Parameters  url - mandatory - URL must contain information about the transport p
     <section class="post-excerpt">
         <p> JUnit is a builtin action, you can&rsquo;t modify it.
 This action parse given file to extract Unit Test results.
-Parameters  path: Path to junit xml file   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.junit/">&raquo;</a></p>
+Parameters  path: Path to junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.junit/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -307,11 +307,13 @@ Parameters  path: Path to junit xml file   <a class="read-more" href="https://ov
         <h2 class="post-title"><a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.script/">Script</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>Script is a builtin action, you can&rsquo;t modify it.
+        <p> Script is a builtin action, you can&rsquo;t modify it.
 This action execute a script, written in script attribute
 Parameters  script: Content of your script. You can put  #!/bin/bash  or
 #!/bin/perl  at first line.
-Make sure that the binary used is in the pre-requisites of action <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.script/">&raquo;</a></p>
+Make sure that the binary used is in the pre-requisites of action
+Variable You can use CDS Variables in a step script.
+Example  Job Configuration, a step with perl, another with bash   Launch pipeline, check logs   <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.builtin.script/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -355,7 +357,7 @@ Parameters  dockerfileDirectory: Directory which contains your Dockerfile. docke
     </header>
     <section class="post-excerpt">
         <p>Upload file on Nexus
-Parameters  files: Regex of files you want to upload login: Login for nexus url: Nexus URL extension: Extension of the artifact artifactId: Artifact id of the artifact version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. packaging: Packaging type of the artifact password: Password for nexus repository: Nexus repository that the artifact is contained in groupId: Group id of the artifact  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/">&raquo;</a></p>
+Parameters  password: Password for nexus repository: Nexus repository that the artifact is contained in extension: Extension of the artifact groupId: Group id of the artifact version: Version of the artifact. Supports resolving of &lsquo;LATEST&rsquo;, &lsquo;RELEASE&rsquo; and snapshot versions (&lsquo;1.0-SNAPSHOT&rsquo;) too. packaging: Packaging type of the artifact login: Login for nexus artifactId: Artifact id of the artifact files: Regex of files you want to upload url: Nexus URL  Requirements  bash: type:binary Value:bash curl: type:binary Value:curl  More documentation on Github <a class="read-more" href="https://ovh.github.com/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -442,7 +444,7 @@ Parameters  testDirectory: Directory where is Perl Source Code  Requirements  pe
 
 <nav class="pagination" role="navigation">
 	
-	<span class="page-number">Page 1 on 3</span>
+	<span class="page-number">Page 1 on 4</span>
 	
 	    <a class="older-posts" href="https://ovh.github.com/cds/building-pipelines/page/2/">Previous Pages &rarr;</a>
 	

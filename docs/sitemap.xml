@@ -10,6 +10,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-ui/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/getting-started/getting-started/</loc>
   </url>
   
@@ -54,6 +58,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-cli/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/advanced/advanced.hatcheries.openstack/</loc>
   </url>
   
@@ -94,6 +102,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.configuration-file/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/advanced/advanced.write-plugin/</loc>
   </url>
   
@@ -114,15 +126,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.com/cds/getting-started/getting-started.installation.ready-to-run/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.com/cds/tutorials/tutorials.service-link-requirement-nginx/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.com/cds/building-pipelines/building-pipelines.templates/</loc>
   </url>
   
   <url>

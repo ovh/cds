@@ -19,12 +19,16 @@ This action can be used to get artifact uploaded by the [Artifact Upload]({{< re
 * tag: Tag set in the Artifact Upload action
 * path: Path where artifacts will be downloaded
 
-### Example of Job Configuration
+### Example
 
-* Download artifact from the parent pipeline
+* Workflow Configuration: a pipeline doing an `upload artifact` and another doing a `download artifact`.
 
-![img](/img/actions/artifact_download_parent.png)
+![img](/images/building-pipelines.actions.builtin.artifact-download-workflow.png)
 
-* Download artifact from the previous stage
+* Job Configuration: download artifact from pipeline `parent`
 
-![img](/img/actions/artifact_download_stage.png)
+![img](/images/building-pipelines.actions.builtin.artifact-download-job.png)
+
+* Run pipeline, check logs
+
+![img](/images/building-pipelines.actions.builtin.artifact-download-logs.png)

@@ -86,6 +86,57 @@
     
     
 
+    <li data-nav-id="/building-pipelines/building-pipelines.first-pipeline-ui/" class="dd-item 
+     
+    ">
+        <a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-ui/">
+            First Pipeline with UI
+            
+        </a>
+        
+    </li>
+
+                    
+                
+                    
+                        
+    
+    
+
+    <li data-nav-id="/building-pipelines/building-pipelines.first-pipeline-cli/" class="dd-item 
+     
+    ">
+        <a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.first-pipeline-cli/">
+            First Pipeline with CLI
+            
+        </a>
+        
+    </li>
+
+                    
+                
+                    
+                        
+    
+    
+
+    <li data-nav-id="/building-pipelines/building-pipelines.configuration-file/" class="dd-item 
+     
+    ">
+        <a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.configuration-file/">
+            Use Configuration File
+            
+        </a>
+        
+    </li>
+
+                    
+                
+                    
+                        
+    
+    
+
     <li data-nav-id="/building-pipelines/building-pipelines.actions/" class="dd-item 
      
     parent">
@@ -299,7 +350,7 @@
      
     ">
         <a href="https://ovh.github.com/cds/building-pipelines/building-pipelines.requirements/">
-            Requirements
+            Job&#39;s Requirements
             
         </a>
         
@@ -430,11 +481,11 @@
     <div class="wrapper">
 <nav id="TableOfContents">
 <ul>
-<li><a href="#artifact-upload-action">Artifact Upload Action</a>
+<li>
 <ul>
 <li><a href="#action-parameter">Action Parameter</a>
 <ul>
-<li><a href="#example-of-job-configuration">Example of Job Configuration</a></li>
+<li><a href="#example">Example</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -453,8 +504,6 @@
 
 
 
-<h1 id="artifact-upload-action">Artifact Upload Action</h1>
-
 <p><strong>Artifact Upload Action</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
 <p>This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.</p>
@@ -466,19 +515,25 @@
 <li>tag: Tag to apply to your file.</li>
 </ul>
 
-<h3 id="example-of-job-configuration">Example of Job Configuration</h3>
+<h3 id="example">Example</h3>
 
 <ul>
-<li>With a tag to indicate the build version</li>
+<li>Create a file <code>myFile</code> and upload it.</li>
 </ul>
 
-<p><img src="https://ovh.github.com/cds/img/actions/artifact_upload_version.png" alt="img" /></p>
+<p><img src="https://ovh.github.com/cds/images/building-pipelines.actions.builtin.artifact-upload-job.png" alt="img" /></p>
 
 <ul>
-<li>With a latest tag</li>
+<li>Launch pipeline, check logs</li>
 </ul>
 
-<p><img src="https://ovh.github.com/cds/img/actions/artifact_upload_latest.png" alt="img" /></p>
+<p><img src="https://ovh.github.com/cds/images/building-pipelines.actions.builtin.artifact-upload-logs.png" alt="img" /></p>
+
+<ul>
+<li>View artifact</li>
+</ul>
+
+<p><img src="https://ovh.github.com/cds/images/building-pipelines.actions.builtin.artifact-upload-view-artifact.png" alt="img" /></p>
 
 
 <footer class=" footline" >

@@ -1,6 +1,6 @@
 +++
 title = "Templates"
-weight = 5
+weight = 4
 
 [menu.main]
 parent = "building-pipelines"
