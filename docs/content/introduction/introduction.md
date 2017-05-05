@@ -20,7 +20,7 @@ Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform
 
 Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a [hatchery](/doc/overview/hatchery.md).
 
-CDS exposes an API available to [workers](/doc/overview/worker.md) and humans through cli or WebUI.
+CDS exposes an API available to [workers](/doc/overview/worker.md) and humans through CLI or WebUI.
 
 ## What does CDS do?
 

@@ -14,7 +14,7 @@ identifier = "first-pipeline-cli"
 The first step is to create your own Project.
 A project contains applications, pipelines and environments.
 
-You can use either the cli or the ui to create your project.
+You can use either the CLI or the UI to create your project.
 
 ```bash
 $ cds project add TEST "My test project" test-team
