@@ -1,10 +1,10 @@
 +++
-title = "Getting started"
+title = "Introduction"
 weight = 1
 chapter = true
 
 [menu.main]
-identifier = "getting-started"
+identifier = "introduction"
 
 +++
 

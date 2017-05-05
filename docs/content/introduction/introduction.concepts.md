@@ -3,7 +3,7 @@ title = "Concepts"
 weight = 2
 
 [menu.main]
-parent = "getting-started"
+parent = "introduction"
 identifier = "concepts"
 
 +++

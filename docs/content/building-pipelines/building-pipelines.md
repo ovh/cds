@@ -1,6 +1,6 @@
 +++
 title = "Building Pipelines"
-weight = 2
+weight = 3
 
 [menu.main]
 identifier = "building-pipelines"
