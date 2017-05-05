@@ -8,4 +8,4 @@ identifier = "installation"
 
 +++
 
-{{%children style="h2"%}}
+{{%children style="h4"%}}

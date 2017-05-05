@@ -1,6 +1,6 @@
 languageCode = "en-us"
 title = "CDS Documentation"
-baseURL = "https://ovh.github.com/cds"
+baseURL = "https://ovh.github.io/cds"
 theme = "docdock"
 canonifyurls = true
 
