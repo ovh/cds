@@ -3,7 +3,7 @@
 set -e
 
 function generateUserActionsDocumentation {
-  for action in `ls ../../contrib/actions/*.hcl`; do
+  for action in `ls ../contrib/actions/*.hcl`; do
 
   filename=$(basename "$action")
   actionName=${filename/.hcl/}
@@ -23,23 +23,23 @@ identifier = "${actionName}"
 +++
 EOF
 
-  cds action doc ../../contrib/actions/${action} >> $ACTION_FILE
+  cds action doc ${action} >> $ACTION_FILE
 
   done;
 }
 
 function generatePluginsDocumentation {
-  for plugin in `ls ../../contrib/plugins/`; do
+  for plugin in `ls ../contrib/plugins/`; do
 
   if [[ "${plugin}" != plugin-* ]]; then
-    echo "skip ../../contrib/plugins/${plugin}"
+    echo "skip ../contrib/plugins/${plugin}"
     continue;
   fi
 
   OLD=`pwd`
   PLUGIN_FILE="$OLD/content/building-pipelines/building-pipelines.actions.plugins.${plugin}.md"
 
-  cd ../../contrib/plugins/${plugin}
+  cd ../contrib/plugins/${plugin}
 
   echo "Compile plugin ${plugin}"
   go build
@@ -65,17 +65,17 @@ EOF
 }
 
 function generateTemplatesDocumentation {
-  for template in `ls ../../contrib/templates/`; do
+  for template in `ls ../contrib/templates/`; do
 
   if [[ "${template}" != cds-template-* ]]; then
-    echo "skip ../../contrib/templates/${template}"
+    echo "skip ../contrib/templates/${template}"
     continue;
   fi
 
   OLD=`pwd`
   TEMPLATE_FILE="$OLD/content/building-pipelines/building-pipelines.templates.${template}.md"
 
-  cd ../../contrib/templates/${template}
+  cd ../contrib/templates/${template}
 
   echo "Compile template ${template}"
   go build
