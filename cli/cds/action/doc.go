@@ -33,7 +33,7 @@ func docAction(cmd *cobra.Command, args []string) {
 
 	action, errFrom := sdk.NewActionFromScript(btes)
 	if errFrom != nil {
-		sdk.Exit("Error loading file: %s", errRead)
+		sdk.Exit("Error loading file: %s", errFrom)
 	}
 
 	fmt.Println(sdk.ActionInfoMarkdown(action, path.Base(args[0])))
