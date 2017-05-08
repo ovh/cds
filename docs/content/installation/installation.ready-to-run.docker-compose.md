@@ -52,7 +52,7 @@ run `docker-compose logs` to get URL for validate the registration.
 On UI http://localhost:2015:
 
 - Create a project
-- Create an application, with an void pipeline
+- Create an application, with a void pipeline
 - Create a pipeline, attached to application
 - On Pipeline, add a stage and a job
 - Inside job, add a step of type "script"

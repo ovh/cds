@@ -74,7 +74,7 @@ You can now use `{{.cds.build.varname}}` in further steps and stages.
 
 ## Shell Environment Variable
 
-All CDS variables, except `password type` can use used as plain environment variable.
+All CDS variables, except `password type` can be used as plain environment variable.
 
 Theses lines will have the same output
 
