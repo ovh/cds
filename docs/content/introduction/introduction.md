@@ -18,9 +18,9 @@ Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform
  - Infrastructure & Architecture agnostic
  - Event-Driven Pipeline
 
-Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a [hatchery](/doc/overview/hatchery.md).
+Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a [hatchery]({{< relref "advanced.hatcheries.md" >}}).
 
-CDS exposes an API available to [workers](/doc/overview/worker.md) and humans through CLI or WebUI.
+CDS exposes an API available to [workers]({{< relref "advanced.worker.md" >}}) and humans through CLI or WebUI.
 
 ## What does CDS do?
 

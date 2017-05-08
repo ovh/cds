@@ -85,18 +85,18 @@ After running this Hatchery, a worker will be spawned. Your pipeline will be in 
 
 ## Hatchery Docker Swarm
 
-The [docker-compose.yml](/docker-compose.yml) runs hatchery belonging to the `shared.infra` groups.
+The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) runs hatchery belonging to the `shared.infra` groups.
 
 A `local hatchery` spawn worker on same host than hatchery. This is usually useful for specific cases, as
 running job on specific hardware.
 But this hatchery does not make it possible to respect the isolation of workpaces
 of workers as they share the same workspace.
 
-There is another hatchery configured in [docker-compose.yml](/docker-compose.yml) file: a 'swarm hatchery'
+There is another hatchery configured in [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) file: a 'swarm hatchery'
 
 Please check that your docker installation allows docker API calls on `tcp://${HOSTNAME}:2375`
 Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:2375` in
-[docker-compose.yml](/docker-compose.yml)
+[docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml)
 
 ```bash
 $ docker-compose up cds-hatchery-swarm
@@ -135,7 +135,7 @@ $ cds admin templates add ./cds-template-plain-linux-amd64
 
 # Go further
 
-- First pipeline with CDS CLI [read more](/ddoc/tutorials/first-pipeline.md)
-- How to use Openstack infrastructure to spawn CDS container [read more](/doc/tutorials/hatchery-openstack.md)
-- Link CDS to a repository manager, as Github or Bitbucket [read more](/doc/tutorials/link-cds-to-reposmanager.md)
-- Learn more about CDS variables [read more](/doc/tutorials/variables.md)
+- First pipeline with CDS CLI [read more]({{< relref "getting-started.first-pipeline-ui.md" >}})
+- How to use Openstack infrastructure to spawn CDS container [read more]({{< relref "advanced.hatcheries.openstack.md" >}})
+- Link CDS to a repository manager, as Github or Bitbucket [read more]({{< relref "advanced.repositories_manager.md" >}})
+- Learn more about CDS variables [read more]({{< relref "building-pipelines.variables.md" >}})
