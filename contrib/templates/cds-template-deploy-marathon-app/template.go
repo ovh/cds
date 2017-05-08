@@ -19,7 +19,7 @@ func (t *TemplateMarathonApp) Name() string {
 func (t *TemplateMarathonApp) Description() string {
 	return `
 This template creates:
-- a deployment pipeline with one stage, containing and one job
+- a deployment pipeline with one stage, and containing one job
 - job calls plugin-marathon
 - an application with a variable named "marathon.config"
 - uses environment variables marathonHost, password and user
