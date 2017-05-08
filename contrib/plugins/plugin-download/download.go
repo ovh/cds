@@ -101,6 +101,5 @@ func parseHeaders(hParams string) http.Header {
 }
 
 func main() {
-	p := DownloadPlugin{}
-	plugin.Serve(&p)
+	plugin.Main(&DownloadPlugin{})
 }

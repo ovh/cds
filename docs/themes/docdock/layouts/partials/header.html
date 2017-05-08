@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    {{ .Hugo.Generator }}
+    {{ partial "meta.html" . }}
+    {{ partial "favicon.html" . }}
+    
+    <title>{{ .Title }} :: {{ .Site.Title }}</title>
+    <link href="{{"css/nucleus.css" | relURL}}" rel="stylesheet">
+    <link href="{{"css/font-awesome.min.css" | relURL}}" rel="stylesheet">
+    <link href="{{"css/hybrid.css" | relURL}}" rel="stylesheet">
+    <link href="{{"css/featherlight.min.css" | relURL}}" rel="stylesheet">
+    <link href="{{"css/perfect-scrollbar.min.css" | relURL}}" rel="stylesheet">
+    <link href="{{"css/horsey.css" | relURL}}" rel="stylesheet">
+    <link href="{{"css/theme.css" | relURL}}" rel="stylesheet">
+    <link href="{{"css/hugo-theme.css" | relURL}}" rel="stylesheet">
+    <link rel="stylesheet" href="{{"css/bootstrap.min.css" | relURL}}">
+    <script src="{{"js/jquery-2.x.min.js" | relURL}}"></script>
+    <style type="text/css">:root #header + #content > #left > #rlblock_left
+    {display:none !important;}</style>
+    {{ partial "style.html" . }}
+  </head>
+  <body class="" data-url="{{ .RelPermalink }}">
+    {{ partial "menu.html" . }}
+        <section id="body">
+        <div id="overlay"></div>
+
+        <div class="padding highlightable">
+        {{if ne .Source.BaseFileName "_index"}}
+          <div id="top-bar">
+              {{ if and .IsPage .Site.Params.editURL }}
+                {{ $File := .File }}
+                {{ $Site := .Site }}
+                {{with $File.Path }}
+              <div id="top-github-link">
+                  <a class="github-link" href="{{ $Site.Params.editURL }}{{ replace $File.Dir "\\" "/" }}{{ $File.LogicalName }}" target="blank">
+                    <i class="fa fa-code-fork"></i>
+                    Edit this page
+                  </a>
+              </div>
+                {{ end }}
+              {{ end }}
+              <div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+
+                  <span id="sidebar-toggle-span">
+                      <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                        <i class="fa fa-bars"></i>
+                      </a>
+                  </span>
+                  <span id="toc-menu"><a href=""><i class="fa fa-list-alt"></i></a></span>
+
+                      <a href="{{.Site.BaseURL}}"> 
+                      <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span> 
+                      {{.Site.Title}}</a> 
+                      {{ if ne nil ($.Scratch.Get "Breadcrumbs")}}
+                        {{ $.Scratch.Get "Breadcrumbs"  | safeHTML }}
+                      {{end}}
+                      {{ if eq .Params.menu.main.identifier nil}} > {{.Title}}{{end}}
+              </div>
+              
+                  {{ partial "toc.html" . }}
+            </div>
+        {{end}}
+              {{if .Params.tags }}  
+                <div id="tags">
+                  {{ range $index, $tag := .Params.tags }}
+                      <a class="label label-default" href="{{$.Site.BaseURL}}/tags/{{ $tag | urlize }}">{{ $tag }}</a>
+                  {{ end }}
+                </div>
+              {{end}}
+            <div id="body-inner">
+              {{if ne .Source.BaseFileName "_index"}}
+              <h1>{{.Title}}</h1>
+              {{end}}  
+

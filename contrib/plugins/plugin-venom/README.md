@@ -1,4 +1,4 @@
-# TMPL
+# Plugin Venom
 
 CDS plugin run venom https://github.com/runabove/venom
 

@@ -30,7 +30,7 @@ func (p Plugin) Name() string {
 
 // Description returns the plugin's description
 func (p Plugin) Description() string {
-	return `This actions helps you generate a marathon group application file.
+	return `This action helps you generate a marathon group application file.
 It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files.
 Check documentation on text/template for more information https://golang.org/pkg/text/template.`
 }

@@ -16,6 +16,7 @@ func (t *TemplateCDSPlugin) Name() string {
 func (t *TemplateCDSPlugin) Description() string {
 	return `
 This template creates a pipeline for building CDS Plugin with:
+
 - A "Commit Stage" with one job "Compile"
 - Job contains two steps: GitClone and CDS_GoBuild
 `
@@ -124,6 +125,5 @@ func (t *TemplateCDSPlugin) Apply(opts template.IApplyOptions) (sdk.Application,
 }
 
 func main() {
-	p := TemplateCDSPlugin{}
-	template.Serve(&p)
+	template.Main(&TemplateCDSPlugin{})
 }

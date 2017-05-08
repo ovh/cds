@@ -1,0 +1,89 @@
+
+<nav id="sidebar">
+  <div id="header-wrapper">
+    <div id="header">
+      {{ partial "logo.html" . }}
+    </div>
+    {{if not .Site.Params.noSearch}}
+        {{ partial "search.html" . }}
+    {{end}}
+  </div>
+
+  <div class="highlightable">
+    <ul class="topics">
+        {{if not .Site.Params.noHomeIcon}}
+            <li data-nav-id="{{"/" | relURL}}" class="dd-item">
+            <a href="{{"/" | relURL}}"><i class="fa fa-fw fa-home"></i></a>
+            </li>
+        {{end}}
+
+        {{ $currentNode := . }}
+        {{$showvisitedlinks := .Site.Params.showVisitedLinks }}
+        {{ $.Scratch.Set "ParentMenuTmp" .Site.Menus.main }}
+        {{ range .Site.Menus.main }}
+            {{ template "menu-item" dict "menu" . "currentnode" $currentNode "showvisitedlinks" $showvisitedlinks }}
+        {{end}}
+
+
+
+
+
+        {{with .Site.Menus.shortcuts}}
+        <section id="shortcuts">
+            {{ range sort . "Weight" "asc"}}
+                <li class="" role="">
+                    {{.Pre}}
+                    <a href="{{.URL}}">{{safeHTML .Name}}</a>
+                    {{.Post}}
+                </li>
+            {{end}}
+        </section>
+
+        {{ if $.Site.Params.showVisitedLinks}}
+            <a class="" href="#" data-clear-history-toggle=""><i class="fa  fa-history"></i> Clear History</a>
+        {{ end }}
+
+        {{end}}
+    </ul>
+
+
+    <section id="footer">
+      {{ partial "menu-footer.html" . }}
+    </section>
+  </div>
+</nav>
+
+{{ define "menu-item" }}
+    {{$currentNode := .currentnode }}
+    {{$showvisitedlinks := .showvisitedlinks }}
+
+    <li data-nav-id="{{ .menu.URL }}" class="dd-item
+    {{if ($currentNode.IsMenuCurrent "main" .menu) }}active{{end}}
+    {{if ($currentNode.HasMenuCurrent "main" .menu) }}parent{{end}}">
+        <a href="{{.menu.URL}}">
+            {{.menu.Pre}}{{.menu.Name}}{{.menu.Post}}
+            {{ if $showvisitedlinks}}<i style="color:grey" class="fa fa-check read-icon"></i>{{end}}
+            {{ if .menu.HasChildren}}
+              {{if ($currentNode.IsMenuCurrent "main" .menu) }}
+                <i style="color:grey" class="fa fa-angle-down section-icon"></i>
+              {{else}}
+                <i style="color:grey" class="fa fa-angle-right section-icon"></i>
+              {{end}}
+            {{end}}
+        </a>
+        {{ if or ($currentNode.IsMenuCurrent "main" .menu) ($currentNode.HasMenuCurrent "main" .menu) }}
+            {{ $currentNode.Scratch.Set "ParentMenu" ($currentNode.Scratch.Get "ParentMenuTmp") }}
+            {{ $currentNode.Scratch.Add "Breadcrumbs" (print " / <a href='" .menu.URL  "'>" .menu.Name "</a>" )  }}
+            {{ if .menu.HasChildren }}
+                <ul>
+                {{ $currentNode.Scratch.Set "ParentMenuTmp" .menu.Children }}
+                {{ range .menu.Children }}
+                    {{ if ne .Identifier ""}}
+                        {{ template "menu-item" dict "menu" . "currentnode" $currentNode "showvisitedlinks" $showvisitedlinks }}
+                    {{ end }}
+                {{ end }}
+                </ul>
+             {{ end }}
+        {{ end }}
+    </li>
+{{ end }}
