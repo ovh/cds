@@ -54,6 +54,7 @@ type ProjectLastUpdates struct {
 	Applications []LastModification `json:"applications"`
 	Pipelines    []LastModification `json:"pipelines"`
 	Environments []LastModification `json:"environments"`
+	Workflows    []LastModification `json:"workflows"`
 }
 
 // ProjectKeyPattern  pattern for project key

@@ -1,0 +1,37 @@
+<div id="WorkflowAdd">
+    <div class="scrollingContent">
+        <div class="paddingContent">
+            <div class="viewContent">
+                <form class="ui form">
+                    <h2>{{ 'workflow_create' | translate }}</h2>
+                    <div class="ui grid">
+                        <div class="one wide column">
+
+                        </div>
+                        <div class="fourteen wide column">
+                            <div class="field">
+                                <label>{{ 'workflow_name' | translate}}</label>
+                                <input name="name" class="ui input" [(ngModel)]="workflow.name">
+                            </div>
+                            <div class="field">
+                                <label>{{ 'workflow_description' | translate}}</label>
+                                <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
+                            </div>
+                            <div class="field">
+                                <app-workflow-node-form [project]="project" [node]="workflow.root"></app-workflow-node-form>
+                            </div>
+                            <div class="field">
+                                <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                <button class="ui right floated green button" (click)="createWorkflow()"
+                                        [disabled]="!workflow.root.pipeline_id || !workflow.name" [class.loading]="loading">{{ 'btn_save' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+

@@ -38,7 +38,7 @@ As CDS admin:
 
 ## How to use
 
-### Consummer Side
+### Consumer Side
 
 #### Generate a new GPG Key
 
@@ -139,7 +139,7 @@ In the current directory. a new file and a new directory have been created :
 ```
 
 The JSON file is the CDS context. It says that the context is related to `action_id=1220` is CDS Engine, and files are stored in `1220` directory. Files are `message` and `file_1`.
-From the consummer side, if you need to trigger a piece of script, you should just have to watch for new incoming json file.
+From the consumer side, if you need to trigger a piece of script, you should just have to watch for new incoming json file.
 
 The listener will never delete files, so have to do it by yourself.
 
@@ -207,6 +207,6 @@ In a CDS Pipeline Job add a `plugin-kafka-publish` action and set the following 
 - `message` : The `message` file, you can template it and use CDS variables. Default is json format, but you can set every thing you want.
 - `artifacts` : Set the list of files you want to send. In the example abose, the list should be just `file_1` because file `message` is always sent. If your want to send artifacts built elsewhere in you pipeline, don't forget to add Download Artifact action prior to this one. The list is comma separated.
 - `publicKey` : Set the CDS variable is which you store you GPG public key (ex: `{{.cds.prog.gpgkey}}`). Set the value of the key to the content of the `gpg.pub.asc` file previously created.
-- `waitForAck` : Set if you want to wait for an ack from the consummer side.
+- `waitForAck` : Set if you want to wait for an ack from the consumer side.
 - `waitForAckTopic` : The kafka topic in which you will send acks. It can't be the same as the `{{.topic}}`
 - `waitForAckTimeout`: If ack is received after the timeout, CDS wil consider pipeline as failed.

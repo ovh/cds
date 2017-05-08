@@ -1,19 +1,44 @@
 package sdk
 
+import (
+	"time"
+)
+
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID         int64         `json:"id" db:"id"`
-	Name       string        `json:"name" db:"name"`
-	ProjectID  int64         `json:"-" db:"project_id"`
-	ProjectKey int64         `json:"project_key" db:"-"`
-	Root       *WorkflowNode `json:"root" db:"-"`
+	ID           int64              `json:"id" db:"id"`
+	Name         string             `json:"name" db:"name"`
+	Description  string             `json:"description" db:"description"`
+	LastModified time.Time          `json:"last_modified" db:"last_modified"`
+	ProjectID    int64              `json:"project_id" db:"project_id"`
+	ProjectKey   string             `json:"project_key" db:"-"`
+	RootID       int64              `json:"root_id" db:"root_node_id"`
+	Root         *WorkflowNode      `json:"root" db:"-"`
+	Joins        []WorkflowNodeJoin `json:"joins" db:"-"`
+}
+
+//WorkflowNodeJoin aims to joins multiple node into multiple triggers
+type WorkflowNodeJoin struct {
+	ID            int64                     `json:"id" db:"id"`
+	WorkflowID    int64                     `json:"workflow_id" db:"workflow_id"`
+	SourceNodeIDs []int64                   `json:"source_node_id" db:"-"`
+	Triggers      []WorkflowNodeJoinTrigger `json:"triggers" db:"-"`
+}
+
+//WorkflowNodeJoinTrigger is a trigger for joins
+type WorkflowNodeJoinTrigger struct {
+	ID                 int64                      `json:"id" db:"id"`
+	WorkflowNodeJoinID int64                      `json:"workflow_node_join_id" db:"join_id"`
+	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
+	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
+	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`
 }
 
 //WorkflowNode represents a node in w workflow tree
 type WorkflowNode struct {
 	ID         int64                 `json:"id" db:"id"`
 	WorkflowID int64                 `json:"workflow_id" db:"workflow_id"`
-	PipelineID int64                 `json:"-" db:"pipeline_id"`
+	PipelineID int64                 `json:"pipeline_id" db:"pipeline_id"`
 	Pipeline   Pipeline              `json:"pipeline" db:"-"`
 	Context    *WorkflowNodeContext  `json:"context" db:"-"`
 	Hooks      []WorkflowNodeHook    `json:"hooks" db:"-"`
@@ -24,7 +49,6 @@ type WorkflowNode struct {
 type WorkflowNodeTrigger struct {
 	ID                 int64                      `json:"id" db:"id"`
 	WorkflowNodeID     int64                      `json:"workflow_node_id" db:"workflow_node_id"`
-	WorkflowNode       *WorkflowNode              `json:"workflow_node" db:"-"`
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
 	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`
@@ -41,7 +65,7 @@ type WorkflowTriggerCondition struct {
 type WorkflowNodeContext struct {
 	ID             int64        `json:"id" db:"id"`
 	WorkflowNodeID int64        `json:"workflow_node_id" db:"workflow_node_id"`
-	ApplicationID  int64        `json:"-" db:"pipeline_id"`
+	ApplicationID  int64        `json:"-" db:"application_id"`
 	Application    *Application `json:"application" db:"-"`
 	Environment    *Environment `json:"environment" db:"-"`
 	EnvironmentID  int64        `json:"-" db:"environment_id"`
@@ -50,7 +74,7 @@ type WorkflowNodeContext struct {
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
 type WorkflowNodeHook struct {
 	ID                  int64                      `json:"id" db:"id"`
-	UUID                string                     `json:"string" db:"string"`
+	UUID                string                     `json:"uuid" db:"uuid"`
 	WorkflowNodeID      int64                      `json:"-" db:"workflow_node_id"`
 	WorkflowHookModelID int64                      `json:"-" db:"workflow_hook_model_id"`
 	WorkflowHookModel   WorkflowHookModel          `json:"model" db:"-"`

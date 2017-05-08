@@ -36,6 +36,7 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 					[]sdk.LastModification{},
 					[]sdk.LastModification{},
 					[]sdk.LastModification{},
+					[]sdk.LastModification{},
 				}
 			}
 		}
@@ -83,6 +84,8 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 		}
 
 	}
+
+	//TODO workflows
 
 	for _, v := range mapRes {
 		res = append(res, *v)
