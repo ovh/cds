@@ -14,7 +14,7 @@ This template creates:
 - a build pipeline with	two stages: Commit Stage and Packaging Stage
 - a deploy pipeline with one stage: Deploy Stage
 
-Commit Stage :
+Commit Stage:
 
 - run git clone
 - run make build
@@ -25,7 +25,7 @@ Packaging Stage:
 
 Deploy Stage:
 
-- it's en empty script
+- it's an empty script
 
 Packaging and Deploy are optional.
 

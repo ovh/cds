@@ -21,9 +21,6 @@ type DefaultValues struct {
 //InitiliazeDB inits the database
 func InitiliazeDB(defaultValues DefaultValues, DBFunc func() *gorp.DbMap) error {
 	dbGorp := DBFunc()
-	if err := action.CreateBuiltinArtifactActions(dbGorp); err != nil {
-		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin Artifact actions")
-	}
 
 	if err := group.CreateDefaultGroup(dbGorp, group.SharedInfraGroupName); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group", group.SharedInfraGroupName)
@@ -35,20 +32,24 @@ func InitiliazeDB(defaultValues DefaultValues, DBFunc func() *gorp.DbMap) error 
 		}
 	}
 
-	if err := action.CreateBuiltinActions(dbGorp); err != nil {
-		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin actions")
-	}
-
-	if err := environment.CreateBuiltinEnvironments(dbGorp); err != nil {
-		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin environments")
-	}
-
 	if err := group.InitializeDefaultGroupName(dbGorp, defaultValues.DefaultGroupName); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot InitializeDefaultGroupName")
 	}
 
 	if err := token.Initialize(dbGorp, defaultValues.SharedInfraToken); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot InitializeDefaultGroupName")
+	}
+
+	if err := action.CreateBuiltinArtifactActions(dbGorp); err != nil {
+		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin Artifact actions")
+	}
+
+	if err := action.CreateBuiltinActions(dbGorp); err != nil {
+		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin actions")
+	}
+
+	if err := environment.CreateBuiltinEnvironments(dbGorp); err != nil {
+		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin environments")
 	}
 
 	return nil
