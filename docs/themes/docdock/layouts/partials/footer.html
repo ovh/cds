@@ -1,0 +1,64 @@
+
+      </div>
+    </div>
+
+    
+ 
+    
+
+    <div id="navigation">
+        <!-- Sibbling contents -->
+
+        {{ $parentMenu :=  ($.Scratch.Get "ParentMenu") }}  
+        {{if  $parentMenu}}
+            {{ $curentURL :=  .RelPermalink }}  
+            {{ range $parentMenu }}
+                {{ if ne .URL $curentURL}}
+                    {{ if ne .Identifier ""}}
+                        {{ $.Scratch.Set "TmpMenu" . }}
+                        {{if eq ($.Scratch.Get "NextOK") "OK"}}
+                            {{if not ($.Scratch.Get "NextMenu")}}
+                                {{ $.Scratch.Set "NextMenu" . }}
+                            {{end}}
+                        {{end}}
+                    {{ end }}
+                {{ else }}
+                    {{ $.Scratch.Set "PrevMenu" ($.Scratch.Get "TmpMenu") }}
+                    {{ $.Scratch.Set "NextOK" "OK" }}
+                {{ end }}
+            {{ end }}
+
+            {{with ($.Scratch.Get "PrevMenu")}}
+                <a class="nav nav-prev" href="{{.URL}}" title="{{.Name}}"> <i class="fa fa-chevron-left"></i></a>
+            {{end}}
+            {{with ($.Scratch.Get "NextMenu")}}
+                <a class="nav nav-next" href="{{.URL}}" title="{{.Name}}" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
+            {{end}}
+        {{ end }}
+    </div>
+
+    </section>
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>
+    <script src="{{"js/clipboard.min.js" | relURL}}"></script>
+    <script src="{{"js/perfect-scrollbar.min.js" | relURL}}"></script>
+    <script src="{{"js/perfect-scrollbar.jquery.min.js" | relURL}}"></script>
+    <script src="{{"js/jquery.sticky-kit.min.js" | relURL}}"></script>
+    <script src="{{"js/featherlight.min.js" | relURL}}"></script>
+    <script src="{{"js/html5shiv-printshiv.min.js" | relURL}}"></script>
+    <script src="{{"js/highlight.pack.js" | relURL}}"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="{{"js/modernizr.custom.71422.js" | relURL}}"></script>
+    <script src="{{"js/learn.js" | relURL}}"></script>
+    <script src="{{"js/hugo-learn.js" | relURL}}"></script>
+
+    
+    <link href="{{"mermaid/mermaid.css" | relURL}}" type="text/css" rel="stylesheet"/>
+    <script src="{{"mermaid/mermaid.js" | relURL}}"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    
+
+    {{ partial "script.html" . }}
+  </body>
+</html>
