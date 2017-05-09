@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
@@ -104,7 +105,14 @@ func Main(p CDSAction) {
 // InfoMarkdown returns string formatted with markdown
 func InfoMarkdown(pl CDSAction) string {
 	var sp string
-	for k, v := range pl.Parameters().DataDescription {
+	var keys []string
+	for k := range pl.Parameters().DataDescription {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	pe := pl.Parameters().DataDescription
+	for _, k := range keys {
+		v := pe[k]
 		sp += fmt.Sprintf("* **%s**: %s\n", k, v)
 	}
 

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -101,7 +102,9 @@ func Main(p Interface) {
 // InfoMarkdown returns string formatted with markdown
 func InfoMarkdown(t Interface) string {
 	var sp string
-	for _, v := range t.Parameters() {
+	ps := t.Parameters()
+	sort.Slice(ps, func(i, j int) bool { return ps[i].Name < ps[j].Name })
+	for _, v := range ps {
 		sp += fmt.Sprintf("* **%s**: %s\n", v.Name, v.Description)
 	}
 

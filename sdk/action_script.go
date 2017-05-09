@@ -1,12 +1,11 @@
 package sdk
 
 import (
-	"net/http"
-	"time"
-
-	"io/ioutil"
-
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"sort"
+	"time"
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/hashicorp/hcl"
@@ -222,14 +221,18 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 // ActionInfoMarkdown returns string formatted with markdown
 func ActionInfoMarkdown(a *Action, filename string) string {
 	var sp, rq string
-	for _, p := range a.Parameters {
+	ps := a.Parameters
+	sort.Slice(ps, func(i, j int) bool { return ps[i].Name < ps[j].Name })
+	for _, p := range ps {
 		sp += fmt.Sprintf("* **%s**: %s\n", p.Name, p.Description)
 	}
 	if sp == "" {
 		sp = "No Parameter"
 	}
 
-	for _, r := range a.Requirements {
+	rs := a.Requirements
+	sort.Slice(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
+	for _, r := range rs {
 		rq += fmt.Sprintf("* **%s**: type: %s Value: %s\n", r.Name, r.Type, r.Value)
 	}
 
