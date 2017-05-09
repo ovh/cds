@@ -12,6 +12,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/sdk/plugin"
 )
 
 //This shows the help
@@ -27,16 +28,7 @@ func helpAction(c *cli.Context) error {
 
 //This shows information about the plugin
 func infoAction(c *cli.Context) error {
-	m := KafkaPlugin{}
-	p := m.Parameters()
-
-	fmt.Printf(" - Name:\t%s\n", m.Name())
-	fmt.Printf(" - Author:\t%s\n", m.Author())
-	fmt.Printf(" - Description:\t%s\n", m.Description())
-	fmt.Println(" - Parameters:")
-	for _, n := range p.Names() {
-		fmt.Printf("\t - %s: %s\n", n, p.GetDescription(n))
-	}
+	fmt.Print(plugin.InfoMarkdown(&KafkaPlugin{}))
 	return nil
 }
 

@@ -11,7 +11,7 @@ CDS is a pipeline based Continuous Delivery Service written in Go(lang).
 
 ## Documentation
 
-Documentation is available [here](/doc/overview/introduction.md)
+Documentation is available [here](https://ovh.github.io/cds/)
 
 ## Overview
 
@@ -31,11 +31,11 @@ CDS Command line interface: [read more](cli/cds)
 
 ### Worker
 
-In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](/doc/overview/worker.md)
+In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](https://ovh.github.io/cds/advanced/advanced.worker/)
 
 ### Hatchery
 
-In CDS, a hatchery is an agent which spawn workers: [read more](/doc/overview/hatchery.md)
+In CDS, a hatchery is an agent which spawn workers: [read more](https://ovh.github.io/cds/advanced/advanced.hatcheries/)
 
 ### Contrib
 

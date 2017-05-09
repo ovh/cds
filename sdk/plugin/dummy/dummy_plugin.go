@@ -27,6 +27,5 @@ func (d DummyPlugin) Run(a plugin.IJob) plugin.Result {
 }
 
 func main() {
-	p := DummyPlugin{}
-	plugin.Serve(&p)
+	plugin.Main(DummyPlugin{})
 }

@@ -16,17 +16,21 @@ func (t *TemplatePlain) Name() string {
 func (t *TemplatePlain) Description() string {
 	return `
 This template creates:
+
 - a build pipeline with	two stages: Commit Stage and Packaging Stage
 - a deploy pipeline with one stage: Deploy Stage
 
 Commit Stage :
+
 - run git clone
 - run make build
 
 Packaging Stage:
+
 - run docker build and docker push
 
 Deploy Stage:
+
 - it's en empty script
 
 Packaging and Deploy are optional.
@@ -226,6 +230,5 @@ echo "CALL YOUR DEPLOY SCRIPT HERE"`, []sdk.Requirement{
 }
 
 func main() {
-	p := TemplatePlain{}
-	template.Serve(&p)
+	template.Main(&TemplatePlain{})
 }

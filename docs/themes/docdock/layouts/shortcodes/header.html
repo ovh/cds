@@ -1,0 +1,13 @@
+<div class="well">
+	<strong>Résumé</strong><br/>
+	{{.Inner}}
+
+	<div><strong>Sur cette page</strong></div>
+	{{.Page.TableOfContents}}
+	<div><strong>Pages liées</strong></div>
+	<ul>
+		{{ range (index .Page.Menus "main").Children }}
+			<li><a href="{{.URL}}" >{{ .Name }}</a></li>
+		{{ end }}
+	</ul>
+</div>
