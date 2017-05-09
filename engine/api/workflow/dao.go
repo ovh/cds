@@ -180,3 +180,9 @@ func updateLastModified(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error
 func HasAccessTo(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
 	return true, nil
 }
+
+// IsValid cheks workflow validity
+func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
+	//Check duplicate refs
+	return true, nil
+}

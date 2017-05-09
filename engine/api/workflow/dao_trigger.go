@@ -57,6 +57,10 @@ func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Workf
 
 // DeleteTrigger deletes a trigger and all chrildren
 func deleteTrigger(db gorp.SqlExecutor, trigger *sdk.WorkflowNodeTrigger) error {
+	if err := deleteNode(db, &trigger.WorkflowDestNode); err != nil {
+		return sdk.WrapError(err, "DeleteTrigger> Unable to delete triggered node")
+	}
+
 	dbt := NodeTrigger(*trigger)
 	if _, err := db.Delete(&dbt); err != nil {
 		return sdk.WrapError(err, "DeleteTrigger> Unable to delete trigger %d", dbt.ID)

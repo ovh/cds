@@ -2,7 +2,7 @@
 
 CREATE TABLE IF NOT EXISTS "workflow_node_join" (
     id BIGSERIAL PRIMARY KEY,
-    workflow_id BIGINT NOT NULL,
+    workflow_id BIGINT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "workflow_node_join_source" (
@@ -28,4 +28,6 @@ SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TRIGGER_WORKFLOW_NODE', 'work
 
 -- +migrate Down
 
-
+DROP TABLE workflow_node_join_trigger CASCADE;
+DROP TABLE workflow_node_join_source CASCADE;
+DROP TABLE workflow_node_join CASCADE;

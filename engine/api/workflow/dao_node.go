@@ -43,27 +43,17 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 		n.Context.WorkflowNodeID = oldNode.ID
 	}
 
-	//Delete old node
-	var isRoot bool
 	if oldNode != nil {
-		if w.Root.ID != n.ID {
-			if err := deleteNode(db, oldNode); err != nil {
-				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow node %d", oldNode.ID)
-			}
-		} else {
-			isRoot = true
-			//Update the root node
-			log.Debug("InsertOrUpdateNode> Updating root node %d", oldNode.ID)
-			dbwn := Node(*n)
-			if _, err := db.Update(&dbwn); err != nil {
-				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow root node")
-			}
-			if err := DeleteNodeDependencies(db, n); err != nil {
-				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow root node dependencies")
-			}
+		//Update the root node
+		log.Debug("InsertOrUpdateNode> Updating root node %d", oldNode.ID)
+		dbwn := Node(*n)
+		if _, err := db.Update(&dbwn); err != nil {
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow root node")
 		}
-	}
-	if !isRoot {
+		if err := DeleteNodeDependencies(db, n); err != nil {
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow root node dependencies")
+		}
+	} else {
 		//Insert new node
 		dbwn := Node(*n)
 		if err := db.Insert(&dbwn); err != nil {
