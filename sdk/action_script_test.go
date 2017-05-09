@@ -79,7 +79,7 @@ EOF
 }
 
 func TestLoadFromRemoteActionScript(t *testing.T) {
-	a, err := NewActionFromRemoteScript("https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-git-clone.hcl", nil)
+	a, err := NewActionFromRemoteScript("https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl", nil)
 	assert.NotNil(t, a)
 	assert.NoError(t, err)
 }
