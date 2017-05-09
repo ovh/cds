@@ -20,19 +20,19 @@ func ReceiveEvents() {
 		db := database.DBMap(database.DB())
 		if db != nil {
 			if err := processEvent(db, e); err != nil {
-				log.Error("ReceiveEvents> err while processing %s : %v", err, e)
-				retryEvent(&e)
+				log.Error("ReceiveEvents> err while processing error=%s : %v", err, e)
+				retryEvent(&e, err)
 			}
 			continue
 		}
-		retryEvent(&e)
+		retryEvent(&e, nil)
 	}
 }
 
-func retryEvent(e *sdk.Event) {
+func retryEvent(e *sdk.Event, err error) {
 	e.Attempts++
 	if e.Attempts > 2 {
-		log.Error("ReceiveEvents> Aborting event processing %v", e)
+		log.Error("ReceiveEvents> Aborting event processing %v: %v", err, e)
 		return
 	}
 	cache.Enqueue("events_repositoriesmanager", e)
@@ -63,11 +63,11 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
 	}
 
 	if err := c.SetStatus(event); err != nil {
-		retryEvent(&event)
+		retryEvent(&event, err)
 		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > err:%s", err)
 	}
 
-	retryEvent(&event)
+	retryEvent(&event, nil)
 
 	return nil
 }
