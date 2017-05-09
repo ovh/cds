@@ -17,11 +17,11 @@ This template creates a pipeline for building CDS Template with:
 
 ## Parameters
 
-* **repo**: Your source code repository
 * **package.root**: example: github.com/ovh/cds
 * **package.sub**: Directory inside your repository where is the template.
 Enter "contrib/templates/your-plugin" for github.com/ovh/cds/contrib/templates/your-plugin
 			
+* **repo**: Your source code repository
 
 
 ## More

@@ -33,8 +33,8 @@ Packaging and Deploy are optional.
 ## Parameters
 
 * **repo**: Your source code repository
-* **withPackage**: Do you want a Docker Package?
 * **withDeploy**: Do you want an deploy Pipeline?
+* **withPackage**: Do you want a Docker Package?
 
 
 ## More
