@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -27,7 +28,7 @@ import (
 )
 
 const (
-	testTestTemplate = "https://dl.plik.ovh/file/FIcfha7CCqHO8DON/c69ILIhdO4iq73GH/testtemplate"
+	testTestTemplate = "https://github.com/ovh/cds/releases/download/0.8.1/cds-template-cds-plugin-" + runtime.GOOS + "-amd64"
 )
 
 func Test_getTemplatesHandler(t *testing.T) {
@@ -99,8 +100,14 @@ func Test_addTemplateHandler(t *testing.T) {
 
 	downloadPublicAction(t, u, pass)
 
+	if tp, err := templateextension.LoadByName(db, "cds-template-cds-plugin"); err == nil {
+		if err := templateextension.Delete(db, tp); err != nil {
+			t.Log(err)
+		}
+	}
+
 	//download the binary from plik
-	path, delete, err := downloadFile(t, "testtemplate", testTestTemplate)
+	path, delete, err := downloadFile(t, "cds-template-cds-plugin", testTestTemplate)
 	if delete != nil {
 		defer delete()
 	}
@@ -225,7 +232,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	downloadPublicAction(t, u, pass)
 
 	//download the binary from plik
-	path, delete, err := downloadFile(t, "testtemplate", testTestTemplate)
+	path, delete, err := downloadFile(t, "cds-template-cds-plugin", testTestTemplate)
 	if delete != nil {
 		defer delete()
 	}
@@ -334,7 +341,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	assert.NotZero(t, pass)
 
 	//download the binary from plik
-	path, delete, err := downloadFile(t, "testtemplate", testTestTemplate)
+	path, delete, err := downloadFile(t, "cds-template-cds-plugin", testTestTemplate)
 	if delete != nil {
 		defer delete()
 	}
@@ -503,7 +510,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	assert.NotZero(t, pass)
 
 	//download the binary from plik
-	path, delete, err := downloadFile(t, "testtemplate", testTestTemplate)
+	path, delete, err := downloadFile(t, "cds-template-cds-plugin", testTestTemplate)
 	if delete != nil {
 		defer delete()
 	}
@@ -584,7 +591,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 
 	assert.Equal(t, 2, len(templs))
 	assert.Equal(t, "Void", templs[0].Name)
-	assert.Equal(t, "testtemplate", templs[1].Name)
+	assert.Equal(t, "cds-template-cds-plugin", templs[1].Name)
 	assert.NotEmpty(t, templs[1].Params)
 
 	dbtempl := templateextension.TemplateExtension(templ)
@@ -633,7 +640,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	downloadPublicAction(t, u, pass)
 
 	//download the binary from plik
-	path, delete, err := downloadFile(t, "testtemplate", testTestTemplate)
+	path, delete, err := downloadFile(t, "cds-template-cds-plugin", testTestTemplate)
 	if delete != nil {
 		defer delete()
 	}
@@ -716,12 +723,8 @@ func Test_applyTemplatesHandler(t *testing.T) {
 		TemplateName:    templ.Name,
 		TemplateParams: []sdk.TemplateParam{
 			{
-				Name:  templ.Params[0].Name,
-				Value: "value1",
-			},
-			{
-				Name:  templ.Params[1].Name,
-				Value: "value2",
+				Name:  "https://github.com/ovh/cds.git",
+				Value: "GitClone",
 			},
 		},
 	}
@@ -789,7 +792,7 @@ func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
 
 	req, _ := http.NewRequest("POST", uri, nil)
 	req.Form = url.Values{}
-	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-git-clone.hcl")
+	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-go-build.hcl")
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request

@@ -14,22 +14,15 @@ See [CDS documentation](https://github.com/ovh/cds) for more details.
 
 ## Actions
 
-- [Docker Package](https://github.com/ovh/cds/tree/master/contrib/actions/cds/cds-docker-package.hcl)
-- [Git clone](https://github.com/ovh/cds/tree/master/contrib/actions/cds/cds-git-clone.hcl)
-- [Go Build](https://github.com/ovh/cds/tree/master/contrib/actions/cds/cds-go-build.hcl)
+[See User Actions Documentation](https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/)
 
 ## Plugins
 
-- [Kafka Publisher](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-kafka-publish)
-- [Mesos/Marathon Deployment](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-marathon)
-- [Tmpl](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-tmpl)
-- [Mesos/Marathon Group-Tmpl](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-group-tmpl)
-- [SSH Cmd](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-ssh-cmd)
-- [Venom](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-venom)
+[See Plugins Documentation](https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/)
 
 ## Templates
 
-- [Plain Template](https://github.com/ovh/cds/tree/master/contrib/templates/cds-template-plain)
+[See Templates Documentation](https://ovh.github.io/cds/building-pipelines/building-pipelines.templates/)
 
 ## Secret Backends
 
