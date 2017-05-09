@@ -46,7 +46,7 @@ func (t *TestTemplate) Parameters() []sdk.TemplateParam {
 
 func (t *TestTemplate) ActionsNeeded() []string {
 	return []string{
-		"CDS_GitClone",
+		sdk.GitCloneAction,
 	}
 }
 
@@ -81,7 +81,7 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 										Name: "Compile", //First job : compile
 										Actions: []sdk.Action{
 											sdk.Action{
-												Name: "CDS_GitClone",
+												Name: sdk.GitCloneAction,
 											},
 											sdk.NewActionScript("cd {{.cds.app.name}} && make", []sdk.Requirement{
 												{
@@ -100,7 +100,7 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 										Name: "Test", //Second job : test
 										Actions: []sdk.Action{
 											sdk.Action{
-												Name: "CDS_GitClone",
+												Name: sdk.GitCloneAction,
 											},
 											sdk.NewActionScript("cd {{.cds.app.name}} && make test", []sdk.Requirement{
 												{
@@ -126,7 +126,7 @@ func (t *TestTemplate) Apply(opts template.IApplyOptions) (sdk.Application, erro
 										Name: "Docker package",
 										Actions: []sdk.Action{
 											sdk.Action{
-												Name: "CDS_GitClone",
+												Name: sdk.GitCloneAction,
 											},
 											sdk.NewActionScript(`
 												cd {{.cds.app.name}}
