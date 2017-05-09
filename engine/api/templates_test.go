@@ -29,6 +29,7 @@ import (
 
 const (
 	testTestTemplate = "https://github.com/ovh/cds/releases/download/0.8.1/cds-template-cds-plugin-" + runtime.GOOS + "-amd64"
+	cdsGoBuildAction = "https://raw.githubusercontent.com/ovh/cds/0.8.1/contrib/actions/cds-go-build.hcl"
 )
 
 func Test_getTemplatesHandler(t *testing.T) {
@@ -792,11 +793,12 @@ func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
 
 	req, _ := http.NewRequest("POST", uri, nil)
 	req.Form = url.Values{}
-	req.Form.Add("url", "https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-go-build.hcl")
+	req.Form.Add("url", cdsGoBuildAction)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//Do the request
 	w := httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
 	assert.True(t, w.Code >= 200)
+	assert.True(t, w.Code < 400)
 }
