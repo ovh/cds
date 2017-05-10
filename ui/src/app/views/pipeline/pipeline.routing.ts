@@ -22,7 +22,7 @@ const pipelineRoutes: Routes = [
                 component: PipelineShowComponent,
                 resolve: {
                     project: ProjectResolver,
-                    application: ApplicationQueryParamResolver,
+                    application: ApplicationQueryParamResolver
                 }
             }
         ]

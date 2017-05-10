@@ -85,22 +85,36 @@ export class ApplicationStore {
         this._recentApplications.next(List(currentRecentApps));
     }
 
+    externalModification(appKey: string) {
+        let cache = this._application.getValue();
+        let appToUpdate = cache.get(appKey);
+        if (appToUpdate) {
+            appToUpdate.externalChange = true;
+            this._application.next(cache.set(appKey, appToUpdate));
+        }
+    }
+
     /**
      * Get an Application
      * @returns {Observable<Application>}
      */
-    getApplications(key: string, appName: string): Observable<Map<string, Application>> {
+    getApplications(key: string, appName?: string): Observable<Map<string, Application>> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
-
-        if (!store.get(appKey)) {
-            this._applicationService.getApplication(key, appName).subscribe(res => {
-                this._application.next(store.set(appKey, res));
-            }, err => {
-                this._application.error(err);
-            });
+        if (appName && !store.get(appKey)) {
+            this.resync(key, appName);
         }
         return new Observable<Map<string, Application>>(fn => this._application.subscribe(fn));
+    }
+
+    resync(key: string, appName: string) {
+        let store = this._application.getValue();
+        let appKey = key + '-' + appName;
+        this._applicationService.getApplication(key, appName).subscribe(res => {
+            this._application.next(store.set(appKey, res));
+        }, err => {
+            this._application.error(err);
+        });
     }
 
     /**
@@ -161,9 +175,8 @@ export class ApplicationStore {
         return this._applicationService.deleteApplication(key, appName).map(res => {
 
             // Remove from application cache
-            let cache = this._application.getValue();
             let appKey = key + '-' + appName;
-            this._application.next(cache.delete(appKey));
+            this.removeFromStore(appKey);
 
             // Remove from recent application
             let recentApp = this._recentApplications.getValue().toArray();
@@ -176,6 +189,11 @@ export class ApplicationStore {
 
             return res;
         });
+    }
+
+    removeFromStore(appKey: string) {
+        let cache = this._application.getValue();
+        this._application.next(cache.delete(appKey));
     }
 
     /**
@@ -623,5 +641,4 @@ export class ApplicationStore {
             return this.refreshApplicationWorkflowCache(key, appName, app);
         });
     }
-
 }
