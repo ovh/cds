@@ -6,6 +6,8 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 
+	"sort"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -59,10 +61,6 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 	assert.Equal(t, w.Name, w1.Name)
 	assert.Equal(t, w.Root.Pipeline.ID, w1.Root.Pipeline.ID)
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
-
-	t.Logf("%s", dump.MustSdump(w))
-	t.Logf("%s", dump.MustSdump(w1))
-
 	assertEqualNode(t, w.Root, w1.Root)
 
 }
@@ -119,10 +117,6 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.Root.Context.ApplicationID, w1.Root.Context.ApplicationID)
 	assert.Equal(t, w.Root.Context.EnvironmentID, w1.Root.Context.EnvironmentID)
-
-	t.Logf("%s", dump.MustSdump(w))
-	t.Logf("%s", dump.MustSdump(w1))
-
 }
 
 func TestInsertComplexeWorkflow(t *testing.T) {
@@ -157,6 +151,15 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip3, nil))
+
+	pip4 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip4",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip4, nil))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -200,7 +203,7 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 						},
 					},
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip2,
+						Pipeline: pip4,
 					},
 				},
 			},
@@ -222,27 +225,25 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 	Sort(&w)
 
 	assertEqualNode(t, w.Root, w1.Root)
-
-	t.Logf("%s", dump.MustSdump(w))
-	t.Logf("%s", dump.MustSdump(w1))
 }
 
-func assertEqualNode(t *testing.T, n1 *sdk.WorkflowNode, n2 *sdk.WorkflowNode) {
+func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
+	t.Logf("assertEqualNode : %d(%s) on %s", n2.ID, n2.Ref, n2.Pipeline.Name)
 	sortNode(n1)
 	sortNode(n2)
-
+	t.Logf("assertEqualNode : Checking hooks")
 	test.Equal(t, len(n1.Hooks), len(n2.Hooks))
+	t.Logf("assertEqualNode : Checking triggers")
 	test.Equal(t, len(n1.Triggers), len(n2.Triggers))
 
 	assert.Equal(t, n1.Pipeline.Name, n2.Pipeline.Name)
 	assert.Equal(t, n1.Pipeline.ProjectKey, n2.Pipeline.ProjectKey)
-
 	for i, t1 := range n1.Triggers {
 		t2 := n2.Triggers[i]
-		test.EqualValuesWithoutOrder(t, t1.Conditions, t2.Conditions)
+		test.Equal(t, len(t1.Conditions), len(t2.Conditions), "Number of conditions on triggers does not match")
+		test.EqualValuesWithoutOrder(t, t1.Conditions, t2.Conditions, "Conditions on triggers does not match")
 		assertEqualNode(t, &t1.WorkflowDestNode, &t2.WorkflowDestNode)
 	}
-
 }
 
 func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
@@ -311,8 +312,6 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	w1, err := Load(db, key, "test_1", nil)
 	test.NoError(t, err)
 
-	t.Logf("%s", dump.MustSdump(w1))
-
 	w1.Name = "test_2"
 	w1.Root.PipelineID = pip2.ID
 	w1.Root.Context.ApplicationID = app2.ID
@@ -325,8 +324,6 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w1.ID, w2.ID)
 	assert.Equal(t, w1.Root.Context.ApplicationID, w2.Root.Context.Application.ID)
 	assert.Equal(t, w1.Root.Context.EnvironmentID, w2.Root.Context.Environment.ID)
-
-	t.Logf("%s", dump.MustSdump(w2))
 
 	test.NoError(t, Delete(db, w2))
 }
@@ -364,6 +361,24 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip3, nil))
 
+	pip4 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip4",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip4, nil))
+
+	pip5 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip5",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip5, nil))
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -393,22 +408,24 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 								WorkflowDestNode: sdk.WorkflowNode{
 									Ref:      "pip3",
 									Pipeline: pip3,
+									Triggers: []sdk.WorkflowNodeTrigger{
+										sdk.WorkflowNodeTrigger{
+											Conditions: []sdk.WorkflowTriggerCondition{
+												sdk.WorkflowTriggerCondition{
+													Operator: "=",
+													Value:    "master",
+													Variable: ".git.branch",
+												},
+											},
+											WorkflowDestNode: sdk.WorkflowNode{
+												Ref:      "pip4",
+												Pipeline: pip4,
+											},
+										},
+									},
 								},
 							},
 						},
-					},
-				},
-				sdk.WorkflowNodeTrigger{
-					Conditions: []sdk.WorkflowTriggerCondition{
-						sdk.WorkflowTriggerCondition{
-							Operator: "=",
-							Value:    "master",
-							Variable: ".git.branch",
-						},
-					},
-					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip2,
-						Ref:      "pip2",
 					},
 				},
 			},
@@ -416,7 +433,7 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 		Joins: []sdk.WorkflowNodeJoin{
 			sdk.WorkflowNodeJoin{
 				SourceNodeRefs: []string{
-					"pip2", "pip3",
+					"pip3", "pip4",
 				},
 				Triggers: []sdk.WorkflowNodeJoinTrigger{
 					sdk.WorkflowNodeJoinTrigger{
@@ -428,7 +445,7 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 							},
 						},
 						WorkflowDestNode: sdk.WorkflowNode{
-							Pipeline: pip2,
+							Pipeline: pip5,
 						},
 					},
 				},
@@ -450,8 +467,251 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 
 	Sort(&w)
 
+	m1, _ := dump.ToMap(w)
+	m2, _ := dump.ToMap(w1)
+
+	keys := []string{}
+	for k := range m2 {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := m2[k]
+		v1, ok := m1[k]
+		if ok {
+			if v1 == v {
+				t.Logf("%s: %s", k, v)
+			} else {
+				t.Logf("%s: %s but was %s", k, v, v1)
+			}
+		} else {
+			t.Logf("%s: %s but was undefined", k, v)
+		}
+	}
 	assertEqualNode(t, w.Root, w1.Root)
 
-	t.Logf("%s", dump.MustSdump(w))
-	t.Logf("%s", dump.MustSdump(w1))
+	assert.EqualValues(t, w.Joins[0].Triggers[0].Conditions, w1.Joins[0].Triggers[0].Conditions)
+	assert.Equal(t, w.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.ID, w1.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.ID)
+
+	assert.Equal(t, pip1.Name, w.Root.Pipeline.Name)
+	assert.Equal(t, pip2.Name, w.Root.Triggers[0].WorkflowDestNode.Pipeline.Name)
+	assert.Equal(t, pip3.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Pipeline.Name)
+	assert.Equal(t, pip4.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Pipeline.Name)
+	assert.EqualValues(t, []int64{
+		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
+		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
+	}, w1.Joins[0].SourceNodeIDs)
+	assert.Equal(t, pip5.Name, w.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.Name)
+
+}
+
+func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
+	db := test.SetupPG(t)
+
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, key, key, nil)
+
+	pip1 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip1, nil))
+
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip2, nil))
+
+	pip3 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip3",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip3, nil))
+
+	pip4 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip4",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip4, nil))
+
+	pip5 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip5",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip5, nil))
+
+	pip6 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip6",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip6, nil))
+
+	pip7 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip7",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip7, nil))
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip1,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					Conditions: []sdk.WorkflowTriggerCondition{
+						sdk.WorkflowTriggerCondition{
+							Operator: "=",
+							Value:    "master",
+							Variable: ".git.branch",
+						},
+					},
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip2,
+						Triggers: []sdk.WorkflowNodeTrigger{
+							sdk.WorkflowNodeTrigger{
+								Conditions: []sdk.WorkflowTriggerCondition{
+									sdk.WorkflowTriggerCondition{
+										Operator: "=",
+										Value:    "master",
+										Variable: ".git.branch",
+									},
+								},
+								WorkflowDestNode: sdk.WorkflowNode{
+									Ref:      "pip3",
+									Pipeline: pip3,
+									Triggers: []sdk.WorkflowNodeTrigger{
+										sdk.WorkflowNodeTrigger{
+											Conditions: []sdk.WorkflowTriggerCondition{
+												sdk.WorkflowTriggerCondition{
+													Operator: "=",
+													Value:    "master",
+													Variable: ".git.branch",
+												},
+											},
+											WorkflowDestNode: sdk.WorkflowNode{
+												Ref:      "pip4",
+												Pipeline: pip4,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Joins: []sdk.WorkflowNodeJoin{
+			sdk.WorkflowNodeJoin{
+				SourceNodeRefs: []string{
+					"pip3", "pip4",
+				},
+				Triggers: []sdk.WorkflowNodeJoinTrigger{
+					sdk.WorkflowNodeJoinTrigger{
+						Conditions: []sdk.WorkflowTriggerCondition{
+							sdk.WorkflowTriggerCondition{
+								Operator: "=",
+								Value:    "master",
+								Variable: ".git.branch",
+							},
+						},
+						WorkflowDestNode: sdk.WorkflowNode{
+							Pipeline: pip5,
+							Ref:      "pip5",
+						},
+					},
+					sdk.WorkflowNodeJoinTrigger{
+						Conditions: []sdk.WorkflowTriggerCondition{
+							sdk.WorkflowTriggerCondition{
+								Operator: "=",
+								Value:    "master",
+								Variable: ".git.branch",
+							},
+						},
+						WorkflowDestNode: sdk.WorkflowNode{
+							Pipeline: pip6,
+							Ref:      "pip6",
+						},
+					},
+				},
+			},
+			sdk.WorkflowNodeJoin{
+				SourceNodeRefs: []string{
+					"pip5", "pip6",
+				},
+				Triggers: []sdk.WorkflowNodeJoinTrigger{
+					sdk.WorkflowNodeJoinTrigger{
+						Conditions: []sdk.WorkflowTriggerCondition{
+							sdk.WorkflowTriggerCondition{
+								Operator: "=",
+								Value:    "master",
+								Variable: ".git.branch",
+							},
+						},
+						WorkflowDestNode: sdk.WorkflowNode{
+							Pipeline: pip7,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, Insert(db, &w, nil))
+
+	w1, err := Load(db, key, "test_1", nil)
+	test.NoError(t, err)
+
+	Sort(&w)
+
+	m1, _ := dump.ToMap(w)
+	m2, _ := dump.ToMap(w1)
+
+	keys := []string{}
+	for k := range m2 {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := m2[k]
+		v1, ok := m1[k]
+		if ok {
+			if v1 == v {
+				t.Logf("%s: %s", k, v)
+			} else {
+				t.Logf("%s: %s but was %s", k, v, v1)
+			}
+		} else {
+			t.Logf("%s: %s but was undefined", k, v)
+		}
+	}
+	assertEqualNode(t, w.Root, w1.Root)
 }

@@ -60,13 +60,10 @@ func Equal(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
 	e := DeepEquals(a, b)
 
 	if !e {
-		t.Log("Expected:")
-		t.Log(dump.Sdump(a))
-		t.Log("Actual:")
-		t.Log(dump.Sdump(b))
+		t.Log("Expected:" + dump.MustSdump(a))
+		t.Log("Actual:" + dump.MustSdump(b))
+		assert.FailNow(t, "Equal failed", msgAndArgs...)
 	}
-
-	assert.True(t, e, msgAndArgs...)
 }
 
 // DeepEquals returns equality between 2 elements using github.com/fsamin/go-dump

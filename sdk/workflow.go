@@ -29,7 +29,7 @@ type WorkflowNodeJoin struct {
 //WorkflowNodeJoinTrigger is a trigger for joins
 type WorkflowNodeJoinTrigger struct {
 	ID                 int64                      `json:"id" db:"id"`
-	WorkflowNodeJoinID int64                      `json:"workflow_node_id" db:"join_id"`
+	WorkflowNodeJoinID int64                      `json:"join_id" db:"workflow_node_join_id"`
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
 	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`

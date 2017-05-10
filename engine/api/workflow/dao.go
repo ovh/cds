@@ -77,7 +77,7 @@ func load(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) (
 	res := sdk.Workflow(dbRes)
 	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
 	if err := loadWorkflowRoot(db, &res, u); err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
 	}
 
 	joins, errJ := loadJoins(db, &res, u)
@@ -119,13 +119,20 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		return sdk.ErrWorkflowInvalidRoot
 	}
 
-	if err := insertOrUpdateNode(db, w, w.Root, u); err != nil {
+	if err := insertOrUpdateNode(db, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow root node")
 	}
 
 	if _, err := db.Exec("UPDATE workflow SET root_node_id = $2 WHERE id = $1", w.ID, w.Root.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow (%#v, %d)", w.Root, w.ID)
 	}
+
+	for _, j := range w.Joins {
+		if err := insertOrUpdateJoin(db, w, &j, u); err != nil {
+			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
+		}
+	}
+
 	return updateLastModified(db, w, u)
 }
 
@@ -137,7 +144,12 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		return sdk.WrapError(err, "Update> Unable to update workflow")
 	}
 	if w.Root != nil {
-		return insertOrUpdateNode(db, w, w.Root, u)
+		return insertOrUpdateNode(db, w, w.Root, u, false)
+	}
+	for _, j := range w.Joins {
+		if err := insertOrUpdateJoin(db, w, &j, u); err != nil {
+			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
+		}
 	}
 	return updateLastModified(db, w, u)
 }

@@ -13,7 +13,10 @@ import (
 )
 
 // InsertOrUpdateNode insert or update a node for the workflow
-func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User) error {
+func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
+	defer func() {
+		log.Debug("insertOrUpdateNode> insert or update node %d (%s) on %s", n.ID, n.Ref, n.Pipeline.Name)
+	}()
 	n.WorkflowID = w.ID
 
 	if n.PipelineID == 0 {
@@ -44,7 +47,7 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	}
 
 	if oldNode != nil {
-		//Update the root node
+		//Update the node
 		log.Debug("InsertOrUpdateNode> Updating root node %d", oldNode.ID)
 		dbwn := Node(*n)
 		if _, err := db.Update(&dbwn); err != nil {
@@ -60,6 +63,10 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
 		}
 		n.ID = dbwn.ID
+	}
+
+	if skipDependencies {
+		return nil
 	}
 
 	//Insert context
@@ -83,15 +90,17 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	}
 
 	//Insert hooks
-	for _, h := range n.Hooks {
-		if err := insertOrUpdateHook(db, n, &h); err != nil {
+	for i := range n.Hooks {
+		h := &n.Hooks[i]
+		if err := insertOrUpdateHook(db, n, h); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}
 
 	//Insert triggers
-	for _, t := range n.Triggers {
-		if err := insertOrUpdateTrigger(db, w, n, &t, u); err != nil {
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		if err := insertOrUpdateTrigger(db, w, n, t, u); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}

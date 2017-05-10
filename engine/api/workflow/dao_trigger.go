@@ -7,10 +7,14 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertOrUpdateTrigger inserts or updates a trigger
 func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
+	defer func() {
+		log.Debug("InsertOrUpdateTrigger> insert or update node %d (%s) on %s trigger %d", node.ID, node.Ref, node.Pipeline.Name, trigger.ID)
+	}()
 	trigger.WorkflowNodeID = node.ID
 	var oldTrigger *sdk.WorkflowNodeTrigger
 
@@ -31,7 +35,7 @@ func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Workf
 	}
 
 	//Setup destination node
-	if err := insertOrUpdateNode(db, w, &trigger.WorkflowDestNode, u); err != nil {
+	if err := insertOrUpdateNode(db, w, &trigger.WorkflowDestNode, u, false); err != nil {
 		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to setup destination node")
 	}
 	trigger.WorkflowDestNodeID = trigger.WorkflowDestNode.ID
@@ -136,7 +140,7 @@ func loadTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, i
 		return nil, sdk.WrapError(err, "LoadTriggers> Unable to load conditions for trigger %d", t.ID)
 	}
 	if sqlConditions.Valid {
-		if err := json.Unmarshal([]byte(sqlConditions.String), t.Conditions); err != nil {
+		if err := json.Unmarshal([]byte(sqlConditions.String), &t.Conditions); err != nil {
 			return nil, sdk.WrapError(err, "LoadTriggers> Unable to unmarshall conditions for trigger %d", t.ID)
 		}
 	}

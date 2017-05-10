@@ -18,13 +18,13 @@ SELECT create_foreign_key('FK_WORKFLOW_NODE_JOIN_SOURCE_NODE', 'workflow_node_jo
 
 CREATE TABLE IF NOT EXISTS "workflow_node_join_trigger" (
     id BIGSERIAL PRIMARY KEY,
-    workflow_node_id BIGINT NOT NULL,
+    workflow_node_join_id BIGINT NOT NULL,
     workflow_dest_node_id BIGINT NOT NULL,
     conditions JSONB
 );
 
-SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TRIGGER_WORKFLOW_NODE', 'workflow_node_trigger', 'workflow_node', 'workflow_node_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TRIGGER_WORKFLOW_NODE', 'workflow_node_trigger', 'workflow_node', 'workflow_dest_node_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_TRIGGER_WORKFLOW_NODE', 'workflow_node_trigger', 'workflow_node_join', 'workflow_node_join_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_TRIGGER_WORKFLOW_NODE', 'workflow_node_trigger', 'workflow_node', 'workflow_dest_node_id', 'id');
 
 -- +migrate Down
 
