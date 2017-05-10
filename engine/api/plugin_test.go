@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -25,7 +26,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-const dummyBinaryFile = "https://dl.plik.ovh/file/7d0jJMNKaFEFc8OI/A5GlNec32iismk9s/dummy_plugin"
+const dummyBinaryFile = "https://github.com/ovh/cds/releases/download/0.8.1/plugin-download-" + runtime.GOOS + "-amd64"
 
 func postFile(t *testing.T,
 	db *gorp.DbMap,
@@ -160,11 +161,11 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 	objectstore.Initialize(cfg)
 
 	u, _ := assets.InsertAdminUser(db)
-	if err := actionplugin.Delete(db, "dummy", u.ID); err != nil {
+	if err := actionplugin.Delete(db, "plugin-download", u.ID); err != nil {
 		t.Log(err)
 	}
 
-	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
+	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}
@@ -184,19 +185,26 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 			t.Fail()
 			return
 		}
-		assert.Equal(t, "dummy", a.Name)
+		assert.Equal(t, "plugin-download", a.Name)
 		assert.Equal(t, sdk.PluginAction, a.Type)
-		assert.Equal(t, "This is a dummy plugin", a.Description)
-		assert.Equal(t, "dummy", a.Requirements[0].Name)
+		assert.Equal(t, "This is a plugin to download file from URL", a.Description)
+		assert.Equal(t, "plugin-download", a.Requirements[0].Name)
 		assert.Equal(t, sdk.PluginRequirement, a.Requirements[0].Type)
-		assert.Equal(t, "dummy", a.Requirements[0].Value)
+		assert.Equal(t, "plugin-download", a.Requirements[0].Value)
 		assert.Empty(t, a.Actions)
 		assert.True(t, a.Enabled)
-		assert.Equal(t, "param1", a.Parameters[0].Name)
-		assert.Equal(t, sdk.StringParameter, a.Parameters[0].Type)
-		assert.Equal(t, "this is a parameter", a.Parameters[0].Description)
-		assert.Equal(t, "value1", a.Parameters[0].Value)
 
+		var checked bool
+		for _, v := range a.Parameters {
+			if v.Name == "filepath" {
+				assert.Equal(t, sdk.StringParameter, v.Type)
+				assert.Equal(t, ".", v.Value)
+				assert.Equal(t, "the destination of your file to be copied", v.Description)
+				checked = true
+			}
+		}
+
+		assert.True(t, checked, "no parameter checked on plugin-download")
 	})
 
 }
@@ -224,7 +232,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 	objectstore.Initialize(cfg)
 
 	u, _ := assets.InsertAdminUser(db)
-	actionplugin.Delete(db, "dummy", u.ID)
+	actionplugin.Delete(db, "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy1", dummyBinaryFile)
 	if delete != nil {
@@ -266,9 +274,9 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 	objectstore.Initialize(cfg)
 
 	u, _ := assets.InsertAdminUser(db)
-	actionplugin.Delete(db, "dummy", u.ID)
+	actionplugin.Delete(db, "plugin-download", u.ID)
 
-	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
+	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}
@@ -316,9 +324,9 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	objectstore.Initialize(cfg)
 
 	u, _ := assets.InsertAdminUser(db)
-	actionplugin.Delete(db, "dummy", u.ID)
+	actionplugin.Delete(db, "plugin-download", u.ID)
 
-	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
+	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}
@@ -379,9 +387,9 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	objectstore.Initialize(cfg)
 
 	u, _ := assets.InsertAdminUser(db)
-	actionplugin.Delete(db, "dummy", u.ID)
+	actionplugin.Delete(db, "plugin-download", u.ID)
 
-	path, delete, err := downloadFile(t, "dummy", dummyBinaryFile)
+	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {
 		defer delete()
 	}

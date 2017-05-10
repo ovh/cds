@@ -8,7 +8,7 @@ import (
 
 func TestLoadFromActionScript(t *testing.T) {
 	b := []byte(`
-name = "CDS_GitClone"
+name = "TestGitClone"
 description = "Clone git repository"
 
 // Requirements
@@ -104,7 +104,7 @@ steps  = [{
 func TestTestLoadFromActionScriptWithGitClone(t *testing.T) {
 	b := []byte(`
 steps  = [{
-	gitClone = {
+	GitClone = {
 			directory = "./src"
 			url = "{{.git.url}}"
 			commit = "{{.git.hash}}"
