@@ -8,6 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -203,6 +204,68 @@ func HasAccessTo(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error
 
 // IsValid cheks workflow validity
 func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	//Check project is not empty
+	if w.ProjectKey == "" {
+		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
+	}
+
 	//Check duplicate refs
+	refs := w.References()
+	for _, ref1 := range refs {
+		for _, ref2 := range refs {
+			if ref1 == ref2 {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Duplicate reference %s", ref1))
+			}
+		}
+	}
+
+	//Load the project
+	proj, err := project.Load(db, w.ProjectKey, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+	if err != nil {
+		return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+	}
+
+	//Checks application are in the current project
+	apps := w.InvolvedApplications()
+	for _, appID := range apps {
+		var found bool
+		for _, a := range proj.Applications {
+			if appID == a.ID {
+				found = true
+			}
+		}
+		if !found {
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown application %d", appID))
+		}
+	}
+
+	//Checks pipelines are in the current project
+	pips := w.InvolvedPipelines()
+	for _, pipID := range pips {
+		var found bool
+		for _, p := range proj.Pipelines {
+			if pipID == p.ID {
+				found = true
+			}
+		}
+		if !found {
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
+		}
+	}
+
+	//Checks environments are in the current project
+	envs := w.InvolvedPipelines()
+	for _, envID := range envs {
+		var found bool
+		for _, e := range proj.Environments {
+			if envID == e.ID {
+				found = true
+			}
+		}
+		if !found {
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
+		}
+	}
+
 	return nil
 }
