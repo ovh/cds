@@ -110,6 +110,10 @@ func loadWorkflowRoot(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	if err := IsValid(db, w, u); err != nil {
+		return err
+	}
+
 	w.LastModified = time.Now()
 	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id) VALUES ($1, $2, $3) RETURNING id", w.Name, w.Description, w.ProjectID).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
@@ -138,6 +142,10 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 
 // Update updates a workflow
 func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	if err := IsValid(db, w, u); err != nil {
+		return err
+	}
+
 	w.LastModified = time.Now()
 	dbw := Workflow(*w)
 	if _, err := db.Update(&dbw); err != nil {
@@ -194,7 +202,7 @@ func HasAccessTo(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error
 }
 
 // IsValid cheks workflow validity
-func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
+func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	//Check duplicate refs
-	return true, nil
+	return nil
 }
