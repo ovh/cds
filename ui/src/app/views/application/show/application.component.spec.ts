@@ -2,7 +2,7 @@
 
 import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
 import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
+import {XHRBackend, Response, ResponseOptions, Http, RequestOptions, ResponseType} from '@angular/http';
 import {Router, ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {ApplicationShowComponent} from './application.component';
 import {ApplicationStore} from '../../../service/application/application.store';
@@ -29,6 +29,7 @@ import {Notification} from '../../../model/notification.model';
 import {NotificationEvent} from './notifications/notification.event';
 import {Pipeline} from '../../../model/pipeline.model';
 import {Environment} from '../../../model/environment.model';
+import {HttpService} from '../../../service/http-service.service';
 
 describe('CDS: Application', () => {
 
@@ -43,7 +44,7 @@ describe('CDS: Application', () => {
             declarations: [
             ],
             providers: [
-                { provide: XHRBackend, useClass: MockBackend },
+                MockBackend,
                 AuthentificationStore,
                 ApplicationStore,
                 ApplicationService,
@@ -55,7 +56,17 @@ describe('CDS: Application', () => {
                 { provide: ToastService, useClass: MockToast},
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                {
+                    provide: Http,
+                    useFactory: (backendParam: MockBackend,
+                                 defaultOptions: RequestOptions,
+                                 toast: ToastService,
+                                 authStore: AuthentificationStore,
+                                 router2: Router) =>
+                        new HttpService(backendParam, defaultOptions, toast, authStore, router2),
+                    deps: [MockBackend, RequestOptions, ToastService, AuthentificationStore]
+                },
             ],
             imports : [
                 ApplicationModule,
@@ -65,7 +76,7 @@ describe('CDS: Application', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
         appStore = injector.get(ApplicationStore);
         router = injector.get(Router);
         prjStore = injector.get(ProjectStore);
@@ -88,7 +99,7 @@ describe('CDS: Application', () => {
                 case 1:
                     connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
                     break;
-                case 2:
+                default:
                     connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
                     break;
             }
@@ -115,7 +126,9 @@ describe('CDS: Application', () => {
     it('Load component + load application with error', fakeAsync( () => {
         // Mock Http
         backend.connections.subscribe(connection => {
-            connection.mockError(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
+            let opts = {type: ResponseType.Error, status: 404, body: '{ "name": "app1" }'};
+            let responseOpts = new ResponseOptions(opts);
+            connection.mockError(new Response(responseOpts));
         });
 
         spyOn(appStore, 'updateRecentApplication');
@@ -477,6 +490,9 @@ describe('CDS: Application', () => {
 
 class MockToast {
     success(title: string, msg: string) {
+
+    }
+    error(title: string, msg: string) {
 
     }
 }

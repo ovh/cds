@@ -58,16 +58,35 @@ export class PipelineStore {
         return new Observable<List<string>>(fn => this._pipelineType.subscribe(fn));
     }
 
-    getPipelines(key: string, pipName: string): Observable<Map<string, Pipeline>> {
+    getPipelines(key: string, pipName?: string): Observable<Map<string, Pipeline>> {
       let store = this._pipeline.getValue();
       let pipKey = key + '-' + pipName;
-      let pipeline = store.get(pipKey);
-      if (!pipeline) {
-        this._pipelineService.getPipeline(key, pipName).subscribe( res => {
-          this._pipeline.next(store.set(pipKey, res));
-        });
+      if (pipName && !store.get(pipKey)) {
+        this.resync(key, pipName);
       }
       return new Observable<Map<string, Pipeline>>(fn => this._pipeline.subscribe(fn));
+    }
+
+    resync(key: string, pipName: string) {
+        let store = this._pipeline.getValue();
+        let pipKey = key + '-' + pipName;
+        this._pipelineService.getPipeline(key, pipName).subscribe(res => {
+            this._pipeline.next(store.set(pipKey, res));
+        });
+    }
+
+    externalModification(pipKey: string) {
+        let cache = this._pipeline.getValue();
+        let pipToUpdate = cache.get(pipKey);
+        if (pipToUpdate) {
+            pipToUpdate.externalChange = true;
+            this._pipeline.next(cache.set(pipKey, pipToUpdate));
+        }
+    }
+
+    removeFromStore(pipKey: string) {
+        let cache = this._pipeline.getValue();
+        this._pipeline.next(cache.delete(pipKey));
     }
 
     /**
@@ -115,9 +134,8 @@ export class PipelineStore {
      */
     deletePipeline(key: string, pipName: string): Observable<boolean> {
         return this._pipelineService.deletePipeline(key, pipName).map(() => {
-            let cache = this._pipeline.getValue();
             let pipKey = key + '-' + pipName;
-            this._pipeline.next(cache.remove(pipKey));
+            this.removeFromStore(pipKey);
             return true;
         });
     }

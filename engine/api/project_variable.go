@@ -168,14 +168,7 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 		return err
 	}
 
-	p.Variable, err = project.GetAllVariableInProject(db, p.ID)
-	if err != nil {
-		log.Warning("deleteVariableFromProject: Cannot load all variables: %s\n", err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, p, http.StatusOK)
+	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
 //DEPRECATED
@@ -354,15 +347,7 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 		return err
 
 	}
-
-	p.Variable, err = project.GetAllVariableInProject(db, p.ID)
-	if err != nil {
-		log.Warning("updateVariableInProject: Cannot get all variables: %s\n", err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, p, http.StatusOK)
+	return WriteJSON(w, r, newVar, http.StatusOK)
 }
 
 //DEPRECATED
