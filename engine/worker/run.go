@@ -291,6 +291,24 @@ func workingDirectory(basedir string, jobInfo *worker.PipelineBuildJobInfo) stri
 }
 
 func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
+	// Setup working directory
+	wd := workingDirectory(basedir, pbji)
+
+	if err := setupBuildDirectory(wd); err != nil {
+		time.Sleep(5 * time.Second)
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
+		}
+	}
+
+	//Add working directory as job parameter
+	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+		Name:  "cds.workspace",
+		Type:  sdk.StringParameter,
+		Value: wd,
+	})
+
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
 	processPipelineBuildJobParameter(&pbji.PipelineBuildJob, pbji.Secrets)
 
@@ -329,24 +347,6 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 			}
 		}
 	}()
-
-	// Setup working directory
-	wd := workingDirectory(basedir, pbji)
-
-	if err := setupBuildDirectory(wd); err != nil {
-		time.Sleep(5 * time.Second)
-		return sdk.Result{
-			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
-		}
-	}
-
-	//Add working directory as job parameter
-	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
-		Name:  "cds.workspace",
-		Type:  sdk.StringParameter,
-		Value: wd,
-	})
 
 	// Setup user ssh keys
 	keysDirectory = workingDirectory(basedir, pbji)
