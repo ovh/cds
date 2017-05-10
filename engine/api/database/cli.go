@@ -56,6 +56,7 @@ func setFlags(cmd *cobra.Command) {
 	pflags.StringVarP(&dbName, "db-name", "", "cds", "DB Name")
 	pflags.StringVarP(&dbHost, "db-host", "", "localhost", "DB Host")
 	pflags.StringVarP(&dbPort, "db-port", "", "5432", "DB Port")
+	pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	pflags.StringVarP(&dbSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
 	pflags.IntVarP(&dbMaxConn, "db-maxconn", "", 20, "DB Max connection")
 	pflags.IntVarP(&dbTimeout, "db-timeout", "", 3000, "Statement timeout value")
@@ -69,15 +70,11 @@ func init() {
 	DBCmd.AddCommand(downgradeCmd)
 	DBCmd.AddCommand(statusCmd)
 
-	upgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	upgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run upgrade")
 	upgradeCmd.Flags().IntVarP(&sqlMigrateLimitUp, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
 
-	downgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	downgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run downgrade")
 	downgradeCmd.Flags().IntVarP(&sqlMigrateLimitDown, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
-
-	statusCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 }
 
 type statusRow struct {

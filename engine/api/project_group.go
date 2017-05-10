@@ -61,13 +61,7 @@ func deleteGroupFromProjectHandler(w http.ResponseWriter, r *http.Request, db *g
 
 	}
 
-	if err := group.LoadGroupByProject(db, p); err != nil {
-		log.Warning("deleteGroupFromProjectHandler: Cannot load groups for project %s:  %s\n", p.Key, err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, p, http.StatusOK)
+	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
 func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -151,13 +145,7 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 		return err
 
 	}
-
-	if err := group.LoadGroupByProject(db, p); err != nil {
-		log.Warning("updateGroupRoleHandler: Cannot load group for project %s: %s\n", p.Key, err)
-		return err
-
-	}
-	return WriteJSON(w, r, p, http.StatusOK)
+	return WriteJSON(w, r, groupProject, http.StatusOK)
 }
 
 // Deprecated
@@ -289,7 +277,7 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 
 	// apply on application
-	applications, err := application.LoadAll(db, p.Key, c.User)
+	applications, err := application.LoadAll(tx, p.Key, c.User)
 	if err != nil {
 		log.Warning("AddGroupInProject: Cannot load applications for project %s:  %s\n", p.Name, err)
 		return err
@@ -309,7 +297,7 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 					return err
 
 				}
-			} else if err := application.AddGroup(db, p, &app, c.User, groupProject); err != nil {
+			} else if err := application.AddGroup(tx, p, &app, c.User, groupProject); err != nil {
 				log.Warning("AddGroupInProject: Cannot insert group %s on application %s: %s\n", g.Name, app.Name, err)
 				return err
 			}
@@ -393,5 +381,5 @@ func addGroupInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 	}
 
-	return WriteJSON(w, r, p, http.StatusOK)
+	return WriteJSON(w, r, p.ProjectGroups, http.StatusOK)
 }

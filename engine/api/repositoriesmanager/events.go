@@ -67,7 +67,5 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
 		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > err:%s", err)
 	}
 
-	retryEvent(&event, nil)
-
 	return nil
 }

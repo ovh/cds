@@ -14,7 +14,7 @@ Packaging Stage:
 - run docker build and docker push
 
 Deploy Stage:
-- it's en empty script
+- it's an empty script
 
 Packaging and Deploy are optional.
 

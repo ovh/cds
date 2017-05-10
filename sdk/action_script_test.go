@@ -8,7 +8,7 @@ import (
 
 func TestLoadFromActionScript(t *testing.T) {
 	b := []byte(`
-name = "CDS_GitClone"
+name = "TestGitClone"
 description = "Clone git repository"
 
 // Requirements
@@ -79,7 +79,7 @@ EOF
 }
 
 func TestLoadFromRemoteActionScript(t *testing.T) {
-	a, err := NewActionFromRemoteScript("https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-git-clone.hcl", nil)
+	a, err := NewActionFromRemoteScript("https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl", nil)
 	assert.NotNil(t, a)
 	assert.NoError(t, err)
 }
@@ -104,7 +104,7 @@ steps  = [{
 func TestTestLoadFromActionScriptWithGitClone(t *testing.T) {
 	b := []byte(`
 steps  = [{
-	gitClone = {
+	GitClone = {
 			directory = "./src"
 			url = "{{.git.url}}"
 			commit = "{{.git.hash}}"

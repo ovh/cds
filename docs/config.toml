@@ -1,0 +1,29 @@
+languageCode = "en-us"
+title = "CDS Documentation"
+baseURL = "https://ovh.github.io/cds"
+theme = "docdock"
+canonifyurls = true
+
+[params]
+editURL = "https://github.com/ovh/cds/edit/master/docs/content/"
+noSearch = true
+noHomeIcon = true
+
+[[menu.shortcuts]]
+pre = "<h3></h3>"
+name = "<i class='fa fa-github'></i> Source Code"
+identifier = "ds"
+url = "https://github.com/ovh/cds"
+weight = 1
+
+[[menu.shortcuts]]
+name = "<i class='fa fa-download'></i> Releases"
+identifier = "cdsreleases"
+url = "https://github.com/ovh/cds/releases"
+weight = 2
+
+[[menu.shortcuts]]
+name = "<i class='fa fa-commenting'></i> Gitter"
+identifier = "cdsgitter"
+url = "https://gitter.im/ovh-cds/Lobby"
+weight = 3

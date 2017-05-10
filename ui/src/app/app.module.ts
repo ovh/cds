@@ -8,6 +8,7 @@ import {routing} from './app.routing';
 import {NavbarModule} from './views/navbar/navbar.module';
 import {SharedModule} from './shared/shared.module';
 import {ToasterModule} from 'angular2-toaster/angular2-toaster';
+import {AppService} from './app.service';
 
 @NgModule({
     declarations: [
@@ -30,6 +31,7 @@ import {ToasterModule} from 'angular2-toaster/angular2-toaster';
         ServicesModule,
     ],
     providers: [
+        AppService,
     ],
     bootstrap: [AppComponent]
 })

@@ -27,42 +27,6 @@ the pre-requisites of action`,
 		return err
 	}
 
-	// ----------------------------------- Notif  ---------------------------
-	notif := sdk.NewAction(sdk.NotifAction)
-	notif.Description = `CDS Builtin Action. This action can be used to send
-information to notification systems.
-Each notification system can interpret this
-notification as desired.
-
-You can write content in a file, using messagefile
-attribute.
-
-Consult documentation for more information`
-	notif.Type = sdk.BuiltinAction
-	notif.Parameter(sdk.Parameter{
-		Name:  "destination",
-		Value: "all",
-		Description: `Destination of notification: email, tat, slack, jabber...
-Check CDS Documentation for available type. Default to all`,
-		Type: sdk.StringParameter})
-	notif.Parameter(sdk.Parameter{
-		Name:        "title",
-		Description: "Title of notification",
-		Type:        sdk.StringParameter})
-	notif.Parameter(sdk.Parameter{
-		Name:        "message",
-		Description: "Message of notification (optional)",
-		Type:        sdk.TextParameter})
-	notif.Parameter(sdk.Parameter{
-		Name:        "messagefile",
-		Value:       "",
-		Description: "Message could be in this file (optional)",
-		Type:        sdk.StringParameter})
-
-	if err := checkBuiltinAction(db, notif); err != nil {
-		return err
-	}
-
 	// ----------------------------------- JUnit    ---------------------------
 	junit := sdk.NewAction(sdk.JUnitAction)
 	junit.Type = sdk.BuiltinAction
@@ -134,7 +98,7 @@ Clone a repository into a new directory.`
 // checkBuiltinAction add builtin actions in database if needed
 func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	var name string
-	err := db.QueryRow(`SELECT action.name FROM action WHERE action.name = $1`, a.Name).Scan(&name)
+	err := db.QueryRow(`SELECT action.name FROM action WHERE action.name = $1 and action.type = $2`, a.Name, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
@@ -143,6 +107,8 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 		if errcreate := createBuiltinAction(db, a); errcreate != nil {
 			return errcreate
 		}
+	} else {
+		log.Debug("checkBuiltinAction> builtin action %s already exists", a.Name)
 	}
 
 	return nil
@@ -155,6 +121,7 @@ func createBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	}
 	defer tx.Rollback()
 
+	log.Info("createBuiltinAction> create builtin action %s", a.Name)
 	if err := InsertAction(tx, a, true); err != nil {
 		return err
 	}
@@ -165,26 +132,30 @@ func createBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 // CreateBuiltinArtifactActions  Create Action BuiltinArtifact
 func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	var name string
-	query := `SELECT action.name FROM action where action.name = $1`
+	query := `SELECT action.name FROM action where action.name = $1 and action.type = $2`
 
 	// Check ArtifactUpload action
-	err := db.QueryRow(query, sdk.ArtifactUpload).Scan(&name)
+	err := db.QueryRow(query, sdk.ArtifactUpload, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err == sql.ErrNoRows {
 		err = createBuiltinArtifactUploadAction(db)
 		if err != nil {
 			log.Warning("CreateBuiltinArtifactActions> CreateBuiltinArtifactActions err:%s", err.Error())
 			return err
 		}
+	} else {
+		log.Debug("CreateBuiltinArtifactActions> builtin action %s already exists", sdk.ArtifactUpload)
 	}
 
 	// Check ArtifactDownload action
-	err = db.QueryRow(query, sdk.ArtifactDownload).Scan(&name)
+	err = db.QueryRow(query, sdk.ArtifactDownload, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err == sql.ErrNoRows {
 		err = createBuiltinArtifactDownloadAction(db)
 		if err != nil {
 			log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err:%s", err.Error())
 			return err
 		}
+	} else {
+		log.Debug("CreateBuiltinArtifactActions> builtin action %s already exists", sdk.ArtifactDownload)
 	}
 
 	return nil
@@ -214,8 +185,8 @@ func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
 	}
 	defer tx.Rollback()
 
-	err = InsertAction(tx, upload, true)
-	if err != nil {
+	log.Info("createBuiltinArtifactUploadAction> create builtin action %s", upload.Name)
+	if err := InsertAction(tx, upload, true); err != nil {
 		log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactUploadAction err:%s", err.Error())
 		return err
 	}
@@ -254,8 +225,8 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 	}
 	defer tx.Rollback()
 
-	err = InsertAction(tx, dl, true)
-	if err != nil {
+	log.Info("createBuiltinArtifactDownloadAction> create builtin action %s", dl.Name)
+	if err := InsertAction(tx, dl, true); err != nil {
 		log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err:%s", err.Error())
 		return err
 	}

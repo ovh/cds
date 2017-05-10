@@ -16,6 +16,7 @@ func (t *TemplateOnlyGitCloneJob) Name() string {
 func (t *TemplateOnlyGitCloneJob) Description() string {
 	return `
 This template creates:
+
 - a build pipeline with	one stage, containing one job
 - job contains 2 steps: GitClone and a empty script.
 
@@ -49,7 +50,7 @@ func (t *TemplateOnlyGitCloneJob) Parameters() []sdk.TemplateParam {
 
 func (t *TemplateOnlyGitCloneJob) ActionsNeeded() []string {
 	return []string{
-		"GitClone",
+		sdk.GitCloneAction,
 	}
 }
 
@@ -65,7 +66,7 @@ func (t *TemplateOnlyGitCloneJob) Apply(opts template.IApplyOptions) (sdk.Applic
 			Name: "Compile",
 			Actions: []sdk.Action{
 				sdk.Action{
-					Name: "GitClone",
+					Name: sdk.GitCloneAction,
 				},
 				sdk.NewActionScript(`#!/bin/bash
 
@@ -110,6 +111,5 @@ echo "TODO"`,
 }
 
 func main() {
-	p := TemplateOnlyGitCloneJob{}
-	template.Serve(&p)
+	template.Main(&TemplateOnlyGitCloneJob{})
 }

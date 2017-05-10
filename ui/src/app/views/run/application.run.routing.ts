@@ -17,7 +17,7 @@ const applicationRunRoutes: Routes = [
                 resolve: {
                     pipeline: PipelineResolver,
                     application: ApplicationResolver,
-                    project: ProjectResolver,
+                    project: ProjectResolver
                 }
             }
         ]

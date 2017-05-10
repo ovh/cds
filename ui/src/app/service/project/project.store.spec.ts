@@ -368,21 +368,10 @@ describe('CDS: project Store', () => {
                     })));
                     break;
                 case 3: // Update variable
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                        "key": "key1", 
-                        "name": "myProject", 
-                        "last_modified": 456, 
-                        "variables" : [ { \"name\" : \"myvarUpdate\"}] 
-                        }`})));
+                    connection.mockRespond(new Response(new ResponseOptions({body: `{ \"name\" : \"myvarUpdate\"}`})));
                     break;
                 case 4: // Delete
-                    connection.mockRespond(new Response(new ResponseOptions({body:
-                        `{ 
-                            "key": "key1", 
-                            "name": "myProject", 
-                            "last_modified": 789,
-                             "variables" : [] 
-                            }`})));
+                    connection.mockRespond(new Response(new ResponseOptions({})));
                     break;
             }
 
@@ -422,7 +411,6 @@ describe('CDS: project Store', () => {
         let updateVariableCheck = false;
         projectStore.getProjects('key1').first().subscribe( projs => {
             updateVariableCheck = true;
-            expect(projs.get('key1').last_modified).toBe(456);
             expect(projs.get('key1').variables.length).toBe(1);
             expect(projs.get('key1').variables[0].name).toBe('myvarUpdate');
         });
@@ -436,7 +424,6 @@ describe('CDS: project Store', () => {
         let deleteVariableCheck = false;
         projectStore.getProjects('key1').first().subscribe( projs => {
             deleteVariableCheck = true;
-            expect(projs.get('key1').last_modified).toBe(789);
             expect(projs.get('key1').variables.length).toBe(0);
         });
         expect(deleteVariableCheck).toBeTruthy('Must check project update');
@@ -456,31 +443,15 @@ describe('CDS: project Store', () => {
                         "groups" : [] 
                         }`})));
                     break;
-                case 2: // add variable
-                    connection.mockRespond(new Response(new ResponseOptions({ body : `{ 
-                       "key": "key1", 
-                        "name": "myProject", 
-                        "last_modified": 123, 
-                        "groups" : [ { \"permission\" : 7}] 
-                    }`
+                case 2: // add group
+                    connection.mockRespond(new Response(new ResponseOptions({ body : `[ { \"permission\" : 7, \"group\" : { \"id\" : 1}}]`
                     })));
                     break;
-                case 3: // Update variable
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                        "key": "key1", 
-                        "name": "myProject", 
-                        "last_modified": 456, 
-                        "groups" : [ { \"permission\" : 4}] 
-                        }`})));
+                case 3: // Update group
+                    connection.mockRespond(new Response(new ResponseOptions({body: `{ \"permission\" : 4, \"group\" : { \"id\" : 1}}`})));
                     break;
                 case 4: // Delete
-                    connection.mockRespond(new Response(new ResponseOptions({body:
-                        `{ 
-                            "key": "key1", 
-                            "name": "myProject", 
-                            "last_modified": 789,
-                             "groups" : [] 
-                            }`})));
+                    connection.mockRespond(new Response(new ResponseOptions({})));
                     break;
             }
 
@@ -504,7 +475,6 @@ describe('CDS: project Store', () => {
         let addPermissionCheck = false;
         projectStore.getProjects('key1').first().subscribe( projs => {
             addPermissionCheck = true;
-            expect(projs.get('key1').last_modified).toBe(123, 'Project must have been updated');
             expect(projs.get('key1').groups.length).toBe(1, 'Project must have 1 variable');
             expect(projs.get('key1').groups[0].permission).toBe(7);
         });
@@ -519,7 +489,6 @@ describe('CDS: project Store', () => {
         let updatePermissionCheck = false;
         projectStore.getProjects('key1').first().subscribe( projs => {
             updatePermissionCheck = true;
-            expect(projs.get('key1').last_modified).toBe(456);
             expect(projs.get('key1').groups.length).toBe(1);
             expect(projs.get('key1').groups[0].permission).toBe(4);
         });
@@ -527,13 +496,13 @@ describe('CDS: project Store', () => {
 
         // Delete group permission
         expect(call).toBe(3, 'Need to have done 4 http call');
+        gp.group.id = 1;
         projectStore.removeProjectPermission('key1', gp).subscribe(() => {});
         expect(call).toBe(4, 'Need to have done 4 http call');
 
         let deletePermissionCheck = false;
         projectStore.getProjects('key1').first().subscribe( projs => {
             deletePermissionCheck = true;
-            expect(projs.get('key1').last_modified).toBe(789);
             expect(projs.get('key1').groups.length).toBe(0);
         });
         expect(deletePermissionCheck).toBeTruthy('Must check project update');

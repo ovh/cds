@@ -24,7 +24,9 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     getProject(key: string): Observable<Project> {
-        return this._http.get('/project/' + key).map(res => res.json());
+        return this._http.get('/project/' + key).map(res => {
+            return res.json();
+        });
     }
 
     /**
@@ -84,7 +86,7 @@ export class ProjectService {
      * @param v Variable to update
      * @returns {Observable<Project>}
      */
-    updateVariable(key: string, v: Variable): Observable<Project> {
+    updateVariable(key: string, v: Variable): Observable<Variable> {
         return this._http.put('/project/' + key + '/variable/' + v.name, v).map(res => res.json());
     }
 
@@ -94,8 +96,8 @@ export class ProjectService {
      * @param v Variable to delete
      * @returns {Observable<Project>}
      */
-    removeVariable(key: string, varName: string): Observable<Project> {
-        return this._http.delete('/project/' + key + '/variable/' + varName).map(res => res.json());
+    removeVariable(key: string, varName: string): Observable<boolean> {
+        return this._http.delete('/project/' + key + '/variable/' + varName).map(res => true);
     }
 
     /**
@@ -104,7 +106,7 @@ export class ProjectService {
      * @param gp Permission to add
      * @returns {Observable<Project>}
      */
-    addPermission(key: string, gp: GroupPermission) {
+    addPermission(key: string, gp: GroupPermission): Observable<Array<GroupPermission>> {
         return this._http.post('/project/' + key + '/group', gp).map(res => res.json());
     }
 
@@ -114,7 +116,7 @@ export class ProjectService {
      * @param gp Permission to update
      * @returns {Observable<Project>}
      */
-    updatePermission(key: string, gp: GroupPermission): Observable<Project> {
+    updatePermission(key: string, gp: GroupPermission): Observable<GroupPermission> {
         return this._http.put('/project/' + key + '/group/' + gp.group.name, gp).map(res => res.json());
     }
 
@@ -124,8 +126,8 @@ export class ProjectService {
      * @param gp Permission to delete
      * @returns {Observable<Project>}
      */
-    removePermission(key: string, gp: GroupPermission): Observable<Project> {
-        return this._http.delete('/project/' + key + '/group/' + gp.group.name).map(res => res.json());
+    removePermission(key: string, gp: GroupPermission): Observable<boolean> {
+        return this._http.delete('/project/' + key + '/group/' + gp.group.name).map(res => true);
     }
 
     /**

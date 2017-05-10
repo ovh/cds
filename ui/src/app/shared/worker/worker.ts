@@ -30,7 +30,7 @@ export class CDSWorker {
                 }
             });
             this.webWorker.onerror = function (e) {
-                console.log('Warning Worker Error: ', e);
+                console.log('Worker Error: ', e);
             };
             this.webWorker.postMessage(msgToSend);
         } else {

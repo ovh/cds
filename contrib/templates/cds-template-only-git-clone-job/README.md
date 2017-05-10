@@ -4,7 +4,7 @@
 
 This template creates:
 - a build pipeline with	one stage, containing one job
-- job contains 2 steps: CDS_GitClone and a empty script.
+- job contains 2 steps: gitClone and a empty script.
 
 Pipeline name contains Application name.
 If you want to make a reusable pipeline, please consider updating this name after creation.
