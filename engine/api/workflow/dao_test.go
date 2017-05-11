@@ -358,7 +358,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	assert.Equal(t, app2.ID, w2.Root.Context.Application.ID)
 	assert.Equal(t, env.ID, w2.Root.Context.Environment.ID)
 
-	//test.NoError(t, Delete(db, w2))
+	test.NoError(t, Delete(db, w2))
 }
 
 func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
