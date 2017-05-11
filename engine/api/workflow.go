@@ -14,12 +14,29 @@ import (
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
 func getWorkflowsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	return nil
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+
+	ws, err := workflow.LoadAll(db, key)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(w, r, ws, http.StatusOK)
 }
 
 // getWorkflowHandler returns a full workflow
 func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	return nil
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	name := vars["workflowName"]
+
+	w1, err := workflow.Load(db, key, name, c.User)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(w, r, w1, http.StatusOK)
 }
 
 // postWorkflowHandler create a new workflow

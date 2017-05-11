@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -214,4 +216,36 @@ type WorkflowHookModel struct {
 	Image         string                 `json:"image" db:"image"`
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
+}
+
+//WorkflowList return the list of the workflows for a project
+func WorkflowList(projectkey string) ([]Workflow, error) {
+	path := fmt.Sprintf("/project/%s/workflows", projectkey)
+	body, _, err := Request("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var ws = []Workflow{}
+	if err := json.Unmarshal(body, &ws); err != nil {
+		return nil, err
+	}
+
+	return ws, nil
+}
+
+//WorkflowGet returns a workflow given its name
+func WorkflowGet(projectkey, name string) (*Workflow, error) {
+	path := fmt.Sprintf("/project/%s/workflows/%s", projectkey, name)
+	body, _, err := Request("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var w = Workflow{}
+	if err := json.Unmarshal(body, &w); err != nil {
+		return nil, err
+	}
+
+	return &w, nil
 }
