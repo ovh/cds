@@ -18,7 +18,7 @@ testcases:
   - script: {{.cds.build.cds}} pipeline logs ITSCGITCLONE TestApp GitClonePip
     assertions:
       - result.code ShouldEqual 0
-      - result.systemout ShouldContainSubstring Cloning into 'go-dump'...
+      - result.systemout ShouldContainSubstring Cloning into
       - result.systemout ShouldContainSubstring GitClone-1 [Success]
 
 - name: cleanup
