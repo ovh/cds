@@ -247,7 +247,7 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 	}
 }
 
-func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
+func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *testing.T) {
 	db := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -258,6 +258,13 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
+		Parameter: []sdk.Parameter{
+			{
+				Name:  "param1",
+				Type:  sdk.StringParameter,
+				Value: "value1",
+			},
+		},
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
@@ -267,6 +274,13 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
+		Parameter: []sdk.Parameter{
+			{
+				Name:  "param1",
+				Type:  sdk.StringParameter,
+				Value: "value1",
+			},
+		},
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
@@ -304,6 +318,20 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 			Context: &sdk.WorkflowNodeContext{
 				Application: &app,
 				Environment: &env,
+				DefaultPipelineParameters: []sdk.Parameter{
+					{
+						Name:  "param1",
+						Type:  sdk.StringParameter,
+						Value: "param1_value",
+					},
+				},
+				DefaultPayload: []sdk.Parameter{
+					{
+						Name:  "git.branch",
+						Type:  sdk.StringParameter,
+						Value: "master",
+					},
+				},
 			},
 		},
 	}
@@ -313,20 +341,24 @@ func TestUpdateSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	w1, err := Load(db, key, "test_1", u)
 	test.NoError(t, err)
 
+	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
+
 	w1.Name = "test_2"
 	w1.Root.PipelineID = pip2.ID
+	w1.Root.Context.Application = &app2
 	w1.Root.Context.ApplicationID = app2.ID
 
-	Update(db, w1, u)
+	test.NoError(t, Update(db, w1, u))
 
+	t.Logf("Reloading workflow...")
 	w2, err := LoadByID(db, w1.ID, u)
 	test.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
-	assert.Equal(t, w1.Root.Context.ApplicationID, w2.Root.Context.Application.ID)
-	assert.Equal(t, w1.Root.Context.EnvironmentID, w2.Root.Context.Environment.ID)
+	assert.Equal(t, app2.ID, w2.Root.Context.Application.ID)
+	assert.Equal(t, env.ID, w2.Root.Context.Environment.ID)
 
-	test.NoError(t, Delete(db, w2))
+	//test.NoError(t, Delete(db, w2))
 }
 
 func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
