@@ -30,6 +30,7 @@ import (
 	"github.com/ovh/cds/cli/cds/version"
 	"github.com/ovh/cds/cli/cds/wizard"
 	"github.com/ovh/cds/cli/cds/worker"
+	"github.com/ovh/cds/cli/cds/workflow"
 )
 
 var rootCmd = &cobra.Command{
@@ -105,6 +106,7 @@ func main() {
 	rootCmd.AddCommand(environment.Cmd())
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(pipeline.Cmd())
+	rootCmd.AddCommand(workflow.Cmd())
 	rootCmd.AddCommand(project.Cmd)
 	rootCmd.AddCommand(group.Cmd)
 	rootCmd.AddCommand(user.Cmd)

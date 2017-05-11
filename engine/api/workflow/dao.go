@@ -72,6 +72,9 @@ func load(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) (
 	t0 := time.Now()
 	dbRes := Workflow{}
 	if err := db.SelectOne(&dbRes, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrWorkflowNotFound
+		}
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow")
 	}
 
