@@ -1,8 +1,12 @@
 package workflow
 
-import "github.com/spf13/cobra"
-import "github.com/ovh/cds/sdk"
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/sdk"
+)
 
 var (
 	rootCmd = &cobra.Command{
