@@ -32,7 +32,7 @@ var ErrNoWorker = fmt.Errorf("cds: no worker found")
 func DeleteWorker(db *gorp.DbMap, id string) error {
 	tx, errb := db.Begin()
 	if errb != nil {
-		return fmt.Errorf("DeleteWorker> Cannot start tx: %s\n", errb)
+		return fmt.Errorf("DeleteWorker> Cannot start tx: %s", errb)
 	}
 	defer tx.Rollback()
 
@@ -40,7 +40,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 	var st, name string
 	var pbJobID sql.NullInt64
 	if err := tx.QueryRow(query, id).Scan(&name, &st, &pbJobID); err != nil {
-		log.Debug("DeleteWorker[%d]> Cannot lock worker: %s\n", id, err)
+		log.Debug("DeleteWorker[%d]> Cannot lock worker: %s", id, err)
 		return nil
 	}
 
@@ -48,14 +48,14 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		// Worker is awol while building !
 		// We need to restart this action
 		if pbJobID.Valid == false {
-			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but action_build_id is NULL!\n", name)
+			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but action_build_id is NULL!", name)
 		}
 
-		log.Info("Worker %s crashed while building %d !\n", name, pbJobID.Int64)
+		log.Info("Worker %s crashed while building %d !", name, pbJobID.Int64)
 		if err := pipeline.RestartPipelineBuildJob(tx, pbJobID.Int64); err != nil {
-			log.Error("DeleteWorker[%d]> Cannot restart pipeline build job: %s\n", id, err)
+			log.Error("DeleteWorker[%d]> Cannot restart pipeline build job: %s", id, err)
 		} else {
-			log.Info("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash\n", id, pbJobID.Int64)
+			log.Info("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash", id, pbJobID.Int64)
 		}
 	}
 
@@ -74,9 +74,8 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 
 // InsertWorker inserts worker representation into database
 func InsertWorker(db gorp.SqlExecutor, w *sdk.Worker, groupID int64) error {
-	query := `INSERT INTO worker (id, name, last_beat, model, status, hatchery_id, group_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`
-
-	_, err := db.Exec(query, w.ID, w.Name, time.Now(), w.Model, w.Status.String(), w.HatcheryID, groupID)
+	query := `INSERT INTO worker (id, name, last_beat, model, status, hatchery_id, hatchery_name, group_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	_, err := db.Exec(query, w.ID, w.Name, time.Now(), w.Model, w.Status.String(), w.HatcheryID, w.HatcheryName, groupID)
 	return err
 }
 
@@ -84,9 +83,9 @@ func InsertWorker(db gorp.SqlExecutor, w *sdk.Worker, groupID int64) error {
 func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	w := &sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
 
-	err := db.QueryRow(query, id).Scan(&w.ID, &w.Name, &w.LastBeat, &w.GroupID, &w.Model, &statusS, &w.HatcheryID, &w.GroupID)
+	err := db.QueryRow(query, id).Scan(&w.ID, &w.Name, &w.LastBeat, &w.GroupID, &w.Model, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +98,7 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 func LoadWorkersByModel(db gorp.SqlExecutor, modelID int64) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT worker.id, worker.name, worker.last_beat, worker.group_id, worker.model, worker.status, worker.hatchery_id
+	query := `SELECT worker.id, worker.name, worker.last_beat, worker.group_id, worker.model, worker.status, worker.hatchery_id, worker.hatchery_name
 	          FROM worker
 	          WHERE worker.model = $1
 	          ORDER BY worker.name ASC`
@@ -113,7 +112,7 @@ func LoadWorkersByModel(db gorp.SqlExecutor, modelID int64) ([]sdk.Worker, error
 	for rows.Next() {
 		var worker sdk.Worker
 
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +127,7 @@ func LoadWorkersByModel(db gorp.SqlExecutor, modelID int64) ([]sdk.Worker, error
 func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id FROM worker WHERE action_build_id = $1 ORDER BY name ASC`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE action_build_id = $1 ORDER BY name ASC`
 
 	rows, err := db.Query(query, pipJobID)
 	if err != nil {
@@ -138,7 +137,7 @@ func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Work
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +152,7 @@ func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Work
 func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id FROM worker WHERE 1 = 1 ORDER BY name ASC`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE 1 = 1 ORDER BY name ASC`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -163,7 +162,7 @@ func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +177,7 @@ func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
-	query := `	SELECT id, name, last_beat, group_id, model, status, hatchery_id
+	query := `	SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name
 				FROM worker
 				WHERE 1 = 1
 				AND now() - last_beat > $1 * INTERVAL '1' SECOND
@@ -193,7 +192,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error)
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			log.Warning("LoadDeadWorkers> Error scanning workers")
 			return nil, err
@@ -211,13 +210,13 @@ func RefreshWorker(db gorp.SqlExecutor, workerID string) error {
 	query := `UPDATE worker SET last_beat = $1 WHERE id = $2`
 	res, err := db.Exec(query, time.Now(), workerID)
 	if err != nil {
-		log.Warning("RefreshWorker> Unable to update worker : %s", workerID)
+		log.Warning("RefreshWorker> Unable to update worker: %s", workerID)
 		return err
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		log.Warning("RefreshWorker> Unable to refresh worker : %s", workerID)
+		log.Warning("RefreshWorker> Unable to refresh worker: %s", workerID)
 		return err
 	}
 
@@ -231,15 +230,14 @@ func RefreshWorker(db gorp.SqlExecutor, workerID string) error {
 func generateID() (string, error) {
 	size := 64
 	bs := make([]byte, size)
-	_, err := rand.Read(bs)
-	if err != nil {
-		log.Error("generateID: rand.Read failed: %s\n", err)
+	if _, err := rand.Read(bs); err != nil {
+		log.Error("generateID: rand.Read failed: %s", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateID: new generated id: %s\n", token)
+	log.Debug("generateID: new generated id: %s", token)
 	return string(token), nil
 }
 
@@ -249,6 +247,7 @@ type RegistrationForm struct {
 	UserKey            string
 	Model              int64
 	Hatchery           int64
+	HatcheryName       string
 	BinaryCapabilities []string
 	Version            string
 }
@@ -271,7 +270,7 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 	// Load token
 	t, errL := token.LoadToken(db, key)
 	if errL != nil {
-		log.Warning("RegisterWorker> Cannot register worker. Caused by : %s", errL)
+		log.Warning("RegisterWorker> Cannot register worker. Caused by: %s", errL)
 		return nil, errL
 	}
 
@@ -287,7 +286,7 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 		var errM error
 		m, errM = LoadWorkerModelByID(db, modelID)
 		if errM != nil {
-			log.Warning("RegisterWorker> Cannot load model: %s\n", errM)
+			log.Warning("RegisterWorker> Cannot load model: %s", errM)
 			return nil, errM
 		}
 	}
@@ -305,27 +304,22 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 	//generate an ID
 	id, errG := generateID()
 	if errG != nil {
-		log.Warning("registerWorker: Cannot generate ID: %s\n", errG)
+		log.Warning("registerWorker: Cannot generate ID: %s", errG)
 		return nil, errG
 	}
 
 	//Instanciate a new worker
-	var hatcheryID int64
-	if h != nil {
-		hatcheryID = h.ID
-	}
-
 	w := &sdk.Worker{
-		ID:         id,
-		Name:       name,
-		Model:      modelID,
-		HatcheryID: hatcheryID,
-		Status:     sdk.StatusWaiting,
-		GroupID:    t.GroupID,
+		ID:      id,
+		Name:    name,
+		Model:   modelID,
+		Status:  sdk.StatusWaiting,
+		GroupID: t.GroupID,
 	}
 
 	if h != nil {
 		w.HatcheryID = h.ID
+		w.HatcheryName = h.Name
 	}
 
 	tx, errTx := db.Begin()
@@ -335,7 +329,7 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 	defer tx.Rollback()
 
 	if err := InsertWorker(tx, w, t.GroupID); err != nil {
-		log.Warning("registerWorker: Cannot insert worker in database: %s\n", err)
+		log.Warning("registerWorker: Cannot insert worker in database: %s", err)
 		return nil, err
 	}
 
@@ -345,14 +339,14 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 			//Start a new tx for this goroutine
 			ntx, err := db.Begin()
 			if err != nil {
-				log.Warning("RegisterWorker> Unable to start a transaction : %s", err)
+				log.Warning("RegisterWorker> Unable to start a transaction: %s", err)
 				return
 			}
 			defer ntx.Rollback()
 
 			existingCapas, err := LoadWorkerModelCapabilities(ntx, modelID)
 			if err != nil {
-				log.Warning("RegisterWorker> Unable to load worker model capabilities : %s", err)
+				log.Warning("RegisterWorker> Unable to load worker model capabilities: %s", err)
 				return
 			}
 
@@ -375,13 +369,13 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 					query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
 					if _, err := ntx.Exec(query, modelID, b, b, string(sdk.BinaryRequirement)); err != nil {
 						//Ignore errors because we let the database to check constraints...
-						log.Debug("registerWorker> Cannot insert into worker_capability: %s\n", err)
+						log.Debug("registerWorker> Cannot insert into worker_capability: %s", err)
 						return
 					}
 				}
 			}
 			if err := ntx.Commit(); err != nil {
-				log.Warning("RegisterWorker> Unable to commit transaction : %s", err)
+				log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
 			}
 		}()
 	}
@@ -451,7 +445,7 @@ func UpdateWorkerStatus(db gorp.SqlExecutor, workerID string, status sdk.Status)
 	}
 
 	if rowsAffected > 1 {
-		log.Error("UpdateWorkerStatus: Multiple (%d) rows affected ! (id=%s)\n", rowsAffected, workerID)
+		log.Error("UpdateWorkerStatus: Multiple (%d) rows affected ! (id=%s)", rowsAffected, workerID)
 	}
 
 	if rowsAffected == 0 {

@@ -191,6 +191,7 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) 
 	args = append(args, "-e", fmt.Sprintf("CDS_KEY=%s", viper.GetString("token")))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
+	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY_NAME=%s", hd.hatch.Name))
 
 	if viper.GetString("graylog_host") != "" {
 		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_HOST=%s", viper.GetString("graylog_host")))

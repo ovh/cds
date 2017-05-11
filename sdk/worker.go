@@ -8,14 +8,15 @@ import (
 
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	LastBeat   time.Time `json:"-"`
-	GroupID    int64     `json:"group_id"`
-	Model      int64     `json:"model"`
-	HatcheryID int64     `json:"hatchery_id"`
-	Status     Status    `json:"status"` // Waiting, Building, Disabled, Unknown
-	Uptodate   bool      `json:"up_to_date"`
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	LastBeat     time.Time `json:"-"`
+	GroupID      int64     `json:"group_id"`
+	Model        int64     `json:"model"`
+	HatcheryID   int64     `json:"hatchery_id"`
+	HatcheryName string    `json:"hatchery_name"`
+	Status       Status    `json:"status"` // Waiting, Building, Disabled, Unknown
+	Uptodate     bool      `json:"up_to_date"`
 }
 
 // Existing worker type
@@ -71,8 +72,7 @@ func GetWorkers(models ...string) ([]Worker, error) {
 		return nil, fmt.Errorf("not implemented")
 	}
 
-	uri := "/worker"
-	data, code, errr := Request("GET", uri, nil)
+	data, code, errr := Request("GET", "/worker", nil)
 	if errr != nil {
 		return nil, errr
 	}
