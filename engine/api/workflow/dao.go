@@ -211,9 +211,9 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 
 	//Check duplicate refs
 	refs := w.References()
-	for _, ref1 := range refs {
-		for _, ref2 := range refs {
-			if ref1 == ref2 {
+	for i, ref1 := range refs {
+		for j, ref2 := range refs {
+			if ref1 == ref2 && i != j {
 				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Duplicate reference %s", ref1))
 			}
 		}
@@ -256,7 +256,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	}
 
 	//Checks environments are in the current project
-	envs := w.InvolvedPipelines()
+	envs := w.InvolvedEnvironments()
 	for _, envID := range envs {
 		var found bool
 		for _, e := range proj.Environments {
