@@ -153,7 +153,7 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		return sdk.WrapError(err, "Update> Unable to update workflow")
 	}
 	if w.Root != nil {
-		return insertOrUpdateNode(db, w, w.Root, u, false)
+		return sdk.WrapError(insertOrUpdateNode(db, w, w.Root, u, false), "Update> unable to update root node on workflow(%d)", w.ID)
 	}
 	for _, j := range w.Joins {
 		if err := insertOrUpdateJoin(db, w, &j, u); err != nil {
@@ -232,6 +232,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		for _, a := range proj.Applications {
 			if appID == a.ID {
 				found = true
+				break
 			}
 		}
 		if !found {
@@ -246,6 +247,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		for _, p := range proj.Pipelines {
 			if pipID == p.ID {
 				found = true
+				break
 			}
 		}
 		if !found {
@@ -260,6 +262,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		for _, e := range proj.Environments {
 			if envID == e.ID {
 				found = true
+				break
 			}
 		}
 		if !found {

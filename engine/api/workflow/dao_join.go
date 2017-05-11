@@ -17,14 +17,14 @@ func loadJoins(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) ([]sdk.Workflo
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "loadJoin> Unable to load join IDs on workflow %d", w.ID)
+		return nil, sdk.WrapError(err, "loadJoins> Unable to load join IDs on workflow %d", w.ID)
 	}
 
 	joins := []sdk.WorkflowNodeJoin{}
 	for _, id := range joinIDs {
 		j, errJ := loadJoin(db, w, id, u)
 		if errJ != nil {
-			return nil, sdk.WrapError(errJ, "loadJoin> Unable to load join %d on workflow %d", id, w.ID)
+			return nil, sdk.WrapError(errJ, "loadJoins> Unable to load join %d on workflow %d", id, w.ID)
 		}
 		joins = append(joins, *j)
 	}
@@ -259,7 +259,7 @@ func deleteJoin(db gorp.SqlExecutor, n *sdk.WorkflowNodeJoin) error {
 	}
 
 	//Delete associations between join and source
-	query := "delete from workflow_node_join_source where workflow_node_id = $1 and workflow_node_join_id = 2"
+	query := "delete from workflow_node_join_source where workflow_node_id = $1 and workflow_node_join_id = $2"
 	for _, source := range n.SourceNodeIDs {
 		if _, err := db.Exec(query, source, n.ID); err != nil {
 			return sdk.WrapError(err, "deleteJoin> Unable to delete associations between join %d and node %d", n.ID, source)
