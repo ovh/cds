@@ -8,17 +8,21 @@ import (
 type Workflow struct {
 	ID           int64              `json:"id" db:"id"`
 	Name         string             `json:"name" db:"name"`
-	Description  string             `json:"description" db:"description"`
+	Description  string             `json:"description,omitempty" db:"description"`
 	LastModified time.Time          `json:"last_modified" db:"last_modified"`
-	ProjectID    int64              `json:"project_id" db:"project_id"`
+	ProjectID    int64              `json:"project_id,omitempty" db:"project_id"`
 	ProjectKey   string             `json:"project_key" db:"-"`
-	RootID       int64              `json:"root_id" db:"root_node_id"`
+	RootID       int64              `json:"root_id,omitempty" db:"root_node_id"`
 	Root         *WorkflowNode      `json:"root" db:"-"`
-	Joins        []WorkflowNodeJoin `json:"joins" db:"-"`
+	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-"`
 }
 
 //References returns a slice with all node references
 func (w *Workflow) References() []string {
+	if w.Root == nil {
+		return nil
+	}
+
 	res := w.Root.References()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
@@ -30,6 +34,10 @@ func (w *Workflow) References() []string {
 
 //InvolvedApplications returns all applications used in the workflow
 func (w *Workflow) InvolvedApplications() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
 	res := w.Root.InvolvedApplications()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
@@ -41,6 +49,10 @@ func (w *Workflow) InvolvedApplications() []int64 {
 
 //InvolvedPipelines returns all pipelines used in the workflow
 func (w *Workflow) InvolvedPipelines() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
 	res := w.Root.InvolvedPipelines()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
@@ -52,6 +64,10 @@ func (w *Workflow) InvolvedPipelines() []int64 {
 
 //InvolvedEnvironments returns all environments used in the workflow
 func (w *Workflow) InvolvedEnvironments() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
 	res := w.Root.InvolvedEnvironments()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
@@ -65,9 +81,9 @@ func (w *Workflow) InvolvedEnvironments() []int64 {
 type WorkflowNodeJoin struct {
 	ID             int64                     `json:"id" db:"id"`
 	WorkflowID     int64                     `json:"workflow_id" db:"workflow_id"`
-	SourceNodeIDs  []int64                   `json:"source_node_id" db:"-"`
-	SourceNodeRefs []string                  `json:"source_node_ref" db:"-"`
-	Triggers       []WorkflowNodeJoinTrigger `json:"triggers" db:"-"`
+	SourceNodeIDs  []int64                   `json:"source_node_id,omitempty" db:"-"`
+	SourceNodeRefs []string                  `json:"source_node_ref,omitempty" db:"-"`
+	Triggers       []WorkflowNodeJoinTrigger `json:"triggers,omitempty" db:"-"`
 }
 
 //WorkflowNodeJoinTrigger is a trigger for joins
@@ -76,7 +92,7 @@ type WorkflowNodeJoinTrigger struct {
 	WorkflowNodeJoinID int64                      `json:"join_id" db:"workflow_node_join_id"`
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
-	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`
+	Conditions         []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
 }
 
 //WorkflowNode represents a node in w workflow tree
@@ -87,8 +103,8 @@ type WorkflowNode struct {
 	PipelineID int64                 `json:"pipeline_id" db:"pipeline_id"`
 	Pipeline   Pipeline              `json:"pipeline" db:"-"`
 	Context    *WorkflowNodeContext  `json:"context" db:"-"`
-	Hooks      []WorkflowNodeHook    `json:"hooks" db:"-"`
-	Triggers   []WorkflowNodeTrigger `json:"triggers" db:"-"`
+	Hooks      []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
+	Triggers   []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
 }
 
 //References returns a slice with all node references
@@ -154,7 +170,7 @@ type WorkflowNodeTrigger struct {
 	WorkflowNodeID     int64                      `json:"workflow_node_id" db:"workflow_node_id"`
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
-	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`
+	Conditions         []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
 }
 
 //WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
@@ -166,12 +182,14 @@ type WorkflowTriggerCondition struct {
 
 //WorkflowNodeContext represents a context attached on a node
 type WorkflowNodeContext struct {
-	ID             int64        `json:"id" db:"id"`
-	WorkflowNodeID int64        `json:"workflow_node_id" db:"workflow_node_id"`
-	ApplicationID  int64        `json:"-" db:"application_id"`
-	Application    *Application `json:"application" db:"-"`
-	Environment    *Environment `json:"environment" db:"-"`
-	EnvironmentID  int64        `json:"-" db:"environment_id"`
+	ID                        int64        `json:"id" db:"id"`
+	WorkflowNodeID            int64        `json:"workflow_node_id" db:"workflow_node_id"`
+	ApplicationID             int64        `json:"-" db:"application_id"`
+	Application               *Application `json:"application,omitempty" db:"-"`
+	Environment               *Environment `json:"environment,omitempty" db:"-"`
+	EnvironmentID             int64        `json:"-" db:"environment_id"`
+	DefaultPayload            []Parameter  `json:"default_payload,omitempty" db:"-"`
+	DefaultPipelineParameters []Parameter  `json:"default_pipeline_parameters,omitempty" db:"-"`
 }
 
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
@@ -181,7 +199,7 @@ type WorkflowNodeHook struct {
 	WorkflowNodeID      int64                      `json:"-" db:"workflow_node_id"`
 	WorkflowHookModelID int64                      `json:"-" db:"workflow_hook_model_id"`
 	WorkflowHookModel   WorkflowHookModel          `json:"model" db:"-"`
-	Conditions          []WorkflowTriggerCondition `json:"conditions" db:"-"`
+	Conditions          []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
 	Config              WorkflowNodeHookConfig     `json:"config" db:"-"`
 }
 

@@ -367,7 +367,7 @@ func ProcessError(target error, al string) (string, int) {
 		if ok {
 			rootMsg, _ = ProcessError(cdsErrRoot, al)
 		} else {
-			rootMsg = fmt.Sprintf("[%T] %s", cdsErr.Root, cdsErr.Root.Error())
+			rootMsg = fmt.Sprintf("%s [%T]", cdsErr.Root.Error(), cdsErr.Root)
 		}
 
 		msg = fmt.Sprintf("%s (caused by: %s)", msg, rootMsg)
@@ -405,14 +405,27 @@ func DecodeError(data []byte) error {
 }
 
 func (e Error) String() string {
+	var msg = e.Message
 	if e.Message == "" {
-		msg, ok := errorsAmericanEnglish[e.ID]
+		msg1, ok := errorsAmericanEnglish[e.ID]
 		if ok {
-			return msg
+			msg = msg1
 		}
 	}
 
-	return e.Message
+	if e.Root != nil {
+		cdsErrRoot, ok := e.Root.(*Error)
+		var rootMsg string
+		if ok {
+			rootMsg, _ = ProcessError(cdsErrRoot, "en-US")
+		} else {
+			rootMsg = fmt.Sprintf("%s [%T]", e.Root.Error(), e.Root)
+		}
+
+		msg = fmt.Sprintf("%s (caused by: %s)", msg, rootMsg)
+	}
+
+	return msg
 }
 
 func (e Error) Error() string {
