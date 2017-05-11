@@ -47,7 +47,7 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
      * Do not work with ngOnChange.
      */
     ngDoCheck() {
-        if (this.project.last_modified !== this.oldLastModifiedDate) {
+        if (this.project.last_modified.getTime() !== this.oldLastModifiedDate) {
             // If environment changed - update selected env
             if (this.selectedEnv && this.project.environments) {
                 let index = this.project.environments.findIndex(e => e.id === this.selectedEnv.id);

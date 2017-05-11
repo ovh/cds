@@ -176,7 +176,7 @@ export class ProjectStore {
             let cache = this._projectCache.getValue();
             if (cache.get(key)) {
                 let pToUpdate = cache.get(key);
-                pToUpdate.last_modified = Number(res.last_modified);
+                pToUpdate.last_modified = res.last_modified;
                 this._projectCache.next(cache.set(key, pToUpdate));
             }
             return res;
