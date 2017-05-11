@@ -206,20 +206,15 @@ func HasAccessTo(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error
 func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
-		err := sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
-		log.Debug("Error: %v", err)
-		return err
+		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
 	}
 
 	//Check duplicate refs
 	refs := w.References()
-	log.Debug("Workflow references: %v", refs)
 	for i, ref1 := range refs {
 		for j, ref2 := range refs {
 			if ref1 == ref2 && i != j {
-				err := sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Duplicate reference %s", ref1))
-				log.Debug("Error: %v", err)
-				return err
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Duplicate reference %s", ref1))
 			}
 		}
 	}
@@ -227,9 +222,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	//Load the project
 	proj, err := project.Load(db, w.ProjectKey, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
 	if err != nil {
-		err := sdk.NewError(sdk.ErrWorkflowInvalid, err)
-		log.Debug("Error: %v", err)
-		return err
+		return sdk.NewError(sdk.ErrWorkflowInvalid, err)
 	}
 
 	//Checks application are in the current project
@@ -243,9 +236,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 			}
 		}
 		if !found {
-			err := sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown application %d", appID))
-			log.Debug("Error: %v", err)
-			return err
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown application %d", appID))
 		}
 	}
 
@@ -260,9 +251,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 			}
 		}
 		if !found {
-			err := sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
-			log.Debug("Error: %v", err)
-			return err
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
 		}
 	}
 
@@ -277,9 +266,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 			}
 		}
 		if !found {
-			err := sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
-			log.Debug("Error: %v", err)
-			return err
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
 		}
 	}
 
