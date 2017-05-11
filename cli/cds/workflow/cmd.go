@@ -38,7 +38,7 @@ var (
 			if err != nil {
 				sdk.Exit("Error: %s\n", err)
 			}
-			sdk.Output("json", ws, fmt.Printf)
+			sdk.Output("yaml", ws, fmt.Printf)
 		},
 	}
 )
