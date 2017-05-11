@@ -104,14 +104,14 @@ export class AppService {
                 return;
             }
 
-            plu.applications.forEach( p => {
+            plu.pipelines.forEach( p => {
                 let pipKey = plu.name + '-' + p.name;
                 if (!pips.get(pipKey)) {
                     return;
                 }
 
                 if ((new Date(pips.get(pipKey).last_modified)).getTime() < p.last_modified * 1000) {
-                    if (params['key'] && params['key'] === plu.name && params['appName'] === p.name ) {
+                    if (params['key'] && params['key'] === plu.name && params['pipName'] === p.name ) {
                         this._pipStore.externalModification(pipKey);
 
                         if (p.username !== this._authStore.getUser().username) {
