@@ -19,6 +19,10 @@ type Workflow struct {
 
 //References returns a slice with all node references
 func (w *Workflow) References() []string {
+	if w.Root == nil {
+		return nil
+	}
+
 	res := w.Root.References()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
@@ -30,6 +34,10 @@ func (w *Workflow) References() []string {
 
 //InvolvedApplications returns all applications used in the workflow
 func (w *Workflow) InvolvedApplications() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
 	res := w.Root.InvolvedApplications()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
@@ -41,6 +49,10 @@ func (w *Workflow) InvolvedApplications() []int64 {
 
 //InvolvedPipelines returns all pipelines used in the workflow
 func (w *Workflow) InvolvedPipelines() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
 	res := w.Root.InvolvedPipelines()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
@@ -52,6 +64,10 @@ func (w *Workflow) InvolvedPipelines() []int64 {
 
 //InvolvedEnvironments returns all environments used in the workflow
 func (w *Workflow) InvolvedEnvironments() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
 	res := w.Root.InvolvedEnvironments()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
@@ -166,12 +182,14 @@ type WorkflowTriggerCondition struct {
 
 //WorkflowNodeContext represents a context attached on a node
 type WorkflowNodeContext struct {
-	ID             int64        `json:"id" db:"id"`
-	WorkflowNodeID int64        `json:"workflow_node_id" db:"workflow_node_id"`
-	ApplicationID  int64        `json:"-" db:"application_id"`
-	Application    *Application `json:"application" db:"-"`
-	Environment    *Environment `json:"environment" db:"-"`
-	EnvironmentID  int64        `json:"-" db:"environment_id"`
+	ID                        int64        `json:"id" db:"id"`
+	WorkflowNodeID            int64        `json:"workflow_node_id" db:"workflow_node_id"`
+	ApplicationID             int64        `json:"-" db:"application_id"`
+	Application               *Application `json:"application" db:"-"`
+	Environment               *Environment `json:"environment" db:"-"`
+	EnvironmentID             int64        `json:"-" db:"environment_id"`
+	DefaultPayload            []Parameter  `json:"default_payload" db:"-"`
+	DefaultPipelineParameters []Parameter  `json:"default_pipeline_parameters" db:"-"`
 }
 
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
