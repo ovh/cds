@@ -8,6 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -77,8 +78,15 @@ func load(db gorp.SqlExecutor, u *sdk.User, query string, args ...interface{}) (
 	res := sdk.Workflow(dbRes)
 	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
 	if err := loadWorkflowRoot(db, &res, u); err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
 	}
+
+	joins, errJ := loadJoins(db, &res, u)
+	if errJ != nil {
+		return nil, sdk.WrapError(errJ, "Load> Unable to load workflow joins")
+	}
+
+	res.Joins = joins
 
 	delta := time.Since(t0).Seconds()
 
@@ -103,6 +111,10 @@ func loadWorkflowRoot(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	if err := IsValid(db, w, u); err != nil {
+		return err
+	}
+
 	w.LastModified = time.Now()
 	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id) VALUES ($1, $2, $3) RETURNING id", w.Name, w.Description, w.ProjectID).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
@@ -112,25 +124,41 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		return sdk.ErrWorkflowInvalidRoot
 	}
 
-	if err := insertOrUpdateNode(db, w, w.Root, u); err != nil {
+	if err := insertOrUpdateNode(db, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow root node")
 	}
 
 	if _, err := db.Exec("UPDATE workflow SET root_node_id = $2 WHERE id = $1", w.ID, w.Root.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow (%#v, %d)", w.Root, w.ID)
 	}
+
+	for _, j := range w.Joins {
+		if err := insertOrUpdateJoin(db, w, &j, u); err != nil {
+			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
+		}
+	}
+
 	return updateLastModified(db, w, u)
 }
 
 // Update updates a workflow
 func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	if err := IsValid(db, w, u); err != nil {
+		return err
+	}
+
 	w.LastModified = time.Now()
 	dbw := Workflow(*w)
 	if _, err := db.Update(&dbw); err != nil {
 		return sdk.WrapError(err, "Update> Unable to update workflow")
 	}
 	if w.Root != nil {
-		return insertOrUpdateNode(db, w, w.Root, u)
+		return sdk.WrapError(insertOrUpdateNode(db, w, w.Root, u, false), "Update> unable to update root node on workflow(%d)", w.ID)
+	}
+	for _, j := range w.Joins {
+		if err := insertOrUpdateJoin(db, w, &j, u); err != nil {
+			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
+		}
 	}
 	return updateLastModified(db, w, u)
 }
@@ -143,7 +171,7 @@ func Delete(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	}
 
 	//Delete root
-	if err := DeleteNode(db, w.Root); err != nil {
+	if err := deleteNode(db, w.Root); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow root")
 	}
 
@@ -172,4 +200,75 @@ func updateLastModified(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error
 // HasAccessTo checks if user has full r, rx or rwx access to the workflow
 func HasAccessTo(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
 	return true, nil
+}
+
+// IsValid cheks workflow validity
+func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+	//Check project is not empty
+	if w.ProjectKey == "" {
+		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
+	}
+
+	//Check duplicate refs
+	refs := w.References()
+	for _, ref1 := range refs {
+		for _, ref2 := range refs {
+			if ref1 == ref2 {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Duplicate reference %s", ref1))
+			}
+		}
+	}
+
+	//Load the project
+	proj, err := project.Load(db, w.ProjectKey, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+	if err != nil {
+		return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+	}
+
+	//Checks application are in the current project
+	apps := w.InvolvedApplications()
+	for _, appID := range apps {
+		var found bool
+		for _, a := range proj.Applications {
+			if appID == a.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown application %d", appID))
+		}
+	}
+
+	//Checks pipelines are in the current project
+	pips := w.InvolvedPipelines()
+	for _, pipID := range pips {
+		var found bool
+		for _, p := range proj.Pipelines {
+			if pipID == p.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
+		}
+	}
+
+	//Checks environments are in the current project
+	envs := w.InvolvedPipelines()
+	for _, envID := range envs {
+		var found bool
+		for _, e := range proj.Environments {
+			if envID == e.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
+		}
+	}
+
+	return nil
 }

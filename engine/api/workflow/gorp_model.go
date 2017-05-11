@@ -18,9 +18,17 @@ type NodeContext sdk.WorkflowNodeContext
 // NodeTrigger is a gorp wrapper around sdk.WorkflowNodeTrigger
 type NodeTrigger sdk.WorkflowNodeTrigger
 
+// Join is a gorp wrapper around sdk.WorkflowNodeJoin
+type Join sdk.WorkflowNodeJoin
+
+// JoinTrigger  is a gorp wrapper around sdk.WorkflowNodeJoinTrigger
+type JoinTrigger sdk.WorkflowNodeJoinTrigger
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(Workflow{}, "workflow", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Node{}, "workflow_node", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeTrigger{}, "workflow_node_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeContext{}, "workflow_node_context", true, "id"))
+	gorpmapping.Register(gorpmapping.New(Join{}, "workflow_node_join", true, "id"))
+	gorpmapping.Register(gorpmapping.New(JoinTrigger{}, "workflow_node_join_trigger", true, "id"))
 }

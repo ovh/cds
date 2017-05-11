@@ -17,18 +17,63 @@ type Workflow struct {
 	Joins        []WorkflowNodeJoin `json:"joins" db:"-"`
 }
 
+//References returns a slice with all node references
+func (w *Workflow) References() []string {
+	res := w.Root.References()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.References()...)
+		}
+	}
+	return res
+}
+
+//InvolvedApplications returns all applications used in the workflow
+func (w *Workflow) InvolvedApplications() []int64 {
+	res := w.Root.InvolvedApplications()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.InvolvedApplications()...)
+		}
+	}
+	return res
+}
+
+//InvolvedPipelines returns all pipelines used in the workflow
+func (w *Workflow) InvolvedPipelines() []int64 {
+	res := w.Root.InvolvedPipelines()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.InvolvedPipelines()...)
+		}
+	}
+	return res
+}
+
+//InvolvedEnvironments returns all environments used in the workflow
+func (w *Workflow) InvolvedEnvironments() []int64 {
+	res := w.Root.InvolvedEnvironments()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.InvolvedEnvironments()...)
+		}
+	}
+	return res
+}
+
 //WorkflowNodeJoin aims to joins multiple node into multiple triggers
 type WorkflowNodeJoin struct {
-	ID            int64                     `json:"id" db:"id"`
-	WorkflowID    int64                     `json:"workflow_id" db:"workflow_id"`
-	SourceNodeIDs []int64                   `json:"source_node_id" db:"-"`
-	Triggers      []WorkflowNodeJoinTrigger `json:"triggers" db:"-"`
+	ID             int64                     `json:"id" db:"id"`
+	WorkflowID     int64                     `json:"workflow_id" db:"workflow_id"`
+	SourceNodeIDs  []int64                   `json:"source_node_id" db:"-"`
+	SourceNodeRefs []string                  `json:"source_node_ref" db:"-"`
+	Triggers       []WorkflowNodeJoinTrigger `json:"triggers" db:"-"`
 }
 
 //WorkflowNodeJoinTrigger is a trigger for joins
 type WorkflowNodeJoinTrigger struct {
 	ID                 int64                      `json:"id" db:"id"`
-	WorkflowNodeJoinID int64                      `json:"workflow_node_join_id" db:"join_id"`
+	WorkflowNodeJoinID int64                      `json:"join_id" db:"workflow_node_join_id"`
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
 	Conditions         []WorkflowTriggerCondition `json:"conditions" db:"-"`
@@ -37,12 +82,70 @@ type WorkflowNodeJoinTrigger struct {
 //WorkflowNode represents a node in w workflow tree
 type WorkflowNode struct {
 	ID         int64                 `json:"id" db:"id"`
+	Ref        string                `json:"ref,omitempty" db:"-"`
 	WorkflowID int64                 `json:"workflow_id" db:"workflow_id"`
 	PipelineID int64                 `json:"pipeline_id" db:"pipeline_id"`
 	Pipeline   Pipeline              `json:"pipeline" db:"-"`
 	Context    *WorkflowNodeContext  `json:"context" db:"-"`
 	Hooks      []WorkflowNodeHook    `json:"hooks" db:"-"`
 	Triggers   []WorkflowNodeTrigger `json:"triggers" db:"-"`
+}
+
+//References returns a slice with all node references
+func (n *WorkflowNode) References() []string {
+	res := []string{}
+	if n.Ref != "" {
+		res = []string{n.Ref}
+	}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.References()...)
+	}
+	return res
+}
+
+//InvolvedApplications returns all applications used in the workflow
+func (n *WorkflowNode) InvolvedApplications() []int64 {
+	res := []int64{}
+	if n.Context != nil {
+		if n.Context.ApplicationID == 0 && n.Context.Application != nil {
+			n.Context.ApplicationID = n.Context.Application.ID
+		}
+		res = []int64{n.Context.ApplicationID}
+	}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.InvolvedApplications()...)
+	}
+	return res
+}
+
+//InvolvedPipelines returns all pipelines used in the workflow
+func (n *WorkflowNode) InvolvedPipelines() []int64 {
+	res := []int64{}
+	if n.Context != nil {
+		if n.PipelineID == 0 {
+			n.PipelineID = n.Pipeline.ID
+		}
+		res = []int64{n.PipelineID}
+	}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.InvolvedPipelines()...)
+	}
+	return res
+}
+
+//InvolvedEnvironments returns all environments used in the workflow
+func (n *WorkflowNode) InvolvedEnvironments() []int64 {
+	res := []int64{}
+	if n.Context != nil {
+		if n.Context.EnvironmentID == 0 && n.Context.Environment != nil {
+			n.Context.EnvironmentID = n.Context.Environment.ID
+		}
+		res = []int64{n.Context.EnvironmentID}
+	}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.InvolvedEnvironments()...)
+	}
+	return res
 }
 
 //WorkflowNodeTrigger is a ling betweeb two pipelines in a workflow

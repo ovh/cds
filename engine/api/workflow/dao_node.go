@@ -13,7 +13,10 @@ import (
 )
 
 // InsertOrUpdateNode insert or update a node for the workflow
-func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User) error {
+func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
+	defer func() {
+		log.Debug("insertOrUpdateNode> insert or update node %d (%s) on %s", n.ID, n.Ref, n.Pipeline.Name)
+	}()
 	n.WorkflowID = w.ID
 
 	if n.PipelineID == 0 {
@@ -43,33 +46,27 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 		n.Context.WorkflowNodeID = oldNode.ID
 	}
 
-	//Delete old node
-	var isRoot bool
 	if oldNode != nil {
-		if w.Root.ID != n.ID {
-			if err := DeleteNode(db, oldNode); err != nil {
-				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow node %d", oldNode.ID)
-			}
-		} else {
-			isRoot = true
-			//Update the root node
-			log.Debug("InsertOrUpdateNode> Updating root node %d", oldNode.ID)
-			dbwn := Node(*n)
-			if _, err := db.Update(&dbwn); err != nil {
-				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow root node")
-			}
-			if err := DeleteNodeDependencies(db, n); err != nil {
-				return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow root node dependencies")
-			}
+		//Update the node
+		log.Debug("InsertOrUpdateNode> Updating root node %d", oldNode.ID)
+		dbwn := Node(*n)
+		if _, err := db.Update(&dbwn); err != nil {
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow root node")
 		}
-	}
-	if !isRoot {
+		if err := DeleteNodeDependencies(db, n); err != nil {
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow root node dependencies")
+		}
+	} else {
 		//Insert new node
 		dbwn := Node(*n)
 		if err := db.Insert(&dbwn); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
 		}
 		n.ID = dbwn.ID
+	}
+
+	if skipDependencies {
+		return nil
 	}
 
 	//Insert context
@@ -93,15 +90,17 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	}
 
 	//Insert hooks
-	for _, h := range n.Hooks {
-		if err := insertOrUpdateHook(db, n, &h); err != nil {
+	for i := range n.Hooks {
+		h := &n.Hooks[i]
+		if err := insertOrUpdateHook(db, n, h); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}
 
 	//Insert triggers
-	for _, t := range n.Triggers {
-		if err := insertOrUpdateTrigger(db, w, n, &t, u); err != nil {
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		if err := insertOrUpdateTrigger(db, w, n, t, u); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}
@@ -185,8 +184,8 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 	return &wn, nil
 }
 
-//DeleteNode deletes nodes and all its children
-func DeleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
+//deleteNode deletes nodes and all its children
+func deleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
 	if err := DeleteNodeDependencies(db, node); err != nil {
 		return sdk.WrapError(err, "DeleteNode> Unable to delete node dependencies %d", node.ID)
 	}
