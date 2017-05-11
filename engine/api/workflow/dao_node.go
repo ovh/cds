@@ -111,23 +111,32 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	return nil
 }
 
+type sqlContext struct {
+	ID                        int64          `db:"id"`
+	WorkflowNodeID            int64          `db:"workflow_node_id"`
+	AppID                     sql.NullInt64  `db:"application_id"`
+	EnvID                     sql.NullInt64  `db:"environment_id"`
+	DefaultPayload            sql.NullString `db:"default_payload"`
+	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
+}
+
 func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	if err := db.QueryRow("INSERT INTO workflow_node_context (workflow_node_id) VALUES ($1) RETURNING id", c.WorkflowNodeID).Scan(&c.ID); err != nil {
 		return sdk.WrapError(err, "insertNodeContext> Unable to insert workflow node context")
 	}
 
+	var sqlContext = sqlContext{}
+	sqlContext.ID = c.ID
+	sqlContext.WorkflowNodeID = c.WorkflowNodeID
+
 	// Set ApplicationID in context
 	if c.ApplicationID != 0 {
-		if _, err := db.Exec("UPDATE workflow_node_context SET application_id=$1 where id=$2", c.ApplicationID, c.ID); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node context(%d) for application %d", c.ID, c.ApplicationID)
-		}
+		sqlContext.AppID = sql.NullInt64{Int64: c.ApplicationID, Valid: true}
 	}
 
 	// Set EnvironmentID in context
 	if c.EnvironmentID != 0 {
-		if _, err := db.Exec("UPDATE workflow_node_context SET environment_id=$1 where id=$2", c.EnvironmentID, c.ID); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node context(%d) for env %d", c.ID, c.EnvironmentID)
-		}
+		sqlContext.EnvID = sql.NullInt64{Int64: c.EnvironmentID, Valid: true}
 	}
 
 	// Set DefaultPayload in context
@@ -136,9 +145,7 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 		if errM != nil {
 			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default payload", c.ID)
 		}
-		if _, err := db.Exec("UPDATE workflow_node_context SET default_payload=$1 where id=$2", b, c.ID); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow node context(%d)", c.ID)
-		}
+		sqlContext.DefaultPayload = sql.NullString{String: string(b), Valid: true}
 	}
 
 	// Set PipelineParameters in context
@@ -147,9 +154,11 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 		if errM != nil {
 			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default pipeline parameters", c.ID)
 		}
-		if _, err := db.Exec("UPDATE workflow_node_context SET default_pipeline_parameters=$1 where id=$2", b, c.ID); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow node context(%d)", c.ID)
-		}
+		sqlContext.DefaultPipelineParameters = sql.NullString{String: string(b), Valid: true}
+	}
+
+	if _, err := db.Update(&sqlContext); err != nil {
+		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow node context(%d)", c.ID)
 	}
 
 	return nil
@@ -202,13 +211,7 @@ func loadNodeContext(db gorp.SqlExecutor, wn *sdk.WorkflowNode, u *sdk.User) (*s
 	ctx := sdk.WorkflowNodeContext(dbnc)
 	ctx.WorkflowNodeID = wn.ID
 
-	var sqlContext = struct {
-		AppID                     sql.NullInt64  `db:"application_id"`
-		EnvID                     sql.NullInt64  `db:"environment_id"`
-		DefaultPayload            sql.NullString `db:"default_payload"`
-		DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
-	}{}
-
+	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
 		"select application_id, environment_id, default_payload, default_pipeline_parameters from workflow_node_context where id = $1", ctx.ID); err != nil {
 		return nil, err

@@ -29,6 +29,7 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(Node{}, "workflow_node", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeTrigger{}, "workflow_node_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeContext{}, "workflow_node_context", true, "id"))
+	gorpmapping.Register(gorpmapping.New(sqlContext{}, "workflow_node_context", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Join{}, "workflow_node_join", true, "id"))
 	gorpmapping.Register(gorpmapping.New(JoinTrigger{}, "workflow_node_join_trigger", true, "id"))
 }
