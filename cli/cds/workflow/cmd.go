@@ -12,8 +12,7 @@ var (
 
 	listCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List workflow on current project",
-		Long:  "List workflow on current project.",
+		Short: "List workflow on current project: cds workflow list <project key>",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
 				sdk.Exit("Wrong usage: %s\n", cmd.Short)
@@ -28,8 +27,7 @@ var (
 
 	showCmd = &cobra.Command{
 		Use:   "show",
-		Short: "Show a workflow on current project",
-		Long:  "Show a  workflow on current project.",
+		Short: "Show a workflow on current project: cds workflow show <project key> <workflow name>",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				sdk.Exit("Wrong usage: %s\n", cmd.Short)
