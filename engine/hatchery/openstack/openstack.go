@@ -440,7 +440,7 @@ cd $HOME
 # Download and start worker with curl
 curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
 chmod +x worker
-CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --booked-job-id={{.JobID}} --single-use --ttl={{.TTL}} {{.Graylog}} && exit 0
+CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --booked-job-id={{.JobID}} --single-use --ttl={{.TTL}} {{.Graylog}} && exit 0
 `
 	var udata = udataBegin + string(udataModel) + udataEnd
 
@@ -454,23 +454,25 @@ CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model
 		return errt
 	}
 	udataParam := struct {
-		API      string
-		Name     string
-		Key      string
-		Model    int64
-		Hatchery int64
-		JobID    int64
-		TTL      int
-		Graylog  string
+		API          string
+		Name         string
+		Key          string
+		Model        int64
+		Hatchery     int64
+		HatcheryName string
+		JobID        int64
+		TTL          int
+		Graylog      string
 	}{
-		API:      viper.GetString("api"),
-		Name:     name,
-		Key:      viper.GetString("token"),
-		Model:    model.ID,
-		Hatchery: h.hatch.ID,
-		JobID:    jobID,
-		TTL:      h.workerTTL,
-		Graylog:  graylog,
+		API:          viper.GetString("api"),
+		Name:         name,
+		Key:          viper.GetString("token"),
+		Model:        model.ID,
+		Hatchery:     h.hatch.ID,
+		HatcheryName: h.hatch.Name,
+		JobID:        jobID,
+		TTL:          h.workerTTL,
+		Graylog:      graylog,
 	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {

@@ -123,13 +123,14 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	forcePull := strings.HasSuffix(model.Image, ":latest")
 
 	env := map[string]string{
-		"CDS_API":        sdk.Host,
-		"CDS_KEY":        m.token,
-		"CDS_NAME":       workerName,
-		"CDS_MODEL":      fmt.Sprintf("%d", model.ID),
-		"CDS_HATCHERY":   fmt.Sprintf("%d", m.hatch.ID),
-		"CDS_SINGLE_USE": "1",
-		"CDS_TTL":        fmt.Sprintf("%d", m.workerTTL),
+		"CDS_API":           sdk.Host,
+		"CDS_KEY":           m.token,
+		"CDS_NAME":          workerName,
+		"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
+		"CDS_HATCHERY":      fmt.Sprintf("%d", m.hatch.ID),
+		"CDS_HATCHERY_NAME": fmt.Sprintf("%s", m.hatch.Name),
+		"CDS_SINGLE_USE":    "1",
+		"CDS_TTL":           fmt.Sprintf("%d", m.workerTTL),
 	}
 
 	if viper.GetString("graylog_host") != "" {

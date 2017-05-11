@@ -38,8 +38,11 @@ func cmdMain() *cobra.Command {
 	pflags.Int("model", 0, "Model of worker")
 	viper.BindPFlag("model", pflags.Lookup("model"))
 
-	pflags.Int("hatchery", 0, "Hatchery spawing worker")
+	pflags.Int("hatchery", 0, "Hatchery ID spawing worker")
 	viper.BindPFlag("hatchery", pflags.Lookup("hatchery"))
+
+	pflags.String("hatchery-name", "", "Hatchery Name spawing worker")
+	viper.BindPFlag("hatchery_name", pflags.Lookup("hatchery-name"))
 
 	flags := mainCmd.Flags()
 

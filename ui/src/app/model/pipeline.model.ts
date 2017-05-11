@@ -17,7 +17,7 @@ export class Pipeline {
     groups: Array<GroupPermission>;
     parameters: Array<Parameter>;
     permission: number;
-    last_modified: number;
+    last_modified: Date;
     projectKey: string;
     attached_application: Array<Application>;
 

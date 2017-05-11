@@ -70,7 +70,7 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 	}
 	pbs, err := executerProcess(tx, p, e)
 	if err != nil {
-		log.Error("poller.ExecuterRun> Unable to process %v : %s", e, err)
+		log.Error("poller.ExecuterRun> Unable to process %+v : %s", e, err)
 		return
 	}
 

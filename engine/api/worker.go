@@ -26,15 +26,11 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	// Check that hatchery exists
 	var h *sdk.Hatchery
-	if params.Hatchery != 0 {
-		if err := hatchery.Exists(db, params.Hatchery); err != nil {
-			return sdk.WrapError(err, "registerWorkerHandler> Unable to check if hatchery (%d) exists on register worker %s (model:%d)", params.Hatchery, params.Name, params.Model)
-		}
-
+	if params.HatcheryName != "" {
 		var errH error
-		h, errH = hatchery.LoadHatcheryByID(db, params.Hatchery)
+		h, errH = hatchery.LoadHatcheryByName(db, params.HatcheryName)
 		if errH != nil {
-			return sdk.WrapError(errH, "registerWorkerHandler> Unable to load hatchery %d", params.Hatchery)
+			return sdk.WrapError(errH, "registerWorkerHandler> Unable to load hatchery %s", params.HatcheryName)
 		}
 	}
 
@@ -47,7 +43,7 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	worker.Uptodate = params.Version == internal.VERSION
 
-	log.Debug("New worker: [%s] - %s\n", worker.ID, worker.Name)
+	log.Debug("New worker: [%s] - %s", worker.ID, worker.Name)
 
 	// Return worker info to worker itself
 	return WriteJSON(w, r, worker, http.StatusOK)

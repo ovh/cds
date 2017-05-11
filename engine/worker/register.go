@@ -33,6 +33,7 @@ func register(cdsURI string, name string, uk string) error {
 		UserKey:            uk,
 		Model:              model,
 		Hatchery:           hatchery,
+		HatcheryName:       hatcheryName,
 		BinaryCapabilities: binaryCapabilities,
 		Version:            VERSION,
 	}
@@ -64,7 +65,7 @@ func register(cdsURI string, name string, uk string) error {
 	WorkerID = w.ID
 	sdk.Authorization(w.ID)
 	initGRPCConn()
-	log.Info("Registered: %s\n", data)
+	log.Info("Registered: %s", data)
 
 	if !w.Uptodate {
 		log.Warning("-=-=-=-=- Please update your worker binary -=-=-=-=-")

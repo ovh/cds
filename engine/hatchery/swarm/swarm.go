@@ -257,6 +257,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob)
 		"CDS_KEY" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
+		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
 		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
 		"CDS_SINGLE_USE=1",
 	}

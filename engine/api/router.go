@@ -95,7 +95,7 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					viper.GetInt(viperDBTimeout),
 					viper.GetInt(viperDBMaxConn),
 				); e != nil {
-					log.Error("[PANIC_RECOVERY] Unable to reinit db connection : %s", e)
+					log.Error("[PANIC_RECOVERY] Unable to reinit db connection: %s", e)
 				}
 
 				//Checking if there are two much panics in two minutes
@@ -175,7 +175,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if rc.auth {
 			if err := r.checkAuthentication(db, req.Header, c); err != nil {
-				log.Warning("Router> Authorization denied on %s %s for %s: %s\n", req.Method, req.URL, req.RemoteAddr, err)
+				log.Warning("Router> Authorization denied on %s %s for %s: %s", req.Method, req.URL, req.RemoteAddr, err)
 				WriteError(w, req, sdk.ErrUnauthorized)
 				return
 			}
@@ -183,7 +183,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if c.User != nil {
 			if err := loadUserPermissions(db, c.User); err != nil {
-				log.Warning("Router> Unable to load user %s permission : %s", c.User.ID, err)
+				log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
 				WriteError(w, req, sdk.ErrUnauthorized)
 				return
 			}
@@ -201,14 +201,14 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if c.Worker != nil {
 			if err := worker.RefreshWorker(db, c.Worker.ID); err != nil {
-				log.Warning("Router> Unable to refresh worker : %s", err)
+				log.Warning("Router> Unable to refresh worker: %s", err)
 				WriteError(w, req, err)
 				return
 			}
 
 			g, err := loadGroupPermissions(db, c.Worker.GroupID)
 			if err != nil {
-				log.Warning("Router> cannot load group permissions : %s", err)
+				log.Warning("Router> cannot load group permissions: %s", err)
 				WriteError(w, req, sdk.ErrUnauthorized)
 				return
 			}
@@ -230,7 +230,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 					log.Debug("Router> loading groups permission for model %d", c.Worker.Model)
 					modelGroup, errLoad2 := loadGroupPermissions(db, m.GroupID)
 					if errLoad2 != nil {
-						log.Warning("checkWorkerAuth> Cannot load group: %s\n", errLoad2)
+						log.Warning("Router> Cannot load group: %s", errLoad2)
 						WriteError(w, req, sdk.ErrUnauthorized)
 						return
 					}
@@ -378,14 +378,14 @@ func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *con
 }
 
 func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
-	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
+	uid, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return fmt.Errorf("bad worker key syntax: %s", err)
 	}
 
-	h, err := hatchery.LoadHatchery(db, string(id))
+	h, err := hatchery.LoadHatchery(db, string(uid))
 	if err != nil {
-		return fmt.Errorf("Invalid Hatchery ID:%s err:%s", string(id), err)
+		return fmt.Errorf("Invalid Hatchery UID:%s err:%s", string(uid), err)
 	}
 
 	c.User = &sdk.User{Username: h.Name}
