@@ -39,6 +39,9 @@ func initViper() {
 		os.Exit(2)
 	}
 
+	// could be empty
+	hatcheryName = viper.GetString("hatchery_name")
+
 	api = viper.GetString("api")
 	if api == "" {
 		log.Error("--api not provided, aborting.")

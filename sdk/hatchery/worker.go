@@ -8,7 +8,6 @@ import (
 // killWorker gets all workers spawned by current hatchery
 // and kill all workers with status Waiting
 func killWorker(h Interface, model *sdk.Model) error {
-
 	workers, errW := sdk.GetWorkers()
 	if errW != nil {
 		return errW
@@ -21,7 +20,7 @@ func killWorker(h Interface, model *sdk.Model) error {
 		}
 
 		// Check if worker was spawned by this hatchery
-		if worker.HatcheryID == 0 || worker.HatcheryID != h.ID() {
+		if worker.HatcheryName == "" || worker.HatcheryName != h.Hatchery().Name {
 			continue
 		}
 
@@ -30,10 +29,10 @@ func killWorker(h Interface, model *sdk.Model) error {
 			if err := sdk.DisableWorker(worker.ID); err != nil {
 				return err
 			}
-			log.Info("KillWorker> Disabled %s\n", worker.Name)
+			log.Info("KillWorker> Disabled %s", worker.Name)
 			return h.KillWorker(worker)
 		}
-		log.Info("KillWorker> Cannot kill building worker %s\n", worker.Name)
+		log.Info("KillWorker> Cannot kill building worker %s", worker.Name)
 	}
 
 	return nil

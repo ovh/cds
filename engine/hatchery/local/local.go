@@ -93,6 +93,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
+	args = append(args, fmt.Sprintf("--hatchery-name=%s", h.hatch.Name))
 
 	if viper.GetString("graylog_host") != "" {
 		args = append(args, fmt.Sprintf("--graylog-host=%s", viper.GetString("graylog_host")))
