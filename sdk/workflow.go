@@ -292,7 +292,7 @@ type WorkflowRun struct {
 	Number           int64             `json:"number" db:"number"`
 	Workflow         Workflow          `json:"workflow" db:"-"`
 	Start            time.Time         `json:"start" db:"start"`
-	WorkflowNodeRuns []WorkflowNodeRun `json:"root" db:"-"`
+	WorkflowNodeRuns []WorkflowNodeRun `json:"nodes" db:"-"`
 	LastModified     time.Time         `json:"last_modified"`
 }
 
@@ -300,7 +300,7 @@ type WorkflowRun struct {
 type WorkflowNodeRun struct {
 	ID              int64                     `json:"id" db:"id"`
 	Number          int64                     `json:"number" db:"number"`
-	SubNumber       int64                     `json:"subnumber" db:"numsubnumberber"`
+	SubNumber       int64                     `json:"subnumber" db:"subnumber"`
 	PipelineBuildID int64                     `json:"pipeline_build_id" db:"pipeline_build_id"`
 	PipelineBuild   *PipelineBuild            `json:"pipeline_build" db:"-"`
 	WorkflowNodeID  int64                     `json:"workflow_node_id" db:"workflow_node_id"`
@@ -312,14 +312,14 @@ type WorkflowNodeRun struct {
 
 //WorkflowNodeRunHookEvent is an instanc of event received on a hook
 type WorkflowNodeRunHookEvent struct {
-	Payload            interface{} `json:"number" db:"-"`
+	Payload            interface{} `json:"payload" db:"-"`
 	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
 	WorkflowNodeHookID int64       `json:"workflow_node_hook_id" db:"-"`
 }
 
 //WorkflowNodeRunManual is an instanc of event received on a hook
 type WorkflowNodeRunManual struct {
-	Payload            interface{} `json:"number" db:"-"`
+	Payload            interface{} `json:"payload" db:"-"`
 	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
 	User               User        `json:"user" db:"-"`
 }
