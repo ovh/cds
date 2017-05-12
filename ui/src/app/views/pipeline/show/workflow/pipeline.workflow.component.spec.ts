@@ -84,7 +84,7 @@ describe('CDS: Pipeline Workflow', () => {
         fixture.componentInstance.project = p;
 
         let pip = new Pipeline();
-        pip.last_modified = 0;
+        pip.last_modified = new Date();
         pip.name = 'pip';
         fixture.componentInstance.pipeline = pip;
 
@@ -99,7 +99,7 @@ describe('CDS: Pipeline Workflow', () => {
 
 
         let pipUpdated = new Pipeline();
-        pip.last_modified = 123;
+        pipUpdated.last_modified = new Date();
         pipUpdated.stages = new Array<Stage>();
         pipUpdated.stages.push(s);
 

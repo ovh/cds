@@ -74,7 +74,7 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
         if (this.pipeline.stages && this.pipeline.stages.length > 0) {
             this.selectedStage = this.pipeline.stages[0];
         }
-        this.oldLastModifiedDate = this.pipeline.last_modified;
+        this.oldLastModifiedDate = this.pipeline.last_modified.getTime();
 
         this._varService.getContextVariable(this.project.key).first().subscribe(s => this.suggest = s);
     }
@@ -84,7 +84,7 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
      * Do not work with ngOnChange.
      */
     ngDoCheck() {
-        if (this.pipeline.last_modified !== this.oldLastModifiedDate) {
+        if (this.pipeline.last_modified.getTime() !== this.oldLastModifiedDate) {
             // If pipeline changed - update selected stage
             if (this.selectedStage && this.pipeline.stages) {
                 let index = this.pipeline.stages.findIndex(s => s.id === this.selectedStage.id);
