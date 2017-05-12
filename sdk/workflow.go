@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //Workflow represents a pipeline based workflow
@@ -216,6 +218,44 @@ type WorkflowHookModel struct {
 	Image         string                 `json:"image" db:"image"`
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
+}
+
+//WorkflowRun is an execution instance of a run
+type WorkflowRun struct {
+	ID               int64             `json:"id" db:"id"`
+	Number           int64             `json:"number" db:"number"`
+	Workflow         Workflow          `json:"workflow" db:"-"`
+	Start            time.Time         `json:"start" db:"start"`
+	WorkflowNodeRuns []WorkflowNodeRun `json:"root" db:"-"`
+	LastModified     time.Time         `json:"last_modified"`
+}
+
+//WorkflowNodeRun is as execution instance of a node
+type WorkflowNodeRun struct {
+	ID              int64                     `json:"id" db:"id"`
+	Number          int64                     `json:"number" db:"number"`
+	SubNumber       int64                     `json:"subnumber" db:"numsubnumberber"`
+	PipelineBuildID int64                     `json:"pipeline_build_id" db:"pipeline_build_id"`
+	PipelineBuild   *PipelineBuild            `json:"pipeline_build" db:"-"`
+	WorkflowNodeID  int64                     `json:"workflow_node_id" db:"workflow_node_id"`
+	LastModified    time.Time                 `json:"last_modified" db:"last_modified"`
+	HookEvent       *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
+	Manual          *WorkflowNodeRunManual    `json:"manual" db:"-"`
+	TriggerID       int64                     `json:"workflow_node_trigger_id" db:"workflow_node_trigger_id"`
+}
+
+//WorkflowNodeRunHookEvent is an instanc of event received on a hook
+type WorkflowNodeRunHookEvent struct {
+	Payload            interface{} `json:"number" db:"-"`
+	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
+	WorkflowNodeHookID int64       `json:"workflow_node_hook_id" db:"-"`
+}
+
+//WorkflowNodeRunManual is an instanc of event received on a hook
+type WorkflowNodeRunManual struct {
+	Payload            interface{} `json:"number" db:"-"`
+	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
+	User               sdk.User    `json:"user" db:"-"`
 }
 
 //WorkflowList return the list of the workflows for a project
