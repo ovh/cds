@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+//DetailedWorkflow represents a pipeline based workflow with some details
+type DetailedWorkflow struct {
+	Workflow Workflow `json:"workflow"`
+	Root     int64    `json:"root"`
+	Nodes    []int64  `json:"nodes"`
+	Joins    []int64  `json:"joins"`
+	Triggers []int64  `json:"triggers"`
+}
+
 //Workflow represents a pipeline based workflow
 type Workflow struct {
 	ID           int64              `json:"id" db:"id"`
@@ -17,6 +26,46 @@ type Workflow struct {
 	RootID       int64              `json:"root_id,omitempty" db:"root_node_id"`
 	Root         *WorkflowNode      `json:"root" db:"-"`
 	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-"`
+}
+
+//JoinsID returns joins ID
+func (w *Workflow) JoinsID() []int64 {
+	res := []int64{}
+	for _, j := range w.Joins {
+		res = append(res, j.ID)
+	}
+	return res
+}
+
+//Nodes returns nodes IDs excluding the root ID
+func (w *Workflow) Nodes() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := []int64{}
+	for _, t := range w.Root.Triggers {
+		res = append(res, t.WorkflowDestNode.Nodes()...)
+	}
+
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.Nodes()...)
+		}
+	}
+	return res
+}
+
+//TriggersID returns triggers IDs
+func (w *Workflow) TriggersID() []int64 {
+	res := w.Root.TriggersID()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.ID)
+			res = append(res, t.WorkflowDestNode.TriggersID()...)
+		}
+	}
+	return res
 }
 
 //References returns a slice with all node references
@@ -107,6 +156,25 @@ type WorkflowNode struct {
 	Context    *WorkflowNodeContext  `json:"context" db:"-"`
 	Hooks      []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
 	Triggers   []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+}
+
+//Nodes returns a slice with all node IDs
+func (n *WorkflowNode) Nodes() []int64 {
+	res := []int64{n.ID}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.Nodes()...)
+	}
+	return res
+}
+
+//TriggersID returns a slides of triggers IDs
+func (n *WorkflowNode) TriggersID() []int64 {
+	res := []int64{}
+	for _, t := range n.Triggers {
+		res = append(res, t.ID)
+		res = append(res, t.WorkflowDestNode.TriggersID()...)
+	}
+	return res
 }
 
 //References returns a slice with all node references
@@ -216,6 +284,44 @@ type WorkflowHookModel struct {
 	Image         string                 `json:"image" db:"image"`
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
+}
+
+//WorkflowRun is an execution instance of a run
+type WorkflowRun struct {
+	ID               int64             `json:"id" db:"id"`
+	Number           int64             `json:"number" db:"number"`
+	Workflow         Workflow          `json:"workflow" db:"-"`
+	Start            time.Time         `json:"start" db:"start"`
+	WorkflowNodeRuns []WorkflowNodeRun `json:"nodes" db:"-"`
+	LastModified     time.Time         `json:"last_modified"`
+}
+
+//WorkflowNodeRun is as execution instance of a node
+type WorkflowNodeRun struct {
+	ID              int64                     `json:"id" db:"id"`
+	Number          int64                     `json:"number" db:"number"`
+	SubNumber       int64                     `json:"subnumber" db:"subnumber"`
+	PipelineBuildID int64                     `json:"pipeline_build_id" db:"pipeline_build_id"`
+	PipelineBuild   *PipelineBuild            `json:"pipeline_build" db:"-"`
+	WorkflowNodeID  int64                     `json:"workflow_node_id" db:"workflow_node_id"`
+	LastModified    time.Time                 `json:"last_modified" db:"last_modified"`
+	HookEvent       *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
+	Manual          *WorkflowNodeRunManual    `json:"manual" db:"-"`
+	TriggerID       int64                     `json:"workflow_node_trigger_id" db:"workflow_node_trigger_id"`
+}
+
+//WorkflowNodeRunHookEvent is an instanc of event received on a hook
+type WorkflowNodeRunHookEvent struct {
+	Payload            interface{} `json:"payload" db:"-"`
+	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
+	WorkflowNodeHookID int64       `json:"workflow_node_hook_id" db:"-"`
+}
+
+//WorkflowNodeRunManual is an instanc of event received on a hook
+type WorkflowNodeRunManual struct {
+	Payload            interface{} `json:"payload" db:"-"`
+	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
+	User               User        `json:"user" db:"-"`
 }
 
 //WorkflowList return the list of the workflows for a project
