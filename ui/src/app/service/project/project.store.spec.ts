@@ -316,7 +316,7 @@ describe('CDS: project Store', () => {
         let addRepoCheck = false;
         projectStore.getProjects('key1').first().subscribe( projs => {
             addRepoCheck = true;
-            expect(projs.get('key1').last_modified).toBe(123, 'Project must have been updated');
+            expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
         });
         expect(addRepoCheck).toBeTruthy('Must check project update');
 
