@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+//DetailedWorkflow represents a pipeline based workflow with some details
+type DetailedWorkflow struct {
+	Workflow Workflow `json:"workflow"`
+	Root     int64    `json:"root"`
+	Nodes    []int64  `json:"nodes"`
+	Joins    []int64  `json:"joins"`
+	Triggers []int64  `json:"triggers"`
+}
+
 //Workflow represents a pipeline based workflow
 type Workflow struct {
 	ID           int64              `json:"id" db:"id"`
@@ -17,6 +26,46 @@ type Workflow struct {
 	RootID       int64              `json:"root_id,omitempty" db:"root_node_id"`
 	Root         *WorkflowNode      `json:"root" db:"-"`
 	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-"`
+}
+
+//JoinsID returns joins ID
+func (w *Workflow) JoinsID() []int64 {
+	res := []int64{}
+	for _, j := range w.Joins {
+		res = append(res, j.ID)
+	}
+	return res
+}
+
+//Nodes returns nodes IDs excluding the root ID
+func (w *Workflow) Nodes() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := []int64{}
+	for _, t := range w.Root.Triggers {
+		res = append(res, t.WorkflowDestNode.Nodes()...)
+	}
+
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.Nodes()...)
+		}
+	}
+	return res
+}
+
+//TriggersID returns triggers IDs
+func (w *Workflow) TriggersID() []int64 {
+	res := w.Root.TriggersID()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.ID)
+			res = append(res, t.WorkflowDestNode.TriggersID()...)
+		}
+	}
+	return res
 }
 
 //References returns a slice with all node references
@@ -107,6 +156,25 @@ type WorkflowNode struct {
 	Context    *WorkflowNodeContext  `json:"context" db:"-"`
 	Hooks      []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
 	Triggers   []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+}
+
+//Nodes returns a slice with all node IDs
+func (n *WorkflowNode) Nodes() []int64 {
+	res := []int64{n.ID}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.Nodes()...)
+	}
+	return res
+}
+
+//TriggersID returns a slides of triggers IDs
+func (n *WorkflowNode) TriggersID() []int64 {
+	res := []int64{}
+	for _, t := range n.Triggers {
+		res = append(res, t.ID)
+		res = append(res, t.WorkflowDestNode.TriggersID()...)
+	}
+	return res
 }
 
 //References returns a slice with all node references

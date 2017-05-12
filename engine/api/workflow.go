@@ -30,19 +30,33 @@ func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
+	detailled := FormBool(r, "detailled")
 
 	w1, err := workflow.Load(db, key, name, c.User)
 	if err != nil {
 		return err
 	}
 
-	return WriteJSON(w, r, w1, http.StatusOK)
+	if !detailled {
+		return WriteJSON(w, r, w1, http.StatusOK)
+	}
+
+	w2 := sdk.DetailedWorkflow{}
+	w2.Workflow = *w1
+
+	w2.Root = w1.Root.ID
+	w2.Nodes = w1.Nodes()
+	w2.Joins = w1.JoinsID()
+	w2.Triggers = w1.TriggersID()
+
+	return WriteJSON(w, r, w2, http.StatusOK)
 }
 
 // postWorkflowHandler create a new workflow
 func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
+	detailled := FormBool(r, "detailled")
 
 	p, errP := project.Load(db, key, c.User)
 	if errP != nil {
@@ -72,7 +86,20 @@ func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(errT, "Cannot commit transaction")
 	}
-	return WriteJSON(w, r, wf, http.StatusCreated)
+
+	if !detailled {
+		return WriteJSON(w, r, wf, http.StatusCreated)
+	}
+
+	w2 := sdk.DetailedWorkflow{}
+	w2.Workflow = wf
+
+	w2.Root = wf.Root.ID
+	w2.Nodes = wf.Nodes()
+	w2.Joins = wf.JoinsID()
+	w2.Triggers = wf.TriggersID()
+
+	return WriteJSON(w, r, w2, http.StatusCreated)
 }
 
 // putWorkflowHandler updates a workflow
@@ -80,6 +107,7 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
+	detailled := FormBool(r, "detailled")
 
 	p, errP := project.Load(db, key, c.User)
 	if errP != nil {
@@ -118,7 +146,19 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(errT, "Cannot commit transaction")
 	}
-	return WriteJSON(w, r, wf, http.StatusOK)
+	if !detailled {
+		return WriteJSON(w, r, wf, http.StatusOK)
+	}
+
+	w2 := sdk.DetailedWorkflow{}
+	w2.Workflow = wf
+
+	w2.Root = wf.Root.ID
+	w2.Nodes = wf.Nodes()
+	w2.Joins = wf.JoinsID()
+	w2.Triggers = wf.TriggersID()
+
+	return WriteJSON(w, r, w2, http.StatusOK)
 }
 
 // putWorkflowHandler deletes a workflow

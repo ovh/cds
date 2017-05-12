@@ -65,7 +65,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	//Do the request
 	w := httptest.NewRecorder()
 	router.mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, 404, w.Code)
 }
 
 func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
