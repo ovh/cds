@@ -30,14 +30,14 @@ func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
-	detailled := FormBool(r, "detailled")
+	detailed := FormBool(r, "detailed")
 
 	w1, err := workflow.Load(db, key, name, c.User)
 	if err != nil {
 		return err
 	}
 
-	if !detailled {
+	if !detailed {
 		return WriteJSON(w, r, w1, http.StatusOK)
 	}
 
@@ -56,7 +56,7 @@ func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
-	detailled := FormBool(r, "detailled")
+	detailed := FormBool(r, "detailed")
 
 	p, errP := project.Load(db, key, c.User)
 	if errP != nil {
@@ -87,7 +87,7 @@ func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.WrapError(errT, "Cannot commit transaction")
 	}
 
-	if !detailled {
+	if !detailed {
 		return WriteJSON(w, r, wf, http.StatusCreated)
 	}
 
@@ -107,7 +107,7 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
-	detailled := FormBool(r, "detailled")
+	detailed := FormBool(r, "detailed")
 
 	p, errP := project.Load(db, key, c.User)
 	if errP != nil {
@@ -146,7 +146,7 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(errT, "Cannot commit transaction")
 	}
-	if !detailled {
+	if !detailed {
 		return WriteJSON(w, r, wf, http.StatusOK)
 	}
 
