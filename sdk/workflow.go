@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/ovh/cds/sdk"
 )
 
 //Workflow represents a pipeline based workflow
@@ -255,7 +253,7 @@ type WorkflowNodeRunHookEvent struct {
 type WorkflowNodeRunManual struct {
 	Payload            interface{} `json:"number" db:"-"`
 	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
-	User               sdk.User    `json:"user" db:"-"`
+	User               User        `json:"user" db:"-"`
 }
 
 //WorkflowList return the list of the workflows for a project
