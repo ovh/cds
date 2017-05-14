@@ -99,6 +99,7 @@ Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:23
 [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml)
 
 ```bash
+$ export HOSTNAME=$(hostname)
 $ docker-compose up cds-hatchery-swarm
 ```
 
