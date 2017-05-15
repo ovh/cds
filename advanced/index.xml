@@ -75,7 +75,7 @@ export CDS_LOG_LEVEL=notice export CDS_RATIO_SERVICE=50 export CDS_TOKEN=&amp;qu
       
       <guid>https://ovh.github.io/cds/advanced/advanced.worker/</guid>
       <description>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
-Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge, &amp;hellip;</description>
+Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge&amp;hellip;</description>
     </item>
     
     <item>
@@ -84,9 +84,9 @@ Building your own worker model enable you to integrate your own tools, or to cus
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/advanced/advanced.worker.model/</guid>
-      <description>Purpose The goal of CDS is to start a worker when you need it and matching all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.
-The goal of worker model is to describe the capabities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.
-Types There is 2 types of worker models:
+      <description>Purpose The goal of CDS is to start a worker when you need it, which should match all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.
+The goal of a worker model is to describe the capabilities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.
+Types There are 2 types of worker models:
  Docker images, see how to create a worker model docker Openstack images, see how to create a worker model openstack  Capabilities Capabilities have a name, a type and a value.</description>
     </item>
     

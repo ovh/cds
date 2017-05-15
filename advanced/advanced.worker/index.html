@@ -386,7 +386,7 @@
 <li>
 <ul>
 <li><a href="#what-is-a-worker">What is a worker</a></li>
-<li><a href="#worker-cycle-of-life">Worker cycle of life</a>
+<li><a href="#worker-life-cycle">Worker life cycle</a>
 <ul>
 <li>
 <ul>
@@ -412,23 +412,23 @@
 
 <p>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.</p>
 
-<p>Building your own worker model enable you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing <code>npm</code> tools, importing <code>bower</code> packages (these are <code>nodeJs</code> tools), building webfonts with <code>fontforge</code>, &hellip;</p>
+<p>Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing <code>npm</code> tools, importing <code>bower</code> packages (these are <code>nodeJs</code> tools), building webfonts with <code>fontforge</code>&hellip;</p>
 
 <h2 id="what-is-a-worker">What is a worker</h2>
 
-<p>Basically, a worker is a binary. This binary can be launched inside a Docker Containers, or on a Host (as VM Openstack).</p>
+<p>Basically, a worker is a binary. This binary can be launched inside a Docker Container, or on a Host (as an Openstack VM).</p>
 
-<h2 id="worker-cycle-of-life">Worker cycle of life</h2>
+<h2 id="worker-life-cycle">Worker life cycle</h2>
 
 <p><img src="https://ovh.github.io/cds/images/concepts_worker_flow.png" alt="Pipeline" /></p>
 
-<p>If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contains a sane installation of &ldquo;curl&rdquo;.</p>
+<p>If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contain a sane installation of &ldquo;curl&rdquo;.</p>
 
-<p>So, in the case of a worker model of type &ldquo;docker&rdquo;, the docker image must contains <code>curl</code> in PATH.</p>
+<p>So, in the case of a worker model of type &ldquo;docker&rdquo;, the docker image must have <code>curl</code> available in the PATH.</p>
 
 <h4 id="why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</h4>
 
-<p>There is several cases where one would need to setup his own worker:</p>
+<p>There are several cases where one would need to setup his own worker:</p>
 
 <ul>
 <li>Perform incremental build</li>
@@ -440,7 +440,7 @@
 
 <p>Workers authenticate on CDS with a <a href="https://ovh.github.io/cds/advanced/advanced.worker.token/">token</a> and have the same permissions as the user who generated it.</p>
 
-<p>Bottom line, if you can access the application, your worker will too.</p>
+<p>Bottom line: if you can access the application, your worker will too.</p>
 
 
 <footer class=" footline" >
