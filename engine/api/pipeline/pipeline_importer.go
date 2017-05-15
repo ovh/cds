@@ -217,7 +217,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 	}
 	if !ok {
 		if err := importNew(db, proj, pip, u); err != nil {
-			log.Debug("pipeline.Import> %s", err)
+			log.Error("pipeline.Import> %s", err)
 			switch err.(type) {
 			case *sdk.Errors:
 				if msgChan != nil {
