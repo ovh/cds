@@ -3,23 +3,23 @@
 This is the core component of CDS.
 To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
 
-There is are two ways to set up CDS:
+There are two ways to set up CDS:
 
-- as [toml](https://github.com/toml-lang/toml) configuration
-- over environment variables.
+- with [toml](https://github.com/toml-lang/toml) configuration
+- with environment variables.
 
 ## CDS API Third-parties
 
-At the minimum, CDS needs a PostgreSQL Database >= 9.4. But for serious usage your may need :
+At the minimum, CDS needs a PostgreSQL Database >= 9.4. But for serious usage your may need:
 
-- A [Redis](https://redis.io) server or sentinels based cluster used as a cache and session store
-- A LDAP Server for authentication
-- A SMTP Server for mails
+- A [Redis](https://redis.io) server or sentinels based cluster used as cache and session store
+- An LDAP Server for authentication
+- An SMTP Server for mails
 - A [Kafka](https://kafka.apache.org/) Broker to manage CDS events
-- A [Openstack Swift](https://docs.openstack.org/developer/swift/) Tenant to store builds artifacts
+- An [Openstack Swift](https://docs.openstack.org/developer/swift/) Tenant to store builds artifacts
 - A [Vault](https://www.vaultproject.io/) server for cipher and app keys
 
-See Configuration template for more details
+See Configuration template for more details.
 
 ## Database management
 
@@ -29,7 +29,7 @@ The migration files are available to download on [Github Releases](https://githu
 
 ### Creation
 
-On a brand new database run the following command:
+On a brand new database, run the following command:
 
 ```bash
 $ $PATH_TO_CDS/api database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --migrate-dir <pathToSQLMigrationDir> --limit 0
@@ -50,20 +50,18 @@ $ $PATH_TO_CDS/api database upgrade --db-host <host> --db-port <port> --db-user 
 
 ## TOML Configuration
 
-The toml configuration can be provided by a file or via [consul k/v store](https://www.consul.io).
+The toml configuration can be provided from a file or via [consul k/v store](https://www.consul.io).
 
 ### Start CDS with local configuration file
 
-You can also generate a configuration file template with the following command.
+You can also generate a configuration file template with the following command:
 
 ```bash
 $ $PATH_TO_CDS/api --config my_conf_file.toml
 Generating default config file my_conf_file.toml
 ```
 
-Edit this file.
-
-Run CDS
+Edit this file, then run CDS:
 
 ```bash
 $ $PATH_TO_CDS/api --config my_conf_file.toml
@@ -74,7 +72,7 @@ Reading configuration file my_new_file.toml
 
 ### Start CDS with Consul
 
-Upload your `toml` configuration to consul
+Upload your `toml` configuration to consul:
 
 ```bash
 $ consul kv put cds/config.api.toml -
@@ -83,7 +81,7 @@ $ consul kv put cds/config.api.toml -
 Success! Data written to: cds/config.api.toml
 ```
 
-Run CDS
+Run CDS:
 
 ```bash
 $ $PATH_TO_CDS/api --remote-config localhost:8500 --remote-config-key cds/config.api.toml
