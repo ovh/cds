@@ -62,9 +62,9 @@ $ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_
       
       <guid>https://ovh.github.io/cds/installation/installation.database/</guid>
       <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the api binary.
+The migration files are available to download on Github Releases and the archive is named sql.tar.gz. You have to download it and untar (tar xvzf sql.tar.gz).
 Creation On a brand new database run the following command:
-$ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-host &amp;lt;port&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --limit 0  Upgrade On an existing database, run the following command on each CDS update:
-$ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-host &amp;lt;port&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt;  More details Read more about CDS Database Management</description>
+$ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir &amp;lt;pathToSQLMigrationDir&amp;gt; --limit 0  Upgrade On an existing database, run the following command on each CDS update:</description>
     </item>
     
     <item>

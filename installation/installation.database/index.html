@@ -378,18 +378,20 @@
 
 <p>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the <code>api</code> binary.</p>
 
+<p>The migration files are available to download on <a href="https://github.com/ovh/cds/releases">Github Releases</a> and the archive is named <code>sql.tar.gz</code>. You have to download it and untar (<code>tar xvzf sql.tar.gz</code>).</p>
+
 <h3 id="creation">Creation</h3>
 
 <p>On a brand new database run the following command:</p>
 
-<pre><code class="language-bash">$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-host &lt;port&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --limit 0
+<pre><code class="language-bash">$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir &lt;pathToSQLMigrationDir&gt; --limit 0
 </code></pre>
 
 <h3 id="upgrade">Upgrade</h3>
 
 <p>On an existing database, run the following command on each CDS update:</p>
 
-<pre><code class="language-bash">$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-host &lt;port&gt; --db-password &lt;password&gt; --db-name &lt;database&gt;
+<pre><code class="language-bash">$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir &lt;pathToSQLMigrationDir&gt;
 </code></pre>
 
 <h3 id="more-details">More details</h3>

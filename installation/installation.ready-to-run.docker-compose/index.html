@@ -496,7 +496,8 @@ of workers as they share the same workspace.</p>
 Otherwise, please update environment variable <code>DOCKER_HOST: tcp://${HOSTNAME}:2375</code> in
 <a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a></p>
 
-<pre><code class="language-bash">$ docker-compose up cds-hatchery-swarm
+<pre><code class="language-bash">$ export HOSTNAME=$(hostname)
+$ docker-compose up cds-hatchery-swarm
 </code></pre>
 
 <p>A <code>swarm hatchery</code> spwan CDS Worker inside dedicated container.
