@@ -1,8 +1,6 @@
 package pipeline
 
 import (
-	"fmt"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/trigger"
@@ -61,9 +59,8 @@ func GetAllParametersInPipeline(db gorp.SqlExecutor, pipelineID int64 /*, args .
 
 // InsertParameterInPipeline Insert a new parameter in the given pipeline
 func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk.Parameter) error {
-
 	if string(param.Type) == string(sdk.SecretVariable) {
-		return sdk.ErrNoDirectSecretUse
+		return sdk.WrapError(sdk.ErrNoDirectSecretUse, "InsertParameterInPipeline>")
 	}
 
 	/* DEPRECATED: no more password in parameter type
@@ -80,7 +77,7 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 	err := db.QueryRow(query, pipelineID, param.Name, param.Value, string(param.Type), param.Description).Scan(&param.ID)
 	if err != nil {
-		return fmt.Errorf("cannot insert in pipeline_parameter (pID:%d): %s", pipelineID, err)
+		return sdk.WrapError(err, "InsertParameterInPipeline> cannot insert in pipeline_parameter (pID:%d)", pipelineID)
 	}
 
 	query = `SELECT id FROM pipeline_trigger WHERE dest_pipeline_id = $1`
@@ -94,14 +91,13 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 	for rows.Next() {
 		err = rows.Scan(&id)
 		if err != nil {
-			return fmt.Errorf("cannot scan pipeline_trigger (pID:%d): %s", pipelineID, err)
+			return sdk.WrapError(err, "InsertParameterInPipeline> cannot scan pipeline_trigger (pID:%d)", pipelineID)
 		}
 		ids = append(ids, id)
 	}
 	for _, id := range ids {
-		err = trigger.InsertTriggerParameter(db, id, *param)
-		if err != nil {
-			return fmt.Errorf("cannot InsertTriggerParameter (tID:%d): %s", id, err)
+		if err := trigger.InsertTriggerParameter(db, id, *param); err != nil {
+			return sdk.WrapError(err, "InsertParameterInPipeline> InsertTriggerParameter (tID:%d)", id)
 		}
 	}
 

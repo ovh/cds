@@ -217,7 +217,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 	}
 	if !ok {
 		if err := importNew(db, proj, pip, u); err != nil {
-			log.Error("pipeline.Import> %s", err)
+			log.Debug("pipeline.Import> %s", err)
 			switch err.(type) {
 			case *sdk.Errors:
 				if msgChan != nil {
@@ -226,7 +226,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 				for _, m := range *err.(*sdk.Errors) {
 					msgChan <- m
 				}
-				return sdk.ErrInvalidPipeline
+				return sdk.WrapError(sdk.ErrInvalidPipeline, "pipeline.Import> %s", err)
 			default:
 				return sdk.WrapError(err, "pipeline.Import")
 			}
@@ -252,7 +252,7 @@ func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, u *sdk
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
 	if err := InsertPipeline(db, pip, u); err != nil {
-		return err
+		return sdk.WrapError(err, "importNew>")
 	}
 
 	//If no GroupPermission provided, inherit from project
@@ -262,7 +262,7 @@ func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, u *sdk
 
 	//Insert group permission
 	if err := group.InsertGroupsInPipeline(db, pip.GroupPermission, pip.ID); err != nil {
-		return err
+		return sdk.WrapError(err, "pipeline.importNew>")
 	}
 
 	//Insert stages
@@ -278,22 +278,21 @@ func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, u *sdk
 		s.PipelineID = pip.ID
 		//Insert stage
 		if err := InsertStage(db, &s); err != nil {
-			return err
+			return sdk.WrapError(err, "pipeline.importNew> InsertStage ")
 		}
 		//Insert stage's Jobs
 		for i := range s.Jobs {
 			jobAction := &s.Jobs[i]
 			jobAction.Enabled = true
 			jobAction.Action.Enabled = true
-			if errs := CheckJob(db, jobAction); errs != nil {
-				log.Debug("CheckJob > %s", errs)
-				return errs
+			if err := CheckJob(db, jobAction); err != nil {
+				return sdk.WrapError(err, "pipeline.importNew> CheckJob ")
 			}
 
 			jobAction.PipelineStageID = s.ID
 			log.Debug("pipeline.importNew> Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
 			if err := InsertJob(db, jobAction, s.ID, pip); err != nil {
-				return err
+				return sdk.WrapError(err, "pipeline.importNew> InsertJob ")
 			}
 		}
 	}
