@@ -261,7 +261,7 @@
     </header>
     <section class="post-excerpt">
         <p>Run with Docker-Compose The docker-compose.yml contains:
- cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables. cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+ cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
 How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user. <a class="read-more" href="https://ovh.github.io/cds/installation/installation.ready-to-run.docker-compose/">&raquo;</a></p>
     </section>
     <footer class=" footline" >

@@ -411,7 +411,7 @@
 <ul>
 <li>cds-db service with a postgresql</li>
 <li>cds-cache service with a redis</li>
-<li>cds-migrate service to prepare DB tables.</li>
+<li>cds-migrate service to prepare DB tables</li>
 <li>cds-api service</li>
 <li>cds-ui service</li>
 <li>cds-hatchery-swarm service</li>
@@ -467,17 +467,17 @@ echo &quot;bar&quot;
 
 <h2 id="run-pipeline">Run Pipeline</h2>
 
-<p>Run pipeline. As you can see now, you pipeline is in &ldquo;waiting status&rdquo;. You have
+<p>Run pipeline. As you can see now, your pipeline is in &ldquo;waiting status&rdquo;. You have
 to run a CDS Worker or a CDS Hatchery which aims to create workers.</p>
 
-<p>Let&rsquo;s run an hatchery with docker-compose.</p>
+<p>Let&rsquo;s run a hatchery with docker-compose.</p>
 
-<p>We will spawn a containers with a hatchery in <code>local</code> mode. Workers will be spawn inside this container.</p>
+<p>We will spawn a container with a hatchery in <code>local</code> mode. Workers will be spawn inside this container.</p>
 
 <pre><code class="language-bash">$ docker-compose up cds-hatchery-local
 </code></pre>
 
-<p><em>Running a hatchery &ldquo;local&rdquo; in a container is not recommanded. Use this way only for test purpose</em>.</p>
+<p><em>Running a hatchery &ldquo;local&rdquo; in a container is not recommended. Use this way only for test purpose</em>.</p>
 
 <p>After running this Hatchery, a worker will be spawned. Your pipeline will be in &ldquo;Building&rdquo;, then &ldquo;Success&rdquo; status.</p>
 
@@ -485,7 +485,7 @@ to run a CDS Worker or a CDS Hatchery which aims to create workers.</p>
 
 <p>The <a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a> runs hatchery belonging to the <code>shared.infra</code> groups.</p>
 
-<p>A <code>local hatchery</code> spawn worker on same host than hatchery. This is usually useful for specific cases, as
+<p>A <code>local hatchery</code> spawns workers on the same host as the hatchery. This is usually useful for specific cases, as
 running job on specific hardware.
 But this hatchery does not make it possible to respect the isolation of workpaces
 of workers as they share the same workspace.</p>
@@ -500,7 +500,7 @@ Otherwise, please update environment variable <code>DOCKER_HOST: tcp://${HOSTNAM
 $ docker-compose up cds-hatchery-swarm
 </code></pre>
 
-<p>A <code>swarm hatchery</code> spwan CDS Worker inside dedicated container.
+<p>A <code>swarm hatchery</code> spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.</p>
 
 <h2 id="next-with-actions-plugins-and-templates">Next with Actions, Plugins and Templates</h2>
