@@ -357,11 +357,11 @@ func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline, u *sdk.User) error {
 	}
 
 	if p.Type != sdk.BuildPipeline && p.Type != sdk.DeploymentPipeline && p.Type != sdk.TestingPipeline {
-		return sdk.ErrInvalidType
+		return sdk.WrapError(sdk.ErrInvalidType, "InsertPipeline>")
 	}
 
 	if p.ProjectID == 0 {
-		return sdk.ErrInvalidProject
+		return sdk.WrapError(sdk.ErrInvalidProject, "InsertPipeline>")
 	}
 
 	if err := db.QueryRow(query, p.Name, p.ProjectID, string(p.Type)).Scan(&p.ID); err != nil {
@@ -370,7 +370,7 @@ func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline, u *sdk.User) error {
 
 	for i := range p.Parameter {
 		if err := InsertParameterInPipeline(db, p.ID, &p.Parameter[i]); err != nil {
-			return err
+			return sdk.WrapError(err, "InsertPipeline>")
 		}
 	}
 

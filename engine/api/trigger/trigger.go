@@ -15,7 +15,7 @@ import (
 // InsertTriggerParameter insert given parameter in database
 func InsertTriggerParameter(db gorp.SqlExecutor, triggerID int64, p sdk.Parameter) error {
 	if string(p.Type) == string(sdk.SecretVariable) {
-		return sdk.ErrNoDirectSecretUse
+		return sdk.WrapError(sdk.ErrNoDirectSecretUse, "InsertTriggerParameter>")
 	}
 
 	query := `INSERT INTO pipeline_trigger_parameter (pipeline_trigger_id, name, type, value, description) VALUES ($1, $2, $3, $4, $5)`
