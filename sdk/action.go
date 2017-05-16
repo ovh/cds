@@ -397,8 +397,7 @@ func GetRequirements() ([]Requirement, error) {
 	}
 
 	var req []Requirement
-	err = json.Unmarshal(data, &req)
-	if err != nil {
+	if err := json.Unmarshal(data, &req); err != nil {
 		return nil, err
 	}
 	return req, nil

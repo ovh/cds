@@ -354,7 +354,7 @@ func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
+func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) error {
 	if job != nil {
 		log.Info("spawnWorker> spawning worker %s for job %d", model.Name, job.ID)
 	} else {
@@ -440,8 +440,11 @@ cd $HOME
 # Download and start worker with curl
 curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
 chmod +x worker
-CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --booked-job-id={{.JobID}} --single-use --ttl={{.TTL}} {{.Graylog}} && exit 0
-`
+CDS_SINGLE_USE=1 ./worker --api={{.API}} --key={{.Key}} --name={{.Name}} --model={{.Model}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --booked-job-id={{.JobID}} --single-use --ttl={{.TTL}} {{.Graylog}} `
+
+	if registerOnly {
+		udataEnd += " register"
+	}
 	var udata = udataBegin + string(udataModel) + udataEnd
 
 	var jobID int64

@@ -105,7 +105,7 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
+func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) error {
 	if job != nil {
 		log.Info("spawnWorker> spawning worker %s (%s) for job %d", model.Name, model.Image, job.ID)
 	} else {
@@ -118,6 +118,9 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	memory := m.defaultMemory
 
 	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
+	if registerOnly {
+		cmd += " register"
+	}
 	instance := 1
 	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	forcePull := strings.HasSuffix(model.Image, ":latest")

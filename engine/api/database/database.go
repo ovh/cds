@@ -127,8 +127,8 @@ func Status() string {
 	if db == nil {
 		return fmt.Sprintf("Database: %s KO (no connection)", dbDriver)
 	}
-	err := db.Ping()
-	if err != nil {
+
+	if err := db.Ping(); err != nil {
 		return fmt.Sprintf("Database: %s KO (%s)", dbDriver, err)
 	}
 

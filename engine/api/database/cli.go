@@ -38,7 +38,6 @@ var downgradeCmd = &cobra.Command{
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show current migration status",
-	Long:  "",
 	Run:   statusCmdFunc,
 }
 
@@ -78,7 +77,7 @@ func init() {
 }
 
 type statusRow struct {
-	Id        string
+	ID        string
 	Migrated  bool
 	AppliedAt time.Time
 }
@@ -125,7 +124,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 	for _, m := range migrations {
 		rows[m.Id] = &statusRow{
-			Id:       m.Id,
+			ID:       m.Id,
 			Migrated: false,
 		}
 	}
@@ -150,7 +149,6 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 	}
 
 	table.Render()
-
 }
 
 //ApplyMigrations applies migration (or not depending on dryrun flag)
@@ -219,7 +217,7 @@ func printMigration(m *migrate.PlannedMigration, dir migrate.MigrationDirection)
 
 //MigrationLock is used to lock the migration (managed by gorp)
 type MigrationLock struct {
-	Id       string     `db:"id"`
+	ID       string     `db:"id"`
 	Locked   *time.Time `db:"locked"`
 	Unlocked *time.Time `db:"unlocked"`
 }
@@ -227,7 +225,7 @@ type MigrationLock struct {
 func lockMigrate(db *sql.DB, id string) error {
 	// construct a gorp DbMap
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "Id")
+	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
 	// create table if not exist
 	if err := dbmap.CreateTablesIfNotExists(); err != nil {
 		return err
@@ -246,12 +244,12 @@ func lockMigrate(db *sql.DB, id string) error {
 	}
 
 	if len(pendingMigration) > 0 {
-		return fmt.Errorf("Migration is locked by %s since %v", pendingMigration[0].Id, pendingMigration[0].Locked)
+		return fmt.Errorf("Migration is locked by %s since %v", pendingMigration[0].ID, pendingMigration[0].Locked)
 	}
 
 	t := time.Now()
 	m := MigrationLock{
-		Id:     id,
+		ID:     id,
 		Locked: &t,
 	}
 
@@ -269,7 +267,7 @@ func lockMigrate(db *sql.DB, id string) error {
 func unlockMigrate(db *sql.DB, id string) error {
 	// construct a gorp DbMap
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "Id")
+	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
 
 	tx, err := dbmap.Begin()
 	if err != nil {

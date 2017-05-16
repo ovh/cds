@@ -14,7 +14,7 @@ import (
 type Interface interface {
 	Init() error
 	KillWorker(worker sdk.Worker) error
-	SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error
+	SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) error
 	CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() int
@@ -70,7 +70,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 	}
 	log.Debug("routine> %d - Job queue size:%d", timestamp, len(jobs))
 
-	models, errwm := sdk.GetWorkerModels()
+	models, errwm := sdk.GetWorkerModelsEnabled()
 	if errwm != nil {
 		log.Debug("routine> %d - error on GetWorkerModels:%e", timestamp, errwm)
 		return nil, errwm
@@ -138,7 +138,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 						},
 					}
 
-					if err := h.SpawnWorker(&model, job); err != nil {
+					if err := h.SpawnWorker(&model, job, false); err != nil {
 						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, err)
 						infos = append(infos, sdk.SpawnInfo{
 							RemoteTime: time.Now(),
@@ -177,9 +177,9 @@ func provisioning(h Interface, provision int) {
 		return
 	}
 
-	models, errwm := sdk.GetWorkerModels()
+	models, errwm := sdk.GetWorkerModelsEnabled()
 	if errwm != nil {
-		log.Debug("provisioning> error on GetWorkerModels:%e", errwm)
+		log.Error("provisioning> error on GetWorkerModels:%e", errwm)
 		return
 	}
 
@@ -187,7 +187,7 @@ func provisioning(h Interface, provision int) {
 		if models[k].Type == h.ModelType() {
 			if h.WorkersStartedByModel(&models[k]) < provision {
 				go func(m sdk.Model) {
-					if err := h.SpawnWorker(&m, nil); err != nil {
+					if err := h.SpawnWorker(&m, nil, false); err != nil {
 						log.Warning("provisioning> cannot spawn worker for provisioning: %s", m.Name, err)
 					}
 				}(models[k])

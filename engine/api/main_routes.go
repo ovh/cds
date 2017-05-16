@@ -243,6 +243,7 @@ func (router *Router) init() {
 	router.Handle("/worker/unregister", POST(unregisterWorkerHandler))
 	router.Handle("/worker/{id}/disable", POST(disableWorkerHandler))
 	router.Handle("/worker/model", POST(addWorkerModel), GET(getWorkerModels))
+	router.Handle("/worker/model/enabled", GET(getWorkerModelsEnabled))
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
 	router.Handle("/worker/model/{permModelID}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
 	router.Handle("/worker/model/{permModelID}/capability", POST(addWorkerModelCapa))

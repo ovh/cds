@@ -47,6 +47,7 @@ func Create(h Interface, api, token string, maxWorkers, provision int, requestSe
 
 	tickerRoutine := time.NewTicker(2 * time.Second).C
 	tickerProvision := time.NewTicker(time.Duration(provisionSeconds) * time.Second).C
+	tickerRegister := time.NewTicker(1 * time.Minute).C
 	for {
 		select {
 		case <-tickerRoutine:
@@ -56,6 +57,10 @@ func Create(h Interface, api, token string, maxWorkers, provision int, requestSe
 			}
 		case <-tickerProvision:
 			provisioning(h, provision)
+		case <-tickerRegister:
+			if err := workerRegister(h); err != nil {
+				log.Warning("Error on workerRegister: %s", err)
+			}
 		}
 	}
 }
@@ -144,4 +149,29 @@ func checkFailures(maxFailures, nb int) {
 		log.Error("Too many failures on try register. This hatchery is killed")
 		os.Exit(10)
 	}
+}
+
+func workerRegister(h Interface) error {
+	models, errwm := sdk.GetWorkerModelsEnabled()
+	if errwm != nil {
+		return fmt.Errorf("workerRegister> error on GetWorkerModels: %e", errwm)
+	}
+
+	if len(models) == 0 {
+		return fmt.Errorf("workerRegister> No model returned by GetWorkerModels")
+	}
+	log.Debug("workerRegister> models received: %d", len(models))
+
+	for _, m := range models {
+		if !m.NeedRegistration {
+			log.Debug("workerRegister> no need to register worker model %s (%d)", m.Name, m.ID)
+			continue
+		}
+
+		if err := h.SpawnWorker(&m, nil, true); err != nil {
+			log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, err)
+		}
+
+	}
+	return nil
 }
