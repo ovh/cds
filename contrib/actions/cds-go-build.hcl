@@ -51,6 +51,11 @@ parameters = {
 		description = "Upload Binary as CDS Artifact"
 		value = "true"
 	}
+	"cgoDisabled" = {
+		type = "boolean"
+		description = "if true (checked) -> export CGO_ENABLED=0 before go build"
+		value = "false"
+	}
 	"runGoGet" = {
 		type = "boolean"
 		description = "Run go get -u before go build"
@@ -111,6 +116,11 @@ fi;
 
 if [ "xtrue" == "x${{.detectRaceCondition}}" ]; then
   GOARGS="${{GOARGS}} -race"
+fi;
+
+if [ "xtrue" == "x{{.cgoDisabled}}" ]; then
+  export CGO_ENABLED=0
+  echo "run with CGO_ENABLED=0";
 fi;
 
 if [ "x" != "x{{.preRun}}" ]; then
