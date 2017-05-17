@@ -285,8 +285,9 @@ func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, u *sdk
 			jobAction := &s.Jobs[i]
 			jobAction.Enabled = true
 			jobAction.Action.Enabled = true
-			if err := CheckJob(db, jobAction); err != nil {
-				return sdk.WrapError(err, "pipeline.importNew> CheckJob ")
+			if errs := CheckJob(db, jobAction); errs != nil {
+				log.Debug("CheckJob > %s", errs)
+				return errs
 			}
 
 			jobAction.PipelineStageID = s.ID
