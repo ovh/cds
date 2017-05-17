@@ -57,6 +57,7 @@ $ DOCKER_HOST="tcp://localhost:2375" hatchery swarm --api=https://<api.domain> -
 			viper.GetInt("max-failures-heartbeat"),
 			viper.GetBool("insecure"),
 			viper.GetInt("provision-seconds"),
+			viper.GetInt("register-seconds"),
 			viper.GetInt("spawn-threshold-warning"),
 			viper.GetInt("spawn-threshold-critical"),
 			viper.GetInt("grace-time-queued"),

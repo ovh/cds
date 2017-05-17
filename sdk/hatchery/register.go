@@ -16,7 +16,7 @@ import (
 )
 
 // Create creates hatchery
-func Create(h Interface, api, token string, maxWorkers, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
+func Create(h Interface, api, token string, maxWorkers, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, registerSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
 	Client = &http.Client{
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
@@ -47,7 +47,7 @@ func Create(h Interface, api, token string, maxWorkers, provision int, requestSe
 
 	tickerRoutine := time.NewTicker(2 * time.Second).C
 	tickerProvision := time.NewTicker(time.Duration(provisionSeconds) * time.Second).C
-	tickerRegister := time.NewTicker(1 * time.Minute).C
+	tickerRegister := time.NewTicker(time.Duration(registerSeconds) * time.Second).C
 	for {
 		select {
 		case <-tickerRoutine:

@@ -68,6 +68,7 @@ $ CDS_OPENSTACK_USER=<user> CDS_OPENSTACK_TENANT=<tenant> CDS_OPENSTACK_AUTH_END
 			viper.GetInt("max-failures-heartbeat"),
 			viper.GetBool("insecure"),
 			viper.GetInt("provision-seconds"),
+			viper.GetInt("register-seconds"),
 			viper.GetInt("spawn-threshold-warning"),
 			viper.GetInt("spawn-threshold-critical"),
 			viper.GetInt("grace-time-queued"),
