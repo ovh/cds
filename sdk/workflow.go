@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/runabove/venom"
 )
 
 //DetailedWorkflow represents a pipeline based workflow with some details
@@ -54,6 +56,23 @@ func (w *Workflow) Nodes() []int64 {
 		}
 	}
 	return res
+}
+
+//GetNode returns the node given its id
+func (w *Workflow) GetNode(id int64) *WorkflowNode {
+	n := w.GetNode(id)
+	if n != nil {
+		return n
+	}
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			n = t.WorkflowDestNode.GetNode(id)
+			if n != nil {
+				return n
+			}
+		}
+	}
+	return nil
 }
 
 //TriggersID returns triggers IDs
@@ -156,6 +175,23 @@ type WorkflowNode struct {
 	Context    *WorkflowNodeContext  `json:"context" db:"-"`
 	Hooks      []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
 	Triggers   []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+}
+
+//GetNode returns the node given its id
+func (n *WorkflowNode) GetNode(id int64) *WorkflowNode {
+	if n == nil {
+		return nil
+	}
+	if n.ID == id {
+		return n
+	}
+	for _, t := range n.Triggers {
+		n = t.WorkflowDestNode.GetNode(id)
+		if n != nil {
+			return n
+		}
+	}
+	return nil
 }
 
 //Nodes returns a slice with all node IDs
@@ -290,24 +326,76 @@ type WorkflowHookModel struct {
 type WorkflowRun struct {
 	ID               int64             `json:"id" db:"id"`
 	Number           int64             `json:"number" db:"number"`
+	ProjectKey       string            `json:"project_key" db:"project_key"`
+	ProjectID        int64             `json:"project_id,omitempty" db:"project_id"`
+	WorkflowName     string            `json:"workflow_name" db:"workflow_name"`
 	Workflow         Workflow          `json:"workflow" db:"-"`
 	Start            time.Time         `json:"start" db:"start"`
 	WorkflowNodeRuns []WorkflowNodeRun `json:"nodes" db:"-"`
-	LastModified     time.Time         `json:"last_modified"`
+	LastModified     time.Time         `json:"last_modified" db:"last_modified"`
 }
 
 //WorkflowNodeRun is as execution instance of a node
 type WorkflowNodeRun struct {
-	ID              int64                     `json:"id" db:"id"`
-	Number          int64                     `json:"number" db:"number"`
-	SubNumber       int64                     `json:"subnumber" db:"subnumber"`
-	PipelineBuildID int64                     `json:"pipeline_build_id" db:"pipeline_build_id"`
-	PipelineBuild   *PipelineBuild            `json:"pipeline_build" db:"-"`
-	WorkflowNodeID  int64                     `json:"workflow_node_id" db:"workflow_node_id"`
-	LastModified    time.Time                 `json:"last_modified" db:"last_modified"`
-	HookEvent       *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
-	Manual          *WorkflowNodeRunManual    `json:"manual" db:"-"`
-	TriggerID       int64                     `json:"workflow_node_trigger_id" db:"workflow_node_trigger_id"`
+	WorkflowRunID     int64                        `json:"workflow_run_id" db:"workflow_run_id"`
+	ID                int64                        `json:"id" db:"id"`
+	Number            int64                        `json:"number" db:"number"`
+	SubNumber         int64                        `json:"subnumber" db:"subnumber"`
+	HookEvent         *WorkflowNodeRunHookEvent    `json:"hook_event" db:"-"`
+	Manual            *WorkflowNodeRunManual       `json:"manual" db:"-"`
+	Payload           []Parameter                  `json:"payload" db:"-"`
+	PipelineParameter []Parameter                  `json:"pipeline_parameter" db:"-"`
+	TriggerID         int64                        `json:"workflow_node_trigger_id" db:"-"`
+	WorkflowNodeID    int64                        `json:"workflow_node_id" db:"workflow_node_id"`
+	Start             time.Time                    `json:"start" db:"start"`
+	LastModified      time.Time                    `json:"last_modified" db:"last_modified"`
+	Done              time.Time                    `json:"done" db:"done"`
+	Artifacts         []WorkflowNodeRunArtifact    `json:"artifacts,omitempty" db:"-"`
+	Tests             *WorkflowNodeRunTestResults  `json:"tests,omitempty" db:"-"`
+	Commits           []WorkflowNodeRunTestCommits `json:"commits,omitempty" db:"-"`
+}
+
+//WorkflowNodeRunArtifact represents tests list
+type WorkflowNodeRunArtifact struct {
+	WorkflowNodeRunID int64  `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	ID                int64  `json:"id"`
+	Name              string `json:"name"`
+	Tag               string `json:"tag"`
+	DownloadHash      string `json:"download_hash"`
+	Size              int64  `json:"size,omitempty"`
+	Perm              uint32 `json:"perm,omitempty"`
+	MD5sum            string `json:"md5sum,omitempty"`
+	ObjectPath        string `json:"object_path,omitempty"`
+}
+
+//WorkflowNodeRunTestResults represents tests list
+type WorkflowNodeRunTestResults struct {
+	WorkflowNodeRunID int64        `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	ID                int64        `json:"id"`
+	Tests             *venom.Tests `json:"tests,omitempty"`
+}
+
+//WorkflowNodeRunTestCommits represents commits list
+type WorkflowNodeRunTestCommits struct {
+	WorkflowNodeRunID int64       `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	ID                int64       `json:"id"`
+	Commits           []VCSCommit `json:"tests,omitempty"`
+}
+
+//WorkflowNodeJobRun represents an job to be run
+type WorkflowNodeJobRun struct {
+	ID                int64
+	WorkflowNodeRunID int64       `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	Job               ExecutedJob `json:"job" db:"-"`
+	Parameters        []Parameter `json:"parameters,omitempty" db:"-"`
+	Status            string      `json:"status"  db:"status"`
+	Queued            time.Time   `json:"queued,omitempty" db:"queued"`
+	QueuedSeconds     int64       `json:"queued_seconds,omitempty" db:"-"`
+	Start             time.Time   `json:"start,omitempty" db:"start"`
+	Done              time.Time   `json:"done,omitempty" db:"done"`
+	Model             string      `json:"model,omitempty" db:"model"`
+	BookedBy          Hatchery    `json:"bookedby" db:"-"`
+	SpawnInfos        []SpawnInfo `json:"spawninfos" db:"-"`
 }
 
 //WorkflowNodeRunHookEvent is an instanc of event received on a hook
