@@ -87,12 +87,17 @@ func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.WrapError(errT, "Cannot commit transaction")
 	}
 
+	wf1, errl := workflow.LoadByID(db, wf.ID, c.User)
+	if errl != nil {
+		return sdk.WrapError(errT, "Cannot load workflow")
+	}
+
 	if !detailed {
-		return WriteJSON(w, r, wf, http.StatusCreated)
+		return WriteJSON(w, r, wf1, http.StatusCreated)
 	}
 
 	w2 := sdk.DetailedWorkflow{}
-	w2.Workflow = wf
+	w2.Workflow = *wf1
 
 	w2.Root = wf.Root.ID
 	w2.Nodes = wf.Nodes()

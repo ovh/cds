@@ -259,6 +259,7 @@ func loadNodeContext(db gorp.SqlExecutor, wn *sdk.WorkflowNode, u *sdk.User) (*s
 
 //deleteNode deletes nodes and all its children
 func deleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
+	log.Debug("deleteNode> Delete node %d", node.ID)
 	if err := DeleteNodeDependencies(db, node); err != nil {
 		return sdk.WrapError(err, "DeleteNode> Unable to delete node dependencies %d", node.ID)
 	}
@@ -268,13 +269,16 @@ func deleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
 		return sdk.WrapError(err, "DeleteNode> Unable to delete node %d", dbwn.ID)
 	}
 
+	node.ID = 0
 	return nil
 }
 
 //DeleteNodeDependencies delete triggers, hooks, context for the node
 func DeleteNodeDependencies(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
-	for _, t := range node.Triggers {
-		if err := deleteTrigger(db, &t); err != nil {
+	log.Debug("DeleteNodeDependencies> Delete node %d", node.ID)
+	for i := range node.Triggers {
+		t := &node.Triggers[i]
+		if err := deleteTrigger(db, t); err != nil {
 			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete trigger %d", t.ID)
 		}
 	}
@@ -290,6 +294,7 @@ func DeleteNodeDependencies(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
 		if _, err := db.Delete(&dbnc); err != nil {
 			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete context %d", dbnc.ID)
 		}
+		node.Context.ID = 0
 	}
 
 	return nil

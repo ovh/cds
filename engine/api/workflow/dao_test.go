@@ -285,6 +285,15 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
 
+	pip3 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip3",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip3, u))
+
 	app := sdk.Application{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -330,6 +339,13 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 						Name:  "git.branch",
 						Type:  sdk.StringParameter,
 						Value: "master",
+					},
+				},
+			},
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						PipelineID: pip3.ID,
 					},
 				},
 			},
