@@ -23,7 +23,7 @@ export class WorkflowService {
      * @param key Project unique key
      * @param workflow Workflow to create
      */
-    addWorkflow(key: string, workflow: Workflow) {
+    addWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
         return this._http.post('/project/' + key + '/workflows', workflow).map(res => res.json());
     }
 }

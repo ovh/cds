@@ -46,7 +46,10 @@
         "../node_modules/codemirror/addon/hint/show-hint.js",
         "../resources/cds-hint.js",
         "../node_modules/ansi_up/ansi_up.js",
-        "../node_modules/duration-js/duration.js"
+        "../node_modules/duration-js/duration.js",
+        "../node_modules/jsplumb/dist/js/jsplumb.js",
+        "../node_modules/graphlib/dist/graphlib.js",
+        "../node_modules/dagre/dist/dagre.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {

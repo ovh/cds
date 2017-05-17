@@ -45,6 +45,7 @@ import {ZoneComponent} from './zone/zone.component';
 import {PipelineLaunchModalComponent} from './pipeline/launch/pipeline.launch.modal.component';
 import {CommitListComponent} from './commit/commit.list.component';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
+import {WorkflowNodeComponent} from './workflow/node/workflow.node.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -80,6 +81,7 @@ import {NguiAutoCompleteModule} from '@ngui/auto-complete';
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
+        WorkflowNodeComponent,
         ZoneComponent,
         ZoneContentComponent
     ],
@@ -127,6 +129,7 @@ import {NguiAutoCompleteModule} from '@ngui/auto-complete';
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
+        WorkflowNodeComponent,
         ZoneComponent,
         ZoneContentComponent
     ]
