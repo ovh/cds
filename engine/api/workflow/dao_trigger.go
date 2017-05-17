@@ -36,7 +36,7 @@ func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Workf
 
 	//Setup destination node
 	if err := insertOrUpdateNode(db, w, &trigger.WorkflowDestNode, u, false); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to setup destination node")
+		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to setup destination node %d", trigger.WorkflowDestNode.ID)
 	}
 	trigger.WorkflowDestNodeID = trigger.WorkflowDestNode.ID
 
