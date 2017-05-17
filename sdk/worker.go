@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -39,20 +38,21 @@ var (
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 type Model struct {
-	ID               int64          `json:"id" db:"id"`
-	Name             string         `json:"name"  db:"name"`
-	Type             string         `json:"type"  db:"type"`
-	Image            string         `json:"image" db:"image"`
-	Capabilities     []Requirement  `json:"capabilities" db:"-"`
-	Communication    string         `json:"communication"  db:"communication"`
-	Template         sql.NullString `json:"template"  db:"template"`
-	RunScript        string         `json:"run_script"  db:"run_script"`
-	Disabled         bool           `json:"disabled"  db:"disabled"`
-	NeedRegistration bool           `json:"need_registration"  db:"need_registration"`
-	LastRegistration time.Time      `json:"last_registration"  db:"last_registration"`
-	CreatedBy        User           `json:"created_by" db:"-"`
-	OwnerID          int64          `json:"owner_id" db:"owner_id"` //DEPRECATED
-	GroupID          int64          `json:"group_id" db:"group_id"`
+	ID               int64              `json:"id" db:"id"`
+	Name             string             `json:"name"  db:"name"`
+	Type             string             `json:"type"  db:"type"`
+	Image            string             `json:"image" db:"image"`
+	Capabilities     []Requirement      `json:"capabilities" db:"-"`
+	Communication    string             `json:"communication"  db:"communication"`
+	Template         *map[string]string `json:"template"  db:"template"`
+	RunScript        string             `json:"run_script"  db:"run_script"`
+	Disabled         bool               `json:"disabled"  db:"disabled"`
+	NeedRegistration bool               `json:"need_registration"  db:"need_registration"`
+	LastRegistration time.Time          `json:"last_registration"  db:"last_registration"`
+	CreatedBy        User               `json:"created_by" db:"-"`
+	Provision        int64              `json:"provision" db:"provision"`
+	OwnerID          int64              `json:"owner_id" db:"owner_id"` //DEPRECATED
+	GroupID          int64              `json:"group_id" db:"group_id"`
 }
 
 // ModelStatus sums up the number of worker deployed and wanted for a given model
