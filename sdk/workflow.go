@@ -330,38 +330,38 @@ type WorkflowHookModel struct {
 type WorkflowRun struct {
 	ID               int64             `json:"id" db:"id"`
 	Number           int64             `json:"number" db:"number"`
-	ProjectKey       string            `json:"project_key" db:"project_key"`
 	ProjectID        int64             `json:"project_id,omitempty" db:"project_id"`
-	WorkflowName     string            `json:"workflow_name" db:"workflow_name"`
+	WorkflowID       string            `json:"workflow_id" db:"workflow_id"`
 	Workflow         Workflow          `json:"workflow" db:"-"`
 	Start            time.Time         `json:"start" db:"start"`
-	WorkflowNodeRuns []WorkflowNodeRun `json:"nodes" db:"-"`
 	LastModified     time.Time         `json:"last_modified" db:"last_modified"`
+	WorkflowNodeRuns []WorkflowNodeRun `json:"nodes" db:"-"`
 }
 
 //WorkflowNodeRun is as execution instance of a node
 type WorkflowNodeRun struct {
-	WorkflowRunID     int64                        `json:"workflow_run_id" db:"workflow_run_id"`
-	ID                int64                        `json:"id" db:"id"`
-	Number            int64                        `json:"number" db:"number"`
-	SubNumber         int64                        `json:"subnumber" db:"subnumber"`
-	HookEvent         *WorkflowNodeRunHookEvent    `json:"hook_event" db:"-"`
-	Manual            *WorkflowNodeRunManual       `json:"manual" db:"-"`
-	Payload           []Parameter                  `json:"payload" db:"-"`
-	PipelineParameter []Parameter                  `json:"pipeline_parameter" db:"-"`
-	TriggerID         int64                        `json:"workflow_node_trigger_id" db:"-"`
-	WorkflowNodeID    int64                        `json:"workflow_node_id" db:"workflow_node_id"`
-	Start             time.Time                    `json:"start" db:"start"`
-	LastModified      time.Time                    `json:"last_modified" db:"last_modified"`
-	Done              time.Time                    `json:"done" db:"done"`
-	Artifacts         []WorkflowNodeRunArtifact    `json:"artifacts,omitempty" db:"-"`
-	Tests             *WorkflowNodeRunTestResults  `json:"tests,omitempty" db:"-"`
-	Commits           []WorkflowNodeRunTestCommits `json:"commits,omitempty" db:"-"`
+	WorkflowRunID     int64                     `json:"workflow_run_id" db:"workflow_run_id"`
+	ID                int64                     `json:"id" db:"id"`
+	WorkflowNodeID    int64                     `json:"workflow_node_id" db:"workflow_node_id"`
+	Number            int64                     `json:"number" db:"number"`
+	SubNumber         int64                     `json:"subnumber" db:"subnumber"`
+	Status            string                    `json:"status" db:"status"`
+	Start             time.Time                 `json:"start" db:"start"`
+	LastModified      time.Time                 `json:"last_modified" db:"last_modified"`
+	Done              time.Time                 `json:"done" db:"done"`
+	HookEvent         *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
+	Manual            *WorkflowNodeRunManual    `json:"manual" db:"-"`
+	TriggerID         int64                     `json:"workflow_node_trigger_id" db:"-"`
+	Payload           []Parameter               `json:"payload" db:"-"`
+	PipelineParameter []Parameter               `json:"pipeline_parameter" db:"-"`
+	Artifacts         []WorkflowNodeRunArtifact `json:"artifacts,omitempty" db:"-"`
+	Tests             *venom.Tests              `json:"tests,omitempty"`
+	Commits           []VCSCommit               `json:"commits,omitempty"`
 }
 
 //WorkflowNodeRunArtifact represents tests list
 type WorkflowNodeRunArtifact struct {
-	WorkflowNodeRunID int64  `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	WorkflowNodeRunID int64  `json:"workflow_node_run_id" db:"workflow_node_run_id"`
 	ID                int64  `json:"id"`
 	Name              string `json:"name"`
 	Tag               string `json:"tag"`
@@ -372,26 +372,12 @@ type WorkflowNodeRunArtifact struct {
 	ObjectPath        string `json:"object_path,omitempty"`
 }
 
-//WorkflowNodeRunTestResults represents tests list
-type WorkflowNodeRunTestResults struct {
-	WorkflowNodeRunID int64        `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
-	ID                int64        `json:"id"`
-	Tests             *venom.Tests `json:"tests,omitempty"`
-}
-
-//WorkflowNodeRunTestCommits represents commits list
-type WorkflowNodeRunTestCommits struct {
-	WorkflowNodeRunID int64       `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
-	ID                int64       `json:"id"`
-	Commits           []VCSCommit `json:"tests,omitempty"`
-}
-
 //WorkflowNodeJobRun represents an job to be run
 type WorkflowNodeJobRun struct {
-	ID                int64
+	ID                int64       `json:"id" db:"id"`
 	WorkflowNodeRunID int64       `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
 	Job               ExecutedJob `json:"job" db:"-"`
-	Parameters        []Parameter `json:"parameters,omitempty" db:"-"`
+	Variables         []Variable  `json:"variables,omitempty" db:"-"`
 	Status            string      `json:"status"  db:"status"`
 	Queued            time.Time   `json:"queued,omitempty" db:"queued"`
 	QueuedSeconds     int64       `json:"queued_seconds,omitempty" db:"-"`
