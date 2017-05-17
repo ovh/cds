@@ -188,7 +188,7 @@ func deleteWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 	defer tx.Rollback()
 
-	if err := workflow.Delete(tx, oldW); err != nil {
+	if err := workflow.Delete(tx, oldW, c.User); err != nil {
 		return sdk.WrapError(err, "Cannot delete workflow")
 	}
 

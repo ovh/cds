@@ -136,6 +136,7 @@ func findNodeByRef(ref string, n *sdk.WorkflowNode) *sdk.WorkflowNode {
 }
 
 func insertOrUpdateJoin(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u *sdk.User) error {
+	log.Debug("insertOrUpdateJoin> %#v", n)
 	n.WorkflowID = w.ID
 	dbJoin := Join(*n)
 
@@ -151,7 +152,7 @@ func insertOrUpdateJoin(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 
 	//Delete the old join
 	if oldJoin != nil {
-		if err := deleteJoin(db, oldJoin); err != nil {
+		if err := deleteJoin(db, w, oldJoin, u); err != nil {
 			return sdk.WrapError(err, "insertOrUpdateJoin> Unable to delete old join %d", oldJoin.ID)
 		}
 	}
@@ -220,7 +221,7 @@ func insertOrUpdateJoinTrigger(db gorp.SqlExecutor, w *sdk.Workflow, j *sdk.Work
 
 	//Delete the old trigger
 	if oldTrigger != nil {
-		if err := deleteJoinTrigger(db, oldTrigger); err != nil {
+		if err := deleteJoinTrigger(db, w, oldTrigger, u); err != nil {
 			return sdk.WrapError(err, "insertOrUpdateJoinTrigger> Unable to delete join trigger %d", trigger.ID)
 		}
 	}
@@ -250,10 +251,10 @@ func insertOrUpdateJoinTrigger(db gorp.SqlExecutor, w *sdk.Workflow, j *sdk.Work
 	return nil
 }
 
-func deleteJoin(db gorp.SqlExecutor, n *sdk.WorkflowNodeJoin) error {
+func deleteJoin(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u *sdk.User) error {
 	//Delete join triggers
 	for _, t := range n.Triggers {
-		if err := deleteJoinTrigger(db, &t); err != nil {
+		if err := deleteJoinTrigger(db, w, &t, u); err != nil {
 			return sdk.WrapError(err, "deleteJoin> Unable to delete join trigger %d", t.ID)
 		}
 	}
@@ -274,8 +275,8 @@ func deleteJoin(db gorp.SqlExecutor, n *sdk.WorkflowNodeJoin) error {
 	return nil
 }
 
-func deleteJoinTrigger(db gorp.SqlExecutor, n *sdk.WorkflowNodeJoinTrigger) error {
-	if err := deleteNode(db, &n.WorkflowDestNode); err != nil {
+func deleteJoinTrigger(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNodeJoinTrigger, u *sdk.User) error {
+	if err := deleteNode(db, w, &n.WorkflowDestNode, u); err != nil {
 		return sdk.WrapError(err, "deleteJoinTrigger> Unable to delete triggered node")
 	}
 

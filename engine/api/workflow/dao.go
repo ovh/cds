@@ -156,10 +156,14 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		return sdk.WrapError(err, "Update> Unable to update workflow")
 	}
 	if w.Root != nil {
-		return sdk.WrapError(insertOrUpdateNode(db, w, w.Root, u, false), "Update> unable to update root node on workflow(%d)", w.ID)
+		if err := insertOrUpdateNode(db, w, w.Root, u, false); err != nil {
+			return sdk.WrapError(err, "Update> unable to update root node on workflow(%d)", w.ID)
+		}
 	}
-	for _, j := range w.Joins {
-		if err := insertOrUpdateJoin(db, w, &j, u); err != nil {
+
+	for i := range w.Joins {
+		j := &w.Joins[i]
+		if err := insertOrUpdateJoin(db, w, j, u); err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
@@ -167,14 +171,14 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 }
 
 // Delete workflow
-func Delete(db gorp.SqlExecutor, w *sdk.Workflow) error {
+func Delete(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	//Detach root from workflow
 	if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to detache workflow root")
 	}
 
 	//Delete root
-	if err := deleteNode(db, w.Root); err != nil {
+	if err := deleteNode(db, w, w.Root, u); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow root")
 	}
 
@@ -219,6 +223,13 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 			if ref1 == ref2 && i != j {
 				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Duplicate reference %s", ref1))
 			}
+		}
+	}
+
+	//Check refs
+	for _, j := range w.Joins {
+		if len(j.SourceNodeRefs) == 0 {
+			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Source node references is mandatory"))
 		}
 	}
 

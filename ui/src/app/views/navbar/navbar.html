@@ -36,9 +36,12 @@
             <sm-item>{{ 'navbar_workers' | translate }}</sm-item>
         </sm-dropdown>
         <sm-dropdown icon="help circle outline">
-            <sm-item>{{ 'navbar_feedback' | translate }}</sm-item>
-            <sm-item>{{ 'navbar_download' | translate }}</sm-item>
-            <sm-item>{{ 'navbar_documentation' | translate }}</sm-item>
+            <sm-item>
+              <a href="https://github.com/ovh/cds/releases/latest">{{ 'navbar_download' | translate }}</a>
+            </sm-item>
+            <sm-item>
+              <a href="https://ovh.github.io/cds/">{{ 'navbar_documentation' | translate }}</a>
+            </sm-item>
         </sm-dropdown>
         <sm-select class="languageSelect"
                 [(model)]="currentCountry"
