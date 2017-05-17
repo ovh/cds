@@ -416,7 +416,7 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGrou
 	ms := []WorkerModel{}
 	if _, err := db.Select(&ms, `
 		SELECT * from worker_model
-		WHERE disable = FALSE
+		WHERE disabled = FALSE
 		AND (group_id = $1 OR group_id = $2 OR $1 = $2)
 		ORDER by name
 		`, groupID, sharedinfraGroupID); err != nil {
