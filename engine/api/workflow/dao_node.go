@@ -70,7 +70,7 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 		if _, err := db.Update(&dbwn); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow root node")
 		}
-		if err := DeleteNodeDependencies(db, n); err != nil {
+		if err := DeleteNodeDependencies(db, w, n, u); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow root node dependencies")
 		}
 	} else {
@@ -176,6 +176,7 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 
 	wn := sdk.WorkflowNode(dbwn)
 	wn.WorkflowID = w.ID
+	wn.Ref = fmt.Sprintf("%d", dbwn.ID)
 
 	//Load triggers
 	triggers, errTrig := loadTriggers(db, w, &wn, u)
@@ -258,9 +259,9 @@ func loadNodeContext(db gorp.SqlExecutor, wn *sdk.WorkflowNode, u *sdk.User) (*s
 }
 
 //deleteNode deletes nodes and all its children
-func deleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
+func deleteNode(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User) error {
 	log.Debug("deleteNode> Delete node %d", node.ID)
-	if err := DeleteNodeDependencies(db, node); err != nil {
+	if err := DeleteNodeDependencies(db, w, node, u); err != nil {
 		return sdk.WrapError(err, "DeleteNode> Unable to delete node dependencies %d", node.ID)
 	}
 
@@ -274,11 +275,11 @@ func deleteNode(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
 }
 
 //DeleteNodeDependencies delete triggers, hooks, context for the node
-func DeleteNodeDependencies(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
+func DeleteNodeDependencies(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User) error {
 	log.Debug("DeleteNodeDependencies> Delete node %d", node.ID)
 	for i := range node.Triggers {
 		t := &node.Triggers[i]
-		if err := deleteTrigger(db, t); err != nil {
+		if err := deleteTrigger(db, w, t, u); err != nil {
 			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete trigger %d", t.ID)
 		}
 	}
@@ -295,6 +296,25 @@ func DeleteNodeDependencies(db gorp.SqlExecutor, node *sdk.WorkflowNode) error {
 			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete context %d", dbnc.ID)
 		}
 		node.Context.ID = 0
+	}
+
+	query := "select workflow_node_join_id from workflow_node_join_source where workflow_node_id = $1"
+	joinIDs := []int64{}
+	if _, err := db.Select(&joinIDs, query, node.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "DeleteNodeDependencies> Unable to load joins for node %d", node.ID)
+	}
+
+	for _, jid := range joinIDs {
+		j, err := loadJoin(db, w, jid, u)
+		if err != nil {
+			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to load join %d for node %d", jid, node.ID)
+		}
+		if err := deleteJoin(db, w, j, u); err != nil {
+			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete join %d for node %d", jid, node.ID)
+		}
 	}
 
 	return nil
