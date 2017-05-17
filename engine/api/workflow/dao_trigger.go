@@ -29,7 +29,7 @@ func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Workf
 
 	//Delete the old trigger
 	if oldTrigger != nil {
-		if err := deleteTrigger(db, oldTrigger); err != nil {
+		if err := deleteTrigger(db, w, oldTrigger, u); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to delete trigger %d", trigger.ID)
 		}
 	}
@@ -60,9 +60,9 @@ func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Workf
 }
 
 // DeleteTrigger deletes a trigger and all chrildren
-func deleteTrigger(db gorp.SqlExecutor, trigger *sdk.WorkflowNodeTrigger) error {
+func deleteTrigger(db gorp.SqlExecutor, w *sdk.Workflow, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
 	log.Debug("deleteTrigger> Delete trigger %d", trigger.ID)
-	if err := deleteNode(db, &trigger.WorkflowDestNode); err != nil {
+	if err := deleteNode(db, w, &trigger.WorkflowDestNode, u); err != nil {
 		return sdk.WrapError(err, "DeleteTrigger> Unable to delete triggered node")
 	}
 	trigger.WorkflowDestNodeID = 0

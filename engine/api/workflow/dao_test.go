@@ -8,6 +8,8 @@ import (
 
 	"sort"
 
+	"fmt"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -374,7 +376,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	assert.Equal(t, app2.ID, w2.Root.Context.Application.ID)
 	assert.Equal(t, env.ID, w2.Root.Context.Environment.ID)
 
-	test.NoError(t, Delete(db, w2))
+	test.NoError(t, Delete(db, w2, u))
 }
 
 func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
@@ -763,4 +765,110 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		}
 	}
 	assertEqualNode(t, w.Root, w1.Root)
+}
+
+func TestUpdateWorkflowWithJoins(t *testing.T) {
+	db := test.SetupPG(t)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, key, key, u)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+
+	pip3 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip3",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, &pip3, u))
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			PipelineID: pip.ID,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						PipelineID: pip2.ID,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, Insert(db, &w, u))
+
+	w1, err := Load(db, key, "test_1", u)
+	test.NoError(t, err)
+
+	w1.Name = "test_2"
+	w1.Root.PipelineID = pip2.ID
+	w1.Root.Pipeline = pip2
+	w1.Joins = []sdk.WorkflowNodeJoin{
+		sdk.WorkflowNodeJoin{
+			SourceNodeRefs: []string{
+				fmt.Sprintf("%d", w1.Root.ID),
+				fmt.Sprintf("%d", w1.Root.Triggers[0].WorkflowDestNode.ID),
+			},
+			Triggers: []sdk.WorkflowNodeJoinTrigger{
+				sdk.WorkflowNodeJoinTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						PipelineID: pip3.ID,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, Update(db, w1, u))
+
+	t.Logf("Reloading workflow...")
+	w2, err := LoadByID(db, w1.ID, u)
+	test.NoError(t, err)
+
+	m1, _ := dump.ToMap(w1)
+	m2, _ := dump.ToMap(w2)
+
+	keys := []string{}
+	for k := range m2 {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := m2[k]
+		v1, ok := m1[k]
+		if ok {
+			if v1 == v {
+				t.Logf("%s: %s", k, v)
+			} else {
+				t.Logf("%s: %s but was %s", k, v, v1)
+			}
+		} else {
+			t.Logf("%s: %s but was undefined", k, v)
+		}
+	}
+
+	test.NoError(t, Delete(db, w2, u))
 }
