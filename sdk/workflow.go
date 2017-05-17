@@ -232,7 +232,9 @@ func (n *WorkflowNode) InvolvedApplications() []int64 {
 		if n.Context.ApplicationID == 0 && n.Context.Application != nil {
 			n.Context.ApplicationID = n.Context.Application.ID
 		}
-		res = []int64{n.Context.ApplicationID}
+		if n.Context.ApplicationID != 0 {
+			res = []int64{n.Context.ApplicationID}
+		}
 	}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedApplications()...)
@@ -262,7 +264,9 @@ func (n *WorkflowNode) InvolvedEnvironments() []int64 {
 		if n.Context.EnvironmentID == 0 && n.Context.Environment != nil {
 			n.Context.EnvironmentID = n.Context.Environment.ID
 		}
-		res = []int64{n.Context.EnvironmentID}
+		if n.Context.EnvironmentID != 0 {
+			res = []int64{n.Context.EnvironmentID}
+		}
 	}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedEnvironments()...)
@@ -290,10 +294,10 @@ type WorkflowTriggerCondition struct {
 type WorkflowNodeContext struct {
 	ID                        int64        `json:"id" db:"id"`
 	WorkflowNodeID            int64        `json:"workflow_node_id" db:"workflow_node_id"`
-	ApplicationID             int64        `json:"-" db:"application_id"`
+	ApplicationID             int64        `json:"application_id" db:"application_id"`
 	Application               *Application `json:"application,omitempty" db:"-"`
 	Environment               *Environment `json:"environment,omitempty" db:"-"`
-	EnvironmentID             int64        `json:"-" db:"environment_id"`
+	EnvironmentID             int64        `json:"environment_id" db:"environment_id"`
 	DefaultPayload            []Parameter  `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter  `json:"default_pipeline_parameters,omitempty" db:"-"`
 }

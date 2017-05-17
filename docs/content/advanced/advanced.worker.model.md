@@ -10,14 +10,14 @@ identifier = "advanced-worker-model-simple"
 
 ### Purpose
 
-The goal of CDS is to start a worker when you need it and matching all your requirements exactly.
+The goal of CDS is to start a worker when you need it, which should match all your requirements exactly.
 In order to scale automatically on demand, it is possible to register a worker model.
 
-The goal of worker model is to describe the capabities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.
+The goal of a worker model is to describe the capabilities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.
 
 ### Types
 
-There is 2 types of worker models:
+There are 2 types of worker models:
 
  * Docker images, see [how to create a worker model docker]({{< relref "tutorials.worker-model-docker-simple.md" >}})
  * Openstack images, see [how to create a worker model openstack]({{< relref "tutorials.worker-model-openstack.md" >}})
@@ -26,7 +26,7 @@ There is 2 types of worker models:
 
 Capabilities have a name, a type and a value.
 
-Existing capabilities type are:
+Existing capability types are:
 
  * Binary
  * Network access
@@ -36,4 +36,4 @@ Existing capabilities type are:
 
 ### Behavior
 
-All registered CDS [hatcheries]({{< relref "advanced.hatcheries.md" >}}) get the number of instances of each model needed. They then start/kill worker accordingly.    
+All registered CDS [hatcheries]({{< relref "advanced.hatcheries.md" >}}) get the number of instances of each model needed. Then, they start/kill workers accordingly.    

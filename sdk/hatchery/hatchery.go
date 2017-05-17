@@ -184,8 +184,8 @@ func provisioning(h Interface, provision int) {
 	}
 
 	for k := range models {
-		if h.WorkersStartedByModel(&models[k]) < provision {
-			if models[k].Type == h.ModelType() {
+		if models[k].Type == h.ModelType() {
+			if h.WorkersStartedByModel(&models[k]) < provision {
 				go func(m sdk.Model) {
 					if err := h.SpawnWorker(&m, nil); err != nil {
 						log.Warning("provisioning> cannot spawn worker for provisioning: %s", m.Name, err)

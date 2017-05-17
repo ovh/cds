@@ -13,7 +13,7 @@ The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.y
 
 - cds-db service with a postgresql
 - cds-cache service with a redis
-- cds-migrate service to prepare DB tables.
+- cds-migrate service to prepare DB tables
 - cds-api service
 - cds-ui service
 - cds-hatchery-swarm service
@@ -68,18 +68,18 @@ echo "bar"
 
 ## Run Pipeline
 
-Run pipeline. As you can see now, you pipeline is in "waiting status". You have
+Run pipeline. As you can see now, your pipeline is in "waiting status". You have
 to run a CDS Worker or a CDS Hatchery which aims to create workers.
 
-Let's run an hatchery with docker-compose.
+Let's run a hatchery with docker-compose.
 
-We will spawn a containers with a hatchery in `local` mode. Workers will be spawn inside this container.
+We will spawn a container with a hatchery in `local` mode. Workers will be spawn inside this container.
 
 ```bash
 $ docker-compose up cds-hatchery-local
 ```
 
-*Running a hatchery "local" in a container is not recommanded. Use this way only for test purpose*.
+*Running a hatchery "local" in a container is not recommended. Use this way only for test purpose*.
 
 After running this Hatchery, a worker will be spawned. Your pipeline will be in "Building", then "Success" status.
 
@@ -87,7 +87,7 @@ After running this Hatchery, a worker will be spawned. Your pipeline will be in 
 
 The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) runs hatchery belonging to the `shared.infra` groups.
 
-A `local hatchery` spawn worker on same host than hatchery. This is usually useful for specific cases, as
+A `local hatchery` spawns workers on the same host as the hatchery. This is usually useful for specific cases, as
 running job on specific hardware.
 But this hatchery does not make it possible to respect the isolation of workpaces
 of workers as they share the same workspace.
@@ -99,10 +99,11 @@ Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:23
 [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml)
 
 ```bash
+$ export HOSTNAME=$(hostname)
 $ docker-compose up cds-hatchery-swarm
 ```
 
-A `swarm hatchery` spwan CDS Worker inside dedicated container.
+A `swarm hatchery` spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.
 
 ## Next with Actions, Plugins and Templates

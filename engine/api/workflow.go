@@ -75,11 +75,11 @@ func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	}
 	defer tx.Rollback()
 
-	if err := workflow.Insert(db, &wf, c.User); err != nil {
+	if err := workflow.Insert(tx, &wf, c.User); err != nil {
 		return sdk.WrapError(err, "Cannot insert workflow")
 	}
 
-	if err := project.UpdateLastModified(db, c.User, p); err != nil {
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
 		return sdk.WrapError(err, "Cannot update project last modified date")
 	}
 
@@ -87,12 +87,17 @@ func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.WrapError(errT, "Cannot commit transaction")
 	}
 
+	wf1, errl := workflow.LoadByID(db, wf.ID, c.User)
+	if errl != nil {
+		return sdk.WrapError(errT, "Cannot load workflow")
+	}
+
 	if !detailed {
-		return WriteJSON(w, r, wf, http.StatusCreated)
+		return WriteJSON(w, r, wf1, http.StatusCreated)
 	}
 
 	w2 := sdk.DetailedWorkflow{}
-	w2.Workflow = wf
+	w2.Workflow = *wf1
 
 	w2.Root = wf.Root.ID
 	w2.Nodes = wf.Nodes()
@@ -135,11 +140,11 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer tx.Rollback()
 
-	if err := workflow.Update(db, &wf, c.User); err != nil {
+	if err := workflow.Update(tx, &wf, c.User); err != nil {
 		return sdk.WrapError(err, "Cannot insert workflow")
 	}
 
-	if err := project.UpdateLastModified(db, c.User, p); err != nil {
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
 		return sdk.WrapError(err, "Cannot update project last modified date")
 	}
 
@@ -183,11 +188,11 @@ func deleteWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 	defer tx.Rollback()
 
-	if err := workflow.Delete(db, oldW); err != nil {
+	if err := workflow.Delete(tx, oldW); err != nil {
 		return sdk.WrapError(err, "Cannot delete workflow")
 	}
 
-	if err := project.UpdateLastModified(db, c.User, p); err != nil {
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
 		return sdk.WrapError(err, "Cannot update project last modified date")
 	}
 
