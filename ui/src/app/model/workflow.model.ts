@@ -10,15 +10,37 @@ export class Workflow {
     project_id: number;
     project_key: string;
     root: WorkflowNode;
+    root_id: number;
+    joins: Array<WorkflowNodeJoin>;
+
+    // UI params
+    externalChange: boolean;
 
     constructor() {
         this.root = new WorkflowNode();
     }
 }
 
+export class WorkflowNodeJoin {
+    id: number;
+    workflow_id: number;
+    source_node_id: Array<number>;
+    source_node_ref: Array<string>;
+    triggers: Array<WorkflowNodeJoinTrigger>;
+}
+
+export class WorkflowNodeJoinTrigger {
+    id: number;
+    join_id: number;
+    workflow_dest_node_id: number;
+    workflow_dest_node: WorkflowNode;
+    conditions: Array<WorkflowTriggerCondition>;
+}
+
 // WorkflowNode represents a node in w workflow tree
 export class WorkflowNode {
     id: number;
+    ref: string;
     workflow_id: number;
     pipeline_id: number;
     pipeline: Pipeline;

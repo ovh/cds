@@ -54,11 +54,34 @@ export class WorkflowStore {
     }
 
     /**
+     * Get workflows
+     * @returns {Observable<Application>}
+     */
+    getWorkflows(key: string, workflowName?: string): Observable<Map<string, Workflow>> {
+        let store = this._workflows.getValue();
+        let workflowKey = key + '-' + workflowName;
+        if (workflowName && !store.get(workflowKey)) {
+            this.resync(key, workflowName);
+        }
+        return new Observable<Map<string, Workflow>>(fn => this._workflows.subscribe(fn));
+    }
+
+    resync(key: string, workflowName: string) {
+        let store = this._workflows.getValue();
+        let workflowKey = key + '-' + workflowName;
+        this._workflowService.getWorkflow(key, workflowName).subscribe(res => {
+            this._workflows.next(store.set(workflowKey, res));
+        }, err => {
+            this._workflows.error(err);
+        });
+    }
+
+    /**
      * Add a new workflow in a project
      * @param key Project unique key
      * @param workflow Workflow to add
      */
     addWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
-        return this._workflowService.addWorkflow(key, workflow).map(res => res.json());
+        return this._workflowService.addWorkflow(key, workflow);
     }
 }

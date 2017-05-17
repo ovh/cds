@@ -2,7 +2,6 @@ import {Injectable} from '@angular/core';
 import {Http, RequestOptions, Headers, URLSearchParams} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Application} from '../../model/application.model';
-import {PipelineBuild, Pipeline} from '../../model/pipeline.model';
 import {Variable} from '../../model/variable.model';
 import {RepositoryPoller} from '../../model/polling.model';
 import {GroupPermission} from '../../model/group.model';

@@ -490,3 +490,29 @@ ngui-auto-complete .no-match-found {
   display: none;
   border: none;
 };
+
+
+.node {
+  white-space: nowrap;
+}
+
+.node rect,
+.node circle,
+.node ellipse {
+  stroke: #333;
+  fill: #fff;
+  stroke-width: 1.5px;
+}
+
+.cluster rect {
+  stroke: #333;
+  fill: #000;
+  fill-opacity: 0.1;
+  stroke-width: 1.5px;
+}
+
+.edgePath path.path {
+  stroke: #333;
+  stroke-width: 1.5px;
+  fill: none;
+}
