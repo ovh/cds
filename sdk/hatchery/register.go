@@ -162,7 +162,15 @@ func workerRegister(h Interface) error {
 	}
 	log.Debug("workerRegister> models received: %d", len(models))
 
+	var nRegistered int
 	for _, m := range models {
+		if m.Type != h.ModelType() {
+			continue
+		}
+		// limit to 5 registration per ticker
+		if nRegistered > 5 {
+			continue
+		}
 		if !m.NeedRegistration {
 			log.Debug("workerRegister> no need to register worker model %s (%d)", m.Name, m.ID)
 			continue
@@ -172,7 +180,7 @@ func workerRegister(h Interface) error {
 		if err := h.SpawnWorker(&m, nil, true); err != nil {
 			log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, err)
 		}
-
+		nRegistered++
 	}
 	return nil
 }
