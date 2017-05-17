@@ -36,7 +36,7 @@ func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Workf
 
 	//Setup destination node
 	if err := insertOrUpdateNode(db, w, &trigger.WorkflowDestNode, u, false); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to setup destination node %d", trigger.WorkflowDestNode.ID)
+		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to setup destination node %d on trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 	trigger.WorkflowDestNodeID = trigger.WorkflowDestNode.ID
 
@@ -61,14 +61,18 @@ func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Workf
 
 // DeleteTrigger deletes a trigger and all chrildren
 func deleteTrigger(db gorp.SqlExecutor, trigger *sdk.WorkflowNodeTrigger) error {
+	log.Debug("deleteTrigger> Delete trigger %d", trigger.ID)
 	if err := deleteNode(db, &trigger.WorkflowDestNode); err != nil {
 		return sdk.WrapError(err, "DeleteTrigger> Unable to delete triggered node")
 	}
+	trigger.WorkflowDestNodeID = 0
 
 	dbt := NodeTrigger(*trigger)
 	if _, err := db.Delete(&dbt); err != nil {
 		return sdk.WrapError(err, "DeleteTrigger> Unable to delete trigger %d", dbt.ID)
 	}
+
+	trigger.ID = 0
 	return nil
 }
 
