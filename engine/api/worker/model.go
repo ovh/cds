@@ -168,6 +168,7 @@ func DeleteWorkerModelCapability(db gorp.SqlExecutor, workerID int64, capaName s
 // if requirements contains "binary" type: all workers model need to be registered again by
 // setting flag need_registration to true in DB.
 func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs []sdk.Requirement, reqs []sdk.Requirement) error {
+	log.Debug("ComputeRegistrationNeeds>")
 	for _, r := range reqs {
 		if r.Type == sdk.BinaryRequirement {
 			exist := false
