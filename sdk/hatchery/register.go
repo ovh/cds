@@ -169,7 +169,7 @@ func workerRegister(h Interface) error {
 		}
 		// limit to 5 registration per ticker
 		if nRegistered > 5 {
-			continue
+			break
 		}
 		if !m.NeedRegistration {
 			log.Debug("workerRegister> no need to register worker model %s (%d)", m.Name, m.ID)
