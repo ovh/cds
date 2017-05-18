@@ -77,7 +77,7 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) error {
+func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) error {
 	var err error
 
 	if len(h.workers) >= viper.GetInt("max-worker") {
@@ -114,6 +114,9 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 		args = append(args, fmt.Sprintf("--booked-job-id=%d", job.ID))
 	}
 
+	if registerOnly {
+		args = append(args, "register")
+	}
 	cmd := exec.Command("worker", args...)
 
 	// Clearenv

@@ -7,26 +7,23 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-
-	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 	stageIDString := vars["stageID"]
 
-	stageID, err := strconv.ParseInt(stageIDString, 10, 64)
-	if err != nil {
-		log.Warning("addJobToStageHandler> Stage ID must be an int: %s\n", err)
-		return sdk.ErrInvalidID
-
+	stageID, errp := strconv.ParseInt(stageIDString, 10, 64)
+	if errp != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "addJobToStageHandler> Stage ID must be an int: %s", errp)
 	}
 
 	var job sdk.Job
@@ -34,17 +31,13 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return err
 	}
 
-	pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if err != nil {
-		log.Warning("addJobToStageHandler> Cannot load pipeline %s for project %s: %s\n", pipelineName, projectKey, err)
-		return sdk.ErrPipelineNotFound
-
+	pip, errl := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	if errl != nil {
+		return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pip); err != nil {
-		log.Warning("addJobToStageHandler>Cannot load stages: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "addJobToStageHandler>Cannot load stages")
 	}
 
 	// check if stage is in the current pipeline
@@ -57,45 +50,44 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	if !found {
-		log.Warning("addJobToStageHandler>Stage not found\n")
-		return sdk.ErrNotFound
-
+		return sdk.WrapError(sdk.ErrNotFound, "addJobToStageHandler>Stage not found")
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-
+	tx, errb := db.Begin()
+	if errb != nil {
+		return errb
 	}
 	defer tx.Rollback()
+
+	reqs, errlb := action.LoadAllBinaryRequirements(tx)
+	if errlb != nil {
+		return sdk.WrapError(errlb, "addJobToStageHandler> cannot load all binary requirements")
+	}
 
 	//Default value is job enabled
 	job.Action.Enabled = true
 	job.Enabled = true
 	if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
-		log.Warning("addJobToStageHandler> Cannot insert job in database: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "addJobToStageHandler> Cannot insert job in database")
 	}
 
 	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
-		log.Warning("addJobToStageHandler> Cannot update pipeline last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addJobToStageHandler> Cannot update pipeline last modified date")
+	}
 
+	if err := worker.ComputeRegistrationNeeds(tx, reqs, job.Action.Requirements); err != nil {
+		return sdk.WrapError(err, "addJobToStageHandler> Cannot compute registration needs")
 	}
 
 	if err := tx.Commit(); err != nil {
 		return err
-
 	}
 
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.Delete(cache.Key("pipeline", projectKey, pipelineName))
 
 	if err := pipeline.LoadPipelineStage(db, pip); err != nil {
-		log.Warning("addJobToStageHandler> Cannot load stages: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
 	}
 
 	return WriteJSON(w, r, pip, http.StatusOK)
@@ -108,18 +100,14 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	stageIDString := vars["stageID"]
 	jobIDString := vars["jobID"]
 
-	jobID, err := strconv.ParseInt(jobIDString, 10, 64)
-	if err != nil {
-		log.Warning("updateJobHandler>ID is not a int: %s\n", err)
-		return sdk.ErrInvalidID
-
+	jobID, errp := strconv.ParseInt(jobIDString, 10, 64)
+	if errp != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "updateJobHandler>ID is not a int: %s", errp)
 	}
 
-	stageID, err := strconv.ParseInt(stageIDString, 10, 64)
-	if err != nil {
-		log.Warning("updateJobHandler>ID is not a int: %s\n", err)
-		return sdk.ErrInvalidID
-
+	stageID, errps := strconv.ParseInt(stageIDString, 10, 64)
+	if errps != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "updateJobHandler>ID is not a int: %s", errps)
 	}
 
 	var job sdk.Job
@@ -128,22 +116,16 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	}
 
 	if jobID != job.PipelineActionID {
-		log.Warning("updateJobHandler>Pipeline action does not match: %s\n", err)
-		return err
-
+		return sdk.WrapError(sdk.ErrInvalidID, "updateJobHandler>Pipeline action does not match")
 	}
 
-	pipelineData, err := pipeline.LoadPipeline(db, key, pipName, false)
-	if err != nil {
-		log.Warning("updateJobHandler>Cannot load pipeline %s: %s\n", pipName, err)
-		return err
-
+	pipelineData, errl := pipeline.LoadPipeline(db, key, pipName, false)
+	if errl != nil {
+		return sdk.WrapError(errl, "updateJobHandler>Cannot load pipeline %s", pipName)
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
-		log.Warning("updateJobHandler>Cannot load stages: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "updateJobHandler>Cannot load stages")
 	}
 
 	// check if job is in the current pipeline
@@ -160,71 +142,61 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	}
 
 	if !found {
-		log.Warning("updateJobHandler>Job not found\n")
-		return sdk.ErrNotFound
-
+		return sdk.WrapError(sdk.ErrNotFound, "updateJobHandler>Job not found")
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("updateJobHandler> Cannot start transaction: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "updateJobHandler> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
-	if err := pipeline.UpdateJob(tx, &job, c.User.ID); err != nil {
-		log.Warning("updateJobHandler> Cannot update in database: %s\n", err)
-		return err
+	reqs, errlb := action.LoadAllBinaryRequirements(tx)
+	if errlb != nil {
+		return sdk.WrapError(errlb, "updateJobHandler> cannot load all binary requirements")
+	}
 
+	if err := pipeline.UpdateJob(tx, &job, c.User.ID); err != nil {
+		return sdk.WrapError(err, "updateJobHandler> Cannot update in database")
+	}
+
+	if err := worker.ComputeRegistrationNeeds(tx, reqs, job.Action.Requirements); err != nil {
+		return sdk.WrapError(err, "updateJobHandler> Cannot compute registration needs")
 	}
 
 	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
-		log.Warning("updateJobHandler> Cannot update pipeline last_modified: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "updateJobHandler> Cannot update pipeline last_modified")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("updateJobHandler> Cannot commit transaction: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "updateJobHandler> Cannot commit transaction")
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
-		log.Warning("updateJobHandler> Cannot load stages: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "updateJobHandler> Cannot load stages")
 	}
 
 	return WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
 func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
 	jobIDString := vars["jobID"]
 
-	jobID, err := strconv.ParseInt(jobIDString, 10, 64)
-	if err != nil {
-		log.Warning("deleteJobHandler>ID is not a int: %s\n", err)
-		return sdk.ErrInvalidID
-
+	jobID, errp := strconv.ParseInt(jobIDString, 10, 64)
+	if errp != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "deleteJobHandler>ID is not a int: %s", errp)
 	}
 
-	pipelineData, err := pipeline.LoadPipeline(db, key, pipName, false)
-	if err != nil {
-		log.Warning("deleteJobHandler>Cannot load pipeline %s: %s\n", pipName, err)
-		return err
-
+	pipelineData, errl := pipeline.LoadPipeline(db, key, pipName, false)
+	if errl != nil {
+		return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
 	}
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
-		log.Warning("deleteJobHandler>Cannot load stages: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "deleteJobHandler>Cannot load stages")
 	}
 
 	// check if job is in the current pipeline
@@ -242,44 +214,32 @@ stageLoop:
 	}
 
 	if !found {
-		log.Warning("deleteJobHandler>Job not found\n")
-		return sdk.ErrNotFound
-
+		return sdk.WrapError(sdk.ErrNotFound, "deleteJobHandler>Job not found")
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deleteJobHandler> Cannot begin transaction: %s\n", err)
-		return err
-
+	tx, errb := db.Begin()
+	if errb != nil {
+		return sdk.WrapError(errb, "deleteJobHandler> Cannot begin transaction")
 	}
 	defer tx.Rollback()
 
 	if err := pipeline.DeleteJob(tx, jobToDelete, c.User.ID); err != nil {
-		log.Warning("deleteJobHandler> Cannot delete pipeline action: %s", err)
-		return err
-
+		return sdk.WrapError(err, "deleteJobHandler> Cannot delete pipeline action")
 	}
 
 	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
-		log.Warning("deleteJobHandler> Cannot update pipeline last_modified: %s", err)
-		return err
-
+		return sdk.WrapError(err, "deleteJobHandler> Cannot update pipeline last_modified")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("deleteJobHandler> Cannot commit transaction: %s", err)
-		return err
-
+		return sdk.WrapError(err, "deleteJobHandler> Cannot commit transaction")
 	}
 
 	k := cache.Key("application", key, "*")
 	cache.DeleteAll(k)
 
 	if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
-		log.Warning("deleteJobHandler> Cannot load stages: %s", err)
-		return err
-
+		return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")
 	}
 
 	return WriteJSON(w, r, pipelineData, http.StatusOK)

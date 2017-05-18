@@ -187,10 +187,21 @@ func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	return WriteJSON(w, r, m, http.StatusOK)
 }
 
+func getWorkerModelsEnabled(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	if c.Hatchery == nil || c.Hatchery.GroupID == 0 {
+		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModelsEnabled> this route can be called only by hatchery")
+	}
+	models, errgroup := worker.LoadWorkerModelsUsableOnGroup(db, c.Hatchery.GroupID, group.SharedInfraGroup.ID)
+	if errgroup != nil {
+		return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", c.Hatchery.ID, c.Hatchery.GroupID)
+	}
+	log.Debug("getWorkerModels> for hatchery %s with group %s : %s", c.Hatchery.ID, c.Hatchery.GroupID, models)
+	return WriteJSON(w, r, models, http.StatusOK)
+}
+
 func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	if err := r.ParseForm(); err != nil {
-		log.Warning("getWorkerModels> cannot parse form")
-		return sdk.ErrWrongRequest
+		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> cannot parse form")
 	}
 
 	name := r.FormValue("name")
@@ -206,13 +217,8 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", c.User.ID)
 		}
 		log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", c.User.ID, c.User.Username, c.User.Admin, models)
-	} else if c.Hatchery != nil && c.Hatchery.GroupID > 0 {
-		var errgroup error
-		models, errgroup = worker.LoadWorkerModelsUsableOnGroup(db, c.Hatchery.GroupID, group.SharedInfraGroup.ID)
-		if errgroup != nil {
-			return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", c.Hatchery.ID, c.Hatchery.GroupID)
-		}
-		log.Debug("getWorkerModels> for hatchery %s with group %s : %s", c.Hatchery.ID, c.Hatchery.GroupID, models)
+	} else {
+		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> this route can't be called by worker or hatchery")
 	}
 
 	return WriteJSON(w, r, models, http.StatusOK)

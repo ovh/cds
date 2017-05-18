@@ -378,6 +378,9 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 				log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
 			}
 		}()
+		if err := updateRegistration(db, modelID); err != nil {
+			log.Warning("registerWorker> Unable updateRegistration: %s", err)
+		}
 	}
 	return w, tx.Commit()
 }
@@ -412,11 +415,10 @@ func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64) er
 func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
 	ms := []WorkerModel{}
 	if _, err := db.Select(&ms, `
-		select * from worker_model
-		where group_id = $1
-		or group_id = $2
-		or $1 = $2
-		order by name
+		SELECT * from worker_model
+		WHERE disabled = FALSE
+		AND (group_id = $1 OR group_id = $2 OR $1 = $2)
+		ORDER by name
 		`, groupID, sharedinfraGroupID); err != nil {
 		return nil, err
 	}

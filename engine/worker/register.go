@@ -15,7 +15,7 @@ import (
 
 // Workers need to register to main api so they can run actions
 func register(cdsURI string, name string, uk string) error {
-	log.Info("Registering [%s] at [%s]\n", name, cdsURI)
+	log.Info("Registering [%s] at [%s]", name, cdsURI)
 
 	sdk.InitEndpoint(cdsURI)
 	sdk.Authorization(WorkerID)

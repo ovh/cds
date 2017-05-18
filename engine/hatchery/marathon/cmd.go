@@ -72,6 +72,7 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 			viper.GetInt("max-failures-heartbeat"),
 			viper.GetBool("insecure"),
 			viper.GetInt("provision-seconds"),
+			viper.GetInt("register-seconds"),
 			viper.GetInt("spawn-threshold-warning"),
 			viper.GetInt("spawn-threshold-critical"),
 			viper.GetInt("grace-time-queued"),
