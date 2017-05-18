@@ -247,11 +247,13 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		}
 	}
 
-	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker", sdk.Host)}
+	var registerCmd string
 	if registerOnly {
-		cmd = append(cmd, "register")
+		registerCmd = " register"
 	}
+
+	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
+	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", sdk.Host, registerCmd)}
 
 	//CDS env needed by the worker binary
 	env := []string{
