@@ -176,7 +176,7 @@ func workerRegister(h Interface) error {
 			continue
 		}
 
-		log.Debug("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
+		log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
 		if err := h.SpawnWorker(&m, nil, true); err != nil {
 			log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, err)
 		}
