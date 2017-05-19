@@ -18,7 +18,7 @@ export class Application {
     pipelines_build: Array<PipelineBuild>;
     permission: number;
     notifications: Array<Notification>;
-    last_modified: Date;
+    last_modified: string;
     repositories_manager: RepositoriesManager;
     repository_fullname: string;
     pollers: Array<RepositoryPoller>;

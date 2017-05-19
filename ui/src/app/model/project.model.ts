@@ -17,7 +17,7 @@ export class Project {
     environments: Array<Environment>;
     repositories_manager: Array<RepositoriesManager>;
     permission: number;
-    last_modified: Date;
+    last_modified: string;
 
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
