@@ -1,9 +1,12 @@
 package cache
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ovh/cds/sdk/log"
@@ -144,9 +147,14 @@ func (s *RedisStore) Dequeue(queueName string, value interface{}) {
 		log.Error("redis> cannot get redis client")
 		return
 	}
+read:
 	res, err := s.Client.BRPop(0, queueName).Result()
 	if err != nil {
 		log.Warning("redis> Error dequeueing %s:%s", queueName, err)
+		if err == io.EOF {
+			time.Sleep(1 * time.Second)
+			goto read
+		}
 	}
 	if len(res) != 2 {
 		return
@@ -154,4 +162,48 @@ func (s *RedisStore) Dequeue(queueName string, value interface{}) {
 	if err := json.Unmarshal([]byte(res[1]), value); err != nil {
 		log.Warning("redis> Cannot unmarshal %s :%s", queueName, err)
 	}
+}
+
+func (s *RedisStore) DequeueWithContext(queueName string, value interface{}, c context.Context) {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return
+	}
+
+	elemChan := make(chan string)
+	var once sync.Once
+	go func() {
+		ticker := time.NewTicker(50 * time.Millisecond).C
+		for {
+			select {
+			case <-ticker:
+				res, err := s.Client.RPop(queueName).Result()
+				if err == redis.Nil {
+					continue
+				}
+				if err == io.EOF {
+					time.Sleep(1 * time.Second)
+					continue
+				}
+				if len(res) != 2 {
+					continue
+				}
+				elemChan <- res
+			case <-c.Done():
+				once.Do(func() {
+					close(elemChan)
+				})
+				return
+			}
+		}
+	}()
+
+	e := <-elemChan
+	if e != "" {
+		b := []byte(e)
+		json.Unmarshal(b, value)
+	}
+	once.Do(func() {
+		close(elemChan)
+	})
 }

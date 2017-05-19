@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS "workflow_run" (
 );
 
 SELECT create_foreign_key('FK_WORKFLOW_RUN_WORKFLOW', 'workflow_run', 'workflow', 'workflow_id', 'id');
-SELECT create_foreign_key('FK_WORKFLOW_RUN_WORKFLOW', 'workflow_run', 'project', 'project_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_RUN_PROJECT', 'workflow_run', 'project', 'project_id', 'id');
 
 CREATE TABLE IF NOT EXISTS "workflow_node_run" (
     workflow_run_id BIGINT NOT NULL,
@@ -26,12 +26,17 @@ CREATE TABLE IF NOT EXISTS "workflow_node_run" (
     done TIMESTAMP WITH TIME ZONE NOT NULL,
     hook_event JSONB,
     manual JSONB,
-    trigger_id BIGINT,
+    source_node_runs JSONB,
     payload JSONB,
     pipeline_parameters JSONB,
     tests JSONB,
-    commits JSONB
+    commits JSONB,
+    stages JSONB
 );
+
+
+SELECT create_foreign_key('FK_WORKFLOW_NODE_RUN_WORKFLOW_RUN', 'workflow_node_run', 'workflow_run', 'workflow_run_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_NODE_RUN_WORKFLOW_NODE', 'workflow_node_run', 'workflow_node', 'workflow_node_id', 'id');
 
 CREATE TABLE IF NOT EXISTS "workflow_node_run_artifact" (
     id BIGSERIAL PRIMARY KEY,
@@ -44,7 +49,9 @@ CREATE TABLE IF NOT EXISTS "workflow_node_run_artifact" (
     md5sum TEXT, 
     object_path TEXT, 
     created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP
-)
+);
+
+SELECT create_foreign_key('FK_WORKFLOW_NODE_RUN_ARTIFACT_WORKFLOW_NODE_RUN', 'workflow_node_run_artifact', 'workflow_node_run', 'workflow_node_run_id', 'id');
 
 CREATE TABLE IF NOT EXISTS "workflow_node_run_job" (
     id BIGSERIAL PRIMARY KEY,
@@ -55,8 +62,11 @@ CREATE TABLE IF NOT EXISTS "workflow_node_run_job" (
     queued TIMESTAMP WITH TIME ZONE,
     start TIMESTAMP WITH TIME ZONE,
     done TIMESTAMP WITH TIME ZONE,
-    model TEXT
+    model TEXT,
+    spawninfos JSONB
 );
+
+SELECT create_foreign_key('FK_WORKFLOW_NODE_RUN_JOB_WORKFLOW_NODE_RUN', 'workflow_node_run_job', 'workflow_node_run', 'workflow_node_run_id', 'id');
 
 CREATE TABLE IF NOT EXISTS "workflow_node_run_job_logs" (
     id BIGSERIAL PRIMARY KEY,
@@ -69,8 +79,13 @@ CREATE TABLE IF NOT EXISTS "workflow_node_run_job_logs" (
     "value" BYTEA
 );
 
+SELECT create_foreign_key('FK_WORKFLOW_NODE_RUN_JOGS_WORKFLOW_NODE_RUN', 'workflow_node_run_job_logs', 'workflow_node_run', 'workflow_node_run_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_NODE_RUN_JOB_JOGS_WORKFLOW_NODE_RUN', 'workflow_node_run_job_logs', 'workflow_node_run_job', 'workflow_node_run_job_id', 'id');
 
 -- +migrate Down
 
+DROP TABLE workflow_node_run_job_logs;
+DROP TABLE workflow_node_run_artifact;
+DROP TABLE workflow_node_run_job;
 DROP TABLE workflow_node_run;
 DROP TABLE workflow_run;

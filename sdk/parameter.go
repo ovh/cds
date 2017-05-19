@@ -88,3 +88,12 @@ func ParametersFromMap(m map[string]string) []Parameter {
 	}
 	return res
 }
+
+// ParametersToMap returns a map from a slice of parameters
+func ParametersToMap(params []Parameter) map[string]string {
+	res := map[string]string{}
+	for _, p := range params {
+		res[p.Name] = p.Value
+	}
+	return res
+}

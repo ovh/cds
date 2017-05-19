@@ -195,7 +195,7 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 	wn.Context = ctx
 
 	//Load pipeline
-	pip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, false)
+	pip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, true)
 	if err != nil {
 		return nil, sdk.WrapError(err, "LoadNode> Unable to load pipeline of %d", id)
 	}

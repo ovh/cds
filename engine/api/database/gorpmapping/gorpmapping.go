@@ -37,7 +37,7 @@ func JSONToNullString(i interface{}) (sql.NullString, error) {
 	if err != nil {
 		return sql.NullString{Valid: false}, err
 	}
-	return sql.NullString{Valid: false, String: string(b)}, nil
+	return sql.NullString{Valid: true, String: string(b)}, nil
 }
 
 //JSONNullString sets the holder with unmarshalled sql.NullString

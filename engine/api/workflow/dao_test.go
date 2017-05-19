@@ -248,7 +248,6 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 		assertEqualNode(t, &t1.WorkflowDestNode, &t2.WorkflowDestNode)
 	}
 }
-
 func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *testing.T) {
 	db := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)

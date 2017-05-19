@@ -3,8 +3,8 @@ package workflow
 import (
 	"time"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/go-gorp/gorp"
 )
@@ -14,23 +14,32 @@ func RunFromHook(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunHoo
 }
 
 func ManualRun(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error) {
+	lastWorkflowRun, err := LoadLastRun(db, w.ProjectKey, w.Name)
+	if err != nil {
+		if err != sdk.ErrWorkflowNotFound {
+			return nil, sdk.WrapError(err, "ManualRun> Unable to load last run")
+		}
+	}
+
+	var number = int64(0)
+	if lastWorkflowRun != nil {
+		number = lastWorkflowRun.Number + 1
+	}
+
 	wr := &sdk.WorkflowRun{
-		Number:       0, //Get last number
-		WorkflowName: w.Name,
+		Number:       number,
 		Workflow:     *w,
+		WorkflowID:   w.ID,
 		Start:        time.Now(),
 		LastModified: time.Now(),
-		ProjectKey:   w.ProjectKey,
 		ProjectID:    w.ProjectID,
 	}
 
 	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
-	return wr, run(db, wr)
-}
 
-func run(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
-	cache.Enqueue(processWorkflowQueue, w)
-	return nil
+	log.Debug("workflow.ManualRun> %#v", wr)
+
+	return wr, processWorkflowRun(db, wr, nil, e, nil)
 }

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"container/list"
+	"context"
 	"strings"
 	"sync"
 
@@ -25,6 +26,7 @@ type Store interface {
 	DeleteAll(key string)
 	Enqueue(queueName string, value interface{})
 	Dequeue(queueName string, value interface{})
+	DequeueWithContext(queueName string, value interface{}, c context.Context)
 }
 
 //Initialize the global cache in memory, or redis
@@ -108,4 +110,11 @@ func Dequeue(queueName string, value interface{}) {
 		return
 	}
 	s.Dequeue(queueName, value)
+}
+
+func DequeueWithContext(queueName string, value interface{}, c context.Context) {
+	if s == nil {
+		return
+	}
+	s.DequeueWithContext(queueName, value, c)
 }
