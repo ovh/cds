@@ -77,14 +77,17 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) error {
+func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error) {
 	var err error
 
 	if len(h.workers) >= viper.GetInt("max-worker") {
-		return fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
 	}
 
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
+	if registerOnly {
+		wName = "register-" + wName
+	}
 
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", sdk.Host))
@@ -129,7 +132,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, re
 	}
 
 	if err = cmd.Start(); err != nil {
-		return err
+		return "", err
 	}
 	h.Lock()
 	h.workers[wName] = cmd
@@ -139,7 +142,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, re
 	go func() {
 		cmd.Wait()
 	}()
-	return nil
+	return wName, nil
 }
 
 // WorkersStarted returns the number of instances started but

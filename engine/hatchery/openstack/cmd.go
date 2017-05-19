@@ -51,12 +51,17 @@ Start worker on a docker openstack cluster.
 $ cds generate token --group shared.infra --expiration persistent
 2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4
 
-$ CDS_OPENSTACK_USER=<user> CDS_OPENSTACK_TENANT=<tenant> CDS_OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net CDS_OPENSTACK_PASSWORD=<password> CDS_OPENSTACK_REGION=SBG1 hatchery \
-        --api=https://api.domain \
-        --max-worker=10 \
-        --mode=openstack \
-        --provision=1 \
-        --token=2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4
+$ CDS_OPENSTACK_USER=<user> \
+	CDS_OPENSTACK_TENANT=<tenant> \
+	CDS_OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net/v2.0 \
+	CDS_OPENSTACK_PASSWORD=<password> \
+	CDS_OPENSTACK_REGION=SBG1 \
+  CDS_API=https://api.domain \
+  CDS_MAX-worker=10 \
+  CDS_MODE=openstack \
+  CDS_PROVISION=1 \
+  CDS_TOKEN=2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4 \
+	./hatchery
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {

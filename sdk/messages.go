@@ -50,9 +50,9 @@ var (
 	MsgPipelineJobUpdated                  = &Message{"MsgPipelineJobUpdated", trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil}
 	MsgPipelineJobAdded                    = &Message{"MsgPipelineJobAdded", trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil}
 	MsgPipelineJobDeleted                  = &Message{"MsgPipelineJobDeleted", trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil}
-	MsgSpawnInfoHatcheryStarts             = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery (%s) a démarré le lancement du worker avec le model %s", EN: "Hatchery (%s) starts spawn worker with model %s"}, nil}
-	MsgSpawnInfoHatcheryErrorSpawn         = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery (%s) a démarré un worker avec le model %s après %s, err:%s", EN: "Error while Hatchery (%s) spawn worker with model %s after %s, err:%s"}, nil}
-	MsgSpawnInfoHatcheryStartsSuccessfully = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery (%s) a démarré le worker avec succès en %s", EN: "Hatchery (%s) spawn worker successfully in %s"}, nil}
+	MsgSpawnInfoHatcheryStarts             = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s (%s) a démarré le lancement du worker avec le model %s", EN: "Hatchery %s (%s) starts spawn worker with model %s"}, nil}
+	MsgSpawnInfoHatcheryErrorSpawn         = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s (%s) a démarré un worker avec le model %s après %s, err:%s", EN: "Error while Hatchery %s (%s) spawn worker with model %s after %s, err:%s"}, nil}
+	MsgSpawnInfoHatcheryStartsSuccessfully = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery %s (%s) a démarré le worker %s avec succès en %s", EN: "Hatchery %s (%s) spawn worker %s successfully in %s"}, nil}
 	MsgSpawnInfoWorkerEnd                  = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "Worker %s finished working on this job and took %s to work on the steps"}, nil}
 	MsgSpawnInfoJobTaken                   = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job a été pris par le worker %s", EN: "Job was taken by worker %s"}, nil}
 	MsgSpawnInfoWorkerForJob               = &Message{"MsgSpawnInfoWorkerForJob", trad{FR: "Ce worker %s a été créé pour lancer ce job", EN: "This worker %s was created to take this action"}, nil}

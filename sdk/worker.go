@@ -49,6 +49,7 @@ type Model struct {
 	Disabled         bool               `json:"disabled"  db:"disabled"`
 	NeedRegistration bool               `json:"need_registration"  db:"need_registration"`
 	LastRegistration time.Time          `json:"last_registration"  db:"last_registration"`
+	UserLastModified time.Time          `json:"user_last_modified"  db:"user_last_modified"`
 	CreatedBy        User               `json:"created_by" db:"-"`
 	Provision        int64              `json:"provision" db:"provision"`
 	OwnerID          int64              `json:"owner_id" db:"owner_id"` //DEPRECATED

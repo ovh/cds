@@ -167,20 +167,23 @@ func (hd *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) error {
+func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error) {
 	if wm.Type != sdk.Docker {
-		return fmt.Errorf("cannot handle %s worker model", wm.Type)
+		return "", fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
 
 	if len(hd.workers) >= viper.GetInt("max-worker") {
-		return fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
 	}
 
 	name, errs := randSeq(16)
 	if errs != nil {
-		return fmt.Errorf("cannot create worker name: %s", errs)
+		return "", fmt.Errorf("cannot create worker name: %s", errs)
 	}
 	name = wm.Name + "-" + name
+	if registerOnly {
+		name = "register-" + name
+	}
 
 	var args []string
 	args = append(args, "run", "--rm", "-a", "STDOUT", "-a", "STDERR")
@@ -223,7 +226,7 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 	log.Debug("Running %s", cmd.Args)
 
 	if err := cmd.Start(); err != nil {
-		return err
+		return "", err
 	}
 	hd.Lock()
 	hd.workers[name] = cmd
@@ -237,7 +240,7 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 
 	// Do not spam docker daemon
 	time.Sleep(2 * time.Second)
-	return nil
+	return name, nil
 }
 
 // KillWorker stops a worker locally
