@@ -209,6 +209,7 @@ func insertJoinTrigger(db gorp.SqlExecutor, w *sdk.Workflow, j *sdk.WorkflowNode
 		return sdk.WrapError(err, "insertOrUpdateJoinTrigger> Unable to insert trigger")
 	}
 	trigger.ID = dbt.ID
+	trigger.WorkflowDestNode.TriggerJoinSrcID = trigger.ID
 
 	// Update node trigger ID
 	if err := updateWorkflowTriggerJoinSrc(db, &trigger.WorkflowDestNode); err != nil {

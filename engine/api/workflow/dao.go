@@ -150,6 +150,13 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, oldWorkflow *sdk.Workflow, u *
 		return err
 	}
 
+	// Delete all OLD JOIN
+	for _, j := range oldWorkflow.Joins {
+		if err := deleteJoin(db, j); err != nil {
+			return sdk.WrapError(err, "Update> unable to delete all join on workflow(%d)", w.ID)
+		}
+	}
+
 	// Delete old Root Node
 	if oldWorkflow.Root != nil {
 		if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
@@ -167,12 +174,6 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, oldWorkflow *sdk.Workflow, u *
 
 	w.RootID = w.Root.ID
 
-	// Delete all OLD JOIN
-	for _, j := range oldWorkflow.Joins {
-		if err := deleteJoin(db, j); err != nil {
-			return sdk.WrapError(err, "Update> unable to delete all join on workflow(%d)", w.ID)
-		}
-	}
 
 	// Insert new JOIN
 	for i := range w.Joins {
@@ -196,6 +197,13 @@ func Delete(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	//Detach root from workflow
 	if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to detache workflow root")
+	}
+
+	// Delete all JOINs
+	for _, j := range w.Joins {
+		if err := deleteJoin(db, j); err != nil {
+			return sdk.WrapError(err, "Update> unable to delete all join on workflow(%d)", w.ID)
+		}
 	}
 
 	//Delete root
