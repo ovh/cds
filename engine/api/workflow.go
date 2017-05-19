@@ -141,7 +141,7 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	defer tx.Rollback()
 
 	if err := workflow.Update(tx, &wf, c.User); err != nil {
-		return sdk.WrapError(err, "Cannot insert workflow")
+		return sdk.WrapError(err, "Cannot update workflow")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
