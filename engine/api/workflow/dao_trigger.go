@@ -10,42 +10,34 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// InsertOrUpdateTrigger inserts or updates a trigger
-func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
+// insertTrigger inserts a trigger
+func insertTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
 	defer func() {
-		log.Debug("InsertOrUpdateTrigger> insert or update node %d (%s) on %s trigger %d", node.ID, node.Ref, node.Pipeline.Name, trigger.ID)
+		log.Debug("insertTrigger> insert or update node %d (%s) on %s trigger %d", node.ID, node.Ref, node.Pipeline.Name, trigger.ID)
 	}()
 	trigger.WorkflowNodeID = node.ID
-	var oldTrigger *sdk.WorkflowNodeTrigger
-
-	//Try to load the trigger
-	if trigger.ID != 0 {
-		var err error
-		oldTrigger, err = loadTrigger(db, w, node, trigger.ID, u)
-		if err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to load trigger %d", trigger.ID)
-		}
-	}
-
-	//Delete the old trigger
-	if oldTrigger != nil {
-		if err := deleteTrigger(db, w, oldTrigger, u); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to delete trigger %d", trigger.ID)
-		}
-	}
+	trigger.ID = 0
+	trigger.WorkflowDestNodeID = 0
 
 	//Setup destination node
-	if err := insertOrUpdateNode(db, w, &trigger.WorkflowDestNode, u, false); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to setup destination node %d on trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
+	if err := insertNode(db, w, &trigger.WorkflowDestNode, u, false); err != nil {
+		return sdk.WrapError(err, "insertTrigger> Unable to setup destination node %d on trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 	trigger.WorkflowDestNodeID = trigger.WorkflowDestNode.ID
 
 	//Insert trigger
 	dbt := NodeTrigger(*trigger)
 	if err := db.Insert(&dbt); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to insert trigger")
+		return sdk.WrapError(err, "insertTrigger> Unable to insert trigger")
 	}
 	trigger.ID = dbt.ID
+	trigger.WorkflowDestNode.TriggerSrcID = trigger.ID
+
+	// Update node trigger ID
+	if err := updateWorkflowTriggerSrc(db, &trigger.WorkflowDestNode); err != nil {
+		return sdk.WrapError(err, "insertTrigger> Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
+	}
+
 
 	//Manage conditions
 	b, err := json.Marshal(trigger.Conditions)
@@ -56,23 +48,6 @@ func insertOrUpdateTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Workf
 		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to set trigger conditions in database")
 	}
 
-	return nil
-}
-
-// DeleteTrigger deletes a trigger and all chrildren
-func deleteTrigger(db gorp.SqlExecutor, w *sdk.Workflow, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
-	log.Debug("deleteTrigger> Delete trigger %d", trigger.ID)
-	if err := deleteNode(db, w, &trigger.WorkflowDestNode, u); err != nil {
-		return sdk.WrapError(err, "DeleteTrigger> Unable to delete triggered node")
-	}
-	trigger.WorkflowDestNodeID = 0
-
-	dbt := NodeTrigger(*trigger)
-	if _, err := db.Delete(&dbt); err != nil {
-		return sdk.WrapError(err, "DeleteTrigger> Unable to delete trigger %d", dbt.ID)
-	}
-
-	trigger.ID = 0
 	return nil
 }
 
@@ -116,38 +91,4 @@ func loadTriggers(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, 
 		triggers = append(triggers, t)
 	}
 	return triggers, nil
-}
-
-// LoadTrigger loads a specific trigger from a node
-func loadTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, id int64, u *sdk.User) (*sdk.WorkflowNodeTrigger, error) {
-	dbtrigger := NodeTrigger{}
-	if err := db.SelectOne(&dbtrigger, "select * from workflow_node_trigger where workflow_node_id = $1 and id = $2", node.ID, id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "LoadTriggers> Unable to load trigger %d", id)
-	}
-
-	t := sdk.WorkflowNodeTrigger(dbtrigger)
-
-	if t.WorkflowDestNodeID != 0 {
-		dest, err := loadNode(db, w, t.WorkflowDestNodeID, u)
-		if err != nil {
-			return nil, sdk.WrapError(err, "LoadTrigger> Unable to load destination node %d", t.WorkflowDestNodeID)
-		}
-		t.WorkflowDestNode = *dest
-	}
-
-	//Load conditions
-	sqlConditions, err := db.SelectNullStr("select conditions from workflow_node_trigger where id = $1", t.ID)
-	if err != nil {
-		return nil, sdk.WrapError(err, "LoadTriggers> Unable to load conditions for trigger %d", t.ID)
-	}
-	if sqlConditions.Valid {
-		if err := json.Unmarshal([]byte(sqlConditions.String), &t.Conditions); err != nil {
-			return nil, sdk.WrapError(err, "LoadTriggers> Unable to unmarshall conditions for trigger %d", t.ID)
-		}
-	}
-
-	return &t, nil
 }

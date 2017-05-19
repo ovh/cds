@@ -7,7 +7,7 @@ import (
 )
 
 // InsertOrUpdateHook inserts or updates a hook
-func insertOrUpdateHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeHook) error {
+func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeHook) error {
 	return nil
 }
 

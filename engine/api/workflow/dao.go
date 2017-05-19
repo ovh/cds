@@ -127,7 +127,7 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		return sdk.ErrWorkflowInvalidRoot
 	}
 
-	if err := insertOrUpdateNode(db, w, w.Root, u, false); err != nil {
+	if err := insertNode(db, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow root node")
 	}
 
@@ -136,7 +136,7 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	}
 
 	for _, j := range w.Joins {
-		if err := insertOrUpdateJoin(db, w, &j, u); err != nil {
+		if err := insertJoin(db, w, &j, u); err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
@@ -145,9 +145,41 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 }
 
 // Update updates a workflow
-func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+func Update(db gorp.SqlExecutor, w *sdk.Workflow, oldWorkflow *sdk.Workflow, u *sdk.User) error {
 	if err := IsValid(db, w, u); err != nil {
 		return err
+	}
+
+	// Delete old Root Node
+	if oldWorkflow.Root != nil {
+		if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
+			return sdk.WrapError(err, "Delete> Unable to detache workflow root")
+		}
+		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root, u); err != nil {
+			return sdk.WrapError(err, "Update> unable to delete root node on workflow(%d)", w.ID)
+		}
+	}
+
+	// Inser new Root Node
+	if err := insertNode(db, w, w.Root, u, false); err != nil {
+		return sdk.WrapError(err, "Update> unable to update root node on workflow(%d)", w.ID)
+	}
+
+	w.RootID = w.Root.ID
+
+	// Delete all OLD JOIN
+	for _, j := range oldWorkflow.Joins {
+		if err := deleteJoin(db, j); err != nil {
+			return sdk.WrapError(err, "Update> unable to delete all join on workflow(%d)", w.ID)
+		}
+	}
+
+	// Insert new JOIN
+	for i := range w.Joins {
+		j := &w.Joins[i]
+		if err := insertJoin(db, w, j, u); err != nil {
+			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
+		}
 	}
 
 	w.LastModified = time.Now()
@@ -155,18 +187,7 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 	if _, err := db.Update(&dbw); err != nil {
 		return sdk.WrapError(err, "Update> Unable to update workflow")
 	}
-	if w.Root != nil {
-		if err := insertOrUpdateNode(db, w, w.Root, u, false); err != nil {
-			return sdk.WrapError(err, "Update> unable to update root node on workflow(%d)", w.ID)
-		}
-	}
 
-	for i := range w.Joins {
-		j := &w.Joins[i]
-		if err := insertOrUpdateJoin(db, w, j, u); err != nil {
-			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
-		}
-	}
 	return updateLastModified(db, w, u)
 }
 

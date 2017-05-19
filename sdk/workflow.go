@@ -148,14 +148,16 @@ type WorkflowNodeJoinTrigger struct {
 
 //WorkflowNode represents a node in w workflow tree
 type WorkflowNode struct {
-	ID         int64                 `json:"id" db:"id"`
-	Ref        string                `json:"ref,omitempty" db:"-"`
-	WorkflowID int64                 `json:"workflow_id" db:"workflow_id"`
-	PipelineID int64                 `json:"pipeline_id" db:"pipeline_id"`
-	Pipeline   Pipeline              `json:"pipeline" db:"-"`
-	Context    *WorkflowNodeContext  `json:"context" db:"-"`
-	Hooks      []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
-	Triggers   []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+	ID               int64                 `json:"id" db:"id"`
+	Ref              string                `json:"ref,omitempty" db:"-"`
+	WorkflowID       int64                 `json:"workflow_id" db:"workflow_id"`
+	PipelineID       int64                 `json:"pipeline_id" db:"pipeline_id"`
+	Pipeline         Pipeline              `json:"pipeline" db:"-"`
+	Context          *WorkflowNodeContext  `json:"context" db:"-"`
+	TriggerSrcID     int64                 `json:"-" db:"-"`
+	TriggerJoinSrcID int64                 `json:"-" db:"-"`
+	Hooks            []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
+	Triggers         []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
 }
 
 //Nodes returns a slice with all node IDs
