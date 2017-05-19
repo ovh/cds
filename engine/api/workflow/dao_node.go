@@ -307,13 +307,15 @@ func DeleteNodeDependencies(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.Work
 		return sdk.WrapError(err, "DeleteNodeDependencies> Unable to load joins for node %d", node.ID)
 	}
 
-	for _, jid := range joinIDs {
-		j, err := loadJoin(db, w, jid, u)
-		if err != nil {
-			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to load join %d for node %d", jid, node.ID)
-		}
-		if err := deleteJoin(db, w, j, u); err != nil {
-			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete join %d for node %d", jid, node.ID)
+	for _, jID := range joinIDs {
+		for ji := range w.Joins {
+			j := &w.Joins[ji]
+			if j.ID == jID {
+				if err := deleteJoin(db, w, j, u); err != nil {
+					return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete join %d for node %d", j.ID, node.ID)
+				}
+			}
+
 		}
 	}
 

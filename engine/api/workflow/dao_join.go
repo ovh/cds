@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
 
@@ -45,6 +46,10 @@ func loadJoin(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 		return nil, sdk.WrapError(err, "loadJoin> Unable to load join %d sources", id)
 	}
 	j := sdk.WorkflowNodeJoin(dbjoin)
+
+	for _, id := range j.SourceNodeIDs {
+		j.SourceNodeRefs = append(j.SourceNodeRefs, fmt.Sprintf("%d", id))
+	}
 
 	//Select triggers id
 	var triggerIDs []int64
@@ -253,8 +258,9 @@ func insertOrUpdateJoinTrigger(db gorp.SqlExecutor, w *sdk.Workflow, j *sdk.Work
 
 func deleteJoin(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u *sdk.User) error {
 	//Delete join triggers
-	for _, t := range n.Triggers {
-		if err := deleteJoinTrigger(db, w, &t, u); err != nil {
+	for ti := range n.Triggers {
+		t := &n.Triggers[ti]
+		if err := deleteJoinTrigger(db, w, t, u); err != nil {
 			return sdk.WrapError(err, "deleteJoin> Unable to delete join trigger %d", t.ID)
 		}
 	}
@@ -271,7 +277,13 @@ func deleteJoin(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u
 	if _, err := db.Delete(&j); err != nil {
 		return sdk.WrapError(err, "deleteJoin> Unable to delete join %d", j.ID)
 	}
+	n.ID = 0
+	n.SourceNodeIDs = nil
 
+	for ti := range n.Triggers {
+		t := &n.Triggers[ti]
+		t.WorkflowNodeJoinID = 0
+	}
 	return nil
 }
 
@@ -284,5 +296,7 @@ func deleteJoinTrigger(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode
 	if _, err := db.Delete(&dbt); err != nil {
 		return sdk.WrapError(err, "deleteJoinTrigger> Unable to delete trigger %d", dbt.ID)
 	}
+	n.WorkflowDestNodeID = 0
+	n.ID = 0
 	return nil
 }
