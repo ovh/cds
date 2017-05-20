@@ -46,6 +46,7 @@ pre {
 
 .scrollingContent {
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
   flex: 1;
 
