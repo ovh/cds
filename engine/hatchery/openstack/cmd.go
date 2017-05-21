@@ -39,6 +39,9 @@ func init() {
 
 	Cmd.Flags().Int("spawn-threshold-warning", 360, "log warning if spawn take more than this value (in seconds)")
 	viper.BindPFlag("spawn-threshold-warning", Cmd.Flags().Lookup("spawn-threshold-warning"))
+
+	Cmd.Flags().Bool("disable-create-image", false, `if true: hatchery does not create openstack image when a worker model is updated`)
+	viper.BindPFlag("disable-create-image", Cmd.Flags().Lookup("disable-create-image"))
 }
 
 // Cmd configures comamnd for HatcheryCloud

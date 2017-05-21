@@ -43,15 +43,16 @@ type HatcheryCloud struct {
 	client   *gophercloud.ServiceClient
 
 	// User provided parameters
-	address       string
-	user          string
-	password      string
-	endpoint      string
-	tenant        string
-	region        string
-	networkString string // flag from cli
-	networkID     string // computed from networkString
-	workerTTL     int
+	address            string
+	user               string
+	password           string
+	endpoint           string
+	tenant             string
+	region             string
+	networkString      string // flag from cli
+	networkID          string // computed from networkString
+	workerTTL          int
+	disableCreateImage bool
 }
 
 // ID returns hatchery id
@@ -187,7 +188,7 @@ func (h *HatcheryCloud) killAwolServers() {
 			// if it's was a worker model for registration
 			// check if we need to create a new openstack image from it
 			// by comparing userDateLastModified from worker model
-			if s.Status == "SHUTOFF" && registerOnly == "true" {
+			if !h.disableCreateImage && s.Status == "SHUTOFF" && registerOnly == "true" {
 				h.killAwolServersComputeImage(workerModelName, workerModelNameLastModified, s.ID, model, flavor)
 			}
 
