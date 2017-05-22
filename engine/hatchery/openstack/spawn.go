@@ -59,17 +59,6 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		return "", errf
 	}
 
-	// Ip len(ipsInfos.ips) > 0, specify one of those
-	var ip string
-	if len(ipsInfos.ips) > 0 {
-		var errai error
-		ip, errai = h.findAvailableIP(name)
-		if errai != nil {
-			return "", errai
-		}
-		log.Debug("Found %s as first available IP", ip)
-	}
-
 	// Decode base64 given user data
 	udataModel, errd := base64.StdEncoding.DecodeString(omd.UserData)
 	if errd != nil {
@@ -126,7 +115,7 @@ export CDS_TTL={{.TTL}}
 			workerModelName, _ := img.Metadata["worker_model_name"]
 			if workerModelName == model.Name {
 				withExistingImage = true
-				log.Info("spawnWorker> existing image found for worker model %s img:%s", model.Name, img.ID)
+				log.Info("spawnWorker> existing image found for worker:%s model:%s img:%s", name, model.Name, img.ID)
 				imageID = img.ID
 				break
 			}
@@ -190,18 +179,31 @@ export CDS_TTL={{.TTL}}
 		"worker_model_name":          model.Name,
 		"worker_model_last_modified": fmt.Sprintf("%d", model.UserLastModified.Unix()),
 	}
+
+	// Ip len(ipsInfos.ips) > 0, specify one of those
+	var ip string
+	if len(ipsInfos.ips) > 0 {
+		var errai error
+		ip, errai = h.findAvailableIP(name)
+		if errai != nil {
+			return "", errai
+		}
+		log.Debug("Found %s as available IP", ip)
+	}
+
 	networks := []servers.Network{{UUID: h.networkID, FixedIP: ip}}
-	server, err := servers.Create(h.client, servers.CreateOpts{
+	r := servers.Create(h.client, servers.CreateOpts{
 		Name:      name,
 		FlavorRef: flavorID,
 		ImageRef:  imageID,
 		Metadata:  meta,
 		UserData:  []byte(udata64),
 		Networks:  networks,
-	}).Extract()
+	})
 
+	server, err := r.Extract()
 	if err != nil {
-		return "", fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%s", name, flavorID, imageID, meta, networks, err)
+		return "", fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%s body:%s", name, flavorID, imageID, meta, networks, err, r.Body)
 	}
 	log.Debug("SpawnWorker> Created Server ID: %s", server.ID)
 	return name, nil

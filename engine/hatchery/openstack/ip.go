@@ -20,8 +20,8 @@ func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
 	defer ipsInfos.mu.Unlock()
 	for ip, infos := range ipsInfos.ips {
 		// ip used less than 10s
-		// 10s max to display worker name on nova list after call create
-		if time.Since(infos.dateLastBooked) < 10*time.Second {
+		// 15s max to display worker name on nova list after call create
+		if time.Since(infos.dateLastBooked) < 15*time.Second {
 			continue
 		}
 		found := false
