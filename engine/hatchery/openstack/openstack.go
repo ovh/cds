@@ -192,7 +192,7 @@ func (h *HatcheryCloud) killAwolServers() {
 				h.killAwolServersComputeImage(workerModelName, workerModelNameLastModified, s.ID, model, flavor)
 			}
 
-			log.Info("killAwolServers> Deleting server %s status: %s last update: %s registerOnly:%t toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), registerOnly, toDeleteKilled, inWorkersList)
+			log.Info("killAwolServers> Deleting server %s status: %s last update: %s registerOnly:%s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), registerOnly, toDeleteKilled, inWorkersList)
 			if err := servers.Delete(h.client, s.ID).ExtractErr(); err != nil {
 				log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
 				continue

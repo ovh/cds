@@ -181,25 +181,27 @@ export CDS_TTL={{.TTL}}
 	udata64 := base64.StdEncoding.EncodeToString([]byte(udata))
 
 	// Create openstack vm
+	meta := map[string]string{
+		"worker":                     name,
+		"hatchery_name":              h.Hatchery().Name,
+		"register_only":              fmt.Sprintf("%t", registerOnly),
+		"flavor":                     omd.Flavor,
+		"model":                      omd.Image,
+		"worker_model_name":          model.Name,
+		"worker_model_last_modified": fmt.Sprintf("%d", model.UserLastModified.Unix()),
+	}
+	networks := []servers.Network{{UUID: h.networkID, FixedIP: ip}}
 	server, err := servers.Create(h.client, servers.CreateOpts{
 		Name:      name,
 		FlavorRef: flavorID,
 		ImageRef:  imageID,
-		Metadata: map[string]string{
-			"worker":                     name,
-			"hatchery_name":              h.Hatchery().Name,
-			"register_only":              fmt.Sprintf("%t", registerOnly),
-			"flavor":                     omd.Flavor,
-			"model":                      omd.Image,
-			"worker_model_name":          model.Name,
-			"worker_model_last_modified": fmt.Sprintf("%d", model.UserLastModified.Unix()),
-		},
-		UserData: []byte(udata64),
-		Networks: []servers.Network{{UUID: h.networkID, FixedIP: ip}},
+		Metadata:  meta,
+		UserData:  []byte(udata64),
+		Networks:  networks,
 	}).Extract()
 
 	if err != nil {
-		return "", fmt.Errorf("SpawnWorker> Unable to create server: %s", err)
+		return "", fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%s", name, flavorID, imageID, meta, networks, err)
 	}
 	log.Debug("SpawnWorker> Created Server ID: %s", server.ID)
 	return name, nil

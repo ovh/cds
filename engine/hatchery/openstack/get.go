@@ -114,7 +114,7 @@ func (h *HatcheryCloud) getServers() []servers.Server {
 			if !worker {
 				continue
 			}
-			workerHatcheryName, _ := s.Metadata["hatcheryName"]
+			workerHatcheryName, _ := s.Metadata["hatchery_name"]
 			if workerHatcheryName == "" || workerHatcheryName != h.Hatchery().Name {
 				continue
 			}
