@@ -160,13 +160,13 @@ func (h *HatcheryCloud) killAwolServers() {
 			}
 		}
 
-		workerHatcheryName, _ := s.Metadata["hatcheryName"]
+		workerHatcheryName, _ := s.Metadata["hatchery_name"]
 		workerName, isWorker := s.Metadata["worker"]
 		registerOnly, _ := s.Metadata["register_only"]
 		workerModelName, _ := s.Metadata["worker_model_name"]
 		workerModelNameLastModified, _ := s.Metadata["worker_model_name"]
-		model, _ := s.Metadata["Model"]
-		flavor, _ := s.Metadata["Flavor"]
+		model, _ := s.Metadata["model"]
+		flavor, _ := s.Metadata["flavor"]
 
 		var toDeleteKilled bool
 		if isWorker {
@@ -235,8 +235,8 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 		Name: "cds_image_" + workerModelName,
 		Metadata: map[string]string{
 			"worker_model_name": workerModelName,
-			"Model":             model,
-			"Flavor":            flavor,
+			"model":             model,
+			"flavor":            flavor,
 			"CreatedBy":         "cdsHatchery_" + h.Hatchery().Name,
 		},
 	}).ExtractImageID()

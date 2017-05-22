@@ -171,7 +171,7 @@ func workerRegister(h Interface) error {
 		if nRegistered > 5 {
 			break
 		}
-		if !m.NeedRegistration {
+		if !m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
 			log.Debug("workerRegister> no need to register worker model %s (%d)", m.Name, m.ID)
 			continue
 		}
