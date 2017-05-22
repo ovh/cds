@@ -30,26 +30,12 @@ func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
-	detailed := FormBool(r, "detailed")
 
 	w1, err := workflow.Load(db, key, name, c.User)
 	if err != nil {
 		return err
 	}
-
-	if !detailed {
-		return WriteJSON(w, r, w1, http.StatusOK)
-	}
-
-	w2 := sdk.DetailedWorkflow{}
-	w2.Workflow = *w1
-
-	w2.Root = w1.Root.ID
-	w2.Nodes = w1.Nodes()
-	w2.Joins = w1.JoinsID()
-	w2.Triggers = w1.TriggersID()
-
-	return WriteJSON(w, r, w2, http.StatusOK)
+	return WriteJSON(w, r, w1, http.StatusOK)
 }
 
 // postWorkflowHandler create a new workflow
