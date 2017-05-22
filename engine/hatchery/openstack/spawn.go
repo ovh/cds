@@ -79,10 +79,6 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", viper.GetString("graylog_extra_value"))
 	}
 
-	// Add curl of worker
-	udataBegin := `#!/bin/sh
-set +e
-`
 	udataEnd := `
 cd $HOME
 # Download and start worker with curl
@@ -157,13 +153,22 @@ export CDS_TTL={{.TTL}}
 		return "", err
 	}
 
-	var udata string
+	var udataBegin, udata string
+
 	if withExistingImage {
 		log.Debug("spawnWorker> using userdata from existing image")
-		udata = udataBegin + buffer.String()
+		udataBegin = `#!/bin/sh
+set +e
+export CDS_FROM_WORKER_IMAGE=true;
+`
+		udata = udataBegin + "true; " + buffer.String()
 	} else {
 		log.Debug("spawnWorker> using userdata from worker model")
-		udata = udataBegin + string(udataModel) + buffer.String()
+		udataBegin = `#!/bin/sh
+set +e
+export CDS_FROM_WORKER_IMAGE=false;
+`
+		udata = udataBegin + "false; " + string(udataModel) + buffer.String()
 	}
 
 	// Encode again
