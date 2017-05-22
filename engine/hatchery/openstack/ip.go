@@ -48,11 +48,18 @@ func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
 			}
 			all, errap := servers.ListAddressesByNetwork(h.client, s.ID, h.networkString).AllPages()
 			if errap != nil {
-				return "", fmt.Errorf("findAvailableIP> error on pager.AllPages %s", errap)
+				// check not found -> this append when a srv is deleted
+				if !strings.Contains(errap.Error(), "Resource not found") {
+					return "", fmt.Errorf("findAvailableIP> error on pager.AllPages with server.ID:%s, err:%s ", s.ID, errap)
+				}
+				continue
 			}
 			addrs, erren := servers.ExtractNetworkAddresses(all)
 			if erren != nil {
-				return "", fmt.Errorf("findAvailableIP> error on ExtractNetworkAddresses %s", erren)
+				if !strings.Contains(errap.Error(), "Resource not found") {
+					log.Error("findAvailableIP> error on ExtractNetworkAddresses with server.ID:%s, err:%s", s.ID, erren)
+				}
+				continue
 			}
 			for _, a := range addrs {
 				if a.Address == ip {
