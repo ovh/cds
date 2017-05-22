@@ -17,8 +17,6 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 		log.Debug("workflow.execute> End [#%d.%d] runID=%d - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, time.Since(t0).Seconds())
 	}()
 
-	//Will insert in workflow_node_run_job
-
 	//Start a transaction
 	tx, errtx := db.Begin()
 	if errtx != nil {
@@ -27,6 +25,14 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	defer tx.Rollback()
 
 	//Select for update on table workflow_run, workflow_node_run
+	if _, err := tx.Exec("select workflow_run.* from workflow_run where id = $1 for update nowait", n.WorkflowRunID); err != nil {
+		log.Debug("workflow.execute> Unable to take lock on workflow_run ID=%d (%v)", n.WorkflowRunID, err)
+		return nil
+	}
+	if _, err := tx.Exec("select workflow_node_run.* from workflow_node_run where id = $1 for update nowait", n.ID); err != nil {
+		log.Debug("workflow.execute> Unable to take lock on workflow_node_run ID=%d (%v)", n.ID, err)
+		return nil
+	}
 
 	//Reload the workflow run ID to get the node, and the pipeline...
 	workflowRun, errw := LoadRunByID(tx, n.WorkflowRunID)
@@ -109,7 +115,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNodeRun) error {
 	log.Debug("addJobsToQueue> add %#v in stage %s", run, stage.Name)
 	//Check stage prerequisites
-	var prerequisitesOK bool
+	var prerequisitesOK = true
 
 	//Update the stage status
 	stage.Status = sdk.StatusBuilding
@@ -117,6 +123,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	//Browse the jobs
 	for _, job := range stage.Jobs {
 		//Process variables for the jobs
+		//TODO
 
 		//Create the job run
 		job := sdk.WorkflowNodeJobRun{
@@ -141,7 +148,6 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 		}
 
 		//Put the job run in database
-
 		event.PublishJobRun(run, &job)
 		stage.RunJobs = append(stage.RunJobs, job)
 	}

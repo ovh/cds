@@ -27,6 +27,7 @@ func TestManualRun1(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
 	s := sdk.NewStage("stage 1")
+	s.Enabled = true
 	s.PipelineID = pip.ID
 	pipeline.InsertStage(db, s)
 	j := &sdk.Job{

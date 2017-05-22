@@ -82,6 +82,9 @@ CREATE TABLE IF NOT EXISTS "workflow_node_run_job_logs" (
 SELECT create_foreign_key('FK_WORKFLOW_NODE_RUN_JOGS_WORKFLOW_NODE_RUN', 'workflow_node_run_job_logs', 'workflow_node_run', 'workflow_node_run_id', 'id');
 SELECT create_foreign_key('FK_WORKFLOW_NODE_RUN_JOB_JOGS_WORKFLOW_NODE_RUN', 'workflow_node_run_job_logs', 'workflow_node_run_job', 'workflow_node_run_job_id', 'id');
 
+-- //TODO
+SELECT create_index('workflow_run', 'IDX_WORKFLOW_LOAD_RUNS', 'project_id, workflow_id');
+
 -- +migrate Down
 
 DROP TABLE workflow_node_run_job_logs;
@@ -89,3 +92,6 @@ DROP TABLE workflow_node_run_artifact;
 DROP TABLE workflow_node_run_job;
 DROP TABLE workflow_node_run;
 DROP TABLE workflow_run;
+
+qc0qd7vkvq
+test_1

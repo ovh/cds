@@ -132,6 +132,10 @@ func (router *Router) init() {
 	// Workflows
 	router.Handle("/project/{permProjectKey}/workflows", POST(postWorkflowHandler), GET(getWorkflowsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}", GET(getWorkflowHandler), PUT(putWorkflowHandler), DELETE(deleteWorkflowHandler))
+	// Workflows run
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", GET(getWorkflowRunsHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", GET(getLatestWorkflowRunHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", GET(getWorkflowRunHandler))
 
 	// DEPRECATED
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{jobID}", PUT(updatePipelineActionHandler), DELETE(deleteJobHandler))

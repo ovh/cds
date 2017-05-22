@@ -45,7 +45,6 @@ func Scheduler(c context.Context) error {
 			}
 			return err
 		case n := <-chanWorkflowNodeRun:
-			log.Debug("%#v", n)
 			db := database.GetDBMap()
 			if err := execute(db, n); err != nil {
 				log.Error("Error workflow.Scheduler executing node: %s", err)
