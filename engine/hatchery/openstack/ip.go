@@ -48,11 +48,11 @@ func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
 			}
 			all, errap := servers.ListAddressesByNetwork(h.client, s.ID, h.networkString).AllPages()
 			if errap != nil {
-				log.Error("findAvailableIP> error on pager.AllPages %s", errap)
+				return "", fmt.Errorf("findAvailableIP> error on pager.AllPages %s", errap)
 			}
 			addrs, erren := servers.ExtractNetworkAddresses(all)
 			if erren != nil {
-				log.Error("findAvailableIP> error on ExtractNetworkAddresses %s", erren)
+				return "", fmt.Errorf("findAvailableIP> error on ExtractNetworkAddresses %s", erren)
 			}
 			for _, a := range addrs {
 				if a.Address == ip {
