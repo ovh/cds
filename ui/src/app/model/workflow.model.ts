@@ -47,6 +47,18 @@ export class WorkflowNode {
     context: WorkflowNodeContext;
     hooks: Array<WorkflowNodeHook>;
     triggers: Array<WorkflowNodeTrigger>;
+
+    static getNodeByID(id: number, triggers: Array<WorkflowNodeTrigger>) {
+        let node = null;
+        triggers.forEach( t => {
+           if (t.workflow_dest_node_id == id) {
+               node = t.workflow_dest_node;
+           } else if (t.workflow_dest_node.triggers) {
+               node = WorkflowNode.getNodeByID(id, t.workflow_dest_node.triggers);
+           }
+        });
+        return node;
+    }
 }
 
 // WorkflowNodeContext represents a context attached on a node
@@ -75,6 +87,10 @@ export class WorkflowNodeTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
+
+    constructor() {
+        this.workflow_dest_node = new WorkflowNode();
+    }
 }
 
 // WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex

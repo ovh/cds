@@ -1,0 +1,11 @@
+<sm-modal title="{{ 'workflow_node_trigger_title' | translate: {} }}" #triggerModal>
+    <modal-content>
+        <div class="ui form" *ngIf="project">
+            <app-workflow-node-form [project]="project" [node]="trigger.workflow_dest_node"  (nodeChange)="destNodeChange($event)"></app-workflow-node-form>
+        </div>
+    </modal-content>
+    <modal-actions>
+        <button class="ui grey button" (click)="hide()">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" (click)="saveTrigger()">{{ 'common_save' | translate }}</button>
+    </modal-actions>
+</sm-modal>

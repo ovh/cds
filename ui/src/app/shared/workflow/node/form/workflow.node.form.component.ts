@@ -7,7 +7,7 @@ import {WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.mode
     templateUrl: './workflow.node.form.html',
     styleUrls: ['./workflow.node.form.scss']
 })
-export class WorkflowNodeItemFormComponent {
+export class WorkflowNodeFormComponent {
 
     @Input() project: Project;
     @Input() node: WorkflowNode;

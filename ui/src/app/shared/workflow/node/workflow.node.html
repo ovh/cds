@@ -1,3 +1,17 @@
 <div class="workflowNode">
-    {{node.pipeline.name}}
+    <div> {{node.pipeline.name + '(' + node.id + ')'}}</div>
+    <div>
+        <sm-dropdown icon="">
+            <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
+            <sm-item>{{ 'workflow_node_join_add' | translate }}</sm-item>
+            <sm-item>{{ 'workflow_node_context_edit' | translate }}</sm-item>
+            <sm-item (click)="openDeleteNodeModal()">{{ 'workflow_node_delete_btn' | translate }}</sm-item>
+        </sm-dropdown>
+    </div>
 </div>
+<ng-container *ngIf="project && node">
+    <app-workflow-trigger [project]="project" [triggerSrcNode]="node" (triggerEvent)="saveTrigger($event)" #workflowTrigger></app-workflow-trigger>
+</ng-container>
+<ng-container *ngIf="node">
+    <app-workflow-node-delete [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
+</ng-container>

@@ -1,4 +1,25 @@
 .workflowNode {
-  width: 350px;
-  height: 60px;
+  width: 175px;
+  height: 40px;
+  display: table;
+
+  .fixed {
+    position: fixed;
+  }
+
+  > div {
+    display: table-cell;
+    &:nth-child(2) {
+      text-align: right;
+    }
+  }
+  //position: fixed;
+  //top: 0;
+
+  i:before {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    content: "blabla";
+  }
 }

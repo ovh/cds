@@ -26,4 +26,23 @@ export class WorkflowService {
     addWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
         return this._http.post('/project/' + key + '/workflows', workflow).map(res => res.json());
     }
+
+    /**
+     * Update a workflow
+     * @param key Project unique key
+     * @param workflow Workflow to update
+     */
+    updateWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
+        return this._http.put('/project/' + key + '/workflows/' + workflow.name, workflow).map(res => res.json());
+    }
+
+    /**
+     * Delete workflow
+     * @param key Project unique key
+     * @param workflow Workflow to delete
+     * @returns {Observable<boolean>}
+     */
+    deleteWorkflow(key: string, workflow: Workflow): Observable<boolean> {
+        return this._http.delete('/project/' + key + '/workflows/' + workflow.name).map(res => true);
+    }
 }
