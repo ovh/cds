@@ -6,15 +6,6 @@ import (
 	"time"
 )
 
-//DetailedWorkflow represents a pipeline based workflow with some details
-type DetailedWorkflow struct {
-	Workflow Workflow `json:"workflow"`
-	Root     int64    `json:"root"`
-	Nodes    []int64  `json:"nodes"`
-	Joins    []int64  `json:"joins"`
-	Triggers []int64  `json:"triggers"`
-}
-
 //Workflow represents a pipeline based workflow
 type Workflow struct {
 	ID           int64              `json:"id" db:"id"`
