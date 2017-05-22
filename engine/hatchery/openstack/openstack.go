@@ -237,7 +237,7 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 			"worker_model_name": workerModelName,
 			"model":             model,
 			"flavor":            flavor,
-			"CreatedBy":         "cdsHatchery_" + h.Hatchery().Name,
+			"created_by":        "cdsHatchery_" + h.Hatchery().Name,
 		},
 	}).ExtractImageID()
 	if err != nil {
