@@ -243,8 +243,8 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 	if err != nil {
 		log.Error("killAwolServersComputeImage> error on create image for worker model %s: %s", workerModelName, err)
 	} else {
-		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting 60s for saving created img...", imageID, workerModelName)
-		time.Sleep(60 * time.Second)
+		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting 180s for saving created img...", imageID, workerModelName)
+		time.Sleep(180 * time.Second)
 		log.Debug("killAwolServersComputeImage> end wait...", imageID, workerModelName)
 		if oldImageID != "" {
 			log.Info("killAwolServersComputeImage> deleting old image for %s with ID %s", workerModelName, oldImageID)
