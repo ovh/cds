@@ -49,6 +49,9 @@ func cmdMain() *cobra.Command {
 	flags.Bool("single-use", false, "Exit after executing an action")
 	viper.BindPFlag("single_use", flags.Lookup("single-use"))
 
+	flags.Bool("force-exit", false, "If single_use=true, force exit. This is useful if it's spawned by an Hatchery (default: worker wait 30min for being killed by hatchery)")
+	viper.BindPFlag("force_exit", flags.Lookup("force-exit"))
+
 	flags.String("basedir", "", "Worker working directory")
 	viper.BindPFlag("basedir", flags.Lookup("basedir"))
 

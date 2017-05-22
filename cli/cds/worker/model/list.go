@@ -32,7 +32,7 @@ func listWorkerModel(cmd *cobra.Command, args []string) {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 27, 1, 2, ' ', 0)
-	titles := []string{"NAME", "TYPE", "PROTOCOL", "DISABLED", "IMAGE", "LAST_REGISTRATION", "NEED_REGISTRATION"}
+	titles := []string{"NAME", "TYPE", "PROTOCOL", "DISABLED", "IMAGE", "LAST_MODIFIED", "LAST_REGISTRATION", "NEED_REGISTRATION"}
 	fmt.Fprintln(w, strings.Join(titles, "\t"))
 
 	for _, m := range models {
@@ -40,12 +40,13 @@ func listWorkerModel(cmd *cobra.Command, args []string) {
 			m.Image = m.Image[:97] + "..."
 		}
 
-		fmt.Fprintf(w, "%-30s\t%-10s\t%-4s\t%t\t%-50s\t%s\t%t\n",
+		fmt.Fprintf(w, "%-30s\t%-10s\t%-4s\t%t\t%-50s\t%s\t%s\t%t\n",
 			m.Name,
 			m.Type,
 			m.Communication,
 			m.Disabled,
 			m.Image,
+			m.UserLastModified,
 			m.LastRegistration,
 			m.NeedRegistration,
 		)

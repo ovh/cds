@@ -85,6 +85,10 @@ func unregister() error {
 	}
 
 	if viper.GetBool("single_use") {
+		if viper.GetBool("force_exit") {
+			log.Info("unregister> worker will exit (force exit after register)")
+			os.Exit(0)
+		}
 		if hatchery > 0 {
 			log.Info("unregister> waiting 30min to be killed by hatchery, if not killed, worker will exit")
 			time.Sleep(30 * time.Minute)

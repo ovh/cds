@@ -171,22 +171,30 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 		ID:     ID,
 		Signal: docker.SIGKILL,
 	}); err != nil {
-		log.Warning("killAndRemove> Unable to kill container %s", err)
+		if !strings.Contains(err.Error(), "is not running") {
+			log.Warning("killAndRemove> Unable to kill container %s", err)
+		}
 	}
 
 	if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
 		ID: ID,
 	}); err != nil {
-		log.Warning("killAndRemove> Unable to remove container %s", err)
+		// container could be already removed by a previous call to docker
+		if !strings.Contains(err.Error(), "No such container") {
+			log.Warning("killAndRemove> Unable to remove container %s", err)
+		}
 	}
 
 	return nil
 }
 
 //SpawnWorker start a new docker container
-func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) error {
+func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error) {
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	if registerOnly {
+		name = "register-" + name
+	}
 
 	log.Info("Spawning worker %s", name)
 
@@ -206,7 +214,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
 					log.Warning("SpawnWorker>Unable to parse memory requirement %s :s", memory, err)
-					return err
+					return "", err
 				}
 			} else if r.Type == sdk.ServiceRequirement {
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
@@ -240,7 +248,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 				//Start the services
 				if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, serviceMemory); err != nil {
 					log.Warning("SpawnWorker>Unable to start required container: %s", err)
-					return err
+					return "", err
 				}
 				services = append(services, serviceName)
 			}
@@ -296,7 +304,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		log.Warning("SpawnWorker> Unable to start container %s", err)
 	}
 
-	return nil
+	return name, nil
 }
 
 //create the docker bridge
