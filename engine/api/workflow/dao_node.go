@@ -14,11 +14,29 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// InsertOrUpdateNode insert or update a node for the workflow
-func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
-	log.Debug("insertOrUpdateNode> insert or update node %d (%s) on %s(%#v)", n.ID, n.Ref, n.Pipeline.Name, n.Context)
+func updateWorkflowTriggerSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) error {
+	//Update node
+	query := "UPDATE workflow_node SET workflow_trigger_src_id = $1 WHERE id = $2"
+	if _, err := db.Exec(query, n.TriggerSrcID, n.ID); err != nil {
+		return sdk.WrapError(err, "updateWorkflowTriggerSrc> Unable to set  workflow_trigger_src_id ON node %d", n.ID)
+	}
+	return nil
+}
+
+func updateWorkflowTriggerJoinSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) error {
+	//Update node
+	query := "UPDATE workflow_node SET workflow_trigger_join_src_id = $1 WHERE id = $2"
+	if _, err := db.Exec(query, n.TriggerJoinSrcID, n.ID); err != nil {
+		return sdk.WrapError(err, "updateWorkflowTriggerSrc> Unable to set  workflow_trigger_join_src_id ON node %d", n.ID)
+	}
+	return nil
+}
+
+func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
+	log.Debug("insertNode> insert or update node %d (%s) on %s(%#v)", n.ID, n.Ref, n.Pipeline.Name, n.Context)
 
 	n.WorkflowID = w.ID
+	n.ID = 0
 
 	if n.PipelineID == 0 {
 		n.PipelineID = n.Pipeline.ID
@@ -52,35 +70,12 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 		n.Context.EnvironmentID = n.Context.Environment.ID
 	}
 
-	var oldNode *sdk.WorkflowNode
-
-	//If the node got an ID; check it in database
-	if n.ID != 0 {
-		var err error
-		oldNode, err = loadNode(db, w, n.ID, u)
-		if err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to load workflow node")
-		}
-		n.Context.WorkflowNodeID = oldNode.ID
+	//Insert new node
+	dbwn := Node(*n)
+	if err := db.Insert(&dbwn); err != nil {
+		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
 	}
-
-	if oldNode != nil {
-		//Update the node
-		dbwn := Node(*n)
-		if _, err := db.Update(&dbwn); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow root node")
-		}
-		if err := DeleteNodeDependencies(db, w, n, u); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to delete workflow root node dependencies")
-		}
-	} else {
-		//Insert new node
-		dbwn := Node(*n)
-		if err := db.Insert(&dbwn); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
-		}
-		n.ID = dbwn.ID
-	}
+	n.ID = dbwn.ID
 
 	if skipDependencies {
 		return nil
@@ -95,7 +90,7 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	//Insert hooks
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
-		if err := insertOrUpdateHook(db, n, h); err != nil {
+		if err := insertHook(db, n, h); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}
@@ -103,7 +98,7 @@ func insertOrUpdateNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNod
 	//Insert triggers
 	for i := range n.Triggers {
 		t := &n.Triggers[i]
-		if err := insertOrUpdateTrigger(db, w, n, t, u); err != nil {
+		if err := insertTrigger(db, w, n, t, u); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}
@@ -261,9 +256,6 @@ func loadNodeContext(db gorp.SqlExecutor, wn *sdk.WorkflowNode, u *sdk.User) (*s
 //deleteNode deletes nodes and all its children
 func deleteNode(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User) error {
 	log.Debug("deleteNode> Delete node %d", node.ID)
-	if err := DeleteNodeDependencies(db, w, node, u); err != nil {
-		return sdk.WrapError(err, "DeleteNode> Unable to delete node dependencies %d", node.ID)
-	}
 
 	dbwn := Node(*node)
 	if _, err := db.Delete(&dbwn); err != nil {
@@ -271,53 +263,5 @@ func deleteNode(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, u 
 	}
 
 	node.ID = 0
-	return nil
-}
-
-//DeleteNodeDependencies delete triggers, hooks, context for the node
-func DeleteNodeDependencies(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User) error {
-	log.Debug("DeleteNodeDependencies> Delete node %d", node.ID)
-	for i := range node.Triggers {
-		t := &node.Triggers[i]
-		if err := deleteTrigger(db, w, t, u); err != nil {
-			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete trigger %d", t.ID)
-		}
-	}
-
-	for _, h := range node.Hooks {
-		if err := deleteHook(db, &h); err != nil {
-			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete hook %d", h.ID)
-		}
-	}
-
-	if node.Context != nil {
-		dbnc := NodeContext(*node.Context)
-		if _, err := db.Delete(&dbnc); err != nil {
-			return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete context %d", dbnc.ID)
-		}
-		node.Context.ID = 0
-	}
-
-	query := "select workflow_node_join_id from workflow_node_join_source where workflow_node_id = $1"
-	joinIDs := []int64{}
-	if _, err := db.Select(&joinIDs, query, node.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "DeleteNodeDependencies> Unable to load joins for node %d", node.ID)
-	}
-
-	for _, jID := range joinIDs {
-		for ji := range w.Joins {
-			j := &w.Joins[ji]
-			if j.ID == jID {
-				if err := deleteJoin(db, w, j, u); err != nil {
-					return sdk.WrapError(err, "DeleteNodeDependencies> Unable to delete join %d for node %d", j.ID, node.ID)
-				}
-			}
-
-		}
-	}
-
 	return nil
 }

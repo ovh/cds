@@ -30,33 +30,18 @@ func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
-	detailed := FormBool(r, "detailed")
 
 	w1, err := workflow.Load(db, key, name, c.User)
 	if err != nil {
 		return err
 	}
-
-	if !detailed {
-		return WriteJSON(w, r, w1, http.StatusOK)
-	}
-
-	w2 := sdk.DetailedWorkflow{}
-	w2.Workflow = *w1
-
-	w2.Root = w1.Root.ID
-	w2.Nodes = w1.Nodes()
-	w2.Joins = w1.JoinsID()
-	w2.Triggers = w1.TriggersID()
-
-	return WriteJSON(w, r, w2, http.StatusOK)
+	return WriteJSON(w, r, w1, http.StatusOK)
 }
 
 // postWorkflowHandler create a new workflow
 func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
-	detailed := FormBool(r, "detailed")
 
 	p, errP := project.Load(db, key, c.User)
 	if errP != nil {
@@ -84,27 +69,15 @@ func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(errT, "Cannot commit transaction")
+		return sdk.WrapError(err, "Cannot commit transaction")
 	}
 
 	wf1, errl := workflow.LoadByID(db, wf.ID, c.User)
 	if errl != nil {
-		return sdk.WrapError(errT, "Cannot load workflow")
+		return sdk.WrapError(errl, "Cannot load workflow")
 	}
 
-	if !detailed {
-		return WriteJSON(w, r, wf1, http.StatusCreated)
-	}
-
-	w2 := sdk.DetailedWorkflow{}
-	w2.Workflow = *wf1
-
-	w2.Root = wf.Root.ID
-	w2.Nodes = wf.Nodes()
-	w2.Joins = wf.JoinsID()
-	w2.Triggers = wf.TriggersID()
-
-	return WriteJSON(w, r, w2, http.StatusCreated)
+	return WriteJSON(w, r, wf1, http.StatusCreated)
 }
 
 // putWorkflowHandler updates a workflow
@@ -112,7 +85,6 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
-	detailed := FormBool(r, "detailed")
 
 	p, errP := project.Load(db, key, c.User)
 	if errP != nil {
@@ -140,7 +112,7 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer tx.Rollback()
 
-	if err := workflow.Update(tx, &wf, c.User); err != nil {
+	if err := workflow.Update(tx, &wf, oldW, c.User); err != nil {
 		return sdk.WrapError(err, "Cannot update workflow")
 	}
 
@@ -149,21 +121,15 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(errT, "Cannot commit transaction")
-	}
-	if !detailed {
-		return WriteJSON(w, r, wf, http.StatusOK)
+		return sdk.WrapError(err, "Cannot commit transaction")
 	}
 
-	w2 := sdk.DetailedWorkflow{}
-	w2.Workflow = wf
+	wf1, errl := workflow.LoadByID(db, wf.ID, c.User)
+	if errl != nil {
+		return sdk.WrapError(errl, "Cannot load workflow")
+	}
 
-	w2.Root = wf.Root.ID
-	w2.Nodes = wf.Nodes()
-	w2.Joins = wf.JoinsID()
-	w2.Triggers = wf.TriggersID()
-
-	return WriteJSON(w, r, w2, http.StatusOK)
+	return WriteJSON(w, r, wf1, http.StatusOK)
 }
 
 // putWorkflowHandler deletes a workflow
