@@ -24,7 +24,7 @@ of the Linux kernel source tree.
 
 It can be accessed online too:
 
-https://www.kernel.org/doc/Documentation/SubmittingPatches
+https://www.kernel.org/doc/html/latest/process/submitting-patches.html
 
 You can submit your patches via GitHub
 
