@@ -57,7 +57,9 @@ func (h *HatcheryCloud) Init() error {
 		log.Warning("Error getting networks: %s", err)
 	}
 
-	h.initIPStatus()
+	if err := h.initIPStatus(); err != nil {
+		log.Warning("Error on initIPStatus(): %s", err)
+	}
 
 	if errRegistrer := hatchery.Register(h.hatch, viper.GetString("token")); errRegistrer != nil {
 		log.Warning("Cannot register hatchery: %s", errRegistrer)
@@ -102,7 +104,7 @@ func (h *HatcheryCloud) initNetworks() error {
 // initIPStatus initializes ipsInfos to
 // add workername on ip belong to openstack-ip-range
 // this func is called once, when hatchery is starting
-func (h *HatcheryCloud) initIPStatus() {
+func (h *HatcheryCloud) initIPStatus() error {
 	srvs := h.getServers()
 	log.Info("initIPStatus> %d srvs", len(srvs))
 	for ip := range ipsInfos.ips {
@@ -115,11 +117,11 @@ func (h *HatcheryCloud) initIPStatus() {
 			log.Debug("initIPStatus> server %s - work on %s", s.Name, h.networkString)
 			all, errap := servers.ListAddressesByNetwork(h.client, s.ID, h.networkString).AllPages()
 			if errap != nil {
-				log.Error("initIPStatus> error on pager.AllPages %s", errap)
+				return fmt.Errorf("initIPStatus> error on pager.AllPages %s", errap)
 			}
 			addrs, erren := servers.ExtractNetworkAddresses(all)
 			if erren != nil {
-				log.Error("initIPStatus> error on ExtractNetworkAddresses %s", erren)
+				return fmt.Errorf("initIPStatus> error on ExtractNetworkAddresses %s", erren)
 			}
 			for _, a := range addrs {
 				log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, a.Address, ip)
@@ -131,4 +133,5 @@ func (h *HatcheryCloud) initIPStatus() {
 
 		}
 	}
+	return nil
 }

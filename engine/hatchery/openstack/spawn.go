@@ -64,10 +64,10 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 	if len(ipsInfos.ips) > 0 {
 		var errai error
 		ip, errai = h.findAvailableIP(name)
-		log.Debug("Found %s as first available IP", ip)
 		if errai != nil {
 			return "", errai
 		}
+		log.Debug("Found %s as first available IP", ip)
 	}
 
 	// Decode base64 given user data
