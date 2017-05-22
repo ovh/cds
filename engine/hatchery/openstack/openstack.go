@@ -322,7 +322,7 @@ func (h *HatcheryCloud) WorkersStarted() int {
 func (h *HatcheryCloud) WorkersStartedByModel(model *sdk.Model) int {
 	var x int
 	for _, s := range h.getServers() {
-		if strings.Contains(s.Name, strings.ToLower(model.Name)) {
+		if strings.Contains(strings.ToLower(s.Name), strings.ToLower(model.Name)) {
 			x++
 		}
 	}

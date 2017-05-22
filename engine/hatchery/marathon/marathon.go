@@ -105,11 +105,11 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error) {
+func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
 	if job != nil {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d", model.Name, model.Image, job.ID)
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", model.Name, model.Image, job.ID, logInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s)", model.Name, model.Image)
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", model.Name, model.Image, logInfo)
 	}
 
 	var logJob string

@@ -8,7 +8,6 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
@@ -114,23 +113,34 @@ func (h *HatcheryCloud) initIPStatus() error {
 				log.Info("initIPStatus> server %s - 0 addr", s.Name)
 				continue
 			}
-			log.Debug("initIPStatus> server %s - work on %s", s.Name, h.networkString)
-			all, errap := servers.ListAddressesByNetwork(h.client, s.ID, h.networkString).AllPages()
-			if errap != nil {
-				return fmt.Errorf("initIPStatus> error on pager.AllPages %s", errap)
-			}
-			addrs, erren := servers.ExtractNetworkAddresses(all)
-			if erren != nil {
-				return fmt.Errorf("initIPStatus> error on ExtractNetworkAddresses %s", erren)
-			}
-			for _, a := range addrs {
-				log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, a.Address, ip)
-				if a.Address != "" && a.Address == ip {
-					log.Info("initIPStatus> worker %s - use IP: %s", s.Name, a.Address)
-					ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
+			for k, v := range s.Addresses {
+				if k != h.networkString {
+					continue
+				}
+				switch v.(type) {
+				case []interface{}:
+					for _, z := range v.([]interface{}) {
+						var addr string
+						var version int
+						for x, y := range z.(map[string]interface{}) {
+							if x == "addr" {
+								addr = y.(string)
+							}
+							if x == "version" {
+								version = int(y.(float64))
+							}
+						}
+						//we only support IPV4
+						if addr != "" && version == 4 {
+							log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, addr, ip)
+							if addr != "" && addr == ip {
+								log.Info("initIPStatus> worker %s - use IP: %s", s.Name, addr)
+								ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
+							}
+						}
+					}
 				}
 			}
-
 		}
 	}
 	return nil

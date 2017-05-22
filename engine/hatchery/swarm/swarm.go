@@ -189,14 +189,14 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 }
 
 //SpawnWorker start a new docker container
-func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	if registerOnly {
 		name = "register-" + name
 	}
 
-	log.Info("Spawning worker %s", name)
+	log.Info("SpawnWorker> Spawning worker %s - %s", name, logInfo)
 
 	//Create a network
 	network := name + "-net"
