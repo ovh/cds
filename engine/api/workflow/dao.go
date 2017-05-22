@@ -135,8 +135,9 @@ func Insert(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow (%#v, %d)", w.Root, w.ID)
 	}
 
-	for _, j := range w.Joins {
-		if err := insertJoin(db, w, &j, u); err != nil {
+	for i := range w.Joins {
+		j := &w.Joins[i]
+		if err := insertJoin(db, w, j, u); err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}

@@ -176,8 +176,9 @@ func insertJoin(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u
 	n.ID = dbJoin.ID
 
 	//Setup destination triggers
-	for _, t := range n.Triggers {
-		if err := insertJoinTrigger(db, w, n, &t, u); err != nil {
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		if err := insertJoinTrigger(db, w, n, t, u); err != nil {
 			return sdk.WrapError(err, "insertOrUpdateJoin> Unable to insert or update join trigger")
 		}
 	}

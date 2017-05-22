@@ -359,9 +359,11 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1, err := Load(db, key, "test_1", u)
 	test.NoError(t, err)
 
+	w1old, err := Load(db, key, "test_1", u)
+	test.NoError(t, err)
+
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
 
-	w1old := w1
 	w1.Name = "test_2"
 	w1.Root.PipelineID = pip2.ID
 	w1.Root.Context.Application = &app2
