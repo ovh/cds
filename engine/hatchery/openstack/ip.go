@@ -56,7 +56,7 @@ func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
 			}
 			addrs, erren := servers.ExtractNetworkAddresses(all)
 			if erren != nil {
-				if !strings.Contains(errap.Error(), "Resource not found") {
+				if !strings.Contains(erren.Error(), "Resource not found") {
 					log.Error("findAvailableIP> error on ExtractNetworkAddresses with server.ID:%s, err:%s", s.ID, erren)
 				}
 				continue

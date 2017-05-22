@@ -20,10 +20,16 @@ import (
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
 func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error) {
+	//generate a pretty cool name
+	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
+	if registerOnly {
+		name = "register-" + name
+	}
+
 	if job != nil {
-		log.Info("spawnWorker> spawning worker %s for job %d", model.Name, job.ID)
+		log.Info("spawnWorker> spawning worker %s model:%s for job %d", name, model.Name, job.ID)
 	} else {
-		log.Info("spawnWorker> spawning worker %s", model.Name)
+		log.Info("spawnWorker> spawning worker %s model:%s", name, model.Name)
 	}
 
 	var omd sdk.OpenstackModelData
@@ -51,12 +57,6 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 	flavorID, errf := h.flavorID(omd.Flavor)
 	if errf != nil {
 		return "", errf
-	}
-
-	//generate a pretty cool name
-	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
-	if registerOnly {
-		name = "register-" + name
 	}
 
 	// Ip len(ipsInfos.ips) > 0, specify one of those
@@ -187,10 +187,10 @@ export CDS_TTL={{.TTL}}
 		ImageRef:  imageID,
 		Metadata: map[string]string{
 			"worker":                     name,
-			"hatcheryName":               h.Hatchery().Name,
+			"hatchery_name":              h.Hatchery().Name,
 			"register_only":              fmt.Sprintf("%t", registerOnly),
-			"Flavor":                     omd.Flavor,
-			"Model":                      omd.Image,
+			"flavor":                     omd.Flavor,
+			"model":                      omd.Image,
 			"worker_model_name":          model.Name,
 			"worker_model_last_modified": fmt.Sprintf("%d", model.UserLastModified.Unix()),
 		},
