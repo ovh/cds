@@ -81,7 +81,7 @@ describe('CDS: Parameter Value Component', () => {
         let compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('codemirror')).toBeTruthy('textarea must be displayed');
 
-        tick(100);
+        tick(500);
     }));
 
     it('should create a select for pipeline', fakeAsync( () => {
