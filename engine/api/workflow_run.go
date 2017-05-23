@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"fmt"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/context"
@@ -47,6 +49,8 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	name := vars["workflowName"]
 
 	runs, offset, limit, count, err := workflow.LoadRuns(db, key, name, offset, limit)
+
+	w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
 
 	return nil
 }
