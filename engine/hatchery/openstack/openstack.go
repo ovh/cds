@@ -164,7 +164,7 @@ func (h *HatcheryCloud) killAwolServers() {
 		workerName, isWorker := s.Metadata["worker"]
 		registerOnly, _ := s.Metadata["register_only"]
 		workerModelName, _ := s.Metadata["worker_model_name"]
-		workerModelNameLastModified, _ := s.Metadata["worker_model_name"]
+		workerModelNameLastModified, _ := s.Metadata["worker_model_last_modified"]
 		model, _ := s.Metadata["model"]
 		flavor, _ := s.Metadata["flavor"]
 
