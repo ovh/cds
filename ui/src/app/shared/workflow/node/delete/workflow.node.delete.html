@@ -1,4 +1,4 @@
-<sm-modal title="{{ 'workflow_node_delete_title' | translate: {} }}" #deleteModal>
+<sm-modal title="{{ 'workflow_node_delete_title' | translate: { pip: node.pipeline.name} }}" #deleteModal>
     <modal-content>
         <div class="">
             {{ 'workflow_node_delete_alert' | translate }}

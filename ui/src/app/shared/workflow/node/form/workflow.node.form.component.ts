@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
 
@@ -14,25 +14,10 @@ export class WorkflowNodeFormComponent {
     @Output() nodeChange = new EventEmitter<WorkflowNode>();
 
     constructor() { }
-
-    updatePipeline(pipelineName: string): void {
-        this.node.pipeline_id = this.project.pipelines.find( p => p.name === pipelineName).id;
-        this.nodeChange.emit(this.node);
-    }
-
-    updateApplication(appName: string): void {
-        if (!this.node.context) {
-            this.node.context = new WorkflowNodeContext();
-        }
-        this.node.context.application_id = this.project.applications.find(a => a.name === appName).id;
-        this.nodeChange.emit(this.node);
-    }
-
-    updateEnvironment(envName: string): void {
-        if (!this.node.context) {
-            this.node.context = new WorkflowNodeContext();
-        }
-        this.node.context.environment_id = this.project.environments.find(e => e.name === envName).id;
+    change(): void {
+        this.node.context.application_id = Number(this.node.context.application_id);
+        this.node.context.environment_id = Number(this.node.context.environment_id);
+        this.node.pipeline_id = Number(this.node.pipeline_id);
         this.nodeChange.emit(this.node);
     }
 }

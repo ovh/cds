@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Http} from '@angular/http';
 import {Observable} from 'rxjs/Observable';
-import {Workflow} from '../../model/workflow.model';
+import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 
 @Injectable()
 export class WorkflowService {
@@ -44,5 +44,10 @@ export class WorkflowService {
      */
     deleteWorkflow(key: string, workflow: Workflow): Observable<boolean> {
         return this._http.delete('/project/' + key + '/workflows/' + workflow.name).map(res => true);
+    }
+
+    getTriggerCondition(key: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {
+        return this._http.get('/project/' + key + '/workflows/' + workflowName + '/node/' + nodeID + '/triggers/condition')
+            .map(res => res.json());
     }
 }

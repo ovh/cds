@@ -16,6 +16,23 @@ export class Workflow {
     // UI params
     externalChange: boolean;
 
+    static getNodeByID(id: number, w: Workflow): WorkflowNode {
+        let node = WorkflowNode.getNodeByID(w.root, id);
+        if (!node && w.joins) {
+            w.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        node = WorkflowNode.getNodeByID(t.workflow_dest_node, id);
+                        if (node) {
+                            return node;
+                        }
+                    });
+                }
+            });
+        }
+        return node;
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
@@ -48,16 +65,26 @@ export class WorkflowNode {
     hooks: Array<WorkflowNodeHook>;
     triggers: Array<WorkflowNodeTrigger>;
 
-    static getNodeByID(id: number, triggers: Array<WorkflowNodeTrigger>) {
-        let node = null;
-        triggers.forEach( t => {
-           if (t.workflow_dest_node_id == id) {
-               node = t.workflow_dest_node;
-           } else if (t.workflow_dest_node.triggers) {
-               node = WorkflowNode.getNodeByID(id, t.workflow_dest_node.triggers);
-           }
-        });
-        return node;
+
+    static getNodeByID(node: WorkflowNode, id: number) {
+        if (node.id === id) {
+            return node;
+        }
+        let nodeToFind: WorkflowNode;
+        if (node.triggers) {
+            node.triggers.forEach(t => {
+               let n = WorkflowNode.getNodeByID(t.workflow_dest_node, id);
+               if (n) {
+                   nodeToFind = n;
+                   return;
+               }
+            });
+        }
+        return nodeToFind;
+    }
+
+    constructor() {
+        this.context = new WorkflowNodeContext();
     }
 }
 
@@ -88,6 +115,9 @@ export class WorkflowNodeTrigger {
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
 
+    // Ui only
+    conditionsCache: WorkflowTriggerConditionCache;
+
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
     }
@@ -107,4 +137,9 @@ export class WorkflowHookModel {
     images: string;
     command: string;
     default_config: {};
+}
+
+export class WorkflowTriggerConditionCache {
+    operators: Array<string>;
+    names: Array<string>;
 }

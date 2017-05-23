@@ -15,7 +15,7 @@ declare var _: any;
     templateUrl: './workflow.node.html',
     styleUrls: ['./workflow.node.scss']
 })
-export class WorkflowNodeComponent implements OnInit, AfterViewInit {
+export class WorkflowNodeComponent implements AfterViewInit {
 
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
@@ -26,11 +26,10 @@ export class WorkflowNodeComponent implements OnInit, AfterViewInit {
     @ViewChild('workflowDeleteNode')
     workflowDeleteNode: WorkflowDeleteNodeComponent;
 
+    newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
+
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
         private _toast: ToastService) {
-    }
-
-    ngOnInit(): void {
     }
 
     ngAfterViewInit() {
@@ -39,6 +38,8 @@ export class WorkflowNodeComponent implements OnInit, AfterViewInit {
     }
 
     openTriggerModal(): void {
+        this.newTrigger = new WorkflowNodeTrigger();
+        this.newTrigger.workflow_node_id = this.node.id;
         this.workflowTrigger.show({observable: true, closable: false, autofocus: false});
     }
 
@@ -46,13 +47,13 @@ export class WorkflowNodeComponent implements OnInit, AfterViewInit {
         this.workflowDeleteNode.show({observable: true, closable: false, autofocus: false});
     }
 
-    saveTrigger(trigger: WorkflowNodeTrigger): void {
+    saveTrigger(): void {
         let clonedWorkflow: Workflow = _.cloneDeep(this.workflow);
         let currentNode: WorkflowNode;
         if (clonedWorkflow.root.id === this.node.id) {
-            currentNode = clonedWorkflow.root
+            currentNode = clonedWorkflow.root;
         } else if (clonedWorkflow.root.triggers) {
-            currentNode = WorkflowNode.getNodeByID(this.node.id, clonedWorkflow.root.triggers);
+            currentNode = Workflow.getNodeByID(this.node.id, clonedWorkflow);
         }
 
         if (!currentNode) {
@@ -62,7 +63,7 @@ export class WorkflowNodeComponent implements OnInit, AfterViewInit {
         if (!currentNode.triggers) {
             currentNode.triggers = new Array<WorkflowNodeTrigger>();
         }
-        currentNode.triggers.push(trigger);
+        currentNode.triggers.push(_.cloneDeep(this.newTrigger));
         this.updateWorkflow(clonedWorkflow, this.workflowTrigger.modal);
     }
 
@@ -72,7 +73,7 @@ export class WorkflowNodeComponent implements OnInit, AfterViewInit {
             if (clonedWorkflow.root.id === this.node.id) {
                 this.deleteWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
             } else {
-                clonedWorkflow.root.triggers.forEach((t,i) => {
+                clonedWorkflow.root.triggers.forEach((t, i) => {
                     this.removeNode(this.node.id, t.workflow_dest_node, clonedWorkflow.root, i);
                 });
                 this.updateWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
@@ -80,7 +81,7 @@ export class WorkflowNodeComponent implements OnInit, AfterViewInit {
         }
     }
 
-    removeNode(id: number, node: WorkflowNode, parent: WorkflowNode, index:number) {
+    removeNode(id: number, node: WorkflowNode, parent: WorkflowNode, index: number) {
         if (node.id === id) {
             parent.triggers.splice(index, 1);
         }

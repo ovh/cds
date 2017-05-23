@@ -21,5 +21,13 @@
 </div>
 <div class="ui text active loader" *ngIf="!viewInit">Loading workflow...</div>
 
-
+<ng-container *ngIf="project && detailedWorkflow">
+    <app-workflow-trigger
+            [project]="project"
+            [workflow]="detailedWorkflow"
+            [triggerSrcNode]="selectedNode"
+            [(trigger)]="selectedTrigger"
+            (triggerChange)="updateTrigger(selectedNode, selectedTrigger)"
+    #editTriggerComponent></app-workflow-trigger>
+</ng-container>
 

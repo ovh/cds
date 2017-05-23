@@ -1,6 +1,6 @@
 import {ProjectStore} from '../project/project.store';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {Workflow} from '../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
 import {Observable} from 'rxjs/Observable';
@@ -111,5 +111,9 @@ export class WorkflowStore {
             this._workflows.next(store.delete(workflowKey));
             return w;
         });
+    }
+
+    getTriggerCondition(key: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {
+        return this._workflowService.getTriggerCondition(key, workflowName, nodeID).map(wtc => wtc);
     }
 }
