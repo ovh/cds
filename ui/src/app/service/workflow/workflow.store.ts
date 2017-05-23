@@ -114,6 +114,6 @@ export class WorkflowStore {
     }
 
     getTriggerCondition(key: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {
-        return this._workflowService.getTriggerCondition(key, workflowName, nodeID).map(wtc => wtc);
+        return this._workflowService.getTriggerCondition(key, workflowName, nodeID);
     }
 }

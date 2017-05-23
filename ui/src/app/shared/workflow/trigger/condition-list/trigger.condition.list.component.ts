@@ -23,9 +23,6 @@ export class WorkflowTriggerConditionListComponent extends Table {
     }
 
     removeCondition(cond: WorkflowTriggerCondition): void {
-        let indexToDelete = this.conditions.findIndex(c => c.variable === cond.variable);
-        if (indexToDelete !== -1) {
-            this.conditions.splice(indexToDelete, 1);
-        }
+        this.conditions = this.conditions.filter(c => c.variable !== cond.variable);
     }
 }

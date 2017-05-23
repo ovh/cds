@@ -19,16 +19,16 @@ export class Workflow {
     static getNodeByID(id: number, w: Workflow): WorkflowNode {
         let node = WorkflowNode.getNodeByID(w.root, id);
         if (!node && w.joins) {
-            w.joins.forEach(j => {
-                if (j.triggers) {
-                    j.triggers.forEach(t => {
-                        node = WorkflowNode.getNodeByID(t.workflow_dest_node, id);
+            quit: for (var i=0; i<w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (var j=0; j<w.joins[i].triggers.length; j++) {
+                        node = WorkflowNode.getNodeByID(w.joins[i].triggers[j].workflow_dest_node, id);
                         if (node) {
-                            return node;
+                            break quit;
                         }
-                    });
+                    }
                 }
-            });
+            }
         }
         return node;
     }
@@ -72,13 +72,13 @@ export class WorkflowNode {
         }
         let nodeToFind: WorkflowNode;
         if (node.triggers) {
-            node.triggers.forEach(t => {
-               let n = WorkflowNode.getNodeByID(t.workflow_dest_node, id);
-               if (n) {
-                   nodeToFind = n;
-                   return;
-               }
-            });
+            for (var i=0; i<node.triggers.length; i++) {
+                let n = WorkflowNode.getNodeByID(node.triggers[i].workflow_dest_node, id);
+                if (n) {
+                    nodeToFind = n;
+                    break;
+                }
+            }
         }
         return nodeToFind;
     }

@@ -212,13 +212,13 @@ export class WorkflowShowComponent implements AfterViewInit {
         let cID = Number(childID.replace('node-', ''));
         let node = Workflow.getNodeByID(pID, this.detailedWorkflow);
         if (node && node.triggers) {
-            node.triggers.forEach(t => {
-                if (t.workflow_dest_node_id === cID) {
+            for (var i=0; i<node.triggers.length; i++) {
+                if (node.triggers[i].workflow_dest_node_id === cID) {
                     this.selectedNode = _.cloneDeep(node);
-                    this.selectedTrigger = _.cloneDeep(t);
-                    return;
+                    this.selectedTrigger = _.cloneDeep(node.triggers[i]);
+                    break;
                 }
-            });
+            }
         }
         if (this.editTriggerComponent) {
             setTimeout(() => {
