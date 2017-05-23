@@ -167,13 +167,19 @@ func (hd *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error) {
+func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
 	if wm.Type != sdk.Docker {
 		return "", fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
 
 	if len(hd.workers) >= viper.GetInt("max-worker") {
 		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+	}
+
+	if job != nil {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, job.ID, logInfo)
+	} else {
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", wm.Name, wm.Image, logInfo)
 	}
 
 	name, errs := randSeq(16)
@@ -278,4 +284,12 @@ func randSeq(n int) (string, error) {
 	ex := hex.EncodeToString(b)
 	sized := []byte(ex)[0:n]
 	return string(sized), nil
+}
+
+// NeedRegistration return true if worker model need regsitration
+func (hd *HatcheryDocker) NeedRegistration(m *sdk.Model) bool {
+	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
+		return true
+	}
+	return false
 }

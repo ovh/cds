@@ -14,12 +14,13 @@ import (
 type Interface interface {
 	Init() error
 	KillWorker(worker sdk.Worker) error
-	SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error)
+	SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error)
 	CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() int
 	Hatchery() *sdk.Hatchery
 	ModelType() string
+	NeedRegistration(model *sdk.Model) bool
 	ID() int64
 }
 
@@ -137,7 +138,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
 						},
 					}
-					workerName, err := h.SpawnWorker(&model, job, false)
+					workerName, err := h.SpawnWorker(&model, job, false, "spawn for job")
 					if err != nil {
 						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, err)
 						infos = append(infos, sdk.SpawnInfo{
@@ -191,9 +192,10 @@ func provisioning(h Interface, provision int) {
 
 	for k := range models {
 		if models[k].Type == h.ModelType() {
-			if h.WorkersStartedByModel(&models[k]) < provision {
+			existing := h.WorkersStartedByModel(&models[k])
+			for i := existing; i < provision; i++ {
 				go func(m sdk.Model) {
-					if name, err := h.SpawnWorker(&m, nil, false); err != nil {
+					if name, err := h.SpawnWorker(&m, nil, false, "spawn for provision"); err != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, err)
 					}
 				}(models[k])

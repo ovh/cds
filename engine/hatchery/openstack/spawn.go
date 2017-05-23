@@ -19,7 +19,7 @@ import (
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool) (string, error) {
+func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
 	//generate a pretty cool name
 	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
 	if registerOnly {
@@ -27,9 +27,9 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 	}
 
 	if job != nil {
-		log.Info("spawnWorker> spawning worker %s model:%s for job %d", name, model.Name, job.ID)
+		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, model.Name, job.ID, logInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s model:%s", name, model.Name)
+		log.Info("spawnWorker> spawning worker %s model:%s - %s", name, model.Name, logInfo)
 	}
 
 	var omd sdk.OpenstackModelData
@@ -159,17 +159,16 @@ export CDS_TTL={{.TTL}}
 		log.Debug("spawnWorker> using userdata from existing image")
 		udataBegin = `#!/bin/sh
 set +e
-export CDS_FROM_WORKER_IMAGE=true;
+export CDS_FROM_WORKER_IMAGE="true";
 `
-		udata = udataBegin + "true; " + buffer.String()
 	} else {
 		log.Debug("spawnWorker> using userdata from worker model")
 		udataBegin = `#!/bin/sh
 set +e
-export CDS_FROM_WORKER_IMAGE=false;
+export CDS_FROM_WORKER_IMAGE="false";
 `
-		udata = udataBegin + "false; " + string(udataModel) + buffer.String()
 	}
+	udata = udataBegin + string(udataModel) + buffer.String()
 
 	// Encode again
 	udata64 := base64.StdEncoding.EncodeToString([]byte(udata))

@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -46,26 +44,27 @@ func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
 			if len(s.Addresses) == 0 {
 				continue
 			}
-			all, errap := servers.ListAddressesByNetwork(h.client, s.ID, h.networkString).AllPages()
-			if errap != nil {
-				// check not found -> this append when a srv is deleted
-				if !strings.Contains(errap.Error(), "Resource not found") {
-					return "", fmt.Errorf("findAvailableIP> error on pager.AllPages with server.ID:%s, err:%s ", s.ID, errap)
+
+			for k, v := range s.Addresses {
+				if k != h.networkString {
+					continue
 				}
-				continue
-			}
-			addrs, erren := servers.ExtractNetworkAddresses(all)
-			if erren != nil {
-				if !strings.Contains(erren.Error(), "Resource not found") {
-					log.Error("findAvailableIP> error on ExtractNetworkAddresses with server.ID:%s, err:%s", s.ID, erren)
+				switch v.(type) {
+				case []interface{}:
+					for _, z := range v.([]interface{}) {
+						var addr string
+						for x, y := range z.(map[string]interface{}) {
+							if x == "addr" {
+								addr = y.(string)
+							}
+						}
+						if addr == ip {
+							free = false
+						}
+					}
 				}
-				continue
 			}
-			for _, a := range addrs {
-				if a.Address == ip {
-					free = false
-				}
-			}
+
 			if !free {
 				break
 			}

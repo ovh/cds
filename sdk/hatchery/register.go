@@ -171,9 +171,9 @@ func workerRegister(h Interface) error {
 		if nRegistered > 5 {
 			break
 		}
-		if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
+		if h.NeedRegistration(&m) {
 			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
-			if _, err := h.SpawnWorker(&m, nil, true); err != nil {
+			if _, err := h.SpawnWorker(&m, nil, true, "spawn for register"); err != nil {
 				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, err)
 			}
 			nRegistered++
