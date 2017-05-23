@@ -285,3 +285,11 @@ func randSeq(n int) (string, error) {
 	sized := []byte(ex)[0:n]
 	return string(sized), nil
 }
+
+// NeedRegistration return true if worker model need regsitration
+func (hd *HatcheryDocker) NeedRegistration(m *sdk.Model) bool {
+	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
+		return true
+	}
+	return false
+}

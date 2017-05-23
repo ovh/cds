@@ -310,3 +310,11 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 
 	return nil
 }
+
+// NeedRegistration return true if worker model need regsitration
+func (h *HatcheryLocal) NeedRegistration(m *sdk.Model) bool {
+	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
+		return true
+	}
+	return false
+}

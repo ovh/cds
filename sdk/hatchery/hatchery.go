@@ -20,6 +20,7 @@ type Interface interface {
 	WorkersStarted() int
 	Hatchery() *sdk.Hatchery
 	ModelType() string
+	NeedRegistration(model *sdk.Model) bool
 	ID() int64
 }
 

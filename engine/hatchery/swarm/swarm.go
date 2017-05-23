@@ -646,3 +646,11 @@ func (h *HatcherySwarm) killAwolWorker() {
 		}
 	}
 }
+
+// NeedRegistration return true if worker model need regsitration
+func (h *HatcherySwarm) NeedRegistration(m *sdk.Model) bool {
+	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
+		return true
+	}
+	return false
+}

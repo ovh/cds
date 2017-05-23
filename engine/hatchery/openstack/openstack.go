@@ -330,6 +330,27 @@ func (h *HatcheryCloud) WorkersStartedByModel(model *sdk.Model) int {
 	return x
 }
 
+// NeedRegistration return true if worker model need regsitration
+func (h *HatcheryCloud) NeedRegistration(m *sdk.Model) bool {
+	var oldDateLastModified string
+	for _, img := range h.getImages() {
+		w, _ := img.Metadata["worker_model_name"]
+		if w == m.Name {
+			if d, ok := img.Metadata["worker_model_last_modified"]; ok {
+				oldDateLastModified = d.(string)
+				break
+			}
+		}
+	}
+
+	var out bool
+	if m.NeedRegistration || fmt.Sprintf("%d", m.UserLastModified.Unix()) != oldDateLastModified {
+		out = true
+	}
+	log.Info("NeedRegistration> %t for %s - m.NeedRegistration:%t m.UserLastModified:%d oldDateLastModified:%d", out, m.Name, m.NeedRegistration, m.UserLastModified.Unix(), oldDateLastModified)
+	return out
+}
+
 // KillWorker delete cloud instances
 func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
 	log.Info("KillWorker> Kill %s", worker.Name)

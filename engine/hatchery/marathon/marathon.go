@@ -435,3 +435,11 @@ func (m *HatcheryMarathon) killAwolWorkers() error {
 
 	return nil
 }
+
+// NeedRegistration return true if worker model need regsitration
+func (m *HatcheryMarathon) NeedRegistration(wm *sdk.Model) bool {
+	if wm.NeedRegistration || wm.LastRegistration.Unix() < wm.UserLastModified.Unix() {
+		return true
+	}
+	return false
+}
