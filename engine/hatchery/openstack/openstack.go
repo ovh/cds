@@ -164,7 +164,7 @@ func (h *HatcheryCloud) killAwolServers() {
 		workerName, isWorker := s.Metadata["worker"]
 		registerOnly, _ := s.Metadata["register_only"]
 		workerModelName, _ := s.Metadata["worker_model_name"]
-		workerModelNameLastModified, _ := s.Metadata["worker_model_name"]
+		workerModelNameLastModified, _ := s.Metadata["worker_model_last_modified"]
 		model, _ := s.Metadata["model"]
 		flavor, _ := s.Metadata["flavor"]
 
@@ -234,10 +234,11 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 	imageID, err := servers.CreateImage(h.client, serverID, servers.CreateImageOpts{
 		Name: "cds_image_" + workerModelName,
 		Metadata: map[string]string{
-			"worker_model_name": workerModelName,
-			"model":             model,
-			"flavor":            flavor,
-			"created_by":        "cdsHatchery_" + h.Hatchery().Name,
+			"worker_model_name":          workerModelName,
+			"model":                      model,
+			"flavor":                     flavor,
+			"created_by":                 "cdsHatchery_" + h.Hatchery().Name,
+			"worker_model_last_modified": workerModelNameLastModified,
 		},
 	}).ExtractImageID()
 	if err != nil {
@@ -347,7 +348,7 @@ func (h *HatcheryCloud) NeedRegistration(m *sdk.Model) bool {
 	if m.NeedRegistration || fmt.Sprintf("%d", m.UserLastModified.Unix()) != oldDateLastModified {
 		out = true
 	}
-	log.Info("NeedRegistration> %t for %s - m.NeedRegistration:%t m.UserLastModified:%d oldDateLastModified:%d", out, m.Name, m.NeedRegistration, m.UserLastModified.Unix(), oldDateLastModified)
+	log.Info("NeedRegistration> %t for %s - m.NeedRegistration:%t m.UserLastModified:%d oldDateLastModified:%s", out, m.Name, m.NeedRegistration, m.UserLastModified.Unix(), oldDateLastModified)
 	return out
 }
 
