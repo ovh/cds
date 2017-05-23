@@ -102,6 +102,11 @@ export CDS_TTL={{.TTL}}
 	}
 	udataEnd += " ; sudo shutdown -h now;"
 
+	var jobID int64
+	if job != nil {
+		jobID = job.ID
+	}
+
 	var withExistingImage bool
 	if !model.NeedRegistration && !registerOnly {
 		start := time.Now()
@@ -111,16 +116,15 @@ export CDS_TTL={{.TTL}}
 			workerModelName, _ := img.Metadata["worker_model_name"]
 			if workerModelName == model.Name {
 				withExistingImage = true
-				log.Info("spawnWorker> existing image found for worker:%s model:%s img:%s", name, model.Name, img.ID)
+				var jobInfo string
+				if jobID != 0 {
+					jobInfo = fmt.Sprintf(" job:%d", jobID)
+				}
+				log.Info("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, model.Name, img.ID, jobInfo, logInfo)
 				imageID = img.ID
 				break
 			}
 		}
-	}
-
-	var jobID int64
-	if job != nil {
-		jobID = job.ID
 	}
 
 	tmpl, errt := template.New("udata").Parse(string(udataEnd))
