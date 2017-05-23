@@ -358,6 +358,9 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1, err := Load(db, key, "test_1", u)
 	test.NoError(t, err)
 
+	w1old, err := Load(db, key, "test_1", u)
+	test.NoError(t, err)
+
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
 
 	w1.Name = "test_2"
@@ -365,7 +368,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1.Root.Context.Application = &app2
 	w1.Root.Context.ApplicationID = app2.ID
 
-	test.NoError(t, Update(db, w1, u))
+	test.NoError(t, Update(db, w1, w1old, u))
 
 	t.Logf("Reloading workflow...")
 	w2, err := LoadByID(db, w1.ID, u)
@@ -820,6 +823,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	w1, err := Load(db, key, "test_1", u)
 	test.NoError(t, err)
 
+	w1old := w1
 	w1.Name = "test_2"
 	w1.Root.PipelineID = pip2.ID
 	w1.Root.Pipeline = pip2
@@ -839,7 +843,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Update(db, w1, u))
+	test.NoError(t, Update(db, w1, w1old, u))
 
 	t.Logf("Reloading workflow...")
 	w2, err := LoadByID(db, w1.ID, u)

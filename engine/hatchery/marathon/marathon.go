@@ -105,11 +105,11 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error {
+func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
 	if job != nil {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d", model.Name, model.Image, job.ID)
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", model.Name, model.Image, job.ID, logInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s)", model.Name, model.Image)
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", model.Name, model.Image, logInfo)
 	}
 
 	var logJob string
@@ -118,8 +118,14 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	memory := m.defaultMemory
 
 	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
+	if registerOnly {
+		cmd += " register"
+	}
 	instance := 1
 	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	if registerOnly {
+		workerName = "register-" + workerName
+	}
 	forcePull := strings.HasSuffix(model.Image, ":latest")
 
 	env := map[string]string{
@@ -154,7 +160,7 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 
 		for _, r := range job.Job.Action.Requirements {
 			if r.Name == sdk.ServiceRequirement {
-				return fmt.Errorf("spawnMarathonDockerWorker> %s service requirement not supported", logJob)
+				return "", fmt.Errorf("spawnMarathonDockerWorker> %s service requirement not supported", logJob)
 			}
 
 			if r.Type == sdk.MemoryRequirement {
@@ -162,7 +168,7 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 				memory, err = strconv.Atoi(r.Value)
 				if err != nil {
 					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %s:%s", logJob, memory, err)
-					return err
+					return "", err
 				}
 			}
 		}
@@ -189,7 +195,7 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	}
 
 	if _, err := m.client.CreateApplication(application); err != nil {
-		return err
+		return "", err
 	}
 
 	ticker := time.NewTicker(time.Second * 5)
@@ -206,12 +212,12 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	deployments, err := m.client.ApplicationDeployments(application.ID)
 	if err != nil {
 		ticker.Stop()
-		return fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
+		return "", fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
 	}
 
 	if len(deployments) == 0 {
 		ticker.Stop()
-		return nil
+		return "", nil
 	}
 
 	wg := &sync.WaitGroup{}
@@ -264,10 +270,10 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	done = true
 
 	if success {
-		return nil
+		return workerName, nil
 	}
 
-	return fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
+	return "", fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
 }
 
 func (m *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
@@ -428,4 +434,12 @@ func (m *HatcheryMarathon) killAwolWorkers() error {
 	}
 
 	return nil
+}
+
+// NeedRegistration return true if worker model need regsitration
+func (m *HatcheryMarathon) NeedRegistration(wm *sdk.Model) bool {
+	if wm.NeedRegistration || wm.LastRegistration.Unix() < wm.UserLastModified.Unix() {
+		return true
+	}
+	return false
 }

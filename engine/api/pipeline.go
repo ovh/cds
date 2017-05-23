@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -22,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/trigger"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -154,12 +156,12 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	pipelineName := vars["permPipelineKey"]
 	appName := vars["permApplicationName"]
 
-	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
-	if err != nil {
-		if err != sdk.ErrApplicationNotFound {
-			log.Warning("runPipelineWithLastParentHandler> Cannot load application %s: %s\n", appName, err)
+	app, errl := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+	if errl != nil {
+		if errl != sdk.ErrApplicationNotFound {
+			log.Warning("runPipelineWithLastParentHandler> Cannot load application %s: %s\n", appName, errl)
 		}
-		return err
+		return errl
 	}
 
 	var request sdk.RunRequest
@@ -258,12 +260,12 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		return sdk.WrapError(errproj, "rollbackPipelineHandler> Unable to load project %s", projectKey)
 	}
 
-	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
-	if err != nil {
-		if err != sdk.ErrApplicationNotFound {
-			log.Warning("runPipelineHandler> Cannot load application %s: %s\n", appName, err)
+	app, errln := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+	if errln != nil {
+		if errln != sdk.ErrApplicationNotFound {
+			log.Warning("runPipelineHandler> Cannot load application %s: %s\n", appName, errln)
 		}
-		return err
+		return errln
 	}
 
 	var pip *sdk.Pipeline
@@ -287,9 +289,9 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		if request.ParentEnvironmentID != 0 {
 			envID = request.ParentEnvironmentID
 		}
-		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentBuildNumber)
-		if err != nil {
-			return sdk.WrapError(err, "runPipelineHandler> Cannot load parent pipeline build")
+		pb, errlp := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentBuildNumber)
+		if errlp != nil {
+			return sdk.WrapError(errlp, "runPipelineHandler> Cannot load parent pipeline build")
 		}
 		parentParams := queue.ParentBuildInfos(pb)
 		request.Params = append(request.Params, parentParams...)
@@ -380,10 +382,9 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	pipName := vars["permPipelineKey"]
 	pipelineActionIDString := vars["pipelineActionID"]
 
-	pipelineActionID, err := strconv.ParseInt(pipelineActionIDString, 10, 64)
-	if err != nil {
-		log.Warning("updatePipelineActionHandler>ID is not a int: %s\n", err)
-		return sdk.ErrInvalidID
+	pipelineActionID, errp := strconv.ParseInt(pipelineActionIDString, 10, 64)
+	if errp != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "updatePipelineActionHandler>ID %s is not a int", pipelineActionID)
 	}
 
 	var job sdk.Job
@@ -392,8 +393,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 
 	if pipelineActionID != job.PipelineActionID {
-		log.Warning("updatePipelineActionHandler>Pipeline action does not match: %s\n", err)
-		return err
+		return fmt.Errorf("updatePipelineActionHandler>Pipeline action does not match")
 	}
 
 	pipelineData, err := pipeline.LoadPipeline(db, key, pipName, false)
@@ -549,10 +549,9 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	project, err := project.Load(db, key, c.User, project.LoadOptions.Default)
-	if err != nil {
-		log.Warning("AddPipeline: Cannot load %s: %s\n", key, err)
-		return err
+	project, errl := project.Load(db, key, c.User, project.LoadOptions.Default)
+	if errl != nil {
+		return sdk.WrapError(errl, "AddPipeline: Cannot load %s", key)
 	}
 
 	var p sdk.Pipeline
@@ -781,7 +780,6 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 }
 
 func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -789,9 +787,7 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	stageID, errInt := strconv.ParseInt(stageIDString, 10, 60)
 	if errInt != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Stage ID must be an int: %s\n", errInt)
-		return sdk.ErrInvalidID
-
+		return sdk.WrapError(sdk.ErrInvalidID, "addJoinedActionToPipelineHandler> Stage ID must be an int", stageID)
 	}
 
 	var job sdk.Job
@@ -801,14 +797,12 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	proj, errP := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
 	if errP != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot load project %s: %s\n", projectKey, errP)
-		return errP
+		return sdk.WrapError(errP, "addJoinedActionToPipelineHandler> Cannot load project %s", projectKey)
 	}
 
 	pip, errPip := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if errPip != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s: %s\n", pipelineName, projectKey, errPip)
-		return errPip
+		return sdk.WrapError(errPip, "addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s", pipelineName, projectKey)
 	}
 
 	tx, errBegin := db.Begin()
@@ -817,22 +811,28 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	defer tx.Rollback()
 
+	reqs, errlb := action.LoadAllBinaryRequirements(tx)
+	if errlb != nil {
+		return sdk.WrapError(errlb, "updateJoinedAction> cannot load all binary requirements")
+	}
+
 	job.Enabled = true
 	job.Action.Enabled = true
 	if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
-		log.Warning("addJoinedActionToPipelineHandler> Cannot insert job: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addJoinedActionToPipelineHandler> Cannot insert job")
 	}
 
 	warnings, errC := sanity.CheckAction(tx, proj, pip, job.Action.ID)
 	if errC != nil {
-		log.Warning("addActionToPipelineHandler> Cannot check action %d requirements: %s\n", job.Action.ID, errC)
-		return errC
+		return sdk.WrapError(errC, "addActionToPipelineHandler> Cannot check action %d requirements", job.Action.ID)
 	}
 
 	if err := sanity.InsertActionWarnings(tx, proj.ID, pip.ID, job.Action.ID, warnings); err != nil {
-		log.Warning("addActionToPipelineHandler> Cannot insert warning for action %d: %s\n", job.Action.ID, err)
-		return err
+		return sdk.WrapError(err, "addActionToPipelineHandler> Cannot insert warning for action %d", job.Action.ID)
+	}
+
+	if err := worker.ComputeRegistrationNeeds(tx, reqs, job.Action.Requirements); err != nil {
+		return sdk.WrapError(err, "addActionToPipelineHandler> Cannot compute registration needs")
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -846,32 +846,25 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 }
 
 func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	actionIDString := vars["actionID"]
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
 
-	proj, err := project.Load(db, key, c.User, project.LoadOptions.Default)
-	if err != nil {
-		log.Warning("updateJoinedAction> Cannot load project %s: %s\n", key, err)
-		return sdk.ErrNoProject
-
+	proj, errl := project.Load(db, key, c.User, project.LoadOptions.Default)
+	if errl != nil {
+		return sdk.WrapError(sdk.ErrNoProject, "updateJoinedAction> Cannot load project %s: %s", key, errl)
 	}
 
-	pip, err := pipeline.LoadPipeline(db, key, pipName, false)
-	if err != nil {
-		log.Warning("updateJoinedAction> Cannot load pipeline %s for project %s: %s\n", pipName, key, err)
-		return sdk.ErrPipelineNotFound
-
+	pip, errlp := pipeline.LoadPipeline(db, key, pipName, false)
+	if errlp != nil {
+		return sdk.WrapError(sdk.ErrPipelineNotFound, "updateJoinedAction> Cannot load pipeline %s for project %s: %s", pipName, key, errlp)
 	}
 
-	actionID, err := strconv.ParseInt(actionIDString, 10, 60)
-	if err != nil {
-		log.Warning("updateJoinedAction> Action ID must be an int: %s\n", err)
-		return sdk.ErrWrongRequest
-
+	actionID, errp := strconv.ParseInt(actionIDString, 10, 60)
+	if errp != nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "updateJoinedAction> Action ID %s must be an int", actionID)
 	}
 
 	var a sdk.Action
@@ -882,59 +875,49 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 	clearJoinedAction, err := action.LoadActionByID(db, actionID)
 	if err != nil {
-		log.Warning("updateJoinedAction> Cannot load action %d: %s\n", actionID, err)
-		return err
-
+		return sdk.WrapError(err, "updateJoinedAction> Cannot load action %d", actionID)
 	}
 
 	if clearJoinedAction.Type != sdk.JoinedAction {
-		log.Warning("updateJoinedAction> Tried to update a %s action, aborting", clearJoinedAction.Type)
-		return sdk.ErrForbidden
-
+		return sdk.WrapError(sdk.ErrForbidden, "updateJoinedAction> Tried to update a %s action, aborting", clearJoinedAction.Type)
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("updateJoinedAction> Cannot begin tx: %s\n", err)
-		return err
-
+	tx, errb := db.Begin()
+	if errb != nil {
+		return sdk.WrapError(errb, "updateJoinedAction> Cannot begin tx")
 	}
 	defer tx.Rollback()
 
+	reqs, errlb := action.LoadAllBinaryRequirements(tx)
+	if errlb != nil {
+		return sdk.WrapError(errlb, "updateJoinedAction> cannot load all binary requirements")
+	}
+
 	log.Debug("updateJoinedAction> UpdateActionDB %d", a.ID)
-
 	if err := action.UpdateActionDB(tx, &a, c.User.ID); err != nil {
-		log.Warning("updateJoinedAction> cannot update action: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "updateJoinedAction> cannot update action")
 	}
 
 	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
-		log.Warning("updateJoinedAction> cannot update pipeline last_modified date: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "updateJoinedAction> cannot update pipeline last_modified date")
 	}
 
 	log.Debug("updateJoinedAction> CheckAction %d", a.ID)
-	warnings, err := sanity.CheckAction(tx, proj, pip, a.ID)
-	if err != nil {
-		log.Warning("updateJoinedAction> Cannot check action %d requirements: %s\n", a.ID, err)
-		return err
-
+	warnings, errc := sanity.CheckAction(tx, proj, pip, a.ID)
+	if errc != nil {
+		return sdk.WrapError(errc, "updateJoinedAction> Cannot check action %d requirements", a.ID)
 	}
 
-	err = sanity.InsertActionWarnings(tx, proj.ID, pip.ID, a.ID, warnings)
-	if err != nil {
-		log.Warning("updateJoinedAction> Cannot insert warning for action %d: %s\n", a.ID, err)
-		return err
-
+	if err := sanity.InsertActionWarnings(tx, proj.ID, pip.ID, a.ID, warnings); err != nil {
+		return sdk.WrapError(err, "updateJoinedAction> Cannot insert warning for action %d", a.ID)
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("updateJoinedAction> Cannot commit transaction: %s\n", err)
-		return err
+	if err := worker.ComputeRegistrationNeeds(tx, reqs, a.Requirements); err != nil {
+		return sdk.WrapError(err, "updateJoinedAction> Cannot compute registration needs")
+	}
 
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "updateJoinedAction> Cannot commit transaction")
 	}
 
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
@@ -944,7 +927,6 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 }
 
 func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipName := vars["permPipelineKey"]

@@ -14,12 +14,13 @@ import (
 type Interface interface {
 	Init() error
 	KillWorker(worker sdk.Worker) error
-	SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob) error
+	SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error)
 	CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() int
 	Hatchery() *sdk.Hatchery
 	ModelType() string
+	NeedRegistration(model *sdk.Model) bool
 	ID() int64
 }
 
@@ -70,7 +71,7 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 	}
 	log.Debug("routine> %d - Job queue size:%d", timestamp, len(jobs))
 
-	models, errwm := sdk.GetWorkerModels()
+	models, errwm := sdk.GetWorkerModelsEnabled()
 	if errwm != nil {
 		log.Debug("routine> %d - error on GetWorkerModels:%e", timestamp, errwm)
 		return nil, errwm
@@ -134,15 +135,15 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 					infos := []sdk.SpawnInfo{
 						{
 							RemoteTime: start,
-							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
+							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
 						},
 					}
-
-					if err := h.SpawnWorker(&model, job); err != nil {
+					workerName, err := h.SpawnWorker(&model, job, false, "spawn for job")
+					if err != nil {
 						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, err)
 						infos = append(infos, sdk.SpawnInfo{
 							RemoteTime: time.Now(),
-							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), err.Error()}},
+							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), err.Error()}},
 						})
 						if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
 							log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job (err spawn)%d: %s", timestamp, job.ID, err)
@@ -153,7 +154,13 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 
 					infos = append(infos, sdk.SpawnInfo{
 						RemoteTime: time.Now(),
-						Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID, Args: []interface{}{fmt.Sprintf("%d", h.Hatchery().ID), sdk.Round(time.Since(start), time.Second).String()}},
+						Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
+							Args: []interface{}{
+								fmt.Sprintf("%s", h.Hatchery().Name),
+								fmt.Sprintf("%d", h.Hatchery().ID),
+								fmt.Sprintf("%s", workerName),
+								sdk.Round(time.Since(start), time.Second).String()},
+						},
 					})
 
 					if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
@@ -177,18 +184,19 @@ func provisioning(h Interface, provision int) {
 		return
 	}
 
-	models, errwm := sdk.GetWorkerModels()
+	models, errwm := sdk.GetWorkerModelsEnabled()
 	if errwm != nil {
-		log.Debug("provisioning> error on GetWorkerModels:%e", errwm)
+		log.Error("provisioning> error on GetWorkerModels:%e", errwm)
 		return
 	}
 
 	for k := range models {
 		if models[k].Type == h.ModelType() {
-			if h.WorkersStartedByModel(&models[k]) < provision {
+			existing := h.WorkersStartedByModel(&models[k])
+			for i := existing; i < provision; i++ {
 				go func(m sdk.Model) {
-					if err := h.SpawnWorker(&m, nil); err != nil {
-						log.Warning("provisioning> cannot spawn worker for provisioning: %s", m.Name, err)
+					if name, err := h.SpawnWorker(&m, nil, false, "spawn for provision"); err != nil {
+						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, err)
 					}
 				}(models[k])
 			}

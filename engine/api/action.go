@@ -99,8 +99,7 @@ func getPipelinesUsingActionHandler(w http.ResponseWriter, r *http.Request, db *
 func getActionsRequirements(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	req, err := action.LoadAllBinaryRequirements(db)
 	if err != nil {
-		log.Warning("getActionsRequirements> Cannot load action requirements: %s\n", err)
-		return err
+		return sdk.WrapError(err, "getActionsRequirements> Cannot load action requirements")
 	}
 	return WriteJSON(w, r, req, http.StatusOK)
 }

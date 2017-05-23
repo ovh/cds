@@ -167,20 +167,29 @@ func (hd *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) error {
+func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
 	if wm.Type != sdk.Docker {
-		return fmt.Errorf("cannot handle %s worker model", wm.Type)
+		return "", fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
 
 	if len(hd.workers) >= viper.GetInt("max-worker") {
-		return fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+	}
+
+	if job != nil {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, job.ID, logInfo)
+	} else {
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", wm.Name, wm.Image, logInfo)
 	}
 
 	name, errs := randSeq(16)
 	if errs != nil {
-		return fmt.Errorf("cannot create worker name: %s", errs)
+		return "", fmt.Errorf("cannot create worker name: %s", errs)
 	}
 	name = wm.Name + "-" + name
+	if registerOnly {
+		name = "register-" + name
+	}
 
 	var args []string
 	args = append(args, "run", "--rm", "-a", "STDOUT", "-a", "STDERR")
@@ -216,11 +225,14 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) 
 	args = append(args, wm.Image)
 	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", sdk.Host))
 
+	if registerOnly {
+		args = append(args, "register")
+	}
 	cmd := exec.Command("docker", args...)
-	log.Debug("Running %s\n", cmd.Args)
+	log.Debug("Running %s", cmd.Args)
 
 	if err := cmd.Start(); err != nil {
-		return err
+		return "", err
 	}
 	hd.Lock()
 	hd.workers[name] = cmd
@@ -234,7 +246,7 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) 
 
 	// Do not spam docker daemon
 	time.Sleep(2 * time.Second)
-	return nil
+	return name, nil
 }
 
 // KillWorker stops a worker locally
@@ -244,17 +256,15 @@ func (hd *HatcheryDocker) KillWorker(worker sdk.Worker) error {
 
 	for name, cmd := range hd.workers {
 		if worker.Name == name {
-			log.Debug("HatcheryDocker.KillWorker> %s\n", name)
-			err := cmd.Process.Kill()
-			if err != nil {
+			log.Debug("HatcheryDocker.KillWorker> %s", name)
+			if err := cmd.Process.Kill(); err != nil {
 				return err
 			}
 
 			// Remove container
 			cmd := exec.Command("docker", "rm", "-f", name)
-			err = cmd.Run()
-			if err != nil {
-				return fmt.Errorf("HatcheryDocker.KillWorker: cannot rm container %s: %s\n", name, err)
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("HatcheryDocker.KillWorker: cannot rm container %s: %s", name, err)
 			}
 
 			delete(hd.workers, worker.Name)
@@ -274,4 +284,12 @@ func randSeq(n int) (string, error) {
 	ex := hex.EncodeToString(b)
 	sized := []byte(ex)[0:n]
 	return string(sized), nil
+}
+
+// NeedRegistration return true if worker model need regsitration
+func (hd *HatcheryDocker) NeedRegistration(m *sdk.Model) bool {
+	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
+		return true
+	}
+	return false
 }

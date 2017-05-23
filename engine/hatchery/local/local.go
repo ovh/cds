@@ -77,14 +77,23 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) error {
+func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
 	var err error
 
 	if len(h.workers) >= viper.GetInt("max-worker") {
-		return fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+	}
+
+	if job != nil {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, job.ID, logInfo)
+	} else {
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", wm.Name, wm.Image, logInfo)
 	}
 
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
+	if registerOnly {
+		wName = "register-" + wName
+	}
 
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", sdk.Host))
@@ -114,6 +123,9 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 		args = append(args, fmt.Sprintf("--booked-job-id=%d", job.ID))
 	}
 
+	if registerOnly {
+		args = append(args, "register")
+	}
 	cmd := exec.Command("worker", args...)
 
 	// Clearenv
@@ -126,7 +138,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	}
 
 	if err = cmd.Start(); err != nil {
-		return err
+		return "", err
 	}
 	h.Lock()
 	h.workers[wName] = cmd
@@ -136,7 +148,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob) er
 	go func() {
 		cmd.Wait()
 	}()
-	return nil
+	return wName, nil
 }
 
 // WorkersStarted returns the number of instances started but
@@ -297,4 +309,12 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 	}
 
 	return nil
+}
+
+// NeedRegistration return true if worker model need regsitration
+func (h *HatcheryLocal) NeedRegistration(m *sdk.Model) bool {
+	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
+		return true
+	}
+	return false
 }

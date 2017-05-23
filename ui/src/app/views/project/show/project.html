@@ -7,6 +7,8 @@
 
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
+            <a *ngIf="false" sm-item [class.active]="selectedTab === 'workflows'" (click)="showTab('workflows')"><i class="sitemap icon"></i>{{
+                'common_workflows' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'applications'" (click)="showTab('applications')"><i class="rocket icon"></i>{{
                 'common_applications' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'pipelines'" (click)="showTab('pipelines')"><i class="sitemap icon"></i>{{
@@ -25,6 +27,9 @@
     <div class="scrollingContent">
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">
+                <div *ngSwitchCase="'workflows'">
+                    <app-project-workflows [project]="project"></app-project-workflows>
+                </div>
                 <div *ngSwitchCase="'applications'">
                     <app-project-applications [project]="project"></app-project-applications>
                 </div>

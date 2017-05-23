@@ -1,0 +1,25 @@
+<div id="WorkflowShow" *ngIf="viewInit">
+    <div class="CDSbreadcrumb">
+        <app-breadcrumb [project]="project"></app-breadcrumb>
+    </div>
+    <div class="CDSmenu">
+        <sm-menu title="" class="pointing secondary">
+            <a *ngIf="true" sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')"><i class="sitemap icon"></i>{{
+                'common_workflow' | translate }}</a>
+        </sm-menu>
+    </div>
+    <div class="scrollingContent">
+        <div class="paddingContent">
+            <div class="viewContent">
+
+
+                <svg width=1000 #svgGraph></svg>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="ui text active loader" *ngIf="!viewInit">Loading workflow...</div>
+
+
+

@@ -16,7 +16,7 @@ const workflowRoutes: Routes = [
                     project: ProjectResolver
                 }
             },
-            { path: ':appName',
+            { path: ':workflowName',
                 component: WorkflowShowComponent,
                 resolve: {
                     project: ProjectResolver

@@ -98,6 +98,9 @@ func addFlags() {
 	rootCmd.PersistentFlags().Int("provision-seconds", 30, "Check provisioning each n Seconds")
 	viper.BindPFlag("provision-seconds", rootCmd.PersistentFlags().Lookup("provision-seconds"))
 
+	rootCmd.PersistentFlags().Int("register-seconds", 60, "Check if some worker model have to be registered each n Seconds")
+	viper.BindPFlag("register-seconds", rootCmd.PersistentFlags().Lookup("register-seconds"))
+
 	rootCmd.PersistentFlags().Int("max-worker", 10, "Maximum allowed simultaneous workers")
 	viper.BindPFlag("max-worker", rootCmd.PersistentFlags().Lookup("max-worker"))
 

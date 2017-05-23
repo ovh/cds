@@ -1,4 +1,4 @@
-<div id="AddProject">
+<div id="AddProject" class="scrollingContent">
     <form class="ui form" (ngSubmit)="createProject()">
         <h2>{{ 'project_create' | translate }}</h2>
         <div class="ui two column centered grid">
@@ -36,15 +36,19 @@
                     <h3>{{ 'project_permission_list_title' | translate }}</h3>
                     <app-permission-list [permissions]="project.groups" mode="form"
                                          (event)="permissionManagement($event)"></app-permission-list>
-                    <div class="ui error message" *ngIf="groupError">
-                        {{ 'project_groups_error' | translate }}
-                    </div>
                 </div>
             </div>
             <div class="row">
                 <div class="column">
                     <h3>{{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="modalCreateGroup.show()">{{ 'project_permission_form_wizard_new' | translate }}</a></h3>
                     <app-permission-form (createGroupPermissionEvent)="permissionManagement($event)" buttonType="button" #permForm></app-permission-form>
+                </div>
+            </div>
+            <div class="row" *ngIf="groupError">
+                <div class="column">
+                    <div class="ui error message">
+                        {{ 'project_groups_error' | translate }}
+                    </div>
                 </div>
             </div>
             <div class="row">

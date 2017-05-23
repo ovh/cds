@@ -16,7 +16,7 @@ import (
 )
 
 // Create creates hatchery
-func Create(h Interface, api, token string, maxWorkers, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
+func Create(h Interface, api, token string, maxWorkers, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, registerSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
 	Client = &http.Client{
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
@@ -47,6 +47,7 @@ func Create(h Interface, api, token string, maxWorkers, provision int, requestSe
 
 	tickerRoutine := time.NewTicker(2 * time.Second).C
 	tickerProvision := time.NewTicker(time.Duration(provisionSeconds) * time.Second).C
+	tickerRegister := time.NewTicker(time.Duration(registerSeconds) * time.Second).C
 	for {
 		select {
 		case <-tickerRoutine:
@@ -56,6 +57,10 @@ func Create(h Interface, api, token string, maxWorkers, provision int, requestSe
 			}
 		case <-tickerProvision:
 			provisioning(h, provision)
+		case <-tickerRegister:
+			if err := workerRegister(h); err != nil {
+				log.Warning("Error on workerRegister: %s", err)
+			}
 		}
 	}
 }
@@ -144,4 +149,38 @@ func checkFailures(maxFailures, nb int) {
 		log.Error("Too many failures on try register. This hatchery is killed")
 		os.Exit(10)
 	}
+}
+
+func workerRegister(h Interface) error {
+	models, errwm := sdk.GetWorkerModelsEnabled()
+	if errwm != nil {
+		return fmt.Errorf("workerRegister> error on GetWorkerModels: %e", errwm)
+	}
+
+	if len(models) == 0 {
+		return fmt.Errorf("workerRegister> No model returned by GetWorkerModels")
+	}
+	log.Debug("workerRegister> models received: %d", len(models))
+
+	var nRegistered int
+	for _, m := range models {
+		if m.Type != h.ModelType() {
+			continue
+		}
+		// limit to 5 registration per ticker
+		if nRegistered > 5 {
+			break
+		}
+		if h.NeedRegistration(&m) {
+			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
+			if _, err := h.SpawnWorker(&m, nil, true, "spawn for register"); err != nil {
+				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, err)
+			}
+			nRegistered++
+		} else {
+			log.Debug("workerRegister> no need to register worker model %s (%d)", m.Name, m.ID)
+			continue
+		}
+	}
+	return nil
 }
