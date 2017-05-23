@@ -23,6 +23,10 @@ export class WorkflowDeleteNodeComponent {
         this.modal.show(data);
     }
 
+    hide(): void {
+        this.modal.hide();
+    }
+
     deleteNode(): void {
         this.deleteEvent.emit(true);
     }
