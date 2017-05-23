@@ -161,13 +161,13 @@ export CDS_TTL={{.TTL}}
 
 	if withExistingImage {
 		log.Debug("spawnWorker> using userdata from existing image")
-		udataBegin = `#!/bin/sh
+		udataBegin = `#!/bin/bash
 set +e
 export CDS_FROM_WORKER_IMAGE="true";
 `
 	} else {
 		log.Debug("spawnWorker> using userdata from worker model")
-		udataBegin = `#!/bin/sh
+		udataBegin = `#!/bin/bash
 set +e
 export CDS_FROM_WORKER_IMAGE="false";
 `
