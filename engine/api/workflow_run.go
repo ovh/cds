@@ -2,9 +2,13 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/sdk"
 )
 
 func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -17,8 +21,32 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	//  resource : le type de la pagination, on parlera ici systématiquement de la ressource en cours d’utilisation, ex : client, order, restaurant, …
 	//  max : le nombre maximum pouvant être requêté en une seule fois.
 
-	offset, err := requestVarInt(r, "offset")
-	limit, err := requestVarInt(r, "limit")
+	vars := mux.Vars(r)
+	var limit, offset int
+	offsetS, ok := vars["offset"]
+	var errAtoi error
+	if ok {
+		offset, errAtoi = strconv.Atoi(offsetS)
+		if errAtoi != nil {
+			return sdk.ErrWrongRequest
+		}
+	}
+	limitS, ok := vars["limit"]
+	if ok {
+		limit, errAtoi = strconv.Atoi(limitS)
+		if errAtoi != nil {
+			return sdk.ErrWrongRequest
+		}
+	}
+
+	if limit == 0 {
+		limit = 10
+	}
+
+	key := vars["permProjectKey"]
+	name := vars["workflowName"]
+
+	runs, offset, limit, count, err := workflow.LoadRuns(db, key, name, offset, limit)
 
 	return nil
 }
