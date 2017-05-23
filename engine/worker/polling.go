@@ -46,7 +46,7 @@ func checkQueue(bookedJobID int64) {
 
 		requirementsOK := true
 		// if worker was spawned for a job, check requirements is already done by hatchery
-		if queue[i].ID == bookedJobID {
+		if bookedJobID == 0 {
 			// Check requirement
 			log.Info("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)
 			for _, r := range queue[i].Job.Action.Requirements {
