@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestManualRun1(t *testing.T) {
@@ -89,4 +90,12 @@ func TestManualRun1(t *testing.T) {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	Scheduler(c)
+
+	time.Sleep(2 * time.Second)
+
+	lastrun, err := LoadLastRun(db, proj.Key, "test_1")
+	test.NoError(t, err)
+
+	t.Logf("Last Run is : %#v", lastrun)
+	assert.Equal(t, int64(2), lastrun.Number)
 }

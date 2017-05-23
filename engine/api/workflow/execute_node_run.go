@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -35,7 +36,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	}
 
 	//Reload the workflow run ID to get the node, and the pipeline...
-	workflowRun, errw := LoadRunByID(tx, n.WorkflowRunID)
+	workflowRun, errw := loadRunByID(tx, n.WorkflowRunID)
 	if errw != nil {
 		return sdk.WrapError(errw, "workflow.execute> Unable to load run id=%id", n.WorkflowRunID)
 	}
@@ -92,7 +93,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := LoadRunByID(tx, workflowRun.ID)
+	updatedWorkflowRun, err := loadRunByID(tx, workflowRun.ID)
 	if err != nil {
 		return sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", workflowRun.ID)
 	}

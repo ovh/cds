@@ -21,7 +21,7 @@ func ManualRun(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunManua
 		}
 	}
 
-	var number = int64(0)
+	var number = int64(1)
 	if lastWorkflowRun != nil {
 		number = lastWorkflowRun.Number + 1
 	}
