@@ -144,6 +144,7 @@ func insertJoin(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u
 	log.Debug("insertOrUpdateJoin> %#v", n)
 	n.WorkflowID = w.ID
 	n.ID = 0
+	n.SourceNodeIDs = nil
 	dbJoin := Join(*n)
 
 	//Check references to sources
