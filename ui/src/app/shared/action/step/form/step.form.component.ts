@@ -23,7 +23,6 @@ export class ActionStepFormComponent implements OnInit {
 
     selectPublicAction(name: string): void {
         let step = this.publicActions.find(a => a.name === name);
-        
         if (step) {
             this.step = step;
         }
