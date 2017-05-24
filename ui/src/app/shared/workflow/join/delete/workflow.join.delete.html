@@ -1,0 +1,11 @@
+<sm-modal title="{{ 'workflow_join_delete' | translate }}" #deleteModal>
+    <modal-content>
+        <div class="">
+            {{ 'workflow_join_delete_alert' | translate }}
+        </div>
+    </modal-content>
+    <modal-actions>
+        <button class="ui grey button" (click)="hide()">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" (click)="deleteJoin()">{{ 'btn_delete' | translate }}</button>
+    </modal-actions>
+</sm-modal>

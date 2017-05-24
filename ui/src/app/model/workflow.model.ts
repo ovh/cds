@@ -44,6 +44,10 @@ export class WorkflowNodeJoin {
     source_node_id: Array<number>;
     source_node_ref: Array<string>;
     triggers: Array<WorkflowNodeJoinTrigger>;
+
+    constructor() {
+        this.source_node_ref = new Array<string>();
+    }
 }
 
 export class WorkflowNodeJoinTrigger {
@@ -114,9 +118,6 @@ export class WorkflowNodeTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
-
-    // Ui only
-    conditionsCache: WorkflowTriggerConditionCache;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();

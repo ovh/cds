@@ -10,7 +10,7 @@
     <a class="ui white ribbon label" *ngIf="node.context.environment_id && node.context.environment_id > 0">{{node.context.environment.name}}</a>
     <sm-dropdown class="nocaret" icon="settings">
             <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
-            <sm-item>{{ 'workflow_node_join_add' | translate }}</sm-item>
+            <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>
             <sm-item (click)="openEditContextModal()">{{ 'workflow_node_context_edit' | translate }}</sm-item>
             <sm-item (click)="openDeleteNodeModal()">{{ 'workflow_node_delete_btn' | translate }}</sm-item>
     </sm-dropdown>

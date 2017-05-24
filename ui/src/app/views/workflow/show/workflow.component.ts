@@ -16,11 +16,11 @@ import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeTrigger} from '../
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
-import {Pipeline} from '../../../model/pipeline.model';
 import {WorkflowTriggerComponent} from '../../../shared/workflow/trigger/workflow.trigger.component';
 import {SemanticModalComponent} from 'ng-semantic';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
+import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
 
 declare var _: any;
 @Component({
@@ -28,7 +28,8 @@ declare var _: any;
     templateUrl: './workflow.html',
     styleUrls: ['./workflow.scss'],
     entryComponents: [
-        WorkflowNodeComponent
+        WorkflowNodeComponent,
+        WorkflowJoinComponent
     ]
 })
 @AutoUnsubscribe()
@@ -151,17 +152,17 @@ export class WorkflowShowComponent implements AfterViewInit {
 
     createJoin(join: WorkflowNodeJoin): void {
 
-        let nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeComponent);
+        let nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowJoinComponent);
         let componentRef = nodeComponentFactory.create(this.svgContainer.parentInjector);
 
-        // FIXME/ use a WorkflowJoinComponent
-        let fake = new WorkflowNode();
-        fake.pipeline = new Pipeline();
-        fake.pipeline.name = 'JOINNNN';
-        componentRef.instance.node = fake;
+        componentRef.instance.workflow = this.detailedWorkflow;
+        componentRef.instance.join = join;
+        componentRef.instance.project = this.project;
+
         this.svgContainer.insert(componentRef.hostView);
 
         this.g.setNode('join-' + join.id, {
+            shape: 'circle',
             label: () => {
                 return componentRef.location.nativeElement;
             }

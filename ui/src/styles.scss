@@ -515,11 +515,16 @@ ngui-auto-complete .no-match-found {
 }
 
 .node rect,
-.node circle,
 .node ellipse {
   //stroke: #333;
   fill: transparent;
   //stroke-width: 1.5px;
+}
+
+.node circle {
+  stroke: #333;
+  fill: white;
+  stroke-width: 1.5px;
 }
 
 .cluster rect {

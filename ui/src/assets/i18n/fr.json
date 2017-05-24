@@ -388,6 +388,8 @@
   "workflow_added" : "Workflow créé",
   "workflow_create" : "Création d'un workflow",
   "workflow_description" : "Description du workflow",
+  "workflow_join_delete" : "Suppression de la jointure",
+  "workflow_join_delete_alert" : "ATTENTION, cela va supprimer la jointure et tout ce qu'elle déclenche",
   "workflow_name" : "Nom du workflow",
   "workflow_node_context_edit" : "Editer le contexte du pipeline",
   "workflow_node_delete_alert" : "ATTENTION, cela va supprimer le pipeline et tout ce qu'il déclenche",

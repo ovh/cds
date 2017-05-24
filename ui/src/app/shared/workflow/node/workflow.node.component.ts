@@ -1,5 +1,5 @@
-import {AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeContext, WorkflowNodeTrigger} from '../../../model/workflow.model';
+import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
+import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeTrigger} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -8,6 +8,7 @@ import {ToastService} from '../../toast/ToastService';
 import {SemanticModalComponent} from 'ng-semantic';
 import {WorkflowDeleteNodeComponent} from './delete/workflow.node.delete.component';
 import {WorkflowNodeContextComponent} from './context/workflow.node.context.component';
+import {cloneDeep} from 'lodash';
 
 
 declare var _: any;
@@ -33,7 +34,7 @@ export class WorkflowNodeComponent implements AfterViewInit {
     editableNode: WorkflowNode;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
-        private _toast: ToastService) {
+                private _toast: ToastService) {
     }
 
     ngAfterViewInit() {
@@ -52,12 +53,12 @@ export class WorkflowNodeComponent implements AfterViewInit {
     }
 
     openEditContextModal(): void {
-        this.editableNode = _.cloneDeep(this.node);
+        this.editableNode = cloneDeep(this.node);
         this.workflowContext.show({observable: true, closable: false, autofocus: false});
     }
 
     saveTrigger(): void {
-        let clonedWorkflow: Workflow = _.cloneDeep(this.workflow);
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let currentNode: WorkflowNode;
         if (clonedWorkflow.root.id === this.node.id) {
             currentNode = clonedWorkflow.root;
@@ -72,17 +73,17 @@ export class WorkflowNodeComponent implements AfterViewInit {
         if (!currentNode.triggers) {
             currentNode.triggers = new Array<WorkflowNodeTrigger>();
         }
-        currentNode.triggers.push(_.cloneDeep(this.newTrigger));
+        currentNode.triggers.push(cloneDeep(this.newTrigger));
         this.updateWorkflow(clonedWorkflow, this.workflowTrigger.modal);
     }
 
     updateNode(n: WorkflowNode): void {
-        let clonedWorkflow: Workflow = _.cloneDeep(this.workflow);
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let node = Workflow.getNodeByID(n.id, clonedWorkflow);
         if (!node) {
             return;
         }
-        node.context = _.clone(n.context);
+        node.context = cloneDeep(n.context);
         delete node.context.application;
         delete node.context.environment;
         this.updateWorkflow(clonedWorkflow, this.workflowContext.nodeContextModal);
@@ -90,7 +91,7 @@ export class WorkflowNodeComponent implements AfterViewInit {
 
     deleteNode(b: boolean): void {
         if (b) {
-            let clonedWorkflow: Workflow = _.cloneDeep(this.workflow);
+            let clonedWorkflow: Workflow = cloneDeep(this.workflow);
             if (clonedWorkflow.root.id === this.node.id) {
                 this.deleteWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
             } else {
@@ -120,10 +121,27 @@ export class WorkflowNodeComponent implements AfterViewInit {
         });
     }
 
-   updateWorkflow(w: Workflow, modal: SemanticModalComponent): void {
+    updateWorkflow(w: Workflow, modal?: SemanticModalComponent): void {
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
-           this._toast.success('', this._translate.instant('workflow_updated'));
-           modal.hide();
+            this._toast.success('', this._translate.instant('workflow_updated'));
+            if (modal) {
+                modal.hide();
+            }
         });
+    }
+
+    createJoin(): void {
+        debugger;
+        if (!this.node.ref) {
+            this.node.ref = this.node.id.toString();
+        }
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+        if (!clonedWorkflow.joins) {
+            clonedWorkflow.joins = new Array<WorkflowNodeJoin>();
+        }
+        let j = new WorkflowNodeJoin();
+        j.source_node_ref.push(this.node.ref);
+        clonedWorkflow.joins.push(j);
+        this.updateWorkflow(clonedWorkflow);
     }
 }
