@@ -47,8 +47,7 @@
          [class.horizontal]="workflowOrientation === 'horizontal'"
          [class.vertical]="workflowOrientation === 'vertical'"
          [class.hierarchical]="workflowOrientation === 'hierarchical'">
-        <app-application-tree-workflow *ngIf="application.workflows" [project]="project" [application]="application" [workflowItems]="application.workflows" [orientation]="workflowOrientation" [applicationFilter]="applicationFilter"
-        [branch]="applicationFilter.branch"></app-application-tree-workflow>
+        <app-application-tree-workflow *ngIf="application.workflows" [project]="project" [application]="application" [workflowItems]="application.workflows" [orientation]="workflowOrientation" [applicationFilter]="applicationFilter"></app-application-tree-workflow>
     </div>
 </div>
 

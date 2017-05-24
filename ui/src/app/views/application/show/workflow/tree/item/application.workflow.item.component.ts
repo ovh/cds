@@ -33,7 +33,6 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     @Input() project: Project;
     @Input() workflowItem: WorkflowItem;
     @Input() orientation: string;
-    @Input() branch: string;
     @Input() application: Application;
     @Input() applicationFilter: any;
     oldPipelineStatus: string;
@@ -322,12 +321,12 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
 
             if (this.oldPipelineStatus === 'Building' && this.oldPipelineStatus &&
                 this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status &&
-                    this.oldBranch && this.branch === this.oldBranch) {
+                    this.oldBranch && this.applicationFilter.branch === this.oldBranch) {
                 this.handleNotification(this.workflowItem.pipeline);
             }
 
             this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
-            this.oldBranch = this.branch;
+            this.oldBranch = this.applicationFilter.branch;
         }
     }
 }
