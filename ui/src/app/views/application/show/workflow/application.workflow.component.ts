@@ -7,8 +7,8 @@ import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
 import {Branch} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
+import {cloneDeep} from 'lodash';
 
-declare var _: any;
 declare var jQuery: any;
 
 @Component({
@@ -142,7 +142,7 @@ export class ApplicationWorkflowComponent implements OnInit {
                         w.environment = env;
                         w.pipeline.last_pipeline_build = pbToAssign;
                     } else {
-                        let newItem = _.cloneDeep(w);
+                        let newItem = cloneDeep(w);
                         newItem.environment = env;
                         newItem.pipeline.last_pipeline_build = pbToAssign;
                         this.application.workflows.push(newItem);

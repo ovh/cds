@@ -10,8 +10,7 @@ import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {GroupService} from '../../../service/group/group.service';
 import {PermissionFormComponent} from '../../../shared/permission/form/permission.form.component';
 import {Variable} from '../../../model/variable.model';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-project-add',
@@ -76,7 +75,7 @@ export class ProjectAddComponent {
                 if (indexToAdd !== -1) {
                     return;
                 }
-                this.project.groups.push(_.cloneDeep(event.gp));
+                this.project.groups.push(cloneDeep(event.gp));
                 break;
             case 'delete':
                 let indexToDelete = this.project.groups.findIndex(gp => gp.group.name === event.gp.group.name);

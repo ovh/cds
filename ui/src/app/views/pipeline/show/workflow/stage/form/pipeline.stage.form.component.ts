@@ -4,8 +4,7 @@ import {Pipeline} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {PrerequisiteEvent} from '../../../../../../shared/prerequisites/prerequisite.event.model';
 import {Prerequisite} from '../../../../../../model/prerequisite.model';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-pipeline-stage-form',
@@ -55,7 +54,7 @@ export class PipelineStageFormComponent implements OnInit {
 
                 let indexAdd = this.stage.prerequisites.findIndex(p => p.parameter === event.prerequisite.parameter);
                 if (indexAdd === -1) {
-                    this.stage.prerequisites.push(_.cloneDeep(event.prerequisite));
+                    this.stage.prerequisites.push(cloneDeep(event.prerequisite));
                 }
                 break;
             case 'delete':

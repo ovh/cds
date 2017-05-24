@@ -8,9 +8,7 @@ import {TranslateService} from 'ng2-translate';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {VariableService} from '../../../../service/variable/variable.service';
-
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-pipeline-workflow',
@@ -142,7 +140,7 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
     }
 
     openEditModal(s: Stage): void {
-        this.editableStage = _.cloneDeep(s);
+        this.editableStage = cloneDeep(s);
         if (this.editStageModal) {
             this.editStageModal.show({autofocus: false, closable: false, observeChanges: true});
         }

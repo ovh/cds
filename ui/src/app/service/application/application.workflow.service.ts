@@ -3,7 +3,6 @@ import {Http, URLSearchParams, RequestOptions} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Branch} from '../../model/repositories.model';
 
-declare var _: any;
 @Injectable()
 export class ApplicationWorkflowService {
 

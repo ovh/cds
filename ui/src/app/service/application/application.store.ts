@@ -179,12 +179,11 @@ export class ApplicationStore {
             this.removeFromStore(appKey);
 
             // Remove from recent application
-            let recentApp = this._recentApplications.getValue().toArray();
-            recentApp.forEach((app, index) => {
-               if (app.name === appName && app.project_key === key) {
-                   recentApp.splice(index, 1);
-               }
-            });
+            let recentApp = this._recentApplications
+                .getValue()
+                .toArray()
+                .filter((app) => !(app.name === appName && app.project_key === key));
+
             this._recentApplications.next(List(recentApp));
 
             return res;
