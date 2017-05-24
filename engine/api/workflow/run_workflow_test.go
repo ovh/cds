@@ -146,7 +146,7 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, lastrun.WorkflowNodeRuns[0], nodeRun)
 
 	//TestLoadNodeJobRun
-	jobs, err := LoadNodeJobRun(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 	test.Equal(t, 2, len(jobs))
 
