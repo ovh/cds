@@ -1,28 +1,28 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
 
     <img src="assets/images/cds.png" class="item">
-
-
-        <sm-select
-                placeholder="{{'navbar_projects_placeholder' | translate}}"
-                class="search classic left"
-                [(model)]="selectedProjectKey"
-                (modelChange)="navigateToProject($event)"
-        >
-            <option [value]="'#NOPROJECT#'">{{'navbar_projects_placeholder' | translate}}</option>
-            <option *ngFor="let project of navProjects" [value]="project.key">{{project.name}}</option>
-        </sm-select>
-        <sm-select
-                placeholder="Find application"
-                class="search classic right"
-                (keydown)="applicationKeyEvent($event)"
-                [(model)]="selectedApplicationName"
-                (modelChange)="navigateToApplication($event)"
-                (onSearchChange)="filterApplication($event)"
-        >
-            <option [value]="'#NOAPP#'"></option>
-            <option *ngFor="let app of listApplications" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
-        </sm-select>
+    <sm-select
+            placeholder="{{'navbar_projects_placeholder' | translate}}"
+            class="search classic left"
+            [options]="{'fullTextSearch': true}"
+            [(model)]="selectedProjectKey"
+            (modelChange)="navigateToProject($event)"
+    >
+        <option [value]="'#NOPROJECT#'">{{'navbar_projects_placeholder' | translate}}</option>
+        <option *ngFor="let project of navProjects" [value]="project.key">{{project.name}}</option>
+    </sm-select>
+    <sm-select
+            placeholder="{{'navbar_applications_placeholder' | translate}}"
+            class="search classic right"
+            (keydown)="applicationKeyEvent($event)"
+            [options]="{'fullTextSearch': true}"
+            [(model)]="selectedApplicationName"
+            (modelChange)="navigateToApplication($event)"
+            (onSearchChange)="filterApplication($event)"
+    >
+        <option [value]="'#NOAPP#'"></option>
+        <option *ngFor="let app of listApplications" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
+    </sm-select>
 
 
     <div class="right menu">
@@ -44,9 +44,9 @@
             </sm-item>
         </sm-dropdown>
         <sm-select class="languageSelect"
-                [(model)]="currentCountry"
-                (modelChange)="changeCountry()"
-        >
+            [options]="{'fullTextSearch': true}"
+            [(model)]="currentCountry"
+            (modelChange)="changeCountry()">
             <option value="fr"><i class="france flag"></i></option>
             <option value="en"><i class="gb flag"></i></option>
         </sm-select>

@@ -41,12 +41,16 @@
 
 
                                         <div class="field" *ngIf="typeofCreation === 'template' && selectedTemplate.name !== ''">
-                                            <sm-select (modelChange)="updateSelectedTemplateToUse($event)" [model]="selectedTemplate.name">
+                                            <sm-select
+                                                [model]="selectedTemplate.name"
+                                                [options]="{'fullTextSearch': true}"
+                                                (modelChange)="updateSelectedTemplateToUse($event)">
                                                 <option *ngFor="let t of templates" value="{{t.name}}">{{t.name}}</option>
                                             </sm-select>
                                         </div>
                                         <div class="field" *ngIf="typeofCreation === 'clone'">
-                                            <sm-select (modelChange)="updateSelectedApplicationToClone($event)">
+                                            <sm-select [options]="{'fullTextSearch': true}"
+                                                (modelChange)="updateSelectedApplicationToClone($event)">
                                                 <option *ngFor="let app of project.applications" value="{{app.name}}">{{app.name}}</option>
                                             </sm-select>
                                         </div>

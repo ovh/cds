@@ -87,9 +87,8 @@ describe('CDS: Application Workflow', () => {
 
         // Check
         expect(fixture.componentInstance.applicationFilter.branch).toBe('foo');
-        expect(JSON.stringify(fixture.componentInstance.versions)).toBe(JSON.stringify([' ', 1, 2, 3]));
+        expect(JSON.stringify(fixture.componentInstance.versions)).toBe(JSON.stringify([1, 2, 3]));
         expect(JSON.stringify(fixture.componentInstance.branches)).toBe(JSON.stringify([
-            {'default': false, 'display_id': ' '},
             {'display_id': 'branche1', 'default': true},
             {'display_id': 'branche2'},
             {'display_id': 'master'},

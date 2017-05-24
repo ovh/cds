@@ -9,14 +9,18 @@
 
         </div>
         <div class="six wide column">
-            <sm-select [(model)]="applicationFilter.branch" (modelChange)="changeBranch()" class="search" placeholder="{{'application_workflow_branch_title' | translate}}">
+            <sm-select class="search"
+                placeholder="{{'application_workflow_branch_title' | translate}}"
+                [options]="{'fullTextSearch': true}"
+                [(model)]="applicationFilter.branch"
+                (modelChange)="changeBranch()">
                 <option *ngFor="let branch of branches" value="{{branch.display_id}}">{{ branch.display_id}}</option>
             </sm-select>
 
 
         </div>
         <div class="four wide column">
-            <sm-select [(model)]="applicationFilter.version" (modelChange)="changeVersion()"
+            <sm-select [(model)]="applicationFilter.version" (modelChange)="changeVersion(applicationFilter.version)"
                        placeholder="{{ 'application_workflow_version_title' | translate }}">
                 <option *ngFor="let v of versions" value="{{v}}">{{ v }}</option>
             </sm-select>
