@@ -11,7 +11,7 @@
     <sm-dropdown class="nocaret" icon="settings">
             <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
             <sm-item>{{ 'workflow_node_join_add' | translate }}</sm-item>
-            <sm-item>{{ 'workflow_node_context_edit' | translate }}</sm-item>
+            <sm-item (click)="openEditContextModal()">{{ 'workflow_node_context_edit' | translate }}</sm-item>
             <sm-item (click)="openDeleteNodeModal()">{{ 'workflow_node_delete_btn' | translate }}</sm-item>
     </sm-dropdown>
 </div>
@@ -20,4 +20,7 @@
 </ng-container>
 <ng-container *ngIf="node">
     <app-workflow-node-delete [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
+</ng-container>
+<ng-container *ngIf="project && node">
+    <app-workflow-node-context [node]="editableNode" [project]="project" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
 </ng-container>

@@ -51,6 +51,7 @@ import {WorkflowNodeFormComponent} from './workflow/node/form/workflow.node.form
 import {WorkflowDeleteNodeComponent} from './workflow/node/delete/workflow.node.delete.component';
 import {WorkflowTriggerConditionFormComponent} from './workflow/trigger/condition-form/trigger.condition.component';
 import {WorkflowTriggerConditionListComponent} from './workflow/trigger/condition-list/trigger.condition.list.component';
+import {WorkflowNodeContextComponent} from './workflow/node/context/workflow.node.context.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -88,6 +89,7 @@ import {WorkflowTriggerConditionListComponent} from './workflow/trigger/conditio
         WarningModalComponent,
         WorkflowNodeComponent,
         WorkflowDeleteNodeComponent,
+        WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerConditionFormComponent,
@@ -141,6 +143,7 @@ import {WorkflowTriggerConditionListComponent} from './workflow/trigger/conditio
         WarningModalComponent,
         WorkflowNodeComponent,
         WorkflowDeleteNodeComponent,
+        WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerConditionFormComponent,

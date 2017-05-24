@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeTrigger} from '../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeContext, WorkflowNodeTrigger} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -7,6 +7,7 @@ import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../toast/ToastService';
 import {SemanticModalComponent} from 'ng-semantic';
 import {WorkflowDeleteNodeComponent} from './delete/workflow.node.delete.component';
+import {WorkflowNodeContextComponent} from './context/workflow.node.context.component';
 
 
 declare var _: any;
@@ -25,8 +26,11 @@ export class WorkflowNodeComponent implements AfterViewInit {
     workflowTrigger: WorkflowTriggerComponent;
     @ViewChild('workflowDeleteNode')
     workflowDeleteNode: WorkflowDeleteNodeComponent;
+    @ViewChild('workflowContext')
+    workflowContext: WorkflowNodeContextComponent;
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
+    editableNode: WorkflowNode;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
         private _toast: ToastService) {
@@ -47,6 +51,11 @@ export class WorkflowNodeComponent implements AfterViewInit {
         this.workflowDeleteNode.show({observable: true, closable: false, autofocus: false});
     }
 
+    openEditContextModal(): void {
+        this.editableNode = _.cloneDeep(this.node);
+        this.workflowContext.show({observable: true, closable: false, autofocus: false});
+    }
+
     saveTrigger(): void {
         let clonedWorkflow: Workflow = _.cloneDeep(this.workflow);
         let currentNode: WorkflowNode;
@@ -65,6 +74,18 @@ export class WorkflowNodeComponent implements AfterViewInit {
         }
         currentNode.triggers.push(_.cloneDeep(this.newTrigger));
         this.updateWorkflow(clonedWorkflow, this.workflowTrigger.modal);
+    }
+
+    updateNode(n: WorkflowNode): void {
+        let clonedWorkflow: Workflow = _.cloneDeep(this.workflow);
+        let node = Workflow.getNodeByID(n.id, clonedWorkflow);
+        if (!node) {
+            return;
+        }
+        node.context = _.clone(n.context);
+        delete node.context.application;
+        delete node.context.environment;
+        this.updateWorkflow(clonedWorkflow, this.workflowContext.nodeContextModal);
     }
 
     deleteNode(b: boolean): void {

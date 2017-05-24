@@ -12,24 +12,14 @@
     </div>
     <div class="five wide field">
         <label>{{ 'workflow_root_context_application' | translate}}</label>
-        <ng-container *ngIf="node.id > 0;else editApplication">
-            <div class="ui input">{{node.context.application?.name}}</div>
-        </ng-container>
-        <ng-template #editApplication>
-            <sm-select [(model)]="node.context.application_id" placeholder="{{ 'common_application' | translate }}" (onChange)="change()">
-                <option *ngFor="let a of project.applications" [value]="a.id">{{ a.name}}</option>
-            </sm-select>
-        </ng-template>
+        <sm-select [(model)]="node.context.application_id" placeholder="{{ 'common_application' | translate }}" (onChange)="change()">
+            <option *ngFor="let a of project.applications" [value]="a.id">{{ a.name}}</option>
+        </sm-select>
     </div>
     <div class="five wide field">
         <label>{{ 'workflow_root_context_environment' | translate}}</label>
-        <ng-container *ngIf="node.id > 0;else editEnvironment">
-            <div class="ui input">{{node.context.environment?.name}}</div>
-        </ng-container>
-        <ng-template #editEnvironment>
-            <sm-select [(model)]="node.context.environment_id" placeholder="{{ 'common_environment' | translate }}" (onChange)="change()">
-                <option *ngFor="let e of project.environments" [value]="e.id">{{ e.name}}</option>
-            </sm-select>
-        </ng-template>
+        <sm-select [(model)]="node.context.environment_id" placeholder="{{ 'common_environment' | translate }}" (onChange)="change()">
+            <option *ngFor="let e of project.environments" [value]="e.id">{{ e.name}}</option>
+        </sm-select>
     </div>
 </div>
