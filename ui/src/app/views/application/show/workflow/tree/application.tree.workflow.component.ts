@@ -13,6 +13,7 @@ export class ApplicationTreeWorkflowComponent {
     @Input() application: Application;
     @Input() workflowItems: Array<WorkflowItem>;
     @Input() orientation: string;
+    @Input() branch: string;
     @Input() applicationFilter: any;
     constructor() { }
 }

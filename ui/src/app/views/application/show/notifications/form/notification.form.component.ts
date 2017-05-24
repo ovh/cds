@@ -15,8 +15,7 @@ import {NotificationEvent} from '../notification.event';
 import {TranslateService} from 'ng2-translate';
 import {DeleteButtonComponent} from '../../../../../shared/button/delete/delete.button';
 import {ProjectService} from '../../../../../service/project/project.service';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-notification-form-modal',
@@ -166,7 +165,7 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
                                 notification.pipeline = n.pipeline;
                                 notification.environment = n.environment;
                                 notification.notifications = {};
-                                notification.notifications[key] = _.cloneDeep(n.notifications[key]);
+                                notification.notifications[key] = cloneDeep(n.notifications[key]);
                                 this.projectNotifications.push(notification);
                             }
                         }

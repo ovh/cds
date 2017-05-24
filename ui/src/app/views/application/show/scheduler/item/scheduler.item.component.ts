@@ -7,8 +7,7 @@ import {Pipeline} from '../../../../../model/pipeline.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-application-scheduler-item',
@@ -36,7 +35,7 @@ export class ApplicationSchedulerItemComponent {
 
     editScheduler(): void {
         if (this.editSchedulerModal) {
-            this.editableScheduler = _.cloneDeep(this.scheduler);
+            this.editableScheduler = cloneDeep(this.scheduler);
             setTimeout(() => {
                 this.editSchedulerModal.show();
             }, 100);

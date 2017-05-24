@@ -22,9 +22,10 @@ export class ActionStepFormComponent implements OnInit {
     }
 
     selectPublicAction(name: string): void {
-        let index = this.publicActions.findIndex(a => a.name === name);
-        if (index >= 0) {
-            this.step = this.publicActions[index];
+        let step = this.publicActions.find(a => a.name === name);
+        
+        if (step) {
+            this.step = step;
         }
     };
 

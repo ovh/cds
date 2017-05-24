@@ -5,8 +5,7 @@ import {VariableEvent} from '../../../../../../shared/variable/variable.event.mo
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-environment',
@@ -25,7 +24,7 @@ export class ProjectEnvironmentComponent {
     @Input('environment')
     set environment(data: Environment) {
         this.oldEnvName = data.name;
-        this.editableEnvironment = _.cloneDeep(data);
+        this.editableEnvironment = cloneDeep(data);
     }
     @Input() project: Project;
 
