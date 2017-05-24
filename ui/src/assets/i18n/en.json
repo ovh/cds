@@ -390,6 +390,7 @@
   "workflow_description" : "Workflow description",
   "workflow_join_delete" : "Delete join",
   "workflow_join_delete_alert" : "BE CAREFUL, this will remove the join and all his children",
+  "workflow_join_trigger_title" : "Trigger",
   "workflow_name" : "Workflow name",
   "workflow_node_context_edit" : "Edit the pipeline context",
   "workflow_node_delete_alert" : "BE CAREFUL, this will remove the pipeline and all his children",

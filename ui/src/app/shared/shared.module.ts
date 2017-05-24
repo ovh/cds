@@ -54,6 +54,7 @@ import {WorkflowTriggerConditionListComponent} from './workflow/trigger/conditio
 import {WorkflowNodeContextComponent} from './workflow/node/context/workflow.node.context.component';
 import {WorkflowJoinComponent} from './workflow/join/workflow.join.component';
 import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.delete.component';
+import {WorkflowTriggerJoinComponent} from './workflow/join/trigger/trigger.join.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -96,6 +97,7 @@ import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowTriggerComponent,
+        WorkflowTriggerJoinComponent,
         WorkflowTriggerConditionFormComponent,
         WorkflowTriggerConditionListComponent,
         ZoneComponent,
@@ -152,6 +154,7 @@ import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowTriggerComponent,
+        WorkflowTriggerJoinComponent,
         WorkflowTriggerConditionFormComponent,
         WorkflowTriggerConditionListComponent,
         ZoneComponent,

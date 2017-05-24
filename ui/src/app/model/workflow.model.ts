@@ -56,6 +56,10 @@ export class WorkflowNodeJoinTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
+
+    constructor() {
+        this.workflow_dest_node = new WorkflowNode();
+    }
 }
 
 // WorkflowNode represents a node in w workflow tree

@@ -1,9 +1,12 @@
 <div class="workflowJoin">
     <sm-dropdown class="nocaret" icon="settings">
-        <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
+        <sm-item (click)="openTriggerJoinModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
         <sm-item (click)="openDeleteJoinModal()">{{ 'workflow_join_delete' | translate }}</sm-item>
     </sm-dropdown>
 </div>
 <ng-container *ngIf="join">
     <app-workflow-join-delete [join]="join" (deleteEvent)="deleteJoin($event)" #workflowDeleteJoin></app-workflow-join-delete>
+</ng-container>
+<ng-container *ngIf="project && join">
+    <app-workflow-trigger-join [project]="project" [workflow]="workflow" [join]="join" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowJoinTrigger></app-workflow-trigger-join>
 </ng-container>

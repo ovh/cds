@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
 import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
@@ -7,6 +7,7 @@ import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {Project} from '../../../model/project.model';
 import {ToastService} from '../../toast/ToastService';
 import {TranslateService} from 'ng2-translate';
+import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
 
 @Component({
     selector: 'app-workflow-join',
@@ -21,6 +22,10 @@ export class WorkflowJoinComponent implements AfterViewInit{
 
     @ViewChild('workflowDeleteJoin')
     workflowDeleteJoin: WorkflowDeleteJoinComponent;
+    @ViewChild('workflowJoinTrigger')
+    workflowJoinTrigger: WorkflowTriggerJoinComponent;
+
+    newTrigger = new WorkflowNodeJoinTrigger();
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
         private _translate: TranslateService) { }
@@ -33,6 +38,13 @@ export class WorkflowJoinComponent implements AfterViewInit{
     openDeleteJoinModal(): void {
         if (this.workflowDeleteJoin) {
             this.workflowDeleteJoin.show({observable: true, closable: false, autofocus: false});
+        }
+    }
+
+    openTriggerJoinModal(): void {
+        this.newTrigger = new WorkflowNodeJoinTrigger();
+        if (this.workflowJoinTrigger) {
+            this.workflowJoinTrigger.show({observable: true, closable: false, autofocus: false});
         }
     }
 
@@ -51,5 +63,19 @@ export class WorkflowJoinComponent implements AfterViewInit{
                 modal.hide();
             }
         });
+    }
+
+    saveTrigger(): void {
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+        let currentJoin: WorkflowNodeJoin = clonedWorkflow.joins.find(j => j.id === this.join.id);
+        if (!currentJoin) {
+            return;
+        }
+
+        if (!currentJoin.triggers) {
+            currentJoin.triggers = new Array<WorkflowNodeJoinTrigger>();
+        }
+        currentJoin.triggers.push(cloneDeep(this.newTrigger));
+        this.updateWorkflow(clonedWorkflow, this.workflowJoinTrigger.modal);
     }
 }
