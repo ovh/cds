@@ -42,24 +42,33 @@ func sortNodeTriggers(triggers *[]sdk.WorkflowNodeTrigger) {
 			return strings.Compare(t1.WorkflowDestNode.Pipeline.Name, t2.WorkflowDestNode.Pipeline.Name) < 0
 		}
 
-		if t1.WorkflowDestNode.Context == nil || t2.WorkflowDestNode.Context == nil {
+		// Without context first
+		if t1.WorkflowDestNode.Context == nil {
 			return true
 		}
 
-		if t1.WorkflowDestNode.Context.Application == nil || t2.WorkflowDestNode.Context.Application == nil {
-			return true
-		}
+		if t1.WorkflowDestNode.Context != nil && t2.WorkflowDestNode.Context != nil {
 
-		if t1.WorkflowDestNode.Context.Application.Name != t1.WorkflowDestNode.Context.Application.Name {
-			return strings.Compare(t1.WorkflowDestNode.Context.Application.Name, t2.WorkflowDestNode.Context.Application.Name) < 0
-		}
+			// Without app first
+			if t1.WorkflowDestNode.Context.Application == nil && t2.WorkflowDestNode.Context.Application != nil {
+				return true
+			}
 
-		if t1.WorkflowDestNode.Context.Environment == nil || t2.WorkflowDestNode.Context.Environment == nil {
-			return true
-		}
+			if t1.WorkflowDestNode.Context.Application == nil && t2.WorkflowDestNode.Context.Application == nil {
+				// Check Env
+				return sortEnvironment(t1.WorkflowDestNode.Context, t2.WorkflowDestNode.Context)
+			}
 
-		if t1.WorkflowDestNode.Context.Environment.Name != t2.WorkflowDestNode.Context.Environment.Name {
-			return strings.Compare(t1.WorkflowDestNode.Context.Environment.Name, t2.WorkflowDestNode.Context.Environment.Name) < 0
+			if t1.WorkflowDestNode.Context.Application != nil && t2.WorkflowDestNode.Context.Application != nil {
+				// Check app Name
+				if t1.WorkflowDestNode.Context.Application.Name == t2.WorkflowDestNode.Context.Application.Name {
+					// Check Env
+					return sortEnvironment(t1.WorkflowDestNode.Context, t2.WorkflowDestNode.Context)
+				} else {
+					return strings.Compare(t1.WorkflowDestNode.Context.Application.Name, t2.WorkflowDestNode.Context.Application.Name) < 0
+				}
+			}
+
 		}
 
 		return false
@@ -70,4 +79,18 @@ func sortConditions(conditions *[]sdk.WorkflowTriggerCondition) {
 	sort.Slice(*conditions, func(i, j int) bool {
 		return strings.Compare((*conditions)[i].Variable, (*conditions)[j].Variable) < 0
 	})
+}
+
+func sortEnvironment(c1, c2 *sdk.WorkflowNodeContext) bool {
+	if c1.Environment == nil {
+		return true
+	}
+	if c1.Environment != nil && c2.Environment != nil {
+		if c1.Environment.Name == c2.Environment.Name {
+			return true
+		} else {
+			return strings.Compare(c1.Application.Name, c2.Application.Name) < 0
+		}
+	}
+	return false
 }
