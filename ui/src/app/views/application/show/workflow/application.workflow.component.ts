@@ -203,7 +203,7 @@ export class ApplicationWorkflowComponent implements OnInit {
         this.applicationFilter.branch = this.applicationFilter.branch.trim();
 
         if (!version && Array.isArray(this.versions) && this.versions.length) {
-            this.applicationFilter.version = this.versions[1];
+            this.applicationFilter.version = this.versions[0];
         }
 
         if (version) {
