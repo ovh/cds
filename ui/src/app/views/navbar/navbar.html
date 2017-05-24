@@ -5,6 +5,7 @@
 
         <sm-select
                 placeholder="{{'navbar_projects_placeholder' | translate}}"
+                [options]="dropdownOptions"
                 class="search classic left"
                 [(model)]="selectedProjectKey"
                 (modelChange)="navigateToProject($event)"
@@ -19,6 +20,7 @@
                 [(model)]="selectedApplicationName"
                 (modelChange)="navigateToApplication($event)"
                 (onSearchChange)="filterApplication($event)"
+                [options]="dropdownOptions"
         >
             <option [value]="'#NOAPP#'"></option>
             <option *ngFor="let app of listApplications" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>

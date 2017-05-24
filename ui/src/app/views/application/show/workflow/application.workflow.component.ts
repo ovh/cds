@@ -29,6 +29,8 @@ export class ApplicationWorkflowComponent implements OnInit {
     // Worflow to display
     workflowOrientation = 'horizontal';
 
+    dropdownOptions = { fullTextSearch: true };
+
     // Filter values
     branches: Array<Branch>;
     versions: Array<string | number>;

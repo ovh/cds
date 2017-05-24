@@ -9,7 +9,9 @@
 
         </div>
         <div class="six wide column">
-            <sm-select [(model)]="applicationFilter.branch" (modelChange)="changeBranch()" class="search" placeholder="{{'application_workflow_branch_title' | translate}}">
+            <sm-select
+                    [(model)]="applicationFilter.branch" (modelChange)="changeBranch()" class="search" [options]="dropdownOptions"
+                    placeholder="{{'application_workflow_branch_title' | translate}}">
                 <option *ngFor="let branch of branches" value="{{branch.display_id}}">{{ branch.display_id}}</option>
             </sm-select>
 
