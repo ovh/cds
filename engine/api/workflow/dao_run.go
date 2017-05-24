@@ -162,6 +162,9 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 	}
 
 	for _, n := range dbNodeRuns {
+		if err := n.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "loadRun> Unable to load workflow nodes run")
+		}
 		wnr := sdk.WorkflowNodeRun(n)
 		wr.WorkflowNodeRuns = append(wr.WorkflowNodeRuns, wnr)
 	}

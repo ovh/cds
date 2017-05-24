@@ -13,6 +13,18 @@ func RunFromHook(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunHoo
 	return nil, nil
 }
 
+func ManualRunFromNode(db gorp.SqlExecutor, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, error) {
+	lastWorkflowRun, err := LoadRun(db, w.ProjectKey, w.Name, number)
+	if err != nil {
+		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to load last run")
+	}
+
+	if err := processWorkflowRun(db, lastWorkflowRun, nil, e, &nodeID); err != nil {
+		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
+	}
+	return nil, nil
+}
+
 func ManualRun(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error) {
 	lastWorkflowRun, err := LoadLastRun(db, w.ProjectKey, w.Name)
 	if err != nil {

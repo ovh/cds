@@ -2,15 +2,74 @@ package workflow
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"strings"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+// LoadNodeJobRunQueue load all workflow_node_run_job accessible
+func LoadNodeJobRunQueue(db gorp.SqlExecutor, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+	if since == nil {
+		since = new(time.Time)
+	}
+
+	if len(statuses) == 0 {
+		statuses = []string{sdk.StatusWaiting.String()}
+	}
+
+	query := `select workflow_node_run_job.* 
+	from workflow_node_run_job
+	join workflow_node_run on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
+	join workflow_node on workflow_node.id = workflow_node_run.workflow_node_id
+	join workflow on workflow.id = workflow_node.workflow_id
+	join project on project.id = workflow.project_id
+	join project_group on project_group.project_id = project.id
+	where project_group.group_id = ANY(string_to_array($1, ',')::int[])
+	and workflow_node_run_job.queued >= $2
+	and workflow_node_run_job.status = ANY(string_to_array($3, ','))`
+
+	var groupID string
+	for i, g := range groupsID {
+		if i == 0 {
+			groupID = fmt.Sprintf("%d", g)
+		} else {
+			groupID += "," + fmt.Sprintf("%d", g)
+		}
+	}
+
+	sqlJobs := []JobRun{}
+	if _, err := db.Select(&sqlJobs, query, groupID, *since, strings.Join(statuses, ",")); err != nil {
+		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs")
+	}
+
+	jobs := make([]sdk.WorkflowNodeJobRun, len(sqlJobs))
+	for i := range sqlJobs {
+		if err := sqlJobs[i].PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs")
+		}
+		jobs[i] = sdk.WorkflowNodeJobRun(sqlJobs[i])
+	}
+
+	return jobs, nil
+}
+
+func LoadNodeJobRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeJobRun, error) {
+	j := JobRun{}
+	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
+	if err := db.SelectOne(&j, query, id); err != nil {
+		return nil, err
+	}
+	job := sdk.WorkflowNodeJobRun(j)
+	return &job, nil
+}
 
 func insertWorkflowNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	dbj := JobRun(*j)
@@ -21,6 +80,14 @@ func insertWorkflowNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) er
 
 	log.Debug("insertWorkflowNodeJobRun> %d", j.ID)
 
+	return nil
+}
+
+func updateWorkflowNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
+	dbj := JobRun(*j)
+	if _, err := db.Update(&dbj); err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -3,8 +3,6 @@ package workflow
 import (
 	"context"
 
-	"time"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
@@ -21,20 +19,13 @@ func dequeueWorkflows(c context.Context) {
 	for {
 		run := &sdk.WorkflowNodeRun{}
 		cache.DequeueWithContext(queueWorkflowNodeRun, run, c)
-		if run != nil {
+		if c.Err() == nil {
 			chanWorkflowNodeRun <- run
 		}
 	}
 }
 
 func Scheduler(c context.Context) error {
-	t0 := time.Now()
-
-	log.Debug("workflow.Scheduler> Begin")
-	defer func() {
-		log.Debug("workflow.Scheduler> End (%.3fs)", time.Since(t0).Seconds())
-	}()
-
 	go dequeueWorkflows(c)
 	for {
 		select {

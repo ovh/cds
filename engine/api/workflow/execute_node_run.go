@@ -129,8 +129,8 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 		//Create the job run
 		job := sdk.WorkflowNodeJobRun{
 			WorkflowNodeRunID: run.ID,
+			Start:             time.Time{},
 			Queued:            time.Now(),
-			Start:             time.Now(),
 			Status:            sdk.StatusWaiting.String(),
 			Job: sdk.ExecutedJob{
 				Job: job,
@@ -157,8 +157,65 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 }
 
 func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
-	//stageEnd := true
-	//finalStatus := sdk.StatusBuilding
+	stageEnd := true
+	finalStatus := sdk.StatusBuilding
 
-	return false, nil
+	// browse all running jobs
+	for indexJob := range stage.RunJobs {
+		pbJob := &stage.RunJobs[indexJob]
+		// If job is runnning, sync it
+		if pbJob.Status == sdk.StatusBuilding.String() || pbJob.Status == sdk.StatusWaiting.String() {
+			pbJobDB, errJob := LoadNodeJobRun(db, pbJob.ID)
+			if errJob != nil {
+				return stageEnd, errJob
+			}
+
+			if pbJobDB.Status == sdk.StatusBuilding.String() || pbJobDB.Status == sdk.StatusWaiting.String() {
+				stageEnd = false
+			}
+
+			pbJob.SpawnInfos = pbJobDB.SpawnInfos
+
+			// If same status, sync step status
+			if pbJobDB.Status == pbJob.Status {
+				pbJob.Job.StepStatus = pbJobDB.Job.StepStatus
+			} else {
+				pbJob.Status = pbJobDB.Status
+				pbJob.Start = pbJobDB.Start
+				pbJob.Done = pbJobDB.Done
+				pbJob.Model = pbJobDB.Model
+				pbJob.Job = pbJobDB.Job
+			}
+		}
+	}
+	if stageEnd || len(stage.RunJobs) == 0 {
+		if len(stage.PipelineBuildJobs) == 0 {
+			finalStatus = sdk.StatusSuccess
+			stageEnd = true
+		}
+		// Determine final stage status
+	finalStageLoop:
+		for _, runJob := range stage.RunJobs {
+			switch runJob.Status {
+			case sdk.StatusDisabled.String():
+				if finalStatus == sdk.StatusBuilding {
+					finalStatus = sdk.StatusDisabled
+				}
+			case sdk.StatusSkipped.String():
+				if finalStatus == sdk.StatusBuilding || finalStatus == sdk.StatusDisabled {
+					finalStatus = sdk.StatusSkipped
+				}
+			case sdk.StatusFail.String():
+				finalStatus = sdk.StatusFail
+				break finalStageLoop
+			case sdk.StatusSuccess.String():
+				if finalStatus != sdk.StatusFail {
+					finalStatus = sdk.StatusSuccess
+				}
+			}
+		}
+
+	}
+	stage.Status = finalStatus
+	return stageEnd, nil
 }

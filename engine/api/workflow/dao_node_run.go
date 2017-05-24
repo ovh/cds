@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
+	"github.com/runabove/venom"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
@@ -21,13 +22,25 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	join workflow on workflow.id = workflow_run.workflow_id
 	where project.projectkey = $1
 	and workflow.name = $2
-	and workflow_run.number = $3
+	and workflow_run.num = $3
 	and workflow_node_run.workflow_node_id = $4`
 
 	if err := db.SelectOne(&rr, query, projectkey, workflowname, number, id); err != nil {
-		return nil, sdk.WrapError(err, "workflow.LoadNodeRun> Unable to load workflow_node_run id=%d", id)
+		return nil, sdk.WrapError(err, "workflow.LoadNodeRun> Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
 	}
 
+	r := sdk.WorkflowNodeRun(rr)
+	return &r, nil
+}
+
+func loadWorkflowNodeRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun, error) {
+	var rr = NodeRun{}
+	query := `select workflow_node_run.* 
+	from workflow_node_run 
+	and workflow_node_run.id = $1`
+	if err := db.SelectOne(&rr, query, id); err != nil {
+		return nil, sdk.WrapError(err, "workflow.loadWorkflowNodeRunByID> Unable to load workflow_node_run node=%d", id)
+	}
 	r := sdk.WorkflowNodeRun(rr)
 	return &r, nil
 }
@@ -159,8 +172,14 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 	if err := gorpmapping.JSONNullString(rr.Commits, &r.Commits); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
 	}
+	if rr.HookEvent.Valid {
+		r.HookEvent = new(sdk.WorkflowNodeRunHookEvent)
+	}
 	if err := gorpmapping.JSONNullString(rr.HookEvent, r.HookEvent); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
+	}
+	if rr.Manual.Valid {
+		r.Manual = new(sdk.WorkflowNodeRunManual)
 	}
 	if err := gorpmapping.JSONNullString(rr.Manual, r.Manual); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
@@ -170,6 +189,9 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 	}
 	if err := gorpmapping.JSONNullString(rr.PipelineParameter, &r.PipelineParameter); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
+	}
+	if rr.Tests.Valid {
+		r.Tests = new(venom.Tests)
 	}
 	if err := gorpmapping.JSONNullString(rr.Tests, r.Tests); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)

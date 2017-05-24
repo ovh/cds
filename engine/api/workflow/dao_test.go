@@ -66,6 +66,10 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	assertEqualNode(t, w.Root, w1.Root)
 
+	ws, err := LoadAll(db, proj.Key)
+	test.NoError(t, err)
+	assert.Equal(t, 1, len(ws))
+
 }
 
 func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
@@ -552,7 +556,7 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 	assert.Equal(t, pip2.Name, w.Root.Triggers[0].WorkflowDestNode.Pipeline.Name)
 	assert.Equal(t, pip3.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Pipeline.Name)
 	assert.Equal(t, pip4.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Pipeline.Name)
-	assert.EqualValues(t, []int64{
+	test.EqualValuesWithoutOrder(t, []int64{
 		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
 		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
 	}, w1.Joins[0].SourceNodeIDs)
