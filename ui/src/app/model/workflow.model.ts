@@ -16,6 +16,23 @@ export class Workflow {
     // UI params
     externalChange: boolean;
 
+    static getNodeByID(id: number, w: Workflow): WorkflowNode {
+        let node = WorkflowNode.getNodeByID(w.root, id);
+        if (!node && w.joins) {
+            quit: for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        node = WorkflowNode.getNodeByID(w.joins[i].triggers[j].workflow_dest_node, id);
+                        if (node) {
+                            break quit;
+                        }
+                    }
+                }
+            }
+        }
+        return node;
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
@@ -47,6 +64,28 @@ export class WorkflowNode {
     context: WorkflowNodeContext;
     hooks: Array<WorkflowNodeHook>;
     triggers: Array<WorkflowNodeTrigger>;
+
+
+    static getNodeByID(node: WorkflowNode, id: number) {
+        if (node.id === id) {
+            return node;
+        }
+        let nodeToFind: WorkflowNode;
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                let n = WorkflowNode.getNodeByID(node.triggers[i].workflow_dest_node, id);
+                if (n) {
+                    nodeToFind = n;
+                    break;
+                }
+            }
+        }
+        return nodeToFind;
+    }
+
+    constructor() {
+        this.context = new WorkflowNodeContext();
+    }
 }
 
 // WorkflowNodeContext represents a context attached on a node
@@ -75,6 +114,13 @@ export class WorkflowNodeTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
+
+    // Ui only
+    conditionsCache: WorkflowTriggerConditionCache;
+
+    constructor() {
+        this.workflow_dest_node = new WorkflowNode();
+    }
 }
 
 // WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
@@ -91,4 +137,9 @@ export class WorkflowHookModel {
     images: string;
     command: string;
     default_config: {};
+}
+
+export class WorkflowTriggerConditionCache {
+    operators: Array<string>;
+    names: Array<string>;
 }

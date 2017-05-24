@@ -5,7 +5,7 @@
 
         <sm-select
                 placeholder="{{'navbar_projects_placeholder' | translate}}"
-                class="search left"
+                class="search classic left"
                 [(model)]="selectedProjectKey"
                 (modelChange)="navigateToProject($event)"
         >
@@ -14,7 +14,7 @@
         </sm-select>
         <sm-select
                 placeholder="Find application"
-                class="search right"
+                class="search classic right"
                 (keydown)="applicationKeyEvent($event)"
                 [(model)]="selectedApplicationName"
                 (modelChange)="navigateToApplication($event)"

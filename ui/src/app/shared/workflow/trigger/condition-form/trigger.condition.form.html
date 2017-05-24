@@ -1,0 +1,24 @@
+<div class=" ui form">
+    <div class="fields">
+        <div class="five wide field">
+            <sm-select [(model)]="condition.variable" *ngIf="names">
+                <option *ngFor="let n of names" [value]="n">{{n}}</option>
+            </sm-select>
+        </div>
+        <div class="four wide field">
+            <sm-select [(model)]="condition.operator" *ngIf="operators">
+                <option *ngFor="let o of operators" [value]="o">{{o}}</option>
+            </sm-select>
+        </div>
+        <div class="five wide field">
+            <div class="ui input">
+                <input type="text" [(ngModel)]="condition.value" placeholder="">
+            </div>
+        </div>
+        <div class="two wide field">
+            <button class="ui blue icon button" [disabled]="!condition.variable || !condition.value || !condition.operator" type="button" (click)="send()">
+                <i class="plus icon"></i>
+            </button>
+        </div>
+    </div>
+</div>

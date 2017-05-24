@@ -58,6 +58,18 @@ input[disabled] {
 
 // Override semantic-ui color to apply CDS theme
 
+// dropdown
+
+.ui.selection.dropdown {
+  width: 100%;
+  min-width: 0px;
+}
+.ui.selection.classic.dropdown {
+  width: auto;
+  min-width: 14em;
+}
+
+
 // icon
 
 .ui {
@@ -467,6 +479,12 @@ $verticalTreeHeightLine: 40px;
   top: $navbarHeight + 10px;
 }
 
+.ui.dropdown.nocaret {
+  .dropdown.icon {
+    display: none;
+  }
+}
+
 // Hack navbar select language
 .ui.dropdown.languageSelect {
   min-width: 1em;
@@ -499,20 +517,24 @@ ngui-auto-complete .no-match-found {
 .node rect,
 .node circle,
 .node ellipse {
-  stroke: #333;
-  fill: #fff;
-  stroke-width: 1.5px;
+  //stroke: #333;
+  fill: transparent;
+  //stroke-width: 1.5px;
 }
 
 .cluster rect {
   stroke: #333;
-  fill: #000;
+  fill: transparent;
   fill-opacity: 0.1;
   stroke-width: 1.5px;
 }
 
 .edgePath path.path {
   stroke: #333;
-  stroke-width: 1.5px;
+  stroke-width: 2px;
   fill: none;
+}
+
+foreignObject {
+  overflow: visible;
 }
