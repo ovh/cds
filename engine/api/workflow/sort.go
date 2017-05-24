@@ -64,9 +64,8 @@ func sortNodeTriggers(triggers *[]sdk.WorkflowNodeTrigger) {
 				if t1.WorkflowDestNode.Context.Application.Name == t2.WorkflowDestNode.Context.Application.Name {
 					// Check Env
 					return sortEnvironment(t1.WorkflowDestNode.Context, t2.WorkflowDestNode.Context)
-				} else {
-					return strings.Compare(t1.WorkflowDestNode.Context.Application.Name, t2.WorkflowDestNode.Context.Application.Name) < 0
 				}
+				return strings.Compare(t1.WorkflowDestNode.Context.Application.Name, t2.WorkflowDestNode.Context.Application.Name) < 0
 			}
 
 		}
@@ -88,9 +87,8 @@ func sortEnvironment(c1, c2 *sdk.WorkflowNodeContext) bool {
 	if c1.Environment != nil && c2.Environment != nil {
 		if c1.Environment.Name == c2.Environment.Name {
 			return true
-		} else {
-			return strings.Compare(c1.Application.Name, c2.Application.Name) < 0
 		}
+		return strings.Compare(c1.Application.Name, c2.Application.Name) < 0
 	}
 	return false
 }
