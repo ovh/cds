@@ -28,7 +28,11 @@
             </td>
             <td *ngIf="mode !=='launcher' && mode !== 'job'">
                 <div class="ui form" *ngIf="mode === 'edit'">
-                    <sm-select class="search" [(model)]="p.type" [disabled]="p.updating" (onChange)="p.hasChanged = true">
+                    <sm-select class="search"
+                        [(model)]="p.type"
+                        [options]="{'fullTextSearch': true}"
+                        [disabled]="p.updating"
+                        (onChange)="p.hasChanged = true">
                         <option *ngFor="let type of parameterTypes" value="{{type}}">{{type}}</option>
                     </sm-select>
                 </div>

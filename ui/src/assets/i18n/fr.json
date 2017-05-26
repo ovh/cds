@@ -89,6 +89,7 @@
   "commit_date" : "Date",
 
   "common_action" : "Action",
+  "common_loading" : "Chargement...",
   "common_advanced" : "Administration",
   "common_application": "Application",
   "common_applications" : "Applications",
@@ -169,6 +170,7 @@
   "navbar_download" : "Téléchargement",
   "navbar_groups" : "Groupes",
   "navbar_projects_placeholder": "Tous les Projets",
+  "navbar_applications_placeholder": "Trouver une application",
   "navbar_users" : "Utilisateurs",
   "navbar_workers" : "Agents",
 

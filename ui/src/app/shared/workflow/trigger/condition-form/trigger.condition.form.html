@@ -1,7 +1,10 @@
 <div class=" ui form">
     <div class="fields">
         <div class="five wide field">
-            <sm-select [(model)]="condition.variable" *ngIf="names">
+            <sm-select 
+                *ngIf="names"
+                [(model)]="condition.variable"
+                [options]="{'fullTextSearch': true}">
                 <option *ngFor="let n of names" [value]="n">{{n}}</option>
             </sm-select>
         </div>

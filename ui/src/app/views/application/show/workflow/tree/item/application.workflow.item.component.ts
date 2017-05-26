@@ -35,8 +35,9 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     @Input() orientation: string;
     @Input() application: Application;
     @Input() applicationFilter: any;
+    oldPipelineId: number;
     oldPipelineStatus: string;
-    oldBranch: string;
+
     // Triggers modals
     @ViewChild('editTriggerModal')
     editTriggerModal: SemanticModalComponent;
@@ -319,14 +320,15 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
                 this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
             }
 
-            if (this.oldPipelineStatus === 'Building' && this.oldPipelineStatus &&
-                this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status &&
-                    this.oldBranch && this.applicationFilter.branch === this.oldBranch) {
+            if (this.oldPipelineStatus === 'Building' &&
+               this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status &&
+                    this.oldPipelineId && this.oldPipelineId === this.workflowItem.pipeline.last_pipeline_build.id) {
                 this.handleNotification(this.workflowItem.pipeline);
             }
 
+            this.oldPipelineId = this.workflowItem.pipeline.last_pipeline_build.id;
             this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
-            this.oldBranch = this.applicationFilter.branch;
         }
+
     }
 }
