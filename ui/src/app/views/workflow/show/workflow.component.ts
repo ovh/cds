@@ -158,7 +158,7 @@ export class WorkflowShowComponent implements AfterViewInit {
                 }
 
                 // Node Join Src
-                if (d.v.indexOf('node-') === 0 && d.w.indexOf('join-') == 0) {
+                if (d.v.indexOf('node-') === 0 && d.w.indexOf('join-') === 0) {
                     this.openDeleteJoinSrcModal(d.v, d.w);
                 }
             });
