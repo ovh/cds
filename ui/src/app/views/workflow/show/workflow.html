@@ -39,4 +39,7 @@
             (triggerChange)="updateJoinTrigger()"
             #editJoinTriggerComponent></app-workflow-trigger-join>
 </ng-container>
+<ng-container *ngIf="project && detailedWorkflow">
+    <app-workflow-trigger-join-src [join]="selectedJoin" (event)="deleteJoinSrc($event)" #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
+</ng-container>
 

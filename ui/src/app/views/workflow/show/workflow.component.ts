@@ -23,6 +23,7 @@ import {ToastService} from '../../../shared/toast/ToastService';
 import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
 import {cloneDeep} from 'lodash';
 import {WorkflowTriggerJoinComponent} from '../../../shared/workflow/join/trigger/trigger.join.component';
+import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
 
 declare var _: any;
 @Component({
@@ -61,6 +62,8 @@ export class WorkflowShowComponent implements AfterViewInit {
     editTriggerComponent: WorkflowTriggerComponent;
     @ViewChild('editJoinTriggerComponent')
     editJoinTriggerComponent: WorkflowTriggerJoinComponent;
+    @ViewChild('workflowJoinTriggerSrc')
+    workflowJoinTriggerSrc: WorkflowJoinTriggerSrcComponent;
 
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
@@ -145,11 +148,18 @@ export class WorkflowShowComponent implements AfterViewInit {
 
         setTimeout(() => {
             svg.selectAll('g.edgePath').on('click', d => {
-                if (d.v.indexOf('node-') === 0) {
+                // Trigger between node and node
+                if (d.v.indexOf('node-') === 0 && d.w.indexOf('node-') === 0) {
                     this.openEditTriggerModal(d.v, d.w);
                 }
+                // Join Trigger
                 if (d.v.indexOf('join-') === 0) {
                     this.openEditJoinTriggerModal(d.v, d.w);
+                }
+
+                // Node Join Src
+                if (d.v.indexOf('node-') === 0 && d.w.indexOf('join-') == 0) {
+                    this.openDeleteJoinSrcModal(d.v, d.w);
                 }
             });
         }, 1);
@@ -240,6 +250,21 @@ export class WorkflowShowComponent implements AfterViewInit {
         return componentRef;
     }
 
+    private openDeleteJoinSrcModal(parentID: string, childID: string) {
+        if (this.linkWithJoin) {
+            return;
+        }
+        let pID = Number(parentID.replace('node-', ''));
+        let cID = Number(childID.replace('join-', ''));
+
+        this.selectedNode = Workflow.getNodeByID(pID, this.detailedWorkflow);
+        this.selectedJoin = this.detailedWorkflow.joins.find(j => j.id === cID);
+
+        if (this.workflowJoinTriggerSrc) {
+            this.workflowJoinTriggerSrc.show({observable: true, closable: false, autofocus: false});
+        }
+    }
+
     private openEditTriggerModal(parentID: string, childID: string) {
         if (this.linkWithJoin) {
             return;
@@ -291,6 +316,21 @@ export class WorkflowShowComponent implements AfterViewInit {
         }
         currentJoin.source_node_ref.push(this.selectedNode.ref);
         this.updateWorkflow(clonedWorkflow);
+    }
+
+    deleteJoinSrc(action: string): void {
+        let clonedWorkflow: Workflow = cloneDeep(this.detailedWorkflow);
+
+        switch (action) {
+            case 'delete_join':
+                clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !==  this.selectedJoin.id);
+                break;
+            default:
+                let currentJoin = clonedWorkflow.joins.find(j => j.id === this.selectedJoin.id);
+                currentJoin.source_node_ref = currentJoin.source_node_ref.filter(ref => ref !== this.selectedNode.ref);
+        }
+
+        this.updateWorkflow(clonedWorkflow, this.workflowJoinTriggerSrc.modal);
     }
 
     updateTrigger(): void {

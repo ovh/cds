@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
+import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
 import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
