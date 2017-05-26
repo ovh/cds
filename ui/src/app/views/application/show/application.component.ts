@@ -63,7 +63,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     // Filter
     appFilter: ApplicationFilter = {
         branch: '',
-        version: 0
+        version: ' '
     };
 
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
@@ -75,8 +75,11 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         });
 
         this._route.queryParams.subscribe(queryParams => {
-           this.appFilter.branch = queryParams['branch'] ? queryParams['branch'] : 'master';
-           this.appFilter.version = queryParams['version'] ? Number(queryParams['version']) : 0;
+           this.appFilter = {
+               branch: queryParams['branch'] || 'master',
+               version: queryParams['version'] || ' '
+           };
+
            if (this.project && this.application) {
                this.startWorkers(this.project.key);
            }
@@ -139,6 +142,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 this.selectedTab = tab;
             }
         });
+
+
     }
 
     stopWorkers(): void {

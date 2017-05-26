@@ -5,7 +5,12 @@
             <ng-template #parent>
                 <div class="field">
                     <label>{{ 'pipeline_parent_version' | translate }}</label>
-                    <sm-select class="fluid search" [disabled]="loading" name="envname" [(model)]="launchParentBuildNumber" (modelChange)="loadCommits()">
+                    <sm-select class="fluid search"
+                        name="envname"
+                        [options]="{'fullTextSearch': true}"
+                        [disabled]="loading"
+                        [(model)]="launchParentBuildNumber"
+                        (modelChange)="loadCommits()">
                         <option *ngFor="let pb of launchOldBuilds" [value]="pb.build_number">{{pb.version}}</option>
                     </sm-select>
                 </div>

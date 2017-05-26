@@ -3,17 +3,23 @@
         <div class="fields">
             <div class="three wide field">
                 <label>{{'repoman_name' | translate}}</label>
-                <sm-select class="fluid search" [disabled]="loadingBtn" name="repomanname" [(model)]="selectedRepoManager" (onChange)="updateListRepo()">
+                <sm-select class="fluid search"
+                    name="repomanname"
+                    [disabled]="loadingBtn"
+                    [(model)]="selectedRepoManager"
+                    [options]="{'fullTextSearch': true}"
+                    (onChange)="updateListRepo()">
                     <option *ngFor="let r of project?.repositories_manager" value="{{r.name}}">{{r.name}}</option>
                 </sm-select>
             </div>
             <div class="five wide field">
                 <label>{{'repo_name' | translate}}</label>
                 <sm-select
-                        placeholder="{{'navbar_applications_placeholder' | translate}}"
-                        [(model)]="selectedRepo"
-                        class="search item"
-                        [disabled]="loadingBtn">
+                    class="search item"
+                    placeholder="{{'navbar_applications_placeholder' | translate}}"
+                    [(model)]="selectedRepo"
+                    [options]="{'fullTextSearch': true}"
+                    [disabled]="loadingBtn">
                     <option *ngFor="let r of reposTmp"  value="{{r.fullname}}">{{r.fullname}}</option>
                 </sm-select>
             </div>

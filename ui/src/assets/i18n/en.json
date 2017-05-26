@@ -96,6 +96,7 @@
   "common_artifacts" : "Artifacts",
   "common_author_title" : "Author: ",
   "common_branch_title" : "Branch: ",
+  "common_loading" : "Loading...",
   "common_close" : "Close",
   "common_commit" : "Commit",
   "common_commits" : "Commits",
@@ -169,6 +170,7 @@
   "navbar_download" : "Download",
   "navbar_groups" : "Groups",
   "navbar_projects_placeholder": "All Projects",
+  "navbar_applications_placeholder": "Find application",
   "navbar_users" : "Users",
   "navbar_workers" : "Workers",
 

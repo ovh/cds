@@ -32,7 +32,11 @@
             </td>
             <td>
                 <div class="ui form" *ngIf="mode === 'edit'">
-                    <sm-select class="search" [disabled]="v.updating" [(model)]="v.type" (onChange)="v.hasChanged = true">
+                    <sm-select class="search"
+                        [options]="{'fullTextSearch': true}"
+                        [disabled]="v.updating"
+                        [(model)]="v.type"
+                        (onChange)="v.hasChanged = true">
                         <option *ngFor="let type of variableTypes" [value]="type">{{type}}</option>
                     </sm-select>
                 </div>
