@@ -536,8 +536,12 @@ ngui-auto-complete .no-match-found {
 
 .edgePath path.path {
   stroke: #333;
-  stroke-width: 2px;
+  stroke-width: 4px;
   fill: none;
+  cursor: pointer;
+}
+.edgePath path.path:hover {
+  stroke: #4fa3e3;
 }
 
 foreignObject {
