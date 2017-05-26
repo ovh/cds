@@ -30,7 +30,7 @@ export class ApplicationWorkflowComponent implements OnInit {
 
     // Filter values
     branches: Array<Branch>;
-    versions: Array<number>;
+    versions: Array<string>;
 
     // Modal Component to link pipeline
     @ViewChild('linkPipelineComponent')
@@ -199,7 +199,7 @@ export class ApplicationWorkflowComponent implements OnInit {
     /**
      * Action when changing version
      */
-    changeVersion(version?: number): void {
+    changeVersion(version?: string): void {
         this.applicationFilter.branch = this.applicationFilter.branch.trim();
 
         if (!version && Array.isArray(this.versions) && this.versions.length) {
@@ -219,9 +219,9 @@ export class ApplicationWorkflowComponent implements OnInit {
     /**
      * Load the list of version for the current application on the selected branch
      */
-    loadVersions(key: string, appName: string): Observable<Array<number>> {
+    loadVersions(key: string, appName: string): Observable<Array<string>> {
         return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch)
-            .map((versions) => this.versions = versions);
+            .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
     };
 
     clearTree(items: Array<WorkflowItem>): void {
