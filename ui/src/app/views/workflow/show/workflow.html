@@ -27,7 +27,16 @@
             [workflow]="detailedWorkflow"
             [triggerSrcNode]="selectedNode"
             [(trigger)]="selectedTrigger"
-            (triggerChange)="updateTrigger(selectedNode, selectedTrigger)"
+            (triggerChange)="updateTrigger()"
     #editTriggerComponent></app-workflow-trigger>
+</ng-container>
+<ng-container *ngIf="project && detailedWorkflow">
+    <app-workflow-trigger-join
+            [project]="project"
+            [workflow]="detailedWorkflow"
+            [join]="selectedJoin"
+            [(trigger)]="selectedJoinTrigger"
+            (triggerChange)="updateJoinTrigger()"
+            #editJoinTriggerComponent></app-workflow-trigger-join>
 </ng-container>
 

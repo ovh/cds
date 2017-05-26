@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeTrigger} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
@@ -22,6 +22,10 @@ export class WorkflowNodeComponent implements AfterViewInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
+
+    @Input () disabled = false;
+
+    @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
     @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
@@ -131,7 +135,6 @@ export class WorkflowNodeComponent implements AfterViewInit {
     }
 
     createJoin(): void {
-        debugger;
         if (!this.node.ref) {
             this.node.ref = this.node.id.toString();
         }
@@ -143,5 +146,9 @@ export class WorkflowNodeComponent implements AfterViewInit {
         j.source_node_ref.push(this.node.ref);
         clonedWorkflow.joins.push(j);
         this.updateWorkflow(clonedWorkflow);
+    }
+
+    linkJoin(): void {
+        this.linkJoinEvent.emit(this.node);
     }
 }

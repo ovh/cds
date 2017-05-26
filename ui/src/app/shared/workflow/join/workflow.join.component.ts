@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
 import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
@@ -14,18 +14,23 @@ import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
     templateUrl: './workflow.join.html',
     styleUrls: ['./workflow.join.scss']
 })
-export class WorkflowJoinComponent implements AfterViewInit{
+export class WorkflowJoinComponent implements AfterViewInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() join: WorkflowNodeJoin;
+
+    disabled = false;
 
     @ViewChild('workflowDeleteJoin')
     workflowDeleteJoin: WorkflowDeleteJoinComponent;
     @ViewChild('workflowJoinTrigger')
     workflowJoinTrigger: WorkflowTriggerJoinComponent;
 
+    @Output() selectEvent = new EventEmitter<WorkflowNodeJoin>();
+
     newTrigger = new WorkflowNodeJoinTrigger();
+
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
         private _translate: TranslateService) { }
@@ -77,5 +82,9 @@ export class WorkflowJoinComponent implements AfterViewInit{
         }
         currentJoin.triggers.push(cloneDeep(this.newTrigger));
         this.updateWorkflow(clonedWorkflow, this.workflowJoinTrigger.modal);
+    }
+
+    selectJoin(): void {
+        this.selectEvent.emit(this.join);
     }
 }
