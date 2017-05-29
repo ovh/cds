@@ -392,7 +392,7 @@
   "workflow_description" : "Description du workflow",
   "workflow_join_delete" : "Suppression de la jointure",
   "workflow_join_delete_alert" : "ATTENTION, cela va supprimer la jointure et tout ce qu'elle déclenche",
-  "workflow_join_src_delete_alert" : "Voulez-vous vraiment supprimer ce lien pipeline-join ?",
+  "workflow_join_src_delete_alert" : "Voulez-vous vraiment supprimer ce lien ?",
   "workflow_join_trigger_src_delete" : "Supprimer le lien",
   "workflow_join_trigger_title" : "Trigger",
   "workflow_join_trigger_src_title" : "Suppression",
