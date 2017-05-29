@@ -189,6 +189,25 @@ func Decrypt(data []byte) ([]byte, error) {
 	return out, nil
 }
 
+func DecryptVariable(v *sdk.Variable) error {
+	if !sdk.NeedPlaceholder(v.Type) {
+		return nil
+	}
+
+	// Empty
+	if len(v.Value) == (nonceSize + macSize) {
+		return nil
+	}
+
+	d, err := Decrypt([]byte(v.Value))
+	if err != nil {
+		return err
+	}
+
+	v.Value = string(d)
+	return nil
+}
+
 // DecryptS wrap Decrypt and:
 // - return Placeholder instead of value if not needed
 // - cast returned value in string

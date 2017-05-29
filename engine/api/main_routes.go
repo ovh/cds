@@ -190,6 +190,16 @@ func (router *Router) init() {
 	router.Handle("/build/{id}/log", POST(addBuildLogHandler))
 	router.Handle("/build/{id}/step", POST(updateStepStatusHandler))
 
+	//Workflow queue
+	router.Handle("/queue/workflows", GET(getWorkflowJobQueueHandler))
+	router.Handle("/queue/workflows/requirements/errors", POST(requirementsErrorHandler))
+	router.Handle("/queue/workflows/{id}/take", POST(postTakeWorkflowJobHandler))
+	router.Handle("/queue/workflows/{id}/book", POST(postBookWorkflowJobHandler))
+	router.Handle("/queue/workflows/{id}/spawn/infos", NeedHatchery(), POST(postSpawnInfosWorkflowJobHandler))
+	router.Handle("/queue/workflows/{id}/result", POST(postWorkflowJobResultHandler))
+	router.Handle("/queue/workflows/{id}/log", POST(postWorkflowJobLogsHandler))
+	router.Handle("/queue/workflows/{id}/step", POST(postWorkflowJobStepStatusHandler))
+
 	router.Handle("/variable/type", GET(getVariableTypeHandler))
 	router.Handle("/parameter/type", GET(getParameterTypeHandler))
 	router.Handle("/pipeline/type", GET(getPipelineTypeHandler))
@@ -216,7 +226,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook", POST(addHookOnRepositoriesManagerHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook/{hookId}", DELETE(deleteHookOnRepositoriesManagerHandler))
 
-	//Suggest
+	// Suggest
 	router.Handle("/suggest/variable/{permProjectKey}", GET(getVariablesHandler))
 
 	// Templates

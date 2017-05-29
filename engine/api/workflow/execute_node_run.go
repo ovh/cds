@@ -6,7 +6,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -117,6 +119,13 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	log.Debug("addJobsToQueue> add %#v in stage %s", run, stage.Name)
 	//Check stage prerequisites
 	var prerequisitesOK = true
+	/*
+		prerequisitesOK, err := pipeline.CheckPrerequisites(*stage, pb)
+		if err != nil {
+			log.Warning("addJobsToQueue> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, err)
+			return err
+		}
+	*/
 
 	//Update the stage status
 	stage.Status = sdk.StatusBuilding
@@ -124,7 +133,10 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	//Browse the jobs
 	for _, job := range stage.Jobs {
 		//Process variables for the jobs
-		//TODO
+		jobParams, errParam := getNodeJobRunVariables(db, job, run, stage)
+		if errParam != nil {
+			return errParam
+		}
 
 		//Create the job run
 		job := sdk.WorkflowNodeJobRun{
@@ -132,6 +144,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 			Start:             time.Time{},
 			Queued:            time.Now(),
 			Status:            sdk.StatusWaiting.String(),
+			Parameters:        jobParams,
 			Job: sdk.ExecutedJob{
 				Job: job,
 			},
@@ -218,4 +231,38 @@ func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	}
 	stage.Status = finalStatus
 	return stageEnd, nil
+}
+
+func getNodeJobRunVariables(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
+	//Load workflow run
+	w, err := loadRunByID(db, run.WorkflowRunID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "getNodeJobRunVariables> Unable to load workflow run")
+	}
+
+	// Load project variables
+	pv, err := project.GetAllVariableInProject(db, w.Workflow.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	//Load node definition
+	n := w.Workflow.GetNode(run.WorkflowNodeID)
+	if n == nil {
+		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeJobRunVariables>")
+	}
+
+	// compute application variables
+	av := []sdk.Variable{}
+	if n.Context != nil && n.Context.Application != nil {
+		av = n.Context.Application.Variable
+	}
+
+	// compute environment variables
+	ev := []sdk.Variable{}
+	if n.Context != nil && n.Context.Environment != nil {
+		ev = n.Context.Environment.Variable
+	}
+
+	return action.ProcessActionBuildVariables(pv, av, ev, run.PipelineParameter, run.Payload, stage, j.Action), nil
 }

@@ -60,3 +60,27 @@ func VariablerFind(vars []Variable, s string) *Variable {
 	}
 	return nil
 }
+
+// VariablesFilter return a slice of variables filtered by type
+func VariablesFilter(vars []Variable, types ...string) []Variable {
+	res := []Variable{}
+	for _, v := range vars {
+		for _, s := range types {
+			if v.Type == s {
+				res = append(res, v)
+			}
+		}
+	}
+	return res
+}
+
+// VariablesPrefix add a prefix on all the variable in the slice
+func VariablesPrefix(vars []Variable, prefix string) []Variable {
+	res := make([]Variable, len(vars))
+	for i := range vars {
+		s := vars[i]
+		s.Name = prefix + s.Name
+		res[i] = s
+	}
+	return res
+}

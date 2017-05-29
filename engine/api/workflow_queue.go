@@ -1,7 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -12,24 +14,148 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	return nil
-}
+func postWorkflowJobRequirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Warning("requirementsErrorHandler> %s", err)
+		return err
+	}
 
-func postWorkflowJobRrequirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	if c.Worker.ID != "" {
+		// Load calling worker
+		caller, err := worker.LoadWorker(db, c.Worker.ID)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "requirementsErrorHandler> cannot load calling worker: %s", err)
+		}
+
+		log.Warning("%s (%s) > %s", c.Worker.ID, caller.Name, string(body))
+	}
 	return nil
 }
 
 func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	return nil
+	id, errc := requestVarInt(r, "id")
+	if errc != nil {
+		return sdk.WrapError(errc, "postTakeWorkflowJobHandler> invalid id")
+	}
+
+	takeForm := &worker.TakeForm{}
+	if err := UnmarshalBody(r, takeForm); err != nil {
+		return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
+	}
+
+	// Load worker
+	caller, err := worker.LoadWorker(db, c.Worker.ID)
+	if err != nil {
+		return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot load calling worker")
+	}
+	if caller.Status != sdk.StatusChecking {
+		return sdk.WrapError(sdk.ErrWrongRequest, "postTakeWorkflowJobHandler> worker %s is not available to for build (status = %s)", caller.ID, caller.Status)
+	}
+
+	// Start a tx
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		return sdk.WrapError(errBegin, "postTakeWorkflowJobHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	//Load worker model
+	workerModel := caller.Name
+	if caller.Model != 0 {
+		wm, errModel := worker.LoadWorkerModelByID(db, caller.Model)
+		if errModel != nil {
+			return sdk.ErrNoWorkerModel
+		}
+		workerModel = wm.Name
+	}
+
+	//Prepare spawn infos
+	infos := []sdk.SpawnInfo{{
+		RemoteTime: takeForm.Time,
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{c.Worker.Name}},
+	}}
+	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
+		infos = append(infos, sdk.SpawnInfo{
+			RemoteTime: takeForm.Time,
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJob.ID, Args: []interface{}{c.Worker.Name}},
+		})
+	}
+
+	//Take node job run
+	job, errTake := workflow.TakeNodeJobRun(tx, id, workerModel, caller.Name, infos)
+	if errTake != nil {
+		return sdk.WrapError(errTake, "postTakeWorkflowJobHandler> Cannot take job %d", id)
+	}
+
+	//Change worker status
+	if err := worker.SetToBuilding(tx, c.Worker.ID, job.ID); err != nil {
+		return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot update worker status")
+	}
+
+	//Load the secrets
+	secrets, errSecret := workflow.LoadNodeJobRunSecrets(db, job)
+	if errSecret != nil {
+		return sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
+	}
+
+	//Load the node run
+	noderun, errn := workflow.LoadNodeRunByID(db, job.WorkflowNodeRunID)
+	if errn != nil {
+		return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot commit transaction")
+	}
+
+	//Feed the worker
+	pbji := worker.WorkflowNodeJobRunInfo{}
+	pbji.NodeJobRun = *job
+	pbji.Secrets = secrets
+	pbji.Number = noderun.Number
+	pbji.SubNumber = noderun.SubNumber
+
+	return WriteJSON(w, r, pbji, http.StatusOK)
 }
 
 func postBookWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	return nil
+	id, errc := requestVarInt(r, "id")
+	if errc != nil {
+		return sdk.WrapError(errc, "postBookWorkflowJobHandler> invalid id")
+	}
+
+	if _, err := workflow.BookNodeJobRun(id, c.Hatchery); err != nil {
+		return sdk.WrapError(err, "postBookWorkflowJobHandler> job already booked")
+	}
+	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
 func postSpawnInfosWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	return nil
+	id, errc := requestVarInt(r, "id")
+	if errc != nil {
+		return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
+	}
+	var s []sdk.SpawnInfo
+	if err := UnmarshalBody(r, &s); err != nil {
+		return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
+	}
+
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
+		return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save job %d", id)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
+	}
+
+	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
 func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
@@ -68,16 +194,16 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 	}
 
 	//Update spwan info
-	_ = []sdk.SpawnInfo{{
+	infos := []sdk.SpawnInfo{{
 		RemoteTime: res.RemoteTime,
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{c.Worker.Name, res.Duration}},
 	}}
-	/*
-		if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, pbJob.ID, infos); err != nil {
-			log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", pbJob.ID, err)
-			return err
-		}
-	*/
+
+	//Add spawn infos
+	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, job.ID, infos); err != nil {
+		log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", job.ID, err)
+		return err
+	}
 
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot commit tx")
@@ -88,9 +214,37 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 
 //TODO grpc
 func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	var logs sdk.Log
+	if err := UnmarshalBody(r, &logs); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobLogsHandler> Unable to parse body")
+	}
+
+	if err := workflow.AddLog(db, &logs); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobLogsHandler")
+	}
+
 	return nil
 }
 
 func postWorkflowJobStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	return nil
+}
+
+func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	sinceHeader := r.Header.Get("If-Modified-Since")
+	since := time.Unix(0, 0)
+	if sinceHeader != "" {
+		since, _ = time.Parse(time.RFC1123, sinceHeader)
+	}
+
+	groupsID := []int64{}
+	for _, g := range c.User.Groups {
+		groupsID = append(groupsID, g.ID)
+	}
+	jobs, err := workflow.LoadNodeJobRunQueue(db, groupsID, &since)
+	if err != nil {
+		return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
+	}
+
+	return WriteJSON(w, r, jobs, http.StatusOK)
 }

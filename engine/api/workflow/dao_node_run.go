@@ -33,7 +33,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	return &r, nil
 }
 
-func loadWorkflowNodeRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun, error) {
+func LoadNodeRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
 	query := `select workflow_node_run.* 
 	from workflow_node_run 

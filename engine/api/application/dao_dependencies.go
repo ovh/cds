@@ -45,6 +45,15 @@ var (
 		return nil
 	}
 
+	loadVariablesWithEncryptedPassword = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+		variables, err := GetAllVariableByID(db, app.ID, WithEncryptPassword())
+		if err != nil && err != sql.ErrNoRows {
+			return sdk.WrapError(err, "application.loadVariablesWithEncryptPassword> Unable to load variables for application %d", app.ID)
+		}
+		app.Variable = variables
+		return nil
+	}
+
 	loadPipelines = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
 		pipelines, err := GetAllPipelinesByID(db, app.ID)
 		if err != nil && err != sdk.ErrNoAttachedPipeline {

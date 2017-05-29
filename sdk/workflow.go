@@ -395,7 +395,7 @@ type WorkflowNodeJobRun struct {
 	ID                int64       `json:"id" db:"id"`
 	WorkflowNodeRunID int64       `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
 	Job               ExecutedJob `json:"job" db:"-"`
-	Variables         []Variable  `json:"variables,omitempty" db:"-"`
+	Parameters        []Parameter `json:"parameters,omitempty" db:"-"`
 	Status            string      `json:"status"  db:"status"`
 	Queued            time.Time   `json:"queued,omitempty" db:"queued"`
 	QueuedSeconds     int64       `json:"queued_seconds,omitempty" db:"-"`

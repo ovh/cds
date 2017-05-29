@@ -61,9 +61,21 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, groupsID []int64, since *time.Time
 	return jobs, nil
 }
 
+//LoadNodeJobRun load a NodeJobRun given its ID
 func LoadNodeJobRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
+	if err := db.SelectOne(&j, query, id); err != nil {
+		return nil, err
+	}
+	job := sdk.WorkflowNodeJobRun(j)
+	return &job, nil
+}
+
+//LoadAndLockNodeJobRun load for update a NodeJobRun given its ID
+func LoadAndLockNodeJobRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeJobRun, error) {
+	j := JobRun{}
+	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update nowait`
 	if err := db.SelectOne(&j, query, id); err != nil {
 		return nil, err
 	}
@@ -107,7 +119,7 @@ func (j *JobRun) PostUpdate(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	paramsJSON, errP := json.Marshal(j.Variables)
+	paramsJSON, errP := json.Marshal(j.Parameters)
 	if errP != nil {
 		return errP
 	}
@@ -141,7 +153,7 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 	if err := json.Unmarshal(job, &j.Job); err != nil {
 		return err
 	}
-	if err := json.Unmarshal(params, &j.Variables); err != nil {
+	if err := json.Unmarshal(params, &j.Parameters); err != nil {
 		return err
 	}
 	if err := json.Unmarshal(spawn, &j.SpawnInfos); err != nil {
