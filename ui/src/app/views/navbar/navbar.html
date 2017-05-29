@@ -24,7 +24,6 @@
         <option *ngFor="let app of listApplications" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
     </sm-select>
 
-
     <div class="right menu">
         <div class="item link">
             <a href="#" [routerLink]="['/project']"><i class="plus circle icon"></i>{{ 'project_create' | translate }}</a>

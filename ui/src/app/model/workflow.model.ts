@@ -1,6 +1,7 @@
 import {Pipeline} from './pipeline.model';
 import {Application} from './application.model';
 import {Environment} from './environment.model';
+import {intersection} from 'lodash';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -33,6 +34,26 @@ export class Workflow {
         return node;
     }
 
+    static removeOldRef(w: Workflow) {
+        if (!w.joins) {
+            return;
+        }
+        let refs = new Array<string>();
+        WorkflowNode.addRef(refs, w.root);
+
+        w.joins.forEach(j => {
+            if (j.triggers) {
+                j.triggers.forEach(t => {
+                    WorkflowNode.addRef(refs, t.workflow_dest_node);
+                });
+            }
+        });
+
+        w.joins.forEach(j => {
+            j.source_node_ref = intersection(j.source_node_ref, refs);
+        });
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
@@ -44,6 +65,10 @@ export class WorkflowNodeJoin {
     source_node_id: Array<number>;
     source_node_ref: Array<string>;
     triggers: Array<WorkflowNodeJoinTrigger>;
+
+    constructor() {
+        this.source_node_ref = new Array<string>();
+    }
 }
 
 export class WorkflowNodeJoinTrigger {
@@ -52,6 +77,10 @@ export class WorkflowNodeJoinTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
+
+    constructor() {
+        this.workflow_dest_node = new WorkflowNode();
+    }
 }
 
 // WorkflowNode represents a node in w workflow tree
@@ -81,6 +110,15 @@ export class WorkflowNode {
             }
         }
         return nodeToFind;
+    }
+
+    static addRef(refs: string[], root: WorkflowNode) {
+        refs.push(root.ref);
+        if (root.triggers) {
+            root.triggers.forEach(t => {
+                WorkflowNode.addRef(refs, t.workflow_dest_node);
+            });
+        }
     }
 
     constructor() {
@@ -114,9 +152,6 @@ export class WorkflowNodeTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
-
-    // Ui only
-    conditionsCache: WorkflowTriggerConditionCache;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();

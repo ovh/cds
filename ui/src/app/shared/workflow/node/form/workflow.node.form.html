@@ -1,4 +1,4 @@
-<div class="fields" *ngIf="node">
+<div class="fields" *ngIf="node && project">
     <div class="six wide field">
         <label>{{ 'workflow_root_context_pipeline' | translate}}</label>
         <ng-container *ngIf="node.id > 0;else editPipeline">

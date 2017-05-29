@@ -52,6 +52,10 @@ import {WorkflowDeleteNodeComponent} from './workflow/node/delete/workflow.node.
 import {WorkflowTriggerConditionFormComponent} from './workflow/trigger/condition-form/trigger.condition.component';
 import {WorkflowTriggerConditionListComponent} from './workflow/trigger/condition-list/trigger.condition.list.component';
 import {WorkflowNodeContextComponent} from './workflow/node/context/workflow.node.context.component';
+import {WorkflowJoinComponent} from './workflow/join/workflow.join.component';
+import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.delete.component';
+import {WorkflowTriggerJoinComponent} from './workflow/join/trigger/trigger.join.component';
+import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigger.src.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -88,10 +92,14 @@ import {WorkflowNodeContextComponent} from './workflow/node/context/workflow.nod
         VariableValueComponent,
         WarningModalComponent,
         WorkflowNodeComponent,
+        WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
+        WorkflowJoinComponent,
+        WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowTriggerComponent,
+        WorkflowTriggerJoinComponent,
         WorkflowTriggerConditionFormComponent,
         WorkflowTriggerConditionListComponent,
         ZoneComponent,
@@ -142,10 +150,14 @@ import {WorkflowNodeContextComponent} from './workflow/node/context/workflow.nod
         VariableValueComponent,
         WarningModalComponent,
         WorkflowNodeComponent,
+        WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
+        WorkflowJoinComponent,
+        WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowTriggerComponent,
+        WorkflowTriggerJoinComponent,
         WorkflowTriggerConditionFormComponent,
         WorkflowTriggerConditionListComponent,
         ZoneComponent,

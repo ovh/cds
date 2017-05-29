@@ -515,11 +515,16 @@ ngui-auto-complete .no-match-found {
 }
 
 .node rect,
-.node circle,
 .node ellipse {
   //stroke: #333;
   fill: transparent;
   //stroke-width: 1.5px;
+}
+
+.node circle {
+  stroke: #333;
+  fill: white;
+  stroke-width: 1.5px;
 }
 
 .cluster rect {
@@ -531,8 +536,12 @@ ngui-auto-complete .no-match-found {
 
 .edgePath path.path {
   stroke: #333;
-  stroke-width: 2px;
+  stroke-width: 4px;
   fill: none;
+  cursor: pointer;
+}
+.edgePath path.path:hover {
+  stroke: #4fa3e3;
 }
 
 foreignObject {

@@ -31,6 +31,7 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
     currentCountry: string;
     langSubscrition: Subscription;
 
+    dropdownOptions = { fullTextSearch: true };
 
     constructor(private _projectStore: ProjectStore,
                 private _authStore: AuthentificationStore,

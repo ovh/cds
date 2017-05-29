@@ -50,4 +50,9 @@ export class WorkflowService {
         return this._http.get('/project/' + key + '/workflows/' + workflowName + '/node/' + nodeID + '/triggers/condition')
             .map(res => res.json());
     }
+
+    getTriggerJoinCondition(key: string, workflowName: string, joinID: number) {
+        return this._http.get('/project/' + key + '/workflows/' + workflowName + '/join/' + joinID + '/triggers/condition')
+            .map(res => res.json());
+    }
 }
