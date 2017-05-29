@@ -1,6 +1,7 @@
 import {Pipeline} from './pipeline.model';
 import {Application} from './application.model';
 import {Environment} from './environment.model';
+import {intersection} from 'lodash';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -31,6 +32,26 @@ export class Workflow {
             }
         }
         return node;
+    }
+
+    static removeOldRef(w: Workflow) {
+        if (!w.joins) {
+            return;
+        }
+        let refs = new Array<string>();
+        WorkflowNode.addRef(refs, w.root);
+
+        w.joins.forEach(j => {
+            if (j.triggers) {
+                j.triggers.forEach(t => {
+                    WorkflowNode.addRef(refs, t.workflow_dest_node);
+                });
+            }
+        });
+
+        w.joins.forEach(j => {
+            j.source_node_ref = intersection(j.source_node_ref, refs);
+        });
     }
 
     constructor() {
@@ -89,6 +110,15 @@ export class WorkflowNode {
             }
         }
         return nodeToFind;
+    }
+
+    static addRef(refs: string[], root: WorkflowNode) {
+        refs.push(root.ref);
+        if (root.triggers) {
+            root.triggers.forEach(t => {
+                WorkflowNode.addRef(refs, t.workflow_dest_node);
+            });
+        }
     }
 
     constructor() {

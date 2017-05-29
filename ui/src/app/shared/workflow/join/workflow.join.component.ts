@@ -57,6 +57,7 @@ export class WorkflowJoinComponent implements AfterViewInit {
         if (b) {
             let clonedWorkflow: Workflow = cloneDeep(this.workflow);
             clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !== this.join.id);
+            Workflow.removeOldRef(clonedWorkflow);
             this.updateWorkflow(clonedWorkflow, this.workflowDeleteJoin.modal);
         }
     }

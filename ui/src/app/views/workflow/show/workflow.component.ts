@@ -142,21 +142,21 @@ export class WorkflowShowComponent implements AfterViewInit {
 
         // Add our custom arrow (a hollow-point)
         this.render.arrows()['customArraow'] = (parent, id, edge, type) => {
-            var marker = parent.append("marker")
-                .attr("id", id)
-                .attr("viewBox", "0 0 10 10")
-                .attr("refX", 7)
-                .attr("refY", 5)
-                .attr("markerUnits", "strokeWidth")
-                .attr("markerWidth", 4)
-                .attr("markerHeight", 3)
-                .attr("orient", "auto");
+            let marker = parent.append('marker')
+                .attr('id', id)
+                .attr('viewBox', '0 0 10 10')
+                .attr('refX', 7)
+                .attr('refY', 5)
+                .attr('markerUnits', 'strokeWidth')
+                .attr('markerWidth', 4)
+                .attr('markerHeight', 3)
+                .attr('orient', 'auto');
 
-            var path = marker.append("path")
-                .attr("d", "M 0 0 L 10 5 L 0 10 z")
-                .style("stroke-width", 1)
-                .style("stroke-dasharray", "1,0");
-            dagreD3['util'].applyStyle(path, edge[type + "Style"]);
+            let path = marker.append('path')
+                .attr('d', 'M 0 0 L 10 5 L 0 10 z')
+                .style('stroke-width', 1)
+                .style('stroke-dasharray', '1,0');
+            dagreD3['util'].applyStyle(path, edge[type + 'Style']);
         };
 
         // Run the renderer. This is what draws the final graph.
@@ -344,6 +344,7 @@ export class WorkflowShowComponent implements AfterViewInit {
         switch (action) {
             case 'delete_join':
                 clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !==  this.selectedJoin.id);
+                Workflow.removeOldRef(clonedWorkflow);
                 break;
             default:
                 let currentJoin = clonedWorkflow.joins.find(j => j.id === this.selectedJoin.id);
