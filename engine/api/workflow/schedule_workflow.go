@@ -21,6 +21,9 @@ func dequeueWorkflows(c context.Context) {
 		cache.DequeueWithContext(queueWorkflowNodeRun, run, c)
 		if c.Err() == nil {
 			chanWorkflowNodeRun <- run
+		} else {
+			log.Error("Exiting workflow.dequeueWorkflows: %s", c.Err())
+			return
 		}
 	}
 }

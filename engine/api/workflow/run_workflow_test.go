@@ -22,6 +22,8 @@ func TestManualRun1(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 
+	db.Exec("truncate workflow cascade")
+
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -184,6 +186,8 @@ func TestManualRun2(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 
+	db.Exec("truncate workflow cascade")
+
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	//First pipeline
@@ -251,46 +255,23 @@ func TestManualRun2(t *testing.T) {
 	w1, err := Load(db, key, "test_1", u)
 	test.NoError(t, err)
 
-	wr, err := ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+	_, err = ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
-
-	m, _ := dump.ToMap(wr)
-
-	keys := []string{}
-	for k := range m {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-	for _, k := range keys {
-		t.Logf("%s: \t%s", k, m[k])
-	}
 
 	_, err = ManualRun(db, w1, &sdk.WorkflowNodeRunManual{User: *u})
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
-	wr2, err := ManualRunFromNode(db, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	_, err = ManualRunFromNode(db, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 
-	//Print lastrun
-	m, _ = dump.ToMap(wr2)
-	keys = []string{}
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		t.Logf("%s: \t%s", k, m[k])
-	}
-
-	c, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	Scheduler(c)
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
@@ -303,6 +284,8 @@ func TestManualRun3(t *testing.T) {
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
+
+	db.Exec("truncate workflow cascade")
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
@@ -346,6 +329,7 @@ func TestManualRun3(t *testing.T) {
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
+			Name:    "job20",
 		},
 	}
 	pipeline.InsertJob(db, j, s.ID, &pip2)
@@ -380,13 +364,14 @@ func TestManualRun3(t *testing.T) {
 	defer cancel()
 	Scheduler(c)
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	for i := range jobs {
 		j := &jobs[i]
+		tx, _ := db.Begin()
 
 		//AddSpawnInfosNodeJobRun
 		j, err := AddSpawnInfosNodeJobRun(db, j.ID, []sdk.SpawnInfo{
@@ -398,14 +383,22 @@ func TestManualRun3(t *testing.T) {
 				},
 			},
 		})
-		test.NoError(t, err)
+		assert.NoError(t, err)
+		if t.Failed() {
+			tx.Rollback()
+			t.FailNow()
+		}
 
 		//BookNodeJobRun
 		_, err = BookNodeJobRun(j.ID, &sdk.Hatchery{
 			Name: "Hatchery",
 			ID:   1,
 		})
-		test.NoError(t, err)
+		assert.NoError(t, err)
+		if t.Failed() {
+			tx.Rollback()
+			t.FailNow()
+		}
 
 		//TakeNodeJobRun
 		j, err = TakeNodeJobRun(db, j.ID, "model", "worker", []sdk.SpawnInfo{
@@ -419,27 +412,50 @@ func TestManualRun3(t *testing.T) {
 		})
 
 		//TestAddLog
-		test.NoError(t, AddLog(db, j, &sdk.Log{
+		assert.NoError(t, AddLog(db, j, &sdk.Log{
 			Val: "This is a log",
 		}))
-
-		test.NoError(t, AddLog(db, j, &sdk.Log{
+		if t.Failed() {
+			tx.Rollback()
+			t.FailNow()
+		}
+		assert.NoError(t, AddLog(db, j, &sdk.Log{
 			Val: "This is another log",
 		}))
-
+		if t.Failed() {
+			tx.Rollback()
+			t.FailNow()
+		}
 		//TestUpdateNodeJobRunStatus
-		test.NoError(t, UpdateNodeJobRunStatus(db, j, sdk.StatusSuccess))
+		assert.NoError(t, UpdateNodeJobRunStatus(db, j, sdk.StatusSuccess))
+		if t.Failed() {
+			tx.Rollback()
+			t.FailNow()
+		}
 
 		logs, err := LoadLogs(db, j.ID)
-		test.NoError(t, err)
+		assert.NoError(t, err)
+		if t.Failed() {
+			tx.Rollback()
+			t.FailNow()
+		}
 		assert.NotEmpty(t, logs)
+
+		tx.Commit()
 	}
 
 	c, cancel = context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	Scheduler(c)
 
+	time.Sleep(3 * time.Second)
+
 	jobs, err = LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
-	assert.Equal(t, 0, len(jobs))
+	assert.Equal(t, 1, len(jobs))
+
+	if len(jobs) == 1 {
+		assert.Equal(t, "Waiting", jobs[0].Status)
+		assert.Equal(t, "job20", jobs[0].Job.Job.Action.Name)
+	}
 }
