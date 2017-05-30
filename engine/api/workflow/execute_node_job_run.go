@@ -45,7 +45,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 		return fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status.String())
 	}
 
-	if err := updateWorkflowNodeJobRun(db, job); err != nil {
+	if err := UpdateNodeJobRun(db, job); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
@@ -55,6 +55,9 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 	}
 
 	event.PublishJobRun(node, job)
+	//call workflow.execute
+	cache.Enqueue(queueWorkflowNodeRun, node)
+
 	return nil
 }
 
@@ -67,7 +70,7 @@ func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, id int64, infos []sdk.SpawnInf
 	if err := prepareSpawnInfos(j, infos); err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot prepare spawn infos")
 	}
-	if err := updateWorkflowNodeJobRun(db, j); err != nil {
+	if err := UpdateNodeJobRun(db, j); err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot update node job run")
 	}
 	return j, nil
@@ -109,7 +112,7 @@ func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerNam
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot prepare spawn infos")
 	}
 
-	if err := updateWorkflowNodeJobRun(db, job); err != nil {
+	if err := UpdateNodeJobRun(db, job); err != nil {
 		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run")
 	}
 
@@ -186,22 +189,26 @@ func BookNodeJobRun(id int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
-func AddLog(db gorp.SqlExecutor, logs *sdk.Log) error {
+//AddLog adds a build log
+func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) error {
+	logs.PipelineBuildJobID = job.ID
+	logs.PipelineBuildID = job.WorkflowNodeRunID
+
 	existingLogs, errLog := LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
 	if errLog != nil && errLog != sql.ErrNoRows {
-		return sdk.WrapError(errLog, "AddBuildLog> Cannot load existing logs")
+		return sdk.WrapError(errLog, "AddLog> Cannot load existing logs")
 	}
 
 	if existingLogs == nil {
 		if err := InsertLog(db, logs); err != nil {
-			return sdk.WrapError(err, "AddBuildLog> Cannot insert log")
+			return sdk.WrapError(err, "AddLog> Cannot insert log")
 		}
 	} else {
 		existingLogs.Val += logs.Val
 		existingLogs.LastModified = logs.LastModified
 		existingLogs.Done = logs.Done
 		if err := UpdateLog(db, existingLogs); err != nil {
-			return sdk.WrapError(err, "AddBuildLog> Cannot update log")
+			return sdk.WrapError(err, "AddLog> Cannot update log")
 		}
 	}
 	return nil

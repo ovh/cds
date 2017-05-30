@@ -33,13 +33,14 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	return &r, nil
 }
 
+//LoadNodeRunByID load a specific node run on a workflow
 func LoadNodeRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
 	query := `select workflow_node_run.* 
 	from workflow_node_run 
-	and workflow_node_run.id = $1`
+	where workflow_node_run.id = $1`
 	if err := db.SelectOne(&rr, query, id); err != nil {
-		return nil, sdk.WrapError(err, "workflow.loadWorkflowNodeRunByID> Unable to load workflow_node_run node=%d", id)
+		return nil, sdk.WrapError(err, "workflow.LoadNodeRunByID> Unable to load workflow_node_run node=%d", id)
 	}
 	r := sdk.WorkflowNodeRun(rr)
 	return &r, nil

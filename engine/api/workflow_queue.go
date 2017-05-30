@@ -227,6 +227,37 @@ func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 }
 
 func postWorkflowJobStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	id, errr := requestVarInt(r, "id")
+	if errr != nil {
+		return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
+	}
+
+	pbJob, errJob := workflow.LoadNodeJobRun(db, id)
+	if errJob != nil {
+		return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
+	}
+
+	var step sdk.StepStatus
+	if err := UnmarshalBody(r, &step); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while unmarshal job")
+	}
+
+	found := false
+	for i := range pbJob.Job.StepStatus {
+		jobStep := &pbJob.Job.StepStatus[i]
+		if step.StepOrder == jobStep.StepOrder {
+			jobStep.Status = step.Status
+			found = true
+		}
+	}
+	if !found {
+		pbJob.Job.StepStatus = append(pbJob.Job.StepStatus, step)
+	}
+
+	if err := workflow.UpdateNodeJobRun(db, pbJob); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run")
+	}
+
 	return nil
 }
 

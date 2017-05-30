@@ -12,7 +12,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
@@ -89,13 +88,16 @@ func insertWorkflowNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) er
 		return err
 	}
 	j.ID = dbj.ID
-
-	log.Debug("insertWorkflowNodeJobRun> %d", j.ID)
-
 	return nil
 }
 
-func updateWorkflowNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
+func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
+	query := `delete from workflow_node_run_job where workflow_node_run_id = $1`
+	_, err := db.Exec(query, nodeID)
+	return err
+}
+
+func UpdateNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	dbj := JobRun(*j)
 	if _, err := db.Update(&dbj); err != nil {
 		return err
@@ -129,9 +131,11 @@ func (j *JobRun) PostUpdate(s gorp.SqlExecutor) error {
 		return errJ
 	}
 
-	query := "update workflow_node_run_job set job = $2, variables = $3, spawninfos= $4 where id = $1"
-	if _, err := s.Exec(query, j.ID, jobJSON, paramsJSON, spawnJSON); err != nil {
+	query := "update workflow_node_run_job set job = $2, variables = $3, spawninfos = $4 where id = $1"
+	if n, err := s.Exec(query, j.ID, jobJSON, paramsJSON, spawnJSON); err != nil {
 		return err
+	} else if n, _ := n.RowsAffected(); n == 0 {
+		return fmt.Errorf("Unable to update workflow_node_run_job id = %d", j.ID)
 	}
 
 	return nil

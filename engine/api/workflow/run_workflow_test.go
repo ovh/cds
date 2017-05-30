@@ -9,6 +9,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -183,6 +184,8 @@ func TestManualRun2(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 
+	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
+
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -283,10 +286,160 @@ func TestManualRun2(t *testing.T) {
 		t.Logf("%s: \t%s", k, m[k])
 	}
 
+	c, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	Scheduler(c)
+
+	time.Sleep(2 * time.Second)
+
+	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	test.NoError(t, err)
+
+	assert.Len(t, jobs, 3)
+}
+
+func TestManualRun3(t *testing.T) {
+	db := test.SetupPG(t)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, key, key, u)
+
+	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(db, s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(db, j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	pipeline.InsertStage(db, s)
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(db, j, s.ID, &pip2)
+	s.Jobs = append(s.Jobs, *j)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip2,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, Insert(db, &w, u))
+	w1, err := Load(db, key, "test_1", u)
+	test.NoError(t, err)
+
+	ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+		User: *u,
+	})
+	test.NoError(t, err)
+
 	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	Scheduler(c)
 
 	time.Sleep(2 * time.Second)
 
+	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	test.NoError(t, err)
+
+	for i := range jobs {
+		j := &jobs[i]
+
+		//AddSpawnInfosNodeJobRun
+		j, err := AddSpawnInfosNodeJobRun(db, j.ID, []sdk.SpawnInfo{
+			sdk.SpawnInfo{
+				APITime:    time.Now(),
+				RemoteTime: time.Now(),
+				Message: sdk.SpawnMsg{
+					ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
+				},
+			},
+		})
+		test.NoError(t, err)
+
+		//BookNodeJobRun
+		_, err = BookNodeJobRun(j.ID, &sdk.Hatchery{
+			Name: "Hatchery",
+			ID:   1,
+		})
+		test.NoError(t, err)
+
+		//TakeNodeJobRun
+		j, err = TakeNodeJobRun(db, j.ID, "model", "worker", []sdk.SpawnInfo{
+			sdk.SpawnInfo{
+				APITime:    time.Now(),
+				RemoteTime: time.Now(),
+				Message: sdk.SpawnMsg{
+					ID: sdk.MsgSpawnInfoJobTaken.ID,
+				},
+			},
+		})
+
+		//TestAddLog
+		test.NoError(t, AddLog(db, j, &sdk.Log{
+			Val: "This is a log",
+		}))
+
+		test.NoError(t, AddLog(db, j, &sdk.Log{
+			Val: "This is another log",
+		}))
+
+		//TestUpdateNodeJobRunStatus
+		test.NoError(t, UpdateNodeJobRunStatus(db, j, sdk.StatusSuccess))
+
+		logs, err := LoadLogs(db, j.ID)
+		test.NoError(t, err)
+		assert.NotEmpty(t, logs)
+	}
+
+	c, cancel = context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+	Scheduler(c)
+
+	jobs, err = LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	test.NoError(t, err)
+	assert.Equal(t, 0, len(jobs))
 }

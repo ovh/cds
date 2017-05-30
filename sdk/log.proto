@@ -15,9 +15,9 @@ message Log {
 	// @inject_tag: db:"id"
 	int64 id = 1;
 	// @inject_tag: db:"pipeline_build_job_id"
-	int64 pipelineBuildJobID = 2;
+	int64 pipelineBuildJobID = 2; // Is also used as workflow_node_run_job_id
 	// @inject_tag: db:"pipeline_build_id"
-	int64 pipelineBuildID = 3;
+	int64 pipelineBuildID = 3; //Is also used as workflow_node_run_id
 	// @inject_tag: db:"start"
 	google.protobuf.Timestamp start = 4;
 	// @inject_tag: db:"last_modified"

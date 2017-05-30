@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+//execute is called by the scheduler. You should not call this by yourself
 func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d", n.Number, n.SubNumber, n.WorkflowRunID)
@@ -27,7 +28,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	}
 	defer tx.Rollback()
 
-	//Select for update on table workflow_run, workflow_node_run
+	//Select fobor update on table workflow_run, workflow_node_run
 	if _, err := tx.Exec("select workflow_run.* from workflow_run where id = $1 for update nowait", n.WorkflowRunID); err != nil {
 		log.Debug("workflow.execute> Unable to take lock on workflow_run ID=%d (%v)", n.WorkflowRunID, err)
 		return nil
@@ -50,6 +51,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 
 	//New status is building
 	n.Status = sdk.StatusBuilding.String()
+	newStatus := sdk.StatusBuilding.String()
 
 	//If no stages ==> success
 	if len(n.Stages) == 0 {
@@ -59,8 +61,6 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	//Browse stages
 	for stageIndex := range n.Stages {
 		stage := &n.Stages[stageIndex]
-		log.Debug("workflow.execute> analyzing stage %s: %#v", stage.Name, stage)
-
 		if stage.Status == sdk.StatusWaiting {
 			//Add job to Queue
 			//Insert data in workflow_node_run_job
@@ -76,19 +76,33 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 				return errSync
 			}
 			if end {
+				log.Debug("workflow.execute> Begin [#%d.%d] runID=%d. Node is %s", n.Number, n.SubNumber, n.WorkflowRunID, newStatus)
 				//The job is over
-
 				//Delete the line in workflow_node_run_job
+				if err := DeleteNodeJobRuns(tx, n.ID); err != nil {
+					return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
+				}
 
-				//If the stage is failed: Ends the node as failed
-
-				//If the stage is stage is the last: Ends the node as success
-
-				//Else (this is not the last stage): Set the status of the next stage at waiting
+				if stage.Status == sdk.StatusFail {
+					n.Done = time.Now()
+					newStatus = sdk.StatusFail.String()
+					break
+				}
+				if stageIndex == len(n.Stages)-1 {
+					n.Done = time.Now()
+					newStatus = sdk.StatusSuccess.String()
+					break
+				}
+				if stageIndex != len(n.Stages)-1 {
+					// Prepare scheduling next stage
+					n.Stages[stageIndex+1].Status = sdk.StatusWaiting
+					continue
+				}
 			}
 		}
 	}
 
+	n.Status = newStatus
 	// Save the node run in database
 	if err := updateWorkflowNodeRun(tx, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d", n.ID), "workflow.execute> Unable to execute node")
@@ -116,7 +130,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 }
 
 func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNodeRun) error {
-	log.Debug("addJobsToQueue> add %#v in stage %s", run, stage.Name)
+	//log.Debug("addJobsToQueue> add %#v in stage %s", run, stage.Name)
 	//Check stage prerequisites
 	var prerequisitesOK = true
 	/*

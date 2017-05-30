@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -57,6 +58,8 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 	log.SetLogger(t)
 
 	cache.Initialize("local", "", "", 30)
+
+	secret.Init("", "test-key", "", nil)
 
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")

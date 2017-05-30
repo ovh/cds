@@ -26,12 +26,13 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 
 	//Checks startingFromNode
 	if startingFromNode != nil {
-		log.Debug("processWorkflowRun> starting from the node %#v", startingFromNode)
+
 		start := w.Workflow.GetNode(*startingFromNode)
 		if start == nil {
 			return sdk.ErrWorkflowNodeNotFound
 		}
 		//Run the node : manual or from an event
+		log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
 		if err := processWorkflowNodeRun(db, w, start, len(w.WorkflowNodeRuns), nil, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -63,6 +64,7 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 				//TODO Check conditions
 
 				//Keep the subnumber of the previous node in the graph
+				log.Debug("processWorkflowRun> starting from trigger %#v", t)
 				if err := processWorkflowNodeRun(db, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
 					sdk.WrapError(err, "processWorkflowRun> Unable to process node ID=%d", t.WorkflowDestNode.ID)
 				}
@@ -139,8 +141,6 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 	defer func() {
 		log.Debug("processWorkflowNodeRun> End [#%d.%d]%s.%d  - %.3fs", w.Number, subnumber, w.Workflow.Name, n.ID, time.Since(t0).Seconds())
 	}()
-
-	log.Debug("processWorkflowNodeRun> Pipeline is %#v", n.Pipeline)
 
 	run := &sdk.WorkflowNodeRun{
 		LastModified:   time.Now(),
