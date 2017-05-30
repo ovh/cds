@@ -22,7 +22,13 @@ func ManualRunFromNode(db gorp.SqlExecutor, w *sdk.Workflow, number int64, e *sd
 	if err := processWorkflowRun(db, lastWorkflowRun, nil, e, &nodeID); err != nil {
 		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
 	}
-	return nil, nil
+
+	lastWorkflowRun, err = LoadRunByID(db, w.ProjectKey, lastWorkflowRun.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return lastWorkflowRun, nil
 }
 
 func ManualRun(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error) {

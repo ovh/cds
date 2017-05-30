@@ -167,8 +167,8 @@ func TestManualRun1(t *testing.T) {
 	//TestprocessWorkflowRun
 	wr2, err := ManualRunFromNode(db, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
+	assert.NotNil(t, wr2)
 
-	//Print lastrun
 	m, _ = dump.ToMap(wr2)
 	keys = []string{}
 	for k := range m {
@@ -176,8 +176,21 @@ func TestManualRun1(t *testing.T) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		t.Logf("%s: \t%s", k, m[k])
+		t.Logf("- %s: \t%s", k, m[k])
 	}
+
+	//TestLoadRuns
+	runs, offset, limit, count, err := LoadRuns(db, proj.Key, w1.Name, 0, 50)
+	test.NoError(t, err)
+	assert.Equal(t, 0, offset)
+	assert.Equal(t, 50, limit)
+	assert.Equal(t, 2, count)
+	assert.Len(t, runs, 2)
+
+	//TestLoadRunByID
+	_, err = LoadRunByID(db, proj.Key, wr2.ID)
+	test.NoError(t, err)
+
 }
 
 func TestManualRun2(t *testing.T) {
@@ -426,6 +439,12 @@ func TestManualRun3(t *testing.T) {
 			tx.Rollback()
 			t.FailNow()
 		}
+
+		//TestLoadNodeJobRunSecrets
+		secrets, err := LoadNodeJobRunSecrets(db, j)
+		assert.NoError(t, err)
+		assert.Len(t, secrets, 1)
+
 		//TestUpdateNodeJobRunStatus
 		assert.NoError(t, UpdateNodeJobRunStatus(db, j, sdk.StatusSuccess))
 		if t.Failed() {
