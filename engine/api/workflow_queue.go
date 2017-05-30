@@ -214,12 +214,22 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 
 //TODO grpc
 func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	id, errr := requestVarInt(r, "id")
+	if errr != nil {
+		return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
+	}
+
+	pbJob, errJob := workflow.LoadNodeJobRun(db, id)
+	if errJob != nil {
+		return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
+	}
+
 	var logs sdk.Log
 	if err := UnmarshalBody(r, &logs); err != nil {
 		return sdk.WrapError(err, "postWorkflowJobLogsHandler> Unable to parse body")
 	}
 
-	if err := workflow.AddLog(db, &logs); err != nil {
+	if err := workflow.AddLog(db, pbJob, &logs); err != nil {
 		return sdk.WrapError(err, "postWorkflowJobLogsHandler")
 	}
 
