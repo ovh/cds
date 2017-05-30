@@ -44,5 +44,5 @@ export class ApplicationPipeline {
 
 export interface ApplicationFilter {
     branch: string;
-    version: number;
+    version: string;
 };

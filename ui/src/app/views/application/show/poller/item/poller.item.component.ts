@@ -7,8 +7,7 @@ import {RepositoryPoller} from '../../../../../model/polling.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-application-poller-item',
@@ -32,7 +31,7 @@ export class ApplicationPollerItemComponent {
 
     editPoller(): void {
         if (this.editPollerModal) {
-            this.editablePoller = _.cloneDeep(this.poller);
+            this.editablePoller = cloneDeep(this.poller);
             setTimeout(() => {
                 this.editPollerModal.show();
             }, 100);

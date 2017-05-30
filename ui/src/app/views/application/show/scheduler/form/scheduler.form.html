@@ -6,7 +6,7 @@
         </div>
         <div class="eight wide field" *ngIf="application.permission === 7 && pipeline && pipeline.type !== 'build'">
             <label>{{ 'common_environment' | translate }}</label>
-            <sm-select [(model)]="scheduler.environment_name">
+            <sm-select [options]="{'fullTextSearch': true}" [(model)]="scheduler.environment_name">
                 <option *ngFor="let e of project.environments" [value]="e.name">{{e.name}}</option>
             </sm-select>
         </div>

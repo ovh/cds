@@ -1,0 +1,12 @@
+<sm-modal title="{{ 'workflow_node_context_edit' | translate }}" #nodeContextModal>
+    <modal-content>
+        <div class="ui form" *ngIf="project && node">
+            <h3>{{ 'workflow_node_form_title' | translate }}</h3>
+            <app-workflow-node-form [project]="project" [(node)]="node"></app-workflow-node-form>
+        </div>
+    </modal-content>
+    <modal-actions>
+        <button class="ui grey button" (click)="hide()">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" (click)="saveContext()">{{ 'btn_save' | translate }}</button>
+    </modal-actions>
+</sm-modal>

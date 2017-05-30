@@ -4,13 +4,22 @@
             <input name="name" [(ngModel)]="newRequirement.name" placeholder="{{ 'requirement_name' | translate }}" (keyup)="setValue($event)">
         </div>
         <div class="three wide field">
-            <sm-select class="search" [(model)]="newRequirement.type" *ngIf="availableRequirements.length > 0" placeholder="{{ 'requirement_type' | translate }}" (onChange)="isWriting = false">
+            <sm-select class="search"
+                *ngIf="availableRequirements.length > 0"
+                [(model)]="newRequirement.type"
+                [options]="{'fullTextSearch': true}"
+                placeholder="{{ 'requirement_type' | translate }}"
+                (onChange)="isWriting = false">
                 <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
             </sm-select>
         </div>
         <div class="five wide field">
             <input name="value" [(ngModel)]="newRequirement.value" placeholder="{{ 'requirement_value' | translate }}" (keyup)="setName($event)" *ngIf="newRequirement.type !== 'model'">
-            <sm-select class="search" [(model)]="newRequirement.value" *ngIf="newRequirement.type === 'model'" placeholder="{{ 'requirement_value' | translate }}">
+            <sm-select class="search"
+                *ngIf="newRequirement.type === 'model'"
+                [(model)]="newRequirement.value"
+                [options]="{'fullTextSearch': true}"
+                placeholder="{{ 'requirement_value' | translate }}">
                 <option *ngFor="let m of workerModels" value="{{m.name}}">{{m.name}}</option>
             </sm-select>
         </div>

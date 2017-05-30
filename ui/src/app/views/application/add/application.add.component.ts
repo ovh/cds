@@ -10,8 +10,7 @@ import {Parameter} from '../../../model/parameter.model';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {VariableService} from '../../../service/variable/variable.service';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-application-add',
@@ -94,7 +93,7 @@ export class ApplicationAddComponent implements OnInit {
     updateSelectedApplicationToClone(name: string): void {
         this._appStore.getApplicationResolver(this.project.key, name).first().subscribe(app => {
             this.selectedApplication = app;
-            this.variables = _.cloneDeep(app.variables);
+            this.variables = cloneDeep(app.variables);
             if (this.variables) {
                 this.variables.forEach( v => {
                     if (v.type === 'password') {

@@ -1,4 +1,72 @@
 .workflowNode {
-  width: 350px;
-  height: 60px;
+  width: 155px;
+  height: 48px;
+  display: table;
+
+  .ui.segment {
+    margin-top: -10px;
+    margin-left: -11px;
+    width: 176px;
+    height: 68px;
+    position: absolute;
+    border-color: #333;
+    padding: 0;
+
+    .pipeline {
+      display:flex;
+      text-align: left;
+      padding-left: 10px;
+      align-items:center;
+      height: 68px;
+
+
+      p {
+        width: 155px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      p.ellipsis {
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .ui.segment.disabled {
+    background-color: #d0d0d0;
+    color: white;
+  }
+
+  .ribbon.label {
+    position: absolute;
+    top: -20px;
+    left: -23px;
+    font-size: 0.7em;
+    border: 1px solid black;
+    background-color: white;
+    color: black;
+  }
+
+  sm-dropdown {
+    position: absolute;
+    right: -10px;
+    top: -5px;
+
+    .dropdown.icon {
+      display: none;
+    }
+  }
+
+  .footer {
+    position: absolute;
+    bottom: -10px;
+    width: 100%;
+
+    p {
+      text-align: center;
+      color: black;
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+  }
 }
+

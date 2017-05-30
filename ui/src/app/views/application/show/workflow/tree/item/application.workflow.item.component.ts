@@ -20,8 +20,7 @@ import {Scheduler} from '../../../../../../model/scheduler.model';
 import {Hook} from '../../../../../../model/hook.model';
 import {RepositoryPoller} from '../../../../../../model/polling.model';
 import {PipelineLaunchModalComponent} from '../../../../../../shared/pipeline/launch/pipeline.launch.modal.component';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-application-workflow-item',
@@ -36,7 +35,9 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     @Input() orientation: string;
     @Input() application: Application;
     @Input() applicationFilter: any;
+    oldPipelineId: number;
     oldPipelineStatus: string;
+
     // Triggers modals
     @ViewChild('editTriggerModal')
     editTriggerModal: SemanticModalComponent;
@@ -223,7 +224,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     }
 
     openEditTriggerModal(): void {
-        this.triggerInModal = _.cloneDeep(this.workflowItem.trigger);
+        this.triggerInModal = cloneDeep(this.workflowItem.trigger);
         setTimeout(() => {
             this.editTriggerModal.show({autofocus: false, closable: false, observeChanges: true});
         }, 100);
@@ -319,11 +320,15 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
                 this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
             }
 
-            if (this.oldPipelineStatus === 'Building' && this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status) {
+            if (this.oldPipelineStatus === 'Building' &&
+               this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status &&
+                    this.oldPipelineId && this.oldPipelineId === this.workflowItem.pipeline.last_pipeline_build.id) {
                 this.handleNotification(this.workflowItem.pipeline);
             }
 
+            this.oldPipelineId = this.workflowItem.pipeline.last_pipeline_build.id;
             this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
         }
+
     }
 }

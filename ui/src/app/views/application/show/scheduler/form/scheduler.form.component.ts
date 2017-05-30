@@ -4,8 +4,6 @@ import {Project} from '../../../../../model/project.model';
 import {Application} from '../../../../../model/application.model';
 import {Pipeline} from '../../../../../model/pipeline.model';
 
-declare var _: any;
-
 @Component({
     selector: 'app-application-scheduler-form',
     templateUrl: './scheduler.form.html',

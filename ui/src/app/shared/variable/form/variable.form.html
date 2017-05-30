@@ -6,7 +6,12 @@
         </div>
         <div class="three wide field">
             <label>{{'variable_type' | translate}}</label>
-            <sm-select class="fluid search" [disabled]="loading" name="type" [(model)]="newVariable.type" *ngIf="variableTypes">
+            <sm-select class="fluid search"
+                name="type"
+                *ngIf="variableTypes"
+                [disabled]="loading"
+                [(model)]="newVariable.type"
+                [options]="{'fullTextSearch': true}">
                 <option *ngFor="let type of variableTypes" [value]="type">{{type}}</option>
             </sm-select>
         </div>

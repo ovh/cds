@@ -7,9 +7,8 @@ import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
 import {Branch} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
-
-declare var _: any;
-declare var jQuery: any;
+import {cloneDeep} from 'lodash';
+import {Observable} from 'rxjs/Observable';
 
 @Component({
     selector: 'app-application-workflow',
@@ -29,9 +28,11 @@ export class ApplicationWorkflowComponent implements OnInit {
     // Worflow to display
     workflowOrientation = 'horizontal';
 
+    dropdownOptions = { fullTextSearch: true };
+
     // Filter values
     branches: Array<Branch>;
-    versions: Array<string | number>;
+    versions: Array<string>;
 
     // Modal Component to link pipeline
     @ViewChild('linkPipelineComponent')
@@ -45,16 +46,15 @@ export class ApplicationWorkflowComponent implements OnInit {
         this.generateParentInformation();
         // Load branches
         this._appWorkflow.getBranches(this.project.key, this.application.name).subscribe(branches => {
-            branches.unshift(new Branch());
             this.branches = branches;
 
             this.branches.forEach(b => {
-                if (b.default && (!this.applicationFilter.branch || this.applicationFilter === '')) {
+                if (b.default && !this.applicationFilter.branch) {
                     this.applicationFilter.branch = b.display_id;
                 }
             });
 
-            this.loadVersions(this.project.key, this.application.name);
+            this.loadVersions(this.project.key, this.application.name).subscribe();
         });
     }
 
@@ -142,7 +142,7 @@ export class ApplicationWorkflowComponent implements OnInit {
                         w.environment = env;
                         w.pipeline.last_pipeline_build = pbToAssign;
                     } else {
-                        let newItem = _.cloneDeep(w);
+                        let newItem = cloneDeep(w);
                         newItem.environment = env;
                         newItem.pipeline.last_pipeline_build = pbToAssign;
                         this.application.workflows.push(newItem);
@@ -193,28 +193,38 @@ export class ApplicationWorkflowComponent implements OnInit {
      * Action when changing branch
      */
     changeBranch(): void {
-        // reinit verison filter
-        this.applicationFilter.version = '';
-        jQuery('.cdsVersion div.text')[0].textContent = '';
-        this.changeVersion();
-
         // Load the versions of the new branch
-        this.loadVersions(this.project.key, this.application.name);
+        this.loadVersions(this.project.key, this.application.name)
+            .subscribe(() => this.changeVersion());
     };
 
     /**
      * Action when changing version
      */
-    changeVersion(): void {
+    changeVersion(version?: string): void {
         this.applicationFilter.branch = this.applicationFilter.branch.trim();
-        if (this.applicationFilter.version.trim() === '') {
-            this.applicationFilter.version = 0;
+
+        if (!version && Array.isArray(this.versions) && this.versions.length) {
+            this.applicationFilter.version = this.versions[0];
         }
+
+        if (version) {
+            this.applicationFilter.version = version;
+        }
+
         this._router.navigate(['/project/', this.project.key, 'application', this.application.name],
             {queryParams: {tab: 'workflow', branch: this.applicationFilter.branch, version: this.applicationFilter.version}});
         this.changeWorkerEvent.emit(true);
         this.clearTree(this.application.workflows);
     }
+
+    /**
+     * Load the list of version for the current application on the selected branch
+     */
+    loadVersions(key: string, appName: string): Observable<Array<string>> {
+        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch)
+            .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
+    };
 
     clearTree(items: Array<WorkflowItem>): void {
         items.forEach(w => {
@@ -224,16 +234,6 @@ export class ApplicationWorkflowComponent implements OnInit {
             }
         });
     }
-
-    /**
-     * Load the list of version for the current application on the selected branch
-     */
-    loadVersions(key: string, appName: string): void {
-        this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch).subscribe(versions => {
-            this.versions = versions;
-            this.versions.unshift(' ');
-        });
-    };
 
     openLinkPipelineModal(): void {
         if (this.linkPipelineComponent) {

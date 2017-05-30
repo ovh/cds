@@ -4,9 +4,9 @@ import {Project} from '../../../model/project.model';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {RepositoriesManager, Repository} from '../../../model/repositories.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {cloneDeep} from 'lodash';
 
 declare var CodeMirror: any;
-declare var _: any;
 
 @Component({
     selector: 'app-parameter-value',
@@ -31,7 +31,7 @@ export class ParameterValueComponent implements OnInit {
             name: 'Git Url'
         });
         if (data && data.repositories_manager) {
-            this.repositoriesManager.push(..._.cloneDeep(data.repositories_manager));
+            this.repositoriesManager.push(...cloneDeep(data.repositories_manager));
         }
         this.selectedRepoManager = this.repositoriesManager[0];
         if (data) {

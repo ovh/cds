@@ -10,8 +10,7 @@ import {ActionStore} from '../../service/action/action.store';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {Project} from '../../model/project.model';
 import {StepEvent} from './step/step.event';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-action',
@@ -31,7 +30,7 @@ export class ActionComponent implements OnDestroy {
 
     @Input('action')
     set action(data: Action) {
-        this.editableAction = _.cloneDeep(data);
+        this.editableAction = cloneDeep(data);
         if (!this.editableAction.requirements) {
             this.editableAction.requirements = new Array<Requirement>();
         }
@@ -135,7 +134,7 @@ export class ActionComponent implements OnDestroy {
         this.editableAction.hasChanged = true;
         switch (event.type) {
             case 'add':
-                let newStep = _.cloneDeep(event.step);
+                let newStep = cloneDeep(event.step);
                 if (newStep.final) {
                     this.finalSteps.push(newStep);
                 } else {

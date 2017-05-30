@@ -4,8 +4,7 @@ import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {Router} from '@angular/router';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-pipeline-admin',
@@ -25,7 +24,7 @@ export class PipelineAdminComponent implements OnInit {
     @Input('pipeline')
     set pipeline(data: Pipeline) {
         this.oldName = data.name;
-        this.editablePipeline = _.cloneDeep(data);
+        this.editablePipeline = cloneDeep(data);
     }
 
     constructor(private _pipStore: PipelineStore, private _toast: ToastService, private _translate: TranslateService,

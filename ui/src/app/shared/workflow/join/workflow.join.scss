@@ -1,0 +1,15 @@
+.iconPosition {
+  top: -1px;
+  left: -6px;
+  font-size: 2em;
+  position: absolute;
+  cursor: pointer;
+  animation: color_change 0.7s infinite alternate;
+  color: #344860;
+  transition-timing-function: ease-in-out;
+}
+
+@keyframes color_change {
+  from { opacity: 1; }
+  to { opacity: 0.2; }
+}

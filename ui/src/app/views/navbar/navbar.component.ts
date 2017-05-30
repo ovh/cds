@@ -31,6 +31,8 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
     currentCountry: string;
     langSubscrition: Subscription;
 
+    dropdownOptions = { fullTextSearch: true };
+
     constructor(private _projectStore: ProjectStore,
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
@@ -129,17 +131,19 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
     filterApplication(event: any): void {
         if (this.selectedProjectKey === '#NOPROJECT#') {
-            let apps = new Array<Application>();
             if (this.navProjects) {
-                this.navProjects.toArray().forEach(p => {
-                    if (p.applications) {
-                        apps.push(...p.applications.filter(app => {
+                this.listApplications = this.navProjects.toArray().reduce((allProj, proj) => {
+                    let filteredApps = [];
+
+                    if (proj.applications) {
+                        filteredApps = proj.applications.filter(app => {
                             return app.name.toLocaleLowerCase().indexOf(event.toLowerCase()) !== -1;
-                        }));
+                        });
                     }
-                });
+
+                    return [...allProj, ...filteredApps];
+                }, []);
             }
-            this.listApplications = apps;
         }
     }
 }

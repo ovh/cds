@@ -2,13 +2,19 @@
     <div class="fields">
         <div class="seven wide field">
             <label>{{'group_name' | translate}}</label>
-            <sm-select class="fluid search" [(model)]="newGroupPermission.group.name" id="PermissionGroupName">
+            <sm-select class="fluid search"
+                [options]="{'fullTextSearch': true}"
+                [(model)]="newGroupPermission.group.name"
+                id="PermissionGroupName">
                 <option *ngFor="let g of groupList" [ngValue]="g">{{g.name}}</option>
             </sm-select>
         </div>
         <div class="seven wide field">
             <label>{{'group_permission' | translate}}</label>
-            <sm-select class="fluid search" [(model)]="newGroupPermission.permission" id="PermissionGroupLevel">
+            <sm-select class="fluid search"
+                [options]="{'fullTextSearch': true}"
+                [(model)]="newGroupPermission.permission"
+                id="PermissionGroupLevel">
                 <option *ngFor="let p of permissionList" [value]="p.value">{{p.name | translate}}</option>
             </sm-select>
         </div>

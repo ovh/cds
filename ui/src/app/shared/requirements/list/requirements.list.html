@@ -24,7 +24,10 @@
             <td>
                 <div *ngIf="edit;else rType">
                     <div class="ui form">
-                        <sm-select class="search" [(model)]="r.type" *ngIf="availableRequirements.length > 0">
+                        <sm-select class="search"
+                            *ngIf="availableRequirements.length > 0"
+                            [options]="{'fullTextSearch': true}"
+                            [(model)]="r.type">
                             <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
                         </sm-select>
                     </div>
@@ -36,7 +39,10 @@
             <td>
                 <div *ngIf="edit;else rValue">
                     <input [(ngModel)]="r.value" name="requirementvalue" *ngIf="r.type !== 'model'">
-                    <sm-select class="search" [(model)]="r.value" *ngIf="r.type === 'model' && workerModels">
+                    <sm-select class="search"
+                        *ngIf="r.type === 'model' && workerModels"
+                        [options]="{'fullTextSearch': true}"
+                        [(model)]="r.value">
                         <option *ngFor="let wm of workerModels" value="{{wm.name}}">{{wm.name}}</option>
                     </sm-select>
                 </div>

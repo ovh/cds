@@ -1,6 +1,7 @@
 import {Pipeline} from './pipeline.model';
 import {Application} from './application.model';
 import {Environment} from './environment.model';
+import {intersection} from 'lodash';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -16,6 +17,43 @@ export class Workflow {
     // UI params
     externalChange: boolean;
 
+    static getNodeByID(id: number, w: Workflow): WorkflowNode {
+        let node = WorkflowNode.getNodeByID(w.root, id);
+        if (!node && w.joins) {
+            quit: for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        node = WorkflowNode.getNodeByID(w.joins[i].triggers[j].workflow_dest_node, id);
+                        if (node) {
+                            break quit;
+                        }
+                    }
+                }
+            }
+        }
+        return node;
+    }
+
+    static removeOldRef(w: Workflow) {
+        if (!w.joins) {
+            return;
+        }
+        let refs = new Array<string>();
+        WorkflowNode.addRef(refs, w.root);
+
+        w.joins.forEach(j => {
+            if (j.triggers) {
+                j.triggers.forEach(t => {
+                    WorkflowNode.addRef(refs, t.workflow_dest_node);
+                });
+            }
+        });
+
+        w.joins.forEach(j => {
+            j.source_node_ref = intersection(j.source_node_ref, refs);
+        });
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
@@ -27,6 +65,10 @@ export class WorkflowNodeJoin {
     source_node_id: Array<number>;
     source_node_ref: Array<string>;
     triggers: Array<WorkflowNodeJoinTrigger>;
+
+    constructor() {
+        this.source_node_ref = new Array<string>();
+    }
 }
 
 export class WorkflowNodeJoinTrigger {
@@ -35,6 +77,10 @@ export class WorkflowNodeJoinTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
+
+    constructor() {
+        this.workflow_dest_node = new WorkflowNode();
+    }
 }
 
 // WorkflowNode represents a node in w workflow tree
@@ -47,6 +93,37 @@ export class WorkflowNode {
     context: WorkflowNodeContext;
     hooks: Array<WorkflowNodeHook>;
     triggers: Array<WorkflowNodeTrigger>;
+
+
+    static getNodeByID(node: WorkflowNode, id: number) {
+        if (node.id === id) {
+            return node;
+        }
+        let nodeToFind: WorkflowNode;
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                let n = WorkflowNode.getNodeByID(node.triggers[i].workflow_dest_node, id);
+                if (n) {
+                    nodeToFind = n;
+                    break;
+                }
+            }
+        }
+        return nodeToFind;
+    }
+
+    static addRef(refs: string[], root: WorkflowNode) {
+        refs.push(root.ref);
+        if (root.triggers) {
+            root.triggers.forEach(t => {
+                WorkflowNode.addRef(refs, t.workflow_dest_node);
+            });
+        }
+    }
+
+    constructor() {
+        this.context = new WorkflowNodeContext();
+    }
 }
 
 // WorkflowNodeContext represents a context attached on a node
@@ -75,6 +152,10 @@ export class WorkflowNodeTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
+
+    constructor() {
+        this.workflow_dest_node = new WorkflowNode();
+    }
 }
 
 // WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
@@ -91,4 +172,9 @@ export class WorkflowHookModel {
     images: string;
     command: string;
     default_config: {};
+}
+
+export class WorkflowTriggerConditionCache {
+    operators: Array<string>;
+    names: Array<string>;
 }

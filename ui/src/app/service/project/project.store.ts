@@ -374,10 +374,7 @@ export class ProjectStore {
             let cache = this._projectCache.getValue();
             let projectUpdate = cache.get(key);
             if (projectUpdate) {
-                let permissionIndex = projectUpdate.groups.findIndex( p => p.group.id === gp.group.id);
-                if (permissionIndex > -1) {
-                    projectUpdate.groups.splice(permissionIndex, 1);
-                }
+                projectUpdate.groups = projectUpdate.groups.filter( p => p.group.id !== gp.group.id);
                 this._projectCache.next(cache.set(key, projectUpdate));
             }
             return true;

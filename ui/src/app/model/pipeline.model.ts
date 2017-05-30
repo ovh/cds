@@ -40,27 +40,19 @@ export class Pipeline {
      * @param current
      */
     public static mergeParams(ref: Array<Parameter>, current: Array<Parameter>): Array<Parameter> {
-        let params = new Array<Parameter>();
-        if (ref) {
-            if (!current || current.length === 0) {
-                params.push(...ref);
-            } else {
-                ref.forEach( p => {
-                    let found = false;
-                    for (let i = 0; i < current.length; i++) {
-                        if (current[i].name === p.name) {
-                            found = true;
-                            params.push(current[i]);
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        params.push(p);
-                    }
-                });
-            }
+        if (!ref) {
+            return [];
         }
-        return params;
+
+        if (!current || current.length === 0) {
+            return ref;
+        }
+
+        return ref.map(p => {
+            let idFound = current.findIndex((c) => c.name === p.name);
+
+            return idFound === -1 ? p : current[idFound];
+        });
     }
 
     constructor() {
@@ -103,7 +95,7 @@ export class PipelineBuild {
         if (pb.trigger.scheduled_trigger) {
             return 'CDS scheduler';
         }
-        if (pb.trigger.triggered_by && pb.trigger.triggered_by.username && pb.trigger.triggered_by.username !== '') {
+        if (pb.trigger.triggered_by && pb.trigger.triggered_by.username) {
             return pb.trigger.triggered_by.username;
         }
         if (pb.trigger.vcs_author) {

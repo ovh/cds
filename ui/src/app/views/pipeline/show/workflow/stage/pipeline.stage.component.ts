@@ -8,8 +8,7 @@ import {Project} from '../../../../../model/project.model';
 import {Job} from '../../../../../model/job.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-pipeline-stage',
@@ -28,7 +27,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
 
     @Input()
     set stage(data: Stage) {
-        this.editableStage = _.cloneDeep(data);
+        this.editableStage = cloneDeep(data);
         if (!this.editableStage.prerequisites) {
             this.editableStage.prerequisites = new Array<Prerequisite>();
         }
@@ -80,7 +79,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
      * @param event
      */
     jobEvent(event: ActionEvent): void {
-        let job: Job = _.cloneDeep(this.selectedJob);
+        let job: Job = cloneDeep(this.selectedJob);
         job.action = event.action;
         job.enabled = event.action.enabled;
         if (job.action.actions) {

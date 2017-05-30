@@ -13,7 +13,7 @@
             <div class="viewContent">
 
 
-                <svg width=1000 #svgGraph></svg>
+                <svg width=1200 #svgGraph><g></g></svg>
 
             </div>
         </div>
@@ -21,5 +21,25 @@
 </div>
 <div class="ui text active loader" *ngIf="!viewInit">Loading workflow...</div>
 
-
+<ng-container *ngIf="project && detailedWorkflow">
+    <app-workflow-trigger
+            [project]="project"
+            [workflow]="detailedWorkflow"
+            [triggerSrcNode]="selectedNode"
+            [(trigger)]="selectedTrigger"
+            (triggerChange)="updateTrigger()"
+    #editTriggerComponent></app-workflow-trigger>
+</ng-container>
+<ng-container *ngIf="project && detailedWorkflow">
+    <app-workflow-trigger-join
+            [project]="project"
+            [workflow]="detailedWorkflow"
+            [join]="selectedJoin"
+            [(trigger)]="selectedJoinTrigger"
+            (triggerChange)="updateJoinTrigger()"
+            #editJoinTriggerComponent></app-workflow-trigger-join>
+</ng-container>
+<ng-container *ngIf="project && detailedWorkflow">
+    <app-workflow-trigger-join-src [join]="selectedJoin" (event)="deleteJoinSrc($event)" #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
+</ng-container>
 
