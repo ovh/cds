@@ -62,7 +62,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 func TestAddPollerHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddPollerHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddPollerHandler")
 	router.init()
 
 	//1. Create admin user
@@ -134,7 +134,7 @@ func TestAddPollerHandler(t *testing.T) {
 func TestUpdatePollerHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdatePollerHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdatePollerHandler")
 	router.init()
 
 	//1. Crerouter.ate admin user
@@ -227,7 +227,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 
 func TestGetApplicationPollersHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationPollersHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationPollersHandler")
 	router.init()
 
 	//1. Create admin user
@@ -323,7 +323,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 func TestGetPollersHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler")
 	router.init()
 
 	//1. Create admin user
@@ -415,7 +415,7 @@ func TestGetPollersHandler(t *testing.T) {
 func TestDeletePollerHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler")
 	router.init()
 
 	//1. Create admin user

@@ -17,7 +17,7 @@ import (
 func Test_getVariableAuditInProjectHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getVariableAuditInProjectHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getVariableAuditInProjectHandler")
 	router.init()
 
 	//Create admin user

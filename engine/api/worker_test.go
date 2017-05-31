@@ -88,7 +88,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerCheckingHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerCheckingHandler")
 	router.init()
 
 	//Prepare request
@@ -185,7 +185,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	worker.SetStatus(db, workr.ID, sdk.StatusBuilding)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerWaitingHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerWaitingHandler")
 	router.init()
 
 	//Prepare request

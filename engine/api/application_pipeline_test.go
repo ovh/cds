@@ -18,7 +18,7 @@ import (
 func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_attachPipelinesToApplicationHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_attachPipelinesToApplicationHandler")
 	router.init()
 
 	//Create admin user

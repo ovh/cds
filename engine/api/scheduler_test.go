@@ -22,7 +22,7 @@ import (
 func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler")
 	router.init()
 
 	//Create admin user
@@ -101,7 +101,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addSchedulerApplicationPipelineHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addSchedulerApplicationPipelineHandler")
 	router.init()
 
 	//Create admin user
@@ -174,7 +174,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updatechedulerApplicationPipelineHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updatechedulerApplicationPipelineHandler")
 	router.init()
 
 	//Create admin user
@@ -254,7 +254,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 
 func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t)
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteSchedulerApplicationPipelineHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteSchedulerApplicationPipelineHandler")
 	router.init()
 
 	//Create admin user

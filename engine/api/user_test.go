@@ -272,7 +272,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 func Test_getUserGroupsHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserGroupsHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserGroupsHandler")
 	router.init()
 
 	g1 := &sdk.Group{

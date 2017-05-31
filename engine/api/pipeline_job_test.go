@@ -22,7 +22,7 @@ import (
 func TestAddJobHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler")
 	router.init()
 
 	//1. Create admin user
@@ -91,7 +91,7 @@ func TestAddJobHandler(t *testing.T) {
 func TestUpdateJobHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateJobHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateJobHandler")
 	router.init()
 
 	//1. Create admin user
@@ -175,7 +175,7 @@ func TestUpdateJobHandler(t *testing.T) {
 func TestDeleteJobHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteJobHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteJobHandler")
 	router.init()
 
 	//1. Create admin user

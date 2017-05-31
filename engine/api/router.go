@@ -131,6 +131,11 @@ type Router struct {
 	authDriver auth.Driver
 	mux        *mux.Router
 	prefix     string
+	url        string
+}
+
+func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
+	return &Router{a, m, p, ""}
 }
 
 var mapRouterConfigs = map[string]*routerConfig{}

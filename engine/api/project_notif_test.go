@@ -19,7 +19,7 @@ import (
 func Test_getProjectNotificationsHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getProjectNotificationsHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getProjectNotificationsHandler")
 	router.init()
 
 	//Create admin user

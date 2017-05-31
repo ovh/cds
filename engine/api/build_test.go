@@ -25,7 +25,7 @@ import (
 func Test_updateStepStatusHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updateStepStatusHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updateStepStatusHandler")
 	router.init()
 
 	//Create admin user
@@ -111,7 +111,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addSpawnInfosPipelineBuildJobHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addSpawnInfosPipelineBuildJobHandler")
 	router.init()
 
 	//Create admin user

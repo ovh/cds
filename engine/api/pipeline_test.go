@@ -44,7 +44,7 @@ func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project
 func Test_runPipelineHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler")
 	router.init()
 
 	//1. Create admin user
@@ -121,7 +121,7 @@ func Test_runPipelineHandler(t *testing.T) {
 func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler")
 	router.init()
 
 	//1. Create admin user

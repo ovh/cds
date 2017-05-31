@@ -13,16 +13,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	//La réponse de votre API sur une collection devra obligatoirement fournir dans les en-têtes HTTP :
-	// Content-Range offset – limit / count
-	//  offset : l’index du premier élément retourné par la requête.
-	//  limit : l’index du dernier élément retourné par la requête.
-	//  count : le nombre total d’élément que contient la collection.
-	// Accept-Range resource max
-	//  resource : le type de la pagination, on parlera ici systématiquement de la ressource en cours d’utilisation, ex : client, order, restaurant, …
-	//  max : le nombre maximum pouvant être requêté en une seule fois.
+const (
+	rangeMax     = 50
+	defaultLimit = 10
+)
 
+func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	vars := mux.Vars(r)
 	var limit, offset int
 
@@ -46,12 +43,12 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		offset = 0
 	}
 	if limit == 0 {
-		limit = 10
+		limit = defaultLimit
 	}
 
 	//Maximim range is set to 50
 	w.Header().Add("Accept-Range", "run 50")
-	if limit-offset > 50 {
+	if limit-offset > rangeMax {
 		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", (limit - offset))
 	}
 
@@ -66,14 +63,63 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", (limit - offset))
 	}
 
-	w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
 	code := http.StatusOK
 
+	//RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"
 	if len(runs) < count {
+		baseLinkURL := router.url +
+			router.getRoute("GET", getWorkflowRunsHandler, map[string]string{
+				"permProjectKey": key,
+				"workflowName":   name,
+			})
 		code = http.StatusPartialContent
+
+		//First page
+		firstLimit := limit - offset
+		if firstLimit > count {
+			firstLimit = count
+		}
+		firstLink := fmt.Sprintf(`<%s?offset=0&limit=%d>; rel="first"`, baseLinkURL, firstLimit)
+		link := firstLink
+
+		//Prev page
+		if offset != 0 {
+			prevOffset := offset - (limit - offset)
+			prevLimit := offset
+			if prevOffset < 0 {
+				prevOffset = 0
+			}
+			prevLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="prev"`, baseLinkURL, prevOffset, prevLimit)
+			link = link + ", " + prevLink
+		}
+
+		//Next page
+		if limit < count {
+			nextOffset := limit
+			nextLimit := limit + (limit - offset)
+
+			if nextLimit >= count {
+				nextLimit = count
+
+			}
+
+			nextLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="next"`, baseLinkURL, nextOffset, nextLimit)
+			link = link + ", " + nextLink
+		}
+
+		//Last page
+		lastOffset := count - (limit - offset)
+		if lastOffset < 0 {
+			lastOffset = 0
+		}
+		lastLimit := count
+		lastLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="last"`, baseLinkURL, lastOffset, lastLimit)
+		link = link + ", " + lastLink
+
+		w.Header().Add("Link", link)
 	}
 
-	//TODO implement  RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"
+	w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
 
 	return WriteJSON(w, r, runs, code)
 }

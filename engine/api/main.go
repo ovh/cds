@@ -168,6 +168,7 @@ var mainCmd = &cobra.Command{
 			mux: mux.NewRouter(),
 		}
 		router.init()
+		router.url = viper.GetString(viperURLAPI)
 
 		baseURL = viper.GetString(viperURLUI)
 

@@ -35,7 +35,7 @@ const (
 func Test_getTemplatesHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getTemplatesHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getTemplatesHandler")
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
@@ -68,7 +68,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 func Test_addTemplateHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addTemplateHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addTemplateHandler")
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
@@ -199,7 +199,7 @@ func Test_addTemplateHandler(t *testing.T) {
 func Test_deleteTemplateHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteTemplateHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteTemplateHandler")
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
@@ -315,7 +315,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 func Test_updateTemplateHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addUpdateHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addUpdateHandler")
 	router.init()
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
@@ -483,7 +483,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 func Test_getBuildTemplatesHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getBuildTemplatesHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getBuildTemplatesHandler")
 	router.init()
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
@@ -603,7 +603,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 func Test_applyTemplatesHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_applyTemplatesHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_applyTemplatesHandler")
 	if router.mux == nil {
 		t.Fatal("Router cannot be nil")
 		return

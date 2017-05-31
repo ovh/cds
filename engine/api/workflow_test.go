@@ -20,7 +20,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
 	// Init router
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowsHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowsHandler")
 	router.init()
 	// Init user
 	u, pass := assets.InsertAdminUser(db)
@@ -46,7 +46,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
 	// Init router
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHandler")
 	router.init()
 	// Init user
 	u, pass := assets.InsertAdminUser(db)
@@ -72,7 +72,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	// Init database
 	db := test.SetupPG(t)
 	// Init router
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler")
 	router.init()
 	// Init user
 	u, pass := assets.InsertAdminUser(db)
@@ -98,7 +98,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	// Init database
 	db := test.SetupPG(t)
 	// Init router
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler")
 	router.init()
 	// Init user
 	u, pass := assets.InsertAdminUser(db)
@@ -142,7 +142,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	// Init database
 	db := test.SetupPG(t)
 	// Init router
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler")
 	router.init()
 	// Init user
 	u, pass := assets.InsertAdminUser(db)
@@ -213,7 +213,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	// Init database
 	db := test.SetupPG(t)
 	// Init router
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkflowHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkflowHandler")
 	router.init()
 	// Init user
 	u, pass := assets.InsertAdminUser(db)
