@@ -23,6 +23,10 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	vars := mux.Vars(r)
 	username := vars["name"]
 
+	if !c.User.Admin && username != c.User.Username {
+		return WriteJSON(w, r, nil, http.StatusForbidden)
+	}
+
 	u, errLoad := user.LoadUserWithoutAuth(db, username)
 	if errLoad != nil {
 		return sdk.WrapError(errLoad, "deleteUserHandler> Cannot load user from db")
@@ -49,6 +53,10 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 func GetUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
 	username := vars["name"]
+
+	if !c.User.Admin && username != c.User.Username {
+		return WriteJSON(w, r, nil, http.StatusForbidden)
+	}
 
 	u, err := user.LoadUserWithoutAuth(db, username)
 	if err != nil {
@@ -105,6 +113,10 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	vars := mux.Vars(r)
 	username := vars["name"]
 
+	if !c.User.Admin && username != c.User.Username {
+		return WriteJSON(w, r, nil, http.StatusForbidden)
+	}
+
 	userDB, errload := user.LoadUserWithoutAuth(db, username)
 	if errload != nil {
 		return sdk.WrapError(errload, "getUserHandler: Cannot load user from db")
@@ -125,7 +137,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
 	}
 
-	return nil
+	return WriteJSON(w, r, userBody, http.StatusOK)
 }
 
 // GetUsers fetches all users from databases

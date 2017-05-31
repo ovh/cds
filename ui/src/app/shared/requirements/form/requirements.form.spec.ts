@@ -6,13 +6,13 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
-import {RequirementService} from '../../../service/worker/requirement/requirement.service';
+import {RequirementService} from '../../../service/worker-model/requirement/requirement.service';
 import {SharedModule} from '../../shared.module';
 import {RequirementsFormComponent} from './requirements.form.component';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
-import {RequirementStore} from '../../../service/worker/requirement/requirement.store';
-import {WorkerModelService} from '../../../service/worker/worker.model.service';
+import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
+import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 
 describe('CDS: Requirement Form Component', () => {
 
@@ -124,4 +124,3 @@ describe('CDS: Requirement Form Component', () => {
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(new RequirementEvent('add', r));
     }));
 });
-

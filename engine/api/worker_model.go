@@ -120,6 +120,7 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	var ok bool
 	for _, g := range c.User.Groups {
 		if g.ID == model.GroupID {
+			// TODO yesnault set Group on model
 			for _, a := range g.Admins {
 				if a.ID == c.User.ID {
 					ok = true
@@ -262,6 +263,10 @@ func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
+}
+
+func getWorkerModelCommunications(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return WriteJSON(w, r, sdk.AvailableWorkerModelCommunication, http.StatusOK)
 }
 
 func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {

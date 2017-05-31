@@ -7,12 +7,12 @@ import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
-import {RequirementService} from '../../../service/worker/requirement/requirement.service';
+import {RequirementService} from '../../../service/worker-model/requirement/requirement.service';
 import {RequirementsListComponent} from './requirements.list.component';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
-import {RequirementStore} from '../../../service/worker/requirement/requirement.store';
-import {WorkerModelService} from '../../../service/worker/worker.model.service';
+import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
+import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 
 describe('CDS: Requirement List Component', () => {
 
@@ -85,4 +85,3 @@ describe('CDS: Requirement List Component', () => {
         );
     })));
 });
-

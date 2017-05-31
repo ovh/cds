@@ -42,7 +42,6 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	h.Model.CreatedBy = sdk.User{Username: h.Name}
 	h.Model.Type = string(sdk.HostProcess)
 	h.Model.GroupID = h.GroupID
-	h.Model.OwnerID = h.ID
 
 	if err := worker.InsertWorkerModel(tx, &h.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
 		return sdk.ErrModelNameExist

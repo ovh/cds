@@ -4,20 +4,16 @@
             <div class="fields">
                 <div class="six wide inline field">
                     <label>{{'common_name' | translate}}</label>
-                    <div *ngIf="edit; then wAction; else rAction"></div>
-                    <ng-template #wAction>
-                        <input type="text" name="actionName" [(ngModel)]="editableAction.name"
-                               (keydown)="editableAction.hasChanged = true">
-                    </ng-template>
-                    <ng-template #rAction>
-                        <span class="inline">{{editableAction.name}}</span>
-                    </ng-template>
+                    <input *ngIf="edit;" type="text" name="actionName" [(ngModel)]="editableAction.name"
+                           (keydown)="editableAction.hasChanged = true">
+                    <span *ngIf="!edit;" class="inline">{{editableAction.name}}</span>
                 </div>
                 <div class="seven wide inline field">
                     <label class="labelPadding">{{'common_description' | translate}}</label>
-                    <textarea [disabled]="!edit" name="actionDescription" [(ngModel)]="editableAction.description"
+                    <textarea *ngIf="edit;" [disabled]="!edit" name="actionDescription" [(ngModel)]="editableAction.description"
                               rows="{{getDescriptionHeight()}}"
                               (keydown)="editableAction.hasChanged = true"></textarea>
+                    <markdown *ngIf="!edit;" [data]="editableAction.description"></markdown>
                 </div>
                 <div class="one wide inline field">
                     <div class="ui checkbox">
@@ -53,11 +49,11 @@
         <div class="field">
             <label>{{ 'common_parameters' | translate }}</label>
             <div>
-                <app-parameter-list [project]="project" [parameters]="editableAction.parameters"
+                <app-parameter-list [project]="project" [parameters]="editableAction.parameters" [mode]="edit? 'edit': 'ro'"
                                     (event)="parameterEvent($event)"></app-parameter-list>
             </div>
             <div>
-                <app-parameter-form [project]="project" (createParameterEvent)="parameterEvent($event)"></app-parameter-form>
+                <app-parameter-form *ngIf="edit" [project]="project" (createParameterEvent)="parameterEvent($event)"></app-parameter-form>
             </div>
         </div>
     </div>

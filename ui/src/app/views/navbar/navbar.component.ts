@@ -4,6 +4,7 @@ import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {Project} from '../../model/project.model';
 import {ApplicationStore} from '../../service/application/application.store';
 import {Application} from '../../model/application.model';
+import {User} from '../../model/user.model';
 import {Router} from '@angular/router';
 import {TranslateService} from 'ng2-translate';
 import {List} from 'immutable';
@@ -33,12 +34,16 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
     dropdownOptions = { fullTextSearch: true };
 
+    public currentUser: User;
+
     constructor(private _projectStore: ProjectStore,
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
                 private _router: Router, private _language: LanguageStore,
-                private _translate: TranslateService) {
+                private _translate: TranslateService,
+                private _authentificationStore: AuthentificationStore) {
         this.selectedProjectKey = '#NOPROJECT#';
+        this.currentUser = this._authentificationStore.getUser();
 
         this.langSubscrition = this._language.get().subscribe(l => {
             this.currentCountry = l;

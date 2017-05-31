@@ -1,0 +1,141 @@
+<h2 *ngIf="!workerModel || !workerModel.id">{{ 'worker_model_new_title' | translate }}</h2>
+<h2 *ngIf="workerModel && workerModel.id">{{ 'worker_model_edit_title' | translate }} {{workerModel.name}}</h2>
+<div id="WorkerModelEdit" *ngIf="workerModel" class="scrollingContent">
+  <form class="ui form">
+    <div class="ui grid">
+      <div class="ten wide column">
+          <div class="two fields">
+            <div class="field">
+                <label>{{'worker_model_name' | translate}}</label>
+                <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name" [disabled]="loading">
+            </div>
+            <div class="field">
+                <label>{{'worker_model_group' | translate}}</label>
+                <sm-select class="fluid search"
+                    name="group"
+                    *ngIf="workerModelGroups"
+                    [disabled]="loading"
+                    [(model)]="workerModel.group_id"
+                    [options]="{'fullTextSearch': true}">
+                    <option *ngFor="let group of workerModelGroups" [value]="group.id">{{group.name}}</option>
+                </sm-select>
+            </div>
+          </div>
+          <div class="field" *ngIf="workerModel.id">
+            <label>{{'worker_model_status' | translate}}</label>
+            <div class="ui icon message" *ngIf="workerModel.disabled">
+              <i class="check green icon"></i>
+              <div class="content">
+                <p>{{ 'worker_model_enabled' | translate }}
+                <button class="ui red right floated button" (click)="workerModel.disabled=false">{{ 'worker_model_disable' | translate }}</button>
+                </p>
+              </div>
+            </div>
+
+            <div class="ui icon message" *ngIf="!workerModel.disabled">
+              <i class="warning red icon"></i>
+              <div class="content">
+                <p>{{ 'worker_model_disabled' | translate }}
+                  <button class="ui green right floated button" (click)="workerModel.disabled=true">{{ 'worker_model_enable' | translate }}</button>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="three fields">
+            <div class="seven wide field">
+                <label>{{'worker_model_type' | translate}}</label>
+                <sm-select class="fluid search"
+                    name="type"
+                    *ngIf="workerModelTypes"
+                    [disabled]="loading"
+                    [(model)]="workerModel.type"
+                    [options]="{'fullTextSearch': true}">
+                    <option *ngFor="let type of workerModelTypes" [value]="type">{{type}}</option>
+                </sm-select>
+            </div>
+            <div class="five wide field">
+              <label>{{'worker_model_communication' | translate}}</label>
+              <sm-select class="fluid search"
+                  name="type"
+                  *ngIf="workerModelCommunications"
+                  [disabled]="loading"
+                  [(model)]="workerModel.communication"
+                  [options]="{'fullTextSearch': true}">
+                  <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
+              </sm-select>
+            </div>
+            <div class="four wide field">
+                <label>{{'worker_model_provision' | translate}}</label>
+                <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision" [disabled]="loading">
+            </div>
+          </div>
+          <div class="field">
+            <label>{{'worker_model_image' | translate}}</label>
+            <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.image" [disabled]="loading">
+          </div>
+
+          <div class="field">
+              <app-delete-button *ngIf="workerModel.id" class="right floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
+              <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
+                <i class="save icon"></i>{{ 'btn_save' | translate }}
+              </button>
+          </div>
+      </div>
+      <div class="six wide column">
+        <div class="ui tall stacked segment">
+          <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
+          <p>The goal of CDS is to start a worker when you need it, which should match all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.</p>
+          <p>The goal of a worker model is to describe the capabilities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.</p>
+
+          <i class="fa fa-question-circle"></i> Howtos:
+          <div class="ui list">
+            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/">Create a worker model based on a docker image from Docker Hub</a>
+            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-customized/">Create a worker model with you own image</a>
+            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-openstack/">Create a worker model based on a Openstack image</a>
+            <a class="item" href="https://ovh.github.io/cds/advanced/advanced.worker.model/">Read more</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="ten wide column" *ngIf="workerModel.id">
+        <div class="ui raised segment">
+
+          <h3 class="ui header">{{'worker_model_capabilities' | translate}}
+            <i *ngIf="!workerModel.need_registration" class="fa fa-check" style="cursor:pointer" title="{{'worker_model_capabilities_up_to_date' | translate}}"></i>
+            <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer" title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
+          </h3>
+          <p>
+          Binaries automatically discovered by CDS when a worker model is starting.
+          If your instance of CDS uses an Hatchery, all worker models are scheduled to be registered.
+          </p>
+        </div>
+
+        <table class="ui fixed celled table">
+            <tr *ngFor="let v of workerModel?.capabilities">
+                <td>
+                    <div class="ui">{{v.value}}</div>
+                </td>
+            </tr>
+        </table>
+      </div>
+
+      <div class="six wide column" *ngIf="workerModel.id">
+        <div class="field" *ngIf="workerModel.created_by?.username != ''">
+          <h3>{{'worker_model_created_by' | translate}}</h3>
+          <div class="row">
+            <i class="fa fa-user"></i> {{workerModel.created_by?.fullname}} ({{workerModel.created_by?.username}})
+            <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
+          </div>
+          <div class="row">
+            <i class="fa fa-envelope"></i> {{workerModel.created_by?.email}}
+          </div>
+        </div>
+        <div class="field" *ngIf="workerModel.user_last_modified != ''">
+          <h3>{{'worker_model_last_modified' | translate}}</h3>
+            {{workerModel.user_last_modified}}
+        </div>
+      </div>
+
+    </div>
+  </form>
+</div>

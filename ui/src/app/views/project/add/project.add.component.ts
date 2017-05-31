@@ -149,7 +149,7 @@ export class ProjectAddComponent {
             return;
         }
         this.modalCreateGroup.hide();
-        this._groupService.addGroup(this.newGroup).subscribe(() => {
+        this._groupService.createGroup(this.newGroup).subscribe(() => {
             this._toast.success('', this._translate.instant('group_added'));
             if (this.permissionFormComponent) {
                 this.permissionFormComponent.loadGroups();
