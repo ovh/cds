@@ -91,6 +91,3 @@ DROP TABLE workflow_node_run_artifact;
 DROP TABLE workflow_node_run_job;
 DROP TABLE workflow_node_run;
 DROP TABLE workflow_run;
-
-qc0qd7vkvq
-test_1

@@ -7,6 +7,7 @@ engine/api/.secrets
 engine/hatchery/hatchery
 engine/worker/worker
 *.out
+coverage.html
 .bash_aliases
 npm-debug.log
 

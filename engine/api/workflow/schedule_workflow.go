@@ -18,7 +18,7 @@ var (
 func dequeueWorkflows(c context.Context) {
 	for {
 		run := &sdk.WorkflowNodeRun{}
-		cache.DequeueWithContext(queueWorkflowNodeRun, run, c)
+		cache.DequeueWithContext(c, queueWorkflowNodeRun, run)
 		if c.Err() == nil {
 			chanWorkflowNodeRun <- run
 		} else {
@@ -28,6 +28,7 @@ func dequeueWorkflows(c context.Context) {
 	}
 }
 
+//Scheduler schedules workflow_node_run
 func Scheduler(c context.Context) error {
 	go dequeueWorkflows(c)
 	for {

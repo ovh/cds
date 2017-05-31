@@ -4,16 +4,16 @@ import (
 	"context"
 	"sort"
 	"testing"
-
 	"time"
 
 	"github.com/fsamin/go-dump"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestManualRun1(t *testing.T) {
@@ -386,6 +386,17 @@ func TestManualRun3(t *testing.T) {
 		j := &jobs[i]
 		tx, _ := db.Begin()
 
+		//BookNodeJobRun
+		_, err = BookNodeJobRun(j.ID, &sdk.Hatchery{
+			Name: "Hatchery",
+			ID:   1,
+		})
+		assert.NoError(t, err)
+		if t.Failed() {
+			tx.Rollback()
+			t.FailNow()
+		}
+
 		//AddSpawnInfosNodeJobRun
 		j, err := AddSpawnInfosNodeJobRun(db, j.ID, []sdk.SpawnInfo{
 			sdk.SpawnInfo{
@@ -395,17 +406,6 @@ func TestManualRun3(t *testing.T) {
 					ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
 				},
 			},
-		})
-		assert.NoError(t, err)
-		if t.Failed() {
-			tx.Rollback()
-			t.FailNow()
-		}
-
-		//BookNodeJobRun
-		_, err = BookNodeJobRun(j.ID, &sdk.Hatchery{
-			Name: "Hatchery",
-			ID:   1,
 		})
 		assert.NoError(t, err)
 		if t.Failed() {
@@ -424,6 +424,11 @@ func TestManualRun3(t *testing.T) {
 			},
 		})
 
+		//TestLoadNodeJobRunSecrets
+		secrets, err := LoadNodeJobRunSecrets(db, j)
+		assert.NoError(t, err)
+		assert.Len(t, secrets, 1)
+
 		//TestAddLog
 		assert.NoError(t, AddLog(db, j, &sdk.Log{
 			Val: "This is a log",
@@ -439,11 +444,6 @@ func TestManualRun3(t *testing.T) {
 			tx.Rollback()
 			t.FailNow()
 		}
-
-		//TestLoadNodeJobRunSecrets
-		secrets, err := LoadNodeJobRunSecrets(db, j)
-		assert.NoError(t, err)
-		assert.Len(t, secrets, 1)
 
 		//TestUpdateNodeJobRunStatus
 		assert.NoError(t, UpdateNodeJobRunStatus(db, j, sdk.StatusSuccess))
@@ -467,7 +467,7 @@ func TestManualRun3(t *testing.T) {
 	defer cancel()
 	Scheduler(c)
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	jobs, err = LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)

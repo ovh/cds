@@ -1,14 +1,13 @@
 package workflow
 
 import (
-	"time"
-
 	"fmt"
-
 	"sort"
+	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"

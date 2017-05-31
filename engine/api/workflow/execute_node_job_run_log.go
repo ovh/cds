@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+//LoadStepLogs load logs (workflow_node_run_job_logs) for a job (workflow_node_run_job) for a specific step_order
 func LoadStepLogs(db gorp.SqlExecutor, id int64, order int64) (*sdk.Log, error) {
 	query := `
 		SELECT id, workflow_node_run_job_id, workflow_node_run_id, start, last_modified, done, step_order, value
@@ -34,6 +35,7 @@ func LoadStepLogs(db gorp.SqlExecutor, id int64, order int64) (*sdk.Log, error) 
 	return logs, nil
 }
 
+//LoadLogs load logs (workflow_node_run_job_logs) for a job (workflow_node_run_job)
 func LoadLogs(db gorp.SqlExecutor, id int64) ([]sdk.Log, error) {
 	query := `
 		SELECT id, workflow_node_run_job_id, workflow_node_run_id, start, last_modified, done, step_order, value
@@ -72,7 +74,7 @@ func LoadLogs(db gorp.SqlExecutor, id int64) ([]sdk.Log, error) {
 	return logs, nil
 }
 
-func InsertLog(db gorp.SqlExecutor, logs *sdk.Log) error {
+func insertLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 	if logs.Start == nil {
 		logs.Start, _ = ptypes.TimestampProto(time.Now())
 	}
@@ -105,7 +107,7 @@ func InsertLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 	return nil
 }
 
-func UpdateLog(db gorp.SqlExecutor, logs *sdk.Log) error {
+func updateLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 	if logs.Start == nil {
 		logs.Start, _ = ptypes.TimestampProto(time.Now())
 	}

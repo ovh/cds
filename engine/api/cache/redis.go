@@ -164,7 +164,8 @@ read:
 	}
 }
 
-func (s *RedisStore) DequeueWithContext(queueName string, value interface{}, c context.Context) {
+//DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
+func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
 	if s.Client == nil {
 		log.Error("redis> cannot get redis client")
 		return

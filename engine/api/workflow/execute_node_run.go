@@ -38,24 +38,16 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 		return nil
 	}
 
-	//Reload the workflow run ID to get the node, and the pipeline...
-	workflowRun, errw := loadRunByID(tx, n.WorkflowRunID)
-	if errw != nil {
-		return sdk.WrapError(errw, "workflow.execute> Unable to load run id=%id", n.WorkflowRunID)
-	}
-
 	//If status is not waiting neither build: nothing to do
 	if n.Status != sdk.StatusWaiting.String() && n.Status != sdk.StatusBuilding.String() {
 		return nil
 	}
 
-	//New status is building
-	n.Status = sdk.StatusBuilding.String()
-	newStatus := sdk.StatusBuilding.String()
+	newStatus := sdk.StatusWaiting.String()
 
 	//If no stages ==> success
 	if len(n.Stages) == 0 {
-		n.Status = sdk.StatusSuccess.String()
+		newStatus = sdk.StatusSuccess.String()
 	}
 
 	//Browse stages
@@ -109,9 +101,9 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := loadRunByID(tx, workflowRun.ID)
+	updatedWorkflowRun, err := loadRunByID(tx, n.WorkflowRunID)
 	if err != nil {
-		return sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", workflowRun.ID)
+		return sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
@@ -142,7 +134,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	*/
 
 	//Update the stage status
-	stage.Status = sdk.StatusBuilding
+	stage.Status = sdk.StatusWaiting
 
 	//Browse the jobs
 	for _, job := range stage.Jobs {

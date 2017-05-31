@@ -45,13 +45,40 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 		return fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status.String())
 	}
 
-	if err := UpdateNodeJobRun(db, job); err != nil {
-		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
-	}
-
 	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID)
 	if errLoad != nil {
 		return errLoad
+	}
+
+	//If the job has been set to building, set the stage to building
+	var stageUpdated bool
+	if job.Status == sdk.StatusBuilding.String() {
+		for i := range node.Stages {
+			s := &node.Stages[i]
+			var found bool
+			//Find the right stage
+			for _, j := range s.Jobs {
+				if j.Action.ID == job.Job.Job.Action.ID {
+					found = true
+					break
+				}
+			}
+			if found && s.Status == sdk.StatusWaiting {
+				s.Status = sdk.StatusBuilding
+				stageUpdated = true
+				break
+			}
+		}
+	}
+
+	if stageUpdated {
+		if err := updateWorkflowNodeRun(db, node); err != nil {
+			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
+		}
+	}
+
+	if err := UpdateNodeJobRun(db, job); err != nil {
+		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
 	event.PublishJobRun(node, job)
@@ -106,13 +133,12 @@ func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerNam
 	job.Model = workerModel
 	job.Job.WorkerName = workerName
 	job.Start = time.Now()
-	job.Status = sdk.StatusBuilding.String()
 
 	if err := prepareSpawnInfos(job, infos); err != nil {
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot prepare spawn infos")
 	}
 
-	if err := UpdateNodeJobRun(db, job); err != nil {
+	if err := UpdateNodeJobRunStatus(db, job, sdk.StatusBuilding); err != nil {
 		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run")
 	}
 
@@ -200,14 +226,14 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 	}
 
 	if existingLogs == nil {
-		if err := InsertLog(db, logs); err != nil {
+		if err := insertLog(db, logs); err != nil {
 			return sdk.WrapError(err, "AddLog> Cannot insert log")
 		}
 	} else {
 		existingLogs.Val += logs.Val
 		existingLogs.LastModified = logs.LastModified
 		existingLogs.Done = logs.Done
-		if err := UpdateLog(db, existingLogs); err != nil {
+		if err := updateLog(db, existingLogs); err != nil {
 			return sdk.WrapError(err, "AddLog> Cannot update log")
 		}
 	}

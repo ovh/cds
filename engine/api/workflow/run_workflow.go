@@ -3,16 +3,18 @@ package workflow
 import (
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-
-	"github.com/go-gorp/gorp"
 )
 
+//RunFromHook is the entry point to trigger a workflow from a hook
 func RunFromHook(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
 	return nil, nil
 }
 
+//ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
 func ManualRunFromNode(db gorp.SqlExecutor, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, error) {
 	lastWorkflowRun, err := LoadRun(db, w.ProjectKey, w.Name, number)
 	if err != nil {
@@ -31,6 +33,7 @@ func ManualRunFromNode(db gorp.SqlExecutor, w *sdk.Workflow, number int64, e *sd
 	return lastWorkflowRun, nil
 }
 
+//ManualRun is the entry point to trigger a workflow manually
 func ManualRun(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error) {
 	lastWorkflowRun, err := LoadLastRun(db, w.ProjectKey, w.Name)
 	if err != nil {
