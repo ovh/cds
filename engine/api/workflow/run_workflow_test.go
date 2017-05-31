@@ -22,8 +22,6 @@ func TestManualRun1(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 
-	db.Exec("truncate workflow cascade")
-
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -199,8 +197,6 @@ func TestManualRun2(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
 
-	db.Exec("truncate workflow cascade")
-
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	//First pipeline
@@ -297,8 +293,6 @@ func TestManualRun3(t *testing.T) {
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
-
-	db.Exec("truncate workflow cascade")
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 

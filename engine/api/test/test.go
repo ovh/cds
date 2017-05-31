@@ -2,12 +2,17 @@ package test
 
 import (
 	"flag"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"os/user"
+	"path"
 	"syscall"
 	"testing"
 
 	"github.com/go-gorp/gorp"
+
+	"encoding/json"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
@@ -47,15 +52,41 @@ type bootstrapf func(bootstrap.DefaultValues, func() *gorp.DbMap) error
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
-	DBDriver = flag.Lookup("dbDriver").Value.String()
-	dbUser = flag.Lookup("dbUser").Value.String()
-	dbPassword = flag.Lookup("dbPassword").Value.String()
-	dbName = flag.Lookup("dbName").Value.String()
-	dbHost = flag.Lookup("dbHost").Value.String()
-	dbPort = flag.Lookup("dbPort").Value.String()
-	dbSSLMode = flag.Lookup("sslMode").Value.String()
-
 	log.SetLogger(t)
+
+	//Try to load flags from config flags, else load from flags
+	var f string
+	u, _ := user.Current()
+	if u != nil {
+		f = path.Join(u.HomeDir, ".cds", "tests.cfg.json")
+	}
+	if _, err := os.Stat(f); err == nil {
+		t.Logf("Tests database configuration read from %s", f)
+		btes, err := ioutil.ReadFile(f)
+		if err != nil {
+			t.Fatalf("Error reading %s: %v", f, err)
+		}
+		if len(btes) != 0 {
+			cfg := map[string]string{}
+			if err := json.Unmarshal(btes, &cfg); err == nil {
+				DBDriver = cfg["dbDriver"]
+				dbUser = cfg["dbUser"]
+				dbPassword = cfg["dbPassword"]
+				dbName = cfg["dbName"]
+				dbHost = cfg["dbHost"]
+				dbPort = cfg["dbPort"]
+				dbSSLMode = cfg["sslMode"]
+			}
+		}
+	} else {
+		DBDriver = flag.Lookup("dbDriver").Value.String()
+		dbUser = flag.Lookup("dbUser").Value.String()
+		dbPassword = flag.Lookup("dbPassword").Value.String()
+		dbName = flag.Lookup("dbName").Value.String()
+		dbHost = flag.Lookup("dbHost").Value.String()
+		dbPort = flag.Lookup("dbPort").Value.String()
+		dbSSLMode = flag.Lookup("sslMode").Value.String()
+	}
 
 	cache.Initialize("local", "", "", 30)
 

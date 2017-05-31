@@ -26,16 +26,16 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	vars := mux.Vars(r)
 	var limit, offset int
 
-	offsetS, ok := vars["offset"]
+	offsetS := r.FormValue("offset")
 	var errAtoi error
-	if ok {
+	if offsetS != "" {
 		offset, errAtoi = strconv.Atoi(offsetS)
 		if errAtoi != nil {
 			return sdk.ErrWrongRequest
 		}
 	}
-	limitS, ok := vars["limit"]
-	if ok {
+	limitS := r.FormValue("limit")
+	if limitS != "" {
 		limit, errAtoi = strconv.Atoi(limitS)
 		if errAtoi != nil {
 			return sdk.ErrWrongRequest
@@ -60,6 +60,10 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	runs, offset, limit, count, err := workflow.LoadRuns(db, key, name, offset, limit)
 	if err != nil {
 		return sdk.WrapError(err, "getWorkflowRunsHandler> Unable to load workflow runs")
+	}
+
+	if limit-offset > count {
+		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", (limit - offset))
 	}
 
 	w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
