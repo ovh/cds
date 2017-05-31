@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"strings"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -91,12 +90,14 @@ func insertWorkflowNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) er
 	return nil
 }
 
+//DeleteNodeJobRuns deletes all workflow_node_run_job for a given workflow_node_run
 func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 	query := `delete from workflow_node_run_job where workflow_node_run_id = $1`
 	_, err := db.Exec(query, nodeID)
 	return err
 }
 
+//UpdateNodeJobRun updates a workflow_node_run_job
 func UpdateNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	dbj := JobRun(*j)
 	if _, err := db.Update(&dbj); err != nil {

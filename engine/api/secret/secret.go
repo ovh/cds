@@ -189,6 +189,7 @@ func Decrypt(data []byte) ([]byte, error) {
 	return out, nil
 }
 
+//DecryptVariable decrypts variable value using aes+hmac algorithm
 func DecryptVariable(v *sdk.Variable) error {
 	if !sdk.NeedPlaceholder(v.Type) {
 		return nil
