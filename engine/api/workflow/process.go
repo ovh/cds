@@ -152,10 +152,6 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		Stages:         n.Pipeline.Stages,
 	}
 
-	for i := range run.Stages {
-		run.Stages[i].Status = sdk.StatusWaiting
-	}
-
 	run.SourceNodeRuns = sourceNodeRuns
 	if sourceNodeRuns != nil {
 		//Get all the nodeRun from the sources

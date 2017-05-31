@@ -53,6 +53,12 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	//Browse stages
 	for stageIndex := range n.Stages {
 		stage := &n.Stages[stageIndex]
+
+		//Initialize stage status at waiting
+		if stage.Status.String() == "" {
+			stage.Status = sdk.StatusWaiting
+		}
+
 		if stage.Status == sdk.StatusWaiting {
 			//Add job to Queue
 			//Insert data in workflow_node_run_job
