@@ -571,7 +571,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		return sdk.WrapError(err, "cannot check if pipeline exist")
 	}
 	if exist {
-		log.Warning("addPipeline> Pipeline %s already exists\n", p.Name)
+		log.Warning("addPipeline> Pipeline %s already exists", p.Name)
 		return sdk.ErrConflict
 	}
 
@@ -604,7 +604,6 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		}
 
 		if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
-			log.Warning("addPipelineHandler> Cannot update application last modified date: %s\n", err)
 			return sdk.WrapError(err, "Cannot update application last modified date")
 		}
 	}
