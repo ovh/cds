@@ -568,8 +568,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	// Check that pipeline does not already exists
 	exist, err := pipeline.ExistPipeline(db, proj.ID, p.Name)
 	if err != nil {
-		log.Warning("addPipeline> cannot check if pipeline exist: %s\n", err)
-		return err
+		return sdk.WrapError(err, "cannot check if pipeline exist")
 	}
 	if exist {
 		log.Warning("addPipeline> Pipeline %s already exists\n", p.Name)
@@ -578,20 +577,17 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("addPipelineHandler> Cannot start transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "Cannot start transaction")
 	}
 	defer tx.Rollback()
 
 	p.ProjectID = proj.ID
 	if err := pipeline.InsertPipeline(tx, &p, c.User); err != nil {
-		log.Warning("addPipelineHandler> Cannot insert pipeline: %s\n", err)
-		return err
+		return sdk.WrapError(err, "Cannot insert pipeline")
 	}
 
 	if err := group.LoadGroupByProject(tx, proj); err != nil {
-		log.Warning("addPipelineHandler> Cannot load groupfrom project: %s\n", err)
-		return err
+		return sdk.WrapError(err, "Cannot load groupfrom project")
 	}
 
 	for _, g := range proj.ProjectGroups {
@@ -599,29 +595,25 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	}
 
 	if err := group.InsertGroupsInPipeline(tx, proj.ProjectGroups, p.ID); err != nil {
-		log.Warning("addPipelineHandler> Cannot add groups on pipeline: %s\n", err)
-		return err
+		return sdk.WrapError(err, "Cannot add groups on pipeline")
 	}
 
 	for _, app := range p.AttachedApplication {
 		if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
-			log.Warning("addPipelineHandler> Cannot attach pipeline %d to %d: %s\n", app.ID, p.ID, err)
-			return err
+			return sdk.WrapError(err, "Cannot attach pipeline %d to %d", app.ID, p.ID)
 		}
 
 		if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
 			log.Warning("addPipelineHandler> Cannot update application last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "Cannot update application last modified date")
 		}
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
-		log.Warning("addPipelineHandler> Cannot update project last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "Cannot update project last modified date")
 	}
 	if err := tx.Commit(); err != nil {
-		log.Warning("addPipelineHandler> Cannot commit transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "Cannot commit transaction")
 	}
 
 	p.Permission = permission.PermissionReadWriteExecute
