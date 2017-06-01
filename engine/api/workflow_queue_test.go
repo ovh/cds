@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -32,6 +33,7 @@ type test_runWorkflowCtx struct {
 	job         *sdk.WorkflowNodeJobRun
 	worker      *sdk.Worker
 	workerToken string
+	hatchery    *sdk.Hatchery
 }
 
 func test_runWorkflow(t *testing.T, db *gorp.DbMap, testName string) test_runWorkflowCtx {
@@ -153,6 +155,24 @@ func test_registerWorker(t *testing.T, db *gorp.DbMap, ctx *test_runWorkflowCtx)
 	test.NoError(t, err)
 }
 
+func test_registerHatchery(t *testing.T, db *gorp.DbMap, ctx *test_runWorkflowCtx) {
+	//Generate token
+	tk, err := token.GenerateToken()
+	test.NoError(t, err)
+	//Insert token
+	test.NoError(t, token.InsertToken(db, ctx.user.Groups[0].ID, tk, sdk.Persistent))
+
+	ctx.hatchery = &sdk.Hatchery{
+		UID:      tk,
+		LastBeat: time.Now(),
+		Name:     sdk.RandomString(10),
+		GroupID:  ctx.user.Groups[0].ID,
+	}
+
+	err = hatchery.InsertHatchery(db, ctx.hatchery)
+	test.NoError(t, err)
+}
+
 func Test_getWorkflowJobQueueHandler(t *testing.T) {
 	db := test.SetupPG(t)
 	ctx := test_runWorkflow(t, db, "/Test_getWorkflowJobQueueHandler")
@@ -229,6 +249,26 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 	ctx := test_runWorkflow(t, db, "/Test_postBookWorkflowJobHandler")
 	test_getWorkflowJob(t, db, &ctx)
 	assert.NotNil(t, ctx.job)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": ctx.project.Key,
+		"workflowName":   ctx.workflow.Name,
+		"id":             fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	//Register the hatchery
+	test_registerHatchery(t, db, &ctx)
+
+	//TakeBook
+	uri := router.getRoute("POST", postBookWorkflowJobHandler, vars)
+	test.NotEmpty(t, uri)
+
+	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "POST", uri, nil)
+	rec := httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
 }
 
 func Test_postSpawnInfosWorkflowJobHandler(t *testing.T) {
@@ -300,10 +340,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 }
-func Test_postWorkflowJobLogsHandler(t *testing.T) {
-	//db := test.SetupPG(t)
-	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
-}
+
 func Test_postWorkflowJobStepStatusHandler(t *testing.T) {
 	//db := test.SetupPG(t)
 	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")

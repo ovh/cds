@@ -71,7 +71,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 	test.NoError(t, user.InsertUser(db, u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -171,7 +171,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	test.NoError(t, user.InsertUser(db, u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -284,9 +284,9 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 	test.NoError(t, user.InsertUser(db, u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", nil)
 
-	proj2 := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE_2", "TEST_LAST_UPDATE_2", u)
+	proj2 := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE_2", "TEST_LAST_UPDATE_2", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -412,7 +412,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	test.NoError(t, user.InsertUser(db, u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -534,7 +534,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 	test.NoError(t, err)
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

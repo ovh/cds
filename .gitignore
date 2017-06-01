@@ -10,6 +10,7 @@ engine/worker/worker
 coverage.html
 .bash_aliases
 npm-debug.log
+debug.test
 
 # UI
 ui/node_modules
