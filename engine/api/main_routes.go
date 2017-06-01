@@ -133,7 +133,7 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/workflows", POST(postWorkflowHandler), GET(getWorkflowsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}", GET(getWorkflowHandler), PUT(putWorkflowHandler), DELETE(deleteWorkflowHandler))
 	// Workflows run
-	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", GET(getWorkflowRunsHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", GET(getWorkflowRunsHandler), POST(postWorkflowRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", GET(getLatestWorkflowRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", GET(getWorkflowRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}", GET(getWorkflowNodeRunHandler))
@@ -194,13 +194,17 @@ func (router *Router) init() {
 
 	//Workflow queue
 	router.Handle("/queue/workflows", GET(getWorkflowJobQueueHandler))
-	router.Handle("/queue/workflows/requirements/errors", POST(requirementsErrorHandler))
-	router.Handle("/queue/workflows/{id}/take", POST(postTakeWorkflowJobHandler))
-	router.Handle("/queue/workflows/{id}/book", POST(postBookWorkflowJobHandler))
+	router.Handle("/queue/workflows/requirements/errors", NeedWorker(), POST(postWorkflowJobRequirementsErrorHandler))
+	router.Handle("/queue/workflows/{id}/take", NeedWorker(), POST(postTakeWorkflowJobHandler))
+	router.Handle("/queue/workflows/{id}/book", NeedHatchery(), POST(postBookWorkflowJobHandler))
 	router.Handle("/queue/workflows/{id}/spawn/infos", NeedHatchery(), POST(postSpawnInfosWorkflowJobHandler))
-	router.Handle("/queue/workflows/{id}/result", POST(postWorkflowJobResultHandler))
-	router.Handle("/queue/workflows/{id}/log", POST(postWorkflowJobLogsHandler))
-	router.Handle("/queue/workflows/{id}/step", POST(postWorkflowJobStepStatusHandler))
+	router.Handle("/queue/workflows/{permID}/result", NeedWorker(), POSTEXECUTE(postWorkflowJobResultHandler))
+	router.Handle("/queue/workflows/{permID}/log", NeedWorker(), POSTEXECUTE(postWorkflowJobLogsHandler))
+	router.Handle("/queue/workflows/{permID}/test", NeedWorker(), POSTEXECUTE(postWorkflowJobTestsResultsHandler))
+	router.Handle("/queue/workflows/{permID}/variable", NeedWorker(), POSTEXECUTE(postWorkflowJobVariableHandler))
+	router.Handle("/queue/workflows/{permID}/step", NeedWorker(), POSTEXECUTE(postWorkflowJobStepStatusHandler))
+	router.Handle("/queue/workflows/{permID}/artifact", NeedWorker(), POSTEXECUTE(postWorkflowJobArtifactHandler), POST(getWorkflowJobArtifactsHandler))
+	router.Handle("/queue/workflows/{permID}/artifact/{artifactId}", NeedWorker(), GET(getDownloadArtifactHandler))
 
 	router.Handle("/variable/type", GET(getVariableTypeHandler))
 	router.Handle("/parameter/type", GET(getParameterTypeHandler))

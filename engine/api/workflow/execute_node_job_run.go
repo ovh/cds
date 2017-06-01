@@ -116,7 +116,7 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerName string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
+func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
 	job, err := LoadAndLockNodeJobRun(db, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot load node job run")
@@ -132,6 +132,7 @@ func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerNam
 
 	job.Model = workerModel
 	job.Job.WorkerName = workerName
+	job.Job.WorkerID = workerID
 	job.Start = time.Now()
 
 	if err := prepareSpawnInfos(job, infos); err != nil {

@@ -168,3 +168,79 @@ func getWorkflowNodeRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 	return WriteJSON(w, r, run, http.StatusOK)
 }
+
+type postWorkflowRunHandlerOption struct {
+	Hook       *sdk.WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	Manual     *sdk.WorkflowNodeRunManual    `json:"manual,omitempty"`
+	Number     *int64                        `json:"number,omitempty"`
+	FromNodeID *int64                        `json:"from_node,omitempty"`
+}
+
+func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	name := vars["workflowName"]
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	opts := &postWorkflowRunHandlerOption{}
+	if err := UnmarshalBody(r, opts); err != nil {
+		return err
+	}
+
+	wf, err := workflow.Load(tx, key, name, c.User)
+	if err != nil {
+		return sdk.WrapError(err, "postWorkflowRunHandler> Unable to load workflow")
+	}
+
+	var lastRun *sdk.WorkflowRun
+	if opts.Number != nil {
+		lastRun, err = workflow.LoadRun(tx, key, name, *opts.Number)
+		if err != nil {
+			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to load workflow run")
+		}
+	}
+
+	var wr *sdk.WorkflowRun
+
+	//Run from hook
+	if opts.Hook != nil {
+		wr, err = workflow.RunFromHook(tx, wf, opts.Hook)
+		if err != nil {
+			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+		}
+	} else {
+		//Default manual run
+		if opts.Manual == nil {
+			opts.Manual = &sdk.WorkflowNodeRunManual{
+				User: *c.User,
+			}
+		}
+
+		//Manual run
+		if lastRun != nil {
+			if opts.FromNodeID == nil {
+				opts.FromNodeID = &lastRun.Workflow.RootID
+			}
+			wr, err = workflow.ManualRunFromNode(tx, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
+			if err != nil {
+				return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+			}
+		} else {
+			wr, err = workflow.ManualRun(tx, wf, opts.Manual)
+			if err != nil {
+				return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+			}
+		}
+	}
+
+	//Commit and return success
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+	}
+	return WriteJSON(w, r, wr, http.StatusOK)
+}

@@ -44,15 +44,6 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
 	}
 
-	// Load worker
-	caller, err := worker.LoadWorker(db, c.Worker.ID)
-	if err != nil {
-		return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot load calling worker")
-	}
-	if caller.Status != sdk.StatusChecking {
-		return sdk.WrapError(sdk.ErrWrongRequest, "postTakeWorkflowJobHandler> worker %s is not available to for build (status = %s)", caller.ID, caller.Status)
-	}
-
 	// Start a tx
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
@@ -61,9 +52,9 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	defer tx.Rollback()
 
 	//Load worker model
-	workerModel := caller.Name
-	if caller.Model != 0 {
-		wm, errModel := worker.LoadWorkerModelByID(db, caller.Model)
+	workerModel := c.Worker.Name
+	if c.Worker.Model != 0 {
+		wm, errModel := worker.LoadWorkerModelByID(db, c.Worker.Model)
 		if errModel != nil {
 			return sdk.ErrNoWorkerModel
 		}
@@ -83,7 +74,7 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	//Take node job run
-	job, errTake := workflow.TakeNodeJobRun(tx, id, workerModel, caller.Name, infos)
+	job, errTake := workflow.TakeNodeJobRun(tx, id, workerModel, c.Worker.Name, c.Worker.ID, infos)
 	if errTake != nil {
 		return sdk.WrapError(errTake, "postTakeWorkflowJobHandler> Cannot take job %d", id)
 	}
@@ -159,7 +150,7 @@ func postSpawnInfosWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db
 }
 
 func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	id, errc := requestVarInt(r, "id")
+	id, errc := requestVarInt(r, "permID")
 	if errc != nil {
 		return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
 	}
@@ -214,7 +205,7 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 
 //TODO grpc
 func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	id, errr := requestVarInt(r, "id")
+	id, errr := requestVarInt(r, "permID")
 	if errr != nil {
 		return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 	}
@@ -237,7 +228,7 @@ func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 }
 
 func postWorkflowJobStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	id, errr := requestVarInt(r, "id")
+	id, errr := requestVarInt(r, "permID")
 	if errr != nil {
 		return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 	}
@@ -288,4 +279,24 @@ func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	return WriteJSON(w, r, jobs, http.StatusOK)
+}
+
+func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return nil
+}
+
+func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return nil
+}
+
+func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return nil
+}
+
+func getWorkflowJobArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return nil
+}
+
+func getDownloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return nil
 }

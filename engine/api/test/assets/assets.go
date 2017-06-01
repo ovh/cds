@@ -48,6 +48,9 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string, u *sdk.Us
 		return nil
 	}
 
+	group.InsertUserInGroup(db, g.ID, u.ID, true)
+	u.Groups = append(u.Groups, g)
+
 	return &proj
 }
 
