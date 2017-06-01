@@ -549,7 +549,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	project, errl := project.Load(db, key, c.User, project.LoadOptions.Default)
+	proj, errl := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if errl != nil {
 		return sdk.WrapError(errl, "AddPipeline: Cannot load %s", key)
 	}
@@ -566,7 +566,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	}
 
 	// Check that pipeline does not already exists
-	exist, err := pipeline.ExistPipeline(db, project.ID, p.Name)
+	exist, err := pipeline.ExistPipeline(db, proj.ID, p.Name)
 	if err != nil {
 		log.Warning("addPipeline> cannot check if pipeline exist: %s\n", err)
 		return err
@@ -583,22 +583,22 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	}
 	defer tx.Rollback()
 
-	p.ProjectID = project.ID
+	p.ProjectID = proj.ID
 	if err := pipeline.InsertPipeline(tx, &p, c.User); err != nil {
 		log.Warning("addPipelineHandler> Cannot insert pipeline: %s\n", err)
 		return err
 	}
 
-	if err := group.LoadGroupByProject(tx, project); err != nil {
+	if err := group.LoadGroupByProject(tx, proj); err != nil {
 		log.Warning("addPipelineHandler> Cannot load groupfrom project: %s\n", err)
 		return err
 	}
 
-	for _, g := range project.ProjectGroups {
+	for _, g := range proj.ProjectGroups {
 		p.GroupPermission = append(p.GroupPermission, g)
 	}
 
-	if err := group.InsertGroupsInPipeline(tx, project.ProjectGroups, p.ID); err != nil {
+	if err := group.InsertGroupsInPipeline(tx, proj.ProjectGroups, p.ID); err != nil {
 		log.Warning("addPipelineHandler> Cannot add groups on pipeline: %s\n", err)
 		return err
 	}
@@ -615,6 +615,10 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 		}
 	}
 
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		log.Warning("addPipelineHandler> Cannot update project last modified date: %s\n", err)
+		return err
+	}
 	if err := tx.Commit(); err != nil {
 		log.Warning("addPipelineHandler> Cannot commit transaction: %s\n", err)
 		return err
