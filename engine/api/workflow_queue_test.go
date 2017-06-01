@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -40,6 +41,8 @@ func test_runWorkflow(t *testing.T, db *gorp.DbMap, testName string) test_runWor
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
+	group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true)
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
