@@ -3,7 +3,7 @@ import {
     ChangeDetectorRef,
     Component,
     ComponentFactoryResolver,
-    ComponentRef,
+    ComponentRef, HostListener,
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
@@ -57,6 +57,8 @@ export class WorkflowShowComponent implements AfterViewInit {
     @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
+    svgWidth = 1500;
+
 
     @ViewChild('editTriggerComponent')
     editTriggerComponent: WorkflowTriggerComponent;
@@ -110,10 +112,27 @@ export class WorkflowShowComponent implements AfterViewInit {
         if (this.detailedWorkflow) {
             this.initWorkflow();
         }
+    }
 
+    @HostListener('window:resize', ['$event'])
+    onResize(event) {
+        if (event) {
+            this.svgWidth = event.target.innerWidth - 200;
+        } else {
+            console.log(window);
+            this.svgWidth = window.innerWidth - 200;
+        }
+
+        let svg = d3.select('svg');
+        let inner = d3.select('svg g');
+        let svgWidth = +svg.attr('width');
+        let xCenterOffset = (svgWidth - this.g.graph().width) / 2;
+        inner.attr('transform', 'translate(' + xCenterOffset + ', 20)');
+        svg.attr('height', this.g.graph().height + 40);
     }
 
     initWorkflow() {
+        this.svgWidth = window.innerWidth - 200;
         // this.g = new dagreD3.graphlib.Graph().setGraph({ directed: false, rankDir: 'LR'});
         this.g = new dagreD3.graphlib.Graph().setGraph({directed: false});
         if (this.detailedWorkflow.root) {
@@ -128,6 +147,8 @@ export class WorkflowShowComponent implements AfterViewInit {
 
         // Set up an SVG group so that we can translate the final graph.
         let svg = d3.select('svg');
+        svg.attr('width', this.svgWidth);
+
         let inner = d3.select('svg g');
         /* FIXME : resize child
          let zoom = d3.behavior.zoom().on('zoom', () => {
@@ -163,7 +184,7 @@ export class WorkflowShowComponent implements AfterViewInit {
         this.render(inner, this.g);
 
         // Center the graph
-        this.centerGraph(svg, inner);
+        this.onResize(null);
 
         setTimeout(() => {
             svg.selectAll('g.edgePath').on('click', d => {
@@ -182,13 +203,6 @@ export class WorkflowShowComponent implements AfterViewInit {
                 }
             });
         }, 1);
-    }
-
-    centerGraph(svg: any, inner: any): void {
-        let svgWidth = +svg.attr('width');
-        let xCenterOffset = (svgWidth - this.g.graph().width) / 2;
-        inner.attr('transform', 'translate(' + xCenterOffset + ', 20)');
-        svg.attr('height', this.g.graph().height + 40);
     }
 
     createEdge(from: string, to: string, options: {}): void {

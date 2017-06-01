@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeTrigger} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
@@ -9,6 +9,9 @@ import {SemanticModalComponent} from 'ng-semantic';
 import {WorkflowDeleteNodeComponent} from './delete/workflow.node.delete.component';
 import {WorkflowNodeContextComponent} from './context/workflow.node.context.component';
 import {cloneDeep} from 'lodash';
+import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
+import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 
 
 declare var _: any;
@@ -17,6 +20,7 @@ declare var _: any;
     templateUrl: './workflow.node.html',
     styleUrls: ['./workflow.node.scss']
 })
+@AutoUnsubscribe()
 export class WorkflowNodeComponent implements AfterViewInit {
 
     @Input() node: WorkflowNode;
@@ -37,8 +41,10 @@ export class WorkflowNodeComponent implements AfterViewInit {
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
 
+    pipelineSubscription: Subscription;
+
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
-                private _toast: ToastService) {
+                private _toast: ToastService, private _pipelineStore: PipelineStore) {
     }
 
     ngAfterViewInit() {
@@ -57,8 +63,13 @@ export class WorkflowNodeComponent implements AfterViewInit {
     }
 
     openEditContextModal(): void {
-        this.editableNode = cloneDeep(this.node);
-        this.workflowContext.show({observable: true, closable: false, autofocus: false});
+        this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
+           if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
+               setTimeout(() => {
+                   this.workflowContext.show({observable: true, closable: false, autofocus: false});
+               }, 100);
+           }
+        });
     }
 
     saveTrigger(): void {
