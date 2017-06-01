@@ -69,7 +69,6 @@ export class WorkflowNodeContextComponent implements OnInit, AfterViewInit {
 
     show(data?: {}): void {
         if (this.nodeContextModal) {
-
             this.nodeContextModal.show(data);
         }
     }
