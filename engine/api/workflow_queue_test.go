@@ -265,17 +265,30 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	router.mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
+	vars = map[string]string{
+		"permProjectKey": ctx.project.Key,
+		"workflowName":   ctx.workflow.Name,
+		"permID":         fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	//Send logs
+	logs := sdk.Log{
+		Val: "This is a log",
+	}
+
+	uri = router.getRoute("POST", postWorkflowJobLogsHandler, vars)
+	test.NotEmpty(t, uri)
+
+	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, logs)
+	rec = httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
 	//Send result
 	res := sdk.Result{
 		Duration:   "10",
 		Status:     sdk.StatusSuccess,
 		RemoteTime: time.Now(),
-	}
-
-	vars = map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"permID":         fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	uri = router.getRoute("POST", postWorkflowJobResultHandler, vars)

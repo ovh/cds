@@ -408,7 +408,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TakeNodeJobRun
-		j, err = TakeNodeJobRun(db, j.ID, "model", "worker", []sdk.SpawnInfo{
+		j, err = TakeNodeJobRun(db, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
