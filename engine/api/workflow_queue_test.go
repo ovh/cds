@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/runabove/venom"
 )
 
 type test_runWorkflowCtx struct {
@@ -349,8 +350,91 @@ func Test_postWorkflowJobStepStatusHandler(t *testing.T) {
 	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
 }
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
-	//db := test.SetupPG(t)
-	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
+	db := test.SetupPG(t)
+	ctx := test_runWorkflow(t, db, "/Test_postTakeWorkflowJobHandler")
+	test_getWorkflowJob(t, db, &ctx)
+	assert.NotNil(t, ctx.job)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": ctx.project.Key,
+		"workflowName":   ctx.workflow.Name,
+		"id":             fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	//Register the worker
+	test_registerWorker(t, db, &ctx)
+
+	//Take
+	uri := router.getRoute("POST", postTakeWorkflowJobHandler, vars)
+	test.NotEmpty(t, uri)
+
+	takeForm := worker.TakeForm{
+		BookedJobID: ctx.job.ID,
+		Time:        time.Now(),
+	}
+
+	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	rec := httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	vars = map[string]string{
+		"permID": fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	//Send test
+	tests := venom.Tests{
+		Total:        2,
+		TotalKO:      1,
+		TotalOK:      1,
+		TotalSkipped: 0,
+		TestSuites: []venom.TestSuite{
+			{
+				Total: 1,
+				Name:  "TestSuite1",
+				TestCases: []venom.TestCase{
+					{
+						Name:   "TestCase1",
+						Status: "OK",
+					},
+				},
+			},
+			{
+				Total: 1,
+				Name:  "TestSuite2",
+				TestCases: []venom.TestCase{
+					{
+						Name:   "TestCase1",
+						Status: "KO",
+						Failures: []venom.Failure{
+							{
+								Value:   "Fail",
+								Type:    "Assertion error",
+								Message: "Error occured",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	uri = router.getRoute("POST", postWorkflowJobTestsResultsHandler, vars)
+	test.NotEmpty(t, uri)
+
+	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, tests)
+	rec = httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(db, ctx.job.ID)
+	test.NoError(t, errJ)
+	nodeRun, errN := workflow.LoadNodeRunByID(db, wNodeJobRun.WorkflowNodeRunID)
+	test.NoError(t, errN)
+
+	assert.NotNil(t, nodeRun.Tests)
+	assert.Equal(t, 2, nodeRun.Tests.Total)
 }
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	db := test.SetupPG(t)

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/runabove/venom"
 
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/worker"
@@ -282,6 +284,69 @@ func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp
 }
 
 func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	// Unmarshal into results
+	var new venom.Tests
+	if err := UnmarshalBody(r, &new); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> cannot unmarshal request")
+	}
+
+	// Load and lock Existing workflow Run Job
+	id, errI := requestVarInt(r, "permID")
+	if errI != nil {
+		return sdk.WrapError(errI, "postWorkflowJobTestsResultsHandler> Invalid node job run ID")
+	}
+
+	nodeRunJob, errJobRun := workflow.LoadNodeJobRun(db, id)
+	if errJobRun != nil {
+		return sdk.WrapError(errJobRun, "postWorkflowJobTestsResultsHandler> Cannot load node run job")
+	}
+
+	tx, errB := db.Begin()
+	if errB != nil {
+		return sdk.WrapError(errB, "postWorkflowJobTestsResultsHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	wnjr, err := workflow.LoadAndLockNodeRunByID(tx, nodeRunJob.WorkflowNodeRunID)
+	if err != nil {
+		return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot load node job")
+	}
+
+	if wnjr.Tests == nil {
+		wnjr.Tests = &venom.Tests{}
+	}
+
+	for k := range new.TestSuites {
+		for i := range wnjr.Tests.TestSuites {
+			if wnjr.Tests.TestSuites[i].Name == new.TestSuites[k].Name {
+				// testsuite with same name already exists,
+				// Create a unique name
+				new.TestSuites[k].Name = fmt.Sprintf("%s.%d", new.TestSuites[k].Name, id)
+				break
+			}
+		}
+		wnjr.Tests.TestSuites = append(wnjr.Tests.TestSuites, new.TestSuites[k])
+	}
+
+	// update total values
+	wnjr.Tests.Total = 0
+	wnjr.Tests.TotalOK = 0
+	wnjr.Tests.TotalKO = 0
+	wnjr.Tests.TotalSkipped = 0
+	for _, ts := range wnjr.Tests.TestSuites {
+		wnjr.Tests.Total += ts.Total
+		wnjr.Tests.TotalKO += ts.Failures + ts.Errors
+		wnjr.Tests.TotalOK += ts.Total - ts.Skipped - ts.Failures - ts.Errors
+		wnjr.Tests.TotalSkipped += ts.Skipped
+	}
+
+	if err := workflow.UpdateNodeRun(tx, wnjr); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
+	}
 	return nil
 }
 
