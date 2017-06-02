@@ -38,7 +38,6 @@ func insertTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode,
 		return sdk.WrapError(err, "insertTrigger> Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 
-
 	//Manage conditions
 	b, err := json.Marshal(trigger.Conditions)
 	if err != nil {

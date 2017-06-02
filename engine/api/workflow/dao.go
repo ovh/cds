@@ -175,7 +175,6 @@ func Update(db gorp.SqlExecutor, w *sdk.Workflow, oldWorkflow *sdk.Workflow, u *
 
 	w.RootID = w.Root.ID
 
-
 	// Insert new JOIN
 	for i := range w.Joins {
 		j := &w.Joins[i]
