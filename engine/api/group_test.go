@@ -17,7 +17,7 @@ import (
 func Test_getPublicGroups(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getPublicGroups"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getPublicGroups")
 	router.init()
 
 	//Create group

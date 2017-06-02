@@ -114,6 +114,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/run", POSTEXECUTE(runPipelineHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/runwithlastparent", POSTEXECUTE(runPipelineWithLastParentHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/rollback", POSTEXECUTE(rollbackPipelineHandler))
+
 	router.Handle("/project/{permProjectKey}/pipeline", GET(getPipelinesHandler), POST(addPipeline))
 	router.Handle("/project/{permProjectKey}/pipeline/import", POST(importPipelineHandler))
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/application", GET(getApplicationUsingPipelineHandler))
@@ -131,6 +132,11 @@ func (router *Router) init() {
 	// Workflows
 	router.Handle("/project/{permProjectKey}/workflows", POST(postWorkflowHandler), GET(getWorkflowsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}", GET(getWorkflowHandler), PUT(putWorkflowHandler), DELETE(deleteWorkflowHandler))
+	// Workflows run
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", GET(getWorkflowRunsHandler), POST(postWorkflowRunHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", GET(getLatestWorkflowRunHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", GET(getWorkflowRunHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}", GET(getWorkflowNodeRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/node/{nodeID}/triggers/condition", GET(getWorkflowTriggerCondition))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/join/{joinID}/triggers/condition", GET(getWorkflowTriggerJoinCondition))
 
@@ -186,6 +192,20 @@ func (router *Router) init() {
 	router.Handle("/build/{id}/log", POST(addBuildLogHandler))
 	router.Handle("/build/{id}/step", POST(updateStepStatusHandler))
 
+	//Workflow queue
+	router.Handle("/queue/workflows", GET(getWorkflowJobQueueHandler))
+	router.Handle("/queue/workflows/requirements/errors", NeedWorker(), POST(postWorkflowJobRequirementsErrorHandler))
+	router.Handle("/queue/workflows/{id}/take", NeedWorker(), POST(postTakeWorkflowJobHandler))
+	router.Handle("/queue/workflows/{id}/book", NeedHatchery(), POST(postBookWorkflowJobHandler))
+	router.Handle("/queue/workflows/{id}/spawn/infos", NeedHatchery(), POST(postSpawnInfosWorkflowJobHandler))
+	router.Handle("/queue/workflows/{permID}/result", NeedWorker(), POSTEXECUTE(postWorkflowJobResultHandler))
+	router.Handle("/queue/workflows/{permID}/log", NeedWorker(), POSTEXECUTE(postWorkflowJobLogsHandler))
+	router.Handle("/queue/workflows/{permID}/test", NeedWorker(), POSTEXECUTE(postWorkflowJobTestsResultsHandler))
+	router.Handle("/queue/workflows/{permID}/variable", NeedWorker(), POSTEXECUTE(postWorkflowJobVariableHandler))
+	router.Handle("/queue/workflows/{permID}/step", NeedWorker(), POSTEXECUTE(postWorkflowJobStepStatusHandler))
+	router.Handle("/queue/workflows/{permID}/artifact", NeedWorker(), POSTEXECUTE(postWorkflowJobArtifactHandler), POST(getWorkflowJobArtifactsHandler))
+	router.Handle("/queue/workflows/{permID}/artifact/{artifactId}", NeedWorker(), GET(getDownloadArtifactHandler))
+
 	router.Handle("/variable/type", GET(getVariableTypeHandler))
 	router.Handle("/parameter/type", GET(getParameterTypeHandler))
 	router.Handle("/pipeline/type", GET(getPipelineTypeHandler))
@@ -212,7 +232,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook", POST(addHookOnRepositoriesManagerHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook/{hookId}", DELETE(deleteHookOnRepositoriesManagerHandler))
 
-	//Suggest
+	// Suggest
 	router.Handle("/suggest/variable/{permProjectKey}", GET(getVariablesHandler))
 
 	// Templates

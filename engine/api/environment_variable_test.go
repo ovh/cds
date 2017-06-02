@@ -23,7 +23,7 @@ import (
 func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddVariableInEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddVariableInEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -87,7 +87,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateVariableInEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateVariableInEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -159,7 +159,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteVariableFromEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteVariableFromEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -224,7 +224,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetVariablesInEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetVariablesInEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -282,7 +282,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 func TestGetEnvironmentsAuditHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetVariablesInEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetVariablesInEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -333,7 +333,7 @@ func TestGetEnvironmentsAuditHandler(t *testing.T) {
 func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestRestoreEnvironmentAuditHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestRestoreEnvironmentAuditHandler")
 	router.init()
 
 	//1. Create admin user
@@ -421,7 +421,7 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getVariableAuditInEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getVariableAuditInEnvironmentHandler")
 	router.init()
 
 	//Create admin user

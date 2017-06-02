@@ -2,6 +2,7 @@ package cache
 
 import (
 	"container/list"
+	"context"
 	"strings"
 	"sync"
 
@@ -25,6 +26,7 @@ type Store interface {
 	DeleteAll(key string)
 	Enqueue(queueName string, value interface{})
 	Dequeue(queueName string, value interface{})
+	DequeueWithContext(c context.Context, queueName string, value interface{})
 }
 
 //Initialize the global cache in memory, or redis
@@ -108,4 +110,12 @@ func Dequeue(queueName string, value interface{}) {
 		return
 	}
 	s.Dequeue(queueName, value)
+}
+
+//DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
+func DequeueWithContext(c context.Context, queueName string, value interface{}) {
+	if s == nil {
+		return
+	}
+	s.DequeueWithContext(c, queueName, value)
 }

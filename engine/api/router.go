@@ -48,6 +48,7 @@ type routerConfig struct {
 	isExecution   bool
 	needAdmin     bool
 	needHatchery  bool
+	needWorker    bool
 }
 
 // ServeAbsoluteFile Serve file to download
@@ -131,6 +132,11 @@ type Router struct {
 	authDriver auth.Driver
 	mux        *mux.Router
 	prefix     string
+	url        string
+}
+
+func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
+	return &Router{a, m, p, ""}
 }
 
 var mapRouterConfigs = map[string]*routerConfig{}
@@ -243,6 +249,8 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		permissionOk := true
 		if rc.auth && rc.needHatchery && c.Hatchery == nil {
 			permissionOk = false
+		} else if rc.auth && rc.needWorker {
+			permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
 		} else if rc.auth && rc.needAdmin && !c.User.Admin {
 			permissionOk = false
 		} else if rc.auth && !rc.needAdmin && !c.User.Admin {
@@ -340,6 +348,14 @@ func NeedAdmin(admin bool) RouterConfigParam {
 func NeedHatchery() RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.needHatchery = true
+	}
+	return f
+}
+
+// NeedWorker set the route for worker only
+func NeedWorker() RouterConfigParam {
+	f := func(rc *routerConfig) {
+		rc.needWorker = true
 	}
 	return f
 }

@@ -31,7 +31,7 @@ type SegmentTest struct {
 }
 
 var segmentTests = []SegmentTest{
-	{"\u1E0A\u0323a", []string{"\x44\u0323\u0307", "a", ""}},
+	{"\u1E0A\u0323a", []string{"\x44\u0323\u0307", "a")},
 	{rep('a', segSize), append(strings.Split(rep('a', segSize), ""), "")},
 	{rep('a', segSize+2), append(strings.Split(rep('a', segSize+2), ""), "")},
 	{rep('a', segSize) + "\u0300aa",
@@ -50,20 +50,20 @@ var segmentTests = []SegmentTest{
 }
 
 var segmentTestsK = []SegmentTest{
-	{"\u3332", []string{"\u30D5", "\u30A1", "\u30E9", "\u30C3", "\u30C8\u3099", ""}},
+	{"\u3332", []string{"\u30D5", "\u30A1", "\u30E9", "\u30C3", "\u30C8\u3099")},
 	// last segment of multi-segment decomposition needs normalization
-	{"\u3332\u093C", []string{"\u30D5", "\u30A1", "\u30E9", "\u30C3", "\u30C8\u093C\u3099", ""}},
+	{"\u3332\u093C", []string{"\u30D5", "\u30A1", "\u30E9", "\u30C3", "\u30C8\u093C\u3099")},
 	{"\u320E", []string{"\x28", "\uAC00", "\x29"}},
 
 	// last segment should be copied to start of buffer.
-	{"\ufdfa", []string{"\u0635", "\u0644", "\u0649", " ", "\u0627", "\u0644", "\u0644", "\u0647", " ", "\u0639", "\u0644", "\u064a", "\u0647", " ", "\u0648", "\u0633", "\u0644", "\u0645", ""}},
+	{"\ufdfa", []string{"\u0635", "\u0644", "\u0649", " ", "\u0627", "\u0644", "\u0644", "\u0647", " ", "\u0639", "\u0644", "\u064a", "\u0647", " ", "\u0648", "\u0633", "\u0644", "\u0645")},
 	{"\ufdfa" + grave(30), []string{"\u0635", "\u0644", "\u0649", " ", "\u0627", "\u0644", "\u0644", "\u0647", " ", "\u0639", "\u0644", "\u064a", "\u0647", " ", "\u0648", "\u0633", "\u0644", "\u0645" + grave(30), ""}},
 	{"\uFDFA" + grave(64), []string{"\u0635", "\u0644", "\u0649", " ", "\u0627", "\u0644", "\u0644", "\u0647", " ", "\u0639", "\u0644", "\u064a", "\u0647", " ", "\u0648", "\u0633", "\u0644", "\u0645" + grave(30), cgj + grave(30), cgj + grave(4), ""}},
 
 	// Hangul and Jamo are grouped togeter.
-	{"\uAC00", []string{"\u1100\u1161", ""}},
-	{"\uAC01", []string{"\u1100\u1161\u11A8", ""}},
-	{"\u1100\u1161", []string{"\u1100\u1161", ""}},
+	{"\uAC00", []string{"\u1100\u1161")},
+	{"\uAC01", []string{"\u1100\u1161\u11A8")},
+	{"\u1100\u1161", []string{"\u1100\u1161")},
 }
 
 // Note that, by design, segmentation is equal for composing and decomposing forms.

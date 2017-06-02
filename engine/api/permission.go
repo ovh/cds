@@ -3,11 +3,14 @@ package main
 import (
 	"strconv"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -44,6 +47,34 @@ func getPermissionByMethod(method string, isExecution bool) int {
 	default:
 		return permission.PermissionRead
 	}
+}
+
+func checkWorkerPermission(db gorp.SqlExecutor, rc *routerConfig, routeVar map[string]string, c *context.Ctx) bool {
+	if c.Worker == nil {
+		return false
+	}
+
+	idS, ok := routeVar["permID"]
+	if !ok {
+		return true
+	}
+
+	id, err := strconv.ParseInt(idS, 10, 64)
+	if err != nil {
+		log.Error("checkWorkerPermission> Unable to parse permID=%s", idS)
+		return false
+	}
+
+	//IF it is POSTEXECUTE, it means that the job is must be taken by the worker
+	if rc.isExecution {
+		node, err := workflow.LoadNodeJobRun(db, id)
+		if err != nil {
+			log.Error("checkWorkerPermission> Unable to load job %d", id)
+			return false
+		}
+		return node.Job.WorkerName == c.Worker.Name && node.Job.WorkerID == c.Worker.ID
+	}
+	return true
 }
 
 func checkPermission(routeVar map[string]string, c *context.Ctx, permission int) bool {

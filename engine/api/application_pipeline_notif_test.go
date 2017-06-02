@@ -576,7 +576,7 @@ func Test_SendPipeline(t *testing.T) {
 func Test_addNotificationsHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler")
 	router.init()
 
 	//Create admin user

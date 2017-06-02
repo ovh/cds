@@ -31,6 +31,11 @@ func Publish(payload interface{}) {
 	cache.Enqueue("events_repositoriesmanager", event)
 }
 
+// PublishJobRun sends an event
+func PublishJobRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun) {
+	//TODO
+}
+
 // PublishActionBuild sends a actionBuild event
 func PublishActionBuild(pb *sdk.PipelineBuild, pbJob *sdk.PipelineBuildJob) {
 	e := sdk.EventJob{

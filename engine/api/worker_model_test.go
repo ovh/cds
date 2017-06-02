@@ -44,7 +44,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 		t.FailNow()
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin")
 	router.init()
 
 	//Create admin user
@@ -90,7 +90,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	db := database.DBMap(database.DB())
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin")
 	router.init()
 
 	//Create admin user
@@ -201,7 +201,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 		t.FailNow()
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember")
 	router.init()
 
 	//Create group
@@ -250,7 +250,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 		t.FailNow()
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember")
 	router.init()
 
 	//Create group
@@ -303,7 +303,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		t.FailNow()
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember")
 	router.init()
 
 	//Create group
@@ -365,7 +365,7 @@ func Test_updateWorkerModel(t *testing.T) {
 		t.FailNow()
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updateWorkerModel"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updateWorkerModel")
 	router.init()
 
 	//Create group
@@ -454,7 +454,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 		t.FailNow()
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkerModel"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkerModel")
 	router.init()
 
 	//Create group
@@ -527,7 +527,7 @@ func Test_getWorkerModel(t *testing.T) {
 		t.FailNow()
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin")
 	router.init()
 
 	//Create admin user
@@ -591,7 +591,7 @@ func Test_getWorkerModels(t *testing.T) {
 		t.FailNow()
 	}
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin")
 	router.init()
 
 	//Create admin user

@@ -23,7 +23,7 @@ import (
 func TestAddTriggerHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler")
 	router.init()
 
 	//1. Create admin user
@@ -109,7 +109,7 @@ func TestAddTriggerHandler(t *testing.T) {
 func TestUpdateTriggerHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateTriggerHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateTriggerHandler")
 	router.init()
 
 	//1. Create admin user
@@ -203,7 +203,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 func TestRemoveTriggerHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestRemoveTriggerHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestRemoveTriggerHandler")
 	router.init()
 
 	//1. Create admin user

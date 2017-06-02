@@ -700,7 +700,7 @@ var appendTestsNFD = []AppendTest{
 
 var appendTestsNFKC = []AppendTest{
 	// empty buffers
-	{"", "", ""},
+	{"", ""),
 	{"a", "", "a"},
 	{"", "a", "a"},
 	{"", "\u0041\u0307\u0304", "\u01E0"},

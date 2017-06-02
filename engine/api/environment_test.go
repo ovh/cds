@@ -22,7 +22,7 @@ import (
 func TestAddEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -70,7 +70,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 func TestUpdateEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -129,7 +129,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 func TestDeleteEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -180,7 +180,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 func TestGetEnvironmentsHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -224,7 +224,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 func TestGetEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user
@@ -269,7 +269,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 func Test_cloneEnvironmentHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_cloneEnvironmentHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_cloneEnvironmentHandler")
 	router.init()
 
 	//1. Create admin user

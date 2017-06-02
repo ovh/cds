@@ -23,7 +23,7 @@ import (
 func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	db := test.SetupPG(t)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationHandler"}
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationHandler")
 	router.init()
 
 	//1. Create admin user

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"container/list"
+	"context"
 	"encoding/json"
 	"strings"
 	"sync"
@@ -125,5 +126,53 @@ func (s *LocalStore) Dequeue(queueName string, value interface{}) {
 		return
 	}
 	json.Unmarshal(b, value)
+	close(elemChan)
+	return
+}
+
+//DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
+func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
+	l := s.Queues[queueName]
+	if l == nil {
+		s.Queues[queueName] = &list.List{}
+		l = s.Queues[queueName]
+	}
+
+	elemChan := make(chan *list.Element)
+	var once sync.Once
+	go func() {
+		ticker := time.NewTicker(500 * time.Millisecond).C
+		for {
+			select {
+			case <-ticker:
+				e := l.Back()
+				if e != nil {
+					s.Mutex.Lock()
+					l.Remove(e)
+					s.Mutex.Unlock()
+					elemChan <- e
+					return
+				}
+			case <-c.Done():
+				once.Do(func() {
+					close(elemChan)
+				})
+				return
+			}
+		}
+	}()
+
+	e := <-elemChan
+	if e != nil {
+		b, ok := e.Value.([]byte)
+		if !ok {
+			return
+		}
+		json.Unmarshal(b, value)
+	}
+
+	once.Do(func() {
+		close(elemChan)
+	})
 	return
 }

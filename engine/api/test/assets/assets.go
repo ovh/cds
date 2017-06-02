@@ -105,6 +105,12 @@ func AuthentifyRequestFromWorker(t *testing.T, req *http.Request, w *sdk.Worker)
 	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(w.ID)))
 }
 
+// AuthentifyRequestFromHatchery have to be used only for tests
+func AuthentifyRequestFromHatchery(t *testing.T, req *http.Request, h *sdk.Hatchery) {
+	req.Header.Add("User-Agent", string(sdk.HatcheryAgent))
+	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(h.UID)))
+}
+
 // NewAuthentifiedRequestFromWorker prepare a request
 func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri string, i interface{}) *http.Request {
 	var btes []byte
@@ -123,6 +129,26 @@ func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri s
 
 	AuthentifyRequestFromWorker(t, req, w)
 
+	return req
+}
+
+// NewAuthentifiedRequestFromHatchery prepare a request
+func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Hatchery, method, uri string, i interface{}) *http.Request {
+	var btes []byte
+	var err error
+	if i != nil {
+		btes, err = json.Marshal(i)
+		if err != nil {
+			t.FailNow()
+		}
+	}
+
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
+	if err != nil {
+		t.FailNow()
+	}
+
+	AuthentifyRequestFromHatchery(t, req, h)
 	return req
 }
 
