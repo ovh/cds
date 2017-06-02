@@ -102,7 +102,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 
 	n.Status = newStatus
 	// Save the node run in database
-	if err := updateWorkflowNodeRun(tx, n); err != nil {
+	if err := UpdateWorkflowNodeRun(tx, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d", n.ID), "workflow.execute> Unable to execute node")
 	}
 
