@@ -286,9 +286,6 @@ func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp
 }
 
 func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	vars := mux.Vars(r)
-	nodeJobRunID := vars["permID"]
-
 	// Unmarshal into results
 	var new venom.Tests
 	if err := UnmarshalBody(r, &new); err != nil {
@@ -296,7 +293,7 @@ func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, 
 	}
 
 	// Load and lock Existing workflow Run Job
-	id, errI := strconv.ParseInt(nodeJobRunID, 10, 64)
+	id, errI := requestVarInt(r, "permID")
 	if errI != nil {
 		return sdk.WrapError(errI, "postWorkflowJobTestsResultsHandler> Invalid node job run ID")
 	}
@@ -318,12 +315,7 @@ func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, 
 	}
 
 	if wnjr.Tests == nil {
-		wnjr.Tests = &venom.Tests{
-			Total:        0,
-			TotalSkipped: 0,
-			TotalOK:      0,
-			TotalKO:      0,
-		}
+		wnjr.Tests = &venom.Tests{}
 	}
 
 	for k := range new.TestSuites {
