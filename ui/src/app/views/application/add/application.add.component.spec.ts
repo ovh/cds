@@ -38,6 +38,7 @@ describe('CDS: Application Add Component', () => {
             declarations: [
             ],
             providers: [
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 AuthentificationStore,
                 ApplicationStore,
@@ -61,7 +62,7 @@ describe('CDS: Application Add Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
         appStore = injector.get(ApplicationStore);
         router = injector.get(Router);
         prjStore = injector.get(ProjectStore);

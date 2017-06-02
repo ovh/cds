@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, getTestBed, tick, fakeAsync, inject} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
@@ -14,9 +14,6 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {AccountModule} from '../account.module';
 
 describe('CDS: PasswordComponent', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -33,18 +30,10 @@ describe('CDS: PasswordComponent', () => {
                 AccountModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-    it('Reset Password OK', fakeAsync( () => {
+    it('Reset Password OK', fakeAsync(  inject([XHRBackend], (backend: MockBackend) => {
         // Create loginComponent
         let fixture = TestBed.createComponent(PasswordComponent);
         let component = fixture.debugElement.componentInstance;
@@ -79,5 +68,5 @@ describe('CDS: PasswordComponent', () => {
         expect(request.user.email).toBe('bar@foo.bar', 'Email must be bar@foo.bar');
         expect(fixture.componentInstance.showWaitingMessage).toBeTruthy('Waiting message must be true');
 
-    }));
+    })));
 });

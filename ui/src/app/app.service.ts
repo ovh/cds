@@ -110,7 +110,7 @@ export class AppService {
                     return;
                 }
 
-                if ((new Date(pips.get(pipKey).last_modified)).getTime() < p.last_modified * 1000) {
+                if ( pips.get(pipKey).last_modified < p.last_modified ) {
                     if (params['key'] && params['key'] === plu.name && params['pipName'] === p.name ) {
                         this._pipStore.externalModification(pipKey);
 

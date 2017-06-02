@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, getTestBed, tick, fakeAsync, inject} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
@@ -15,9 +15,6 @@ import {RequirementStore} from '../../../service/worker/requirement/requirement.
 import {WorkerModelService} from '../../../service/worker/worker.model.service';
 
 describe('CDS: Requirement List Component', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -37,19 +34,10 @@ describe('CDS: Requirement List Component', () => {
                 SharedModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-    it('should load component + delete requirement', fakeAsync( () => {
+    it('should load component + delete requirement', fakeAsync(  inject([XHRBackend], (backend: MockBackend) => {
         // Mock Http request
         backend.connections.subscribe(connection => {
             connection.mockRespond(new Response(new ResponseOptions({ body : '["binary", "network"]'})));
@@ -95,6 +83,6 @@ describe('CDS: Requirement List Component', () => {
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
             new RequirementEvent('delete', fixture.componentInstance.requirements[0])
         );
-    }));
+    })));
 });
 

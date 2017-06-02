@@ -22,6 +22,7 @@ describe('CDS: History component', () => {
             ],
             providers: [
                 TranslateService,
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
@@ -33,7 +34,7 @@ describe('CDS: History component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
 
     });
 

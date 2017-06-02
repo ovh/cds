@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, getTestBed, tick, fakeAsync, inject} from '@angular/core/testing';
 import {VariableComponent} from './variable.component';
 import {VariableService} from '../../../service/variable/variable.service';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
@@ -17,9 +17,6 @@ import {EnvironmentAuditService} from '../../../service/environment/environment.
 import {ApplicationAuditService} from '../../../service/application/application.audit.service';
 
 describe('CDS: Variable List Component', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -41,19 +38,10 @@ describe('CDS: Variable List Component', () => {
                 SharedModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-    it('Load Component + update value', fakeAsync( () => {
+    it('Load Component + update value', fakeAsync(  inject([XHRBackend], (backend: MockBackend) => {
         // Mock Http request
         backend.connections.subscribe(connection => {
             connection.mockRespond(new Response(new ResponseOptions({ body : '["string", "password"]'})));
@@ -112,6 +100,6 @@ describe('CDS: Variable List Component', () => {
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
             new VariableEvent('update', fixture.componentInstance.variables[0])
         );
-    }));
+    })));
 });
 

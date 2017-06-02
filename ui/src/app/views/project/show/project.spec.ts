@@ -32,6 +32,7 @@ describe('CDS: Project Show Component', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                MockBackend,
                 {provide: XHRBackend, useClass: MockBackend},
                 TranslateLoader,
                 RepoManagerService,
@@ -54,7 +55,7 @@ describe('CDS: Project Show Component', () => {
             ]
         });
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
 
     });
 

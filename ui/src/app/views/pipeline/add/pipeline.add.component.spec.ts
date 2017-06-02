@@ -40,6 +40,7 @@ describe('CDS: Pipeline Add Component', () => {
             declarations: [
             ],
             providers: [
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 AuthentificationStore,
                 ProjectStore,
@@ -61,7 +62,7 @@ describe('CDS: Pipeline Add Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
         pipStore = injector.get(PipelineStore);
         router = injector.get(Router);
         prjStore = injector.get(ProjectStore);
@@ -95,7 +96,7 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.newPipeline = new Pipeline();
         fixture.componentInstance.newPipeline.name = 'myPip';
         fixture.componentInstance.newPipeline.type = 'build';
-        fixture.componentInstance.selectedApplications = new Array<String>();
+        fixture.componentInstance.selectedApplications = new Array<string>();
         fixture.componentInstance.selectedApplications.push('app2');
 
         spyOn(pipStore, 'createPipeline').and.callFake( () => {

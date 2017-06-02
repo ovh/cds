@@ -20,6 +20,7 @@ describe('CDS: Group form component', () => {
             ],
             providers: [
                 TranslateService,
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
@@ -31,7 +32,7 @@ describe('CDS: Group form component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
 
     });
 

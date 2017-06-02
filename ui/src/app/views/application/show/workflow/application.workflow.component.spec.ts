@@ -29,6 +29,7 @@ describe('CDS: Application Workflow', () => {
             declarations: [
             ],
             providers: [
+                MockBackend,
                 { provide: APP_BASE_HREF, useValue: '/' },
                 { provide: XHRBackend, useClass: MockBackend },
                 ApplicationWorkflowService,
@@ -44,7 +45,7 @@ describe('CDS: Application Workflow', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {

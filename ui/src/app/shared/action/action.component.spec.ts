@@ -1,10 +1,10 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
+import {TestBed, fakeAsync, tick, getTestBed, inject} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, ResponseOptions, Response} from '@angular/http';
+import {XHRBackend, ResponseOptions, Response, ConnectionBackend, Http, RequestOptions} from '@angular/http';
 import {ActionComponent} from './action.component';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
@@ -26,9 +26,6 @@ import {WorkerModelService} from '../../service/worker/worker.model.service';
 
 describe('CDS: Action Component', () => {
 
-    let injector: Injector;
-    let backend: MockBackend;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
@@ -43,7 +40,7 @@ describe('CDS: Action Component', () => {
                 ActionStore,
                 ActionService,
                 WorkerModelService,
-                { provide: XHRBackend, useClass: MockBackend },
+                { provide: XHRBackend, useClass: MockBackend},
                 TranslateLoader,
                 TranslateParser
             ],
@@ -52,19 +49,11 @@ describe('CDS: Action Component', () => {
                 SharedModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
 
-    it('should create and then delete a requirement', fakeAsync( () => {
+    it('should create and then delete a requirement', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -198,45 +187,49 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('update', action));
     }));
 
-    it('should add and then remove a step', fakeAsync( () => {
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '[{ "name" : "action1" }]'})));
-        });
+    it('should add and then remove a step', fakeAsync(
+        inject([
+            XHRBackend,
+        ], (backend: MockBackend) => {
 
-        // Create component
-        let fixture = TestBed.createComponent(ActionComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
+            backend.connections.subscribe(connection => {
+                connection.mockRespond(new Response(new ResponseOptions({ body : '[{ "name" : "action1" }]'})));
+            });
 
-        expect(backend.connectionsArray[0].request.url).toBe('/action', 'Component must load public action');
+            // Create component
+            let fixture = TestBed.createComponent(ActionComponent);
+            let component = fixture.debugElement.componentInstance;
+            expect(component).toBeTruthy();
 
-        let action: Action = new Action();
-        action.name = 'FooAction';
-        action.requirements = new Array<Requirement>();
-        fixture.componentInstance.editableAction = action;
-        fixture.componentInstance.edit = true;
+            expect(backend.connectionsArray[0].request.url).toBe('/action', 'Component must load public action');
 
-        fixture.detectChanges();
-        tick(50);
+            let action: Action = new Action();
+            action.name = 'FooAction';
+            action.requirements = new Array<Requirement>();
+            fixture.componentInstance.editableAction = action;
+            fixture.componentInstance.edit = true;
+
+            fixture.detectChanges();
+            tick(50);
 
 
-        let step = new Action();
-        step.final = false;
-        step.name = 'action1';
-        let event = new StepEvent('add', step);
-        fixture.componentInstance.stepManagement(event);
+            let step = new Action();
+            step.final = false;
+            step.name = 'action1';
+            let event = new StepEvent('add', step);
+            fixture.componentInstance.stepManagement(event);
 
-        expect(fixture.componentInstance.nonFinalSteps.length).toBe(1, 'Action must have 1 non final step');
-        expect(fixture.componentInstance.nonFinalSteps[0].name).toBe('action1');
+            expect(fixture.componentInstance.nonFinalSteps.length).toBe(1, 'Action must have 1 non final step');
+            expect(fixture.componentInstance.nonFinalSteps[0].name).toBe('action1');
 
-        event.type = 'add';
-        step.final = true;
-        step.name = 'action2';
-        fixture.componentInstance.stepManagement(event);
-        expect(fixture.componentInstance.finalSteps.length).toBe(1, 'Action must have 1 final step');
-        expect(fixture.componentInstance.finalSteps[0].name).toBe('action2');
-
-    }));
+            event.type = 'add';
+            step.final = true;
+            step.name = 'action2';
+            fixture.componentInstance.stepManagement(event);
+            expect(fixture.componentInstance.finalSteps.length).toBe(1, 'Action must have 1 final step');
+            expect(fixture.componentInstance.finalSteps[0].name).toBe('action2');
+        })
+    ));
 
     it('should init nonFinalSteps and finalSteps', fakeAsync( () => {
         // Create component
