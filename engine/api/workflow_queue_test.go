@@ -380,37 +380,37 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"permID":         fmt.Sprintf("%d", ctx.job.ID),
+		"permID": fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Send test
 	tests := venom.Tests{
-		Total: 2,
-		TotalKO: 1,
-		TotalOK: 1,
+		Total:        2,
+		TotalKO:      1,
+		TotalOK:      1,
 		TotalSkipped: 0,
 		TestSuites: []venom.TestSuite{
 			{
 				Total: 1,
-				Name: "TestSuite1",
+				Name:  "TestSuite1",
 				TestCases: []venom.TestCase{
 					{
-						Name: "TestCase1",
+						Name:   "TestCase1",
 						Status: "OK",
 					},
 				},
 			},
 			{
 				Total: 1,
-				Name: "TestSuite2",
+				Name:  "TestSuite2",
 				TestCases: []venom.TestCase{
 					{
-						Name: "TestCase1",
+						Name:   "TestCase1",
 						Status: "KO",
 						Failures: []venom.Failure{
 							{
-								Value: "Fail",
-								Type: "Assertion error",
+								Value:   "Fail",
+								Type:    "Assertion error",
 								Message: "Error occured",
 							},
 						},
@@ -428,7 +428,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	router.mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	wNodeJobRun , errJ := workflow.LoadNodeJobRun(db, ctx.job.ID)
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(db, ctx.job.ID)
 	test.NoError(t, errJ)
 	nodeRun, errN := workflow.LoadNodeRunByID(db, wNodeJobRun.WorkflowNodeRunID)
 	test.NoError(t, errN)
