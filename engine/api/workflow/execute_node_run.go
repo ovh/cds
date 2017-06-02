@@ -6,10 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-<<<<<<< HEAD
-=======
-	"github.com/ovh/cds/engine/api/action"
->>>>>>> master
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
@@ -105,11 +101,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 
 	n.Status = newStatus
 	// Save the node run in database
-<<<<<<< HEAD
 	if err := UpdateNodeRun(tx, n); err != nil {
-=======
-	if err := updateWorkflowNodeRun(tx, n); err != nil {
->>>>>>> master
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d", n.ID), "workflow.execute> Unable to execute node")
 	}
 
@@ -152,14 +144,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	//Browse the jobs
 	for _, job := range stage.Jobs {
 		//Process variables for the jobs
-<<<<<<< HEAD
 		jobParams, errParam := getNodeJobRunParameters(db, job, run, stage)
-=======
-		jobParams, errParam := getNodeJobRunVariables(db, job, run, stage)
-		if errParam != nil {
-			return errParam
-		}
->>>>>>> master
 
 		//Create the job run
 		job := sdk.WorkflowNodeJobRun{
@@ -179,7 +164,6 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 			job.Status = sdk.StatusSkipped.String()
 		}
 
-<<<<<<< HEAD
 		if errParam != nil {
 			job.Status = sdk.StatusFail.String()
 
@@ -204,8 +188,6 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 
 		}
 
-=======
->>>>>>> master
 		//Insert in database
 		if err := insertWorkflowNodeJobRun(db, &job); err != nil {
 			return sdk.WrapError(err, "addJobsToQueue> Unable to insert in table workflow_node_run_job")
@@ -283,32 +265,18 @@ func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	return stageEnd, nil
 }
 
-<<<<<<< HEAD
 func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
-=======
-func getNodeJobRunVariables(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
->>>>>>> master
 	//Load workflow run
 	w, err := loadRunByID(db, run.WorkflowRunID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "getNodeJobRunVariables> Unable to load workflow run")
 	}
 
-<<<<<<< HEAD
-=======
-	// Load project variables
-	pv, err := project.GetAllVariableInProject(db, w.Workflow.ProjectID)
-	if err != nil {
-		return nil, err
-	}
-
->>>>>>> master
 	//Load node definition
 	n := w.Workflow.GetNode(run.WorkflowNodeID)
 	if n == nil {
 		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeJobRunVariables>")
 	}
-<<<<<<< HEAD
 	vars := map[string]string{}
 
 	//Load project
@@ -366,20 +334,4 @@ func getNodeJobRunVariables(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNod
 	}
 
 	return params, errm
-=======
-
-	// compute application variables
-	av := []sdk.Variable{}
-	if n.Context != nil && n.Context.Application != nil {
-		av = n.Context.Application.Variable
-	}
-
-	// compute environment variables
-	ev := []sdk.Variable{}
-	if n.Context != nil && n.Context.Environment != nil {
-		ev = n.Context.Environment.Variable
-	}
-
-	return action.ProcessActionBuildVariables(pv, av, ev, run.PipelineParameter, run.Payload, stage, j.Action), nil
->>>>>>> master
 }

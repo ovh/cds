@@ -56,13 +56,8 @@ func insertWorkflowNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	return nil
 }
 
-<<<<<<< HEAD
 //UpdateNodeRun updates in table workflow_node_run
 func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
-=======
-//updateWorkflowNodeRun updates in table workflow_node_run
-func updateWorkflowNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
->>>>>>> master
 	nodeRunDB := NodeRun(*n)
 	if _, err := db.Update(&nodeRunDB); err != nil {
 		return err
@@ -71,7 +66,6 @@ func updateWorkflowNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 }
 
 type sqlNodeRun struct {
-<<<<<<< HEAD
 	ID                 int64          `db:"id"`
 	HookEvent          sql.NullString `db:"hook_event"`
 	Manual             sql.NullString `db:"manual"`
@@ -82,17 +76,6 @@ type sqlNodeRun struct {
 	Tests              sql.NullString `db:"tests"`
 	Commits            sql.NullString `db:"commits"`
 	Stages             sql.NullString `db:"stages"`
-=======
-	ID                int64          `db:"id"`
-	HookEvent         sql.NullString `db:"hook_event"`
-	Manual            sql.NullString `db:"manual"`
-	SourceNodeRuns    sql.NullString `db:"source_node_runs"`
-	Payload           sql.NullString `db:"payload"`
-	PipelineParameter sql.NullString `db:"pipeline_parameters"`
-	Tests             sql.NullString `db:"tests"`
-	Commits           sql.NullString `db:"commits"`
-	Stages            sql.NullString `db:"stages"`
->>>>>>> master
 }
 
 //PostInsert is a db hook on WorkflowNodeRun in table workflow_node_run
@@ -134,7 +117,6 @@ func (r *NodeRun) PostInsert(db gorp.SqlExecutor) error {
 		}
 		rr.Payload = s
 	}
-<<<<<<< HEAD
 	if r.PipelineParameters != nil {
 		s, err := gorpmapping.JSONToNullString(r.PipelineParameters)
 		if err != nil {
@@ -148,14 +130,6 @@ func (r *NodeRun) PostInsert(db gorp.SqlExecutor) error {
 			return sdk.WrapError(err, "NodeRun.PostInsert> unable to get json from build_parameters")
 		}
 		rr.BuildParameters = s
-=======
-	if r.PipelineParameter != nil {
-		s, err := gorpmapping.JSONToNullString(r.PipelineParameter)
-		if err != nil {
-			return sdk.WrapError(err, "NodeRun.PostInsert> unable to get json from pipeline_parameters")
-		}
-		rr.PipelineParameter = s
->>>>>>> master
 	}
 	if r.Tests != nil {
 		s, err := gorpmapping.JSONToNullString(r.Tests)
@@ -222,11 +196,7 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 	if err := gorpmapping.JSONNullString(rr.Payload, &r.Payload); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
 	}
-<<<<<<< HEAD
 	if err := gorpmapping.JSONNullString(rr.BuildParameters, &r.BuildParameters); err != nil {
-=======
-	if err := gorpmapping.JSONNullString(rr.PipelineParameter, &r.PipelineParameter); err != nil {
->>>>>>> master
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
 	}
 	if rr.Tests.Valid {
