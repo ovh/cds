@@ -28,6 +28,7 @@ describe('CDS: Variable From Component', () => {
                 GroupService,
                 SharedService,
                 TranslateService,
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
@@ -39,7 +40,7 @@ describe('CDS: Variable From Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
 
     });
 

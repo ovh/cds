@@ -178,7 +178,11 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		}
 
 		run.Payload = sdk.ParametersFromMap(m)
+<<<<<<< HEAD
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
+=======
+		run.PipelineParameter = n.Context.DefaultPipelineParameters
+>>>>>>> master
 	}
 
 	run.HookEvent = h
@@ -189,9 +193,15 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		}
 		run.Payload = sdk.ParametersFromMap(payload)
 		if len(h.PipelineParameters) != 0 {
+<<<<<<< HEAD
 			run.PipelineParameters = h.PipelineParameters
 		} else {
 			run.PipelineParameters = n.Context.DefaultPipelineParameters
+=======
+			run.PipelineParameter = h.PipelineParameters
+		} else {
+			run.PipelineParameter = n.Context.DefaultPipelineParameters
+>>>>>>> master
 		}
 
 	}
@@ -204,9 +214,15 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		}
 		run.Payload = sdk.ParametersFromMap(payload)
 		if len(m.PipelineParameters) != 0 {
+<<<<<<< HEAD
 			run.PipelineParameters = m.PipelineParameters
 		} else {
 			run.PipelineParameters = n.Context.DefaultPipelineParameters
+=======
+			run.PipelineParameter = m.PipelineParameters
+		} else {
+			run.PipelineParameter = n.Context.DefaultPipelineParameters
+>>>>>>> master
 		}
 	}
 

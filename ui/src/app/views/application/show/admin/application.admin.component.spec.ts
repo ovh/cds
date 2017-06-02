@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {RouterTestingModule} from '@angular/router/testing';
-import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
+import {TestBed, fakeAsync, getTestBed, tick, inject} from '@angular/core/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Router, ActivatedRoute} from '@angular/router';
@@ -34,7 +34,6 @@ describe('CDS: Application Admin Component', () => {
 
     let injector: Injector;
     let appStore: ApplicationStore;
-    let backend: MockBackend;
     let router: Router;
 
     beforeEach(() => {
@@ -66,7 +65,6 @@ describe('CDS: Application Admin Component', () => {
 
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
         appStore = injector.get(ApplicationStore);
         router = injector.get(Router);
     });
@@ -74,11 +72,10 @@ describe('CDS: Application Admin Component', () => {
     afterEach(() => {
         injector = undefined;
         appStore = undefined;
-        backend = undefined;
         router = undefined;
     });
 
-    it('Load component + renamed app', fakeAsync( () => {
+    it('Load component + renamed app', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
 
             // Mock Http login request
             backend.connections.subscribe(connection => {
@@ -123,7 +120,7 @@ describe('CDS: Application Admin Component', () => {
 
             tick(50);
 
-    }));
+    })));
 });
 
 class MockToast {

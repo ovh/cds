@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, fakeAsync, tick} from '@angular/core/testing';
+import {TestBed, getTestBed, fakeAsync, tick, inject} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
@@ -17,8 +17,6 @@ import {AccountModule} from '../account.module';
 
 describe('CDS: VerifyComponent', () => {
 
-    let injector: Injector;
-    let backend: MockBackend;
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
@@ -36,18 +34,9 @@ describe('CDS: VerifyComponent', () => {
                 AccountModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
     });
 
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
-    });
-
-
-    it('Verify OK', fakeAsync( () => {
+    it('Verify OK', fakeAsync( inject([XHRBackend], (backend: MockBackend) => {
         // Create component
         let fixture = TestBed.createComponent(VerifyComponent);
         let component = fixture.debugElement.componentInstance;
@@ -80,7 +69,7 @@ describe('CDS: VerifyComponent', () => {
         expect(userSent.username).toBe('foo');
         expect(userSent.password).toBe('bar');
 
-    }));
+    })));
 });
 
 export class MockRouter {

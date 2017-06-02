@@ -8,13 +8,16 @@
         <p class="ellipsis">{{node.context.application.name}}</p>
     </div>
     <a class="ui white ribbon label" *ngIf="node.context.environment_id && node.context.environment_id > 0">{{node.context.environment.name}}</a>
-    <sm-dropdown class="nocaret" icon="settings" [disabled]="disabled">
+
+        <sm-dropdown class="nocaret" icon="settings" [disabled]="disabled">
             <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
             <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>
             <sm-item (click)="linkJoin()">{{ 'workflow_node_join_link' | translate }}</sm-item>
             <sm-item (click)="openEditContextModal()">{{ 'workflow_node_context_edit' | translate }}</sm-item>
             <sm-item (click)="openDeleteNodeModal()">{{ 'workflow_node_delete_btn' | translate }}</sm-item>
-    </sm-dropdown>
+        </sm-dropdown>
+
+
 </div>
 <ng-container *ngIf="project && node">
     <app-workflow-trigger [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>
@@ -23,5 +26,5 @@
     <app-workflow-node-delete [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
 </ng-container>
 <ng-container *ngIf="project && node">
-    <app-workflow-node-context [node]="editableNode" [project]="project" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
+    <app-workflow-node-context [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
 </ng-container>

@@ -24,6 +24,9 @@ import {PipelineStore} from './service/pipeline/pipeline.store';
 import {LastModification, ProjectLastUpdates} from './model/lastupdate.model';
 import {AppService} from './app.service';
 import {RouterTestingModule} from '@angular/router/testing';
+import {Pipeline} from './model/pipeline.model';
+import {Application} from './model/application.model';
+import {Project} from './model/project.model';
 
 describe('App: CDS', () => {
 
@@ -217,9 +220,9 @@ describe('App: CDS', () => {
             checkPip = true;
             expect(pips.size).toBe(2, 'Must have 2 pipelines');
             expect(pips.get('key1-pip1')).toBeTruthy('pip1 must be here');
-            expect(pips.get('key1-pip1').last_modified).toBe('2017-05-11T10:20:22.874779+02:00', 'no change on pip1');
+            expect(pips.get('key1-pip1').last_modified).toBe(1494490822, 'no change on pip1');
             expect(pips.get('key1-pip2')).toBeTruthy('pip2 must be here');
-            expect(pips.get('key1-pip2').last_modified).toBe('2017-06-11T10:20:22.874779+02:00', 'pip2 have to be up to date');
+            expect(pips.get('key1-pip2').last_modified).toBe(1497169222, 'pip2 have to be up to date');
         }).unsubscribe();
         expect(checkPip).toBe(true);
     }));
@@ -249,11 +252,24 @@ class MockProjectService extends ProjectService {
             case 'key1':
                 if (this.callKEY1 === 0) {
                     this.callKEY1++;
-                    return Observable.of({ key: 'key1', name: 'project1', last_modified: '2017-05-11T10:20:22.874779+02:00'});
+                    let proj = new Project();
+                    proj.key = 'key1';
+                    proj.name = 'project1';
+                    proj.last_modified = '2017-05-11T10:20:22.874779+02:00';
+                    return Observable.of(proj);
                 } else {
-                    return Observable.of({ key: 'key1', name: 'project1', last_modified: '2017-06-11T10:20:22.874779+02:00'});
+                    let proj = new Project();
+                    proj.key = 'key1';
+                    proj.name = 'project1';
+                    proj.last_modified = '2017-06-11T10:20:22.874779+02:00';
+                    return Observable.of(proj);
                 }
-            case 'key2': return Observable.of({ key: 'key2', name: 'project2', last_modified: '2017-05-11T10:20:22.874779+02:00'});
+            case 'key2':
+                let proj = new Project();
+                proj.key = 'key2';
+                proj.name = 'project2';
+                proj.last_modified = '2017-05-11T10:20:22.874779+02:00';
+                return Observable.of(proj);
         }
 
     }
@@ -265,13 +281,22 @@ class MockApplicationService extends ApplicationService {
     getApplication(key: string, appName: string) {
         if (key === 'key1') {
             if (appName === 'app1') {
-                return Observable.of({ name: 'app1', last_modified: '2017-05-11T10:20:22.874779+02:00'});
+                let app = new Application();
+                app.name = 'app1';
+                app.last_modified = '2017-05-11T10:20:22.874779+02:00';
+                return Observable.of(app);
             }
             if (appName === 'app2') {
                 if (this.callAPP2 === 0) {
                     this.callAPP2++;
-                    return Observable.of({ name: 'app2', last_modified: '2017-05-11T10:20:22.874779+02:00'});
+                    let app = new Application();
+                    app.name = 'app2';
+                    app.last_modified = '2017-05-11T10:20:22.874779+02:00';
+                    return Observable.of(app);
                 } else {
+                    let app = new Application();
+                    app.name = 'app2';
+                    app.last_modified = '2017-06-11T10:20:22.874779+02:00';
                     return Observable.of({ name: 'app2', last_modified: '2017-06-11T10:20:22.874779+02:00'});
                 }
 
@@ -279,7 +304,10 @@ class MockApplicationService extends ApplicationService {
         }
         if (key === 'key2') {
             if (appName === 'app3') {
-                return Observable.of({ name: 'app3', last_modified: '2017-05-11T10:20:22.874779+02:00'});
+                let app = new Application();
+                app.name = 'app3';
+                app.last_modified = '2017-05-11T10:20:22.874779+02:00';
+                return Observable.of(app);
             }
         }
     }
@@ -290,21 +318,33 @@ class MockPipelineService extends PipelineService {
     getPipeline(key: string, pipName: string) {
         if (key === 'key1') {
             if (pipName === 'pip1') {
-                return Observable.of({ name: 'pip1', last_modified: '2017-05-11T10:20:22.874779+02:00'});
+                let pip = new Pipeline();
+                pip.name = 'pip1';
+                pip.last_modified = 1494490822;
+                return Observable.of(pip);
             }
             if (pipName === 'pip2') {
                 if (this.callPIP2 === 0) {
                     this.callPIP2++;
-                    return Observable.of({ name: 'pip2', last_modified: '2017-05-11T10:20:22.874779+02:00'});
+                    let pip = new Pipeline();
+                    pip.name = 'pip1';
+                    pip.last_modified = 1494490822;
+                    return Observable.of(pip);
                 } else {
-                    return Observable.of({ name: 'pip2', last_modified: '2017-06-11T10:20:22.874779+02:00'});
+                    let pip = new Pipeline();
+                    pip.name = 'pip1';
+                    pip.last_modified = 1497169222;
+                    return Observable.of(pip);
                 }
 
             }
         }
         if (key === 'key2') {
             if (pipName === 'pip3') {
-                return Observable.of({name: 'pip3', last_modified: '2017-05-11T10:20:22.874779+02:00'});
+                let pip = new Pipeline();
+                pip.name = 'pip3';
+                pip.last_modified = 1494490822;
+                return Observable.of(pip);
             }
         }
     }

@@ -19,6 +19,9 @@ import {UserNotificationSettings, UserNotificationTemplate, Notification} from '
 import {Pipeline} from '../../../../../model/pipeline.model';
 import {Environment} from '../../../../../model/environment.model';
 import {NotificationEvent} from '../notification.event';
+import {Operator} from 'rxjs/Operator';
+import {Observable} from 'rxjs/Observable';
+import {Subscriber} from 'rxjs/Subscriber';
 
 describe('CDS: Application notifications', () => {
 
@@ -498,8 +501,11 @@ describe('CDS: Application notifications', () => {
     }));
 });
 
-class MockEventEmitter extends EventEmitter {
+class MockEventEmitter extends EventEmitter<NotificationEvent> {
     event: NotificationEvent;
+    __isAsync: any;
+
+
 
     constructor() {
         super();

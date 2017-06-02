@@ -2,6 +2,7 @@ import {Pipeline} from './pipeline.model';
 import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {intersection} from 'lodash';
+import {Parameter} from './parameter.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -134,6 +135,8 @@ export class WorkflowNodeContext {
     application: Application;
     environment: Environment;
     environment_id: number;
+    default_payload: string;
+    default_pipeline_parameters: Array<Parameter>;
 }
 
 // WorkflowNodeHook represents a hook which cann trigger the workflow from a given node

@@ -25,6 +25,7 @@ describe('CDS: Pipeline Admin Component', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                MockBackend,
                 {provide: XHRBackend, useClass: MockBackend},
                 PipelineService,
                 PipelineStore,
@@ -43,7 +44,7 @@ describe('CDS: Pipeline Admin Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {

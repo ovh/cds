@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, getTestBed, tick, fakeAsync, inject} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
@@ -14,9 +14,6 @@ import {PermissionEvent} from '../permission.event.model';
 import {SharedModule} from '../../shared.module';
 
 describe('CDS: Permission From Component', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -36,18 +33,10 @@ describe('CDS: Permission From Component', () => {
             ]
         });
 
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-    it('should create new permission', fakeAsync( () => {
+    it('should create new permission', fakeAsync( inject([XHRBackend], (backend: MockBackend) => {
         // Mock Http login request
         backend.connections.subscribe(connection => {
             connection.mockRespond(new Response(new ResponseOptions({ body : '[ { "id": 1, "name": "grp1", "admins": [], "users": [] },' +
@@ -84,6 +73,6 @@ describe('CDS: Permission From Component', () => {
 
         // Check if creation evant has been emitted
         expect(fixture.componentInstance.createGroupPermissionEvent.emit).toHaveBeenCalledWith(new PermissionEvent('add', gp));
-    }));
+    })));
 });
 

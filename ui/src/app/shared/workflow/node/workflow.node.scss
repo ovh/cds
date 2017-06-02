@@ -1,24 +1,21 @@
 .workflowNode {
   width: 155px;
-  height: 48px;
-  display: table;
+  height: 68px;
 
   .ui.segment {
     margin-top: -10px;
     margin-left: -11px;
     width: 176px;
     height: 68px;
-    position: absolute;
     border-color: #333;
     padding: 0;
 
     .pipeline {
-      display:flex;
+      display: flex;
       text-align: left;
       padding-left: 10px;
-      align-items:center;
+      align-items: center;
       height: 68px;
-
 
       p {
         width: 155px;
@@ -47,10 +44,10 @@
   }
 
   sm-dropdown {
+    z-index: 3;
     position: absolute;
     right: -10px;
     top: -5px;
-
     .dropdown.icon {
       display: none;
     }
@@ -58,7 +55,7 @@
 
   .footer {
     position: absolute;
-    bottom: -10px;
+    bottom: 0px;
     width: 100%;
 
     p {

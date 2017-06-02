@@ -286,6 +286,7 @@ func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+<<<<<<< HEAD
 	id, errr := requestVarInt(r, "permID")
 	if errr != nil {
 		return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Invalid id")
@@ -329,6 +330,8 @@ func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *
 		return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Unable to commit tx")
 	}
 
+=======
+>>>>>>> master
 	return nil
 }
 

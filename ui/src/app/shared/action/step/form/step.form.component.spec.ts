@@ -27,6 +27,7 @@ describe('CDS: Action Component', () => {
                 SharedService,
                 TranslateService,
                 ParameterService,
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
@@ -38,7 +39,7 @@ describe('CDS: Action Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {

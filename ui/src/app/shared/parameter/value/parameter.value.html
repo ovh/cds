@@ -60,7 +60,7 @@
         </sm-select>
         <input *ngIf="selectedRepoManager && selectedRepoManager.name === 'Git Url'" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="{{'parameter_git_url' | translate }}">
     </div>
-    <div *ngSwitchDefault class="ui fluid input">
+    <div *ngSwitchDefault>
         <input auto-complete autocomplete="off" type="text" [(ngModel)]="value"
                (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [source]="suggest" [min-chars]="3"
                [no-match-found-text]="false">

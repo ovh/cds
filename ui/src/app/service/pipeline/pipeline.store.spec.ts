@@ -1,5 +1,5 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, async, getTestBed} from '@angular/core/testing';
+import {async, getTestBed, TestBed} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {MockBackend} from '@angular/http/testing';
 import {Http, RequestOptions, Response, ResponseOptions} from '@angular/http';
@@ -7,7 +7,7 @@ import {Injector} from '@angular/core';
 import {AppModule} from '../../app.module';
 import {AuthentificationStore} from '../auth/authentification.store';
 import {HttpService} from '../http-service.service';
-import {RouterModule, Router} from '@angular/router';
+import {Router, RouterModule} from '@angular/router';
 import {PipelineStore} from './pipeline.store';
 import {Pipeline} from '../../model/pipeline.model';
 import {ToastService} from '../../shared/toast/ToastService';
@@ -275,9 +275,9 @@ describe('CDS: pipeline Store', () => {
                     connection.mockRespond(
                         new Response(
                             new ResponseOptions({
-                                body: `{ 
-                                "name": "myPipeline", 
-                                "stages": [{ "id": 1, "jobs": [{"action": { "name": "action1" }}] }] 
+                                body: `{
+                                "name": "myPipeline",
+                                "stages": [{ "id": 1, "jobs": [{"action": { "name": "action1" }}] }]
                             }`
                             })));
                     break;
@@ -286,9 +286,9 @@ describe('CDS: pipeline Store', () => {
                     connection.mockRespond(
                         new Response(
                             new ResponseOptions({
-                                body: `{ 
-                                "name": "myPipeline", 
-                                "stages": [{ "id": 1, "jobs": [ {"action": { "name": "action1Updated" }}] }] 
+                                body: `{
+                                "name": "myPipeline",
+                                "stages": [{ "id": 1, "jobs": [ {"action": { "name": "action1Updated" }}] }]
                             }`
                             })));
                     break;
@@ -297,9 +297,9 @@ describe('CDS: pipeline Store', () => {
                     connection.mockRespond(
                         new Response(
                             new ResponseOptions({
-                                body: `{ 
-                                "name": "myPipeline", 
-                                "stages": [{ "id": 1, "jobs": [] }] 
+                                body: `{
+                                "name": "myPipeline",
+                                "stages": [{ "id": 1, "jobs": [] }]
                             }`
                             })
                         )
@@ -373,35 +373,38 @@ describe('CDS: pipeline Store', () => {
 
     }));
 
-    it('should add/update/delete a permission', async( () => {
+    it('should add/update/delete a permission', async(() => {
         let call = 0;
         // Mock Http application request
         backend.connections.subscribe(connection => {
             switch (call) {
                 case 0: // create application
-                    call ++;
+                    call++;
                     connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline", "last_modified": 0 }'})));
                     break;
                 case 1: // Add variable
                     call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                        "name": "myPipeline", 
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{
+                        "name": "myPipeline",
                         "last_modified": 123,
                         "groups": [ {"permission": 7} ] }`
                     })));
                     break;
                 case 2: // update variable
                     call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                         "name": "myPipeline", 
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{
+                         "name": "myPipeline",
                         "last_modified": 456,
                         "groups": [ {"permission": 4} ] }`
                     })));
                     break;
                 case 3: // delete variable
                     call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                         "name": "myPipeline", 
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{
+                         "name": "myPipeline",
                         "last_modified": 789,
                         "groups": [ ] }`
                     })));
@@ -416,19 +419,21 @@ describe('CDS: pipeline Store', () => {
 
         // Create pipeline
         let pip = createPipeline('myPipeline');
-        pipelineStore.createPipeline(proj.key, pip).subscribe( () => {});
+        pipelineStore.createPipeline(proj.key, pip).subscribe(() => {
+        });
         expect(call).toBe(1, 'Need to have done 1 http call');
 
         let gp: GroupPermission = new GroupPermission();
         gp.permission = 0;
 
 
-        pipelineStore.addPermission(proj.key, pip.name, gp).subscribe(() => {});
+        pipelineStore.addPermission(proj.key, pip.name, gp).subscribe(() => {
+        });
         expect(call).toBe(2, 'Need to have done 2 http call');
 
         // check get pipeline
         let checkedAddPermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(123, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'A group must have been added');
             expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(7, 'Permission must be 7');
@@ -438,12 +443,13 @@ describe('CDS: pipeline Store', () => {
         expect(call).toBe(2, 'Need to have done 2 http call');
 
 
-        pipelineStore.updatePermission(proj.key, pip.name, gp).subscribe(() => {});
+        pipelineStore.updatePermission(proj.key, pip.name, gp).subscribe(() => {
+        });
         expect(call).toBe(3, 'Need to have done 3 http call');
 
         // check get pipeline
         let checkedUpdatePermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(456, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'Pip must have 1 group');
             expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(4, 'Group permission must be 4');
@@ -453,12 +459,13 @@ describe('CDS: pipeline Store', () => {
         expect(call).toBe(3, 'Need to have done 3 http call');
 
 
-        pipelineStore.removePermission(proj.key, pip.name, gp).subscribe(() => {});
+        pipelineStore.removePermission(proj.key, pip.name, gp).subscribe(() => {
+        });
         expect(call).toBe(4, 'Need to have done 4 http call');
 
         // check get pipeline
         let checkedDeletePermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(789, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(0, 'Ouo must have 0 group');
             checkedDeletePermission = true;
@@ -469,35 +476,38 @@ describe('CDS: pipeline Store', () => {
 
     }));
 
-    it('should add/update/delete a parameter', async( () => {
+    it('should add/update/delete a parameter', async(() => {
         let call = 0;
         // Mock Http application request
         backend.connections.subscribe(connection => {
             switch (call) {
                 case 0: // create application
-                    call ++;
+                    call++;
                     connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline", "last_modified": 0 }'})));
                     break;
                 case 1: // Add variable
                     call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                        "name": "myPipeline", 
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{
+                        "name": "myPipeline",
                         "last_modified": 123,
                         "parameters": [ {"name": "foo"} ] }`
                     })));
                     break;
                 case 2: // update variable
                     call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                         "name": "myPipeline", 
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{
+                         "name": "myPipeline",
                         "last_modified": 456,
                         "parameters": [ {"name": "fooUpdated"} ] }`
                     })));
                     break;
                 case 3: // delete variable
                     call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                         "name": "myPipeline", 
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{
+                         "name": "myPipeline",
                         "last_modified": 789,
                         "parameters": [ ] }`
                     })));
@@ -512,7 +522,8 @@ describe('CDS: pipeline Store', () => {
 
         // Create pipeline
         let pip = createPipeline('myPipeline');
-        pipelineStore.createPipeline(proj.key, pip).subscribe( () => {});
+        pipelineStore.createPipeline(proj.key, pip).subscribe(() => {
+        });
         expect(call).toBe(1, 'Need to have done 1 http call');
 
         let param: Parameter = new Parameter();
@@ -522,12 +533,13 @@ describe('CDS: pipeline Store', () => {
         param.value = 'bar';
 
 
-        pipelineStore.addParameter(proj.key, pip.name, param).subscribe(() => {});
+        pipelineStore.addParameter(proj.key, pip.name, param).subscribe(() => {
+        });
         expect(call).toBe(2, 'Need to have done 2 http call');
 
         // check get pipeline
         let checkedAddParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(123, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(1, 'A parameter must have been added');
             expect(apps.get(proj.key + '-myPipeline').parameters[0].name).toBe('foo', 'Name must be foo');
@@ -537,12 +549,13 @@ describe('CDS: pipeline Store', () => {
         expect(call).toBe(2, 'Need to have done 2 http call');
 
 
-        pipelineStore.updateParameter(proj.key, pip.name, param).subscribe(() => {});
+        pipelineStore.updateParameter(proj.key, pip.name, param).subscribe(() => {
+        });
         expect(call).toBe(3, 'Need to have done 3 http call');
 
         // check get pipeline
         let checkedUpdateParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(456, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(1, 'Pip must have 1 group');
             expect(apps.get(proj.key + '-myPipeline').parameters[0].name).toBe('fooUpdated', 'Name must be fooUpdated');
@@ -552,12 +565,13 @@ describe('CDS: pipeline Store', () => {
         expect(call).toBe(3, 'Need to have done 3 http call');
 
 
-        pipelineStore.removeParameter(proj.key, pip.name, param).subscribe(() => {});
+        pipelineStore.removeParameter(proj.key, pip.name, param).subscribe(() => {
+        });
         expect(call).toBe(4, 'Need to have done 4 http call');
 
         // check get pipeline
         let checkedDeleteParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(789, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(0, 'Pip must have 0 parameter');
             checkedDeleteParam = true;

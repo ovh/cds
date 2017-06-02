@@ -72,7 +72,11 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 	}
 
 	if stageUpdated {
+<<<<<<< HEAD
 		if err := UpdateNodeRun(db, node); err != nil {
+=======
+		if err := updateWorkflowNodeRun(db, node); err != nil {
+>>>>>>> master
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
 		}
 	}

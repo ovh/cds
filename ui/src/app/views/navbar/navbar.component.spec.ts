@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
+import {TestBed, getTestBed, fakeAsync, inject} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
@@ -19,7 +19,6 @@ import {LanguageStore} from '../../service/language/language.store';
 describe('CDS: Navbar Component', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
     let projectStore: ProjectStore;
 
     beforeEach(() => {
@@ -46,19 +45,17 @@ describe('CDS: Navbar Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
         projectStore = injector.get(ProjectStore);
 
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
         projectStore = undefined;
     });
 
 
-    it('should select a project + rename project event', fakeAsync(() => {
+    it('should select a project + rename project event', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
         let call = 0;
         let nameUpdated = 'prj1Updated';
         // Mock Http login request
@@ -88,5 +85,5 @@ describe('CDS: Navbar Component', () => {
         fixture.componentInstance.ngOnInit();
         expect(backend.connectionsArray.length).toBe(1, 'Must have call getProjects');
 
-    }));
+    })));
 });
