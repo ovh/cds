@@ -97,3 +97,52 @@ func ParametersToMap(params []Parameter) map[string]string {
 	}
 	return res
 }
+
+// ParametersFromProjectVariables returns a map from a slice of parameters
+func ParametersFromProjectVariables(proj *Project) map[string]string {
+	if proj == nil {
+		return nil
+	}
+	params := variablesToParameters("cds.proj", proj.Variable)
+	return ParametersToMap(params)
+}
+
+// ParametersFromApplicationVariables returns a map from a slice of parameters
+func ParametersFromApplicationVariables(app *Application) map[string]string {
+	if app == nil {
+		return nil
+	}
+	params := variablesToParameters("cds.app", app.Variable)
+	return ParametersToMap(params)
+}
+
+// ParametersFromEnvironmentVariables returns a map from a slice of parameters
+func ParametersFromEnvironmentVariables(env *Environment) map[string]string {
+	if env == nil {
+		return nil
+	}
+	params := variablesToParameters("cds.env", env.Variable)
+	return ParametersToMap(params)
+}
+
+// ParametersFromPipelineParameters returns a map from a slice of parameters
+func ParametersFromPipelineParameters(pipParams []Parameter) map[string]string {
+	res := []Parameter{}
+	for _, t := range pipParams {
+		t.Name = "cds.pip." + t.Name
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return ParametersToMap(res)
+}
+
+func variablesToParameters(prefix string, variables []Variable) []Parameter {
+	res := []Parameter{}
+	for _, t := range variables {
+		if NeedPlaceholder(t.Type) {
+			continue
+		}
+		t.Name = prefix + "." + t.Name
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return res
+}
