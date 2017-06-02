@@ -353,7 +353,6 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
 }
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
-<<<<<<< HEAD
 	db := test.SetupPG(t)
 	ctx := test_runWorkflow(t, db, "/Test_postWorkflowJobVariableHandler")
 	test_getWorkflowJob(t, db, &ctx)
@@ -403,10 +402,6 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	router.mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-=======
-	//db := test.SetupPG(t)
-	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
->>>>>>> master
 }
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	//db := test.SetupPG(t)
