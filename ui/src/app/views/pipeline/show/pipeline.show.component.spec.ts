@@ -1,5 +1,5 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
+import {TestBed, fakeAsync, getTestBed, inject} from '@angular/core/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {ActivatedRoute, ActivatedRouteSnapshot, Data} from '@angular/router';
@@ -26,7 +26,6 @@ import {ApplicationPipelineService} from '../../../service/application/pipeline/
 describe('CDS: Pipeline Show', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -52,15 +51,13 @@ describe('CDS: Pipeline Show', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
     });
 
-    it('should load component', fakeAsync(() => {
+    it('should load component', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
         let call = 0;
         // Mock Http
         backend.connections.subscribe(connection => {
@@ -95,9 +92,9 @@ describe('CDS: Pipeline Show', () => {
         expect(fixture.componentInstance.pipeline.name).toBe('pip1');
         expect(fixture.componentInstance.project.key).toBe('key1');
 
-    }));
+    })));
 
-    it('should run add/update/delete permission', fakeAsync(() => {
+    it('should run add/update/delete permission', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
         let call = 0;
         // Mock Http
         backend.connections.subscribe(connection => {
@@ -157,9 +154,9 @@ describe('CDS: Pipeline Show', () => {
         });
         fixture.componentInstance.groupEvent(groupEvent, true);
         expect(pipStore.removePermission).toHaveBeenCalledWith('key1', 'pip1', gp);
-    }));
+    })));
 
-    it('should run add/update/delete parameters', fakeAsync(() => {
+    it('should run add/update/delete parameters', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
         let call = 0;
         // Mock Http
         backend.connections.subscribe(connection => {
@@ -219,7 +216,7 @@ describe('CDS: Pipeline Show', () => {
         });
         fixture.componentInstance.parameterEvent(event, true);
         expect(pipStore.removeParameter).toHaveBeenCalledWith('key1', 'pip1', param);
-    }));
+    })));
 });
 
 class MockToast {

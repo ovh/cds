@@ -29,6 +29,7 @@ describe('CDS: Pipeline Workflow', () => {
             declarations: [
             ],
             providers: [
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 PipelineService,
                 PipelineStore,
@@ -47,7 +48,7 @@ describe('CDS: Pipeline Workflow', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {
@@ -84,7 +85,7 @@ describe('CDS: Pipeline Workflow', () => {
         fixture.componentInstance.project = p;
 
         let pip = new Pipeline();
-        pip.last_modified = new Date();
+        pip.last_modified = (new Date()).getTime();
         pip.name = 'pip';
         fixture.componentInstance.pipeline = pip;
 
@@ -99,7 +100,7 @@ describe('CDS: Pipeline Workflow', () => {
 
 
         let pipUpdated = new Pipeline();
-        pipUpdated.last_modified = new Date();
+        pipUpdated.last_modified = (new Date()).getTime();
         pipUpdated.stages = new Array<Stage>();
         pipUpdated.stages.push(s);
 

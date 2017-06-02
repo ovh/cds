@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, getTestBed, tick, fakeAsync, inject} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
@@ -17,8 +17,6 @@ import {AccountModule} from '../account.module';
 
 describe('CDS: LoginComponent', () => {
 
-    let injector: Injector;
-    let backend: MockBackend;
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
@@ -35,18 +33,10 @@ describe('CDS: LoginComponent', () => {
                 AccountModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-    it('Click on Login button', fakeAsync( () => {
+    it('Click on Login button', fakeAsync(  inject([XHRBackend], (backend: MockBackend) => {
         // Create loginComponent
         let fixture = TestBed.createComponent(LoginComponent);
         let component = fixture.debugElement.componentInstance;
@@ -80,7 +70,7 @@ describe('CDS: LoginComponent', () => {
         expect(userSent.username).toBe('foo');
         expect(userSent.password).toBe('bar');
 
-    }));
+    })));
 });
 
 export class MockRouter {

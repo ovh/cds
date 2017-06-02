@@ -25,6 +25,7 @@ describe('CDS: parameter From Component', () => {
             providers: [
                 ParameterService,
                 TranslateService,
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
@@ -37,7 +38,7 @@ describe('CDS: parameter From Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
 
     });
 

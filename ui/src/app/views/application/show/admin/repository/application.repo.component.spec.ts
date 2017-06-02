@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
+import {TestBed, fakeAsync, getTestBed, tick, inject} from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
@@ -31,7 +31,6 @@ describe('CDS: Application Repo Component', () => {
 
     let injector: Injector;
     let toast: ToastService;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -61,24 +60,22 @@ describe('CDS: Application Repo Component', () => {
 
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
         toast = injector.get(ToastService);
     });
 
     afterEach(() => {
         injector = undefined;
         toast = undefined;
-        backend = undefined;
     });
 
-    it('Load component + select repository', fakeAsync( () => {
+    it('Load component + select repository', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
         TestBed.compileComponents().then(() => {
             let call = 0;
             // Mock Http login request
             backend.connections.subscribe(connection => {
                 call++;
                 connection.mockRespond(new Response(new ResponseOptions({
-                    body: `[ 
+                    body: `[
                     { "name" : "repo1", "fullname": "frepo1" },
                     { "name" : "repo2", "fullname": "frepo2" },
                     { "name" : "repo3", "fullname": "frepo3" },
@@ -138,7 +135,7 @@ describe('CDS: Application Repo Component', () => {
             compiled.querySelector('.ui.red.button.active').click();
             expect(toast.success).toHaveBeenCalledTimes(2);
         });
-    }));
+    })));
 });
 
 class MockRouter {

@@ -30,6 +30,7 @@ describe('CDS: Project Admin Component', () => {
             declarations: [
             ],
             providers: [
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 RepoManagerService,
@@ -51,7 +52,7 @@ describe('CDS: Project Admin Component', () => {
             ]
         });
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
         projectStore = injector.get(ProjectStore);
 
     });

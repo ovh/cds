@@ -28,6 +28,7 @@ describe('CDS: Requirement Form Component', () => {
                 RequirementStore,
                 TranslateService,
                 WorkerModelService,
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
@@ -39,7 +40,7 @@ describe('CDS: Requirement Form Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
 
     });
 
