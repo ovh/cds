@@ -164,6 +164,20 @@ read:
 	}
 }
 
+//QueueLen returns the length of a queue
+func (s *RedisStore) QueueLen(queueName string) int {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return 0
+	}
+
+	res, err := s.Client.LLen(queueName).Result()
+	if err != nil {
+		log.Warning("redis> Cannot read %s :%s", queueName, err)
+	}
+	return int(res)
+}
+
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
 	if s.Client == nil {

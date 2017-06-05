@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/internal"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -62,6 +63,10 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	// Check Event
 	output = append(output, fmt.Sprintf("Event: %s", event.Status()))
 	log.Debug("Status> Event: %s", event.Status())
+
+	// Check Event
+	output = append(output, fmt.Sprintf("Internal Events Queue: %s", repositoriesmanager.EventsStatus()))
+	log.Debug("Status> Internal Events Queue: %s", repositoriesmanager.EventsStatus())
 
 	// Check redis
 	output = append(output, fmt.Sprintf("Cache: %s", cache.Status))

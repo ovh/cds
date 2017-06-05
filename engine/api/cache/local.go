@@ -130,6 +130,15 @@ func (s *LocalStore) Dequeue(queueName string, value interface{}) {
 	return
 }
 
+//QueueLen returns the length of a queue
+func (s *LocalStore) QueueLen(queueName string) int {
+	l := s.Queues[queueName]
+	if l == nil {
+		return 0
+	}
+	return l.Len()
+}
+
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
 	l := s.Queues[queueName]

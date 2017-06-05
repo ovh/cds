@@ -12,6 +12,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+//EventsStatus returns info about length of events queue
+func EventsStatus() string {
+	return fmt.Sprintf("%d", cache.QueueLen("events_repositoriesmanager"))
+}
+
 //ReceiveEvents has to be launched as a goroutine.
 func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap) {
 	for {
