@@ -19,7 +19,7 @@ func CheckHeartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("WorkerHeartbeat> Exiting CheckHeartbeat: %v", c.Err())
+				log.Error("Exiting WorkerHeartbeat: %v", c.Err())
 			}
 			return
 		case <-tick:

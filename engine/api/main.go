@@ -70,9 +70,7 @@ var mainCmd = &cobra.Command{
 
 		// Gracefully shutdown sql connections
 		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		signal.Notify(c, syscall.SIGTERM)
-		signal.Notify(c, syscall.SIGKILL)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 		defer func() {
 			signal.Stop(c)
 			cancel()
@@ -82,8 +80,10 @@ var mainCmd = &cobra.Command{
 			case <-c:
 				log.Warning("Cleanup SQL connections")
 				database.Close()
-				event.Publish(sdk.EventEngine{Message: "shutdown"})
+				cancel()
+				//event.Publish(sdk.EventEngine{Message: "shutdown"})
 				event.Close()
+
 			case <-ctx.Done():
 			}
 		}()
@@ -262,9 +262,9 @@ var mainCmd = &cobra.Command{
 		go hatchery.Heartbeat(ctx, database.GetDBMap)
 		go auditCleanerRoutine(ctx, database.GetDBMap)
 
-		go repositoriesmanager.ReceiveEvents()
+		go repositoriesmanager.ReceiveEvents(ctx, database.GetDBMap)
 
-		go stats.StartRoutine()
+		go stats.StartRoutine(ctx, database.GetDBMap)
 		go action.RequirementsCacheLoader(ctx, 5*time.Second, database.GetDBMap)
 		go hookRecoverer(ctx, database.GetDBMap)
 

@@ -59,8 +59,9 @@ func DequeueEvent(c context.Context) {
 	for {
 		e := sdk.Event{}
 		cache.DequeueWithContext(c, "events", &e)
-		if c.Err() != nil {
-			log.Error("event.DequeueEvent error : %v", e)
+		err := c.Err()
+		if err != nil {
+			log.Error("Exiting event.DequeueEvent : %v", err)
 			return
 		}
 

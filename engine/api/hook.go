@@ -215,7 +215,12 @@ func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
 			}
 		case <-tick:
 			h := hook.ReceivedHook{}
-			cache.Dequeue("hook:recovery", &h)
+			cache.DequeueWithContext(c, "hook:recovery", &h)
+			err := c.Err()
+			if err != nil {
+				log.Error("Exiting hookRecoverer: %v", err)
+				return
+			}
 			if h.Repository != "" {
 				if err := processHook(DBFunc(), h); err != nil {
 					hook.Recovery(h, err)

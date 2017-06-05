@@ -20,7 +20,7 @@ func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("RequirementsCacheLoader> Exiting RequirementsCacheLoader: %v", c.Err())
+				log.Error("Exiting RequirementsCacheLoader: %v", c.Err())
 				return
 			}
 		case <-tick:
