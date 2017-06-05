@@ -81,8 +81,9 @@ var mainCmd = &cobra.Command{
 				log.Warning("Cleanup SQL connections")
 				database.Close()
 				cancel()
-				//event.Publish(sdk.EventEngine{Message: "shutdown"})
+				event.Publish(sdk.EventEngine{Message: "shutdown"})
 				event.Close()
+				os.Exit(0)
 
 			case <-ctx.Done():
 			}
