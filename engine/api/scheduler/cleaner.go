@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -10,10 +11,18 @@ import (
 )
 
 //Cleaner is the cleaner main goroutine
-func Cleaner(DBFunc func() *gorp.DbMap, nbToKeep int) {
+func Cleaner(c context.Context, DBFunc func() *gorp.DbMap, nbToKeep int) {
+	tick := time.NewTicker(10 * time.Minute).C
 	for {
-		CleanerRun(DBFunc(), nbToKeep)
-		time.Sleep(10 * time.Minute)
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting scheduler.Cleaner: %v", c.Err())
+				return
+			}
+		case <-tick:
+			CleanerRun(DBFunc(), nbToKeep)
+		}
 	}
 }
 

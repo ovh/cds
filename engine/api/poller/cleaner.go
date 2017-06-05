@@ -1,6 +1,7 @@
 package poller
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -10,13 +11,20 @@ import (
 )
 
 //Cleaner is the cleaner main goroutine
-func Cleaner(DBFunc func() *gorp.DbMap, nbToKeep int) {
-	defer log.Error("poller.Cleaner> has been exited !")
+func Cleaner(c context.Context, DBFunc func() *gorp.DbMap, nbToKeep int) {
+	tick := time.NewTicker(30 * time.Minute).C
 	for {
-		time.Sleep(30 * time.Minute)
-		if _, err := CleanerRun(DBFunc(), nbToKeep); err != nil {
-			log.Warning("poller.Cleaner> Error : %s", err)
-			continue
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting poller.Cleaner: %v", c.Err())
+				return
+			}
+		case <-tick:
+			if _, err := CleanerRun(DBFunc(), nbToKeep); err != nil {
+				log.Warning("poller.Cleaner> Error : %s", err)
+				continue
+			}
 		}
 	}
 }

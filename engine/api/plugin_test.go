@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	ctx "context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -158,7 +159,8 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	u, _ := assets.InsertAdminUser(db)
 	if err := actionplugin.Delete(db, "plugin-download", u.ID); err != nil {
@@ -229,7 +231,8 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	u, _ := assets.InsertAdminUser(db)
 	actionplugin.Delete(db, "plugin-download", u.ID)
@@ -271,7 +274,8 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	u, _ := assets.InsertAdminUser(db)
 	actionplugin.Delete(db, "plugin-download", u.ID)
@@ -321,7 +325,8 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	u, _ := assets.InsertAdminUser(db)
 	actionplugin.Delete(db, "plugin-download", u.ID)
@@ -384,7 +389,8 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	u, _ := assets.InsertAdminUser(db)
 	actionplugin.Delete(db, "plugin-download", u.ID)

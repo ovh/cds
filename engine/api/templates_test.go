@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	ctx "context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -88,7 +89,8 @@ func Test_addTemplateHandler(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	defer os.RemoveAll(tmpDir)
 
@@ -219,7 +221,8 @@ func Test_deleteTemplateHandler(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	defer os.RemoveAll(tmpDir)
 
@@ -331,7 +334,8 @@ func Test_updateTemplateHandler(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
@@ -499,7 +503,8 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	defer os.RemoveAll(tmpDir)
 
@@ -623,7 +628,8 @@ func Test_applyTemplatesHandler(t *testing.T) {
 			},
 		},
 	}
-	objectstore.Initialize(cfg)
+	c := ctx.Background()
+	objectstore.Initialize(c, cfg)
 
 	defer os.RemoveAll(tmpDir)
 

@@ -79,6 +79,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 			}
 		}
 	} else {
+		t.Logf("Error reading %s: %v", f, err)
 		DBDriver = flag.Lookup("dbDriver").Value.String()
 		dbUser = flag.Lookup("dbUser").Value.String()
 		dbPassword = flag.Lookup("dbPassword").Value.String()

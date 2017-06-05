@@ -1,6 +1,7 @@
 package main
 
 import (
+	ctx "context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -203,16 +204,24 @@ func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *conte
 }
 
 //hookRecoverer is the go-routine which catches on-error hook
-func hookRecoverer(DBFunc func() *gorp.DbMap) {
+func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(10 * time.Second).C
 	for {
-		h := hook.ReceivedHook{}
-		cache.Dequeue("hook:recovery", &h)
-		if h.Repository != "" {
-			if err := processHook(DBFunc(), h); err != nil {
-				hook.Recovery(h, err)
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting hookRecoverer: %v", c.Err())
+				return
+			}
+		case <-tick:
+			h := hook.ReceivedHook{}
+			cache.Dequeue("hook:recovery", &h)
+			if h.Repository != "" {
+				if err := processHook(DBFunc(), h); err != nil {
+					hook.Recovery(h, err)
+				}
 			}
 		}
-		time.Sleep(10 * time.Second)
 	}
 }
 

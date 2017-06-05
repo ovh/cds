@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -22,33 +22,35 @@ import (
 )
 
 // Pipelines is a goroutine responsible for pushing actions of a building pipeline in queue, in the wanted order
-func Pipelines() {
-	// If this goroutine exits, then it's a crash
-	defer log.Fatalf("Goroutine of scheduler.Schedule exited - Exit CDS Engine")
-
+func Pipelines(c context.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(2 * time.Second).C
 	for {
-		time.Sleep(2 * time.Second)
-
-		//Check if CDS is in maintenance mode
-		var m bool
-		cache.Get("maintenance", &m)
-		if m {
-			log.Warning("⚠ CDS maintenance in ON")
-			time.Sleep(30 * time.Second)
-		}
-
-		db := database.DBMap(database.DB())
-		if db != nil && !m {
-			ids, err := pipeline.LoadBuildingPipelinesIDs(db)
-			if err != nil {
-				log.Warning("queue.Pipelines> Cannot load building pipelines: %s\n", err)
-				// Add some extra sleep if db is down...
-				time.Sleep(3 * time.Second)
-				continue
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting queue.Pipelines: %v", c.Err())
+				return
+			}
+		case <-tick:
+			//Check if CDS is in maintenance mode
+			var m bool
+			cache.Get("maintenance", &m)
+			if m {
+				log.Info("⚠ CDS maintenance in ON")
+				time.Sleep(30 * time.Second)
 			}
 
-			for _, id := range ids {
-				runPipeline(db, id)
+			db := DBFunc()
+			if db != nil && !m {
+				ids, err := pipeline.LoadBuildingPipelinesIDs(db)
+				if err != nil {
+					log.Warning("queue.Pipelines> Cannot load building pipelines: %s\n", err)
+					continue
+				}
+
+				for _, id := range ids {
+					runPipeline(db, id)
+				}
 			}
 		}
 	}

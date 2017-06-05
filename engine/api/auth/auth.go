@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -11,7 +12,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	ctx "github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
@@ -25,13 +26,13 @@ type Driver interface {
 	Store() sessionstore.Store
 	Authentify(db gorp.SqlExecutor, username, password string) (bool, error)
 	AuthentifyUser(db gorp.SqlExecutor, user *sdk.User, password string) (bool, error)
-	GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, c *context.Ctx) error
+	GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, c *ctx.Ctx) error
 }
 
 //GetDriver is a factory
-func GetDriver(mode string, options interface{}, storeOptions sessionstore.Options) (Driver, error) {
+func GetDriver(c context.Context, mode string, options interface{}, storeOptions sessionstore.Options) (Driver, error) {
 	log.Info("Auth> Intializing driver (%s)", mode)
-	store, err := sessionstore.Get(storeOptions.Mode, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
+	store, err := sessionstore.Get(c, storeOptions.Mode, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get AuthDriver : %s\n", err)
 	}
@@ -109,7 +110,7 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 }
 
 //CheckPersistentSession check persistent session token from CLI
-func CheckPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
+func CheckPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *ctx.Ctx) bool {
 	if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 		if getUserPersistentSession(db, store, headers, ctx) {
 			return true
@@ -121,7 +122,7 @@ func CheckPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, heade
 	return false
 }
 
-func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
+func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *ctx.Ctx) bool {
 	h := headers.Get(sdk.SessionTokenHeader)
 	if h != "" {
 		ok, _ := store.Exists(sessionstore.SessionKey(h))
@@ -141,7 +142,7 @@ func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, hea
 	return false
 }
 
-func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
+func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *ctx.Ctx) bool {
 	authHeaderValue := headers.Get("Authorization")
 	if authHeaderValue == "" {
 		log.Warning("ReloadUserPersistentSession> No Authorization Header")
@@ -218,7 +219,7 @@ func GetWorker(db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
 	return w, nil
 }
 
-func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *context.Ctx) error {
+func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *ctx.Ctx) error {
 	id, err := base64.StdEncoding.DecodeString(auth)
 	if err != nil {
 		return fmt.Errorf("bad worker key syntax: %s", err)

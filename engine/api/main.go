@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -63,6 +64,30 @@ var mainCmd = &cobra.Command{
 
 		startupTime = time.Now()
 
+		//Initliaze context
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+
+		// Gracefully shutdown sql connections
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
+		signal.Notify(c, syscall.SIGTERM)
+		signal.Notify(c, syscall.SIGKILL)
+		defer func() {
+			signal.Stop(c)
+			cancel()
+		}()
+		go func() {
+			select {
+			case <-c:
+				log.Warning("Cleanup SQL connections")
+				database.Close()
+				event.Publish(sdk.EventEngine{Message: "shutdown"})
+				event.Close()
+			case <-ctx.Done():
+			}
+		}()
+
 		//Initialize secret driver
 		secretBackend := viper.GetString(viperServerSecretBackend)
 		secretBackendOptions := viper.GetStringSlice(viperServerSecretBackendOption)
@@ -122,12 +147,12 @@ var mainCmd = &cobra.Command{
 			},
 		}
 
-		if err := objectstore.Initialize(cfg); err != nil {
+		if err := objectstore.Initialize(ctx, cfg); err != nil {
 			log.Fatalf("Cannot initialize storage: %s", err)
 		}
 
 		//Intialize database
-		db, err := database.Init(
+		if _, err := database.Init(
 			viper.GetString(viperDBUser),
 			viper.GetString(viperDBPassword),
 			viper.GetString(viperDBName),
@@ -136,8 +161,7 @@ var mainCmd = &cobra.Command{
 			viper.GetString(viperDBSSLMode),
 			viper.GetInt(viperDBTimeout),
 			viper.GetInt(viperDBMaxConn),
-		)
-		if err != nil {
+		); err != nil {
 			log.Error("Cannot connect to database: %s", err)
 			os.Exit(3)
 		}
@@ -149,20 +173,6 @@ var mainCmd = &cobra.Command{
 		if err := bootstrap.InitiliazeDB(defaultValues, database.GetDBMap); err != nil {
 			log.Error("Cannot setup databases: %s", err)
 		}
-
-		// Gracefully shutdown sql connections
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		signal.Notify(c, syscall.SIGTERM)
-		signal.Notify(c, syscall.SIGKILL)
-		go func() {
-			<-c
-			log.Warning("Cleanup SQL connections")
-			db.Close()
-			event.Publish(sdk.EventEngine{Message: "shutdown"})
-			event.Close()
-			os.Exit(0)
-		}()
 
 		router = &Router{
 			mux: mux.NewRouter(),
@@ -226,7 +236,7 @@ var mainCmd = &cobra.Command{
 			RedisPassword: viper.GetString(viperCacheRedisPassword),
 		}
 
-		router.authDriver, _ = auth.GetDriver(authMode, authOptions, storeOptions)
+		router.authDriver, _ = auth.GetDriver(ctx, authMode, authOptions, storeOptions)
 
 		cache.Initialize(viper.GetString(viperCacheMode), viper.GetString(viperCacheRedisHost), viper.GetString(viperCacheRedisPassword), viper.GetInt(viperCacheTTL))
 
@@ -240,32 +250,32 @@ var mainCmd = &cobra.Command{
 		if err := event.Initialize(kafkaOptions); err != nil {
 			log.Warning("⚠ Error while initializing event system: %s", err)
 		} else {
-			go event.DequeueEvent()
+			go event.DequeueEvent(ctx)
 		}
 
-		if err := worker.Initialize(); err != nil {
+		if err := worker.Initialize(ctx, database.GetDBMap); err != nil {
 			log.Warning("⚠ Error while initializing workers routine: %s", err)
 		}
 
-		go queue.Pipelines()
-		go pipeline.AWOLPipelineKiller(database.GetDBMap)
-		go hatchery.Heartbeat(database.GetDBMap)
-		go auditCleanerRoutine(database.GetDBMap)
+		go queue.Pipelines(ctx, database.GetDBMap)
+		go pipeline.AWOLPipelineKiller(ctx, database.GetDBMap)
+		go hatchery.Heartbeat(ctx, database.GetDBMap)
+		go auditCleanerRoutine(ctx, database.GetDBMap)
 
 		go repositoriesmanager.ReceiveEvents()
 
 		go stats.StartRoutine()
-		go action.RequirementsCacheLoader(5, database.GetDBMap)
-		go hookRecoverer(database.GetDBMap)
+		go action.RequirementsCacheLoader(ctx, 5*time.Second, database.GetDBMap)
+		go hookRecoverer(ctx, database.GetDBMap)
 
 		if !viper.GetBool(viperVCSPollingDisabled) {
-			go poller.Initialize(database.GetDBMap, 10)
+			go poller.Initialize(ctx, 10, database.GetDBMap)
 		} else {
 			log.Warning("⚠ Repositories polling is disabled")
 		}
 
 		if !viper.GetBool(viperSchedulersDisabled) {
-			go scheduler.Initialize(database.GetDBMap, 10)
+			go scheduler.Initialize(ctx, 10, database.GetDBMap)
 		} else {
 			log.Warning("⚠ Cron Scheduler is disabled")
 		}

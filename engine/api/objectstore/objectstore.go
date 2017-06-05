@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -101,9 +102,9 @@ type Driver interface {
 }
 
 // Initialize setup wanted ObjectStore driver
-func Initialize(cfg Config) error {
+func Initialize(c context.Context, cfg Config) error {
 	var err error
-	storage, err = New(cfg)
+	storage, err = New(c, cfg)
 	if err != nil {
 		return err
 	}
@@ -150,10 +151,10 @@ type ConfigOptionsFilesystem struct {
 }
 
 // New initialise a new ArtifactStorage
-func New(cfg Config) (Driver, error) {
+func New(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
 	case Openstack, Swift:
-		return NewOpenstackStore(cfg.Options.Openstack.Address,
+		return NewOpenstackStore(c, cfg.Options.Openstack.Address,
 			cfg.Options.Openstack.Username,
 			cfg.Options.Openstack.Password,
 			cfg.Options.Openstack.Tenant,

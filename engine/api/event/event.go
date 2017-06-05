@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -54,10 +55,15 @@ func Initialize(k KafkaConfig) error {
 }
 
 // DequeueEvent runs in a goroutine and dequeue event from cache
-func DequeueEvent() {
+func DequeueEvent(c context.Context) {
 	for {
 		e := sdk.Event{}
-		cache.Dequeue("events", &e)
+		cache.DequeueWithContext(c, "events", &e)
+		if c.Err() != nil {
+			log.Error("event.DequeueEvent error : %v", e)
+			return
+		}
+
 		for _, b := range brokers {
 			if err := b.sendEvent(&e); err != nil {
 				log.Warning("Error while sending message: %s", err)

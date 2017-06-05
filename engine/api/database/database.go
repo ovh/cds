@@ -134,3 +134,11 @@ func Status() string {
 
 	return fmt.Sprintf("Database: %s OK (%d conns)", dbDriver, db.Stats().OpenConnections)
 }
+
+// Close closes the database, releasing any open resources.
+func Close() error {
+	if db != nil {
+		return db.Close()
+	}
+	return nil
+}

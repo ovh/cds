@@ -1,6 +1,7 @@
 package poller
 
 import (
+	"context"
 	"database/sql"
 	"regexp"
 	"time"
@@ -16,17 +17,24 @@ import (
 )
 
 //Executer is the goroutine which run the pipelines
-func Executer(DBFunc func() *gorp.DbMap) {
-	defer log.Error("poller.Executer> has been exited !")
+func Executer(c context.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(5 * time.Second).C
 	for {
-		time.Sleep(5 * time.Second)
-		exs, err := ExecuterRun(DBFunc())
-		if err != nil {
-			log.Warning("poller.Executer> Error : %s", err)
-			continue
-		}
-		if len(exs) > 0 {
-			log.Debug("poller.Executer> %d has been executed", len(exs))
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting poller.Executer: %v", c.Err())
+				return
+			}
+		case <-tick:
+			exs, err := ExecuterRun(DBFunc())
+			if err != nil {
+				log.Warning("poller.Executer> Error : %s", err)
+				continue
+			}
+			if len(exs) > 0 {
+				log.Debug("poller.Executer> %d has been executed", len(exs))
+			}
 		}
 	}
 }
@@ -65,6 +73,16 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 
 	p, errl := LoadByApplicationAndPipeline(tx, e.ApplicationID, e.PipelineID)
 	if errl != nil {
+		//If the poller doesn't exist: clean this execution and exit
+		if errl == sql.ErrNoRows {
+			if err := DeleteExecution(tx, e); err != nil {
+				log.Error("poller.ExecuterRun> Unable to delete execution %d: %s", e.ID, err)
+			}
+			if err := tx.Commit(); err != nil {
+				log.Error("poller.ExecuterRun> %s", err)
+			}
+			return
+		}
 		log.Error("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, errl)
 		return
 	}

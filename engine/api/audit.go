@@ -1,30 +1,38 @@
 package main
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 const (
 	maxVersion = 10
+	delay      = 1
 )
 
-func auditCleanerRoutine(DBFunc func() *gorp.DbMap) {
-	defer sdk.Exit("AuditCleanerRoutine exited")
+func auditCleanerRoutine(c context.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(delay * time.Minute).C
 
 	for {
-		db := DBFunc()
-		if db != nil {
-			err := actionAuditCleaner(db)
-			if err != nil {
-				log.Warning("AuditCleanerRoutine> Action clean failed: %s\n", err)
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting auditCleanerRoutine: %v", c.Err())
+			}
+			return
+		case <-tick:
+			db := DBFunc()
+			if db != nil {
+				err := actionAuditCleaner(db)
+				if err != nil {
+					log.Warning("AuditCleanerRoutine> Action clean failed: %s\n", err)
+				}
 			}
 		}
-		time.Sleep(1 * time.Minute)
 	}
 }
 

@@ -1,6 +1,7 @@
 package sessionstore
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"time"
@@ -17,38 +18,45 @@ type Redis struct {
 }
 
 //Keep redis in good health and remove HSet for expired session
-func (s *Redis) vacuumCleaner() {
-	log.Info("Redis> Starting Session Vacuum Cleaner")
+func (s *Redis) vacuumCleaner(c context.Context) {
+	tick := time.NewTicker(5 * time.Second).C
 	for {
-		keys, err := s.store.Client.Keys("session:*:data").Result()
-		if err != nil {
-			log.Error("RedisSessionStore> Unable to get keys in store : %s", err)
-		}
-		for _, k := range keys {
-			sessionKey := strings.Replace(k, ":data", "", -1)
-			sessionExist, err := s.store.Client.Exists(sessionKey).Result()
-			if err != nil {
-				log.Warning("RedisSessionStore> Unable to get key %s from store : %s", sessionKey, err)
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting sessionstore.vacuumCleaner: %v", c.Err())
+				return
 			}
-			if !sessionExist {
-				if err := s.store.Client.Del(k).Err(); err != nil {
-					log.Error("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
+		case <-tick:
+			keys, err := s.store.Client.Keys("session:*:data").Result()
+			if err != nil {
+				log.Error("RedisSessionStore> Unable to get keys in store : %s", err)
+			}
+			for _, k := range keys {
+				sessionKey := strings.Replace(k, ":data", "", -1)
+				sessionExist, err := s.store.Client.Exists(sessionKey).Result()
+				if err != nil {
+					log.Warning("RedisSessionStore> Unable to get key %s from store : %s", sessionKey, err)
+				}
+				if !sessionExist {
+					if err := s.store.Client.Del(k).Err(); err != nil {
+						log.Error("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
+					}
 				}
 			}
 		}
-		time.Sleep(5 * time.Minute)
 	}
 }
 
 //NewRedis creates a ready to use redisstore
-func NewRedis(redisHost, redisPassword string, ttl int) (*Redis, error) {
+func NewRedis(c context.Context, redisHost, redisPassword string, ttl int) (*Redis, error) {
 	r, err := cache.NewRedisStore(redisHost, redisPassword, ttl*60)
 	if err != nil {
 		return nil, err
 	}
 	log.Info("Redis> Store ready")
 	redisStore := &Redis{ttl * 1440, r}
-	go redisStore.vacuumCleaner()
+	go redisStore.vacuumCleaner(c)
 	return redisStore, nil
 }
 
