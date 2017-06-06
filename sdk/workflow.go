@@ -371,8 +371,8 @@ type WorkflowNodeRun struct {
 	Manual             *WorkflowNodeRunManual    `json:"manual" db:"-"`
 	SourceNodeRuns     []int64                   `json:"source_node_runs" db:"-"`
 	Payload            []Parameter               `json:"payload" db:"-"`
-	PipelineParameters []Parameter               `json:"pipeline_parameter" db:"-"`
-	BuildParameters    []Parameter               `json:"build_parameter" db:"-"`
+	PipelineParameters []Parameter               `json:"pipeline_parameters" db:"-"`
+	BuildParameters    []Parameter               `json:"build_parameters" db:"-"`
 	Artifacts          []WorkflowNodeRunArtifact `json:"artifacts,omitempty" db:"-"`
 	Tests              *venom.Tests              `json:"tests,omitempty" db:"-"`
 	Commits            []VCSCommit               `json:"commits,omitempty" db:"-"`
