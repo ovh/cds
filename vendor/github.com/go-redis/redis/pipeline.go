@@ -2,25 +2,35 @@ package redis
 
 import (
 	"sync"
-	"sync/atomic"
 
-	"gopkg.in/redis.v4/internal/errors"
-	"gopkg.in/redis.v4/internal/pool"
+	"github.com/go-redis/redis/internal/pool"
 )
+
+type pipelineExecer func([]Cmder) error
+
+type Pipeliner interface {
+	StatefulCmdable
+	Process(cmd Cmder) error
+	Close() error
+	Discard() error
+	discard() error
+	Exec() ([]Cmder, error)
+	pipelined(fn func(Pipeliner) error) ([]Cmder, error)
+}
+
+var _ Pipeliner = (*Pipeline)(nil)
 
 // Pipeline implements pipelining as described in
 // http://redis.io/topics/pipelining. It's safe for concurrent use
 // by multiple goroutines.
 type Pipeline struct {
-	cmdable
 	statefulCmdable
 
-	exec func([]Cmder) error
+	exec pipelineExecer
 
-	mu   sync.Mutex // protects cmds
-	cmds []Cmder
-
-	closed int32
+	mu     sync.Mutex
+	cmds   []Cmder
+	closed bool
 }
 
 func (c *Pipeline) Process(cmd Cmder) error {
@@ -32,20 +42,23 @@ func (c *Pipeline) Process(cmd Cmder) error {
 
 // Close closes the pipeline, releasing any open resources.
 func (c *Pipeline) Close() error {
-	atomic.StoreInt32(&c.closed, 1)
-	c.Discard()
+	c.mu.Lock()
+	c.discard()
+	c.closed = true
+	c.mu.Unlock()
 	return nil
-}
-
-func (c *Pipeline) isClosed() bool {
-	return atomic.LoadInt32(&c.closed) == 1
 }
 
 // Discard resets the pipeline and discards queued commands.
 func (c *Pipeline) Discard() error {
-	defer c.mu.Unlock()
 	c.mu.Lock()
-	if c.isClosed() {
+	err := c.discard()
+	c.mu.Unlock()
+	return err
+}
+
+func (c *Pipeline) discard() error {
+	if c.closed {
 		return pool.ErrClosed
 	}
 	c.cmds = c.cmds[:0]
@@ -58,15 +71,15 @@ func (c *Pipeline) Discard() error {
 // Exec always returns list of commands and error of the first failed
 // command if any.
 func (c *Pipeline) Exec() ([]Cmder, error) {
-	if c.isClosed() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.closed {
 		return nil, pool.ErrClosed
 	}
 
-	defer c.mu.Unlock()
-	c.mu.Lock()
-
 	if len(c.cmds) == 0 {
-		return c.cmds, nil
+		return nil, nil
 	}
 
 	cmds := c.cmds
@@ -75,7 +88,7 @@ func (c *Pipeline) Exec() ([]Cmder, error) {
 	return cmds, c.exec(cmds)
 }
 
-func (c *Pipeline) pipelined(fn func(*Pipeline) error) ([]Cmder, error) {
+func (c *Pipeline) pipelined(fn func(Pipeliner) error) ([]Cmder, error) {
 	if err := fn(c); err != nil {
 		return nil, err
 	}
@@ -84,26 +97,10 @@ func (c *Pipeline) pipelined(fn func(*Pipeline) error) ([]Cmder, error) {
 	return cmds, err
 }
 
-func execCmds(cn *pool.Conn, cmds []Cmder) ([]Cmder, error) {
-	if err := writeCmd(cn, cmds...); err != nil {
-		setCmdsErr(cmds, err)
-		return cmds, err
-	}
+func (c *Pipeline) Pipelined(fn func(Pipeliner) error) ([]Cmder, error) {
+	return c.pipelined(fn)
+}
 
-	var firstCmdErr error
-	var failedCmds []Cmder
-	for _, cmd := range cmds {
-		err := cmd.readReply(cn)
-		if err == nil {
-			continue
-		}
-		if firstCmdErr == nil {
-			firstCmdErr = err
-		}
-		if errors.IsRetryable(err) {
-			failedCmds = append(failedCmds, cmd)
-		}
-	}
-
-	return failedCmds, firstCmdErr
+func (c *Pipeline) Pipeline() Pipeliner {
+	return c
 }

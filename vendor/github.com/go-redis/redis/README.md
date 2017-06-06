@@ -3,26 +3,35 @@
 Supports:
 
 - Redis 3 commands except QUIT, MONITOR, SLOWLOG and SYNC.
-- [Pub/Sub](http://godoc.org/gopkg.in/redis.v4#PubSub).
-- [Transactions](http://godoc.org/gopkg.in/redis.v4#Multi).
-- [Pipelining](http://godoc.org/gopkg.in/redis.v4#Client.Pipeline).
-- [Scripting](http://godoc.org/gopkg.in/redis.v4#Script).
-- [Timeouts](http://godoc.org/gopkg.in/redis.v4#Options).
-- [Redis Sentinel](http://godoc.org/gopkg.in/redis.v4#NewFailoverClient).
-- [Redis Cluster](http://godoc.org/gopkg.in/redis.v4#NewClusterClient).
-- [Ring](http://godoc.org/gopkg.in/redis.v4#NewRing).
+- [Pub/Sub](https://godoc.org/github.com/go-redis/redis#PubSub).
+- [Transactions](https://godoc.org/github.com/go-redis/redis#Multi).
+- [Pipeline](https://godoc.org/github.com/go-redis/redis#example-Client-Pipeline) and [TxPipeline](https://godoc.org/github.com/go-redis/redis#example-Client-TxPipeline).
+- [Scripting](https://godoc.org/github.com/go-redis/redis#Script).
+- [Timeouts](https://godoc.org/github.com/go-redis/redis#Options).
+- [Redis Sentinel](https://godoc.org/github.com/go-redis/redis#NewFailoverClient).
+- [Redis Cluster](https://godoc.org/github.com/go-redis/redis#NewClusterClient).
+- [Ring](https://godoc.org/github.com/go-redis/redis#NewRing).
+- [Instrumentation](https://godoc.org/github.com/go-redis/redis#ex-package--Instrumentation).
 - [Cache friendly](https://github.com/go-redis/cache).
 - [Rate limiting](https://github.com/go-redis/rate).
 - [Distributed Locks](https://github.com/bsm/redis-lock).
 
-API docs: http://godoc.org/gopkg.in/redis.v4.
-Examples: http://godoc.org/gopkg.in/redis.v4#pkg-examples.
+API docs: https://godoc.org/github.com/go-redis/redis.
+Examples: https://godoc.org/github.com/go-redis/redis#pkg-examples.
 
 ## Installation
 
 Install:
 
-    go get gopkg.in/redis.v4
+```shell
+go get -u github.com/go-redis/redis
+```
+
+Import:
+
+```go
+import "github.com/go-redis/redis"
+```
 
 ## Quickstart
 
@@ -66,7 +75,7 @@ func ExampleClient() {
 
 ## Howto
 
-Please go through [examples](http://godoc.org/gopkg.in/redis.v4#pkg-examples) to get an idea how to use this package.
+Please go through [examples](https://godoc.org/github.com/go-redis/redis#pkg-examples) to get an idea how to use this package.
 
 ## Look and feel
 
@@ -79,7 +88,7 @@ Some corner cases:
     vals, err := client.Sort("list", redis.Sort{Offset: 0, Count: 2, Order: "ASC"}).Result()
 
     ZRANGEBYSCORE zset -inf +inf WITHSCORES LIMIT 0 2
-    vals, err := client.ZRangeByScoreWithScores("zset", redis.ZRangeByScore{
+    vals, err := client.ZRangeByScoreWithScores("zset", redis.ZRangeBy{
         Min: "-inf",
         Max: "+inf",
         Offset: 0,
@@ -122,6 +131,8 @@ BenchmarkRedisPing-4                	  200000	      6983 ns/op	     116 B/op	   
 BenchmarkRedisClusterPing-4         	  100000	     11535 ns/op	     117 B/op	       4 allocs/op
 ```
 
-## Shameless plug
+## See also
 
-Check my [PostgreSQL client for Go](https://github.com/go-pg/pg).
+- [Golang PostgreSQL ORM](https://github.com/go-pg/pg)
+- [Golang msgpack](https://github.com/vmihailenco/msgpack)
+- [Golang message task queue](https://github.com/go-msgqueue/msgqueue)

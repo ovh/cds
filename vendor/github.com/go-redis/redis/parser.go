@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 
-	"gopkg.in/redis.v4/internal/proto"
+	"github.com/go-redis/redis/internal/proto"
 )
 
 // Implements proto.MultiBulkParse
@@ -27,19 +28,6 @@ func sliceParser(rd *proto.Reader, n int64) (interface{}, error) {
 		}
 	}
 	return vals, nil
-}
-
-// Implements proto.MultiBulkParse
-func intSliceParser(rd *proto.Reader, n int64) (interface{}, error) {
-	ints := make([]int64, 0, n)
-	for i := int64(0); i < n; i++ {
-		n, err := rd.ReadIntReply()
-		if err != nil {
-			return nil, err
-		}
-		ints = append(ints, n)
-	}
-	return ints, nil
 }
 
 // Implements proto.MultiBulkParse
@@ -69,19 +57,6 @@ func stringSliceParser(rd *proto.Reader, n int64) (interface{}, error) {
 		}
 	}
 	return ss, nil
-}
-
-// Implements proto.MultiBulkParse
-func floatSliceParser(rd *proto.Reader, n int64) (interface{}, error) {
-	nn := make([]float64, 0, n)
-	for i := int64(0); i < n; i++ {
-		n, err := rd.ReadFloatReply()
-		if err != nil {
-			return nil, err
-		}
-		nn = append(nn, n)
-	}
-	return nn, nil
 }
 
 // Implements proto.MultiBulkParse
@@ -316,7 +291,7 @@ func commandInfoParser(rd *proto.Reader, n int64) (interface{}, error) {
 	var err error
 
 	if n != 6 {
-		return nil, fmt.Errorf("redis: got %d elements in COMMAND reply, wanted 6")
+		return nil, fmt.Errorf("redis: got %d elements in COMMAND reply, wanted 6", n)
 	}
 
 	cmd.Name, err = rd.ReadStringReply()
@@ -364,6 +339,7 @@ func commandInfoParser(rd *proto.Reader, n int64) (interface{}, error) {
 	return &cmd, nil
 }
 
+// Implements proto.MultiBulkParse
 func commandInfoSliceParser(rd *proto.Reader, n int64) (interface{}, error) {
 	m := make(map[string]*CommandInfo, n)
 	for i := int64(0); i < n; i++ {
@@ -376,4 +352,23 @@ func commandInfoSliceParser(rd *proto.Reader, n int64) (interface{}, error) {
 
 	}
 	return m, nil
+}
+
+// Implements proto.MultiBulkParse
+func timeParser(rd *proto.Reader, n int64) (interface{}, error) {
+	if n != 2 {
+		return nil, fmt.Errorf("got %d elements, expected 2", n)
+	}
+
+	sec, err := rd.ReadInt()
+	if err != nil {
+		return nil, err
+	}
+
+	microsec, err := rd.ReadInt()
+	if err != nil {
+		return nil, err
+	}
+
+	return time.Unix(sec, microsec*1000), nil
 }

@@ -38,7 +38,7 @@ func (s *Redis) vacuumCleaner(c context.Context) {
 				if err != nil {
 					log.Warning("RedisSessionStore> Unable to get key %s from store : %s", sessionKey, err)
 				}
-				if !sessionExist {
+				if sessionExist == 0 {
 					if err := s.store.Client.Del(k).Err(); err != nil {
 						log.Error("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
 					}
@@ -91,7 +91,7 @@ func (s *Redis) Exists(token SessionKey) (bool, error) {
 		log.Warning("Redis> unable check session exist %s : %s", key, err)
 		return false, err
 	}
-	if exists {
+	if exists == 1 {
 		if err := s.store.Client.Expire(key, time.Duration(s.ttl)*time.Minute).Err(); err != nil {
 			log.Warning("Redis> unable to update session expire %s : %s", key, err)
 		}
@@ -99,7 +99,7 @@ func (s *Redis) Exists(token SessionKey) (bool, error) {
 		log.Debug("Session %s invalid", key)
 	}
 
-	return exists, nil
+	return exists == 1, nil
 }
 
 //Set set a value in session with a key

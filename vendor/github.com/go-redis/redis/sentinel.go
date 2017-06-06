@@ -2,14 +2,13 @@ package redis
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"strings"
 	"sync"
 	"time"
 
-	"gopkg.in/redis.v4/internal"
-	"gopkg.in/redis.v4/internal/pool"
+	"github.com/go-redis/redis/internal"
+	"github.com/go-redis/redis/internal/pool"
 )
 
 //------------------------------------------------------------------------------
@@ -23,6 +22,8 @@ type FailoverOptions struct {
 	SentinelAddrs []string
 
 	// Following options are copied from Options struct.
+
+	OnConnect func(*Conn) error
 
 	Password string
 	DB       int
@@ -42,6 +43,8 @@ type FailoverOptions struct {
 func (opt *FailoverOptions) options() *Options {
 	return &Options{
 		Addr: "FailoverClient",
+
+		OnConnect: opt.OnConnect,
 
 		DB:       opt.DB,
 		Password: opt.Password,
@@ -83,7 +86,7 @@ func NewFailoverClient(failoverOpt *FailoverOptions) *Client {
 			},
 		},
 	}
-	client.cmdable.process = client.Process
+	client.setProcessor(client.Process)
 
 	return &client
 }
@@ -111,7 +114,7 @@ func (c *sentinelClient) PubSub() *PubSub {
 	return &PubSub{
 		base: baseClient{
 			opt:      c.opt,
-			connPool: pool.NewStickyConnPool(c.connPool.(*pool.ConnPool), false),
+			connPool: c.connPool,
 		},
 	}
 }
@@ -162,8 +165,8 @@ func (d *sentinelFailover) Pool() *pool.ConnPool {
 }
 
 func (d *sentinelFailover) MasterAddr() (string, error) {
-	defer d.mu.Unlock()
 	d.mu.Lock()
+	defer d.mu.Unlock()
 
 	// Try last working sentinel.
 	if d.sentinel != nil {
@@ -258,7 +261,7 @@ func (d *sentinelFailover) discoverSentinels(sentinel *sentinelClient) {
 // closeOldConns closes connections to the old master after failover switch.
 func (d *sentinelFailover) closeOldConns(newMaster string) {
 	// Good connections that should be put back to the pool. They
-	// can't be put immediately, because pool.First will return them
+	// can't be put immediately, because pool.PopFree will return them
 	// again on next iteration.
 	cnsToPut := make([]*pool.Conn, 0)
 
@@ -268,12 +271,11 @@ func (d *sentinelFailover) closeOldConns(newMaster string) {
 			break
 		}
 		if cn.RemoteAddr().String() != newMaster {
-			err := fmt.Errorf(
+			internal.Logf(
 				"sentinel: closing connection to the old master %s",
 				cn.RemoteAddr(),
 			)
-			internal.Logf(err.Error())
-			d.pool.Remove(cn, err)
+			d.pool.Remove(cn)
 		} else {
 			cnsToPut = append(cnsToPut, cn)
 		}
@@ -289,8 +291,10 @@ func (d *sentinelFailover) listen(sentinel *sentinelClient) {
 	for {
 		if pubsub == nil {
 			pubsub = sentinel.PubSub()
+
 			if err := pubsub.Subscribe("+switch-master"); err != nil {
 				internal.Logf("sentinel: Subscribe failed: %s", err)
+				pubsub.Close()
 				d.resetSentinel()
 				return
 			}

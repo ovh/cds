@@ -3,7 +3,7 @@ package cache
 import (
 	"time"
 
-	"gopkg.in/redis.v4"
+	"github.com/go-redis/redis"
 )
 
 type redisClient interface {
@@ -14,7 +14,7 @@ type redisClient interface {
 	Decr(key string) *redis.IntCmd
 	DecrBy(key string, decrement int64) *redis.IntCmd
 	Del(keys ...string) *redis.IntCmd
-	Exists(key string) *redis.BoolCmd
+	Exists(key ...string) *redis.IntCmd
 	Expire(key string, expiration time.Duration) *redis.BoolCmd
 	ExpireAt(key string, tm time.Time) *redis.BoolCmd
 	FlushDb() *redis.StatusCmd
@@ -30,10 +30,9 @@ type redisClient interface {
 	HKeys(key string) *redis.StringSliceCmd
 	HLen(key string) *redis.IntCmd
 	HMGet(key string, fields ...string) *redis.SliceCmd
-	HMSet(key string, fields map[string]string) *redis.StatusCmd
-	HScan(key string, cursor uint64, match string, count int64) redis.Scanner
-	HSet(key, field, value string) *redis.BoolCmd
-	HSetNX(key, field, value string) *redis.BoolCmd
+	HMSet(key string, fields map[string]interface{}) *redis.StatusCmd
+	HSet(key, field string, value interface{}) *redis.BoolCmd
+	HSetNX(key, field string, value interface{}) *redis.BoolCmd
 	HVals(key string) *redis.StringSliceCmd
 	Incr(key string) *redis.IntCmd
 	IncrBy(key string, value int64) *redis.IntCmd
@@ -59,7 +58,7 @@ type redisClient interface {
 	Ping() *redis.StatusCmd
 	PTTL(key string) *redis.DurationCmd
 	Persist(key string) *redis.BoolCmd
-	Pipeline() *redis.Pipeline
+	Pipeline() redis.Pipeliner
 	PubSubChannels(pattern string) *redis.StringSliceCmd
 	PubSubNumPat() *redis.IntCmd
 	Publish(channel, message string) *redis.IntCmd
@@ -83,10 +82,8 @@ type redisClient interface {
 	SRandMember(key string) *redis.StringCmd
 	SRandMemberN(key string, count int64) *redis.StringSliceCmd
 	SRem(key string, members ...interface{}) *redis.IntCmd
-	SScan(key string, cursor uint64, match string, count int64) redis.Scanner
 	SUnion(keys ...string) *redis.StringSliceCmd
 	SUnionStore(destination string, keys ...string) *redis.IntCmd
-	Scan(cursor uint64, match string, count int64) redis.Scanner
 	Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	SetBit(key string, offset int64, value int) *redis.IntCmd
 	SetNX(key string, value interface{}, expiration time.Duration) *redis.BoolCmd
@@ -124,7 +121,6 @@ type redisClient interface {
 	ZRevRangeByScoreWithScores(key string, opt redis.ZRangeBy) *redis.ZSliceCmd
 	ZRevRangeWithScores(key string, start, stop int64) *redis.ZSliceCmd
 	ZRevRank(key, member string) *redis.IntCmd
-	ZScan(key string, cursor uint64, match string, count int64) redis.Scanner
 	ZScore(key, member string) *redis.FloatCmd
 	ZUnionStore(dest string, store redis.ZStore, keys ...string) *redis.IntCmd
 }

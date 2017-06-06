@@ -14,6 +14,10 @@ type scripter interface {
 	ScriptLoad(script string) *StringCmd
 }
 
+var _ scripter = (*Client)(nil)
+var _ scripter = (*Ring)(nil)
+var _ scripter = (*ClusterClient)(nil)
+
 type Script struct {
 	src, hash string
 }
@@ -25,6 +29,10 @@ func NewScript(src string) *Script {
 		src:  src,
 		hash: hex.EncodeToString(h.Sum(nil)),
 	}
+}
+
+func (s *Script) Hash() string {
+	return s.hash
 }
 
 func (s *Script) Load(c scripter) *StringCmd {
@@ -43,6 +51,8 @@ func (s *Script) EvalSha(c scripter, keys []string, args ...interface{}) *Cmd {
 	return c.EvalSha(s.hash, keys, args...)
 }
 
+// Run optimistically uses EVALSHA to run the script. If script does not exist
+// it is retried using EVAL.
 func (s *Script) Run(c scripter, keys []string, args ...interface{}) *Cmd {
 	r := s.EvalSha(c, keys, args...)
 	if err := r.Err(); err != nil && strings.HasPrefix(err.Error(), "NOSCRIPT ") {

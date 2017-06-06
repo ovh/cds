@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ovh/cds/sdk/log"
 
-	"gopkg.in/redis.v4"
+	"github.com/go-redis/redis"
 )
 
 //RedisStore a redis client and a default ttl
@@ -63,7 +62,7 @@ func (s *RedisStore) Get(key string, value interface{}) bool {
 	}
 	val, err := s.Client.Get(key).Result()
 	if err != nil && err != redis.Nil {
-		log.Warning("redis> Get error %s : %s", key, err)
+		log.Warning("redis> Get error %s : %v", key, err)
 		return false
 	}
 	if val != "" && err != redis.Nil {
@@ -185,42 +184,29 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 		return
 	}
 
-	elemChan := make(chan string)
-	var elemChanClosed bool
-	var once sync.Once
-	go func() {
-		ticker := time.NewTicker(250 * time.Millisecond).C
-		for {
-			select {
-			case <-ticker:
-				res, err := s.Client.BRPop(200*time.Millisecond, queueName).Result()
-				if err == redis.Nil {
-					continue
-				}
-				if err == io.EOF {
-					time.Sleep(1 * time.Second)
-					continue
-				}
-				if err == nil && len(res) == 2 && !elemChanClosed {
-					elemChan <- res[1]
-				}
-			case <-c.Done():
-				once.Do(func() {
-					elemChanClosed = true
-					close(elemChan)
-				})
-				return
+	var elem string
+	ticker := time.NewTicker(250 * time.Millisecond).C
+	for elem == "" {
+		select {
+		case <-ticker:
+			res, err := s.Client.BRPop(200*time.Millisecond, queueName).Result()
+			if err == redis.Nil {
+				continue
 			}
+			if err == io.EOF {
+				time.Sleep(1 * time.Second)
+				continue
+			}
+			if err == nil && len(res) == 2 {
+				elem = res[1]
+				break
+			}
+		case <-c.Done():
+			return
 		}
-	}()
-
-	e := <-elemChan
-	if e != "" {
-		b := []byte(e)
+	}
+	if elem != "" {
+		b := []byte(elem)
 		json.Unmarshal(b, value)
 	}
-	once.Do(func() {
-		elemChanClosed = true
-		close(elemChan)
-	})
 }

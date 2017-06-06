@@ -22,8 +22,7 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap) {
 	for {
 		e := sdk.Event{}
 		cache.DequeueWithContext(c, "events_repositoriesmanager", &e)
-		err := c.Err()
-		if err != nil {
+		if err := c.Err(); err != nil {
 			log.Error("Exiting repositoriesmanager.ReceiveEvents: %v", err)
 			return
 		}

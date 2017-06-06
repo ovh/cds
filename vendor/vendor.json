@@ -337,6 +337,12 @@
 			"revisionTime": "2016-11-13T21:19:33Z"
 		},
 		{
+			"checksumSHA1": "8e1otPfJWefeg6kZwMFyRzxpuqY=",
+			"path": "github.com/go-redis/redis",
+			"revision": "f29951c8990f0d31d1bacc27393ac88e3edf7e21",
+			"revisionTime": "2017-06-02T13:19:43Z"
+		},
+		{
 			"checksumSHA1": "kBeNcaKk56FguvPSUCEaH6AxpRc=",
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
