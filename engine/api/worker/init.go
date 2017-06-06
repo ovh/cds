@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-
 	"time"
 
 	"github.com/go-gorp/gorp"
