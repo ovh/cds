@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
@@ -22,7 +23,7 @@ type OpenstackStore struct {
 }
 
 // NewOpenstackStore create a new ObjectStore with openstack driver and check configuration
-func NewOpenstackStore(address, user, password, tenant, region, containerprefix string) (*OpenstackStore, error) {
+func NewOpenstackStore(c context.Context, address, user, password, tenant, region, containerprefix string) (*OpenstackStore, error) {
 	log.Info("Objectstore> Initialize Swift(Openstack) driver on address: %s, tenant: %s, region: %s, prefix: %s", address, tenant, region, containerprefix)
 	if address == "" {
 		return nil, fmt.Errorf("artifact storage is openstack, but flag --artifact_address is not provided")
@@ -54,7 +55,7 @@ func NewOpenstackStore(address, user, password, tenant, region, containerprefix 
 	if err != nil {
 		return nil, err
 	}
-	go ops.refreshTokenRoutine()
+	go ops.refreshTokenRoutine(c)
 
 	log.Debug("NewOpenstackStore> Got token %dchar at %s\n", len(ops.token.ID), ops.endpoint)
 	return ops, nil

@@ -164,6 +164,20 @@ read:
 	}
 }
 
+//QueueLen returns the length of a queue
+func (s *RedisStore) QueueLen(queueName string) int {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return 0
+	}
+
+	res, err := s.Client.LLen(queueName).Result()
+	if err != nil {
+		log.Warning("redis> Cannot read %s :%s", queueName, err)
+	}
+	return int(res)
+}
+
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
 	if s.Client == nil {
@@ -172,13 +186,14 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 	}
 
 	elemChan := make(chan string)
+	var elemChanClosed bool
 	var once sync.Once
 	go func() {
-		ticker := time.NewTicker(50 * time.Millisecond).C
+		ticker := time.NewTicker(250 * time.Millisecond).C
 		for {
 			select {
 			case <-ticker:
-				res, err := s.Client.RPop(queueName).Result()
+				res, err := s.Client.BRPop(200*time.Millisecond, queueName).Result()
 				if err == redis.Nil {
 					continue
 				}
@@ -186,12 +201,12 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 					time.Sleep(1 * time.Second)
 					continue
 				}
-				if len(res) != 2 {
-					continue
+				if err == nil && len(res) == 2 && !elemChanClosed {
+					elemChan <- res[1]
 				}
-				elemChan <- res
 			case <-c.Done():
 				once.Do(func() {
+					elemChanClosed = true
 					close(elemChan)
 				})
 				return
@@ -205,6 +220,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 		json.Unmarshal(b, value)
 	}
 	once.Do(func() {
+		elemChanClosed = true
 		close(elemChan)
 	})
 }

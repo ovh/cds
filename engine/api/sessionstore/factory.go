@@ -1,6 +1,7 @@
 package sessionstore
 
 import (
+	"context"
 	"sync"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -11,12 +12,12 @@ import (
 var Status string
 
 //Get is a factory
-func Get(mode, redisHost, redisPassword string, ttl int) (Store, error) {
+func Get(c context.Context, mode, redisHost, redisPassword string, ttl int) (Store, error) {
 	log.Info("SessionStore> Intializing store (%s)", mode)
 	switch mode {
 	case "redis":
 		Status = "Redis "
-		r, err := NewRedis(redisHost, redisPassword, ttl)
+		r, err := NewRedis(c, redisHost, redisPassword, ttl)
 		if err != nil {
 			log.Error("sessionstore.factory> unable to connect to redis %s : %s", redisHost, err)
 			Status += "KO"

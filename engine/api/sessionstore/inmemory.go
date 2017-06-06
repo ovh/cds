@@ -34,13 +34,12 @@ func (s *InMemory) New(k SessionKey) (SessionKey, error) {
 	s.data[k] = cache
 	s.lock.Unlock()
 
-	go func(k SessionKey) {
-		time.Sleep(time.Duration(s.ttl) * time.Minute)
+	time.AfterFunc(time.Duration(s.ttl)*time.Minute, func() {
 		log.Info("session> delete session %s after %d minutes", k, s.ttl)
 		s.lock.Lock()
 		delete(s.data, k)
 		s.lock.Unlock()
-	}(k)
+	})
 
 	return k, nil
 }

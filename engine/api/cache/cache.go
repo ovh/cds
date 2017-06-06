@@ -27,6 +27,7 @@ type Store interface {
 	Enqueue(queueName string, value interface{})
 	Dequeue(queueName string, value interface{})
 	DequeueWithContext(c context.Context, queueName string, value interface{})
+	QueueLen(queueName string) int
 }
 
 //Initialize the global cache in memory, or redis
@@ -118,4 +119,12 @@ func DequeueWithContext(c context.Context, queueName string, value interface{}) 
 		return
 	}
 	s.DequeueWithContext(c, queueName, value)
+}
+
+//QueueLen returns the length of a queue
+func QueueLen(queueName string) int {
+	if s == nil {
+		return 0
+	}
+	return s.QueueLen(queueName)
 }
