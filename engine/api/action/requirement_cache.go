@@ -14,7 +14,7 @@ import (
 
 //RequirementsCacheLoader set all action requirement in the cache
 func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func() *gorp.DbMap) {
-	tick := time.NewTicker(delay * time.Second).C
+	tick := time.NewTicker(delay).C
 
 	for {
 		select {

@@ -216,8 +216,7 @@ func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
 		case <-tick:
 			h := hook.ReceivedHook{}
 			cache.DequeueWithContext(c, "hook:recovery", &h)
-			err := c.Err()
-			if err != nil {
+			if err := c.Err(); err != nil {
 				log.Error("Exiting hookRecoverer: %v", err)
 				return
 			}

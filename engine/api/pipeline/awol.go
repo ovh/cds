@@ -19,7 +19,7 @@ type awolPipelineBuildJob struct {
 // - Having building status
 // - Without any logs output in the last 15 minutes
 func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
-	tick := time.NewTicker(5 * time.Minute).C
+	tick := time.NewTicker(1 * time.Minute).C
 	for {
 		select {
 		case <-c.Done():

@@ -188,7 +188,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 	elemChan := make(chan string)
 	var once sync.Once
 	go func() {
-		ticker := time.NewTicker(400 * time.Millisecond).C
+		ticker := time.NewTicker(200 * time.Millisecond).C
 		for {
 			select {
 			case <-ticker:

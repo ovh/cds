@@ -34,8 +34,7 @@ func Heartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
 				}
 
 				for i := range w {
-					err = DeleteHatchery(db, w[i].ID, w[i].Model.ID)
-					if err != nil {
+					if err = DeleteHatchery(db, w[i].ID, w[i].Model.ID); err != nil {
 						log.Warning("HatcheryHeartbeat> Cannot delete hatchery %d: %s\n", w[i].ID, err)
 						continue
 					}
