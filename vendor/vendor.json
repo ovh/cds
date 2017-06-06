@@ -337,6 +337,42 @@
 			"revisionTime": "2016-11-13T21:19:33Z"
 		},
 		{
+			"checksumSHA1": "8e1otPfJWefeg6kZwMFyRzxpuqY=",
+			"path": "github.com/go-redis/redis",
+			"revision": "f29951c8990f0d31d1bacc27393ac88e3edf7e21",
+			"revisionTime": "2017-06-02T13:19:43Z"
+		},
+		{
+			"checksumSHA1": "4nvc3mJXcLJxCWKHhVLvAAstQVI=",
+			"path": "github.com/go-redis/redis/internal",
+			"revision": "f29951c8990f0d31d1bacc27393ac88e3edf7e21",
+			"revisionTime": "2017-06-02T13:19:43Z"
+		},
+		{
+			"checksumSHA1": "GQZsUVg/+6UpQAYpc4luMvMutSI=",
+			"path": "github.com/go-redis/redis/internal/consistenthash",
+			"revision": "f29951c8990f0d31d1bacc27393ac88e3edf7e21",
+			"revisionTime": "2017-06-02T13:19:43Z"
+		},
+		{
+			"checksumSHA1": "VP0K8vvf716n6xuzAZTvpz+wTwc=",
+			"path": "github.com/go-redis/redis/internal/hashtag",
+			"revision": "f29951c8990f0d31d1bacc27393ac88e3edf7e21",
+			"revisionTime": "2017-06-02T13:19:43Z"
+		},
+		{
+			"checksumSHA1": "jqWbW7HClGFK4zjaW96RWdRElZk=",
+			"path": "github.com/go-redis/redis/internal/pool",
+			"revision": "f29951c8990f0d31d1bacc27393ac88e3edf7e21",
+			"revisionTime": "2017-06-02T13:19:43Z"
+		},
+		{
+			"checksumSHA1": "Ct2AS6Z9YmTAlKOMsBrhwvpXAPY=",
+			"path": "github.com/go-redis/redis/internal/proto",
+			"revision": "f29951c8990f0d31d1bacc27393ac88e3edf7e21",
+			"revisionTime": "2017-06-02T13:19:43Z"
+		},
+		{
 			"checksumSHA1": "kBeNcaKk56FguvPSUCEaH6AxpRc=",
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
@@ -1333,48 +1369,6 @@
 			"path": "gopkg.in/ldap.v2",
 			"revision": "0e7db8eb77695b5a952f0e5d78df9ab160050c73",
 			"revisionTime": "2016-04-15T03:57:59Z"
-		},
-		{
-			"checksumSHA1": "G+wjRpD6pnBDjNBD0p0nz/YWoYc=",
-			"path": "gopkg.in/redis.v4",
-			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
-			"revisionTime": "2016-08-23T11:40:42Z"
-		},
-		{
-			"checksumSHA1": "4HbfnrL1KOz/6nsdBAPeL0oUXzc=",
-			"path": "gopkg.in/redis.v4/internal",
-			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
-			"revisionTime": "2016-08-23T11:40:42Z"
-		},
-		{
-			"checksumSHA1": "l+1jiOGUyjHP0u0mB+KiT/UHVcY=",
-			"path": "gopkg.in/redis.v4/internal/consistenthash",
-			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
-			"revisionTime": "2016-08-23T11:40:42Z"
-		},
-		{
-			"checksumSHA1": "2g6I7ogdqKeDLwDO+mHn75XSajI=",
-			"path": "gopkg.in/redis.v4/internal/errors",
-			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
-			"revisionTime": "2016-08-23T11:40:42Z"
-		},
-		{
-			"checksumSHA1": "6XSNzBg5bzd2TjEfC/q41tPT/Zg=",
-			"path": "gopkg.in/redis.v4/internal/hashtag",
-			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
-			"revisionTime": "2016-08-23T11:40:42Z"
-		},
-		{
-			"checksumSHA1": "iNTNDlfYLkwrmZzLMG+O3PBHSCw=",
-			"path": "gopkg.in/redis.v4/internal/pool",
-			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
-			"revisionTime": "2016-08-23T11:40:42Z"
-		},
-		{
-			"checksumSHA1": "BGzuM8ZpMCmTKWnb/3CtrV4OwDU=",
-			"path": "gopkg.in/redis.v4/internal/proto",
-			"revision": "49f197e6d11de35192fce19b2b9fd2f9b8b13c4a",
-			"revisionTime": "2016-08-23T11:40:42Z"
 		},
 		{
 			"checksumSHA1": "/1TzqyoYSSdEkFrZG20XoNGwD8o=",
