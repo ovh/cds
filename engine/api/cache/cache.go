@@ -121,6 +121,7 @@ func DequeueWithContext(c context.Context, queueName string, value interface{}) 
 	s.DequeueWithContext(c, queueName, value)
 }
 
+//QueueLen returns the length of a queue
 func QueueLen(queueName string) int {
 	if s == nil {
 		return 0
