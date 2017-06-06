@@ -19,7 +19,7 @@ type Redis struct {
 
 //Keep redis in good health and remove HSet for expired session
 func (s *Redis) vacuumCleaner(c context.Context) {
-	tick := time.NewTicker(5 * time.Second).C
+	tick := time.NewTicker(5 * time.Minute).C
 	for {
 		select {
 		case <-c.Done():
