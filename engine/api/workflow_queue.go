@@ -370,13 +370,13 @@ func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *
 
 	job, errj := workflow.LoadAndLockNodeJobRun(tx, id)
 	if errj != nil {
-		return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Unable to load job")
+		return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
 	}
 
 	sdk.AddParameter(&job.Parameters, "cds.build."+v.Name, sdk.StringParameter, v.Value)
 
 	if err := workflow.UpdateNodeJobRun(tx, job); err != nil {
-		return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Unable to update node job run")
+		return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run")
 	}
 
 	node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID)
@@ -387,11 +387,11 @@ func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *
 	sdk.AddParameter(&node.BuildParameters, "cds.build."+v.Name, sdk.StringParameter, v.Value)
 
 	if err := workflow.UpdateNodeRun(tx, node); err != nil {
-		return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Unable to update node run")
+		return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Unable to commit tx")
+		return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to commit tx")
 	}
 
 	return nil
