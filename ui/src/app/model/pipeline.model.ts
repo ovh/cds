@@ -8,6 +8,15 @@ import {Artifact} from './artifact.model';
 import {Job} from './job.model';
 import {Commit} from './repositories.model';
 
+export class PipelineStatus {
+    static BUILDING = 'Building';
+    static FAIL = 'Fail';
+    static SUCCESS = 'Success';
+    static WAITING = 'Waiting';
+    static DISABLED = 'Disabled';
+    static SKIPPED = 'Skipped';
+}
+
 export class Pipeline {
     id: number;
     name: string;

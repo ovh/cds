@@ -1,7 +1,7 @@
 import {Component, Input, OnDestroy} from '@angular/core';
 import {TranslateService} from 'ng2-translate';
 import {Subscription} from 'rxjs/Subscription';
-import {Pipeline, PipelineBuild, PipelineBuildJob} from '../../../model/pipeline.model';
+import {Pipeline, PipelineBuild, PipelineBuildJob, PipelineStatus} from '../../../model/pipeline.model';
 import {Stage} from '../../../model/stage.model';
 import {Job} from '../../../model/job.model';
 import {Project} from '../../../model/project.model';
@@ -33,6 +33,8 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
 
     currentBuild: PipelineBuild;
     notificationSubscription: Subscription;
+    previousStatus: string;
+    pipelineStatusEnum = PipelineStatus;
 
     selectedPipJob: PipelineBuildJob;
     jobSelected: Job;
@@ -59,8 +61,14 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
     refreshBuild(data: PipelineBuild): void {
         this.currentBuild = data;
 
-        if (this.previousBuild && this.previousBuild.id !== this.currentBuild.id && this.currentBuild.status !== 'Building') {
+        if (this.previousStatus && this.currentBuild && this.previousStatus === PipelineStatus.BUILDING &&
+            this.previousBuild && this.previousBuild.id !== this.currentBuild.id &&
+                this.currentBuild.status !== PipelineStatus.BUILDING) {
             this.handleNotification(this.currentBuild);
+        }
+
+        if (this.currentBuild) {
+            this.previousStatus = this.currentBuild.status;
         }
         // Set selected job if needed or refresh step_status
         if (this.currentBuild.stages) {
@@ -69,7 +77,7 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
                 if (s.builds) {
                     s.builds.forEach((pipJob, pjIndex) => {
                         // Update percent progression
-                        if (pipJob.status === 'Building') {
+                        if (pipJob.status === PipelineStatus.BUILDING) {
                             this.updateJobProgression(pipJob);
                         }
                         // Update duration
@@ -107,12 +115,12 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
 
     handleNotification(pipelineBuild: PipelineBuild): void {
         switch (pipelineBuild.status) {
-        case 'Success':
+        case PipelineStatus.SUCCESS:
             this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
                 pipelineName: pipelineBuild.pipeline.name
             })).subscribe();
             break;
-        case 'Failing':
+        case PipelineStatus.FAIL:
             this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
                 pipelineName: pipelineBuild.pipeline.name
             })).subscribe();
@@ -122,13 +130,13 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
 
     updateJobDuration(pipJob: PipelineBuildJob): void {
         switch (pipJob.status) {
-            case 'Waiting':
+            case PipelineStatus.WAITING:
                 if (pipJob.queued) {
                     this.mapJobDuration[pipJob.job.pipeline_action_id] =
                         'Queued ' + this._durationService.duration(new Date(pipJob.queued), new Date()) + ' ago';
                 }
                 break;
-            case 'Building':
+            case PipelineStatus.BUILDING:
                 if (pipJob.start) {
                     this.mapJobDuration[pipJob.job.pipeline_action_id] =
                         this._durationService.duration(new Date(pipJob.start), new Date());
