@@ -1,10 +1,9 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Group} from '../../../../model/group.model';
 import {GroupService} from '../../../../service/group/group.service';
 import {User} from '../../../../model/user.model';
 import {UserService} from '../../../../service/user/user.service';
-import {Subscription} from 'rxjs/Subscription';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
@@ -15,20 +14,18 @@ import {AuthentificationStore} from '../../../../service/auth/authentification.s
     styleUrls: ['./group.edit.scss']
 })
 export class GroupEditComponent implements OnInit {
-    public ready = true;
-    public loadingSave = false;
-    public deleteLoading = false;
-    public group: Group;
-    public currentUser: User;
-    public currentUserIsAdminOnGroup: boolean;
-    private groupname: string;
+    loading = false;
+    deleteLoading = false;
+    group: Group;
+    currentUser: User;
+    currentUserIsAdminOnGroup: boolean;
+    addUserUsername: string;
+    users: Array<User>;
+    members: Array<User>;
 
+    private groupname: string;
     private groupnamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private groupPatternError = false;
-
-    public addUserUsername: string;
-    public users: Array<User>;
-    public members: Array<User>;
 
     constructor(private _userService: UserService, private _groupService: GroupService,
                 private _toast: ToastService, private _translate: TranslateService,
@@ -46,7 +43,6 @@ export class GroupEditComponent implements OnInit {
                 this.reloadData(params['groupname']);
             } else {
                 this.group = new Group();
-                this.ready = true;
             }
         });
     }
@@ -55,7 +51,6 @@ export class GroupEditComponent implements OnInit {
       this._groupService.getGroupByName(groupname).subscribe( wm => {
           this.group = wm;
           this.groupname = wm.name;
-          this.ready = true;
           this.members = new Array<User>();
           if (wm.admins && wm.admins.length > 0) {
             for (let i = 0; i < wm.admins.length; i++) {
@@ -84,7 +79,7 @@ export class GroupEditComponent implements OnInit {
           this._toast.success('', this._translate.instant('group_deleted'));
           this._router.navigate(['../'], { relativeTo: this._route });
       }, () => {
-          this.loadingSave = false;
+          this.deleteLoading = false;
       });
     }
 
@@ -98,67 +93,67 @@ export class GroupEditComponent implements OnInit {
           return;
       }
 
-      this.loadingSave = true;
+      this.loading = true;
       if (this.group.id > 0) {
         this._groupService.updateGroup(this.groupname, this.group).subscribe( wm => {
-            this.loadingSave = false;
+            this.loading = false;
             this._toast.success('', this._translate.instant('group_saved'));
             this._router.navigate(['settings', 'group', this.group.name]);
         }, () => {
-            this.loadingSave = false;
+            this.loading = false;
         });
       } else {
         this._groupService.createGroup(this.group).subscribe( wm => {
-            this.loadingSave = false;
+            this.loading = false;
             this._toast.success('', this._translate.instant('group_saved'));
             this._router.navigate(['settings', 'group', this.group.name]);
         }, () => {
-            this.loadingSave = false;
+            this.loading = false;
         });
       }
     }
 
     clickAddAdminButton(username: string): void {
-      this.loadingSave = true;
+      this.loading = true;
       this._groupService.addUserAdmin(this.group.name, username).subscribe( wm => {
-          this.loadingSave = false;
+          this.loading = false;
           this._toast.success('', this._translate.instant('group_add_admin_saved'));
           this.reloadData(this.group.name);
       }, () => {
-          this.loadingSave = false;
+          this.loading = false;
       });
     }
 
     clickRemoveAdminButton(username: string): void {
-      this.loadingSave = true;
+      this.loading = true;
       this._groupService.removeUserAdmin(this.group.name, username).subscribe( wm => {
-          this.loadingSave = false;
+          this.loading = false;
           this._toast.success('', this._translate.instant('group_remove_admin_saved'));
           this.reloadData(this.group.name);
       }, () => {
-          this.loadingSave = false;
+          this.loading = false;
       });
     }
 
     clickRemoveUserButton(username: string): void {
-      this.loadingSave = true;
+      this.loading = true;
       this._groupService.removeUser(this.group.name, username).subscribe( wm => {
-          this.loadingSave = false;
+          this.loading = false;
           this._toast.success('', this._translate.instant('group_remove_user_saved'));
           this.reloadData(this.group.name);
       }, () => {
-          this.loadingSave = false;
+          this.loading = false;
       });
     }
 
     clickAddUserButton(): void {
-      this.loadingSave = true;
+      this.loading = true;
       this._groupService.addUser(this.group.name, this.addUserUsername).subscribe(() => {
-          this.loadingSave = false;
+          this.loading = false;
           this._toast.success('', this._translate.instant('group_add_user_saved'));
           this.reloadData(this.group.name);
       }, () => {
-          this.loadingSave = false;
+          this.loading = false;
       });
     }
 }

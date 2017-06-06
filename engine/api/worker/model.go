@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var columns = `
+const columns = `
 	worker_model.id,
 	worker_model.type,
 	worker_model.name,
@@ -52,18 +52,12 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
-	if _, err := db.Select(&ms, "select * from worker_model order by name"); err != nil {
-		return nil, sdk.WrapError(err, "LoadWorkerModels> Unable to load worker models: %T", err)
+	query := `select %s from worker_model JOIN "group" on worker_model.group_id = "group".id  order by worker_model.name`
+	rows, errQuery := db.Query(query)
+	if errQuery != nil {
+		return nil, sdk.WrapError(errQuery, "LoadAllWorkerModels> ")
 	}
-	models := []sdk.Model{}
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadWorkerModels> postSelect>")
-		}
-		models = append(models, sdk.Model(ms[i]))
-	}
-	return models, nil
+	return scanWorkerModels(db, rows)
 }
 
 // loadWorkerModel retrieves a specific worker model in database

@@ -1,6 +1,6 @@
 <h2 *ngIf="!workerModel || !workerModel.id">{{ 'worker_model_new_title' | translate }}</h2>
 <h2 *ngIf="workerModel && workerModel.id">{{ 'worker_model_edit_title' | translate }} {{workerModel.name}}</h2>
-<div id="WorkerModelEdit" *ngIf="workerModel" class="scrollingContent">
+<div id="WorkerModelEdit" *ngIf="workerModel">
   <form class="ui form">
     <div class="ui grid">
       <div class="ten wide column">
@@ -26,18 +26,16 @@
             <div class="ui icon message" *ngIf="workerModel.disabled">
               <i class="check green icon"></i>
               <div class="content">
-                <p>{{ 'worker_model_enabled' | translate }}
                 <button class="ui red right floated button" (click)="workerModel.disabled=false">{{ 'worker_model_disable' | translate }}</button>
-                </p>
+                <p>{{ 'worker_model_enabled' | translate }}</p>
               </div>
             </div>
 
             <div class="ui icon message" *ngIf="!workerModel.disabled">
               <i class="warning red icon"></i>
               <div class="content">
-                <p>{{ 'worker_model_disabled' | translate }}
-                  <button class="ui green right floated button" (click)="workerModel.disabled=true">{{ 'worker_model_enable' | translate }}</button>
-                </p>
+                <button class="ui green right floated button" (click)="workerModel.disabled=true">{{ 'worker_model_enable' | translate }}</button>
+                <p>{{ 'worker_model_disabled' | translate }}</p>
               </div>
             </div>
           </div>
@@ -75,7 +73,7 @@
           </div>
 
           <div class="field">
-              <app-delete-button *ngIf="workerModel.id" class="right floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
+              <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
               <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
                 <i class="save icon"></i>{{ 'btn_save' | translate }}
               </button>
@@ -84,15 +82,15 @@
       <div class="six wide column">
         <div class="ui tall stacked segment">
           <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
-          <p>The goal of CDS is to start a worker when you need it, which should match all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.</p>
-          <p>The goal of a worker model is to describe the capabilities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.</p>
+          <p>{{'worker_model_help_line_1' | translate}}</p>
+          <p>{{'worker_model_help_line_2' | translate}}</p>
 
-          <i class="fa fa-question-circle"></i> Howtos:
+          <i class="fa fa-question-circle"></i> {{'worker_model_help_howtos' | translate}}
           <div class="ui list">
-            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/">Create a worker model based on a docker image from Docker Hub</a>
-            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-customized/">Create a worker model with you own image</a>
-            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-openstack/">Create a worker model based on a Openstack image</a>
-            <a class="item" href="https://ovh.github.io/cds/advanced/advanced.worker.model/">Read more</a>
+            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/">{{'worker_model_help_howto_link_1' | translate}}</a>
+            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-customized/">{{'worker_model_help_howto_link_2' | translate}}</a>
+            <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-openstack/">{{'worker_model_help_howto_link_3' | translate}}</a>
+            <a class="item" href="https://ovh.github.io/cds/advanced/advanced.worker.model/">{{'worker_model_help_howto_link_4' | translate}}</a>
           </div>
         </div>
       </div>
@@ -105,8 +103,7 @@
             <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer" title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
           </h3>
           <p>
-          Binaries automatically discovered by CDS when a worker model is starting.
-          If your instance of CDS uses an Hatchery, all worker models are scheduled to be registered.
+{{'worker_model_help_capabilities' | translate}}
           </p>
         </div>
 
@@ -122,11 +119,11 @@
       <div class="six wide column" *ngIf="workerModel.id">
         <div class="field" *ngIf="workerModel.created_by?.username != ''">
           <h3>{{'worker_model_created_by' | translate}}</h3>
-          <div class="row">
+          <div>
             <i class="fa fa-user"></i> {{workerModel.created_by?.fullname}} ({{workerModel.created_by?.username}})
             <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
           </div>
-          <div class="row">
+          <div>
             <i class="fa fa-envelope"></i> {{workerModel.created_by?.email}}
           </div>
         </div>

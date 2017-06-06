@@ -1,7 +1,7 @@
 
 <h2>{{ 'group_list_title' | translate }}</h2>
 
-<div id="groupList" *ngIf="ready">
+<div id="groupList" *ngIf="groups">
     <div class="ui form">
         <div class="field">
           <div class="fields">
@@ -32,7 +32,7 @@
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
         <tr>
-            <th colspan="4">
+            <th>
                 <div class="ui right floated pagination menu" >
                     <a class="icon item" (click)="downPage()">
                         <i class="left chevron icon"></i>

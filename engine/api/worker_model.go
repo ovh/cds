@@ -120,7 +120,6 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	var ok bool
 	for _, g := range c.User.Groups {
 		if g.ID == model.GroupID {
-			// TODO yesnault set Group on model
 			for _, a := range g.Admins {
 				if a.ID == c.User.ID {
 					ok = true

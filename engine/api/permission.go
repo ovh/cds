@@ -167,7 +167,6 @@ func checkApplicationPermissions(applicationName string, c *context.Ctx, permiss
 }
 
 func checkApplicationIDPermissions(appIDS string, c *context.Ctx, permission int, routeVar map[string]string) bool {
-
 	appID, err := strconv.ParseInt(appIDS, 10, 64)
 	if err != nil {
 		log.Warning("checkApplicationIDPermissions> appID (%s) is not an integer: %s", appIDS, err)

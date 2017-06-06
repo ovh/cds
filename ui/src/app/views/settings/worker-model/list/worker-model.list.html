@@ -1,16 +1,14 @@
 
 <h2>{{ 'worker_model_list_title' | translate }}</h2>
 
-<div class="model" *ngIf="ready">
+<div class="model" *ngIf="workerModels">
     <div class="ui form">
-        <div class="field">
-          <div class="fields">
-            <div class="twelve wide field">
-              <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
-            </div>
-            <div class="four wide field">
-              <a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
-            </div>
+        <div class="fields">
+          <div class="twelve wide field">
+            <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+          </div>
+          <div class="four wide field">
+            <a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
           </div>
         </div>
     </div>
@@ -34,7 +32,7 @@
             <td>
                 <a class="ui" [routerLink]="[v.name]">
                   <div class="ui">{{v.name}}
-                      <span *ngIf="v.disabled=='true'"> {{ 'worker_model_disabled' | translate }}</span>
+                      <span *ngIf="v.disabled==='true'"> {{ 'worker_model_disabled' | translate }}</span>
                   </div>
                 </a>
             </td>

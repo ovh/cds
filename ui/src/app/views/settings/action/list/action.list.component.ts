@@ -16,10 +16,9 @@ export class ActionListComponent extends Table {
         this.nbElementsByPage = data;
     };
 
-    public ready = true;
     filter: string;
     actions: Array<Action>;
-    public currentUser: User;
+    currentUser: User;
 
     constructor(private _actionService: ActionService,
                 private _authentificationStore: AuthentificationStore) {
@@ -27,12 +26,11 @@ export class ActionListComponent extends Table {
         this.currentUser = this._authentificationStore.getUser();
         this._actionService.getActions().subscribe( actions => {
             this.actions = actions;
-            this.ready = true;
         });
     }
 
     getData(): any[] {
-        if (!this.filter || this.filter === '') {
+        if (!this.filter) {
             return this.actions;
         }
         return this.actions.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);

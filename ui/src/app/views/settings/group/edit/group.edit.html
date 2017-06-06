@@ -1,6 +1,6 @@
 <h2 *ngIf="group && !group.id">{{ 'group_new_title' | translate }}</h2>
 <h2 *ngIf="group && group.id">{{ 'group_edit_title' | translate }} {{group.name}}</h2>
-<div id="GroupEdit" *ngIf="group" class="scrollingContent">
+<div id="GroupEdit" *ngIf="group">
   <form class="ui form">
     <div class="ui grid">
       <div class="ten wide column">

@@ -1,6 +1,6 @@
 <h2 *ngIf="user && user.id && user.username === currentUser.username">{{ 'user_my_profile' | translate }} - {{user.username}}</h2>
 <h2 *ngIf="user && user.id && user.username !== currentUser.username">{{ 'user_edit_title' | translate }} {{user.username}}</h2>
-<div id="UserEdit" *ngIf="user" class="scrollingContent">
+<div id="UserEdit" *ngIf="user">
   <form class="ui form">
     <div class="ui grid">
       <div class="ten wide column">
@@ -23,7 +23,7 @@
               </div>
           </div>
           <div class="field">
-              <app-delete-button *ngIf="user && user.id && currentUser.admin && user.username != currentUser.username" class="right floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
+              <app-delete-button *ngIf="user && user.id && currentUser.admin && user.username !== currentUser.username" class="right floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
               <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
                 <i class="save icon"></i>{{ 'btn_save' | translate }}
               </button>

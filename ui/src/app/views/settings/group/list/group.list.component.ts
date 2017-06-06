@@ -14,7 +14,6 @@ export class GroupListComponent extends Table {
         this.nbElementsByPage = data;
     };
 
-    public ready = true;
     filter: string;
     groups: Array<Group>;
 
@@ -22,12 +21,11 @@ export class GroupListComponent extends Table {
         super();
         this._groupService.getGroups().subscribe( wms => {
             this.groups = wms;
-            this.ready = true;
         });
     }
 
     getData(): any[] {
-        if (!this.filter || this.filter === '') {
+        if (!this.filter) {
             return this.groups;
         }
         return this.groups.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);

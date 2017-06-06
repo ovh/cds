@@ -1,8 +1,7 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {User} from '../../../../model/user.model';
 import {UserService} from '../../../../service/user/user.service';
-import {Subscription} from 'rxjs/Subscription';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
@@ -13,13 +12,12 @@ import {AuthentificationStore} from '../../../../service/auth/authentification.s
     styleUrls: ['./user.edit.scss']
 })
 export class UserEditComponent implements OnInit {
-    public ready = true;
-    public loadingSave = false;
-    public deleteLoading = false;
-    public user: User;
-    private username: string;
-    public currentUser: User;
+    loading = false;
+    deleteLoading = false;
+    user: User;
+    currentUser: User;
 
+    private username: string;
     private usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private userPatternError = false;
 
@@ -33,16 +31,11 @@ export class UserEditComponent implements OnInit {
     ngOnInit() {
         this._route.params.subscribe(params => {
             this.username = params['username'];
-            this.reloadData();
+            this._userService.getUser(this.username).subscribe( u => {
+                this.user = u;
+                this.username = this.user.username;
+            });
         });
-    }
-
-    reloadData(): void {
-      this._userService.getUser(this.username).subscribe( u => {
-          this.user = u;
-          this.username = this.user.username;
-          this.ready = true;
-      });
     }
 
     clickDeleteButton(): void {
@@ -52,7 +45,7 @@ export class UserEditComponent implements OnInit {
           this._toast.success('', this._translate.instant('user_deleted'));
           this._router.navigate(['../'], { relativeTo: this._route });
       }, () => {
-          this.loadingSave = false;
+          this.loading = false;
       });
     }
 
@@ -66,14 +59,14 @@ export class UserEditComponent implements OnInit {
           return;
       }
 
-      this.loadingSave = true;
+      this.loading = true;
       if (this.user.id > 0) {
         this._userService.updateUser(this.username, this.user).subscribe( wm => {
-            this.loadingSave = false;
+            this.loading = false;
             this._toast.success('', this._translate.instant('user_saved'));
             this._router.navigate(['/settings', 'user', this.user.username], { relativeTo: this._route });
         }, () => {
-            this.loadingSave = false;
+            this.loading = false;
         });
       }
 

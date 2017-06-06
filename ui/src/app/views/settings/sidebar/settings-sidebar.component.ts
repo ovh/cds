@@ -8,7 +8,7 @@ import {User} from '../../../model/user.model';
     styleUrls: ['./settings-sidebar.scss']
 })
 export class SettingsSidebarComponent {
-    public currentUser: User;
+    currentUser: User;
     constructor(private _authentificationStore: AuthentificationStore) {
       this.currentUser = this._authentificationStore.getUser();
     }

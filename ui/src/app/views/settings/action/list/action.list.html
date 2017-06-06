@@ -1,7 +1,7 @@
 
 <h2>{{ 'action_list_title' | translate }}</h2>
 
-<div class="model" *ngIf="ready">
+<div class="model" *ngIf="actions">
     <div class="ui form">
         <div class="field">
           <div class="fields">
@@ -34,7 +34,7 @@
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
         <tr>
-            <th colspan="4">
+            <th colspan="2">
                 <div class="ui right floated pagination menu" >
                     <a class="icon item" (click)="downPage()">
                         <i class="left chevron icon"></i>
