@@ -26,8 +26,12 @@ const columns = `
 	worker_model.communication,
 	worker_model.run_script,
 	worker_model.provision,
-	"group".id,
-	"group".name`
+	"group".name as groupname`
+
+type dbResultWMS struct {
+	WorkerModel
+	GroupName string `db:"groupname"`
+}
 
 // InsertWorkerModel insert a new worker model in database
 func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
@@ -52,31 +56,31 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
+	wms := []dbResultWMS{}
 	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, columns)
-	rows, errQuery := db.Query(query)
-	if errQuery != nil {
-		return nil, sdk.WrapError(errQuery, "LoadAllWorkerModels> ")
+	if _, err := db.Select(&wms, query); err != nil {
+		return nil, sdk.WrapError(err, "LoadAllWorkerModels> ")
 	}
-	return scanWorkerModels(db, rows)
+	return scanWorkerModels(db, wms)
 }
 
 // loadWorkerModel retrieves a specific worker model in database
 func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Model, error) {
-	rows, errQuery := db.Query(query, args...)
-	if errQuery != nil {
-		if errQuery == sql.ErrNoRows {
+	wms := []dbResultWMS{}
+	if _, err := db.Select(&wms, query, args...); err != nil {
+		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoWorkerModel
 		}
-		return nil, errQuery
+		return nil, err
 	}
-	wms, err := scanWorkerModels(db, rows)
+	r, err := scanWorkerModels(db, wms)
 	if err != nil {
 		return nil, err
 	}
-	if len(wms) != 1 {
+	if len(r) != 1 {
 		return nil, fmt.Errorf("worker model not unique")
 	}
-	return &wms[0], nil
+	return &r[0], nil
 }
 
 // LoadWorkerModelByName retrieves a specific worker model in database
@@ -93,13 +97,11 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
-	var rows *sql.Rows
+	wms := []dbResultWMS{}
 	if user.Admin {
 		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, columns)
-		var errQuery error
-		rows, errQuery = db.Query(query)
-		if errQuery != nil {
-			return nil, fmt.Errorf("LoadWorkerModelsByUser> for admin err:%s", errQuery)
+		if _, err := db.Select(&wms, query); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for admin")
 		}
 	} else {
 		query := fmt.Sprintf(`select %s
@@ -110,40 +112,18 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, e
 					select %s from worker_model
 					JOIN "group" on worker_model.group_id = "group".id
 					where group_id = $2`, columns, columns)
-		var errQuery error
-		rows, errQuery = db.Query(query, user.ID, group.SharedInfraGroup.ID)
-		if errQuery != nil {
-			return nil, fmt.Errorf("LoadWorkerModelsByUser> for user err:%s", errQuery)
+		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
 		}
 	}
-	return scanWorkerModels(db, rows)
+	return scanWorkerModels(db, wms)
 }
 
-func scanWorkerModels(db gorp.SqlExecutor, rows *sql.Rows) ([]sdk.Model, error) {
+func scanWorkerModels(db gorp.SqlExecutor, rows []dbResultWMS) ([]sdk.Model, error) {
 	models := []sdk.Model{}
-	defer rows.Close()
-	for rows.Next() {
-		m := WorkerModel(sdk.Model{})
-		var g sdk.Group
-		if err := rows.Scan(
-			&m.ID,
-			&m.Type,
-			&m.Name,
-			&m.Image,
-			&m.GroupID,
-			&m.LastRegistration,
-			&m.NeedRegistration,
-			&m.Disabled,
-			&m.Template,
-			&m.Communication,
-			&m.RunScript,
-			&m.Provision,
-			&g.ID,
-			&g.Name,
-		); err != nil {
-			return nil, err
-		}
-		m.Group = g
+	for _, row := range rows {
+		m := row.WorkerModel
+		m.Group = sdk.Group{ID: m.GroupID, Name: row.GroupName}
 		if err := m.PostSelect(db); err != nil {
 			return nil, err
 		}
