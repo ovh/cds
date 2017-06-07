@@ -500,7 +500,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 		Kind: objectstore.Filesystem,
 		Options: objectstore.ConfigOptions{
 			Filesystem: objectstore.ConfigOptionsFilesystem{
-				Basedir: "/tmp/objstore",
+				Basedir: path.Join(os.TempDir(), "store"),
 			},
 		},
 	}
@@ -541,7 +541,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	myartifact, errF := os.Create(path.Join(os.TempDir(), "myartifact"))
-	defer os.RemoveAll("/tmp/myartifact")
+	defer os.RemoveAll(path.Join(os.TempDir(), "myartifact"))
 	test.NoError(t, errF)
 	_, errW := myartifact.Write([]byte("Hi, I am foo"))
 	test.NoError(t, errW)
