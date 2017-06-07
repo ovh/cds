@@ -176,7 +176,7 @@ func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
 		return err
 	}
 
-	err = objectstore.DeleteArtifact(s)
+	err = objectstore.DeleteArtifact(&s)
 	// If it's 404, it's lost anyway...
 	if err != nil && !strings.Contains(err.Error(), "404") {
 		return err
@@ -210,21 +210,32 @@ func insertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, enviro
 }
 
 // SaveFile Insert file in db and write it in data directory
+func SaveWorkflowFile(art *sdk.WorkflowNodeRunArtifact, content io.ReadCloser) error {
+	objectPath, err := objectstore.StoreArtifact(art, content)
+	if err != nil {
+		return sdk.WrapError(err, "SaveWorkflowFile> Cannot store artifact")
+	}
+	log.Debug("objectpath=%s\n", objectPath)
+	art.ObjectPath = objectPath
+	return nil
+}
+
+// SaveFile Insert file in db and write it in data directory
 func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artifact, content io.ReadCloser, e *sdk.Environment) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "Cannot start transaction")
 	}
 	defer tx.Rollback()
 
-	objectPath, err := objectstore.StoreArtifact(art, content)
+	objectPath, err := objectstore.StoreArtifact(&art, content)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "SaveFile>Cannot store artifact")
 	}
 	log.Debug("objectpath=%s\n", objectPath)
 	art.ObjectPath = objectPath
 	if err = insertArtifact(tx, p.ID, a.ID, e.ID, art); err != nil {
-		return err
+		return sdk.WrapError(err, "SaveFile> Cannot insert artifact in DB")
 	}
 
 	return tx.Commit()
@@ -232,7 +243,7 @@ func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artif
 
 // StreamFile Stream artifact
 func StreamFile(w io.Writer, art sdk.Artifact) error {
-	f, err := objectstore.FetchArtifact(art)
+	f, err := objectstore.FetchArtifact(&art)
 	if err != nil {
 		return fmt.Errorf("cannot fetch artifact: %s", err)
 	}

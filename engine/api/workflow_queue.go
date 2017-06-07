@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
 	"github.com/runabove/venom"
 
+	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -355,10 +359,99 @@ func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *
 }
 
 func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	return nil
-}
+	// Load and lock Existing workflow Run Job
+	id, errI := requestVarInt(r, "permID")
+	if errI != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "postWorkflowJobArtifactHandler> Invalid node job run ID")
+	}
 
-func getWorkflowJobArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	vars := mux.Vars(r)
+	tag := vars["tag"]
+	fileName := r.Header.Get(sdk.ArtifactFileName)
+
+	//parse the multipart form in the request
+	if err := r.ParseMultipartForm(100000); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobArtifactHandler: Error parsing multipart form")
+
+	}
+	//get a ref to the parsed multipart form
+	m := r.MultipartForm
+
+	var sizeStr, permStr, md5sum string
+	if len(m.Value["size"]) > 0 {
+		sizeStr = m.Value["size"][0]
+	}
+	if len(m.Value["perm"]) > 0 {
+		permStr = m.Value["perm"][0]
+	}
+	if len(m.Value["md5sum"]) > 0 {
+		md5sum = m.Value["md5sum"][0]
+	}
+
+	if fileName == "" {
+		log.Warning("uploadArtifactHandler> %s header is not set", sdk.ArtifactFileName)
+		return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", sdk.ArtifactFileName)
+	}
+
+	nodeJobRun, errJ := workflow.LoadNodeJobRun(db, id)
+	if errJ != nil {
+		return sdk.WrapError(errJ, "Cannot load node job run")
+	}
+
+	nodeRun, errR := workflow.LoadNodeRunByID(db, nodeJobRun.WorkflowNodeRunID)
+	if errR != nil {
+		return sdk.WrapError(errR, "Cannot load node run")
+	}
+
+	hash, errG := generateHash()
+	if errG != nil {
+		return sdk.WrapError(errG, "postWorkflowJobArtifactHandler> Could not generate hash")
+	}
+
+	var size int64
+	var perm uint64
+
+	if sizeStr != "" {
+		size, _ = strconv.ParseInt(sizeStr, 10, 64)
+	}
+
+	if permStr != "" {
+		perm, _ = strconv.ParseUint(permStr, 10, 32)
+	}
+
+	art := sdk.WorkflowNodeRunArtifact{
+		Name:              fileName,
+		Tag:               tag,
+		DownloadHash:      hash,
+		Size:              size,
+		Perm:              uint32(perm),
+		MD5sum:            md5sum,
+		WorkflowNodeRunID: nodeRun.ID,
+		WorkflowID:        nodeRun.WorkflowRunID,
+	}
+
+	files := m.File[fileName]
+	if len(files) == 1 {
+		file, err := files[0].Open()
+		if err != nil {
+			log.Warning("postWorkflowJobArtifactHandler> cannot open file: %s\n", err)
+			return err
+
+		}
+
+		if err := artifact.SaveWorkflowFile(&art, file); err != nil {
+			log.Warning("postWorkflowJobArtifactHandler> cannot save file: %s\n", err)
+			file.Close()
+			return err
+		}
+		file.Close()
+	}
+
+	nodeRun.Artifacts = append(nodeRun.Artifacts, art)
+	if err := workflow.InsertArtifact(db, &art); err != nil {
+		_ = objectstore.DeleteArtifact(&art)
+		return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot update workflow node run")
+	}
 	return nil
 }
 

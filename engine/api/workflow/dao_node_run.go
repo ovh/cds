@@ -150,15 +150,12 @@ func (r *NodeRun) PostInsert(db gorp.SqlExecutor) error {
 		}
 		rr.Commits = s
 	}
-
 	if n, err := db.Update(&rr); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostInsert> unable to update workflow_node_run id=%d", rr.ID)
 	} else if n == 0 {
 		return fmt.Errorf("workflow_node_run=%d was not updated", rr.ID)
 	}
-	if r.Artifacts != nil {
-		//TODO
-	}
+
 	return nil
 }
 
@@ -211,7 +208,11 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
 	}
 
-	//TODO artifacts
+	arts, errA := loadArtifactByNodeRunID(db, r.ID)
+	if errA != nil {
+		return sdk.WrapError(errA, "NodeRun.PostGet> Error loading artifacts for run %d", r.ID)
+	}
+	r.Artifacts = arts
 
 	return nil
 }

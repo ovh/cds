@@ -20,25 +20,25 @@ func Status() string {
 }
 
 //StoreArtifact an artifact with default objectstore driver
-func StoreArtifact(art sdk.Artifact, data io.ReadCloser) (string, error) {
+func StoreArtifact(o Object, data io.ReadCloser) (string, error) {
 	if storage != nil {
-		return storage.Store(&art, data)
+		return storage.Store(o, data)
 	}
 	return "", fmt.Errorf("store not initialized")
 }
 
 //FetchArtifact an artifact with default objectstore driver
-func FetchArtifact(art sdk.Artifact) (io.ReadCloser, error) {
+func FetchArtifact(o Object) (io.ReadCloser, error) {
 	if storage != nil {
-		return storage.Fetch(&art)
+		return storage.Fetch(o)
 	}
 	return nil, fmt.Errorf("store not initialized")
 }
 
 //DeleteArtifact an artifact with default objectstore driver
-func DeleteArtifact(art sdk.Artifact) error {
+func DeleteArtifact(o Object) error {
 	if storage != nil {
-		return storage.Delete(&art)
+		return storage.Delete(o)
 	}
 	return fmt.Errorf("store not initialized")
 }
