@@ -340,7 +340,7 @@ func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, 
 		wnjr.Tests.TotalSkipped += ts.Skipped
 	}
 
-	if err := workflow.UpdateWorkflowNodeRun(tx, wnjr); err != nil {
+	if err := workflow.UpdateNodeRun(tx, wnjr); err != nil {
 		return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
 	}
 
@@ -351,6 +351,49 @@ func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	id, errr := requestVarInt(r, "permID")
+	if errr != nil {
+		return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Invalid id")
+	}
+
+	// Unmarshal into variable
+	var v sdk.Variable
+	if err := UnmarshalBody(r, &v); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobVariableHandler")
+	}
+
+	tx, errb := db.Begin()
+	if errb != nil {
+		return sdk.WrapError(errb, "postWorkflowJobVariableHandler> Unable to start tx")
+	}
+	defer tx.Rollback()
+
+	job, errj := workflow.LoadAndLockNodeJobRun(tx, id)
+	if errj != nil {
+		return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
+	}
+
+	sdk.AddParameter(&job.Parameters, "cds.build."+v.Name, sdk.StringParameter, v.Value)
+
+	if err := workflow.UpdateNodeJobRun(tx, job); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run")
+	}
+
+	node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID)
+	if errn != nil {
+		return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node")
+	}
+
+	sdk.AddParameter(&node.BuildParameters, "cds.build."+v.Name, sdk.StringParameter, v.Value)
+
+	if err := workflow.UpdateNodeRun(tx, node); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to commit tx")
+	}
+
 	return nil
 }
 
