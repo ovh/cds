@@ -40,15 +40,16 @@ type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *con
 type RouterConfigParam func(rc *routerConfig)
 
 type routerConfig struct {
-	get           Handler
-	post          Handler
-	put           Handler
-	deleteHandler Handler
-	auth          bool
-	isExecution   bool
-	needAdmin     bool
-	needHatchery  bool
-	needWorker    bool
+	get                 Handler
+	post                Handler
+	put                 Handler
+	deleteHandler       Handler
+	auth                bool
+	isExecution         bool
+	needAdmin           bool
+	needUsernameOrAdmin bool
+	needHatchery        bool
+	needWorker          bool
 }
 
 // ServeAbsoluteFile Serve file to download
@@ -253,6 +254,10 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
 		} else if rc.auth && rc.needAdmin && !c.User.Admin {
 			permissionOk = false
+		} else if rc.auth && rc.needUsernameOrAdmin && !c.User.Admin && c.User.Username != mux.Vars(req)["username"] {
+			// get / update / delete user -> for admin or current user
+			// if not admin and currentUser != username in request -> ko
+			permissionOk = false
 		} else if rc.auth && !rc.needAdmin && !c.User.Admin {
 			permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
 		}
@@ -340,6 +345,14 @@ func PUT(h Handler) RouterConfigParam {
 func NeedAdmin(admin bool) RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.needAdmin = admin
+	}
+	return f
+}
+
+// NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
+func NeedUsernameOrAdmin(need bool) RouterConfigParam {
+	f := func(rc *routerConfig) {
+		rc.needUsernameOrAdmin = need
 	}
 	return f
 }

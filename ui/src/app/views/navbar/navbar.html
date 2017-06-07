@@ -6,8 +6,7 @@
             class="search classic left"
             [options]="{'fullTextSearch': true}"
             [(model)]="selectedProjectKey"
-            (modelChange)="navigateToProject($event)"
-    >
+            (modelChange)="navigateToProject($event)">
         <option [value]="'#NOPROJECT#'">{{'navbar_projects_placeholder' | translate}}</option>
         <option *ngFor="let project of navProjects" [value]="project.key">{{project.name}}</option>
     </sm-select>
@@ -18,8 +17,7 @@
             [options]="{'fullTextSearch': true}"
             [(model)]="selectedApplicationName"
             (modelChange)="navigateToApplication($event)"
-            (onSearchChange)="filterApplication($event)"
-    >
+            (onSearchChange)="filterApplication($event)">
         <option [value]="'#NOAPP#'"></option>
         <option *ngFor="let app of listApplications" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
     </sm-select>
@@ -29,10 +27,11 @@
             <a href="#" [routerLink]="['/project']"><i class="plus circle icon"></i>{{ 'project_create' | translate }}</a>
         </div>
         <sm-dropdown icon="settings">
-            <sm-item>{{ 'navbar_actions' | translate }}</sm-item>
-            <sm-item>{{ 'navbar_users' | translate }}</sm-item>
-            <sm-item>{{ 'navbar_groups' | translate }}</sm-item>
-            <sm-item>{{ 'navbar_workers' | translate }}</sm-item>
+            <sm-item><a href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a></sm-item>
+            <sm-item><a href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a></sm-item>
+            <sm-item *ngIf="currentUser.admin"><a href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a></sm-item>
+            <sm-item><a href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a></sm-item>
+            <sm-item><a href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a></sm-item>
         </sm-dropdown>
         <sm-dropdown icon="help circle outline">
             <sm-item>

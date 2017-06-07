@@ -253,9 +253,9 @@ func (router *Router) init() {
 	router.Handle("/user/signup", Auth(false), POST(AddUser))
 	router.Handle("/user/group", Auth(true), GET(getUserGroupsHandler))
 	router.Handle("/user/import", NeedAdmin(true), POST(importUsersHandler))
-	router.Handle("/user/{name}", NeedAdmin(true), GET(GetUserHandler), PUT(UpdateUserHandler), DELETE(DeleteUserHandler))
-	router.Handle("/user/{name}/confirm/{token}", Auth(false), GET(ConfirmUser))
-	router.Handle("/user/{name}/reset", Auth(false), POST(ResetUser))
+	router.Handle("/user/{username}", NeedUsernameOrAdmin(true), GET(GetUserHandler), PUT(UpdateUserHandler), DELETE(DeleteUserHandler))
+	router.Handle("/user/{username}/confirm/{token}", Auth(false), GET(ConfirmUser))
+	router.Handle("/user/{username}/reset", Auth(false), POST(ResetUser))
 	router.Handle("/auth/mode", Auth(false), GET(AuthModeHandler))
 
 	// Workers
@@ -265,9 +265,12 @@ func (router *Router) init() {
 	router.Handle("/worker/waiting", POST(workerWaitingHandler))
 	router.Handle("/worker/unregister", POST(unregisterWorkerHandler))
 	router.Handle("/worker/{id}/disable", POST(disableWorkerHandler))
+
+	// Worker models
 	router.Handle("/worker/model", POST(addWorkerModel), GET(getWorkerModels))
 	router.Handle("/worker/model/enabled", GET(getWorkerModelsEnabled))
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
+	router.Handle("/worker/model/communication", GET(getWorkerModelCommunications))
 	router.Handle("/worker/model/{permModelID}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
 	router.Handle("/worker/model/{permModelID}/capability", POST(addWorkerModelCapa))
 	router.Handle("/worker/model/{permModelID}/instances", GET(getWorkerModelInstances))

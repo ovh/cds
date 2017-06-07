@@ -35,6 +35,20 @@ var (
 	}
 )
 
+// Existing worker communication
+const (
+	HTTP = "http"
+	GRPC = "grpc"
+)
+
+var (
+	// AvailableWorkerModelCommunication List of all worker model communication
+	AvailableWorkerModelCommunication = []string{
+		string(HTTP),
+		string(GRPC),
+	}
+)
+
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 type Model struct {
@@ -52,8 +66,8 @@ type Model struct {
 	UserLastModified time.Time          `json:"user_last_modified"  db:"user_last_modified"`
 	CreatedBy        User               `json:"created_by" db:"-"`
 	Provision        int64              `json:"provision" db:"provision"`
-	OwnerID          int64              `json:"owner_id" db:"owner_id"` //DEPRECATED
 	GroupID          int64              `json:"group_id" db:"group_id"`
+	Group            Group              `json:"group" db:"-"`
 }
 
 // ModelStatus sums up the number of worker deployed and wanted for a given model

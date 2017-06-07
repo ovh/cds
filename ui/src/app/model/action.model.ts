@@ -5,7 +5,7 @@ export class Action {
     id: number;
     name: string;
     type: string;
-    description: string;
+    description = '';
     requirements: Array<Requirement>;
     parameters: Array<Parameter>;
     actions: Array<Action>;

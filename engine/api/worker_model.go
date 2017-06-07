@@ -264,6 +264,10 @@ func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
 }
 
+func getWorkerModelCommunications(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	return WriteJSON(w, r, sdk.AvailableWorkerModelCommunication, http.StatusOK)
+}
+
 func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
 }

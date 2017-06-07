@@ -6,6 +6,7 @@ import {HttpService} from './http-service.service';
 import {AuthentificationStore} from './auth/authentification.store';
 import {UserService} from './user/user.service';
 import {CanActivateAuthRoute} from './auth/authenRouteActivate';
+import {CanActivateAuthAdminRoute} from './auth/authenAdminRouteActivate';
 import {Router} from '@angular/router';
 import {WarningStore} from './warning/warning.store';
 import {PipelineStore} from './pipeline/pipeline.store';
@@ -18,8 +19,8 @@ import {GroupService} from './group/group.service';
 import {RepoManagerService} from './repomanager/project.repomanager.service';
 import {ToastService} from '../shared/toast/ToastService';
 import {ApplicationWorkflowService} from './application/application.workflow.service';
-import {RequirementService} from './worker/requirement/requirement.service';
-import {RequirementStore} from './worker/requirement/requirement.store';
+import {RequirementService} from './worker-model/requirement/requirement.service';
+import {RequirementStore} from './worker-model/requirement/requirement.store';
 import {ParameterService} from './parameter/parameter.service';
 import {ActionService} from './action/action.service';
 import {ActionStore} from './action/action.store';
@@ -30,7 +31,7 @@ import {ApplicationTemplateService} from './application/application.template.ser
 import {ProjectAuditService} from './project/project.audit.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {ApplicationAuditService} from './application/application.audit.service';
-import {WorkerModelService} from './worker/worker.model.service';
+import {WorkerModelService} from './worker-model/worker-model.service';
 import {LanguageStore} from './language/language.store';
 import {NotificationService} from './notification/notification.service';
 import {WorkflowService} from './workflow/workflow.service';
@@ -55,6 +56,7 @@ export class ServicesModule {
                 ApplicationStore,
                 AuthentificationStore,
                 CanActivateAuthRoute,
+                CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 GroupService,
                 LanguageStore,
@@ -108,6 +110,7 @@ export {
     ApplicationTemplateService,
     AuthentificationStore,
     CanActivateAuthRoute,
+    CanActivateAuthAdminRoute,
     EnvironmentAuditService,
     GroupService,
     LanguageStore,

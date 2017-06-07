@@ -2,6 +2,7 @@ package worker
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
@@ -80,6 +81,13 @@ func TestInsertWorkerModel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
+	m1.Group = sdk.Group{}
+	now := time.Now()
+	// lastregistration is LOCALTIMESTAMP (at sql insert)
+	// set it manually to allow use EqualValues on others fields
+	m.LastRegistration = now
+	m1.LastRegistration = now
+
 	assert.EqualValues(t, m, m1)
 
 	s := sdk.RandomString(10)
@@ -103,7 +111,10 @@ func TestInsertWorkerModel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}
-	assert.EqualValues(t, []sdk.Model{*m}, m3)
+	m3u := m3[0]
+	m3u.Group = sdk.Group{}
+	m3u.LastRegistration = now
+	assert.EqualValues(t, *m, m3u)
 }
 
 func TestLoadWorkerModel(t *testing.T) {

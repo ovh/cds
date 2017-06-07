@@ -21,7 +21,11 @@ import (
 // DeleteUserHandler removes a user
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
-	username := vars["name"]
+	username := vars["username"]
+
+	if !c.User.Admin && username != c.User.Username {
+		return WriteJSON(w, r, nil, http.StatusForbidden)
+	}
 
 	u, errLoad := user.LoadUserWithoutAuth(db, username)
 	if errLoad != nil {
@@ -48,7 +52,11 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 // GetUserHandler returns a specific user's information
 func GetUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
-	username := vars["name"]
+	username := vars["username"]
+
+	if !c.User.Admin && username != c.User.Username {
+		return WriteJSON(w, r, nil, http.StatusForbidden)
+	}
 
 	u, err := user.LoadUserWithoutAuth(db, username)
 	if err != nil {
@@ -73,18 +81,15 @@ func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		allgroups, err := group.LoadGroups(db)
 		if err != nil {
 			return err
-
 		}
 
 		groups = allgroups
 		groupsAdmin = allgroups
 	} else {
 		var err1, err2 error
-
 		groups, err1 = group.LoadGroupByUser(db, c.User.ID)
 		if err1 != nil {
 			return err1
-
 		}
 
 		groupsAdmin, err2 = group.LoadGroupByAdmin(db, c.User.ID)
@@ -103,7 +108,11 @@ func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 // UpdateUserHandler modifies user informations
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	vars := mux.Vars(r)
-	username := vars["name"]
+	username := vars["username"]
+
+	if !c.User.Admin && username != c.User.Username {
+		return WriteJSON(w, r, nil, http.StatusForbidden)
+	}
 
 	userDB, errload := user.LoadUserWithoutAuth(db, username)
 	if errload != nil {
@@ -125,7 +134,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
 	}
 
-	return nil
+	return WriteJSON(w, r, userBody, http.StatusOK)
 }
 
 // GetUsers fetches all users from databases
@@ -150,13 +159,11 @@ func AddUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.
 	}
 
 	if createUserRequest.User.Username == "" {
-		log.Warning("AddUser: Empty username is invalid")
-		return sdk.ErrInvalidUsername
+		return sdk.WrapError(sdk.ErrInvalidUsername, "AddUser: Empty username is invalid")
 	}
 
 	if !user.IsValidEmail(createUserRequest.User.Email) {
-		log.Warning("AddUser: Email address %s is not valid", createUserRequest.User.Email)
-		return sdk.ErrInvalidEmail
+		return sdk.WrapError(sdk.ErrInvalidEmail, "AddUser: Email address %s is not valid", createUserRequest.User.Email)
 	}
 
 	u := createUserRequest.User
@@ -166,26 +173,23 @@ func AddUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.
 	query := `SELECT * FROM "user" WHERE username = $1`
 	rows, err := db.Query(query, u.Username)
 	if err != nil {
-		log.Warning("AddUsers: Cannot check if user %s exist: %s\n", u.Username, err)
-		return err
+		return sdk.WrapError(err, "AddUsers: Cannot check if user %s exist", u.Username)
 	}
 	defer rows.Close()
 	if rows.Next() {
-		log.Warning("AddUser: User %s already exists\n", u.Username)
-		return sdk.ErrUserConflict
-
+		return sdk.WrapError(sdk.ErrUserConflict, "AddUser: User %s already exists", u.Username)
 	}
-	tokenVerify, hashedToken, err := user.GeneratePassword()
-	if err != nil {
-		log.Warning("AddUser: Error while generate Token Verify for new user %s \n", err)
-		return err
+
+	tokenVerify, hashedToken, errg := user.GeneratePassword()
+	if errg != nil {
+		return sdk.WrapError(errg, "AddUser: Error while generate Token Verify for new user")
 	}
 
 	auth := sdk.NewAuth(hashedToken)
 
-	nbUsers, err := user.CountUser(db)
-	if err != nil {
-		log.Warning("AddUser: Cannot count user %s \n", err)
+	nbUsers, errc := user.CountUser(db)
+	if errc != nil {
+		return sdk.WrapError(errc, "AddUser: Cannot count user")
 	}
 	if nbUsers == 0 {
 		u.Admin = true
@@ -193,22 +197,16 @@ func AddUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.
 		u.Admin = false
 	}
 
-	err = user.InsertUser(db, &u, auth)
-	if err != nil {
-		log.Warning("AddUser: Cannot insert user: %s\n", err)
-		return err
-
+	if err := user.InsertUser(db, &u, auth); err != nil {
+		return sdk.WrapError(err, "AddUser: Cannot insert user")
 	}
 
 	go mail.SendMailVerifyToken(createUserRequest.User.Email, createUserRequest.User.Username, tokenVerify, createUserRequest.Callback)
 
 	// If it's the first user, add him to shared.infra group
 	if nbUsers == 0 {
-		err = group.AddAdminInGlobalGroup(db, u.ID)
-		if err != nil {
-			log.Warning("AddUser: Cannot add user in global group: %s\n", err)
-			return err
-
+		if err := group.AddAdminInGlobalGroup(db, u.ID); err != nil {
+			return sdk.WrapError(err, "AddUser: Cannot add user in global group")
 		}
 	}
 
@@ -222,9 +220,9 @@ func ResetUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 		return sdk.ErrForbidden
 	}
 
-	// Get user name in URL
+	// Get username in URL
 	vars := mux.Vars(r)
-	username := vars["name"]
+	username := vars["username"]
 
 	resetUserRequest := sdk.UserAPIRequest{}
 	if err := UnmarshalBody(r, &resetUserRequest); err != nil {
@@ -234,14 +232,12 @@ func ResetUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	// Load user
 	userDb, err := user.LoadUserAndAuth(db, username)
 	if err != nil || userDb.Email != resetUserRequest.User.Email {
-		log.Warning("Cannot load user: %s\n", err)
-		return sdk.ErrInvalidResetUser
+		return sdk.WrapError(sdk.ErrInvalidResetUser, "Cannot load user: %s", err)
 	}
 
 	tokenVerify, hashedToken, err := user.GeneratePassword()
 	if err != nil {
-		log.Warning("Error while generate Token Verify for new user %s \n", err)
-		return err
+		return sdk.WrapError(err, "Error while generate Token Verify for new user")
 	}
 	userDb.Auth.HashedTokenVerify = hashedToken
 	userDb.Auth.DateReset = time.Now().Unix()
@@ -250,8 +246,7 @@ func ResetUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	query := `UPDATE "user" SET auth = $1 WHERE username = $2`
 	_, err = db.Exec(query, userDb.Auth.JSON(), userDb.Username)
 	if err != nil {
-		log.Warning("ResetUser: Cannot update user %s: %s\n", userDb.Username, err)
-		return err
+		return sdk.WrapError(err, "ResetUser: Cannot update user %s", userDb.Username)
 	}
 
 	go mail.SendMailVerifyToken(userDb.Email, userDb.Username, tokenVerify, resetUserRequest.Callback)
@@ -281,15 +276,15 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 
 	// Get user name in URL
 	vars := mux.Vars(r)
-	name := vars["name"]
+	username := vars["username"]
 	token := vars["token"]
 
-	if name == "" || token == "" {
+	if username == "" || token == "" {
 		return sdk.ErrInvalidUsername
 	}
 
 	// Load user
-	u, err := user.LoadUserAndAuth(db, name)
+	u, err := user.LoadUserAndAuth(db, username)
 	if err != nil {
 		return sdk.ErrInvalidUsername
 	}
@@ -306,8 +301,7 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 
 	// Update in db
 	query := `UPDATE "user" SET data = $1, auth = $2 WHERE username = $3`
-	_, err = db.Exec(query, u.JSON(), u.Auth.JSON(), u.Username)
-	if err != nil {
+	if _, err := db.Exec(query, u.JSON(), u.Auth.JSON(), u.Username); err != nil {
 		return err
 	}
 
@@ -351,24 +345,18 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *contex
 	// Authentify user through authDriver
 	authOK, erra := router.authDriver.Authentify(db, loginUserRequest.Username, loginUserRequest.Password)
 	if erra != nil {
-		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, erra)
-		return sdk.ErrInvalidUser
-
+		return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login error %s: %s", loginUserRequest.Username, erra)
 	}
 	if !authOK {
-		log.Warning("Auth> Login failed: %s\n", loginUserRequest.Username)
-		return sdk.ErrInvalidUser
-
+		return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login failed: %s", loginUserRequest.Username)
 	}
 	// Load user
 	u, errl := user.LoadUserWithoutAuth(db, loginUserRequest.Username)
 	if errl != nil && errl == sql.ErrNoRows {
-		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, errl)
-		return sdk.ErrInvalidUser
+		return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login error %s: %s", loginUserRequest.Username, errl)
 	}
 	if errl != nil {
-		log.Warning("Auth> Login error %s :%s\n", loginUserRequest.Username, errl)
-		return sdk.ErrWrongRequest
+		return sdk.WrapError(sdk.ErrWrongRequest, "Auth> Login error %s: %s", loginUserRequest.Username, errl)
 	}
 
 	// Prepare response
@@ -416,8 +404,7 @@ func importUsersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 	_, hashedToken, err := user.GeneratePassword()
 	if err != nil {
-		log.Warning("Error while generate Token Verify for new user %s \n", err)
-		return err
+		return sdk.WrapError(err, "Error while generate Token Verify for new user")
 	}
 
 	errors := map[string]string{}

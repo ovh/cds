@@ -5,7 +5,8 @@ const routes: Routes = [
     { path: '', redirectTo: 'home', pathMatch: 'full' },
     { path: 'home', loadChildren: 'app/views/home/home.module#HomeModule' },
     { path: 'account', loadChildren: 'app/views/account/account.module#AccountModule' },
-    { path: 'project', loadChildren: 'app/views/project/project.module#ProjectModule' }
+    { path: 'project', loadChildren: 'app/views/project/project.module#ProjectModule' },
+    { path: 'settings', loadChildren: 'app/views/settings/settings.module#SettingsModule' }
 ];
 
 export const routing: ModuleWithProviders = RouterModule.forRoot(routes, {

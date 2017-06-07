@@ -61,7 +61,7 @@ export class VariableComponent extends Table {
         if (!this.filter || this.filter === '') {
             return this.variables;
         } else {
-            return this.variables.filter(v => v.name.indexOf(this.filter) !== -1);
+            return this.variables.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
         }
     }
 
