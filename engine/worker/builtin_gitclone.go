@@ -24,7 +24,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 
 	if url == nil {
 		res := sdk.Result{
-			Status: sdk.StatusFail,
+			Status: sdk.StatusFail.String(),
 			Reason: "Git repository URL is not set. Nothing to perform.",
 		}
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
@@ -36,7 +36,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 		//Setup the key
 		if err := vcs.SetupSSHKey(nil, keysDirectory, privateKey); err != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail,
+				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
 			}
 			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
@@ -49,7 +49,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 	key, errK := vcs.GetSSHKey(pbJob.Parameters, keysDirectory, privateKey)
 	if errK != nil && errK != sdk.ErrKeyNotFound {
 		res := sdk.Result{
-			Status: sdk.StatusFail,
+			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
 		}
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
@@ -61,7 +61,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 	if !strings.HasPrefix(url.Value, "http") {
 		if errK == sdk.ErrKeyNotFound || key == nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail,
+				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("SSH Key not found. Unable to perform git clone"),
 			}
 			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
@@ -136,7 +136,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 
 	if err != nil {
 		res := sdk.Result{
-			Status: sdk.StatusFail,
+			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Unable to git clone: %s", err),
 		}
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
@@ -145,5 +145,5 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 	}
 
 	time.Sleep(5 * time.Second)
-	return sdk.Result{Status: sdk.StatusSuccess}
+	return sdk.Result{Status: sdk.StatusSuccess.String()}
 }

@@ -91,7 +91,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := runArtifactUpload(a.Name, a.Tag, pbJob, currentStep); result.Status != sdk.StatusSuccess {
+	if result := runArtifactUpload(a.Name, a.Tag, pbJob, currentStep); result.Status != sdk.StatusSuccess.String() {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

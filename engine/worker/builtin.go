@@ -10,7 +10,7 @@ import (
 )
 
 func runBuiltin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
-	res := sdk.Result{Status: sdk.StatusFail}
+	res := sdk.Result{Status: sdk.StatusFail.String()}
 	switch a.Name {
 	case sdk.ArtifactUpload:
 		filePattern, tag := getArtifactParams(a)
@@ -30,7 +30,7 @@ func runBuiltin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Re
 }
 
 func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
-	res := sdk.Result{Status: sdk.StatusFail}
+	res := sdk.Result{Status: sdk.StatusFail.String()}
 	//For the moment we consider that plugin name = action name = plugin binary file name
 	pluginName := a.Name
 	//The binary file has been downloaded during requirement check in /tmp
@@ -49,7 +49,7 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Res
 	_plugin, err := pluginClient.Instance()
 	if err != nil {
 		result := sdk.Result{
-			Status: sdk.StatusFail,
+			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Unable to init plugin %s: %s\n", pluginName, err),
 		}
 		sendLog(pbJob.ID, result.Reason, pbJob.PipelineBuildID, stepOrder, false)
@@ -78,7 +78,7 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Res
 	pluginResult := _plugin.Run(pluginAction)
 
 	if pluginResult == plugin.Success {
-		res.Status = sdk.StatusSuccess
+		res.Status = sdk.StatusSuccess.String()
 	}
 	return res
 }

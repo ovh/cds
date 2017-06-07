@@ -31,7 +31,7 @@ func getArtifactParams(action *sdk.Action) (string, string) {
 }
 
 func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
-	res := sdk.Result{Status: sdk.StatusSuccess}
+	res := sdk.Result{Status: sdk.StatusSuccess.String()}
 	var project, pipeline, application, environment, buildNumberString string
 
 	for _, p := range pbJob.Parameters {
@@ -59,7 +59,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 	}
 
 	if tag == "" {
-		res.Status = sdk.StatusFail
+		res.Status = sdk.StatusFail.String()
 		res.Reason = fmt.Sprintf("tag variable is empty. aborting\n")
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
@@ -70,14 +70,14 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 	// Global all files matching filePath
 	filesPath, err := filepath.Glob(filePattern)
 	if err != nil {
-		res.Status = sdk.StatusFail
+		res.Status = sdk.StatusFail.String()
 		res.Reason = fmt.Sprintf("cannot perform globbing of pattern '%s': %s\n", filePattern, err)
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
 
 	if len(filesPath) == 0 {
-		res.Status = sdk.StatusFail
+		res.Status = sdk.StatusFail.String()
 		res.Reason = fmt.Sprintf("Pattern '%s' matched no file\n", filePattern)
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
@@ -85,7 +85,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 
 	buildNumber, errBN := strconv.Atoi(buildNumberString)
 	if errBN != nil {
-		res.Status = sdk.StatusFail
+		res.Status = sdk.StatusFail.String()
 		res.Reason = fmt.Sprintf("BuilNumber is not an integer %s\n", errBN)
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
@@ -95,7 +95,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 		filename := filepath.Base(filePath)
 		sendLog(pbJob.ID, fmt.Sprintf("Uploading '%s' into %s-%s-%s/%s...\n", filename, project, application, pipeline, tag), pbJob.PipelineBuildID, stepOrder, false)
 		if err := sdk.UploadArtifact(project, pipeline, application, tag, filePath, buildNumber, environment); err != nil {
-			res.Status = sdk.StatusFail
+			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
 			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 			return res
@@ -106,7 +106,7 @@ func runArtifactUpload(filePattern, tag string, pbJob sdk.PipelineBuildJob, step
 }
 
 func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
-	res := sdk.Result{Status: sdk.StatusSuccess}
+	res := sdk.Result{Status: sdk.StatusSuccess.String()}
 	var project, pipeline, application, environment, tag, filePath string
 	enabled := true
 
@@ -161,7 +161,7 @@ func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder in
 	}
 
 	if tag == "" {
-		res.Status = sdk.StatusFail
+		res.Status = sdk.StatusFail.String()
 		res.Reason = fmt.Sprintf("tag variable is empty. aborting\n")
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
@@ -170,7 +170,7 @@ func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder in
 	tag = url.QueryEscape(tag)
 
 	if pipeline == "" {
-		res.Status = sdk.StatusFail
+		res.Status = sdk.StatusFail.String()
 		res.Reason = fmt.Sprintf("pipeline variable is empty. aborting\n")
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
@@ -179,7 +179,7 @@ func runArtifactDownload(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder in
 	sendLog(pbJob.ID, fmt.Sprintf("Downloading artifacts from %s-%s-%s/%s into '%s'...\n", project, application, pipeline, tag, filePath), pbJob.PipelineBuildID, stepOrder, false)
 	err := sdk.DownloadArtifacts(project, application, pipeline, tag, filePath, environment)
 	if err != nil {
-		res.Status = sdk.StatusFail
+		res.Status = sdk.StatusFail.String()
 		res.Reason = fmt.Sprintf("%s\n", err)
 		log.Warning("Cannot download artifacts: %s\n", err)
 		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)

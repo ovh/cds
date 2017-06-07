@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -119,7 +120,8 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	buildVariables = nil
 	start := time.Now()
 	res := run(&pbji)
-	res.RemoteTime = time.Now()
+	now, _ := ptypes.TimestampProto(time.Now())
+	res.RemoteTime = now
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
 	// Give time to buffered logs to be sent

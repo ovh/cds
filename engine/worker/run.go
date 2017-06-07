@@ -125,7 +125,7 @@ func runJob(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, step
 
 	if !a.Enabled {
 		return sdk.Result{
-			Status:  sdk.StatusDisabled,
+			Status:  sdk.StatusDisabled.String(),
 			BuildID: pipBuildJob.ID,
 		}
 	}
@@ -133,7 +133,7 @@ func runJob(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, step
 	// Nothing to do, success !
 	if len(a.Actions) == 0 {
 		return sdk.Result{
-			Status:  sdk.StatusSuccess,
+			Status:  sdk.StatusSuccess.String(),
 			BuildID: pipBuildJob.ID,
 		}
 	}
@@ -151,12 +151,12 @@ func runJob(a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, step
 	r, nDisabled := runSteps(noFinalActions, a, pipBuildJob, stepOrder, stepName, 0)
 	//If all steps are disabled, set action status to disabled
 	if nDisabled >= (len(a.Actions) - len(finalActions)) {
-		r.Status = sdk.StatusDisabled
+		r.Status = sdk.StatusDisabled.String()
 	}
 
 	rFinal, _ := runSteps(finalActions, a, pipBuildJob, stepOrder, stepName, len(noFinalActions))
 
-	if r.Status == sdk.StatusFail {
+	if r.Status == sdk.StatusFail.String() {
 		return r
 	}
 	return rFinal
@@ -169,13 +169,13 @@ func runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob sdk.PipelineBuildJo
 	// Nothing to do, success !
 	if len(steps) == 0 {
 		return sdk.Result{
-			Status:  sdk.StatusSuccess,
+			Status:  sdk.StatusSuccess.String(),
 			BuildID: pipBuildJob.ID,
 		}, 0
 	}
 
 	r := sdk.Result{
-		Status:  sdk.StatusFail,
+		Status:  sdk.StatusFail.String(),
 		BuildID: pipBuildJob.ID,
 	}
 
@@ -206,15 +206,15 @@ func runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob sdk.PipelineBuildJo
 			sendLog(pipBuildJob.ID, fmt.Sprintf("Starting step %s", childName), pipBuildJob.PipelineBuildID, currentStep, false)
 
 			r = startAction(&child, pipBuildJob, currentStep, childName)
-			if r.Status != sdk.StatusSuccess {
+			if r.Status != sdk.StatusSuccess.String() {
 				log.Debug("Stopping %s at step %s", a.Name, childName)
 				doNotRunChildrenAnymore = true
 			}
 
-			sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s [%s]", childName, r.Status.String()), pipBuildJob.PipelineBuildID, currentStep, true)
+			sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s [%s]", childName, r.Status), pipBuildJob.PipelineBuildID, currentStep, true)
 
 			// Update step status
-			if err := updateStepStatus(pipBuildJob.ID, currentStep, r.Status.String()); err != nil {
+			if err := updateStepStatus(pipBuildJob.ID, currentStep, r.Status); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 		}
@@ -297,7 +297,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	if err := setupBuildDirectory(wd); err != nil {
 		time.Sleep(5 * time.Second)
 		return sdk.Result{
-			Status: sdk.StatusFail,
+			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
 		}
 	}
@@ -314,7 +314,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 
 	if err := processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob, pbji.Secrets); err != nil {
 		log.Warning("run> Cannot process action %s parameters: %s\n", pbji.PipelineBuildJob.Job.Action.Name, err)
-		return sdk.Result{Status: sdk.StatusFail}
+		return sdk.Result{Status: sdk.StatusFail.String()}
 	}
 
 	// Add secrets as string or password in ActionBuild.Args
@@ -338,7 +338,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 			case <-time.After(12 * time.Hour):
 				path := fmt.Sprintf("/queue/%d/result", pbji.PipelineBuildJob.ID)
 				body, _ := json.Marshal(sdk.Result{
-					Status: sdk.StatusFail,
+					Status: sdk.StatusFail.String(),
 					Reason: fmt.Sprintf("Error: Action %s running for 12 hour on worker %s, aborting", pbji.PipelineBuildJob.Job.Action.Name, name),
 				})
 				sdk.Request("POST", path, body)
@@ -353,7 +353,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
 		time.Sleep(5 * time.Second)
 		return sdk.Result{
-			Status: sdk.StatusFail,
+			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
 		}
 	}
@@ -362,7 +362,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	if err := setupSSHKey(pbji.Secrets, keysDirectory); err != nil {
 		time.Sleep(5 * time.Second)
 		return sdk.Result{
-			Status: sdk.StatusFail,
+			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
 		}
 	}
@@ -372,7 +372,7 @@ func run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	if err := vcs.SetupSSHKey(pbji.Secrets, keysDirectory, nil); err != nil {
 		time.Sleep(5 * time.Second)
 		return sdk.Result{
-			Status: sdk.StatusFail,
+			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
 		}
 	}
