@@ -556,8 +556,6 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	router.mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-
-
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(db, ctx.job.ID)
 	test.NoError(t, errJ)
 
@@ -571,7 +569,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	vars = map[string]string{
 		"permProjectKey": ctx.project.Key,
 		"workflowName":   ctx.workflow.Name,
-		"number": fmt.Sprintf("%d", updatedNodeRun.Number),
+		"number":         fmt.Sprintf("%d", updatedNodeRun.Number),
 		"id":             fmt.Sprintf("%d", wNodeJobRun.WorkflowNodeRunID),
 	}
 	uri = router.getRoute("GET", getWorkflowNodeRunArtifactsHandler, vars)

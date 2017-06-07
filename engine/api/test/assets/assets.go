@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -144,7 +145,7 @@ func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, meth
 		t.Fail()
 	}
 	defer file.Close()
-
+	defer os.RemoveAll(path)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile(fileName, filepath.Base(path))
@@ -158,6 +159,9 @@ func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, meth
 	for key, val := range params {
 		_ = writer.WriteField(key, val)
 	}
+
+	contextType := writer.FormDataContentType()
+
 	if err := writer.Close(); err != nil {
 		t.Fail()
 	}
@@ -166,7 +170,8 @@ func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, meth
 	if err != nil {
 		t.Fail()
 	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Content-Type", contextType)
+	req.Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	req.Header.Set("ARTIFACT-FILENAME", fileName)
 
 	AuthentifyRequestFromWorker(t, req, w)

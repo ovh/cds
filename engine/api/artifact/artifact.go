@@ -218,19 +218,19 @@ func SaveWorkflowFile(art *sdk.WorkflowNodeRunArtifact, content io.ReadCloser) e
 
 // SaveFile Insert file in db and write it in data directory
 func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artifact, content io.ReadCloser, e *sdk.Environment) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WrapError(err, "Cannot start transaction")
+	tx, errB := db.Begin()
+	if errB != nil {
+		return sdk.WrapError(errB, "Cannot start transaction")
 	}
 	defer tx.Rollback()
 
-	objectPath, err := objectstore.StoreArtifact(&art, content)
-	if err != nil {
-		return sdk.WrapError(err, "SaveFile>Cannot store artifact")
+	objectPath, errO := objectstore.StoreArtifact(&art, content)
+	if errO != nil {
+		return sdk.WrapError(errO, "SaveFile>Cannot store artifact")
 	}
 	log.Debug("objectpath=%s\n", objectPath)
 	art.ObjectPath = objectPath
-	if err = insertArtifact(tx, p.ID, a.ID, e.ID, art); err != nil {
+	if err := insertArtifact(tx, p.ID, a.ID, e.ID, art); err != nil {
 		return sdk.WrapError(err, "SaveFile> Cannot insert artifact in DB")
 	}
 

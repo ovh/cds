@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"strconv"
 	"time"
@@ -410,7 +411,13 @@ func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *
 
 	vars := mux.Vars(r)
 	tag := vars["tag"]
-	fileName := r.Header.Get(sdk.ArtifactFileName)
+
+	_, params, errM := mime.ParseMediaType(r.Header.Get("Content-Disposition"))
+	if errM != nil {
+		return sdk.WrapError(errM, "postWorkflowJobArtifactHandler> Cannot read Content Disposition header")
+	}
+
+	fileName := params["filename"]
 
 	//parse the multipart form in the request
 	if err := r.ParseMultipartForm(100000); err != nil {
@@ -432,8 +439,8 @@ func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *
 	}
 
 	if fileName == "" {
-		log.Warning("uploadArtifactHandler> %s header is not set", sdk.ArtifactFileName)
-		return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", sdk.ArtifactFileName)
+		log.Warning("uploadArtifactHandler> %s header is not set", "Content-Disposition")
+		return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", "Content-Disposition")
 	}
 
 	nodeJobRun, errJ := workflow.LoadNodeJobRun(db, id)
@@ -477,15 +484,12 @@ func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *
 	if len(files) == 1 {
 		file, err := files[0].Open()
 		if err != nil {
-			log.Warning("postWorkflowJobArtifactHandler> cannot open file: %s\n", err)
-			return err
+			return sdk.WrapError(err, "postWorkflowJobArtifactHandler> cannot open file")
 
 		}
 
 		if err := artifact.SaveWorkflowFile(&art, file); err != nil {
-			log.Warning("postWorkflowJobArtifactHandler> cannot save file: %s\n", err)
-			file.Close()
-			return err
+			return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot save artifact in store")
 		}
 		file.Close()
 	}
