@@ -143,21 +143,17 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 }
 
 func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	vars := mux.Vars(r)
-	artifactIDS := vars["id"]
 
-	artifactID, errAtoi := strconv.Atoi(artifactIDS)
+	artifactID, errAtoi := requestVarInt(r, "id")
 	if errAtoi != nil {
-		log.Warning("DownloadArtifactHandler> Cannot convert '%s' into int: %s\n", artifactIDS, errAtoi)
-		return sdk.ErrWrongRequest
+		return sdk.WrapError(errAtoi, "DownloadArtifactHandler> Cannot get artifact ID")
 
 	}
 
 	// Load artifact
 	art, err := artifact.LoadArtifact(db, int64(artifactID))
 	if err != nil {
-		log.Warning("downloadArtifactHandler> Cannot load artifact %d: %s\n", artifactID, err)
-		return err
+		return sdk.WrapError(err, "downloadArtifactHandler> Cannot load artifact")
 	}
 
 	log.Debug("downloadArtifactHandler: Serving %+v\n", art)
@@ -165,9 +161,8 @@ func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	w.Header().Add("Content-Type", "application/octet-stream")
 	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-	if err = artifact.StreamFile(w, art); err != nil {
-		log.Warning("downloadArtifactHandler: Cannot stream artifact %s-%s-%s-%s-%s file: %s\n", art.Project, art.Application, art.Environment, art.Pipeline, art.Tag, err)
-		return err
+	if err := artifact.StreamFile(w, art); err != nil {
+		return sdk.WrapError(err, "downloadArtifactHandler> Cannot stream artifact")
 	}
 	return nil
 }
@@ -294,19 +289,15 @@ func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *g
 
 	art, err := artifact.LoadArtifactByHash(db, hash)
 	if err != nil {
-		log.Warning("downloadArtifactDirectHandler> Could not load artifact with hash %s: %s\n", hash, err)
-		return err
+		return sdk.WrapError(err, "downloadArtifactDirectHandler> Could not load artifact with hash %s", hash)
 	}
 
 	w.Header().Add("Content-Type", "application/octet-stream")
 	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
 	log.Debug("downloadArtifactDirectHandler: Serving %+v\n", art)
-	err = artifact.StreamFile(w, art)
-	if err != nil {
-		log.Warning("downloadArtifactDirectHandler: Cannot stream artifact %s-%s-%s-%s-%s file: %s\n", art.Project, art.Application, art.Environment, art.Pipeline, art.Tag, err)
-		return err
-
+	if err := artifact.StreamFile(w, art); err != nil {
+		return sdk.WrapError(err, "downloadArtifactDirectHandler: Cannot stream artifact")
 	}
 	return nil
 }
