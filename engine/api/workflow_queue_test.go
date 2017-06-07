@@ -13,6 +13,7 @@ import (
 
 	"fmt"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
@@ -327,11 +328,13 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	router.mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
+	now, _ := ptypes.TimestampProto(time.Now())
+
 	//Send result
 	res := sdk.Result{
 		Duration:   "10",
-		Status:     sdk.StatusSuccess,
-		RemoteTime: time.Now(),
+		Status:     sdk.StatusSuccess.String(),
+		RemoteTime: now,
 	}
 
 	uri = router.getRoute("POST", postWorkflowJobResultHandler, vars)
