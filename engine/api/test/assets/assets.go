@@ -145,7 +145,6 @@ func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, meth
 		t.Fail()
 	}
 	defer file.Close()
-	defer os.RemoveAll(path)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile(fileName, filepath.Base(path))

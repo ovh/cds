@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -539,7 +540,8 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	uri = router.getRoute("POST", postWorkflowJobArtifactHandler, vars)
 	test.NotEmpty(t, uri)
 
-	myartifact, errF := os.Create("/tmp/myartifact")
+	myartifact, errF := os.Create(path.Join(os.TempDir(), "myartifact"))
+	defer os.RemoveAll("/tmp/myartifact")
 	test.NoError(t, errF)
 	_, errW := myartifact.Write([]byte("Hi, I am foo"))
 	test.NoError(t, errW)
