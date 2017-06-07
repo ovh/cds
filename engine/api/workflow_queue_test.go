@@ -457,7 +457,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 		},
 	}
 
-	errO := objectstore.Initialize(cfg)
+	errO := objectstore.Initialize(context.Background(), cfg)
 	test.NoError(t, errO)
 
 	//Prepare request
