@@ -445,3 +445,24 @@ func ErrorIs(err error, t *Error) bool {
 	}
 	return false
 }
+
+type MultiError []error
+
+func (e *MultiError) Error() string {
+	var s string
+	for i := range *e {
+		if i > 0 {
+			s += ", "
+		}
+		s += (*e)[i].Error()
+	}
+	return s
+}
+
+func (e *MultiError) Append(err error) {
+	*e = append(*e, err)
+}
+
+func (e *MultiError) IsEmpty() bool {
+	return len(*e) == 0
+}

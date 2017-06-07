@@ -1,7 +1,7 @@
 <div class="summary" *ngIf="currentBuild"
-     [class.success]="currentBuild.status === 'Success'"
-     [class.fail]="currentBuild.status === 'Fail'"
-     [class.building]="currentBuild.status === 'Building'">
+     [class.success]="currentBuild.status === pipelineStatusEnum.SUCCESS"
+     [class.fail]="currentBuild.status === pipelineStatusEnum.FAIL"
+     [class.building]="currentBuild.status === pipelineStatusEnum.BUILDING">
     <div class="ui grid">
         <div class="row">
             <div class="five wide column">
@@ -16,7 +16,7 @@
                 <span class="title">{{ 'common_pipeline_start_title' | translate }}</span>
                 <span class="content">{{currentBuild.start | amCalendar }}</span>
             </div>
-            <div class="five wide column" *ngIf="currentBuild.status !== 'Building'">
+            <div class="five wide column" *ngIf="currentBuild.status !== pipelineStatusEnum.BUILDING">
                 <span class="title">{{ 'common_duration_title' | translate }}</span>
                 <span class="content">{{duration}}</span>
             </div>
@@ -37,11 +37,11 @@
         </div>
         <div class="row">
             <div class="right aligned column">
-                <div class="ui buttons" *ngIf="currentBuild.status !== 'Building'">
-                    <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runAgain()" *ngIf="currentBuild.status === 'Fail'">{{'pipeline_label_run_again' | translate}}</button>
+                <div class="ui buttons" *ngIf="currentBuild.status !== pipelineStatusEnum.BUILDING">
+                    <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runAgain()" *ngIf="currentBuild.status === pipelineStatusEnum.FAIL">{{'pipeline_label_run_again' | translate}}</button>
                     <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runNew()">{{ 'pipeline_label_run_new' | translate }}</button>
                 </div>
-                <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="stop()" *ngIf="currentBuild.status === 'Building'">{{ 'pipeline_label_stop' | translate }}</button>
+                <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="stop()" *ngIf="currentBuild.status === pipelineStatusEnum.BUILDING">{{ 'pipeline_label_stop' | translate }}</button>
             </div>
         </div>
     </div>

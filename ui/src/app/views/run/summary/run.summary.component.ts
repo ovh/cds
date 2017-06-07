@@ -1,5 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {PipelineBuild, PipelineRunRequest} from '../../../model/pipeline.model';
+import {PipelineBuild, PipelineRunRequest, PipelineStatus} from '../../../model/pipeline.model';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {Router} from '@angular/router';
 import {Application} from '../../../model/application.model';
@@ -24,6 +24,7 @@ export class RunSummaryComponent implements OnInit {
 
     parent: WorkflowItem;
     currentWI: WorkflowItem;
+    pipelineStatusEnum = PipelineStatus;
 
     loading = false;
 

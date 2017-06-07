@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
@@ -102,7 +101,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 
 	n.Status = newStatus
 	// Save the node run in database
-	if err := UpdateWorkflowNodeRun(tx, n); err != nil {
+	if err := UpdateNodeRun(tx, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d", n.ID), "workflow.execute> Unable to execute node")
 	}
 
@@ -145,10 +144,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	//Browse the jobs
 	for _, job := range stage.Jobs {
 		//Process variables for the jobs
-		jobParams, errParam := getNodeJobRunVariables(db, job, run, stage)
-		if errParam != nil {
-			return errParam
-		}
+		jobParams, errParam := getNodeJobRunParameters(db, job, run, stage)
 
 		//Create the job run
 		job := sdk.WorkflowNodeJobRun{
@@ -166,6 +162,30 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 			job.Status = sdk.StatusDisabled.String()
 		} else if !prerequisitesOK {
 			job.Status = sdk.StatusSkipped.String()
+		}
+
+		if errParam != nil {
+			job.Status = sdk.StatusFail.String()
+
+			errm, ok := errParam.(*sdk.MultiError)
+			spawnInfos := sdk.SpawnMsg{
+				ID: sdk.MsgSpawnInfoJobError.ID,
+			}
+
+			if ok {
+				for _, e := range *errm {
+					spawnInfos.Args = append(spawnInfos.Args, e.Error())
+				}
+			} else {
+				spawnInfos.Args = []interface{}{errParam.Error()}
+			}
+
+			job.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
+				APITime:    time.Now(),
+				Message:    spawnInfos,
+				RemoteTime: time.Now(),
+			}}
+
 		}
 
 		//Insert in database
@@ -245,17 +265,11 @@ func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	return stageEnd, nil
 }
 
-func getNodeJobRunVariables(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
+func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
 	//Load workflow run
 	w, err := loadRunByID(db, run.WorkflowRunID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "getNodeJobRunVariables> Unable to load workflow run")
-	}
-
-	// Load project variables
-	pv, err := project.GetAllVariableInProject(db, w.Workflow.ProjectID)
-	if err != nil {
-		return nil, err
 	}
 
 	//Load node definition
@@ -263,18 +277,61 @@ func getNodeJobRunVariables(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNod
 	if n == nil {
 		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeJobRunVariables>")
 	}
+	vars := map[string]string{}
+
+	//Load project
+	proj, err := project.Load(db, w.Workflow.ProjectKey, nil, project.LoadOptions.WithVariables)
+	if err != nil {
+		return nil, sdk.WrapError(err, "getNodeJobRunVariables> Unable to load project")
+	}
+	tmp := sdk.ParametersFromProjectVariables(proj)
+	for k, v := range tmp {
+		vars[k] = v
+	}
 
 	// compute application variables
-	av := []sdk.Variable{}
 	if n.Context != nil && n.Context.Application != nil {
-		av = n.Context.Application.Variable
+		tmp := sdk.ParametersFromApplicationVariables(n.Context.Application)
+		for k, v := range tmp {
+			vars[k] = v
+		}
 	}
 
 	// compute environment variables
-	ev := []sdk.Variable{}
 	if n.Context != nil && n.Context.Environment != nil {
-		ev = n.Context.Environment.Variable
+		tmp := sdk.ParametersFromEnvironmentVariables(n.Context.Environment)
+		for k, v := range tmp {
+			vars[k] = v
+		}
 	}
 
-	return action.ProcessActionBuildVariables(pv, av, ev, run.PipelineParameter, run.Payload, stage, j.Action), nil
+	// compute pipeline parameters
+	tmp = sdk.ParametersFromPipelineParameters(run.PipelineParameters)
+	for k, v := range tmp {
+		vars[k] = v
+	}
+
+	// compute payload
+	tmp = sdk.ParametersToMap(run.Payload)
+
+	tmp["cds.stage"] = stage.Name
+	tmp["cds.job"] = j.Action.Name
+
+	errm := &sdk.MultiError{}
+
+	params := []sdk.Parameter{}
+	for k, v := range tmp {
+		s, err := sdk.Interpolate(v, tmp)
+		if err != nil {
+			errm.Append(err)
+			continue
+		}
+		sdk.AddParameter(&params, k, sdk.StringParameter, s)
+	}
+
+	if errm.IsEmpty() {
+		return params, nil
+	}
+
+	return params, errm
 }

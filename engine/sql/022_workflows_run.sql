@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS "workflow_node_run" (
     source_node_runs JSONB,
     payload JSONB,
     pipeline_parameters JSONB,
+    build_parameters JSONB,
     tests JSONB,
     commits JSONB,
     stages JSONB

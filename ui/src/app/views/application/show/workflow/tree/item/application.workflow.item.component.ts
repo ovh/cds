@@ -5,7 +5,7 @@ import {Application} from '../../../../../../model/application.model';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
 import {NotificationService} from '../../../../../../service/notification/notification.service';
 import {Router} from '@angular/router';
-import {PipelineRunRequest, PipelineBuild, Pipeline} from '../../../../../../model/pipeline.model';
+import {PipelineRunRequest, PipelineBuild, Pipeline, PipelineStatus} from '../../../../../../model/pipeline.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Project} from '../../../../../../model/project.model';
 import {Parameter} from '../../../../../../model/parameter.model';
@@ -38,6 +38,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     oldPipelineId: number;
     oldPipelineStatus: string;
 
+    pipelineStatusEnum = PipelineStatus;
+
     // Triggers modals
     @ViewChild('editTriggerModal')
     editTriggerModal: SemanticModalComponent;
@@ -60,10 +62,12 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     detachModalPipelineModal: SemanticModalComponent;
 
     notificationSubscription: Subscription;
+    routerSubscription: Subscription;
 
     constructor(private _router: Router, private _appPipService: ApplicationPipelineService, private _pipStore: PipelineStore,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
                 private _notification: NotificationService) {
+
     }
 
 
@@ -299,12 +303,12 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
 
     handleNotification(pipeline: Pipeline): void {
         switch (pipeline.last_pipeline_build.status) {
-        case 'Success':
+        case PipelineStatus.SUCCESS:
             this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
                 pipelineName: pipeline.name
             })).subscribe();
             break;
-        case 'Failing':
+        case PipelineStatus.FAIL:
             this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
                 pipelineName: pipeline.name
             })).subscribe();
@@ -320,7 +324,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
                 this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
             }
 
-            if (this.oldPipelineStatus === 'Building' &&
+            if (this.oldPipelineStatus === PipelineStatus.BUILDING &&
                this.oldPipelineStatus !== this.workflowItem.pipeline.last_pipeline_build.status &&
                     this.oldPipelineId && this.oldPipelineId === this.workflowItem.pipeline.last_pipeline_build.id) {
                 this.handleNotification(this.workflowItem.pipeline);

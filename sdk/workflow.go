@@ -359,24 +359,25 @@ type WorkflowRun struct {
 
 //WorkflowNodeRun is as execution instance of a node
 type WorkflowNodeRun struct {
-	WorkflowRunID     int64                     `json:"workflow_run_id" db:"workflow_run_id"`
-	ID                int64                     `json:"id" db:"id"`
-	WorkflowNodeID    int64                     `json:"workflow_node_id" db:"workflow_node_id"`
-	Number            int64                     `json:"num" db:"num"`
-	SubNumber         int64                     `json:"subnumber" db:"sub_num"`
-	Status            string                    `json:"status" db:"status"`
-	Stages            []Stage                   `json:"stages" db:"-"`
-	Start             time.Time                 `json:"start" db:"start"`
-	LastModified      time.Time                 `json:"last_modified" db:"last_modified"`
-	Done              time.Time                 `json:"done" db:"done"`
-	HookEvent         *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
-	Manual            *WorkflowNodeRunManual    `json:"manual" db:"-"`
-	SourceNodeRuns    []int64                   `json:"source_node_runs" db:"-"`
-	Payload           []Parameter               `json:"payload" db:"-"`
-	PipelineParameter []Parameter               `json:"pipeline_parameter" db:"-"`
-	Artifacts         []WorkflowNodeRunArtifact `json:"artifacts,omitempty" db:"-"`
-	Tests             *venom.Tests              `json:"tests,omitempty" db:"-"`
-	Commits           []VCSCommit               `json:"commits,omitempty" db:"-"`
+	WorkflowRunID      int64                     `json:"workflow_run_id" db:"workflow_run_id"`
+	ID                 int64                     `json:"id" db:"id"`
+	WorkflowNodeID     int64                     `json:"workflow_node_id" db:"workflow_node_id"`
+	Number             int64                     `json:"num" db:"num"`
+	SubNumber          int64                     `json:"subnumber" db:"sub_num"`
+	Status             string                    `json:"status" db:"status"`
+	Stages             []Stage                   `json:"stages" db:"-"`
+	Start              time.Time                 `json:"start" db:"start"`
+	LastModified       time.Time                 `json:"last_modified" db:"last_modified"`
+	Done               time.Time                 `json:"done" db:"done"`
+	HookEvent          *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
+	Manual             *WorkflowNodeRunManual    `json:"manual" db:"-"`
+	SourceNodeRuns     []int64                   `json:"source_node_runs" db:"-"`
+	Payload            []Parameter               `json:"payload" db:"-"`
+	PipelineParameters []Parameter               `json:"pipeline_parameters" db:"-"`
+	BuildParameters    []Parameter               `json:"build_parameters" db:"-"`
+	Artifacts          []WorkflowNodeRunArtifact `json:"artifacts,omitempty" db:"-"`
+	Tests              *venom.Tests              `json:"tests,omitempty" db:"-"`
+	Commits            []VCSCommit               `json:"commits,omitempty" db:"-"`
 }
 
 //WorkflowNodeRunArtifact represents tests list

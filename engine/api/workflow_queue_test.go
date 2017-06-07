@@ -438,8 +438,55 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	assert.Equal(t, 2, nodeRun.Tests.Total)
 }
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
-	//db := test.SetupPG(t)
-	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
+	db := test.SetupPG(t)
+	ctx := test_runWorkflow(t, db, "/Test_postWorkflowJobVariableHandler")
+	test_getWorkflowJob(t, db, &ctx)
+	assert.NotNil(t, ctx.job)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": ctx.project.Key,
+		"workflowName":   ctx.workflow.Name,
+		"id":             fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	//Register the worker
+	test_registerWorker(t, db, &ctx)
+
+	//Take
+	uri := router.getRoute("POST", postTakeWorkflowJobHandler, vars)
+	test.NotEmpty(t, uri)
+
+	takeForm := worker.TakeForm{
+		BookedJobID: ctx.job.ID,
+		Time:        time.Now(),
+	}
+
+	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	rec := httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	vars = map[string]string{
+		"permProjectKey": ctx.project.Key,
+		"workflowName":   ctx.workflow.Name,
+		"permID":         fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	//Send result
+	v := sdk.Variable{
+		Name:  "var",
+		Value: "value",
+	}
+
+	uri = router.getRoute("POST", postWorkflowJobVariableHandler, vars)
+	test.NotEmpty(t, uri)
+
+	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, v)
+	rec = httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
 }
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	db := test.SetupPG(t)
