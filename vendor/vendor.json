@@ -66,6 +66,18 @@
 			"revisionTime": "2016-06-15T09:26:46Z"
 		},
 		{
+			"checksumSHA1": "0sGwVNYd+vmCRrOWQ/Gq7czIfVk=",
+			"path": "github.com/docker/docker-credential-helpers/credentials",
+			"revision": "80833adff5dd10aa3b3d55dbc94308fde69e2d92",
+			"revisionTime": "2016-07-20T20:55:38Z"
+		},
+		{
+			"checksumSHA1": "CJGEjijnKnYUV6uCrUR8jJLfw3Y=",
+			"path": "github.com/docker/docker-credential-helpers/secretservice",
+			"revision": "80833adff5dd10aa3b3d55dbc94308fde69e2d92",
+			"revisionTime": "2016-07-20T20:55:38Z"
+		},
+		{
 			"checksumSHA1": "jVJDbe0IcyjoKc2xbohwzQr+FF0=",
 			"path": "github.com/docker/docker/api/types/blkiodev",
 			"revision": "1474bf6c6e830e3300ac37fb630d1a0d8841d4bf",
