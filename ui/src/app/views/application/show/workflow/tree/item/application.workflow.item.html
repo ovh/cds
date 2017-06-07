@@ -6,17 +6,17 @@
     <div class="column">
         <div class="ui compact segments">
             <div class="ui raised segment"
-                 [class.green]="workflowItem.pipeline.last_pipeline_build?.status === 'Success'"
-                 [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === 'Building'"
-                 [class.red]="workflowItem.pipeline.last_pipeline_build?.status === 'Fail'">
+                 [class.green]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.SUCCESS"
+                 [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING"
+                 [class.red]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.FAIL">
 
 
                 <!-- User + date -->
                 <span *ngIf="workflowItem.pipeline.last_pipeline_build"
                       class="user ui blue left ribbon label"
-                      [class.green]="workflowItem.pipeline.last_pipeline_build.status === 'Success'"
-                      [class.blue]="workflowItem.pipeline.last_pipeline_build.status === 'Building'"
-                      [class.red]="workflowItem.pipeline.last_pipeline_build.status === 'Fail'"
+                      [class.green]="workflowItem.pipeline.last_pipeline_build.status === pipelineStatusEnum.SUCCESS"
+                      [class.blue]="workflowItem.pipeline.last_pipeline_build.status === pipelineStatusEnum.BUILDING"
+                      [class.red]="workflowItem.pipeline.last_pipeline_build.status === pipelineStatusEnum.FAIL"
 
                 >
                     <div smDirTooltip="{{getTriggerSource(workflowItem.pipeline.last_pipeline_build)}}"><i class="user icon"></i>{{getTriggerSource(workflowItem.pipeline.last_pipeline_build) | truncate : 13 }}</div>
@@ -26,9 +26,9 @@
 
                 <span *ngIf="workflowItem.pipeline.type !== 'build' && workflowItem.environment"
                       class="ui right ribbon label"
-                      [class.green]="workflowItem.pipeline.last_pipeline_build?.status === 'Success'"
-                      [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === 'Building'"
-                      [class.red]="workflowItem.pipeline.last_pipeline_build?.status === 'Fail'"
+                      [class.green]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.SUCCESS"
+                      [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING"
+                      [class.red]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.FAIL"
 
                 ><div smDirTooltip="{{workflowItem.environment.name}}">{{workflowItem.environment.name | truncate : 20 }}</div></span>
 
@@ -45,7 +45,7 @@
                                     <ng-container *ngIf="workflowItem.pipeline.last_pipeline_build"
                                                   [ngSwitch]="workflowItem.pipeline.last_pipeline_build?.status">
                                         <div class="ui active inline blue loader"
-                                             *ngSwitchCase="'Building'"
+                                             *ngSwitchCase="pipelineStatusEnum.BUILDING"
                                              [class.medium]="workflowItem.pipeline.last_pipeline_build.version < 10"
                                              [class.large]="workflowItem.pipeline.last_pipeline_build.version >= 10 && workflowItem.pipeline.last_pipeline_build.version < 10000"
                                              [class.huge]="workflowItem.pipeline.last_pipeline_build.version >= 10000 && workflowItem.pipeline.last_pipeline_build.version < 100000"

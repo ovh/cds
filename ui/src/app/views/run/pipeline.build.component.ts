@@ -2,7 +2,7 @@ import {Component, OnDestroy, NgZone} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Application} from '../../model/application.model';
 import {Project} from '../../model/project.model';
-import {Pipeline, PipelineBuild} from '../../model/pipeline.model';
+import {Pipeline, PipelineBuild, PipelineStatus} from '../../model/pipeline.model';
 import {Subscription} from 'rxjs/Rx';
 import {environment} from '../../../environments/environment';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
@@ -114,7 +114,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 this.zone.run(() => {
                     this.currentBuild = build;
 
-                    if (this.currentBuild.status !== 'Building') {
+                    if (this.currentBuild.status !== PipelineStatus.BUILDING) {
                         this.duration = this._durationService.duration(
                             new Date(this.currentBuild.start), new Date(this.currentBuild.done));
                     }
@@ -167,7 +167,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
         });
 
         this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
-            env, 1, 'Success', pb.trigger.vcs_branch).subscribe(pbs => {
+            env, 1, PipelineStatus.SUCCESS, pb.trigger.vcs_branch).subscribe(pbs => {
             if (pbs && pbs.length === 1) {
                 this.previousBuild = pbs[0];
             }
