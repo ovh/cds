@@ -72,6 +72,12 @@
 			"revisionTime": "2016-07-20T20:55:38Z"
 		},
 		{
+			"checksumSHA1": "9TP1bsS5s04Bm3W3IAv6W6S147M=",
+			"path": "github.com/docker/docker-credential-helpers/osxkeychain",
+			"revision": "d8f57a18c61ade10ddf767fa080b4778359f5c66",
+			"revisionTime": "2017-05-30T18:56:52Z"
+		},
+		{
 			"checksumSHA1": "CJGEjijnKnYUV6uCrUR8jJLfw3Y=",
 			"path": "github.com/docker/docker-credential-helpers/secretservice",
 			"revision": "80833adff5dd10aa3b3d55dbc94308fde69e2d92",

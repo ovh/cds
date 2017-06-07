@@ -11,13 +11,6 @@ import (
 	"github.com/docker/docker-credential-helpers/secretservice"
 )
 
-// Errors
-var (
-	ErrLibSecretUnavailable = fmt.Errorf("Shared library libsecret not found. Please install libsecret-1 from your package manager")
-	ErrLdd                  = fmt.Errorf("Unable to check shared object dependencies")
-	ErrExecNotFound         = fmt.Errorf("Unable to get current binary file")
-)
-
 func checkLibSecretAvailable() (bool, error) {
 	cliexec, err := filepath.Abs(os.Args[0])
 	if err != nil {
