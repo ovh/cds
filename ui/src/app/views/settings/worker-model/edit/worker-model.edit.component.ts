@@ -1,11 +1,13 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {WorkerModel} from '../../../../model/worker-model.model';
 import {Group} from '../../../../model/group.model';
 import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
 import {GroupService} from '../../../../service/group/group.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
+import {User} from '../../../../model/user.model';
 
 @Component({
     selector: 'app-worker-model-edit',
@@ -19,13 +21,17 @@ export class WorkerModelEditComponent implements OnInit {
     workerModelTypes: Array<string>;
     workerModelCommunications: Array<string>;
     workerModelGroups: Array<Group>;
+    currentUser: User;
+    canEdit = false;
 
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private workerModelPatternError = false;
 
     constructor(private _workerModelService: WorkerModelService, private _groupService: GroupService,
                 private _toast: ToastService, private _translate: TranslateService,
-                private _route: ActivatedRoute, private _router: Router) {
+                private _route: ActivatedRoute, private _router: Router,
+                private _authentificationStore: AuthentificationStore) {
+        this.currentUser = this._authentificationStore.getUser();
         this._groupService.getGroups().subscribe( groups => {
             this.workerModelGroups = groups;
         });
@@ -51,6 +57,21 @@ export class WorkerModelEditComponent implements OnInit {
     reloadData(workerModelName: string): void {
       this._workerModelService.getWorkerModelByName(workerModelName).subscribe( wm => {
           this.workerModel = wm;
+          if (this.currentUser.admin) {
+              this.canEdit = true;
+              return;
+          }
+          // here, check if user is admin of worker model group
+          this._groupService.getGroupByName(wm.group.name).subscribe( gr => {
+              if (gr.admins) {
+                for (let i = 0; i < gr.admins.length; i++) {
+                    if (gr.admins[i].username === this.currentUser.username) {
+                      this.canEdit = true;
+                      break;
+                    };
+                }
+              }
+          });
       });
     }
 
