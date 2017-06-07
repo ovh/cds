@@ -1108,7 +1108,7 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 // GetVersions  Get version for the given application and branch
 func GetVersions(db gorp.SqlExecutor, app *sdk.Application, branchName string) ([]int, error) {
 	query := `
-		SELECT version
+		SELECT distinct version
 		FROM pipeline_build
 		WHERE application_id = $1 AND vcs_changes_branch = $2
 		ORDER BY version DESC
