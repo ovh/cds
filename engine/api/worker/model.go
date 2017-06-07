@@ -52,7 +52,7 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	query := `select %s from worker_model JOIN "group" on worker_model.group_id = "group".id  order by worker_model.name`
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, columns)
 	rows, errQuery := db.Query(query)
 	if errQuery != nil {
 		return nil, sdk.WrapError(errQuery, "LoadAllWorkerModels> ")
