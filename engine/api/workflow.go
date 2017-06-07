@@ -167,3 +167,25 @@ func deleteWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 	return WriteJSON(w, r, nil, http.StatusOK)
 }
+
+func getWorkflowNodeRunArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	name := vars["workflowName"]
+
+	number, errNu := requestVarInt(r, "number")
+	if errNu != nil {
+		return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
+	}
+
+	id, errI := requestVarInt(r, "id")
+	if errI != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
+	}
+	nodeRun, errR := workflow.LoadNodeRun(db, key, name, number, id)
+	if errR != nil {
+		return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
+	}
+
+	return WriteJSON(w, r, nodeRun.Artifacts, http.StatusOK)
+}

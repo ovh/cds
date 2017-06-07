@@ -3,19 +3,22 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
+	"os"
+	"path"
 	"testing"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/runabove/venom"
 	"github.com/stretchr/testify/assert"
-
-	"fmt"
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -23,7 +26,6 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/runabove/venom"
 )
 
 type test_runWorkflowCtx struct {
@@ -508,8 +510,102 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 
 }
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
-	//db := test.SetupPG(t)
-	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
+	db := test.SetupPG(t)
+	ctx := test_runWorkflow(t, db, "/Test_postWorkflowJobArtifactHandler")
+	test_getWorkflowJob(t, db, &ctx)
+	assert.NotNil(t, ctx.job)
+
+	// Init store
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: path.Join(os.TempDir(), "store"),
+			},
+		},
+	}
+
+	errO := objectstore.Initialize(context.Background(), cfg)
+	test.NoError(t, errO)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": ctx.project.Key,
+		"workflowName":   ctx.workflow.Name,
+		"id":             fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	//Register the worker
+	test_registerWorker(t, db, &ctx)
+
+	//Take
+	uri := router.getRoute("POST", postTakeWorkflowJobHandler, vars)
+	test.NotEmpty(t, uri)
+
+	takeForm := worker.TakeForm{
+		BookedJobID: ctx.job.ID,
+		Time:        time.Now(),
+	}
+
+	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	rec := httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	vars = map[string]string{
+		"tag":    "latest",
+		"permID": fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	uri = router.getRoute("POST", postWorkflowJobArtifactHandler, vars)
+	test.NotEmpty(t, uri)
+
+	myartifact, errF := os.Create(path.Join(os.TempDir(), "myartifact"))
+	defer os.RemoveAll(path.Join(os.TempDir(), "myartifact"))
+	test.NoError(t, errF)
+	_, errW := myartifact.Write([]byte("Hi, I am foo"))
+	test.NoError(t, errW)
+
+	errClose := myartifact.Close()
+	test.NoError(t, errClose)
+
+	params := map[string]string{}
+	params["size"] = "12"
+	params["perm"] = "7"
+	params["md5sum"] = "123"
+	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, "/tmp/myartifact", "myartifact", params)
+	rec = httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(db, ctx.job.ID)
+	test.NoError(t, errJ)
+
+	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(db, wNodeJobRun.WorkflowNodeRunID)
+	test.NoError(t, errN2)
+
+	assert.NotNil(t, updatedNodeRun.Artifacts)
+	assert.Equal(t, 1, len(updatedNodeRun.Artifacts))
+
+	//Prepare request
+	vars = map[string]string{
+		"permProjectKey": ctx.project.Key,
+		"workflowName":   ctx.workflow.Name,
+		"number":         fmt.Sprintf("%d", updatedNodeRun.Number),
+		"id":             fmt.Sprintf("%d", wNodeJobRun.WorkflowNodeRunID),
+	}
+	uri = router.getRoute("GET", getWorkflowNodeRunArtifactsHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	rec = httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	var arts []sdk.WorkflowNodeRunArtifact
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &arts))
+	assert.Equal(t, 1, len(arts))
+	assert.Equal(t, "myartifact", arts[0].Name)
+
 }
 func Test_getWorkflowJobArtifactsHandler(t *testing.T) {
 	//db := test.SetupPG(t)
