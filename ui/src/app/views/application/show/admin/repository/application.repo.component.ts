@@ -58,6 +58,14 @@ export class ApplicationRepositoryComponent implements OnInit {
         }
     }
 
+    filterRepositories(filter: string): void {
+        if (filter.length >= 3) {
+            this.reposTmp = this.repos.filter(r => {
+                return r.fullname.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+            });
+        }
+    }
+
     /**
      * Update list of repo when changing repo manager
      */
@@ -67,7 +75,6 @@ export class ApplicationRepositoryComponent implements OnInit {
             this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager)
                 .subscribe( repos => {
                     this.repos = repos;
-                    this.reposTmp = this.repos.slice(0, 1000);
                     this.loadingRepos = false;
                 }, () => {
                     this.loadingRepos = false;
