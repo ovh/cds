@@ -109,7 +109,6 @@ describe('CDS: Application Repo Component', () => {
             fixture.componentInstance.ngOnInit();
             expect(call).toBe(1, 'Get repo list must have been called');
             expect(fixture.componentInstance.selectedRepoManager).toBe('RepoManager');
-            expect(JSON.stringify(fixture.componentInstance.repos)).toBe(JSON.stringify(fixture.componentInstance.reposTmp));
             expect(fixture.componentInstance.repos.length).toBe(5, 'Must have 5 repositories in list');
 
             // Select repo + link
