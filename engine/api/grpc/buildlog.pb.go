@@ -7,6 +7,7 @@ Package grpc is a generated protocol buffer package.
 
 It is generated from these files:
 	buildlog.proto
+	workflowqueue.proto
 
 It has these top-level messages:
 */
