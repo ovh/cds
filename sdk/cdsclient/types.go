@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"io"
 
 	"github.com/ovh/cds/sdk"
 )

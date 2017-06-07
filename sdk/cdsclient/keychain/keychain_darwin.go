@@ -1,17 +1,11 @@
 package keychain
 
 import (
-	"fmt"
-
 	"github.com/docker/docker-credential-helpers/credentials"
+"github.com/docker/docker-credential-helpers/osxkeychain"
 )
 
-// Errors
-var (
-	ErrLibSecretUnavailable = fmt.Errorf("Shared library libsecret not found. Please install libsecret-1 from your package manager")
-	ErrLdd                  = fmt.Errorf("Unable to check shared object dependencies")
-	ErrExecNotFound         = fmt.Errorf("Unable to get current binary file")
-)
+
 
 //StoreSecret store a credential through libsecret
 func StoreSecret(url, username, secret string) error {
