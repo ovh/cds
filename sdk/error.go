@@ -227,7 +227,7 @@ var errorsFrench = map[int]string{
 	ErrForbidden.ID:                 "accès refusé",
 	ErrPipelineNotFound.ID:          "le pipeline n'existe pas",
 	ErrPipelineNotAttached.ID:       "le pipeline n'est pas lié à l'application",
-	ErrNoEnvironmentProvided.ID:     "les pipelines de deploiement et de tests requiert un environnement",
+	ErrNoEnvironmentProvided.ID:     "les pipelines de déploiement et de tests requièrent un environnement",
 	ErrEnvironmentProvided.ID:       "une pipeline de build ne nécessite pas d'environnement",
 	ErrUnknownEnv.ID:                "environnement inconnu",
 	ErrEnvironmentExist.ID:          "l'environnement existe",

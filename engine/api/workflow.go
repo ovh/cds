@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -166,4 +168,55 @@ func deleteWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return sdk.WrapError(errT, "Cannot commit transaction")
 	}
 	return WriteJSON(w, r, nil, http.StatusOK)
+}
+
+func getWorkflowNodeRunArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	name := vars["workflowName"]
+
+	number, errNu := requestVarInt(r, "number")
+	if errNu != nil {
+		return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
+	}
+
+	id, errI := requestVarInt(r, "id")
+	if errI != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
+	}
+	nodeRun, errR := workflow.LoadNodeRun(db, key, name, number, id)
+	if errR != nil {
+		return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
+	}
+
+	return WriteJSON(w, r, nodeRun.Artifacts, http.StatusOK)
+}
+
+func getDownloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	name := vars["workflowName"]
+
+	id, errI := requestVarInt(r, "artifactId")
+	if errI != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "getDownloadArtifactHandler> Invalid node job run ID")
+	}
+
+	work, errW := workflow.Load(db, key, name, c.User)
+	if errW != nil {
+		return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")
+	}
+
+	art, errA := workflow.LoadArtifactByIDs(db, work.ID, id)
+	if errA != nil {
+		return sdk.WrapError(errA, "getDownloadArtifactHandler> Cannot load artifacts")
+	}
+
+	w.Header().Add("Content-Type", "application/octet-stream")
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
+
+	if err := artifact.StreamFile(w, art); err != nil {
+		return sdk.WrapError(err, "Cannot stream artifact %s", art.Name)
+	}
+	return nil
 }

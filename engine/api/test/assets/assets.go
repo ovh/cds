@@ -4,10 +4,16 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -126,6 +132,46 @@ func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri s
 	if err != nil {
 		t.FailNow()
 	}
+
+	AuthentifyRequestFromWorker(t, req, w)
+
+	return req
+}
+
+// NewAuthentifiedMultipartRequestFromWorker  prepare multipart request with file to upload
+func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri string, path string, fileName string, params map[string]string) *http.Request {
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fail()
+	}
+	defer file.Close()
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(fileName, filepath.Base(path))
+	if err != nil {
+		t.Fail()
+	}
+	if _, err := io.Copy(part, file); err != nil {
+		t.Fail()
+	}
+
+	for key, val := range params {
+		_ = writer.WriteField(key, val)
+	}
+
+	contextType := writer.FormDataContentType()
+
+	if err := writer.Close(); err != nil {
+		t.Fail()
+	}
+
+	req, err := http.NewRequest("POST", uri, body)
+	if err != nil {
+		t.Fail()
+	}
+	req.Header.Set("Content-Type", contextType)
+	req.Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
+	req.Header.Set("ARTIFACT-FILENAME", fileName)
 
 	AuthentifyRequestFromWorker(t, req, w)
 
