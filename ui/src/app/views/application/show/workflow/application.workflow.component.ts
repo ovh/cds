@@ -128,6 +128,10 @@ export class ApplicationWorkflowComponent implements OnInit {
                     this.updateSchedulers(w, app);
                 }
 
+                if (w.poller) {
+                    this.updatePoller(w, app);
+                }
+
             } else if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
                 // If current item is a deploy or testing pipeline without environment
                 // Then add new item on workflow
@@ -187,6 +191,16 @@ export class ApplicationWorkflowComponent implements OnInit {
                 s.next_execution = sInApp.next_execution;
             }
         });
+    }
+
+    updatePoller(w: WorkflowItem, app: Application): void {
+        let poller = app.pollers.find(p => {
+           return p.application.id === w.poller.application.id
+            && p.pipeline.id === w.poller.pipeline.id;
+        });
+        if (poller && poller.next_execution) {
+            w.poller.next_execution = poller.next_execution;
+        }
     }
 
     /**

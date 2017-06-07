@@ -114,9 +114,9 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
         }
 
         s.name = 'Stage ' + (this.pipeline.stages.length + 1);
-        this._pipelineStore.addStage(this.project.key, this.pipeline.name, s).subscribe(() => {
+        this._pipelineStore.addStage(this.project.key, this.pipeline.name, s).subscribe(stageAdded => {
             this._toast.success('', this._translate.instant('step_added'));
-            this.selectedStage = this.pipeline.stages[this.pipeline.stages.length - 1];
+            this.selectedStage = stageAdded;
         });
     }
 
