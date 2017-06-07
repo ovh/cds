@@ -38,7 +38,7 @@ export class ApplicationRepositoryComponent implements OnInit {
         if (this.project.repositories_manager && this.project.repositories_manager.length > 0) {
             this.selectedRepoManager = this.project.repositories_manager[0].name;
         }
-        this.updateListRepo();
+        this.updateListRepo(false);
     }
 
     removeRepository(skip?: boolean): void {
@@ -63,16 +63,18 @@ export class ApplicationRepositoryComponent implements OnInit {
             this.reposTmp = this.repos.filter(r => {
                 return r.fullname.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
             });
+        } else {
+            this.reposTmp = new Array<Repository>();
         }
     }
 
     /**
      * Update list of repo when changing repo manager
      */
-    updateListRepo(): void {
+    updateListRepo(sync: boolean): void {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
-            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager)
+            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, sync).first()
                 .subscribe( repos => {
                     this.repos = repos;
                     this.loadingRepos = false;

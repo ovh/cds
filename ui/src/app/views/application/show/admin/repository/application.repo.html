@@ -5,10 +5,10 @@
                 <label>{{'repoman_name' | translate}}</label>
                 <sm-select class="fluid search"
                     name="repomanname"
-                    [disabled]="loadingBtn"
+                    [disabled]="loadingRepos"
                     [(model)]="selectedRepoManager"
                     [options]="{'fullTextSearch': true}"
-                    (onChange)="updateListRepo()">
+                    (onChange)="updateListRepo(false)">
                     <option *ngFor="let r of project?.repositories_manager" value="{{r.name}}">{{r.name}}</option>
                 </sm-select>
             </div>
@@ -20,11 +20,16 @@
                     [(model)]="selectedRepo"
                     [options]="{'fullTextSearch': true}"
                     (onSearchChange)="filterRepositories($event)"
-                    [disabled]="loadingBtn">
+                    [disabled]="loadingRepos">
                     <option *ngFor="let r of reposTmp"  value="{{r.fullname}}">{{r.fullname}}</option>
                 </sm-select>
             </div>
-            <div class="eight wide right aligned field">
+            <div class="four wide field">
+                <button name="resync" class="ui blue button" [class.loading]="loadingRepos" type="button"
+                    (click)="updateListRepo(true)"
+                >{{ 'btn_resync_repo' | translate }}</button>
+            </div>
+            <div class="four wide right aligned field">
                 <button name="addrepobtn" class="ui green button" [class.loading]="loadingBtn" type="submit">{{ 'btn_link' | translate }}</button>
                 <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="linkRepository(true)" #linkWarning></app-warning-modal>
             </div>
