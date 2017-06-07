@@ -478,6 +478,7 @@ func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *
 		MD5sum:            md5sum,
 		WorkflowNodeRunID: nodeRun.ID,
 		WorkflowID:        nodeRun.WorkflowRunID,
+		Created:           time.Now(),
 	}
 
 	files := m.File[fileName]
@@ -499,9 +500,5 @@ func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *
 		_ = objectstore.DeleteArtifact(&art)
 		return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot update workflow node run")
 	}
-	return nil
-}
-
-func getDownloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
 	return nil
 }

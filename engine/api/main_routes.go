@@ -138,6 +138,7 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", GET(getWorkflowRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}", GET(getWorkflowNodeRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}/artifacts", GET(getWorkflowNodeRunArtifactsHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/artifact/{artifactId}", GET(getDownloadArtifactHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/node/{nodeID}/triggers/condition", GET(getWorkflowTriggerCondition))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/join/{joinID}/triggers/condition", GET(getWorkflowTriggerJoinCondition))
 
@@ -205,7 +206,6 @@ func (router *Router) init() {
 	router.Handle("/queue/workflows/{permID}/variable", NeedWorker(), POSTEXECUTE(postWorkflowJobVariableHandler))
 	router.Handle("/queue/workflows/{permID}/step", NeedWorker(), POSTEXECUTE(postWorkflowJobStepStatusHandler))
 	router.Handle("/queue/workflows/{permID}/artifact/{tag}", NeedWorker(), POSTEXECUTE(postWorkflowJobArtifactHandler))
-	router.Handle("/queue/workflows/{permID}/artifact/{artifactId}", NeedWorker(), GET(getDownloadArtifactHandler))
 
 	router.Handle("/variable/type", GET(getVariableTypeHandler))
 	router.Handle("/parameter/type", GET(getParameterTypeHandler))

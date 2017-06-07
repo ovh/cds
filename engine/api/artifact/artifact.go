@@ -238,8 +238,8 @@ func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artif
 }
 
 // StreamFile Stream artifact
-func StreamFile(w io.Writer, art sdk.Artifact) error {
-	f, err := objectstore.FetchArtifact(&art)
+func StreamFile(w io.Writer, o objectstore.Object) error {
+	f, err := objectstore.FetchArtifact(o)
 	if err != nil {
 		return fmt.Errorf("cannot fetch artifact: %s", err)
 	}
