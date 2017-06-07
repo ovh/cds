@@ -48,5 +48,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(NodeRun{}, "workflow_node_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(sqlNodeRun{}, "workflow_node_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(JobRun{}, "workflow_node_run_job", true, "id"))
-	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_run_artifacts", true, "id"))
+	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_node_run_artifacts", true, "id"))
 }

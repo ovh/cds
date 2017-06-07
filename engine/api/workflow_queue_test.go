@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http/httptest"
 	"os"
 	"path"
@@ -26,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type test_runWorkflowCtx struct {
@@ -606,6 +608,25 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, 1, len(arts))
 	assert.Equal(t, "myartifact", arts[0].Name)
 
+
+	// Download artifact
+	//Prepare request
+	vars = map[string]string{
+		"permProjectKey": ctx.project.Key,
+		"workflowName":   ctx.workflow.Name,
+		"artifactId":         fmt.Sprintf("%d", arts[0].ID),
+	}
+	uri = router.getRoute("GET", getDownloadArtifactHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	rec = httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+
+	resp := rec.Result()
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, "Hi, I am foo", string(body))
 }
 func Test_getWorkflowJobArtifactsHandler(t *testing.T) {
 	//db := test.SetupPG(t)
