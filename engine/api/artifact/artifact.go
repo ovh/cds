@@ -171,21 +171,17 @@ func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
 						WHERE artifact.id = $1 FOR UPDATE`
 
 	s := sdk.Artifact{}
-	err := db.QueryRow(query, id).Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment)
-	if err != nil {
-		return err
+	if err := db.QueryRow(query, id).Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment); err != nil {
+		return sdk.WrapError(err, "DeleteArtifact> Cannot select artifact")
 	}
 
-	err = objectstore.DeleteArtifact(&s)
-	// If it's 404, it's lost anyway...
-	if err != nil && !strings.Contains(err.Error(), "404") {
-		return err
+	if err := objectstore.DeleteArtifact(&s); err != nil && !strings.Contains(err.Error(), "404") {
+		return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in store")
 	}
 
 	query = `DELETE FROM artifact WHERE id = $1`
-	_, err = db.Exec(query, id)
-	if err != nil {
-		return err
+	if _, err := db.Exec(query, id); err != nil {
+		return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in DB")
 	}
 
 	return nil
@@ -209,7 +205,7 @@ func insertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, enviro
 	return nil
 }
 
-// SaveFile Insert file in db and write it in data directory
+// SaveWorkflowFile Insert file in db and write it in data directory
 func SaveWorkflowFile(art *sdk.WorkflowNodeRunArtifact, content io.ReadCloser) error {
 	objectPath, err := objectstore.StoreArtifact(art, content)
 	if err != nil {
