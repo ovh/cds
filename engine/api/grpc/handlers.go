@@ -3,10 +3,10 @@ package grpc
 import (
 	"io"
 
-	"golang.org/x/net/context"
-
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
+	"golang.org/x/net/context"
+
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
