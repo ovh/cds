@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/runabove/venom"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/context"
@@ -271,12 +272,17 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	// Update action status
 	log.Debug("addQueueResultHandler> Updating %d to %s in queue", id, res.Status)
-	if err := pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, res.Status); err != nil {
+	if err := pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, sdk.Status(res.Status)); err != nil {
 		return sdk.WrapError(err, "addQueueResultHandler> Cannot update %d status", id)
 	}
 
+	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
+	if errt != nil {
+		return sdk.WrapError(errt, "addQueueResultHandler> Cannot parse remote time")
+	}
+
 	infos := []sdk.SpawnInfo{{
-		RemoteTime: res.RemoteTime,
+		RemoteTime: remoteTime,
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{c.Worker.Name, res.Duration}},
 	}}
 

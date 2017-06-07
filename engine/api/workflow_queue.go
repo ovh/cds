@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/runabove/venom"
 
 	"github.com/ovh/cds/engine/api/context"
@@ -182,13 +183,18 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	// Update action status
 	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", id, res.Status)
-	if err := workflow.UpdateNodeJobRunStatus(tx, job, res.Status); err != nil {
+	if err := workflow.UpdateNodeJobRunStatus(tx, job, sdk.Status(res.Status)); err != nil {
 		return sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", id)
+	}
+
+	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
+	if errt != nil {
+		return sdk.WrapError(errt, "postWorkflowJobResultHandler> Cannot parse remote time")
 	}
 
 	//Update spwan info
 	infos := []sdk.SpawnInfo{{
-		RemoteTime: res.RemoteTime,
+		RemoteTime: remoteTime,
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{c.Worker.Name, res.Duration}},
 	}}
 
