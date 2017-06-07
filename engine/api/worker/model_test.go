@@ -134,6 +134,9 @@ func TestLoadWorkerModel(t *testing.T) {
 	}
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m.Type)
+
+	_, errNotExist := LoadWorkerModelByName(db, "NotExisting")
+	assert.Equal(t, errNotExist, sdk.ErrNoWorkerModel)
 }
 
 func TestLoadWorkerModels(t *testing.T) {
