@@ -38,9 +38,6 @@ export class BreadcrumbComponent {
         if (this.branch) {
             queryParams.queryParams['branch'] = this.branch;
         }
-        if (this.appVersion) {
-            queryParams.queryParams['version'] = this.appVersion;
-        }
         if (!appName) {
             appName = this.application.name;
         }

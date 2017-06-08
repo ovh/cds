@@ -281,6 +281,7 @@
   "pipeline_permission_form_title" : "Autoriser un groupe : ",
   "pipeline_stop" : "Le pipeline a été arrêté",
   "pipeline_type" : "Type de pipeline",
+  "pipeline_triggered": "Pipelines déclenchés",
   "pipeline_updated" : "Pipeline mis à jour",
   "pipeline_administration" : "Administration générale du pipeline",
 
