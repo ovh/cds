@@ -1,6 +1,8 @@
 <h2 *ngIf="action && action.id">{{ 'action_edit_title' | translate }} {{action.name}} - {{action.type}}</h2>
 
-<div id="ActionEdit" *ngIf="action">
+<div *ngIf="action;then showAction;else loadAction"></div>
+<ng-template #showAction>
+<div id="ActionEdit">
   <div class="ui info message" *ngIf="action.type === 'Builtin'">
       {{ 'action_edit_builtin' | translate }}
   </div>
@@ -30,5 +32,8 @@
 
     </div>
   </form>
-
 </div>
+</ng-template>
+<ng-template #loadAction>
+    <div class="ui text active loader">{{ 'action_load_action' | translate }}</div>
+</ng-template>
