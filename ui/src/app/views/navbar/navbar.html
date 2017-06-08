@@ -23,10 +23,10 @@
     </sm-select>
 
     <div class="right menu">
-        <div class="item link">
+        <div class="item link" *ngIf="currentUser">
             <a href="#" [routerLink]="['/project']"><i class="plus circle icon"></i>{{ 'project_create' | translate }}</a>
         </div>
-        <sm-dropdown icon="settings">
+        <sm-dropdown icon="settings" *ngIf="currentUser">
             <sm-item><a href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a></sm-item>
             <sm-item><a href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a></sm-item>
             <sm-item *ngIf="currentUser.admin"><a href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a></sm-item>
