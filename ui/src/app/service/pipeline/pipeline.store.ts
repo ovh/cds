@@ -146,10 +146,10 @@ export class PipelineStore {
      * @param pipName Pipeline name
      * @param stage Stage to add
      */
-    addStage(key: string, pipName: string, stage: Stage): Observable<Stage> {
+    addStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
         return this._pipelineService.insertStage(key, pipName, stage).map(res => {
             this.refreshPipelineStageCache(key, pipName, res);
-            return res.stages[res.stages.length - 1];
+            return res;
         });
     }
 
