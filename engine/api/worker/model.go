@@ -73,6 +73,9 @@ func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*s
 		}
 		return nil, err
 	}
+	if len(wms) == 0 {
+		return nil, sdk.ErrNoWorkerModel
+	}
 	r, err := scanWorkerModels(db, wms)
 	if err != nil {
 		return nil, err
