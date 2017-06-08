@@ -113,4 +113,17 @@ export class ApplicationPipelineService {
     getApplicationFromPipeline(key: string, pipName: string): Observable<Array<Application>> {
         return this._http.get('/project/' + key + '/pipeline/' + pipName + '/application').map(res => res.json());
     }
+
+    /**
+     * Get triggered pipeline from parent pipeline build info
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name
+     * @param buildNumber Buildnumber
+     * @returns {Observable<Array<PipelineBuild>>}
+     */
+    getTriggeredPipeline(key: string, appName: string, pipName: string, buildNumber: number): Observable<Array<PipelineBuild>> {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/triggered';
+        return this._http.get(url).map(res => res.json());
+    }
 }

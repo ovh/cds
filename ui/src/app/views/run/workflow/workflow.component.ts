@@ -8,6 +8,8 @@ import {Project} from '../../../model/project.model';
 import {Application} from '../../../model/application.model';
 import {DurationService} from '../../../shared/duration/duration.service';
 import {NotificationService} from '../../../service/notification/notification.service';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 
 
 @Component({
@@ -15,7 +17,8 @@ import {NotificationService} from '../../../service/notification/notification.se
     templateUrl: './workflow.html',
     styleUrls: ['./workflow.scss']
 })
-export class PipelineRunWorkflowComponent implements OnDestroy {
+@AutoUnsubscribe()
+export class PipelineRunWorkflowComponent {
 
     @Input() previousBuild: PipelineBuild;
     @Input() application: Application;
@@ -43,8 +46,10 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
     mapJobProgression: { [key: number]: number };
     mapJobDuration: { [key: number]: string };
 
+    nextBuilds: Array<PipelineBuild>;
+
     constructor(private _durationService: DurationService, private _translate: TranslateService,
-        private _notification: NotificationService) {
+        private _notification: NotificationService, private _appPipService: ApplicationPipelineService) {
         this.initData();
     }
 
@@ -69,6 +74,9 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
 
         if (this.currentBuild) {
             this.previousStatus = this.currentBuild.status;
+            if (this.currentBuild.status === PipelineStatus.SUCCESS) {
+                this.getTriggeredPipeline();
+            }
         }
         // Set selected job if needed or refresh step_status
         if (this.currentBuild.stages) {
@@ -189,9 +197,14 @@ export class PipelineRunWorkflowComponent implements OnDestroy {
         }
     }
 
-    ngOnDestroy() {
-        if (this.notificationSubscription) {
-            this.notificationSubscription.unsubscribe();
-        }
+    getTriggeredPipeline(): void {
+        this._appPipService.getTriggeredPipeline(
+            this.project.key,
+            this.currentBuild.application.name,
+            this.currentBuild.pipeline.name,
+            this.currentBuild.build_number)
+            .first().subscribe( builds => {
+            this.nextBuilds = builds;
+        });
     }
 }
