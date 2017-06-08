@@ -10,12 +10,14 @@ import {TranslateService} from 'ng2-translate';
 import {List} from 'immutable';
 import {LanguageStore} from '../../service/language/language.store';
 import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-navbar',
     templateUrl: './navbar.html',
     styleUrls: ['./navbar.scss']
 })
+@AutoUnsubscribe()
 export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // flag to indicate that the component is ready to use
@@ -34,6 +36,8 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
     dropdownOptions = { fullTextSearch: true };
 
+    userSubscription: Subscription;
+
     public currentUser: User;
 
     constructor(private _projectStore: ProjectStore,
@@ -43,7 +47,9 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
                 private _translate: TranslateService,
                 private _authentificationStore: AuthentificationStore) {
         this.selectedProjectKey = '#NOPROJECT#';
-        this.currentUser = this._authentificationStore.getUser();
+        this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
+            this.currentUser = u;
+        });
 
         this.langSubscrition = this._language.get().subscribe(l => {
             this.currentCountry = l;
