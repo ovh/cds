@@ -23,20 +23,20 @@
           </div>
           <div class="field" *ngIf="workerModel.id">
             <label>{{'worker_model_status' | translate}}</label>
-            <div class="ui icon message" *ngIf="workerModel.disabled">
+            <div class="ui icon message" *ngIf="!workerModel.disabled">
               <i class="check green icon"></i>
               <div class="content">
-                <button class="ui red right floated button" (click)="workerModel.disabled=false">{{ 'worker_model_disable' | translate }}</button>
                 <p>{{ 'worker_model_enabled' | translate }}</p>
               </div>
+              <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=true">{{ 'worker_model_disable' | translate }}</button>
             </div>
 
-            <div class="ui icon message" *ngIf="!workerModel.disabled">
+            <div class="ui icon message" *ngIf="workerModel.disabled">
               <i class="warning red icon"></i>
               <div class="content">
-                <button class="ui green right floated button" (click)="workerModel.disabled=true">{{ 'worker_model_enable' | translate }}</button>
                 <p>{{ 'worker_model_disabled' | translate }}</p>
               </div>
+              <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=false">{{ 'worker_model_enable' | translate }}</button>
             </div>
           </div>
           <div class="three fields">
@@ -72,7 +72,7 @@
             <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.image" [disabled]="loading">
           </div>
 
-          <div class="field">
+          <div *ngIf="canEdit" class="field">
               <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
               <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
                 <i class="save icon"></i>{{ 'btn_save' | translate }}
@@ -103,7 +103,7 @@
             <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer" title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
           </h3>
           <p>
-{{'worker_model_help_capabilities' | translate}}
+            {{'worker_model_help_capabilities' | translate}}
           </p>
         </div>
 
