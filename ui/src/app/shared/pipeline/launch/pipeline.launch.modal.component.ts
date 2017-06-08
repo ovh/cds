@@ -8,6 +8,7 @@ import {WorkflowItem} from '../../../model/application.workflow.model';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {Environment} from '../../../model/environment.model';
 import {Commit} from '../../../model/repositories.model';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-pipeline-launch-modal',
@@ -89,8 +90,9 @@ export class PipelineLaunchModalComponent {
     runManual() {
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.parameters = this.launchPipelineParams;
-        request.env = new Environment();
-        request.env = this.workflowItem.environment;
+        request.env = cloneDeep(this.workflowItem.environment);
+        delete request.env.variables;
+        delete request.env.groups;
 
         if (this.workflowItem.parent) {
             request.parent_application_id = this.workflowItem.parent.application_id;
@@ -100,6 +102,9 @@ export class PipelineLaunchModalComponent {
         } else {
             request.parameters.push(...this.launchGitParams);
         }
+
+        request.parameters = Parameter.formatForAPI(request.parameters);
+
         this.launchModal.hide();
         // Run pipeline
         this._appPipService.run(
