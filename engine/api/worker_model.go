@@ -6,8 +6,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
@@ -262,6 +262,10 @@ func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 
 func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
+}
+
+func getWorkerModelCommunications(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	return WriteJSON(w, r, sdk.AvailableWorkerModelCommunication, http.StatusOK)
 }
 
 func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {

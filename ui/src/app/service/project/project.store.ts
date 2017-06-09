@@ -38,7 +38,6 @@ export class ProjectStore {
             });
         }
         return new Observable<List<Project>>(fn => this._projectNav.subscribe(fn));
-
     }
 
     /**
@@ -483,4 +482,3 @@ export class ProjectStore {
 
 
 }
-

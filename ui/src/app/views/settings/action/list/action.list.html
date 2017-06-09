@@ -1,0 +1,60 @@
+
+<h2>{{ 'action_list_title' | translate }}</h2>
+
+<div *ngIf="actions;then showActions;else loadActions"></div>
+<ng-template #showActions>
+  <div class="model">
+      <div class="ui form">
+          <div class="field">
+            <div class="fields">
+              <div class="twelve wide field">
+                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+              </div>
+              <div class="four wide field" *ngIf="currentUser.admin">
+                <a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <table class="ui selectable fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+          <thead>
+          <tr>
+              <th class="sixteen wide">{{ 'action_name' | translate }}</th>
+              <th class="sixteen wide">{{ 'action_type' | translate }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let v of getDataForCurrentPage()">
+              <td>
+                  <a class="ui" [routerLink]="[v.name]"><div class="ui">{{v.name}}</div></a>
+              </td>
+              <td>
+                  <a class="ui" [routerLink]="[v.name]"><div class="ui">{{v.type}}</div></a>
+              </td>
+          </tr>
+          </tbody>
+          <tfoot *ngIf="getNbOfPages() > 1">
+          <tr>
+              <th colspan="2">
+                  <div class="ui right floated pagination menu" >
+                      <a class="icon item" (click)="downPage()">
+                          <i class="left chevron icon"></i>
+                      </a>
+                      <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                      <a class="icon item" (click)="upPage()">
+                          <i class="right chevron icon"></i>
+                      </a>
+                  </div>
+              </th>
+          </tr>
+          </tfoot>
+      </table>
+      <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+          {{ 'action_none' | translate }}
+      </div>
+  </div>
+</ng-template>
+<ng-template #loadActions>
+    <div class="ui text active loader">{{ 'action_load_actions' | translate }}</div>
+</ng-template>

@@ -53,6 +53,7 @@ export class ParameterValueComponent implements OnInit {
     selectedRepoManager: RepositoriesManager;
     selectedRepo: string;
     loadingRepos: boolean;
+    connectRepos: boolean;
 
     list: Array<string>;
 
@@ -133,7 +134,7 @@ export class ParameterValueComponent implements OnInit {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
             delete this.selectedRepo;
-            this._repoManagerService.getRepositories(this.projectKey, this.selectedRepoManager.name)
+            this._repoManagerService.getRepositories(this.projectKey, this.selectedRepoManager.name, false).first()
                 .subscribe( repos => {
                     this.selectedRepo = repos[0].fullname;
                     this.repositories = repos;

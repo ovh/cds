@@ -14,40 +14,28 @@ import (
 
 // DeleteGroupAndDependencies deletes group and all subsequent group_project, pipeline_project
 func DeleteGroupAndDependencies(db gorp.SqlExecutor, group *sdk.Group) error {
-	err := DeleteGroupUserByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group user %s: %s\n", group.Name, err)
-		return err
+	if err := DeleteGroupUserByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group user %s: %s", group.Name)
 	}
 
-	err = deleteGroupEnvironmentByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group env %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroupEnvironmentByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group env %s: %s", group.Name)
 	}
 
-	err = deleteGroupPipelineByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group pipeline %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroupPipelineByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group pipeline %s: %s", group.Name)
 	}
 
-	err = deleteGroupApplicationByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group application %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroupApplicationByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group application %s: %s", group.Name)
 	}
 
-	err = deleteGroupProjectByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group project %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroupProjectByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group project %s: %s", group.Name)
 	}
 
-	err = deleteGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group %s: %s", group.Name)
 	}
 
 	return nil
@@ -58,16 +46,14 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	// check projectKey pattern
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(group.Name) {
-		log.Warning("AddGroup: Wrong pattern for group name : %s\n", group.Name)
-		return 0, false, sdk.ErrInvalidGroupPattern
+		return 0, false, sdk.WrapError(sdk.ErrInvalidGroupPattern, "AddGroup: Wrong pattern for group name : %s", group.Name)
 	}
 
 	// Check that group does not already exists
 	query := `SELECT id FROM "group" WHERE "group".name = $1`
-	rows, err := db.Query(query, group.Name)
-	if err != nil {
-		log.Warning("AddGroup: Cannot check if group %s exist: %s\n", group.Name, err)
-		return 0, false, err
+	rows, errq := db.Query(query, group.Name)
+	if errq != nil {
+		return 0, false, sdk.WrapError(errq, "AddGroup: Cannot check if group %s exist: %s", group.Name)
 	}
 	defer rows.Close()
 
@@ -76,17 +62,14 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 
 		var groupID int64
 		if err := rows.Scan(&groupID); err != nil {
-			log.Warning("AddGroup: Cannot get the ID of the existing group %s (%s)\n", group.Name, err)
-			return 0, false, sdk.ErrGroupExists
+			return 0, false, sdk.WrapError(sdk.ErrGroupExists, "AddGroup: Cannot get the ID of the existing group %s (%s)", group.Name, err)
 		}
 
 		return groupID, false, sdk.ErrGroupExists
 	}
 
-	err = InsertGroup(db, group)
-	if err != nil {
-		log.Warning("AddGroup: Cannot insert group: %s\n", err)
-		return 0, false, err
+	if err := InsertGroup(db, group); err != nil {
+		return 0, false, sdk.WrapError(err, "AddGroup: Cannot insert group")
 	}
 	return group.ID, true, nil
 }
@@ -126,7 +109,7 @@ func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
 
 // LoadUserGroup retrieves all group users from database
 func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
-	query := `SELECT "user".username, "group_user".group_admin FROM "user"
+	query := `SELECT "user".username, "user".data, "group_user".group_admin FROM "user"
 	 		  JOIN group_user ON group_user.user_id = "user".id
 	 		  WHERE group_user.group_id = $1 ORDER BY "user".username ASC`
 
@@ -137,16 +120,21 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	defer rows.Close()
 
 	for rows.Next() {
-		var userName string
+		var username string
+		var jsonUser []byte
 		var admin bool
-		if err := rows.Scan(&userName, &admin); err != nil {
+		if err := rows.Scan(&username, &jsonUser, &admin); err != nil {
 			return err
 		}
-		u := sdk.User{Username: userName}
+
+		u, err := sdk.NewUser(username).FromJSON(jsonUser)
+		if err != nil {
+			return sdk.WrapError(err, "LoadUserGroup> Error while converting jsonUser")
+		}
 		if admin {
-			group.Admins = append(group.Admins, u)
+			group.Admins = append(group.Admins, *u)
 		} else {
-			group.Users = append(group.Users, u)
+			group.Users = append(group.Users, *u)
 		}
 	}
 	return nil

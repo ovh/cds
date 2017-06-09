@@ -56,6 +56,19 @@ export class AuthentificationStore {
     }
 
     /**
+     * Check if user is admin
+     * @returns {boolean}
+     */
+    isAdmin(): boolean {
+        // user is connected ?
+        if (!this.isConnected()) {
+          return false;
+        }
+        // user is admin ?
+        return this._connectedUser.getValue().admin;
+    }
+
+    /**
      * Remove user data from localstorage.
      */
     removeUser(): void {

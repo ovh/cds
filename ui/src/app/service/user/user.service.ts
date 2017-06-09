@@ -91,28 +91,29 @@ export class UserService {
 
     /**
      * Get a user by his username
-     * @param userName username of the user to get
+     * @param username username of the user to get
      * @returns {Observable<User>}
      */
-    getUser(userName: string): Observable<User> {
-        return this._http.get('/user/' + userName).map(res => res.json());
+    getUser(username: string): Observable<User> {
+        return this._http.get('/user/' + username).map(res => res.json());
     }
 
     /**
      * Update an user
-     * @param user to update
+     * @param username to update
+     * @param user new values
      * @returns {Observable<User>}
      */
-    update(user: User): Observable<User> {
-        return this._http.put('/user/' + user.username, user).map(res => res.json());
+    updateUser(username: string, user: User): Observable<User> {
+        return this._http.put('/user/' + username, user).map(res => res.json());
     }
 
     /**
      * Delete a user from CDS
-     * @param userName Username of the user to delete
+     * @param username Username of the user to delete
      * @returns {Observable<Response>}
      */
-    delete(userName: string): Observable<Response> {
-        return this._http.delete('/user/' + userName);
+    deleteUser(username: string): Observable<Response> {
+        return this._http.delete('/user/' + username);
     }
 }

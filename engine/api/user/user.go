@@ -24,8 +24,7 @@ func Verify(u *sdk.User, token string) (string, string, error) {
 		return "", "", fmt.Errorf("Reset operation expired")
 	}
 
-	err := checkToken(u, token)
-	if err != nil {
+	if err := checkToken(u, token); err != nil {
 		return "", "", err
 	}
 	return regenerateAndStoreAuth()
@@ -60,8 +59,8 @@ func LoadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, erro
 	var jsonUser []byte
 	var username, origin string
 	var admin bool
-	err := db.QueryRow(query, userID).Scan(&username, &admin, &jsonUser, &origin)
-	if err != nil {
+
+	if err := db.QueryRow(query, userID).Scan(&username, &admin, &jsonUser, &origin); err != nil {
 		return nil, err
 	}
 
@@ -85,8 +84,8 @@ func LoadUserWithoutAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	var id int64
 	var admin bool
 	var origin string
-	err := db.QueryRow(query, name).Scan(&id, &admin, &jsonUser, &origin)
-	if err != nil {
+
+	if err := db.QueryRow(query, name).Scan(&id, &admin, &jsonUser, &origin); err != nil {
 		return nil, err
 	}
 
@@ -111,8 +110,8 @@ func LoadUserAndAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	var id int64
 	var admin bool
 	var origin string
-	err := db.QueryRow(query, name).Scan(&id, &admin, &jsonUser, &jsonAuth, &origin)
-	if err != nil {
+
+	if err := db.QueryRow(query, name).Scan(&id, &admin, &jsonUser, &jsonAuth, &origin); err != nil {
 		return nil, err
 	}
 
@@ -140,8 +139,7 @@ func FindUserIDByName(db gorp.SqlExecutor, name string) (int64, error) {
 	query := `SELECT id FROM "user" WHERE username = $1`
 
 	var id int64
-	err := db.QueryRow(query, name).Scan(&id)
-	if err != nil {
+	if err := db.QueryRow(query, name).Scan(&id); err != nil {
 		return 0, err
 	}
 	return id, nil
@@ -229,17 +227,12 @@ func DeleteUserWithDependenciesByName(db gorp.SqlExecutor, s string) error {
 
 // DeleteUserWithDependencies Delete user and all his dependencies
 func DeleteUserWithDependencies(db gorp.SqlExecutor, u *sdk.User) error {
-
-	err := deleteUserFromUserGroup(db, u)
-	if err != nil {
-		log.Warning("DeleteUserWithDependencies>User cannot be removed from group_user table: %s", err)
-		return err
+	if err := deleteUserFromUserGroup(db, u); err != nil {
+		return sdk.WrapError(err, "DeleteUserWithDependencies>User cannot be removed from group_user table")
 	}
 
-	err = deleteUser(db, u)
-	if err != nil {
-		log.Warning("DeleteUserWithDependencies> User cannot be removed from user table: %s", err)
-		return err
+	if err := deleteUser(db, u); err != nil {
+		return sdk.WrapError(err, "DeleteUserWithDependencies> User cannot be removed from user table")
 	}
 	return nil
 }

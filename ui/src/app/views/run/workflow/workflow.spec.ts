@@ -13,6 +13,7 @@ import {Job} from '../../../model/job.model';
 import {Action} from '../../../model/action.model';
 import {ApplicationRunModule} from '../application.run.module';
 import {NotificationService} from '../../../service/notification/notification.service';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 
 describe('CDS: Pipeline Run Workflow', () => {
 
@@ -25,7 +26,8 @@ describe('CDS: Pipeline Run Workflow', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                NotificationService
+                NotificationService,
+                ApplicationPipelineService
             ],
             imports: [
                 ApplicationRunModule,

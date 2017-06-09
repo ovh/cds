@@ -2,9 +2,9 @@ import {Component, Input, Output, EventEmitter} from '@angular/core';
 import {Table} from '../../table/table';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
-import {RequirementStore} from '../../../service/worker/requirement/requirement.store';
-import {WorkerModelService} from '../../../service/worker/worker.model.service';
-import {WorkerModel} from '../../../model/worker.model';
+import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
+import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
+import {WorkerModel} from '../../../model/worker-model.model';
 
 @Component({
     selector: 'app-requirements-list',
@@ -28,7 +28,7 @@ export class RequirementsListComponent extends Table {
             this.availableRequirements.push(...r.toArray());
         });
 
-        this._workerModelService.getWorkerModel().first().subscribe( wms => {
+        this._workerModelService.getWorkerModels().first().subscribe( wms => {
             this.workerModels = wms;
         });
     }

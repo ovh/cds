@@ -8,9 +8,9 @@ import {XHRBackend, ResponseOptions, Response, ConnectionBackend, Http, RequestO
 import {ActionComponent} from './action.component';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
-import {RequirementStore} from '../../service/worker/requirement/requirement.store';
+import {RequirementStore} from '../../service/worker-model/requirement/requirement.store';
 import {ParameterService} from '../../service/parameter/parameter.service';
-import {RequirementService} from '../../service/worker/requirement/requirement.service';
+import {RequirementService} from '../../service/worker-model/requirement/requirement.service';
 import {Action} from '../../model/action.model';
 import {RequirementEvent} from '../requirements/requirement.event.model';
 import {Requirement} from '../../model/requirement.model';
@@ -22,7 +22,7 @@ import {ActionService} from '../../service/action/action.service';
 import {Injector} from '@angular/core';
 import {RepoManagerService} from '../../service/repomanager/project.repomanager.service';
 import {StepEvent} from './step/step.event';
-import {WorkerModelService} from '../../service/worker/worker.model.service';
+import {WorkerModelService} from '../../service/worker-model/worker-model.service';
 
 describe('CDS: Action Component', () => {
 
@@ -256,4 +256,3 @@ describe('CDS: Action Component', () => {
 
     }));
 });
-

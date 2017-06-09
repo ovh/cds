@@ -167,10 +167,9 @@ func checkApplicationPermissions(applicationName string, c *businesscontext.Ctx,
 }
 
 func checkApplicationIDPermissions(appIDS string, c *businesscontext.Ctx, permission int, routeVar map[string]string) bool {
-
 	appID, err := strconv.ParseInt(appIDS, 10, 64)
 	if err != nil {
-		log.Warning("checkApplicationIDPermissions> appID is not an integer: %s\n", err)
+		log.Warning("checkApplicationIDPermissions> appID (%s) is not an integer: %s", appIDS, err)
 		return false
 	}
 
@@ -222,7 +221,7 @@ func checkActionPermissions(groupName string, c *businesscontext.Ctx, permission
 func checkWorkerModelPermissions(modelID string, c *businesscontext.Ctx, permissionValue int, routeVar map[string]string) bool {
 	id, err := strconv.ParseInt(modelID, 10, 64)
 	if err != nil {
-		log.Warning("checkWorkerModelPermissions> modelID is not an integer: %s\n", err)
+		log.Warning("checkWorkerModelPermissions> modelID is not an integer: %s", err)
 		return false
 	}
 
@@ -233,7 +232,7 @@ func checkWorkerModelPermissions(modelID string, c *businesscontext.Ctx, permiss
 
 	m, err := worker.LoadWorkerModelByID(database.DBMap(db), id)
 	if err != nil {
-		log.Warning("checkWorkerModelPermissions> unable to load model by id %s: %s\n", modelID, err)
+		log.Warning("checkWorkerModelPermissions> unable to load model by id %s: %s", modelID, err)
 		return false
 	}
 

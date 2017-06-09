@@ -5,5 +5,16 @@
   flex-direction: column;
   align-content: stretch;
   height: 100%;
+
+  .paddingContent {
+    padding: 0px 20px;
+
+    .ui.attached.button {
+      box-shadow: none !important;
+    }
+  }
+
+
 }
+
 

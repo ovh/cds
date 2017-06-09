@@ -2,6 +2,8 @@ package worker
 
 import (
 	"database/sql"
+	"fmt"
+	"sort"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -10,6 +12,26 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+const columns = `
+	worker_model.id,
+	worker_model.type,
+	worker_model.name,
+	worker_model.image,
+	worker_model.group_id,
+	worker_model.last_registration,
+	worker_model.need_registration,
+	worker_model.disabled,
+	worker_model.template,
+	worker_model.communication,
+	worker_model.run_script,
+	worker_model.provision,
+	"group".name as groupname`
+
+type dbResultWMS struct {
+	WorkerModel
+	GroupName string `db:"groupname"`
+}
 
 // InsertWorkerModel insert a new worker model in database
 func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
@@ -34,81 +56,86 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
-	if _, err := db.Select(&ms, "select * from worker_model order by name"); err != nil {
-		return nil, sdk.WrapError(err, "LoadWorkerModels> Unable to load worker models: %T", err)
+	wms := []dbResultWMS{}
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, columns)
+	if _, err := db.Select(&wms, query); err != nil {
+		return nil, sdk.WrapError(err, "LoadAllWorkerModels> ")
 	}
-	models := []sdk.Model{}
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadWorkerModels> postSelect>")
+	return scanWorkerModels(db, wms)
+}
+
+// loadWorkerModel retrieves a specific worker model in database
+func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Model, error) {
+	wms := []dbResultWMS{}
+	if _, err := db.Select(&wms, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoWorkerModel
 		}
-		models = append(models, sdk.Model(ms[i]))
+		return nil, err
 	}
-	return models, nil
+	if len(wms) == 0 {
+		return nil, sdk.ErrNoWorkerModel
+	}
+	r, err := scanWorkerModels(db, wms)
+	if err != nil {
+		return nil, err
+	}
+	if len(r) != 1 {
+		return nil, fmt.Errorf("worker model not unique")
+	}
+	return &r[0], nil
 }
 
 // LoadWorkerModelByName retrieves a specific worker model in database
 func LoadWorkerModelByName(db gorp.SqlExecutor, name string) (*sdk.Model, error) {
-	m := WorkerModel(sdk.Model{})
-	if err := db.SelectOne(&m, "select * from worker_model where name = $1", name); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoWorkerModel
-		}
-		return nil, err
-	}
-	if err := m.PostSelect(db); err != nil {
-		return nil, err
-	}
-
-	model := sdk.Model(m)
-	return &model, nil
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, columns)
+	return loadWorkerModel(db, query, name)
 }
 
 // LoadWorkerModelByID retrieves a specific worker model in database
 func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
-	m := WorkerModel(sdk.Model{})
-	if err := db.SelectOne(&m, "select * from worker_model where id = $1", ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoWorkerModel
-		}
-		return nil, err
-	}
-	if err := m.PostSelect(db); err != nil {
-		return nil, err
-	}
-	model := sdk.Model(m)
-	return &model, nil
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, columns)
+	return loadWorkerModel(db, query, ID)
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
+	wms := []dbResultWMS{}
 	if user.Admin {
-		query := `	select * from worker_model`
-		if _, err := db.Select(&ms, query); err != nil {
-			return nil, err
+		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, columns)
+		if _, err := db.Select(&wms, query); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for admin")
 		}
 	} else {
-		query := `	select *
+		query := fmt.Sprintf(`select %s
 					from worker_model
+					JOIN "group" on worker_model.group_id = "group".id
 					where group_id in (select group_id from group_user where user_id = $1)
 					union
-					select * from worker_model
-					where group_id = $2
-					order by name`
-		if _, err := db.Select(&ms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
-			return nil, err
+					select %s from worker_model
+					JOIN "group" on worker_model.group_id = "group".id
+					where group_id = $2`, columns, columns)
+		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
 		}
 	}
+	return scanWorkerModels(db, wms)
+}
 
+func scanWorkerModels(db gorp.SqlExecutor, rows []dbResultWMS) ([]sdk.Model, error) {
 	models := []sdk.Model{}
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
+	for _, row := range rows {
+		m := row.WorkerModel
+		m.Group = sdk.Group{ID: m.GroupID, Name: row.GroupName}
+		if err := m.PostSelect(db); err != nil {
 			return nil, err
 		}
-		models = append(models, sdk.Model(ms[i]))
+		models = append(models, sdk.Model(m))
 	}
+	// as we can't use order by name with sql union without alias, sort models here
+	sort.Slice(models, func(i, j int) bool {
+		return models[i].Name <= models[j].Name
+	})
 	return models, nil
 }
 

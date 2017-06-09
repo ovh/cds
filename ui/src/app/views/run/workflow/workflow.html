@@ -61,5 +61,25 @@
                 </div>
             </div>
         </div>
+        <div class="row" *ngIf="nextBuilds">
+            <div class="column">
+                <h3>{{ 'pipeline_triggered' | translate }}</h3>
+                <ul>
+                    <li *ngFor="let pb of nextBuilds">
+                        <a href="#" [routerLink]="[
+                        '/project', project.key,
+                        'application', pb.application.name,
+                        'pipeline', pb.pipeline.name,
+                        'build', pb.build_number]"
+                        [queryParams]="{envName: pb.environment.name, branch: pb.trigger.vcs_branch}">
+                            {{pb.application.name + ' - ' + pb.pipeline.name}}
+                            <span *ngIf="pb.environment.id > 1">
+                                {{ ' - ' + pb.environment.name }}
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>

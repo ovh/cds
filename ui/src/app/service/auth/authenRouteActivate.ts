@@ -13,12 +13,11 @@ export class CanActivateAuthRoute implements CanActivate , CanActivateChild {
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean>|Promise<boolean>|boolean {
-            if (this._authStore.isConnected()) {
-                return true;
-            } else {
-                this._router.navigate(['account/login']);
-                return false;
-            }
+        if (this._authStore.isConnected()) {
+            return true;
+        }
+        this._router.navigate(['account/login']);
+        return false;
     }
 
     canActivateChild(
@@ -27,10 +26,8 @@ export class CanActivateAuthRoute implements CanActivate , CanActivateChild {
     ): Observable<boolean>|Promise<boolean>|boolean {
         if (this._authStore.isConnected()) {
             return true;
-        } else {
-            this._router.navigate(['account/login']);
-            return false;
         }
+        this._router.navigate(['account/login']);
+        return false;
     }
 }
-
