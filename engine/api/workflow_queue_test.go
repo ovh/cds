@@ -607,13 +607,12 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, 1, len(arts))
 	assert.Equal(t, "myartifact", arts[0].Name)
 
-
 	// Download artifact
 	//Prepare request
 	vars = map[string]string{
 		"permProjectKey": ctx.project.Key,
 		"workflowName":   ctx.workflow.Name,
-		"artifactId":         fmt.Sprintf("%d", arts[0].ID),
+		"artifactId":     fmt.Sprintf("%d", arts[0].ID),
 	}
 	uri = router.getRoute("GET", getDownloadArtifactHandler, vars)
 	test.NotEmpty(t, uri)
