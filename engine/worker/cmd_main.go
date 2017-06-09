@@ -118,12 +118,25 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		queuePollingTick := time.NewTicker(4 * time.Second).C
 		registerTick := time.NewTicker(10 * time.Second).C
 
+		pbjobs := make(chan sdk.PipelineBuildJob)
+		wjobs := make(chan sdk.WorkflowNodeJobRun)
+		errs := make(chan error)
+
+		go w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second)
+
 		for {
 			if !w.alive && viper.GetBool("single_use") {
 				return
 			}
 
 			select {
+			case j := <-pbjobs:
+
+			case j := <-wjobs:
+
+			case err := <-errs:
+				log.Error("%v", err)
+
 			case <-registerTick:
 				if w.id == "" {
 					var info string
@@ -150,7 +163,6 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					log.Info("Time to exit.")
 					w.unregister()
 				}
-
 			case <-queuePollingTick:
 				w.queuePolling()
 				firstViewQueue = false

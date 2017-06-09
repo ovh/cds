@@ -13,12 +13,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-<<<<<<< HEAD
 func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get group name in URL
-=======
-func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
->>>>>>> master
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
 
@@ -34,12 +30,8 @@ func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	return WriteJSON(w, r, g, http.StatusOK)
 }
 
-<<<<<<< HEAD
 func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get group name in URL
-=======
-func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
->>>>>>> master
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
 
@@ -64,12 +56,8 @@ func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return nil
 }
 
-<<<<<<< HEAD
 func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get group name in URL
-=======
-func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
->>>>>>> master
 	vars := mux.Vars(r)
 	oldName := vars["permGroupName"]
 
@@ -229,12 +217,8 @@ func removeUserFromGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	return nil
 }
 
-<<<<<<< HEAD
 func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get group name in URL
-=======
-func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
->>>>>>> master
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
 
@@ -277,12 +261,8 @@ func addUserInGroup(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	return nil
 }
 
-<<<<<<< HEAD
 func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get group name in URL
-=======
-func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
->>>>>>> master
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
 	userName := vars["user"]
@@ -304,12 +284,8 @@ func setUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	return nil
 }
 
-<<<<<<< HEAD
 func removeUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get group name in URL
-=======
-func removeUserGroupAdminHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
->>>>>>> master
 	vars := mux.Vars(r)
 	name := vars["permGroupName"]
 	userName := vars["user"]
