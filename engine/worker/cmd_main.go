@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"encoding/json"
+
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -89,7 +91,10 @@ func cmdMain(w *currentWorker) *cobra.Command {
 
 func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		ctx, cancel := context.WithCancel(context.Background())
+		//Initliaze context
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+
 		w.alive = true
 		initViper(w)
 		log.Info("What a good time to be alive")
@@ -97,76 +102,144 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		// Gracefully shutdown connections
 		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		signal.Notify(c, syscall.SIGTERM)
-		signal.Notify(c, syscall.SIGKILL)
-		go func() {
-			<-c
-			if w.grpc.conn != nil {
-				log.Warning("Closing GRPC connections")
-				w.grpc.conn.Close()
-			}
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+		defer func() {
+			signal.Stop(c)
 			cancel()
-			os.Exit(0)
 		}()
 
+		go func() {
+			select {
+			case <-c:
+				cancel()
+			case <-ctx.Done():
+			}
+		}()
+
+		time.AfterFunc(time.Duration(viper.GetInt("ttl"))*time.Minute, func() {
+			if w.nbActionsDone == 0 {
+				cancel()
+			}
+		})
+
+		//Register
+		if err := w.doRegister(); err != nil {
+			cancel()
+			os.Exit(0)
+		}
+		//Register every 10 seconds if we have nothing to do
+		registerTick := time.NewTicker(10 * time.Second)
+
 		// start logger routine with a large buffer
-		w.logChan = make(chan sdk.Log, 10000)
-		go w.logger()
+		w.logChan = make(chan sdk.Log, 100000)
+		go w.logger(ctx)
 
-		suicideTick := time.NewTicker(time.Duration(viper.GetInt("ttl")) * time.Minute).C
-		queuePollingTick := time.NewTicker(4 * time.Second).C
-		registerTick := time.NewTicker(10 * time.Second).C
-
+		// start queue polling
 		pbjobs := make(chan sdk.PipelineBuildJob)
 		wjobs := make(chan sdk.WorkflowNodeJobRun)
 		errs := make(chan error)
 
-		go w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second)
+		//Before start the loop, take the bookJobID
+		//TODO: TEST THIS !!
+		if w.bookedJobID != 0 {
+			log.Debug("Try to take the job %d", w.bookedJobID)
+			b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d", w.bookedJobID), nil)
+			if err != nil {
+				log.Error("Unable to load pipeline build job %d", w.bookedJobID)
+			} else {
+				j := &sdk.PipelineBuildJob{}
+				if err := json.Unmarshal(b, j); err != nil {
+					log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
+				} else {
+					pbjobs <- *j
+				}
+			}
+		}
 
+		go func() {
+			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second); err != nil {
+				log.Error("Queues polling stopped: %v", err)
+			}
+		}()
+
+		// main loop
 		for {
 			if !w.alive && viper.GetBool("single_use") {
+				registerTick.Stop()
+				cancel()
+				w.unregister()
 				return
 			}
 
 			select {
-			case j := <-pbjobs:
+			case <-ctx.Done():
+				if err := ctx.Err(); err != nil {
+					log.Error("Exiting worker: %v", err)
+				} else {
+					log.Info("Exiting worker")
+				}
+				registerTick.Stop()
+				w.unregister()
+				return
 
-			case j := <-wjobs:
+			case j := <-pbjobs:
+				requirementsOK := true
+				w.client.WorkerSetStatus(sdk.StatusChecking)
+				for _, r := range j.Job.Action.Requirements {
+					ok, err := checkRequirement(w, r)
+					if err != nil {
+						postCheckRequirementError(&r, err)
+						requirementsOK = false
+						continue
+					}
+					if !ok {
+						requirementsOK = false
+						continue
+					}
+				}
+
+				if requirementsOK {
+					t := ""
+					if j.ID != w.bookedJobID {
+						t = ", this was my booked job"
+					}
+					log.Info("checkQueue> Taking job %d%s", j.ID, t)
+					w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
+				}
+
+				w.client.WorkerSetStatus(sdk.StatusWaiting)
+			case _ = <-wjobs:
+				//TODO
 
 			case err := <-errs:
 				log.Error("%v", err)
 
-			case <-registerTick:
-				if w.id == "" {
-					var info string
-					if w.bookedJobID > 0 {
-						info = fmt.Sprintf(", I was born to work on job %d", w.bookedJobID)
-					}
-					log.Info("Registering on CDS engine%s", info)
-					form := worker.RegistrationForm{
-						Name:         w.status.Name,
-						Token:        w.token,
-						Hatchery:     w.hatchery.id,
-						HatcheryName: w.hatchery.name,
-						Model:        w.modelID,
-					}
-					if err := w.register(form); err != nil {
-						log.Info("Cannot register: %s", err)
-						continue
-					}
-					w.alive = true
-				}
-
-			case <-suicideTick:
-				if w.nbActionsDone == 0 {
-					log.Info("Time to exit.")
-					w.unregister()
-				}
-			case <-queuePollingTick:
-				w.queuePolling()
-				firstViewQueue = false
+			case <-registerTick.C:
+				w.doRegister()
 			}
 		}
 	}
+}
+
+func (w *currentWorker) doRegister() error {
+	if w.id == "" {
+		var info string
+		if w.bookedJobID > 0 {
+			info = fmt.Sprintf(", I was born to work on job %d", w.bookedJobID)
+		}
+		log.Info("Registering on CDS engine%s", info)
+		form := worker.RegistrationForm{
+			Name:         w.status.Name,
+			Token:        w.token,
+			Hatchery:     w.hatchery.id,
+			HatcheryName: w.hatchery.name,
+			Model:        w.modelID,
+		}
+		if err := w.register(form); err != nil {
+			log.Info("Cannot register: %s", err)
+			return err
+		}
+		w.alive = true
+	}
+	return nil
 }

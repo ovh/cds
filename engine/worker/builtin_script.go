@@ -57,7 +57,7 @@ func (w *currentWorker) runScriptAction(c context.Context, a *sdk.Action, pbJob 
 	// Create a tmp file
 	tmpscript, err := ioutil.TempFile(os.TempDir(), "cds-")
 	if err != nil {
-		log.Warning("Cannot create tmp file: %s\n", err)
+		log.Warning("Cannot create tmp file: %s", err)
 		res.Reason = fmt.Sprintf("cannot create temporary file, aborting\n")
 		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		res.Status = sdk.StatusFail.String()
@@ -68,9 +68,9 @@ func (w *currentWorker) runScriptAction(c context.Context, a *sdk.Action, pbJob 
 	n, err := tmpscript.Write([]byte(scriptContent))
 	if err != nil || n != len(scriptContent) {
 		if err != nil {
-			log.Warning("Cannot write script: %s\n", err)
+			log.Warning("Cannot write script: %s", err)
 		} else {
-			log.Warning("cannot write all script: %d/%d\n", n, len(scriptContent))
+			log.Warning("cannot write all script: %d/%d", n, len(scriptContent))
 		}
 		res.Reason = fmt.Sprintf("cannot write script in temporary file, aborting\n")
 		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
@@ -106,8 +106,8 @@ func (w *currentWorker) runScriptAction(c context.Context, a *sdk.Action, pbJob 
 	// Chmod file
 	err = os.Chmod(scriptPath, 0755)
 	if err != nil {
-		log.Warning("runScriptAction> cannot chmod script %s: %s\n", scriptPath, err)
-		res.Reason = fmt.Sprintf("cannot chmod script, aborting\n")
+		log.Warning("runScriptAction> cannot chmod script %s: %s", scriptPath, err)
+		res.Reason = fmt.Sprintf("cannot chmod script, aborting")
 		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		res.Status = sdk.StatusFail.String()
 		return res
@@ -156,13 +156,13 @@ func (w *currentWorker) runScriptAction(c context.Context, a *sdk.Action, pbJob 
 
 	workerpath, err := osext.Executable()
 	if err != nil {
-		log.Warning("runScriptAction: Cannot get worker path: %s\n", err)
+		log.Warning("runScriptAction: Cannot get worker path: %s", err)
 		res.Reason = "Failure due to internal error (Worker Path)"
 		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		res.Status = sdk.StatusFail.String()
 		return res
 	}
-	log.Info("Worker binary path: %s\n", path.Dir(workerpath))
+	log.Info("Worker binary path: %s", path.Dir(workerpath))
 
 	for i := range cmd.Env {
 		if strings.HasPrefix(cmd.Env[i], "PATH") {
@@ -173,7 +173,7 @@ func (w *currentWorker) runScriptAction(c context.Context, a *sdk.Action, pbJob 
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Warning("runScriptAction: Cannot get stdout pipe: %s\n", err)
+		log.Warning("runScriptAction: Cannot get stdout pipe: %s", err)
 		res.Reason = "Failure due to internal error"
 		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		res.Status = sdk.StatusFail.String()
@@ -182,7 +182,7 @@ func (w *currentWorker) runScriptAction(c context.Context, a *sdk.Action, pbJob 
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		log.Warning("runScriptAction: Cannot get stderr pipe: %s\n", err)
+		log.Warning("runScriptAction: Cannot get stderr pipe: %s", err)
 		res.Reason = "Failure due to internal error"
 		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		res.Status = sdk.StatusFail.String()
@@ -201,7 +201,6 @@ func (w *currentWorker) runScriptAction(c context.Context, a *sdk.Action, pbJob 
 				close(outchan)
 				return
 			}
-			log.Debug(">Line: %s", line)
 			w.sendLog(pbJob.ID, line, pbJob.PipelineBuildID, stepOrder, false)
 		}
 	}()

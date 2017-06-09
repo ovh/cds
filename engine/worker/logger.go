@@ -35,10 +35,10 @@ func (w *currentWorker) sendLog(pipJobID int64, value string, pipelineBuildID in
 	return nil
 }
 
-func (w *currentWorker) logger() {
+func (w *currentWorker) logger(c context.Context) {
 	if w.grpc.conn != nil {
-		if err := w.grpcLogger(w.logChan); err != nil {
-			log.Error("Unable to start grpc logger : %s", err)
+		if err := w.grpcLogger(c, w.logChan); err != nil {
+			log.Error("GPPC logger : %s", err)
 		} else {
 			return
 		}
@@ -47,6 +47,9 @@ func (w *currentWorker) logger() {
 	llist := list.New()
 	for {
 		select {
+		case <-c.Done():
+			log.Error("Logger stopped: %v", c.Err())
+			return
 		case l, ok := <-w.logChan:
 			if ok {
 				llist.PushBack(l)
@@ -123,34 +126,37 @@ func (w *currentWorker) logger() {
 	}
 }
 
-func (w *currentWorker) grpcLogger(inputChan chan sdk.Log) error {
+func (w *currentWorker) grpcLogger(c context.Context, inputChan chan sdk.Log) error {
 	log.Info("Logging through grpc")
 	client := grpc.NewBuildLogClient(w.grpc.conn)
-	stream, err := client.AddBuildLog(context.Background())
+	stream, err := client.AddBuildLog(c)
 	if err != nil {
 		return err
 	}
 
 	for {
-		l, ok := <-inputChan
-		if ok {
-			if err := stream.Send(&l); err != nil {
-				log.Error("grpcLogger> Error sending message : %s", err)
-				//Close all
-				stream.CloseSend()
-				w.grpc.conn.Close()
-				//Try to reopen connection
-				w.initGRPCConn()
-				//restart the logger
-				go w.logger()
-				//Reinject log
-				inputChan <- l
-				return nil
+		select {
+		case <-c.Done():
+			stream.CloseSend()
+			return c.Err()
+		case l, ok := <-inputChan:
+			if ok {
+				if err := stream.Send(&l); err != nil {
+					log.Error("grpcLogger> Error sending message : %s", err)
+					//Close all
+					stream.CloseSend()
+					w.grpc.conn.Close()
+					//Try to reopen connection
+					w.initGRPCConn()
+					//restart the logger
+					go w.logger(c)
+					//Reinject log
+					inputChan <- l
+					return nil
+				}
+			} else {
+				return stream.CloseSend()
 			}
-		} else {
-			break
 		}
 	}
-
-	return stream.CloseSend()
 }

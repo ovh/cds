@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/spf13/viper"
 )
 
 // Workers need to register to main api so they can run actions
@@ -48,6 +46,11 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 }
 
 func (w *currentWorker) unregister() error {
+	//Wait until the logchannel is empty
+	for len(w.logChan) > 0 {
+		time.Sleep(100 * time.Millisecond)
+	}
+
 	w.alive = false
 	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
 	if err != nil {
@@ -57,19 +60,6 @@ func (w *currentWorker) unregister() error {
 		return fmt.Errorf("HTTP %d", code)
 	}
 
-	if viper.GetBool("single_use") {
-		if viper.GetBool("force_exit") {
-			log.Info("unregister> worker will exit (force exit after register)")
-			os.Exit(0)
-		}
-		if w.hatchery.id > 0 {
-			log.Info("unregister> waiting 30min to be killed by hatchery, if not killed, worker will exit")
-			time.Sleep(30 * time.Minute)
-		}
-		log.Info("unregister> worker will exit")
-		time.Sleep(3 * time.Second)
-		os.Exit(0)
-	}
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,79 +17,15 @@ import (
 
 var firstViewQueue = true
 
-func (w *currentWorker) queuePolling() {
-	w.checkPipelineBuildJobQueue()
-	if firstViewQueue {
-		// if worker did not found booked job ID is first iteration
-		// reset booked job to take another action
-		w.bookedJobID = 0
-	}
-}
-
-func (w *currentWorker) checkPipelineBuildJobQueue() {
-	defer w.client.WorkerSetStatus(sdk.StatusWaiting)
-
-	queue, err := sdk.GetBuildQueue()
-	if err != nil {
-		log.Warning("checkQueue> Cannot get build queue: %s", err)
-		w.id = ""
-		return
-	}
-
-	log.Info("checkQueue> %d actions in queue", len(queue))
-
-	//Set the status to checking to avoid being killed while checking queue, actions and requirements
-	w.client.WorkerSetStatus(sdk.StatusChecking)
-
-	for i := range queue {
-		if w.bookedJobID != 0 && queue[i].ID != w.bookedJobID {
-			continue
-		}
-
-		requirementsOK := true
-		// Check requirement
-		log.Info("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)
-		for _, r := range queue[i].Job.Action.Requirements {
-			ok, err := checkRequirement(w, r)
-			if err != nil {
-				postCheckRequirementError(&r, err)
-				requirementsOK = false
-				continue
-			}
-			if !ok {
-				requirementsOK = false
-				continue
-			}
-		}
-
-		if requirementsOK {
-			t := ""
-			if queue[i].ID != w.bookedJobID {
-				t = ", this was my booked job"
-			}
-			log.Info("checkQueue> Taking job %d%s", queue[i].ID, t)
-			w.takeJob(queue[i], queue[i].ID == w.bookedJobID)
-		}
-	}
-
-	if w.bookedJobID > 0 {
-		log.Info("checkQueue> worker born for work on job %d but job is not found in queue", w.bookedJobID)
-	}
-
-	if !viper.GetBool("single_use") {
-		log.Info("checkQueue> Nothing to do...")
-	}
-}
-
 func postCheckRequirementError(r *sdk.Requirement, err error) {
 	s := fmt.Sprintf("Error checking requirement Name=%s Type=%s Value=%s :%s", r.Name, r.Type, r.Value, err)
 	sdk.Request("POST", "/queue/requirements/errors", []byte(s))
 }
 
-func (w *currentWorker) takeJob(b sdk.PipelineBuildJob, isBooked bool) {
+func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) {
 	in := worker.TakeForm{Time: time.Now()}
 	if isBooked {
-		in.BookedJobID = b.ID
+		in.BookedJobID = pipelineBuildJobID
 	}
 
 	bodyTake, errm := json.Marshal(in)
@@ -99,10 +36,10 @@ func (w *currentWorker) takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	w.nbActionsDone++
 	w.currentJob.gitsshPath = ""
 	w.currentJob.pkey = ""
-	path := fmt.Sprintf("/queue/%d/take", b.ID)
+	path := fmt.Sprintf("/queue/%d/take", pipelineBuildJobID)
 	data, code, errr := sdk.Request("POST", path, bodyTake)
 	if errr != nil {
-		log.Info("takeJob> Cannot take action %d : %s", b.Job.PipelineActionID, errr)
+		log.Info("takeJob> Cannot take job %d : %s", pipelineBuildJobID, errr)
 		return
 	}
 	if code != http.StatusOK {
@@ -116,18 +53,22 @@ func (w *currentWorker) takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	}
 
 	w.currentJob.pbJob = pbji.PipelineBuildJob
+
 	// Reset build variables
 	w.currentJob.buildVariables = nil
 	start := time.Now()
+	//Run !
 	res := w.run(&pbji)
 	now, _ := ptypes.TimestampProto(time.Now())
 	res.RemoteTime = now
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
-	// Give time to buffered logs to be sent
-	time.Sleep(3 * time.Second)
+	//Wait until the logchannel is empty
+	for len(w.logChan) > 0 {
+		time.Sleep(100 * time.Millisecond)
+	}
 
-	path = fmt.Sprintf("/queue/%d/result", b.ID)
+	path = fmt.Sprintf("/queue/%d/result", pipelineBuildJobID)
 	body, errm := json.MarshalIndent(res, " ", " ")
 	if errm != nil {
 		log.Error("takeJob> Cannot marshal result: %s", errm)
@@ -146,7 +87,7 @@ func (w *currentWorker) takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 			break
 		}
 		if errre == nil && code < 300 {
-			fmt.Printf("BuildResult sent.")
+			log.Info("BuildResult sent.")
 			break
 		}
 
@@ -165,8 +106,6 @@ func (w *currentWorker) takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	}
 
 	if viper.GetBool("single_use") {
-		// Give time to logs to be flushed
-		time.Sleep(2 * time.Second)
 		// Unregister from engine
 		if err := w.unregister(); err != nil {
 			log.Warning("takeJob> could not unregister: %s", err)

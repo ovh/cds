@@ -16,12 +16,14 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
 	pbjobsTicker := time.NewTicker(delay)
+	oldJobsTicker := time.NewTicker(delay * 60)
 
 	for {
 		select {
 		case <-ctx.Done():
 			jobsTicker.Stop()
 			pbjobsTicker.Stop()
+			oldJobsTicker.Stop()
 			if jobs != nil {
 				close(jobs)
 			}
@@ -29,6 +31,17 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				close(pbjobs)
 			}
 			return ctx.Err()
+		case <-oldJobsTicker.C:
+			if jobs != nil {
+				queue := []sdk.WorkflowNodeJobRun{}
+				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
+					errs <- err
+				}
+				t0 = time.Now()
+				for _, j := range queue {
+					jobs <- j
+				}
+			}
 		case <-jobsTicker.C:
 			if jobs != nil {
 				queue := []sdk.WorkflowNodeJobRun{}

@@ -193,7 +193,7 @@ func (w *currentWorker) runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob 
 		if !child.Enabled {
 			// Update step status and continue
 			if err := updateStepStatus(pipBuildJob.ID, w.currentJob.currentStep, sdk.StatusDisabled.String()); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 
 			w.sendLog(pipBuildJob.ID, fmt.Sprintf("End of Step %s [Disabled]\n", childName), pipBuildJob.PipelineBuildID, w.currentJob.currentStep, true)
@@ -202,7 +202,7 @@ func (w *currentWorker) runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob 
 		}
 
 		if !doNotRunChildrenAnymore {
-			log.Debug("Running %s\n", childName)
+			log.Debug("Running %s", childName)
 			// Update step status
 			if err := updateStepStatus(pipBuildJob.ID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
@@ -219,7 +219,7 @@ func (w *currentWorker) runSteps(steps []sdk.Action, a *sdk.Action, pipBuildJob 
 
 			// Update step status
 			if err := updateStepStatus(pipBuildJob.ID, w.currentJob.currentStep, r.Status); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
 			}
 		}
 	}
@@ -295,6 +295,8 @@ func workingDirectory(basedir string, jobInfo *worker.PipelineBuildJobInfo) stri
 }
 
 func (w *currentWorker) run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
+	t0 := time.Now()
+	defer func() { log.Info("Run Pipeline Build Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
 	// Setup working directory
 	wd := workingDirectory(w.basedir, pbji)
 
@@ -317,7 +319,7 @@ func (w *currentWorker) run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	processPipelineBuildJobParameter(&pbji.PipelineBuildJob, pbji.Secrets)
 
 	if err := w.processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob, pbji.Secrets); err != nil {
-		log.Warning("run> Cannot process action %s parameters: %s\n", pbji.PipelineBuildJob.Job.Action.Name, err)
+		log.Warning("run> Cannot process action %s parameters: %s", pbji.PipelineBuildJob.Job.Action.Name, err)
 		return sdk.Result{Status: sdk.StatusFail.String()}
 	}
 
@@ -392,9 +394,7 @@ func (w *currentWorker) run(pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	logsecrets = nil
 
 	if err := teardownBuildDirectory(wd); err != nil {
-		fmt.Printf("Cannot remove build directory: %s\n", err)
+		log.Error("Cannot remove build directory: %s", err)
 	}
-
-	fmt.Printf("run> Done.\n")
 	return res
 }

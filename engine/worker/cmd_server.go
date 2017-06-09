@@ -30,7 +30,7 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 		return 0, err
 	}
 
-	log.Info("Export variable HTTP server: %s\n", listener.Addr().String())
+	log.Info("Export variable HTTP server: %s", listener.Addr().String())
 	r := mux.NewRouter()
 	r.HandleFunc("/var", w.addBuildVarHandler)
 	r.HandleFunc("/upload", w.uploadHandler)
@@ -44,7 +44,9 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 
 	//Start the server
 	go func() {
-		log.Fatalf("Cannot start local http server: %s\n", srv.Serve(listener))
+		if err := srv.Serve(listener); err != nil {
+			log.Error("%v", err)
+		}
 	}()
 
 	//Handle shutdown

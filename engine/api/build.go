@@ -298,6 +298,19 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
+func getPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	id, errc := requestVarInt(r, "id")
+	if errc != nil {
+		return sdk.WrapError(errc, "getPipelineBuildJobHandler> invalid id")
+	}
+
+	j, err := pipeline.GetPipelineBuildJob(db, id)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to load pipeline build job id")
+	}
+	return WriteJSON(w, r, j, http.StatusOK)
+}
+
 func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "id")
 	if errc != nil {
@@ -483,17 +496,6 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 }
 
 func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	if c.Worker != nil && c.Worker.ID != "" {
-		// Load calling worker
-		caller, errW := worker.LoadWorker(db, c.Worker.ID)
-		if errW != nil {
-			return sdk.WrapError(errW, "getQueueHandler> cannot load calling worker")
-		}
-		if caller.Status != sdk.StatusWaiting {
-			return sdk.WrapError(sdk.ErrInvalidWorkerStatus, "getQueueHandler> worker %s is not available to build (status = %s)", caller.ID, caller.Status)
-		}
-	}
-
 	var queue []sdk.PipelineBuildJob
 	var errQ error
 	switch c.Agent {
