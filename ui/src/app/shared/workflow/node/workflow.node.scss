@@ -1,9 +1,9 @@
 .workflowNode {
   width: 155px;
-  height: 68px;
+  height: 58px;
 
   .ui.segment {
-    margin-top: -10px;
+    margin-top: -8px;
     margin-left: -11px;
     width: 176px;
     height: 68px;
@@ -55,7 +55,7 @@
 
   .footer {
     position: absolute;
-    bottom: 0px;
+    bottom: -10px;
     width: 100%;
 
     p {
