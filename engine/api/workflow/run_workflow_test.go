@@ -142,7 +142,7 @@ func TestManualRun1(t *testing.T) {
 	}
 
 	//TestLoadNodeRun
-	nodeRun, err := LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[0].ID)
+	nodeRun, err := LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID)
 	test.NoError(t, err)
 	test.Equal(t, lastrun.WorkflowNodeRuns[0], nodeRun)
 
