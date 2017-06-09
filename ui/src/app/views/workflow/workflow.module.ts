@@ -3,10 +3,12 @@ import {SharedModule} from '../../shared/shared.module';
 import {workflowRouting} from './workflow.routing';
 import {WorkflowAddComponent} from './add/workflow.add.component';
 import {WorkflowShowComponent} from './show/workflow.component';
+import {WorkflowGraphComponent} from './graph/workflow.graph.component';
 
 @NgModule({
     declarations: [
         WorkflowAddComponent,
+        WorkflowGraphComponent,
         WorkflowShowComponent
     ],
     imports: [

@@ -14,6 +14,7 @@ export class Workflow {
     root: WorkflowNode;
     root_id: number;
     joins: Array<WorkflowNodeJoin>;
+    last_modified: Date;
 
     // UI params
     externalChange: boolean;
