@@ -17,6 +17,7 @@ import (
 
 type handlers struct{}
 
+//AddBuildLog is the BuildLogServer implementation
 func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
 	log.Debug("grpc.AddBuildLog> started stream")
 	for {
@@ -37,6 +38,7 @@ func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
 	}
 }
 
+//SendLog is the WorkflowQueueServer implementation
 func (*handlers) SendLog(stream WorkflowQueue_SendLogServer) error {
 	log.Debug("grpc.SendLog> begin")
 	defer log.Debug("grpc.SendLog> end")
@@ -58,6 +60,7 @@ func (*handlers) SendLog(stream WorkflowQueue_SendLogServer) error {
 	}
 }
 
+//SendResult is the WorkflowQueueServer implementation
 func (*handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, error) {
 	log.Debug("grpc.SendResult> begin")
 	defer log.Debug("grpc.SendResult> end")
