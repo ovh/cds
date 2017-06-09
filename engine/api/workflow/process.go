@@ -226,6 +226,9 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 
 	log.Debug("processWorkflowNodeRun> new node run: %#v", run)
 
+	if w.WorkflowNodeRuns == nil {
+		w.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
+	}
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	if err := updateWorkflowRun(db, w); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
