@@ -1,10 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
@@ -14,11 +13,10 @@ import (
 )
 
 // Workers need to register to main api so they can run actions
-func register(cdsURI string, name string, uk string) error {
-	log.Info("Registering [%s] at [%s]", name, cdsURI)
-
-	sdk.InitEndpoint(cdsURI)
-	sdk.Authorization(WorkerID)
+func (w *currentWorker) register(form worker.RegistrationForm) error {
+	log.Info("Registering %s on %s", form.Name, w.apiEndpoint)
+	sdk.InitEndpoint(w.apiEndpoint)
+	sdk.Authorization("")
 
 	requirements, errR := sdk.GetRequirements()
 	if errR != nil {
@@ -26,56 +24,31 @@ func register(cdsURI string, name string, uk string) error {
 	}
 
 	log.Debug("Checking %d requirements", len(requirements))
-	binaryCapabilities := LoopPath(requirements)
+	form.BinaryCapabilities = LoopPath(w, requirements)
+	form.Version = VERSION
+	form.OS = runtime.GOOS
+	form.Arch = runtime.GOOS
 
-	in := worker.RegistrationForm{
-		Name:               name,
-		UserKey:            uk,
-		Model:              model,
-		Hatchery:           hatchery,
-		HatcheryName:       hatcheryName,
-		BinaryCapabilities: binaryCapabilities,
-		Version:            VERSION,
+	WorkerID, Uptodate, err := w.client.WorkerRegister(form)
+	if err != nil {
+		sdk.Exit("register> Got HTTP %d, exiting\n", err)
+		return err
 	}
 
-	body, errM := json.Marshal(in)
-	if errM != nil {
-		log.Info("register: Cannot marshal body: %s", errM)
-		return errM
-	}
+	w.id = WorkerID
+	sdk.Authorization(WorkerID)
+	w.initGRPCConn()
+	log.Info("%s Registered on %s", form.Name, w.apiEndpoint)
 
-	data, code, errR := sdk.Request("POST", "/worker", body)
-	if errR != nil {
-		log.Info("Cannot register worker: %s", errR)
-		return errR
-	}
-
-	if code == http.StatusUnauthorized {
-		// Nothing to do here, better exit
-		time.Sleep(10 * time.Second)
-		sdk.Exit("register> Got HTTP %d, exiting\n", code)
-	}
-
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	var w sdk.Worker
-	json.Unmarshal(data, &w)
-	WorkerID = w.ID
-	sdk.Authorization(w.ID)
-	initGRPCConn()
-	log.Info("Registered: %s", data)
-
-	if !w.Uptodate {
+	if !Uptodate {
 		log.Warning("-=-=-=-=- Please update your worker binary -=-=-=-=-")
 	}
 
 	return nil
 }
 
-func unregister() error {
-	alive = false
+func (w *currentWorker) unregister() error {
+	w.alive = false
 	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
 	if err != nil {
 		return err
@@ -89,7 +62,7 @@ func unregister() error {
 			log.Info("unregister> worker will exit (force exit after register)")
 			os.Exit(0)
 		}
-		if hatchery > 0 {
+		if w.hatchery.id > 0 {
 			log.Info("unregister> waiting 30min to be killed by hatchery, if not killed, worker will exit")
 			time.Sleep(30 * time.Minute)
 		}
@@ -101,11 +74,11 @@ func unregister() error {
 }
 
 // LoopPath return the list of evailable command in path
-func LoopPath(reqs []sdk.Requirement) []string {
+func LoopPath(w *currentWorker, reqs []sdk.Requirement) []string {
 	binaries := []string{}
 	for _, req := range reqs {
 		if req.Type == sdk.BinaryRequirement {
-			if b, _ := checkBinaryRequirement(req); b {
+			if b, _ := checkBinaryRequirement(w, req); b {
 				binaries = append(binaries, req.Value)
 			}
 		}

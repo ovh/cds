@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
@@ -34,7 +34,7 @@ var (
 const nbPanicsBeforeFail = 50
 
 // Handler defines the HTTP handler used in CDS engine
-type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error
+type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
 type RouterConfigParam func(rc *routerConfig)
@@ -162,7 +162,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		w.Header().Add("X-Api-Time", time.Now().Format(time.RFC3339))
 		w.Header().Add("ETag", fmt.Sprintf("%d", time.Now().Unix()))
 
-		c := &context.Ctx{}
+		c := &businesscontext.Ctx{}
 
 		if req.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
@@ -377,12 +377,12 @@ func Auth(v bool) RouterConfigParam {
 	return f
 }
 
-func (r *Router) checkAuthHeader(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
+func (r *Router) checkAuthHeader(db *gorp.DbMap, headers http.Header, c *businesscontext.Ctx) error {
 	return r.authDriver.GetCheckAuthHeaderFunc(localCLientAuthMode)(db, headers, c)
 }
 
-func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
-	c.Agent = sdk.Agent(headers.Get("User-Agent"))
+func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *businesscontext.Ctx) error {
+	c.Agent = headers.Get("User-Agent")
 
 	switch headers.Get("User-Agent") {
 	// TODO: case sdk.WorkerAgent should be moved here
@@ -393,7 +393,7 @@ func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *con
 	}
 }
 
-func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
+func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *businesscontext.Ctx) error {
 	uid, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return fmt.Errorf("bad worker key syntax: %s", err)

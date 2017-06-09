@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -16,7 +16,7 @@ import (
 )
 
 // PermCheckFunc defines func call to check permission
-type PermCheckFunc func(key string, c *context.Ctx, permission int, routeVar map[string]string) bool
+type PermCheckFunc func(key string, c *businesscontext.Ctx, permission int, routeVar map[string]string) bool
 
 var permissionMapFunction = initPermissionFunc()
 
@@ -49,7 +49,7 @@ func getPermissionByMethod(method string, isExecution bool) int {
 	}
 }
 
-func checkWorkerPermission(db gorp.SqlExecutor, rc *routerConfig, routeVar map[string]string, c *context.Ctx) bool {
+func checkWorkerPermission(db gorp.SqlExecutor, rc *routerConfig, routeVar map[string]string, c *businesscontext.Ctx) bool {
 	if c.Worker == nil {
 		return false
 	}
@@ -77,7 +77,7 @@ func checkWorkerPermission(db gorp.SqlExecutor, rc *routerConfig, routeVar map[s
 	return true
 }
 
-func checkPermission(routeVar map[string]string, c *context.Ctx, permission int) bool {
+func checkPermission(routeVar map[string]string, c *businesscontext.Ctx, permission int) bool {
 	for _, g := range c.User.Groups {
 		if group.SharedInfraGroup != nil && g.Name == group.SharedInfraGroup.Name {
 			return true
@@ -97,7 +97,7 @@ func checkPermission(routeVar map[string]string, c *context.Ctx, permission int)
 	return permissionOk
 }
 
-func checkProjectPermissions(projectKey string, c *context.Ctx, permission int, routeVar map[string]string) bool {
+func checkProjectPermissions(projectKey string, c *businesscontext.Ctx, permission int, routeVar map[string]string) bool {
 	if c.User.Groups != nil {
 		for _, g := range c.User.Groups {
 			for _, p := range g.ProjectGroups {
@@ -111,7 +111,7 @@ func checkProjectPermissions(projectKey string, c *context.Ctx, permission int, 
 	return false
 }
 
-func checkPipelinePermissions(pipelineName string, c *context.Ctx, permission int, routeVar map[string]string) bool {
+func checkPipelinePermissions(pipelineName string, c *businesscontext.Ctx, permission int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
 		for _, g := range c.User.Groups {
@@ -128,7 +128,7 @@ func checkPipelinePermissions(pipelineName string, c *context.Ctx, permission in
 	return false
 }
 
-func checkEnvironmentPermissions(envName string, c *context.Ctx, permission int, routeVar map[string]string) bool {
+func checkEnvironmentPermissions(envName string, c *businesscontext.Ctx, permission int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
 		if c.User.Groups != nil {
@@ -147,7 +147,7 @@ func checkEnvironmentPermissions(envName string, c *context.Ctx, permission int,
 	return false
 }
 
-func checkApplicationPermissions(applicationName string, c *context.Ctx, permission int, routeVar map[string]string) bool {
+func checkApplicationPermissions(applicationName string, c *businesscontext.Ctx, permission int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
 		if c.User.Groups != nil {
@@ -166,7 +166,7 @@ func checkApplicationPermissions(applicationName string, c *context.Ctx, permiss
 	return false
 }
 
-func checkApplicationIDPermissions(appIDS string, c *context.Ctx, permission int, routeVar map[string]string) bool {
+func checkApplicationIDPermissions(appIDS string, c *businesscontext.Ctx, permission int, routeVar map[string]string) bool {
 
 	appID, err := strconv.ParseInt(appIDS, 10, 64)
 	if err != nil {
@@ -188,7 +188,7 @@ func checkApplicationIDPermissions(appIDS string, c *context.Ctx, permission int
 	return false
 }
 
-func checkGroupPermissions(groupName string, c *context.Ctx, permissionValue int, routeVar map[string]string) bool {
+func checkGroupPermissions(groupName string, c *businesscontext.Ctx, permissionValue int, routeVar map[string]string) bool {
 	for _, g := range c.User.Groups {
 		if g.Name == groupName {
 
@@ -207,7 +207,7 @@ func checkGroupPermissions(groupName string, c *context.Ctx, permissionValue int
 	return false
 }
 
-func checkActionPermissions(groupName string, c *context.Ctx, permissionValue int, routeVar map[string]string) bool {
+func checkActionPermissions(groupName string, c *businesscontext.Ctx, permissionValue int, routeVar map[string]string) bool {
 	if permissionValue == permission.PermissionRead {
 		return true
 	}
@@ -219,7 +219,7 @@ func checkActionPermissions(groupName string, c *context.Ctx, permissionValue in
 	return false
 }
 
-func checkWorkerModelPermissions(modelID string, c *context.Ctx, permissionValue int, routeVar map[string]string) bool {
+func checkWorkerModelPermissions(modelID string, c *businesscontext.Ctx, permissionValue int, routeVar map[string]string) bool {
 	id, err := strconv.ParseInt(modelID, 10, 64)
 	if err != nil {
 		log.Warning("checkWorkerModelPermissions> modelID is not an integer: %s\n", err)

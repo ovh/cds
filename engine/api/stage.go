@@ -8,13 +8,13 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -74,7 +74,7 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	return WriteJSON(w, r, pipelineData, http.StatusCreated)
 }
 
-func getStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -101,7 +101,7 @@ func getStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	return WriteJSON(w, r, s, http.StatusOK)
 }
 
-func moveStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func moveStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -156,7 +156,7 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	return WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
-func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -227,7 +227,7 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
-func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 
 	// Get project name in URL
 	vars := mux.Vars(r)

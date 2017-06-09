@@ -252,12 +252,14 @@ func generateID() (string, error) {
 // RegistrationForm represents the arguments needed to register a worker
 type RegistrationForm struct {
 	Name               string
-	UserKey            string
+	Token              string
 	Model              int64
 	Hatchery           int64
 	HatcheryName       string
 	BinaryCapabilities []string
 	Version            string
+	OS                 string
+	Arch               string
 }
 
 // TakeForm contains booked JobID if exists

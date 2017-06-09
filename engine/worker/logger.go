@@ -18,7 +18,7 @@ import (
 
 var logsecrets []sdk.Variable
 
-func sendLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int, final bool) error {
+func (w *currentWorker) sendLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int, final bool) error {
 	for i := range logsecrets {
 		if len(logsecrets[i].Value) >= 6 {
 			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
@@ -31,13 +31,13 @@ func sendLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int,
 	} else {
 		l.Done = &timestamp.Timestamp{}
 	}
-	logChan <- *l
+	w.logChan <- *l
 	return nil
 }
 
-func logger(inputChan chan sdk.Log) {
-	if grpcConn != nil {
-		if err := grpcLogger(inputChan); err != nil {
+func (w *currentWorker) logger() {
+	if w.grpc.conn != nil {
+		if err := w.grpcLogger(w.logChan); err != nil {
 			log.Error("Unable to start grpc logger : %s", err)
 		} else {
 			return
@@ -47,7 +47,7 @@ func logger(inputChan chan sdk.Log) {
 	llist := list.New()
 	for {
 		select {
-		case l, ok := <-inputChan:
+		case l, ok := <-w.logChan:
 			if ok {
 				llist.PushBack(l)
 			}
@@ -123,9 +123,9 @@ func logger(inputChan chan sdk.Log) {
 	}
 }
 
-func grpcLogger(inputChan chan sdk.Log) error {
+func (w *currentWorker) grpcLogger(inputChan chan sdk.Log) error {
 	log.Info("Logging through grpc")
-	client := grpc.NewBuildLogClient(grpcConn)
+	client := grpc.NewBuildLogClient(w.grpc.conn)
 	stream, err := client.AddBuildLog(context.Background())
 	if err != nil {
 		return err
@@ -138,11 +138,11 @@ func grpcLogger(inputChan chan sdk.Log) error {
 				log.Error("grpcLogger> Error sending message : %s", err)
 				//Close all
 				stream.CloseSend()
-				grpcConn.Close()
+				w.grpc.conn.Close()
 				//Try to reopen connection
-				initGRPCConn()
+				w.initGRPCConn()
 				//restart the logger
-				go logger(inputChan)
+				go w.logger()
 				//Reinject log
 				inputChan <- l
 				return nil

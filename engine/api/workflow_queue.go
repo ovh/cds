@@ -14,7 +14,7 @@ import (
 	"github.com/runabove/venom"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -22,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func postWorkflowJobRequirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowJobRequirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("requirementsErrorHandler> %s", err)
@@ -41,7 +41,7 @@ func postWorkflowJobRequirementsErrorHandler(w http.ResponseWriter, r *http.Requ
 	return nil
 }
 
-func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "id")
 	if errc != nil {
 		return sdk.WrapError(errc, "postTakeWorkflowJobHandler> invalid id")
@@ -118,7 +118,7 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	return WriteJSON(w, r, pbji, http.StatusOK)
 }
 
-func postBookWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postBookWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "id")
 	if errc != nil {
 		return sdk.WrapError(errc, "postBookWorkflowJobHandler> invalid id")
@@ -130,7 +130,7 @@ func postBookWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
-func postSpawnInfosWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postSpawnInfosWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "id")
 	if errc != nil {
 		return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
@@ -157,7 +157,7 @@ func postSpawnInfosWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db
 	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
-func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "permID")
 	if errc != nil {
 		return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
@@ -217,7 +217,7 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 }
 
 //TODO grpc
-func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errr := requestVarInt(r, "permID")
 	if errr != nil {
 		return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
@@ -240,7 +240,7 @@ func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	return nil
 }
 
-func postWorkflowJobStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowJobStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errr := requestVarInt(r, "permID")
 	if errr != nil {
 		return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
@@ -275,7 +275,7 @@ func postWorkflowJobStepStatusHandler(w http.ResponseWriter, r *http.Request, db
 	return nil
 }
 
-func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	sinceHeader := r.Header.Get("If-Modified-Since")
 	since := time.Unix(0, 0)
 	if sinceHeader != "" {
@@ -294,7 +294,7 @@ func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	return WriteJSON(w, r, jobs, http.StatusOK)
 }
 
-func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Unmarshal into results
 	var new venom.Tests
 	if err := UnmarshalBody(r, &new); err != nil {
@@ -361,7 +361,7 @@ func postWorkflowJobTestsResultsHandler(w http.ResponseWriter, r *http.Request, 
 	return nil
 }
 
-func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errr := requestVarInt(r, "permID")
 	if errr != nil {
 		return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Invalid id")
@@ -408,7 +408,7 @@ func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *
 	return nil
 }
 
-func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowJobArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Load and lock Existing workflow Run Job
 	id, errI := requestVarInt(r, "permID")
 	if errI != nil {

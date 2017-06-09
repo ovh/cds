@@ -38,7 +38,7 @@ var (
 	// HTTP client
 	client HTTPClient
 	// current agent calling
-	agent Agent
+	agent string
 	// CDSConfigFile is path to the default config file
 	CDSConfigFile = path.Join(os.Getenv("HOME"), ".cds", "config.json")
 )
@@ -55,18 +55,15 @@ func Authorization(h string) {
 	skipReadConfig = true
 }
 
-// Agent describe the type of authentication method to use
-type Agent string
-
 // Different values of agent
 const (
-	SDKAgent      Agent = "CDS/sdk"
-	WorkerAgent         = "CDS/worker"
-	HatcheryAgent       = "CDS/hatchery"
+	SDKAgent      = "CDS/sdk"
+	WorkerAgent   = "CDS/worker"
+	HatcheryAgent = "CDS/hatchery"
 )
 
 //SetAgent set a agent value
-func SetAgent(a Agent) {
+func SetAgent(a string) {
 	agent = a
 }
 

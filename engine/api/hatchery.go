@@ -6,14 +6,14 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Unmarshal body
 	hatch := sdk.Hatchery{}
 	if err := UnmarshalBody(r, &hatch); err != nil {
@@ -38,7 +38,7 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	return WriteJSON(w, r, hatch, http.StatusOK)
 }
 
-func refreshHatcheryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func refreshHatcheryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	hatcheryID := vars["id"]
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
@@ -22,7 +22,7 @@ import (
 )
 
 // Deprecated
-func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -62,7 +62,7 @@ func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -138,7 +138,7 @@ func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -181,7 +181,7 @@ func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 }
 
 // DEPRECATED
-func updatePipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updatePipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -218,7 +218,7 @@ func updatePipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func getPipelinesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelinesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -232,7 +232,7 @@ func getPipelinesInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 	return WriteJSON(w, r, pipelines, http.StatusOK)
 }
 
-func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -289,17 +289,17 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	return WriteJSON(w, r, a, http.StatusOK)
 }
 
-func getUserNotificationTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getUserNotificationTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	var types = []sdk.UserNotificationSettingsType{sdk.EmailUserNotification, sdk.JabberUserNotification}
 	return WriteJSON(w, r, types, http.StatusOK)
 }
 
-func getUserNotificationStateValueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getUserNotificationStateValueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	states := []sdk.UserNotificationEventType{sdk.UserNotificationAlways, sdk.UserNotificationChange, sdk.UserNotificationNever}
 	return WriteJSON(w, r, states, http.StatusOK)
 }
 
-func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -354,7 +354,7 @@ func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *htt
 	return WriteJSON(w, r, notifs, http.StatusOK)
 }
 
-func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -437,7 +437,7 @@ func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	return WriteJSON(w, r, applicationData, http.StatusOK)
 }
 
-func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
@@ -510,7 +510,7 @@ func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]

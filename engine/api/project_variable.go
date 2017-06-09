@@ -7,7 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getVariablesAuditInProjectnHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getVariablesAuditInProjectnHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
@@ -28,7 +28,7 @@ func getVariablesAuditInProjectnHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
-func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	auditIDString := vars["auditID"]
@@ -109,7 +109,7 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 	return nil
 }
 
-func getVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -123,7 +123,7 @@ func getVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *go
 	return WriteJSON(w, r, p.Variable, http.StatusOK)
 }
 
-func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -172,7 +172,7 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 }
 
 //DEPRECATED
-func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -289,7 +289,7 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 	return nil
 }
 
-func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -351,7 +351,7 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 }
 
 //DEPRECATED
-func getVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -374,7 +374,7 @@ func getVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, v, http.StatusOK)
 }
 
-func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -459,7 +459,7 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getVariableAuditInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getVariableAuditInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runGitClone(c context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	url := sdk.ParameterFind(a.Parameters, "url")
 	privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
 	user := sdk.ParameterFind(a.Parameters, "user")
@@ -27,7 +28,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 			Status: sdk.StatusFail.String(),
 			Reason: "Git repository URL is not set. Nothing to perform.",
 		}
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		time.Sleep(5 * time.Second)
 		return res
 	}
@@ -39,7 +40,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
 			}
-			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 			time.Sleep(5 * time.Second)
 			return res
 		}
@@ -52,7 +53,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
 		}
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		time.Sleep(5 * time.Second)
 		return res
 	}
@@ -64,7 +65,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("SSH Key not found. Unable to perform git clone"),
 			}
-			sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 			time.Sleep(5 * time.Second)
 			return res
 		}
@@ -128,10 +129,10 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 
 	//Send the logs
 	if len(stdOut.Bytes()) > 0 {
-		sendLog(pbJob.ID, stdOut.String(), pbJob.PipelineBuildID, stepOrder, false)
+		w.sendLog(pbJob.ID, stdOut.String(), pbJob.PipelineBuildID, stepOrder, false)
 	}
 	if len(stdErr.Bytes()) > 0 {
-		sendLog(pbJob.ID, stdErr.String(), pbJob.PipelineBuildID, stepOrder, false)
+		w.sendLog(pbJob.ID, stdErr.String(), pbJob.PipelineBuildID, stepOrder, false)
 	}
 
 	if err != nil {
@@ -139,7 +140,7 @@ func runGitClone(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.R
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Unable to git clone: %s", err),
 		}
-		sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		time.Sleep(5 * time.Second)
 		return res
 	}

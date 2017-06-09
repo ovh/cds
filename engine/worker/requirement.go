@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-var requirementCheckFuncs = map[string]func(r sdk.Requirement) (bool, error){
+var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement) (bool, error){
 	sdk.BinaryRequirement:        checkBinaryRequirement,
 	sdk.HostnameRequirement:      checkHostnameRequirement,
 	sdk.ModelRequirement:         checkModelRequirement,
@@ -26,17 +26,17 @@ var requirementCheckFuncs = map[string]func(r sdk.Requirement) (bool, error){
 	sdk.MemoryRequirement:        checkMemoryRequirement,
 }
 
-func checkRequirement(r sdk.Requirement) (bool, error) {
+func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	check := requirementCheckFuncs[r.Type]
 	if check == nil {
 		log.Warning("checkRequirement> Unknown type of requirement: %s\n", r.Type)
 		log.Warning("checkRequirement> Support requirements are : %v", requirementCheckFuncs)
 		return false, fmt.Errorf("unknown type of requirement %s", r.Type)
 	}
-	return check(r)
+	return check(w, r)
 }
 
-func checkPluginRequirement(r sdk.Requirement) (bool, error) {
+func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	pluginBinary := path.Join(os.TempDir(), r.Name)
 
 	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
@@ -62,7 +62,7 @@ func checkPluginRequirement(r sdk.Requirement) (bool, error) {
 	return true, nil
 }
 
-func checkHostnameRequirement(r sdk.Requirement) (bool, error) {
+func checkHostnameRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	h, err := os.Hostname()
 	if err != nil {
 		return false, err
@@ -75,7 +75,7 @@ func checkHostnameRequirement(r sdk.Requirement) (bool, error) {
 	return false, nil
 }
 
-func checkBinaryRequirement(r sdk.Requirement) (bool, error) {
+func checkBinaryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	if _, err := exec.LookPath(r.Value); err != nil {
 		// Return nil because the error contains 'Executable file not found', that's what we wanted
 		return false, nil
@@ -84,20 +84,20 @@ func checkBinaryRequirement(r sdk.Requirement) (bool, error) {
 	return true, nil
 }
 
-func checkModelRequirement(r sdk.Requirement) (bool, error) {
+func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	wm, err := sdk.GetWorkerModel(r.Value)
 	if err != nil {
 		return false, nil
 	}
 
-	if wm.ID == model {
+	if wm.ID == w.modelID {
 		return true, nil
 	}
 
 	return false, nil
 }
 
-func checkNetworkAccessRequirement(r sdk.Requirement) (bool, error) {
+func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	conn, err := net.DialTimeout("tcp", r.Value, 10*time.Second)
 	if err != nil {
 		return false, nil
@@ -107,7 +107,7 @@ func checkNetworkAccessRequirement(r sdk.Requirement) (bool, error) {
 	return true, nil
 }
 
-func checkServiceRequirement(r sdk.Requirement) (bool, error) {
+func checkServiceRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	if _, err := net.LookupIP(r.Name); err != nil {
 		log.Warning("Error checking requirement : %s\n", err)
 		return false, nil
@@ -116,7 +116,7 @@ func checkServiceRequirement(r sdk.Requirement) (bool, error) {
 	return true, nil
 }
 
-func checkMemoryRequirement(r sdk.Requirement) (bool, error) {
+func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		return false, err

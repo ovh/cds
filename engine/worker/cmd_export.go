@@ -62,7 +62,7 @@ func exportCmd(cmd *cobra.Command, args []string) {
 	}
 }
 
-func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
+func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -71,15 +71,14 @@ func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var v sdk.Variable
-	err = json.Unmarshal(data, &v)
-	if err != nil {
+	if err := json.Unmarshal(data, &v); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// OK, so now we got our new variable. We need to:
 	// - add it as a build var in API
-	buildVariables = append(buildVariables, v)
+	wk.currentJob.buildVariables = append(wk.currentJob.buildVariables, v)
 	// - add it in current building Action
 	data, err = json.Marshal(v)
 	if err != nil {
@@ -87,7 +86,7 @@ func addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Retrieve build info
 	var proj, app, pip, bnS, env string
-	for _, p := range pbJob.Parameters {
+	for _, p := range wk.currentJob.pbJob.Parameters {
 		switch p.Name {
 		case "cds.pipeline":
 			pip = p.Value

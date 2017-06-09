@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,15 +11,16 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func cmdMain() *cobra.Command {
+func cmdMain(w *currentWorker) *cobra.Command {
 	var mainCmd = &cobra.Command{
 		Use:   "worker",
 		Short: "CDS Worker",
-		Run:   mainCommandRun,
+		Run:   mainCommandRun(w),
 	}
 
 	pflags := mainCmd.PersistentFlags()
@@ -85,73 +87,74 @@ func cmdMain() *cobra.Command {
 	return mainCmd
 }
 
-func mainCommandRun(cmd *cobra.Command, args []string) {
-	initViper()
-	log.Info("What a good time to be alive")
+func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) {
+		ctx, cancel := context.WithCancel(context.Background())
+		w.alive = true
+		initViper(w)
+		log.Info("What a good time to be alive")
+		w.initServer(ctx)
 
-	alive = true
+		// Gracefully shutdown connections
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
+		signal.Notify(c, syscall.SIGTERM)
+		signal.Notify(c, syscall.SIGKILL)
+		go func() {
+			<-c
+			if w.grpc.conn != nil {
+				log.Warning("Closing GRPC connections")
+				w.grpc.conn.Close()
+			}
+			cancel()
+			os.Exit(0)
+		}()
 
-	basedir = viper.GetString("basedir")
-	if basedir == "" {
-		basedir = os.TempDir()
-	}
+		// start logger routine with a large buffer
+		w.logChan = make(chan sdk.Log, 10000)
+		go w.logger()
 
-	bookedJobID = viper.GetInt64("booked_job_id")
+		suicideTick := time.NewTicker(time.Duration(viper.GetInt("ttl")) * time.Minute).C
+		queuePollingTick := time.NewTicker(4 * time.Second).C
+		registerTick := time.NewTicker(10 * time.Second).C
 
-	initServer()
-
-	// Gracefully shutdown connections
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
-	signal.Notify(c, syscall.SIGKILL)
-	go func() {
-		<-c
-		if grpcConn != nil {
-			log.Warning("Closing GRPC connections")
-			grpcConn.Close()
-		}
-		os.Exit(0)
-	}()
-
-	// start logger routine with a large buffer
-	logChan = make(chan sdk.Log, 10000)
-	go logger(logChan)
-
-	suicideTick := time.NewTicker(time.Duration(viper.GetInt("ttl")) * time.Minute).C
-	queuePollingTick := time.NewTicker(4 * time.Second).C
-	registerTick := time.NewTicker(1 * time.Second).C
-
-	for {
-		if !alive && viper.GetBool("single_use") {
-			return
-		}
-
-		select {
-		case <-registerTick:
-			if WorkerID == "" {
-				var info string
-				if bookedJobID > 0 {
-					info = fmt.Sprintf(", I was born to work on job %d", bookedJobID)
-				}
-				log.Info("Registering on CDS engine%s", info)
-				if err := register(api, name, key); err != nil {
-					log.Info("Cannot register: %s", err)
-					continue
-				}
-				alive = true
+		for {
+			if !w.alive && viper.GetBool("single_use") {
+				return
 			}
 
-		case <-suicideTick:
-			if nbActionsDone == 0 {
-				log.Info("Time to exit.")
-				unregister()
-			}
+			select {
+			case <-registerTick:
+				if w.id == "" {
+					var info string
+					if w.bookedJobID > 0 {
+						info = fmt.Sprintf(", I was born to work on job %d", w.bookedJobID)
+					}
+					log.Info("Registering on CDS engine%s", info)
+					form := worker.RegistrationForm{
+						Name:         w.status.Name,
+						Token:        w.token,
+						Hatchery:     w.hatchery.id,
+						HatcheryName: w.hatchery.name,
+						Model:        w.modelID,
+					}
+					if err := w.register(form); err != nil {
+						log.Info("Cannot register: %s", err)
+						continue
+					}
+					w.alive = true
+				}
 
-		case <-queuePollingTick:
-			queuePolling()
-			firstViewQueue = false
+			case <-suicideTick:
+				if w.nbActionsDone == 0 {
+					log.Info("Time to exit.")
+					w.unregister()
+				}
+
+			case <-queuePollingTick:
+				w.queuePolling()
+				firstViewQueue = false
+			}
 		}
 	}
-
 }

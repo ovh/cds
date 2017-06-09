@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 )
 
-func getWorkflowTriggerCondition(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowTriggerCondition(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	operators := []string{"=", "!=", "<", "<=", ">=", ">"}
 
 	data := struct {
@@ -22,7 +22,7 @@ func getWorkflowTriggerCondition(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, data, http.StatusOK)
 }
 
-func getWorkflowTriggerJoinCondition(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowTriggerJoinCondition(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	operators := []string{"=", "!=", "<", "<=", ">=", ">"}
 
 	data := struct {

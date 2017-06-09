@@ -8,7 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/internal"
@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Unmarshal body
 	params := &worker.RegistrationForm{}
 	if err := UnmarshalBody(r, params); err != nil {
@@ -35,7 +35,7 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	// Try to register worker
-	worker, err := worker.RegisterWorker(db, params.Name, params.UserKey, params.Model, h, params.BinaryCapabilities)
+	worker, err := worker.RegisterWorker(db, params.Name, params.Token, params.Model, h, params.BinaryCapabilities)
 	if err != nil {
 		err = sdk.NewError(sdk.ErrUnauthorized, err)
 		return sdk.WrapError(err, "registerWorkerHandler> [%s] Registering failed", params.Name)
@@ -49,7 +49,7 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return WriteJSON(w, r, worker, http.StatusOK)
 }
 
-func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workers, err := worker.LoadWorkersByModel(db, 0)
 	if err != nil {
 		return sdk.WrapError(err, "getOrphanWorker> Cannot load workers")
@@ -57,7 +57,7 @@ func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	return WriteJSON(w, r, workers, http.StatusOK)
 }
 
-func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	if err := r.ParseForm(); err != nil {
 		return sdk.WrapError(err, "getWorkerModels> cannot parse form")
 	}
@@ -75,7 +75,7 @@ func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	return WriteJSON(w, r, workers, http.StatusOK)
 }
 
-func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -149,21 +149,21 @@ func disableWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	return nil
 }
 
-func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func refreshWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	if err := worker.RefreshWorker(db, c.Worker.ID); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 		return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", c.Worker.ID)
 	}
 	return nil
 }
 
-func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func unregisterWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	if err := worker.DeleteWorker(db, c.Worker.ID); err != nil {
 		return sdk.WrapError(err, "unregisterWorkerHandler> cannot delete worker %s", c.Worker.ID)
 	}
 	return nil
 }
 
-func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	wk, errW := worker.LoadWorker(db, c.Worker.ID)
 	if errW != nil {
 		return sdk.WrapError(errW, "workerCheckingHandler> Unable to load worker %s", c.Worker.ID)
@@ -181,7 +181,7 @@ func workerCheckingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
-func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func workerWaitingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	wk, errW := worker.LoadWorker(db, c.Worker.ID)
 	if errW != nil {
 		return sdk.WrapError(errW, "workerWaitingHandler> Unable to load worker %s", c.Worker.ID)

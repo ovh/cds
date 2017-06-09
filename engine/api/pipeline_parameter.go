@@ -6,13 +6,13 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -32,7 +32,7 @@ func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *
 	return WriteJSON(w, r, parameters, http.StatusOK)
 }
 
-func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -75,7 +75,7 @@ func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 // Deprecated
-func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -182,7 +182,7 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	return WriteJSON(w, r, append(added, updated...), http.StatusOK)
 }
 
-func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -240,7 +240,7 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]

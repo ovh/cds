@@ -11,12 +11,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func deleteUserPermissionCache(c *context.Ctx) {
+func deleteUserPermissionCache(c *businesscontext.Ctx) {
 	if c.User != nil {
 		k := cache.Key("users", c.User.Username, "permissions")
 		cache.Delete(k)

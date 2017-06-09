@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -9,27 +10,26 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-func runBuiltin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runBuiltin(c context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail.String()}
 	switch a.Name {
 	case sdk.ArtifactUpload:
 		filePattern, tag := getArtifactParams(a)
-		return runArtifactUpload(filePattern, tag, pbJob, stepOrder)
+		return w.runArtifactUpload(c, filePattern, tag, pbJob, stepOrder)
 	case sdk.ArtifactDownload:
-		return runArtifactDownload(a, pbJob, stepOrder)
+		return w.runArtifactDownload(c, a, pbJob, stepOrder)
 	case sdk.ScriptAction:
-		return runScriptAction(a, pbJob, stepOrder)
+		return w.runScriptAction(c, a, pbJob, stepOrder)
 	case sdk.JUnitAction:
-		return runParseJunitTestResultAction(a, pbJob, stepOrder)
+		return w.runParseJunitTestResultAction(c, a, pbJob, stepOrder)
 	case sdk.GitCloneAction:
-		return runGitClone(a, pbJob, stepOrder)
+		return w.runGitClone(c, a, pbJob, stepOrder)
 	}
-
-	res.Reason = fmt.Sprintf("Unknown builtin step: %s\n", name)
+	res.Reason = fmt.Sprintf("Unknown builtin step: %s\n", a.Name)
 	return res
 }
 
-func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runPlugin(c context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail.String()}
 	//For the moment we consider that plugin name = action name = plugin binary file name
 	pluginName := a.Name
@@ -42,7 +42,7 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Res
 	}
 
 	//Create the rpc server
-	pluginClient := plugin.NewClient(pluginName, pluginBinary, WorkerID, api, tlsskipverify)
+	pluginClient := plugin.NewClient(pluginName, pluginBinary, w.id, w.apiEndpoint, tlsskipverify)
 	defer pluginClient.Kill()
 
 	//Get the plugin interface
@@ -52,7 +52,7 @@ func runPlugin(a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Res
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Unable to init plugin %s: %s\n", pluginName, err),
 		}
-		sendLog(pbJob.ID, result.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		w.sendLog(pbJob.ID, result.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return result
 	}
 

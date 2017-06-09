@@ -16,32 +16,32 @@ import (
 
 var firstViewQueue = true
 
-func queuePolling() {
-	checkQueue(bookedJobID)
+func (w *currentWorker) queuePolling() {
+	w.checkPipelineBuildJobQueue()
 	if firstViewQueue {
 		// if worker did not found booked job ID is first iteration
 		// reset booked job to take another action
-		bookedJobID = 0
+		w.bookedJobID = 0
 	}
 }
 
-func checkQueue(bookedJobID int64) {
-	defer sdk.SetWorkerStatus(sdk.StatusWaiting)
+func (w *currentWorker) checkPipelineBuildJobQueue() {
+	defer w.client.WorkerSetStatus(sdk.StatusWaiting)
 
 	queue, err := sdk.GetBuildQueue()
 	if err != nil {
 		log.Warning("checkQueue> Cannot get build queue: %s", err)
-		WorkerID = ""
+		w.id = ""
 		return
 	}
 
 	log.Info("checkQueue> %d actions in queue", len(queue))
 
 	//Set the status to checking to avoid being killed while checking queue, actions and requirements
-	sdk.SetWorkerStatus(sdk.StatusChecking)
+	w.client.WorkerSetStatus(sdk.StatusChecking)
 
 	for i := range queue {
-		if bookedJobID != 0 && queue[i].ID != bookedJobID {
+		if w.bookedJobID != 0 && queue[i].ID != w.bookedJobID {
 			continue
 		}
 
@@ -49,7 +49,7 @@ func checkQueue(bookedJobID int64) {
 		// Check requirement
 		log.Info("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)
 		for _, r := range queue[i].Job.Action.Requirements {
-			ok, err := checkRequirement(r)
+			ok, err := checkRequirement(w, r)
 			if err != nil {
 				postCheckRequirementError(&r, err)
 				requirementsOK = false
@@ -63,16 +63,16 @@ func checkQueue(bookedJobID int64) {
 
 		if requirementsOK {
 			t := ""
-			if queue[i].ID != bookedJobID {
+			if queue[i].ID != w.bookedJobID {
 				t = ", this was my booked job"
 			}
 			log.Info("checkQueue> Taking job %d%s", queue[i].ID, t)
-			takeJob(queue[i], queue[i].ID == bookedJobID)
+			w.takeJob(queue[i], queue[i].ID == w.bookedJobID)
 		}
 	}
 
-	if bookedJobID > 0 {
-		log.Info("checkQueue> worker born for work on job %d but job is not found in queue", bookedJobID)
+	if w.bookedJobID > 0 {
+		log.Info("checkQueue> worker born for work on job %d but job is not found in queue", w.bookedJobID)
 	}
 
 	if !viper.GetBool("single_use") {
@@ -85,7 +85,7 @@ func postCheckRequirementError(r *sdk.Requirement, err error) {
 	sdk.Request("POST", "/queue/requirements/errors", []byte(s))
 }
 
-func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
+func (w *currentWorker) takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	in := worker.TakeForm{Time: time.Now()}
 	if isBooked {
 		in.BookedJobID = b.ID
@@ -96,9 +96,9 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		log.Info("takeJob> Cannot marshal body: %s", errm)
 	}
 
-	nbActionsDone++
-	gitsshPath = ""
-	pkey = ""
+	w.nbActionsDone++
+	w.currentJob.gitsshPath = ""
+	w.currentJob.pkey = ""
 	path := fmt.Sprintf("/queue/%d/take", b.ID)
 	data, code, errr := sdk.Request("POST", path, bodyTake)
 	if errr != nil {
@@ -115,11 +115,11 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		return
 	}
 
-	pbJob = pbji.PipelineBuildJob
+	w.currentJob.pbJob = pbji.PipelineBuildJob
 	// Reset build variables
-	buildVariables = nil
+	w.currentJob.buildVariables = nil
 	start := time.Now()
-	res := run(&pbji)
+	res := w.run(&pbji)
 	now, _ := ptypes.TimestampProto(time.Now())
 	res.RemoteTime = now
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
@@ -131,7 +131,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	body, errm := json.MarshalIndent(res, " ", " ")
 	if errm != nil {
 		log.Error("takeJob> Cannot marshal result: %s", errm)
-		unregister()
+		w.unregister()
 		return
 	}
 
@@ -142,7 +142,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		_, code, errre = sdk.Request("POST", path, body)
 		if code == http.StatusNotFound {
 			log.Info("takeJob> Cannot send build result: PipelineBuildJob does not exists anymore")
-			unregister() // well...
+			w.unregister() // well...
 			break
 		}
 		if errre == nil && code < 300 {
@@ -168,7 +168,7 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		// Give time to logs to be flushed
 		time.Sleep(2 * time.Second)
 		// Unregister from engine
-		if err := unregister(); err != nil {
+		if err := w.unregister(); err != nil {
 			log.Warning("takeJob> could not unregister: %s", err)
 		}
 	}

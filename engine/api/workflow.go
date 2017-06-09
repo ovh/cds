@@ -8,14 +8,14 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
-func getWorkflowsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
@@ -28,7 +28,7 @@ func getWorkflowsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 }
 
 // getWorkflowHandler returns a full workflow
-func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
@@ -41,7 +41,7 @@ func getWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 }
 
 // postWorkflowHandler create a new workflow
-func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
@@ -83,7 +83,7 @@ func postWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 }
 
 // putWorkflowHandler updates a workflow
-func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
@@ -135,7 +135,7 @@ func putWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 }
 
 // putWorkflowHandler deletes a workflow
-func deleteWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
@@ -170,7 +170,7 @@ func deleteWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
-func getWorkflowNodeRunArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowNodeRunArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
@@ -192,7 +192,7 @@ func getWorkflowNodeRunArtifactsHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, nodeRun.Artifacts, http.StatusOK)
 }
 
-func getDownloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getDownloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
