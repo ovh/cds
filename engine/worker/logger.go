@@ -91,7 +91,7 @@ func (w *currentWorker) logger(c context.Context) {
 					currentStepLog.Val += l.Val
 					currentStepLog.LastModified = l.LastModified
 					currentStepLog.Done = l.Done
-				} else {
+				} efor lse {
 					// new Step
 					logs = append(logs, currentStepLog)
 					currentStepLog = &l
