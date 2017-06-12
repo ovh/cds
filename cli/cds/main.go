@@ -9,8 +9,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/ovh/cds/cli/cds/action"
 	"github.com/ovh/cds/cli/cds/admin"
 	"github.com/ovh/cds/cli/cds/application"
@@ -31,6 +29,7 @@ import (
 	"github.com/ovh/cds/cli/cds/wizard"
 	"github.com/ovh/cds/cli/cds/worker"
 	"github.com/ovh/cds/cli/cds/workflow"
+	"github.com/ovh/cds/sdk"
 )
 
 var rootCmd = &cobra.Command{
@@ -67,7 +66,7 @@ func main() {
 		sdk.CDSConfigFile = internal.ConfigFile
 
 		//On login command: do nothing
-		if cmd == login.Cmd {
+		if cmd == login.CmdLogin || cmd == login.CmdSignup {
 			return
 		}
 
@@ -99,7 +98,8 @@ func main() {
 
 	}
 
-	rootCmd.AddCommand(login.Cmd)
+	rootCmd.AddCommand(login.CmdLogin)
+	rootCmd.AddCommand(login.CmdSignup)
 	rootCmd.AddCommand(action.Cmd)
 	rootCmd.AddCommand(application.Cmd())
 	rootCmd.AddCommand(artifact.Cmd)
