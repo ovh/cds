@@ -13,8 +13,8 @@
             <div class="viewContent">
 
                     <div class="ui right floated green buttons">
-                        <div class="ui button" (click)="runWorkflow()">{{ 'btn_run_workflow' | translate }}</div>
-                        <sm-dropdown class="floating icon button">
+                        <div class="ui button" (click)="runWorkflow()" [class.loading]="loading">{{ 'btn_run_workflow' | translate }}</div>
+                        <sm-dropdown class="icon button">
                             <sm-item>
                                 {{ 'btn_run_custom_worklow' | translate }}
                             </sm-item>

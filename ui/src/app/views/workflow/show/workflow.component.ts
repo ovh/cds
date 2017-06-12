@@ -15,6 +15,7 @@ import {cloneDeep} from 'lodash';
 import {WorkflowTriggerJoinComponent} from '../../../shared/workflow/join/trigger/trigger.join.component';
 import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 
 declare var _: any;
 @Component({
@@ -47,8 +48,10 @@ export class WorkflowShowComponent {
     selectedJoin: WorkflowNodeJoin;
     selectedJoinTrigger: WorkflowNodeJoinTrigger;
 
+    loading = false;
+
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService) {
+                private _translate: TranslateService, private _toast: ToastService, private _worklowRun: WorkflowRunService) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -82,7 +85,7 @@ export class WorkflowShowComponent {
         this._router.navigateByUrl('/project/' + this.project.key + '/workflow/' + this.detailedWorkflow.name + '?tab=' + tab);
     }
 
-    public openDeleteJoinSrcModal(data: {source, target}) {
+    public openDeleteJoinSrcModal(data: { source, target }) {
         let pID = Number(data.source.replace('node-', ''));
         let cID = Number(data.target.replace('join-', ''));
 
@@ -94,7 +97,7 @@ export class WorkflowShowComponent {
         }
     }
 
-    public openEditTriggerModal(data: {source, target}) {
+    public openEditTriggerModal(data: { source, target }) {
         let pID = Number(data.source.replace('node-', ''));
         let cID = Number(data.target.replace('node-', ''));
         let node = Workflow.getNodeByID(pID, this.detailedWorkflow);
@@ -115,7 +118,7 @@ export class WorkflowShowComponent {
         }
     }
 
-    public openEditJoinTriggerModal(data: {source, target}) {
+    public openEditJoinTriggerModal(data: { source, target }) {
         let pID = Number(data.source.replace('join-', ''));
         let cID = Number(data.target.replace('node-', ''));
         let join = this.detailedWorkflow.joins.find(j => j.id === pID);
@@ -131,7 +134,7 @@ export class WorkflowShowComponent {
         }
     }
 
-    public addSourceToJoin(data: {source: WorkflowNode, target: WorkflowNodeJoin}): void {
+    public addSourceToJoin(data: { source: WorkflowNode, target: WorkflowNodeJoin }): void {
         let clonedWorkflow: Workflow = cloneDeep(this.detailedWorkflow);
         let currentJoin = clonedWorkflow.joins.find(j => j.id === data.target.id);
         this.selectedNode = data.source;
@@ -147,7 +150,7 @@ export class WorkflowShowComponent {
 
         switch (action) {
             case 'delete_join':
-                clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !==  this.selectedJoin.id);
+                clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !== this.selectedJoin.id);
                 Workflow.removeOldRef(clonedWorkflow);
                 break;
             default:
@@ -197,9 +200,13 @@ export class WorkflowShowComponent {
         });
     }
 
-
-
     runWorkflow(): void {
-
+        this.loading = true;
+        this._worklowRun.runWorkflow(this.project.key, this.detailedWorkflow, {}).first().subscribe(wr => {
+            this.loading = false;
+            this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name, 'run', wr.num]);
+        }, () => {
+            this.loading = false;
+        });
     }
 }

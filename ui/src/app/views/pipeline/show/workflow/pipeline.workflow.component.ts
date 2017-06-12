@@ -44,6 +44,9 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
         });
         dragulaService.drop.subscribe(v => {
             setTimeout(() => {
+                if (v[0] !== 'bag-stage') {
+                    return;
+                }
                 let stageMovedBuildOrder = Number(v[1].id.replace('step', ''));
                 let stageMoved: Stage;
                 for (let i = 0; i < this.pipeline.stages.length; i++) {
