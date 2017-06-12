@@ -14,7 +14,7 @@ func TestCheckRequirement(t *testing.T) {
 		Value: "go",
 	}
 
-	ok, err := checkRequirement(r)
+	ok, err := checkRequirement(nil, r)
 	if err != nil {
 		t.Fatalf("checkRequirement should not fail: %s", err)
 	}
@@ -23,7 +23,7 @@ func TestCheckRequirement(t *testing.T) {
 	}
 
 	r.Value = "foo"
-	ok, err = checkRequirement(r)
+	ok, err = checkRequirement(nil, r)
 	if err != nil {
 		t.Fatalf("checkRequirement should not fail: %s", err)
 	}
@@ -44,7 +44,7 @@ func TestCheckHostnameRequirement(t *testing.T) {
 		Value: h,
 	}
 
-	ok, err := checkRequirement(r)
+	ok, err := checkRequirement(nil, r)
 	if err != nil {
 		t.Fatalf("checkRequirement should not fail: %s", err)
 	}
@@ -54,7 +54,7 @@ func TestCheckHostnameRequirement(t *testing.T) {
 	}
 
 	r.Value = "fewfewf"
-	ok, err = checkRequirement(r)
+	ok, err = checkRequirement(nil, r)
 	if err != nil {
 		t.Fatalf("checkRequirement should not fail: %s", err)
 	}
@@ -70,7 +70,7 @@ func TestNetworkAccessRequirement(t *testing.T) {
 		Value: "google.com:443",
 	}
 
-	ok, err := checkRequirement(r)
+	ok, err := checkRequirement(nil, r)
 	if err != nil {
 		t.Fatalf("checkRequirement should not fail: %s", err)
 	}
@@ -80,7 +80,7 @@ func TestNetworkAccessRequirement(t *testing.T) {
 	}
 
 	r.Value = "fewfewf"
-	ok, err = checkRequirement(r)
+	ok, err = checkRequirement(nil, r)
 	if err != nil {
 		t.Fatalf("checkRequirement should not fail: %s", err)
 	}
