@@ -54,6 +54,38 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 
 	w.currentJob.pbJob = pbji.PipelineBuildJob
 
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func(cancel context.CancelFunc, jobID int64) {
+		tick := time.NewTicker(5 * time.Second)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
+				if err != nil {
+					log.Error("Unable to load pipeline build job %d", jobID)
+					cancel()
+					return
+				}
+
+				j := &sdk.PipelineBuildJob{}
+				if err := json.Unmarshal(b, j); err != nil {
+					log.Error("Unable to load pipeline build job %d: %v", jobID, err)
+					cancel()
+					return
+				}
+				if j.Status != sdk.StatusBuilding.String() {
+					cancel()
+					return
+				}
+
+			}
+		}
+	}(cancel, pipelineBuildJobID)
+
 	// Reset build variables
 	w.currentJob.buildVariables = nil
 	start := time.Now()
@@ -85,7 +117,6 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 		_, code, errre = sdk.Request("POST", path, body)
 		if code == http.StatusNotFound {
 			log.Info("takeJob> Cannot send build result: PipelineBuildJob does not exists anymore")
-			w.unregister() // well...
 			break
 		}
 		if errre == nil && code < 300 {
