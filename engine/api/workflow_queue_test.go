@@ -159,10 +159,10 @@ func test_registerWorker(t *testing.T, db *gorp.DbMap, ctx *test_runWorkflowCtx)
 	test.NoError(t, token.InsertToken(db, ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent))
 	//Register the worker
 	params := &worker.RegistrationForm{
-		Name:    sdk.RandomString(10),
-		UserKey: ctx.workerToken,
+		Name:  sdk.RandomString(10),
+		Token: ctx.workerToken,
 	}
-	ctx.worker, err = worker.RegisterWorker(db, params.Name, params.UserKey, params.Model, nil, params.BinaryCapabilities)
+	ctx.worker, err = worker.RegisterWorker(db, params.Name, params.Token, params.Model, nil, params.BinaryCapabilities)
 	test.NoError(t, err)
 }
 
