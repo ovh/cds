@@ -45,9 +45,6 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 }
 
 func (w *currentWorker) unregister() error {
-	//Wait until the logchannel is empty
-	w.waitLogsDraining()
-
 	w.alive = false
 	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
 	if err != nil {

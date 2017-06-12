@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func (w *currentWorker) runGitClone(c context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runGitClone(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	url := sdk.ParameterFind(a.Parameters, "url")
 	privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
 	user := sdk.ParameterFind(a.Parameters, "user")

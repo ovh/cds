@@ -58,13 +58,17 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	w.currentJob.buildVariables = nil
 	start := time.Now()
 	//Run !
-	res := w.run(&pbji)
+	res := w.run(ctx, &pbji)
 	now, _ := ptypes.TimestampProto(time.Now())
 	res.RemoteTime = now
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
 	//Wait until the logchannel is empty
-	w.waitLogsDraining()
+	if ctx.Err() == nil {
+		w.drainLogsAndCloseLogger(ctx)
+	}
+
+	log.Debug("Send result")
 
 	path = fmt.Sprintf("/queue/%d/result", pipelineBuildJobID)
 	body, errm := json.MarshalIndent(res, " ", " ")

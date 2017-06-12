@@ -10,26 +10,26 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-func (w *currentWorker) runBuiltin(c context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail.String()}
 	switch a.Name {
 	case sdk.ArtifactUpload:
 		filePattern, tag := getArtifactParams(a)
-		return w.runArtifactUpload(c, filePattern, tag, pbJob, stepOrder)
+		return w.runArtifactUpload(ctx, filePattern, tag, pbJob, stepOrder)
 	case sdk.ArtifactDownload:
-		return w.runArtifactDownload(c, a, pbJob, stepOrder)
+		return w.runArtifactDownload(ctx, a, pbJob, stepOrder)
 	case sdk.ScriptAction:
-		return w.runScriptAction(c, a, pbJob, stepOrder)
+		return w.runScriptAction(ctx, a, pbJob, stepOrder)
 	case sdk.JUnitAction:
-		return w.runParseJunitTestResultAction(c, a, pbJob, stepOrder)
+		return w.runParseJunitTestResultAction(ctx, a, pbJob, stepOrder)
 	case sdk.GitCloneAction:
-		return w.runGitClone(c, a, pbJob, stepOrder)
+		return w.runGitClone(ctx, a, pbJob, stepOrder)
 	}
 	res.Reason = fmt.Sprintf("Unknown builtin step: %s\n", a.Name)
 	return res
 }
 
-func (w *currentWorker) runPlugin(c context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusFail.String()}
 	//For the moment we consider that plugin name = action name = plugin binary file name
 	pluginName := a.Name

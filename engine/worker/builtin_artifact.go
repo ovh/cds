@@ -31,7 +31,7 @@ func getArtifactParams(action *sdk.Action) (string, string) {
 	return filePattern, tag
 }
 
-func (w *currentWorker) runArtifactUpload(c context.Context, filePattern, tag string, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runArtifactUpload(ctx context.Context, filePattern, tag string, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusSuccess.String()}
 	var project, pipeline, application, environment, buildNumberString string
 
@@ -106,7 +106,7 @@ func (w *currentWorker) runArtifactUpload(c context.Context, filePattern, tag st
 	return res
 }
 
-func (w *currentWorker) runArtifactDownload(c context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runArtifactDownload(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	res := sdk.Result{Status: sdk.StatusSuccess.String()}
 	var project, pipeline, application, environment, tag, filePath string
 	enabled := true

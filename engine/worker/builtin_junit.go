@@ -12,7 +12,7 @@ import (
 	"github.com/runabove/venom"
 )
 
-func (w *currentWorker) runParseJunitTestResultAction(c context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func (w *currentWorker) runParseJunitTestResultAction(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
 	var res sdk.Result
 	res.Status = sdk.StatusFail.String()
 

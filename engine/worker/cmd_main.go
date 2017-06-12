@@ -132,7 +132,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		// start logger routine with a large buffer
 		w.logChan = make(chan sdk.Log, 100000)
-		go w.logger(ctx)
+		go w.logger()
 
 		// start queue polling
 		pbjobs := make(chan sdk.PipelineBuildJob, 1)
@@ -182,6 +182,10 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				return
 
 			case j := <-pbjobs:
+				if j.ID == 0 {
+					continue
+				}
+
 				requirementsOK := true
 				w.client.WorkerSetStatus(sdk.StatusChecking)
 				for _, r := range j.Job.Action.Requirements {
