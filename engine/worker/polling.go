@@ -64,9 +64,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
 	//Wait until the logchannel is empty
-	for len(w.logChan) > 0 {
-		time.Sleep(100 * time.Millisecond)
-	}
+	w.waitLogsDraining()
 
 	path = fmt.Sprintf("/queue/%d/result", pipelineBuildJobID)
 	body, errm := json.MarshalIndent(res, " ", " ")

@@ -2,7 +2,6 @@ package cdsclient
 
 import (
 	"context"
-
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"

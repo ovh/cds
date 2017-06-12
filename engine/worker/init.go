@@ -52,9 +52,9 @@ func initViper(w *currentWorker) {
 		os.Exit(3)
 	}
 
-	w.token = viper.GetString("key")
+	w.token = viper.GetString("token")
 	if w.token == "" {
-		log.Error("--key not provided, aborting.")
+		log.Error("--token not provided, aborting.")
 		os.Exit(4)
 	}
 

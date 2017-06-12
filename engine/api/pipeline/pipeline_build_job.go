@@ -80,9 +80,9 @@ func GetPipelineBuildJobForUpdate(db gorp.SqlExecutor, id int64) (*sdk.PipelineB
 	if err := db.SelectOne(&pbJobGorp, `
 		SELECT *
 		FROM pipeline_build_job
-		WHERE id = $1 FOR UPDATE
+		WHERE id = $1 FOR UPDATE NOWAIT
 	`, id); err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "GetPipelineBuildJobForUpdate> Unable to get pipeline_build_job for update")
 	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
 	return &pbJob, nil

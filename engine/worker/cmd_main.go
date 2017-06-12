@@ -33,8 +33,8 @@ func cmdMain(w *currentWorker) *cobra.Command {
 	pflags.String("api", "", "URL of CDS API")
 	viper.BindPFlag("api", pflags.Lookup("api"))
 
-	pflags.String("key", "", "CDS KEY")
-	viper.BindPFlag("key", pflags.Lookup("key"))
+	pflags.String("token", "", "CDS Token")
+	viper.BindPFlag("token", pflags.Lookup("token"))
 
 	pflags.String("name", "", "Name of worker")
 	viper.BindPFlag("name", pflags.Lookup("name"))
@@ -135,15 +135,14 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		go w.logger(ctx)
 
 		// start queue polling
-		pbjobs := make(chan sdk.PipelineBuildJob)
-		wjobs := make(chan sdk.WorkflowNodeJobRun)
-		errs := make(chan error)
+		pbjobs := make(chan sdk.PipelineBuildJob, 1)
+		wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
+		errs := make(chan error, 1)
 
 		//Before start the loop, take the bookJobID
-		//TODO: TEST THIS !!
 		if w.bookedJobID != 0 {
 			log.Debug("Try to take the job %d", w.bookedJobID)
-			b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d", w.bookedJobID), nil)
+			b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedJobID), nil)
 			if err != nil {
 				log.Error("Unable to load pipeline build job %d", w.bookedJobID)
 			} else {
@@ -200,7 +199,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if requirementsOK {
 					t := ""
-					if j.ID != w.bookedJobID {
+					if j.ID == w.bookedJobID {
 						t = ", this was my booked job"
 					}
 					log.Info("checkQueue> Taking job %d%s", j.ID, t)

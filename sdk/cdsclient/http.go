@@ -3,14 +3,13 @@ package cdsclient
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
-
-	"encoding/json"
 
 	"github.com/ovh/cds/sdk"
 )

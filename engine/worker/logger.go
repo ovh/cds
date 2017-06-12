@@ -160,3 +160,9 @@ func (w *currentWorker) grpcLogger(c context.Context, inputChan chan sdk.Log) er
 		}
 	}
 }
+
+func (w *currentWorker) waitLogsDraining() {
+	for len(w.logChan) > 0 {
+		time.Sleep(100 * time.Millisecond)
+	}
+}

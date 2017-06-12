@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/spf13/cobra"
 )
 
 func cmdRegister(w *currentWorker) *cobra.Command {

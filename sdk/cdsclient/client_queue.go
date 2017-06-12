@@ -35,7 +35,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			if jobs != nil {
 				queue := []sdk.WorkflowNodeJobRun{}
 				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
-					errs <- err
+					errs <- sdk.WrapError(err, "Unable to load old jobs")
 				}
 				t0 = time.Now()
 				for _, j := range queue {
@@ -46,10 +46,11 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			if jobs != nil {
 				queue := []sdk.WorkflowNodeJobRun{}
 				if _, err := c.GetJSON("/queue/workflows", &queue, SetHeader("If-Modified-Since", t0.Format(time.RFC1123))); err != nil {
-					errs <- err
+					errs <- sdk.WrapError(err, "Unable to load jobs")
 				}
 				t0 = time.Now()
 				for _, j := range queue {
+					fmt.Printf("Job in queue :%+v\n", j)
 					jobs <- j
 				}
 			}
@@ -57,7 +58,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			if pbjobs != nil {
 				queue, err := sdk.GetBuildQueue()
 				if err != nil {
-					errs <- err
+					errs <- sdk.WrapError(err, "Unable to load pipeline build jobs")
 				}
 				for _, j := range queue {
 					pbjobs <- j

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"runtime"
-	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
@@ -47,9 +46,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 
 func (w *currentWorker) unregister() error {
 	//Wait until the logchannel is empty
-	for len(w.logChan) > 0 {
-		time.Sleep(100 * time.Millisecond)
-	}
+	w.waitLogsDraining()
 
 	w.alive = false
 	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
