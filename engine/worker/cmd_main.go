@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,8 +11,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"encoding/json"
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"

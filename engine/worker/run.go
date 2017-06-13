@@ -112,8 +112,6 @@ func (w *currentWorker) replaceBuildVariablesPlaceholder(a *sdk.Action) {
 }
 
 func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, stepName string) sdk.Result {
-	//TODO call the API to fetch the pipeline and the job. If it's stopped => cancel the context
-
 	// Replace build variable placeholder that may have been added by last step
 	w.replaceBuildVariablesPlaceholder(a)
 
