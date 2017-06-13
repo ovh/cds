@@ -14,6 +14,9 @@ function httpCall (path, host, user, session) {
         if (xhr.status === 200) {
             return xhr.responseText;
         }
+        if (xhr.status === 401) {
+            close();
+        }
         return null;
     }
 }

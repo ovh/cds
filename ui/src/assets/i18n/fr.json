@@ -209,6 +209,7 @@
   "navbar_settings" : "Paramètres",
   "navbar_users" : "Utilisateurs",
   "navbar_worker_models" : "Modèles de worker",
+  "navbar_settings" : "Configuration",
 
   "notifications_added" : "Notifications ajoutées",
   "notification_clone" : "Notification à cloner",
@@ -483,6 +484,7 @@
   "workflow_join_trigger_src_delete" : "Supprimer le lien",
   "workflow_join_trigger_title" : "Trigger",
   "workflow_join_trigger_src_title" : "Suppression",
+  "workflow_loading" : "Chargement du workflow...",
   "workflow_name" : "Nom du workflow",
   "workflow_node_context_edit" : "Éditer le contexte du pipeline",
   "workflow_node_context_pipeline_parameter" : "Paramètres du pipeline",

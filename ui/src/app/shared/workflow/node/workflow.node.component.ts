@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnInit, Output, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeTrigger} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
@@ -12,6 +12,9 @@ import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
+import {CDSWorker} from '../../worker/worker';
+import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
+import {Router} from '@angular/router';
 
 
 declare var _: any;
@@ -21,7 +24,7 @@ declare var _: any;
     styleUrls: ['./workflow.node.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeComponent implements AfterViewInit {
+export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
@@ -42,9 +45,25 @@ export class WorkflowNodeComponent implements AfterViewInit {
     editableNode: WorkflowNode;
 
     pipelineSubscription: Subscription;
+    webworker: CDSWorker;
+
+    zone: NgZone;
+    currentNodeRun: WorkflowNodeRun;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
-                private _toast: ToastService, private _pipelineStore: PipelineStore) {
+                private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {
+    }
+
+    ngOnInit(): void {
+        if (this.webworker) {
+            this.zone = new NgZone({enableLongStackTrace: false});
+            this.webworker.response().subscribe(wrString => {
+                let wr = <WorkflowRun>JSON.parse(wrString);
+                if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
+                    this.currentNodeRun = wr.nodes[this.node.id][0];
+                }
+            });
+        }
     }
 
     ngAfterViewInit() {
@@ -161,5 +180,17 @@ export class WorkflowNodeComponent implements AfterViewInit {
 
     linkJoin(): void {
         this.linkJoinEvent.emit(this.node);
+    }
+
+    goToNodeRun(): void {
+        if (!this.webworker) {
+            return;
+        }
+        this._router.navigate([
+            '/project', this.project.key,
+            'workflow', this.workflow.name,
+            'run', this.currentNodeRun.num,
+            'node', this.node.id,
+            'subnumber', this.currentNodeRun.subnumber]);
     }
 }
