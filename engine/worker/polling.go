@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
@@ -127,6 +125,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 		for {
 			select {
 			case <-ctx.Done():
+				log.Debug("Exiting pippelibe build job info goroutine: %v", ctx.Err())
 				return
 			case <-tick.C:
 				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
@@ -161,17 +160,12 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
 	//Wait until the logchannel is empty
-	if ctx.Err() == nil {
-		w.drainLogsAndCloseLogger(ctx)
-	}
-
-	log.Debug("Send result")
+	w.drainLogsAndCloseLogger(ctx)
 
 	path = fmt.Sprintf("/queue/%d/result", pipelineBuildJobID)
 	body, errm := json.MarshalIndent(res, " ", " ")
 	if errm != nil {
 		log.Error("takeJob> Cannot marshal result: %s", errm)
-		w.unregister()
 		return
 	}
 
@@ -202,12 +196,4 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 			break
 		}
 	}
-
-	if viper.GetBool("single_use") {
-		// Unregister from engine
-		if err := w.unregister(); err != nil {
-			log.Warning("takeJob> could not unregister: %s", err)
-		}
-	}
-
 }

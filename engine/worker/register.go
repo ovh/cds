@@ -18,6 +18,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 	requirements, errR := sdk.GetRequirements()
 	if errR != nil {
 		log.Warning("register> unable to get requirements : %s", errR)
+		return errR
 	}
 
 	log.Debug("Checking %d requirements", len(requirements))
@@ -45,7 +46,9 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 }
 
 func (w *currentWorker) unregister() error {
+	log.Info("Unregistering worker")
 	w.alive = false
+	w.id = ""
 	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
 	if err != nil {
 		return err
