@@ -11,6 +11,29 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+//LoadNodeRunBySub load a specific node run on a workflow
+func LoadNodeRunBySub(db gorp.SqlExecutor, projectkey, workflowname string, number, id int64, sub int64) (*sdk.WorkflowNodeRun, error) {
+	var rr = NodeRun{}
+
+	query := `select workflow_node_run.*
+	from workflow_node_run
+	join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+	join project on project.id = workflow_run.project_id
+	join workflow on workflow.id = workflow_run.workflow_id
+	where project.projectkey = $1
+	and workflow.name = $2
+	and workflow_run.num = $3
+	and workflow_node_run.id = $4
+	and workflow_node_run.sub = $5`
+
+	if err := db.SelectOne(&rr, query, projectkey, workflowname, number, id, sub); err != nil {
+		return nil, sdk.WrapError(err, "workflow.LoadNodeRun> Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
+	}
+
+	r := sdk.WorkflowNodeRun(rr)
+	return &r, nil
+}
+
 //LoadNodeRun load a specific node run on a workflow
 func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, id int64) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
