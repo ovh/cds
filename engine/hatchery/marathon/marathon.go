@@ -130,7 +130,7 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 
 	env := map[string]string{
 		"CDS_API":           sdk.Host,
-		"CDS_KEY":           m.token,
+		"CDS_TOKEN":         m.token,
 		"CDS_NAME":          workerName,
 		"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
 		"CDS_HATCHERY":      fmt.Sprintf("%d", m.hatch.ID),

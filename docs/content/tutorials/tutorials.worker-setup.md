@@ -65,7 +65,7 @@ Flags:
       --grpc-api string              CDS GRPC tcp address
       --grpc-insecure                Disable GRPC TLS encryption
       --hatchery int                 Hatchery spawing worker
-      --key string                   CDS KEY
+      --token string                 CDS Token
       --log-level string             Log Level : debug, info, notice, warning, critical (default "notice")
       --model int                    Model of worker
       --name string                  Name of worker
@@ -75,12 +75,12 @@ Flags:
 Use "worker [command] --help" for more information about a command.
 ```
 
-Mandatory parameters are **--api** and **--key**.
+Mandatory parameters are **--api** and **--token**.
 
 The most basic way to start a worker is as following:
 
 ```
-$ worker --api=https://your-cds-api --key=NTU2ZmFiOGZmMzI5MGU1NzVmY2FhNThmOTY3NjFmMDVmNmIxOTFhNDViNjRjETCETC
+$ worker --api=https://your-cds-api --token=NTU2ZmFiOGZmMzI5MGU1NzVmY2FhNThmOTY3NjFmMDVmNmIxOTFhNDViNjRjETCETC
 2016/03/24 11:30:50 [NOTICE]   What a good time to be alive
 2016/03/24 11:30:50 [NOTICE]   Disconnected from CDS engine, trying to register...
 2016/03/24 11:30:50 [NOTICE]   Registering [desk32345] at [https://your-cds-api]

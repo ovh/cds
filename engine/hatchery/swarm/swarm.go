@@ -267,7 +267,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 	env := []string{
 		"CDS_API" + "=" + sdk.Host,
 		"CDS_NAME" + "=" + name,
-		"CDS_KEY" + "=" + viper.GetString("token"),
+		"CDS_TOKEN" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,

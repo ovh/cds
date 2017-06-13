@@ -123,7 +123,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 				strings.HasPrefix(e, "CDS_TTL=") ||
 				strings.HasPrefix(e, "CDS_SINGLE_USE=") ||
 				strings.HasPrefix(e, "CDS_NAME=") ||
-				strings.HasPrefix(e, "CDS_KEY=") ||
+				strings.HasPrefix(e, "CDS_TOKEN=") ||
 				strings.HasPrefix(e, "CDS_API=") ||
 				strings.HasPrefix(e, "CDS_HATCHERY=") {
 				continue

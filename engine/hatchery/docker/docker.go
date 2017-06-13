@@ -197,7 +197,7 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 	args = append(args, "-e", "CDS_SINGLE_USE=1")
 	args = append(args, "-e", fmt.Sprintf("CDS_API=%s", sdk.Host))
 	args = append(args, "-e", fmt.Sprintf("CDS_NAME=%s", name))
-	args = append(args, "-e", fmt.Sprintf("CDS_KEY=%s", viper.GetString("token")))
+	args = append(args, "-e", fmt.Sprintf("CDS_TOKEN=%s", viper.GetString("token")))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY_NAME=%s", hd.hatch.Name))
