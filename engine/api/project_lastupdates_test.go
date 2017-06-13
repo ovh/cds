@@ -15,7 +15,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -107,7 +107,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 
 	test.NoError(t, loadUserPermissions(db, u))
 
-	c := &context.Ctx{
+	c := &businesscontext.Ctx{
 		User: u,
 	}
 
@@ -216,7 +216,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 
 	test.NoError(t, loadUserPermissions(db, u))
 
-	c := &context.Ctx{
+	c := &businesscontext.Ctx{
 		User: u,
 	}
 
@@ -338,7 +338,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 
 	test.NoError(t, loadUserPermissions(db, u))
 
-	c := &context.Ctx{
+	c := &businesscontext.Ctx{
 		User: u,
 	}
 
@@ -470,7 +470,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 
 	test.NoError(t, loadUserPermissions(db, u))
 
-	c := &context.Ctx{
+	c := &businesscontext.Ctx{
 		User: u,
 	}
 
@@ -593,7 +593,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 
 	test.NoError(t, loadUserPermissions(db, u))
 
-	c := &context.Ctx{
+	c := &businesscontext.Ctx{
 		User: u,
 	}
 

@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -103,7 +103,7 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -177,7 +177,7 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -196,7 +196,7 @@ func getApplicationPollersHandler(w http.ResponseWriter, r *http.Request, db *go
 	return WriteJSON(w, r, a.RepositoryPollers, http.StatusOK)
 }
 
-func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -223,7 +223,7 @@ func getPollersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	return WriteJSON(w, r, poller, http.StatusOK)
 }
 
-func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]

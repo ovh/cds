@@ -9,13 +9,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
 
-func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -93,7 +93,7 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	return WriteJSON(w, r, pip, http.StatusOK)
 }
 
-func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
@@ -179,7 +179,7 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	return WriteJSON(w, r, pipelineData, http.StatusOK)
 }
 
-func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]

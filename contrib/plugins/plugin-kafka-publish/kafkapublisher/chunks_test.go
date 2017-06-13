@@ -12,7 +12,7 @@ import (
 )
 
 func TestKafkaMessages(t *testing.T) {
-	chunks, err := shredder.ShredFile("chunks.go", nil)
+	chunks, err := shredder.ShredFile("chunks.go", "", nil)
 	test.NoError(t, err)
 
 	msgs, err := KafkaMessages(chunks)

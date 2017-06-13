@@ -41,40 +41,56 @@ func Init(port int, tls bool, certFile, keyFile string) error {
 
 	handlers := &handlers{}
 	RegisterBuildLogServer(grpcServer, handlers)
+	RegisterWorkflowQueueServer(grpcServer, handlers)
 
 	return grpcServer.Serve(lis)
 }
 
+type key string
+
+const (
+	keyWorkerID   key = "worker_id"
+	keyWorkerName key = "worker_name"
+)
+
 func streamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	if err := authorize(stream.Context()); err != nil {
+	c := stream.Context()
+	w, err := authorize(c)
+	if err != nil {
 		log.Warning("streamInterceptor> authorize failed : %s", err)
 		return err
 	}
+	m := metadata.Pairs(string(keyWorkerID), w.ID, string(keyWorkerName), w.Name)
+	stream.SendHeader(m)
+
 	return handler(srv, stream)
 }
 
 func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-	if err := authorize(ctx); err != nil {
+	w, err := authorize(ctx)
+	if err != nil {
 		log.Warning("unaryInterceptor> authorize failed : %s", err)
 		return nil, err
 	}
+	ctx = context.WithValue(ctx, keyWorkerID, w.ID)
+	ctx = context.WithValue(ctx, keyWorkerName, w.Name)
 	return handler(ctx, req)
 }
 
-func authorize(ctx context.Context) error {
+func authorize(ctx context.Context) (*sdk.Worker, error) {
 	if md, ok := metadata.FromContext(ctx); ok {
 		if len(md["name"]) > 0 && len(md["token"]) > 0 {
 			w, err := auth.GetWorker(database.GetDBMap(), md["token"][0])
 			if err != nil {
 				log.Error("grpc.authorize> Unable to get worker %v:%v => %s", md["name"], md["token"], err)
-				return sdk.ErrServiceUnavailable
+				return nil, sdk.ErrServiceUnavailable
 			}
 			if w == nil {
-				return sdk.ErrForbidden
+				return nil, sdk.ErrForbidden
 			}
-			return nil
+			return w, nil
 		}
-		return sdk.ErrForbidden
+		return nil, sdk.ErrForbidden
 	}
-	return sdk.ErrForbidden
+	return nil, sdk.ErrForbidden
 }

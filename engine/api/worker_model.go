@@ -6,8 +6,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Unmarshal body
 	var model sdk.Model
 	if err := UnmarshalBody(r, &model); err != nil {
@@ -69,7 +69,7 @@ func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	return WriteJSON(w, r, model, http.StatusOK)
 }
 
-func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workerModelID, errr := requestVarInt(r, "permModelID")
 	if errr != nil {
 		return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
@@ -157,7 +157,7 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	return WriteJSON(w, r, model, http.StatusOK)
 }
 
-func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workerModelID, errr := requestVarInt(r, "permModelID")
 	if errr != nil {
 		return sdk.WrapError(errr, "deleteWorkerModel> Invalid permModelID")
@@ -179,7 +179,7 @@ func deleteWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	return nil
 }
 
-func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx, name string) error {
+func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx, name string) error {
 	m, err := worker.LoadWorkerModelByName(db, name)
 	if err != nil {
 		return sdk.WrapError(err, "getWorkerModel> cannot load worker model")
@@ -187,7 +187,7 @@ func getWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	return WriteJSON(w, r, m, http.StatusOK)
 }
 
-func getWorkerModelsEnabled(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkerModelsEnabled(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	if c.Hatchery == nil || c.Hatchery.GroupID == 0 {
 		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModelsEnabled> this route can be called only by hatchery")
 	}
@@ -199,7 +199,7 @@ func getWorkerModelsEnabled(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	return WriteJSON(w, r, models, http.StatusOK)
 }
 
-func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	if err := r.ParseForm(); err != nil {
 		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> cannot parse form")
 	}
@@ -224,7 +224,7 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	return WriteJSON(w, r, models, http.StatusOK)
 }
 
-func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workerModelID, errr := requestVarInt(r, "permModelID")
 	if errr != nil {
 		return sdk.WrapError(errr, "addWorkerModelCapa> Invalid permModelID")
@@ -260,19 +260,19 @@ func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return nil
 }
 
-func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
 }
 
-func getWorkerModelCommunications(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkerModelCommunications(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableWorkerModelCommunication, http.StatusOK)
 }
 
-func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
 }
 
-func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	capaName := vars["capa"]
 
@@ -310,7 +310,7 @@ func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
-func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	capaName := vars["capa"]
 
@@ -338,7 +338,7 @@ func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
-func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	res := []struct {
 		Model string
 		Used  int
@@ -407,7 +407,7 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, res, http.StatusAccepted)
 }
 
-func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workerModelID, errr := requestVarInt(r, "permModelID")
 	if errr != nil {
 		return sdk.WrapError(errr, "getWorkerModelInstances> Invalid permModelID")

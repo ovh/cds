@@ -6,7 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func updateGroupRoleOnEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateGroupRoleOnEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -59,7 +59,7 @@ func updateGroupRoleOnEnvironmentHandler(w http.ResponseWriter, r *http.Request,
 	return nil
 }
 
-func addGroupInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addGroupInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -101,7 +101,7 @@ func addGroupInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	return nil
 }
 
-func deleteGroupFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteGroupFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]

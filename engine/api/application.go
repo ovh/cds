@@ -11,7 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -27,7 +27,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
@@ -40,7 +40,7 @@ func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	return WriteJSON(w, r, applications, http.StatusOK)
 }
 
-func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -55,7 +55,7 @@ func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, tree, http.StatusOK)
 }
 
-func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -99,7 +99,7 @@ func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request
 	return WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func getApplicationDeployHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationDeployHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -114,7 +114,7 @@ func getApplicationDeployHistoryHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
@@ -136,7 +136,7 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, versions, http.StatusOK)
 }
 
-func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
@@ -257,7 +257,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
@@ -295,7 +295,7 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, branches, http.StatusOK)
 }
 
-func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -348,7 +348,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
-func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -401,7 +401,7 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	return nil
 }
 
-func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -553,7 +553,7 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 	return nil
 }
 
-func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]

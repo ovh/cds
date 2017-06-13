@@ -15,7 +15,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
@@ -28,7 +28,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	rms, err := repositoriesmanager.LoadAll(db)
 	if err != nil {
 		log.Warning("getRepositoriesManagerHandler> error %s\n", err)
@@ -38,7 +38,7 @@ func getRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *g
 	return WriteJSON(w, r, rms, http.StatusOK)
 }
 
-func addRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	var args interface{}
 	options := map[string]string{}
 
@@ -76,7 +76,7 @@ func addRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *g
 	return WriteJSON(w, r, rm, http.StatusCreated)
 }
 
-func getRepositoriesManagerForProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getRepositoriesManagerForProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -90,7 +90,7 @@ func getRepositoriesManagerForProjectHandler(w http.ResponseWriter, r *http.Requ
 	return WriteJSON(w, r, rms, http.StatusOK)
 }
 
-func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
@@ -153,7 +153,7 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 	return WriteJSON(w, r, data, http.StatusOK)
 }
 
-func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	cberr := r.FormValue("error")
 	errDescription := r.FormValue("error_description")
 	errURI := r.FormValue("error_uri")
@@ -207,7 +207,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	return nil
 }
 
-func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
@@ -270,7 +270,7 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
@@ -323,7 +323,7 @@ func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db
 
 }
 
-func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
@@ -354,7 +354,7 @@ func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	return WriteJSON(w, r, repos, http.StatusOK)
 }
 
-func getRepoFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getRepoFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
@@ -376,7 +376,7 @@ func getRepoFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reques
 	return WriteJSON(w, r, repo, http.StatusOK)
 }
 
-func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -424,7 +424,7 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -484,11 +484,11 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func getRepositoriesManagerForApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getRepositoriesManagerForApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return errors.New("Not implemented")
 }
 
-func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -577,7 +577,7 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	return WriteJSON(w, r, app, http.StatusCreated)
 }
 
-func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -653,7 +653,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]

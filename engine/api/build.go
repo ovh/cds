@@ -10,9 +10,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/runabove/venom"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -23,7 +24,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	buildID, errr := requestVarInt(r, "id")
 	if errr != nil {
 		return sdk.WrapError(errr, "updateStepStatusHandler> Invalid id")
@@ -58,7 +59,7 @@ func updateStepStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	return nil
 }
 
-func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -100,7 +101,7 @@ func getPipelineBuildTriggeredHandler(w http.ResponseWriter, r *http.Request, db
 	return WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -160,7 +161,7 @@ func deleteBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return nil
 }
 
-func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -239,7 +240,7 @@ func getBuildStateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	return WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "id")
 	if errc != nil {
 		return sdk.WrapError(errc, "addQueueResultHandler> invalid id")
@@ -271,12 +272,17 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	// Update action status
 	log.Debug("addQueueResultHandler> Updating %d to %s in queue", id, res.Status)
-	if err := pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, res.Status); err != nil {
+	if err := pipeline.UpdatePipelineBuildJobStatus(tx, pbJob, sdk.Status(res.Status)); err != nil {
 		return sdk.WrapError(err, "addQueueResultHandler> Cannot update %d status", id)
 	}
 
+	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
+	if errt != nil {
+		return sdk.WrapError(errt, "addQueueResultHandler> Cannot parse remote time")
+	}
+
 	infos := []sdk.SpawnInfo{{
-		RemoteTime: res.RemoteTime,
+		RemoteTime: remoteTime,
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{c.Worker.Name, res.Duration}},
 	}}
 
@@ -292,7 +298,20 @@ func addQueueResultHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
-func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	id, errc := requestVarInt(r, "id")
+	if errc != nil {
+		return sdk.WrapError(errc, "getPipelineBuildJobHandler> invalid id")
+	}
+
+	j, err := pipeline.GetPipelineBuildJob(db, id)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to load pipeline build job id")
+	}
+	return WriteJSON(w, r, j, http.StatusOK)
+}
+
+func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "id")
 	if errc != nil {
 		return sdk.WrapError(errc, "takePipelineBuildJobHandler> invalid id")
@@ -370,7 +389,7 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, pbji, http.StatusOK)
 }
 
-func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "id")
 	if errc != nil {
 		return sdk.WrapError(errc, "bookPipelineBuildJobHandler> invalid id")
@@ -382,7 +401,7 @@ func bookPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
-func addSpawnInfosPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addSpawnInfosPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	pbJobID, errc := requestVarInt(r, "id")
 	if errc != nil {
 		return sdk.WrapError(errc, "addSpawnInfosPipelineBuildJobHandler> invalid id")
@@ -476,18 +495,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 	return secrets, nil
 }
 
-func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	if c.Worker != nil && c.Worker.ID != "" {
-		// Load calling worker
-		caller, errW := worker.LoadWorker(db, c.Worker.ID)
-		if errW != nil {
-			return sdk.WrapError(errW, "getQueueHandler> cannot load calling worker")
-		}
-		if caller.Status != sdk.StatusWaiting {
-			return sdk.WrapError(sdk.ErrInvalidWorkerStatus, "getQueueHandler> worker %s is not available to build (status = %s)", caller.ID, caller.Status)
-		}
-	}
-
+func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	var queue []sdk.PipelineBuildJob
 	var errQ error
 	switch c.Agent {
@@ -511,7 +519,7 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	return WriteJSON(w, r, queue, http.StatusOK)
 }
 
-func requirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func requirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Warning("requirementsErrorHandler> %s", err)
@@ -530,7 +538,7 @@ func requirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	return nil
 }
 
-func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -598,7 +606,7 @@ func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	return nil
 }
 
-func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -687,7 +695,7 @@ func addBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	return nil
 }
 
-func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getBuildTestResultsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]

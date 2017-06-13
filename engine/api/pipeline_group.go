@@ -6,14 +6,14 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 )
 
-func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -81,7 +81,7 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 }
 
 // DEPRECATED
-func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -143,7 +143,7 @@ func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *g
 	return nil
 }
 
-func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -196,7 +196,7 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]

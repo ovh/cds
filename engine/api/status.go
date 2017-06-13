@@ -9,7 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/internal"
@@ -23,11 +23,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return sdk.ErrInvalidProjectKey
 }
 
-func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	s := struct {
 		Version string `json:"version"`
 	}{
@@ -37,7 +37,7 @@ func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	return WriteJSON(w, r, s, http.StatusOK)
 }
 
-func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	var output []string
 
 	// Version
@@ -96,7 +96,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *co
 	return WriteJSON(w, r, output, status)
 }
 
-func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func smtpPingHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	if c.User == nil {
 		return sdk.ErrForbidden
 	}

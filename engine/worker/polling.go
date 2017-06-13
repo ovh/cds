@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/spf13/viper"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -15,79 +17,80 @@ import (
 
 var firstViewQueue = true
 
-func queuePolling() {
-	checkQueue(bookedJobID)
-	if firstViewQueue {
-		// if worker did not found booked job ID is first iteration
-		// reset booked job to take another action
-		bookedJobID = 0
-	}
-}
-
-func checkQueue(bookedJobID int64) {
-	defer sdk.SetWorkerStatus(sdk.StatusWaiting)
-
-	queue, err := sdk.GetBuildQueue()
-	if err != nil {
-		log.Warning("checkQueue> Cannot get build queue: %s", err)
-		WorkerID = ""
-		return
-	}
-
-	log.Info("checkQueue> %d actions in queue", len(queue))
-
-	//Set the status to checking to avoid being killed while checking queue, actions and requirements
-	sdk.SetWorkerStatus(sdk.StatusChecking)
-
-	for i := range queue {
-		if bookedJobID != 0 && queue[i].ID != bookedJobID {
-			continue
-		}
-
-		requirementsOK := true
-		// Check requirement
-		log.Info("checkQueue> Checking requirements for action [%d] %s", queue[i].ID, queue[i].Job.Action.Name)
-		for _, r := range queue[i].Job.Action.Requirements {
-			ok, err := checkRequirement(r)
-			if err != nil {
-				postCheckRequirementError(&r, err)
-				requirementsOK = false
-				continue
-			}
-			if !ok {
-				requirementsOK = false
-				continue
-			}
-		}
-
-		if requirementsOK {
-			t := ""
-			if queue[i].ID != bookedJobID {
-				t = ", this was my booked job"
-			}
-			log.Info("checkQueue> Taking job %d%s", queue[i].ID, t)
-			takeJob(queue[i], queue[i].ID == bookedJobID)
-		}
-	}
-
-	if bookedJobID > 0 {
-		log.Info("checkQueue> worker born for work on job %d but job is not found in queue", bookedJobID)
-	}
-
-	if !viper.GetBool("single_use") {
-		log.Info("checkQueue> Nothing to do...")
-	}
-}
-
 func postCheckRequirementError(r *sdk.Requirement, err error) {
 	s := fmt.Sprintf("Error checking requirement Name=%s Type=%s Value=%s :%s", r.Name, r.Type, r.Value, err)
 	sdk.Request("POST", "/queue/requirements/errors", []byte(s))
 }
 
-func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
+func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
+	info, err := w.client.QueueTakeJob(job, w.bookedJobID == job.ID)
+	if err != nil {
+		return sdk.WrapError(err, "takeWorkflowJob> Unable to take workflob node run job")
+	}
+
+	w.nbActionsDone++
+	// Set build variables
+	w.currentJob.wJob = &info.NodeJobRun
+	// Reset build variables
+	w.currentJob.gitsshPath = ""
+	w.currentJob.pkey = ""
+	w.currentJob.buildVariables = nil
+
+	start := time.Now()
+
+	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
+	ctx, cancel := context.WithCancel(ctx)
+	go func(cancel context.CancelFunc, jobID int64) {
+		tick := time.NewTicker(5 * time.Second)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
+				if err != nil {
+					log.Error("Unable to load pipeline build job %d", jobID)
+					cancel()
+					return
+				}
+
+				j := &sdk.PipelineBuildJob{}
+				if err := json.Unmarshal(b, j); err != nil {
+					log.Error("Unable to load pipeline build job %d: %v", jobID, err)
+					cancel()
+					return
+				}
+				if j.Status != sdk.StatusBuilding.String() {
+					cancel()
+					return
+				}
+
+			}
+		}
+	}(cancel, job.ID)
+
+	// Reset build variables
+	w.currentJob.buildVariables = nil
+	//start := time.Now()
+	//Run !
+	res := w.processJob(ctx, info)
+	now, _ := ptypes.TimestampProto(time.Now())
+	res.RemoteTime = now
+	res.Duration = sdk.Round(time.Since(start), time.Second).String()
+
+	//Wait until the logchannel is empty
+	if ctx.Err() == nil {
+		w.drainLogsAndCloseLogger(ctx)
+	}
+
+	return nil
+}
+
+func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) {
 	in := worker.TakeForm{Time: time.Now()}
 	if isBooked {
-		in.BookedJobID = b.ID
+		in.BookedJobID = pipelineBuildJobID
 	}
 
 	bodyTake, errm := json.Marshal(in)
@@ -95,13 +98,13 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		log.Info("takeJob> Cannot marshal body: %s", errm)
 	}
 
-	nbActionsDone++
-	gitsshPath = ""
-	pkey = ""
-	path := fmt.Sprintf("/queue/%d/take", b.ID)
+	w.nbActionsDone++
+	w.currentJob.gitsshPath = ""
+	w.currentJob.pkey = ""
+	path := fmt.Sprintf("/queue/%d/take", pipelineBuildJobID)
 	data, code, errr := sdk.Request("POST", path, bodyTake)
 	if errr != nil {
-		log.Info("takeJob> Cannot take action %d : %s", b.Job.PipelineActionID, errr)
+		log.Info("takeJob> Cannot take job %d : %s", pipelineBuildJobID, errr)
 		return
 	}
 	if code != http.StatusOK {
@@ -114,22 +117,61 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		return
 	}
 
-	pbJob = pbji.PipelineBuildJob
+	w.currentJob.pbJob = pbji.PipelineBuildJob
+
+	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
+	ctx, cancel := context.WithCancel(ctx)
+	go func(cancel context.CancelFunc, jobID int64) {
+		tick := time.NewTicker(5 * time.Second)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
+				if err != nil {
+					log.Error("Unable to load pipeline build job %d", jobID)
+					cancel()
+					return
+				}
+
+				j := &sdk.PipelineBuildJob{}
+				if err := json.Unmarshal(b, j); err != nil {
+					log.Error("Unable to load pipeline build job %d: %v", jobID, err)
+					cancel()
+					return
+				}
+				if j.Status != sdk.StatusBuilding.String() {
+					cancel()
+					return
+				}
+
+			}
+		}
+	}(cancel, pipelineBuildJobID)
+
 	// Reset build variables
-	buildVariables = nil
+	w.currentJob.buildVariables = nil
 	start := time.Now()
-	res := run(&pbji)
-	res.RemoteTime = time.Now()
+	//Run !
+	res := w.run(ctx, &pbji)
+	now, _ := ptypes.TimestampProto(time.Now())
+	res.RemoteTime = now
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
-	// Give time to buffered logs to be sent
-	time.Sleep(3 * time.Second)
+	//Wait until the logchannel is empty
+	if ctx.Err() == nil {
+		w.drainLogsAndCloseLogger(ctx)
+	}
 
-	path = fmt.Sprintf("/queue/%d/result", b.ID)
+	log.Debug("Send result")
+
+	path = fmt.Sprintf("/queue/%d/result", pipelineBuildJobID)
 	body, errm := json.MarshalIndent(res, " ", " ")
 	if errm != nil {
 		log.Error("takeJob> Cannot marshal result: %s", errm)
-		unregister()
+		w.unregister()
 		return
 	}
 
@@ -140,11 +182,10 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 		_, code, errre = sdk.Request("POST", path, body)
 		if code == http.StatusNotFound {
 			log.Info("takeJob> Cannot send build result: PipelineBuildJob does not exists anymore")
-			unregister() // well...
 			break
 		}
 		if errre == nil && code < 300 {
-			fmt.Printf("BuildResult sent.")
+			log.Info("BuildResult sent.")
 			break
 		}
 
@@ -163,10 +204,8 @@ func takeJob(b sdk.PipelineBuildJob, isBooked bool) {
 	}
 
 	if viper.GetBool("single_use") {
-		// Give time to logs to be flushed
-		time.Sleep(2 * time.Second)
 		// Unregister from engine
-		if err := unregister(); err != nil {
+		if err := w.unregister(); err != nil {
 			log.Warning("takeJob> could not unregister: %s", err)
 		}
 	}

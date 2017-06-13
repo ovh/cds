@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,9 +30,9 @@ func (c *GithubClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password
 
 //GetCheckAuthHeaderFunc returns the func to heck http headers.
 //Options is a const to switch from session to basic auth or both
-func (c *GithubClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
+func (c *GithubClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
 
-	return func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
+	return func(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
 		return nil
 	}
 }

@@ -218,8 +218,10 @@ func BookNodeJobRun(id int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
 
 //AddLog adds a build log
 func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) error {
-	logs.PipelineBuildJobID = job.ID
-	logs.PipelineBuildID = job.WorkflowNodeRunID
+	if job != nil {
+		logs.PipelineBuildJobID = job.ID
+		logs.PipelineBuildID = job.WorkflowNodeRunID
+	}
 
 	existingLogs, errLog := LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
 	if errLog != nil && errLog != sql.ErrNoRows {

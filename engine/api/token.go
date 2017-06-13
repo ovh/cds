@@ -6,7 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
@@ -15,7 +15,7 @@ import (
 // generateTokenHandler allows a user to generate a token associated to a group permission
 // and used by worker to take action from API.
 // User generating the token needs to be admin of given group
-func generateTokenHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func generateTokenHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	groupName := vars["permGroupName"]
 	expiration := vars["expiration"]

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/mux"
 	"github.com/runabove/venom"
 	"github.com/stretchr/testify/assert"
@@ -158,10 +159,10 @@ func test_registerWorker(t *testing.T, db *gorp.DbMap, ctx *test_runWorkflowCtx)
 	test.NoError(t, token.InsertToken(db, ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent))
 	//Register the worker
 	params := &worker.RegistrationForm{
-		Name:    sdk.RandomString(10),
-		UserKey: ctx.workerToken,
+		Name:  sdk.RandomString(10),
+		Token: ctx.workerToken,
 	}
-	ctx.worker, err = worker.RegisterWorker(db, params.Name, params.UserKey, params.Model, nil, params.BinaryCapabilities)
+	ctx.worker, err = worker.RegisterWorker(db, params.Name, params.Token, params.Model, nil, params.BinaryCapabilities)
 	test.NoError(t, err)
 }
 
@@ -283,7 +284,7 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
 	db := test.SetupPG(t)
-	ctx := test_runWorkflow(t, db, "/Test_postTakeWorkflowJobHandler")
+	ctx := test_runWorkflow(t, db, "/Test_postWorkflowJobResultHandler")
 	test_getWorkflowJob(t, db, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -330,11 +331,13 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	router.mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
+	now, _ := ptypes.TimestampProto(time.Now())
+
 	//Send result
 	res := sdk.Result{
 		Duration:   "10",
-		Status:     sdk.StatusSuccess,
-		RemoteTime: time.Now(),
+		Status:     sdk.StatusSuccess.String(),
+		RemoteTime: now,
 	}
 
 	uri = router.getRoute("POST", postWorkflowJobResultHandler, vars)
@@ -349,7 +352,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	db := test.SetupPG(t)
-	ctx := test_runWorkflow(t, db, "/Test_postTakeWorkflowJobHandler")
+	ctx := test_runWorkflow(t, db, "/Test_postWorkflowJobTestsResultsHandler")
 	test_getWorkflowJob(t, db, &ctx)
 	assert.NotNil(t, ctx.job)
 

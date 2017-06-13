@@ -87,7 +87,7 @@ chmod +x worker
 export CDS_SINGLE_USE=1
 export CDS_FORCE_EXIT=1
 export CDS_API={{.API}}
-export CDS_KEY={{.Key}}
+export CDS_TOKEN={{.Key}}
 export CDS_NAME={{.Name}}
 export CDS_MODEL={{.Model}}
 export CDS_HATCHERY={{.Hatchery}}

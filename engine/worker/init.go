@@ -8,10 +8,11 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func initViper() {
+func initViper(w *currentWorker) {
 	viper.SetEnvPrefix("cds")
 	viper.AutomaticEnv()
 
@@ -25,52 +26,57 @@ func initViper() {
 	})
 
 	var errN error
-	name, errN = os.Hostname()
+	w.status.Name, errN = os.Hostname()
 	if errN != nil {
 		log.Error("Cannot retrieve hostname: %s", errN)
 		os.Exit(1)
 	}
+	givenName := viper.GetString("name")
+	if givenName != "" {
+		w.status.Name = givenName
+	}
 
 	hatchS := viper.GetString("hatchery")
 	var errH error
-	hatchery, errH = strconv.ParseInt(hatchS, 10, 64)
+	w.hatchery.id, errH = strconv.ParseInt(hatchS, 10, 64)
 	if errH != nil {
 		log.Error("WARNING: Invalid hatchery ID (%s)", errH)
 		os.Exit(2)
 	}
 
 	// could be empty
-	hatcheryName = viper.GetString("hatchery_name")
-
-	api = viper.GetString("api")
-	if api == "" {
+	w.hatchery.name = viper.GetString("hatchery_name")
+	w.apiEndpoint = viper.GetString("api")
+	if w.apiEndpoint == "" {
 		log.Error("--api not provided, aborting.")
 		os.Exit(3)
 	}
 
-	key = viper.GetString("key")
-	if key == "" {
-		log.Error("--key not provided, aborting.")
+	w.token = viper.GetString("token")
+	if w.token == "" {
+		log.Error("--token not provided, aborting.")
 		os.Exit(4)
 	}
 
-	givenName := viper.GetString("name")
-	if givenName != "" {
-		name = givenName
-	}
-	status.Name = name
+	w.modelID = int64(viper.GetInt("model"))
+	w.status.Model = w.modelID
 
-	model = int64(viper.GetInt("model"))
-	status.Model = model
+	w.basedir = viper.GetString("basedir")
+	if w.basedir == "" {
+		w.basedir = os.TempDir()
+	}
+	w.bookedJobID = viper.GetInt64("booked_job_id")
+
+	w.client = cdsclient.NewWorker(w.apiEndpoint)
 }
 
-func initServer() {
-	port, err := server()
+func (w *currentWorker) initServer(c context.Context) {
+	port, err := w.serve(c)
 	if err != nil {
 		log.Error("cannot bind port for worker export: %s", err)
 		os.Exit(1)
 	}
-	exportport = port
+	w.exportPort = port
 }
 
 type grpcCreds struct {
@@ -90,14 +96,14 @@ func (c *grpcCreds) RequireTransportSecurity() bool {
 	return !viper.GetBool("grpc_insecure")
 }
 
-func initGRPCConn() {
-	grpcAddress = viper.GetString("grpc_api")
+func (w *currentWorker) initGRPCConn() {
+	w.grpc.address = viper.GetString("grpc_api")
 
-	if grpcAddress != "" {
+	if w.grpc.address != "" {
 		opts := []grpc.DialOption{grpc.WithPerRPCCredentials(
 			&grpcCreds{
-				Name:  name,
-				Token: WorkerID,
+				Name:  w.status.Name,
+				Token: w.id,
 			})}
 
 		if viper.GetBool("grpc_insecure") {
@@ -105,9 +111,9 @@ func initGRPCConn() {
 		}
 
 		var err error
-		grpcConn, err = grpc.Dial(grpcAddress, opts...)
+		w.grpc.conn, err = grpc.Dial(w.grpc.address, opts...)
 		if err != nil {
-			log.Error("Unable to connect to GRPC API %s: %s", grpcAddress, err)
+			log.Error("Unable to connect to GRPC API %s: %s", w.grpc.address, err)
 		}
 	}
 }

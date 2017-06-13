@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,15 +12,16 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func cmdMain() *cobra.Command {
+func cmdMain(w *currentWorker) *cobra.Command {
 	var mainCmd = &cobra.Command{
 		Use:   "worker",
 		Short: "CDS Worker",
-		Run:   mainCommandRun,
+		Run:   mainCommandRun(w),
 	}
 
 	pflags := mainCmd.PersistentFlags()
@@ -29,8 +32,8 @@ func cmdMain() *cobra.Command {
 	pflags.String("api", "", "URL of CDS API")
 	viper.BindPFlag("api", pflags.Lookup("api"))
 
-	pflags.String("key", "", "CDS KEY")
-	viper.BindPFlag("key", pflags.Lookup("key"))
+	pflags.String("token", "", "CDS Token")
+	viper.BindPFlag("token", pflags.Lookup("token"))
 
 	pflags.String("name", "", "Name of worker")
 	viper.BindPFlag("name", pflags.Lookup("name"))
@@ -85,73 +88,161 @@ func cmdMain() *cobra.Command {
 	return mainCmd
 }
 
-func mainCommandRun(cmd *cobra.Command, args []string) {
-	initViper()
-	log.Info("What a good time to be alive")
+func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) {
+		//Initliaze context
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
 
-	alive = true
+		w.alive = true
+		initViper(w)
+		log.Info("What a good time to be alive")
+		w.initServer(ctx)
 
-	basedir = viper.GetString("basedir")
-	if basedir == "" {
-		basedir = os.TempDir()
-	}
+		// Gracefully shutdown connections
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+		defer func() {
+			signal.Stop(c)
+			cancel()
+		}()
 
-	bookedJobID = viper.GetInt64("booked_job_id")
+		go func() {
+			select {
+			case <-c:
+				cancel()
+			case <-ctx.Done():
+			}
+		}()
 
-	initServer()
+		time.AfterFunc(time.Duration(viper.GetInt("ttl"))*time.Minute, func() {
+			if w.nbActionsDone == 0 {
+				cancel()
+			}
+		})
 
-	// Gracefully shutdown connections
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
-	signal.Notify(c, syscall.SIGKILL)
-	go func() {
-		<-c
-		if grpcConn != nil {
-			log.Warning("Closing GRPC connections")
-			grpcConn.Close()
+		//Register
+		if err := w.doRegister(); err != nil {
+			cancel()
+			os.Exit(0)
 		}
-		os.Exit(0)
-	}()
+		//Register every 10 seconds if we have nothing to do
+		registerTick := time.NewTicker(10 * time.Second)
 
-	// start logger routine with a large buffer
-	logChan = make(chan sdk.Log, 10000)
-	go logger(logChan)
+		// start logger routine with a large buffer
+		w.logChan = make(chan sdk.Log, 100000)
+		go w.logger()
 
-	suicideTick := time.NewTicker(time.Duration(viper.GetInt("ttl")) * time.Minute).C
-	queuePollingTick := time.NewTicker(4 * time.Second).C
-	registerTick := time.NewTicker(1 * time.Second).C
+		// start queue polling
+		pbjobs := make(chan sdk.PipelineBuildJob, 1)
+		wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
+		errs := make(chan error, 1)
 
-	for {
-		if !alive && viper.GetBool("single_use") {
-			return
-		}
-
-		select {
-		case <-registerTick:
-			if WorkerID == "" {
-				var info string
-				if bookedJobID > 0 {
-					info = fmt.Sprintf(", I was born to work on job %d", bookedJobID)
+		//Before start the loop, take the bookJobID
+		if w.bookedJobID != 0 {
+			log.Debug("Try to take the job %d", w.bookedJobID)
+			b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedJobID), nil)
+			if err != nil {
+				log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
+			} else {
+				j := &sdk.PipelineBuildJob{}
+				if err := json.Unmarshal(b, j); err != nil {
+					log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
+				} else {
+					pbjobs <- *j
 				}
-				log.Info("Registering on CDS engine%s", info)
-				if err := register(api, name, key); err != nil {
-					log.Info("Cannot register: %s", err)
+			}
+		}
+
+		go func() {
+			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second); err != nil {
+				log.Error("Queues polling stopped: %v", err)
+			}
+		}()
+
+		// main loop
+		for {
+			if !w.alive && viper.GetBool("single_use") {
+				registerTick.Stop()
+				cancel()
+				w.unregister()
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				if err := ctx.Err(); err != nil {
+					log.Error("Exiting worker: %v", err)
+				} else {
+					log.Info("Exiting worker")
+				}
+				registerTick.Stop()
+				w.unregister()
+				return
+
+			case j := <-pbjobs:
+				if j.ID == 0 {
 					continue
 				}
-				alive = true
-			}
 
-		case <-suicideTick:
-			if nbActionsDone == 0 {
-				log.Info("Time to exit.")
-				unregister()
-			}
+				requirementsOK := true
+				w.client.WorkerSetStatus(sdk.StatusChecking)
+				for _, r := range j.Job.Action.Requirements {
+					ok, err := checkRequirement(w, r)
+					if err != nil {
+						postCheckRequirementError(&r, err)
+						requirementsOK = false
+						continue
+					}
+					if !ok {
+						requirementsOK = false
+						continue
+					}
+				}
 
-		case <-queuePollingTick:
-			queuePolling()
-			firstViewQueue = false
+				if requirementsOK {
+					t := ""
+					if j.ID == w.bookedJobID {
+						t = ", this was my booked job"
+					}
+					log.Info("checkQueue> Taking job %d%s", j.ID, t)
+					w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
+				}
+
+				w.client.WorkerSetStatus(sdk.StatusWaiting)
+			case j := <-wjobs:
+				if err := w.takeWorkflowJob(ctx, j); err != nil {
+					errs <- err
+				}
+			case err := <-errs:
+				log.Error("%v", err)
+
+			case <-registerTick.C:
+				w.doRegister()
+			}
 		}
 	}
+}
 
+func (w *currentWorker) doRegister() error {
+	if w.id == "" {
+		var info string
+		if w.bookedJobID > 0 {
+			info = fmt.Sprintf(", I was born to work on job %d", w.bookedJobID)
+		}
+		log.Info("Registering on CDS engine%s", info)
+		form := worker.RegistrationForm{
+			Name:         w.status.Name,
+			Token:        w.token,
+			Hatchery:     w.hatchery.id,
+			HatcheryName: w.hatchery.name,
+			Model:        w.modelID,
+		}
+		if err := w.register(form); err != nil {
+			log.Info("Cannot register: %s", err)
+			return err
+		}
+		w.alive = true
+	}
+	return nil
 }

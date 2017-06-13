@@ -7,7 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
@@ -30,7 +30,7 @@ func getEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	return WriteJSON(w, r, environments, http.StatusOK)
 }
 
-func getEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	environmentName := vars["permEnvironmentName"]
@@ -47,7 +47,7 @@ func getEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 }
 
 // Deprecated
-func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -226,7 +226,7 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, proj, http.StatusOK)
 }
 
-func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -286,7 +286,7 @@ func addEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return WriteJSON(w, r, proj, http.StatusOK)
 }
 
-func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -337,7 +337,7 @@ func deleteEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -436,7 +436,7 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]

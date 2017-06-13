@@ -13,7 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -22,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get body
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -62,7 +62,7 @@ func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	return nil
 }
 
-func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -93,7 +93,7 @@ func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -134,7 +134,7 @@ func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	return WriteJSON(w, r, app, http.StatusOK)
 }
 
-func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -148,7 +148,7 @@ func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	return WriteJSON(w, r, a.Hooks, http.StatusOK)
 }
 
-func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectName := vars["key"]
 	appName := vars["permApplicationName"]
@@ -177,7 +177,7 @@ func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context
 	return WriteJSON(w, r, hooks, http.StatusOK)
 }
 
-func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	idS := vars["id"]
 

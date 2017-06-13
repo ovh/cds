@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -30,7 +30,7 @@ func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
-func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -130,7 +130,7 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getVariableAuditInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getVariableAuditInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -154,7 +154,7 @@ func getVariableAuditInEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
-func getVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -169,7 +169,7 @@ func getVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	return WriteJSON(w, r, v, http.StatusOK)
 }
 
-func getVariablesInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getVariablesInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -183,7 +183,7 @@ func getVariablesInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db
 	return WriteJSON(w, r, variables, http.StatusOK)
 }
 
-func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -248,7 +248,7 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]
@@ -316,7 +316,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	envName := vars["permEnvironmentName"]

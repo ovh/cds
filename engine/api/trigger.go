@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 
@@ -150,7 +150,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
 }
 
-func getTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	striggerID := vars["id"]
 
@@ -169,7 +169,7 @@ func getTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	return WriteJSON(w, r, t, http.StatusOK)
 }
 
-func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	app := vars["permApplicationName"]
@@ -219,7 +219,7 @@ func getTriggersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return WriteJSON(w, r, triggers, http.StatusOK)
 }
 
-func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	triggerIDS := vars["id"]
@@ -270,7 +270,7 @@ func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
 }
 
-func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	triggerIDS := vars["id"]
@@ -328,7 +328,7 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
 }
 
-func getTriggersAsSourceHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getTriggersAsSourceHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	app := vars["permApplicationName"]

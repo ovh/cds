@@ -7,9 +7,11 @@ Package sdk is a generated protocol buffer package.
 
 It is generated from these files:
 	log.proto
+	result.proto
 
 It has these top-level messages:
 	Log
+	Result
 */
 package sdk
 
@@ -36,21 +38,21 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 // 	=> github.com/favadi/protoc-go-inject-tag
 type Log struct {
 	// @inject_tag: db:"id"
-	Id int64 `protobuf:"varint,1,opt,name=id" json:"id,omitempty" db:"id"`
+	Id int64 `protobuf:"varint,1,opt,name=id" json:"id,omitempty" db:"id" db:"id"`
 	// @inject_tag: db:"pipeline_build_job_id"
-	PipelineBuildJobID int64 `protobuf:"varint,2,opt,name=pipelineBuildJobID" json:"pipelineBuildJobID,omitempty" db:"pipeline_build_job_id"`
+	PipelineBuildJobID int64 `protobuf:"varint,2,opt,name=pipelineBuildJobID" json:"pipelineBuildJobID,omitempty" db:"pipeline_build_job_id" db:"pipeline_build_job_id"`
 	// @inject_tag: db:"pipeline_build_id"
-	PipelineBuildID int64 `protobuf:"varint,3,opt,name=pipelineBuildID" json:"pipelineBuildID,omitempty" db:"pipeline_build_id"`
+	PipelineBuildID int64 `protobuf:"varint,3,opt,name=pipelineBuildID" json:"pipelineBuildID,omitempty" db:"pipeline_build_id" db:"pipeline_build_id"`
 	// @inject_tag: db:"start"
-	Start *google_protobuf.Timestamp `protobuf:"bytes,4,opt,name=start" json:"start,omitempty" db:"start"`
+	Start *google_protobuf.Timestamp `protobuf:"bytes,4,opt,name=start" json:"start,omitempty" db:"start" db:"start"`
 	// @inject_tag: db:"last_modified"
-	LastModified *google_protobuf.Timestamp `protobuf:"bytes,5,opt,name=lastModified" json:"lastModified,omitempty" db:"last_modified"`
+	LastModified *google_protobuf.Timestamp `protobuf:"bytes,5,opt,name=lastModified" json:"lastModified,omitempty" db:"last_modified" db:"last_modified"`
 	// @inject_tag: db:"done"
-	Done *google_protobuf.Timestamp `protobuf:"bytes,6,opt,name=done" json:"done,omitempty" db:"done"`
+	Done *google_protobuf.Timestamp `protobuf:"bytes,6,opt,name=done" json:"done,omitempty" db:"done" db:"done"`
 	// @inject_tag: db:"step_order"
-	StepOrder int64 `protobuf:"varint,7,opt,name=stepOrder" json:"stepOrder,omitempty" db:"step_order"`
+	StepOrder int64 `protobuf:"varint,7,opt,name=stepOrder" json:"stepOrder,omitempty" db:"step_order" db:"step_order"`
 	// @inject_tag: db:"value"
-	Val string `protobuf:"bytes,8,opt,name=val" json:"val,omitempty" db:"value"`
+	Val string `protobuf:"bytes,8,opt,name=val" json:"val,omitempty" db:"value" db:"value"`
 }
 
 func (m *Log) Reset()                    { *m = Log{} }

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/hcl"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	format := r.FormValue("format")

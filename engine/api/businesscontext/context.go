@@ -1,4 +1,4 @@
-package context
+package businesscontext
 
 import (
 	"github.com/ovh/cds/sdk"
@@ -6,7 +6,7 @@ import (
 
 // Ctx gather information about http call origin
 type Ctx struct {
-	Agent    sdk.Agent
+	Agent    string
 	User     *sdk.User
 	Worker   *sdk.Worker
 	Hatchery *sdk.Hatchery

@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -82,7 +82,7 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 	return ap, params, content, deferFunc, nil
 }
 
-func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	tmpls, err := templateextension.All(db)
 	if err != nil {
 		log.Warning("getTemplatesHandler>%T %s", err, err)
@@ -92,7 +92,7 @@ func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return WriteJSON(w, r, tmpls, http.StatusOK)
 }
 
-func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	//Upload file and get as a template object
 	templ, params, file, deferFunc, err := fileUploadAndGetTemplate(w, r)
 	if deferFunc != nil {
@@ -141,7 +141,7 @@ func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return WriteJSON(w, r, templ, http.StatusOK)
 }
 
-func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get id from URL
 	vars := mux.Vars(r)
 	sid := vars["id"]
@@ -240,7 +240,7 @@ func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return WriteJSON(w, r, templ2, http.StatusOK)
 }
 
-func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get id from URL
 	vars := mux.Vars(r)
 	sid := vars["id"]
@@ -280,7 +280,7 @@ func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
-func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	tpl, err := templateextension.LoadByType(db, "BUILD")
 	if err != nil {
 		return sdk.WrapError(err, "getBuildTemplatesHandler> error on loadByType")
@@ -288,7 +288,7 @@ func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	return WriteJSON(w, r, tpl, http.StatusOK)
 }
 
-func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	tpl, err := templateextension.LoadByType(db, "DEPLOY")
 	if err != nil {
 		return sdk.WrapError(err, "getDeployTemplatesHandler> error on loadByType")
@@ -296,7 +296,7 @@ func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, tpl, http.StatusOK)
 }
 
-func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 
@@ -356,7 +356,7 @@ func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	return WriteJSON(w, r, proj, http.StatusOK)
 }
 
-func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]

@@ -15,7 +15,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -77,7 +77,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	return ap, params, content, deferFunc, nil
 }
 
-func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	//Upload file and get plugin information
 	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
@@ -132,7 +132,7 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	return WriteJSON(w, r, a, http.StatusCreated)
 }
 
-func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	//Upload file and get plugin information
 	ap, params, file, deferFunc, errUpload := fileUploadAndGetPlugin(w, r)
 	if deferFunc != nil {
@@ -228,7 +228,7 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return WriteJSON(w, r, a, http.StatusOK)
 }
 
-func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	name := vars["name"]
 
@@ -253,7 +253,7 @@ func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return nil
 }
 
-func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	name := vars["name"]
 

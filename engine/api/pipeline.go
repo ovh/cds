@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
@@ -28,7 +28,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -132,7 +132,7 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	return WriteJSON(w, r, newPb, http.StatusOK)
 }
 
-func loadDestEnvFromRunRequest(db *gorp.DbMap, c *context.Ctx, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
+func loadDestEnvFromRunRequest(db *gorp.DbMap, c *businesscontext.Ctx, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
 	var envDest = &sdk.DefaultEnv
 	var err error
 	if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
@@ -149,7 +149,7 @@ func loadDestEnvFromRunRequest(db *gorp.DbMap, c *context.Ctx, request *sdk.RunR
 	return envDest, nil
 }
 
-func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -247,7 +247,7 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	return runPipelineHandlerFunc(w, r, db, c, &request)
 }
 
-func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx, request *sdk.RunRequest) error {
+func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx, request *sdk.RunRequest) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -366,7 +366,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	return WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	var request sdk.RunRequest
 	if err := UnmarshalBody(r, &request); err != nil {
 		return err
@@ -376,7 +376,7 @@ func runPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 }
 
 // DEPRECATED
-func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipName := vars["permPipelineKey"]
@@ -433,7 +433,7 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return nil
 }
 
-func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -485,7 +485,7 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return nil
 }
 
-func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -524,7 +524,7 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return WriteJSON(w, r, pipelineDB, http.StatusOK)
 }
 
-func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -544,7 +544,7 @@ func getApplicationUsingPipelineHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, applications, http.StatusOK)
 }
 
-func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -620,7 +620,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *cont
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -637,11 +637,11 @@ func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
-func getPipelineTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineTypeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailablePipelineType, http.StatusOK)
 }
 
-func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -665,7 +665,7 @@ func getPipelinesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	return WriteJSON(w, r, pip, http.StatusOK)
 }
 
-func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -724,7 +724,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -774,7 +774,7 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *c
 	return nil
 }
 
-func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -840,7 +840,7 @@ func addJobToPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	return WriteJSON(w, r, job, http.StatusOK)
 }
 
-func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	actionIDString := vars["actionID"]
@@ -921,7 +921,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return WriteJSON(w, r, a, http.StatusOK)
 }
 
-func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipName := vars["permPipelineKey"]
@@ -961,7 +961,7 @@ func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	return nil
 }
 
-func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	actionIDString := vars["actionID"]
@@ -983,7 +983,7 @@ func getJoinedActionAudithandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, audit, http.StatusOK)
 }
 
-func getJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	actionIDString := vars["actionID"]
@@ -1007,7 +1007,7 @@ func getJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	return WriteJSON(w, r, a, http.StatusOK)
 }
 
-func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	var err error
 	var pbs, recent []sdk.PipelineBuild
 
@@ -1025,7 +1025,7 @@ func getBuildingPipelines(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	return WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 
@@ -1038,7 +1038,7 @@ func getPipelineBuildingCommit(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, pbs, http.StatusOK)
 }
 
-func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1112,7 +1112,7 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	return nil
 }
 
-func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1212,7 +1212,7 @@ func restartPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -1303,7 +1303,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, commits, http.StatusOK)
 }
 
-func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getPipelineBuildCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]

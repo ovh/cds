@@ -237,7 +237,11 @@ var mainCmd = &cobra.Command{
 			RedisPassword: viper.GetString(viperCacheRedisPassword),
 		}
 
-		router.authDriver, _ = auth.GetDriver(ctx, authMode, authOptions, storeOptions)
+		var errdriver error
+		router.authDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions)
+		if errdriver != nil {
+			log.Fatalf("Error: %v", errdriver)
+		}
 
 		cache.Initialize(viper.GetString(viperCacheMode), viper.GetString(viperCacheRedisHost), viper.GetString(viperCacheRedisPassword), viper.GetInt(viperCacheTTL))
 

@@ -97,7 +97,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, re
 
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", sdk.Host))
-	args = append(args, fmt.Sprintf("--key=%s", viper.GetString("token")))
+	args = append(args, fmt.Sprintf("--token=%s", viper.GetString("token")))
 	args = append(args, fmt.Sprintf("--basedir=%s", h.basedir))
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))

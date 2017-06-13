@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -18,7 +18,7 @@ const (
 	defaultLimit = 10
 )
 
-func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	vars := mux.Vars(r)
 	var limit, offset int
@@ -124,7 +124,7 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	return WriteJSON(w, r, runs, code)
 }
 
-func getLatestWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getLatestWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
@@ -135,7 +135,7 @@ func getLatestWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, run, http.StatusOK)
 }
 
-func getWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
@@ -150,7 +150,7 @@ func getWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return WriteJSON(w, r, run, http.StatusOK)
 }
 
-func getWorkflowNodeRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func getWorkflowNodeRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
@@ -176,7 +176,7 @@ type postWorkflowRunHandlerOption struct {
 	FromNodeID *int64                        `json:"from_node,omitempty"`
 }
 
-func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]

@@ -12,7 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -142,7 +142,7 @@ func uploadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return nil
 }
 
-func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 
 	artifactID, errAtoi := requestVarInt(r, "id")
 	if errAtoi != nil {
@@ -167,7 +167,7 @@ func downloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	return nil
 }
 
-func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -227,7 +227,7 @@ func listArtifactsBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	return WriteJSON(w, r, art, http.StatusOK)
 }
 
-func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	project := vars["key"]
 	pipelineName := vars["permPipelineKey"]
@@ -283,7 +283,7 @@ func listArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	return WriteJSON(w, r, art, http.StatusOK)
 }
 
-func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
+func downloadArtifactDirectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 

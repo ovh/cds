@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"strconv"
@@ -17,8 +18,7 @@ import (
 const WorkerServerPort = "CDS_EXPORT_PORT"
 
 // This handler is started by the worker instance waiting for action
-func server() (int, error) {
-
+func (w *currentWorker) serve(c context.Context) (int, error) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return 0, err
@@ -30,10 +30,10 @@ func server() (int, error) {
 		return 0, err
 	}
 
-	log.Info("Export variable HTTP server: %s\n", listener.Addr().String())
+	log.Info("Export variable HTTP server: %s", listener.Addr().String())
 	r := mux.NewRouter()
-	r.HandleFunc("/var", addBuildVarHandler)
-	r.HandleFunc("/upload", uploadHandler)
+	r.HandleFunc("/var", w.addBuildVarHandler)
+	r.HandleFunc("/upload", w.uploadHandler)
 
 	srv := &http.Server{
 		Handler:      r,
@@ -42,8 +42,17 @@ func server() (int, error) {
 		ReadTimeout:  6 * time.Minute,
 	}
 
+	//Start the server
 	go func() {
-		log.Fatalf("Cannot start local http server: %s\n", srv.Serve(listener))
+		if err := srv.Serve(listener); err != nil {
+			log.Error("%v", err)
+		}
+	}()
+
+	//Handle shutdown
+	go func() {
+		<-c.Done()
+		srv.Shutdown(c)
 	}()
 
 	return int(port), nil

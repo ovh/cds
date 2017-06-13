@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/actionplugin"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -73,7 +73,7 @@ func postFile(t *testing.T,
 		return
 	}
 
-	c := &context.Ctx{
+	c := &businesscontext.Ctx{
 		User: &sdk.User{
 			ID: 1,
 		},
@@ -425,7 +425,7 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 			return
 		}
 
-		c := &context.Ctx{
+		c := &businesscontext.Ctx{
 			User: &sdk.User{
 				ID: 1,
 			},
