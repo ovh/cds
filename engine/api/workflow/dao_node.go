@@ -46,23 +46,6 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 		n.Context = &sdk.WorkflowNodeContext{}
 	}
 
-	//Loading the pipeline to check pipeline parameters
-	pip, errPip := pipeline.LoadPipelineByID(db, n.PipelineID, true)
-	if errPip != nil {
-		return sdk.WrapError(errPip, "InsertOrUpdateNode> Unable to load workflow node pipeline %d", n.PipelineID)
-	}
-
-	if len(pip.Parameter) != len(n.Context.DefaultPipelineParameters) {
-		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Pipeline parameters don't match"))
-	}
-
-	//Checking parameters
-	for _, p := range pip.Parameter {
-		if sdk.ParameterFind(n.Context.DefaultPipelineParameters, p.Name) == nil {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Pipeline parameter %s doens't match", p.Name))
-		}
-	}
-
 	if n.Context.ApplicationID == 0 && n.Context.Application != nil {
 		n.Context.ApplicationID = n.Context.Application.ID
 	}

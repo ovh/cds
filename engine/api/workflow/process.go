@@ -49,23 +49,27 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 	}
 
 	//Checks the triggers
-	for i := range w.WorkflowNodeRuns {
-		nodeRun := &w.WorkflowNodeRuns[i]
-		//Trigger only if the node is over (successfull or not)
-		if nodeRun.Status == string(sdk.StatusSuccess) || nodeRun.Status == string(sdk.StatusFail) {
-			//Find the node in the workflow
-			node := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
-			if node == nil {
-				return sdk.ErrWorkflowNodeNotFound
-			}
-			for j := range node.Triggers {
-				t := &node.Triggers[j]
-				//TODO Check conditions
+	for k, v := range w.WorkflowNodeRuns {
+		for i := range v {
+			nodeRun := &w.WorkflowNodeRuns[k][i]
+			// TODO check if triggers already passed
 
-				//Keep the subnumber of the previous node in the graph
-				log.Debug("processWorkflowRun> starting from trigger %#v", t)
-				if err := processWorkflowNodeRun(db, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
-					sdk.WrapError(err, "processWorkflowRun> Unable to process node ID=%d", t.WorkflowDestNode.ID)
+			//Trigger only if the node is over (successfull or not)
+			if nodeRun.Status == string(sdk.StatusSuccess) || nodeRun.Status == string(sdk.StatusFail) {
+				//Find the node in the workflow
+				node := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
+				if node == nil {
+					return sdk.ErrWorkflowNodeNotFound
+				}
+				for j := range node.Triggers {
+					t := &node.Triggers[j]
+					//TODO Check conditions
+
+					//Keep the subnumber of the previous node in the graph
+					log.Debug("processWorkflowRun> starting from trigger %#v", t)
+					if err := processWorkflowNodeRun(db, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
+						sdk.WrapError(err, "processWorkflowRun> Unable to process node ID=%d", t.WorkflowDestNode.ID)
+					}
 				}
 			}
 		}
@@ -79,12 +83,15 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 		//we have to check noderun for every sources
 		for _, id := range j.SourceNodeIDs {
 			sources[id] = nil
-			for x := range w.WorkflowNodeRuns {
-				nodeRun := &w.WorkflowNodeRuns[x]
-				if nodeRun.WorkflowNodeID == id {
-					//We found the source in the list of the noderuns
-					sources[id] = nodeRun
+			for k, v := range w.WorkflowNodeRuns {
+				for x := range v {
+					nodeRun := &w.WorkflowNodeRuns[k][x]
+					if nodeRun.WorkflowNodeID == id {
+						//We found the source in the list of the noderuns
+						sources[id] = nodeRun
+					}
 				}
+
 			}
 		}
 
@@ -158,10 +165,13 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		//Merge the payload applying older nodeRun to most recent
 		runs := []sdk.WorkflowNodeRun{}
 		for _, id := range sourceNodeRuns {
-			for _, runID := range w.WorkflowNodeRuns {
-				if id == runID.ID {
-					runs = append(runs, runID)
+			for _, v := range w.WorkflowNodeRuns {
+				for _, run := range v {
+					if id == run.ID {
+						runs = append(runs, run)
+					}
 				}
+
 			}
 		}
 
@@ -216,7 +226,10 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 
 	log.Debug("processWorkflowNodeRun> new node run: %#v", run)
 
-	w.WorkflowNodeRuns = append(w.WorkflowNodeRuns, *run)
+	if w.WorkflowNodeRuns == nil {
+		w.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
+	}
+	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	if err := updateWorkflowRun(db, w); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}

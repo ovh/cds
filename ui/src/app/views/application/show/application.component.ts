@@ -99,7 +99,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.applicationSubscription = this._applicationStore.getApplications(key, appName).subscribe(apps => {
                         if (apps) {
                             let updatedApplication = apps.get(key + '-' + appName);
-                            if (updatedApplication && !updatedApplication.externalChange && !this.application) {
+                            if (updatedApplication && !updatedApplication.externalChange) {
                                 this.readyApp = true;
                                 this.application = updatedApplication;
 

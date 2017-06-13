@@ -153,7 +153,7 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 	}
 	wr := sdk.WorkflowRun(*runDB)
 
-	q := "select workflow_node_run.* from workflow_node_run where workflow_run_id = $1"
+	q := "select workflow_node_run.* from workflow_node_run where workflow_run_id = $1 ORDER BY workflow_node_run.sub_num DESC"
 	dbNodeRuns := []NodeRun{}
 	if _, err := db.Select(&dbNodeRuns, q, wr.ID); err != nil {
 		if err != sql.ErrNoRows {
@@ -166,7 +166,10 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 			return nil, sdk.WrapError(err, "loadRun> Unable to load workflow nodes run")
 		}
 		wnr := sdk.WorkflowNodeRun(n)
-		wr.WorkflowNodeRuns = append(wr.WorkflowNodeRuns, wnr)
+		if wr.WorkflowNodeRuns == nil {
+			wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
+		}
+		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], wnr)
 	}
 
 	return &wr, nil

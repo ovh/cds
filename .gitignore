@@ -4,6 +4,7 @@
 cli/cds/cds
 engine/api/api
 engine/api/.secrets
+engine/api/config.toml
 engine/hatchery/hatchery
 engine/worker/worker
 *.out

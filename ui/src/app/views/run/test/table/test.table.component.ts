@@ -64,6 +64,9 @@ export class TestTableComponent extends Table {
     }
 
     getLogs(logs) {
-        return ansi_up.ansi_to_html(logs.value);
+        if (logs && logs.value) {
+            return ansi_up.ansi_to_html(logs.value);
+        }
+        return '';
     }
 }
