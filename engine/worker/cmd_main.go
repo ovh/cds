@@ -211,9 +211,10 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				w.client.WorkerSetStatus(sdk.StatusWaiting)
-			case _ = <-wjobs:
-				//TODO
-
+			case j := <-wjobs:
+				if err := w.takeWorkflowJob(ctx, j); err != nil {
+					errs <- err
+				}
 			case err := <-errs:
 				log.Error("%v", err)
 

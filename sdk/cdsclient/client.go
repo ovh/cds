@@ -3,9 +3,8 @@ package cdsclient
 import (
 	"io"
 	"net/http"
-	"time"
-
 	"os"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 )

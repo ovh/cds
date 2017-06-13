@@ -74,7 +74,7 @@ func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worke
 		in.BookedJobID = job.ID
 	}
 
-	var path = fmt.Sprintf("/queue/%d/take", job.ID)
+	var path = fmt.Sprintf("/queue/workflows/%d/take", job.ID)
 	var info worker.WorkflowNodeJobRunInfo
 
 	if code, err := c.PostJSON(path, &in, &info); err != nil {
@@ -84,4 +84,16 @@ func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worke
 	}
 
 	return &info, nil
+}
+
+func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
+	var path = fmt.Sprintf("/queue/workflows/%d/infos", id)
+	var job sdk.WorkflowNodeJobRun
+
+	if code, err := c.PostJSON(path, nil, &job); err != nil {
+		return nil, err
+	} else if code != http.StatusOK {
+		return nil, nil
+	}
+	return &job, nil
 }

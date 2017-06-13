@@ -22,6 +22,56 @@ func postCheckRequirementError(r *sdk.Requirement, err error) {
 	sdk.Request("POST", "/queue/requirements/errors", []byte(s))
 }
 
+func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
+	info, err := w.client.QueueTakeJob(job, w.bookedJobID == job.ID)
+	if err != nil {
+		return sdk.WrapError(err, "takeWorkflowJob> Unable to take workflob node run job")
+	}
+
+	w.nbActionsDone++
+	// Set build variables
+	w.currentJob.wJob = &info.NodeJobRun
+	// Reset build variables
+	w.currentJob.gitsshPath = ""
+	w.currentJob.pkey = ""
+	w.currentJob.buildVariables = nil
+
+	start := time.Now()
+
+	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
+	ctx, cancel := context.WithCancel(ctx)
+	go func(cancel context.CancelFunc, jobID int64) {
+		tick := time.NewTicker(5 * time.Second)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
+				if err != nil {
+					log.Error("Unable to load pipeline build job %d", jobID)
+					cancel()
+					return
+				}
+
+				j := &sdk.PipelineBuildJob{}
+				if err := json.Unmarshal(b, j); err != nil {
+					log.Error("Unable to load pipeline build job %d: %v", jobID, err)
+					cancel()
+					return
+				}
+				if j.Status != sdk.StatusBuilding.String() {
+					cancel()
+					return
+				}
+
+			}
+		}
+	}(cancel, pipelineBuildJobID)
+
+}
+
 func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) {
 	in := worker.TakeForm{Time: time.Now()}
 	if isBooked {
@@ -54,8 +104,8 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 
 	w.currentJob.pbJob = pbji.PipelineBuildJob
 
+	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
 	ctx, cancel := context.WithCancel(ctx)
-
 	go func(cancel context.CancelFunc, jobID int64) {
 		tick := time.NewTicker(5 * time.Second)
 

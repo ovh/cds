@@ -130,6 +130,18 @@ func postBookWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
+func getWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	id, errc := requestVarInt(r, "id")
+	if errc != nil {
+		return sdk.WrapError(errc, "getWorkflowJobHandler> invalid id")
+	}
+	j, err := workflow.LoadNodeJobRun(db, id)
+	if err != nil {
+		return sdk.WrapError(err, "getWorkflowJobHandler> job not found")
+	}
+	return WriteJSON(w, r, j, http.StatusOK)
+}
+
 func postSpawnInfosWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errc := requestVarInt(r, "id")
 	if errc != nil {

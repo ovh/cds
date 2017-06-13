@@ -30,6 +30,7 @@ type currentWorker struct {
 	}
 	currentJob struct {
 		pbJob          sdk.PipelineBuildJob
+		wJob           *sdk.WorkflowNodeJobRun
 		currentStep    int
 		buildVariables []sdk.Variable
 		pkey           string
