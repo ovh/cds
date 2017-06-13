@@ -143,7 +143,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			log.Debug("Try to take the job %d", w.bookedJobID)
 			b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedJobID), nil)
 			if err != nil {
-				log.Error("Unable to load pipeline build job %d", w.bookedJobID)
+				log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
 			} else {
 				j := &sdk.PipelineBuildJob{}
 				if err := json.Unmarshal(b, j); err != nil {

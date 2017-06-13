@@ -284,7 +284,7 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
 	db := test.SetupPG(t)
-	ctx := test_runWorkflow(t, db, "/Test_postTakeWorkflowJobHandler")
+	ctx := test_runWorkflow(t, db, "/Test_postWorkflowJobResultHandler")
 	test_getWorkflowJob(t, db, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -352,7 +352,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	db := test.SetupPG(t)
-	ctx := test_runWorkflow(t, db, "/Test_postTakeWorkflowJobHandler")
+	ctx := test_runWorkflow(t, db, "/Test_postWorkflowJobTestsResultsHandler")
 	test_getWorkflowJob(t, db, &ctx)
 	assert.NotNil(t, ctx.job)
 
