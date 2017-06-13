@@ -5,12 +5,14 @@ import {WorkflowAddComponent} from './add/workflow.add.component';
 import {WorkflowShowComponent} from './show/workflow.component';
 import {WorkflowGraphComponent} from './graph/workflow.graph.component';
 import {WorkflowRunComponent} from './run/workflow.run.component';
+import {WorkflowNodeRunComponent} from './run/node/workflow.run.node.component';
 
 @NgModule({
     declarations: [
         WorkflowAddComponent,
         WorkflowGraphComponent,
         WorkflowRunComponent,
+        WorkflowNodeRunComponent,
         WorkflowShowComponent
     ],
     imports: [

@@ -1,47 +1,20 @@
-<div id="WorkflowRun">
-
+<div id="WorkflowRun" *ngIf="workflowRun">
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
             <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')">
                 <i class="sitemap icon"></i>
-                {{ 'common_workflow' | translate }}
+                {{ workflowRun.workflow.name + ' #' + workflowRun.num}}
             </a>
-            <a sm-item [class.active]="selectedTab === 'commit'">
-                Commit
-            </a>
-            <a sm-item [class.active]="selectedTab === 'test'">
-               Tests
-            </a>
-            <a sm-item [class.active]="selectedTab === 'artifact'">
-                Artifacts
-            </a>
-            <a sm-item [class.active]="selectedTab === 'history'">
-                History
-            </a>
-            <a *ngIf="false" sm-item [class.active]="selectedTab === 'highlights'" (click)="showTab('highlights')"><i class="graduation icon"></i>{{ 'common_highlights' | translate }}</a>
         </sm-menu>
     </div>
 
     <div class="scrollingContent">
         <div class="paddingContent">
-            <div class="viewContent" [ngSwitch]="selectedTab" *ngIf="workflowRun">
+            <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'workflow'">
                     <app-workflow-graph [project]="project" [workflow]="workflowRun.workflow" [webworker]="runWorkflowWorker"></app-workflow-graph>
                 </div>
-                <div *ngSwitchCase="'test'">
-                    <app-tests-result [tests]="currentBuild?.tests"></app-tests-result>
-                </div>
-                <div *ngSwitchCase="'artifact'">
-                    <app-artifact-list [artifacts]="currentBuild?.artifacts"></app-artifact-list>
-                </div>
-                <div *ngSwitchCase="'commit'">
-                    <app-commit-list [commits]="currentBuild?.commits"></app-commit-list>
-                </div>
-                <div *ngSwitchCase="'history'">
-                    <app-history [history]="histories" [currentBuild]="currentBuild" *ngIf="histories"></app-history>
-                </div>
             </div>
-
         </div>
     </div>
 </div>

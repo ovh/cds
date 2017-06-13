@@ -14,6 +14,7 @@ import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {CDSWorker} from '../../worker/worker';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
+import {Router} from '@angular/router';
 
 
 declare var _: any;
@@ -47,9 +48,10 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     webworker: CDSWorker;
 
     zone: NgZone;
+    currentNodeRun: WorkflowNodeRun;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
-                private _toast: ToastService, private _pipelineStore: PipelineStore) {
+                private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {
     }
 
     ngOnInit(): void {
@@ -58,7 +60,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
             this.webworker.response().subscribe(wrString => {
                 let wr = <WorkflowRun>JSON.parse(wrString);
                 if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
-                    console.log(wr.nodes[this.node.id][0]);
+                    this.currentNodeRun = wr.nodes[this.node.id][0];
                 }
             });
         }
@@ -178,5 +180,17 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     linkJoin(): void {
         this.linkJoinEvent.emit(this.node);
+    }
+
+    goToNodeRun(): void {
+        if (!this.webworker) {
+            return;
+        }
+        this._router.navigate([
+            '/project', this.project.key,
+            'workflow', this.workflow.name,
+            'run', this.currentNodeRun.num,
+            'node', this.node.id,
+            'subnumber', this.currentNodeRun.subnumber]);
     }
 }
