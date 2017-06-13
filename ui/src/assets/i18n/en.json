@@ -484,6 +484,7 @@
   "workflow_join_trigger_title" : "Trigger",
   "workflow_join_trigger_src_delete" : "Delete source this link",
   "workflow_join_trigger_src_title" : "Delete",
+  "workflow_loading" : "Loading workflow...",
   "workflow_name" : "Workflow name",
   "workflow_node_context_edit" : "Edit the pipeline context",
   "workflow_node_context_pipeline_parameter" : "Pipeline parameters",
