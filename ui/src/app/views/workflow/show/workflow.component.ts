@@ -51,7 +51,7 @@ export class WorkflowShowComponent {
     loading = false;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _worklowRun: WorkflowRunService) {
+                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -202,7 +202,7 @@ export class WorkflowShowComponent {
 
     runWorkflow(): void {
         this.loading = true;
-        this._worklowRun.runWorkflow(this.project.key, this.detailedWorkflow, {}).first().subscribe(wr => {
+        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow, {}).first().subscribe(wr => {
             this.loading = false;
             this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name, 'run', wr.num]);
         }, () => {
