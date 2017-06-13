@@ -1381,17 +1381,6 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
 		if pb.Status != sdk.StatusBuilding {
 			continue
 		}
-		for _, s := range pb.Stages {
-			if s.Status != sdk.StatusBuilding {
-				continue
-			}
-			for _, pbJob := range s.PipelineBuildJobs {
-				if err := DisableBuildingWorker(db, pbJob.ID); err != nil {
-					log.Error("deleteBranchBuilds> Cannot disabled worker")
-					continue
-				}
-			}
-		}
 
 		// Stop building pipeline
 		if err := StopPipelineBuild(db, &pb); err != nil {
@@ -1406,14 +1395,5 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
 		}
 	}
 
-	return nil
-}
-
-// DisableBuildingWorker Disable all workers working on given pipeline build job
-func DisableBuildingWorker(db gorp.SqlExecutor, pipJobID int64) error {
-	query := `UPDATE worker set status=$1, action_build_id = NULL where action_build_id = $2`
-	if _, err := db.Exec(query, sdk.StatusDisabled.String(), pipJobID); err != nil {
-		return sdk.WrapError(err, "DisableBuildingWorker> Error while disabling building worker")
-	}
 	return nil
 }

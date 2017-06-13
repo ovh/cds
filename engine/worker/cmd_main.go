@@ -110,12 +110,15 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		go func() {
 			select {
 			case <-c:
-				cancel()
+				defer cancel()
+				return
 			case <-ctx.Done():
+				return
 			}
 		}()
 
-		time.AfterFunc(time.Duration(viper.GetInt("ttl"))*time.Minute, func() {
+		time.AfterFunc(time.Duration(viper.GetInt("ttl"))*time.Second, func() {
+			log.Debug("Suicide")
 			if w.nbActionsDone == 0 {
 				cancel()
 			}
@@ -154,18 +157,40 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		go func() {
+		go func(ctx context.Context) {
 			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 			}
-		}()
+		}(ctx)
 
 		// main loop
 		for {
+			if ctx.Err() != nil {
+				w.drainLogsAndCloseLogger(ctx)
+				w.unregister()
+				log.Info("Exiting worker on error: %v", ctx.Err())
+				if viper.GetBool("force_exit") {
+					return
+				}
+				if w.hatchery.id > 0 {
+					log.Info("Waiting 30min to be killed by hatchery, if not killed, worker will exit")
+					time.Sleep(30 * time.Minute)
+				}
+				return
+			}
+
 			if !w.alive && viper.GetBool("single_use") {
 				registerTick.Stop()
-				cancel()
-				w.unregister()
+				defer cancel()
+				w.drainLogsAndCloseLogger(ctx)
+				if viper.GetBool("force_exit") {
+					return
+				}
+				if w.hatchery.id > 0 {
+					log.Info("Waiting 30min to be killed by hatchery, if not killed, worker will exit")
+					time.Sleep(30 * time.Minute)
+				}
+				log.Info("Exiting single-use worker")
 				return
 			}
 
@@ -176,6 +201,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				} else {
 					log.Info("Exiting worker")
 				}
+				w.drainLogsAndCloseLogger(ctx)
 				registerTick.Stop()
 				w.unregister()
 				return
@@ -185,6 +211,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
+				//Check requirements
 				requirementsOK := true
 				w.client.WorkerSetStatus(sdk.StatusChecking)
 				for _, r := range j.Job.Action.Requirements {
@@ -200,6 +227,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					}
 				}
 
+				//Take the job
 				if requirementsOK {
 					t := ""
 					if j.ID == w.bookedJobID {
@@ -209,7 +237,17 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
 				}
 
-				w.client.WorkerSetStatus(sdk.StatusWaiting)
+				if !viper.GetBool("single_use") {
+					//Continue
+					w.client.WorkerSetStatus(sdk.StatusWaiting)
+					continue
+				}
+
+				// Unregister from engine
+				if err := w.unregister(); err != nil {
+					log.Warning("takeJob> could not unregister: %s", err)
+				}
+
 			case j := <-wjobs:
 				if err := w.takeWorkflowJob(ctx, j); err != nil {
 					errs <- err
