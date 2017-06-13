@@ -162,9 +162,23 @@ func getWorkflowNodeRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	if err != nil {
 		return err
 	}
-	run, err := workflow.LoadNodeRun(db, key, name, number, id)
-	if err != nil {
-		return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
+
+	var run *sdk.WorkflowNodeRun
+	var errNodeRun error
+
+	subNumberS := r.Form.Get("subnumber")
+	if subNumberS == "" {
+		run, errNodeRun = workflow.LoadNodeRun(db, key, name, number, id)
+	} else {
+		sub, errS := strconv.ParseInt("subNumberS", 10, 64)
+		if errS != nil {
+			return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowRunHandler> subnumber is not an ID")
+		}
+		run, errNodeRun = workflow.LoadNodeRunBySub(db, key, name, number, id, sub)
+	}
+
+	if errNodeRun != nil {
+		return sdk.WrapError(errNodeRun, "getWorkflowRunHandler> Unable to load last workflow run")
 	}
 	return WriteJSON(w, r, run, http.StatusOK)
 }
