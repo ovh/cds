@@ -119,8 +119,8 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 
 	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
 	ctx, cancel := context.WithCancel(ctx)
-	go func(cancel context.CancelFunc, jobID int64) {
-		tick := time.NewTicker(5 * time.Second)
+	tick := time.NewTicker(5 * time.Second)
+	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
 
 		for {
 			select {
@@ -148,13 +148,14 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 
 			}
 		}
-	}(cancel, pipelineBuildJobID)
+	}(cancel, pipelineBuildJobID, tick)
 
 	// Reset build variables
 	w.currentJob.buildVariables = nil
 	start := time.Now()
 	//Run !
 	res := w.run(ctx, &pbji)
+	tick.Stop()
 	now, _ := ptypes.TimestampProto(time.Now())
 	res.RemoteTime = now
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()

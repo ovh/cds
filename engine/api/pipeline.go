@@ -11,8 +11,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
@@ -1087,19 +1087,6 @@ func stopPipelineBuildHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 			errFinal = sdk.ErrBuildArchived
 		}
 		return sdk.WrapError(errFinal, "stopPipelineBuildHandler> Cannot load pipeline Build")
-	}
-
-	// Disable building worker
-	for _, s := range pb.Stages {
-		if s.Status != sdk.StatusBuilding {
-			continue
-		}
-
-		for _, pipJob := range s.PipelineBuildJobs {
-			if err := pipeline.DisableBuildingWorker(db, pipJob.ID); err != nil {
-				return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop worker for pipeline build [%d-%d]", pb.ID, pipJob.ID)
-			}
-		}
 	}
 
 	if err := pipeline.StopPipelineBuild(db, pb); err != nil {
