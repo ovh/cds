@@ -291,6 +291,10 @@ func workingDirectory(basedir string, jobInfo *worker.PipelineBuildJobInfo) stri
 	return dir
 }
 
+func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.WorkflowNodeJobRunInfo) sdk.Result {
+	return sdk.Result{}
+}
+
 func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	t0 := time.Now()
 	defer func() { log.Info("Run Pipeline Build Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()

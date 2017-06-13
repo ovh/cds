@@ -68,8 +68,23 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 			}
 		}
-	}(cancel, pipelineBuildJobID)
+	}(cancel, job.ID)
 
+	// Reset build variables
+	w.currentJob.buildVariables = nil
+	//start := time.Now()
+	//Run !
+	res := w.processJob(ctx, info)
+	now, _ := ptypes.TimestampProto(time.Now())
+	res.RemoteTime = now
+	res.Duration = sdk.Round(time.Since(start), time.Second).String()
+
+	//Wait until the logchannel is empty
+	if ctx.Err() == nil {
+		w.drainLogsAndCloseLogger(ctx)
+	}
+
+	return nil
 }
 
 func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) {
