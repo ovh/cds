@@ -24,7 +24,11 @@ import {WorkflowStore} from '../../../service/workflow/workflow.store';
 @Component({
     selector: 'app-workflow-graph',
     templateUrl: './workflow.graph.html',
-    styleUrls: ['./workflow.graph.scss']
+    styleUrls: ['./workflow.graph.scss'],
+    entryComponents: [
+        WorkflowNodeComponent,
+        WorkflowJoinComponent
+    ]
 })
 @AutoUnsubscribe()
 export class WorkflowGraphComponent implements AfterViewInit, OnInit {

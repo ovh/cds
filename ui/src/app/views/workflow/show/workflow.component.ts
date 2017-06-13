@@ -5,12 +5,10 @@ import {Subscription} from 'rxjs/Subscription';
 import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger, WorkflowNodeTrigger} from '../../../model/workflow.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
 import {WorkflowTriggerComponent} from '../../../shared/workflow/trigger/workflow.trigger.component';
 import {SemanticModalComponent} from 'ng-semantic';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
 import {cloneDeep} from 'lodash';
 import {WorkflowTriggerJoinComponent} from '../../../shared/workflow/join/trigger/trigger.join.component';
 import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
@@ -21,11 +19,7 @@ declare var _: any;
 @Component({
     selector: 'app-workflow',
     templateUrl: './workflow.html',
-    styleUrls: ['./workflow.scss'],
-    entryComponents: [
-        WorkflowNodeComponent,
-        WorkflowJoinComponent
-    ]
+    styleUrls: ['./workflow.scss']
 })
 @AutoUnsubscribe()
 export class WorkflowShowComponent {
