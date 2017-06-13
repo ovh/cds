@@ -182,7 +182,7 @@ func (w *currentWorker) runArtifactDownload(ctx context.Context, a *sdk.Action, 
 	if err != nil {
 		res.Status = sdk.StatusFail.String()
 		res.Reason = fmt.Sprintf("%s\n", err)
-		log.Warning("Cannot download artifacts: %s\n", err)
+		log.Warning("Cannot download artifacts: %s", err)
 		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
 		return res
 	}
