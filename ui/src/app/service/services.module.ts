@@ -36,6 +36,7 @@ import {LanguageStore} from './language/language.store';
 import {NotificationService} from './notification/notification.service';
 import {WorkflowService} from './workflow/workflow.service';
 import {WorkflowStore} from './workflow/workflow.store';
+import {WorkflowRunService} from './workflow/run/workflow.run.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -76,7 +77,7 @@ export class ServicesModule {
                 VariableService,
                 WarningStore,
                 WorkerModelService,
-                WorkflowService, WorkflowStore,
+                WorkflowService, WorkflowStore, WorkflowRunService,
                 {
                     provide: Http,
                     useFactory: (httpFactory),
@@ -127,5 +128,6 @@ export {
     WarningStore,
     WorkerModelService,
     WorkflowStore,
+    WorkflowRunService,
     Http
 }

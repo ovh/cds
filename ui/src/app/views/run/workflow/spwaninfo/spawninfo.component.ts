@@ -33,7 +33,10 @@ export class SpawnInfoComponent {
                msg += '[' + s.api_time.toString().substr(0, 19) + '] ' + s.user_message + '\n';
             });
         }
-        return ansi_up.ansi_to_html(msg);
+        if (msg !== '') {
+            return ansi_up.ansi_to_html(msg);
+        }
+        return '';
     }
 
     openVariableModal(): void {

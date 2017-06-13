@@ -4,6 +4,7 @@ import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
 import {ProjectResolver} from '../../service/project/project.resolver';
 import {WorkflowAddComponent} from './add/workflow.add.component';
 import {WorkflowShowComponent} from './show/workflow.component';
+import {WorkflowRunComponent} from './run/workflow.run.component';
 
 const workflowRoutes: Routes = [
     {
@@ -16,8 +17,13 @@ const workflowRoutes: Routes = [
                     project: ProjectResolver
                 }
             },
-            { path: ':workflowName',
-                component: WorkflowShowComponent,
+            { path: ':workflowName', component: WorkflowShowComponent,
+                resolve: {
+                    project: ProjectResolver
+                }
+            },
+            {
+                path: ':workflowName/run/:number', component: WorkflowRunComponent,
                 resolve: {
                     project: ProjectResolver
                 }

@@ -59,7 +59,12 @@ input[disabled] {
 // Override semantic-ui color to apply CDS theme
 
 // dropdown
-
+.ui.buttons {
+  sm-dropdown>.ui.dropdown:last-child .menu {
+    left: auto;
+    right: 0;
+  }
+}
 .ui.selection.dropdown {
   width: 100%;
   min-width: 0px;
