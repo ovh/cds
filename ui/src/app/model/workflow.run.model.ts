@@ -16,7 +16,7 @@ export class WorkflowRun {
     workflow: Workflow;
     start: string;
     last_modified: string;
-    nodes: Array<WorkflowNodeRun>;
+    nodes: {[key: string]: Array<WorkflowNodeRun>; };
 }
 
 // WorkflowNodeRun is as execution instance of a node

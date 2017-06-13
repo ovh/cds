@@ -19,6 +19,7 @@ import * as dagreD3 from 'dagre-d3';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
+import {CDSWorker} from '../../../shared/worker/worker';
 
 
 @Component({
@@ -35,6 +36,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @Input() workflow: Workflow;
     @Input() project: Project;
+    @Input() webworker: CDSWorker;
 
     @Output() editTriggerEvent = new EventEmitter<{source, target}>();
     @Output() editTriggerJoinEvent = new EventEmitter<{source, target}>();
@@ -244,6 +246,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
         componentRef.instance.disabled = this.linkWithJoin;
+        componentRef.instance.webworker = this.webworker;
         this.nodesComponent.push(componentRef);
         componentRef.instance.linkJoinEvent.subscribe(n => {
             this.nodeToLink = n;

@@ -5,8 +5,6 @@ import {CDSWorker} from '../../../shared/worker/worker';
 import {WorkflowRun} from '../../../model/workflow.run.model';
 import {environment} from '../../../../environments/environment';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
-import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
 
 @Component({
     selector: 'app-workflow-run',
