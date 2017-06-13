@@ -131,6 +131,9 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 			cmd.Env = append(cmd.Env, e)
 		}
 
+		//We have to let it here for some legacy reason
+		cmd.Env = append(cmd.Env, "CDS_KEY=********")
+
 		// worker export http port
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", WorkerServerPort, w.exportPort))
 
