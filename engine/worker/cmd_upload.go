@@ -94,7 +94,7 @@ func (wk *currentWorker) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := wk.runArtifactUpload(context.Background(), wk.status.Name, a.Tag, wk.currentJob.pbJob, wk.currentJob.currentStep); result.Status != sdk.StatusSuccess.String() {
+	if result := wk.runArtifactUpload(context.Background(), a.Name, a.Tag, wk.currentJob.pbJob, wk.currentJob.currentStep); result.Status != sdk.StatusSuccess.String() {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
