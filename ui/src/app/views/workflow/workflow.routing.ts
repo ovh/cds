@@ -32,7 +32,7 @@ const workflowRoutes: Routes = [
                 }
             },
             {
-                path: ':workflowName/run/:number/node/:nodeId/subnumber/:subnumber', component: WorkflowNodeRunComponent
+                path: ':workflowName/run/:number/node/:nodeId', component: WorkflowNodeRunComponent
             }
         ]
     }

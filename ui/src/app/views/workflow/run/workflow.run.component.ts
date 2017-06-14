@@ -1,37 +1,32 @@
-import {Component, NgZone} from '@angular/core';
+import {Component, NgZone, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {WorkflowRun} from '../../../model/workflow.run.model';
 import {environment} from '../../../../environments/environment';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-run',
     templateUrl: './workflow.run.html',
     styleUrls: ['./workflow.run.scss']
 })
-export class WorkflowRunComponent {
+@AutoUnsubscribe()
+export class WorkflowRunComponent implements OnDestroy {
 
     project: Project;
     runWorkflowWorker: CDSWorker;
+    runSubsription: Subscription;
     workflowRun: WorkflowRun;
     zone: NgZone;
-
-    selectedTab = '';
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore, private _router: Router) {
         this.zone = new NgZone({enableLongStackTrace: false});
         // Update data if route change
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
-        });
-        this._activatedRoute.queryParams.subscribe(q => {
-            if (q['tab']) {
-                this.selectedTab = q['tab'];
-            } else {
-                this.selectedTab = 'workflow';
-            }
         });
 
         this._activatedRoute.params.first().subscribe(params => {
@@ -49,7 +44,7 @@ export class WorkflowRunComponent {
                     workflowName: workflowName,
                     number: number
                 });
-                this.runWorkflowWorker.response().subscribe(wrString => {
+                this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
                     this.zone.run(() => {
                        this.workflowRun = <WorkflowRun>JSON.parse(wrString);
                     });
@@ -58,10 +53,9 @@ export class WorkflowRunComponent {
         });
     }
 
-    showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key +
-            '/workflow/' + this.workflowRun.workflow.name +
-            '/run/' + this.workflowRun.num +
-            '?&tab=' + tab);
+    ngOnDestroy(): void {
+        if (this.runWorkflowWorker) {
+            this.runWorkflowWorker.stop();
+        }
     }
 }

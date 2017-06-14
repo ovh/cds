@@ -1,0 +1,85 @@
+<div id="NodeRunPipeline">
+    <div class="ui grid">
+        <div class="row">
+            <div class="column">
+                <ul *ngIf="nodeRun">
+                    <li *ngFor="let stage of nodeRun.stages" class="stage"
+                        [class.one]="nodeRun.stages.length === 1"
+                        [class.two]="nodeRun.stages.length === 2"
+                        [class.three]="nodeRun.stages.length === 3"
+                        [class.four]="nodeRun.stages.length === 4"
+                        [class.five]="nodeRun.stages.length === 5"
+                        [class.six]="nodeRun.stages.length === 6"
+                        [class.seven]="nodeRun.stages.length === 7">
+                        <div class="stageItem">
+                            {{stage.name}}
+                            <ul>
+                                <li *ngFor="let rj of stage.run_jobs">
+                                    <div class="job ui segment pointing"
+                                         [class.active]="selectedRunJob && selectedRunJob.id === rj.id"
+                                         [class.success]="rj.status === pipelineStatusEnum.SUCCESS"
+                                         [class.inactive]="rj.status === pipelineStatusEnum.DISABLED || rj.status === pipelineStatusEnum.SKIPPED"
+                                         [class.fail]="rj.status === pipelineStatusEnum.FAIL"
+                                         [class.building]="rj.status === pipelineStatusEnum.BUILDING"
+                                         (click)="selectedJob(rj)">
+                                        <div class="truncate">
+                                            <app-status-icon [status]="rj.status" [value]="99"></app-status-icon>
+                                            {{rj.job.action.name}}
+                                        </div>
+                                        <!--div class="duration" *ngIf="mapJobStatus[j.pipeline_action_id] !== pipelineStatusEnum.DISABLED && mapJobStatus[j.pipeline_action_id] !== pipelineStatusEnum.SKIPPED">
+                                            {{mapJobDuration[j.pipeline_action_id]}}
+                                        </div-->
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="column">
+                <div class="log" *ngIf="selectedRunJob">
+                    <ul>
+                        <li>
+                            <app-spawn-info [spawnInfos]="selectedRunJob.spawninfos" [variables]="selectedRunJob.parameters"></app-spawn-info>
+                        </li>
+                        <li *ngFor="let step of selectedRunJob.job.action.actions; let i = index">
+                            <!--app-step-log
+                                    [application]="application"
+                                    [pipeline]="pipeline"
+                                    [project]="project"
+                                    [pipelineBuild]="currentBuild"
+                                    [jobID]="selectedPipJob.job.pipeline_action_id"
+                                    [step]="step"
+                                    [stepOrder]="i"
+                                    [stepStatus]="mapStepStatus[selectedPipJob.job.pipeline_action_id + '-' + i]"
+                                    [previousBuild]="previousBuild"
+                            ></app-step-log-->
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!--div class="row" *ngIf="nextBuilds">
+            <div class="column">
+                <h3>{{ 'pipeline_triggered' | translate }}</h3>
+                <ul>
+                    <li *ngFor="let pb of nextBuilds">
+                        <a href="#" [routerLink]="[
+                        '/project', project.key,
+                        'application', pb.application.name,
+                        'pipeline', pb.pipeline.name,
+                        'build', pb.build_number]"
+                           [queryParams]="{envName: pb.environment.name, branch: pb.trigger.vcs_branch}">
+                            {{pb.application.name + ' - ' + pb.pipeline.name}}
+                            <span *ngIf="pb.environment.id > 1">
+                                {{ ' - ' + pb.environment.name }}
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div-->
+    </div>
+</div>
