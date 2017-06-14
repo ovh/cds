@@ -256,7 +256,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine
-				log.Debug("Jobs is done. Unregistering...")
+				log.Debug("Job is done. Unregistering...")
 				if err := w.unregister(); err != nil {
 					log.Warning("takeJob> could not unregister: %s", err)
 				}
