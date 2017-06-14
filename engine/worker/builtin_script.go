@@ -240,6 +240,8 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		chanRes <- res
 	}()
 
+	defer w.drainLogsAndCloseLogger(ctx)
+
 	for {
 		select {
 		case <-ctx.Done():

@@ -12,6 +12,8 @@ import (
 )
 
 func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+	defer w.drainLogsAndCloseLogger(ctx)
+
 	res := sdk.Result{Status: sdk.StatusFail.String()}
 	switch a.Name {
 	case sdk.ArtifactUpload:

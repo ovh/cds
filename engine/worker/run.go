@@ -296,10 +296,12 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	t0 := time.Now()
 	defer func() { log.Info("Run Pipeline Build Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
-	/*
-		ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
-		defer cancel()
-	*/
+
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
+	defer cancel()
+
+	defer w.drainLogsAndCloseLogger(ctx)
+
 	// Setup working directory
 	wd := workingDirectory(w.basedir, pbji)
 
