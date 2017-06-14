@@ -137,6 +137,7 @@ export class ApplicationStore {
     applyTemplate(key: string, request: ApplyTemplateRequest): Observable<Project> {
         return this._applicationService.applyTemplate(key, request).map(p => {
             this._projectStore.updateApplications(key, p);
+            this._projectStore.updatePipelines(key, p);
             return p;
         });
     }

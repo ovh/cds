@@ -144,6 +144,21 @@ export class ProjectStore {
     }
 
     /**
+     *
+     * @param key project key
+     * @param project containing new data
+     */
+    updatePipelines(key: string, project: Project): void {
+        let cache = this._projectCache.getValue();
+        let projectToUpdate = cache.get(key);
+        if (projectToUpdate) {
+            projectToUpdate.pipelines = project.pipelines;
+            projectToUpdate.last_modified = project.last_modified;
+            this._projectCache.next(cache.set(key, projectToUpdate));
+        }
+    }
+
+    /**
      * Update application name in project
      * @param key Project unique key
      * @param oldName old name
