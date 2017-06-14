@@ -125,10 +125,19 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		})
 
 		//Register
-		if err := w.doRegister(); err != nil {
-			cancel()
-			os.Exit(0)
+		t0 := time.Now()
+		for w.id == "" && ctx.Err() == nil {
+			if t0.Add(6 * time.Minute).Before(time.Now()) {
+				log.Error("Unable to register to CDS. Exiting...")
+				cancel()
+				os.Exit(1)
+			}
+			if err := w.doRegister(); err != nil {
+				log.Error("Unable to register to CDS (%v). Retry", err)
+			}
+			time.Sleep(2 * time.Second)
 		}
+
 		//Register every 10 seconds if we have nothing to do
 		registerTick := time.NewTicker(10 * time.Second)
 
