@@ -154,7 +154,7 @@ func (w *currentWorker) grpcLogger(inputChan chan sdk.Log) error {
 func (w *currentWorker) drainLogsAndCloseLogger(c context.Context) error {
 	for len(w.logger.logChan) > 0 || (w.logger.llist != nil && w.logger.llist.Len() > 0) {
 		log.Debug("Draining logs...")
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 	}
 	return c.Err()
 }
