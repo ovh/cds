@@ -19,6 +19,7 @@ export class WorkflowJoinComponent implements AfterViewInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() join: WorkflowNodeJoin;
+    @Input() readOnly = false;
 
     disabled = false;
 
@@ -30,6 +31,7 @@ export class WorkflowJoinComponent implements AfterViewInit {
     @Output() selectEvent = new EventEmitter<WorkflowNodeJoin>();
 
     newTrigger = new WorkflowNodeJoinTrigger();
+
 
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
