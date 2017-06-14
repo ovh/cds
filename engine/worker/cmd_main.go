@@ -133,8 +133,8 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		registerTick := time.NewTicker(10 * time.Second)
 
 		// start logger routine with a large buffer
-		w.logChan = make(chan sdk.Log, 100000)
-		go w.logger()
+		w.logger.logChan = make(chan sdk.Log, 100000)
+		go w.logProcessor()
 
 		// start queue polling
 		pbjobs := make(chan sdk.PipelineBuildJob, 1)
