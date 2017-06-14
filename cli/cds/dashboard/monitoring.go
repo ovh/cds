@@ -243,6 +243,7 @@ func (ui *Termui) updateStatus() string {
 		if strings.HasPrefix(l, "Version") ||
 			strings.HasPrefix(l, "Uptime") ||
 			strings.HasPrefix(l, "Nb of Panics: 0") ||
+			strings.HasPrefix(l, "Internal Events Queue: 0") ||
 			strings.HasPrefix(l, "Secret Backend") ||
 			strings.HasPrefix(l, "Cache: local") ||
 			strings.HasPrefix(l, "Session-Store: In Memory") ||
