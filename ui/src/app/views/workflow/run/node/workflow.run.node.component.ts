@@ -74,7 +74,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
         });
     }
 
-    ngOnDestroy() :void {
+    ngOnDestroy(): void {
         if (this.nodeRunWorker) {
             this.nodeRunWorker.stop();
         }
