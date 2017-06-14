@@ -117,7 +117,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}()
 
-		time.AfterFunc(time.Duration(viper.GetInt("ttl"))*time.Second, func() {
+		time.AfterFunc(time.Duration(viper.GetInt("ttl"))*time.Minute, func() {
 			log.Debug("Suicide")
 			if w.nbActionsDone == 0 {
 				cancel()
@@ -244,6 +244,9 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					}
 					log.Info("checkQueue> Taking job %d%s", j.ID, t)
 					w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
+				} else {
+					log.Debug("Unable to run this job, let's continue")
+					continue
 				}
 
 				if !viper.GetBool("single_use") {
@@ -253,6 +256,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine
+				log.Debug("Jobs is done. Unregistering...")
 				if err := w.unregister(); err != nil {
 					log.Warning("takeJob> could not unregister: %s", err)
 				}
