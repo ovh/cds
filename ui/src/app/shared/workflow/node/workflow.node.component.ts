@@ -183,14 +183,13 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     goToNodeRun(): void {
-        if (!this.webworker) {
+        if (!this.webworker || !this.currentNodeRun) {
             return;
         }
         this._router.navigate([
             '/project', this.project.key,
             'workflow', this.workflow.name,
             'run', this.currentNodeRun.num,
-            'node', this.node.id,
-            'subnumber', this.currentNodeRun.subnumber]);
+            'node', this.currentNodeRun.id]);
     }
 }

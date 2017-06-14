@@ -1,0 +1,35 @@
+<div id="WorkflowNodeRun" *ngIf="nodeRun">
+    <div class="CDSmenu">
+        <sm-menu title="" class="pointing secondary">
+            <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')">
+                <i class="sitemap icon"></i>
+                {{ 'common_workflow' | translate }}
+            </a>
+            <a sm-item [class.active]="selectedTab === 'commit'">
+                Commit
+            </a>
+            <a sm-item [class.active]="selectedTab === 'test'">
+                Test
+            </a>
+            <a sm-item [class.active]="selectedTab === 'artifact'">
+                Artifact
+            </a>
+            <a sm-item [class.active]="selectedTab === 'history'">
+                History
+            </a>
+        </sm-menu>
+    </div>
+
+    <div class="scrollingContent">
+        <div class="paddingContent">
+            <div class="viewContent" [ngSwitch]="selectedTab">
+                <div *ngSwitchCase="'workflow'">
+                    <app-node-run-pipeline [run]="nodeRun"></app-node-run-pipeline>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="ui text active loader" *ngIf="!nodeRun">Loading build...</div>

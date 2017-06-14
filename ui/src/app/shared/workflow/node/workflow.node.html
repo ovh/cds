@@ -1,5 +1,6 @@
 <div class="workflowNode">
-    <div class="ui segment" [class.disabled]="disabled" [class.pointing]="webworker" (click)="goToNodeRun()">
+    <div class="ui segment" [class.disabled]="disabled" [class.pointing]="currentNodeRun" (click)="goToNodeRun()"
+        [class.building]="currentNodeRun?.status === 'Waiting'">
         <div class="pipeline">
             <p class="ellipsis">{{node.pipeline.name + '(' + node.id + ')'}}</p>
         </div>
@@ -18,9 +19,6 @@
             <sm-item (click)="openDeleteNodeModal()">{{ 'workflow_node_delete_btn' | translate }}</sm-item>
         </sm-dropdown>
     </ng-container>
-    
-
-
 </div>
 <ng-container *ngIf="project && node">
     <app-workflow-trigger [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>

@@ -1,7 +1,7 @@
 <div id="WorkflowRun" *ngIf="workflowRun">
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
-            <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')">
+            <a sm-item>
                 <i class="sitemap icon"></i>
                 {{ workflowRun.workflow.name + ' #' + workflowRun.num}}
             </a>
@@ -10,10 +10,8 @@
 
     <div class="scrollingContent">
         <div class="paddingContent">
-            <div class="viewContent" [ngSwitch]="selectedTab">
-                <div *ngSwitchCase="'workflow'">
+            <div class="viewContent" >
                     <app-workflow-graph [project]="project" [workflow]="workflowRun.workflow" [webworker]="runWorkflowWorker"></app-workflow-graph>
-                </div>
             </div>
         </div>
     </div>

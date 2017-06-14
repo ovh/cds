@@ -1,7 +1,20 @@
+@import '../../../../common';
+
 .workflowNode {
   width: 155px;
   height: 58px;
 
+  .ui.segment.success {
+    background-color: $cds_color_light_green;
+  }
+
+  .ui.segment.fail {
+    background-color: $cds_color_light_red;
+  }
+
+  .ui.segment.building {
+    background-color: $cds_color_light_teal;
+  }
   .ui.segment {
     margin-top: -8px;
     margin-left: -11px;
