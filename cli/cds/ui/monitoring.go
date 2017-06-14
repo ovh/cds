@@ -1,9 +1,8 @@
-package dashboard
+package ui
 
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 )
 
 func (ui *Termui) showMonitoring() {
-	ui.current = MonitoringView
 	termui.Body.Rows = nil
 
 	ui.queue = NewScrollableList()
@@ -97,11 +95,13 @@ func (ui *Termui) showMonitoring() {
 	termui.Body.AddRows(
 		termui.NewRow(
 			termui.NewCol(4, 0, ui.statusWorkerList),
-			termui.NewCol(3, 0, ui.statusWorkerModels),
+			termui.NewCol(2, 0, ui.statusWorkerModels),
 			termui.NewCol(3, 0, ui.statusHatcheriesWorkers),
-			termui.NewCol(2, 0, ui.status),
+			termui.NewCol(3, 0, ui.status),
 		),
 	)
+
+	termui.Render()
 
 	baseURL := "http://cds.ui/"
 	urlUI, err := sdk.GetConfigUser()
@@ -116,10 +116,6 @@ func (ui *Termui) showMonitoring() {
 	ticker := time.NewTicker(2 * time.Second).C
 
 	for {
-		if ui.current != MonitoringView {
-			return
-		}
-
 		var a, b, c, d string
 		select {
 		case <-ticker:
@@ -231,7 +227,7 @@ func (ui *Termui) updateStatus() string {
 		return ""
 	}
 	elapsed := time.Since(start)
-	msg := fmt.Sprintf("[getStatus %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
+	msg := fmt.Sprintf("[status %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
 	selected := "fg-white,bg-default"
 	if ui.selected == StatusSelected {
@@ -265,7 +261,7 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 		return ""
 	}
 	elapsed := time.Since(start)
-	msg := fmt.Sprintf("[getBuildingPipelines %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
+	msg := fmt.Sprintf("[buildingPipelines %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
 	items := []string{fmt.Sprintf("[  %s➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("project/application", 35), pad("pipeline", 25), pad("branch/env", 19), "stage: jobs...")}
 	for i, pb := range pbs {
@@ -351,7 +347,7 @@ func (ui *Termui) updateQueueWorkers() string {
 		return ""
 	}
 	elapsed := time.Since(start)
-	msg := fmt.Sprintf("[getWorkers %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
+	msg := fmt.Sprintf("[workers %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
 	ui.computeStatusHatcheriesWorkers(workers)
 
@@ -361,23 +357,23 @@ func (ui *Termui) updateQueueWorkers() string {
 }
 
 func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
-	idsHatcheries, statusTitle := []string{}, []string{}
+	hatcheryNames, statusTitle := []string{}, []string{}
 	hatcheries := make(map[string]map[string]int64)
 	status := make(map[string]int)
 
 	for _, w := range workers {
-		var id string
+		var name string
 		if w.HatcheryID == 0 {
-			id = "Without hatchery"
+			name = "Without hatchery"
 		} else {
-			id = fmt.Sprintf("%d", w.HatcheryID)
+			name = w.HatcheryName
 		}
 
-		if _, ok := hatcheries[id]; !ok {
-			hatcheries[id] = make(map[string]int64)
-			idsHatcheries = append(idsHatcheries, id)
+		if _, ok := hatcheries[name]; !ok {
+			hatcheries[name] = make(map[string]int64)
+			hatcheryNames = append(hatcheryNames, name)
 		}
-		hatcheries[id][w.Status.String()] = hatcheries[id][w.Status.String()] + 1
+		hatcheries[name][w.Status.String()] = hatcheries[name][w.Status.String()] + 1
 
 		if _, ok := status[w.Status.String()]; !ok {
 			statusTitle = append(statusTitle, w.Status.String())
@@ -391,41 +387,54 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 	}
 
 	items := []string{}
-	sort.Strings(idsHatcheries)
-	for _, id := range idsHatcheries {
-		v := hatcheries[id]
-		t := fmt.Sprintf("%s ", id)
-		for status, nb := range v {
-			t += fmt.Sprintf("%s:%d ", status, nb)
+	sort.Strings(hatcheryNames)
+	for _, name := range hatcheryNames {
+		v := hatcheries[name]
+		var t string
+		for _, status := range statusTitle {
+			if v[status] > 0 {
+				t += fmt.Sprintf("%d %s ", v[status], statusShort(status))
+			}
 		}
+		t += fmt.Sprintf("%s ", name)
 		items = append(items, fmt.Sprintf("[%s](%s)", t, selected))
 	}
-	sort.Strings(items)
 	ui.statusHatcheriesWorkers.Items = items
 
 	sort.Strings(statusTitle)
-	title := " Hatcheries Workers "
+	title := " Hatcheries "
 	for _, s := range statusTitle {
-		title += fmt.Sprintf("%s:%d ", s, status[s])
+		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
 	}
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
 
-func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[string]sdk.Model) {
-	items := []string{}
+func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[int64]sdk.Model) {
+	titles, items := []string{}, []string{}
+	values := map[string]sdk.Worker{}
 	selected := "fg-white,bg-default"
 	if ui.selected == WorkersListSelected {
 		selected = "fg-white"
 	}
 	for _, w := range workers {
-		idModel := fmt.Sprintf("%d", w.Model)
-		items = append(items, fmt.Sprintf("[%s %s](%s)", pad(wModels[idModel].Type+" "+wModels[idModel].Name+" "+w.Name, 60), w.Status, selected))
+		n := wModels[w.Model].Type + " " + wModels[w.Model].Name + " " + w.Name
+		titles = append(titles, n)
+		values[n] = w
 	}
-	sort.Strings(items)
+	sort.Strings(titles)
+	for _, t := range titles {
+		w := values[t]
+		items = append(items, fmt.Sprintf("[%s %s](%s)", statusShort(w.Status.String()), pad(t, 60), selected))
+	}
+	var s string
+	if len(workers) > 1 {
+		s = "s"
+	}
+	ui.statusWorkerList.BorderLabel = fmt.Sprintf(" %d Worker%s ", len(workers), s)
 	ui.statusWorkerList.Items = items
 }
 
-func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[string]sdk.Model) {
+func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[int64]sdk.Model) {
 	start := time.Now()
 	workerModels, errwm := sdk.GetWorkerModels()
 	if errwm != nil {
@@ -433,24 +442,29 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[s
 		return "", nil
 	}
 	elapsed := time.Since(start)
-	msg := fmt.Sprintf(" | [getWorkerModels %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
+	msg := fmt.Sprintf(" | [wModels %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
-	wModels := make(map[string]sdk.Model, len(workerModels))
+	wModels := make(map[int64]sdk.Model, len(workerModels))
 	for w := range workerModels {
-		id := strconv.FormatInt(workerModels[w].ID, 10)
-		wModels[id] = workerModels[w]
+		wModels[workerModels[w].ID] = workerModels[w]
 	}
 
-	items, idsModels := []string{}, []string{}
+	statusTitle, items, idsModels := []string{}, []string{}, []string{}
 	models := make(map[string]map[string]int64)
+	status := make(map[string]int)
 
 	for _, w := range workers {
-		idModel := fmt.Sprintf("%d", w.Model)
+		idModel := fmt.Sprintf("%s", wModels[w.Model].Type+" "+wModels[w.Model].Name)
 		if _, ok := models[idModel]; !ok {
 			models[idModel] = make(map[string]int64)
 			idsModels = append(idsModels, idModel)
 		}
 		models[idModel][w.Status.String()] = models[idModel][w.Status.String()] + 1
+
+		if _, ok := status[w.Status.String()]; !ok {
+			statusTitle = append(statusTitle, w.Status.String())
+		}
+		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
 	selected := "fg-white,bg-default"
@@ -460,15 +474,24 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[s
 
 	sort.Strings(idsModels)
 	for _, id := range idsModels {
-		t := fmt.Sprintf("%s ", pad(wModels[id].Type+" "+wModels[id].Name, 28))
 		v := models[id]
-		for status, nb := range v {
-			t += fmt.Sprintf("%s:%d ", status, nb)
+		var t string
+		for _, status := range statusTitle {
+			if v[status] > 0 {
+				t += fmt.Sprintf("%d %s ", v[status], statusShort(status))
+			}
 		}
+		t += fmt.Sprintf("%s ", pad(id, 28))
 		items = append(items, fmt.Sprintf("[%s](%s)", t, selected))
 	}
-	sort.Strings(items)
 	ui.statusWorkerModels.Items = items
+
+	sort.Strings(statusTitle)
+	title := " models "
+	for _, s := range statusTitle {
+		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
+	}
+	ui.statusWorkerModels.BorderLabel = title
 
 	return msg, wModels
 }
@@ -481,7 +504,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		return ""
 	}
 	elapsed := time.Since(start)
-	msg := fmt.Sprintf("[getQueue %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
+	msg := fmt.Sprintf("[queue %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
 	var maxQueued time.Duration
 	booked := make(map[string]int)
@@ -544,6 +567,19 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	return msg
 }
 
+func statusShort(status string) string {
+	switch status {
+	case sdk.StatusWaiting.String():
+		return "⏳ "
+	case sdk.StatusBuilding.String():
+		return "🔥 "
+	case sdk.StatusDisabled.String():
+		return "💀 "
+	case sdk.StatusChecking.String():
+		return "🔎 "
+	}
+	return status
+}
 func computeURL(baseURL, prj, app, pip, build, env string) string {
 	return fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%s?env=%s",
 		baseURL, prj, app, pip, build, env,

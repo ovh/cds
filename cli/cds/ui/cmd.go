@@ -1,4 +1,4 @@
-package dashboard
+package ui
 
 import (
 	"fmt"
@@ -9,10 +9,8 @@ import (
 
 // Cmd dashboard
 var Cmd = &cobra.Command{
-	Use:     "ui",
-	Short:   "Interactive termUI",
-	Long:    `cds ui`,
-	Aliases: []string{"d", "dashboard"},
+	Use:   "ui",
+	Short: "cds ui",
 	Run: func(cmd *cobra.Command, args []string) {
 		runUI()
 	},
