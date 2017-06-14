@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"time"
 
 	"google.golang.org/grpc"
@@ -18,9 +19,12 @@ type currentWorker struct {
 	bookedJobID   int64
 	nbActionsDone int
 	basedir       string
-	logChan       chan sdk.Log
-	exportPort    int
-	hatchery      struct {
+	logger        struct {
+		logChan chan sdk.Log
+		llist   *list.List
+	}
+	exportPort int
+	hatchery   struct {
 		id   int64
 		name string
 	}

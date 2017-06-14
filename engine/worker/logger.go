@@ -31,44 +31,44 @@ func (w *currentWorker) sendLog(pipJobID int64, value string, pipelineBuildID in
 	} else {
 		l.Done = &timestamp.Timestamp{}
 	}
-	w.logChan <- *l
+	w.logger.logChan <- *l
 	return nil
 }
 
-func (w *currentWorker) logger() error {
+func (w *currentWorker) logProcessor() error {
 	if w.grpc.conn != nil {
-		if err := w.grpcLogger(w.logChan); err != nil {
+		if err := w.grpcLogger(w.logger.logChan); err != nil {
 			log.Error("GPPC logger : %s", err)
 		} else {
 			return nil
 		}
 	} else {
-		llist := list.New()
+		w.logger.llist = list.New()
 		for {
 			select {
-			case l, ok := <-w.logChan:
+			case l, ok := <-w.logger.logChan:
 				if ok {
-					llist.PushBack(l)
+					w.logger.llist.PushBack(l)
 				}
 				break
 			case <-time.After(250 * time.Millisecond):
 				var logs []*sdk.Log
 				var currentStepLog *sdk.Log
 				// While list is not empty
-				for llist.Len() > 0 {
+				for w.logger.llist.Len() > 0 {
 					// get older log line
-					l := llist.Front().Value.(sdk.Log)
-					llist.Remove(llist.Front())
+					l := w.logger.llist.Front().Value.(sdk.Log)
+					w.logger.llist.Remove(w.logger.llist.Front())
 
 					// then count how many lines are exactly the same
 					count := 1
-					for llist.Len() > 0 {
-						n := llist.Front().Value.(sdk.Log)
+					for w.logger.llist.Len() > 0 {
+						n := w.logger.llist.Front().Value.(sdk.Log)
 						if string(n.Val) != string(l.Val) {
 							break
 						}
 						count++
-						llist.Remove(llist.Front())
+						w.logger.llist.Remove(w.logger.llist.Front())
 					}
 
 					// and if count > 1, then add it at the beginning of the log
@@ -152,7 +152,7 @@ func (w *currentWorker) grpcLogger(inputChan chan sdk.Log) error {
 }
 
 func (w *currentWorker) drainLogsAndCloseLogger(c context.Context) error {
-	for len(w.logChan) > 0 {
+	for len(w.logger.logChan) > 0 || (w.logger.llist != nil && w.logger.llist.Len() > 0) {
 		log.Debug("Draining logs...")
 		time.Sleep(100 * time.Millisecond)
 	}
