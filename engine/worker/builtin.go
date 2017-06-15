@@ -37,7 +37,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, pbJob sdk.
 	chanRes := make(chan sdk.Result)
 
 	go func(pbJob *sdk.PipelineBuildJob) {
-		res := sdk.Result{Status: sdk.StatusSuccess.String()}
+		res := sdk.Result{Status: sdk.StatusFail.String()}
 
 		//For the moment we consider that plugin name = action name = plugin binary file name
 		pluginName := a.Name
