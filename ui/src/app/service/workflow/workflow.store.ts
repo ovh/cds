@@ -10,6 +10,7 @@ import {WorkflowService} from './workflow.service';
 export class WorkflowStore {
 
     static RECENT_WORKFLOW_KEY = 'CDS-RECENT-WORKFLOW';
+    WORKFLOW_ORIENTATION_KEY = 'CDS-WORKFLOW-ORIENTATION';
 
     // List of all workflows.
     private _workflows: BehaviorSubject<Map<string, Workflow>> = new BehaviorSubject(Map<string, Workflow>());
@@ -119,5 +120,26 @@ export class WorkflowStore {
 
     getTriggerJoinCondition(key: string, workflowName: string, joinID: number) {
         return this._workflowService.getTriggerJoinCondition(key, workflowName, joinID);
+    }
+
+    getDirection(key: string, name: string) {
+        let o = localStorage.getItem(this.WORKFLOW_ORIENTATION_KEY);
+        if (o) {
+            let j = JSON.parse(o);
+            if (j[key + '-' + name]) {
+                return j[key + '-' + name];
+            }
+        }
+        return 'TB';
+    }
+
+    setDirection(key: string, name: string, o: string) {
+        let ls = localStorage.getItem(this.WORKFLOW_ORIENTATION_KEY);
+        let j = {};
+        if (ls) {
+            j = JSON.parse(ls);
+        }
+        j[key + '-' + name] = o;
+        localStorage.setItem(this.WORKFLOW_ORIENTATION_KEY, JSON.stringify(j));
     }
 }

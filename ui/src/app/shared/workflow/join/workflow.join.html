@@ -11,8 +11,8 @@
 
 </div>
 <ng-container *ngIf="join">
-    <app-workflow-join-delete [join]="join" (deleteEvent)="deleteJoin($event)" #workflowDeleteJoin></app-workflow-join-delete>
+    <app-workflow-join-delete [join]="join" [loading]="loading" (deleteEvent)="deleteJoin($event)" #workflowDeleteJoin></app-workflow-join-delete>
 </ng-container>
 <ng-container *ngIf="project && join">
-    <app-workflow-trigger-join [project]="project" [workflow]="workflow" [join]="join" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowJoinTrigger></app-workflow-trigger-join>
+    <app-workflow-trigger-join [project]="project" [workflow]="workflow" [join]="join" [loading]="loading" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowJoinTrigger></app-workflow-trigger-join>
 </ng-container>

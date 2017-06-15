@@ -20,7 +20,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {CDSWorker} from '../../../shared/worker/worker';
-
+import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -48,6 +48,10 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
     svgWidth: number;
+    direction: string;
+
+    @ViewChild('dimmer')
+    dimmer: SemanticDimmerComponent;
 
     linkWithJoin = false;
     nodeToLink: WorkflowNode;
@@ -62,6 +66,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     }
 
     ngOnInit(): void {
+        this.direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
         this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, this.workflow.name).subscribe(ws => {
             if (ws) {
                 let updatedWorkflow = ws.get(this.project.key + '-' + this.workflow.name);
@@ -78,17 +83,26 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @HostListener('window:resize', ['$event'])
     onResize(event) {
-        if (event) {
-            this.svgWidth = event.target.innerWidth;
-        } else {
-            this.svgWidth = window.innerWidth;
-        }
-
         let svg = d3.select('svg');
         let inner = d3.select('svg g');
-        let svgWidth = +svg.attr('width');
-        let xCenterOffset = (svgWidth - this.g.graph().width) / 2;
-        inner.attr('transform', 'translate(' + xCenterOffset + ', 20)');
+        if (this.direction === 'LR') {
+            let w = 0;
+            inner.each(function () {
+                w = this.getBBox().width;
+            });
+            this.svgWidth = w;
+            inner.attr('transform', 'translate(20, 0)');
+        } else {
+            // Horizontal center
+            if (event) {
+                this.svgWidth = event.target.innerWidth;
+            } else {
+                this.svgWidth = window.innerWidth;
+            }
+            let svgWidth = +svg.attr('width');
+            let xCenterOffset = (svgWidth - this.g.graph().width) / 2;
+            inner.attr('transform', 'translate(' + xCenterOffset + ', 20)');
+        }
         svg.attr('height', this.g.graph().height + 40);
     }
 
@@ -96,10 +110,22 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.initWorkflow();
     }
 
+    changeDisplay(): void {
+        this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
+        this.initWorkflow();
+    }
+
     initWorkflow() {
+        this.joinsComponent.forEach( j => {
+           j.destroy();
+        });
+        this.nodesComponent.forEach( j => {
+            j.destroy();
+        });
+
         this.svgWidth = window.innerWidth;
         // this.g = new dagreD3.graphlib.Graph().setGraph({ directed: false, rankDir: 'LR'});
-        this.g = new dagreD3.graphlib.Graph().setGraph({directed: false});
+        this.g = new dagreD3.graphlib.Graph().setGraph({directed: false, rankDir: this.direction});
         if (this.workflow.root) {
             this.createNode(this.workflow.root);
         }
@@ -113,15 +139,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         // Set up an SVG group so that we can translate the final graph.
         let svg = d3.select('svg');
         svg.attr('width', this.svgWidth);
-
         let inner = d3.select('svg g');
-        /* FIXME : resize child
-         let zoom = d3.behavior.zoom().on('zoom', () => {
-         inner.attr('transform', 'translate(' + (<ZoomEvent>d3.event).translate + ')' + 'scale(' + (<ZoomEvent>d3.event).scale + ')');
-         //this.centerGraph(svg, inner);
-         });
-         svg.call(zoom);
-         */
+
         this.g.transition = (selection) => {
             return selection.transition().duration(500);
         };
@@ -148,13 +167,16 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.g.graph().transition = function(selection) {
             return selection.transition().duration(500);
         };
+
         // Run the renderer. This is what draws the final graph.
         this.render(inner, this.g);
 
-        // Center the graph
-        this.onResize(null);
+        this._cd.detectChanges();
 
         setTimeout(() => {
+            // Center the graph
+            this.onResize(null);
+
             svg.selectAll('g.edgePath').on('click', d => {
                 if (this.linkWithJoin) {
                     return;
@@ -175,7 +197,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                 }
             });
         }, 1);
-        this._cd.detectChanges();
+
+
     }
 
     createEdge(from: string, to: string, options: {}): void {

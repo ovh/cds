@@ -22,6 +22,7 @@ export class WorkflowJoinComponent implements AfterViewInit {
     @Input() readonly = false;
 
     disabled = false;
+    loading = false;
 
     @ViewChild('workflowDeleteJoin')
     workflowDeleteJoin: WorkflowDeleteJoinComponent;
@@ -65,11 +66,15 @@ export class WorkflowJoinComponent implements AfterViewInit {
     }
 
     updateWorkflow(w: Workflow, modal?: SemanticModalComponent): void {
+        this.loading = true;
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
+            this.loading = false;
             this._toast.success('', this._translate.instant('workflow_updated'));
             if (modal) {
                 modal.hide();
             }
+        }, () => {
+            this.loading = false;
         });
     }
 

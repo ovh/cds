@@ -22,6 +22,7 @@ export class WorkflowTriggerJoinComponent {
     @Input() workflow: Workflow;
     @Input() project: Project;
     @Input() trigger: WorkflowNodeJoinTrigger;
+    @Input() loading: boolean;
 
     operators: Array<string>;
     conditionNames: Array<string>;

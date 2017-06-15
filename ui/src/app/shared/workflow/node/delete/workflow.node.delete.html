@@ -5,7 +5,7 @@
         </div>
     </modal-content>
     <modal-actions>
-        <button class="ui grey button" (click)="hide()">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" (click)="deleteNode()">{{ 'btn_delete' | translate }}</button>
+        <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="deleteNode()">{{ 'btn_delete' | translate }}</button>
     </modal-actions>
 </sm-modal>
