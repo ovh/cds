@@ -304,7 +304,8 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 	sort.Strings(statusTitle)
 	title := " Pipelines  "
 	for _, s := range statusTitle {
-		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
+		icon, color := statusShort(s)
+		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
 	}
 	ui.building.BorderLabel = title
 	return msg
@@ -316,7 +317,8 @@ func (ui *Termui) pipelineLine(projKey string, app sdk.Application, pb sdk.Pipel
 	if ui.selected == BuildingSelected {
 		selected = "fg-white"
 	}
-	return fmt.Sprintf("[%s](%s)[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", statusShort(pb.Status.String()), selected, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
+	icon, color := statusShort(pb.Status.String())
+	return fmt.Sprintf("[%s](%s,%s)[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", icon, color, selected, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
 }
 
 func jobLine(name string, status string) string {
@@ -390,7 +392,8 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		var t string
 		for _, status := range statusTitle {
 			if v[status] > 0 {
-				t += fmt.Sprintf("%d %s ", v[status], statusShort(status))
+				icon, color := statusShort(status)
+				t += fmt.Sprintf("[%d %s](%s) ", v[status], icon, color)
 			}
 		}
 		t += fmt.Sprintf("%s ", name)
@@ -401,7 +404,8 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 	sort.Strings(statusTitle)
 	title := " Hatcheries "
 	for _, s := range statusTitle {
-		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
+		icon, color := statusShort(s)
+		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
 	}
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
@@ -421,7 +425,8 @@ func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[int
 	sort.Strings(titles)
 	for _, t := range titles {
 		w := values[t]
-		items = append(items, fmt.Sprintf("[%s %s](%s)", statusShort(w.Status.String()), pad(t, 60), selected))
+		icon, color := statusShort(w.Status.String())
+		items = append(items, fmt.Sprintf("[%s %s](%s,%s)", icon, pad(t, 60), color, selected))
 	}
 	var s string
 	if len(workers) > 1 {
@@ -475,18 +480,20 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 		var t string
 		for _, status := range statusTitle {
 			if v[status] > 0 {
-				t += fmt.Sprintf("%d %s ", v[status], statusShort(status))
+				icon, color := statusShort(status)
+				t += fmt.Sprintf("[%d %s](%s) ", v[status], icon, color)
 			}
 		}
-		t += fmt.Sprintf("%s ", pad(id, 28))
-		items = append(items, fmt.Sprintf("[%s](%s)", t, selected))
+		t += fmt.Sprintf("[%s](%s) ", pad(id, 28), selected)
+		items = append(items, t)
 	}
 	ui.statusWorkerModels.Items = items
 
 	sort.Strings(statusTitle)
 	title := " models "
 	for _, s := range statusTitle {
-		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
+		icon, color := statusShort(s)
+		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
 	}
 	ui.statusWorkerModels.BorderLabel = title
 
@@ -564,22 +571,22 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	return msg
 }
 
-func statusShort(status string) string {
+func statusShort(status string) (string, string) {
 	switch status {
 	case sdk.StatusWaiting.String():
-		return "⏳ "
+		return "☕", "fg-cyan"
 	case sdk.StatusBuilding.String():
-		return "🔥 "
+		return "▶", "fg-blue"
 	case sdk.StatusDisabled.String():
-		return "💀 "
+		return "⏏", "fg-grey"
 	case sdk.StatusChecking.String():
-		return "🔎 "
+		return "♻", "fg-yellow"
 	case sdk.StatusSuccess.String():
-		return "✅ "
+		return "✔", "fg-green"
 	case sdk.StatusFail.String():
-		return "🚨 "
+		return "✖", "fg-red"
 	}
-	return status
+	return status, "fg-default"
 }
 func computeURL(baseURL, prj, app, pip, build, env string) string {
 	return fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%s?env=%s",

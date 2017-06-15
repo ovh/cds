@@ -77,13 +77,19 @@ func (ui *Termui) init() {
 }
 
 func (ui *Termui) draw(i int) {
-	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: Checking:%s Waiting:%s Building:%s Success:%s Fail:%s Disabled:%s](fg-cyan) | %s",
-		statusShort(sdk.StatusChecking.String()),
-		statusShort(sdk.StatusWaiting.String()),
-		statusShort(sdk.StatusBuilding.String()),
-		statusShort(sdk.StatusSuccess.String()),
-		statusShort(sdk.StatusFail.String()),
-		statusShort(sdk.StatusDisabled.String()),
+	checking, checkingColor := statusShort(sdk.StatusChecking.String())
+	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
+	building, buildingColor := statusShort(sdk.StatusBuilding.String())
+	success, successColor := statusShort(sdk.StatusSuccess.String())
+	fail, failColor := statusShort(sdk.StatusFail.String())
+	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
+	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s) [Waiting:%s](%s) [Building:%s](%s) [Success:%s](%s) [Fail:%s](%s) [Disabled:%s](%s) [| %s](fg-cyan)",
+		checking, checkingColor,
+		waiting, waitingColor,
+		building, buildingColor,
+		success, successColor,
+		fail, failColor,
+		disabled, disabledColor,
 		ui.msg)
 	termui.Body.Align()
 	termui.Render(termui.Body)
