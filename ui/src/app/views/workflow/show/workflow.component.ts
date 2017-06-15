@@ -75,10 +75,6 @@ export class WorkflowShowComponent {
         });
     }
 
-    showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key + '/workflow/' + this.detailedWorkflow.name + '?tab=' + tab);
-    }
-
     public openDeleteJoinSrcModal(data: { source, target }) {
         let pID = Number(data.source.replace('node-', ''));
         let cID = Number(data.target.replace('join-', ''));

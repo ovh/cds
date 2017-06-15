@@ -7,10 +7,12 @@ import {WorkflowGraphComponent} from './graph/workflow.graph.component';
 import {WorkflowRunComponent} from './run/workflow.run.component';
 import {WorkflowNodeRunComponent} from './run/node/workflow.run.node.component';
 import {WorkflowRunNodePipelineComponent} from './run/node/pipeline/node.pipeline.component';
+import {WorkflowBreadCrumbComponent} from './breadcrumb/workflow.breadcrumb.component';
 
 @NgModule({
     declarations: [
         WorkflowAddComponent,
+        WorkflowBreadCrumbComponent,
         WorkflowGraphComponent,
         WorkflowRunComponent,
         WorkflowNodeRunComponent,
