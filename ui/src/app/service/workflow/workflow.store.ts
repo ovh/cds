@@ -10,7 +10,7 @@ import {WorkflowService} from './workflow.service';
 export class WorkflowStore {
 
     static RECENT_WORKFLOW_KEY = 'CDS-RECENT-WORKFLOW';
-    WORKFLOW_ORIENTATION_KEY: string = 'CDS-WORKFLOW-ORIENTATION';
+    WORKFLOW_ORIENTATION_KEY = 'CDS-WORKFLOW-ORIENTATION';
 
     // List of all workflows.
     private _workflows: BehaviorSubject<Map<string, Workflow>> = new BehaviorSubject(Map<string, Workflow>());
