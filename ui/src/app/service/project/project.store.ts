@@ -130,7 +130,6 @@ export class ProjectStore {
 
     /**
      * Update applications and pipelines on a project
-     * 
      * @param key project key
      * @param project project to update
      */
