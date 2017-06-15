@@ -77,10 +77,12 @@ func (ui *Termui) init() {
 }
 
 func (ui *Termui) draw(i int) {
-	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: Checking:%s Waiting:%s Building:%s Disabled:%s](fg-cyan) | %s",
+	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: Checking:%s Waiting:%s Building:%s Success:%s Fail:%s Disabled:%s](fg-cyan) | %s",
 		statusShort(sdk.StatusChecking.String()),
 		statusShort(sdk.StatusWaiting.String()),
 		statusShort(sdk.StatusBuilding.String()),
+		statusShort(sdk.StatusSuccess.String()),
+		statusShort(sdk.StatusFail.String()),
 		statusShort(sdk.StatusDisabled.String()),
 		ui.msg)
 	termui.Body.Align()

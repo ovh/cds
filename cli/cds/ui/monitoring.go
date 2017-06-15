@@ -263,8 +263,16 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 	elapsed := time.Since(start)
 	msg := fmt.Sprintf("[buildingPipelines %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
+	statusTitle := []string{}
+	status := make(map[string]int)
+
 	items := []string{fmt.Sprintf("[  %s➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("project/application", 35), pad("pipeline", 25), pad("branch/env", 19), "stage: jobs...")}
 	for i, pb := range pbs {
+		if _, ok := status[pb.Status.String()]; !ok {
+			statusTitle = append(statusTitle, pb.Status.String())
+		}
+		status[pb.Status.String()] = status[pb.Status.String()] + 1
+
 		t := ui.pipelineLine(pb.Application.ProjectKey, pb.Application, pb)
 		for _, s := range pb.Stages {
 			switch s.Status {
@@ -293,33 +301,22 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 		}
 	}
 	ui.building.Items = items
+	sort.Strings(statusTitle)
+	title := " Pipelines  "
+	for _, s := range statusTitle {
+		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
+	}
+	ui.building.BorderLabel = title
 	return msg
 }
 
 func (ui *Termui) pipelineLine(projKey string, app sdk.Application, pb sdk.PipelineBuild) string {
-	var txt string
-
+	branch := pb.Trigger.VCSChangesBranch
 	selected := ",bg-default"
 	if ui.selected == BuildingSelected {
 		selected = "fg-white"
 	}
-	buildingChar := fmt.Sprintf("[↻](fg-blue%s)", selected)
-	okChar := fmt.Sprintf("[✓](fg-green%s)", selected)
-	koChar := fmt.Sprintf("[✗](fg-red%s)", selected)
-
-	branch := pb.Trigger.VCSChangesBranch
-
-	switch pb.Status {
-	case sdk.StatusBuilding:
-		txt = buildingChar
-	case sdk.StatusSuccess:
-		txt = okChar
-	case sdk.StatusFail:
-		txt = koChar
-	}
-
-	txt = fmt.Sprintf("%s[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", txt, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
-	return txt
+	return fmt.Sprintf("[%s](%s)[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", statusShort(pb.Status.String()), selected, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
 }
 
 func jobLine(name string, status string) string {
@@ -577,6 +574,10 @@ func statusShort(status string) string {
 		return "💀 "
 	case sdk.StatusChecking.String():
 		return "🔎 "
+	case sdk.StatusSuccess.String():
+		return "✅ "
+	case sdk.StatusFail.String():
+		return "🚨 "
 	}
 	return status
 }
