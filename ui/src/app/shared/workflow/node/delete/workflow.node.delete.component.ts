@@ -14,6 +14,7 @@ export class WorkflowDeleteNodeComponent {
 
     @Output() deleteEvent = new EventEmitter<boolean>();
     @Input() node: WorkflowNode;
+    @Input() loading: boolean;
 
     constructor() {
 

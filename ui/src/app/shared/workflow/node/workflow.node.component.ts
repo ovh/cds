@@ -50,6 +50,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     zone: NgZone;
     currentNodeRun: WorkflowNodeRun;
 
+    loading = false;
+
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
                 private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {
     }
@@ -132,8 +134,29 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                 clonedWorkflow.root.triggers.forEach((t, i) => {
                     this.removeNode(this.node.id, t.workflow_dest_node, clonedWorkflow.root, i);
                 });
+                if (clonedWorkflow.joins) {
+                    clonedWorkflow.joins.forEach(j => {
+                        if (j.triggers) {
+                            j.triggers.forEach((t, i) => {
+                                this.removeNodeFromJoin(this.node.id, t.workflow_dest_node, j, i)
+                            });
+                        }
+                    });
+                }
+
                 this.updateWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
             }
+        }
+    }
+
+    removeNodeFromJoin(id: number, node: WorkflowNode, parent: WorkflowNodeJoin, index: number) {
+        if (node.id === id) {
+            parent.triggers.splice(index, 1);
+        }
+        if (node.triggers) {
+            node.triggers.forEach((t, i) => {
+                this.removeNode(id, t.workflow_dest_node, node, i);
+            });
         }
     }
 
@@ -156,11 +179,15 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     updateWorkflow(w: Workflow, modal?: SemanticModalComponent): void {
+        this.loading = true;
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
+            this.loading = false;
             this._toast.success('', this._translate.instant('workflow_updated'));
             if (modal) {
                 modal.hide();
             }
+        }, () => {
+            this.loading = false;
         });
     }
 

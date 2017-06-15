@@ -6,8 +6,14 @@
   align-content: stretch;
   height: 100%;
 
-  .paddingContent {
-    padding: 0px 20px;
+  .scrollingContent {
+    .paddingContent {
+      padding: 0px 0px;
+
+      .center {
+        text-align: center;
+      }
+    }
   }
 }
 

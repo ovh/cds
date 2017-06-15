@@ -21,6 +21,7 @@ export class WorkflowNodeContextComponent implements OnInit, AfterViewInit {
     @Input() project: Project;
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
+    @Input() loading: boolean;
 
     @Output() contextEvent = new EventEmitter<WorkflowNode>();
 

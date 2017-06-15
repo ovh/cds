@@ -19,6 +19,7 @@ export class WorkflowTriggerComponent {
     @Input() workflow: Workflow;
     @Input() project: Project;
     @Input() trigger: WorkflowNodeTrigger;
+    @Input() loading: boolean;
 
     operators: Array<string>;
     conditionNames: Array<string>;
