@@ -193,7 +193,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         componentRef.instance.disabled = this.linkWithJoin;
 
         if (this.webworker) {
-            componentRef.instance.readOnly = true;
+            componentRef.instance.readonly = true;
         }
 
         componentRef.instance.selectEvent.subscribe(j => {

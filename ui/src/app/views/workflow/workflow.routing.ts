@@ -32,7 +32,10 @@ const workflowRoutes: Routes = [
                 }
             },
             {
-                path: ':workflowName/run/:number/node/:nodeId', component: WorkflowNodeRunComponent
+                path: ':workflowName/run/:number/node/:nodeId', component: WorkflowNodeRunComponent,
+                resolve: {
+                    project: ProjectResolver
+                }
             }
         ]
     }

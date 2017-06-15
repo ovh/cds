@@ -1,17 +1,10 @@
 <div id="WorkflowShow">
     <div class="CDSbreadcrumb">
-        <app-breadcrumb [project]="project"></app-breadcrumb>
-    </div>
-    <div class="CDSmenu">
-        <sm-menu title="" class="pointing secondary">
-            <a *ngIf="true" sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')"><i class="sitemap icon"></i>{{
-                'common_workflow' | translate }}</a>
-        </sm-menu>
+        <app-worflow-breadcrumb [project]="project" [workflowName]="detailedWorkflow?.name"></app-worflow-breadcrumb>
     </div>
     <div class="scrollingContent">
         <div class="paddingContent">
             <div class="viewContent">
-
                     <div class="ui right floated green buttons">
                         <div class="ui button" (click)="runWorkflow()" [class.loading]="loading">{{ 'btn_run_workflow' | translate }}</div>
                         <sm-dropdown class="icon button">
@@ -19,14 +12,7 @@
                                 {{ 'btn_run_custom_worklow' | translate }}
                             </sm-item>
                         </sm-dropdown>
-
                     </div>
-                    <!--
-                    <div class="right floated">
-                        <button class="ui left attached green button" (click)="runWorkflow()">{{ 'btn_run_workflow' | translate }}</button>
-                        <button class="ui right attached green button">{{ 'btn_run_custom_worklow' | translate }}</button>
-                    </div>
-                    -->
                     <ng-container *ngIf="project && detailedWorkflow">
                         <app-workflow-graph [workflow]="detailedWorkflow" [project]="project"
                             (addSrcToJoinEvent)="addSourceToJoin($event)"
@@ -35,7 +21,6 @@
                             (editTriggerEvent)="openEditTriggerModal($event)" #workflowGraph></app-workflow-graph>
                     </ng-container>
                     <div class="ui text active loader" *ngIf="!detailedWorkflow || !project">Loading workflow...</div>
-
             </div>
         </div>
     </div>

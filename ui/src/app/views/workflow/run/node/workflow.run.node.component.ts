@@ -7,6 +7,8 @@ import {WorkflowNodeRun} from '../../../../model/workflow.run.model';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
+import {Workflow} from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -22,7 +24,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
     runSubscription: Subscription;
 
     // Context info
-    projectKey: string;
+    project: Project;
     workflowName: string;
 
     selectedTab: string;
@@ -30,6 +32,11 @@ export class WorkflowNodeRunComponent implements OnDestroy {
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
         private _router: Router) {
         this.zone = new NgZone({enableLongStackTrace: false});
+
+        this._activatedRoute.data.subscribe(datas => {
+            this.project = datas['project'];
+        });
+
 
         this._activatedRoute.queryParams.subscribe(q => {
             if (q['tab']) {
@@ -40,19 +47,19 @@ export class WorkflowNodeRunComponent implements OnDestroy {
         });
 
         this._activatedRoute.params.first().subscribe(params => {
-            this.projectKey = params['key'];
+            let key = params['key'];
             this.workflowName = params['workflowName'];
             let number = params['number'];
             let nodeRunId = params['nodeId'];
 
-            if (this.projectKey && this.workflowName && number && nodeRunId) {
+            if (key && this.workflowName && number && nodeRunId) {
                 // Start web worker
                 this.nodeRunWorker = new CDSWorker('./assets/worker/web/noderun.js');
                 this.nodeRunWorker.start({
                     'user': this._authStore.getUser(),
                     'session': this._authStore.getSessionToken(),
                     'api': environment.apiURL,
-                    key: this.projectKey,
+                    key: key,
                     workflowName: this.workflowName,
                     number: number,
                     nodeRunId: nodeRunId
@@ -82,7 +89,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
 
 
     showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.projectKey +
+        this._router.navigateByUrl('/project/' + this.project.key +
             '/workflow/' + this.workflowName +
             '/run/' + this.nodeRun.num +
             '/node/' + this.nodeRun.id,

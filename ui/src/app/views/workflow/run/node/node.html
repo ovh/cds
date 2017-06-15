@@ -1,4 +1,10 @@
 <div id="WorkflowNodeRun" *ngIf="nodeRun">
+
+    <div class="CDSbreadcrumb">
+        <app-worflow-breadcrumb [project]="project" [workflowName]="workflowName" [run]="nodeRun?.num"></app-worflow-breadcrumb>
+    </div>
+
+
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
             <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')">

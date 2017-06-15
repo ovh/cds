@@ -56,10 +56,11 @@ import {WorkflowJoinComponent} from './workflow/join/workflow.join.component';
 import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.delete.component';
 import {WorkflowTriggerJoinComponent} from './workflow/join/trigger/trigger.join.component';
 import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigger.src.component';
+import {RouterModule} from '@angular/router';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
-        PrettyJsonModule, CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule ],
+        PrettyJsonModule, CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule ],
     declarations: [
         ActionComponent,
         ActionStepComponent,

@@ -3,7 +3,6 @@ import {Project} from '../../model/project.model';
 import {Application} from '../../model/application.model';
 import {Pipeline} from '../../model/pipeline.model';
 import {Action} from '../../model/action.model';
-import {Router} from '@angular/router';
 
 @Component({
     selector: 'app-breadcrumb',
@@ -21,61 +20,52 @@ export class BreadcrumbComponent {
     @Input() branch: string;
     @Input() appVersion: number;
 
-    constructor(private _router: Router) { }
+    constructor() {
+    }
 
-    navigateToProject(): void {
-        let queryParams = { queryParams: {}};
+    getProjectQueryParams(): {} {
+        let queryParams = {};
         if (!this.application && this.pipeline) {
-            queryParams.queryParams['tab'] = 'pipelines';
+            queryParams['tab'] = 'pipelines';
         } else {
-            queryParams.queryParams['tab'] = 'applications';
+            queryParams['tab'] = 'applications';
         }
-        this._router.navigate(['project', this.project.key], queryParams);
+
+        return queryParams;
     }
 
-    navigateToApplication(appName: string): void {
-        let queryParams = { queryParams: {}};
+    getApplicationQueryParams(): {} {
+        let queryParams = {};
         if (this.branch) {
-            queryParams.queryParams['branch'] = this.branch;
+            queryParams['branch'] = this.branch;
         }
-        if (!appName) {
-            appName = this.application.name;
-        }
-        this._router.navigate(['project', this.project.key, 'application', appName], queryParams);
+        return queryParams;
     }
 
-    navigateToPipeline(pipName: string): void {
-        let queryParams = { queryParams: {}};
+    getPipelineQueryParams(): {} {
+        let queryParams = {};
         if (this.application) {
-            queryParams.queryParams['application'] = this.application.name;
+            queryParams['application'] = this.application.name;
         }
         if (this.version) {
-            queryParams.queryParams['version'] = this.version;
+            queryParams['version'] = this.version;
         }
         if (this.buildNumber) {
-            queryParams.queryParams['buildNumber'] = this.buildNumber;
+            queryParams['buildNumber'] = this.buildNumber;
         }
         if (this.envName) {
-            queryParams.queryParams['envName'] = this.envName;
+            queryParams['envName'] = this.envName;
         }
         if (this.branch) {
-            queryParams.queryParams['branch'] = this.branch;
+            queryParams['branch'] = this.branch;
         }
-        if (!pipName) {
-            pipName = this.pipeline.name;
-        }
-        this._router.navigate(['project', this.project.key, 'pipeline', pipName], queryParams);
+        return queryParams;
     }
 
-    navigateToBuild(): void {
-        let queryParams = { queryParams: {}};
-        queryParams.queryParams['envName'] = this.envName;
-        queryParams.queryParams['branch'] = this.branch;
-        this._router.navigate([
-            '/project',  this.project.key,
-            'application', this.application.name,
-            'pipeline', this.pipeline.name,
-            'build', this.buildNumber
-        ], queryParams);
+    getBuildQueryParams(): {} {
+        let queryParams = {queryParams: {}};
+        queryParams['envName'] = this.envName;
+        queryParams['branch'] = this.branch;
+        return queryParams;
     }
 }
