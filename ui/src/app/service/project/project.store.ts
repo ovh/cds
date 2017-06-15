@@ -129,15 +129,16 @@ export class ProjectStore {
     }
 
     /**
-     *
-     * @param key
-     * @param applications
+     * Update applications and pipelines on a project
+     * @param key project key
+     * @param project project to update
      */
-    updateApplications(key: string, project: Project): void {
+    updateApplicationsAndPipelines(key: string, project: Project): void {
         let cache = this._projectCache.getValue();
         let projectToUpdate = cache.get(key);
         if (projectToUpdate) {
             projectToUpdate.applications = project.applications;
+            projectToUpdate.pipelines = project.pipelines;
             projectToUpdate.last_modified = project.last_modified;
             this._projectCache.next(cache.set(key, projectToUpdate));
         }
