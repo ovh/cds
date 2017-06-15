@@ -53,7 +53,7 @@ func (ui *Termui) showMonitoring() {
 	ui.statusWorkerList.ItemFgColor = termui.ColorWhite
 	ui.statusWorkerList.ItemBgColor = termui.ColorBlack
 
-	ui.statusWorkerList.BorderLabel = " Workers List "
+	ui.statusWorkerList.BorderLabel = " Workers "
 	ui.statusWorkerList.Height = heightBottom
 	ui.statusWorkerList.Items = []string{"[select a job](fg-cyan,bg-default)"}
 	ui.statusWorkerList.BorderBottom = false
@@ -67,7 +67,7 @@ func (ui *Termui) showMonitoring() {
 	ui.statusWorkerModels.BorderLeft = false
 
 	ui.statusHatcheriesWorkers = NewScrollableList()
-	ui.statusHatcheriesWorkers.BorderLabel = " Hatcheries Workers "
+	ui.statusHatcheriesWorkers.BorderLabel = " Hatcheries "
 	ui.statusHatcheriesWorkers.Height = heightBottom
 	ui.statusHatcheriesWorkers.Items = []string{"[loading...](fg-cyan,bg-default)"}
 	ui.statusHatcheriesWorkers.BorderBottom = false
@@ -380,9 +380,9 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
-	selected := "fg-white,bg-default"
+	selected := ",bg-default"
 	if ui.selected == HatcheriesWorkersSelected {
-		selected = "fg-white"
+		selected = ""
 	}
 
 	items := []string{}
@@ -393,11 +393,11 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		for _, status := range statusTitle {
 			if v[status] > 0 {
 				icon, color := statusShort(status)
-				t += fmt.Sprintf("[%d %s](%s) ", v[status], icon, color)
+				t += fmt.Sprintf("[ %d %s ](%s%s)", v[status], icon, color, selected)
 			}
 		}
-		t += fmt.Sprintf("%s ", name)
-		items = append(items, fmt.Sprintf("[%s](%s)", t, selected))
+		t += fmt.Sprintf("[ %s](fg-white%s)", name, selected)
+		items = append(items, t)
 	}
 	ui.statusHatcheriesWorkers.Items = items
 
@@ -413,26 +413,38 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[int64]sdk.Model) {
 	titles, items := []string{}, []string{}
 	values := map[string]sdk.Worker{}
-	selected := "fg-white,bg-default"
+	selected := ",bg-default"
+	statusTitle := []string{}
+	status := make(map[string]int)
 	if ui.selected == WorkersListSelected {
-		selected = "fg-white"
+		selected = ""
 	}
 	for _, w := range workers {
 		n := wModels[w.Model].Type + " " + wModels[w.Model].Name + " " + w.Name
 		titles = append(titles, n)
 		values[n] = w
+		if _, ok := status[w.Status.String()]; !ok {
+			statusTitle = append(statusTitle, w.Status.String())
+		}
+		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 	sort.Strings(titles)
 	for _, t := range titles {
 		w := values[t]
 		icon, color := statusShort(w.Status.String())
-		items = append(items, fmt.Sprintf("[%s %s](%s,%s)", icon, pad(t, 60), color, selected))
+		items = append(items, fmt.Sprintf("[%s ](%s%s)[ %s](%s)", icon, color, selected, pad(t, 70), selected))
 	}
 	var s string
 	if len(workers) > 1 {
 		s = "s"
 	}
-	ui.statusWorkerList.BorderLabel = fmt.Sprintf(" %d Worker%s ", len(workers), s)
+	sort.Strings(statusTitle)
+	title := fmt.Sprintf(" %d Worker%s ", len(workers), s)
+	for _, s := range statusTitle {
+		icon, color := statusShort(s)
+		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
+	}
+	ui.statusWorkerList.BorderLabel = title
 	ui.statusWorkerList.Items = items
 }
 
@@ -469,9 +481,9 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
-	selected := "fg-white,bg-default"
+	selected := ",bg-default"
 	if ui.selected == WorkerModelsSelected {
-		selected = "fg-white"
+		selected = ""
 	}
 
 	sort.Strings(idsModels)
@@ -481,16 +493,16 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 		for _, status := range statusTitle {
 			if v[status] > 0 {
 				icon, color := statusShort(status)
-				t += fmt.Sprintf("[%d %s](%s) ", v[status], icon, color)
+				t += fmt.Sprintf("[%d %s ](%s%s)", v[status], icon, color, selected)
 			}
 		}
-		t += fmt.Sprintf("[%s](%s) ", pad(id, 28), selected)
+		t += fmt.Sprintf("[ %s](fg-white%s)", pad(id, 28), selected)
 		items = append(items, t)
 	}
 	ui.statusWorkerModels.Items = items
 
 	sort.Strings(statusTitle)
-	title := " models "
+	title := " Models "
 	for _, s := range statusTitle {
 		icon, color := statusShort(s)
 		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)

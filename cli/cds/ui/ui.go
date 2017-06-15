@@ -83,7 +83,7 @@ func (ui *Termui) draw(i int) {
 	success, successColor := statusShort(sdk.StatusSuccess.String())
 	fail, failColor := statusShort(sdk.StatusFail.String())
 	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
-	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s) [Waiting:%s](%s) [Building:%s](%s) [Success:%s](%s) [Fail:%s](%s) [Disabled:%s](%s) [| %s](fg-cyan)",
+	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s) | %s",
 		checking, checkingColor,
 		waiting, waitingColor,
 		building, buildingColor,
