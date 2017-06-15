@@ -1,6 +1,6 @@
 <div class="ui large breadcrumb">
     <i class="browser icon"></i>
-    <a class="section" (click)="navigateToProject()" [routerLink]="['/project', project.key]">{{ project?.name}}</a>
+    <a class="section" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'workflows'}">{{ project?.name}}</a>
 
     <i *ngIf="workflowName" class="right chevron icon divider"></i>
     <i *ngIf="workflowName" class="sitemap icon"></i>

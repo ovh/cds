@@ -19,7 +19,7 @@ export class WorkflowJoinComponent implements AfterViewInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() join: WorkflowNodeJoin;
-    @Input() readOnly = false;
+    @Input() readonly = false;
 
     disabled = false;
 
