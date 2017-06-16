@@ -53,7 +53,7 @@ func (ui *Termui) showMonitoring() {
 	ui.statusWorkerList.ItemFgColor = termui.ColorWhite
 	ui.statusWorkerList.ItemBgColor = termui.ColorBlack
 
-	ui.statusWorkerList.BorderLabel = " Workers List "
+	ui.statusWorkerList.BorderLabel = " Workers "
 	ui.statusWorkerList.Height = heightBottom
 	ui.statusWorkerList.Items = []string{"[select a job](fg-cyan,bg-default)"}
 	ui.statusWorkerList.BorderBottom = false
@@ -67,7 +67,7 @@ func (ui *Termui) showMonitoring() {
 	ui.statusWorkerModels.BorderLeft = false
 
 	ui.statusHatcheriesWorkers = NewScrollableList()
-	ui.statusHatcheriesWorkers.BorderLabel = " Hatcheries Workers "
+	ui.statusHatcheriesWorkers.BorderLabel = " Hatcheries "
 	ui.statusHatcheriesWorkers.Height = heightBottom
 	ui.statusHatcheriesWorkers.Items = []string{"[loading...](fg-cyan,bg-default)"}
 	ui.statusHatcheriesWorkers.BorderBottom = false
@@ -304,7 +304,8 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 	sort.Strings(statusTitle)
 	title := " Pipelines  "
 	for _, s := range statusTitle {
-		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
+		icon, color := statusShort(s)
+		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
 	}
 	ui.building.BorderLabel = title
 	return msg
@@ -316,7 +317,8 @@ func (ui *Termui) pipelineLine(projKey string, app sdk.Application, pb sdk.Pipel
 	if ui.selected == BuildingSelected {
 		selected = "fg-white"
 	}
-	return fmt.Sprintf("[%s](%s)[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", statusShort(pb.Status.String()), selected, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
+	icon, color := statusShort(pb.Status.String())
+	return fmt.Sprintf("[%s](%s,%s)[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", icon, color, selected, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
 }
 
 func jobLine(name string, status string) string {
@@ -378,9 +380,9 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
-	selected := "fg-white,bg-default"
+	selected := ",bg-default"
 	if ui.selected == HatcheriesWorkersSelected {
-		selected = "fg-white"
+		selected = ""
 	}
 
 	items := []string{}
@@ -390,18 +392,20 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		var t string
 		for _, status := range statusTitle {
 			if v[status] > 0 {
-				t += fmt.Sprintf("%d %s ", v[status], statusShort(status))
+				icon, color := statusShort(status)
+				t += fmt.Sprintf("[ %d %s ](%s%s)", v[status], icon, color, selected)
 			}
 		}
-		t += fmt.Sprintf("%s ", name)
-		items = append(items, fmt.Sprintf("[%s](%s)", t, selected))
+		t += fmt.Sprintf("[ %s](fg-white%s)", name, selected)
+		items = append(items, t)
 	}
 	ui.statusHatcheriesWorkers.Items = items
 
 	sort.Strings(statusTitle)
 	title := " Hatcheries "
 	for _, s := range statusTitle {
-		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
+		icon, color := statusShort(s)
+		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
 	}
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
@@ -409,25 +413,38 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[int64]sdk.Model) {
 	titles, items := []string{}, []string{}
 	values := map[string]sdk.Worker{}
-	selected := "fg-white,bg-default"
+	selected := ",bg-default"
+	statusTitle := []string{}
+	status := make(map[string]int)
 	if ui.selected == WorkersListSelected {
-		selected = "fg-white"
+		selected = ""
 	}
 	for _, w := range workers {
 		n := wModels[w.Model].Type + " " + wModels[w.Model].Name + " " + w.Name
 		titles = append(titles, n)
 		values[n] = w
+		if _, ok := status[w.Status.String()]; !ok {
+			statusTitle = append(statusTitle, w.Status.String())
+		}
+		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 	sort.Strings(titles)
 	for _, t := range titles {
 		w := values[t]
-		items = append(items, fmt.Sprintf("[%s %s](%s)", statusShort(w.Status.String()), pad(t, 60), selected))
+		icon, color := statusShort(w.Status.String())
+		items = append(items, fmt.Sprintf("[%s ](%s%s)[ %s](%s)", icon, color, selected, pad(t, 70), selected))
 	}
 	var s string
 	if len(workers) > 1 {
 		s = "s"
 	}
-	ui.statusWorkerList.BorderLabel = fmt.Sprintf(" %d Worker%s ", len(workers), s)
+	sort.Strings(statusTitle)
+	title := fmt.Sprintf(" %d Worker%s ", len(workers), s)
+	for _, s := range statusTitle {
+		icon, color := statusShort(s)
+		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
+	}
+	ui.statusWorkerList.BorderLabel = title
 	ui.statusWorkerList.Items = items
 }
 
@@ -464,9 +481,9 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
-	selected := "fg-white,bg-default"
+	selected := ",bg-default"
 	if ui.selected == WorkerModelsSelected {
-		selected = "fg-white"
+		selected = ""
 	}
 
 	sort.Strings(idsModels)
@@ -475,18 +492,20 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 		var t string
 		for _, status := range statusTitle {
 			if v[status] > 0 {
-				t += fmt.Sprintf("%d %s ", v[status], statusShort(status))
+				icon, color := statusShort(status)
+				t += fmt.Sprintf("[%d %s ](%s%s)", v[status], icon, color, selected)
 			}
 		}
-		t += fmt.Sprintf("%s ", pad(id, 28))
-		items = append(items, fmt.Sprintf("[%s](%s)", t, selected))
+		t += fmt.Sprintf("[ %s](fg-white%s)", pad(id, 28), selected)
+		items = append(items, t)
 	}
 	ui.statusWorkerModels.Items = items
 
 	sort.Strings(statusTitle)
-	title := " models "
+	title := " Models "
 	for _, s := range statusTitle {
-		title += fmt.Sprintf("%d %s ", status[s], statusShort(s))
+		icon, color := statusShort(s)
+		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
 	}
 	ui.statusWorkerModels.BorderLabel = title
 
@@ -564,22 +583,22 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	return msg
 }
 
-func statusShort(status string) string {
+func statusShort(status string) (string, string) {
 	switch status {
 	case sdk.StatusWaiting.String():
-		return "⏳ "
+		return "☕", "fg-cyan"
 	case sdk.StatusBuilding.String():
-		return "🔥 "
+		return "▶", "fg-blue"
 	case sdk.StatusDisabled.String():
-		return "💀 "
+		return "⏏", "fg-grey"
 	case sdk.StatusChecking.String():
-		return "🔎 "
+		return "♻", "fg-yellow"
 	case sdk.StatusSuccess.String():
-		return "✅ "
+		return "✔", "fg-green"
 	case sdk.StatusFail.String():
-		return "🚨 "
+		return "✖", "fg-red"
 	}
-	return status
+	return status, "fg-default"
 }
 func computeURL(baseURL, prj, app, pip, build, env string) string {
 	return fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%s?env=%s",
