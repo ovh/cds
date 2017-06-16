@@ -12,3 +12,5 @@
          find: button.ui.green
          wait: 2
     screenshot: workflow_create_2_submit.png
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/workflow/{{.ui.workflow}}
