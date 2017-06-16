@@ -372,3 +372,10 @@ func WorkflowGet(projectkey, name string) (*Workflow, error) {
 
 	return &w, nil
 }
+
+// WorkflowDelete Call API to delete a workflow
+func WorkflowDelete(projectkey, name string) error {
+	path := fmt.Sprintf("/project/%s/workflows/%s", projectkey, name)
+	_, _, err := Request("DELETE", path, nil)
+	return err
+}
