@@ -53,7 +53,6 @@ export class WorkflowJoinComponent implements AfterViewInit {
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
         this.elementRef.nativeElement.style.top = 0;
-        this.elementRef.nativeElement.style.zIndex = 50;
     }
 
     displayDropdown(): void {
