@@ -2,7 +2,7 @@
     <div class="ui segment" [class.disabled]="disabled" [class.pointing]="currentNodeRun" (click)="goToNodeRun()"
         [class.building]="currentNodeRun?.status === 'Waiting'">
         <div class="pipeline">
-            <p class="ellipsis">{{node.pipeline.name + '(' + node.id + ')'}}</p>
+            <p class="ellipsis">{{node.pipeline.name}}</p>
         </div>
     </div>
     <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
@@ -11,7 +11,7 @@
     <a class="ui white ribbon label" *ngIf="node.context.environment_id && node.context.environment_id > 0">{{node.context.environment.name}}</a>
 
     <ng-container *ngIf="!webworker">
-        <sm-dropdown class="nocaret" icon="settings" [disabled]="disabled">
+        <sm-dropdown class="nocaret" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
             <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
             <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>
             <sm-item (click)="linkJoin()">{{ 'workflow_node_join_link' | translate }}</sm-item>

@@ -1,6 +1,6 @@
 <div class="workflowJoin">
     <div [hidden]="disabled || readonly">
-        <sm-dropdown class="nocaret" icon="settings">
+        <sm-dropdown class="nocaret" icon="settings" (click)="displayDropdown()" [options]="options">
             <sm-item (click)="openTriggerJoinModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
             <sm-item (click)="openDeleteJoinModal()">{{ 'workflow_join_delete' | translate }}</sm-item>
         </sm-dropdown>

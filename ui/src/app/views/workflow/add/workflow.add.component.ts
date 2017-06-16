@@ -37,6 +37,7 @@ export class WorkflowAddComponent {
         this._workflowStore.addWorkflow(this.project.key, this.workflow).first().subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_added'));
             this.loading = false;
+            this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name]);
         }, () => {
             this.loading = false;
         });

@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, Output, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
 import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
@@ -33,14 +33,30 @@ export class WorkflowJoinComponent implements AfterViewInit {
 
     newTrigger = new WorkflowNodeJoinTrigger();
 
+    zone: NgZone;
+    options: {};
 
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
-        private _translate: TranslateService) { }
+        private _translate: TranslateService) {
+        this.zone = new NgZone({enableLongStackTrace: false});
+        this.options = {
+            'fullTextSearch': true,
+            onHide: () => {
+                this.zone.run(() => {
+                    this.elementRef.nativeElement.style.zIndex = 0;
+                });
+            }
+        }
+    }
 
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
         this.elementRef.nativeElement.style.top = 0;
+    }
+
+    displayDropdown(): void {
+        this.elementRef.nativeElement.style.zIndex = 50;
     }
 
     openDeleteJoinModal(): void {

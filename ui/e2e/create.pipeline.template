@@ -1,0 +1,28 @@
+  - action:
+      navigate:
+          url: '{{.ui.url}}/project/{{.ui.project}}'
+    screenshot: pipeline_1_navigate.png
+  - action:
+      click:
+        find: '#ProjectPipelineTab'
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}?tab=pipelines
+    screenshot: pipeline_2_navigate.png
+  - action:
+      click:
+          find: 'a.ui.blue.button'
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/pipeline
+    screenshot: pipeline_3_navigate.png
+  - action:
+      fill:
+      - find: input[name="pipname"]
+        text: '{{.ui.pipeline}}'
+    screenshot: pipeline_4_form_create.png
+  - action:
+      click:
+        find: button.ui.green
+        wait: 2
+    screenshot: pipeline_5_form_submit.png
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/pipeline/{{.ui.pipeline}}

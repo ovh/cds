@@ -49,47 +49,50 @@ func removeProject(cmd *cobra.Command, args []string) {
 
 func forceRemoveProject(key string) error {
 
+	// Delete all workflow
+	ws, errW := sdk.WorkflowList(key)
+	if errW != nil {
+		return errW
+	}
+	for _, w := range ws {
+		if err := sdk.WorkflowDelete(key, w.Name); err != nil {
+			return err
+		}
+	}
+
 	// Delete all apps
-	apps, err := sdk.ListApplications(key)
-	if err != nil {
-		return err
+	apps, errA := sdk.ListApplications(key)
+	if errA != nil {
+		return errA
 	}
 	for _, app := range apps {
-		err = sdk.DeleteApplication(key, app.Name)
-		if err != nil {
+		if err := sdk.DeleteApplication(key, app.Name); err != nil {
 			return err
 		}
 	}
 
 	// Delete all pipelines
-	pips, err := sdk.ListPipelines(key)
-	if err != nil {
-		return err
+	pips, errP := sdk.ListPipelines(key)
+	if errP != nil {
+		return errP
 	}
 	for _, pip := range pips {
-		err = sdk.DeletePipeline(key, pip.Name)
-		if err != nil {
+		if err := sdk.DeletePipeline(key, pip.Name); err != nil {
 			return err
 		}
 	}
 
 	// Delete all environments
-	envs, err := sdk.ListEnvironments(key)
-	if err != nil {
-		return err
+	envs, errE := sdk.ListEnvironments(key)
+	if errE != nil {
+		return errE
 	}
 	for _, env := range envs {
-		err = sdk.DeleteEnvironment(key, env.Name)
-		if err != nil {
+		if err := sdk.DeleteEnvironment(key, env.Name); err != nil {
 			return err
 		}
 	}
 
 	// Delete project
-	err = sdk.RemoveProject(key)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return sdk.RemoveProject(key)
 }
