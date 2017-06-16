@@ -51,6 +51,15 @@ func (s VenomPlugin) Parameters() plugin.Parameters {
 	return params
 }
 
+type venomWriter struct {
+	plugin.IJob
+}
+
+func (w venomWriter) Write(buf []byte) (int, error) {
+	err := plugin.SendLog(w, "VENOM %s", buf)
+	return 0, err
+}
+
 // Run execute the action
 func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	// Parse parameters
@@ -66,7 +75,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	}
 	p, err := strconv.Atoi(parallel)
 	if err != nil {
-		plugin.SendLog(a, "PLUGIN", "parallel arg must be an integer.")
+		plugin.SendLog(a, "VENOM - parallel arg must be an integer\n")
 		return plugin.Fail
 	}
 
@@ -87,9 +96,10 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	}
 
 	start := time.Now()
-	tests, err := venom.Process([]string{path}, a.Arguments().Data, []string{exclude}, p, loglevel, details)
+	w := venomWriter{a}
+	tests, err := venom.Process([]string{path}, a.Arguments().Data, []string{exclude}, p, loglevel, details, w)
 	if err != nil {
-		plugin.SendLog(a, "PLUGIN", "Fail on venom: %s", err)
+		plugin.SendLog(a, "VENOM - Fail on venom: %s\n", err)
 		return plugin.Fail
 	}
 
