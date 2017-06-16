@@ -1,0 +1,14 @@
+  - action:
+      fill:
+      - find: '#WorkflowPipelineSelect input.search'
+        text: '{{.ui.pipeline}}'
+      - find: input[name="name"]
+        text: '{{.ui.workflow}}'
+      - find: 'textarea[name="description"]'
+        text: 'Workflow e2e'
+    screenshot: workflow_create_1.png
+  - action:
+      click:
+         find: button.ui.green
+         wait: 2
+    screenshot: workflow_create_2_submit.png

@@ -15,6 +15,7 @@ import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {CDSWorker} from '../../worker/worker';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router} from '@angular/router';
+import {inherits} from 'util';
 
 
 declare var _: any;
@@ -51,26 +52,42 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     currentNodeRun: WorkflowNodeRun;
 
     loading = false;
+    options: {};
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
                 private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {
     }
 
     ngOnInit(): void {
+        this.zone = new NgZone({enableLongStackTrace: false});
         if (this.webworker) {
-            this.zone = new NgZone({enableLongStackTrace: false});
             this.webworker.response().subscribe(wrString => {
                 let wr = <WorkflowRun>JSON.parse(wrString);
                 if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
                     this.currentNodeRun = wr.nodes[this.node.id][0];
                 }
             });
+        } else {
+            this.options = {
+                'fullTextSearch': true,
+                onHide: () => {
+                    this.zone.run(() => {
+                        this.elementRef.nativeElement.style.zIndex = 0;
+                    });
+                }
+            }
         }
+
+    }
+
+    displayDropdown(): void {
+        this.elementRef.nativeElement.style.zIndex = 50;
     }
 
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
         this.elementRef.nativeElement.style.top = 0;
+
     }
 
     openTriggerModal(): void {
