@@ -26,9 +26,8 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	r.ParseMultipartForm(64 << 20)
 	file, handler, err := r.FormFile("UploadFile")
 	if err != nil {
-		log.Warning("fileUploadAndGetPlugin> %s", err)
 		log.Debug("fileUploadAndGetPlugin> %v", r.Header)
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, sdk.WrapError(err, "fileUploadAndGetPlugin> err on formFile")
 	}
 
 	filename := handler.Filename
@@ -42,8 +41,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 
 	tmp, err := ioutil.TempDir("", "cds-plugin")
 	if err != nil {
-		log.Error("fileUploadAndGetPlugin> %s", err)
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, sdk.WrapError(err, "fileUploadAndGetPlugin> err on temp dir.")
 	}
 	deferFunc := func() {
 		log.Debug("fileUploadAndGetPlugin> deleting file %s", tmp)
@@ -54,8 +52,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	tmpfn := filepath.Join(tmp, filename)
 	f, err := os.OpenFile(tmpfn, os.O_WRONLY|os.O_CREATE, 0700)
 	if err != nil {
-		log.Error("fileUploadAndGetPlugin> %s", err)
-		return nil, nil, nil, deferFunc, err
+		return nil, nil, nil, deferFunc, sdk.WrapError(err, "fileUploadAndGetPlugin> err on openFile")
 	}
 
 	log.Debug("fileUploadAndGetPlugin> writing file %s", tmpfn)
@@ -64,14 +61,12 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 
 	content, err := os.Open(tmpfn)
 	if err != nil {
-		log.Error("fileUploadAndGetPlugin> %s", err)
-		return nil, nil, nil, deferFunc, err
+		return nil, nil, nil, deferFunc, sdk.WrapError(err, "fileUploadAndGetPlugin> err on Open")
 	}
 
 	ap, params, err := actionplugin.Get(filename, tmpfn)
 	if err != nil {
-		log.Warning("fileUploadAndGetPlugin> unable to get plugin info: %s", err)
-		return nil, nil, nil, deferFunc, sdk.NewError(sdk.ErrPluginInvalid, err)
+		return nil, nil, nil, deferFunc, sdk.WrapError(sdk.ErrPluginInvalid, "fileUploadAndGetPlugin> unable to get plugin info: %s", err)
 	}
 
 	return ap, params, content, deferFunc, nil
@@ -84,16 +79,14 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		defer deferFunc()
 	}
 	if err != nil {
-		log.Warning("addPluginHandler>%T %s", err, err)
-		return err
+		return sdk.WrapError(err, "addPluginHandler>%T", err)
 	}
 	defer file.Close()
 
 	// Check that action does not already exists
 	conflict, err := action.Exists(db, ap.Name)
 	if err != nil {
-		log.Warning("updatePluginHandler>%T %s", err, err)
-		return err
+		return sdk.WrapError(err, "updatePluginHandler>%T", err)
 	}
 	if conflict {
 		return sdk.ErrConflict
@@ -102,31 +95,25 @@ func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	//Upload it to objectstore
 	objectPath, err := objectstore.StorePlugin(*ap, file)
 	if err != nil {
-		log.Warning("addPluginHandler> Error while uploading to object store %s: %s\n", ap.Name, err)
-		return err
+		return sdk.WrapError(err, "addPluginHandler> Error while uploading to object store %s", ap.Name)
 	}
 	ap.ObjectPath = objectPath
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("addPluginHandler> Cannot start transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addPluginHandler> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
 	//Insert in database
 	a, err := actionplugin.Insert(tx, ap, params)
 	if err != nil {
-		log.Warning("addPluginHandler> Error while inserting action %s in database: %s\n", ap.Name, err)
 		objectstore.DeletePlugin(*ap)
-		return err
-
+		return sdk.WrapError(err, "addPluginHandler> Error while inserting action %s in database", ap.Name)
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("addPluginHandler> Cannot commit transaction: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "addPluginHandler> Cannot commit transaction")
 	}
 
 	return WriteJSON(w, r, a, http.StatusCreated)
@@ -221,8 +208,7 @@ func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.WrapError(errDB, "updatePluginHandler> Unable to update plugin", ap.Name)
 	}
 	if err := tx.Commit(); err != nil {
-		log.Warning("updatePluginHandler> Cannot commit transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updatePluginHandler> Cannot commit transaction")
 	}
 
 	return WriteJSON(w, r, a, http.StatusOK)
@@ -234,21 +220,16 @@ func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	if name == "" {
 		return sdk.ErrWrongRequest
-
 	}
 
 	//Delete in database
 	if err := actionplugin.Delete(db, name, c.User.ID); err != nil {
-		log.Warning("deletePluginHandler> Error while deleting action %s in database: %s\n", name, err)
-		return err
-
+		return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in database", name)
 	}
 
 	//Delete from objectstore
 	if err := objectstore.DeletePlugin(sdk.ActionPlugin{Name: name}); err != nil {
-		log.Warning("deletePluginHandler> Error while deleting action %s in objectstore: %s\n", name, err)
-		return err
-
+		return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in objectstore", name)
 	}
 	return nil
 }
@@ -259,21 +240,18 @@ func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	if name == "" {
 		return sdk.ErrWrongRequest
-
 	}
 
 	f, err := objectstore.FetchPlugin(sdk.ActionPlugin{Name: name})
 	if err != nil {
-		log.Warning("downloadPluginHandler> Error while fetching plugin: %s\n", name, err)
-		return err
+		return sdk.WrapError(err, "downloadPluginHandler> Error while fetching plugin", name)
 	}
 
 	w.Header().Add("Content-Type", "application/octet-stream")
 	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", name))
 
 	if err := objectstore.StreamFile(w, f); err != nil {
-		log.Warning("downloadPluginHandler> Error while streaming plugin %s: %s\n", name, err)
-		return err
+		return sdk.WrapError(err, "downloadPluginHandler> Error while streaming plugin %s", name)
 	}
 
 	return nil

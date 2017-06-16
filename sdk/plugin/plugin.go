@@ -23,7 +23,6 @@ func Serve(a CDSAction) {
 			p.PluginName(): p,
 		},
 	})
-
 }
 
 //NewClient has to be called every time we nedd to call a plugin
