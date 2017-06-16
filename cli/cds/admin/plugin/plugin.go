@@ -12,7 +12,6 @@ func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "plugin",
 		Short:   "CDS Admin Plugin Management (admin only)",
-		Long:    ``,
 		Aliases: []string{},
 	}
 

@@ -27,7 +27,7 @@ func Get(name, path string) (*sdk.ActionPlugin, *plugin.Parameters, error) {
 	log.Debug("actionplugin.Get> Client '%s'", name)
 	_plugin, err := client.Instance()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, sdk.WrapError(err, "actionplugin.Get> ")
 	}
 
 	fi, err := os.Open(path)

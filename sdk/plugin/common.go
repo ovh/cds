@@ -81,6 +81,7 @@ func (p *Common) Init(o IOptions) string {
 // Main func call by plugin, display info only
 func Main(p CDSAction) {
 	var format string
+
 	var cmdInfo = &cobra.Command{
 		Use:   "info",
 		Short: "Print plugin Information anything to the screen: info --format <yml>",
@@ -97,7 +98,11 @@ func Main(p CDSAction) {
 
 	cmdInfo.Flags().StringVarP(&format, "format", "", "markdown", "--format:yaml, json, xml, markdown")
 
-	var rootCmd = &cobra.Command{}
+	var rootCmd = &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			Serve(p)
+		},
+	}
 	rootCmd.AddCommand(cmdInfo)
 	rootCmd.Execute()
 }
