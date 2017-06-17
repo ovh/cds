@@ -12,7 +12,9 @@
   <form class="ui form">
     <div class="ui grid">
       <div class="thirteen wide column">
-          <app-action [edit]="isAdmin && action.type !== 'Builtin' && action.type !== 'Plugin'" [action]="action"></app-action>
+          <app-action [edit]="isAdmin && action.type !== 'Builtin' && action.type !== 'Plugin'"
+                      [action]="action"
+                      (actionEvent)="actionEvent($event)"></app-action>
       </div>
 
       <div class="three wide column">

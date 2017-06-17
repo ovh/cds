@@ -23,8 +23,9 @@
                     </div>
                 </div>
                 <div class="two wide right aligned field labelPadding">
-                    <a class="pointing" (click)="requirementModal.show({inverted: false, closable: false})">{{ editableAction.requirements.length + ' '}}{{
-                        'common_requirements' | translate }}</a>
+                    <a class="pointing" (click)="requirementModal.show({inverted: false, closable: false})">
+                        {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
+                    </a>
                     <sm-modal class="large" title="{{ 'common_requirements' | translate }}" #requirementModal>
                         <modal-content>
                             <div class="ui form">
@@ -97,11 +98,10 @@
         {{ 'step_final_no' | translate }}
     </div>
 
-
-    <div class="right aligned field" *ngIf="edit">
-        <button name="updatebtn" class="ui green button" *ngIf="editableAction.hasChanged" (click)="sendActionEvent('update')"><i
-                class="save icon"></i>{{ 'job_save' | translate }}
+    <div class="field" *ngIf="edit">
+        <app-delete-button class="left floating"  (event)="sendActionEvent('delete')"></app-delete-button>
+        <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('update')">
+            <i class="save icon"></i>{{ 'save' | translate }}
         </button>
-        <app-delete-button *ngIf="!editableAction.hasChanged" (event)="sendActionEvent('delete')"></app-delete-button>
     </div>
 </form>

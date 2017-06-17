@@ -30,12 +30,21 @@ export class ActionService {
     }
 
     /**
+     * Create an action
+     * @param action to create
+     * @returns {Observable<Action>}
+     */
+    createAction(action: Action): Observable<Action> {
+        return this._http.post('/action/' + action.name, action).map(res => res.json());
+    }
+
+    /**
      * Update an action
      * @param action to update
      * @returns {Observable<Action>}
      */
-    updateAction(action: Action): Observable<Action> {
-        return this._http.put('/action/' + action.name, action).map(res => res.json());
+    updateAction(name: string, action: Action): Observable<Action> {
+        return this._http.put('/action/' + name, action).map(res => res.json());
     }
 
     /**

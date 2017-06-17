@@ -18,7 +18,6 @@ import {cloneDeep} from 'lodash';
     styleUrls: ['./action.scss']
 })
 export class ActionComponent implements OnDestroy {
-
     editableAction: Action;
     nonFinalSteps: Array<Action> = new Array<Action>();
     finalSteps: Array<Action> = new Array<Action>();
@@ -94,7 +93,6 @@ export class ActionComponent implements OnDestroy {
                 if (indexAdd === -1) {
                     this.editableAction.requirements.push(r.requirement);
                 }
-
                 break;
             case 'delete':
                 let indexDelete = this.editableAction.requirements.indexOf(r.requirement);
@@ -153,7 +151,6 @@ export class ActionComponent implements OnDestroy {
                         this.nonFinalSteps.splice(index, 1);
                     }
                 }
-
                 break;
         }
     }
@@ -176,7 +173,6 @@ export class ActionComponent implements OnDestroy {
                 this.editableAction.actions.push(s);
             });
         }
-
 
         this.actionEvent.emit(new ActionEvent(type, this.editableAction));
     }

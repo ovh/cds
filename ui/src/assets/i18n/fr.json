@@ -26,6 +26,7 @@
   "action_edit_builtin": "C'est une action de type Builtin, vous ne pouvez pas la modifier",
   "action_edit_plugin": "C'est une action de type Plugin, vous ne pouvez pas la modifier sans la ré-importer",
   "action_none": "Aucune action",
+  "action_saved": "Action sauvegardée",
   "action_type": "Type",
 
   "application_create" : "Créer une application",
