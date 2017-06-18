@@ -42,18 +42,18 @@ export class ActionEditComponent implements OnInit {
 
     actionEvent(event: ActionEvent): void {
         switch (event.type) {
+            case 'insert':
+                this._actionService.createAction(event.action).subscribe( action => {
+                    this._toast.success('', this._translate.instant('action_saved'));
+                    // navigate to have action name in url
+                    this._router.navigate(['settings', 'action', event.action.name]);
+                });
+                break;
             case 'update':
-                if (!event.action.id) {
-                  this._actionService.createAction(event.action).subscribe( () => {
-                      this._toast.success('', this._translate.instant('action_saved'));
-                      this._router.navigate(['settings', 'action', event.action.name]);
-                  });
-                } else {
-                  this._actionService.updateAction(this.action.name, event.action).subscribe( () => {
-                      this._toast.success('', this._translate.instant('action_saved'));
-                      this._router.navigate(['settings', 'action', event.action.name]);
-                  });
-                }
+                this._actionService.updateAction(this.action.name, event.action).subscribe( action => {
+                    this._toast.success('', this._translate.instant('action_saved'));
+                    this.action = action;
+                });
                 break;
             case 'delete':
                 this._actionService.deleteAction(event.action.name).subscribe( () => {

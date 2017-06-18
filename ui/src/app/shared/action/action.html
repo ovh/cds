@@ -98,10 +98,15 @@
         {{ 'step_final_no' | translate }}
     </div>
 
-    <div class="field" *ngIf="edit">
-        <app-delete-button class="left floating"  (event)="sendActionEvent('delete')"></app-delete-button>
-        <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('update')">
+    <div class="field" *ngIf="edit && editableAction.id">
+        <app-delete-button class="left floating" disabled="{{editableAction.hasChanged}}" (event)="sendActionEvent('delete')"></app-delete-button>
+        <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged">
             <i class="save icon"></i>{{ 'save' | translate }}
         </button>
+    </div>
+    <div class="field" *ngIf="edit && !editableAction.id">
+      <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('insert')">
+          <i class="save icon"></i>{{ 'btn_create' | translate }}
+      </button>
     </div>
 </form>

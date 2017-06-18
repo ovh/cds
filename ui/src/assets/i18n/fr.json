@@ -21,6 +21,7 @@
   "action_list_title": "Actions",
   "action_load_actions": "Chargement des actions...",
   "action_load_action": "Chargement de l'action...",
+  "action_deleted": "Action supprimée",
   "action_edit_title": "Édition de l'action",
   "action_name": "Nom de l'action",
   "action_edit_builtin": "C'est une action de type Builtin, vous ne pouvez pas la modifier",

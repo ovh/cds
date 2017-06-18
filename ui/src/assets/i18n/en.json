@@ -21,6 +21,7 @@
   "action_list_title": "Actions",
   "action_load_actions": "Loading Actions...",
   "action_load_action": "Loading Action...",
+  "action_deleted": "Action deleted",
   "action_edit_title": "Edit action",
   "action_name": "Action name",
   "action_edit_builtin": "It's a Builtin action, you can not modify it",
