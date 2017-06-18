@@ -72,30 +72,29 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *b
 
 // getUserGroupsHandler returns groups of the user
 func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	log.Debug("getUserGroupsHandler> get groups for user %d", c.User.ID)
+	vars := mux.Vars(r)
+	username := vars["username"]
+
+	if !c.User.Admin && username != c.User.Username {
+		return WriteJSON(w, r, nil, http.StatusForbidden)
+	}
+
+	u, err := user.LoadUserWithoutAuth(db, username)
+	if err != nil {
+		return sdk.WrapError(err, "getUserHandler: Cannot load user from db")
+	}
 
 	var groups, groupsAdmin []sdk.Group
 
-	//Admin are considered as admin of all groups
-	if c.User.Admin {
-		allgroups, err := group.LoadGroups(db)
-		if err != nil {
-			return err
-		}
+	var err1, err2 error
+	groups, err1 = group.LoadGroupByUser(db, u.ID)
+	if err1 != nil {
+		return err1
+	}
 
-		groups = allgroups
-		groupsAdmin = allgroups
-	} else {
-		var err1, err2 error
-		groups, err1 = group.LoadGroupByUser(db, c.User.ID)
-		if err1 != nil {
-			return err1
-		}
-
-		groupsAdmin, err2 = group.LoadGroupByAdmin(db, c.User.ID)
-		if err2 != nil {
-			return err2
-		}
+	groupsAdmin, err2 = group.LoadGroupByAdmin(db, u.ID)
+	if err2 != nil {
+		return err2
 	}
 
 	res := map[string][]sdk.Group{}

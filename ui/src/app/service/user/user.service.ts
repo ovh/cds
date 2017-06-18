@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Http, Response, RequestOptions, Headers} from '@angular/http';
 import {User} from '../../model/user.model';
+import {Groups} from '../../model/group.model';
 import {Observable} from 'rxjs/Rx';
 import {AuthentificationStore} from '../auth/authentification.store';
 
@@ -87,6 +88,14 @@ export class UserService {
      */
     getUsers(): Observable<User[]> {
         return this._http.get('/user').map(res => res.json());
+    }
+
+    /**
+     * Get user groups.
+     * @returns {Observable<User[]>}
+     */
+    getGroups(username: string): Observable<Groups> {
+        return this._http.get('/user/' + username + '/groups').map(res => res.json());
     }
 
     /**

@@ -1,6 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {User} from '../../../../model/user.model';
+import {Group} from '../../../../model/group.model';
 import {UserService} from '../../../../service/user/user.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
@@ -16,6 +17,8 @@ export class UserEditComponent implements OnInit {
     deleteLoading = false;
     user: User;
     currentUser: User;
+    groups: Array<Group>;
+    groupsAdmin: Array<Group>;
 
     private username: string;
     private usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
@@ -34,6 +37,23 @@ export class UserEditComponent implements OnInit {
             this._userService.getUser(this.username).subscribe( u => {
                 this.user = u;
                 this.username = this.user.username;
+                this.groups = [];
+
+                this._userService.getGroups(this.user.username).subscribe( g => {
+                    this.groupsAdmin = g.groups_admin;
+                    for (let i = 0; i < g.groups.length; i++) {
+                        var userAdminOnGroup = false;
+                        for (let j = 0; j < this.groupsAdmin.length; j++) {
+                            if (this.groupsAdmin[j].name === g.groups[i].name) {
+                              userAdminOnGroup = true;
+                              break;
+                            }
+                        }
+                        if (!userAdminOnGroup) {
+                            this.groups.push(g.groups[i]);
+                        }
+                    }
+                });
             });
         });
     }
