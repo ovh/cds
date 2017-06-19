@@ -37,6 +37,7 @@ export class ActionEditComponent implements OnInit {
     }
 
     actionEvent(event: ActionEvent): void {
+        event.action.loading = true;
         switch (event.type) {
             case 'update':
                 this._actionService.updateAction(this.action.name, event.action).subscribe( action => {

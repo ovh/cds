@@ -37,6 +37,7 @@ export class ActionAddComponent implements OnInit {
     }
 
     actionEvent(event: ActionEvent): void {
+        this.action.loading = true;
         this._actionService.createAction(event.action).subscribe( action => {
             this._toast.success('', this._translate.instant('action_saved'));
             // navigate to have action name in url
