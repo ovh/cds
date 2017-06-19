@@ -146,10 +146,17 @@ describe('CDS: Action Component', () => {
         let compiled = fixture.debugElement.nativeElement;
 
         spyOn(fixture.componentInstance.actionEvent, 'emit');
-        action.hasChanged = false;
+        console.log('try click on .ui.red.button');
+        if (!compiled.querySelector('.ui.red.button')) {
+            console.log('compiled A:', compiled);
+        }
         compiled.querySelector('.ui.red.button').click();
         fixture.detectChanges();
         tick(50);
+        console.log('try click on .ui.red.button.active');
+        if (!compiled.querySelector('.ui.red.button.active')) {
+            console.log('compiled B:', compiled);
+        }
         compiled.querySelector('.ui.red.button.active').click();
 
         expect(compiled.querySelector('button[name="updatebtn"]')).toBeFalsy();
