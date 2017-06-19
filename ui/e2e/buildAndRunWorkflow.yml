@@ -27,4 +27,6 @@ testcases:
       navigate:
         url: '{{.ui.url}}/project/{{.ui.project}}/workflow'
     screenshot: barw_workflowform.png
+  - action:
+      wait: 2
 {{.templateCreateWorkflow}}

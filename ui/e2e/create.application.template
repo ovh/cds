@@ -11,6 +11,7 @@
   - action:
       click:
           find: 'a.ui.blue.button'
+          wait: 2
     assertions:
     - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/application
     screenshot: application_3_navigate.png
