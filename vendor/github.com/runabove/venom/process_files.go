@@ -1,6 +1,8 @@
 package venom
 
 import (
+	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -56,14 +58,13 @@ func getFilesPath(path []string, exclude []string) []string {
 	return filesPath
 }
 
-func readFiles(variables map[string]string, detailsLevel string, filesPath []string, chanToRun chan<- TestSuite) map[string]*pb.ProgressBar {
+func readFiles(variables map[string]string, detailsLevel string, filesPath []string, chanToRun chan<- TestSuite, writer io.Writer) (map[string]*pb.ProgressBar, error) {
 	bars := make(map[string]*pb.ProgressBar)
 
 	for _, f := range filesPath {
 		dat, errr := ioutil.ReadFile(f)
 		if errr != nil {
-			log.WithError(errr).Errorf("Error while reading file %s", f)
-			continue
+			return nil, fmt.Errorf("Error while reading file %s err:%s", f, errr)
 		}
 
 		ts := TestSuite{}
@@ -73,8 +74,7 @@ func readFiles(variables map[string]string, detailsLevel string, filesPath []str
 		out := ts.Templater.apply(dat)
 
 		if err := yaml.Unmarshal(out, &ts); err != nil {
-			log.WithError(err).Errorf("Error while unmarshal file %s", f)
-			continue
+			return nil, fmt.Errorf("Error while unmarshal file %s err:%s data:%s variables:%s", f, err, out, variables)
 		}
 		ts.Name += " [" + f + "]"
 
@@ -89,6 +89,7 @@ func readFiles(variables map[string]string, detailsLevel string, filesPath []str
 
 		b := pb.New(nSteps).Prefix(rightPad("⚙ "+ts.Package, " ", 47))
 		b.ShowCounters = false
+		b.Output = writer
 		if detailsLevel == DetailsLow {
 			b.ShowBar = false
 			b.ShowFinalTime = false
@@ -103,5 +104,5 @@ func readFiles(variables map[string]string, detailsLevel string, filesPath []str
 
 		chanToRun <- ts
 	}
-	return bars
+	return bars, nil
 }

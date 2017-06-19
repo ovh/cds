@@ -2,6 +2,7 @@ package venom
 
 import (
 	"errors"
+	"io"
 	"strings"
 	"sync"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Process runs tests suite and return a Tests result
-func Process(path []string, variables map[string]string, exclude []string, parallel int, logLevel string, detailsLevel string) (*Tests, error) {
+func Process(path []string, variables map[string]string, exclude []string, parallel int, logLevel string, detailsLevel string, writer io.Writer) (*Tests, error) {
 
 	switch logLevel {
 	case "debug":
@@ -22,6 +23,7 @@ func Process(path []string, variables map[string]string, exclude []string, paral
 		log.SetLevel(log.WarnLevel)
 	}
 
+	log.SetOutput(writer)
 	switch detailsLevel {
 	case DetailsLow, DetailsMedium, DetailsHigh:
 		log.Infof("Detail Level: %s", detailsLevel)
@@ -40,7 +42,10 @@ func Process(path []string, variables map[string]string, exclude []string, paral
 
 	go computeStats(testsResult, chanEnd, &wg)
 
-	bars := readFiles(variables, detailsLevel, filesPath, chanToRun)
+	bars, err := readFiles(variables, detailsLevel, filesPath, chanToRun, writer)
+	if err != nil {
+		return nil, err
+	}
 
 	pool := initBars(detailsLevel, bars)
 
