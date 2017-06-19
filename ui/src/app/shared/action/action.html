@@ -100,13 +100,13 @@
 
     <div class="bottomBtnsWrapper ui segment">
       <div *ngIf="edit && editableAction.id">
-          <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading">
+          <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading" [class.loading]="editableAction.loading">
               <i class="save icon"></i>{{ 'save' | translate }}
           </button>
           <app-delete-button class="right floated" [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading"></app-delete-button>
       </div>
       <div *ngIf="edit && !editableAction.id">
-        <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading">
+        <button class="ui green right floated button" name="addbtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
             <i class="save icon"></i>{{ 'btn_create' | translate }}
         </button>
       </div>
