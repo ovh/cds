@@ -182,8 +182,9 @@ describe('CDS: Action Component', () => {
         tick(50);
 
         expect(compiled.querySelector('button[name="deletebtn"]')).toBeFalsy();
+        expect(compiled.querySelector('button[name="updatebtn"]')).toBeFalsy();
 
-        let btn = compiled.querySelector('button[name="updatebtn"]');
+        let btn = compiled.querySelector('button[name="addbtn"]');
         btn.click();
 
         expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('insert', action));
