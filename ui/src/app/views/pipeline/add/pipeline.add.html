@@ -21,7 +21,7 @@
                     </div>
                     <div class="field" *ngIf="project.applications && project.applications.length > 0">
                         <label>{{'pipeline_attach_application' | translate}}</label>
-                        <sm-select class="fluid search multiple"
+                        <sm-select class="fluid search multiple" id="PipelineLinkedApplicationSelect"
                             [(model)]="selectedApplications"
                             [options]="{'fullTextSearch': true}">
                             <option *ngFor="let a of project.applications" value="{{a.name}}">{{a.name}}</option>
