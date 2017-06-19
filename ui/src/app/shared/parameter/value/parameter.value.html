@@ -6,7 +6,7 @@
         <codemirror [(ngModel)]="value" [config]="codeMirrorConfig" (change)="changeCodeMirror($event)" #codeMirror (keydown)="sendValueChanged()"></codemirror>
     </div>
     <div *ngSwitchCase="'boolean'" class="ui checkbox">
-        <input type="checkbox" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+        <input type="checkbox" [(ngModel)]="value" (change)="valueChanged();sendValueChanged()" name="value">
         <label>{{ ' '}}</label>
     </div>
     <div *ngSwitchCase="'list'">

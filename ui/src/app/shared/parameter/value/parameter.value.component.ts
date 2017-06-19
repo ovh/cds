@@ -67,7 +67,7 @@ export class ParameterValueComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.type === 'boolean') {
-            this.value = (this.value === 'true');
+            this.value = (this.value === 'true' || this.value === true);
         }
         if (this.type === 'list' && !this.editList) {
             this.list = (<string>this.value).split(';');

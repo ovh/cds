@@ -2,7 +2,7 @@ export class Parameter {
     id: number;
     name: string;
     type: string;
-    value: string;
+    value: string|boolean;
     description: string;
 
     // flag to know if variable data has changed
