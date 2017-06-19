@@ -42,6 +42,8 @@ export class ActionAddComponent implements OnInit {
             this._toast.success('', this._translate.instant('action_saved'));
             // navigate to have action name in url
             this._router.navigate(['settings', 'action', event.action.name]);
+        }, () => {
+            this.action.loading = false;
         });
     }
 

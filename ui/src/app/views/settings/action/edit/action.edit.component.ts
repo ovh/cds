@@ -43,12 +43,16 @@ export class ActionEditComponent implements OnInit {
                 this._actionService.updateAction(this.action.name, event.action).subscribe( action => {
                     this._toast.success('', this._translate.instant('action_saved'));
                     this.action = action;
+                }, () => {
+                    this.action.loading = false;
                 });
                 break;
             case 'delete':
                 this._actionService.deleteAction(event.action.name).subscribe( () => {
                     this._toast.success('', this._translate.instant('action_deleted'));
                     this._router.navigate(['settings', 'action']);
+                }, () => {
+                    this.action.loading = false;
                 });
                 break;
         }
