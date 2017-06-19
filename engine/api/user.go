@@ -79,9 +79,9 @@ func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return WriteJSON(w, r, nil, http.StatusForbidden)
 	}
 
-	u, err := user.LoadUserWithoutAuth(db, username)
-	if err != nil {
-		return sdk.WrapError(err, "getUserHandler: Cannot load user from db")
+	u, errl := user.LoadUserWithoutAuth(db, username)
+	if errl != nil {
+		return sdk.WrapError(errl, "getUserHandler: Cannot load user from db")
 	}
 
 	var groups, groupsAdmin []sdk.Group
@@ -89,12 +89,12 @@ func getUserGroupsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	var err1, err2 error
 	groups, err1 = group.LoadGroupByUser(db, u.ID)
 	if err1 != nil {
-		return err1
+		return sdk.WrapError(err1, "getUserGroupsHandler: Cannot load group by user")
 	}
 
 	groupsAdmin, err2 = group.LoadGroupByAdmin(db, u.ID)
 	if err2 != nil {
-		return err2
+		return sdk.WrapError(err2, "getUserGroupsHandler: Cannot load group by admin")
 	}
 
 	res := map[string][]sdk.Group{}

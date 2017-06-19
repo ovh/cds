@@ -42,7 +42,7 @@ export class UserEditComponent implements OnInit {
                 this._userService.getGroups(this.user.username).subscribe( g => {
                     this.groupsAdmin = g.groups_admin;
                     for (let i = 0; i < g.groups.length; i++) {
-                        var userAdminOnGroup = false;
+                        let userAdminOnGroup = false;
                         for (let j = 0; j < this.groupsAdmin.length; j++) {
                             if (this.groupsAdmin[j].name === g.groups[i].name) {
                               userAdminOnGroup = true;
