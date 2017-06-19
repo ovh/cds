@@ -103,6 +103,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
                 this._pipelineStore.updateJob(this.project.key, this.pipeline.name, this.editableStage.id, job).subscribe(() => {
                     this._toast.success('', this._translate.instant('stage_job_updated'));
                     job.action.loading = false;
+                    job.action.hasChanged = false;
                 });
                 break;
             case 'delete':

@@ -103,7 +103,7 @@
           <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading">
               <i class="save icon"></i>{{ 'save' | translate }}
           </button>
-          <app-delete-button class="right floated" disabled="{{editableAction.hasChanged}}" (event)="sendActionEvent('delete')" [loading]="editableAction.loading"></app-delete-button>
+          <app-delete-button class="right floated" [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading"></app-delete-button>
       </div>
       <div *ngIf="edit && !editableAction.id">
         <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading">
