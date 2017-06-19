@@ -8,11 +8,11 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 
 @Component({
-    selector: 'app-action-edit',
-    templateUrl: './action.edit.html',
-    styleUrls: ['./action.edit.scss']
+    selector: 'app-action-add',
+    templateUrl: './action.add.html',
+    styleUrls: ['./action.add.scss']
 })
-export class ActionEditComponent implements OnInit {
+export class ActionAddComponent implements OnInit {
     action: Action;
     isAdmin: boolean;
 
@@ -37,25 +37,14 @@ export class ActionEditComponent implements OnInit {
     }
 
     actionEvent(event: ActionEvent): void {
-        event.action.loading = true;
-        switch (event.type) {
-            case 'update':
-                this._actionService.updateAction(this.action.name, event.action).subscribe( action => {
-                    this._toast.success('', this._translate.instant('action_saved'));
-                    this.action = action;
-                }, () => {
-                    this.action.loading = false;
-                });
-                break;
-            case 'delete':
-                this._actionService.deleteAction(event.action.name).subscribe( () => {
-                    this._toast.success('', this._translate.instant('action_deleted'));
-                    this._router.navigate(['settings', 'action']);
-                }, () => {
-                    this.action.loading = false;
-                });
-                break;
-        }
+        this.action.loading = true;
+        this._actionService.createAction(event.action).subscribe( action => {
+            this._toast.success('', this._translate.instant('action_saved'));
+            // navigate to have action name in url
+            this._router.navigate(['settings', 'action', event.action.name]);
+        }, () => {
+            this.action.loading = false;
+        });
     }
 
 }

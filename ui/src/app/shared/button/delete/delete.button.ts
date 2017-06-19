@@ -11,6 +11,7 @@ export class DeleteButtonComponent  {
 
     // normal / icon
     @Input() buttonType = 'normal';
+    @Input() disabled = false;
     @Output() event = new EventEmitter<boolean>();
 
     showConfirmation = false;

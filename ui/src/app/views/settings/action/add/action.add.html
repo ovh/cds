@@ -1,20 +1,10 @@
-<h2 *ngIf="action && action.id">{{ 'action_edit_title' | translate }} {{action.name}} - {{action.type}}</h2>
+<h2>{{ 'action_add_title' | translate }}</h2>
 
-<div *ngIf="action;then showAction;else loadAction"></div>
-<ng-template #showAction>
-<div id="ActionEdit">
-  <div class="ui info message" *ngIf="action.type === 'Builtin'">
-      {{ 'action_edit_builtin' | translate }}
-  </div>
-  <div class="ui info message" *ngIf="action.type === 'Plugin'">
-      {{ 'action_edit_plugin' | translate }}
-  </div>
+<div id="ActionAdd">
   <form class="ui form">
     <div class="ui grid">
       <div class="thirteen wide column">
-          <app-action [edit]="isAdmin && action.type !== 'Builtin' && action.type !== 'Plugin'"
-                      [action]="action"
-                      (actionEvent)="actionEvent($event)"></app-action>
+          <app-action [edit]="isAdmin" [action]="action" (actionEvent)="actionEvent($event)"></app-action>
       </div>
 
       <div class="three wide column">
@@ -35,7 +25,3 @@
     </div>
   </form>
 </div>
-</ng-template>
-<ng-template #loadAction>
-    <div class="ui text active loader">{{ 'action_load_action' | translate }}</div>
-</ng-template>

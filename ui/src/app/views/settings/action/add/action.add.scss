@@ -1,0 +1,16 @@
+@import '../../../../../common';
+.ui.input {
+  position: inherit;
+}
+
+#ActionAdd {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  height: 100%;
+  padding: 20px;
+
+  h2 {
+    text-align: center;
+  }
+}

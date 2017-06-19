@@ -58,8 +58,6 @@ export class PipelineStageComponent implements OnInit, DoCheck {
         }
     }
 
-
-
     selectJob(j: Job) {
         this.selectedJob = j;
         this.selectedJob.action.enabled = j.enabled;
@@ -81,6 +79,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     jobEvent(event: ActionEvent): void {
         let job: Job = cloneDeep(this.selectedJob);
         job.action = event.action;
+        job.action.loading = true;
         job.enabled = event.action.enabled;
         if (job.action.actions) {
             job.action.actions.forEach(a => {
@@ -101,12 +100,18 @@ export class PipelineStageComponent implements OnInit, DoCheck {
             case 'update':
                 this._pipelineStore.updateJob(this.project.key, this.pipeline.name, this.editableStage.id, job).subscribe(() => {
                     this._toast.success('', this._translate.instant('stage_job_updated'));
+                    job.action.loading = false;
+                    job.action.hasChanged = false;
+                }, () => {
+                    job.action.loading = false;
                 });
                 break;
             case 'delete':
                 this._pipelineStore.removeJob(this.project.key, this.pipeline.name, this.editableStage.id, job).subscribe(() => {
                     this._toast.success('', this._translate.instant('stage_job_deleted'));
                     this.selectedJob = undefined;
+                }, () => {
+                    job.action.loading = false;
                 });
                 break;
         }
