@@ -13,6 +13,16 @@ export class Group {
     }
 }
 
+export class Groups {
+    groups: Array<Group>;
+    groups_admin: Array<Group>;
+
+    constructor() {
+        this.groups = [];
+        this.groups_admin = [];
+    }
+}
+
 export class GroupPermission {
     group: Group;
     permission: number;

@@ -31,6 +31,33 @@
                   <i class="save icon"></i>{{ 'btn_save' | translate }}
                 </button>
             </div>
+
+            <h3>{{ 'group_list_title' | translate }}</h3>
+            <table class="ui fixed celled table" *ngIf="groups || groupsAdmin">
+                <thead>
+                <tr>
+                    <th class="three wide">{{ 'group_name' | translate }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let v of groupsAdmin">
+                    <td>
+                        <a class="ui" [routerLink]="['/settings', 'group', v?.name]">
+                          <i class="fa fa-user-circle-o" title="{{ 'group_user_is_admin' | translate }}"></i>
+                          {{v?.name}}
+                        </a>
+                    </td>
+                </tr>
+                <tr *ngFor="let v of groups">
+                    <td>
+                        <a class="ui" [routerLink]="['/settings', 'group', v?.name]">
+                          {{v?.name}}
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
         </div>
 
         <div class="six wide column">

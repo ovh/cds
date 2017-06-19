@@ -9,7 +9,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // DeleteGroupAndDependencies deletes group and all subsequent group_project, pipeline_project
@@ -58,14 +57,11 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	defer rows.Close()
 
 	if rows.Next() {
-		log.Warning("AddGroup: Group %s already exists\n", group.Name)
-
 		var groupID int64
 		if err := rows.Scan(&groupID); err != nil {
 			return 0, false, sdk.WrapError(sdk.ErrGroupExists, "AddGroup: Cannot get the ID of the existing group %s (%s)", group.Name, err)
 		}
-
-		return groupID, false, sdk.ErrGroupExists
+		return groupID, false, sdk.WrapError(sdk.ErrGroupExists, "AddGroup: Group %s already exists")
 	}
 
 	if err := InsertGroup(db, group); err != nil {

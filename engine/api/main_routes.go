@@ -253,9 +253,9 @@ func (router *Router) init() {
 	// Users
 	router.Handle("/user", GET(GetUsers))
 	router.Handle("/user/signup", Auth(false), POST(AddUser))
-	router.Handle("/user/group", Auth(true), GET(getUserGroupsHandler))
 	router.Handle("/user/import", NeedAdmin(true), POST(importUsersHandler))
 	router.Handle("/user/{username}", NeedUsernameOrAdmin(true), GET(GetUserHandler), PUT(UpdateUserHandler), DELETE(DeleteUserHandler))
+	router.Handle("/user/{username}/groups", NeedUsernameOrAdmin(true), GET(getUserGroupsHandler))
 	router.Handle("/user/{username}/confirm/{token}", Auth(false), GET(ConfirmUser))
 	router.Handle("/user/{username}/reset", Auth(false), POST(ResetUser))
 	router.Handle("/auth/mode", Auth(false), GET(AuthModeHandler))
