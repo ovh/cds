@@ -146,16 +146,18 @@ describe('CDS: Action Component', () => {
         let compiled = fixture.debugElement.nativeElement;
 
         spyOn(fixture.componentInstance.actionEvent, 'emit');
+        console.log('compiled one:', compiled);
         compiled.querySelector('.ui.red.button').click();
         fixture.detectChanges();
         tick(50);
+        console.log('compiled two:', compiled);
         compiled.querySelector('.ui.red.button.active').click();
 
         expect(compiled.querySelector('button[name="updatebtn"]')).toBeFalsy();
         expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('delete', action));
     }));
 
-    it('should send update action event', fakeAsync( () => {
+    it('should send insert action event', fakeAsync( () => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -184,7 +186,7 @@ describe('CDS: Action Component', () => {
         let btn = compiled.querySelector('button[name="updatebtn"]');
         btn.click();
 
-        expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('update', action));
+        expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('insert', action));
     }));
 
     it('should add and then remove a step', fakeAsync(
