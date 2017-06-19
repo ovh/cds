@@ -11,6 +11,7 @@
   - action:
       click:
           find: 'a.ui.blue.button'
+          wait: 1
     assertions:
     - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/pipeline
     screenshot: pipeline_3_navigate.png
