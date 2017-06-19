@@ -146,11 +146,10 @@ describe('CDS: Action Component', () => {
         let compiled = fixture.debugElement.nativeElement;
 
         spyOn(fixture.componentInstance.actionEvent, 'emit');
-        console.log('compiled one:', compiled);
+        action.hasChanged = false;
         compiled.querySelector('.ui.red.button').click();
         fixture.detectChanges();
         tick(50);
-        console.log('compiled two:', compiled);
         compiled.querySelector('.ui.red.button.active').click();
 
         expect(compiled.querySelector('button[name="updatebtn"]')).toBeFalsy();
