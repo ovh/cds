@@ -9,6 +9,7 @@ import {GroupEditComponent} from './group/edit/group.edit.component';
 import {GroupListComponent} from './group/list/group.list.component';
 import {UserEditComponent} from './user/edit/user.edit.component';
 import {UserListComponent} from './user/list/user.list.component';
+import {WorkerModelAddComponent} from './worker-model/add/worker-model.add.component';
 import {WorkerModelEditComponent} from './worker-model/edit/worker-model.edit.component';
 import {WorkerModelListComponent} from './worker-model/list/worker-model.list.component';
 
@@ -21,6 +22,7 @@ const routes: Routes = [
         children: [
             { path: 'profile/:username', component: UserEditComponent },
             { path: 'worker-model', component: WorkerModelListComponent },
+            { path: 'worker-model/add', component: WorkerModelAddComponent },
             { path: 'worker-model/:workerModelName', component: WorkerModelEditComponent },
             { path: 'group', component: GroupListComponent },
             { path: 'group/:groupname', component: GroupEditComponent },
