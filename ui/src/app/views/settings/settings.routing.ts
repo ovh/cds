@@ -2,6 +2,7 @@ import {Routes, RouterModule} from '@angular/router';
 import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
 import {ModuleWithProviders} from '@angular/core';
 import {SettingsComponent} from './settings.component';
+import {ActionAddComponent} from './action/add/action.add.component';
 import {ActionEditComponent} from './action/edit/action.edit.component';
 import {ActionListComponent} from './action/list/action.list.component';
 import {GroupEditComponent} from './group/edit/group.edit.component';
@@ -26,6 +27,7 @@ const routes: Routes = [
             { path: 'user', component: UserListComponent },
             { path: 'user/:username', component: UserEditComponent },
             { path: 'action', component: ActionListComponent },
+            { path: 'action/add', component: ActionAddComponent },
             { path: 'action/:name', component: ActionEditComponent }
         ]
     }

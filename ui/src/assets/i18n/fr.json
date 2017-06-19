@@ -16,6 +16,7 @@
   "account_verify_title" : "Information du compte",
   "account_verify_error" : "Impossible d'activer le compte.",
 
+  "action_add_title" : "Ajouter une action",
   "action_step_title" : "Étapes du job",
   "action_step_final_title" : "Étapes finales du job",
   "action_list_title": "Actions",

@@ -1,5 +1,5 @@
-<button class="ui red button" (click)="showConfirmation = true" *ngIf="!showConfirmation && buttonType === 'normal'" disabled="{{disabled}}"><i class="trash icon"></i>{{ 'btn_delete' | translate }}</button>
-<button class="ui red icon button" (click)="showConfirmation = true" *ngIf="!showConfirmation && buttonType === 'icon'" disabled="{{disabled}}"><i class="trash icon"></i></button>
+<button class="ui red button" (click)="showConfirmation = true" *ngIf="!showConfirmation && buttonType === 'normal'" [disabled]="disabled"><i class="trash icon"></i>{{ 'btn_delete' | translate }}</button>
+<button class="ui red icon button" (click)="showConfirmation = true" *ngIf="!showConfirmation && buttonType === 'icon'" [disabled]="disabled"><i class="trash icon"></i></button>
 <div class="ui buttons" *ngIf="showConfirmation">
     <button class="ui grey button" [class.disabled]="loading" (click)="showConfirmation = false"><i class="ban icon"></i></button>
     <div class="or"></div>

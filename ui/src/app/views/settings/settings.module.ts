@@ -4,6 +4,7 @@ import {RouterModule} from '@angular/router';
 import {SettingsRouting} from './settings.routing';
 import {SettingsComponent} from './settings.component';
 import {SettingsSidebarComponent} from './sidebar/settings-sidebar.component';
+import {ActionAddComponent} from './action/add/action.add.component';
 import {ActionEditComponent} from './action/edit/action.edit.component';
 import {ActionListComponent} from './action/list/action.list.component';
 import {GroupEditComponent} from './group/edit/group.edit.component';
@@ -17,6 +18,7 @@ import {WorkerModelListComponent} from './worker-model/list/worker-model.list.co
     declarations: [
         SettingsComponent,
         SettingsSidebarComponent,
+        ActionAddComponent,
         ActionEditComponent,
         ActionListComponent,
         GroupEditComponent,

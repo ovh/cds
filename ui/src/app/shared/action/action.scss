@@ -55,4 +55,9 @@
   }
 }
 
-
+.bottomBtnsWrapper {
+  position: fixed;
+  bottom:0;
+  z-index: 1000;
+  right: 0;
+}
