@@ -10,7 +10,7 @@ Workflows embeds following concepts:
 
 - **Pipeline**: It's the key component of CDS. A pipeline can have paremeters.
 - **Payload**: The payload is the input for running the pipeline.
-- **Context**: A context defines it the pipeline has to be run with or without an **application** and **environnement**. It also defines a default **Payload** and default **pipeline parameters**.
+- **Context**: A context defines it the pipeline has to be run with or without an **application** and **environment**. It also defines a default **Payload** and default **pipeline parameters**.
 - **Hook**: A hook is the way to trigger a workflow. You can attach one or more hooks on each pipelines of the workflow.
 - **Root**: A workflow has one and only one root. You will often hooks on this very fist pipelines
 - **Trigger**: Triggers are links between two pipelines. You can define conditions on each triggers to define when the destination pipeline have to be ran.
