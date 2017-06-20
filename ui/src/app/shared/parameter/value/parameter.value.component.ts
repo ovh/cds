@@ -13,10 +13,15 @@ declare var CodeMirror: any;
     templateUrl: './parameter.value.html',
     styleUrls: ['./parameter.value.scss']
 })
-export class ParameterValueComponent implements OnInit {
+export class ParameterValueComponent {
 
+    editableValue: string|number|boolean;
     @Input() type: string;
-    @Input() value: string|number|boolean;
+    @Input('value')
+    set value (data: string|number|boolean) {
+      this.editableValue = this.castValue(data);
+    };
+
     @Input() editList = true;
     @Input() edit = true;
     @Input() suggest: Array<string> = new Array<string>();
@@ -65,18 +70,19 @@ export class ParameterValueComponent implements OnInit {
         };
     }
 
-    ngOnInit(): void {
+    castValue(data: string|number|boolean): string|number|boolean {
         if (this.type === 'boolean') {
-            this.value = (this.value === 'true' || this.value === true);
+            return (data === 'true' || data === true);
         }
         if (this.type === 'list' && !this.editList) {
-            this.list = (<string>this.value).split(';');
-            this.value = this.list[0];
+            this.list = (<string>data).split(';');
+            return this.list[0];
         }
+        return data;
     }
 
     valueChanged(): void {
-        this.valueChange.emit(this.value);
+        this.valueChange.emit(this.editableValue);
     }
 
     sendValueChanged(): void {
@@ -85,7 +91,7 @@ export class ParameterValueComponent implements OnInit {
 
     changeCodeMirror(): void {
         this.valueChanged();
-        let firstLine = String(this.value).split('\n')[0];
+        let firstLine = String(this.editableValue).split('\n')[0];
 
         if (firstLine.indexOf('FROM') !== -1) {
             this.codeMirrorConfig.mode = 'dockerfile';
@@ -93,7 +99,7 @@ export class ParameterValueComponent implements OnInit {
             this.codeMirrorConfig.mode = 'perl';
         } else if (firstLine.indexOf('#!/usr/bin/python') !== -1) {
             this.codeMirrorConfig.mode = 'python';
-        } else if (String(this.value).indexOf('c:\\') !== -1) {
+        } else if (String(this.editableValue).indexOf('c:\\') !== -1) {
             this.codeMirrorConfig.mode = 'powershell';
         } else if (firstLine.indexOf('#!/bin/bash') !== -1) {
             this.codeMirrorConfig.mode = 'bash';
@@ -123,7 +129,7 @@ export class ParameterValueComponent implements OnInit {
     }
 
     valueRepoChanged(name): void {
-        this.value = this.selectedRepoManager.name + '##' + name;
+        this.editableValue = this.selectedRepoManager.name + '##' + name;
         this.valueChanged();
     }
 

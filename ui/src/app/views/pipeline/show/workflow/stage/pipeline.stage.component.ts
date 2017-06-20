@@ -103,23 +103,6 @@ export class PipelineStageComponent implements OnInit, DoCheck {
                     job.action.loading = false;
                     job.action.hasChanged = false;
 
-                    if (event.action.actions) {
-                        event.action.actions.forEach(a => {
-                           if (a.parameters) {
-                               a.parameters.forEach(p => {
-                                  if (p.type === 'boolean') {
-                                      p.value = (p.value === 'true' || p.value === true);
-                                  }
-                               });
-                           }
-                        });
-                    }
-                    if (event.action.parameters) {
-                        event.action.parameters.forEach(p => {
-                            p.value = p.value.toString();
-                        });
-                    }
-
                 }, () => {
                     job.action.loading = false;
                 });
