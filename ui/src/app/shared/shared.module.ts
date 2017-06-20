@@ -57,6 +57,7 @@ import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.
 import {WorkflowTriggerJoinComponent} from './workflow/join/trigger/trigger.join.component';
 import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigger.src.component';
 import {RouterModule} from '@angular/router';
+import {ForMapPipe} from './pipes/map.pipe';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -69,6 +70,7 @@ import {RouterModule} from '@angular/router';
         CommitListComponent,
         CutPipe,
         DeleteButtonComponent,
+        ForMapPipe,
         GroupFormComponent,
         HistoryComponent,
         KeysPipe,
@@ -124,6 +126,7 @@ import {RouterModule} from '@angular/router';
         CutPipe,
         DeleteButtonComponent,
         DragulaModule,
+        ForMapPipe,
         FormsModule,
         GroupFormComponent,
         HistoryComponent,

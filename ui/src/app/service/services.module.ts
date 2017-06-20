@@ -37,6 +37,7 @@ import {NotificationService} from './notification/notification.service';
 import {WorkflowService} from './workflow/workflow.service';
 import {WorkflowStore} from './workflow/workflow.store';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
+import {RouterService} from './router/router.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -73,6 +74,7 @@ export class ServicesModule {
                 RepoManagerService,
                 RequirementStore,
                 RequirementService,
+                RouterService,
                 UserService,
                 VariableService,
                 WarningStore,
@@ -123,6 +125,7 @@ export {
     ProjectAuditService,
     RepoManagerService,
     RequirementStore,
+    RouterService,
     UserService,
     VariableService,
     WarningStore,

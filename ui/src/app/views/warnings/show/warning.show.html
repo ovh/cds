@@ -1,0 +1,29 @@
+<div *ngIf="warnings">
+    <ul>
+        <li *ngFor="let v of warnings.variables">
+            {{v.message}}
+        </li>
+        <li *ngFor="let d of warnings.pipelines | forMap">
+            <h3>{{d.key}}</h3>
+            <ul>
+                <li *ngFor="let p of d.value.parameters">
+                    {{ p.message }}
+                </li>
+                <li *ngFor="let j of d.value.jobs">
+                    {{ j.message }}
+                </li>
+            </ul>
+        </li>
+        <li *ngFor="let d of warnings.applications | forMap">
+            <h3>{{d.key}}</h3>
+            <ul>
+                <li *ngFor="let v of d.value.variables">
+                    {{v.message}}
+                </li>
+                <li *ngFor="let a of d.value.actions">
+                    {{a.message}}
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
