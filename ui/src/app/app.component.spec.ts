@@ -105,7 +105,6 @@ describe('App: CDS', () => {
         expect(compiled.querySelector('#navbar.connected')).toBeFalsy('Nav bar must have connected css class');
     }));
 
-    // FIXME CACHE NOT INITIALIZE
     it('should update cache', fakeAsync(() => {
         // Create cache
         projectStore.getProjects('key1').subscribe(() => {}).unsubscribe();
