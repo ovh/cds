@@ -35,7 +35,7 @@ Beyond pipeline configuration CDS must support **Application Workfow** configura
 
 As a developper, considering :
 
-- the workfing directory is in a git repository (.git directory is available is the directory or in parent directory)
+- the working directory is in a git repository (.git directory is available is the directory or in parent directory)
 - a yml file is defined in working directory
 - `PROJECT_KEY` is a project in CDS
 
@@ -51,13 +51,13 @@ I create the **application workflow** with `$ cds push [--git-remote origin] <PR
 
 As a developper, considering :
 
-- the workfing directory is in a git repository (.git directory is available is the directory or in parent directory)
+- the working directory is in a git repository (.git directory is available is the directory or in parent directory)
 - a yml file is defined in working directory and the workflow has been pushed to CDS
 
 I commit and push on `origin`:
 
-- the workflow hook detected the change on the remote git repository
-- it analyze the yaml definition of the workflow
+- the workflow hook detects the change on the remote git repository
+- it analyzes the yaml definition of the workflow
 - it triggers the workflow as defined
 
 On my command line:
@@ -72,7 +72,7 @@ On my command line:
 
 #### Example
 
- `TODO`
+comming soon
 
 
 ### Workflow template
@@ -96,7 +96,7 @@ When a template will be used from command line in a Git repository:
 
 As a developper, considering :
 
-- the workfing directory is in a git repository (.git directory is available is the directory or in parent directory)
+- the working directory is in a git repository (.git directory is available is the directory or in parent directory)
 - `PROJECT_KEY` is a project in CDS
 - I can see all the templates with: `$ cds template list`
 - I choose my template and run
@@ -110,8 +110,8 @@ As a developper, considering :
 
 #### Export
 
-TODO
+comming soon
 
 #### Import
 
-TODO 
+comming soon 
