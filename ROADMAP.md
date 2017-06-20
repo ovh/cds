@@ -2,17 +2,20 @@
 
 ## CDS Workflow
 
-TODO
+Issues #538, #539, #540, #742.
 
-### CDS Workflow file format
+A CDS Worflow is set of pipelines and allow pipelines reusability with multiples execution contexts. It orchestrates pipelines executions by triggering the right pipelines at the right time with the right input.
 
-#### Export
+Workflows embeds following concepts:
 
-TODO
-
-#### Import
-
-TODO 
+- **Pipeline**: It's the key component of CDS. A pipeline can have paremeters.
+- **Payload**: The payload is the input for running the pipeline.
+- **Context**: A context defines it the pipeline has to be run with or without an **application** and **environnement**. It also defines a default **Payload** and default **pipeline parameters**.
+- **Hook**: A hook is the way to trigger a workflow. You can attach one or more hooks on each pipelines of the workflow.
+- **Root**: A workflow has one and only one root. You will often hooks on this very fist pipelines
+- **Trigger**: Triggers are links between two pipelines. You can define conditions on each triggers to define when the destination pipeline have to be ran.
+- **Join**: Joins allows to to wait for multiple pipelines execution before triggering pipelines through a **trigger**
+- **Run**: A Run is a workflow execution. It is identified by a **Number**. In a Run, every pipelines can be re-run, it introduce the **Subnumber**. So a workflow run with number 12, can have pipeline runs identified by 12.0, 12.1, 12.2 etc.
 
 ### CDS Workflow As Code
 
@@ -72,7 +75,7 @@ On my command line:
  `TODO`
 
 
-#### Workflow template
+### Workflow template
 
 Template as binary file we be removed from CDS. We consider that the main use case of template is the bootstrap on an **Application Workflow**. So Workflow Template must be just generic configuration file.
 
@@ -89,7 +92,7 @@ When a template will be used from command line in a Git repository:
 - The current repostory is added in the CDS project as an application linked to the repository.
 - The workflow is imported in the project
 
-##### Use case #1
+#### Use case #1
 
 As a developper, considering :
 
@@ -101,4 +104,14 @@ As a developper, considering :
   - for each variable prompt the use and replace in the template
   - if the variable is a secret, prompt the user, and encrypt the secret with the project GPG key
   - write the file in the current directory.
--  `$ cds push [PROJECT_KEY]`
+- `$ cds push [PROJECT_KEY]`
+
+### CDS Workflow file format
+
+#### Export
+
+TODO
+
+#### Import
+
+TODO 
