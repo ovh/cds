@@ -1,5 +1,5 @@
 <h3>{{ 'stage_jobs_title' | translate}}</h3>
-<div class="ui grid">
+<div class="ui grid spacebottom">
     <div class="three wide column">
         <div class="ui vertical steps">
             <div class="step" *ngFor="let job of editableStage.jobs; let i = index"
@@ -30,4 +30,3 @@
                     (actionEvent)="jobEvent($event)"></app-action>
     </div>
 </div>
-

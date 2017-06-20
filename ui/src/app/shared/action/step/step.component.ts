@@ -1,5 +1,6 @@
 import {Component, Input, EventEmitter, Output} from '@angular/core';
 import {Action} from '../../../model/action.model';
+import {Parameter} from '../../../model/parameter.model';
 import {StepEvent} from './step.event';
 
 @Component({
