@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"testing"
@@ -14,7 +15,7 @@ func TestDummyPlugin(t *testing.T) {
 	if _, err := os.Stat("../dummy"); os.IsNotExist(err) {
 		t.SkipNow()
 	}
-	client := plugin.NewClient("dummy", "../dummy", "ID", "http://localhost:8081", true)
+	client := plugin.NewClient(context.Background(), "dummy", "../dummy", "ID", "http://localhost:8081", true)
 	defer client.Kill()
 
 	_plugin, err := client.Instance()
