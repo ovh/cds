@@ -25,7 +25,8 @@ export class WarningBreadCrumbComponent {
 
     warningsCount: Map<string, number>;
 
-    constructor(private _projectStore: ProjectStore, private _warningStore: WarningStore, private _warningService: WarningService, private _router: Router) {
+    constructor(private _projectStore: ProjectStore, private _warningStore: WarningStore,
+                private _warningService: WarningService, private _router: Router) {
         this.warnSub = this._warningStore.getWarnings().subscribe(ws => {
             this.warnings = ws;
             if (this.projects) {

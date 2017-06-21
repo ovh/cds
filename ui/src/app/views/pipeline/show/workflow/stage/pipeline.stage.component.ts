@@ -38,7 +38,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     }
 
     ngOnInit(): void {
-        if (this.queryParams['job']) {
+        if (this.queryParams && this.queryParams['job']) {
             let j = this.editableStage.jobs.find(job => job.action.name === this.queryParams['job']);
             if (j) {
                 this.selectJob(j);

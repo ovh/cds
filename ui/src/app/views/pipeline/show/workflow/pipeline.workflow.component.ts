@@ -74,7 +74,7 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
      * Init selected stage + pipeline date
      */
     ngOnInit() {
-        if (this.queryParams['stage']) {
+        if (this.queryParams && this.queryParams['stage']) {
             this.selectedStage = this.pipeline.stages.find(s => s.name === this.queryParams['stage']);
         }
         if (this.pipeline.stages && this.pipeline.stages.length > 0 && !this.selectedStage) {
