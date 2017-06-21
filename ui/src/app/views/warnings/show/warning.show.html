@@ -1,5 +1,5 @@
 <div id="WarningShow">
-    <div class="CDSbreadcrumb" *ngIf="project">
+    <div class="CDSbreadcrumb">
         <app-warning-breadcrumb [project]="project"></app-warning-breadcrumb>
     </div>
     <div class="scrollingContent">
@@ -10,6 +10,12 @@
                     <ul>
                         <li *ngFor="let v of warnings.variables">
                             {{v.message}}
+                            <a href="#"
+                               [routerLink]="['/project', project.key]"
+                               [queryParams]="{ tab: 'variables' }"
+                            >
+                                [{{ 'warning_goto_project_variable' | translate }}]
+                            </a>
                         </li>
                     </ul>
                 </ng-container>
@@ -18,10 +24,20 @@
                         <h3>{{ 'warning_pipeline_title' | translate: {pip: d.key} }}</h3>
                         <ul>
                             <li *ngFor="let p of d.value.parameters">
-                                {{ p.message }}
+                                {{p.message}}
+                                <a href="#"
+                                   [routerLink]="['/project', project.key, 'pipeline', d.key]"
+                                   [queryParams]="{ tab: 'parameters' }">
+                                    [{{ 'warning_goto_pipeline_parameter' | translate }}]
+                                </a>
                             </li>
                             <li *ngFor="let j of d.value.jobs">
-                                {{ j.message }}
+                                {{j.message}}
+                                <a href="#"
+                                   [routerLink]="['/project', project.key, 'pipeline', d.key]"
+                                   [queryParams]="{ tab: 'pipeline'}">
+                                    [{{ 'warning_goto_job' | translate }}]
+                                </a>
                             </li>
                         </ul>
                     </ng-container>
@@ -32,9 +48,20 @@
                         <ul>
                             <li *ngFor="let v of d.value.variables">
                                 {{v.message}}
+                                <a href="#"
+                                   [routerLink]="['/project', project.key, 'application', d.key]"
+                                   [queryParams]="{ tab: 'variables' }"
+                                >
+                                    [{{ 'warning_goto_application_variables' | translate }}]
+                                </a>
                             </li>
                             <li *ngFor="let a of d.value.actions">
                                 {{a.message}}
+                                <a href="#"
+                                   [routerLink]="['/project', project.key, 'application', d.key, 'pipeline', a.message_param['PipelineName']]"
+                                >
+                                    [{{ 'warning_goto_job' | translate}}]
+                                </a>
                             </li>
                         </ul>
                     </ng-container>

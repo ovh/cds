@@ -60,4 +60,4 @@ export class WarningAPI {
 
 export interface MessageParams {
     [key: string]: string;
-};
+}

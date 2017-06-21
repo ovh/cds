@@ -38,8 +38,6 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
     currentCountry: string;
     langSubscrition: Subscription;
 
-    dropdownOptions = {fullTextSearch: true};
-
     warnings: Map<string, WarningUI>;
     warningsCount: number;
     currentRoute: {};
