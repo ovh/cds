@@ -12,55 +12,32 @@ import (
 	"github.com/runabove/venom"
 )
 
-func (w *currentWorker) runParseJunitTestResultAction(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func runParseJunitTestResultAction(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 	var res sdk.Result
 	res.Status = sdk.StatusFail.String()
 
-	// Retrieve build info
-	var proj, app, pip, bnS, envName string
-	for _, p := range pbJob.Parameters {
-		switch p.Name {
-		case "cds.pipeline":
-			pip = p.Value
-			break
-		case "cds.project":
-			proj = p.Value
-			break
-		case "cds.application":
-			app = p.Value
-			break
-		case "cds.buildNumber":
-			bnS = p.Value
-			break
-		case "cds.environment":
-			envName = p.Value
-			break
-		}
-	}
+	pip := sdk.ParameterValue(params, "cds.pipeline")
+	proj := sdk.ParameterValue(params, "cds.project")
+	app := sdk.ParameterValue(params, "cds.application")
+	envName := sdk.ParameterValue(params, "cds.environment")
+	bnS := sdk.ParameterValue(params, "cds.buildNumber")
 
-	var p string
-	for _, a := range a.Parameters {
-		if a.Name == "path" {
-			p = a.Value
-			break
-		}
-	}
-
+	p := sdk.ParameterValue(a.Parameters, "path")
 	if p == "" {
 		res.Reason = fmt.Sprintf("UnitTest parser: path not provided")
-		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		sendLog(res.Reason)
 		return res
 	}
 
 	files, errg := filepath.Glob(p)
 	if errg != nil {
 		res.Reason = fmt.Sprintf("UnitTest parser: Cannot find requested files, invalid pattern")
-		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		sendLog(res.Reason)
 		return res
 	}
 
 	var tests venom.Tests
-	w.sendLog(pbJob.ID, fmt.Sprintf("%d file(s) to analyze", len(files)), pbJob.PipelineBuildID, stepOrder, false)
+	sendLog("%d file(s) to analyze", len(files))
 
 	for _, f := range files {
 		var ftests venom.Tests
@@ -68,7 +45,7 @@ func (w *currentWorker) runParseJunitTestResultAction(ctx context.Context, a *sd
 		data, errRead := ioutil.ReadFile(f)
 		if errRead != nil {
 			res.Reason = fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, errRead)
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			return res
 		}
 
@@ -84,17 +61,17 @@ func (w *currentWorker) runParseJunitTestResultAction(ctx context.Context, a *sd
 		}
 	}
 
-	w.sendLog(pbJob.ID, fmt.Sprintf("%d Total Testsuite(s)", len(tests.TestSuites)), pbJob.PipelineBuildID, stepOrder, false)
+	sendLog("%d Total Testsuite(s)", len(tests.TestSuites))
 	reasons := computeStats(&res, &tests)
 	for _, r := range reasons {
-		w.sendLog(pbJob.ID, r, pbJob.PipelineBuildID, stepOrder, false)
+		sendLog(r)
 	}
 
 	data, err := json.Marshal(tests)
 	if err != nil {
 		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
 		res.Status = sdk.StatusFail.String()
-		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		sendLog(res.Reason)
 		return res
 	}
 
@@ -107,7 +84,7 @@ func (w *currentWorker) runParseJunitTestResultAction(ctx context.Context, a *sd
 	if err != nil {
 		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
 		res.Status = sdk.StatusFail.String()
-		w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+		sendLog(res.Reason)
 		return res
 	}
 

@@ -18,14 +18,19 @@ import (
 
 var logsecrets []sdk.Variable
 
-func (w *currentWorker) sendLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int, final bool) error {
+func (w *currentWorker) sendLog(buildID int64, value string, stepOrder int, final bool) error {
 	for i := range logsecrets {
 		if len(logsecrets[i].Value) >= 6 {
 			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
 		}
 	}
 
-	l := sdk.NewLog(pipJobID, value, pipelineBuildID, stepOrder)
+	var id = w.currentJob.pbJob.PipelineBuildID
+	if w.currentJob.wJob != nil {
+		w.currentJob.wJob.WorkflowNodeRunID
+	}
+
+	l := sdk.NewLog(buildID, value, id, stepOrder)
 	if final {
 		l.Done, _ = ptypes.TimestampProto(time.Now())
 	} else {

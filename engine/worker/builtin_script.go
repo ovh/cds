@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+func runScriptAction(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 	chanRes := make(chan sdk.Result)
 
 	go func() {
@@ -32,7 +32,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		if scriptContent == "" {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("script content not provided, aborting\n")
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			chanRes <- res
 		}
 
@@ -58,7 +58,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		if err != nil {
 			log.Warning("Cannot create tmp file: %s", err)
 			res.Reason = fmt.Sprintf("cannot create temporary file, aborting\n")
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			res.Status = sdk.StatusFail.String()
 			chanRes <- res
 		}
@@ -72,7 +72,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 				log.Warning("cannot write all script: %d/%d", n, len(scriptContent))
 			}
 			res.Reason = fmt.Sprintf("cannot write script in temporary file, aborting\n")
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			res.Status = sdk.StatusFail.String()
 			chanRes <- res
 		}
@@ -89,7 +89,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 			if err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = fmt.Sprintf("cannot rename script to add powershell Extension, aborting\n")
-				w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+				sendLog(res.Reason)
 				chanRes <- res
 			}
 			//This aims to stop a the very first error and return the right exit code
@@ -106,7 +106,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		if err := os.Chmod(scriptPath, 0755); err != nil {
 			log.Warning("runScriptAction> cannot chmod script %s: %s", scriptPath, err)
 			res.Reason = fmt.Sprintf("cannot chmod script, aborting")
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			res.Status = sdk.StatusFail.String()
 			chanRes <- res
 		}
@@ -146,7 +146,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		//DEPRECATED - END
 
 		//set up environment variables from pipeline build job parameters
-		for _, p := range pbJob.Parameters {
+		for _, p := range params {
 			envName := strings.Replace(p.Name, ".", "_", -1)
 			envName = strings.ToUpper(envName)
 			if !sdk.NeedPlaceholder(p.Type) {
@@ -160,7 +160,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		if err != nil {
 			log.Warning("runScriptAction: Cannot get worker path: %s", err)
 			res.Reason = "Failure due to internal error (Worker Path)"
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			res.Status = sdk.StatusFail.String()
 			chanRes <- res
 		}
@@ -177,7 +177,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		if err != nil {
 			log.Warning("runScriptAction: Cannot get stdout pipe: %s", err)
 			res.Reason = "Failure due to internal error"
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			res.Status = sdk.StatusFail.String()
 			chanRes <- res
 		}
@@ -186,7 +186,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		if err != nil {
 			log.Warning("runScriptAction: Cannot get stderr pipe: %s", err)
 			res.Reason = "Failure due to internal error"
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			res.Status = sdk.StatusFail.String()
 			chanRes <- res
 		}
@@ -203,7 +203,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 					close(outchan)
 					return
 				}
-				w.sendLog(pbJob.ID, line, pbJob.PipelineBuildID, stepOrder, false)
+				w.sendLog(buildID, line, stepOrder, false)
 			}
 		}()
 
@@ -216,13 +216,13 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 					close(errchan)
 					return
 				}
-				w.sendLog(pbJob.ID, line, pbJob.PipelineBuildID, stepOrder, false)
+				w.sendLog(buildID, line, stepOrder, false)
 			}
 		}()
 
 		if err := cmd.Start(); err != nil {
 			res.Reason = fmt.Sprintf("%s\n", err)
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			res.Status = sdk.StatusFail.String()
 			chanRes <- res
 		}
@@ -231,7 +231,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		<-errchan
 		if err := cmd.Wait(); err != nil {
 			res.Reason = fmt.Sprintf("%s\n", err)
-			w.sendLog(pbJob.ID, res.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(res.Reason)
 			res.Status = sdk.StatusFail.String()
 			chanRes <- res
 		}
@@ -246,7 +246,7 @@ func (w *currentWorker) runScriptAction(ctx context.Context, a *sdk.Action, pbJo
 		select {
 		case <-ctx.Done():
 			log.Error("CDS Worker execution canceled: %v", ctx.Err())
-			w.sendLog(pbJob.ID, "CDS Worker execution canceled\n", pbJob.PipelineBuildID, stepOrder, false)
+			w.sendLog(buildID, "CDS Worker execution canceled\n", stepOrder, false)
 			return sdk.Result{
 				Status: sdk.StatusFail.String(),
 				Reason: "CDS Worker execution canceled",
