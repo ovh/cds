@@ -54,5 +54,6 @@ export class WarningService {
                 });
             }
         }
+        return warningsCount;
     }
 }
