@@ -432,6 +432,9 @@
   "warning_modal_title" : "Attention - accès concurrents",
   "warning_modal_body" : "Un autre utilisateur vient de modifier cette ressource. Vous risquez d'écraser ses modifications.",
   "warning_project" : "Un autre utilisateur vient de modifier le projet.",
+  "warning_project_title" : "Liste des warnings sur le project",
+  "warning_pipeline_title" : "Liste des warnings sur le pipeline {{pip}}",
+  "warning_application_title" : "Liste des warnings sur l'application {{app}}",
 
   "wizard_app_clone" : "Cloner une application",
   "wizard_app_empty" : "Application vide",

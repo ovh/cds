@@ -4,6 +4,8 @@ import {WarningStore} from '../../../service/warning/warning.store';
 import {WarningUI} from '../../../model/warning.model';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {Subscription} from 'rxjs/Subscription';
+import {ProjectStore} from '../../../service/project/project.store';
+import {Project} from '../../../model/project.model';
 
 @Component({
     selector: 'app-warning-show',
@@ -16,15 +18,28 @@ export class WarningShowComponent {
     warnings: WarningUI;
     warningsSubscription: Subscription;
     key: string;
+    appName: string;
+    pipName: string;
+    project: Project;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _warningStore: WarningStore, private _cd: ChangeDetectorRef) {
+    constructor(private _activatedRoute: ActivatedRoute, private _warningStore: WarningStore, private _cd: ChangeDetectorRef,
+        private _projectStore: ProjectStore) {
         this._activatedRoute.queryParams.subscribe(q => {
-            if (q['key']) {
-                this.key = q['key'];
+            if (q['key'] && q['key'] !== this.key) {
+                this.loadProject(q['key']);
             }
+            this.key = q['key'];
+            this.appName = q['appName'];
+            this.pipName = q['pipName'];
         });
         this.warningsSubscription = this._warningStore.getWarnings().subscribe(ws => {
             this.warnings = ws.get(this.key);
+        });
+    }
+
+    loadProject(key: string): void {
+        this._projectStore.getProjectResolver(key).first().subscribe(p => {
+            this.project = p;
         });
     }
 }
