@@ -386,7 +386,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	uri := router.getRoute("GET", getUserGroupsHandler, map[string]string{"name": u.Username})
+	uri := router.getRoute("GET", getUserGroupsHandler, map[string]string{"username": u.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
