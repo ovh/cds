@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -49,7 +50,7 @@ func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		}
 	}
 
-	pluginClient := plugin.NewClient(r.Name, pluginBinary, "", "", false)
+	pluginClient := plugin.NewClient(context.Background(), r.Name, pluginBinary, "", "", false)
 	defer pluginClient.Kill()
 
 	_plugin, err := pluginClient.Instance()

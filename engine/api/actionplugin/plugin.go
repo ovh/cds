@@ -1,6 +1,7 @@
 package actionplugin
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -19,7 +20,7 @@ import (
 func Get(name, path string) (*sdk.ActionPlugin, *plugin.Parameters, error) {
 	//FIXME: run this in a jail with apparmor
 	log.Debug("actionplugin.Get> Getting info from '%s' (%s)", name, path)
-	client := plugin.NewClient(name, path, "ID", "http://127.0.0.1:8081", true)
+	client := plugin.NewClient(context.Background(), name, path, "ID", "http://127.0.0.1:8081", true)
 	defer func() {
 		log.Debug("actionplugin.Get> kill rpc-server")
 		client.Kill()
