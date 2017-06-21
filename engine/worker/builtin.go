@@ -49,10 +49,8 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, pbJob sdk.
 			tlsskipverify = true
 		}
 
-		//TODO: cancel the plugin
-
 		//Create the rpc server
-		pluginClient := plugin.NewClient(pluginName, pluginBinary, w.id, w.apiEndpoint, tlsskipverify)
+		pluginClient := plugin.NewClient(ctx, pluginName, pluginBinary, w.id, w.apiEndpoint, tlsskipverify)
 		defer pluginClient.Kill()
 
 		//Get the plugin interface
