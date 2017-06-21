@@ -22,23 +22,23 @@ describe('CDS: Warning Store', () => {
 
         let haveWarnings = false;
         warnStore.getWarnings().subscribe( res => {
-            expect(res['key1']).toBeTruthy('Must have warnings on project key1');
-            expect(res['key1'].applications['app1']).toBeTruthy('Must have warnings on application app1');
-            expect(res['key1'].applications['app1'].actions.length).toBe(3, 'App1 must have 3 warnings on jobs');
+            expect(res.get('key1')).toBeTruthy('Must have warnings on project key1');
+            expect(res.get('key1').applications.get('app1')).toBeTruthy('Must have warnings on application app1');
+            expect(res.get('key1').applications.get('app1').actions.length).toBe(3, 'App1 must have 3 warnings on jobs');
 
-            expect(res['key1'].pipelines['pip1']).toBeTruthy('Must have warnings on pipeline pip1');
-            expect(res['key1'].pipelines['pip1'].jobs.length).toBe(1, 'Pip1 must have 1 warning on jobs');
+            expect(res.get('key1').pipelines.get('pip1')).toBeTruthy('Must have warnings on pipeline pip1');
+            expect(res.get('key1').pipelines.get('pip1').jobs.length).toBe(1, 'Pip1 must have 1 warning on jobs');
 
-            expect(res['key1'].pipelines['pip2']).toBeTruthy('Must have warnings on pipeline pip2');
-            expect(res['key1'].pipelines['pip2'].jobs.length).toBe(2, 'Pip2 must have 2 warning on jobs');
+            expect(res.get('key1').pipelines.get('pip2')).toBeTruthy('Must have warnings on pipeline pip2');
+            expect(res.get('key1').pipelines.get('pip2').jobs.length).toBe(2, 'Pip2 must have 2 warning on jobs');
 
 
-            expect(res['key2']).toBeTruthy('Must have warnings on project key2');
-            expect(res['key2'].applications['app2']).toBeTruthy('Must have warnings on application app2');
-            expect(res['key2'].applications['app2'].actions.length).toBe(1, 'App2 must have 1 warning on actions');
+            expect(res.get('key2')).toBeTruthy('Must have warnings on project key2');
+            expect(res.get('key2').applications.get('app2')).toBeTruthy('Must have warnings on application app2');
+            expect(res.get('key2').applications.get('app2').actions.length).toBe(1, 'App2 must have 1 warning on actions');
 
-            expect(res['key2'].pipelines['pip3']).toBeTruthy('Must have warnings on pipeline pip2');
-            expect(res['key2'].pipelines['pip3'].jobs.length).toBe(2, 'Pip3 must have 2 warnings on jobs');
+            expect(res.get('key2').pipelines.get('pip3')).toBeTruthy('Must have warnings on pipeline pip2');
+            expect(res.get('key2').pipelines.get('pip3').jobs.length).toBe(2, 'Pip3 must have 2 warnings on jobs');
 
             haveWarnings = true;
         });

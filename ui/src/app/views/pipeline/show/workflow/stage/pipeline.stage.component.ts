@@ -102,6 +102,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
                     this._toast.success('', this._translate.instant('stage_job_updated'));
                     job.action.loading = false;
                     job.action.hasChanged = false;
+
                 }, () => {
                     job.action.loading = false;
                 });

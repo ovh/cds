@@ -6,7 +6,8 @@ const routes: Routes = [
     { path: 'home', loadChildren: 'app/views/home/home.module#HomeModule' },
     { path: 'account', loadChildren: 'app/views/account/account.module#AccountModule' },
     { path: 'project', loadChildren: 'app/views/project/project.module#ProjectModule' },
-    { path: 'settings', loadChildren: 'app/views/settings/settings.module#SettingsModule' }
+    { path: 'settings', loadChildren: 'app/views/settings/settings.module#SettingsModule' },
+    { path: 'warnings', loadChildren: 'app/views/warnings/warnings.module#WarningsModule' }
 ];
 
 export const routing: ModuleWithProviders = RouterModule.forRoot(routes, {

@@ -38,6 +38,28 @@ export class ActionEditComponent implements OnInit {
 
     actionEvent(event: ActionEvent): void {
         event.action.loading = true;
+
+        if (event.action.actions) {
+            event.action.actions.forEach(a => {
+               if (a.parameters) {
+                   a.parameters.forEach(p => {
+                      if (p.type === 'boolean' && !p.value) {
+                          p.value = 'false';
+                      }
+                      p.value = p.value.toString();
+                   });
+               }
+            });
+        }
+        if (event.action.parameters) {
+            event.action.parameters.forEach(p => {
+                if (p.type === 'boolean' && !p.value) {
+                    p.value = 'false';
+                }
+                p.value = p.value.toString();
+            });
+        }
+
         switch (event.type) {
             case 'update':
                 this._actionService.updateAction(this.action.name, event.action).subscribe( action => {

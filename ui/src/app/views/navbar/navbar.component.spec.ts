@@ -15,6 +15,9 @@ import {ApplicationStore} from '../../service/application/application.store';
 import {ApplicationService} from '../../service/application/application.service';
 import {Project} from '../../model/project.model';
 import {LanguageStore} from '../../service/language/language.store';
+import {RouterService} from '../../service/router/router.service';
+import {WarningStore} from '../../service/warning/warning.store';
+import {WarningService} from '../../service/warning/warning.service';
 
 describe('CDS: Navbar Component', () => {
 
@@ -32,6 +35,9 @@ describe('CDS: Navbar Component', () => {
                 TranslateLoader,
                 ProjectStore,
                 ProjectService,
+                RouterService,
+                WarningStore,
+                WarningService,
                 AuthentificationStore,
                 ApplicationStore,
                 ApplicationService,

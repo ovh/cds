@@ -7,13 +7,14 @@ import {NotificationService} from './service/notification/notification.service';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {TranslateService} from 'ng2-translate';
 import {PipelineStore} from './service/pipeline/pipeline.store';
+import {RouterService} from './service/router/router.service';
 
 @Injectable()
 export class AppService {
 
-    constructor(private _projStore: ProjectStore, private _routeActivated: ActivatedRoute, private _router: Router,
+    constructor(private _projStore: ProjectStore, private _routeActivated: ActivatedRoute,
         private _appStore: ApplicationStore, private _notif: NotificationService, private _authStore: AuthentificationStore,
-        private _translate: TranslateService, private _pipStore: PipelineStore) {
+        private _translate: TranslateService, private _pipStore: PipelineStore, private _routerService: RouterService) {
     }
 
     updateCache(lastUpdates: Array<ProjectLastUpdates>) {
@@ -22,7 +23,7 @@ export class AppService {
         }
 
         // Get current route params
-        let params = this.getRouteParams({}, this._routeActivated);
+        let params = this._routerService.getRouteParams({}, this._routeActivated);
 
         // Get all projects
         this._projStore.getProjects().first().subscribe(projects => {
@@ -104,18 +105,18 @@ export class AppService {
                 return;
             }
 
-            plu.pipelines.forEach( p => {
+            plu.pipelines.forEach(p => {
                 let pipKey = plu.name + '-' + p.name;
                 if (!pips.get(pipKey)) {
                     return;
                 }
 
-                if ( pips.get(pipKey).last_modified < p.last_modified ) {
-                    if (params['key'] && params['key'] === plu.name && params['pipName'] === p.name ) {
+                if (pips.get(pipKey).last_modified < p.last_modified) {
+                    if (params['key'] && params['key'] === plu.name && params['pipName'] === p.name) {
                         this._pipStore.externalModification(pipKey);
 
                         if (p.username !== this._authStore.getUser().username) {
-                            this._notif.create(this._translate.instant('pipeline_modification', { username: plu.username}));
+                            this._notif.create(this._translate.instant('pipeline_modification', {username: plu.username}));
                         }
 
                         if (params['buildNumber'] || p.username === this._authStore.getUser().username) {
@@ -128,31 +129,5 @@ export class AppService {
             });
         });
 
-    }
-
-    getRouteParams(params: {}, activatedRoute: ActivatedRoute): {} {
-        if (activatedRoute) {
-            if (activatedRoute.snapshot.params) {
-                if (activatedRoute.snapshot.params['key']) {
-                    params['key'] = activatedRoute.snapshot.params['key'];
-                }
-                if (activatedRoute.snapshot.params['pipName']) {
-                    params['pipName'] = activatedRoute.snapshot.params['pipName'];
-                }
-                if (activatedRoute.snapshot.params['appName']) {
-                    params['appName'] = activatedRoute.snapshot.params['appName'];
-                }
-                if (activatedRoute.snapshot.params['buildNumber']) {
-                    params['buildNumber'] = activatedRoute.snapshot.params['buildNumber'];
-                }
-            }
-
-            if (activatedRoute.children) {
-                activatedRoute.children.forEach(c => {
-                    params = this.getRouteParams(params, c);
-                });
-            }
-        }
-        return params;
     }
 }

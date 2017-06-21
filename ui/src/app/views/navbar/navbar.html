@@ -1,5 +1,4 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
-
     <img src="assets/images/cds.png" class="item">
     <sm-select
             placeholder="{{'navbar_projects_placeholder' | translate}}"
@@ -21,10 +20,15 @@
         <option [value]="'#NOAPP#'"></option>
         <option *ngFor="let app of listApplications" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
     </sm-select>
-
     <div class="right menu">
         <div class="item link" *ngIf="currentUser">
             <a href="#" [routerLink]="['/project']"><i class="plus circle icon"></i>{{ 'project_create' | translate }}</a>
+        </div>
+        <div class="item link" *ngIf="currentUser && warningsCount > 0">
+            <a href="#" [routerLink]="['/warnings/show']" [queryParams]="getWarningParams()">
+                <i class="alarm outline icon"></i>
+                <div class="ui red circular label">{{warningsCount}}</div>
+            </a>
         </div>
         <sm-dropdown icon="settings" *ngIf="currentUser">
             <a sm-item href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
