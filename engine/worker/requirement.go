@@ -30,9 +30,7 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	check := requirementCheckFuncs[r.Type]
 	if check == nil {
-		log.Warning("checkRequirement> Unknown type of requirement: %s\n", r.Type)
-		log.Warning("checkRequirement> Support requirements are : %v", requirementCheckFuncs)
-		return false, fmt.Errorf("unknown type of requirement %s", r.Type)
+		return false, fmt.Errorf("checkRequirement> Unknown type of requirement: %s supported requirements are : %v", r.Type, requirementCheckFuncs)
 	}
 	return check(w, r)
 }

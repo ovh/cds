@@ -172,6 +172,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}(ctx)
 
+		firstViewBooked := false
 		// main loop
 		for {
 			if ctx.Err() != nil {
@@ -222,30 +223,47 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				//Check requirements
 				requirementsOK := true
+				errRequirements := []sdk.Requirement{}
 				w.client.WorkerSetStatus(sdk.StatusChecking)
 				for _, r := range j.Job.Action.Requirements {
 					ok, err := checkRequirement(w, r)
-					if err != nil {
-						postCheckRequirementError(&r, err)
+					if err != nil || !ok {
+						if err != nil {
+							log.Warning("checkQueue> Err on checkRequirement %s", err)
+						}
 						requirementsOK = false
-						continue
-					}
-					if !ok {
-						requirementsOK = false
+						errRequirements = append(errRequirements, r)
 						continue
 					}
 				}
 
+				t := ""
+				if j.ID == w.bookedJobID {
+					t = ", this was my booked job"
+				}
+
 				//Take the job
 				if requirementsOK {
-					t := ""
-					if j.ID == w.bookedJobID {
-						t = ", this was my booked job"
-					}
 					log.Info("checkQueue> Taking job %d%s", j.ID, t)
 					w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
 				} else {
-					log.Debug("Unable to run this job, let's continue")
+					log.Debug("Unable to run this job, let's continue %d%s", j.ID, t)
+
+					if j.ID == w.bookedJobID && !firstViewBooked {
+						var details string
+						for _, r := range errRequirements {
+							details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
+						}
+						infos := []sdk.SpawnInfo{{
+							RemoteTime: time.Now(),
+							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
+						}}
+						if err := sdk.AddSpawnInfosPipelineBuildJob(j.ID, infos); err != nil {
+							log.Warning("Cannot record AddSpawnInfosPipelineBuildJob for job (err spawn): %d%s %s", j.ID, t, err)
+						}
+						firstViewBooked = true
+					}
+
 					continue
 				}
 

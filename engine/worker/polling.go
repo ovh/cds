@@ -13,13 +13,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var firstViewQueue = true
-
-func postCheckRequirementError(r *sdk.Requirement, err error) {
-	s := fmt.Sprintf("Error checking requirement Name=%s Type=%s Value=%s :%s", r.Name, r.Type, r.Value, err)
-	sdk.Request("POST", "/queue/requirements/errors", []byte(s))
-}
-
 func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
 	info, err := w.client.QueueTakeJob(job, w.bookedJobID == job.ID)
 	if err != nil {
@@ -125,7 +118,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 		for {
 			select {
 			case <-ctx.Done():
-				log.Debug("Exiting pippelibe build job info goroutine: %v", ctx.Err())
+				log.Debug("Exiting pipeline build job info goroutine: %v", ctx.Err())
 				return
 			case <-tick.C:
 				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
