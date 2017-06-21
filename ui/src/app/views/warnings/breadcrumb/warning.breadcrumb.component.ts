@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Project} from '../../../model/project.model';
 import {ProjectStore} from '../../../service/project/project.store';
 import {Subscription} from 'rxjs/Subscription';
@@ -7,6 +7,7 @@ import {List} from 'immutable';
 import {WarningStore} from '../../../service/warning/warning.store';
 import {WarningUI} from '../../../model/warning.model';
 import {WarningService} from '../../../service/warning/warning.service';
+import {Router} from '@angular/router';
 
 @Component({
     selector: 'app-warning-breadcrumb',
@@ -24,7 +25,7 @@ export class WarningBreadCrumbComponent {
 
     warningsCount: Map<string, number>;
 
-    constructor(private _projectStore: ProjectStore, private _warningStore: WarningStore, private _warningService: WarningService) {
+    constructor(private _projectStore: ProjectStore, private _warningStore: WarningStore, private _warningService: WarningService, private _router: Router) {
         this.warnSub = this._warningStore.getWarnings().subscribe(ws => {
             this.warnings = ws;
             if (this.projects) {
@@ -46,5 +47,14 @@ export class WarningBreadCrumbComponent {
                 this.warningsCount.set(p.key, this._warningService.calculateWarningCountForProject(p.key, this.warnings));
             }
         });
+        if (!this.project) {
+            this.warningsCount.forEach((v, k) => {
+                if (v > 0 && !this.project) {
+                    this.project = this.projects.find(prj => prj.key === k );
+                    this._router.navigate(['/warnings', 'show'], { queryParams: {key: k}});
+                }
+            });
+
+        }
     }
 }

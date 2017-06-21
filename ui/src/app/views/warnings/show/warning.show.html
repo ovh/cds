@@ -1,5 +1,5 @@
 <div id="WarningShow">
-    <div class="CDSbreadcrumb" *ngIf="project">
+    <div class="CDSbreadcrumb">
         <app-warning-breadcrumb [project]="project"></app-warning-breadcrumb>
     </div>
     <div class="scrollingContent">
@@ -33,7 +33,6 @@
                             </li>
                             <li *ngFor="let j of d.value.jobs">
                                 {{j.message}}
-                                {{j | json}}
                                 <a href="#"
                                    [routerLink]="['/project', project.key, 'pipeline', d.key]"
                                    [queryParams]="{ tab: 'pipeline'}">
