@@ -12,83 +12,85 @@ import (
 	"github.com/runabove/venom"
 )
 
-func runParseJunitTestResultAction(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-	var res sdk.Result
-	res.Status = sdk.StatusFail.String()
+func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+		var res sdk.Result
+		res.Status = sdk.StatusFail.String()
 
-	pip := sdk.ParameterValue(params, "cds.pipeline")
-	proj := sdk.ParameterValue(params, "cds.project")
-	app := sdk.ParameterValue(params, "cds.application")
-	envName := sdk.ParameterValue(params, "cds.environment")
-	bnS := sdk.ParameterValue(params, "cds.buildNumber")
+		pip := sdk.ParameterValue(params, "cds.pipeline")
+		proj := sdk.ParameterValue(params, "cds.project")
+		app := sdk.ParameterValue(params, "cds.application")
+		envName := sdk.ParameterValue(params, "cds.environment")
+		bnS := sdk.ParameterValue(params, "cds.buildNumber")
 
-	p := sdk.ParameterValue(a.Parameters, "path")
-	if p == "" {
-		res.Reason = fmt.Sprintf("UnitTest parser: path not provided")
-		sendLog(res.Reason)
-		return res
-	}
-
-	files, errg := filepath.Glob(p)
-	if errg != nil {
-		res.Reason = fmt.Sprintf("UnitTest parser: Cannot find requested files, invalid pattern")
-		sendLog(res.Reason)
-		return res
-	}
-
-	var tests venom.Tests
-	sendLog("%d file(s) to analyze", len(files))
-
-	for _, f := range files {
-		var ftests venom.Tests
-
-		data, errRead := ioutil.ReadFile(f)
-		if errRead != nil {
-			res.Reason = fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, errRead)
+		p := sdk.ParameterValue(a.Parameters, "path")
+		if p == "" {
+			res.Reason = fmt.Sprintf("UnitTest parser: path not provided")
 			sendLog(res.Reason)
 			return res
 		}
 
-		var vf venom.Tests
-		if err := xml.Unmarshal(data, &vf); err != nil {
-			// Check if file contains testsuite only (and no testsuites)
-			if s, ok := parseTestsuiteAlone(data); ok {
-				ftests.TestSuites = append(ftests.TestSuites, s)
-			}
-			tests.TestSuites = append(tests.TestSuites, ftests.TestSuites...)
-		} else {
-			tests.TestSuites = append(tests.TestSuites, vf.TestSuites...)
+		files, errg := filepath.Glob(p)
+		if errg != nil {
+			res.Reason = fmt.Sprintf("UnitTest parser: Cannot find requested files, invalid pattern")
+			sendLog(res.Reason)
+			return res
 		}
-	}
 
-	sendLog("%d Total Testsuite(s)", len(tests.TestSuites))
-	reasons := computeStats(&res, &tests)
-	for _, r := range reasons {
-		sendLog(r)
-	}
+		var tests venom.Tests
+		sendLog("%d file(s) to analyze", len(files))
 
-	data, err := json.Marshal(tests)
-	if err != nil {
-		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
-		res.Status = sdk.StatusFail.String()
-		sendLog(res.Reason)
+		for _, f := range files {
+			var ftests venom.Tests
+
+			data, errRead := ioutil.ReadFile(f)
+			if errRead != nil {
+				res.Reason = fmt.Sprintf("UnitTest parser: cannot read file %s (%s)", f, errRead)
+				sendLog(res.Reason)
+				return res
+			}
+
+			var vf venom.Tests
+			if err := xml.Unmarshal(data, &vf); err != nil {
+				// Check if file contains testsuite only (and no testsuites)
+				if s, ok := parseTestsuiteAlone(data); ok {
+					ftests.TestSuites = append(ftests.TestSuites, s)
+				}
+				tests.TestSuites = append(tests.TestSuites, ftests.TestSuites...)
+			} else {
+				tests.TestSuites = append(tests.TestSuites, vf.TestSuites...)
+			}
+		}
+
+		sendLog("%d Total Testsuite(s)", len(tests.TestSuites))
+		reasons := computeStats(&res, &tests)
+		for _, r := range reasons {
+			sendLog(r)
+		}
+
+		data, err := json.Marshal(tests)
+		if err != nil {
+			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+			res.Status = sdk.StatusFail.String()
+			sendLog(res.Reason)
+			return res
+		}
+
+		uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, envName)
+		_, code, err := sdk.Request("POST", uri, data)
+		if err == nil && code > 300 {
+			err = fmt.Errorf("HTTP %d", code)
+		}
+
+		if err != nil {
+			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+			res.Status = sdk.StatusFail.String()
+			sendLog(res.Reason)
+			return res
+		}
+
 		return res
 	}
-
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, envName)
-	_, code, err := sdk.Request("POST", uri, data)
-	if err == nil && code > 300 {
-		err = fmt.Errorf("HTTP %d", code)
-	}
-
-	if err != nil {
-		res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
-		res.Status = sdk.StatusFail.String()
-		sendLog(res.Reason)
-		return res
-	}
-
-	return res
 }
 
 // computeStats computes failures / errors on testSuites,

@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,21 +31,30 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, groupsID []int64, since *time.Time
 	join workflow on workflow.id = workflow_node.workflow_id
 	join project on project.id = workflow.project_id
 	join project_group on project_group.project_id = project.id
-	where project_group.group_id = ANY(string_to_array($1, ',')::int[])
+	where (
+		project_group.group_id = ANY(string_to_array($1, ',')::int[])
+		or
+		true = $4
+	)
 	and workflow_node_run_job.queued >= $2
 	and workflow_node_run_job.status = ANY(string_to_array($3, ','))`
 
 	var groupID string
+	var isSharedInfraGroup bool
 	for i, g := range groupsID {
 		if i == 0 {
 			groupID = fmt.Sprintf("%d", g)
 		} else {
 			groupID += "," + fmt.Sprintf("%d", g)
 		}
+		if g == group.SharedInfraGroup.ID {
+			isSharedInfraGroup = true
+			break
+		}
 	}
 
 	sqlJobs := []JobRun{}
-	if _, err := db.Select(&sqlJobs, query, groupID, *since, strings.Join(statuses, ",")); err != nil {
+	if _, err := db.Select(&sqlJobs, query, groupID, *since, strings.Join(statuses, ","), isSharedInfraGroup); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs")
 	}
 

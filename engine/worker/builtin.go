@@ -23,24 +23,26 @@ func init() {
 	mapBuiltinActions[sdk.GitCloneAction] = runGitClone
 }
 
-func RegisterBuiltinAction(name string, f BuiltInActionFunc) {
-	mapBuiltinActions[name] = f
-}
+type BuiltInAction func(context.Context, *sdk.Action, int64, []sdk.Parameter, LoggerFunc) sdk.Result
 
-type BuiltInActionFunc func(context.Context, *sdk.Action, int64, []sdk.Parameter, LoggerFunc) sdk.Result
+type BuiltInActionFunc func(*currentWorker) BuiltInAction
 
 type LoggerFunc func(format string, args ...interface{})
 
-func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int) sdk.Result {
-	defer w.drainLogsAndCloseLogger(ctx)
-
-	//Define a loggin function
-	sendLog := func(format string, args ...interface{}) {
+func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
+	return func(format string, args ...interface{}) {
 		if !strings.HasSuffix(format, "\n") {
 			format += "\n"
 		}
 		w.sendLog(buildID, fmt.Sprintf(format, args...), stepOrder, false)
 	}
+}
+
+func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int) sdk.Result {
+	defer w.drainLogsAndCloseLogger(ctx)
+
+	//Define a loggin function
+	sendLog := getLogger(w, buildID, stepOrder)
 
 	f, ok := mapBuiltinActions[a.Name]
 	if !ok {
@@ -51,7 +53,7 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 		return res
 	}
 
-	return f(ctx, a, buildID, params, sendLog)
+	return f(w)(ctx, a, buildID, params, sendLog)
 }
 
 func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {

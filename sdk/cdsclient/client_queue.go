@@ -32,17 +32,24 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			}
 			return ctx.Err()
 		case <-oldJobsTicker.C:
+			if c.config.Verbose {
+				fmt.Println("oldJobsTicker")
+			}
+
 			if jobs != nil {
 				queue := []sdk.WorkflowNodeJobRun{}
 				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load old jobs")
 				}
-				t0 = time.Now()
 				for _, j := range queue {
 					jobs <- j
 				}
 			}
 		case <-jobsTicker.C:
+			if c.config.Verbose {
+				fmt.Println("jobsTicker")
+			}
+
 			if jobs != nil {
 				queue := []sdk.WorkflowNodeJobRun{}
 				if _, err := c.GetJSON("/queue/workflows", &queue, SetHeader("If-Modified-Since", t0.Format(time.RFC1123))); err != nil {
@@ -55,6 +62,10 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				}
 			}
 		case <-pbjobsTicker.C:
+			if c.config.Verbose {
+				fmt.Println("pbjobsTicker")
+			}
+
 			if pbjobs != nil {
 				queue, err := sdk.GetBuildQueue()
 				if err != nil {
@@ -96,4 +107,15 @@ func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
 		return nil, nil
 	}
 	return &job, nil
+}
+
+func (c *client) QueueSendResult(id int64, res sdk.Result) error {
+	var path = fmt.Sprintf("/queue/workflows/%d/result", id)
+
+	if code, err := c.PostJSON(path, res, nil); err != nil {
+		return err
+	} else if code != http.StatusOK {
+		return fmt.Errorf("HTTP Error: %d", code)
+	}
+	return nil
 }

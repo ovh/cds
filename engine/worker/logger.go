@@ -27,7 +27,7 @@ func (w *currentWorker) sendLog(buildID int64, value string, stepOrder int, fina
 
 	var id = w.currentJob.pbJob.PipelineBuildID
 	if w.currentJob.wJob != nil {
-		w.currentJob.wJob.WorkflowNodeRunID
+		id = w.currentJob.wJob.WorkflowNodeRunID
 	}
 
 	l := sdk.NewLog(buildID, value, id, stepOrder)
@@ -116,7 +116,13 @@ func (w *currentWorker) logProcessor() error {
 						continue
 					}
 
-					path := fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
+					var path string
+					if w.currentJob.wJob != nil {
+						path = fmt.Sprintf("/queue/workflows/%d/log", w.currentJob.wJob.ID)
+					} else {
+						path = fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
+					}
+
 					if _, _, err := sdk.Request("POST", path, data); err != nil {
 						fmt.Printf("error: cannot send logs: %s\n", err)
 						continue

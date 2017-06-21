@@ -13,6 +13,7 @@ type Interface interface {
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
 	QueueJobInfo(int64) (*sdk.WorkflowNodeJobRun, error)
+	QueueSendResult(int64, sdk.Result) error
 	Requirements() ([]sdk.Requirement, error)
 	WorkerRegister(worker.RegistrationForm) (string, bool, error)
 	WorkerSetStatus(sdk.Status) error
