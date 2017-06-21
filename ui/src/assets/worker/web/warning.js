@@ -6,6 +6,7 @@ onmessage = function (e) {
 
 function loadWarnings (user, session, api) {
     if (user && api) {
+        postMessage(httpCall('/mon/warning', api, user, session));
         setInterval(function () {
             postMessage(httpCall('/mon/warning', api, user, session));
         }, 10000);

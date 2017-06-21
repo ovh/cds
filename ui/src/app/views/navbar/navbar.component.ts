@@ -14,6 +14,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {RouterService} from '../../service/router/router.service';
 import {WarningStore} from '../../service/warning/warning.store';
 import {WarningUI} from '../../model/warning.model';
+import {WarningService} from '../../service/warning/warning.service';
 
 @Component({
     selector: 'app-navbar',
@@ -53,7 +54,7 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
                 private _appStore: ApplicationStore,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
                 private _translate: TranslateService, private _warningStore: WarningStore,
-                private _authentificationStore: AuthentificationStore) {
+                private _authentificationStore: AuthentificationStore, private _warningService: WarningService) {
         this.selectedProjectKey = '#NOPROJECT#';
         this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
             this.currentUser = u;
@@ -65,14 +66,14 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.warningSubscription = this._warningStore.getWarnings().subscribe(ws => {
             this.warnings = ws;
-            this.calculateWarningCount();
+            this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
         });
 
         this._router.events
             .filter(e => e instanceof NavigationEnd)
             .forEach(() => {
                 this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
-                this.calculateWarningCount();
+                this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
             });
     }
 
@@ -109,43 +110,7 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
         });
     }
 
-    calculateWarningCount(): void {
-        if (!this.currentRoute || !this.warnings) {
-            return;
-        }
 
-        this.warningsCount = 0;
-        let k = this.currentRoute['key'];
-
-        if (k && this.warnings.get(k)) {
-            this.warningsCount += this.warnings.get(k).variables.length;
-
-            // If on pipeline page
-            let pip = this.currentRoute['pipName'];
-            if (pip && this.warnings.get(k).pipelines.get(pip)) {
-                this.warningsCount += this.warnings.get(k).pipelines.get(pip).jobs.length
-                    + this.warnings.get(k).pipelines.get(pip).parameters.length;
-            }
-
-            // If on application page
-            let app = this.currentRoute['appName'];
-            if (app && this.warnings.get(k).applications.get(app)) {
-                this.warningsCount += this.warnings.get(k).applications.get(app).variables.length
-                    + this.warnings.get(k).applications.get(app).actions.length;
-            }
-
-            // On project page
-            if (!this.currentRoute['appName'] && !this.currentRoute['pipName']) {
-                this.warnings.get(k).pipelines.forEach((v) => {
-                    this.warningsCount += v.jobs.length + v.parameters.length;
-                });
-                this.warnings.get(k).applications.forEach((v) => {
-                    this.warningsCount += v.variables.length + v.actions.length;
-                });
-
-            }
-        }
-    }
 
     /**
      * Listen change on project list.

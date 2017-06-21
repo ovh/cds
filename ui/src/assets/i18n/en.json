@@ -432,6 +432,9 @@
   "warning_modal_title" : "Warning - concurrent access",
   "warning_modal_body" : "Another use has just updated this resource. You may overwrite his update.",
   "warning_project" : "Another user has just updated the project.",
+  "warning_project_title" : "Project warning list",
+  "warning_pipeline_title" : "Warnings list for pipeline {{pip}}",
+  "warning_application_title" : "Warnings list for application {{app}}",
 
   "wizard_app_clone" : "Clone an application",
   "wizard_app_empty" : "Empty application",
