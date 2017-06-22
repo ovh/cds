@@ -227,10 +227,10 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				w.client.WorkerSetStatus(sdk.StatusChecking)
 				for _, r := range j.Job.Action.Requirements {
 					ok, err := checkRequirement(w, r)
-					if err != nil || !ok {
-						if err != nil {
-							log.Warning("checkQueue> Err on checkRequirement %s", err)
-						}
+					if err != nil {
+						log.Warning("checkQueue> Err on checkRequirement %s", err)
+					}
+					if !ok {
 						requirementsOK = false
 						errRequirements = append(errRequirements, r)
 						continue
