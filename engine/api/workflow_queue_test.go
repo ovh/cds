@@ -118,7 +118,7 @@ func test_runWorkflow(t *testing.T, db *gorp.DbMap, testName string) test_runWor
 
 	c, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	defer cancel()
-	workflow.Scheduler(c)
+	workflow.Scheduler(c, func() *gorp.DbMap { return db })
 	time.Sleep(1 * time.Second)
 
 	return test_runWorkflowCtx{
