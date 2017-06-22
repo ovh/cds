@@ -40,17 +40,16 @@ type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bus
 type RouterConfigParam func(rc *routerConfig)
 
 type routerConfig struct {
-	get                  Handler
-	post                 Handler
-	put                  Handler
-	deleteHandler        Handler
-	auth                 bool
-	isExecution          bool
-	needAdmin            bool
-	needUsernameOrAdmin  bool
-	needHatchery         bool
-	needWorker           bool
-	needHatcheryOrWorker bool
+	get                 Handler
+	post                Handler
+	put                 Handler
+	deleteHandler       Handler
+	auth                bool
+	isExecution         bool
+	needAdmin           bool
+	needUsernameOrAdmin bool
+	needHatchery        bool
+	needWorker          bool
 }
 
 // ServeAbsoluteFile Serve file to download
@@ -249,16 +248,16 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		}
 
 		permissionOk := true
-		if rc.auth && rc.needHatchery && c.Hatchery == nil {
-			permissionOk = false
-		} else if rc.auth && rc.needWorker {
-			permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
-		} else if rc.auth && rc.needHatcheryOrWorker {
+		if rc.auth && rc.needWorker && rc.needHatchery {
 			// if it's a hatchery, with c.Hatchery != nil -> it's ok
-			// if not (c.Hatchery == nil), then, we have to check worker permissions
+			// if not (ie. c.Hatchery == nil), then, we have to check worker permissions
 			if c.Hatchery == nil {
 				permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
 			}
+		} else if rc.auth && rc.needHatchery && c.Hatchery == nil {
+			permissionOk = false
+		} else if rc.auth && rc.needWorker {
+			permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
 		} else if rc.auth && rc.needAdmin && !c.User.Admin {
 			permissionOk = false
 		} else if rc.auth && rc.needUsernameOrAdmin && !c.User.Admin && c.User.Username != mux.Vars(req)["username"] {
@@ -376,14 +375,6 @@ func NeedHatchery() RouterConfigParam {
 func NeedWorker() RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.needWorker = true
-	}
-	return f
-}
-
-// NeedHatcheryOrWorker set the route for worker or hatchery only
-func NeedHatcheryOrWorker() RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.needHatcheryOrWorker = true
 	}
 	return f
 }

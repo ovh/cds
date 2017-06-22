@@ -188,7 +188,7 @@ func (router *Router) init() {
 	router.Handle("/queue", GET(getQueueHandler))
 	router.Handle("/queue/{id}/take", POST(takePipelineBuildJobHandler))
 	router.Handle("/queue/{id}/book", NeedHatchery(), POST(bookPipelineBuildJobHandler))
-	router.Handle("/queue/{id}/spawn/infos", NeedHatcheryOrWorker(), POST(addSpawnInfosPipelineBuildJobHandler))
+	router.Handle("/queue/{id}/spawn/infos", NeedWorker(), NeedHatchery(), POST(addSpawnInfosPipelineBuildJobHandler))
 	router.Handle("/queue/{id}/result", POST(addQueueResultHandler))
 	router.Handle("/queue/{id}/infos", GET(getPipelineBuildJobHandler))
 	router.Handle("/build/{id}/log", POST(addBuildLogHandler))
