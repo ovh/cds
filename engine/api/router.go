@@ -270,6 +270,11 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			if !rc.needAdmin && !c.User.Admin {
 				permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
 			}
+
+			// else case, just need auth
+			if !rc.needAdmin && !rc.needHatchery && !rc.needWorker && !rc.needUsernameOrAdmin {
+				permissionOk = true
+			}
 		}
 
 		if !permissionOk {
