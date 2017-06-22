@@ -247,20 +247,36 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			}
 		}
 
-		permissionOk := true
-		if rc.auth && rc.needHatchery && c.Hatchery == nil {
-			permissionOk = false
-		} else if rc.auth && rc.needWorker {
-			permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
-		} else if rc.auth && rc.needAdmin && !c.User.Admin {
-			permissionOk = false
-		} else if rc.auth && rc.needUsernameOrAdmin && !c.User.Admin && c.User.Username != mux.Vars(req)["username"] {
-			// get / update / delete user -> for admin or current user
-			// if not admin and currentUser != username in request -> ko
-			permissionOk = false
-		} else if rc.auth && !rc.needAdmin && !c.User.Admin {
-			permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
+		permissionOk := false
+		if !rc.auth {
+			permissionOk = true
+		} else {
+			if rc.needHatchery && c.Hatchery != nil {
+				permissionOk = true
+			}
+			if rc.needWorker {
+				permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
+			}
+
+			if rc.needUsernameOrAdmin && (c.User.Admin || (c.User.Username == mux.Vars(req)["username"])) {
+				// get / update / delete user -> for admin or current user
+				// if not admin and currentUser != username in request -> ko
+				permissionOk = true
+			}
+
+			if rc.needAdmin && c.User.Admin {
+				permissionOk = true
+			}
+			if !rc.needAdmin && !c.User.Admin {
+				permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
+			}
+
+			// else case, just need auth
+			if !rc.needAdmin && !rc.needHatchery && !rc.needWorker && !rc.needUsernameOrAdmin {
+				permissionOk = true
+			}
 		}
+
 		if !permissionOk {
 			WriteError(w, req, sdk.ErrForbidden)
 			return

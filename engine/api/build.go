@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -517,25 +516,6 @@ func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	}
 
 	return WriteJSON(w, r, queue, http.StatusOK)
-}
-
-func requirementsErrorHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Warning("requirementsErrorHandler> %s", err)
-		return err
-	}
-
-	if c.Worker.ID != "" {
-		// Load calling worker
-		caller, err := worker.LoadWorker(db, c.Worker.ID)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "requirementsErrorHandler> cannot load calling worker: %s", err)
-		}
-
-		log.Warning("%s (%s) > %s", c.Worker.ID, caller.Name, string(body))
-	}
-	return nil
 }
 
 func addBuildVariableHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
