@@ -429,6 +429,10 @@
   "user_edit_title": "Édition de l'utisateur",
   "user_none": "Aucun utilisateur",
 
+  "warning_goto_application_variables": "variables de l'application",
+  "warning_goto_job": "job",
+  "warning_goto_pipeline_parameter" : "parametres du pipeline",
+  "warning_goto_project_variable" : "variables du projet",
   "warning_modal_title" : "Attention - accès concurrents",
   "warning_modal_body" : "Un autre utilisateur vient de modifier cette ressource. Vous risquez d'écraser ses modifications.",
   "warning_project" : "Un autre utilisateur vient de modifier le projet.",

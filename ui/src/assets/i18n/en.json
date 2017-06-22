@@ -429,6 +429,10 @@
   "user_edit_title": "Edit user",
   "user_none": "No user",
 
+  "warning_goto_application_variables": "application variables",
+  "warning_goto_job": "job",
+  "warning_goto_pipeline_parameter" : "pipeline parameters",
+  "warning_goto_project_variable" : "project variables",
   "warning_modal_title" : "Warning - concurrent access",
   "warning_modal_body" : "Another use has just updated this resource. You may overwrite his update.",
   "warning_project" : "Another user has just updated the project.",

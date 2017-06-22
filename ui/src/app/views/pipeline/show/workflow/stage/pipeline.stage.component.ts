@@ -24,6 +24,7 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     @Input() pipeline: Pipeline;
     @Input() project: Project;
     @Input() suggest: Array<string>;
+    @Input() queryParams: {};
 
     @Input()
     set stage(data: Stage) {
@@ -37,7 +38,13 @@ export class PipelineStageComponent implements OnInit, DoCheck {
     }
 
     ngOnInit(): void {
-        if (this.editableStage && this.editableStage.jobs && this.editableStage.jobs.length > 0) {
+        if (this.queryParams && this.queryParams['job']) {
+            let j = this.editableStage.jobs.find(job => job.action.name === this.queryParams['job']);
+            if (j) {
+                this.selectJob(j);
+            }
+        }
+        if (this.editableStage && this.editableStage.jobs && this.editableStage.jobs.length > 0 && !this.selectedJob) {
             this.selectJob(this.editableStage.jobs[0]);
         }
         this.currentStageID = this.editableStage.id;

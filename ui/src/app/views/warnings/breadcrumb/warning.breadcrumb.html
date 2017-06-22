@@ -2,7 +2,7 @@
     <!-- PROJECT -->
     <i class="browser icon"></i>
     <a class="section">
-        {{ project.name + ' (' + warningsCount.get(project.key) + ')'}}
+        {{ project.name }} <span *ngIf="projects &&  warningsCount.get(project.key) > 0">{{' (' + warningsCount.get(project.key) + ')'}}</span>
     </a>
     <sm-dropdown class="search">
         <ng-container *ngFor="let p of projects">
@@ -11,6 +11,5 @@
                 {{p.name + ' (' + warningsCount.get(p.key) + ')'}}
             </a>
         </ng-container>
-
     </sm-dropdown>
 </div>

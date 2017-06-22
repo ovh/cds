@@ -87,9 +87,6 @@ describe('CDS: Stage', () => {
         let s = new Stage();
         s.id = 1;
 
-        let jPreInit = new Job();
-        jPreInit.pipeline_action_id = 1;
-
         let j = new Job();
         j.pipeline_action_id = 1;
         j.action = new Action();
@@ -97,7 +94,6 @@ describe('CDS: Stage', () => {
         s.jobs = new Array<Job>();
         s.jobs.push(j);
 
-        fixture.componentInstance.selectedJob = jPreInit;
         fixture.componentInstance.stage = s;
 
         fixture.componentInstance.ngOnInit();

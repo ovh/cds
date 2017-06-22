@@ -1,5 +1,5 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {ActivatedRoute, Params, Router} from '@angular/router';
 import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
@@ -34,6 +34,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     buildNumber: string;
     envName: string;
     branch: string;
+
+    queryParams: Params;
 
     @ViewChild('permWarning')
         permissionModalWarning: WarningModalComponent;
@@ -80,6 +82,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         });
 
         this._routeActivated.queryParams.subscribe(params => {
+            this.queryParams = params;
             let tab = params['tab'] ;
             if (tab) {
                 this.selectedTab = tab;

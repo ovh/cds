@@ -25,6 +25,8 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
     @Input() project: Project;
     @Input() pipeline: Pipeline;
 
+    @Input() queryParams: {};
+
     @ViewChild('editStageModal')
     editStageModal: SemanticModalComponent;
 
@@ -72,9 +74,13 @@ export class PipelineWorkflowComponent implements DoCheck, OnInit, OnDestroy {
      * Init selected stage + pipeline date
      */
     ngOnInit() {
-        if (this.pipeline.stages && this.pipeline.stages.length > 0) {
+        if (this.queryParams && this.queryParams['stage']) {
+            this.selectedStage = this.pipeline.stages.find(s => s.name === this.queryParams['stage']);
+        }
+        if (this.pipeline.stages && this.pipeline.stages.length > 0 && !this.selectedStage) {
             this.selectedStage = this.pipeline.stages[0];
         }
+
         this.oldLastModifiedDate = this.pipeline.last_modified;
 
         this._varService.getContextVariable(this.project.key).first().subscribe(s => this.suggest = s);

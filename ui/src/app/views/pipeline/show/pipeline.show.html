@@ -28,7 +28,7 @@
             <div class="paddingContent">
                 <div class="viewContent" [ngSwitch]="selectedTab">
                     <div *ngSwitchCase="'pipeline'">
-                        <app-pipeline-workflow [project]="project" [pipeline]="pipeline"></app-pipeline-workflow>
+                        <app-pipeline-workflow [project]="project" [pipeline]="pipeline" [queryParams]="queryParams"></app-pipeline-workflow>
                     </div>
                     <div *ngSwitchCase="'parameters'">
                         <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
