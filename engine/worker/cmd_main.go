@@ -256,29 +256,33 @@ func (w *currentWorker) processBookedJob(pbjobs chan<- sdk.PipelineBuildJob) {
 	b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedJobID), nil)
 	if err != nil {
 		log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
-	} else {
-		j := &sdk.PipelineBuildJob{}
-		if err := json.Unmarshal(b, j); err != nil {
-			log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
-		} else {
-			requirementsOK, errRequirements := checkRequirements(w, j)
-			if !requirementsOK {
-				var details string
-				for _, r := range errRequirements {
-					details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
-				}
-				infos := []sdk.SpawnInfo{{
-					RemoteTime: time.Now(),
-					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
-				}}
-				if err := sdk.AddSpawnInfosPipelineBuildJob(j.ID, infos); err != nil {
-					log.Warning("Cannot record AddSpawnInfosPipelineBuildJob for job (err spawn): %d %s", j.ID, err)
-				}
-			} else { // requirementsOK is ok
-				pbjobs <- *j
-			}
-		}
+		return
 	}
+
+	j := &sdk.PipelineBuildJob{}
+	if err := json.Unmarshal(b, j); err != nil {
+		log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
+		return
+	}
+
+	requirementsOK, errRequirements := checkRequirements(w, j)
+	if !requirementsOK {
+		var details string
+		for _, r := range errRequirements {
+			details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
+		}
+		infos := []sdk.SpawnInfo{{
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
+		}}
+		if err := sdk.AddSpawnInfosPipelineBuildJob(j.ID, infos); err != nil {
+			log.Warning("Cannot record AddSpawnInfosPipelineBuildJob for job (err spawn): %d %s", j.ID, err)
+		}
+		return
+	}
+
+	// requirementsOK is ok
+	pbjobs <- *j
 }
 
 func (w *currentWorker) doRegister() error {
