@@ -222,7 +222,6 @@ func getDownloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp
 }
 
 func getWorkflowNodeRunJobStepHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	workflowName := vars["workflowName"]
@@ -244,8 +243,7 @@ func getWorkflowNodeRunJobStepHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	// Check workflow is in project
-	_, errW := workflow.Load(db, projectKey, workflowName, c.User)
-	if errW != nil {
+	if _, errW := workflow.Load(db, projectKey, workflowName, c.User); errW != nil {
 		return sdk.WrapError(errW, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
 	}
 
