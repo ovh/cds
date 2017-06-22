@@ -243,11 +243,6 @@ func getWorkflowNodeRunJobStepHandler(w http.ResponseWriter, r *http.Request, db
 		return sdk.WrapError(errS, "getWorkflowNodeRunJobBuildLogsHandler> stepOrder: invalid number")
 	}
 
-	logs, errL := workflow.LoadStepLogs(db, runJobID, stepOrder)
-	if errL != nil {
-		return sdk.WrapError(errL, "getWorkflowNodeRunJobBuildLogsHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
-	}
-
 	// Check workflow is in project
 	_, errW := workflow.Load(db, projectKey, workflowName, c.User)
 	if errW != nil {
@@ -282,6 +277,11 @@ stageLoop:
 	if stepStatus == "" {
 		return sdk.WrapError(fmt.Errorf("getWorkflowNodeRunJobBuildLogsHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
 			stepOrder, runJobID, nodeRunID, number, workflowName, projectKey), "")
+	}
+
+	logs, errL := workflow.LoadStepLogs(db, runJobID, stepOrder)
+	if errL != nil {
+		return sdk.WrapError(errL, "getWorkflowNodeRunJobBuildLogsHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
 	}
 
 	result := &sdk.BuildState{
