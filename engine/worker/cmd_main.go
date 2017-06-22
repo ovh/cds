@@ -209,7 +209,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				requirementsOK, _ := checkRequirements(w, &j)
+				requirementsOK, _ := checkRequirements(w, &j.Job.Action)
 
 				t := ""
 				if j.ID == w.bookedJobID {
@@ -234,7 +234,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				// Unregister from engine
 				log.Debug("Job is done. Unregistering...")
 				if err := w.unregister(); err != nil {
-					log.Warning("takeJob> could not unregister: %s", err)
+					log.Warning("takeJob> could n ot unregister: %s", err)
 				}
 
 			case j := <-wjobs:
@@ -245,34 +245,21 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				//Check requirements
-				requirementsOK := true
-				w.client.WorkerSetStatus(sdk.StatusChecking)
-				for _, r := range j.Job.Action.Requirements {
-					ok, err := checkRequirement(w, r)
-					if err != nil {
-						postCheckRequirementError(&r, err)
-						requirementsOK = false
-						continue
-					}
-					if !ok {
-						requirementsOK = false
-						continue
-					}
+				requirementsOK, _ := checkRequirements(w, &j.Job.Action)
+
+				t := ""
+				if j.ID == w.bookedJobID {
+					t = ", this was my booked job"
 				}
 
 				//Take the job
 				if requirementsOK {
-					t := ""
-					if j.ID == w.bookedJobID {
-						t = ", this was my booked job"
-					}
 					log.Info("checkQueue> Taking job %d%s", j.ID, t)
 					if err := w.takeWorkflowJob(ctx, j); err != nil {
 						errs <- err
 					}
 				} else {
-					log.Debug("Unable to run this job, let's continue")
+					log.Debug("Unable to run this job, let's continue %d%s", j.ID, t)
 					continue
 				}
 
@@ -312,7 +299,7 @@ func (w *currentWorker) processBookedJob(pbjobs chan<- sdk.PipelineBuildJob) {
 		return
 	}
 
-	requirementsOK, errRequirements := checkRequirements(w, j)
+	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action)
 	if !requirementsOK {
 		var details string
 		for _, r := range errRequirements {
