@@ -1,9 +1,17 @@
 package cdsclient
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
@@ -118,4 +126,66 @@ func (c *client) QueueSendResult(id int64, res sdk.Result) error {
 		return fmt.Errorf("HTTP Error: %d", code)
 	}
 	return nil
+}
+
+func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
+	fileForMD5, errop := os.Open(filePath)
+	if errop != nil {
+		return errop
+	}
+
+	//File stat
+	stat, errst := fileForMD5.Stat()
+	if errst != nil {
+		return errst
+	}
+
+	//Compute md5sum
+	hash := md5.New()
+	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
+		return errcopy
+	}
+	hashInBytes := hash.Sum(nil)[:16]
+	md5sumStr := hex.EncodeToString(hashInBytes)
+	fileForMD5.Close()
+
+	//Reopen the file because we already read it for md5
+	fileReopen, erro := os.Open(filePath)
+	if erro != nil {
+		return erro
+	}
+	defer fileReopen.Close()
+	_, name := filepath.Split(filePath)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
+	if errc != nil {
+		return errc
+	}
+
+	if _, err := io.Copy(part, fileReopen); err != nil {
+		return err
+	}
+
+	writer.WriteField("size", strconv.FormatInt(stat.Size(), 10))
+	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10))
+	writer.WriteField("md5sum", md5sumStr)
+
+	if errclose := writer.Close(); errclose != nil {
+		return errclose
+	}
+
+	var err error
+	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s", id, tag)
+	for i := 0; i <= c.config.Retry; i++ {
+		var code int
+		_, code, err = c.UploadMultiPart("POST", uri, body, SetHeader("Content-Disposition", "attachment; filename="+name), SetHeader("Content-Type", writer.FormDataContentType()))
+		if err == nil || code < 300 {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	return fmt.Errorf("x5: %s", err)
 }

@@ -17,7 +17,6 @@ import (
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
 func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, status sdk.Status) error {
-	log.Debug(">>UpdateNodeJobRunStatus<<")
 	var query string
 	query = `SELECT status FROM workflow_node_run_job WHERE id = $1 FOR UPDATE`
 	var currentStatus string

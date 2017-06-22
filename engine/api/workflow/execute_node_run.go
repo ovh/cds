@@ -297,6 +297,7 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 
 	// compute application variables
 	if n.Context != nil && n.Context.Application != nil {
+		vars["cds.application"] = n.Context.Application.Name
 		tmp := sdk.ParametersFromApplicationVariables(n.Context.Application)
 		for k, v := range tmp {
 			vars[k] = v
@@ -305,6 +306,7 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 
 	// compute environment variables
 	if n.Context != nil && n.Context.Environment != nil {
+		vars["cds.environment"] = n.Context.Environment.Name
 		tmp := sdk.ParametersFromEnvironmentVariables(n.Context.Environment)
 		for k, v := range tmp {
 			vars[k] = v
@@ -320,8 +322,15 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 	// compute payload
 	tmp = sdk.ParametersToMap(run.Payload)
 
+	tmp["cds.project"] = w.Workflow.ProjectKey
+	tmp["cds.workflow"] = w.Workflow.Name
+	tmp["cds.pipeline"] = n.Pipeline.Name
 	tmp["cds.stage"] = stage.Name
 	tmp["cds.job"] = j.Action.Name
+	tmp["cds.version"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
+	tmp["cds.run"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
+	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
+	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
 
 	errm := &sdk.MultiError{}
 

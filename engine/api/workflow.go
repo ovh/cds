@@ -7,6 +7,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"sort"
+
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/project"
@@ -219,4 +221,35 @@ func getDownloadArtifactHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return sdk.WrapError(err, "Cannot stream artifact %s", art.Name)
 	}
 	return nil
+}
+
+func getWorkflowRunArtifactsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	name := vars["workflowName"]
+
+	number, errNu := requestVarInt(r, "number")
+	if errNu != nil {
+		return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
+	}
+
+	wr, errW := workflow.LoadRun(db, key, name, number)
+	if errW != nil {
+		return errW
+	}
+
+	arts := []sdk.WorkflowNodeRunArtifact{}
+	for _, runs := range wr.WorkflowNodeRuns {
+		if len(runs) == 0 {
+			continue
+		}
+
+		sort.Slice(runs, func(i, j int) bool {
+			return runs[i].SubNumber > runs[j].SubNumber
+		})
+
+		arts = append(arts, runs[0].Artifacts...)
+	}
+
+	return WriteJSON(w, r, arts, http.StatusOK)
 }

@@ -209,3 +209,63 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 
 	return nil, 0, fmt.Errorf("x%d: %s", c.config.Retry, savederror)
 }
+
+// UploadMultiPart upload multipart
+func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
+	var req *http.Request
+	req, errRequest := http.NewRequest(method, c.config.Host+path, body)
+	if errRequest != nil {
+		return nil, 0, errRequest
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", c.config.userAgent)
+	req.Header.Set("Connection", "close")
+	req.Header.Add(RequestedWithHeader, RequestedWithValue)
+
+	for i := range mods {
+		mods[i](req)
+	}
+
+	//No auth on /login route
+	if !strings.HasPrefix(path, "/login") {
+		if c.config.Hash != "" {
+			basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
+			req.Header.Set(AuthHeader, basedHash)
+		}
+		if c.config.User != "" && c.config.Password != "" {
+			req.SetBasicAuth(c.config.User, c.config.Password)
+		}
+		if c.config.User != "" && c.config.Token != "" {
+			req.Header.Add(SessionTokenHeader, c.config.Token)
+			req.SetBasicAuth(c.config.User, c.config.Token)
+		}
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+
+	if c.config.Verbose {
+		fmt.Printf("Response Status: %s\n", resp.Status)
+		fmt.Printf("Request path: %s\n", c.config.Host+path)
+		fmt.Printf("Request Headers: %s\n", req.Header)
+		fmt.Printf("Response Headers: %s\n", resp.Header)
+	}
+
+	var respBody []byte
+	respBody, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, resp.StatusCode, err
+	}
+
+	if c.config.Verbose {
+		if len(body.Bytes()) > 0 {
+			fmt.Printf("Response Body: %s\n", body.String())
+		}
+	}
+
+	return respBody, resp.StatusCode, nil
+}
