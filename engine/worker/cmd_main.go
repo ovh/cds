@@ -152,18 +152,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		//Before start the loop, take the bookJobID
 		if w.bookedJobID != 0 {
-			log.Debug("Try to take the job %d", w.bookedJobID)
-			b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedJobID), nil)
-			if err != nil {
-				log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
-			} else {
-				j := &sdk.PipelineBuildJob{}
-				if err := json.Unmarshal(b, j); err != nil {
-					log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
-				} else {
-					pbjobs <- *j
-				}
-			}
+			w.processBookedJob(pbjobs)
 		}
 
 		go func(ctx context.Context) {
@@ -172,7 +161,6 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}(ctx)
 
-		firstViewBooked := false
 		// main loop
 		for {
 			if ctx.Err() != nil {
@@ -221,21 +209,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				//Check requirements
-				requirementsOK := true
-				errRequirements := []sdk.Requirement{}
-				w.client.WorkerSetStatus(sdk.StatusChecking)
-				for _, r := range j.Job.Action.Requirements {
-					ok, err := checkRequirement(w, r)
-					if err != nil {
-						log.Warning("checkQueue> Err on checkRequirement %s", err)
-					}
-					if !ok {
-						requirementsOK = false
-						errRequirements = append(errRequirements, r)
-						continue
-					}
-				}
+				requirementsOK, _ := checkRequirements(w, &j)
 
 				t := ""
 				if j.ID == w.bookedJobID {
@@ -248,22 +222,6 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
 				} else {
 					log.Debug("Unable to run this job, let's continue %d%s", j.ID, t)
-
-					if j.ID == w.bookedJobID && !firstViewBooked {
-						var details string
-						for _, r := range errRequirements {
-							details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
-						}
-						infos := []sdk.SpawnInfo{{
-							RemoteTime: time.Now(),
-							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
-						}}
-						if err := sdk.AddSpawnInfosPipelineBuildJob(j.ID, infos); err != nil {
-							log.Warning("Cannot record AddSpawnInfosPipelineBuildJob for job (err spawn): %d%s %s", j.ID, t, err)
-						}
-						firstViewBooked = true
-					}
-
 					continue
 				}
 
@@ -289,6 +247,35 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			case <-registerTick.C:
 				w.doRegister()
 			}
+		}
+	}
+}
+
+func (w *currentWorker) processBookedJob(pbjobs chan sdk.PipelineBuildJob) {
+	log.Debug("Try to take the job %d", w.bookedJobID)
+	b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedJobID), nil)
+	if err != nil {
+		log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
+	} else {
+		j := &sdk.PipelineBuildJob{}
+		if err := json.Unmarshal(b, j); err != nil {
+			log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
+		} else {
+			requirementsOK, errRequirements := checkRequirements(w, j)
+			if !requirementsOK {
+				var details string
+				for _, r := range errRequirements {
+					details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
+				}
+				infos := []sdk.SpawnInfo{{
+					RemoteTime: time.Now(),
+					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
+				}}
+				if err := sdk.AddSpawnInfosPipelineBuildJob(j.ID, infos); err != nil {
+					log.Warning("Cannot record AddSpawnInfosPipelineBuildJob for job (err spawn): %d %s", j.ID, err)
+				}
+			}
+			pbjobs <- *j
 		}
 	}
 }

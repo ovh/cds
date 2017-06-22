@@ -27,6 +27,25 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 	sdk.MemoryRequirement:        checkMemoryRequirement,
 }
 
+func checkRequirements(w *currentWorker, j *sdk.PipelineBuildJob) (bool, []sdk.Requirement) {
+	requirementsOK := true
+	errRequirements := []sdk.Requirement{}
+	w.client.WorkerSetStatus(sdk.StatusChecking)
+	for _, r := range j.Job.Action.Requirements {
+		ok, err := checkRequirement(w, r)
+		if err != nil {
+			log.Warning("checkQueue> error on checkRequirement %s", err)
+		}
+		if !ok {
+			requirementsOK = false
+			errRequirements = append(errRequirements, r)
+			continue
+		}
+	}
+
+	return requirementsOK, errRequirements
+}
+
 func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	check := requirementCheckFuncs[r.Type]
 	if check == nil {
