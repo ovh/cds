@@ -251,7 +251,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	}
 }
 
-func (w *currentWorker) processBookedJob(pbjobs chan sdk.PipelineBuildJob) {
+func (w *currentWorker) processBookedJob(pbjobs chan<- sdk.PipelineBuildJob) {
 	log.Debug("Try to take the job %d", w.bookedJobID)
 	b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedJobID), nil)
 	if err != nil {
