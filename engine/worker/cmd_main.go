@@ -274,8 +274,9 @@ func (w *currentWorker) processBookedJob(pbjobs chan sdk.PipelineBuildJob) {
 				if err := sdk.AddSpawnInfosPipelineBuildJob(j.ID, infos); err != nil {
 					log.Warning("Cannot record AddSpawnInfosPipelineBuildJob for job (err spawn): %d %s", j.ID, err)
 				}
+			} else { // requirementsOK is ok
+				pbjobs <- *j
 			}
-			pbjobs <- *j
 		}
 	}
 }
