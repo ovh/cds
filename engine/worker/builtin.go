@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -23,10 +22,13 @@ func init() {
 	mapBuiltinActions[sdk.GitCloneAction] = runGitClone
 }
 
+// BuiltInAction defines builtin action signature
 type BuiltInAction func(context.Context, *sdk.Action, int64, []sdk.Parameter, LoggerFunc) sdk.Result
 
+// BuiltInActionFunc returns the BuiltInAction given a worker
 type BuiltInActionFunc func(*currentWorker) BuiltInAction
 
+// LoggerFunc is the type for the logging function through BuiltInActions
 type LoggerFunc func(format string, args ...interface{})
 
 func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
@@ -132,7 +134,6 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 				Status: sdk.StatusFail.String(),
 				Reason: "CDS Worker execution canceled",
 			}
-
 		case res := <-chanRes:
 			return res
 		}
