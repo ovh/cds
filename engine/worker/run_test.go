@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func Test_processPipelineBuildJobParameter(t *testing.T) {
+func Test_processJobParameter(t *testing.T) {
 	type args struct {
 		pbJob   *sdk.PipelineBuildJob
 		secrets []sdk.Variable
@@ -45,7 +45,7 @@ func Test_processPipelineBuildJobParameter(t *testing.T) {
 		},
 	}
 	for _, tt := range testcases {
-		processPipelineBuildJobParameter(tt.args.pbJob, tt.args.secrets)
+		processJobParameter(&tt.args.pbJob.Parameters, tt.args.secrets)
 		t.Log(tt.args.pbJob.Parameters)
 		assert.EqualValues(t, tt.want, tt.args.pbJob.Parameters)
 	}
