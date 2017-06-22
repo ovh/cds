@@ -5,38 +5,63 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
-	defer w.drainLogsAndCloseLogger(ctx)
+var mapBuiltinActions = map[string]BuiltInActionFunc{}
 
-	res := sdk.Result{Status: sdk.StatusFail.String()}
-	switch a.Name {
-	case sdk.ArtifactUpload:
-		filePattern, tag := getArtifactParams(a)
-		return w.runArtifactUpload(ctx, filePattern, tag, pbJob, stepOrder)
-	case sdk.ArtifactDownload:
-		return w.runArtifactDownload(ctx, a, pbJob, stepOrder)
-	case sdk.ScriptAction:
-		return w.runScriptAction(ctx, a, pbJob, stepOrder)
-	case sdk.JUnitAction:
-		return w.runParseJunitTestResultAction(ctx, a, pbJob, stepOrder)
-	case sdk.GitCloneAction:
-		return w.runGitClone(ctx, a, pbJob, stepOrder)
-	}
-	res.Reason = fmt.Sprintf("Unknown builtin step: %s\n", a.Name)
-	return res
+func init() {
+	mapBuiltinActions[sdk.ArtifactUpload] = runArtifactUpload
+	mapBuiltinActions[sdk.ArtifactDownload] = runArtifactDownload
+	mapBuiltinActions[sdk.ScriptAction] = runScriptAction
+	mapBuiltinActions[sdk.JUnitAction] = runParseJunitTestResultAction
+	mapBuiltinActions[sdk.GitCloneAction] = runGitClone
 }
 
-func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, pbJob sdk.PipelineBuildJob, stepOrder int) sdk.Result {
+// BuiltInAction defines builtin action signature
+type BuiltInAction func(context.Context, *sdk.Action, int64, []sdk.Parameter, LoggerFunc) sdk.Result
 
+// BuiltInActionFunc returns the BuiltInAction given a worker
+type BuiltInActionFunc func(*currentWorker) BuiltInAction
+
+// LoggerFunc is the type for the logging function through BuiltInActions
+type LoggerFunc func(format string, args ...interface{})
+
+func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
+	return func(format string, args ...interface{}) {
+		if !strings.HasSuffix(format, "\n") {
+			format += "\n"
+		}
+		w.sendLog(buildID, fmt.Sprintf(format, args...), stepOrder, false)
+	}
+}
+
+func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int) sdk.Result {
+	defer w.drainLogsAndCloseLogger(ctx)
+
+	//Define a loggin function
+	sendLog := getLogger(w, buildID, stepOrder)
+
+	f, ok := mapBuiltinActions[a.Name]
+	if !ok {
+		res := sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Unknown builtin step: %s\n", a.Name),
+		}
+		return res
+	}
+
+	return f(w)(ctx, a, buildID, params, sendLog)
+}
+
+func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
 	chanRes := make(chan sdk.Result)
 
-	go func(pbJob *sdk.PipelineBuildJob) {
+	go func(buildID int64, params []sdk.Parameter) {
 		res := sdk.Result{Status: sdk.StatusFail.String()}
 
 		//For the moment we consider that plugin name = action name = plugin binary file name
@@ -60,7 +85,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, pbJob sdk.
 				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("Unable to init plugin %s: %s\n", pluginName, err),
 			}
-			w.sendLog(pbJob.ID, result.Reason, pbJob.PipelineBuildID, stepOrder, false)
+			sendLog(result.Reason)
 			chanRes <- result
 		}
 
@@ -71,7 +96,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, pbJob sdk.
 		for _, p := range a.Parameters {
 			pluginArgs.Data[p.Name] = p.Value
 		}
-		for _, p := range pbJob.Parameters {
+		for _, p := range params {
 			pluginArgs.Data[p.Name] = p.Value
 		}
 		for _, v := range w.currentJob.buildVariables {
@@ -79,9 +104,14 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, pbJob sdk.
 		}
 
 		//Call the Run function on the plugin interface
+		id := w.currentJob.pbJob.PipelineBuildID
+		if w.currentJob.wJob != nil {
+			id = w.currentJob.wJob.WorkflowNodeRunID
+		}
+
 		pluginAction := plugin.Job{
-			IDPipelineBuild:    pbJob.PipelineBuildID,
-			IDPipelineJobBuild: pbJob.ID,
+			IDPipelineBuild:    id,
+			IDPipelineJobBuild: buildID,
 			OrderStep:          stepOrder,
 			Args:               pluginArgs,
 		}
@@ -93,18 +123,17 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, pbJob sdk.
 		}
 
 		chanRes <- res
-	}(&pbJob)
+	}(buildID, params)
 
 	for {
 		select {
 		case <-ctx.Done():
 			log.Error("CDS Worker execution canceled: %v", ctx.Err())
-			w.sendLog(pbJob.ID, "CDS Worker execution canceled\n", pbJob.PipelineBuildID, stepOrder, false)
+			w.sendLog(buildID, "CDS Worker execution canceled\n", stepOrder, false)
 			return sdk.Result{
 				Status: sdk.StatusFail.String(),
 				Reason: "CDS Worker execution canceled",
 			}
-
 		case res := <-chanRes:
 			return res
 		}

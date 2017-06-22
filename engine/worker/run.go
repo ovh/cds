@@ -18,26 +18,30 @@ import (
 	"github.com/ovh/cds/sdk/vcs"
 )
 
-func processPipelineBuildJobParameter(pbJob *sdk.PipelineBuildJob, secrets []sdk.Variable) {
-	for i := range pbJob.Parameters {
+func processJobParameter(params *[]sdk.Parameter, secrets []sdk.Variable) {
+	parameters := *params
+
+	for i := range parameters {
 		keepReplacing := true
 		for keepReplacing {
-			t := pbJob.Parameters[i].Value
+			t := parameters[i].Value
 
-			for _, p := range pbJob.Parameters {
-				pbJob.Parameters[i].Value = strings.Replace(pbJob.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
+			for _, p := range parameters {
+				parameters[i].Value = strings.Replace(parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
 			}
 
 			for _, p := range secrets {
-				pbJob.Parameters[i].Value = strings.Replace(pbJob.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
+				parameters[i].Value = strings.Replace(parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
 			}
 
 			// If parameters wasn't updated, consider it done
-			if pbJob.Parameters[i].Value == t {
+			if parameters[i].Value == t {
 				keepReplacing = false
 			}
 		}
 	}
+
+	params = &parameters
 	return
 }
 
@@ -47,7 +51,7 @@ func processPipelineBuildJobParameter(pbJob *sdk.PipelineBuildJob, secrets []sdk
 // - Secrets from project, application and environment
 //
 // This function should be called ONLY from worker
-func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action, pipBuildJob sdk.PipelineBuildJob, secrets []sdk.Variable) error {
+func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []sdk.Parameter, secrets []sdk.Variable) error {
 	// replaces placeholder in parameters with ActionBuild variables
 	// replaces placeholder in parameters with Parent params
 	for i := range a.Parameters {
@@ -61,7 +65,7 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 				}
 			}
 
-			for _, p := range pipBuildJob.Parameters {
+			for _, p := range jobParameters {
 				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+p.Name+"}}", p.Value, -1)
 			}
 
@@ -78,7 +82,7 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 
 	// replaces placeholder in all children recursively
 	for i := range a.Actions {
-		if err := w.processActionVariables(&a.Actions[i], a, pipBuildJob, secrets); err != nil {
+		if err := w.processActionVariables(&a.Actions[i], a, jobParameters, secrets); err != nil {
 			return nil
 		}
 	}
@@ -86,20 +90,17 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 	return nil
 }
 
-func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, stepName string) sdk.Result {
+func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string) sdk.Result {
 	// Process action build arguments
-	for _, abp := range pipBuildJob.Parameters {
+	for _, abp := range params {
 		// Process build variable for root action
 		for j := range a.Parameters {
 			if abp.Name == a.Parameters[j].Name {
 				a.Parameters[j].Value = abp.Value
 			}
-			a.Parameters[j].Value = strings.Replace(a.Parameters[j].Value,
-				"{{.cds.worker}}", pipBuildJob.Job.WorkerName, -1)
 		}
 	}
-
-	return w.runJob(ctx, a, pipBuildJob, stepOrder, stepName)
+	return w.runJob(ctx, a, buildID, params, stepOrder, stepName)
 }
 
 func (w *currentWorker) replaceBuildVariablesPlaceholder(a *sdk.Action) {
@@ -111,21 +112,28 @@ func (w *currentWorker) replaceBuildVariablesPlaceholder(a *sdk.Action) {
 	}
 }
 
-func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, stepName string) sdk.Result {
+func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string) sdk.Result {
 	// Replace build variable placeholder that may have been added by last step
 	w.replaceBuildVariablesPlaceholder(a)
 
 	if a.Type == sdk.BuiltinAction {
-		return w.runBuiltin(ctx, a, pipBuildJob, stepOrder)
+		return w.runBuiltin(ctx, a, buildID, params, stepOrder)
 	}
 	if a.Type == sdk.PluginAction {
-		return w.runPlugin(ctx, a, pipBuildJob, stepOrder)
+		//Define a loggin function
+		sendLog := func(format string, args ...interface{}) {
+			if !strings.HasSuffix(format, "\n") {
+				format += "\n"
+			}
+			w.sendLog(buildID, fmt.Sprintf(format, args...), stepOrder, false)
+		}
+		return w.runPlugin(ctx, a, buildID, params, stepOrder, sendLog)
 	}
 
 	if !a.Enabled {
 		return sdk.Result{
 			Status:  sdk.StatusDisabled.String(),
-			BuildID: pipBuildJob.ID,
+			BuildID: buildID,
 		}
 	}
 
@@ -133,7 +141,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, pipBuildJob s
 	if len(a.Actions) == 0 {
 		return sdk.Result{
 			Status:  sdk.StatusSuccess.String(),
-			BuildID: pipBuildJob.ID,
+			BuildID: buildID,
 		}
 	}
 
@@ -147,13 +155,13 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, pipBuildJob s
 		}
 	}
 
-	r, nDisabled := w.runSteps(ctx, noFinalActions, a, pipBuildJob, stepOrder, stepName, 0)
+	r, nDisabled := w.runSteps(ctx, noFinalActions, a, buildID, params, stepOrder, stepName, 0)
 	//If all steps are disabled, set action status to disabled
 	if nDisabled >= (len(a.Actions) - len(finalActions)) {
 		r.Status = sdk.StatusDisabled.String()
 	}
 
-	rFinal, _ := w.runSteps(ctx, finalActions, a, pipBuildJob, stepOrder, stepName, len(noFinalActions))
+	rFinal, _ := w.runSteps(ctx, finalActions, a, buildID, params, stepOrder, stepName, len(noFinalActions))
 
 	if r.Status == sdk.StatusFail.String() {
 		return r
@@ -161,7 +169,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, pipBuildJob s
 	return rFinal
 }
 
-func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, pipBuildJob sdk.PipelineBuildJob, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
+func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
 	var doNotRunChildrenAnymore bool
 	var nbDisabledChildren int
 
@@ -169,13 +177,13 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 	if len(steps) == 0 {
 		return sdk.Result{
 			Status:  sdk.StatusSuccess.String(),
-			BuildID: pipBuildJob.ID,
+			BuildID: buildID,
 		}, 0
 	}
 
 	r := sdk.Result{
 		Status:  sdk.StatusFail.String(),
-		BuildID: pipBuildJob.ID,
+		BuildID: buildID,
 	}
 
 	for i, child := range steps {
@@ -187,11 +195,11 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 		childName := fmt.Sprintf("%s/%s-%d", stepName, child.Name, i+1)
 		if !child.Enabled {
 			// Update step status and continue
-			if err := updateStepStatus(pipBuildJob.ID, w.currentJob.currentStep, sdk.StatusDisabled.String()); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusDisabled.String()); err != nil {
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 
-			w.sendLog(pipBuildJob.ID, fmt.Sprintf("End of Step %s [Disabled]\n", childName), pipBuildJob.PipelineBuildID, w.currentJob.currentStep, true)
+			w.sendLog(buildID, fmt.Sprintf("End of Step %s [Disabled]\n", childName), w.currentJob.currentStep, true)
 			nbDisabledChildren++
 			continue
 		}
@@ -199,29 +207,29 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 		if !doNotRunChildrenAnymore {
 			log.Debug("Running %s", childName)
 			// Update step status
-			if err := updateStepStatus(pipBuildJob.ID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
-			w.sendLog(pipBuildJob.ID, fmt.Sprintf("Starting step %s", childName), pipBuildJob.PipelineBuildID, w.currentJob.currentStep, false)
+			w.sendLog(buildID, fmt.Sprintf("Starting step %s", childName), w.currentJob.currentStep, false)
 
-			r = w.startAction(ctx, &child, pipBuildJob, w.currentJob.currentStep, childName)
+			r = w.startAction(ctx, &child, buildID, params, w.currentJob.currentStep, childName)
 			if r.Status != sdk.StatusSuccess.String() {
 				log.Debug("Stopping %s at step %s", a.Name, childName)
 				doNotRunChildrenAnymore = true
 			}
 
-			w.sendLog(pipBuildJob.ID, fmt.Sprintf("End of step %s [%s]", childName, r.Status), pipBuildJob.PipelineBuildID, w.currentJob.currentStep, true)
+			w.sendLog(buildID, fmt.Sprintf("End of step %s [%s]", childName, r.Status), w.currentJob.currentStep, true)
 
 			// Update step status
-			if err := updateStepStatus(pipBuildJob.ID, w.currentJob.currentStep, r.Status); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), pipBuildJob.ID, err)
+			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, r.Status); err != nil {
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 		}
 	}
 	return r, nbDisabledChildren
 }
 
-func updateStepStatus(pbJobID int64, stepOrder int, status string) error {
+func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status string) error {
 	step := sdk.StepStatus{
 		StepOrder: stepOrder,
 		Status:    status,
@@ -231,7 +239,13 @@ func updateStepStatus(pbJobID int64, stepOrder int, status string) error {
 		return errM
 	}
 
-	path := fmt.Sprintf("/build/%d/step", pbJobID)
+	var path string
+	if w.currentJob.wJob != nil {
+		path = fmt.Sprintf("/queue/workflows/%d/step", pbJobID)
+	} else {
+		path = fmt.Sprintf("/build/%d/step", pbJobID)
+	}
+
 	_, code, errReq := sdk.Request("POST", path, body)
 	if errReq != nil {
 		return errReq
@@ -277,20 +291,104 @@ func generateWorkingDirectory() (string, error) {
 	return string(token), nil
 }
 
-func workingDirectory(basedir string, jobInfo *worker.PipelineBuildJobInfo) string {
+func workingDirectory(basedir, jobPath string) string {
 	gen, _ := generateWorkingDirectory()
-
-	dir := path.Join(basedir,
-		fmt.Sprintf("%d", jobInfo.PipelineID),
-		fmt.Sprintf("%d", jobInfo.PipelineBuildJob.Job.PipelineActionID),
-		fmt.Sprintf("%d", jobInfo.BuildNumber),
-		gen)
-
-	return dir
+	return path.Join(basedir, jobPath, gen)
 }
 
 func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.WorkflowNodeJobRunInfo) sdk.Result {
-	return sdk.Result{}
+	t0 := time.Now()
+	defer func() { log.Info("Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
+	defer cancel()
+
+	defer w.drainLogsAndCloseLogger(ctx)
+
+	// Setup working directory
+	pbJobPath := path.Join(fmt.Sprintf("%d", jobInfo.Number),
+		fmt.Sprintf("%d", jobInfo.SubNumber),
+		fmt.Sprintf("%s", jobInfo.NodeJobRun.Job.Action.Name))
+
+	wd := workingDirectory(w.basedir, pbJobPath)
+
+	if err := setupBuildDirectory(wd); err != nil {
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
+		}
+	}
+
+	//Add working directory as job parameter
+	jobInfo.NodeJobRun.Parameters = append(jobInfo.NodeJobRun.Parameters, sdk.Parameter{
+		Name:  "cds.workspace",
+		Type:  sdk.StringParameter,
+		Value: wd,
+	})
+
+	// add cds.worker on parameters available
+	jobInfo.NodeJobRun.Parameters = append(jobInfo.NodeJobRun.Parameters, sdk.Parameter{
+		Name:  "cds.worker",
+		Type:  sdk.StringParameter,
+		Value: jobInfo.NodeJobRun.Job.WorkerName,
+	})
+
+	// REPLACE ALL VARIABLE EVEN SECRETS HERE
+	processJobParameter(&jobInfo.NodeJobRun.Parameters, jobInfo.Secrets)
+
+	if err := w.processActionVariables(&jobInfo.NodeJobRun.Job.Action, nil, jobInfo.NodeJobRun.Parameters, jobInfo.Secrets); err != nil {
+		log.Warning("run> Cannot process action %s parameters: %s", jobInfo.NodeJobRun.Job.Action.Name, err)
+		return sdk.Result{Status: sdk.StatusFail.String()}
+	}
+
+	// Add secrets as string or password in ActionBuild.Args
+	// So they can be used by plugins
+	for _, s := range jobInfo.Secrets {
+		p := sdk.Parameter{
+			Type:  s.Type,
+			Name:  s.Name,
+			Value: s.Value,
+		}
+		jobInfo.NodeJobRun.Parameters = append(jobInfo.NodeJobRun.Parameters, p)
+	}
+
+	// Setup user ssh keys
+	keysDirectory = workingDirectory(w.basedir, pbJobPath)
+	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
+		}
+	}
+
+	// DEPRECATED - BEGIN
+	if err := w.setupSSHKey(jobInfo.Secrets, keysDirectory); err != nil {
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
+		}
+	}
+	// DEPRECATED - END
+
+	// The right way to go is :
+	if err := vcs.SetupSSHKey(jobInfo.Secrets, keysDirectory, nil); err != nil {
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
+		}
+	}
+
+	logsecrets = jobInfo.Secrets
+	res := w.startAction(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.NodeJobRun.Parameters, -1, "")
+	logsecrets = nil
+
+	if err := teardownBuildDirectory(wd); err != nil {
+		log.Error("Cannot remove build directory: %s", err)
+	}
+
+	log.Debug("Result: %v", res)
+
+	return res
 }
 
 func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobInfo) sdk.Result {
@@ -303,10 +401,12 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	defer w.drainLogsAndCloseLogger(ctx)
 
 	// Setup working directory
-	wd := workingDirectory(w.basedir, pbji)
+	pbJobPath := path.Join(fmt.Sprintf("%d", pbji.PipelineID),
+		fmt.Sprintf("%d", pbji.PipelineBuildJob.Job.PipelineActionID),
+		fmt.Sprintf("%d", pbji.BuildNumber))
+	wd := workingDirectory(w.basedir, pbJobPath)
 
 	if err := setupBuildDirectory(wd); err != nil {
-		time.Sleep(5 * time.Second)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
@@ -320,10 +420,17 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 		Value: wd,
 	})
 
-	// REPLACE ALL VARIABLE EVEN SECRETS HERE
-	processPipelineBuildJobParameter(&pbji.PipelineBuildJob, pbji.Secrets)
+	// add cds.worker on parameters available
+	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+		Name:  "cds.worker",
+		Type:  sdk.StringParameter,
+		Value: pbji.PipelineBuildJob.Job.WorkerName,
+	})
 
-	if err := w.processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob, pbji.Secrets); err != nil {
+	// REPLACE ALL VARIABLE EVEN SECRETS HERE
+	processJobParameter(&pbji.PipelineBuildJob.Parameters, pbji.Secrets)
+
+	if err := w.processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob.Parameters, pbji.Secrets); err != nil {
 		log.Warning("run> Cannot process action %s parameters: %s", pbji.PipelineBuildJob.Job.Action.Name, err)
 		return sdk.Result{Status: sdk.StatusFail.String()}
 	}
@@ -340,9 +447,8 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	}
 
 	// Setup user ssh keys
-	keysDirectory = workingDirectory(w.basedir, pbji)
+	keysDirectory = workingDirectory(w.basedir, pbJobPath)
 	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
-		time.Sleep(5 * time.Second)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
@@ -351,7 +457,6 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 
 	// DEPRECATED - BEGIN
 	if err := w.setupSSHKey(pbji.Secrets, keysDirectory); err != nil {
-		time.Sleep(5 * time.Second)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
@@ -361,7 +466,6 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 
 	// The right way to go is :
 	if err := vcs.SetupSSHKey(pbji.Secrets, keysDirectory, nil); err != nil {
-		time.Sleep(5 * time.Second)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
@@ -370,10 +474,7 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 
 	logsecrets = pbji.Secrets
 
-	// add cds.worker on parameters available
-	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{Name: "cds.worker", Value: pbji.PipelineBuildJob.Job.WorkerName, Type: sdk.StringParameter})
-
-	res := w.startAction(ctx, &pbji.PipelineBuildJob.Job.Action, pbji.PipelineBuildJob, -1, "")
+	res := w.startAction(ctx, &pbji.PipelineBuildJob.Job.Action, pbji.PipelineBuildJob.ID, pbji.PipelineBuildJob.Parameters, -1, "")
 	logsecrets = nil
 
 	if err := teardownBuildDirectory(wd); err != nil {

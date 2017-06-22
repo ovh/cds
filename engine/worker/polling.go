@@ -46,16 +46,16 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 			case <-ctx.Done():
 				return
 			case <-tick.C:
-				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
+				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/workflows/%d/infos", jobID), nil)
 				if err != nil {
 					log.Error("Unable to load pipeline build job %d", jobID)
 					cancel()
 					return
 				}
 
-				j := &sdk.PipelineBuildJob{}
+				j := &sdk.WorkflowNodeJobRun{}
 				if err := json.Unmarshal(b, j); err != nil {
-					log.Error("Unable to load pipeline build job %d: %v", jobID, err)
+					log.Error("Unable to load job run %d: %v", jobID, err)
 					cancel()
 					return
 				}
@@ -70,7 +70,6 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 	// Reset build variables
 	w.currentJob.buildVariables = nil
-	//start := time.Now()
 	//Run !
 	res := w.processJob(ctx, info)
 	now, _ := ptypes.TimestampProto(time.Now())
@@ -82,7 +81,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 		w.drainLogsAndCloseLogger(ctx)
 	}
 
-	return nil
+	return w.client.QueueSendResult(job.ID, res)
 }
 
 func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) {
@@ -121,7 +120,6 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
-
 		for {
 			select {
 			case <-ctx.Done():

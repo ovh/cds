@@ -8,18 +8,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_getWorkflowRunsHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -146,7 +149,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 }
 
 func Test_getLatestWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -246,7 +249,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -347,7 +350,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -424,7 +427,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
-	workflow.Scheduler(c)
+	workflow.Scheduler(c, func() *gorp.DbMap { return db })
 	time.Sleep(2 * time.Second)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, w1.Name)
@@ -450,7 +453,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)

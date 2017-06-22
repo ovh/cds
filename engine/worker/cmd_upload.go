@@ -94,7 +94,24 @@ func (wk *currentWorker) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := wk.runArtifactUpload(context.Background(), a.Name, a.Tag, wk.currentJob.pbJob, wk.currentJob.currentStep); result.Status != sdk.StatusSuccess.String() {
+	action := sdk.Action{
+		Parameters: []sdk.Parameter{
+			{
+				Name:  "name",
+				Type:  sdk.StringParameter,
+				Value: a.Name,
+			},
+			{
+				Name:  "tag",
+				Type:  sdk.StringParameter,
+				Value: a.Tag,
+			},
+		},
+	}
+
+	sendLog := getLogger(wk, wk.currentJob.pbJob.ID, wk.currentJob.currentStep)
+
+	if result := runArtifactUpload(wk)(context.Background(), &action, wk.currentJob.pbJob.ID, wk.currentJob.pbJob.Parameters, sendLog); result.Status != sdk.StatusSuccess.String() {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

@@ -93,14 +93,19 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	}
 
 	//Load the secrets
-	secrets, errSecret := workflow.LoadNodeJobRunSecrets(db, job)
+	secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, job)
 	if errSecret != nil {
 		return sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
 	}
 
 	//Load the node run
-	noderun, errn := workflow.LoadNodeRunByID(db, job.WorkflowNodeRunID)
+	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID)
 	if errn != nil {
+		return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
+	}
+
+	noderun.Status = sdk.StatusBuilding.String()
+	if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
 		return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
 	}
 
@@ -198,12 +203,6 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 		log.Warning("postWorkflowJobResultHandler> Cannot update worker status (%s): %s", c.Worker.ID, err)
 	}
 
-	// Update action status
-	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", id, res.Status)
-	if err := workflow.UpdateNodeJobRunStatus(tx, job, sdk.Status(res.Status)); err != nil {
-		return sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", id)
-	}
-
 	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
 	if errt != nil {
 		return sdk.WrapError(errt, "postWorkflowJobResultHandler> Cannot parse remote time")
@@ -219,6 +218,12 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, job.ID, infos); err != nil {
 		log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", job.ID, err)
 		return err
+	}
+
+	// Update action status
+	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", id, res.Status)
+	if err := workflow.UpdateNodeJobRunStatus(tx, job, sdk.Status(res.Status)); err != nil {
+		return sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", id)
 	}
 
 	if err := tx.Commit(); err != nil {

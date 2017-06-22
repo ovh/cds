@@ -80,6 +80,15 @@ func ParameterFind(vars []Parameter, s string) *Parameter {
 	return nil
 }
 
+// ParameterValue return a parameter value given its name if it exists in array, else it returns empty string
+func ParameterValue(vars []Parameter, s string) string {
+	p := ParameterFind(vars, s)
+	if p == nil {
+		return ""
+	}
+	return p.Value
+}
+
 // ParametersFromMap returns an array of parameters from a map
 func ParametersFromMap(m map[string]string) []Parameter {
 	res := []Parameter{}

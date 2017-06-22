@@ -36,6 +36,7 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -263,6 +264,7 @@ var mainCmd = &cobra.Command{
 		}
 
 		go queue.Pipelines(ctx, database.GetDBMap)
+		go workflow.Scheduler(ctx, database.GetDBMap)
 		go pipeline.AWOLPipelineKiller(ctx, database.GetDBMap)
 		go hatchery.Heartbeat(ctx, database.GetDBMap)
 		go auditCleanerRoutine(ctx, database.GetDBMap)

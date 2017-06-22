@@ -12,14 +12,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-//execute is called by the scheduler. You should not call this by yourself
-func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
-	t0 := time.Now()
-	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d", n.Number, n.SubNumber, n.WorkflowRunID)
-	defer func() {
-		log.Debug("workflow.execute> End [#%d.%d] runID=%d - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, time.Since(t0).Seconds())
-	}()
-
+func lockAndExecute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 	//Start a transaction
 	tx, errtx := db.Begin()
 	if errtx != nil {
@@ -29,13 +22,31 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 
 	//Select fobor update on table workflow_run, workflow_node_run
 	if _, err := tx.Exec("select workflow_run.* from workflow_run where id = $1 for update nowait", n.WorkflowRunID); err != nil {
-		log.Debug("workflow.execute> Unable to take lock on workflow_run ID=%d (%v)", n.WorkflowRunID, err)
-		return nil
+		return fmt.Errorf("Unable to take lock on workflow_run ID=%d (%v)", n.WorkflowRunID, err)
 	}
 	if _, err := tx.Exec("select workflow_node_run.* from workflow_node_run where id = $1 for update nowait", n.ID); err != nil {
-		log.Debug("workflow.execute> Unable to take lock on workflow_node_run ID=%d (%v)", n.ID, err)
-		return nil
+		return fmt.Errorf("Unable to take lock on workflow_run ID=%d (%v)", n.WorkflowRunID, err)
 	}
+
+	if err := execute(db, n); err != nil {
+		return err
+	}
+
+	//Commit all the things
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "workflow.execute> Unable to commit tx")
+	}
+
+	return nil
+}
+
+//execute is called by the scheduler. You should not call this by yourself
+func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
+	t0 := time.Now()
+	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d", n.Number, n.SubNumber, n.WorkflowRunID)
+	defer func() {
+		log.Debug("workflow.execute> End [#%d.%d] runID=%d - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, time.Since(t0).Seconds())
+	}()
 
 	//If status is not waiting neither build: nothing to do
 	if n.Status != sdk.StatusWaiting.String() && n.Status != sdk.StatusBuilding.String() {
@@ -61,14 +72,14 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 		if stage.Status == sdk.StatusWaiting {
 			//Add job to Queue
 			//Insert data in workflow_node_run_job
-			if err := addJobsToQueue(tx, stage, n); err != nil {
+			if err := addJobsToQueue(db, stage, n); err != nil {
 				return err
 			}
 		}
 
 		if stage.Status == sdk.StatusBuilding {
 			var end bool
-			end, errSync := syncStage(tx, stage)
+			end, errSync := syncStage(db, stage)
 			if errSync != nil {
 				return errSync
 			}
@@ -76,7 +87,7 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 				log.Debug("workflow.execute> Begin [#%d.%d] runID=%d. Node is %s", n.Number, n.SubNumber, n.WorkflowRunID, newStatus)
 				//The job is over
 				//Delete the line in workflow_node_run_job
-				if err := DeleteNodeJobRuns(tx, n.ID); err != nil {
+				if err := DeleteNodeJobRuns(db, n.ID); err != nil {
 					return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
 				}
 
@@ -101,26 +112,21 @@ func execute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 
 	n.Status = newStatus
 	// Save the node run in database
-	if err := UpdateNodeRun(tx, n); err != nil {
+	if err := UpdateNodeRun(db, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d", n.ID), "workflow.execute> Unable to execute node")
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := loadRunByID(tx, n.WorkflowRunID)
+	updatedWorkflowRun, err := loadRunByID(db, n.WorkflowRunID)
 	if err != nil {
 		return sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	if n.Status == sdk.StatusSuccess.String() {
-		if err := processWorkflowRun(tx, updatedWorkflowRun, nil, nil, nil); err != nil {
+		if err := processWorkflowRun(db, updatedWorkflowRun, nil, nil, nil); err != nil {
 			sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 		}
-	}
-
-	//Commit all the things
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "workflow.execute> Unable to commit tx")
 	}
 
 	return nil

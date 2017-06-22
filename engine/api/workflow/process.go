@@ -8,7 +8,6 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -234,8 +233,9 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}
 
-	//Push the workflow node run in queue
-	cache.Enqueue(queueWorkflowNodeRun, run)
+	if err := execute(db, run); err != nil {
+		return sdk.WrapError(err, "processWorkflowNodeRun> unable to execute workflow run")
+	}
 
 	return nil
 }

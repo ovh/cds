@@ -3,8 +3,8 @@ package workflow
 import (
 	"context"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -29,7 +29,7 @@ func dequeueWorkflows(c context.Context) {
 }
 
 //Scheduler schedules workflow_node_run
-func Scheduler(c context.Context) error {
+func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) error {
 	go dequeueWorkflows(c)
 	for {
 		select {
@@ -40,8 +40,8 @@ func Scheduler(c context.Context) error {
 			}
 			return err
 		case n := <-chanWorkflowNodeRun:
-			db := database.GetDBMap()
-			if err := execute(db, n); err != nil {
+			db := DBFunc()
+			if err := lockAndExecute(db, n); err != nil {
 				log.Error("Error workflow.Scheduler executing node: %s", err)
 			}
 		}

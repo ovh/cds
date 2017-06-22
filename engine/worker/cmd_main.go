@@ -262,9 +262,56 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 			case j := <-wjobs:
-				if err := w.takeWorkflowJob(ctx, j); err != nil {
-					errs <- err
+
+				log.Debug("%#v", j)
+
+				if j.ID == 0 {
+					continue
 				}
+
+				//Check requirements
+				requirementsOK := true
+				w.client.WorkerSetStatus(sdk.StatusChecking)
+				for _, r := range j.Job.Action.Requirements {
+					ok, err := checkRequirement(w, r)
+					if err != nil {
+						postCheckRequirementError(&r, err)
+						requirementsOK = false
+						continue
+					}
+					if !ok {
+						requirementsOK = false
+						continue
+					}
+				}
+
+				//Take the job
+				if requirementsOK {
+					t := ""
+					if j.ID == w.bookedJobID {
+						t = ", this was my booked job"
+					}
+					log.Info("checkQueue> Taking job %d%s", j.ID, t)
+					if err := w.takeWorkflowJob(ctx, j); err != nil {
+						errs <- err
+					}
+				} else {
+					log.Debug("Unable to run this job, let's continue")
+					continue
+				}
+
+				if !viper.GetBool("single_use") {
+					//Continue
+					w.client.WorkerSetStatus(sdk.StatusWaiting)
+					continue
+				}
+
+				// Unregister from engine
+				log.Debug("Job is done. Unregistering...")
+				if err := w.unregister(); err != nil {
+					log.Warning("takeJob> could not unregister: %s", err)
+				}
+
 			case err := <-errs:
 				log.Error("%v", err)
 

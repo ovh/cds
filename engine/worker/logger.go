@@ -18,14 +18,19 @@ import (
 
 var logsecrets []sdk.Variable
 
-func (w *currentWorker) sendLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int, final bool) error {
+func (w *currentWorker) sendLog(buildID int64, value string, stepOrder int, final bool) error {
 	for i := range logsecrets {
 		if len(logsecrets[i].Value) >= 6 {
 			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
 		}
 	}
 
-	l := sdk.NewLog(pipJobID, value, pipelineBuildID, stepOrder)
+	var id = w.currentJob.pbJob.PipelineBuildID
+	if w.currentJob.wJob != nil {
+		id = w.currentJob.wJob.WorkflowNodeRunID
+	}
+
+	l := sdk.NewLog(buildID, value, id, stepOrder)
 	if final {
 		l.Done, _ = ptypes.TimestampProto(time.Now())
 	} else {
@@ -111,7 +116,13 @@ func (w *currentWorker) logProcessor() error {
 						continue
 					}
 
-					path := fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
+					var path string
+					if w.currentJob.wJob != nil {
+						path = fmt.Sprintf("/queue/workflows/%d/log", w.currentJob.wJob.ID)
+					} else {
+						path = fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
+					}
+
 					if _, _, err := sdk.Request("POST", path, data); err != nil {
 						fmt.Printf("error: cannot send logs: %s\n", err)
 						continue
