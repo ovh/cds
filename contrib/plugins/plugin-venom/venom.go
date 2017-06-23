@@ -2,6 +2,7 @@ package main
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk/plugin"
@@ -48,6 +49,7 @@ func (s VenomPlugin) Parameters() plugin.Parameters {
 	params.Add("output", plugin.StringParameter, "Directory where output xunit result file", ".")
 	params.Add("details", plugin.StringParameter, "Output Details Level: low, medium, high", "low")
 	params.Add("loglevel", plugin.StringParameter, "Log Level: debug, info, warn or error", "error")
+	params.Add("vars", plugin.StringParameter, "Empty: all {{.cds...}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty", "")
 	return params
 }
 
@@ -69,6 +71,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	output := a.Arguments().Get("output")
 	details := a.Arguments().Get("details")
 	loglevel := a.Arguments().Get("loglevel")
+	vars := a.Arguments().Get("vars")
 
 	if path == "" {
 		path = "."
@@ -97,7 +100,35 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 
 	start := time.Now()
 	w := venomWriter{a}
-	tests, err := venom.Process([]string{path}, a.Arguments().Data, []string{exclude}, p, loglevel, details, w)
+	data := make(map[string]string)
+	if vars == "" {
+		// no vars -> all .cds... variables can by used in yml
+		data = a.Arguments().Data
+	} else {
+		// if vars is not empty
+		// vars could be:
+		// cds.foo.bar,cds.foo2.bar2
+		// cds.foo.bar,cds.foo2.bar2,anotherVars=foo,anotherVars2=bar
+		for _, v := range strings.Split(vars, ",") {
+			t := strings.Split(v, "=")
+			if len(t) > 1 {
+				// if value of current var is setted, we take it
+				data[t[0]] = t[1]
+				plugin.SendLog(a, "VENOM - var %s has value %s\n", t[0], t[1])
+			} else if len(t) == 1 && strings.HasPrefix(v, "cds.") {
+				plugin.SendLog(a, "VENOM - try fo find var %s in cds variables\n", v)
+				// if var starts with .cds, we try to take value from current CDS variables
+				for k := range a.Arguments().Data {
+					if k == v {
+						plugin.SendLog(a, "VENOM - var %s is found with value %s\n", v, a.Arguments().Data[k])
+						data[k] = a.Arguments().Data[k]
+						break
+					}
+				}
+			}
+		}
+	}
+	tests, err := venom.Process([]string{path}, data, []string{exclude}, p, loglevel, details, w)
 	if err != nil {
 		plugin.SendLog(a, "VENOM - Fail on venom: %s\n", err)
 		return plugin.Fail
