@@ -97,7 +97,7 @@ func (wk *currentWorker) uploadHandler(w http.ResponseWriter, r *http.Request) {
 	action := sdk.Action{
 		Parameters: []sdk.Parameter{
 			{
-				Name:  "name",
+				Name:  "path",
 				Type:  sdk.StringParameter,
 				Value: a.Name,
 			},
