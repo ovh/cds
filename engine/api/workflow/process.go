@@ -51,7 +51,6 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 	for k, v := range w.WorkflowNodeRuns {
 		for i := range v {
 			nodeRun := &w.WorkflowNodeRuns[k][i]
-			// TODO check if triggers already passed
 
 			//Trigger only if the node is over (successfull or not)
 			if nodeRun.Status == string(sdk.StatusSuccess) || nodeRun.Status == string(sdk.StatusFail) {
@@ -64,10 +63,24 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 					t := &node.Triggers[j]
 					//TODO Check conditions
 
-					//Keep the subnumber of the previous node in the graph
-					log.Debug("processWorkflowRun> starting from trigger %#v", t)
-					if err := processWorkflowNodeRun(db, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
-						sdk.WrapError(err, "processWorkflowRun> Unable to process node ID=%d", t.WorkflowDestNode.ID)
+					// check if the destination node already exists on w.WorkflowNodeRuns with the same subnumber
+					var abortTrigger bool
+				previousRuns:
+					for _, previousRunArray := range w.WorkflowNodeRuns {
+						for _, previousRun := range previousRunArray {
+							if previousRun.WorkflowNodeID == t.WorkflowDestNode.ID && previousRun.SubNumber == nodeRun.SubNumber {
+								abortTrigger = true
+								break previousRuns
+							}
+						}
+					}
+
+					if !abortTrigger {
+						//Keep the subnumber of the previous node in the graph
+						log.Debug("processWorkflowRun> starting from trigger %#v", t)
+						if err := processWorkflowNodeRun(db, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
+							sdk.WrapError(err, "processWorkflowRun> Unable to process node ID=%d", t.WorkflowDestNode.ID)
+						}
 					}
 				}
 			}
