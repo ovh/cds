@@ -86,7 +86,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		}
 
 		if stage.Status == sdk.StatusBuilding {
-			newStatus := sdk.StatusBuilding.String()
+			newStatus = sdk.StatusBuilding.String()
 
 			var end bool
 			end, errSync := syncStage(db, stage)
@@ -94,7 +94,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 				return errSync
 			}
 			if end {
-				log.Debug("workflow.execute> Stage [#%d.%d] ends runID=%d. Node is %s", n.Number, n.SubNumber, n.WorkflowRunID, newStatus)
+				log.Debug("workflow.execute> Stage (%d-%s) [#%d.%d] ends runID=%d. Node is %s - stage is %s", stageIndex, stage.Name, n.Number, n.SubNumber, n.WorkflowRunID, newStatus, stage.Status.String())
 				//The stage is over
 
 				if stage.Status == sdk.StatusFail {
@@ -103,6 +103,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 					break
 				}
 				if stageIndex == len(n.Stages)-1 {
+					log.Debug("normalement on doit passer là")
 					n.Done = time.Now()
 					newStatus = sdk.StatusSuccess.String()
 					break
@@ -113,6 +114,8 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 			}
 		}
 	}
+
+	log.Debug("newSTatus=%s", newStatus)
 
 	n.Status = newStatus
 	// Save the node run in database
