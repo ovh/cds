@@ -195,7 +195,6 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 			if rj.Status == sdk.StatusWaiting.String() {
 				rj.QueuedSeconds = time.Now().Unix() - rj.Queued.Unix()
 			}
-
 		}
 	}
 	if err := gorpmapping.JSONNullString(rr.SourceNodeRuns, &r.SourceNodeRuns); err != nil {
@@ -219,6 +218,9 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 	if err := gorpmapping.JSONNullString(rr.Payload, &r.Payload); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
 	}
+
+	log.Debug("%d %v", rr.ID, rr.BuildParameters)
+
 	if err := gorpmapping.JSONNullString(rr.BuildParameters, &r.BuildParameters); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
 	}

@@ -70,6 +70,9 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 				newStatus = sdk.StatusWaiting.String()
 			}
 
+			//TODO compute and store build_parameters on the node
+			//idem getNodeJobRunParameters
+
 			stage.Status = sdk.StatusWaiting
 			//Add job to Queue
 			//Insert data in workflow_node_run_job

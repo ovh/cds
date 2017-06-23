@@ -137,9 +137,23 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 				t := &j.Triggers[x]
 				//TODO Check conditions
 
-				//Keep the subnumber of the previous node in the graph
-				if err := processWorkflowNodeRun(db, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), nodeRunIDs, nil, nil); err != nil {
-					sdk.WrapError(err, "processWorkflowRun> Unable to process node ID=%d", t.WorkflowDestNode.ID)
+				// check if the destination node already exists on w.WorkflowNodeRuns with the same subnumber
+				var abortTrigger bool
+			previousJoinRuns:
+				for _, previousRunArray := range w.WorkflowNodeRuns {
+					for _, previousRun := range previousRunArray {
+						if previousRun.WorkflowNodeID == t.WorkflowDestNode.ID && previousRun.SubNumber == nodeRun.SubNumber {
+							abortTrigger = true
+							break previousJoinRuns
+						}
+					}
+				}
+
+				if !abortTrigger {
+					//Keep the subnumber of the previous node in the graph
+					if err := processWorkflowNodeRun(db, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), nodeRunIDs, nil, nil); err != nil {
+						sdk.WrapError(err, "processWorkflowRun> Unable to process node ID=%d", t.WorkflowDestNode.ID)
+					}
 				}
 			}
 		}
