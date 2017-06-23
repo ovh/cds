@@ -43,9 +43,9 @@ func lockAndExecute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 //execute is called by the scheduler. You should not call this by yourself
 func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	t0 := time.Now()
-	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d", n.Number, n.SubNumber, n.WorkflowRunID)
+	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
-		log.Debug("workflow.execute> End [#%d.%d] runID=%d - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, time.Since(t0).Seconds())
+		log.Debug("workflow.execute> End [#%d.%d] runID=%d (%s) - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, n.Status, time.Since(t0).Seconds())
 	}()
 
 	//If status is not waiting neither build: nothing to do
@@ -53,7 +53,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		return nil
 	}
 
-	newStatus := sdk.StatusWaiting.String()
+	var newStatus = n.Status
 
 	//If no stages ==> success
 	if len(n.Stages) == 0 {
@@ -67,6 +67,10 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 
 		//Initialize stage status at waiting
 		if stage.Status.String() == "" {
+			if stageIndex == 0 {
+				newStatus = sdk.StatusWaiting.String()
+			}
+
 			stage.Status = sdk.StatusWaiting
 			//Add job to Queue
 			//Insert data in workflow_node_run_job
@@ -113,7 +117,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	n.Status = newStatus
 	// Save the node run in database
 	if err := UpdateNodeRun(db, n); err != nil {
-		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d", n.ID), "workflow.execute> Unable to execute node")
+		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s", n.ID, n.Status), "workflow.execute> Unable to execute node")
 	}
 
 	//Reload the workflow
