@@ -63,28 +63,34 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	//Browse stages
 	for stageIndex := range n.Stages {
 		stage := &n.Stages[stageIndex]
+		log.Debug("workflow.execute> stage %d is %s", stageIndex, stage.Status.String())
 
 		//Initialize stage status at waiting
 		if stage.Status.String() == "" {
 			stage.Status = sdk.StatusWaiting
-		}
-
-		if stage.Status == sdk.StatusWaiting {
 			//Add job to Queue
 			//Insert data in workflow_node_run_job
 			if err := addJobsToQueue(db, stage, n); err != nil {
 				return err
 			}
+			break
+		}
+
+		//If stage is waiting, nothing to do
+		if stage.Status == sdk.StatusWaiting {
+			break
 		}
 
 		if stage.Status == sdk.StatusBuilding {
+			newStatus := sdk.StatusBuilding.String()
+
 			var end bool
 			end, errSync := syncStage(db, stage)
 			if errSync != nil {
 				return errSync
 			}
 			if end {
-				log.Debug("workflow.execute> Begin [#%d.%d] runID=%d. Node is %s", n.Number, n.SubNumber, n.WorkflowRunID, newStatus)
+				log.Debug("workflow.execute> Stage [#%d.%d] ends runID=%d. Node is %s", n.Number, n.SubNumber, n.WorkflowRunID, newStatus)
 				//The job is over
 				//Delete the line in workflow_node_run_job
 				if err := DeleteNodeJobRuns(db, n.ID); err != nil {
@@ -102,8 +108,6 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 					break
 				}
 				if stageIndex != len(n.Stages)-1 {
-					// Prepare scheduling next stage
-					n.Stages[stageIndex+1].Status = sdk.StatusWaiting
 					continue
 				}
 			}
@@ -133,7 +137,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 }
 
 func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNodeRun) error {
-	//log.Debug("addJobsToQueue> add %#v in stage %s", run, stage.Name)
+	log.Debug("addJobsToQueue> add %d in stage %s", run.ID, stage.Name)
 	//Check stage prerequisites
 	var prerequisitesOK = true
 	/*
@@ -143,9 +147,6 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 			return err
 		}
 	*/
-
-	//Update the stage status
-	stage.Status = sdk.StatusWaiting
 
 	//Browse the jobs
 	for _, job := range stage.Jobs {

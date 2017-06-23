@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/runabove/venom"
@@ -184,6 +185,16 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 	}
 	if err := gorpmapping.JSONNullString(rr.Stages, &r.Stages); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
+	}
+	for i := range r.Stages {
+		s := &r.Stages[i]
+		for j := range s.RunJobs {
+			rj := &s.RunJobs[j]
+			if rj.Status == sdk.StatusWaiting.String() {
+				rj.QueuedSeconds = time.Now().Unix() - rj.Queued.Unix()
+			}
+
+		}
 	}
 	if err := gorpmapping.JSONNullString(rr.SourceNodeRuns, &r.SourceNodeRuns); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)

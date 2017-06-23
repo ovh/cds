@@ -138,6 +138,7 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", GET(getWorkflowRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts", GET(getWorkflowRunArtifactsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}", GET(getWorkflowNodeRunHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}/job/{runJobId}/step/{stepOrder}", GET(getWorkflowNodeRunJobStepHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}/artifacts", GET(getWorkflowNodeRunArtifactsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/artifact/{artifactId}", GET(getDownloadArtifactHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/node/{nodeID}/triggers/condition", GET(getWorkflowTriggerCondition))
@@ -187,10 +188,9 @@ func (router *Router) init() {
 
 	// Build queue
 	router.Handle("/queue", GET(getQueueHandler))
-	router.Handle("/queue/requirements/errors", POST(requirementsErrorHandler))
 	router.Handle("/queue/{id}/take", POST(takePipelineBuildJobHandler))
 	router.Handle("/queue/{id}/book", NeedHatchery(), POST(bookPipelineBuildJobHandler))
-	router.Handle("/queue/{id}/spawn/infos", NeedHatchery(), POST(addSpawnInfosPipelineBuildJobHandler))
+	router.Handle("/queue/{id}/spawn/infos", NeedWorker(), NeedHatchery(), POST(addSpawnInfosPipelineBuildJobHandler))
 	router.Handle("/queue/{id}/result", POST(addQueueResultHandler))
 	router.Handle("/queue/{id}/infos", GET(getPipelineBuildJobHandler))
 	router.Handle("/build/{id}/log", POST(addBuildLogHandler))

@@ -8,81 +8,11 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
+
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-var firstViewQueue = true
-
-func postCheckRequirementError(r *sdk.Requirement, err error) {
-	s := fmt.Sprintf("Error checking requirement Name=%s Type=%s Value=%s :%s", r.Name, r.Type, r.Value, err)
-	sdk.Request("POST", "/queue/requirements/errors", []byte(s))
-}
-
-func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
-	info, err := w.client.QueueTakeJob(job, w.bookedJobID == job.ID)
-	if err != nil {
-		return sdk.WrapError(err, "takeWorkflowJob> Unable to take workflob node run job")
-	}
-
-	w.nbActionsDone++
-	// Set build variables
-	w.currentJob.wJob = &info.NodeJobRun
-	// Reset build variables
-	w.currentJob.gitsshPath = ""
-	w.currentJob.pkey = ""
-	w.currentJob.buildVariables = nil
-
-	start := time.Now()
-
-	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
-	ctx, cancel := context.WithCancel(ctx)
-	go func(cancel context.CancelFunc, jobID int64) {
-		tick := time.NewTicker(5 * time.Second)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/workflows/%d/infos", jobID), nil)
-				if err != nil {
-					log.Error("Unable to load pipeline build job %d", jobID)
-					cancel()
-					return
-				}
-
-				j := &sdk.WorkflowNodeJobRun{}
-				if err := json.Unmarshal(b, j); err != nil {
-					log.Error("Unable to load job run %d: %v", jobID, err)
-					cancel()
-					return
-				}
-				if j.Status != sdk.StatusBuilding.String() {
-					cancel()
-					return
-				}
-
-			}
-		}
-	}(cancel, job.ID)
-
-	// Reset build variables
-	w.currentJob.buildVariables = nil
-	//Run !
-	res := w.processJob(ctx, info)
-	now, _ := ptypes.TimestampProto(time.Now())
-	res.RemoteTime = now
-	res.Duration = sdk.Round(time.Since(start), time.Second).String()
-
-	//Wait until the logchannel is empty
-	if ctx.Err() == nil {
-		w.drainLogsAndCloseLogger(ctx)
-	}
-
-	return w.client.QueueSendResult(job.ID, res)
-}
 
 func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) {
 	in := worker.TakeForm{Time: time.Now()}
@@ -123,9 +53,13 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 		for {
 			select {
 			case <-ctx.Done():
-				log.Debug("Exiting pippelibe build job info goroutine: %v", ctx.Err())
+				log.Debug("Exiting pipeline build job info goroutine: %v", ctx.Err())
+				tick.Stop()
 				return
-			case <-tick.C:
+			case _, ok := <-tick.C:
+				if !ok {
+					return
+				}
 				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
 				if err != nil {
 					log.Error("Unable to load pipeline build job %d", jobID)
