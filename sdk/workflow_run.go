@@ -44,6 +44,15 @@ type WorkflowNodeRun struct {
 	Commits            []VCSCommit               `json:"commits,omitempty" db:"-"`
 }
 
+// Translate translates messages in WorkflowNodeRun
+func (nr *WorkflowNodeRun) Translate(lang string) {
+	for ks := range nr.Stages {
+		for kj := range nr.Stages[ks].RunJobs {
+			nr.Stages[ks].RunJobs[kj].Translate(lang)
+		}
+	}
+}
+
 //WorkflowNodeRunArtifact represents tests list
 type WorkflowNodeRunArtifact struct {
 	WorkflowID        int64     `json:"workflow_id" db:"workflow_run_id"`
@@ -73,6 +82,15 @@ type WorkflowNodeJobRun struct {
 	Model             string      `json:"model,omitempty" db:"model"`
 	BookedBy          Hatchery    `json:"bookedby" db:"-"`
 	SpawnInfos        []SpawnInfo `json:"spawninfos" db:"-"`
+}
+
+// Translate translates messages in WorkflowNodeJobRun
+func (njr *WorkflowNodeJobRun) Translate(lang string) {
+	for ki, info := range njr.SpawnInfos {
+		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
+		njr.SpawnInfos[ki].UserMessage = m.String(lang)
+	}
+
 }
 
 //WorkflowNodeRunHookEvent is an instanc of event received on a hook
