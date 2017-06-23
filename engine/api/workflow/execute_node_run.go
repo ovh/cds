@@ -115,8 +115,6 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		}
 	}
 
-	log.Debug("newSTatus=%s", newStatus)
-
 	n.Status = newStatus
 	// Save the node run in database
 	if err := UpdateNodeRun(db, n); err != nil {
