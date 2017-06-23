@@ -91,11 +91,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 			}
 			if end {
 				log.Debug("workflow.execute> Stage [#%d.%d] ends runID=%d. Node is %s", n.Number, n.SubNumber, n.WorkflowRunID, newStatus)
-				//The job is over
-				//Delete the line in workflow_node_run_job
-				if err := DeleteNodeJobRuns(db, n.ID); err != nil {
-					return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
-				}
+				//The stage is over
 
 				if stage.Status == sdk.StatusFail {
 					n.Done = time.Now()
@@ -130,6 +126,14 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	if n.Status == sdk.StatusSuccess.String() {
 		if err := processWorkflowRun(db, updatedWorkflowRun, nil, nil, nil); err != nil {
 			sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+		}
+	}
+
+	//Delete jobs only when node is over
+	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
+		//Delete the line in workflow_node_run_job
+		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
+			return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
 		}
 	}
 
