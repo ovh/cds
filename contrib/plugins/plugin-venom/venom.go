@@ -104,7 +104,11 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	}
 
 	elapsed := time.Since(start)
-	venom.OutputResult("xml", false, true, output, *tests, elapsed, "low")
+	plugin.SendLog(a, "VENOM - Output test results under: %s\n", output)
+	if err := venom.OutputResult("xml", false, true, output, *tests, elapsed, "low"); err != nil {
+		plugin.SendLog(a, "VENOM - Error while uploading test results: %s\n", err)
+		return plugin.Fail
+	}
 
 	return plugin.Success
 }
