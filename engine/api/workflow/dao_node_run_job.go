@@ -24,7 +24,11 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, groupsID []int64, since *time.Time
 		statuses = []string{sdk.StatusWaiting.String()}
 	}
 
+<<<<<<< HEAD
 	query := `select distinct workflow_node_run_job.* 
+=======
+	query := `select distinct workflow_node_run_job.*
+>>>>>>> fe902db6aced51ad19ec769cf69a699db0da958d
 	from workflow_node_run_job
 	join workflow_node_run on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
 	join workflow_node on workflow_node.id = workflow_node_run.workflow_node_id
