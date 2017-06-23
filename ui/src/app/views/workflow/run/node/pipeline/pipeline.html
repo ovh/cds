@@ -49,10 +49,6 @@
                         <li>
                             <app-workflow-rin-job-spawn-info [spawnInfos]="selectedRunJob.spawninfos" [variables]="selectedRunJob.parameters"></app-workflow-rin-job-spawn-info>
                         </li>
-                        <li>
-                            {{selectedRunJob?.job?.action?.actions | json}}
-                            {{mapStepStatus | json}}
-                        </li>
                         <li *ngFor="let step of selectedRunJob.job.action.actions; let i = index">
 
                             <app-workflow-step-log
