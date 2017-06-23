@@ -166,6 +166,8 @@ func getWorkflowNodeRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	if err != nil {
 		return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 	}
+	run.Translate(r.Header.Get("Accept-Language"))
+
 	return WriteJSON(w, r, run, http.StatusOK)
 }
 
