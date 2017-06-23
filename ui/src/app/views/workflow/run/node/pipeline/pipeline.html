@@ -20,15 +20,20 @@
                                          [class.success]="rj.status === pipelineStatusEnum.SUCCESS"
                                          [class.inactive]="rj.status === pipelineStatusEnum.DISABLED || rj.status === pipelineStatusEnum.SKIPPED"
                                          [class.fail]="rj.status === pipelineStatusEnum.FAIL"
-                                         [class.building]="rj.status === pipelineStatusEnum.BUILDING"
+                                         [class.building]="rj.status === pipelineStatusEnum.BUILDING || rj.status === pipelineStatusEnum.WAITING"
                                          (click)="selectedJob(rj)">
                                         <div class="truncate">
                                             <app-status-icon [status]="rj.status" [value]="99"></app-status-icon>
                                             {{rj.job.action.name}}
                                         </div>
-                                        <!--div class="duration" *ngIf="mapJobStatus[j.pipeline_action_id] !== pipelineStatusEnum.DISABLED && mapJobStatus[j.pipeline_action_id] !== pipelineStatusEnum.SKIPPED">
-                                            {{mapJobDuration[j.pipeline_action_id]}}
-                                        </div-->
+                                        <div class="duration" *ngIf="rj.status !== pipelineStatusEnum.DISABLED && rj.status !== pipelineStatusEnum.SKIPPED">
+                                            <span *ngIf="rj.status === pipelineStatusEnum.WAITING">
+                                                 {{ 'workflow_run_node_job_queued' | translate: {time: jobTime.get(rj.id)} }}
+                                            </span>
+                                            <span *ngIf="rj.status !== pipelineStatusEnum.WAITING">
+                                                {{jobTime.get(rj.id)}}
+                                            </span>
+                                        </div>
                                     </div>
                                 </li>
                             </ul>
@@ -42,20 +47,23 @@
                 <div class="log" *ngIf="selectedRunJob">
                     <ul>
                         <li>
-                            <app-spawn-info [spawnInfos]="selectedRunJob.spawninfos" [variables]="selectedRunJob.parameters"></app-spawn-info>
+                            <app-workflow-rin-job-spawn-info [spawnInfos]="selectedRunJob.spawninfos" [variables]="selectedRunJob.parameters"></app-workflow-rin-job-spawn-info>
+                        </li>
+                        <li>
+                            {{selectedRunJob?.job?.action?.actions | json}}
+                            {{mapStepStatus | json}}
                         </li>
                         <li *ngFor="let step of selectedRunJob.job.action.actions; let i = index">
-                            <!--app-step-log
-                                    [application]="application"
-                                    [pipeline]="pipeline"
+
+                            <app-workflow-step-log
                                     [project]="project"
-                                    [pipelineBuild]="currentBuild"
-                                    [jobID]="selectedPipJob.job.pipeline_action_id"
+                                    [workflowName]="workflowName"
+                                    [nodeRun]="nodeRun"
+                                    [nodeJobRun]="selectedRunJob"
                                     [step]="step"
                                     [stepOrder]="i"
-                                    [stepStatus]="mapStepStatus[selectedPipJob.job.pipeline_action_id + '-' + i]"
-                                    [previousBuild]="previousBuild"
-                            ></app-step-log-->
+                                    [stepStatus]="mapStepStatus[selectedRunJob.job.pipeline_action_id + '-' + i]"
+                            ></app-workflow-step-log>
                         </li>
                     </ul>
                 </div>
@@ -81,5 +89,7 @@
                 </ul>
             </div>
         </div-->
+
+
     </div>
 </div>

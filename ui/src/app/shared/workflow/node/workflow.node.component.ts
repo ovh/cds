@@ -15,7 +15,7 @@ import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {CDSWorker} from '../../worker/worker';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router} from '@angular/router';
-import {inherits} from 'util';
+import {PipelineStatus} from '../../../model/pipeline.model';
 
 
 declare var _: any;
@@ -50,6 +50,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     zone: NgZone;
     currentNodeRun: WorkflowNodeRun;
+    pipelineStatus = PipelineStatus;
 
     loading = false;
     options: {};
