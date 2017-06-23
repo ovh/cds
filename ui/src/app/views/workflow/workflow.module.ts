@@ -8,6 +8,9 @@ import {WorkflowRunComponent} from './run/workflow.run.component';
 import {WorkflowNodeRunComponent} from './run/node/workflow.run.node.component';
 import {WorkflowRunNodePipelineComponent} from './run/node/pipeline/node.pipeline.component';
 import {WorkflowBreadCrumbComponent} from './breadcrumb/workflow.breadcrumb.component';
+import {WorkflowRunJobVariableComponent} from './run/node/pipeline/variables/job.variables.component';
+import {WorkflowRunJobSpawnInfoComponent} from './run/node/pipeline/spawninfo/spawninfo.component';
+import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.component';
 
 @NgModule({
     declarations: [
@@ -16,8 +19,11 @@ import {WorkflowBreadCrumbComponent} from './breadcrumb/workflow.breadcrumb.comp
         WorkflowGraphComponent,
         WorkflowRunComponent,
         WorkflowNodeRunComponent,
+        WorkflowRunJobVariableComponent,
+        WorkflowRunJobSpawnInfoComponent,
         WorkflowRunNodePipelineComponent,
-        WorkflowShowComponent
+        WorkflowShowComponent,
+        WorkflowStepLogComponent,
     ],
     imports: [
         SharedModule,

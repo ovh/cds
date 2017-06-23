@@ -80,6 +80,16 @@ for t in "${tags[@]}"; do
 
 	docker rmi -f {{.dockerRegistry}}/$IMG:$TAG || true;
 done
+
+IMAGE_ID=`docker images --digests --no-trunc --format "{{.Repository}}:{{.Tag}} {{.ID}}" | grep "{{.dockerRegistry}}/$IMG:$GENTAG" | awk '{print $2}'`
+IMAGE_DIGEST=`docker images --digests --no-trunc --format "{{.Repository}}:{{.Tag}} {{.Digest}}" | grep "{{.dockerRegistry}}/$IMG:$GENTAG" | awk '{print $2}'`
+
+echo "ID=$IMAGE_ID"
+worker export image.id $IMAGE_ID
+
+echo "DIGEST=$IMAGE_DIGEST"
+worker export image.digest $IMAGE_DIGEST
+
 docker rmi -f {{.dockerRegistry}}/$IMG:$GENTAG || true;
 
 EOF

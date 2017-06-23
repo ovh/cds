@@ -15,6 +15,11 @@
   .ui.segment.building {
     background-color: $cds_color_light_teal;
   }
+
+  .ui.segment.inactive {
+    background-color: $cds_color_light_grey;
+  }
+
   .ui.segment {
     margin-top: -8px;
     margin-left: -11px;

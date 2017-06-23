@@ -1,31 +1,31 @@
-import {Component, Input, OnInit, OnDestroy, NgZone} from '@angular/core';
-import {Action} from '../../../../model/action.model';
-import {CDSWorker} from '../../../../shared/worker/worker';
+import {Component, Input, OnInit,  NgZone} from '@angular/core';
 import {Subscription} from 'rxjs/Rx';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {environment} from '../../../../../environments/environment';
-import {Project} from '../../../../model/project.model';
-import {Application} from '../../../../model/application.model';
-import {Pipeline, PipelineBuild, Log, BuildResult} from '../../../../model/pipeline.model';
+import {Action} from '../../../../../../model/action.model';
+import {Project} from '../../../../../../model/project.model';
+import {BuildResult, Log} from '../../../../../../model/pipeline.model';
+import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
+import {CDSWorker} from '../../../../../../shared/worker/worker';
+import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
+import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
+import {environment} from '../../../../../../../environments/environment';
 
 declare var ansi_up: any;
 
 @Component({
-    selector: 'app-step-log',
+    selector: 'app-workflow-step-log',
     templateUrl: './step.log.html',
     styleUrls: ['step.log.scss']
 })
-export class StepLogComponent implements OnInit, OnDestroy {
+@AutoUnsubscribe()
+export class WorkflowStepLogComponent implements OnInit {
 
     // Static
     @Input() step: Action;
     @Input() stepOrder: number;
-    @Input() jobID: number;
     @Input() project: Project;
-    @Input() application: Application;
-    @Input() pipeline: Pipeline;
-    @Input() pipelineBuild: PipelineBuild;
-    @Input() previousBuild: PipelineBuild;
+    @Input() workflowName: string;
+    @Input() nodeRun: WorkflowNodeRun;
+    @Input() nodeJobRun: WorkflowNodeJobRun;
 
     // Dynamic
     @Input('stepStatus')
@@ -52,21 +52,20 @@ export class StepLogComponent implements OnInit, OnDestroy {
 
     initWorker(): void {
         if (!this.worker) {
-            this.worker = new CDSWorker('./assets/worker/web/log.js');
+            this.worker = new CDSWorker('./assets/worker/web/workflow-log.js');
             this.worker.start({
                 user: this._authStore.getUser(),
                 session: this._authStore.getSessionToken(),
                 api: environment.apiURL,
                 key: this.project.key,
-                appName: this.application.name,
-                pipName: this.pipeline.name,
-                envName: this.pipelineBuild.environment.name,
-                buildNumber: this.pipelineBuild.build_number,
-                jobID: this.jobID,
+                workflowName: this.workflowName,
+                number: this.nodeRun.num,
+                nodeRunId: this.nodeRun.id,
+                runJobId: this.nodeJobRun.id,
                 stepOrder: this.stepOrder
             });
 
-            this.worker.response().subscribe( msg => {
+            this.workerSubscription = this.worker.response().subscribe( msg => {
                 if (msg) {
                     let build: BuildResult = JSON.parse(msg);
                     this.zone.run(() => {
@@ -75,14 +74,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
                         }
                     });
                 }
-
             });
-        }
-    }
-
-    ngOnDestroy(): void {
-        if (this.workerSubscription) {
-            this.workerSubscription.unsubscribe();
         }
     }
 

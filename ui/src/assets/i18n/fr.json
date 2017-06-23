@@ -499,6 +499,7 @@
   "workflow_node_context_edit" : "Éditer le contexte du pipeline",
   "workflow_node_context_pipeline_parameter" : "Paramètres du pipeline",
   "workflow_node_context_payload" : "Payload par défaut",
+  "workflow_run_node_job_queued" : "Attente depuis {{time}}",
 
   "workflow_node_delete_alert" : "ATTENTION, cela va supprimer le pipeline et tout ce qu'il déclenche",
   "workflow_node_delete_btn" : "Supprimer le pipeline",
