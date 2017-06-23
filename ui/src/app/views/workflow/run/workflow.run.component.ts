@@ -21,6 +21,7 @@ export class WorkflowRunComponent implements OnDestroy {
     runSubsription: Subscription;
     workflowRun: WorkflowRun;
     zone: NgZone;
+    workflowName: string;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore, private _router: Router) {
         this.zone = new NgZone({enableLongStackTrace: false});
@@ -31,9 +32,9 @@ export class WorkflowRunComponent implements OnDestroy {
 
         this._activatedRoute.params.first().subscribe(params => {
             let key = params['key'];
-            let workflowName = params['workflowName'];
+            this.workflowName = params['workflowName'];
             let number = params['number'];
-            if (key && workflowName && number) {
+            if (key && this.workflowName && number) {
                 // Start web worker
                 this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
                 this.runWorkflowWorker.start({
@@ -41,7 +42,7 @@ export class WorkflowRunComponent implements OnDestroy {
                     'session': this._authStore.getSessionToken(),
                     'api': environment.apiURL,
                     key: key,
-                    workflowName: workflowName,
+                    workflowName: this.workflowName,
                     number: number
                 });
                 this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {

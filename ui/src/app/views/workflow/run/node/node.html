@@ -30,7 +30,7 @@
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'workflow'">
-                    <app-node-run-pipeline [run]="nodeRun"></app-node-run-pipeline>
+                    <app-node-run-pipeline [run]="nodeRun" [project]="project" [workflowName]="workflowName"></app-node-run-pipeline>
                 </div>
 
             </div>
