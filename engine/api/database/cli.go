@@ -130,6 +130,10 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 	}
 
 	for _, r := range records {
+		if _, ok := rows[r.Id]; !ok {
+			fmt.Printf("Record '%s' not in migration list, manual migration needed\n", r.Id)
+			continue
+		}
 		rows[r.Id].Migrated = true
 		rows[r.Id].AppliedAt = r.AppliedAt
 	}
