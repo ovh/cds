@@ -24,7 +24,6 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 
 	//Checks startingFromNode
 	if startingFromNode != nil {
-
 		start := w.Workflow.GetNode(*startingFromNode)
 		if start == nil {
 			return sdk.ErrWorkflowNodeNotFound
@@ -61,7 +60,27 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 				}
 				for j := range node.Triggers {
 					t := &node.Triggers[j]
-					//TODO Check conditions
+
+					//Check conditions
+					var params = nodeRun.BuildParameters
+					//Define specific desitination parameters
+					sdk.AddParameter(&params, "cds.dest.pip", sdk.StringParameter, t.WorkflowDestNode.Pipeline.Name)
+					if t.WorkflowDestNode.Context.Application != nil {
+						sdk.AddParameter(&params, "cds.dest.app", sdk.StringParameter, t.WorkflowDestNode.Context.Application.Name)
+					}
+					if t.WorkflowDestNode.Context.Environment != nil {
+						sdk.AddParameter(&params, "cds.dest.env", sdk.StringParameter, t.WorkflowDestNode.Context.Environment.Name)
+					}
+
+					conditionsOK, err := sdk.WorkflowCheckConditions(t.Conditions, params)
+					if err != nil {
+						//TODO do something like spawn info on  workflow run
+						return err
+					}
+
+					if !conditionsOK {
+						continue
+					}
 
 					// check if the destination node already exists on w.WorkflowNodeRuns with the same subnumber
 					var abortTrigger bool

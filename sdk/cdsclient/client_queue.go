@@ -65,7 +65,6 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				}
 				t0 = time.Now()
 				for _, j := range queue {
-					fmt.Printf("Job in queue :%+v\n", j)
 					jobs <- j
 				}
 			}
