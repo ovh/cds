@@ -185,6 +185,13 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		Stages:         n.Pipeline.Stages,
 	}
 
+	//Process parameters for the jobs
+	jobParams, errParam := getNodeRunParameters(db, run)
+	if errParam != nil {
+		return errParam
+	}
+	run.BuildParameters = jobParams
+
 	run.SourceNodeRuns = sourceNodeRuns
 	if sourceNodeRuns != nil {
 		//Get all the nodeRun from the sources
