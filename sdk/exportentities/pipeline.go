@@ -509,10 +509,11 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 					sdk.Job{
 						Enabled: true,
 						Action: sdk.Action{
-							Enabled: true,
-							Name:    p.Name,
-							Actions: actions,
-							Type:    sdk.JoinedAction,
+							Enabled:      true,
+							Name:         p.Name,
+							Actions:      actions,
+							Type:         sdk.JoinedAction,
+							Requirements: computeJobRequirements(p.Requirements),
 						},
 					},
 				},
@@ -638,21 +639,9 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 	return
 }
 
-func computeJob(name string, j Job) (*sdk.Job, error) {
-	job := sdk.Job{
-		Action: sdk.Action{
-			Name:        name,
-			Description: j.Description,
-			Type:        sdk.JoinedAction,
-		},
-	}
-	if j.Enabled != nil {
-		job.Enabled = *j.Enabled
-	} else {
-		job.Enabled = true
-	}
-	job.Action.Enabled = job.Enabled
-	for _, r := range j.Requirements {
+func computeJobRequirements(req []Requirement) []sdk.Requirement {
+	res := []sdk.Requirement{}
+	for _, r := range req {
 		var name, tpe, val string
 		if r.Binary != "" {
 			name = r.Binary
@@ -683,8 +672,30 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 			val = r.Service.Value
 			tpe = sdk.ServiceRequirement
 		}
-		job.Action.Requirement(name, tpe, val)
+		res = append(res, sdk.Requirement{
+			Name:  name,
+			Type:  tpe,
+			Value: val,
+		})
 	}
+	return res
+}
+
+func computeJob(name string, j Job) (*sdk.Job, error) {
+	job := sdk.Job{
+		Action: sdk.Action{
+			Name:        name,
+			Description: j.Description,
+			Type:        sdk.JoinedAction,
+		},
+	}
+	if j.Enabled != nil {
+		job.Enabled = *j.Enabled
+	} else {
+		job.Enabled = true
+	}
+	job.Action.Enabled = job.Enabled
+	job.Action.Requirements = computeJobRequirements(j.Requirements)
 
 	//Compute steps for the jobs
 	children, err := computeSteps(j.Steps)
