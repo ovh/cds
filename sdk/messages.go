@@ -58,6 +58,7 @@ var (
 	MsgSpawnInfoWorkerForJob               = &Message{"MsgSpawnInfoWorkerForJob", trad{FR: "Ce worker %s a été créé pour lancer ce job", EN: "This worker %s was created to take this action"}, nil}
 	MsgSpawnInfoWorkerForJobError          = &Message{"MsgSpawnInfoWorkerForJobError", trad{FR: "Ce worker %s a été créé pour lancer ce job, mais ne possède pas tous les pré-requis. Vérifiez que les prérequis suivants:%s", EN: "This worker %s was created to take this action, but does not have all prerequisites. Please verify the following prerequisites:%s"}, nil}
 	MsgSpawnInfoJobError                   = &Message{"MsgSpawnInfoJobError", trad{FR: "Impossible de lancer ce job : %s", EN: "Unable to run this job: %s"}, nil}
+	MsgWorkflowStarting                    = &Message{"MsgWorkflowStarting", trad{FR: "Le workflow %s#%s a été démarré", EN: "Workflow %s#%s has been started"}, nil}
 )
 
 // Messages contains all sdk Messages
@@ -100,6 +101,7 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoJobTaken.ID:                   MsgSpawnInfoJobTaken,
 	MsgSpawnInfoWorkerForJob.ID:               MsgSpawnInfoWorkerForJob,
 	MsgSpawnInfoWorkerForJobError.ID:          MsgSpawnInfoWorkerForJobError,
+	MsgWorkflowStarting.ID:                    MsgWorkflowStarting,
 }
 
 //Message represent a struc format translated messages

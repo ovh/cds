@@ -33,13 +33,20 @@ func updateWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
 
 //PostInsert is a db hook on WorkflowRun
 func (r *Run) PostInsert(db gorp.SqlExecutor) error {
-	b, err := json.Marshal(r.Workflow)
-	if err != nil {
-		return sdk.WrapError(err, "Run.PostInsert> Unable to marshal workflow")
+	w, errw := json.Marshal(r.Workflow)
+	if errw != nil {
+		return sdk.WrapError(errw, "Run.PostInsert> Unable to marshal workflow")
 	}
-	if _, err := db.Exec("update workflow_run set workflow = $2 where id = $1", r.ID, b); err != nil {
-		return sdk.WrapError(err, "Run.PostInsert> Unable to store marshalled workflow")
+
+	i, erri := json.Marshal(r.Infos)
+	if erri != nil {
+		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal infos")
 	}
+
+	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2 where id = $1", r.ID, i, w); err != nil {
+		return sdk.WrapError(err, "Run.PostInsert> Unable to store marshalled infos")
+	}
+
 	return nil
 }
 
@@ -51,15 +58,31 @@ func (r *Run) PostUpdate(db gorp.SqlExecutor) error {
 //PostGet is a db hook on WorkflowRun
 //It loads column workflow wich is in JSONB in table workflow_run
 func (r *Run) PostGet(db gorp.SqlExecutor) error {
-	b, err := db.SelectStr("select workflow from workflow_run where id = $1", r.ID)
+	var res = struct {
+		W sql.NullString `db:"workflow"`
+		I sql.NullString `db:"infos"`
+	}{}
+
+	_, err := db.Select(&res, "select workflow, infos from workflow_run where id = $1", r.ID)
 	if err != nil {
 		return sdk.WrapError(err, "Run.PostGet> Unable to load marshalled workflow")
 	}
-	w := sdk.Workflow{}
-	if err := json.Unmarshal([]byte(b), &w); err != nil {
-		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal workflow")
+	if res.W.Valid {
+		w := sdk.Workflow{}
+		if err := json.Unmarshal([]byte(res.W.String), &w); err != nil {
+			return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal workflow")
+		}
+		r.Workflow = w
 	}
-	r.Workflow = w
+
+	if res.I.Valid {
+		i := []sdk.WorkflowRunInfo{}
+		if err := json.Unmarshal([]byte(res.I.String), &i); err != nil {
+			return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal infos")
+		}
+		r.Infos = i
+	}
+
 	return nil
 }
 
