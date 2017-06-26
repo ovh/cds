@@ -112,17 +112,16 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     changeDisplay(): void {
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
-        this.initWorkflow();
-    }
-
-    initWorkflow() {
         this.joinsComponent.forEach( j => {
-           j.destroy();
+            j.destroy();
         });
         this.nodesComponent.forEach( j => {
             j.destroy();
         });
+        this.initWorkflow();
+    }
 
+    initWorkflow() {
         this.svgWidth = window.innerWidth;
         // this.g = new dagreD3.graphlib.Graph().setGraph({ directed: false, rankDir: 'LR'});
         this.g = new dagreD3.graphlib.Graph().setGraph({directed: false, rankDir: this.direction});
