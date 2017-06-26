@@ -15,6 +15,15 @@
           <app-action [edit]="isAdmin && action.type !== 'Builtin' && action.type !== 'Plugin'"
                       [action]="action"
                       (actionEvent)="actionEvent($event)"></app-action>
+
+          <div *ngIf="isAdmin && pipelinesUsingAction">
+              <h3>{{ 'pipelines_using_action' | translate }}</h3>
+              <ul>
+                <li *ngFor="let p of pipelinesUsingAction">
+                  <a [routerLink]="['/project/', p.key, 'pipeline', p.pipeline_name]">{{p.project_name}} - {{p.pipeline_name}} - {{p.action_name}}</a>
+                </li>
+              </ul>
+          </div>
       </div>
 
       <div class="three wide column">

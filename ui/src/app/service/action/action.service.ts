@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Http, Response} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
-import {Action} from '../../model/action.model';
+import {Action, PipelineUsingAction} from '../../model/action.model';
 
 /**
  * Service to access Public Action
@@ -27,6 +27,15 @@ export class ActionService {
      */
     getAction(name: string): Observable<Action> {
         return this._http.get('/action/' + name).map(res => res.json());
+    }
+
+    /**
+     * Get pipelines using specified action
+     * @param name name of the action to get
+     * @returns {Observable<PipelineUsingAction>}
+     */
+    getPiplinesUsingAction(name: string): Observable<PipelineUsingAction[]> {
+        return this._http.get('/action/' + name + '/using').map(res => res.json());
     }
 
     /**
