@@ -63,8 +63,7 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 		I sql.NullString `db:"infos"`
 	}{}
 
-	_, err := db.Select(&res, "select workflow, infos from workflow_run where id = $1", r.ID)
-	if err != nil {
+	if err := db.SelectOne(&res, "select workflow, infos from workflow_run where id = $1", r.ID); err != nil {
 		return sdk.WrapError(err, "Run.PostGet> Unable to load marshalled workflow")
 	}
 	if res.W.Valid {

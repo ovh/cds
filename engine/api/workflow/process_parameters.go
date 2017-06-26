@@ -47,7 +47,7 @@ func getNodeRunParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.
 	//Load node definition
 	n := w.Workflow.GetNode(run.WorkflowNodeID)
 	if n == nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeJobRunVariables>")
+		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeRunParameters>")
 	}
 	vars := map[string]string{}
 
