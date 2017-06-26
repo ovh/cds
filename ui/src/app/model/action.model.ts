@@ -16,4 +16,5 @@ export class Action {
     // UI parameter
     hasChanged: boolean;
     loading: boolean;
+    showAddStep: boolean;
 }
