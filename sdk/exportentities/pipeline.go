@@ -42,6 +42,7 @@ type Job struct {
 // Step represents exported step used in a job
 type Step map[string]interface{}
 
+// IsValid returns true is the step is valid
 func (s Step) IsValid() bool {
 	keys := []string{}
 	for k := range s {
@@ -62,6 +63,7 @@ func (s Step) key() string {
 	return keys[0]
 }
 
+//AsScript returns the step a sdk.Action
 func (s Step) AsScript() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -92,6 +94,7 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsAction returns the step a sdk.Action
 func (s Step) AsAction() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -129,6 +132,7 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 	return a, true, nil
 }
 
+//AsJUnitReport returns the step a sdk.Action
 func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -159,6 +163,7 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsGitClone returns the step a sdk.Action
 func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -193,6 +198,7 @@ func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsArtifactUpload returns the step a sdk.Action
 func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -227,6 +233,7 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsArtifactDownload returns the step a sdk.Action
 func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -256,6 +263,7 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//IsEnabled returns true the step is enabled
 func (s Step) IsEnabled() (bool, error) {
 	bI, ok := s["enabled"]
 	if !ok {
@@ -268,6 +276,7 @@ func (s Step) IsEnabled() (bool, error) {
 	return bS, nil
 }
 
+//IsFinal returns true the step is final
 func (s Step) IsFinal() (bool, error) {
 	bI, ok := s["final"]
 	if !ok {
