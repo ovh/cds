@@ -18,8 +18,7 @@ import (
 func getActionsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	acts, err := action.LoadActions(db)
 	if err != nil {
-		log.Warning("GetActions: Cannot load action from db: %s\n", err)
-		return err
+		return sdk.WrapError(err, "GetActions: Cannot load action from db")
 	}
 	return WriteJSON(w, r, acts, http.StatusOK)
 }
@@ -46,10 +45,9 @@ func getPipelinesUsingActionHandler(w http.ResponseWriter, r *http.Request, db *
 		WHERE actionChild.name = $1 and actionChild.public = true
 		ORDER BY projectkey, appName, pipName, actionName;
 	`
-	rows, err := db.Query(query, name)
-	if err != nil {
-		log.Warning("getPipelinesUsingActionHandler> Cannot load pipelines using action %s: %s\n", name, err)
-		return err
+	rows, errq := db.Query(query, name)
+	if errq != nil {
+		return sdk.WrapError(errq, "getPipelinesUsingActionHandler> Cannot load pipelines using action %s", name)
 	}
 	defer rows.Close()
 
@@ -70,10 +68,8 @@ func getPipelinesUsingActionHandler(w http.ResponseWriter, r *http.Request, db *
 		var a pipelineUsingAction
 		var pipName, appName, projName, projKey sql.NullString
 		var stageID sql.NullInt64
-		err = rows.Scan(&a.ActionType, &a.ActionName, &a.ActionID, &stageID, &pipName, &appName, &projName, &projKey)
-		if err != nil {
-			log.Warning("getPipelinesUsingActionHandler> Cannot read sql response: %s\n", err)
-			return err
+		if err := rows.Scan(&a.ActionType, &a.ActionName, &a.ActionID, &stageID, &pipName, &appName, &projName, &projKey); err != nil {
+			return sdk.WrapError(err, "getPipelinesUsingActionHandler> Cannot read sql response")
 		}
 		if stageID.Valid {
 			a.StageID = stageID.Int64
@@ -112,7 +108,7 @@ func deleteActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	a, errLoad := action.LoadPublicAction(db, name)
 	if errLoad != nil {
 		if errLoad != sdk.ErrNoAction {
-			log.Warning("deleteAction> Cannot load action %s: %T %s\n", name, errLoad, errLoad)
+			log.Warning("deleteAction> Cannot load action %s: %T %s", name, errLoad, errLoad)
 		}
 		return errLoad
 	}
@@ -122,8 +118,7 @@ func deleteActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return errUsed
 	}
 	if used {
-		log.Warning("deleteAction> Cannot delete action %s: used in pipelines\n", name)
-		return sdk.ErrForbidden
+		return sdk.WrapError(sdk.ErrForbidden, "deleteAction> Cannot delete action %s: used in pipelines", name)
 	}
 
 	tx, errbegin := db.Begin()
@@ -134,13 +129,11 @@ func deleteActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	defer tx.Rollback()
 
 	if err := action.DeleteAction(tx, a.ID, c.User.ID); err != nil {
-		log.Warning("deleteAction> Cannot delete action %s: %s\n", name, err)
-		return err
+		return sdk.WrapError(err, "deleteAction> Cannot delete action %s", name)
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("deleteAction> Cannot commit transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteAction> Cannot commit transaction")
 	}
 
 	return nil
@@ -161,22 +154,19 @@ func updateActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	//actionDB, err := action.LoadPublicAction(db, name, action.WithClearPasswords())
 	actionDB, err := action.LoadPublicAction(db, name)
 	if err != nil {
-		log.Warning("updateAction> Cannot check if action %s exist: %s\n", a.Name, err)
-		return err
+		return sdk.WrapError(err, "updateAction> Cannot check if action %s exist", a.Name)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("updateAction> Cannot begin tx: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateAction> Cannot begin tx")
 	}
 	defer tx.Rollback()
 
 	a.ID = actionDB.ID
 
 	if err = action.UpdateActionDB(tx, &a, c.User.ID); err != nil {
-		log.Warning("updateAction: Cannot update action: %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateAction: Cannot update action")
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -200,8 +190,7 @@ func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 	}
 
 	if conflict {
-		log.Warning("addAction> Action %s already exists\n", a.Name)
-		return sdk.ErrConflict
+		return sdk.WrapError(sdk.ErrConflict, "addAction> Action %s already exists", a.Name)
 	}
 
 	tx, errDB := db.Begin()
@@ -212,9 +201,7 @@ func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 
 	a.Type = sdk.DefaultAction
 	if err := action.InsertAction(tx, &a, true); err != nil {
-		log.Warning("Action: Cannot insert action: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "Action: Cannot insert action")
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -225,34 +212,28 @@ func addActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 }
 
 func getActionAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get action name in URL
 	vars := mux.Vars(r)
 	actionIDString := vars["actionID"]
 
 	actionID, err := strconv.Atoi(actionIDString)
 	if err != nil {
-		log.Warning("getActionAuditHandler> ActionID must be a number, got %s: %s\n", actionIDString, err)
-		return sdk.ErrInvalidID
+		return sdk.WrapError(sdk.ErrInvalidID, "getActionAuditHandler> ActionID must be a number, got %s: %s", actionIDString, err)
 	}
 	// Load action
 	a, err := action.LoadAuditAction(db, actionID, true)
 	if err != nil {
-		log.Warning("getActionAuditHandler> Cannot load audit for action %s: %s\n", actionID, err)
-		return err
+		return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %s", actionID)
 	}
 	return WriteJSON(w, r, a, http.StatusOK)
 }
 
 func getActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get action name in URL
 	vars := mux.Vars(r)
 	name := vars["permActionName"]
 
-	// Load action
 	a, err := action.LoadPublicAction(db, name)
 	if err != nil {
-		log.Warning("getActionHandler> Cannot load action: %s\n", err)
-		return sdk.ErrNotFound
+		return sdk.WrapError(sdk.ErrNotFound, "getActionHandler> Cannot load action: %s", err)
 	}
 	return WriteJSON(w, r, a, http.StatusOK)
 }
@@ -273,8 +254,7 @@ func importActionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		r.ParseMultipartForm(64 << 20)
 		file, _, errUpload := r.FormFile("UploadFile")
 		if errUpload != nil {
-			log.Warning("importActionHandler> Cannot load file uploaded: %s\n", errUpload)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "importActionHandler> Cannot load file uploaded: %s", errUpload)
 		}
 		btes, errRead := ioutil.ReadAll(file)
 		if errRead != nil {
