@@ -38,7 +38,7 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 
 	//Checks the root
 	if len(w.WorkflowNodeRuns) == 0 {
-		log.Debug("processWorkflowRun> starting from the root : %#v", w.Workflow.Root)
+		log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", w.Workflow.Root.ID, w.Workflow.Root.Pipeline.Name)
 		//Run the root: manual or from an event
 		if err := processWorkflowNodeRun(db, w, w.Workflow.Root, 0, nil, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
@@ -193,6 +193,10 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		log.Debug("processWorkflowNodeRun> End [#%d.%d]%s.%d  - %.3fs", w.Number, subnumber, w.Workflow.Name, n.ID, time.Since(t0).Seconds())
 	}()
 
+	//Recopy stages
+	stages := make([]sdk.Stage, len(n.Pipeline.Stages))
+	copy(stages, n.Pipeline.Stages)
+
 	run := &sdk.WorkflowNodeRun{
 		LastModified:   time.Now(),
 		Start:          time.Now(),
@@ -201,7 +205,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		WorkflowRunID:  w.ID,
 		WorkflowNodeID: n.ID,
 		Status:         string(sdk.StatusWaiting),
-		Stages:         n.Pipeline.Stages,
+		Stages:         stages,
 	}
 
 	//Process parameters for the jobs

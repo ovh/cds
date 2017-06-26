@@ -68,6 +68,7 @@ func insertWorkflowNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		return err
 	}
 	n.ID = nodeRunDB.ID
+	log.Debug("insertWorkflowNodeRun> new node run: %d (%d)", n.ID, n.WorkflowNodeID)
 	return nil
 }
 

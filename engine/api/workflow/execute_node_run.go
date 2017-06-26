@@ -62,7 +62,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	//Browse stages
 	for stageIndex := range n.Stages {
 		stage := &n.Stages[stageIndex]
-
+		log.Debug("workflow.execute> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status.String() == "" {
 			if stageIndex == 0 {
