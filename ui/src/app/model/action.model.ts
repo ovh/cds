@@ -17,3 +17,14 @@ export class Action {
     hasChanged: boolean;
     loading: boolean;
 }
+
+export class PipelineUsingAction{
+    action_id: number
+    type: string
+    action_name: string
+    pipeline_name: string
+    application_name: string
+    project_name: string
+    key: string
+    stage_id: number
+}

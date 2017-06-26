@@ -294,6 +294,7 @@
   "pipeline_type" : "Type of pipeline",
   "pipeline_updated" : "Pipeline updated",
   "pipeline_administration" : "General administration of the pipeline",
+  "pipelines_using_action" : "This action is used by following pipelines:",
 
   "pipeline_run_test_filter_empty" : "There is no test matching '{{criteria}}'",
   "pipeline_run_test_no_error" : "All tests are successfull",

@@ -294,6 +294,7 @@
   "pipeline_triggered": "Pipelines déclenchés",
   "pipeline_updated" : "Pipeline mis à jour",
   "pipeline_administration" : "Administration générale du pipeline",
+  "pipelines_using_action" : "Cette action est utilisée dans les pipelines suivants : ",
 
   "pipeline_run_test_filter_empty" : "Il n'y a aucun test correspondant au filter {{criteria}}",
   "pipeline_run_test_no_error" : "Tous les tests sont en succès",
