@@ -1,14 +1,10 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"net/http/httptest"
 	"testing"
-	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
@@ -16,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
