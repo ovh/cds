@@ -9,7 +9,7 @@ import {StepEvent} from '../step.event';
 })
 export class ActionStepFormComponent implements OnInit {
     @Input() publicActions: Array<Action>;
-    showAddStep: boolean = false;
+    showAddStep: boolean;
     @Output() create = new EventEmitter<StepEvent>();
 
     step: Action;
