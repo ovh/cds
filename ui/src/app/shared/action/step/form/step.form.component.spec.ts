@@ -70,8 +70,18 @@ describe('CDS: Action Component', () => {
 
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.ui.blue.button')).toBeTruthy('Add button must be displayed');
-        compiled.querySelector('.ui.blue.button').click();
+        expect(compiled.querySelector('.addbtn.ui.right.floated.button')).toBeTruthy('Add button must be displayed');
+        compiled.querySelector('.addbtn.ui.right.floated.button').click();
+
+        fixture.detectChanges();
+        tick(50);
+
+        expect(fixture.componentInstance.create.emit).toHaveBeenCalledWith(
+            new StepEvent('displayChoice', null)
+        );
+
+        expect(compiled.querySelector('.ui.green.button')).toBeTruthy('Add green button must be displayed');
+        compiled.querySelector('.ui.green.button').click();
 
         fixture.detectChanges();
         tick(50);
@@ -83,4 +93,3 @@ describe('CDS: Action Component', () => {
 
     }));
 });
-
