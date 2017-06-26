@@ -159,6 +159,40 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+func (s Step) AsGitClone() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+
+	bI, ok := s["gitClone"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	if reflect.ValueOf(bI).Kind() != reflect.Map {
+		return nil, false, nil
+	}
+
+	argss := map[string]string{}
+	if err := mapstructure.Decode(bI, &argss); err != nil {
+		return nil, true, sdk.WrapError(err, "Malformatted Step")
+	}
+
+	a := sdk.NewStepGitClone(argss)
+
+	var err error
+	a.Enabled, err = s.IsEnabled()
+	if err != nil {
+		return nil, true, err
+	}
+	a.Final, err = s.IsFinal()
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
 func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -439,6 +473,38 @@ func newSteps(a sdk.Action) []Step {
 					artifactUploadArgs["tag"] = tag.Value
 				}
 				s["artifactUpload"] = artifactUploadArgs
+			case sdk.GitCloneAction:
+				gitCloneArgs := map[string]string{}
+				branch := sdk.ParameterFind(a.Parameters, "branch")
+				if branch != nil {
+					gitCloneArgs["branch"] = branch.Value
+				}
+				commit := sdk.ParameterFind(a.Parameters, "commit")
+				if commit != nil {
+					gitCloneArgs["commit"] = commit.Value
+				}
+				directory := sdk.ParameterFind(a.Parameters, "directory")
+				if directory != nil {
+					gitCloneArgs["directory"] = directory.Value
+				}
+				password := sdk.ParameterFind(a.Parameters, "password")
+				if password != nil {
+					gitCloneArgs["password"] = password.Value
+				}
+				privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
+				if privateKey != nil {
+					gitCloneArgs["privateKey"] = privateKey.Value
+				}
+				url := sdk.ParameterFind(a.Parameters, "url")
+				if url != nil {
+					gitCloneArgs["url"] = url.Value
+				}
+				user := sdk.ParameterFind(a.Parameters, "user")
+				if user != nil {
+					gitCloneArgs["user"] = user.Value
+				}
+
+				s["gitClone"] = gitCloneArgs
 			case sdk.JUnitAction:
 				path := sdk.ParameterFind(a.Parameters, "path")
 				if path != nil {
@@ -622,6 +688,11 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 	}
 
 	a, ok, e = s.AsJUnitReport()
+	if ok {
+		return
+	}
+
+	a, ok, e = s.AsGitClone()
 	if ok {
 		return
 	}
