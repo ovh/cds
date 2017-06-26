@@ -16,7 +16,7 @@
                       [action]="action"
                       (actionEvent)="actionEvent($event)"></app-action>
 
-          <div *ngIf="pipelinesUsingAction">
+          <div *ngIf="isAdmin && pipelinesUsingAction">
               <h3>{{ 'pipelines_using_action' | translate }}</h3>
               <ul>
                 <li *ngFor="let p of pipelinesUsingAction">

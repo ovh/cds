@@ -33,9 +33,11 @@ export class ActionEditComponent implements OnInit {
         this._route.params.subscribe(params => {
             this._actionService.getAction(params['name']).subscribe( u => {
                 this.action = u;
-                this._actionService.getPiplinesUsingAction(params['name']).subscribe( p => {
-                    this.pipelinesUsingAction = p;
-                });
+                if (this.isAdmin) {
+                  this._actionService.getPiplinesUsingAction(params['name']).first().subscribe( p => {
+                      this.pipelinesUsingAction = p;
+                  });
+                }
             });
         });
     }
