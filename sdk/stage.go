@@ -21,6 +21,19 @@ type Stage struct {
 	Status            Status               `json:"status"`
 }
 
+// Conditions returns stage prerequisites as a set of WorkflowTriggerCondition regex
+func (s *Stage) Conditions() []WorkflowTriggerCondition {
+	res := []WorkflowTriggerCondition{}
+	for _, p := range s.Prerequisites {
+		res = append(res, WorkflowTriggerCondition{
+			Value:    p.ExpectedValue,
+			Variable: p.Parameter,
+			Operator: WorkflowConditionsOperatorRegex,
+		})
+	}
+	return res
+}
+
 // NewStage instanciate a new Stage
 func NewStage(name string) *Stage {
 	s := &Stage{

@@ -183,7 +183,7 @@ type WorkflowNode struct {
 	Triggers         []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
 }
 
-//EqualsTo returns true ia a node has the same pipeline, and context than another
+// EqualsTo returns true if a node has the same pipeline and context than another
 func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 	if n.PipelineID != n1.PipelineID {
 		return false

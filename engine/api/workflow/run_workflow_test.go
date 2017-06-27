@@ -94,19 +94,6 @@ func TestManualRun1(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	/*
-		m, _ := dump.ToMap(wr)
-
-		keys := []string{}
-		for k := range m {
-			keys = append(keys, k)
-		}
-
-		sort.Strings(keys)
-		for _, k := range keys {
-			t.Logf("%s: \t%s", k, m[k])
-		}
-	*/
 	wr1, err := ManualRun(db, w1, &sdk.WorkflowNodeRunManual{User: *u})
 	test.NoError(t, err)
 
@@ -133,18 +120,6 @@ func TestManualRun1(t *testing.T) {
 
 	assert.Equal(t, int64(2), lastrun.Number)
 
-	//Print lastrun
-	/*
-		m, _ = dump.ToMap(lastrun)
-		keys = []string{}
-		for k := range m {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, k := range keys {
-			t.Logf("%s: \t%s", k, m[k])
-		}
-	*/
 	//TestLoadNodeRun
 	nodeRun, err := LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID)
 	test.NoError(t, err)

@@ -186,5 +186,5 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 		time.Sleep(1 * time.Second)
 	}
 
-	return fmt.Errorf("x5: %s", err)
+	return fmt.Errorf("x%s: %v", c.config.Retry, err)
 }

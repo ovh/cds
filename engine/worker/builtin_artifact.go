@@ -207,7 +207,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		n, err := strconv.ParseInt(number, 10, 64)
 		if err != nil {
 			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("cds.run.numer variable is not valid. aborting\n")
+			res.Reason = fmt.Sprintf("cds.run.nubmer variable is not valid. aborting\n")
 			sendLog(res.Reason)
 			return res
 		}
