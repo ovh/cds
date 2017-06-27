@@ -136,11 +136,11 @@ export class ProjectAddComponent {
             return;
         }
         this.loading = true;
-        this.modalCreateGroup.hide();
         this._groupService.createGroup(this.newGroup).subscribe(() => {
             this._toast.success('', this._translate.instant('group_added'));
             this.loadGroups(this.newGroup.name);
-            this.newGroup = new Group();
+            this.modalCreateGroup.hide();
+            this.loading = false;
         }, () => {
             this.loading = false;
             this.newGroup = new Group();

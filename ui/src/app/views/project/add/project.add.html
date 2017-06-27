@@ -63,6 +63,6 @@
     </modal-content>
     <modal-actions>
         <div class="ui grey button" (click)="modalCreateGroup.hide()">{{ 'btn_cancel' | translate }}</div>
-        <div class="ui green button" (click)="createGroup()">{{ 'btn_create' | translate }}</div>
+        <div class="ui green button" (click)="createGroup()" [class.loading]="loading" [class.disabled]="loading">{{ 'btn_create' | translate }}</div>
     </modal-actions>
 </sm-modal>

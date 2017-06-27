@@ -82,9 +82,8 @@ describe('CDS: Project Show Component', () => {
         fixture.componentInstance.project.key = 'BAR';
 
         fixture.componentInstance.project.groups = new Array<GroupPermission>();
-        let gp = new GroupPermission();
-        gp.permission = 7;
-        fixture.componentInstance.project.groups.push(gp);
+        fixture.componentInstance.group = new Group();
+        fixture.componentInstance.group.name = 'foo';
 
         fixture.componentInstance.createProject();
         expect(projectStore.createProject).toHaveBeenCalled();
