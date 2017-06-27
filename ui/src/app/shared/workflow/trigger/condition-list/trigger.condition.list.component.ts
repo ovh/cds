@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {Table} from '../../../table/table';
 import {WorkflowTriggerCondition} from '../../../../model/workflow.model';
 import {Project} from '../../../../model/project.model';
@@ -11,6 +11,7 @@ import {Project} from '../../../../model/project.model';
 export class WorkflowTriggerConditionListComponent extends Table {
 
     @Input() conditions: Array<WorkflowTriggerCondition>;
+    @Output() conditionsChange = new EventEmitter<Array<WorkflowTriggerCondition>>();
     @Input() project: Project;
     @Input() operators: Array<string>;
 
@@ -23,6 +24,6 @@ export class WorkflowTriggerConditionListComponent extends Table {
     }
 
     removeCondition(cond: WorkflowTriggerCondition): void {
-        this.conditions = this.conditions.filter(c => c.variable !== cond.variable);
+        this.conditionsChange.emit(this.conditions.filter(c => c.variable !== cond.variable));
     }
 }
