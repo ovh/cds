@@ -7,7 +7,7 @@
             </ng-container>
 
             <h3>{{ 'workflow_node_trigger_condition_list_title' | translate }}</h3>
-            <app-workflow-trigger-condition-list [project]="project" [conditions]="trigger.conditions" [operators]="operators"></app-workflow-trigger-condition-list>
+            <app-workflow-trigger-condition-list [project]="project" [(conditions)]="trigger.conditions" [operators]="operators"></app-workflow-trigger-condition-list>
             <h3>{{ 'workflow_node_trigger_condition_form_title' | translate }}</h3>
             <app-workflow-trigger-condition-form [names]="conditionNames" [operators]="operators" (addEvent)="addCondition($event)"></app-workflow-trigger-condition-form>
         </div>
