@@ -31,7 +31,7 @@ export class ProjectAddComponent {
     groupError = false;
     sshError = false;
 
-    private groupList: Group[];
+    groupList: Group[];
 
     @ViewChild('createGroupModal')
     modalCreateGroup: SemanticModalComponent;
