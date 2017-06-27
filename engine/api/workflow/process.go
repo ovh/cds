@@ -40,13 +40,10 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 	if len(w.WorkflowNodeRuns) == 0 {
 		log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", w.Workflow.Root.ID, w.Workflow.Root.Pipeline.Name)
 		//Run the root: manual or from an event
-		w.Infos = append(w.Infos, sdk.WorkflowRunInfo{
-			APITime: time.Now(),
-			Message: sdk.SpawnMsg{
-				ID: sdk.MsgWorkflowStarting.ID,
-				Args: []interface{}{
-					w.Workflow.Name,
-				},
+		AddWorkflowRunInfo(w, sdk.SpawnMsg{
+			ID: sdk.MsgWorkflowStarting.ID,
+			Args: []interface{}{
+				w.Workflow.Name,
 			},
 		})
 
@@ -305,4 +302,14 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 	}
 
 	return nil
+}
+
+// AddWorkflowRunInfo add WorkflowRunInfo on a WorkflowRun
+func AddWorkflowRunInfo(run *sdk.WorkflowRun, infos ...sdk.SpawnMsg) {
+	for _, i := range infos {
+		run.Infos = append(run.Infos, sdk.WorkflowRunInfo{
+			APITime: time.Now(),
+			Message: i,
+		})
+	}
 }

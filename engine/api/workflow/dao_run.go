@@ -126,6 +126,13 @@ func loadRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
 	return loadRun(db, query, id)
 }
 
+func loadAndLockRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+	query := `select workflow_run.* 
+	from workflow_run 
+	where workflow_run.id = $1 for update nowait`
+	return loadRun(db, query, id)
+}
+
 //LoadRuns loads all runs
 //It retuns runs, offset, limit count and an error
 func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int) ([]sdk.WorkflowRun, int, int, int, error) {
