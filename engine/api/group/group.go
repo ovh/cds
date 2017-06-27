@@ -140,7 +140,7 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 func LoadGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 	groups := []sdk.Group{}
 
-	query := `SELECT * FROM "group"`
+	query := `SELECT * FROM "group" ORDER BY name`
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -168,6 +168,7 @@ func LoadGroupByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Group, error) {
 		FROM "group"
 		JOIN "group_user" ON "group".id = "group_user".group_id
 		WHERE "group_user".user_id = $1
+    ORDER BY "group".name
 		`
 	rows, err := db.Query(query, userID)
 	if err != nil {
@@ -225,6 +226,7 @@ func LoadPublicGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 		SELECT id, name
 		FROM "group"
 		WHERE name = $1
+		ORDER BY name
 		`
 	rows, err := db.Query(query, SharedInfraGroup.Name)
 	if err != nil {

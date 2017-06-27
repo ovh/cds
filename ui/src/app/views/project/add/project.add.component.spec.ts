@@ -121,26 +121,6 @@ describe('CDS: Project Show Component', () => {
         fixture.componentInstance.createProject();
         expect(fixture.componentInstance.groupError).toBeTruthy();
     }));
-
-    it('it should add/remove group', fakeAsync(() => {
-        let fixture = TestBed.createComponent(ProjectAddComponent);
-
-        let gp = new GroupPermission();
-        gp.permission = 4;
-        let g = new Group();
-        gp.group = g;
-        let event = new PermissionEvent('add', gp);
-
-        // add twice
-        fixture.componentInstance.permissionManagement(event);
-        fixture.componentInstance.permissionManagement(event);
-
-        expect(fixture.componentInstance.project.groups.length).toBe(1);
-
-        event.type = 'delete';
-        fixture.componentInstance.permissionManagement(event);
-        expect(fixture.componentInstance.project.groups.length).toBe(0);
-    }));
 });
 
 class MockToast {
