@@ -1,6 +1,15 @@
 <div class="ui form" *ngIf="step">
-    <div class="fields">
-        <div class="field">
+    <div class="field">
+        <button class="addbtn ui right floated button" (click)="displayChoice()" *ngIf="!showAddStep"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
+        <div *ngIf="showAddStep">
+            <sm-card class="ui card">
+                <card-title><b>{{step?.name}}</b></card-title>
+                <card-subtitle> {{step?.type}}</card-subtitle>
+                <card-content>
+                    <markdown [data]="step?.description"></markdown>
+                </card-content>
+            </sm-card>
+
             <sm-select name="step" class="search"
                 [options]="{'fullTextSearch': true}"
                 [model]="step.name"
@@ -8,9 +17,13 @@
                 <option *ngFor="let a of publicActions" value="{{a.name}}">{{a.name}}</option>
             </sm-select>
         </div>
-        <div class="field">
-            <button name="addstepbtn" class="ui left floated blue button" (click)="addStep()"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
-        </div>
-
+    </div>
+    <div class="field" *ngIf="showAddStep">
+      <div class="ui buttons">
+          <button class="ui green button" (click)="addStep(false)"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
+          <div class="or"></div>
+          <button class="ui grey button" (click)="addStep(true)"><i class="plus icon"></i>{{ 'job_add_step_final' | translate }}</button>
+      </div>
+      <button class="ui grey right floated button" (click)="cancel()">{{'btn_cancel' | translate}}</button>
     </div>
 </div>

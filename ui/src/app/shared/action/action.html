@@ -61,9 +61,6 @@
 
     <div class="subtitle normalStep">
         <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
-        <div class="right floated" *ngIf="edit && publicActions.length > 0">
-            <app-action-step-form [publicActions]="publicActions" [final]="false" (create)="stepManagement($event)"></app-action-step-form>
-        </div>
     </div>
     <div class="ui segment" *ngIf="nonFinalSteps.length > 0" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="nonFinalSteps" *ngIf="nonFinalSteps">
@@ -80,9 +77,6 @@
 
     <div class="subtitle finalStep">
         <h3 class="inline">{{ 'action_step_final_title' | translate }}</h3>
-        <div class="right floated" *ngIf="edit && publicActions.length > 0">
-            <app-action-step-form [publicActions]="publicActions" [final]="true" (create)="stepManagement($event)"></app-action-step-form>
-        </div>
     </div>
 
     <div class="ui segment" *ngIf="finalSteps.length > 0" [class.off]="!editableAction.enabled">
@@ -99,13 +93,16 @@
     </div>
 
     <div class="bottomBtnsWrapper ui segment">
-      <div *ngIf="edit && editableAction.id">
+      <div *ngIf="edit && publicActions.length > 0">
+          <app-action-step-form [publicActions]="publicActions" (create)="stepManagement($event)"></app-action-step-form>
+      </div>
+      <div class="field" *ngIf="edit && editableAction.id && !editableAction.showAddStep">
           <button class="ui green right floated button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading" [class.loading]="editableAction.loading">
               <i class="save icon"></i>{{ 'save' | translate }}
           </button>
           <app-delete-button class="right floated" [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading"></app-delete-button>
       </div>
-      <div *ngIf="edit && !editableAction.id">
+      <div *ngIf="edit && !editableAction.id && !editableAction.showAddStep">
         <button class="ui green right floated button" name="addbtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
             <i class="save icon"></i>{{ 'btn_create' | translate }}
         </button>

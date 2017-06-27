@@ -30,6 +30,8 @@ export class ActionComponent implements OnDestroy {
     @Input('action')
     set action(data: Action) {
         this.editableAction = cloneDeep(data);
+        this.editableAction.showAddStep = false;
+
         if (!this.editableAction.requirements) {
             this.editableAction.requirements = new Array<Requirement>();
         }
@@ -130,7 +132,14 @@ export class ActionComponent implements OnDestroy {
 
     stepManagement(event: StepEvent): void {
         this.editableAction.hasChanged = true;
+        this.editableAction.showAddStep = false
         switch (event.type) {
+            case 'displayChoice':
+                this.editableAction.showAddStep = true;
+                break;
+            case 'cancel':
+                // nothing to do
+                break;
             case 'add':
                 let newStep = cloneDeep(event.step);
                 if (newStep.final) {
