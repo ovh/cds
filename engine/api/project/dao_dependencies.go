@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -45,7 +44,6 @@ var (
 
 		for i := range proj.Applications {
 			a := &proj.Applications[i]
-			log.Debug("loading application %s", a.Name)
 			if err := (*application.LoadOptions.WithTriggers)(db, a, u); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationPipelines")
 			}

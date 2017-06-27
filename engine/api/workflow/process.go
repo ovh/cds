@@ -81,7 +81,7 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 
 					conditionsOK, err := sdk.WorkflowCheckConditions(t.Conditions, params)
 					if err != nil {
-						//TODO do something like spawn info on  workflow run
+						log.Warning("processWorkflowRun> WorkflowCheckConditions error: %s", err)
 						return err
 					}
 

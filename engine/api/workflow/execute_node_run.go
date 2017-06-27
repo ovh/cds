@@ -136,7 +136,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) (err error) {
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	if n.Status == sdk.StatusSuccess.String() {
 		if err := processWorkflowRun(db, updatedWorkflowRun, nil, nil, nil); err != nil {
-			sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+			return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 		}
 	}
 
