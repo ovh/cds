@@ -484,3 +484,54 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 		}
 	}
 }
+
+func Test_ImportPipelineWithRequirements(t *testing.T) {
+	in := `name: build-all-images
+type: build
+requirements:
+- hostname: buildbot_image
+- binary: git
+steps:
+- script: |-
+    #!/bin/bash
+
+    echo "I'm just a decoy allowing you to rebuild the images."
+
+    exit 0;
+`
+
+	payload := &Pipeline{}
+	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
+
+	p, err := payload.Pipeline()
+	test.NoError(t, err)
+
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Requirements, 2)
+
+}
+
+func Test_ImportPipelineWithGitClone(t *testing.T) {
+	in := `name: build-all-images
+requirements:
+- binary: git
+steps:
+- gitClone:
+    branch: '{{.git.branch}}'
+    commit: '{{.git.hash}}'
+    directory: '{{.cds.workspace}}'
+    password: ""
+    privateKey: '{{.cds.app.key}}'
+    url: '{{.git.http_url}}'
+    user: ""
+`
+
+	payload := &Pipeline{}
+	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
+
+	p, err := payload.Pipeline()
+	test.NoError(t, err)
+
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 1)
+	assert.Equal(t, sdk.GitCloneAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 7)
+}

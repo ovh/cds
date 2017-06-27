@@ -42,6 +42,7 @@ type Job struct {
 // Step represents exported step used in a job
 type Step map[string]interface{}
 
+// IsValid returns true is the step is valid
 func (s Step) IsValid() bool {
 	keys := []string{}
 	for k := range s {
@@ -62,6 +63,7 @@ func (s Step) key() string {
 	return keys[0]
 }
 
+//AsScript returns the step a sdk.Action
 func (s Step) AsScript() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -92,6 +94,7 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsAction returns the step a sdk.Action
 func (s Step) AsAction() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -129,6 +132,7 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 	return a, true, nil
 }
 
+//AsJUnitReport returns the step a sdk.Action
 func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -159,6 +163,42 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsGitClone returns the step a sdk.Action
+func (s Step) AsGitClone() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+
+	bI, ok := s["gitClone"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	if reflect.ValueOf(bI).Kind() != reflect.Map {
+		return nil, false, nil
+	}
+
+	argss := map[string]string{}
+	if err := mapstructure.Decode(bI, &argss); err != nil {
+		return nil, true, sdk.WrapError(err, "Malformatted Step")
+	}
+
+	a := sdk.NewStepGitClone(argss)
+
+	var err error
+	a.Enabled, err = s.IsEnabled()
+	if err != nil {
+		return nil, true, err
+	}
+	a.Final, err = s.IsFinal()
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
+//AsArtifactUpload returns the step a sdk.Action
 func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -193,6 +233,7 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsArtifactDownload returns the step a sdk.Action
 func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -222,6 +263,7 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//IsEnabled returns true the step is enabled
 func (s Step) IsEnabled() (bool, error) {
 	bI, ok := s["enabled"]
 	if !ok {
@@ -234,6 +276,7 @@ func (s Step) IsEnabled() (bool, error) {
 	return bS, nil
 }
 
+//IsFinal returns true the step is final
 func (s Step) IsFinal() (bool, error) {
 	bI, ok := s["final"]
 	if !ok {
@@ -439,6 +482,38 @@ func newSteps(a sdk.Action) []Step {
 					artifactUploadArgs["tag"] = tag.Value
 				}
 				s["artifactUpload"] = artifactUploadArgs
+			case sdk.GitCloneAction:
+				gitCloneArgs := map[string]string{}
+				branch := sdk.ParameterFind(a.Parameters, "branch")
+				if branch != nil {
+					gitCloneArgs["branch"] = branch.Value
+				}
+				commit := sdk.ParameterFind(a.Parameters, "commit")
+				if commit != nil {
+					gitCloneArgs["commit"] = commit.Value
+				}
+				directory := sdk.ParameterFind(a.Parameters, "directory")
+				if directory != nil {
+					gitCloneArgs["directory"] = directory.Value
+				}
+				password := sdk.ParameterFind(a.Parameters, "password")
+				if password != nil {
+					gitCloneArgs["password"] = password.Value
+				}
+				privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
+				if privateKey != nil {
+					gitCloneArgs["privateKey"] = privateKey.Value
+				}
+				url := sdk.ParameterFind(a.Parameters, "url")
+				if url != nil {
+					gitCloneArgs["url"] = url.Value
+				}
+				user := sdk.ParameterFind(a.Parameters, "user")
+				if user != nil {
+					gitCloneArgs["user"] = user.Value
+				}
+
+				s["gitClone"] = gitCloneArgs
 			case sdk.JUnitAction:
 				path := sdk.ParameterFind(a.Parameters, "path")
 				if path != nil {
@@ -509,10 +584,11 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 					sdk.Job{
 						Enabled: true,
 						Action: sdk.Action{
-							Enabled: true,
-							Name:    p.Name,
-							Actions: actions,
-							Type:    sdk.JoinedAction,
+							Enabled:      true,
+							Name:         p.Name,
+							Actions:      actions,
+							Type:         sdk.JoinedAction,
+							Requirements: computeJobRequirements(p.Requirements),
 						},
 					},
 				},
@@ -625,6 +701,11 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 		return
 	}
 
+	a, ok, e = s.AsGitClone()
+	if ok {
+		return
+	}
+
 	a, ok, e = s.AsScript()
 	if ok {
 		return
@@ -638,21 +719,9 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 	return
 }
 
-func computeJob(name string, j Job) (*sdk.Job, error) {
-	job := sdk.Job{
-		Action: sdk.Action{
-			Name:        name,
-			Description: j.Description,
-			Type:        sdk.JoinedAction,
-		},
-	}
-	if j.Enabled != nil {
-		job.Enabled = *j.Enabled
-	} else {
-		job.Enabled = true
-	}
-	job.Action.Enabled = job.Enabled
-	for _, r := range j.Requirements {
+func computeJobRequirements(req []Requirement) []sdk.Requirement {
+	res := []sdk.Requirement{}
+	for _, r := range req {
 		var name, tpe, val string
 		if r.Binary != "" {
 			name = r.Binary
@@ -683,8 +752,30 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 			val = r.Service.Value
 			tpe = sdk.ServiceRequirement
 		}
-		job.Action.Requirement(name, tpe, val)
+		res = append(res, sdk.Requirement{
+			Name:  name,
+			Type:  tpe,
+			Value: val,
+		})
 	}
+	return res
+}
+
+func computeJob(name string, j Job) (*sdk.Job, error) {
+	job := sdk.Job{
+		Action: sdk.Action{
+			Name:        name,
+			Description: j.Description,
+			Type:        sdk.JoinedAction,
+		},
+	}
+	if j.Enabled != nil {
+		job.Enabled = *j.Enabled
+	} else {
+		job.Enabled = true
+	}
+	job.Action.Enabled = job.Enabled
+	job.Action.Requirements = computeJobRequirements(j.Requirements)
 
 	//Compute steps for the jobs
 	children, err := computeSteps(j.Steps)
