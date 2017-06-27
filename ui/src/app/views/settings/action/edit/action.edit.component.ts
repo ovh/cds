@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Action} from '../../../../model/action.model';
+import {Action, PipelineUsingAction} from '../../../../model/action.model';
 import {ActionEvent} from '../../../../shared/action/action.event.model';
 import {ActionService} from '../../../../service/action/action.service';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
@@ -15,6 +15,7 @@ import {TranslateService} from 'ng2-translate';
 export class ActionEditComponent implements OnInit {
     action: Action;
     isAdmin: boolean;
+    pipelinesUsingAction: Array<PipelineUsingAction>;
 
     private namePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private actionPatternError = false;
@@ -32,6 +33,11 @@ export class ActionEditComponent implements OnInit {
         this._route.params.subscribe(params => {
             this._actionService.getAction(params['name']).subscribe( u => {
                 this.action = u;
+                if (this.isAdmin) {
+                  this._actionService.getPiplinesUsingAction(params['name']).first().subscribe( p => {
+                      this.pipelinesUsingAction = p;
+                  });
+                }
             });
         });
     }

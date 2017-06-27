@@ -198,6 +198,7 @@
   "home_title" : "Bienvenue sur CDS",
 
   "job_add_step" : "Ajouter une étape",
+  "job_add_step_final" : "Ajouter une étape finale",
   "job_delete" : "Supprimer le job",
   "job_save" : "Sauvegarder le job",
   "job_spawn_title" : "Informations",
@@ -294,6 +295,7 @@
   "pipeline_triggered": "Pipelines déclenchés",
   "pipeline_updated" : "Pipeline mis à jour",
   "pipeline_administration" : "Administration générale du pipeline",
+  "pipelines_using_action" : "Cette action est utilisée dans les pipelines suivants : ",
 
   "pipeline_run_test_filter_empty" : "Il n'y a aucun test correspondant au filter {{criteria}}",
   "pipeline_run_test_no_error" : "Tous les tests sont en succès",
