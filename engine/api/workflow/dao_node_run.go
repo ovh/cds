@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //LoadNodeRun load a specific node run on a workflow
@@ -67,11 +68,13 @@ func insertWorkflowNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		return err
 	}
 	n.ID = nodeRunDB.ID
+	log.Debug("insertWorkflowNodeRun> new node run: %d (%d)", n.ID, n.WorkflowNodeID)
 	return nil
 }
 
 //UpdateNodeRun updates in table workflow_node_run
 func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
+	log.Debug("workflow.UpdateNodeRun> node.id=%d, status=%s", n.ID, n.Status)
 	nodeRunDB := NodeRun(*n)
 	if _, err := db.Update(&nodeRunDB); err != nil {
 		return err
@@ -193,7 +196,6 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 			if rj.Status == sdk.StatusWaiting.String() {
 				rj.QueuedSeconds = time.Now().Unix() - rj.Queued.Unix()
 			}
-
 		}
 	}
 	if err := gorpmapping.JSONNullString(rr.SourceNodeRuns, &r.SourceNodeRuns); err != nil {

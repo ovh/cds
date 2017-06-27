@@ -19,6 +19,22 @@ type WorkflowRun struct {
 	Start            time.Time                   `json:"start" db:"start"`
 	LastModified     time.Time                   `json:"last_modified" db:"last_modified"`
 	WorkflowNodeRuns map[int64][]WorkflowNodeRun `json:"nodes" db:"-"`
+	Infos            []WorkflowRunInfo           `json:"infos" db:"-"`
+	Tags             []WorkflowRunTag            `json:"tags" db:"-"`
+}
+
+//WorkflowRunInfo is an info on workflow run
+type WorkflowRunInfo struct {
+	APITime time.Time `json:"api_time,omitempty" db:"-"`
+	Message SpawnMsg  `json:"message,omitempty" db:"-"`
+	// UserMessage contains msg translated for end user
+	UserMessage string `json:"user_message,omitempty" db:"-"`
+}
+
+//WorkflowRunTag is a tag on workflow run
+type WorkflowRunTag struct {
+	Tag   string `json:"tag" db:"tag"`
+	Value string `json:"value" db:"value"`
 }
 
 //WorkflowNodeRun is as execution instance of a node

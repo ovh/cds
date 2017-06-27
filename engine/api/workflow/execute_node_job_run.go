@@ -17,7 +17,8 @@ import (
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
 func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, status sdk.Status) error {
-	log.Debug(">>UpdateNodeJobRunStatus<<")
+	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
+
 	var query string
 	query = `SELECT status FROM workflow_node_run_job WHERE id = $1 FOR UPDATE`
 	var currentStatus string
@@ -73,8 +74,13 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 	}
 
 	if stageUpdated {
+		node.Status = sdk.StatusBuilding.String()
 		if err := UpdateNodeRun(db, node); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
+		}
+	} else {
+		if errE := execute(db, node); errE != nil {
+			return sdk.WrapError(errE, "workflow.UpdateNodeJobRunStatus> Cannot execute sync node")
 		}
 	}
 
@@ -84,7 +90,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 
 	event.PublishJobRun(node, job)
 
-	return execute(db, node)
+	return nil
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
@@ -96,6 +102,7 @@ func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, id int64, infos []sdk.SpawnInf
 	if err := prepareSpawnInfos(j, infos); err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot prepare spawn infos")
 	}
+
 	if err := UpdateNodeJobRun(db, j); err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot update node job run")
 	}

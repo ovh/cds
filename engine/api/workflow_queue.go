@@ -285,11 +285,17 @@ func postWorkflowJobStepStatusHandler(w http.ResponseWriter, r *http.Request, db
 		pbJob.Job.StepStatus = append(pbJob.Job.StepStatus, step)
 	}
 
-	if err := workflow.UpdateNodeJobRun(db, pbJob); err != nil {
+	tx, errB := db.Begin()
+	if errB != nil {
+		return sdk.WrapError(errB, "postWorkflowJobStepStatusHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	if err := workflow.UpdateNodeJobRun(tx, pbJob); err != nil {
 		return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run")
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func getWorkflowJobQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {

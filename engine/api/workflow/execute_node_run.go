@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -43,9 +42,9 @@ func lockAndExecute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 //execute is called by the scheduler. You should not call this by yourself
 func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	t0 := time.Now()
-	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d", n.Number, n.SubNumber, n.WorkflowRunID)
+	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
-		log.Debug("workflow.execute> End [#%d.%d] runID=%d - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, time.Since(t0).Seconds())
+		log.Debug("workflow.execute> End [#%d.%d] runID=%d (%s) - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, n.Status, time.Since(t0).Seconds())
 	}()
 
 	//If status is not waiting neither build: nothing to do
@@ -53,7 +52,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		return nil
 	}
 
-	newStatus := sdk.StatusWaiting.String()
+	var newStatus = n.Status
 
 	//If no stages ==> success
 	if len(n.Stages) == 0 {
@@ -63,34 +62,37 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	//Browse stages
 	for stageIndex := range n.Stages {
 		stage := &n.Stages[stageIndex]
-
+		log.Debug("workflow.execute> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status.String() == "" {
-			stage.Status = sdk.StatusWaiting
-		}
+			if stageIndex == 0 {
+				newStatus = sdk.StatusWaiting.String()
+			}
 
-		if stage.Status == sdk.StatusWaiting {
+			stage.Status = sdk.StatusWaiting
 			//Add job to Queue
 			//Insert data in workflow_node_run_job
 			if err := addJobsToQueue(db, stage, n); err != nil {
 				return err
 			}
+			break
+		}
+
+		//If stage is waiting, nothing to do
+		if stage.Status == sdk.StatusWaiting {
+			break
 		}
 
 		if stage.Status == sdk.StatusBuilding {
+			newStatus = sdk.StatusBuilding.String()
+
 			var end bool
 			end, errSync := syncStage(db, stage)
 			if errSync != nil {
 				return errSync
 			}
 			if end {
-				log.Debug("workflow.execute> Begin [#%d.%d] runID=%d. Node is %s", n.Number, n.SubNumber, n.WorkflowRunID, newStatus)
-				//The job is over
-				//Delete the line in workflow_node_run_job
-				if err := DeleteNodeJobRuns(db, n.ID); err != nil {
-					return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
-				}
-
+				//The stage is over
 				if stage.Status == sdk.StatusFail {
 					n.Done = time.Now()
 					newStatus = sdk.StatusFail.String()
@@ -102,8 +104,6 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 					break
 				}
 				if stageIndex != len(n.Stages)-1 {
-					// Prepare scheduling next stage
-					n.Stages[stageIndex+1].Status = sdk.StatusWaiting
 					continue
 				}
 			}
@@ -113,7 +113,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	n.Status = newStatus
 	// Save the node run in database
 	if err := UpdateNodeRun(db, n); err != nil {
-		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d", n.ID), "workflow.execute> Unable to execute node")
+		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s", n.ID, n.Status), "workflow.execute> Unable to execute node")
 	}
 
 	//Reload the workflow
@@ -129,23 +129,25 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		}
 	}
 
+	//Delete jobs only when node is over
+	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
+		//Delete the line in workflow_node_run_job
+		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
+			return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
+		}
+	}
+
 	return nil
 }
 
 func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNodeRun) error {
-	//log.Debug("addJobsToQueue> add %#v in stage %s", run, stage.Name)
-	//Check stage prerequisites
-	var prerequisitesOK = true
-	/*
-		prerequisitesOK, err := pipeline.CheckPrerequisites(*stage, pb)
-		if err != nil {
-			log.Warning("addJobsToQueue> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, err)
-			return err
-		}
-	*/
+	log.Debug("addJobsToQueue> add %d in stage %s", run.ID, stage.Name)
 
-	//Update the stage status
-	stage.Status = sdk.StatusWaiting
+	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
+	if err != nil {
+		log.Warning("addJobsToQueue> Cannot compute prerequisites on stage %s(%d): err", stage.Name, stage.ID, err)
+		return err
+	}
 
 	//Browse the jobs
 	for _, job := range stage.Jobs {
@@ -166,7 +168,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 
 		if !stage.Enabled || !job.Job.Enabled {
 			job.Status = sdk.StatusDisabled.String()
-		} else if !prerequisitesOK {
+		} else if !conditionsOK {
 			job.Status = sdk.StatusSkipped.String()
 		}
 
@@ -269,75 +271,4 @@ func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	}
 	stage.Status = finalStatus
 	return stageEnd, nil
-}
-
-func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
-	//Load workflow run
-	w, err := loadRunByID(db, run.WorkflowRunID)
-	if err != nil {
-		return nil, sdk.WrapError(err, "getNodeJobRunVariables> Unable to load workflow run")
-	}
-
-	//Load node definition
-	n := w.Workflow.GetNode(run.WorkflowNodeID)
-	if n == nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeJobRunVariables>")
-	}
-	vars := map[string]string{}
-
-	//Load project
-	proj, err := project.Load(db, w.Workflow.ProjectKey, nil, project.LoadOptions.WithVariables)
-	if err != nil {
-		return nil, sdk.WrapError(err, "getNodeJobRunVariables> Unable to load project")
-	}
-	tmp := sdk.ParametersFromProjectVariables(proj)
-	for k, v := range tmp {
-		vars[k] = v
-	}
-
-	// compute application variables
-	if n.Context != nil && n.Context.Application != nil {
-		tmp := sdk.ParametersFromApplicationVariables(n.Context.Application)
-		for k, v := range tmp {
-			vars[k] = v
-		}
-	}
-
-	// compute environment variables
-	if n.Context != nil && n.Context.Environment != nil {
-		tmp := sdk.ParametersFromEnvironmentVariables(n.Context.Environment)
-		for k, v := range tmp {
-			vars[k] = v
-		}
-	}
-
-	// compute pipeline parameters
-	tmp = sdk.ParametersFromPipelineParameters(run.PipelineParameters)
-	for k, v := range tmp {
-		vars[k] = v
-	}
-
-	// compute payload
-	tmp = sdk.ParametersToMap(run.Payload)
-
-	tmp["cds.stage"] = stage.Name
-	tmp["cds.job"] = j.Action.Name
-
-	errm := &sdk.MultiError{}
-
-	params := []sdk.Parameter{}
-	for k, v := range tmp {
-		s, err := sdk.Interpolate(v, tmp)
-		if err != nil {
-			errm.Append(err)
-			continue
-		}
-		sdk.AddParameter(&params, k, sdk.StringParameter, s)
-	}
-
-	if errm.IsEmpty() {
-		return params, nil
-	}
-
-	return params, errm
 }

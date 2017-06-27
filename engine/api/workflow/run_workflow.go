@@ -6,7 +6,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
@@ -59,8 +58,6 @@ func ManualRun(db gorp.SqlExecutor, w *sdk.Workflow, e *sdk.WorkflowNodeRunManua
 	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
-
-	log.Debug("workflow.ManualRun> %#v", wr)
 
 	return wr, processWorkflowRun(db, wr, nil, e, nil)
 }

@@ -238,15 +238,11 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 			case j := <-wjobs:
-
-				log.Debug("%#v", j)
-
 				if j.ID == 0 {
 					continue
 				}
 
 				requirementsOK, _ := checkRequirements(w, &j.Job.Action)
-
 				t := ""
 				if j.ID == w.bookedJobID {
 					t = ", this was my booked job"

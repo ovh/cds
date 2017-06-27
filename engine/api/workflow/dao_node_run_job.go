@@ -24,7 +24,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, groupsID []int64, since *time.Time
 		statuses = []string{sdk.StatusWaiting.String()}
 	}
 
-	query := `select workflow_node_run_job.* 
+	query := `select distinct workflow_node_run_job.*
 	from workflow_node_run_job
 	join workflow_node_run on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
 	join workflow_node on workflow_node.id = workflow_node_run.workflow_node_id
@@ -113,7 +113,12 @@ func UpdateNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	if _, err := db.Update(&dbj); err != nil {
 		return err
 	}
-	return nil
+
+	nRun, errR := LoadNodeRunByID(db, j.WorkflowNodeRunID)
+	if errR != nil {
+		return errR
+	}
+	return execute(db, nRun)
 }
 
 func keyBookJob(id int64) string {
