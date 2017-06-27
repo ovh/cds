@@ -46,9 +46,10 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) (err error) {
 	defer func() {
 		log.Debug("workflow.execute> End [#%d.%d] runID=%d (%s) - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, n.Status, time.Since(t0).Seconds())
 		if err != nil {
+			log.Error("workflow.execute> Unable to execute run %d: %v", n.WorkflowRunID, err)
 			run, errw := loadAndLockRunByID(db, n.WorkflowRunID)
 			if errw != nil {
-				log.Error("workflow.execute> Unable to add infos on run %d: %v", n.WorkflowRunID, err)
+				log.Error("workflow.execute> Unable to add infos on run %d: %v", n.WorkflowRunID, errw)
 				return
 			}
 			AddWorkflowRunInfo(run, sdk.SpawnMsg{
@@ -282,4 +283,33 @@ func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	}
 	stage.Status = finalStatus
 	return stageEnd, nil
+}
+
+//NodeBuildParameters returns build_parameters for a node given its id
+func NodeBuildParameters(wf *sdk.Workflow, wr *sdk.WorkflowRun, id int64, u *sdk.User) ([]sdk.Parameter, error) {
+	refNode := wf.GetNode(id)
+	if refNode == nil {
+		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
+	}
+
+	res := []sdk.Parameter{}
+
+	//TODO what should we do if they is not last run ?
+	if wr != nil {
+		for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
+			oldNode := wr.Workflow.GetNode(nodeID)
+			if oldNode == nil {
+				log.Warning("getWorkflowTriggerConditionHandler> Unable to find last run")
+				break
+			}
+			if oldNode.EqualsTo(refNode) {
+				for _, p := range nodeRuns[0].BuildParameters {
+					sdk.AddParameter(&res, p.Name, p.Type, p.Value)
+				}
+				break
+			}
+		}
+	}
+
+	return res, nil
 }

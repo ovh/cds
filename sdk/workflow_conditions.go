@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -36,7 +37,7 @@ func WorkflowCheckConditions(conditions []WorkflowTriggerCondition, params []Par
 		var err error
 		mapParams[k], err = Interpolate(v, mapParams)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("Unable to interpolate %s (%v)", v, err)
 		}
 	}
 
@@ -45,7 +46,7 @@ func WorkflowCheckConditions(conditions []WorkflowTriggerCondition, params []Par
 		var err error
 		cond.Value, err = Interpolate(cond.Value, mapParams)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("Unable to interpolate %s (%v)", cond.Value, err)
 		}
 
 		switch cond.Operator {
@@ -70,7 +71,7 @@ func WorkflowCheckConditions(conditions []WorkflowTriggerCondition, params []Par
 		case WorkflowConditionsOperatorRegex:
 			match, err := regexp.MatchString(cond.Value, mapParams[cond.Variable])
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("Unable to match string with regex %s (%v)", cond.Value, err)
 			}
 			conditionsOK = conditionsOK && match
 		}

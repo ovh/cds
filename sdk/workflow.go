@@ -64,6 +64,16 @@ func (w *Workflow) GetNode(id int64) *WorkflowNode {
 	return nil
 }
 
+//GetJoin returns the join given its id
+func (w *Workflow) GetJoin(id int64) *WorkflowNodeJoin {
+	for _, j := range w.Joins {
+		if j.ID == id {
+			return &j
+		}
+	}
+	return nil
+}
+
 //TriggersID returns triggers IDs
 func (w *Workflow) TriggersID() []int64 {
 	res := w.Root.TriggersID()
