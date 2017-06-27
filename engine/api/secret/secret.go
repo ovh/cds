@@ -173,8 +173,6 @@ func Decrypt(data []byte) ([]byte, error) {
 	out := make([]byte, macStart-nonceSize)
 	data = data[:macStart]
 	// check hmac
-	fmt.Println(key)
-
 	h := hmac.New(sha256.New, key[ckeySize:])
 	h.Write(data)
 	mac := h.Sum(nil)
