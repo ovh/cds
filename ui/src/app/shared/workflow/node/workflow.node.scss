@@ -1,32 +1,113 @@
 @import '../../../../common';
-
+$boxHeight: 68px;
+$boxWidth: 176px;
 .workflowNode {
   width: 155px;
   height: 58px;
 
   .ui.segment.success {
     background-color: $cds_color_light_green;
+    border: 2px solid $cds_color_green;
   }
 
   .ui.segment.fail {
     background-color: $cds_color_light_red;
+    border: 2px solid $cds_color_red;
   }
 
   .ui.segment.building {
     background-color: $cds_color_light_teal;
+    border: 2px solid transparent;
   }
 
   .ui.segment.inactive {
     background-color: $cds_color_light_grey;
+    border: 2px solid grey;
   }
 
   .ui.segment {
     margin-top: -8px;
     margin-left: -11px;
-    width: 176px;
-    height: 68px;
+    width: $boxWidth;
+    height: $boxHeight;
     border-color: #333;
     padding: 0;
+
+    .firstloop {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      margin: 0;
+      width: $boxWidth;
+      height: $boxHeight;
+      background-color: transparent;
+      border: none;
+
+      &::before,
+      &::after {
+        z-index: 1;
+        box-sizing: inherit;
+        content: '';
+        position: absolute;
+        width: $boxWidth;
+        height: $boxHeight;
+      }
+
+      &::before {
+        top: -2px;
+        left: -2px;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        animation: spinBefore 4s infinite;
+      }
+
+      &::after {
+        border: 2px solid transparent;
+        bottom: 2px;
+        right: 2px;
+        border-radius: 5px;
+        animation: spinAfter 4s infinite;
+      }
+
+    }
+
+    .secondloop {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      margin: 0;
+      width: $boxWidth;
+      height: $boxHeight;
+      background-color: transparent;
+      border: none;
+
+      &::before,
+      &::after {
+        z-index: 2;
+        box-sizing: inherit;
+        content: '';
+        position: absolute;
+        width: $boxWidth;
+        height: $boxHeight;
+      }
+
+      &::before {
+        top: -2px;
+        left: -2px;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        animation: spinSecondBefore 4s infinite;
+      }
+
+      &::after {
+        border: 2px solid transparent;
+        bottom: 2px;
+        right: 2px;
+        border-radius: 5px;
+        animation: spinSecondAfter 4s infinite;
+      }
+
+    }
 
     .pipeline {
       display: flex;
@@ -92,3 +173,126 @@
   }
 }
 
+@keyframes spinBefore {
+  0% {
+    width: 0;
+    height: 0;
+    box-sizing: inherit;
+  }
+  12.5% {
+    width: $boxWidth;
+    height: 0;
+    border-top-color: $cds_color_teal;
+    transition: width 0.5s ease-in;
+  }
+  25% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-top-color: $cds_color_teal;
+    border-right-color: $cds_color_teal;
+    transition: height 0.5s;
+  }
+  50% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-top-color: $cds_color_teal;
+    border-right-color: $cds_color_teal;
+  }
+  100% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-top-color: $cds_color_teal;
+    border-right-color: $cds_color_teal;
+  }
+}
+
+@keyframes spinSecondBefore {
+  0% {
+    width: 0;
+    height: 0;
+  }
+  50% {
+    width: 0;
+    height: 0;
+  }
+  62.5% {
+    width: $boxWidth;
+    height: 0;
+    border-top-color: $cds_color_light_teal;
+    transition: width 0.5s ease-in;
+  }
+  75% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-top-color: $cds_color_light_teal;
+    border-right-color: $cds_color_light_teal;
+    transition: height 0.5s;
+  }
+  100% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-top-color: $cds_color_light_teal;
+    border-right-color: $cds_color_light_teal;
+  }
+}
+
+@keyframes spinAfter {
+  0% {
+    width: 0;
+    height: 0;
+  }
+  25% {
+    width: 0;
+    height: 0;
+  }
+  37.5% {
+    width: $boxWidth;
+    height: 0;
+    border-bottom-color: $cds_color_teal;
+    border-left-color: transparent;
+    transition:
+            width 0.5s ease-in
+  }
+  50% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-bottom-color: $cds_color_teal;
+    border-left-color: $cds_color_teal;
+    transition:
+          height 0.5s
+  }
+  100% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-bottom-color: $cds_color_teal;
+    border-left-color: $cds_color_teal;
+  }
+}
+
+@keyframes spinSecondAfter {
+  0% {
+    width: 0;
+    height: 0;
+  }
+  75% {
+    width: 0;
+    height: 0;
+  }
+  87.5% {
+    width: $boxWidth;
+    height: 0;
+    border-bottom-color: $cds_color_light_teal;
+    border-left-color: transparent;
+    transition:
+            width 0.5s ease-in
+
+  }
+  100% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-bottom-color: $cds_color_light_teal;
+    border-left-color: $cds_color_light_teal;
+    transition:
+            height 0.5s
+  }
+}
