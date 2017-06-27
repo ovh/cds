@@ -40,6 +40,13 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 	if len(w.WorkflowNodeRuns) == 0 {
 		log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", w.Workflow.Root.ID, w.Workflow.Root.Pipeline.Name)
 		//Run the root: manual or from an event
+		AddWorkflowRunInfo(w, sdk.SpawnMsg{
+			ID: sdk.MsgWorkflowStarting.ID,
+			Args: []interface{}{
+				w.Workflow.Name,
+			},
+		})
+
 		if err := processWorkflowNodeRun(db, w, w.Workflow.Root, 0, nil, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -74,7 +81,7 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 
 					conditionsOK, err := sdk.WorkflowCheckConditions(t.Conditions, params)
 					if err != nil {
-						//TODO do something like spawn info on  workflow run
+						log.Warning("processWorkflowRun> WorkflowCheckConditions error: %s", err)
 						return err
 					}
 
@@ -295,4 +302,14 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 	}
 
 	return nil
+}
+
+// AddWorkflowRunInfo add WorkflowRunInfo on a WorkflowRun
+func AddWorkflowRunInfo(run *sdk.WorkflowRun, infos ...sdk.SpawnMsg) {
+	for _, i := range infos {
+		run.Infos = append(run.Infos, sdk.WorkflowRunInfo{
+			APITime: time.Now(),
+			Message: i,
+		})
+	}
 }

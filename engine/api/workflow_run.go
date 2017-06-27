@@ -123,6 +123,10 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 
 	w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
 
+	for i := range runs {
+		runs[i].Translate(r.Header.Get("Accept-Language"))
+	}
+
 	return WriteJSON(w, r, runs, code)
 }
 
@@ -134,6 +138,7 @@ func getLatestWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gor
 	if err != nil {
 		return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
 	}
+	run.Translate(r.Header.Get("Accept-Language"))
 	return WriteJSON(w, r, run, http.StatusOK)
 }
 
@@ -149,6 +154,7 @@ func getWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	if err != nil {
 		return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 	}
+	run.Translate(r.Header.Get("Accept-Language"))
 	return WriteJSON(w, r, run, http.StatusOK)
 }
 
@@ -169,7 +175,6 @@ func getWorkflowNodeRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 	}
 	run.Translate(r.Header.Get("Accept-Language"))
-
 	return WriteJSON(w, r, run, http.StatusOK)
 }
 
@@ -246,6 +251,8 @@ func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
 	}
+
+	wr.Translate(r.Header.Get("Accept-Language"))
 	return WriteJSON(w, r, wr, http.StatusOK)
 }
 

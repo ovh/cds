@@ -40,11 +40,22 @@ func lockAndExecute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 }
 
 //execute is called by the scheduler. You should not call this by yourself
-func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
+func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) (err error) {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
 		log.Debug("workflow.execute> End [#%d.%d] runID=%d (%s) - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, n.Status, time.Since(t0).Seconds())
+		if err != nil {
+			run, errw := loadAndLockRunByID(db, n.WorkflowRunID)
+			if errw != nil {
+				log.Error("workflow.execute> Unable to add infos on run %d: %v", n.WorkflowRunID, err)
+				return
+			}
+			AddWorkflowRunInfo(run, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{err},
+			})
+		}
 	}()
 
 	//If status is not waiting neither build: nothing to do
@@ -125,7 +136,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	if n.Status == sdk.StatusSuccess.String() {
 		if err := processWorkflowRun(db, updatedWorkflowRun, nil, nil, nil); err != nil {
-			sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+			return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 		}
 	}
 
