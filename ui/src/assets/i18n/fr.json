@@ -214,7 +214,7 @@
   "navbar_users" : "Utilisateurs",
   "navbar_worker_models" : "Modèles de worker",
   "navbar_settings" : "Configuration",
-  "navbar_home" : "Aller à la page d'accueil",
+  "navbar_home" : "Accueil",
 
   "notifications_added" : "Notifications ajoutées",
   "notification_clone" : "Notification à cloner",

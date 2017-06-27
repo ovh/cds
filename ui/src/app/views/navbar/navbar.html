@@ -1,5 +1,5 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
-    <a href="/"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"></a>
+    <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"></a>
     <sm-select
             placeholder="{{'navbar_projects_placeholder' | translate}}"
             class="search classic left"
