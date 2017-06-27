@@ -92,9 +92,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 				return errSync
 			}
 			if end {
-				//log.Debug("workflow.execute> Stage (%d-%s) [#%d.%d] ends runID=%d. Node is %s - stage is %s", stageIndex, stage.Name, n.Number, n.SubNumber, n.WorkflowRunID, newStatus, stage.Status.String())
 				//The stage is over
-
 				if stage.Status == sdk.StatusFail {
 					n.Done = time.Now()
 					newStatus = sdk.StatusFail.String()
@@ -144,15 +142,12 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 
 func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNodeRun) error {
 	log.Debug("addJobsToQueue> add %d in stage %s", run.ID, stage.Name)
-	//Check stage prerequisites
-	var prerequisitesOK = true
-	/*
-		prerequisitesOK, err := pipeline.CheckPrerequisites(*stage, pb)
-		if err != nil {
-			log.Warning("addJobsToQueue> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d): %s\n", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, err)
-			return err
-		}
-	*/
+
+	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
+	if err != nil {
+		log.Warning("addJobsToQueue> Cannot compute prerequisites on stage %s(%d): err", stage.Name, stage.ID, err)
+		return err
+	}
 
 	//Browse the jobs
 	for _, job := range stage.Jobs {
@@ -173,7 +168,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 
 		if !stage.Enabled || !job.Job.Enabled {
 			job.Status = sdk.StatusDisabled.String()
-		} else if !prerequisitesOK {
+		} else if !conditionsOK {
 			job.Status = sdk.StatusSkipped.String()
 		}
 
