@@ -52,7 +52,7 @@
     </div>
     <div *ngIf="selectedJob">
         <h3></h3>
-        <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [edit]="pipeline.permission === 7"
+        <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [edit]="pipeline.permission === permissionValue.READ_WRITE_EXECUTE"
                     (actionEvent)="jobEvent($event)"></app-action>
     </div>
 </div>

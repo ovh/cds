@@ -11,6 +11,7 @@ import {cloneDeep} from 'lodash';
 import {Job} from '../../../../model/job.model';
 import {ActionEvent} from '../../../../shared/action/action.event.model';
 import {DragulaService} from 'ng2-dragula';
+import {PermissionValue} from '../../../../model/permission.model';
 
 @Component({
     selector: 'app-pipeline-workflow',
@@ -39,6 +40,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     selectedStage: Stage;
     selectedJob: Job;
     suggest: Array<string>;
+    permissionValue = PermissionValue;
 
     loadingStage = false;
 

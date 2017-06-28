@@ -89,7 +89,5 @@ describe('CDS: Step Form Component', () => {
         expect(fixture.componentInstance.create.emit).toHaveBeenCalledWith(
             new StepEvent('add', fixture.componentInstance.step)
         );
-
-
     }));
 });
