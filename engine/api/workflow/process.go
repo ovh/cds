@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -254,23 +253,9 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		Stages:         stages,
 	}
 
-	//Process parameters for the jobs
-	jobParams, errParam := getNodeRunParameters(db, run)
-	if errParam != nil {
-		AddWorkflowRunInfo(w, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errParam},
-		})
-		return errParam
-	}
-	run.BuildParameters = jobParams
-
-	//TODO inherit parameter from parent job
-
 	run.SourceNodeRuns = sourceNodeRuns
 	if sourceNodeRuns != nil {
 		//Get all the nodeRun from the sources
-		//Merge the payload applying older nodeRun to most recent
 		runs := []sdk.WorkflowNodeRun{}
 		for _, id := range sourceNodeRuns {
 			for _, v := range w.WorkflowNodeRuns {
@@ -283,16 +268,18 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 			}
 		}
 
-		sort.Slice(runs, func(i, j int) bool {
-			return runs[i].Start.Before(runs[i].Start)
-		})
-
+		//Merge the payloads from all the sources
 		m := map[string]string{}
 		for _, r := range runs {
-			m1 := sdk.ParametersToMap(r.Payload)
-			for k, v := range m1 {
-				m[k] = v
+			m1, errm1 := dump.ToMap(r.Payload, dump.WithDefaultLowerCaseFormatter())
+			if errm1 != nil {
+				AddWorkflowRunInfo(w, sdk.SpawnMsg{
+					ID:   sdk.MsgWorkflowError.ID,
+					Args: []interface{}{errm1},
+				})
+				log.Error("processWorkflowNodeRun> Unable to compute hook payload")
 			}
+			m = sdk.ParametersMapMerge(m, m1)
 		}
 
 		run.Payload = sdk.ParametersFromMap(m)
@@ -350,6 +337,18 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 	if err := updateWorkflowRun(db, w); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}
+
+	//Process parameters for the jobs
+	//TODO inherit parameter from parent job
+	jobParams, errParam := getNodeRunBuildParameters(db, run)
+	if errParam != nil {
+		AddWorkflowRunInfo(w, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowError.ID,
+			Args: []interface{}{errParam},
+		})
+		return errParam
+	}
+	run.BuildParameters = jobParams
 
 	//Execute the node run !
 	if err := execute(db, run); err != nil {

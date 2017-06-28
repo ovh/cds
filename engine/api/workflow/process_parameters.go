@@ -3,6 +3,7 @@ package workflow
 import (
 	"fmt"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/project"
@@ -10,7 +11,7 @@ import (
 )
 
 func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
-	params, err := getNodeRunParameters(db, run)
+	params, err := getNodeRunBuildParameters(db, run)
 	if err != nil {
 		return nil, err
 	}
@@ -37,25 +38,9 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 	return params, errm
 }
 
-func getNodeRunParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
-	//Load workflow run
-	w, err := loadRunByID(db, run.WorkflowRunID)
-	if err != nil {
-		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load workflow run")
-	}
-
-	//Load node definition
-	n := w.Workflow.GetNode(run.WorkflowNodeID)
-	if n == nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeRunParameters>")
-	}
+// GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
+func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
 	vars := map[string]string{}
-
-	//Load project
-	proj, err := project.Load(db, w.Workflow.ProjectKey, nil, project.LoadOptions.WithVariables)
-	if err != nil {
-		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load project")
-	}
 	tmp := sdk.ParametersFromProjectVariables(proj)
 	for k, v := range tmp {
 		vars[k] = v
@@ -80,25 +65,85 @@ func getNodeRunParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.
 	}
 
 	// compute pipeline parameters
-	tmp = sdk.ParametersFromPipelineParameters(run.PipelineParameters)
+	tmp = sdk.ParametersFromPipelineParameters(pipelineParameters)
 	for k, v := range tmp {
 		vars[k] = v
 	}
 
 	// compute payload
-	tmp = sdk.ParametersToMap(run.Payload)
+	errm := &sdk.MultiError{}
+	payloadMap, errdump := dump.ToMap(payload, dump.WithLowerCaseFormatter())
+	if errdump != nil {
+		errm.Append(errdump)
+	}
+	for k, v := range payloadMap {
+		tmp[k] = v
+	}
 
-	tmp["cds.project"] = w.Workflow.ProjectKey
-	tmp["cds.workflow"] = w.Workflow.Name
+	tmp["cds.project"] = w.ProjectKey
+	tmp["cds.workflow"] = w.Name
 	tmp["cds.pipeline"] = n.Pipeline.Name
+	tmp["cds.version"] = fmt.Sprintf("%d.%d", 1, 0)
+	tmp["cds.run"] = fmt.Sprintf("%d.%d", 1, 0)
+	tmp["cds.run.number"] = fmt.Sprintf("%d", 1)
+	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", 0)
+
+	params := []sdk.Parameter{}
+	for k, v := range tmp {
+		s, err := sdk.Interpolate(v, tmp)
+		if err != nil {
+			errm.Append(err)
+			continue
+		}
+		sdk.AddParameter(&params, k, sdk.StringParameter, s)
+	}
+
+	if errm.IsEmpty() {
+		return params, nil
+	}
+
+	return params, errm
+}
+
+func getNodeRunBuildParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
+	//Load workflow run
+	w, err := loadRunByID(db, run.WorkflowRunID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load workflow run")
+	}
+
+	//Load node definition
+	n := w.Workflow.GetNode(run.WorkflowNodeID)
+	if n == nil {
+		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeRunParameters>")
+	}
+
+	//Load project
+	proj, err := project.Load(db, w.Workflow.ProjectKey, nil, project.LoadOptions.WithVariables)
+	if err != nil {
+		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load project")
+	}
+
+	//Get node build parameters
+	errm := &sdk.MultiError{}
+	params, errparam := GetNodeBuildParameters(proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
+	if errparam != nil {
+		err, ok := errparam.(*sdk.MultiError)
+		if ok {
+			errm = err
+		} else {
+			return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to compute node build parameters")
+		}
+	}
+
+	//override default parameters value
+	tmp := sdk.ParametersToMap(params)
 	tmp["cds.version"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
 	tmp["cds.run"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
 
-	errm := &sdk.MultiError{}
-
-	params := []sdk.Parameter{}
+	params = []sdk.Parameter{}
 	for k, v := range tmp {
 		s, err := sdk.Interpolate(v, tmp)
 		if err != nil {

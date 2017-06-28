@@ -286,7 +286,7 @@ func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 }
 
 //NodeBuildParameters returns build_parameters for a node given its id
-func NodeBuildParameters(wf *sdk.Workflow, wr *sdk.WorkflowRun, id int64, u *sdk.User) ([]sdk.Parameter, error) {
+func NodeBuildParameters(proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRun, id int64, u *sdk.User) ([]sdk.Parameter, error) {
 	refNode := wf.GetNode(id)
 	if refNode == nil {
 		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
@@ -294,7 +294,6 @@ func NodeBuildParameters(wf *sdk.Workflow, wr *sdk.WorkflowRun, id int64, u *sdk
 
 	res := []sdk.Parameter{}
 
-	//TODO what should we do if they is not last run ?
 	if wr != nil {
 		for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
 			oldNode := wr.Workflow.GetNode(nodeID)
@@ -308,6 +307,14 @@ func NodeBuildParameters(wf *sdk.Workflow, wr *sdk.WorkflowRun, id int64, u *sdk
 				}
 				break
 			}
+		}
+	}
+
+	if len(res) == 0 {
+		var err error
+		res, err = GetNodeBuildParameters(proj, wf, refNode, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload)
+		if err != nil {
+			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters")
 		}
 	}
 

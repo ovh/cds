@@ -60,7 +60,7 @@ type WorkflowNodeRun struct {
 	HookEvent          *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
 	Manual             *WorkflowNodeRunManual    `json:"manual" db:"-"`
 	SourceNodeRuns     []int64                   `json:"source_node_runs" db:"-"`
-	Payload            []Parameter               `json:"payload" db:"-"`
+	Payload            interface{}               `json:"payload" db:"-"`
 	PipelineParameters []Parameter               `json:"pipeline_parameters" db:"-"`
 	BuildParameters    []Parameter               `json:"build_parameters" db:"-"`
 	Artifacts          []WorkflowNodeRunArtifact `json:"artifacts,omitempty" db:"-"`
