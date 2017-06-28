@@ -82,9 +82,8 @@ describe('CDS: Project Show Component', () => {
         fixture.componentInstance.project.key = 'BAR';
 
         fixture.componentInstance.project.groups = new Array<GroupPermission>();
-        let gp = new GroupPermission();
-        gp.permission = 7;
-        fixture.componentInstance.project.groups.push(gp);
+        fixture.componentInstance.group = new Group();
+        fixture.componentInstance.group.name = 'foo';
 
         fixture.componentInstance.createProject();
         expect(projectStore.createProject).toHaveBeenCalled();
@@ -120,26 +119,6 @@ describe('CDS: Project Show Component', () => {
         fixture.componentInstance.project.groups.push(gp);
         fixture.componentInstance.createProject();
         expect(fixture.componentInstance.groupError).toBeTruthy();
-    }));
-
-    it('it should add/remove group', fakeAsync(() => {
-        let fixture = TestBed.createComponent(ProjectAddComponent);
-
-        let gp = new GroupPermission();
-        gp.permission = 4;
-        let g = new Group();
-        gp.group = g;
-        let event = new PermissionEvent('add', gp);
-
-        // add twice
-        fixture.componentInstance.permissionManagement(event);
-        fixture.componentInstance.permissionManagement(event);
-
-        expect(fixture.componentInstance.project.groups.length).toBe(1);
-
-        event.type = 'delete';
-        fixture.componentInstance.permissionManagement(event);
-        expect(fixture.componentInstance.project.groups.length).toBe(0);
     }));
 });
 

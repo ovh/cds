@@ -8,17 +8,11 @@
       fill:
       - find: input[name="projectname"]
         text: '{{.ui.project}}'
-      - find: '#PermissionGroupName input.search'
+      - find: '#PermissionGroup input.search'
         text: CDS_TEAM
-      - find: '#PermissionGroupLevel input.search'
-        text: 'Read / Write / Execute'
-    screenshot: project_create_2_type.png
-  - action:
-      click:
-        find: button.ui.blue
-    screenshot: project_create_3_permission.png
+    screenshot: project_create_2_group.png
   - action:
       click:
          find: button.ui.green
          wait: 2
-    screenshot: project_create_4_submit.png
+    screenshot: project_create_3_submit.png
