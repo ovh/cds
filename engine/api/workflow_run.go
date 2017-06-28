@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -229,6 +230,32 @@ func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 				User: *c.User,
 			}
 		}
+
+		//If payload is not set, keep the default payload
+		if opts.Manual.Payload == interface{}(nil) {
+			n := wf.Root
+			if opts.FromNodeID != nil {
+				n = wf.GetNode(*opts.FromNodeID)
+				if n == nil {
+					return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Unable to run workflow")
+				}
+			}
+			opts.Manual.Payload = n.Context.DefaultPayload
+		}
+
+		//If PipelineParameters are not set, keep the default PipelineParameters
+		if len(opts.Manual.PipelineParameters) == 0 {
+			n := wf.Root
+			if opts.FromNodeID != nil {
+				n = wf.GetNode(*opts.FromNodeID)
+				if n == nil {
+					return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Unable to run workflow")
+				}
+			}
+			opts.Manual.PipelineParameters = n.Context.DefaultPipelineParameters
+		}
+
+		log.Debug("Manual run: %#v", opts.Manual)
 
 		//Manual run
 		if lastRun != nil {

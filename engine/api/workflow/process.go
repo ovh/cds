@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -254,23 +253,9 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		Stages:         stages,
 	}
 
-	//Process parameters for the jobs
-	jobParams, errParam := getNodeRunParameters(db, run)
-	if errParam != nil {
-		AddWorkflowRunInfo(w, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errParam},
-		})
-		return errParam
-	}
-	run.BuildParameters = jobParams
-
-	//TODO inherit parameter from parent job
-
 	run.SourceNodeRuns = sourceNodeRuns
 	if sourceNodeRuns != nil {
 		//Get all the nodeRun from the sources
-		//Merge the payload applying older nodeRun to most recent
 		runs := []sdk.WorkflowNodeRun{}
 		for _, id := range sourceNodeRuns {
 			for _, v := range w.WorkflowNodeRuns {
@@ -283,64 +268,53 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 			}
 		}
 
-		sort.Slice(runs, func(i, j int) bool {
-			return runs[i].Start.Before(runs[i].Start)
-		})
-
+		//Merge the payloads from all the sources
 		m := map[string]string{}
 		for _, r := range runs {
-			m1 := sdk.ParametersToMap(r.Payload)
-			for k, v := range m1 {
-				m[k] = v
+			m1, errm1 := dump.ToMap(r.Payload, dump.WithDefaultLowerCaseFormatter())
+			if errm1 != nil {
+				AddWorkflowRunInfo(w, sdk.SpawnMsg{
+					ID:   sdk.MsgWorkflowError.ID,
+					Args: []interface{}{errm1},
+				})
+				log.Error("processWorkflowNodeRun> Unable to compute hook payload: %v", errm1)
 			}
+			m = sdk.ParametersMapMerge(m, m1)
 		}
 
-		run.Payload = sdk.ParametersFromMap(m)
+		run.Payload = m
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
 
 	run.HookEvent = h
 	if h != nil {
-		payload, err := dump.ToMap(h.Payload, dump.WithDefaultLowerCaseFormatter())
-		if err != nil {
-			AddWorkflowRunInfo(w, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{err},
-			})
-			log.Error("processWorkflowNodeRun> Unable to compute hook payload")
-		}
-		run.Payload = sdk.ParametersFromMap(payload)
-		if len(h.PipelineParameters) != 0 {
-			run.PipelineParameters = h.PipelineParameters
-		} else {
-			run.PipelineParameters = n.Context.DefaultPipelineParameters
-		}
+		run.Payload = h.Payload
+		run.PipelineParameters = h.PipelineParameters
 	}
 
 	run.Manual = m
 	if m != nil {
-		payload, err := dump.ToMap(m.Payload, dump.WithDefaultLowerCaseFormatter())
-		if err != nil {
-			AddWorkflowRunInfo(w, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{err},
-			})
-			log.Error("processWorkflowNodeRun> Unable to compute hook payload")
-		}
-		run.Payload = sdk.ParametersFromMap(payload)
-		if len(m.PipelineParameters) != 0 {
-			run.PipelineParameters = m.PipelineParameters
-		} else {
-			run.PipelineParameters = n.Context.DefaultPipelineParameters
-		}
+		run.Payload = m.Payload
+		run.PipelineParameters = m.PipelineParameters
 	}
+
+	//Process parameters for the jobs
+	//TODO inherit parameter from parent job
+	jobParams, errParam := getNodeRunBuildParameters(db, run)
+	if errParam != nil {
+		AddWorkflowRunInfo(w, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowError.ID,
+			Args: []interface{}{errParam},
+		})
+		return sdk.WrapError(errParam, "processWorkflowNodeRun> getNodeRunBuildParameters failed")
+	}
+	run.BuildParameters = jobParams
 
 	if err := insertWorkflowNodeRun(db, run); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run")
 	}
 
-	log.Debug("processWorkflowNodeRun> new node run: %#v", run)
-
+	//Update workflow run
 	if w.WorkflowNodeRuns == nil {
 		w.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
 	}

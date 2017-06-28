@@ -33,7 +33,7 @@ func Publish(payload interface{}) {
 
 // PublishJobRun sends an event
 func PublishJobRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun) {
-	//TODO
+	//TODO PublishJobRun sends an event
 }
 
 // PublishActionBuild sends a actionBuild event

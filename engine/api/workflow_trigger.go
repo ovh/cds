@@ -7,9 +7,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func getWorkflowTriggerConditionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -22,6 +22,11 @@ func getWorkflowTriggerConditionHandler(w http.ResponseWriter, r *http.Request, 
 		return errID
 	}
 
+	proj, errproj := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
+	}
+
 	wf, errw := workflow.Load(db, key, name, c.User)
 	if errw != nil {
 		return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
@@ -32,10 +37,9 @@ func getWorkflowTriggerConditionHandler(w http.ResponseWriter, r *http.Request, 
 		if errr != sdk.ErrWorkflowNotFound {
 			return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
 		}
-		log.Warning("getWorkflowTriggerConditionHandler> Unable to find last run")
 	}
 
-	params, errp := workflow.NodeBuildParameters(wf, wr, id, c.User)
+	params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, c.User)
 	if errp != nil {
 		return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
 	}
@@ -77,6 +81,11 @@ func getWorkflowTriggerJoinConditionHandler(w http.ResponseWriter, r *http.Reque
 		return errID
 	}
 
+	proj, errproj := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
+	}
+
 	wf, errw := workflow.Load(db, key, name, c.User)
 	if errw != nil {
 		return sdk.WrapError(errw, "getWorkflowTriggerJoinConditionHandler> Unable to load workflow")
@@ -87,7 +96,6 @@ func getWorkflowTriggerJoinConditionHandler(w http.ResponseWriter, r *http.Reque
 		if errr != sdk.ErrWorkflowNotFound {
 			return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load last run workflow")
 		}
-		log.Warning("getWorkflowTriggerJoinConditionHandler> Unable to find last run")
 	}
 
 	j := wf.GetJoin(id)
@@ -104,7 +112,7 @@ func getWorkflowTriggerJoinConditionHandler(w http.ResponseWriter, r *http.Reque
 
 	allparams := map[string]string{}
 	for _, i := range j.SourceNodeIDs {
-		params, errp := workflow.NodeBuildParameters(wf, wr, i, c.User)
+		params, errp := workflow.NodeBuildParameters(proj, wf, wr, i, c.User)
 		if errp != nil {
 			return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load build parameters")
 		}
