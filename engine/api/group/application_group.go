@@ -33,8 +33,7 @@ func CheckGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64) 
 	query := `SELECT COUNT(group_id) FROM application_group WHERE application_id = $1 AND group_id = $2`
 
 	var nb int64
-	err := db.QueryRow(query, applicationID, groupID).Scan(&nb)
-	if err != nil {
+	if err := db.QueryRow(query, applicationID, groupID).Scan(&nb); err != nil {
 		return false, err
 	}
 	return (nb != 0), nil
