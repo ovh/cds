@@ -1,6 +1,7 @@
 import {Component, Input} from '@angular/core';
 import {Table} from '../table/table';
 import {PipelineBuild} from '../../model/pipeline.model';
+import {Project} from '../../model/project.model';
 
 @Component({
     selector: 'app-history',
@@ -9,6 +10,7 @@ import {PipelineBuild} from '../../model/pipeline.model';
 })
 export class HistoryComponent extends Table {
 
+    @Input() project: Project;
     @Input() history: Array<PipelineBuild>;
     @Input() currentBuild: PipelineBuild;
 

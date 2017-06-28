@@ -12,11 +12,41 @@
         </thead>
         <tbody>
         <tr *ngFor="let pb of getDataForCurrentPage()" [class.active]="currentBuild && currentBuild.id === pb.id">
-            <td class="center"><app-status-icon [status]="pb.status"></app-status-icon></td>
-            <td>{{pb.version}}</td>
-            <td>{{getTriggerSource(pb)}}</td>
-            <td>{{pb.start | amCalendar}}</td>
-            <td>{{pb.done | amCalendar}}</td>
+            <td class="center">
+                <a href="#"
+                   [routerLink]="['/project', project.key, 'application', pb.application.name, 'pipeline', pb.pipeline.name, 'build', pb.build_number]"
+                   [queryParams]="{ envName: pb.environment.name, branch: pb.trigger.vcs_branch, version: pb.version}">
+                    <app-status-icon [status]="pb.status"></app-status-icon>
+                </a>
+            </td>
+            <td>
+                <a href="#"
+                   [routerLink]="['/project', project.key, 'application', pb.application.name, 'pipeline', pb.pipeline.name, 'build', pb.build_number]"
+                   [queryParams]="{ envName: pb.environment.name, branch: pb.trigger.vcs_branch, version: pb.version}">
+                {{pb.version}}
+                </a>
+            </td>
+            <td>
+                <a href="#"
+                   [routerLink]="['/project', project.key, 'application', pb.application.name, 'pipeline', pb.pipeline.name, 'build', pb.build_number]"
+                   [queryParams]="{ envName: pb.environment.name, branch: pb.trigger.vcs_branch, version: pb.version}">
+                {{getTriggerSource(pb)}}
+                </a>
+            </td>
+            <td>
+                <a href="#"
+                   [routerLink]="['/project', project.key, 'application', pb.application.name, 'pipeline', pb.pipeline.name, 'build', pb.build_number]"
+                   [queryParams]="{ envName: pb.environment.name, branch: pb.trigger.vcs_branch, version: pb.version}">
+                    {{pb.start | amCalendar}}
+                </a>
+            </td>
+            <td>
+                <a href="#"
+                   [routerLink]="['/project', project.key, 'application', pb.application.name, 'pipeline', pb.pipeline.name, 'build', pb.build_number]"
+                   [queryParams]="{ envName: pb.environment.name, branch: pb.trigger.vcs_branch, version: pb.version}">
+                    {{pb.done | amCalendar}}
+                </a>
+            </td>
             <td class="center">
                 <app-delete-button></app-delete-button>
             </td>
