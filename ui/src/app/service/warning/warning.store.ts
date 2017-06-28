@@ -29,7 +29,7 @@ export class WarningStore {
             if (w.project && w.project.key) {
 
                 if (!updatedWarnings.get(w.project.key)) {
-                    updatedWarnings.set(w.project.key, new WarningUI);
+                    updatedWarnings.set(w.project.key, new WarningUI());
                 }
                 let warningUI = updatedWarnings.get(w.project.key);
 
