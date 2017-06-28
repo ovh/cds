@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
+
+	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -73,6 +75,17 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 	//Wait until the logchannel is empty
 	w.drainLogsAndCloseLogger(ctx)
+
+	// Try to send result through grpc
+	if w.grpc.conn != nil {
+		client := grpc.NewWorkflowQueueClient(w.grpc.conn)
+		res.BuildID = job.ID
+		_, err := client.SendResult(ctx, &res)
+		if err == nil {
+			return nil
+		}
+		log.Error("Unable to send result through grpc: %v", err)
+	}
 
 	return w.client.QueueSendResult(job.ID, res)
 }
