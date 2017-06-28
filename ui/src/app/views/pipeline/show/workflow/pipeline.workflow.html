@@ -12,7 +12,7 @@
                         [class.seven]="pipeline.stages.length === 6">
                         <div class="stageItem">
                             <a class="pointing" (click)="openEditModal(stage)"><i class="setting icon"></i>{{stage.name}}</a>
-                            <i class="move icon"></i>
+                            <i class="right floated move icon"></i>
                             <ul>
                                 <li *ngFor="let j of stage.jobs; let i = index" id="Job{{i}}">
                                     <div class="job ui segment pointing" [class.inactive]="!j.enabled" (click)="selectJob(j, stage)"
@@ -51,7 +51,6 @@
         </div>
     </div>
     <div *ngIf="selectedJob">
-        <h3></h3>
         <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [edit]="pipeline.permission === permissionValue.READ_WRITE_EXECUTE"
                     (actionEvent)="jobEvent($event)"></app-action>
     </div>
