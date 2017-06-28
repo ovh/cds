@@ -233,7 +233,6 @@ func postWorkflowJobResultHandler(w http.ResponseWriter, r *http.Request, db *go
 	return nil
 }
 
-//TODO grpc
 func postWorkflowJobLogsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	id, errr := requestVarInt(r, "permID")
 	if errr != nil {
