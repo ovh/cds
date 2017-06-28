@@ -80,7 +80,7 @@ func (*handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, e
 	db := database.GetDBMap()
 
 	//Load workflow node job run
-	job, errj := workflow.LoadNodeJobRun(db, res.BuildID)
+	job, errj := workflow.LoadAndLockNodeJobRun(db, res.BuildID)
 	if errj != nil {
 		return new(empty.Empty), sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
 	}
@@ -95,12 +95,6 @@ func (*handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, e
 	//Update worker status
 	if err := worker.UpdateWorkerStatus(tx, workerID, sdk.StatusWaiting); err != nil {
 		log.Warning("postWorkflowJobResultHandler> Cannot update worker status (%s): %s", workerID, err)
-	}
-
-	// Update action status
-	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", workerID, res.Status)
-	if err := workflow.UpdateNodeJobRunStatus(tx, job, sdk.Status(res.Status)); err != nil {
-		return new(empty.Empty), sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", workerID)
 	}
 
 	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
@@ -120,10 +114,16 @@ func (*handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, e
 		return nil, err
 	}
 
+	// Update action status
+	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", workerID, res.Status)
+	if err := workflow.UpdateNodeJobRunStatus(tx, job, sdk.Status(res.Status)); err != nil {
+		return new(empty.Empty), sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", workerID)
+	}
+
 	//Commit the transaction
 	if err := tx.Commit(); err != nil {
 		return new(empty.Empty), sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot commit tx")
 	}
 
-	return nil, nil
+	return new(empty.Empty), nil
 }
