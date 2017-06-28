@@ -32,18 +32,13 @@
     - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/pipeline/{{.ui.pipeline}}
   - action:
       click:
-        find: '#AddStageLink'
+        find: '#AddStageAndJob'
         wait: 2
-    screenshot: pipeline_6_stage_submit.png
-  - action:
-      click:
-        find: '#AddJobLink'
-        wait: 2
-    screenshot: pipeline_7_job_submit.png
+    screenshot: pipeline_6_job_submit.png
   - action:
       click:
         find: '#Job0'
         wait: 1
-    screenshot: pipeline_8_job_select.png
+    screenshot: pipeline_7_job_select.png
   - type: exec
     script: '{{.cds.build.cds}} pipeline job append {{.ui.project}} {{.ui.pipeline}} "New Job" Script -p "script=echo hello"'

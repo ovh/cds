@@ -59,6 +59,14 @@
   background-color: #f9f9f9;
   position: fixed;
   bottom:0;
-  z-index: 1000;
+  z-index: 30;
   right: 0;
+  width: 430px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+
+  .column {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
 }
