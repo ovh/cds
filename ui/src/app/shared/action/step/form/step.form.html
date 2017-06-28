@@ -1,6 +1,6 @@
 <div class="ui form" *ngIf="step">
     <div class="field">
-        <button class="addbtn ui right floated button" (click)="displayChoice()" *ngIf="!showAddStep"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
+        <button class="ui fluid blue button" (click)="displayChoice()" *ngIf="!showAddStep"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
         <div *ngIf="showAddStep">
             <sm-card class="ui card">
                 <card-title><b>{{step?.name}}</b></card-title>
@@ -22,8 +22,8 @@
       <div class="ui buttons">
           <button class="ui green button" (click)="addStep(false)"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
           <div class="or"></div>
-          <button class="ui grey button" (click)="addStep(true)"><i class="plus icon"></i>{{ 'job_add_step_final' | translate }}</button>
+          <button class="ui blue button" (click)="addStep(true)"><i class="plus icon"></i>{{ 'job_add_step_final' | translate }}</button>
       </div>
-      <button class="ui grey right floated button" (click)="cancel()">{{'btn_cancel' | translate}}</button>
+      <button class="ui right floated grey button" (click)="cancel()">{{'btn_cancel' | translate}}</button>
     </div>
 </div>

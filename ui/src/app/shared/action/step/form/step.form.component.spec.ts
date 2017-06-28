@@ -14,7 +14,7 @@ import {Action} from '../../../../model/action.model';
 import {StepEvent} from '../step.event';
 
 
-describe('CDS: Action Component', () => {
+describe('CDS: Step Form Component', () => {
 
     let injector: Injector;
     let backend: MockBackend;
@@ -70,8 +70,8 @@ describe('CDS: Action Component', () => {
 
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.addbtn.ui.right.floated.button')).toBeTruthy('Add button must be displayed');
-        compiled.querySelector('.addbtn.ui.right.floated.button').click();
+        expect(compiled.querySelector('.ui.fluid.blue.button')).toBeTruthy('Add button must be displayed');
+        compiled.querySelector('.ui.fluid.blue.button').click();
 
         fixture.detectChanges();
         tick(50);
@@ -89,7 +89,5 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.create.emit).toHaveBeenCalledWith(
             new StepEvent('add', fixture.componentInstance.step)
         );
-
-
     }));
 });
