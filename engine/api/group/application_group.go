@@ -33,8 +33,7 @@ func CheckGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64) 
 	query := `SELECT COUNT(group_id) FROM application_group WHERE application_id = $1 AND group_id = $2`
 
 	var nb int64
-	err := db.QueryRow(query, applicationID, groupID).Scan(&nb)
-	if err != nil {
+	if err := db.QueryRow(query, applicationID, groupID).Scan(&nb); err != nil {
 		return false, err
 	}
 	return (nb != 0), nil
@@ -60,8 +59,7 @@ func UpdateGroupRoleInApplication(db gorp.SqlExecutor, key, appName, groupName s
 
 // DeleteAllGroupFromApplication remove all group from the given application
 func DeleteAllGroupFromApplication(db gorp.SqlExecutor, applicationID int64) error {
-	query := `DELETE FROM application_group
-		  WHERE application_id=$1`
+	query := `DELETE FROM application_group WHERE application_id=$1`
 	_, err := db.Exec(query, applicationID)
 	return err
 }
