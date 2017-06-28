@@ -16,7 +16,7 @@ declare var CodeMirror: any;
     styleUrls: ['./node.context.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeContextComponent implements OnInit, AfterViewInit {
+export class WorkflowNodeContextComponent implements AfterViewInit {
 
     @Input() project: Project;
     @Input() node: WorkflowNode;
@@ -30,6 +30,7 @@ export class WorkflowNodeContextComponent implements OnInit, AfterViewInit {
 
     editableNode: WorkflowNode;
 
+    payloadString: string;
     codeMirrorConfig: {};
     invalidJSON = false;
 
@@ -44,11 +45,6 @@ export class WorkflowNodeContextComponent implements OnInit, AfterViewInit {
             lineWrapping: true
         };
     }
-
-    ngOnInit(): void {
-        this.editableNode = cloneDeep(this.node);
-    }
-
     ngAfterViewInit(): void {
         this.nodeContextModal.onModalShow.subscribe(() => {
             this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
@@ -70,6 +66,11 @@ export class WorkflowNodeContextComponent implements OnInit, AfterViewInit {
 
     show(data?: {}): void {
         if (this.nodeContextModal) {
+            this.editableNode = cloneDeep(this.node);
+            if (!this.editableNode.context.default_payload) {
+                this.editableNode.context.default_payload = {};
+            }
+            this.payloadString = JSON.stringify(this.editableNode.context.default_payload);
             this.nodeContextModal.show(data);
         }
     }
@@ -90,16 +91,19 @@ export class WorkflowNodeContextComponent implements OnInit, AfterViewInit {
     }
 
     reindent(): void {
-        this.editableNode.context.default_payload = JSON.stringify(this.editableNode.context.default_payload, undefined, 4);
+        this.updateValue(this.payloadString);
     }
 
-    updateValue(): void {
+    updateValue(payload): void {
+        let newPayload: {};
         try {
-            JSON.parse(this.editableNode.context.default_payload);
+            newPayload = JSON.parse(payload);
             this.invalidJSON = false;
         } catch (e) {
             this.invalidJSON = true;
             return;
         }
+        this.payloadString = JSON.stringify(newPayload, undefined, 4);
+        this.editableNode.context.default_payload = JSON.parse(this.payloadString);
     }
 }

@@ -136,7 +136,7 @@ export class WorkflowNodeContext {
     application: Application;
     environment: Environment;
     environment_id: number;
-    default_payload: string;
+    default_payload: {};
     default_pipeline_parameters: Array<Parameter>;
 }
 
