@@ -40,9 +40,9 @@ func (w *currentWorker) sendLog(buildID int64, value string, stepOrder int, fina
 	return nil
 }
 
-func (w *currentWorker) logProcessor() error {
+func (w *currentWorker) logProcessor(ctx context.Context) error {
 	if w.grpc.conn != nil {
-		if err := w.grpcLogger(w.logger.logChan); err != nil {
+		if err := w.grpcLogger(ctx, w.logger.logChan); err != nil {
 			log.Error("GPPC logger : %s", err)
 		} else {
 			return nil
@@ -134,10 +134,15 @@ func (w *currentWorker) logProcessor() error {
 	return nil
 }
 
-func (w *currentWorker) grpcLogger(inputChan chan sdk.Log) error {
+func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) error {
 	log.Info("Logging through grpc")
-	client := grpc.NewBuildLogClient(w.grpc.conn)
-	stream, err := client.AddBuildLog(context.Background())
+
+	stream, err := grpc.NewBuildLogClient(w.grpc.conn).AddBuildLog(ctx)
+	if err != nil {
+		return err
+	}
+
+	streamWorkflow, err := grpc.NewWorkflowQueueClient(w.grpc.conn).SendLog(ctx)
 	if err != nil {
 		return err
 	}
@@ -146,15 +151,28 @@ func (w *currentWorker) grpcLogger(inputChan chan sdk.Log) error {
 		l, ok := <-inputChan
 		if ok {
 			log.Debug("LOG: %v", l.Val)
-			if err := stream.Send(&l); err != nil {
-				log.Error("grpcLogger> Error sending message : %s", err)
-				//Close all
-				stream.CloseSend()
-				w.grpc.conn.Close()
-				w.grpc.conn = nil
-				//Reinject log
-				inputChan <- l
-				return nil
+			if w.currentJob.wJob == nil {
+				if err := stream.Send(&l); err != nil {
+					log.Error("grpcLogger> Error sending message : %s", err)
+					//Close all
+					stream.CloseSend()
+					w.grpc.conn.Close()
+					w.grpc.conn = nil
+					//Reinject log
+					inputChan <- l
+					return nil
+				}
+			} else {
+				if err := streamWorkflow.Send(&l); err != nil {
+					log.Error("grpcLogger> Error sending message : %s", err)
+					//Close all
+					stream.CloseSend()
+					w.grpc.conn.Close()
+					w.grpc.conn = nil
+					//Reinject log
+					inputChan <- l
+					return nil
+				}
 			}
 		} else {
 			return stream.CloseSend()

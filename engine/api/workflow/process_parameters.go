@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
@@ -71,14 +72,18 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	}
 
 	// compute payload
+	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
 	errm := &sdk.MultiError{}
 	payloadMap, errdump := dump.ToMap(payload, dump.WithLowerCaseFormatter())
 	if errdump != nil {
+		log.Error("GetNodeBuildParameters> do-dump error: %v", errdump)
 		errm.Append(errdump)
 	}
 	for k, v := range payloadMap {
 		tmp[k] = v
 	}
+
+	log.Debug("GetNodeBuildParameters> compute payload :%#v : %#v", payload, tmp)
 
 	tmp["cds.project"] = w.ProjectKey
 	tmp["cds.workflow"] = w.Name

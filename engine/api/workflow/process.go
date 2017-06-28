@@ -282,61 +282,23 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 			m = sdk.ParametersMapMerge(m, m1)
 		}
 
-		run.Payload = sdk.ParametersFromMap(m)
+		run.Payload = m
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
 
 	run.HookEvent = h
 	if h != nil {
-		payload, err := dump.ToMap(h.Payload, dump.WithDefaultLowerCaseFormatter())
-		if err != nil {
-			AddWorkflowRunInfo(w, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{err},
-			})
-			log.Error("processWorkflowNodeRun> Unable to compute hook payload")
-		}
-		run.Payload = sdk.ParametersFromMap(payload)
-		if len(h.PipelineParameters) != 0 {
-			run.PipelineParameters = h.PipelineParameters
-		} else {
-			run.PipelineParameters = n.Context.DefaultPipelineParameters
-		}
+		run.Payload = h.Payload
+		run.PipelineParameters = h.PipelineParameters
 	}
 
 	run.Manual = m
 	if m != nil {
-		payload, err := dump.ToMap(m.Payload, dump.WithDefaultLowerCaseFormatter())
-		if err != nil {
-			AddWorkflowRunInfo(w, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{err},
-			})
-			log.Error("processWorkflowNodeRun> Unable to compute hook payload")
-		}
-		run.Payload = sdk.ParametersFromMap(payload)
-		if len(m.PipelineParameters) != 0 {
-			run.PipelineParameters = m.PipelineParameters
-		} else {
-			run.PipelineParameters = n.Context.DefaultPipelineParameters
-		}
+		run.Payload = m.Payload
+		run.PipelineParameters = m.PipelineParameters
 	}
 
-	if err := insertWorkflowNodeRun(db, run); err != nil {
-		return sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run")
-	}
-
-	log.Debug("processWorkflowNodeRun> new node run: %#v", run)
-
-	if w.WorkflowNodeRuns == nil {
-		w.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
-	}
-	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
-
-	//Update the workflow run
-	if err := updateWorkflowRun(db, w); err != nil {
-		return sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
-	}
+	log.Debug("Payload is %#v", run.Payload)
 
 	//Process parameters for the jobs
 	//TODO inherit parameter from parent job
@@ -349,6 +311,23 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		return errParam
 	}
 	run.BuildParameters = jobParams
+
+	if err := insertWorkflowNodeRun(db, run); err != nil {
+		return sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run")
+	}
+
+	log.Debug("processWorkflowNodeRun> new node run: %#v", run)
+
+	//Update workflow run
+	if w.WorkflowNodeRuns == nil {
+		w.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
+	}
+	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
+
+	//Update the workflow run
+	if err := updateWorkflowRun(db, w); err != nil {
+		return sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
+	}
 
 	//Execute the node run !
 	if err := execute(db, run); err != nil {

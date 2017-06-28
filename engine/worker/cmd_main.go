@@ -143,7 +143,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		// start logger routine with a large buffer
 		w.logger.logChan = make(chan sdk.Log, 100000)
-		go w.logProcessor()
+		go w.logProcessor(ctx)
 
 		// start queue polling
 		pbjobs := make(chan sdk.PipelineBuildJob, 1)
