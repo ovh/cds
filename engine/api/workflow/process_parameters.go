@@ -83,8 +83,6 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 		tmp[k] = v
 	}
 
-	log.Debug("GetNodeBuildParameters> compute payload :%#v : %#v", payload, tmp)
-
 	tmp["cds.project"] = w.ProjectKey
 	tmp["cds.workflow"] = w.Name
 	tmp["cds.pipeline"] = n.Pipeline.Name

@@ -277,7 +277,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 					ID:   sdk.MsgWorkflowError.ID,
 					Args: []interface{}{errm1},
 				})
-				log.Error("processWorkflowNodeRun> Unable to compute hook payload")
+				log.Error("processWorkflowNodeRun> Unable to compute hook payload: %v", errm1)
 			}
 			m = sdk.ParametersMapMerge(m, m1)
 		}
@@ -298,8 +298,6 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		run.PipelineParameters = m.PipelineParameters
 	}
 
-	log.Debug("Payload is %#v", run.Payload)
-
 	//Process parameters for the jobs
 	//TODO inherit parameter from parent job
 	jobParams, errParam := getNodeRunBuildParameters(db, run)
@@ -308,15 +306,13 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 			ID:   sdk.MsgWorkflowError.ID,
 			Args: []interface{}{errParam},
 		})
-		return errParam
+		return sdk.WrapError(errParam, "processWorkflowNodeRun> getNodeRunBuildParameters failed")
 	}
 	run.BuildParameters = jobParams
 
 	if err := insertWorkflowNodeRun(db, run); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run")
 	}
-
-	log.Debug("processWorkflowNodeRun> new node run: %#v", run)
 
 	//Update workflow run
 	if w.WorkflowNodeRuns == nil {
