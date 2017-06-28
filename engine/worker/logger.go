@@ -150,29 +150,25 @@ func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) 
 	for {
 		l, ok := <-inputChan
 		if ok {
+
 			log.Debug("LOG: %v", l.Val)
+			var errSend error
 			if w.currentJob.wJob == nil {
-				if err := stream.Send(&l); err != nil {
-					log.Error("grpcLogger> Error sending message : %s", err)
-					//Close all
-					stream.CloseSend()
-					w.grpc.conn.Close()
-					w.grpc.conn = nil
-					//Reinject log
-					inputChan <- l
-					return nil
-				}
+				errSend = stream.Send(&l)
 			} else {
-				if err := streamWorkflow.Send(&l); err != nil {
-					log.Error("grpcLogger> Error sending message : %s", err)
-					//Close all
-					stream.CloseSend()
-					w.grpc.conn.Close()
-					w.grpc.conn = nil
-					//Reinject log
-					inputChan <- l
-					return nil
-				}
+				errSend = streamWorkflow.Send(&l)
+			}
+
+			if errSend != nil {
+				log.Error("grpcLogger> Error sending message : %s", err)
+				//Close all
+				stream.CloseSend()
+				streamWorkflow.CloseSend()
+				w.grpc.conn.Close()
+				w.grpc.conn = nil
+				//Reinject log
+				inputChan <- l
+				return nil
 			}
 		} else {
 			return stream.CloseSend()
