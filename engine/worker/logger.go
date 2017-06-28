@@ -160,7 +160,7 @@ func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) 
 			}
 
 			if errSend != nil {
-				log.Error("grpcLogger> Error sending message : %s", err)
+				log.Error("grpcLogger> Error sending message : %s", errSend)
 				//Close all
 				stream.CloseSend()
 				streamWorkflow.CloseSend()
@@ -171,14 +171,17 @@ func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) 
 				return nil
 			}
 		} else {
+				streamWorkflow.CloseSend()
 			return stream.CloseSend()
 		}
 	}
 }
 
 func (w *currentWorker) drainLogsAndCloseLogger(c context.Context) error {
-	for len(w.logger.logChan) > 0 || (w.logger.llist != nil && w.logger.llist.Len() > 0) {
+	var i int
+	for (len(w.logger.logChan) > 0 || (w.logger.llist != nil && w.logger.llist.Len() > 0)) && i < 60 {
 		log.Debug("Draining logs...")
+		i++
 		time.Sleep(1 * time.Second)
 	}
 	return c.Err()
