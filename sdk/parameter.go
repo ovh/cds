@@ -155,3 +155,18 @@ func variablesToParameters(prefix string, variables []Variable) []Parameter {
 	}
 	return res
 }
+
+// ParametersMapMerge merges two maps of parameters preserving all values
+func ParametersMapMerge(params map[string]string, otherParams map[string]string) map[string]string {
+	for k, v := range otherParams {
+		if val, ok := params[k]; ok {
+			if val != v {
+				params[k] = fmt.Sprintf("%s,%s", val, v)
+				continue
+			}
+			continue
+		}
+		params[k] = v
+	}
+	return params
+}

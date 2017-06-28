@@ -110,6 +110,7 @@ var (
 	ErrWorkflowInvalidRoot                   = &Error{ID: 94, Status: http.StatusBadRequest}
 	ErrWorkflowNodeRef                       = &Error{ID: 95, Status: http.StatusBadRequest}
 	ErrWorkflowInvalid                       = &Error{ID: 96, Status: http.StatusBadRequest}
+	ErrWorkflowNodeJoinNotFound              = &Error{ID: 97, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -211,6 +212,7 @@ You can safely use them in a String or Text parameter`,
 	ErrWorkflowInvalidRoot.ID:                   "Invalid workflow root",
 	ErrWorkflowNodeRef.ID:                       "Invalid workflow node reference",
 	ErrWorkflowInvalid.ID:                       "Invalid workflow",
+	ErrWorkflowNodeJoinNotFound.ID:              "Workflow node join not found",
 }
 
 var errorsFrench = map[int]string{
@@ -312,6 +314,7 @@ Vous pouvez les utiliser sans problème dans un paramêtre de type String ou Tex
 	ErrWorkflowInvalidRoot.ID:                   "Racine de Workflow invalide",
 	ErrWorkflowNodeRef.ID:                       "Référence de noeud de workflow invalide",
 	ErrWorkflowInvalid.ID:                       "Workflow invalide",
+	ErrWorkflowNodeJoinNotFound.ID:              "Jointure introuvable",
 }
 
 var errorsLanguages = []map[int]string{

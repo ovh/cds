@@ -27,9 +27,17 @@ func getWorkflowTriggerConditionHandler(w http.ResponseWriter, r *http.Request, 
 		return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 	}
 
-	refNode := wf.GetNode(id)
-	if refNode == nil {
-		return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
+	wr, errr := workflow.LoadLastRun(db, key, name)
+	if errr != nil {
+		if errr != sdk.ErrWorkflowNotFound {
+			return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
+		}
+		log.Warning("getWorkflowTriggerConditionHandler> Unable to find last run")
+	}
+
+	params, errp := workflow.NodeBuildParameters(wf, wr, id, c.User)
+	if errp != nil {
+		return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
 	}
 
 	data := struct {
@@ -39,49 +47,72 @@ func getWorkflowTriggerConditionHandler(w http.ResponseWriter, r *http.Request, 
 		Operators: sdk.WorkflowConditionsOperators,
 	}
 
-	//TODO what should we do if they is not last run ?
-	wr, errr := workflow.LoadLastRun(db, key, name)
-	if errr != nil {
-		if errr != sdk.ErrWorkflowNotFound {
-			return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load las run workflow")
-		}
-		log.Warning("getWorkflowTriggerConditionHandler> Unable to find last run")
+	for _, p := range params {
+		data.ConditionNames = append(data.ConditionNames, p.Name)
 	}
 
-	if wr != nil {
-		for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
-			oldNode := wr.Workflow.GetNode(nodeID)
-			if oldNode == nil {
-				log.Warning("getWorkflowTriggerConditionHandler> Unable to find last run")
-				break
-			}
-			if oldNode.EqualsTo(refNode) {
-				for _, p := range nodeRuns[0].BuildParameters {
-					data.ConditionNames = append(data.ConditionNames, p.Name)
-				}
-				break
-			}
-		}
-	}
+	data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline")
 
-	data.ConditionNames = append(data.ConditionNames, "cds.dest.pip")
+	refNode := wf.GetNode(id)
+	if refNode == nil {
+		return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
+	}
 	if refNode.Context != nil && refNode.Context.Application != nil {
-		data.ConditionNames = append(data.ConditionNames, "cds.dest.app")
+		data.ConditionNames = append(data.ConditionNames, "cds.dest.application")
 	}
 	if refNode.Context != nil && refNode.Context.Environment != nil {
-		data.ConditionNames = append(data.ConditionNames, "cds.dest.env")
+		data.ConditionNames = append(data.ConditionNames, "cds.dest.environment")
 	}
 
 	return WriteJSON(w, r, data, http.StatusOK)
 }
 
 func getWorkflowTriggerJoinConditionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	name := vars["workflowName"]
+
+	id, errID := requestVarInt(r, "joinID")
+	if errID != nil {
+		return errID
+	}
+
+	wf, errw := workflow.Load(db, key, name, c.User)
+	if errw != nil {
+		return sdk.WrapError(errw, "getWorkflowTriggerJoinConditionHandler> Unable to load workflow")
+	}
+
+	wr, errr := workflow.LoadLastRun(db, key, name)
+	if errr != nil {
+		if errr != sdk.ErrWorkflowNotFound {
+			return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load last run workflow")
+		}
+		log.Warning("getWorkflowTriggerJoinConditionHandler> Unable to find last run")
+	}
+
+	j := wf.GetJoin(id)
+	if j == nil {
+		return sdk.ErrWorkflowNodeJoinNotFound
+	}
+
 	data := struct {
 		Operators      []string `json:"operators" db:"id"`
 		ConditionNames []string `json:"names" db:"id"`
 	}{
-		sdk.WorkflowConditionsOperators,
-		[]string{"git.branch"},
+		Operators: sdk.WorkflowConditionsOperators,
+	}
+
+	allparams := map[string]string{}
+	for _, i := range j.SourceNodeIDs {
+		params, errp := workflow.NodeBuildParameters(wf, wr, i, c.User)
+		if errp != nil {
+			return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load build parameters")
+		}
+		allparams = sdk.ParametersMapMerge(allparams, sdk.ParametersToMap(params))
+	}
+
+	for k := range allparams {
+		data.ConditionNames = append(data.ConditionNames, k)
 	}
 
 	return WriteJSON(w, r, data, http.StatusOK)
