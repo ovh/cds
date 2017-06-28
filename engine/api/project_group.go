@@ -70,12 +70,12 @@ func updateGroupRoleOnProjectHandler(w http.ResponseWriter, r *http.Request, db 
 
 	p, errl := project.Load(db, key, c.User)
 	if errl != nil {
-		return sdk.WrapError(sdk.ErrNoProject, "updateGroupRoleHandler: Cannot load %s: %s", key, errl)
+		return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load %s: %s", key)
 	}
 
 	g, errlg := group.LoadGroup(db, groupProject.Group.Name)
 	if errlg != nil {
-		return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleHandler: Cannot find %s: %s", groupProject.Group.Name, errlg)
+		return sdk.WrapError(errlg, "updateGroupRoleHandler: Cannot find %s", groupProject.Group.Name)
 	}
 
 	groupInProject, errcg := group.CheckGroupInProject(db, p.ID, g.ID)
@@ -146,33 +146,33 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	p, err := project.Load(db, key, c.User)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInProject: Cannot load %s", key)
+		return sdk.WrapError(err, "updateGroupsInProject: Cannot load %s")
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInProject: Cannot start transaction: %s", err)
+		return sdk.WrapError(err, "updateGroupsInProject: Cannot start transaction")
 	}
 	defer tx.Rollback()
 
 	err = group.DeleteGroupProjectByProject(tx, p.ID)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInProject: Cannot delete groups from project %s", p.Name)
+		return sdk.WrapError(err, "updateGroupsInProject: Cannot delete groups from project %s", p.Name)
 	}
 
 	for _, g := range groupProject {
 		groupData, errl := group.LoadGroup(tx, g.Group.Name)
 		if errl != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInProject: Cannot load group %s : %s", g.Group.Name, errl)
+			return sdk.WrapError(errl, "updateGroupsInProject: Cannot load group %s", g.Group.Name)
 		}
 
 		if err := group.InsertGroupInProject(tx, p.ID, groupData.ID, g.Permission); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInProject: Cannot add group %s in project %s: %s", g.Group.Name, p.Name, err)
+			return sdk.WrapError(err, "updateGroupsInProject: Cannot add group %s in project %s", g.Group.Name, p.Name)
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "updateGroupsInProject: Cannot commit transaction: %s", err)
+		return sdk.WrapError(err, "updateGroupsInProject: Cannot commit transaction")
 	}
 	return nil
 }
