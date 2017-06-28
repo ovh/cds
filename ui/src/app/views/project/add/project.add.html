@@ -8,7 +8,7 @@
                   {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="modalCreateGroup.show()">{{ 'project_permission_form_wizard_new' | translate }}</a>
                   <sm-select class="fluid search"
                       [options]="{'fullTextSearch': true}"
-                      [model]="group.id"
+                      [model]="group?.id"
                       (modelChange)="setGroup($event)"
                       id="PermissionGroup">
                       <option *ngFor="let g of groupList" [value]="g.id">{{g.name}}</option>
