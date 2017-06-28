@@ -111,6 +111,10 @@ func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, u *sdk
 			if err := group.InsertGroupInProject(db, proj.ID, g.ID, perm); err != nil {
 				return sdk.WrapError(err, "AddGroup> Cannot add group %s in project %s", g.Name, proj.Name)
 			}
+
+			if err := UpdateLastModified(db, a, u); err != nil {
+				return sdk.WrapError(err, "AddGroup> Cannot update application %s", a.Name)
+			}
 		}
 
 		//For all attached pipelines

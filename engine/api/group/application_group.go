@@ -59,8 +59,7 @@ func UpdateGroupRoleInApplication(db gorp.SqlExecutor, key, appName, groupName s
 
 // DeleteAllGroupFromApplication remove all group from the given application
 func DeleteAllGroupFromApplication(db gorp.SqlExecutor, applicationID int64) error {
-	query := `DELETE FROM application_group
-		  WHERE application_id=$1`
+	query := `DELETE FROM application_group WHERE application_id=$1`
 	_, err := db.Exec(query, applicationID)
 	return err
 }
