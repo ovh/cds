@@ -231,6 +231,39 @@ export class ProjectService {
     }
 
     /**
+     * Add permission on environments
+     * @param key Project unique key
+     * @param envName environment name
+     * @param gps New group permission to add
+     * @returns {Observable<Environment>}
+     */
+    addEnvironmentPermission(key: string, envName: string, gps: Array<GroupPermission>): Observable<Environment> {
+        return this._http.post('/project/' + key + '/environment/' + envName + '/groups', gps).map(res => res.json());
+    }
+
+    /**
+     * Update a permission on an environment
+     * @param key Project unique key
+     * @param envName Environmenet name
+     * @param gp Group Permission to update
+     * @returns {Observable<Environment>}
+     */
+    updateEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<Environment> {
+        return this._http.put('/project/' + key + '/environment/' + envName + '/group/' + gp.group.name, gp).map(res => res.json());
+    }
+
+    /**
+     * Remove a permission on an environment
+     * @param key Project unique key
+     * @param envName Environmenet name
+     * @param gp Group Permission to update
+     * @returns {Observable<boolean>}
+     */
+    removeEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<boolean> {
+        return this._http.delete('/project/' + key + '/environment/' + envName + '/group/' + gp.group.name).map(res => true);
+    }
+
+    /**
      * Get all notification on project
      * @param key Project unique key
      */

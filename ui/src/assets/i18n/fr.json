@@ -335,6 +335,7 @@
   "project_delete_description" : "Une fois le projet supprimé, il n'y a pas de retour possible.",
   "project_env_form_title" : "Ajouter un environment : ",
   "project_env_list_title" : "Liste des environments : ",
+  "project_env_permission_form_title"  : "Ajouter des permissions sur des environnements",
   "project_groups_error" : "Il doit y avoir au moins un groupe avec le droit d'écriture",
   "project_key" : "Identifiant du projet",
   "project_key_error" : "L'identifiant est obligatoire et doit etre en majuscule",

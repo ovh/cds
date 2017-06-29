@@ -58,6 +58,7 @@ import {WorkflowTriggerJoinComponent} from './workflow/join/trigger/trigger.join
 import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigger.src.component';
 import {RouterModule} from '@angular/router';
 import {ForMapPipe} from './pipes/map.pipe';
+import {PermissionEnvironmentFormComponent} from './permission/environment/form/permission.env.form.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -81,6 +82,7 @@ import {ForMapPipe} from './pipes/map.pipe';
         ParameterValueComponent,
         PermissionFormComponent,
         PermissionListComponent,
+        PermissionEnvironmentFormComponent,
         PrerequisiteComponent,
         PipelineLaunchModalComponent,
         PrerequisitesFormComponent,
@@ -141,6 +143,7 @@ import {ForMapPipe} from './pipes/map.pipe';
         ParameterValueComponent,
         PermissionFormComponent,
         PermissionListComponent,
+        PermissionEnvironmentFormComponent,
         PrettyJsonModule,
         PrerequisiteComponent,
         PrerequisitesFormComponent,

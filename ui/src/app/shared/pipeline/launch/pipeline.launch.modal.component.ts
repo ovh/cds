@@ -98,7 +98,7 @@ export class PipelineLaunchModalComponent {
             request.parent_application_id = this.workflowItem.parent.application_id;
             request.parent_pipeline_id = this.workflowItem.parent.pipeline_id;
             request.parent_environment_id = this.workflowItem.parent.environment_id;
-            request.parent_build_number = this.launchParentBuildNumber;
+            request.parent_build_number = Number(this.launchParentBuildNumber);
         } else {
             request.parameters.push(...this.launchGitParams);
         }
