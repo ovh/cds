@@ -819,7 +819,6 @@ describe('CDS: project Store', () => {
         });
         expect(addEnvCheck).toBeTruthy('Must check env update');
 
-        /*
         // update gp
         expect(call).toBe(2, 'Need to have done 2 http call');
         gp.permission = 4;
@@ -830,8 +829,6 @@ describe('CDS: project Store', () => {
         let renameVarEnvCheck = false;
         projectStore.getProjects('key1').first().subscribe(projs => {
             renameVarEnvCheck = true;
-            console.log(projs.get('key1').environments);
-            console.log(projs.get('key1').environments[0].groups.length);
             expect(projs.get('key1').environments.length).toBe(1);
             expect(projs.get('key1').environments[0].groups.length).toBe(1);
             expect(projs.get('key1').environments[0].groups[0].permission).toBe(4);
@@ -847,13 +844,10 @@ describe('CDS: project Store', () => {
         let deletePermCheck = false;
         projectStore.getProjects('key1').first().subscribe(projs => {
             deletePermCheck = true;
-            console.log(projs.get('key1').environments);
-            console.log(projs.get('key1').environments[0].groups.length);
             expect(projs.get('key1').environments.length).toBe(1);
             expect(projs.get('key1').environments[0].groups.length).toBe(0);
         });
         expect(deletePermCheck).toBeTruthy('Must check env delete perm');
-        */
     }));
 
 
