@@ -755,6 +755,101 @@ describe('CDS: project Store', () => {
         expect(deleteVarCheck).toBeTruthy('Must check project delete var');
     }));
 
+    it('should add/update/delete an environment permission', async(() => {
+        let call = 0;
+        // Mock Http project request
+        backend.connections.subscribe(connection => {
+            call++;
+            switch (call) {
+                case 1: // create project
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{
+                        "key": "key1",
+                        "name": "myProject",
+                        "last_modified": 0,
+                        "environments" : [ { "name" : "prod", "groups": []}]
+                        }`
+                    })));
+                    break;
+                case 2: // add permission
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{ "name" : "prod", "groups": [{ "permission": 7, "group": { "name": "grp1" } }]}`
+                    })));
+                    break;
+                case 3: // Update permission
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{ "name" : "prod", "groups": [{ "permission": 4, "group": { "name": "grp1" } }]}`
+                    })));
+                    break;
+                case 4: // Delete
+                    connection.mockRespond(new Response(new ResponseOptions({
+                        body: `{ "name" : "prod", "groups": []}`
+                    })));
+                    break;
+            }
+
+
+        });
+
+        // Get project in cache
+        expect(call).toBe(0, 'Need to have done 0 http call');
+        projectStore.getProjects('key1').first().subscribe(() => {
+        });
+        expect(call).toBe(1, 'Need to have done 1 http call');
+
+
+        // Add env permission
+        let gpA: Array<GroupPermission> = new Array<GroupPermission>();
+        let gp = new GroupPermission();
+        gp.permission = 7;
+        gp.group = new Group();
+        gp.group.name = 'grp1';
+        gpA.push(gp);
+        projectStore.addEnvironmentPermission('key1', 'prod', gpA).subscribe(() => {
+        }).unsubscribe();
+        expect(call).toBe(2, 'Need to have done 2 http call');
+
+        let addEnvCheck = false;
+        projectStore.getProjects('key1').first().subscribe(projs => {
+            addEnvCheck = true;
+            expect(projs.get('key1').environments.length).toBe(1, 'Project must have 1 env');
+            expect(projs.get('key1').environments[0].groups.length).toBe(1);
+            expect(projs.get('key1').environments[0].groups[0].permission).toBe(7);
+            expect(projs.get('key1').environments[0].groups[0].group.name).toBe('grp1');
+        });
+        expect(addEnvCheck).toBeTruthy('Must check env update');
+
+        // update gp
+        expect(call).toBe(2, 'Need to have done 2 http call');
+        gp.permission = 4;
+        projectStore.updateEnvironmentPermission('key1', 'prod', gp).subscribe(() => {
+        }).unsubscribe();
+        expect(call).toBe(3, 'Need to have done 3 http call');
+
+        let renameVarEnvCheck = false;
+        projectStore.getProjects('key1').first().subscribe(projs => {
+            renameVarEnvCheck = true;
+            expect(projs.get('key1').environments.length).toBe(1);
+            expect(projs.get('key1').environments[0].groups.length).toBe(1);
+            expect(projs.get('key1').environments[0].groups[0].permission).toBe(4);
+        });
+        expect(renameVarEnvCheck).toBeTruthy('Must check env update');
+
+        // Delete gp
+        expect(call).toBe(3, 'Need to have done 4 http call');
+        projectStore.removeEnvironmentPermission('key1', 'prod', gp).subscribe(() => {
+        });
+        expect(call).toBe(4, 'Need to have done 4 http call');
+
+        let deletePermCheck = false;
+        projectStore.getProjects('key1').first().subscribe(projs => {
+            deletePermCheck = true;
+            expect(projs.get('key1').environments.length).toBe(1);
+            expect(projs.get('key1').environments[0].groups.length).toBe(0);
+        });
+        expect(deletePermCheck).toBeTruthy('Must check env delete perm');
+    }));
+
 
     function createProject(key: string, name: string): Project {
         let project: Project = new Project();

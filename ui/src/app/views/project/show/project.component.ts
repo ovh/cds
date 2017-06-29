@@ -5,9 +5,11 @@ import {Project} from '../../../model/project.model';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {EnvironmentPermissionEvent, PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {Subscription} from 'rxjs/Subscription';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
+import {PermissionValue} from '../../../model/permission.model';
+import {Environment} from '../../../model/environment.model';
 
 @Component({
     selector: 'app-project-show',
@@ -16,18 +18,25 @@ import {WarningModalComponent} from '../../../shared/modal/warning/warning.compo
 })
 export class ProjectShowComponent implements OnInit, OnDestroy {
 
-    public varFormLoading = false;
-    public permFormLoading = false;
+    varFormLoading = false;
+    permFormLoading = false;
+    permEnvFormLoading = false;
 
-    public project: Project;
+    project: Project;
     private projectSubscriber: Subscription;
 
     selectedTab = 'applications';
 
     @ViewChild('varWarning')
-    public varWarningModal: WarningModalComponent;
+    varWarningModal: WarningModalComponent;
     @ViewChild('permWarning')
-    public permWarningModal: WarningModalComponent;
+    permWarningModal: WarningModalComponent;
+    @ViewChild('permEnvWarning')
+    permEnvWarningModal: WarningModalComponent;
+    @ViewChild('permEnvGroupWarning')
+    permEnvGroupWarningModal: WarningModalComponent;
+
+    permissionEnum = PermissionValue;
 
     constructor(private _projectStore: ProjectStore, private _route: ActivatedRoute, private _router: Router,
                 private _toast: ToastService, public _translate: TranslateService) {
@@ -106,6 +115,43 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
                 case 'delete':
                     this._projectStore.deleteProjectVariable(this.project.key, event.variable).subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_deleted'));
+                    });
+                    break;
+            }
+        }
+    }
+
+    addEnvPermEvent(event: EnvironmentPermissionEvent, skip?: boolean): void {
+        if (!skip && this.project.externalChange) {
+            this.permEnvWarningModal.show(event);
+        } else {
+            this.permEnvFormLoading = true;
+            this._projectStore.addEnvironmentPermission(this.project.key, event.env.name, event.gp).subscribe(() => {
+                this._toast.success('', this._translate.instant('permission_added'));
+                this.permEnvFormLoading = false;
+            }, () => {
+                this.permEnvFormLoading = false;
+            });
+        }
+    }
+
+    envGroupEvent(event: PermissionEvent, env: Environment, skip?: boolean): void {
+        if (!skip && this.project.externalChange) {
+            event.env = env;
+            this.permEnvGroupWarningModal.show(event);
+        } else {
+            if (!env) {
+                env = event.env;
+            }
+            switch (event.type) {
+                case 'update':
+                    this._projectStore.updateEnvironmentPermission(this.project.key, env.name, event.gp).subscribe(() => {
+                        this._toast.success('', this._translate.instant('permission_updated'));
+                    });
+                    break;
+                case 'delete':
+                    this._projectStore.removeEnvironmentPermission(this.project.key, env.name, event.gp).subscribe(() => {
+                        this._toast.success('', this._translate.instant('permission_deleted'));
                     });
                     break;
             }
