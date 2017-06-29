@@ -1,16 +1,14 @@
 import {Component, ViewChild} from '@angular/core';
 import {Project} from '../../../model/project.model';
 import {PermissionService} from '../../../shared/permission/permission.service';
-import {GroupPermission, Group} from '../../../model/group.model';
+import {Group, GroupPermission} from '../../../model/group.model';
 import {ProjectStore} from '../../../service/project/project.store';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {Router} from '@angular/router';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {GroupService} from '../../../service/group/group.service';
-import {PermissionFormComponent} from '../../../shared/permission/form/permission.form.component';
 import {Variable} from '../../../model/variable.model';
-import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-project-add',
@@ -114,7 +112,7 @@ export class ProjectAddComponent {
     }
 
     loadGroups(selected: string) {
-        this._groupService.getGroups().first().subscribe( groups => {
+        this._groupService.getGroups().first().subscribe(groups => {
             this.groupList = groups;
             this.loading = false;
             if (selected == null) {
@@ -125,7 +123,7 @@ export class ProjectAddComponent {
     }
 
     setGroup(groupID): void {
-      this.group = this.groupList.find(g => g.id === groupID);
+        this.group = this.groupList.find(g => g.id === Number(groupID));
     }
 
     /**

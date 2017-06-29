@@ -19,6 +19,7 @@ import {GroupService} from '../../../service/group/group.service';
 import {GroupPermission, Group} from '../../../model/group.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {Router} from '@angular/router';
+import {Project} from '../../../model/project.model';
 
 describe('CDS: Project Show Component', () => {
 
@@ -86,7 +87,16 @@ describe('CDS: Project Show Component', () => {
         fixture.componentInstance.group.name = 'foo';
 
         fixture.componentInstance.createProject();
-        expect(projectStore.createProject).toHaveBeenCalled();
+
+        let project = new Project();
+        project.name = 'FooProject';
+        project.key = 'BAR';
+        project.groups = new Array<GroupPermission>();
+        project.groups.push(new GroupPermission());
+        project.groups[0].group = new Group();
+        project.groups[0].group.name = 'foo';
+        project.groups[0].permission = 7;
+        expect(projectStore.createProject).toHaveBeenCalledWith(project);
         expect(router.navigate).toHaveBeenCalled();
     }));
 
