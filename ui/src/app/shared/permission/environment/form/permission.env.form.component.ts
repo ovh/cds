@@ -51,12 +51,11 @@ export class PermissionEnvironmentFormComponent {
                return this.groups.find(g => g.id === Number(ids));
             });
 
-            let gps = new Array<GroupPermission>();
-            newGroups.forEach(g => {
+            let gps = newGroups.map(g => {
                 let groupPermissions = new GroupPermission();
                 groupPermissions.permission = Number(this.selectedPerm);
                 groupPermissions.group = g;
-                gps.push(groupPermissions);
+                return groupPermissions;
             });
             this.addEnvPermEvent.emit(new EnvironmentPermissionEvent('add', env, gps));
         });
