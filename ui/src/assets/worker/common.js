@@ -1,6 +1,5 @@
 var apiTestEnv = 'foo.bar'; // url for test cf environments/environment.ts
 
-// Function to loop overtime
 function loop (initWaitingTime, func) {
     var retry = 0;
     var fibonacciStep = 0;
