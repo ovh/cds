@@ -10,7 +10,7 @@ declare var _: any;
 })
 export class WorkflowTriggerConditionFormComponent {
 
-    @Input() operators: Array<string>;
+    @Input() operators: {};
     @Input() names: Array<string>;
 
     @Output() addEvent = new EventEmitter<WorkflowTriggerCondition>();

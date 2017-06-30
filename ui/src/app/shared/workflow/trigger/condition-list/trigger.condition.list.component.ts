@@ -13,7 +13,7 @@ export class WorkflowTriggerConditionListComponent extends Table {
     @Input() conditions: Array<WorkflowTriggerCondition>;
     @Output() conditionsChange = new EventEmitter<Array<WorkflowTriggerCondition>>();
     @Input() project: Project;
-    @Input() operators: Array<string>;
+    @Input() operators: {};
 
     constructor() {
         super();

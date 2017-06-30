@@ -10,7 +10,7 @@
         </div>
         <div class="four wide field">
             <sm-select [(model)]="condition.operator" *ngIf="operators">
-                <option *ngFor="let o of operators" [value]="o">{{o}}</option>
+                <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>
             </sm-select>
         </div>
         <div class="five wide field">

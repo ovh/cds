@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Workflow, WorkflowNode, WorkflowNodeTrigger, WorkflowTriggerCondition} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
@@ -21,10 +21,8 @@ export class WorkflowTriggerComponent {
     @Input() trigger: WorkflowNodeTrigger;
     @Input() loading: boolean;
 
-    operators: Array<string>;
+    operators: {};
     conditionNames: Array<string>;
-
-
 
     constructor(private _workflowStore: WorkflowStore) {
     }
