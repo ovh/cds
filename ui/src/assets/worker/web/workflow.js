@@ -19,12 +19,12 @@ function loadWorkflow (user, session, api) {
         var url = '/project/' + key + '/application/' + appName +
             '?withSchedulers=true&withPollers=true&applicationStatus=true&branchName=' + branch + '&version=' + version;
 
-        var response = httpCall(url, api, user, session);
-        if (response.xhr.status >= 400) {
+        var xhr = httpCall(url, api, user, session);
+        if (xhr.status >= 400) {
             return true;
         }
-        if (response.xhr.status === 200 && response.xhr.responseText !== null) {
-            postMessage(response.xhr.responseText);
+        if (xhr.status === 200 && xhr.responseText !== null) {
+            postMessage(xhr.responseText);
         }
         return false;
     });

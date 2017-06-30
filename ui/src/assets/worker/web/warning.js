@@ -6,12 +6,12 @@ onmessage = function (e) {
 
 function loadWarnings (user, session, api) {
     loop(10, function () {
-        var response = httpCall('/mon/warning', api, user, session);
-        if (response.xhr.status >= 400) {
+        var xhr = httpCall('/mon/warning', api, user, session);
+        if (xhr.status >= 400) {
             return true;
         }
-        if (response.xhr.status === 200) {
-            postMessage(response.xhr.responseText);
+        if (xhr.status === 200) {
+            postMessage(xhr.responseText);
         }
         return false;
     });

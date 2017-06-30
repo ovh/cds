@@ -12,13 +12,13 @@ function loadLastUpdates (user, session, api) {
         if (lastUpdate) {
             header = {"If-Modified-Since": lastUpdate};
         }
-        var response = httpCall('/mon/lastupdates', api, user, session, header);
-        if (response.xhr.status >= 400) {
+        var xhr = httpCall('/mon/lastupdates', api, user, session, header);
+        if (xhr.status >= 400) {
             return true;
         }
-        lastUpdate = response.xhr.getResponseHeader("ETag");
-        if (response.xhr.status === 200) {
-            postMessage(response.xhr.responseText);
+        lastUpdate = xhr.getResponseHeader("ETag");
+        if (xhr.status === 200) {
+            postMessage(xhr.responseText);
         }
         return false;
     });

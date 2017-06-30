@@ -6,12 +6,12 @@ onmessage = function () {
 
 function loadVersion () {
     loop(10, function () {
-        var response = httpCall('assets/version.json?ts=' + (new Date()).getTime(), '../../../');
-        if (response.xhr.status >= 400) {
+        var xhr = httpCall('assets/version.json?ts=' + (new Date()).getTime(), '../../../');
+        if (xhr.status >= 400) {
             return true;
         }
-        if (response.xhr.status === 200) {
-            postMessage(response.xhr.responseText);
+        if (xhr.status === 200) {
+            postMessage(xhr.responseText);
         }
         return false;
     });

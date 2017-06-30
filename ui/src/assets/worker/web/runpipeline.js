@@ -20,13 +20,13 @@ function loadBuild (user, session, api) {
     loop(2, function () {
         var url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '?withArtifacts=true&withTests=true&envName=' + envName;
 
-        var response = httpCall(url, api, user, session);
-        if (response.xhr.status >= 400) {
+        var xhr = httpCall(url, api, user, session);
+        if (xhr.status >= 400) {
             return true;
         }
-        if (response.xhr.status === 200 && response.xhr.responseText !== null) {
-            postMessage(response.xhr.responseText);
-            var jsonPb = JSON.parse(response.xhr.responseText);
+        if (xhr.status === 200 && xhr.responseText !== null) {
+            postMessage(xhr.responseText);
+            var jsonPb = JSON.parse(xhr.responseText);
             if (jsonPb && jsonPb.status !== 'Building') {
                 close();
             }

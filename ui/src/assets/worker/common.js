@@ -42,7 +42,7 @@ function httpCall (path, host, user, session, additionnalHeaders) {
         if (xhr.status === 401 || xhr.status === 403) {
             close();
         }
-        return {xhr: xhr};
+        return xhr;
     }
 }
 
