@@ -7,7 +7,12 @@
    4. [Workflow Hooks](#hooks)
 2. [Static analysis report](#static)
 3. [Code coverage report](#coverage)
-3. [Security analysis report](#security)
+4. [Security analysis report](#security)
+5. [Tags and releases](#tags)
+6. [Environment Providers](#env)
+7. [Application Providers](#apps)
+8. [Mesos Hatchery](#mesos)
+9. [Kubernetes support](#k8s)
 
 ## CDS Workflow <a name="workflow"></a>
 
@@ -148,7 +153,7 @@ As Units tests report, CDS will support code coverage report. It should also pro
 
 As Units tests report, CDS will support  security analysis report. It should support [owasp dependency checks](https://www.owasp.org/index.php/OWASP_Dependency_Check) for code dependencies vulnerability, [coreos clair](https://github.com/coreos/clair) for container images vulnerability.
 
-## Tags and releases
+## Tags and releases <a name="tags"></a>
 
 Push a tag on a repomanager will trigger a workflow on the tag. CDS will support git tag, release
 
