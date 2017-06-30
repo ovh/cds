@@ -45,8 +45,8 @@ func getWorkflowTriggerConditionHandler(w http.ResponseWriter, r *http.Request, 
 	}
 
 	data := struct {
-		Operators      []string `json:"operators" db:"id"`
-		ConditionNames []string `json:"names" db:"id"`
+		Operators      map[string]string `json:"operators"`
+		ConditionNames []string          `json:"names"`
 	}{
 		Operators: sdk.WorkflowConditionsOperators,
 	}
@@ -104,8 +104,8 @@ func getWorkflowTriggerJoinConditionHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	data := struct {
-		Operators      []string `json:"operators" db:"id"`
-		ConditionNames []string `json:"names" db:"id"`
+		Operators      map[string]string `json:"operators"`
+		ConditionNames []string          `json:"names"`
 	}{
 		Operators: sdk.WorkflowConditionsOperators,
 	}

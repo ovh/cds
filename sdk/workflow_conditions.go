@@ -19,14 +19,14 @@ const (
 
 // Workflow conditions operator
 var (
-	WorkflowConditionsOperators = []string{
-		WorkflowConditionsOperatorEquals,
-		WorkflowConditionsOperatorNotEquals,
-		WorkflowConditionsOperatorLessThan,
-		WorkflowConditionsOperatorLessOrEqualThan,
-		WorkflowConditionsOperatorGreaterThan,
-		WorkflowConditionsOperatorGreaterOrEqualThan,
-		WorkflowConditionsOperatorRegex,
+	WorkflowConditionsOperators = map[string]string{
+		WorkflowConditionsOperatorEquals:             "=",
+		WorkflowConditionsOperatorNotEquals:          "!=",
+		WorkflowConditionsOperatorLessThan:           "<",
+		WorkflowConditionsOperatorLessOrEqualThan:    "<=",
+		WorkflowConditionsOperatorGreaterThan:        ">",
+		WorkflowConditionsOperatorGreaterOrEqualThan: ">=",
+		WorkflowConditionsOperatorRegex:              "match",
 	}
 )
 
