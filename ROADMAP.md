@@ -1,10 +1,10 @@
 # Roadmap
 
 1. [Workflow](#workflow)
-  1. [Application Workflow / Workflow As Code](#wasc)
-  2. [Workflow Template](#template)
-  3. [Workflow file format](#fileformat)
-  4. [Workflow Hooks](#hooks)
+  1.1. [Application Workflow / Workflow As Code](#wasc)
+  1.2. [Workflow Template](#template)
+  1.3. [Workflow file format](#fileformat)
+  1.4. [Workflow Hooks](#hooks)
 2. [Static analysis report](#static)
 3. [Code coverage report](#coverage)
 3. [Security analysis report](#security)
