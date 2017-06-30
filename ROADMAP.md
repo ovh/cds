@@ -138,12 +138,36 @@ Provides workflows hooks SDK to give to users ability to develop their own hooks
 
 ## Static analysis report <a name="static"></a>
 
-As Units tests report, CDS will support static analysis/linter report. With or without sonarcube. It should also provides a way to measure improvemnts/regression of code quality.
+As Units tests report, CDS will support static analysis/linter report. With or without sonarcube. It should also provides a way to measure improvements/regression of code quality.
 
 ## Code coverage report <a name="coverage"></a>
 
-As Units tests report, CDS will support code coverage report. It should also provides a way to measure improvemnts/regression of code coverage.
+As Units tests report, CDS will support code coverage report. It should also provides a way to measure improvements/regression of code coverage.
 
 ## Security analysis report <a name="security"></a>
 
 As Units tests report, CDS will support  security analysis report. It should support [owasp dependency checks](https://www.owasp.org/index.php/OWASP_Dependency_Check) for code dependencies vulnerability, [coreos clair](https://github.com/coreos/clair) for container images vulnerability.
+
+## Tags and releases
+
+Push a tag on a repomanager will trigger a workflow on the tag. CDS will support git tag, release
+
+## Environment Provider <a name="envs"></a>
+
+comming soon 
+
+
+## Application Provider <a name="apps"></a>
+
+comming soon 
+
+## Mesos Hatchery <a name="mesos"></a>
+
+For the moment, CDS provides a Mesos/Marathon hatchery wich to spawn worker on a mesos cluster. As worker are not long-running application, their is a lot of workaround to solves this equation. So the goal is develop a mesos hatchery as a mesos framework.
+
+## Kubernetes(K8S) Support <a name="k8s"></a>
+
+Support Kubernetes as a CDS infra structure to run worker as Kubernetes pods, and also support Kuberneted as an environment provider.
+
+
+
