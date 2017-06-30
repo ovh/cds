@@ -33,7 +33,7 @@ function loadLog (user, session, api) {
         if (xhr.status >= 400) {
             return true;
         }
-        if (xhr.status === 200 && xhr.responseText !== null) {
+        if (xhr.status === 200 && xhr.responseText) {
             postMessage(xhr.responseText);
             var jsonLogs = JSON.parse(xhr.responseText);
             if (jsonLogs && jsonLogs.status !== 'Building') {
