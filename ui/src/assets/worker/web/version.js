@@ -5,8 +5,14 @@ onmessage = function () {
 };
 
 function loadVersion () {
-    setInterval(function () {
-        var date = new Date();
-        postMessage(httpCall('assets/version.json?ts=' + date.getTime(), '../../../'));
-    }, 10000);
+    loop(10, function () {
+        var response = httpCall('assets/version.json?ts=' + (new Date()).getTime(), '../../../');
+        if (response.xhr.status >= 400) {
+            return true;
+        }
+        if (response.xhr.status === 200) {
+            postMessage(response.xhr.responseText);
+        }
+        return false;
+    });
 }

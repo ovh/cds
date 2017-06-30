@@ -5,10 +5,14 @@ onmessage = function (e) {
 };
 
 function loadWarnings (user, session, api) {
-    if (user && api) {
-        postMessage(httpCall('/mon/warning', api, user, session));
-        setInterval(function () {
-            postMessage(httpCall('/mon/warning', api, user, session));
-        }, 10000);
-    }
+    loop(10, function () {
+        var response = httpCall('/mon/warning', api, user, session);
+        if (response.xhr.status >= 400) {
+            return true;
+        }
+        if (response.xhr.status === 200) {
+            postMessage(response.xhr.responseText);
+        }
+        return false;
+    });
 }

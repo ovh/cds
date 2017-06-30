@@ -12,12 +12,16 @@ onmessage = function (e) {
 };
 
 function loadWorkflow (user, session, api) {
-    var url = '/project/' + key + '/workflows/' + workflowName + '/runs/' + number;
-    if (user && api) {
-        postMessage(httpCall(url, api, user, session));
-        setInterval(function () {
-            var response = httpCall(url, api, user, session);
-            postMessage(response);
-        }, 2000);
-    }
+    loop(2, function () {
+        var url = '/project/' + key + '/workflows/' + workflowName + '/runs/' + number;
+
+        var response = httpCall(url, api, user, session);
+        if (response.xhr.status >= 400) {
+            return true;
+        }
+        if (response.xhr.status === 200 && response.xhr.responseText !== null) {
+            postMessage(response.xhr.responseText);
+        }
+        return false;
+    });
 }

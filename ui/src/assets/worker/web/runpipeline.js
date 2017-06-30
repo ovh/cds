@@ -17,17 +17,20 @@ onmessage = function (e) {
 };
 
 function loadBuild (user, session, api) {
-    if (user && api) {
+    loop(2, function () {
         var url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '?withArtifacts=true&withTests=true&envName=' + envName;
-        postMessage(httpCall(url, api, user, session));
 
-        setInterval(function () {
-            var response = httpCall(url, api, user, session);
-            postMessage(response);
-            var jsonPb = JSON.parse(response);
+        var response = httpCall(url, api, user, session);
+        if (response.xhr.status >= 400) {
+            return true;
+        }
+        if (response.xhr.status === 200 && response.xhr.responseText !== null) {
+            postMessage(response.xhr.responseText);
+            var jsonPb = JSON.parse(response.xhr.responseText);
             if (jsonPb && jsonPb.status !== 'Building') {
                 close();
             }
-        }, 2000);
-    }
+        }
+        return false;
+    });
 }
