@@ -1,6 +1,20 @@
 # Roadmap
 
-## CDS Workflow
+1. [Workflow](#workflow)
+   1. [Application Workflow / Workflow As Code](#wasc)
+   2. [Workflow Template](#template)
+   3. [Workflow file format](#fileformat)
+   4. [Workflow Hooks](#hooks)
+2. [Static analysis report](#static)
+3. [Code coverage report](#coverage)
+4. [Security analysis report](#security)
+5. [Tags and releases](#tags)
+6. [Environment Providers](#env)
+7. [Application Providers](#apps)
+8. [Mesos Hatchery](#mesos)
+9. [Kubernetes support](#k8s)
+
+## CDS Workflow <a name="workflow"></a>
 
 Issues #538, #539, #540, #742.
 
@@ -17,7 +31,7 @@ Workflows embeds following concepts:
 - **Join**: Joins allows to to wait for multiple pipelines execution before triggering pipelines through a **trigger**
 - **Run**: A Run is a workflow execution. It is identified by a **Number**. In a Run, every pipelines can be re-run, it introduce the **Subnumber**. So a workflow run with number 12, can have pipeline runs identified by 12.0, 12.1, 12.2 etc.
 
-### CDS Workflow As Code
+### CDS Workflow As Code <a name="wasc"></a>
 
 #### Definition
 
@@ -75,7 +89,7 @@ On my command line:
 comming soon
 
 
-### Workflow template
+### Workflow template <a name="template"></a>
 
 Template as binary file we be removed from CDS. We consider that the main use case of template is the bootstrap on an **Application Workflow**. So Workflow Template must be just generic configuration file.
 
@@ -106,7 +120,7 @@ As a developper, considering :
   - write the file in the current directory.
 - `$ cds push [PROJECT_KEY]`
 
-### CDS Workflow file format
+### CDS Workflow file format  <a name="fileformat"></a>
 
 #### Export
 
@@ -115,3 +129,50 @@ comming soon
 #### Import
 
 comming soon 
+
+### Workflow Hooks <a name="hooks"></a>
+
+Provides workflows hooks SDK to give to users ability to develop their own hooks to trigger their workflow on every events. For instances:
+
+- Openstack nova server status change
+- Openstack swift container events
+- Marathon events (application failure): Marathon Apps self healing
+- SNMP Traps: SNTMP traps will trigger some alerts in Nagios/Shinker, and you may trigger some workflow in CDS
+- HTTP/TCP/UDP Dial Error: For advanced health check a self healing workflow
+- ...
+
+## Static analysis report <a name="static"></a>
+
+As Units tests report, CDS will support static analysis/linter report. With or without sonarcube. It should also provides a way to measure improvements/regression of code quality.
+
+## Code coverage report <a name="coverage"></a>
+
+As Units tests report, CDS will support code coverage report. It should also provides a way to measure improvements/regression of code coverage.
+
+## Security analysis report <a name="security"></a>
+
+As Units tests report, CDS will support  security analysis report. It should support [owasp dependency checks](https://www.owasp.org/index.php/OWASP_Dependency_Check) for code dependencies vulnerability, [coreos clair](https://github.com/coreos/clair) for container images vulnerability.
+
+## Tags and releases <a name="tags"></a>
+
+Push a tag on a repomanager will trigger a workflow on the tag. CDS will support git tag, release
+
+## Environment Provider <a name="envs"></a>
+
+comming soon 
+
+
+## Application Provider <a name="apps"></a>
+
+comming soon 
+
+## Mesos Hatchery <a name="mesos"></a>
+
+For the moment, CDS provides a Mesos/Marathon hatchery wich to spawn worker on a mesos cluster. As worker are not long-running application, their is a lot of workaround to solves this equation. So the goal is develop a mesos hatchery as a mesos framework.
+
+## Kubernetes(K8S) Support <a name="k8s"></a>
+
+Support Kubernetes as a CDS infra structure to run worker as Kubernetes pods, and also support Kuberneted as an environment provider.
+
+
+
