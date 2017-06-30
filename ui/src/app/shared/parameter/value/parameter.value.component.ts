@@ -102,7 +102,7 @@ export class ParameterValueComponent {
         } else if (String(this.editableValue).indexOf('c:\\') !== -1) {
             this.codeMirrorConfig.mode = 'powershell';
         } else if (firstLine.indexOf('#!/bin/bash') !== -1) {
-            this.codeMirrorConfig.mode = 'bash';
+            this.codeMirrorConfig.mode = 'shell';
         } else {
             this.codeMirrorConfig.mode = 'shell';
         }
