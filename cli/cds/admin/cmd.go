@@ -17,6 +17,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "admin",
 		Short: "CDS Admin Management",
+		Long:  "blabla",
 	}
 )
 

@@ -12,12 +12,18 @@ import (
 
 // Interface is the main interface for cdsclient package
 type Interface interface {
+	MonStatus() ([]string, error)
+	ProjectCreate(*sdk.Project) error
+	ProjectDelete(string) error
+	ProjectInfo(string) (*sdk.Project, error)
+	ProjectList() ([]sdk.Project, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
 	QueueJobInfo(int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueSendResult(int64, sdk.Result) error
 	QueueArtifactUpload(id int64, tag, filePath string) error
 	Requirements() ([]sdk.Requirement, error)
+	UserLogin(username, password string) (bool, string, error)
 	WorkerRegister(worker.RegistrationForm) (string, bool, error)
 	WorkerSetStatus(sdk.Status) error
 	WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
