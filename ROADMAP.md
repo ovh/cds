@@ -134,6 +134,7 @@ comming soon
 
 Provides workflows hooks SDK to give to users ability to develop their own hooks to trigger their workflow on every events. For instances:
 
+- Kafka messages
 - Openstack nova server status change
 - Openstack swift container events
 - Marathon events (application failure): Marathon Apps self healing
