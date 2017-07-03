@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	ctx "github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
@@ -26,7 +25,7 @@ type Driver interface {
 	Store() sessionstore.Store
 	Authentify(db gorp.SqlExecutor, username, password string) (bool, error)
 	AuthentifyUser(db gorp.SqlExecutor, user *sdk.User, password string) (bool, error)
-	GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, c *ctx.Ctx) error
+	CheckAuthHeader(db *gorp.DbMap, headers http.Header, c *ctx.Ctx) error
 }
 
 //GetDriver is a factory
@@ -71,19 +70,10 @@ func NewPersistentSession(db gorp.SqlExecutor, d Driver, u *sdk.User) (sessionst
 	if errLoad != nil {
 		return "", errLoad
 	}
-	t, errSession := sessionstore.NewSessionKey()
+
+	t, errSession := user.NewPersistentSession(db, u)
 	if errSession != nil {
 		return "", errSession
-	}
-	log.Info("NewPersistentSession> New Persistent Session for %s", u.Username)
-	newToken := sdk.UserToken{
-		Token:     string(t),
-		Timestamp: time.Now().Unix(),
-		Comment:   "",
-	}
-	u.Auth.Tokens = append(u.Auth.Tokens, newToken)
-	if err := user.UpdateUserAndAuth(db, *u); err != nil {
-		return "", err
 	}
 
 	session, errStore := d.Store().New(t)

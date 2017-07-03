@@ -66,7 +66,7 @@ func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, key string) error {
 // InsertAdminUser have to be used only for tests
 func InsertAdminUser(db *gorp.DbMap) (*sdk.User, string) {
 	s := sdk.RandomString(10)
-	password, hash, _ := user.GeneratePassword()
+	_, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
 		Admin:    true,
 		Email:    "no-reply-" + s + "@corp.ovh.com",
@@ -79,13 +79,15 @@ func InsertAdminUser(db *gorp.DbMap) (*sdk.User, string) {
 		},
 	}
 	user.InsertUser(db, u, &u.Auth)
-	return u, password
+
+	t, _ := user.NewPersistentSession(db, u)
+	return u, string(t)
 }
 
 // InsertLambaUser have to be used only for tests
 func InsertLambaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
 	s := sdk.RandomString(10)
-	password, hash, _ := user.GeneratePassword()
+	_, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
 		Admin:    false,
 		Email:    "no-reply-" + s + "@corp.ovh.com",
@@ -103,7 +105,9 @@ func InsertLambaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, stri
 		group.InsertUserInGroup(db, g.ID, u.ID, false)
 		u.Groups = append(u.Groups, *g)
 	}
-	return u, password
+
+	t, _ := user.NewPersistentSession(db, u)
+	return u, string(t)
 }
 
 // AuthentifyRequestFromWorker have to be used only for tests
@@ -199,16 +203,20 @@ func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Hatchery, method, u
 }
 
 // AuthHeaders set auth headers
-func AuthHeaders(t *testing.T, u *sdk.User, pass string) http.Header {
+func AuthHeaders(t *testing.T, u *sdk.User, token string) http.Header {
 	h := http.Header{}
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+pass))
+	h.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
+	h.Add(sdk.SessionTokenHeader, token)
+	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+token))
 	h.Add("Authorization", auth)
 	return h
 }
 
 // AuthentifyRequest  have to be used only for tests
-func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, pass string) {
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+pass))
+func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, token string) {
+	req.Header.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
+	req.Header.Add(sdk.SessionTokenHeader, token)
+	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+token))
 	req.Header.Add("Authorization", auth)
 }
 

@@ -28,11 +28,7 @@ func (c *GithubClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password
 	return true, nil
 }
 
-//GetCheckAuthHeaderFunc returns the func to heck http headers.
-//Options is a const to switch from session to basic auth or both
-func (c *GithubClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
-
-	return func(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
-		return nil
-	}
+//CheckAuthHeader returns the func to heck http headers.
+func (c *GithubClient) CheckAuthHeader(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
+	return nil
 }

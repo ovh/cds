@@ -13,8 +13,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"gopkg.in/ldap.v2"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
@@ -316,32 +316,25 @@ func (c *LDAPClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password s
 	return c.Authentify(db, u.Username, password)
 }
 
-//GetCheckAuthHeaderFunc returns the func to heck http headers.
-//Options is a const to switch from session to basic auth or both
-func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
-	return func(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
-		//Check if its a worker
-		if h := headers.Get(sdk.AuthHeader); h != "" {
-			if err := checkWorkerAuth(db, h, ctx); err != nil {
-				return err
-			}
+//CheckAuthHeader returns the func to heck http headers.
+func (c *LDAPClient) CheckAuthHeader(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
+	//Check if its a worker
+	if h := headers.Get(sdk.AuthHeader); h != "" {
+		if err := checkWorkerAuth(db, h, ctx); err != nil {
+			return err
+		}
+		return nil
+	}
+	//Check if its coming from CLI
+	if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
+		if getUserPersistentSession(db, c.Store(), headers, ctx) {
 			return nil
 		}
-		//Check if its coming from CLI
-		if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-			if getUserPersistentSession(db, c.Store(), headers, ctx) {
-				return nil
-			}
-			if reloadUserPersistentSession(db, c.Store(), headers, ctx) {
-				return nil
-			}
+		if reloadUserPersistentSession(db, c.Store(), headers, ctx) {
+			return nil
 		}
-
-		return c.checkUserSessionAuth(db, headers, ctx)
 	}
-}
-
-func (c *LDAPClient) checkUserSessionAuth(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
+	//Get the session token
 	sessionToken := headers.Get(sdk.SessionTokenHeader)
 	if sessionToken == "" {
 		return fmt.Errorf("no session header")
@@ -354,6 +347,7 @@ func (c *LDAPClient) checkUserSessionAuth(db *gorp.DbMap, headers http.Header, c
 	if err != nil {
 		return err
 	}
+	//Find the suer
 	u, err := c.searchAndInsertOrUpdateUser(db, username)
 	if err != nil {
 		return err
