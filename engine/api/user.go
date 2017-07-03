@@ -307,7 +307,7 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busi
 	var response = sdk.UserAPIResponse{
 		User: *u,
 	}
-	if _, local := router.authDriver.(*auth.LocalClient); !local || localCLientAuthMode != auth.LocalClientBasicAuthMode {
+	if _, local := router.authDriver.(*auth.LocalClient); !local {
 		sessionKey, err := auth.NewSession(router.authDriver, u)
 		if err != nil {
 			log.Error("Auth> Error while creating new session: %s\n", err)
@@ -320,7 +320,7 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busi
 
 	//If authDriver is local, we send the password.
 	//BTW forgotten password process should not be available in ldap mode.
-	if _, ok := router.authDriver.(*auth.LocalClient); ok {
+	if _, local := router.authDriver.(*auth.LocalClient); local {
 		response.Password = password
 	}
 
@@ -368,7 +368,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busine
 	}
 
 	// If "session" mode is activated, generate a new session
-	if _, local := router.authDriver.(*auth.LocalClient); !local || localCLientAuthMode != auth.LocalClientBasicAuthMode {
+	if _, local := router.authDriver.(*auth.LocalClient); !local {
 		var sessionKey sessionstore.SessionKey
 		var errs error
 		if !logFromCLI {

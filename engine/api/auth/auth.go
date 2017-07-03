@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	ctx "github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
@@ -26,7 +26,7 @@ type Driver interface {
 	Store() sessionstore.Store
 	Authentify(db gorp.SqlExecutor, username, password string) (bool, error)
 	AuthentifyUser(db gorp.SqlExecutor, user *sdk.User, password string) (bool, error)
-	GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, c *ctx.Ctx) error
+	CheckAuthHeader(db *gorp.DbMap, headers http.Header, c *ctx.Ctx) error
 }
 
 //GetDriver is a factory

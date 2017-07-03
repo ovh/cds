@@ -406,10 +406,6 @@ func Auth(v bool) RouterConfigParam {
 	return f
 }
 
-func (r *Router) checkAuthHeader(db *gorp.DbMap, headers http.Header, c *businesscontext.Ctx) error {
-	return r.authDriver.GetCheckAuthHeaderFunc(localCLientAuthMode)(db, headers, c)
-}
-
 func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *businesscontext.Ctx) error {
 	c.Agent = headers.Get("User-Agent")
 
@@ -418,7 +414,7 @@ func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *bus
 	case sdk.HatcheryAgent:
 		return r.checkHatcheryAuth(db, headers, c)
 	default:
-		return r.checkAuthHeader(db, headers, c)
+		return r.authDriver.CheckAuthHeader(db, headers, c)
 	}
 }
 

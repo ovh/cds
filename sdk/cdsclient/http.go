@@ -153,9 +153,6 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 				basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
 				req.Header.Set(AuthHeader, basedHash)
 			}
-			if c.config.User != "" && c.config.Password != "" {
-				req.SetBasicAuth(c.config.User, c.config.Password)
-			}
 			if c.config.User != "" && c.config.Token != "" {
 				req.Header.Add(SessionTokenHeader, c.config.Token)
 				req.SetBasicAuth(c.config.User, c.config.Token)
@@ -232,9 +229,6 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		if c.config.Hash != "" {
 			basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
 			req.Header.Set(AuthHeader, basedHash)
-		}
-		if c.config.User != "" && c.config.Password != "" {
-			req.SetBasicAuth(c.config.User, c.config.Password)
 		}
 		if c.config.User != "" && c.config.Token != "" {
 			req.Header.Add(SessionTokenHeader, c.config.Token)
