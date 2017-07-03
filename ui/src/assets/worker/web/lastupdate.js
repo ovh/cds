@@ -1,3 +1,5 @@
+importScripts('../common.js');
+
 onmessage = function (e) {
     loadLastUpdates(e.data.user, e.data.session, e.data.api);
 };
@@ -5,34 +7,19 @@ onmessage = function (e) {
 var lastUpdate;
 
 function loadLastUpdates (user, session, api) {
-    if (user && api) {
-        setInterval(function () {
-            var response = httpCall('/mon/lastupdates', api, user, session);
-            postMessage(response);
-        }, 1000);
-    }
-}
-
-
-function httpCall (path, host, user, session) {
-    if (host !== 'foo.bar') {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', host + path, false, null, null);
-        if (session) {
-            xhr.setRequestHeader("Session-Token", session);
-        } else if (user) {
-            xhr.setRequestHeader("Authorization", "Basic " + user.token);
-        }
-
+    loop(1, function () {
+        var header = {};
         if (lastUpdate) {
-            xhr.setRequestHeader("If-Modified-Since", lastUpdate);
+            header = {"If-Modified-Since": lastUpdate};
         }
-
-        xhr.send(null);
+        var xhr = httpCall('/mon/lastupdates', api, user, session, header);
+        if (xhr.status >= 400) {
+            return true;
+        }
+        lastUpdate = xhr.getResponseHeader("ETag");
         if (xhr.status === 200) {
-            lastUpdate = xhr.getResponseHeader("ETag");
-            return xhr.responseText;
+            postMessage(xhr.responseText);
         }
-        return null;
-    }
+        return false;
+    });
 }

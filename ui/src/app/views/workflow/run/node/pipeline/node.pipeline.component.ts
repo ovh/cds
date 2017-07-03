@@ -2,6 +2,7 @@ import {Component, Input} from '@angular/core';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
+import {Job} from '../../../../../model/job.model';
 
 declare var Duration: any;
 
@@ -25,14 +26,22 @@ export class WorkflowRunNodePipelineComponent {
 
     pipelineStatusEnum = PipelineStatus;
     selectedRunJob: WorkflowNodeJobRun;
+    mapJobStatus: Map<number, string> = new Map<number, string>();
     mapStepStatus: Map<string, string> = new Map<string, string>();
 
     previousStatus: string;
 
     constructor() { }
 
-    selectedJob(rj: WorkflowNodeJobRun): void {
-        this.selectedRunJob = rj;
+    selectedJob(j: Job): void {
+        this.nodeRun.stages.forEach(s => {
+            if (s.run_jobs) {
+                let runJob = s.run_jobs.find(rj => rj.job.pipeline_action_id === j.pipeline_action_id);
+                if (runJob) {
+                    this.selectedRunJob = runJob;
+                }
+            }
+        });
     }
 
     refreshNodeRun(data: WorkflowNodeRun): void {
@@ -55,9 +64,11 @@ export class WorkflowRunNodePipelineComponent {
         // Set selected job if needed or refresh step_status
         if (this.nodeRun.stages) {
             this.nodeRun.stages.forEach((s, sIndex) => {
-
                 if (s.run_jobs) {
                     s.run_jobs.forEach((rj, rjIndex) => {
+                        // Update job status
+                        this.mapJobStatus.set(rj.job.pipeline_action_id, rj.status);
+
                         // Update percent progression
                         if (rj.status === PipelineStatus.BUILDING) {
                             // this.updateJobProgression(rj);
@@ -94,7 +105,10 @@ export class WorkflowRunNodePipelineComponent {
 
                if (s.run_jobs) {
                    s.run_jobs.forEach(rj => {
-                       this.jobTime.set(rj.id, new Duration(rj.queued_seconds + 's'));
+                       if (rj.queued_seconds) {
+                           this.jobTime.set(rj.job.pipeline_action_id, new Duration(rj.queued_seconds + 's'));
+                       }
+
                        if (rj.job.step_status) {
                            rj.job.step_status.forEach(ss => {
                                this.mapStepStatus.set(rj.job.pipeline_action_id + '-' + ss.step_order, ss.status);
