@@ -4,7 +4,7 @@ cd /app
 
 if [ ! -z ${BASE_URL} ]; then
     echo "replace base url with ${BASE_URL}"
-    sed -i "s/base href=\"\/\"/base href=\"${BASE_URL}\"/g" index.html
+    sed -i "s#base href=\"/\"#base href=\"${BASE_URL}\"#g" index.html
 fi;
 
 cd assets
