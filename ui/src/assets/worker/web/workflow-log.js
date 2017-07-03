@@ -21,16 +21,20 @@ onmessage = function (e) {
 };
 
 function loadLog (user, session, api) {
-    if (user && api) {
+    loop(2, function () {
         var url = '/project/' + key + '/workflows/' + workflowName + '/runs/' + number+ '/nodes/' + nodeRunId + '/job/' + runJobId + '/step/' + stepOrder;
-        postMessage(httpCall(url, api, user, session));
-        setInterval(function () {
-            var stepLogs = httpCall(url, api, user, session);
-            postMessage(stepLogs);
-            var jsonLogs = JSON.parse(stepLogs);
+
+        var xhr = httpCall(url, api, user, session);
+        if (xhr.status >= 400) {
+            return true;
+        }
+        if (xhr.status === 200 && xhr.responseText !== null) {
+            postMessage(xhr.responseText);
+            var jsonLogs = JSON.parse(xhr.responseText);
             if (jsonLogs && jsonLogs.status !== 'Building') {
                 close();
             }
-        }, 2000);
-    }
+        }
+        return false;
+    });
 }

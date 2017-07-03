@@ -15,14 +15,17 @@ onmessage = function (e) {
 };
 
 function loadWorkflow (user, session, api) {
-    var url = '/project/' + key + '/application/' + appName +
-        '?withSchedulers=true&withPollers=true&applicationStatus=true&branchName=' + branch + '&version=' + version;
+    loop(2, function () {
+        var url = '/project/' + key + '/application/' + appName +
+            '?withSchedulers=true&withPollers=true&applicationStatus=true&branchName=' + branch + '&version=' + version;
 
-    if (user && api) {
-        postMessage(httpCall(url, api, user, session));
-        setInterval(function () {
-            var response = httpCall(url, api, user, session);
-            postMessage(response);
-        }, 2000);
-    }
+        var xhr = httpCall(url, api, user, session);
+        if (xhr.status >= 400) {
+            return true;
+        }
+        if (xhr.status === 200 && xhr.responseText !== null) {
+            postMessage(xhr.responseText);
+        }
+        return false;
+    });
 }

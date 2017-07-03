@@ -6,23 +6,23 @@ testcases:
   - script: {{.cds.build.cds}} project add ITSCJA ITSCJA ITSCJA
   - script: {{.cds.build.cds}} application add ITSCJA TestApp
   - script: {{.cds.build.cds}} action remove ITSCJA_GitClone --force
-  - script: {{.cds.build.cds}} action remove ITSCJA_GoGet --force
-  - script: {{.cds.build.cds}} action remove ITSCJA_GoTest --force
+  - script: {{.cds.build.cds}} action remove ITSCJA_EchoA --force
+  - script: {{.cds.build.cds}} action remove ITSCJA_EchoB --force
 
 - name : test joined action
   steps:
   - script: {{.cds.build.cds}} pipeline add ITSCJA JA_Pipeline
   - script: {{.cds.build.cds}} action add ITSCJA_GitClone -r git -p gitURL -p gitTarget
   - script: {{.cds.build.cds}} action add step ITSCJA_GitClone Script -p script="git --version; echo Cloning {{.gitURL}} in {{.gitTarget}}; echo toto={{.toto}}"
-  - script: {{.cds.build.cds}} action add ITSCJA_GoGet -r go -p goGetTarget
-  - script: {{.cds.build.cds}} action add step ITSCJA_GoGet Script -p script="go version; echo {{.goGetTarget}}; echo toto={{.toto}}"
-  - script: {{.cds.build.cds}} action add ITSCJA_GoTest -r go -p goTestTarget
-  - script: {{.cds.build.cds}} action add step ITSCJA_GoTest Script -p script="go version; echo {{.goTestTarget}}; echo toto={{.toto}}"
+  - script: {{.cds.build.cds}} action add ITSCJA_EchoA -p goGetTarget
+  - script: {{.cds.build.cds}} action add step ITSCJA_EchoA Script -p script="echo {{.goGetTarget}}; echo toto={{.toto}}"
+  - script: {{.cds.build.cds}} action add ITSCJA_EchoB -p goTestTarget
+  - script: {{.cds.build.cds}} action add step ITSCJA_EchoB Script -p script="echo {{.goTestTarget}}; echo toto={{.toto}}"
 
   - script: {{.cds.build.cds}} pipeline job add ITSCJA JA_Pipeline TestFoo
   - script: {{.cds.build.cds}} pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GitClone -p gitURL="ssh://foo@bar.com" -p gitTarget="./src/foo@bar.com/test"
-  - script: {{.cds.build.cds}} pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GoGet -p goGetTarget="./..."
-  - script: {{.cds.build.cds}} pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_GoTest -p goTestTarget="./..."
+  - script: {{.cds.build.cds}} pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_EchoA -p goGetTarget="./..."
+  - script: {{.cds.build.cds}} pipeline job append ITSCJA JA_Pipeline TestFoo ITSCJA_EchoB -p goTestTarget="./..."
   - script: {{.cds.build.cds}} pipeline show ITSCJA JA_Pipeline
 
 - name : joined action run
@@ -36,6 +36,6 @@ testcases:
   - script: {{.cds.build.cds}} pipeline delete ITSCJA JA_Pipeline
   - script: {{.cds.build.cds}} project remove --force ITSCJA
   - script: {{.cds.build.cds}} action remove ITSCJA_GitClone
-  - script: {{.cds.build.cds}} action remove ITSCJA_GoGet
-  - script: {{.cds.build.cds}} action remove ITSCJA_GoTest
+  - script: {{.cds.build.cds}} action remove ITSCJA_EchoA
+  - script: {{.cds.build.cds}} action remove ITSCJA_EchoB
   - script: {{.cds.build.cds}} group remove ITSCJA

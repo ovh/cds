@@ -30,6 +30,9 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         if (this.selectedStage && this.selectedStage.jobs.length > 0 && !this.selectedJob) {
             this.selectJob(this.selectedStage.jobs[0], this.selectedStage);
         }
+        if (!this.pipeline.stages) {
+            this.pipeline.stages = new Array<Stage>();
+        }
     }
     @Input() queryParams: {};
 
