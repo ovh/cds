@@ -408,7 +408,6 @@ func Auth(v bool) RouterConfigParam {
 
 func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *businesscontext.Ctx) error {
 	c.Agent = headers.Get("User-Agent")
-
 	switch headers.Get("User-Agent") {
 	// TODO: case sdk.WorkerAgent should be moved here
 	case sdk.HatcheryAgent:

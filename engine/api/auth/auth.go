@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -71,19 +70,10 @@ func NewPersistentSession(db gorp.SqlExecutor, d Driver, u *sdk.User) (sessionst
 	if errLoad != nil {
 		return "", errLoad
 	}
-	t, errSession := sessionstore.NewSessionKey()
+
+	t, errSession := user.NewPersistentSession(db, u)
 	if errSession != nil {
 		return "", errSession
-	}
-	log.Info("NewPersistentSession> New Persistent Session for %s", u.Username)
-	newToken := sdk.UserToken{
-		Token:     string(t),
-		Timestamp: time.Now().Unix(),
-		Comment:   "",
-	}
-	u.Auth.Tokens = append(u.Auth.Tokens, newToken)
-	if err := user.UpdateUserAndAuth(db, *u); err != nil {
-		return "", err
 	}
 
 	session, errStore := d.Store().New(t)
