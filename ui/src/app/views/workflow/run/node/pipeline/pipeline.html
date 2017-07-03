@@ -14,24 +14,24 @@
                         <div class="stageItem">
                             {{stage.name}}
                             <ul>
-                                <li *ngFor="let rj of stage.run_jobs">
+                                <li *ngFor="let j of stage.jobs">
                                     <div class="job ui segment pointing"
-                                         [class.active]="selectedRunJob && selectedRunJob.id === rj.id"
-                                         [class.success]="rj.status === pipelineStatusEnum.SUCCESS"
-                                         [class.inactive]="rj.status === pipelineStatusEnum.DISABLED || rj.status === pipelineStatusEnum.SKIPPED"
-                                         [class.fail]="rj.status === pipelineStatusEnum.FAIL"
-                                         [class.building]="rj.status === pipelineStatusEnum.BUILDING || rj.status === pipelineStatusEnum.WAITING"
-                                         (click)="selectedJob(rj)">
+                                         [class.active]="selectedRunJob && selectedRunJob.job.pipeline_action_id === j.pipeline_action_id"
+                                         [class.success]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SUCCESS"
+                                         [class.inactive]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.DISABLED || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SKIPPED"
+                                         [class.fail]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.FAIL"
+                                         [class.building]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.BUILDING || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.WAITING"
+                                         (click)="selectedJob(j)">
                                         <div class="truncate">
-                                            <app-status-icon [status]="rj.status" [value]="99"></app-status-icon>
-                                            {{rj.job.action.name}}
+                                            <app-status-icon [status]="mapJobStatus.get(j.pipeline_action_id)" [value]="99"></app-status-icon>
+                                            {{j.action.name}}
                                         </div>
-                                        <div class="duration" *ngIf="rj.status !== pipelineStatusEnum.DISABLED && rj.status !== pipelineStatusEnum.SKIPPED">
-                                            <span *ngIf="rj.status === pipelineStatusEnum.WAITING">
-                                                 {{ 'workflow_run_node_job_queued' | translate: {time: jobTime.get(rj.id)} }}
+                                        <div class="duration" *ngIf="mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.DISABLED && mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.SKIPPED">
+                                            <span *ngIf="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.WAITING">
+                                                 {{ 'workflow_run_node_job_queued' | translate: {time: jobTime.get(j.pipeline_action_id)} }}
                                             </span>
-                                            <span *ngIf="rj.status !== pipelineStatusEnum.WAITING">
-                                                {{jobTime.get(rj.id)}}
+                                            <span *ngIf="mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.WAITING">
+                                                {{jobTime.get(j.pipeline_action_id)}}
                                             </span>
                                         </div>
                                     </div>
