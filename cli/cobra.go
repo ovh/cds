@@ -8,6 +8,8 @@ import (
 
 	"sort"
 
+	"reflect"
+
 	"github.com/spf13/cobra"
 )
 
@@ -136,7 +138,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				}
 			}
 
-			s, err := f(vals, filters)
+			s, err := f(vals)
 			if err != nil {
 				ExitOnError(err)
 			}
@@ -152,4 +154,35 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	cmd.AddCommand(subCommands...)
 
 	return cmd
+}
+
+func listItem(i interface{}, filters map[string]string, quiet bool, fields []string) map[string]string {
+	res := map[string]string{}
+
+	var s reflect.Value
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		s = reflect.ValueOf(i).Elem()
+	} else {
+		s = reflect.ValueOf(i)
+	}
+
+	t := reflect.TypeOf(i)
+
+	for i := 0; i < s.NumField(); i++ {
+		f := s.Field(i)
+		structField := t.Field(i)
+		if f.Kind() == reflect.Ptr {
+			f = f.Elem()
+		}
+		switch f.Kind() {
+		case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map:
+			continue
+		default:
+			if s.IsValid() && s.CanInterface() {
+				tag, ok := structField.Tag.Lookup("cli")
+				fmt.Println(tag)
+
+			}
+		}
+	}
 }

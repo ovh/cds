@@ -11,19 +11,19 @@ import (
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID            int64                 `json:"-" yaml:"-" db:"id"`
-	Key           string                `json:"key" yaml:"key" db:"projectkey"`
-	Name          string                `json:"name" yaml:"name" db:"name"`
-	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"`
-	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"`
-	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"`
-	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"`
-	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"`
-	Permission    int                   `json:"permission"  yaml:"-" db:"-"`
-	Created       time.Time             `json:"created"  yaml:"created" db:"created"`
-	LastModified  time.Time             `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
-	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-"`
-	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-"`
+	ID            int64                 `json:"-" yaml:"-" db:"id" cli:"-"`
+	Key           string                `json:"key" yaml:"key" db:"projectkey" cli:"key"`
+	Name          string                `json:"name" yaml:"name" db:"name" cli:"name"`
+	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
+	Permission    int                   `json:"permission"  yaml:"-" db:"-"  cli:"-"`
+	Created       time.Time             `json:"created"  yaml:"created" db:"created"  cli:"created"`
+	LastModified  time.Time             `json:"last_modified"  yaml:"last_modified" db:"last_modified" cli:"-"`
+	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-" cli:"-"`
+	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
 }
 
 // ProjectVariableAudit represents an audit on a project variable

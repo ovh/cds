@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-
-	"github.com/fsamin/go-dump"
 )
 
 type Flag struct {
@@ -127,53 +125,19 @@ type ListResult []interface{}
 
 type RunFunc func(Values) error
 type RunGetFunc func(Values) (GetResult, error)
-type RunListFunc func(Values, map[string]string, bool, string) (ListResult, error)
+type RunListFunc func(Values) (ListResult, error)
 
-func AsListResult(i interface{}, filter map[string]string, keyField string) ListResult {
+func AsListResult(i interface{}) ListResult {
 	s := reflect.ValueOf(i)
 	if s.Kind() != reflect.Slice {
 		panic("AsListResult() given a non-slice type")
 	}
 
-	res := [][]string{}
+	res := ListResult{}
 	for i := 0; i < s.Len(); i++ {
 		v := s.Index(i).Interface()
 
-		dmp, err := dump.ToMap(v)
-		if err != nil {
-			panic(err)
-		}
-
-		vals := []string{}
-		for k, val := range dmp {
-			fmt.Println(k, val)
-			var filtered bool
-			if len(filter) > 0 {
-				filtered = true
-			}
-			for fk, fv := range filter {
-				if k == fk && val == fv {
-					filtered = false
-				}
-			}
-
-			if filtered {
-				break
-			}
-
-			if len(fields) == 0 {
-				vals = append(vals, val)
-				continue
-			}
-
-			for _, inField := range fields {
-				if inField == k {
-					vals = append(vals, val)
-					continue
-				}
-			}
-		}
-		res = append(res, vals)
+		res = append(res, v)
 	}
 
 	return res
