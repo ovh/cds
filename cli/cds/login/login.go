@@ -45,7 +45,8 @@ var CmdSignup = &cobra.Command{
 	},
 }
 
-type config struct {
+// Config contains config file structure
+type Config struct {
 	User     string `json:"user"`
 	Password string `json:"password,omitempty"`
 	Token    string `json:"token,omitempty"`
@@ -53,7 +54,7 @@ type config struct {
 }
 
 func runSignup() {
-	conf := config{}
+	conf := Config{}
 
 	//Take the endpoint from flags or ask for on command line
 	if defaultEndPoint == "" {
@@ -83,6 +84,9 @@ func runSignup() {
 	fmt.Println("Please check your email to activate your account...")
 	fmt.Printf("And type your verification code: ")
 	b, err := gopass.GetPasswd()
+	if err != nil {
+		sdk.Exit("%v", err)
+	}
 	token := string(b)
 
 	u, err := sdk.VerifyUser(conf.User, token)
@@ -94,7 +98,7 @@ func runSignup() {
 	runLogin(&conf)
 }
 
-func runLogin(conf *config) {
+func runLogin(conf *Config) {
 	if conf == nil {
 		//Check if file exists
 		if _, err := os.Stat(sdk.CDSConfigFile); err == nil {
@@ -106,7 +110,7 @@ func runLogin(conf *config) {
 			}
 		}
 
-		conf = &config{}
+		conf = &Config{}
 
 		//Take the endpoint from flags or ask for on command line
 		if defaultEndPoint == "" {

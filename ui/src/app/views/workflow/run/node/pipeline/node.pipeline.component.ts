@@ -108,6 +108,7 @@ export class WorkflowRunNodePipelineComponent {
                        if (rj.queued_seconds) {
                            this.jobTime.set(rj.job.pipeline_action_id, new Duration(rj.queued_seconds + 's'));
                        }
+
                        if (rj.job.step_status) {
                            rj.job.step_status.forEach(ss => {
                                this.mapStepStatus.set(rj.job.pipeline_action_id + '-' + ss.step_order, ss.status);

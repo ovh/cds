@@ -87,6 +87,9 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) (err error) {
 			if err := addJobsToQueue(db, stage, n); err != nil {
 				return err
 			}
+			if stage.Status == sdk.StatusSkipped || stage.Status == sdk.StatusDisabled {
+				continue
+			}
 			break
 		}
 
@@ -159,6 +162,13 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	if err != nil {
 		log.Warning("addJobsToQueue> Cannot compute prerequisites on stage %s(%d): err", stage.Name, stage.ID, err)
 		return err
+	}
+
+	if !conditionsOK {
+		stage.Status = sdk.StatusSkipped
+	}
+	if !stage.Enabled {
+		stage.Status = sdk.StatusDisabled
 	}
 
 	//Browse the jobs
