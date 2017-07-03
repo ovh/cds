@@ -12,7 +12,7 @@ import {TranslateService} from 'ng2-translate';
     templateUrl: './action.add.html',
     styleUrls: ['./action.add.scss']
 })
-export class ActionAddComponent implements OnInit {
+export class ActionAddComponent {
     action: Action;
     isAdmin: boolean;
 
@@ -21,19 +21,13 @@ export class ActionAddComponent implements OnInit {
 
     constructor(private _actionService: ActionService,
                 private _toast: ToastService, private _translate: TranslateService,
-                private _route: ActivatedRoute, private _router: Router,
+                private _router: Router,
                 private _authentificationStore: AuthentificationStore) {
+        this.action = new Action();
+        this.action.enabled = true;
         if (this._authentificationStore.isConnected()) {
             this.isAdmin = this._authentificationStore.isAdmin();
         }
-    }
-
-    ngOnInit() {
-        this._route.params.subscribe(params => {
-            this._actionService.getAction(params['name']).subscribe( u => {
-                this.action = u;
-            });
-        });
     }
 
     actionEvent(event: ActionEvent): void {
@@ -46,5 +40,7 @@ export class ActionAddComponent implements OnInit {
             this.action.loading = false;
         });
     }
+
+    // TODO check name pattern before submit
 
 }
