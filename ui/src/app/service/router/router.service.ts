@@ -6,20 +6,7 @@ export class RouterService {
 
     getRouteParams(params: {}, activatedRoute: ActivatedRoute): {} {
         if (activatedRoute) {
-            if (activatedRoute.snapshot.params) {
-                if (activatedRoute.snapshot.params['key']) {
-                    params['key'] = activatedRoute.snapshot.params['key'];
-                }
-                if (activatedRoute.snapshot.params['pipName']) {
-                    params['pipName'] = activatedRoute.snapshot.params['pipName'];
-                }
-                if (activatedRoute.snapshot.params['appName']) {
-                    params['appName'] = activatedRoute.snapshot.params['appName'];
-                }
-                if (activatedRoute.snapshot.params['buildNumber']) {
-                    params['buildNumber'] = activatedRoute.snapshot.params['buildNumber'];
-                }
-            }
+            params = Object.assign({}, params, activatedRoute.snapshot.params);
             if (activatedRoute.children) {
                 activatedRoute.children.forEach(c => {
                     params = this.getRouteParams(params, c);
@@ -31,20 +18,7 @@ export class RouterService {
 
     getRouteSnapshotParams(params: {}, activatedRoute: ActivatedRouteSnapshot): {} {
         if (activatedRoute) {
-            if (activatedRoute.params) {
-                if (activatedRoute.params['key']) {
-                    params['key'] = activatedRoute.params['key'];
-                }
-                if (activatedRoute.params['pipName']) {
-                    params['pipName'] = activatedRoute.params['pipName'];
-                }
-                if (activatedRoute.params['appName']) {
-                    params['appName'] = activatedRoute.params['appName'];
-                }
-                if (activatedRoute.params['buildNumber']) {
-                    params['buildNumber'] = activatedRoute.params['buildNumber'];
-                }
-            }
+            params = Object.assign({}, params, activatedRoute.params);
             if (activatedRoute.children) {
                 activatedRoute.children.forEach(c => {
                     params = this.getRouteSnapshotParams(params, c);
