@@ -11,9 +11,11 @@ import {WorkflowBreadCrumbComponent} from './breadcrumb/workflow.breadcrumb.comp
 import {WorkflowRunJobVariableComponent} from './run/node/pipeline/variables/job.variables.component';
 import {WorkflowRunJobSpawnInfoComponent} from './run/node/pipeline/spawninfo/spawninfo.component';
 import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.component';
+import {WorkflowComponent} from './workflow.compoment';
 
 @NgModule({
     declarations: [
+        WorkflowComponent,
         WorkflowAddComponent,
         WorkflowBreadCrumbComponent,
         WorkflowGraphComponent,
