@@ -307,22 +307,14 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busi
 	var response = sdk.UserAPIResponse{
 		User: *u,
 	}
-	if _, local := router.authDriver.(*auth.LocalClient); !local || localCLientAuthMode != auth.LocalClientBasicAuthMode {
-		sessionKey, err := auth.NewSession(router.authDriver, u)
-		if err != nil {
-			log.Error("Auth> Error while creating new session: %s\n", err)
-		}
 
-		if sessionKey != "" {
-			response.Token = string(sessionKey)
-		}
+	sessionKey, err := auth.NewSession(router.authDriver, u)
+	if err != nil {
+		log.Error("Auth> Error while creating new session: %s\n", err)
 	}
 
-	//If authDriver is local, we send the password.
-	//BTW forgotten password process should not be available in ldap mode.
-	if _, ok := router.authDriver.(*auth.LocalClient); ok {
-		response.Password = password
-	}
+	response.Token = string(sessionKey)
+	response.Password = password
 
 	response.User.Auth = sdk.Auth{}
 	return WriteJSON(w, r, response, http.StatusOK)
@@ -367,28 +359,25 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busine
 		log.Warning("Auth> Error while check user in default group:%s\n", err)
 	}
 
-	// If "session" mode is activated, generate a new session
-	if _, local := router.authDriver.(*auth.LocalClient); !local || localCLientAuthMode != auth.LocalClientBasicAuthMode {
-		var sessionKey sessionstore.SessionKey
-		var errs error
-		if !logFromCLI {
-			//Standard login, new session
-			sessionKey, errs = auth.NewSession(router.authDriver, u)
-			if errs != nil {
-				log.Error("Auth> Error while creating new session: %s\n", errs)
-			}
-		} else {
-			//CLI login, generate user key as persistent session
-			sessionKey, errs = auth.NewPersistentSession(db, router.authDriver, u)
-			if errs != nil {
-				log.Error("Auth> Error while creating new session: %s\n", errs)
-			}
+	var sessionKey sessionstore.SessionKey
+	var errs error
+	if !logFromCLI {
+		//Standard login, new session
+		sessionKey, errs = auth.NewSession(router.authDriver, u)
+		if errs != nil {
+			log.Error("Auth> Error while creating new session: %s\n", errs)
 		}
+	} else {
+		//CLI login, generate user key as persistent session
+		sessionKey, errs = auth.NewPersistentSession(db, router.authDriver, u)
+		if errs != nil {
+			log.Error("Auth> Error while creating new session: %s\n", errs)
+		}
+	}
 
-		if sessionKey != "" {
-			w.Header().Set(sdk.SessionTokenHeader, string(sessionKey))
-			response.Token = string(sessionKey)
-		}
+	if sessionKey != "" {
+		w.Header().Set(sdk.SessionTokenHeader, string(sessionKey))
+		response.Token = string(sessionKey)
 	}
 
 	response.User.Auth = sdk.Auth{}

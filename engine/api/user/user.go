@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -254,4 +255,23 @@ func InsertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
 	query := `INSERT INTO "user" (username, admin, data, auth, created, origin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`
 	err := db.QueryRow(query, u.Username, u.Admin, u.JSON(), a.JSON(), time.Now(), u.Origin).Scan(&u.ID)
 	return err
+}
+
+// NewPersistentSession creates a new persistent session token in database
+func NewPersistentSession(db gorp.SqlExecutor, u *sdk.User) (sessionstore.SessionKey, error) {
+	t, errSession := sessionstore.NewSessionKey()
+	if errSession != nil {
+		return "", errSession
+	}
+	log.Info("NewPersistentSession> New Persistent Session for %s", u.Username)
+	newToken := sdk.UserToken{
+		Token:     string(t),
+		Timestamp: time.Now().Unix(),
+		Comment:   "",
+	}
+	u.Auth.Tokens = append(u.Auth.Tokens, newToken)
+	if err := UpdateUserAndAuth(db, *u); err != nil {
+		return "", err
+	}
+	return t, nil
 }

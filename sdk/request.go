@@ -22,7 +22,6 @@ var (
 	// Host defines the endpoint for all SDK requests
 	Host           string
 	user           string
-	password       string
 	token          string
 	hash           string
 	skipReadConfig bool
@@ -116,9 +115,6 @@ func ReadConfig() error {
 		if viper.GetString("user") != "" {
 			user = viper.GetString("user")
 		}
-		if viper.GetString("password") != "" {
-			password = viper.GetString("password")
-		}
 		if viper.GetString("token") != "" {
 			token = viper.GetString("token")
 		}
@@ -131,14 +127,11 @@ func ReadConfig() error {
 	if val := os.Getenv("CDS_USER"); val != "" {
 		user = val
 	}
-	if val := os.Getenv("CDS_PASSWORD"); val != "" {
-		password = val
-	}
 	if val := os.Getenv("CDS_TOKEN"); val != "" {
 		token = val
 	}
 
-	if user != "" && (password != "" || token != "") {
+	if user != "" && token != "" {
 		return nil
 	}
 
@@ -170,7 +163,6 @@ func SetHTTPClient(c HTTPClient) {
 func Options(h, u, p, t string) {
 	Host = h
 	user = u
-	password = p
 	token = t
 	skipReadConfig = true
 }
@@ -254,9 +246,6 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 				basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
 				req.Header.Set(AuthHeader, basedHash)
 			}
-			if user != "" && password != "" {
-				req.SetBasicAuth(user, password)
-			}
 			if user != "" && token != "" {
 				req.Header.Add(SessionTokenHeader, token)
 				req.SetBasicAuth(user, token)
@@ -338,9 +327,6 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 		basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
 		req.Header.Set(AuthHeader, basedHash)
 	}
-	if user != "" && password != "" {
-		req.SetBasicAuth(user, password)
-	}
 	if user != "" && token != "" {
 		req.Header.Add(SessionTokenHeader, token)
 		req.SetBasicAuth(user, token)
@@ -396,9 +382,6 @@ func Upload(method string, path string, body io.ReadCloser, mods ...RequestModif
 	if hash != "" {
 		basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
 		req.Header.Set(AuthHeader, basedHash)
-	}
-	if user != "" && password != "" {
-		req.SetBasicAuth(user, password)
 	}
 	resp, err := client.Do(req)
 	if err != nil {

@@ -41,7 +41,6 @@ const (
 	viperCacheRedisPassword             = "cache.redis.password"
 	viperDownloadDirectory              = "directories.download"
 	viperKeysDirectory                  = "directories.keys"
-	viperAuthMode                       = "auth.localmode"
 	viperAuthLDAPEnable                 = "auth.ldap.enable"
 	viperAuthLDAPHost                   = "auth.ldap.host"
 	viperAuthLDAPPort                   = "auth.ldap.port"
@@ -189,7 +188,6 @@ const tmpl = `###################################
 # CDS_CACHE_REDIS_PASSWORD
 # CDS_DIRECTORIES_DOWNLOAD
 # CDS_DIRECTORIES_KEYS
-# CDS_AUTH_LOCALMODE
 # CDS_AUTH_LDAP_ENABLE
 # CDS_AUTH_LDAP_HOST
 # CDS_AUTH_LDAP_PORT
@@ -312,10 +310,6 @@ ttl = 60
 [auth]
 # The default group is the group in which every new user will be granted at signup
 defaultgroup = ""
-
-# If Authentication is CDS local, you can switch between session based auth or basic auth
-# localmode = "basic"
-localmode = "session"
 
 	[auth.sharedinfra]
 	# Token for shared.infra group. This value will be used when shared.infra will be created

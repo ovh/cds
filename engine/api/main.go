@@ -43,7 +43,6 @@ import (
 
 var startupTime time.Time
 var baseURL string
-var localCLientAuthMode = auth.LocalClientBasicAuthMode
 
 var mainCmd = &cobra.Command{
 	Use:   "api",
@@ -222,13 +221,6 @@ var mainCmd = &cobra.Command{
 			}
 		default:
 			authMode = "local"
-			if viper.GetString(viperAuthMode) == "basic" {
-				log.Info("Authentitication mode: Basic")
-				localCLientAuthMode = auth.LocalClientBasicAuthMode
-			} else {
-				log.Info("Authentitication mode: Session")
-				localCLientAuthMode = auth.LocalClientSessionMode
-			}
 		}
 
 		storeOptions := sessionstore.Options{

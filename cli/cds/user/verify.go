@@ -7,10 +7,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/cli/cds/login"
-	"github.com/ovh/cds/sdk"
 	"os"
 	"path"
+
+	"github.com/ovh/cds/cli/cds/login"
+	"github.com/ovh/cds/sdk"
 )
 
 func cmdUserVerify() *cobra.Command {
@@ -43,7 +44,8 @@ func verifyUser(cmd *cobra.Command, args []string) {
 	fmt.Printf("Account informations : %s\n", userDataString)
 
 	fileContent := &login.Config{
-		User:  userData.User.Username,
+		User: userData.User.Username,
+
 		Token: userData.Token,
 		Host:  sdk.Host,
 	}
