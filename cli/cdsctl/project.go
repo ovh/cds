@@ -22,10 +22,10 @@ var projectListCmd = cli.Command{
 	Short: "List CDS projects",
 }
 
-func projectListRun(v cli.Values, filter map[string]string) (cli.ListResult, error) {
+func projectListRun(v cli.Values) (cli.ListResult, error) {
 	projs, err := client.ProjectList()
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(projs, filter), nil
+	return cli.AsListResult(projs), nil
 }

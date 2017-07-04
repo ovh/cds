@@ -7,7 +7,7 @@ var healthCmd = cli.Command{
 	Short: "Check CDS health",
 }
 
-func healthRun(v cli.Values, filter map[string]string) (cli.ListResult, error) {
+func healthRun(v cli.Values) (cli.ListResult, error) {
 	s, err := client.MonStatus()
-	return cli.AsListResult(s, filter, ""), err
+	return cli.AsListResult(s), err
 }

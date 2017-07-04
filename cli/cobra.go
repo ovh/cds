@@ -1,7 +1,11 @@
 package cli
 
 import (
+	"regexp"
+	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 
 	"fmt"
 	"os"
@@ -10,6 +14,9 @@ import (
 
 	"reflect"
 
+	"encoding/json"
+
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -58,13 +65,23 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		cmd.Use = cmd.Use + " [" + strings.ToUpper(a.Name) + "]"
 	}
 
-	for _, f := range c.Flags {
-		_ = cmd.Flags().StringP(f.Name, f.ShortHand, f.Default, f.Usage)
+	if len(mods) == 0 {
+		mods = []CommandModifier{CommandWithExtraFlags}
 	}
 
 	if run != nil {
 		for _, mod := range mods {
 			mod(&c, run)
+		}
+	}
+
+	for _, f := range c.Flags {
+		switch f.Kind {
+		case reflect.Bool:
+			b, _ := strconv.ParseBool(f.Default)
+			_ = cmd.Flags().BoolP(f.Name, f.ShortHand, b, f.Usage)
+		default:
+			_ = cmd.Flags().StringP(f.Name, f.ShortHand, f.Default, f.Usage)
 		}
 	}
 
@@ -94,6 +111,9 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		}
 
 		for i := range c.Flags {
+			if c.Flags[i].Kind != reflect.String {
+				continue
+			}
 			var err error
 			s := c.Flags[i].Name
 			vals[s], err = cmd.Flags().GetString(s)
@@ -103,6 +123,8 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				ExitOnError(ErrWrongUsage, cmd.Help)
 			}
 		}
+
+		format, _ := cmd.Flags().GetString("format")
 
 		switch f := run.(type) {
 		case RunFunc:
@@ -128,8 +150,10 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				os.Exit(0)
 			}
 
+			quiet, _ := cmd.Flags().GetBool("quiet")
+			verbose, _ := cmd.Flags().GetBool("verbose")
 			filter, _ := cmd.Flags().GetString("filter")
-			var filters map[string]string
+			var filters = make(map[string]string)
 			if filter != "" {
 				t := strings.Split(filter, " ")
 				for i := range t {
@@ -142,9 +166,72 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			if err != nil {
 				ExitOnError(err)
 			}
+
+			tableHeader := []string{}
+			tableData := [][]string{}
+			var tableHeaderReady bool
+
+			allResult := []map[string]string{}
+
 			for _, i := range s {
-				fmt.Printf("%v\n", i)
+				item := listItem(i, filters, quiet, nil, verbose)
+				if len(item) == 0 {
+					continue
+				}
+
+				if quiet {
+					fmt.Println(item["key"])
+					continue
+				}
+
+				allResult = append(allResult, item)
+
+				if format == "" || format == "table" {
+					itemData := make([]string, len(item))
+					var i int
+
+					itemKeys := []string{}
+					for k := range item {
+						itemKeys = append(itemKeys, k)
+					}
+
+					sort.Strings(itemKeys)
+
+					for _, k := range itemKeys {
+						if !tableHeaderReady {
+							tableHeader = append(tableHeader, strings.ToTitle(k))
+						}
+						itemData[i] = item[k]
+						i++
+					}
+					tableHeaderReady = true
+					tableData = append(tableData, itemData)
+				}
 			}
+
+			if quiet {
+				return
+			}
+
+			switch format {
+			case "json":
+				b, err := json.Marshal(allResult)
+				ExitOnError(err)
+				fmt.Println(string(b))
+			case "yaml":
+				b, err := yaml.Marshal(allResult)
+				ExitOnError(err)
+				fmt.Println(string(b))
+			default:
+				table := tablewriter.NewWriter(os.Stdout)
+				table.SetHeader(tableHeader)
+				for _, v := range tableData {
+					table.Append(v)
+				}
+				table.Render()
+				return
+			}
+
 		default:
 			panic(fmt.Errorf("Unknown function type: %T", f))
 		}
@@ -156,7 +243,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	return cmd
 }
 
-func listItem(i interface{}, filters map[string]string, quiet bool, fields []string) map[string]string {
+func listItem(i interface{}, filters map[string]string, quiet bool, fields []string, verbose bool) map[string]string {
 	res := map[string]string{}
 
 	var s reflect.Value
@@ -167,22 +254,71 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 	}
 
 	t := reflect.TypeOf(i)
-
-	for i := 0; i < s.NumField(); i++ {
+	var ok = true
+	for i := 0; i < s.NumField() && ok; i++ {
 		f := s.Field(i)
 		structField := t.Field(i)
 		if f.Kind() == reflect.Ptr {
 			f = f.Elem()
 		}
 		switch f.Kind() {
-		case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map:
+		case reflect.Array, reflect.Slice, reflect.Map:
 			continue
 		default:
 			if s.IsValid() && s.CanInterface() {
-				tag, ok := structField.Tag.Lookup("cli")
-				fmt.Println(tag)
+				tag := structField.Tag.Get("cli")
+				if tag == "-" {
+					continue
+				}
 
+				if !verbose && tag == "" {
+					continue
+				}
+
+				if tag == "" {
+					tag = structField.Name
+				}
+
+				if len(filters) > 0 {
+					for k, v := range filters {
+						if !strings.HasPrefix(v, "^") {
+							v = "^" + v
+						}
+						if !strings.HasSuffix(v, "$") {
+							v = v + "$"
+						}
+						match, err := regexp.MatchString(v, fmt.Sprintf("%v", f.Interface()))
+						if err != nil {
+							panic(err)
+						}
+						if k == tag && !match {
+							ok = false
+							continue
+						}
+					}
+					if ok {
+						res[tag] = fmt.Sprintf("%v", f.Interface())
+					}
+				} else {
+					if quiet && tag == "key" {
+						res[tag] = fmt.Sprintf("%v", f.Interface())
+						break
+					}
+
+					if len(fields) > 0 {
+						for _, ff := range fields {
+							if ff == tag {
+								res[tag] = fmt.Sprintf("%v", f.Interface())
+								continue
+							}
+						}
+						continue
+					}
+
+					res[tag] = fmt.Sprintf("%v", f.Interface())
+				}
 			}
 		}
 	}
+	return res
 }

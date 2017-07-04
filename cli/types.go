@@ -11,6 +11,7 @@ type Flag struct {
 	ShortHand string
 	Usage     string
 	Default   string
+	Kind      reflect.Kind
 	IsValid   func(string) bool
 }
 
@@ -74,11 +75,13 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Name:    "format",
 				Default: "plain",
 				Usage:   "Output format: plain|json|yaml",
+				Kind:    reflect.String,
 			},
 			{
 				Name:    "quiet",
 				Default: "",
 				Usage:   "Only display object's key",
+				Kind:    reflect.Bool,
 			},
 		}
 	case RunListFunc:
@@ -87,22 +90,31 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Name:    "filter",
 				Default: "",
 				Usage:   "Filter output based on conditions provided",
+				Kind:    reflect.String,
 			},
 			{
 				Name:    "format",
-				Default: "plain",
+				Default: "table",
 				Usage:   "Output format: table|json|yaml",
+				Kind:    reflect.String,
 			},
 			{
 				Name:      "quiet",
 				ShortHand: "q",
 				Default:   "",
 				Usage:     "Only display object's key",
+				Kind:      reflect.Bool,
 			},
 			{
 				Name:    "fields",
 				Default: "",
-				Usage:   "Only display specified object fields. 'empty' will display common fields, 'all' will display all object fields, 'field1,field2' to select multiple fields",
+				Usage:   "Only display specified object fields. 'empty' will display all fields, 'all' will display all object fields, 'field1,field2' to select multiple fields",
+				Kind:    reflect.String,
+			},
+			{
+				Name:  "verbose",
+				Usage: "Display all object fields",
+				Kind:  reflect.Bool,
 			},
 		}
 	}
@@ -136,7 +148,6 @@ func AsListResult(i interface{}) ListResult {
 	res := ListResult{}
 	for i := 0; i < s.Len(); i++ {
 		v := s.Index(i).Interface()
-
 		res = append(res, v)
 	}
 
