@@ -10,9 +10,7 @@ export class ProjectResolver implements Resolve<Project> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
-        return this.projectStore.getProjectResolver(params['key']).map( p => {
-            return p;
-        });
+        return this.projectStore.getProjectResolver(params['key']);
     }
 
     constructor(private projectStore: ProjectStore, private routerService: RouterService) {}

@@ -18,7 +18,7 @@ export class WorkflowComponent {
     project: Project;
     workflow: Workflow;
     workflowSubscription: Subscription;
-    sidebarOpen: false;
+    sidebarOpen: boolean;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
