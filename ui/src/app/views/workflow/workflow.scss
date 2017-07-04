@@ -1,0 +1,33 @@
+.content-wrap, .sidebar {
+  transition: width 0.1s;
+  height: 100%;
+}
+
+.sidebar {
+  float: left;
+  width: 0%;
+  background: #FFFFFF;
+
+  &.expanded {
+    width: 25%;
+    position: fixed;
+    z-index: 4;
+  }
+}
+
+.content-wrap {
+  float: right;
+  width: 75%;
+
+  &.expanded {
+    width: 100%;
+  }
+
+  .open.button {
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    padding-left: 10px;
+    padding-right: 5px;
+    position: absolute;
+  }
+}

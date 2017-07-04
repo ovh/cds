@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 
 @Injectable()
 export class RouterService {
@@ -23,6 +23,31 @@ export class RouterService {
             if (activatedRoute.children) {
                 activatedRoute.children.forEach(c => {
                     params = this.getRouteParams(params, c);
+                });
+            }
+        }
+        return params;
+    }
+
+    getRouteSnapshotParams(params: {}, activatedRoute: ActivatedRouteSnapshot): {} {
+        if (activatedRoute) {
+            if (activatedRoute.params) {
+                if (activatedRoute.params['key']) {
+                    params['key'] = activatedRoute.params['key'];
+                }
+                if (activatedRoute.params['pipName']) {
+                    params['pipName'] = activatedRoute.params['pipName'];
+                }
+                if (activatedRoute.params['appName']) {
+                    params['appName'] = activatedRoute.params['appName'];
+                }
+                if (activatedRoute.params['buildNumber']) {
+                    params['buildNumber'] = activatedRoute.params['buildNumber'];
+                }
+            }
+            if (activatedRoute.children) {
+                activatedRoute.children.forEach(c => {
+                    params = this.getRouteSnapshotParams(params, c);
                 });
             }
         }

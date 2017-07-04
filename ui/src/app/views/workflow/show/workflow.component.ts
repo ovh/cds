@@ -52,23 +52,22 @@ export class WorkflowShowComponent {
         });
 
         this.activatedRoute.params.subscribe(params => {
-            let key = params['key'];
             let workflowName = params['workflowName'];
-            if (key && workflowName) {
+            if (this.project.key && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
                 }
 
                 if (!this.detailedWorkflow) {
-                    this.workflowSubscription = this._workflowStore.getWorkflows(key, workflowName).subscribe(ws => {
+                    this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
                         if (ws) {
-                            let updatedWorkflow = ws.get(key + '-' + workflowName);
+                            let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
                             if (updatedWorkflow && !updatedWorkflow.externalChange) {
                                 this.detailedWorkflow = updatedWorkflow;
                             }
                         }
                     }, () => {
-                        this._router.navigate(['/project', key]);
+                        this._router.navigate(['/project', this.project.key]);
                     });
                 }
             }

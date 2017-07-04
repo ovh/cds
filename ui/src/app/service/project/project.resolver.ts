@@ -3,15 +3,17 @@ import {Resolve, ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/rou
 import {Observable} from 'rxjs/Rx';
 import {Project} from '../../model/project.model';
 import {ProjectStore} from './project.store';
+import {RouterService} from '../router/router.service';
 
 @Injectable()
 export class ProjectResolver implements Resolve<Project> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-        return this.projectStore.getProjectResolver(route.params['key']).map( p => {
+        let params = this.routerService.getRouteSnapshotParams({}, state.root);
+        return this.projectStore.getProjectResolver(params['key']).map( p => {
             return p;
         });
     }
 
-    constructor(private projectStore: ProjectStore) {}
+    constructor(private projectStore: ProjectStore, private routerService: RouterService) {}
 }

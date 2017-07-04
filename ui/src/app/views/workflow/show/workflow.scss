@@ -1,20 +1,11 @@
 @import '../../../../common';
-
 #WorkflowShow {
   display: flex;
   flex-direction: column;
   align-content: stretch;
-  height: 100%;
+  height: calc(100% - 58px);
 
-  .scrollingContent {
-    .paddingContent {
-      padding: 0px 0px;
-
-      .center {
-        text-align: center;
-      }
-    }
+  .center {
+    text-align: center;
   }
 }
-
-
