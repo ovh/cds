@@ -5,7 +5,13 @@
   align-content: stretch;
   height: calc(100% - 58px);
 
-  .center {
-    text-align: center;
+  .scrollingContent {
+    overflow-x: auto;
+
+    .center {
+      text-align: center;
+    }
   }
+
+
 }
