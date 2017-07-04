@@ -8,9 +8,7 @@ import {PipelineStore} from './pipeline.store';
 export class PipelineResolver implements Resolve<Array<Pipeline>> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-        return this.pipStore.getPipelineResolver(route.params['key'], route.params['pipName']).map( p => {
-            return p;
-        });
+        return this.pipStore.getPipelineResolver(route.params['key'], route.params['pipName']);
     }
 
     constructor(private pipStore: PipelineStore) {}

@@ -1,0 +1,12 @@
+<aside class="sidebar" [class.expanded]="sidebarOpen">
+    <div class="sidebar-toggle">
+
+    </div>
+</aside>
+<section class="content-wrap" [class.expanded]="!sidebarOpen">
+    <button class="ui blue open button" (click)="sidebarOpen = !sidebarOpen"><i class="content icon"></i></button>
+    <div class="CDSbreadcrumb">
+        <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name"></app-worflow-breadcrumb>
+    </div>
+    <router-outlet></router-outlet>
+</section>

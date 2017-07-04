@@ -8,8 +8,8 @@
 </div>
 
 
-<div class="container" [class.LR]="direction === 'LR'" [class.TB]="direction === 'TB'">
-    <svg [attr.width]="svgWidth" [attr.height]="700" #svgGraph>
+<div [class.LR]="direction === 'LR'" [class.TB]="direction === 'TB'">
+    <svg [attr.width]="svgWidth" [attr.height]="svgHeight" #svgGraph>
         <g></g>
     </svg>
 </div>

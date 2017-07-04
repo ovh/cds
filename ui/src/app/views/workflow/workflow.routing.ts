@@ -6,19 +6,19 @@ import {WorkflowAddComponent} from './add/workflow.add.component';
 import {WorkflowShowComponent} from './show/workflow.component';
 import {WorkflowRunComponent} from './run/workflow.run.component';
 import {WorkflowNodeRunComponent} from './run/node/workflow.run.node.component';
+import {WorkflowComponent} from './workflow.compoment';
 
 const workflowRoutes: Routes = [
     {
         path: '',
+        component: WorkflowComponent,
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
+        resolve: {
+            project: ProjectResolver
+        },
         children: [
-            {
-                path: '', component: WorkflowAddComponent,
-                resolve: {
-                    project: ProjectResolver
-                }
-            },
+
             {
                 path: ':workflowName', component: WorkflowShowComponent,
                 resolve: {
@@ -38,6 +38,12 @@ const workflowRoutes: Routes = [
                 }
             }
         ]
+    },
+    {
+        path: 'add', component: WorkflowAddComponent,
+        resolve: {
+            project: ProjectResolver
+        }
     }
 ];
 

@@ -8,9 +8,7 @@ import {ApplicationStore} from './application.store';
 export class ApplicationResolver implements Resolve<Application> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-        return this.appStore.getApplicationResolver(route.params['key'], route.params['appName']).map( app => {
-            return app;
-        });
+        return this.appStore.getApplicationResolver(route.params['key'], route.params['appName']);
     }
 
     constructor(private appStore: ApplicationStore) {}

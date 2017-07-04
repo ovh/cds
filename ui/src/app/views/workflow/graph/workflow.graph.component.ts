@@ -48,6 +48,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
     svgWidth: number;
+    svgHeight: number;
     direction: string;
 
     @ViewChild('dimmer')
@@ -90,10 +91,12 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             inner.each(function () {
                 w = this.getBBox().width;
             });
-            this.svgWidth = w;
+            this.svgWidth = w + 40;
             inner.attr('transform', 'translate(20, 0)');
         } else {
+            inner.attr('transform', 'translate(20, 0)');
             // Horizontal center
+            /*
             if (event) {
                 this.svgWidth = event.target.innerWidth;
             } else {
@@ -101,9 +104,12 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             }
             let svgWidth = +svg.attr('width');
             let xCenterOffset = (svgWidth - this.g.graph().width) / 2;
-            inner.attr('transform', 'translate(' + xCenterOffset + ', 20)');
+            inner.attr('transform', 'translate(' + xCenterOffset + ', 0)');
+            */
+
         }
-        svg.attr('height', this.g.graph().height + 40);
+        this.svgHeight = this.g.graph().height + 40;
+        svg.attr('height', this.svgHeight);
     }
 
     ngAfterViewInit(): void {
@@ -123,6 +129,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     initWorkflow() {
         this.svgWidth = window.innerWidth;
+        this.svgHeight = window.innerHeight;
         // this.g = new dagreD3.graphlib.Graph().setGraph({ directed: false, rankDir: 'LR'});
         this.g = new dagreD3.graphlib.Graph().setGraph({directed: false, rankDir: this.direction});
         if (this.workflow.root) {
@@ -138,6 +145,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         // Set up an SVG group so that we can translate the final graph.
         let svg = d3.select('svg');
         svg.attr('width', this.svgWidth);
+        svg.attr('height', this.svgHeight);
         let inner = d3.select('svg g');
 
         this.g.transition = (selection) => {

@@ -1,55 +1,49 @@
 <div id="WorkflowShow">
-    <div class="CDSbreadcrumb">
-        <app-worflow-breadcrumb [project]="project" [workflowName]="detailedWorkflow?.name"></app-worflow-breadcrumb>
-    </div>
     <div class="scrollingContent">
-        <div class="paddingContent">
-            <div class="viewContent">
-                <div class="center">
-                    <div class="ui green buttons">
-                        <div class="ui button" (click)="runWorkflow()" [class.loading]="loading">{{ 'btn_run_workflow' | translate }}</div>
-                        <sm-dropdown class="icon button">
-                            <sm-item>
-                                {{ 'btn_run_custom_worklow' | translate }}
-                            </sm-item>
-                        </sm-dropdown>
-                    </div>
-                </div>
-                    <ng-container *ngIf="project && detailedWorkflow">
-                        <div class="graph">
-                            <app-workflow-graph [workflow]="detailedWorkflow" [project]="project"
-                                (addSrcToJoinEvent)="addSourceToJoin($event)"
-                                (deleteJoinSrcEvent)="openDeleteJoinSrcModal($event)"
-                                (editTriggerJoinEvent)="openEditJoinTriggerModal($event)"
-                                (editTriggerEvent)="openEditTriggerModal($event)" #workflowGraph></app-workflow-graph>
-                        </div>
-                    </ng-container>
-                    <div class="ui text active loader" *ngIf="!detailedWorkflow || !project">Loading workflow...</div>
+        <div class="center">
+            <div class="ui green buttons">
+                <div class="ui button" (click)="runWorkflow()" [class.loading]="loading">{{ 'btn_run_workflow' | translate }}</div>
+                <sm-dropdown class="icon button">
+                    <sm-item>
+                        {{ 'btn_run_custom_worklow' | translate }}
+                    </sm-item>
+                </sm-dropdown>
             </div>
         </div>
+        <ng-container *ngIf="project && detailedWorkflow">
+            <div class="graph">
+                <app-workflow-graph [workflow]="detailedWorkflow" [project]="project"
+                                    (addSrcToJoinEvent)="addSourceToJoin($event)"
+                                    (deleteJoinSrcEvent)="openDeleteJoinSrcModal($event)"
+                                    (editTriggerJoinEvent)="openEditJoinTriggerModal($event)"
+                                    (editTriggerEvent)="openEditTriggerModal($event)" #workflowGraph></app-workflow-graph>
+            </div>
+        </ng-container>
     </div>
+    <div class="ui text active loader" *ngIf="!detailedWorkflow || !project">Loading workflow...</div>
+
+    <ng-container *ngIf="project && detailedWorkflow">
+        <app-workflow-trigger
+                [project]="project"
+                [workflow]="detailedWorkflow"
+                [triggerSrcNode]="selectedNode"
+                [(trigger)]="selectedTrigger"
+                (triggerChange)="updateTrigger()"
+                #editTriggerComponent></app-workflow-trigger>
+    </ng-container>
+    <ng-container *ngIf="project && detailedWorkflow">
+        <app-workflow-trigger-join
+                [project]="project"
+                [workflow]="detailedWorkflow"
+                [join]="selectedJoin"
+                [(trigger)]="selectedJoinTrigger"
+                (triggerChange)="updateJoinTrigger()"
+                #editJoinTriggerComponent></app-workflow-trigger-join>
+    </ng-container>
+    <ng-container *ngIf="project && detailedWorkflow">
+        <app-workflow-trigger-join-src [join]="selectedJoin" (event)="deleteJoinSrc($event)"
+                                       #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
+    </ng-container>
+
+
 </div>
-
-
-<ng-container *ngIf="project && detailedWorkflow">
-    <app-workflow-trigger
-            [project]="project"
-            [workflow]="detailedWorkflow"
-            [triggerSrcNode]="selectedNode"
-            [(trigger)]="selectedTrigger"
-            (triggerChange)="updateTrigger()"
-    #editTriggerComponent></app-workflow-trigger>
-</ng-container>
-<ng-container *ngIf="project && detailedWorkflow">
-    <app-workflow-trigger-join
-            [project]="project"
-            [workflow]="detailedWorkflow"
-            [join]="selectedJoin"
-            [(trigger)]="selectedJoinTrigger"
-            (triggerChange)="updateJoinTrigger()"
-            #editJoinTriggerComponent></app-workflow-trigger-join>
-</ng-container>
-<ng-container *ngIf="project && detailedWorkflow">
-    <app-workflow-trigger-join-src [join]="selectedJoin" (event)="deleteJoinSrc($event)" #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
-</ng-container>
-
