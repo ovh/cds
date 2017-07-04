@@ -19,7 +19,7 @@ var (
 
 func main() {
 	login := cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
-	healt := cli.NewListCommand(healthCmd, healthRun, nil, cli.CommandWithoutExtraFlags)
+	healt := cli.NewGetCommand(healthCmd, healthRun, nil, cli.CommandWithoutExtraFlags)
 
 	root := cli.NewCommand(mainCmd, mainRun,
 		[]*cobra.Command{
