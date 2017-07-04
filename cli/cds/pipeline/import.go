@@ -55,7 +55,7 @@ func importCmd() *cobra.Command {
 			}
 
 			var url string
-			url = fmt.Sprintf("/project/%s/pipeline/import?format=%s", projectKey, importFormat)
+			url = fmt.Sprintf("/project/%s/import/pipeline?format=%s", projectKey, importFormat)
 
 			if importForce {
 				url += "&forceUpdate=true"
@@ -65,7 +65,7 @@ func importCmd() *cobra.Command {
 			if sdk.ErrorIs(err, sdk.ErrPipelineAlreadyExists) {
 				fmt.Print("Pipline already exists. ")
 				if cli.AskForConfirmation("Do you want to override ?") {
-					url = fmt.Sprintf("/project/%s/pipeline/import?format=%s&forceUpdate=true", projectKey, importFormat)
+					url = fmt.Sprintf("/project/%s/import/pipeline?format=%s&forceUpdate=true", projectKey, importFormat)
 					data, code, err = sdk.Request("POST", url, btes)
 				} else {
 					sdk.Exit("Aborted\n")
