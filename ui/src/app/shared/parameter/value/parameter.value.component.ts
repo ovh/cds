@@ -13,13 +13,13 @@ declare var CodeMirror: any;
     templateUrl: './parameter.value.html',
     styleUrls: ['./parameter.value.scss']
 })
-export class ParameterValueComponent {
+export class ParameterValueComponent implements OnInit {
 
     editableValue: string|number|boolean;
     @Input() type: string;
     @Input('value')
     set value (data: string|number|boolean) {
-      this.editableValue = this.castValue(data);
+        this.castValue(data);
     };
 
     @Input() editList = true;
@@ -70,15 +70,23 @@ export class ParameterValueComponent {
         };
     }
 
+    ngOnInit(): void {
+        this.castValue(this.editableValue);
+    }
+
     castValue(data: string|number|boolean): string|number|boolean {
         if (this.type === 'boolean') {
-            return (data === 'true' || data === true);
+            this.editableValue = (data === 'true' || data === true);
+            return;
+        } else if (this.type === 'list' && !this.editList) {
+            if (!this.list) {
+                this.list = (<string>data).split(';');
+                return this.editableValue = this.list[0];
+            }
+            return;
+        } else {
+            this.editableValue = data;
         }
-        if (this.type === 'list' && !this.editList) {
-            this.list = (<string>data).split(';');
-            return this.list[0];
-        }
-        return data;
     }
 
     valueChanged(): void {
