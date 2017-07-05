@@ -659,6 +659,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	}
 
 	// Load last finished build
+
 	buildNumber, err := GetLastBuildNumber(tx, p.ID, app.ID, env.ID)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
@@ -840,6 +841,21 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		for i := range history {
 			if previous == nil || previous.BuildNumber > history[i].BuildNumber {
 				previous = &history[i]
+			}
+		}
+	}
+
+	if previous != nil {
+		previousHash := sdk.ParameterValue(previous.Parameters, "git.hash")
+		if previousHash != "" {
+			sdk.AddParameter(&argsFinal, "git.previousHash", sdk.StringParameter, previousHash)
+			argsJSON, errmarshal := json.Marshal(argsFinal)
+			if errmarshal != nil {
+				return nil, sdk.WrapError(errmarshal, "InsertPipelineBuild> Cannot marshal build parameters")
+			}
+			query := "UPDATE pipeline_build SET args=$1 where id=$2"
+			if _, err := tx.Exec(query, string(argsJSON), pb.ID); err != nil {
+				return nil, sdk.WrapError(err, "InsertPipelineBuild> Cannot update build parameters")
 			}
 		}
 	}
