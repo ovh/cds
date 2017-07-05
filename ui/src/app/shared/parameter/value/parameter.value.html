@@ -13,14 +13,14 @@
         <div class="ui fluid input" *ngIf="editList">
             <input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="value1;value2;value3">
         </div>
-        <div *ngIf="!editList">
+        <div *ngIf="!editList && editableValue && list">
             <sm-select class="search fluid"
                 [(model)]="editableValue"
                 [options]="{'fullTextSearch': true}"
                 (modelChange)="valueChanged()"
                 (keydown)="sendValueChanged()"
                 name="value">
-                <option *ngFor="let v of list" value="{{v}}">{{v}}</option>
+                <option *ngFor="let v of list" [value]="v">{{v}}</option>
             </sm-select>
         </div>
     </div>

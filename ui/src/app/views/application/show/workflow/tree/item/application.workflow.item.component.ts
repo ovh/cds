@@ -73,8 +73,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
 
     runPipeline(): void {
         // If no parents and have parameters without value, go to manual launch
-        if (this.workflowItem.trigger.manual
-            || (Pipeline.hasParameterWithoutValue(this.workflowItem.pipeline) && !this.workflowItem.parent)) {
+        if (this.workflowItem.trigger.manual ||
+            (this.workflowItem.pipeline.parameters && this.workflowItem.pipeline.parameters.length > 0)) {
             return this.runWithParameters();
         }
 

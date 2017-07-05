@@ -6,7 +6,6 @@ import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {Project} from '../../../model/project.model';
 import {WorkflowItem} from '../../../model/application.workflow.model';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
-import {Environment} from '../../../model/environment.model';
 import {Commit} from '../../../model/repositories.model';
 import {cloneDeep} from 'lodash';
 
@@ -52,18 +51,11 @@ export class PipelineLaunchModalComponent {
         gitBranchParam.type = 'string';
         this.launchGitParams.push(gitBranchParam);
 
-        // Init pipeline parameters
-        this._pipStore.getPipelines(this.project.key, this.workflowItem.pipeline.name).subscribe(pips => {
-            let pipKey = this.project.key + '-' + this.workflowItem.pipeline.name;
-            if (pips && pips.get(pipKey)) {
-                let pipeline = pips.get(pipKey);
-                if (this.workflowItem.trigger) {
-                    this.launchPipelineParams = Pipeline.mergeParams(pipeline.parameters, this.workflowItem.trigger.parameters);
-                } else {
-                    this.launchPipelineParams = Pipeline.mergeParams(pipeline.parameters, []);
-                }
-            }
-        });
+        if (this.workflowItem.trigger) {
+            this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, this.workflowItem.trigger.parameters);
+        } else {
+            this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, []);
+        }
 
         // Init parent version
         if (this.workflowItem.parent && this.workflowItem.trigger.id > 0) {
