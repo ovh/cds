@@ -121,11 +121,11 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	}
 	if a.Type == sdk.PluginAction {
 		//Define a loggin function
-		sendLog := func(format string, args ...interface{}) {
-			if !strings.HasSuffix(format, "\n") {
-				format += "\n"
+		sendLog := func(s string) {
+			if !strings.HasSuffix(s, "\n") {
+				s += "\n"
 			}
-			w.sendLog(buildID, fmt.Sprintf(format, args...), stepOrder, false)
+			w.sendLog(buildID, s, stepOrder, false)
 		}
 		return w.runPlugin(ctx, a, buildID, params, stepOrder, sendLog)
 	}
