@@ -1,25 +1,20 @@
 package cli
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 
-	"gopkg.in/yaml.v2"
-
-	"fmt"
-	"os"
-
-	"sort"
-
-	"reflect"
-
-	"encoding/json"
-
 	"github.com/fsamin/go-dump"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 func ExitOnError(err error, helpFunc ...func() error) {
