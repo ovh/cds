@@ -38,7 +38,7 @@ func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
 		}
 
 		var tests venom.Tests
-		sendLog("%d file(s) to analyze", len(files))
+		sendLog(fmt.Sprintf("%d", len(files)) + " file(s) to analyze")
 
 		for _, f := range files {
 			var ftests venom.Tests
@@ -62,7 +62,7 @@ func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
 			}
 		}
 
-		sendLog("%d Total Testsuite(s)", len(tests.TestSuites))
+		sendLog(fmt.Sprintf("%d", len(tests.TestSuites)) + " Total Testsuite(s)")
 		reasons := computeStats(&res, &tests)
 		for _, r := range reasons {
 			sendLog(r)

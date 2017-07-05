@@ -78,7 +78,7 @@ func (w *currentWorker) logProcessor(ctx context.Context) error {
 
 					// and if count > 1, then add it at the beginning of the log
 					if count > 1 {
-						l.Val = fmt.Sprintf("[x%d] %s", count, l.Val)
+						l.Val = fmt.Sprintf("[x%d]", count) + l.Val
 					}
 					// and append to the loerrorgs batch
 					l.Val = strings.Trim(strings.Replace(l.Val, "\n", " ", -1), " \t\n") + "\n"
@@ -171,7 +171,7 @@ func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) 
 				return nil
 			}
 		} else {
-				streamWorkflow.CloseSend()
+			streamWorkflow.CloseSend()
 			return stream.CloseSend()
 		}
 	}
