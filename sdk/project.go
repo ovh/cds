@@ -486,14 +486,21 @@ func WithApplicationHistory(length int) Mod {
 }
 
 // GetProject retrieves project informations from CDS
-func GetProject(key string, mods ...Mod) (Project, error) {
+func GetProject(key string, mods ...RequestModifier) (Project, error) {
 	var p Project
 	path := fmt.Sprintf("/project/%s", key)
-	for _, f := range mods {
-		path = f(path)
+
+	if len(mods) == 0 {
+		mods = append(mods, func(r *http.Request) {
+			q := r.URL.Query()
+			q.Set("withApplications", "true")
+			q.Set("withPipelines", "true")
+			q.Set("withEnvironments", "true")
+			r.URL.RawQuery = q.Encode()
+		})
 	}
 
-	data, _, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil, mods...)
 	if err != nil {
 		return p, err
 	}
