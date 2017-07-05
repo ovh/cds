@@ -51,11 +51,7 @@ export class PipelineLaunchModalComponent {
         gitBranchParam.type = 'string';
         this.launchGitParams.push(gitBranchParam);
 
-        if (this.workflowItem.trigger) {
-            this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, this.workflowItem.trigger.parameters);
-        } else {
-            this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, []);
-        }
+        this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, []);
 
         // Init parent version
         if (this.workflowItem.parent && this.workflowItem.trigger.id > 0) {
