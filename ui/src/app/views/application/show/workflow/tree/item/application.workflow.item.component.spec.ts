@@ -164,11 +164,6 @@ describe('CDS: Application Workflow Item', () => {
         workflowItem.pipeline = new Pipeline();
         workflowItem.pipeline.name = 'pip1';
         workflowItem.pipeline.parameters = new Array<Parameter>();
-        let paramPip = new Parameter();
-        paramPip.name = 'fooPip';
-        paramPip.value = 'barrPip';
-        paramPip.type = 'string';
-        workflowItem.pipeline.parameters.push(paramPip);
 
         // env
         workflowItem.environment = new Environment();
@@ -211,7 +206,7 @@ describe('CDS: Application Workflow Item', () => {
 
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
-        request.parameters = workflowItem.pipeline.parameters;
+        request.parameters = new Array<Parameter>();
         let p = new Parameter();
         p.name = 'git.branch';
         p.value = 'toto';
