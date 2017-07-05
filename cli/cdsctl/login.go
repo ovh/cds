@@ -8,6 +8,8 @@ import (
 
 	"os"
 
+	"reflect"
+
 	"github.com/howeyc/gopass"
 	"github.com/naoina/toml"
 	"github.com/ovh/cds/cli"
@@ -27,14 +29,17 @@ var loginCmd = cli.Command{
 				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
 				return match
 			},
+			Kind: reflect.String,
 		}, {
 			Name:      "username",
 			ShortHand: "u",
 			Usage:     "CDS Username",
+			Kind:      reflect.String,
 		}, {
 			Name:      "password",
 			ShortHand: "p",
 			Usage:     "CDS Password",
+			Kind:      reflect.String,
 		},
 	},
 }

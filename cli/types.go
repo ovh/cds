@@ -78,10 +78,9 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Kind:    reflect.String,
 			},
 			{
-				Name:    "quiet",
-				Default: "",
-				Usage:   "Only display object's key",
-				Kind:    reflect.Bool,
+				Name:  "verbose",
+				Usage: "Display all object fields",
+				Kind:  reflect.Bool,
 			},
 		}
 	case RunListFunc:
@@ -132,11 +131,10 @@ func (e *Error) Error() string {
 	return e.Err.Error()
 }
 
-type GetResult interface{}
 type ListResult []interface{}
 
 type RunFunc func(Values) error
-type RunGetFunc func(Values) (GetResult, error)
+type RunGetFunc func(Values) (interface{}, error)
 type RunListFunc func(Values) (ListResult, error)
 
 func AsListResult(i interface{}) ListResult {

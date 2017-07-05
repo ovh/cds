@@ -15,7 +15,7 @@ type Interface interface {
 	MonStatus() ([]string, error)
 	ProjectCreate(*sdk.Project) error
 	ProjectDelete(string) error
-	ProjectInfo(string) (*sdk.Project, error)
+	ProjectGet(string, ...RequestModifier) (*sdk.Project, error)
 	ProjectList() ([]sdk.Project, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)

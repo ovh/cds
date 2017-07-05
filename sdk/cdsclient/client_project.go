@@ -32,9 +32,9 @@ func (c *client) ProjectDelete(key string) error {
 	return nil
 }
 
-func (c *client) ProjectInfo(key string) (*sdk.Project, error) {
+func (c *client) ProjectGet(key string, mods ...RequestModifier) (*sdk.Project, error) {
 	p := &sdk.Project{}
-	code, err := c.GetJSON("/project/"+key, p)
+	code, err := c.GetJSON("/project/"+key, p, mods...)
 	if code != 200 {
 		if err == nil {
 			return nil, fmt.Errorf("HTTP Code %d", code)

@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 
 	"gopkg.in/yaml.v2"
 
@@ -16,6 +17,7 @@ import (
 
 	"encoding/json"
 
+	"github.com/fsamin/go-dump"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
@@ -111,13 +113,17 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		}
 
 		for i := range c.Flags {
-			if c.Flags[i].Kind != reflect.String {
-				continue
-			}
-			var err error
 			s := c.Flags[i].Name
-			vals[s], err = cmd.Flags().GetString(s)
-			ExitOnError(err)
+			switch c.Flags[i].Kind {
+			case reflect.String:
+				var err error
+				vals[s], err = cmd.Flags().GetString(s)
+				ExitOnError(err)
+			case reflect.Bool:
+				b, err := cmd.Flags().GetBool(s)
+				ExitOnError(err)
+				vals[s] = fmt.Sprintf("%v", b)
+			}
 			if c.Flags[i].IsValid != nil && !c.Flags[i].IsValid(vals[s]) {
 				fmt.Printf("%s is invalid\n", s)
 				ExitOnError(ErrWrongUsage, cmd.Help)
@@ -143,7 +149,32 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			if err != nil {
 				ExitOnError(err)
 			}
-			fmt.Println(i)
+
+			verbose, _ := cmd.Flags().GetBool("verbose")
+			if !verbose {
+				i = listItem(i, nil, false, nil, verbose)
+			}
+
+			switch format {
+			case "json":
+				b, err := json.Marshal(i)
+				ExitOnError(err)
+				fmt.Println(string(b))
+			case "yaml":
+				b, err := yaml.Marshal(i)
+				ExitOnError(err)
+				fmt.Println(string(b))
+			default:
+				w := tabwriter.NewWriter(os.Stdout, 10, 0, 1, ' ', 0)
+				m, err := dump.ToMap(i)
+				ExitOnError(err)
+				for k, v := range m {
+					fmt.Fprintln(w, k+"\t"+v)
+				}
+				w.Flush()
+				return
+			}
+
 		case RunListFunc:
 			if f == nil {
 				cmd.Help()
@@ -314,7 +345,6 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 						}
 						continue
 					}
-
 					res[tag] = fmt.Sprintf("%v", f.Interface())
 				}
 			}

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +17,7 @@ var (
 	project = cli.NewCommand(projectCmd, nil,
 		[]*cobra.Command{
 			cli.NewListCommand(projectListCmd, projectListRun, nil),
+			cli.NewGetCommand(projectShowCmd, projectShowRun, nil),
 		})
 )
 
@@ -28,4 +32,30 @@ func projectListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(projs), nil
+}
+
+var projectShowCmd = cli.Command{
+	Name:  "show",
+	Short: "Show a CDS project",
+	Args: []cli.Arg{
+		{Name: "key"},
+	},
+}
+
+func projectShowRun(v cli.Values) (interface{}, error) {
+	mods := []cdsclient.RequestModifier{}
+	if v["verbose"] == "true" {
+		mods = append(mods, func(r *http.Request) {
+			q := r.URL.Query()
+			q.Set("withApplications", "true")
+			q.Set("withPipelines", "true")
+			q.Set("withEnvironments", "true")
+			r.URL.RawQuery = q.Encode()
+		})
+	}
+	proj, err := client.ProjectGet(v["key"], mods...)
+	if err != nil {
+		return nil, err
+	}
+	return *proj, nil
 }
