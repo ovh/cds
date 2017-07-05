@@ -363,12 +363,6 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 			return sdk.WrapError(err, "getChild> Cannot scan child for root: %d-%d-%d", parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
 		}
 
-		pipParams, errP := pipeline.GetAllParametersInPipeline(db, child.Pipeline.ID)
-		if errP != nil {
-			return sdk.WrapError(errP, "getChild> Cannot get pipeline parameters")
-		}
-		child.Pipeline.Parameter = pipParams
-
 		if permission.AccessToPipeline(child.Trigger.DestEnvironment.ID, child.Trigger.DestPipeline.ID, user, permission.PermissionRead) {
 			child.Trigger.SrcPipeline.Type = srcType
 			child.Trigger.DestPipeline.Type = destType
@@ -377,6 +371,12 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 			child.Application = child.Trigger.DestApplication
 			child.Pipeline = child.Trigger.DestPipeline
 			child.Environment = child.Trigger.DestEnvironment
+
+			pipParams, errP := pipeline.GetAllParametersInPipeline(db, child.Pipeline.ID)
+			if errP != nil {
+				return sdk.WrapError(errP, "getChild> Cannot get pipeline parameters")
+			}
+			child.Pipeline.Parameter = pipParams
 
 			// Calculate permission
 			child.Application.Permission = permission.ApplicationPermission(child.Application.ID, user)

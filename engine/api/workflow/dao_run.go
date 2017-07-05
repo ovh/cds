@@ -148,7 +148,7 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 		return nil, 0, 0, 0, sdk.WrapError(errc, "LoadRuns> unable to load runs")
 	}
 	if count == 0 {
-		return nil, 0, 0, 0, sdk.ErrWorkflowNotFound
+		return nil, 0, 0, 0, nil
 	}
 
 	query := `select workflow_run.* 
