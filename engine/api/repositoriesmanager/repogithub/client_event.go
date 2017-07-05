@@ -55,7 +55,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 		status = "pending"
 	}
 
-	url := fmt.Sprintf("%s#/project/%s/application/%s/pipeline/%s/build/%d?env=%s",
+	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
 		uiURL,
 		eventpb.ProjectKey,
 		eventpb.ApplicationName,

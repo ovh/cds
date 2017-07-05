@@ -44,7 +44,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 	}
 	params["cds.status"] = pb.Status.String()
 	//Set PipelineBuild UI URL
-	params["cds.buildURL"] = fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s&tab=detail", uiURL, pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
+	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s", uiURL, pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
 	//find author (triggeredBy user or changes author)
 	if pb.Trigger.TriggeredBy != nil {
 		params["cds.author"] = pb.Trigger.TriggeredBy.Username

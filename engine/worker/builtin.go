@@ -29,14 +29,14 @@ type BuiltInAction func(context.Context, *sdk.Action, int64, []sdk.Parameter, Lo
 type BuiltInActionFunc func(*currentWorker) BuiltInAction
 
 // LoggerFunc is the type for the logging function through BuiltInActions
-type LoggerFunc func(format string, args ...interface{})
+type LoggerFunc func(format string)
 
 func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
-	return func(format string, args ...interface{}) {
-		if !strings.HasSuffix(format, "\n") {
-			format += "\n"
+	return func(s string) {
+		if !strings.HasSuffix(s, "\n") {
+			s += "\n"
 		}
-		w.sendLog(buildID, fmt.Sprintf(format, args...), stepOrder, false)
+		w.sendLog(buildID, s, stepOrder, false)
 	}
 }
 

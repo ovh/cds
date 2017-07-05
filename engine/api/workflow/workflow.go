@@ -7,6 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/sdk"
@@ -195,7 +196,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 
 	rows, err := db.Query(query, projectkey, appName)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "LoadCDTree> Cannot load root elements")
 	}
 	defer rows.Close()
 
@@ -209,7 +210,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			&root.Pipeline.ID, &root.Pipeline.Name, &typePipeline,
 			&root.Environment.ID, &root.Environment.Name,
 			&hasHook, &hasScheduler, &hasPoller, &hasChild); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "LoadCDTree> Cannot scan load root result")
 		}
 		root.Pipeline.Type = typePipeline
 		if root.Environment.ID == 0 {
@@ -226,9 +227,8 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			lastTree.Pipeline.ID != root.Pipeline.ID || lastTree.Environment.ID != root.Environment.ID {
 			if permission.AccessToPipeline(root.Environment.ID, root.Pipeline.ID, user, permission.PermissionRead) {
 				if hasChild {
-					err = getChild(db, &root, user)
-					if err != nil {
-						return nil, err
+					if err := getChild(db, &root, user); err != nil {
+						return nil, sdk.WrapError(err, "LoadCDTree> Cannot get child")
 					}
 				}
 				root.Project.Key = projectkey
@@ -237,6 +237,13 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 				if root.Environment.ID != sdk.DefaultEnv.ID {
 					root.Environment.Permission = permission.EnvironmentPermission(root.Environment.ID, user)
 				}
+
+				pipParams, errP := pipeline.GetAllParametersInPipeline(db, root.Pipeline.ID)
+				if errP != nil {
+					return nil, sdk.WrapError(err, "LoadCDTree> Cannot get pipeline parameters")
+				}
+				root.Pipeline.Parameter = pipParams
+
 				cdTrees = append(cdTrees, root)
 				lastTree = &cdTrees[len(cdTrees)-1]
 			}
@@ -244,7 +251,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 
 		if lastTree != nil {
 			if err := fetchTriggers(db, lastTree, hasScheduler, hasPoller, hasHook); err != nil {
-				return nil, err
+				return nil, sdk.WrapError(err, "LoadCDTree> Cannot fetch triggers")
 			}
 		}
 	}
@@ -333,7 +340,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 	`
 	rows, errQuery := db.Query(query, parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
 	if errQuery != nil {
-		return errQuery
+		return sdk.WrapError(errQuery, "getChild> Cannot load child for root: %d-%d-%d", parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
 	}
 	defer rows.Close()
 
@@ -353,7 +360,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 			&child.Trigger.DestProject.ID, &child.Trigger.DestProject.Key, &child.Trigger.DestProject.Name,
 			&params, &prerequisites,
 			&hasSchedulers, &hasHooks, &hasPoller); err != nil {
-			return err
+			return sdk.WrapError(err, "getChild> Cannot scan child for root: %d-%d-%d", parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
 		}
 
 		if permission.AccessToPipeline(child.Trigger.DestEnvironment.ID, child.Trigger.DestPipeline.ID, user, permission.PermissionRead) {
@@ -365,6 +372,12 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 			child.Pipeline = child.Trigger.DestPipeline
 			child.Environment = child.Trigger.DestEnvironment
 
+			pipParams, errP := pipeline.GetAllParametersInPipeline(db, child.Pipeline.ID)
+			if errP != nil {
+				return sdk.WrapError(errP, "getChild> Cannot get pipeline parameters")
+			}
+			child.Pipeline.Parameter = pipParams
+
 			// Calculate permission
 			child.Application.Permission = permission.ApplicationPermission(child.Application.ID, user)
 			child.Project.Permission = permission.ProjectPermission(child.Project.Key, user)
@@ -372,15 +385,15 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 			child.Environment.Permission = permission.EnvironmentPermission(child.Environment.ID, user)
 
 			if err := json.Unmarshal([]byte(params), &child.Trigger.Parameters); err != nil {
-				return err
+				return sdk.WrapError(err, "getChild> Cannot unmarshal trigger params")
 			}
 
 			if err := json.Unmarshal([]byte(prerequisites), &child.Trigger.Prerequisites); err != nil {
-				return err
+				return sdk.WrapError(err, "getChild> Cannot unmarshal trigger prerequisite")
 			}
 
 			if err := fetchTriggers(db, &child, hasSchedulers, hasPoller, hasHooks); err != nil {
-				return err
+				return sdk.WrapError(err, "getChild> Cannot fetch trigger")
 			}
 
 			listTrigger = append(listTrigger, child)
