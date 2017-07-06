@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, NgZone, OnInit, Output, ViewChild} from 
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {Application} from '../../../../model/application.model';
 import {Project} from '../../../../model/project.model';
-import {WorkflowItem} from '../../../../model/application.workflow.model';
+import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
 import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
 import {Branch} from '../../../../model/repositories.model';
@@ -27,8 +27,6 @@ export class ApplicationWorkflowComponent implements OnInit {
 
     // Worflow to display
     workflowOrientation = 'horizontal';
-
-    dropdownOptions = { fullTextSearch: true };
 
     // Filter values
     branches: Array<Branch>;
@@ -97,68 +95,75 @@ export class ApplicationWorkflowComponent implements OnInit {
      * Refresh workflow trees.
      * @param app Application data updated
      */
-    refreshWorkflow(app: Application): void {
+    refreshWorkflow(resp: WorkflowStatusResponse): void {
         if (this.application.workflows) {
             this.zone.run(() => {
                 this.application.workflows.forEach((w) => {
-                    this.updateTree(w, app);
+                    this.updateTreeStatus(w, resp);
                 });
             });
         }
     }
 
-    /**
-     * Update workflow Item
-     * @param w Workflow Item to update
-     * @param app Application data updated
-     */
-    updateTree(w: WorkflowItem, app: Application): void {
-        // If same app, try to find pipeline
-        if (w.application.id === app.id && app.pipelines_build) {
-            let pipelineBuildUpdated = app.pipelines_build.filter(
-                pb => pb.pipeline.id === w.pipeline.id && pb.environment.id === w.environment.id
-            );
-
-            // If pipeline found : update it
-            if (pipelineBuildUpdated && pipelineBuildUpdated.length === 1) {
-                w.pipeline.last_pipeline_build = pipelineBuildUpdated[0];
-
-                // Check update scheduler
-                if (w.schedulers) {
-                    this.updateSchedulers(w, app);
-                }
-
-                if (w.poller) {
-                    this.updatePoller(w, app);
-                }
-
-            } else if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
-                // If current item is a deploy or testing pipeline without environment
-                // Then add new item on workflow
-                this.project.environments.forEach((env, index) => {
-                    let pipelineBuild = app.pipelines_build.filter(pb => pb.pipeline.id === w.pipeline.id && pb.environment.id === env.id);
-                    let pbToAssign: PipelineBuild = undefined;
-                    if (pipelineBuild && pipelineBuild.length === 1) {
-                        pbToAssign = pipelineBuild[0];
+    updateTreeStatus(w: WorkflowItem, resp: WorkflowStatusResponse): void {
+        // Find pipeline build for current workflow item
+        let pb = resp.builds.find(p => {
+            return p.application.id === w.application.id &&
+                p.pipeline.id === w.pipeline.id &&
+                p.environment.id === w.environment.id;
+        });
+        if (pb) {
+            w.pipeline.last_pipeline_build = pb;
+            if (w.schedulers && resp.schedulers && resp.schedulers.length > 0) {
+                w.schedulers.forEach(s => {
+                    let sInApp = resp.schedulers.find(sc => {
+                        return sc.id === s.id;
+                    });
+                    if (sInApp && sInApp.next_execution) {
+                        s.next_execution = sInApp.next_execution;
                     }
-
-                    if (index === 0) {
-                        w.environment = env;
-                        w.pipeline.last_pipeline_build = pbToAssign;
-                    } else {
-                        let newItem = cloneDeep(w);
-                        newItem.environment = env;
-                        newItem.pipeline.last_pipeline_build = pbToAssign;
-                        this.application.workflows.push(newItem);
-                    }
-
                 });
             }
+            if (w.poller && resp.pollers && resp.pollers.length > 0) {
+                let poller = resp.pollers.find(p => {
+                    return p.application.id === w.poller.application.id
+                        && p.pipeline.id === w.poller.pipeline.id;
+                });
+                if (poller && poller.next_execution) {
+                    w.poller.next_execution = poller.next_execution;
+                }
+            }
+        } else if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
+            // If current item is a deploy or testing pipeline without environment
+            // Then add new item on workflow
+            this.project.environments.forEach((env, index) => {
+                let pipelineBuild = resp.builds.filter(p => p.application.id === w.application.id &&
+                p.pipeline.id === w.pipeline.id &&
+                p.environment.id === env.id);
+                let pbToAssign: PipelineBuild = undefined;
+                if (pipelineBuild && pipelineBuild.length === 1) {
+                    pbToAssign = pipelineBuild[0];
+                }
+
+                if (index === 0) {
+                    w.environment = env;
+                    w.pipeline.last_pipeline_build = pbToAssign;
+                } else {
+                    let newItem = cloneDeep(w);
+                    newItem.environment = env;
+                    newItem.pipeline.last_pipeline_build = pbToAssign;
+                    this.application.workflows.push(newItem);
+                }
+
+            });
         }
+
         // Update parent info
-        if (w.parent && w.parent.application_id === app.id && app.pipelines_build) {
-            let parentUpdated = app.pipelines_build.filter(
-                pb => pb.pipeline.id === w.parent.pipeline_id && pb.environment.id === w.parent.environment_id
+        if (w.parent) {
+            let parentUpdated = resp.builds.filter(
+                p => p.pipeline.id === w.parent.pipeline_id &&
+                p.environment.id === w.parent.environment_id &&
+                p.application.id === w.parent.application_id
             );
             if (parentUpdated && parentUpdated.length === 1) {
                 w.parent.buildNumber = parentUpdated[0].build_number;
@@ -172,34 +177,8 @@ export class ApplicationWorkflowComponent implements OnInit {
         // Check subpipeline
         if (w.subPipelines) {
             w.subPipelines.forEach((sub) => {
-                this.updateTree(sub, app);
+                this.updateTreeStatus(sub, resp);
             });
-        }
-    };
-
-    /**
-     * Update scheduler last execution date;
-     * @param w Workflow item to update
-     * @param app Data up to date
-     */
-    updateSchedulers(w: WorkflowItem, app: Application): void {
-        w.schedulers.forEach(s => {
-            let sInApp = app.schedulers.find(sc => {
-                return sc.id === s.id;
-            });
-            if (sInApp && sInApp.next_execution) {
-                s.next_execution = sInApp.next_execution;
-            }
-        });
-    }
-
-    updatePoller(w: WorkflowItem, app: Application): void {
-        let poller = app.pollers.find(p => {
-           return p.application.id === w.poller.application.id
-            && p.pipeline.id === w.poller.pipeline.id;
-        });
-        if (poller && poller.next_execution) {
-            w.poller.next_execution = poller.next_execution;
         }
     }
 

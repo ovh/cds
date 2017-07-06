@@ -14,7 +14,7 @@ import {Application, ApplicationFilter} from '../../../../model/application.mode
 import {XHRBackend} from '@angular/http';
 import {MockBackend} from '@angular/http/testing';
 import {Observable} from 'rxjs/Rx';
-import {WorkflowItem} from '../../../../model/application.workflow.model';
+import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
 import {PipelineBuild, Pipeline} from '../../../../model/pipeline.model';
 import {Environment} from '../../../../model/environment.model';
 import {Scheduler, SchedulerExecution} from '../../../../model/scheduler.model';
@@ -157,8 +157,7 @@ describe('CDS: Application Workflow', () => {
 
 
         // Updated Application to apply
-        let upApp: Application = new Application();
-        upApp.id = 1;
+        let upApp: WorkflowStatusResponse = new WorkflowStatusResponse();
 
         upApp.schedulers = new Array<Scheduler>();
         let sUp = new Scheduler();
@@ -182,7 +181,7 @@ describe('CDS: Application Workflow', () => {
         pbItem2.version = 5;
 
         pbs.push(pbItem1, pbItem2);
-        upApp.pipelines_build = pbs;
+        upApp.builds = pbs;
 
         // Init component with input datas
         fixture.componentInstance.project = p;
@@ -248,8 +247,7 @@ describe('CDS: Application Workflow', () => {
         a.workflows = currentWorkflow;
 
         // Updated Application to apply
-        let upApp: Application = new Application();
-        upApp.id = 1;
+        let upApp: WorkflowStatusResponse = new WorkflowStatusResponse();
 
         let pbs: Array<PipelineBuild> = new Array<PipelineBuild>();
 
@@ -267,7 +265,7 @@ describe('CDS: Application Workflow', () => {
 
 
         pbs.push(pbItem1, pbItem2);
-        upApp.pipelines_build = pbs;
+        upApp.builds = pbs;
 
         fixture.componentInstance.project = p;
         fixture.componentInstance.application = a;
