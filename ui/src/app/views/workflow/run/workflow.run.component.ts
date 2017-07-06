@@ -30,18 +30,20 @@ export class WorkflowRunComponent implements OnDestroy {
             this.project = datas['project'];
         });
 
-        this._activatedRoute.params.first().subscribe(params => {
-            let key = params['key'];
+        this._activatedRoute.params.subscribe(params => {
             this.workflowName = params['workflowName'];
             let number = params['number'];
-            if (key && this.workflowName && number) {
+            if (this.project.key && this.workflowName && number) {
                 // Start web worker
+                if (this.runWorkflowWorker) {
+                    this.runWorkflowWorker.stop();
+                }
                 this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
                 this.runWorkflowWorker.start({
                     'user': this._authStore.getUser(),
                     'session': this._authStore.getSessionToken(),
                     'api': environment.apiURL,
-                    key: key,
+                    key: this.project.key,
                     workflowName: this.workflowName,
                     number: number
                 });

@@ -1,0 +1,7 @@
+<div id="WorkflowSidebar" *ngIf="open">
+    <ul>
+        <li *ngFor="let r of workflowRuns">
+            <a href="#" [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', r.num]">{{r.num}}</a>
+        </li>
+    </ul>
+</div>

@@ -9,6 +9,9 @@
         <a href="#" sm-item *ngFor="let w of project.workflows" [routerLink]="['/project', project.key, 'workflow', w.name]">{{w.name}}</a>
     </sm-dropdown>
 
-    <i *ngIf="run" class="right chevron icon divider"></i>
-    <a *ngIf="run" class="section" [class.active]="workflowName && run" [routerLink]="['/project', project.key, 'workflow', workflowName, 'run', run]">{{ '#' + run}}</a>
+    <ng-container *ngIf="project && workflowName && run">
+        <i class="right chevron icon divider"></i>
+        <a class="section" [class.active]="workflowName && run" [routerLink]="['/project', project.key, 'workflow', workflowName, 'run', run]">{{ '#' + run}}</a>
+    </ng-container>
+
 </div>

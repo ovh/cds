@@ -19,6 +19,7 @@ export class WorkflowComponent {
     workflow: Workflow;
     workflowSubscription: Subscription;
     sidebarOpen: boolean;
+    number: number;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
@@ -30,7 +31,7 @@ export class WorkflowComponent {
 
         this._activatedRoute.children.forEach(c => {
            c.params.subscribe(p => {
-               console.log(p);
+               this.number = p['number'];
                let workflowName = p['workflowName'];
                if (this.project.key && workflowName) {
                    if (this.workflowSubscription) {
