@@ -107,7 +107,6 @@ export class ApplicationWorkflowComponent implements OnInit {
 
     updateTreeStatus(w: WorkflowItem, resp: WorkflowStatusResponse): void {
         // Find pipeline build for current workflow item
-        var pb;
         if (resp.builds) {
             let pb = resp.builds.find(p => {
                 return p.application.id === w.application.id &&
