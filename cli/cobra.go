@@ -17,6 +17,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+//ExitOnError if the error is not nil; exit the process with printing help functions and the error
 func ExitOnError(err error, helpFunc ...func() error) {
 	if err == nil {
 		return
@@ -36,14 +37,17 @@ func ExitOnError(err error, helpFunc ...func() error) {
 	os.Exit(50)
 }
 
+// NewCommand creates a new cobra command with or without a RunFunc and eventually subCommands
 func NewCommand(c Command, run RunFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
 }
 
+// NewGetCommand creates a new cobra command with a RunGetFunc and eventually subCommands
 func NewGetCommand(c Command, run RunGetFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
 }
 
+// NewListCommand creates a new cobra command with a RunListFunc and eventually subCommands
 func NewListCommand(c Command, run RunListFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
 }

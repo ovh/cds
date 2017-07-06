@@ -6,6 +6,7 @@ import (
 	"sort"
 )
 
+// Flag represents a command flag.
 type Flag struct {
 	Name      string
 	ShortHand string
@@ -15,8 +16,10 @@ type Flag struct {
 	IsValid   func(string) bool
 }
 
+// Values represents commands flags and args values accessible with their name
 type Values map[string]string
 
+// Arg represent a command argument
 type Arg struct {
 	Name    string
 	IsValid func(string) bool
@@ -53,6 +56,7 @@ func (s args) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
+// Command represents the way to instanciate a cobra.Command
 type Command struct {
 	Name          string
 	Args          []Arg
@@ -62,10 +66,13 @@ type Command struct {
 	Flags         []Flag
 }
 
+// CommandModifier is a function type to extend a command
 type CommandModifier func(*Command, interface{})
 
+// CommandWithoutExtraFlags to avoid add extra flags
 func CommandWithoutExtraFlags(c *Command, run interface{}) {}
 
+// CommandWithExtraFlags to add common extra flags
 func CommandWithExtraFlags(c *Command, run interface{}) {
 	var extraFlags = []Flag{}
 	switch run.(type) {
@@ -120,23 +127,33 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 	c.Flags = append(c.Flags, extraFlags...)
 }
 
+// ErrWrongUsage is a common error
 var ErrWrongUsage = &Error{1, fmt.Errorf("Wrong usage")}
 
+// Error implements error
 type Error struct {
 	Code int
 	Err  error
 }
 
+// Error implements error
 func (e *Error) Error() string {
 	return e.Err.Error()
 }
 
+// ListResult is the result type for command function which returns list. Use AsListResult to compute this
 type ListResult []interface{}
 
+// RunFunc is the most basic run function for a command. It returns only an error
 type RunFunc func(Values) error
+
+// RunGetFunc is a run function for a command. It returns an object value (not a pointer) and an error.
 type RunGetFunc func(Values) (interface{}, error)
+
+// RunListFunc is a run function for a command. It returns an objects list  and an error
 type RunListFunc func(Values) (ListResult, error)
 
+// AsListResult compute any slice to ListResult
 func AsListResult(i interface{}) ListResult {
 	s := reflect.ValueOf(i)
 	if s.Kind() != reflect.Slice {
