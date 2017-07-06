@@ -147,7 +147,7 @@ export class ApplicationWorkflowComponent implements OnInit {
                 let pipelineBuild = resp.builds.filter(p => p.application.id === w.application.id &&
                     p.pipeline.id === w.pipeline.id &&
                     p.environment.id === env.id);
-                
+
                 if (pipelineBuild && pipelineBuild.length === 1) {
                     pbToAssign = pipelineBuild[0];
                 }
