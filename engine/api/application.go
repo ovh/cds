@@ -10,8 +10,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -46,7 +46,7 @@ func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	tree, err := workflow.LoadCDTree(db, projectKey, applicationName, c.User)
+	tree, err := workflow.LoadCDTree(db, projectKey, applicationName, c.User, "", 0)
 	if err != nil {
 		log.Warning("getApplicationTreeHandler: Cannot load CD Tree for applications %s: %s\n", applicationName, err)
 		return err
@@ -136,6 +136,48 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, versions, http.StatusOK)
 }
 
+func getApplicationTreeStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	projectKey := vars["key"]
+	applicationName := vars["permApplicationName"]
+
+	branchName := r.FormValue("branchName")
+	versionString := r.FormValue("version")
+
+	var version int64
+	var errV error
+	if versionString != "" {
+		version, errV = requestVarInt(r, "version")
+		if errV != nil {
+			return sdk.WrapError(errV, "getApplicationTreeStatusHandler>Cannot cast version %s into int", versionString)
+		}
+	}
+
+	app, errApp := application.LoadByName(db, projectKey, applicationName, c.User)
+	if errApp != nil {
+		return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
+	}
+
+	pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(db, projectKey, applicationName, c.User, branchName, version)
+	if errPB != nil {
+		return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status %s", app.Name)
+	}
+
+	response := struct {
+		Builds     []sdk.PipelineBuild     `json:"builds"`
+		Schedulers []sdk.PipelineScheduler `json:"schedulers"`
+		Pollers    []sdk.RepositoryPoller  `json:"pollers"`
+		Hooks      []sdk.Hook              `json:"hooks"`
+	}{
+		pbs,
+		schedulers,
+		pollers,
+		hooks,
+	}
+
+	return WriteJSON(w, r, response, http.StatusOK)
+}
+
 func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -198,7 +240,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	if withWorkflow {
 		var errWorflow error
-		app.Workflows, errWorflow = workflow.LoadCDTree(db, projectKey, applicationName, c.User)
+		app.Workflows, errWorflow = workflow.LoadCDTree(db, projectKey, applicationName, c.User, "", 0)
 		if errWorflow != nil {
 			log.Warning("getApplicationHandler: Cannot load CD Tree for applications %s: %s\n", app.Name, errWorflow)
 			return errWorflow

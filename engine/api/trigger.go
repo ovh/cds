@@ -141,7 +141,7 @@ func addTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 
 	var errWorkflow error
-	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, project, t.SrcApplication.Name, c.User)
+	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, project, t.SrcApplication.Name, c.User, "", 0)
 	if errWorkflow != nil {
 		log.Warning("addTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 		return errWorkflow
@@ -261,7 +261,7 @@ func deleteTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	var errWorkflow error
-	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User)
+	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User, "", 0)
 	if errWorkflow != nil {
 		log.Warning("deleteTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 		return errWorkflow
@@ -319,7 +319,7 @@ func updateTriggerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	var errWorkflow error
-	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User)
+	t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User, "", 0)
 	if errWorkflow != nil {
 		log.Warning("updateTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 		return errWorkflow
