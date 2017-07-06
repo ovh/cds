@@ -12,7 +12,7 @@ import (
 // Project represent a team with group of users and pipelines
 type Project struct {
 	ID            int64                 `json:"-" yaml:"-" db:"id" cli:"-"`
-	Key           string                `json:"key" yaml:"key" db:"projectkey" cli:"key"`
+	Key           string                `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
 	Name          string                `json:"name" yaml:"name" db:"name" cli:"name"`
 	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
 	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`

@@ -73,6 +73,10 @@ func loginRun(v cli.Values) error {
 		fmt.Println("Password: ********")
 	}
 
+	return doLogin(url, username, password)
+}
+
+func doLogin(url, username, password string) error {
 	conf := cdsclient.Config{
 		Host:    url,
 		Verbose: os.Getenv("CDS_VERBOSE") == "true",
@@ -115,6 +119,5 @@ func loginRun(v cli.Values) error {
 	}
 
 	fmt.Println("Login successfull")
-
 	return nil
 }

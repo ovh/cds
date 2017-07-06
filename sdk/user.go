@@ -8,13 +8,13 @@ import (
 
 // User represent a CDS user.
 type User struct {
-	ID       int64   `json:"id" yaml:"-"`
-	Username string  `json:"username" yaml:"username"`
-	Fullname string  `json:"fullname" yaml:"fullname,omitempty"`
-	Email    string  `json:"email" yaml:"email,omitempty"`
-	Admin    bool    `json:"admin" yaml:"admin,omitempty"`
-	Auth     Auth    `json:"-" yaml:"-"`
-	Groups   []Group `json:"groups,omitempty" yaml:"-"`
+	ID       int64   `json:"id" yaml:"-" cli:"-"`
+	Username string  `json:"username" yaml:"username" cli:"username,key"`
+	Fullname string  `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
+	Email    string  `json:"email" yaml:"email,omitempty" cli:"-"`
+	Admin    bool    `json:"admin" yaml:"admin,omitempty" cli:"-"`
+	Auth     Auth    `json:"-" yaml:"-" cli:"-"`
+	Groups   []Group `json:"groups,omitempty" yaml:"-" cli:"-"`
 	Origin   string  `json:"origin" yaml:"origin,omitempty"`
 }
 

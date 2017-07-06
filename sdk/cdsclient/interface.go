@@ -12,6 +12,7 @@ import (
 
 // Interface is the main interface for cdsclient package
 type Interface interface {
+	APIURL() string
 	MonStatus() ([]string, error)
 	ProjectCreate(*sdk.Project) error
 	ProjectDelete(string) error
@@ -24,6 +25,12 @@ type Interface interface {
 	QueueArtifactUpload(id int64, tag, filePath string) error
 	Requirements() ([]sdk.Requirement, error)
 	UserLogin(username, password string) (bool, string, error)
+	UserList() ([]sdk.User, error)
+	UserSignup(username, fullname, email, callback string) error
+	UserGet(username string) (*sdk.User, error)
+	UserGetGroups(username string) (map[string][]sdk.Group, error)
+	UserReset(username, email string) error
+	UserConfirm(username, token string) (bool, string, error)
 	WorkerRegister(worker.RegistrationForm) (string, bool, error)
 	WorkerSetStatus(sdk.Status) error
 	WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)

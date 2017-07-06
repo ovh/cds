@@ -11,6 +11,7 @@ import (
 
 var (
 	configFile            string
+	cfg                   *cdsclient.Config
 	verbose               bool
 	noWarnings            bool
 	insecureSkipVerifyTLS bool
@@ -19,12 +20,15 @@ var (
 
 func main() {
 	login := cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
+	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
 	healt := cli.NewGetCommand(healthCmd, healthRun, nil, cli.CommandWithoutExtraFlags)
 
 	root := cli.NewCommand(mainCmd, mainRun,
 		[]*cobra.Command{
 			login,
+			signup,
 			project,
+			usr,
 			healt,
 		},
 	)
@@ -35,7 +39,7 @@ func main() {
 	root.PersistentFlags().BoolVarP(&insecureSkipVerifyTLS, "insecure", "k", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		//Do not load config nor display warnings on login
-		if cmd == login {
+		if cmd == login || (cmd.Run == nil && cmd.RunE == nil) {
 			return
 		}
 

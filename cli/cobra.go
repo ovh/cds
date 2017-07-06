@@ -91,6 +91,14 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 
 	cmd.Short = c.Short
 	cmd.Long = c.Long
+	cmd.AddCommand(subCommands...)
+
+	if run == nil || reflect.ValueOf(run).IsNil() {
+		cmd.Run = nil
+		cmd.RunE = nil
+		return cmd
+	}
+
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		//Command must receive as leat mandatory args
 		if len(c.Args) > len(args) {
@@ -137,7 +145,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				cmd.Help()
 				os.Exit(0)
 			}
-			ExitOnError(f(vals), cmd.Help)
+			ExitOnError(f(vals))
 			os.Exit(0)
 		case RunGetFunc:
 			if f == nil {
@@ -253,6 +261,10 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				ExitOnError(err)
 				fmt.Println(string(b))
 			default:
+				if len(tableData) == 0 {
+					fmt.Println("nothing to display...")
+					return
+				}
 				table := tablewriter.NewWriter(os.Stdout)
 				table.SetHeader(tableHeader)
 				for _, v := range tableData {
@@ -267,8 +279,6 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		}
 
 	}
-
-	cmd.AddCommand(subCommands...)
 
 	return cmd
 }
@@ -296,9 +306,15 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 			continue
 		default:
 			if s.IsValid() && s.CanInterface() {
+				var isKey bool
 				tag := structField.Tag.Get("cli")
 				if tag == "-" {
 					continue
+				}
+
+				if strings.HasSuffix(tag, ",key") {
+					isKey = true
+					tag = strings.Replace(tag, ",key", "", -1)
 				}
 
 				if !verbose && tag == "" {
@@ -330,8 +346,8 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 						res[tag] = fmt.Sprintf("%v", f.Interface())
 					}
 				} else {
-					if quiet && tag == "key" {
-						res[tag] = fmt.Sprintf("%v", f.Interface())
+					if quiet && isKey {
+						res["key"] = fmt.Sprintf("%v", f.Interface())
 						break
 					}
 

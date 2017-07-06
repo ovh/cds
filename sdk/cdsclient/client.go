@@ -67,6 +67,10 @@ func (c *client) init() {
 	}
 }
 
+func (c *client) APIURL() string {
+	return c.config.Host
+}
+
 func (c *client) Requirements() ([]sdk.Requirement, error) {
 	var req []sdk.Requirement
 	if _, err := c.GetJSON("/action/requirement", &req); err != nil {
