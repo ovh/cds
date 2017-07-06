@@ -107,56 +107,63 @@ export class ApplicationWorkflowComponent implements OnInit {
 
     updateTreeStatus(w: WorkflowItem, resp: WorkflowStatusResponse): void {
         // Find pipeline build for current workflow item
-        let pb = resp.builds.find(p => {
-            return p.application.id === w.application.id &&
-                p.pipeline.id === w.pipeline.id &&
-                p.environment.id === w.environment.id;
-        });
-        if (pb) {
-            w.pipeline.last_pipeline_build = pb;
-            if (w.schedulers && resp.schedulers && resp.schedulers.length > 0) {
-                w.schedulers.forEach(s => {
-                    let sInApp = resp.schedulers.find(sc => {
-                        return sc.id === s.id;
+        var pb;
+        if (resp.builds) {
+            let pb = resp.builds.find(p => {
+                return p.application.id === w.application.id &&
+                    p.pipeline.id === w.pipeline.id &&
+                    p.environment.id === w.environment.id;
+            });
+
+            if (pb) {
+                w.pipeline.last_pipeline_build = pb;
+                if (w.schedulers && resp.schedulers && resp.schedulers.length > 0) {
+                    w.schedulers.forEach(s => {
+                        let sInApp = resp.schedulers.find(sc => {
+                            return sc.id === s.id;
+                        });
+                        if (sInApp && sInApp.next_execution) {
+                            s.next_execution = sInApp.next_execution;
+                        }
                     });
-                    if (sInApp && sInApp.next_execution) {
-                        s.next_execution = sInApp.next_execution;
+                }
+                if (w.poller && resp.pollers && resp.pollers.length > 0) {
+                    let poller = resp.pollers.find(p => {
+                        return p.application.id === w.poller.application.id
+                            && p.pipeline.id === w.poller.pipeline.id;
+                    });
+                    if (poller && poller.next_execution) {
+                        w.poller.next_execution = poller.next_execution;
                     }
-                });
-            }
-            if (w.poller && resp.pollers && resp.pollers.length > 0) {
-                let poller = resp.pollers.find(p => {
-                    return p.application.id === w.poller.application.id
-                        && p.pipeline.id === w.poller.pipeline.id;
-                });
-                if (poller && poller.next_execution) {
-                    w.poller.next_execution = poller.next_execution;
                 }
             }
-        } else if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
-            // If current item is a deploy or testing pipeline without environment
-            // Then add new item on workflow
-            this.project.environments.forEach((env, index) => {
+        }
+
+        if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
+        // If current item is a deploy or testing pipeline without environment
+        // Then add new item on workflow
+        this.project.environments.forEach((env, index) => {
+            let pbToAssign: PipelineBuild;
+            if (resp.builds) {
                 let pipelineBuild = resp.builds.filter(p => p.application.id === w.application.id &&
-                p.pipeline.id === w.pipeline.id &&
-                p.environment.id === env.id);
-                let pbToAssign: PipelineBuild = undefined;
+                    p.pipeline.id === w.pipeline.id &&
+                    p.environment.id === env.id);
+                
                 if (pipelineBuild && pipelineBuild.length === 1) {
                     pbToAssign = pipelineBuild[0];
                 }
-
-                if (index === 0) {
-                    w.environment = env;
-                    w.pipeline.last_pipeline_build = pbToAssign;
-                } else {
-                    let newItem = cloneDeep(w);
-                    newItem.environment = env;
-                    newItem.pipeline.last_pipeline_build = pbToAssign;
-                    this.application.workflows.push(newItem);
-                }
-
-            });
-        }
+            }
+            if (index === 0) {
+                w.environment = env;
+                w.pipeline.last_pipeline_build = pbToAssign;
+            } else {
+                let newItem = cloneDeep(w);
+                newItem.environment = env;
+                newItem.pipeline.last_pipeline_build = pbToAssign;
+                this.application.workflows.push(newItem);
+            }
+        });
+    }
 
         // Update parent info
         if (w.parent) {
