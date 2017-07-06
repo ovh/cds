@@ -8,6 +8,24 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) WorkflowList(projectKey string) ([]sdk.Workflow, error) {
+	url := fmt.Sprintf("/project/%s/workflows", projectKey)
+	w := []sdk.Workflow{}
+	if _, err := c.GetJSON(url, &w); err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
+func (c *client) WorkflowGet(projectKey, name string) (*sdk.Workflow, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s", projectKey, name)
+	w := &sdk.Workflow{}
+	if _, err := c.GetJSON(url, &w); err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
 func (c *client) WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d", projectKey, name, number)
 	run := sdk.WorkflowRun{}

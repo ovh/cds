@@ -28,6 +28,7 @@ func main() {
 			login,
 			signup,
 			project,
+			workflow,
 			usr,
 			healt,
 		},

@@ -33,6 +33,8 @@ type Interface interface {
 	UserConfirm(username, token string) (bool, string, error)
 	WorkerRegister(worker.RegistrationForm) (string, bool, error)
 	WorkerSetStatus(sdk.Status) error
+	WorkflowList(projectKey string) ([]sdk.Workflow, error)
+	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
 	WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.Artifact, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
