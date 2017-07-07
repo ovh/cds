@@ -305,13 +305,13 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         switch (pipeline.last_pipeline_build.status) {
         case PipelineStatus.SUCCESS:
             this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
-                pipelineName: pipeline.name
-            })).subscribe();
+                pipelineName: pipeline.name,
+            }), { icon: 'assets/images/checked.png' }).subscribe();
             break;
         case PipelineStatus.FAIL:
             this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
                 pipelineName: pipeline.name
-            })).subscribe();
+            }), { icon: 'assets/images/close.png' }).subscribe();
             break;
         }
     }
