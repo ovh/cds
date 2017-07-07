@@ -46,6 +46,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     @ViewChild('createTriggerModal')
     createTriggerModal: SemanticModalComponent;
     triggerInModal: Trigger;
+    parameterRefModal: Array<Parameter>;
     triggerLoading = false;
 
     // Run pipeline modal
@@ -62,14 +63,12 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     detachModalPipelineModal: SemanticModalComponent;
 
     notificationSubscription: Subscription;
-    routerSubscription: Subscription;
 
     constructor(private _router: Router, private _appPipService: ApplicationPipelineService, private _pipStore: PipelineStore,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
                 private _notification: NotificationService) {
 
     }
-
 
     runPipeline(): void {
         // If no parents and have parameters without value, go to manual launch
@@ -229,6 +228,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
 
     openEditTriggerModal(): void {
         this.triggerInModal = cloneDeep(this.workflowItem.trigger);
+        this.parameterRefModal = this.workflowItem.pipeline.parameters;
         setTimeout(() => {
             this.editTriggerModal.show({autofocus: false, closable: false, observeChanges: true});
         }, 100);

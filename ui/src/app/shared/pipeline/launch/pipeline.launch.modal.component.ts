@@ -31,11 +31,12 @@ export class PipelineLaunchModalComponent {
     launchParentBuildNumber = 0;
     launchOldBuilds: Array<PipelineBuild>;
 
-    commits: {[key: string]: Array<Commit>} = {};
+    commits: { [key: string]: Array<Commit> } = {};
     currentHash: string;
     loadingCommits = false;
 
-    constructor(private _pipStore: PipelineStore, private _appPipService: ApplicationPipelineService) { }
+    constructor(private _pipStore: PipelineStore, private _appPipService: ApplicationPipelineService) {
+    }
 
     show(data?: {}): void {
         this.launchPipelineParams = new Array<Parameter>();
@@ -51,7 +52,11 @@ export class PipelineLaunchModalComponent {
         gitBranchParam.type = 'string';
         this.launchGitParams.push(gitBranchParam);
 
-        this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, []);
+        if (this.workflowItem.trigger) {
+            this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, this.workflowItem.trigger.parameters);
+        } else {
+            this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, []);
+        }
 
         // Init parent version
         if (this.workflowItem.parent && this.workflowItem.trigger.id > 0) {
@@ -99,7 +104,7 @@ export class PipelineLaunchModalComponent {
             this.workflowItem.project.key,
             this.workflowItem.application.name,
             this.workflowItem.pipeline.name, request).subscribe(pipelineBuild => {
-                this.pipelineRunEvent.emit(pipelineBuild);
+            this.pipelineRunEvent.emit(pipelineBuild);
         });
     }
 
@@ -114,7 +119,7 @@ export class PipelineLaunchModalComponent {
             this._appPipService.getCommits(this.project.key, this.workflowItem.application.name, this.workflowItem.pipeline.name,
                 this.workflowItem.environment.name, this.currentHash).subscribe(cs => {
                 this.loadingCommits = false;
-                    this.commits[this.currentHash] = cs;
+                this.commits[this.currentHash] = cs;
             }, () => {
                 this.loadingCommits = false;
             });

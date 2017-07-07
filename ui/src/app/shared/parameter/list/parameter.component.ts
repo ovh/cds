@@ -14,6 +14,7 @@ import {Project} from '../../../model/project.model';
 export class ParameterListComponent extends Table {
 
     @Input() parameters: Array<Parameter>;
+    @Input() paramsRef: Array<Parameter>;
     @Input() project: Project;
     @Input() suggest: Array<string>;
 
@@ -62,6 +63,13 @@ export class ParameterListComponent extends Table {
             return 2;
         }
         return 4;
+    }
+
+    getRef(p: Parameter): Parameter {
+        if (this.paramsRef) {
+            return this.paramsRef.find(r => r.name === p.name)
+        }
+        return null;
     }
 
 }
