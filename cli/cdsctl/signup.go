@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/howeyc/gopass"
+
 	"github.com/ovh/cds/cli"
 )
 
@@ -39,10 +40,10 @@ var signupCmd = cli.Command{
 }
 
 func signupRun(v cli.Values) error {
-	url := v["host"]
-	username := v["username"]
-	fullname := v["fullname"]
-	email := v["email"]
+	url := v.GetString("host")
+	username := v.GetString("username")
+	fullname := v.GetString("fullname")
+	email := v.GetString("email")
 
 	fmt.Println("CDS API Url:", url)
 
@@ -98,5 +99,5 @@ func doConfirm(username string) error {
 	fmt.Println("All is fine. Here is your new password:")
 	fmt.Println(password)
 
-	return doLogin(client.APIURL(), username, password)
+	return doLogin(client.APIURL(), username, password, false)
 }

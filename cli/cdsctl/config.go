@@ -77,7 +77,7 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	}
 
 	if c.Host == "" {
-		return nil, fmt.Errorf("unable to load confiration, you should try to login first")
+		return nil, fmt.Errorf("unable to load configuration, you should try to login first")
 	}
 
 	conf := &cdsclient.Config{

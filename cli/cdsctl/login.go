@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"regexp"
-
 	"os"
-
 	"reflect"
+	"regexp"
+	"runtime"
 
 	"github.com/howeyc/gopass"
 	"github.com/naoina/toml"
+
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/keychain"
@@ -40,24 +40,35 @@ var loginCmd = cli.Command{
 			ShortHand: "p",
 			Usage:     "CDS Password",
 			Kind:      reflect.String,
+		}, {
+			Name:  "env",
+			Usage: "Display the commands to set up the environment for the cds client",
+			Kind:  reflect.Bool,
 		},
 	},
 }
 
 func loginRun(v cli.Values) error {
-	url := v["host"]
-	username := v["username"]
-	password := v["password"]
+	url := v.GetString("host")
+	username := v.GetString("username")
+	password := v.GetString("password")
+	env := v.GetBool("env")
 
-	fmt.Println("CDS API Url:", url)
+	if env &&
+		(url == "" || username == "" || password == "") {
+		return fmt.Errorf("Please set flags to use --env option")
+	}
+
+	if !env {
+		fmt.Println("CDS API Url:", url)
+	}
 
 	//Take the user from flags or ask for on command line
 	if username == "" {
 		fmt.Printf("Username: ")
 		username = cli.ReadLine()
-	} else {
+	} else if !env {
 		fmt.Println("Username:", username)
-
 	}
 
 	//Take the password from flags or ask for on command line
@@ -69,14 +80,14 @@ func loginRun(v cli.Values) error {
 		if err != nil {
 			cli.ExitOnError(err)
 		}
-	} else {
+	} else if !env {
 		fmt.Println("Password: ********")
 	}
 
-	return doLogin(url, username, password)
+	return doLogin(url, username, password, env)
 }
 
-func doLogin(url, username, password string) error {
+func doLogin(url, username, password string, env bool) error {
 	conf := cdsclient.Config{
 		Host:    url,
 		Verbose: os.Getenv("CDS_VERBOSE") == "true",
@@ -89,6 +100,20 @@ func doLogin(url, username, password string) error {
 	}
 	if !ok {
 		return fmt.Errorf("login failed")
+	}
+
+	if env && runtime.GOOS == "windows" {
+		fmt.Println("env option is not supported on windows yet")
+		os.Exit(1)
+	}
+
+	if env {
+		fmt.Printf("export CDS_API=%s\n", url)
+		fmt.Printf("export CDS_USER=%s\n", username)
+		fmt.Printf("export CDS_TOKEN=%s\n", token)
+		fmt.Println("# Run this command to configure your shell:")
+		fmt.Println(`# eval "$(cds login -H HOST -u USERNAME -p PASSWORD --env)`)
+		return nil
 	}
 
 	if configFile != "" {

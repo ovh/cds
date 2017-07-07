@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 )
 
 // Flag represents a command flag.
@@ -18,6 +19,16 @@ type Flag struct {
 
 // Values represents commands flags and args values accessible with their name
 type Values map[string]string
+
+// GetString returns a string
+func (v *Values) GetString(s string) string {
+	return (*v)[s]
+}
+
+// GetBool returns a string
+func (v *Values) GetBool(s string) bool {
+	return strings.ToLower((*v)[s]) == "true" || strings.ToLower((*v)[s]) == "yes" || strings.ToLower((*v)[s]) == "y" || strings.ToLower((*v)[s]) == "1"
+}
 
 // Arg represent a command argument
 type Arg struct {
