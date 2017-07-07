@@ -273,16 +273,16 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 	var rows []PipelineBuildDbResult
 	var errQuery error
 	if status == "" && branchName == "" {
-		query = fmt.Sprintf(query, " ORDER BY pb.version DESC LIMIT $4")
+		query = fmt.Sprintf(query, " ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit)
 	} else if status != "" && branchName == "" {
-		query = fmt.Sprintf(query, " AND pb.status = $5 ORDER BY pb.version DESC LIMIT $4")
+		query = fmt.Sprintf(query, " AND pb.status = $5 ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, status)
 	} else if status == "" && branchName != "" {
-		query = fmt.Sprintf(query, " AND pb.vcs_changes_branch = $5 ORDER BY pb.version DESC LIMIT $4")
+		query = fmt.Sprintf(query, " AND pb.vcs_changes_branch = $5 ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, branchName)
 	} else {
-		query = fmt.Sprintf(query, " AND pb.status = $5 AND pb.vcs_changes_branch = $6 ORDER BY pb.version DESC LIMIT $4")
+		query = fmt.Sprintf(query, " AND pb.status = $5 AND pb.vcs_changes_branch = $6 ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, status, branchName)
 	}
 	if errQuery != nil {
