@@ -147,7 +147,7 @@ func getApplicationTreeStatusHandler(w http.ResponseWriter, r *http.Request, db 
 	var version int64
 	var errV error
 	if versionString != "" {
-		version, errV = requestVarInt(r, "version")
+		version, errV = strconv.ParseInt(versionString, 10, 64)
 		if errV != nil {
 			return sdk.WrapError(errV, "getApplicationTreeStatusHandler>Cannot cast version %s into int", versionString)
 		}
