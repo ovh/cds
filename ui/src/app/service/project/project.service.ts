@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {URLSearchParams, Http} from '@angular/http';
+import {RequestOptions, URLSearchParams, Http} from '@angular/http';
 import {Project} from '../../model/project.model';
 import {Observable} from 'rxjs/Rx';
 import {Variable} from '../../model/variable.model';
@@ -24,7 +24,17 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     getProject(key: string): Observable<Project> {
-        return this._http.get('/project/' + key).map(res => {
+        let options = new RequestOptions();
+        options.params = new URLSearchParams();
+        options.params.set('withVariables', 'true');
+        options.params.set('withApplications', 'true');
+        options.params.set('withApplicationPipelines', 'true');
+        options.params.set('withPipelines', 'true');
+        options.params.set('withEnvironments', 'true');
+        options.params.set('withGroups', 'true');
+        options.params.set('withPermission', 'true');
+        options.params.set('withRepositoriesManagers', 'true');
+        return this._http.get('/project/' + key, options).map(res => {
             return res.json();
         });
     }

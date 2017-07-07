@@ -76,16 +76,42 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	p, errProj := project.Load(db, key, c.User,
-		project.LoadOptions.WithVariables,
-		project.LoadOptions.WithApplications,
-		project.LoadOptions.WithApplicationPipelines,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithGroups,
-		project.LoadOptions.WithPermission,
-		project.LoadOptions.WithPipelines,
-		project.LoadOptions.WithRepositoriesManagers,
-	)
+	WithVariables := FormBool(r, "withVariables")
+	WithApplications := FormBool(r, "withApplications")
+	WithApplicationPipelines := FormBool(r, "withApplicationPipelines")
+	WithPipelines := FormBool(r, "withPipelines")
+	WithEnvironments := FormBool(r, "withEnvironments")
+	WithGroups := FormBool(r, "withGroups")
+	WithPermission := FormBool(r, "withPermission")
+	WithRepositoriesManagers := FormBool(r, "withRepositoriesManagers")
+
+	opts := []project.LoadOptionFunc{}
+	if WithVariables {
+		opts = append(opts, project.LoadOptions.WithVariables)
+	}
+	if WithApplications {
+		opts = append(opts, project.LoadOptions.WithApplications)
+	}
+	if WithApplicationPipelines {
+		opts = append(opts, project.LoadOptions.WithApplicationPipelines)
+	}
+	if WithPipelines {
+		opts = append(opts, project.LoadOptions.WithPipelines)
+	}
+	if WithEnvironments {
+		opts = append(opts, project.LoadOptions.WithEnvironments)
+	}
+	if WithGroups {
+		opts = append(opts, project.LoadOptions.WithGroups)
+	}
+	if WithPermission {
+		opts = append(opts, project.LoadOptions.WithPermission)
+	}
+	if WithRepositoriesManagers {
+		opts = append(opts, project.LoadOptions.WithRepositoriesManagers)
+	}
+
+	p, errProj := project.Load(db, key, c.User, opts...)
 	if errProj != nil {
 		return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 	}

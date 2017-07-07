@@ -8,15 +8,15 @@ import (
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID           int64              `json:"id" db:"id"`
-	Name         string             `json:"name" db:"name"`
-	Description  string             `json:"description,omitempty" db:"description"`
+	ID           int64              `json:"id" db:"id" cli:"-"`
+	Name         string             `json:"name" db:"name" cli:"name,key"`
+	Description  string             `json:"description,omitempty" db:"description" cli:"description"`
 	LastModified time.Time          `json:"last_modified" db:"last_modified"`
-	ProjectID    int64              `json:"project_id,omitempty" db:"project_id"`
-	ProjectKey   string             `json:"project_key" db:"-"`
-	RootID       int64              `json:"root_id,omitempty" db:"root_node_id"`
-	Root         *WorkflowNode      `json:"root" db:"-"`
-	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-"`
+	ProjectID    int64              `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey   string             `json:"project_key" db:"-" cli:"-"`
+	RootID       int64              `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
+	Root         *WorkflowNode      `json:"root" db:"-" cli:"-"`
+	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
 }
 
 //JoinsID returns joins ID
@@ -363,8 +363,8 @@ type WorkflowNodeHookConfig map[string]string
 
 //WorkflowHookModel represents a hook which can be used in workflows.
 type WorkflowHookModel struct {
-	ID            int64                  `json:"id" db:"id"`
-	Name          string                 `json:"name" db:"name"`
+	ID            int64                  `json:"id" db:"id" cli:"-"`
+	Name          string                 `json:"name" db:"name" cli:"name"`
 	Type          string                 `json:"type"  db:"type"`
 	Image         string                 `json:"image" db:"image"`
 	Command       string                 `json:"command" db:"command"`

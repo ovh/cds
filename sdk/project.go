@@ -11,19 +11,19 @@ import (
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID            int64                 `json:"-" yaml:"-" db:"id"`
-	Key           string                `json:"key" yaml:"key" db:"projectkey"`
-	Name          string                `json:"name" yaml:"name" db:"name"`
-	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"`
-	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"`
-	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"`
-	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"`
-	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"`
-	Permission    int                   `json:"permission"  yaml:"-" db:"-"`
-	Created       time.Time             `json:"created"  yaml:"created" db:"created"`
+	ID            int64                 `json:"-" yaml:"-" db:"id" cli:"-"`
+	Key           string                `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
+	Name          string                `json:"name" yaml:"name" db:"name" cli:"name"`
+	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
+	Permission    int                   `json:"permission"  yaml:"-" db:"-"  cli:"-"`
+	Created       time.Time             `json:"created"  yaml:"created" db:"created" `
 	LastModified  time.Time             `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
-	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-"`
-	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-"`
+	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-" cli:"-"`
+	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
 }
 
 // ProjectVariableAudit represents an audit on a project variable
@@ -486,14 +486,21 @@ func WithApplicationHistory(length int) Mod {
 }
 
 // GetProject retrieves project informations from CDS
-func GetProject(key string, mods ...Mod) (Project, error) {
+func GetProject(key string, mods ...RequestModifier) (Project, error) {
 	var p Project
 	path := fmt.Sprintf("/project/%s", key)
-	for _, f := range mods {
-		path = f(path)
+
+	if len(mods) == 0 {
+		mods = append(mods, func(r *http.Request) {
+			q := r.URL.Query()
+			q.Set("withApplications", "true")
+			q.Set("withPipelines", "true")
+			q.Set("withEnvironments", "true")
+			r.URL.RawQuery = q.Encode()
+		})
 	}
 
-	data, _, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil, mods...)
 	if err != nil {
 		return p, err
 	}

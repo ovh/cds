@@ -15,7 +15,7 @@ import (
 )
 
 // LoadAll returns all projects
-func LoadAll(db gorp.SqlExecutor, u *sdk.User, opts ...loadOptionFunc) ([]sdk.Project, error) {
+func LoadAll(db gorp.SqlExecutor, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	var query string
 	var args []interface{}
 	// Admin can gets all project
@@ -178,20 +178,20 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 	return nil
 }
 
-type loadOptionFunc *func(gorp.SqlExecutor, *sdk.Project, *sdk.User) error
+type LoadOptionFunc *func(gorp.SqlExecutor, *sdk.Project, *sdk.User) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
-	Default                  loadOptionFunc
-	WithApplications         loadOptionFunc
-	WithVariables            loadOptionFunc
-	WithPipelines            loadOptionFunc
-	WithEnvironments         loadOptionFunc
-	WithGroups               loadOptionFunc
-	WithPermission           loadOptionFunc
-	WithRepositoriesManagers loadOptionFunc
-	WithApplicationPipelines loadOptionFunc
-	WithApplicationVariables loadOptionFunc
+	Default                  LoadOptionFunc
+	WithApplications         LoadOptionFunc
+	WithVariables            LoadOptionFunc
+	WithPipelines            LoadOptionFunc
+	WithEnvironments         LoadOptionFunc
+	WithGroups               LoadOptionFunc
+	WithPermission           LoadOptionFunc
+	WithRepositoriesManagers LoadOptionFunc
+	WithApplicationPipelines LoadOptionFunc
+	WithApplicationVariables LoadOptionFunc
 }{
 	Default:                  &loadDefault,
 	WithPipelines:            &loadPipelines,
@@ -206,12 +206,12 @@ var LoadOptions = struct {
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
-func Load(db gorp.SqlExecutor, key string, u *sdk.User, opts ...loadOptionFunc) (*sdk.Project, error) {
+func Load(db gorp.SqlExecutor, key string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	return load(db, u, opts, "select * from project where projectkey = $1", key)
 }
 
 // LoadByPipelineID loads an project from pipeline iD
-func LoadByPipelineID(db gorp.SqlExecutor, u *sdk.User, pipelineID int64, opts ...loadOptionFunc) (*sdk.Project, error) {
+func LoadByPipelineID(db gorp.SqlExecutor, u *sdk.User, pipelineID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
 	          FROM project
 	          JOIN pipeline ON pipeline.project_id = projecT.id
@@ -219,7 +219,7 @@ func LoadByPipelineID(db gorp.SqlExecutor, u *sdk.User, pipelineID int64, opts .
 	return load(db, u, opts, query, pipelineID)
 }
 
-func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
+func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	log.Debug("loadprojects> %s %v", query, args)
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
@@ -245,7 +245,7 @@ func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query
 	return projs, nil
 }
 
-func load(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
+func load(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	dbProj := &dbProject{}
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -257,7 +257,7 @@ func load(db gorp.SqlExecutor, u *sdk.User, opts []loadOptionFunc, query string,
 	return unwrap(db, dbProj, u, opts)
 }
 
-func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User, opts []loadOptionFunc) (*sdk.Project, error) {
+func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User, opts []LoadOptionFunc) (*sdk.Project, error) {
 	proj := sdk.Project(*p)
 
 	for _, f := range opts {
