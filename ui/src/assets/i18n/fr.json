@@ -522,6 +522,8 @@
   "workflow_root_context_application" : "Application (facultatif)",
   "workflow_root_context_environment" : "Environnement (facultatif)",
   "workflow_root_context_pipeline" : "Pipeline",
+  "workflow_run_loading" : "Chargement des exécutions",
+  "workflow_run_never" : "Ce workflow n'a jamais été lancé",
   "workflow_updated" : "Workflow mis à jour",
 
   "workflow_orientation_tree" : "Arborescence",

@@ -17,6 +17,7 @@ export class WorkflowComponent {
 
     project: Project;
     workflow: Workflow;
+    number: number;
     workflowSubscription: Subscription;
     sidebarOpen: boolean;
 
@@ -28,29 +29,32 @@ export class WorkflowComponent {
             this.project = datas['project'];
         });
 
-        this._activatedRoute.children.forEach(c => {
-           c.params.subscribe(p => {
-               console.log(p);
-               let workflowName = p['workflowName'];
-               if (this.project.key && workflowName) {
-                   if (this.workflowSubscription) {
-                       this.workflowSubscription.unsubscribe();
-                   }
+        this._activatedRoute.params.subscribe(p => {
+            let workflowName = p['workflowName'];
+            if (this.project.key && workflowName) {
+                if (this.workflowSubscription) {
+                    this.workflowSubscription.unsubscribe();
+                }
+                if (!this.workflow) {
+                    this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
+                        if (ws) {
+                            let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
+                            if (updatedWorkflow && !updatedWorkflow.externalChange) {
+                                this.workflow = updatedWorkflow;
+                            }
+                        }
+                    }, () => {
+                        this._router.navigate(['/project', this.project.key]);
+                    });
+                }
+            }
 
-                   if (!this.workflow) {
-                       this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
-                           if (ws) {
-                               let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
-                               if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                                   this.workflow = updatedWorkflow;
-                               }
-                           }
-                       }, () => {
-                           this._router.navigate(['/project', this.project.key]);
-                       });
-                   }
-               }
-           }) ;
+        });
+
+        this._activatedRoute.children.forEach(c => {
+            c.params.subscribe(p => {
+                this.number = p['number'];
+            });
         });
     }
 }

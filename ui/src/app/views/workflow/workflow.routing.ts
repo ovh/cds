@@ -11,6 +11,15 @@ import {WorkflowComponent} from './workflow.compoment';
 const workflowRoutes: Routes = [
     {
         path: '',
+        component: WorkflowAddComponent,
+        canActivate: [CanActivateAuthRoute],
+        canActivateChild: [CanActivateAuthRoute],
+        resolve: {
+            project: ProjectResolver
+        }
+    },
+    {
+        path: ':workflowName',
         component: WorkflowComponent,
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
@@ -20,30 +29,24 @@ const workflowRoutes: Routes = [
         children: [
 
             {
-                path: ':workflowName', component: WorkflowShowComponent,
+                path: '', component: WorkflowShowComponent,
                 resolve: {
                     project: ProjectResolver
                 }
             },
             {
-                path: ':workflowName/run/:number', component: WorkflowRunComponent,
+                path: 'run/:number', component: WorkflowRunComponent,
                 resolve: {
                     project: ProjectResolver
                 }
             },
             {
-                path: ':workflowName/run/:number/node/:nodeId', component: WorkflowNodeRunComponent,
+                path: 'run/:number/node/:nodeId', component: WorkflowNodeRunComponent,
                 resolve: {
                     project: ProjectResolver
                 }
             }
         ]
-    },
-    {
-        path: 'add', component: WorkflowAddComponent,
-        resolve: {
-            project: ProjectResolver
-        }
     }
 ];
 

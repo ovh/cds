@@ -1,13 +1,7 @@
 <div id="WorkflowRun" *ngIf="workflowRun">
-    <div class="CDSbreadcrumb">
-        <app-worflow-breadcrumb [project]="project" [workflowName]="workflowRun.workflow.name" [run]="workflowRun.num" [pipeline]=""></app-worflow-breadcrumb>
-    </div>
-
     <div class="scrollingContent">
-        <div class="paddingContent">
-            <div class="viewContent" >
-                <app-workflow-graph [project]="project" [workflow]="workflowRun.workflow" [webworker]="runWorkflowWorker"></app-workflow-graph>
-            </div>
+        <div class="viewContent">
+            <app-workflow-graph [project]="project" [workflow]="workflowRun.workflow" [webworker]="runWorkflowWorker"></app-workflow-graph>
         </div>
     </div>
 </div>

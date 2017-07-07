@@ -1,12 +1,15 @@
+<div class="CDSbreadcrumb">
+    <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name" [run]="number"></app-worflow-breadcrumb>
+</div>
 <aside class="sidebar" [class.expanded]="sidebarOpen">
     <div class="sidebar-toggle">
+        <ng-container *ngIf="project && workflow">
+            <app-workflow-sidebar [project]="project" [workflow]="workflow" [open]="sidebarOpen"></app-workflow-sidebar>
+        </ng-container>
 
     </div>
 </aside>
 <section class="content-wrap" [class.expanded]="!sidebarOpen">
-    <button class="ui blue open button" (click)="sidebarOpen = !sidebarOpen"><i class="content icon"></i></button>
-    <div class="CDSbreadcrumb">
-        <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name"></app-worflow-breadcrumb>
-    </div>
+    <button class="ui small icon blue open button" (click)="sidebarOpen = !sidebarOpen"><i class="content icon"></i></button>
     <router-outlet></router-outlet>
 </section>

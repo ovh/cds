@@ -522,6 +522,8 @@
   "workflow_root_context_application" : "Application (optional)",
   "workflow_root_context_environment" : "Environnment (optional)",
   "workflow_root_context_pipeline" : "Pipeline",
+  "workflow_run_loading" : "Loading runs...",
+  "workflow_run_never" : "This workflow has never been run",
   "workflow_updated" : "Workflow updated",
 
   "workflow_orientation_horizontal" : "Horizontal",
