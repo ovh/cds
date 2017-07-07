@@ -30,8 +30,10 @@ export class WorkflowRunComponent implements OnDestroy {
             this.project = datas['project'];
         });
 
-        this._activatedRoute.params.subscribe(params => {
+        this._activatedRoute.parent.params.subscribe(params => {
             this.workflowName = params['workflowName'];
+        });
+        this._activatedRoute.params.subscribe(params => {
             let number = params['number'];
             if (this.project.key && this.workflowName && number) {
                 // Start web worker
