@@ -3,7 +3,6 @@ package cdsclient
 import (
 	"fmt"
 	"net/http"
-
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
