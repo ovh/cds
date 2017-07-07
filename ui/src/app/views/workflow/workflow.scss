@@ -25,6 +25,7 @@ $sidebarWidth: 10%;
   float: right;
   width: calc(100% - #{$sidebarWidth});
   height: calc( 100% - #{$navbarHeight});
+  padding-left: 10px;
 
   &.expanded {
     width: 100%;
@@ -36,5 +37,6 @@ $sidebarWidth: 10%;
     border-top-right-radius: 0px;
     position: absolute;
     z-index: 10;
+    left: 0;
   }
 }
