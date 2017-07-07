@@ -5,6 +5,7 @@ import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {RepositoriesManager, Repository} from '../../../model/repositories.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {cloneDeep} from 'lodash';
+import {Parameter} from '../../../model/parameter.model';
 
 declare var CodeMirror: any;
 
@@ -24,8 +25,16 @@ export class ParameterValueComponent implements OnInit {
 
     @Input() editList = true;
     @Input() edit = true;
-    @Input() suggest: Array<string> = new Array<string>();
+    @Input() suggest: Array<string>;
     @Input() projectKey: string;
+    @Input('ref')
+    set ref(data: Parameter) {
+        if (data && data.type === 'list') {
+            this.refValue = (<string>data.value).split(';');
+        }
+    }
+    refValue: Array<string>;
+
     @Input('project')
     set project(data: Project) {
         this.repositoriesManager = new Array<RepositoriesManager>();
@@ -42,8 +51,10 @@ export class ParameterValueComponent implements OnInit {
         if (data) {
             this.projectKey = data.key;
         }
-
+        this.projectRo = data;
     }
+
+    projectRo: Project;
 
     @Output() valueChange = new EventEmitter<string|number|boolean>();
     @Output() valueUpdating = new EventEmitter<boolean>();
@@ -72,6 +83,9 @@ export class ParameterValueComponent implements OnInit {
 
     ngOnInit(): void {
         this.castValue(this.editableValue);
+        if (!this.suggest) {
+            this.suggest = new Array<string>();
+        }
     }
 
     castValue(data: string|number|boolean): string|number|boolean {

@@ -20,18 +20,26 @@
                 (modelChange)="valueChanged()"
                 (keydown)="sendValueChanged()"
                 name="value">
-                <option *ngFor="let v of list" [value]="v">{{v}}</option>
+
+                <ng-container *ngIf="refValue">
+                    <option *ngFor="let v of refValue" [value]="v">{{v}}</option>
+                </ng-container>
+                <ng-container *ngIf="!refValue">
+                    <option *ngFor="let v of list" [value]="v">{{v}}</option>
+                </ng-container>
+
             </sm-select>
         </div>
     </div>
+
     <div *ngSwitchCase="'env'">
-        <sm-select class="search fluid"
-            [options]="{'fullTextSearch': true}"
-            [(model)]="editableValue"
-            (modelChange)="valueChanged()"
-            (onChange)="sendValueChanged()">
-            <option *ngFor="let env of project?.environments" value="{{env.name}}">{{env.name}}</option>
-        </sm-select>
+            <sm-select class="search fluid"
+                       [options]="{'fullTextSearch': true}"
+                       [(model)]="editableValue"
+                       (modelChange)="valueChanged()"
+                       (onChange)="sendValueChanged()">
+                <option *ngFor="let env of projectRo?.environments" value="{{env.name}}">{{env.name}}</option>
+            </sm-select>
     </div>
     <div *ngSwitchCase="'pipeline'">
         <sm-select class="search fluid"
@@ -39,7 +47,7 @@
             [(model)]="editableValue"
             (modelChange)="valueChanged()"
             (onChange)="sendValueChanged()">
-            <option *ngFor="let pip of project?.pipelines" value="{{pip.name}}">{{pip.name}}</option>
+            <option *ngFor="let pip of projectRo?.pipelines" value="{{pip.name}}">{{pip.name}}</option>
         </sm-select>
     </div>
     <div *ngSwitchCase="'repository'">

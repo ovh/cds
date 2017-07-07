@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Trigger} from '../../../../../model/trigger.model';
 import {Project} from '../../../../../model/project.model';
 import {Pipeline} from '../../../../../model/pipeline.model';
@@ -7,16 +7,20 @@ import {ApplicationPipeline} from '../../../../../model/application.model';
 import {Prerequisite} from '../../../../../model/prerequisite.model';
 import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
 import {cloneDeep} from 'lodash';
+import {Parameter} from '../../../../../model/parameter.model';
 
 @Component({
     selector: 'app-application-trigger',
     templateUrl: './trigger.html',
     styleUrls: ['./trigger.scss']
 })
-export class ApplicationTriggerComponent {
+export class ApplicationTriggerComponent implements OnInit {
 
     // Trigger to edit
     @Input() trigger: Trigger;
+
+    // Pipeline parameters
+    @Input() paramsRef: Array<Parameter>;
 
     // Project data
     @Input() project: Project;
@@ -32,6 +36,9 @@ export class ApplicationTriggerComponent {
     constructor(private _appStore: ApplicationStore) {
         this.refPrerequisites = new Array<Prerequisite>();
         this.refPrerequisites.push(this.getGitPrerequisite());
+    }
+
+    ngOnInit(): void {
     }
 
     /**

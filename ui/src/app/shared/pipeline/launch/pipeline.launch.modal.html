@@ -40,7 +40,7 @@
 
             <div class="field" *ngIf="launchPipelineParams.length > 0">
                 <label> {{ 'application_launch_pipeline_title' | translate}}</label>
-                <app-parameter-list [parameters]="launchPipelineParams" mode="launcher"></app-parameter-list>
+                <app-parameter-list [parameters]="launchPipelineParams" [project]="project" [paramsRef]="workflowItem?.pipeline?.parameters" mode="launcher"></app-parameter-list>
             </div>
         </div>
     </modal-content>
