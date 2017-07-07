@@ -76,7 +76,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                         this.elementRef.nativeElement.style.zIndex = 0;
                     });
                 }
-            }
+            };
         }
 
     }
@@ -156,7 +156,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                     clonedWorkflow.joins.forEach(j => {
                         if (j.triggers) {
                             j.triggers.forEach((t, i) => {
-                                this.removeNodeFromJoin(this.node.id, t.workflow_dest_node, j, i)
+                                this.removeNodeFromJoin(this.node.id, t.workflow_dest_node, j, i);
                             });
                         }
                     });

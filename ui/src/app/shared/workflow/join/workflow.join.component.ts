@@ -47,7 +47,7 @@ export class WorkflowJoinComponent implements AfterViewInit {
                     this.elementRef.nativeElement.style.zIndex = 0;
                 });
             }
-        }
+        };
     }
 
     ngAfterViewInit() {
