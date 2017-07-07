@@ -13,8 +13,45 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// GetWorkflowStatus Get workflow updated builds status + scheduler and poller executions
+func GetWorkflowStatus(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User, branchName string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.RepositoryPoller, []sdk.Hook, error) {
+	cdPipelines, err := LoadCDTree(db, projectkey, appName, user, branchName, version)
+	if err != nil {
+		return nil, nil, nil, nil, sdk.WrapError(err, "GetWorkflowStatus> Cannot load workflow")
+	}
+
+	var pbs []sdk.PipelineBuild
+	var schedulers []sdk.PipelineScheduler
+	var pollers []sdk.RepositoryPoller
+	var hooks []sdk.Hook
+
+	for _, cdp := range cdPipelines {
+		getWorkflowStatus(&pbs, &schedulers, &pollers, &hooks, cdp)
+	}
+
+	return pbs, schedulers, pollers, hooks, nil
+}
+
+func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineScheduler, pollers *[]sdk.RepositoryPoller, hooks *[]sdk.Hook, cdPip sdk.CDPipeline) {
+	if cdPip.Pipeline.LastPipelineBuild != nil {
+		*pbs = append(*pbs, *cdPip.Pipeline.LastPipelineBuild)
+	}
+	if cdPip.Schedulers != nil {
+		*schedulers = append(*schedulers, cdPip.Schedulers...)
+	}
+	if cdPip.Poller != nil {
+		*pollers = append(*pollers, *cdPip.Poller)
+	}
+	if cdPip.Hooks != nil {
+		*hooks = append(*hooks, cdPip.Hooks...)
+	}
+	for _, sub := range cdPip.SubPipelines {
+		getWorkflowStatus(pbs, schedulers, pollers, hooks, sub)
+	}
+}
+
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
-func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User) ([]sdk.CDPipeline, error) {
+func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User, branchName string, version int64) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
 
 	// Select root trigger element + non triggered pipeline
@@ -227,7 +264,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 			lastTree.Pipeline.ID != root.Pipeline.ID || lastTree.Environment.ID != root.Environment.ID {
 			if permission.AccessToPipeline(root.Environment.ID, root.Pipeline.ID, user, permission.PermissionRead) {
 				if hasChild {
-					if err := getChild(db, &root, user); err != nil {
+					if err := getChild(db, &root, user, branchName, version); err != nil {
 						return nil, sdk.WrapError(err, "LoadCDTree> Cannot get child")
 					}
 				}
@@ -244,6 +281,23 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 				}
 				root.Pipeline.Parameter = pipParams
 
+				// Load Status
+				if branchName != "" {
+					var pbs []sdk.PipelineBuild
+					var errPB error
+					if version == 0 {
+						pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, 1, "", branchName)
+					} else {
+						pbs, errPB = pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, version, 1)
+					}
+					if errPB != nil {
+						return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
+					}
+					if len(pbs) > 0 {
+						root.Pipeline.LastPipelineBuild = &pbs[0]
+					}
+				}
+
 				cdTrees = append(cdTrees, root)
 				lastTree = &cdTrees[len(cdTrees)-1]
 			}
@@ -258,7 +312,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User)
 	return cdTrees, nil
 }
 
-func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error {
+func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branchName string, version int64) error {
 	listTrigger := []sdk.CDPipeline{}
 
 	query := `
@@ -377,6 +431,23 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User) error
 				return sdk.WrapError(errP, "getChild> Cannot get pipeline parameters")
 			}
 			child.Pipeline.Parameter = pipParams
+
+			// Load Status
+			if branchName != "" {
+				var pbs []sdk.PipelineBuild
+				var errPB error
+				if version == 0 {
+					pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1, "", branchName)
+				} else {
+					pbs, errPB = pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, version, 1)
+				}
+				if errPB != nil {
+					return sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
+				}
+				if len(pbs) > 0 {
+					child.Pipeline.LastPipelineBuild = &pbs[0]
+				}
+			}
 
 			// Calculate permission
 			child.Application.Permission = permission.ApplicationPermission(child.Application.ID, user)

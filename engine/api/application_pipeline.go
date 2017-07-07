@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
@@ -126,7 +126,7 @@ func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, project.Key, app.Name, c.User)
+	app.Workflows, errW = workflow.LoadCDTree(db, project.Key, app.Name, c.User, "", 0)
 	if errW != nil {
 		log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s\n", errW)
 		return errW
@@ -270,7 +270,7 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	cache.DeleteAll(k)
 
 	var errW error
-	a.Workflows, errW = workflow.LoadCDTree(db, key, a.Name, c.User)
+	a.Workflows, errW = workflow.LoadCDTree(db, key, a.Name, c.User, "", 0)
 	if errW != nil {
 		log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s\n", errW)
 		return errW

@@ -63,7 +63,7 @@ export class BreadcrumbComponent {
     }
 
     getBuildQueryParams(): {} {
-        let queryParams = {queryParams: {}};
+        let queryParams = {};
         queryParams['envName'] = this.envName;
         queryParams['branch'] = this.branch;
         return queryParams;
