@@ -15,9 +15,10 @@ import {Router} from '@angular/router';
     styleUrls: ['./warning.breadcrumb.scss']
 })
 @AutoUnsubscribe()
-export class WarningBreadCrumbComponent {
+export class WarningBreadCrumbComponent implements OnInit {
 
     @Input() project: Project;
+
     projects: List<Project>;
     projectSub: Subscription;
     warnings: Map<string, WarningUI>;
@@ -27,6 +28,10 @@ export class WarningBreadCrumbComponent {
 
     constructor(private _projectStore: ProjectStore, private _warningStore: WarningStore,
                 private _warningService: WarningService, private _router: Router) {
+
+    }
+
+    ngOnInit(): void {
         this.warnSub = this._warningStore.getWarnings().subscribe(ws => {
             this.warnings = ws;
             if (this.projects) {
