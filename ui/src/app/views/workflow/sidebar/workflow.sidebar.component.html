@@ -1,7 +1,11 @@
 <div id="WorkflowSidebar" *ngIf="open">
+    <h3></h3>
     <ul>
         <li *ngFor="let r of workflowRuns">
-            <a href="#" [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', r.num]">{{r.num}}</a>
+            <a href="#" [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', r.num]">Run {{r.num}}</a>
         </li>
+        <li *ngIf="ready && (!workflowRuns || workflowRuns.length === 0)">{{ 'workflow_run_never' | translate }}</li>
     </ul>
+
 </div>
+<div class="ui text active loader" *ngIf="!ready">{{ 'workflow_run_loading' | translate }}</div>

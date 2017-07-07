@@ -33,6 +33,8 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
     // Angular zone to update model with webworker data
     zone: NgZone;
 
+    ready: boolean;
+
     constructor(private _authStore: AuthentificationStore) {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
@@ -51,6 +53,7 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
         // Listening to web worker responses
         this.runWorkerSubscription = this.runWorker.response().subscribe(msg => {
             this.zone.run(() => {
+                this.ready = true;
                 this.workflowRuns = <Array<WorkflowRun>>JSON.parse(msg);
             });
 
