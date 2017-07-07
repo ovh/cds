@@ -15,7 +15,7 @@ export class PermissionEvent {
 export class EnvironmentPermissionEvent {
     type: string;
     gp: Array<GroupPermission>;
-    env: Environment
+    env: Environment;
 
     constructor(type: string, env: Environment, gp: Array<GroupPermission>) {
         this.type = type;

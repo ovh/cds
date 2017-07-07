@@ -132,7 +132,7 @@ export class ActionComponent implements OnDestroy {
 
     stepManagement(event: StepEvent): void {
         this.editableAction.hasChanged = true;
-        this.editableAction.showAddStep = false
+        this.editableAction.showAddStep = false;
         switch (event.type) {
             case 'displayChoice':
                 this.editableAction.showAddStep = true;

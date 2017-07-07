@@ -31,7 +31,7 @@ export class ActionStepFormComponent implements OnInit {
         if (this.step) {
             this.step.final = final;
             this.step.enabled = true;
-            this.showAddStep = false
+            this.showAddStep = false;
             this.create.emit(new StepEvent('add', this.step));
         }
     }

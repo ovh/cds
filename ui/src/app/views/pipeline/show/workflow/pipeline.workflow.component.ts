@@ -24,7 +24,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     @Input('currentPipeline')
     set currentPipeline (data: Pipeline) {
         this.pipeline = data;
-        
+
         if (!this.pipeline) {
             return;
         }
@@ -32,7 +32,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         if (this.pipeline.stages && this.pipeline.stages.length > 0 && !this.selectedStage) {
             this.selectStage(this.pipeline.stages[0]);
         }
-        if (this.selectedStage && Array.isArray(this.selectedStage.jobs) && 
+        if (this.selectedStage && Array.isArray(this.selectedStage.jobs) &&
             this.selectedStage.jobs.length > 0 && !this.selectedJob) {
 
             this.selectJob(this.selectedStage.jobs[0], this.selectedStage);
