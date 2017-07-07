@@ -25,7 +25,7 @@ testcases:
 {{.templateCreatePipeline}}
   - action:
       navigate:
-        url: '{{.ui.url}}/project/{{.ui.project}}/workflow/add'
+        url: '{{.ui.url}}/project/{{.ui.project}}/workflow'
     screenshot: barw_workflowform.png
   - action:
       wait: 2
