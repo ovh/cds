@@ -17,7 +17,7 @@ onmessage = function (e) {
 function loadWorkflow (user, session, api) {
     loop(2, function () {
         var url = '/project/' + key + '/application/' + appName +
-            '?withSchedulers=true&withPollers=true&applicationStatus=true&branchName=' + branch + '&version=' + version;
+            '/tree/status?branchName=' + branch + '&version=' + version;
 
         var xhr = httpCall(url, api, user, session);
         if (xhr.status >= 400) {

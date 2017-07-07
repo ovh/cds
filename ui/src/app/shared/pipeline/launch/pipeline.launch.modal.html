@@ -11,7 +11,7 @@
                         [disabled]="loading"
                         [(model)]="launchParentBuildNumber"
                         (modelChange)="loadCommits()">
-                        <option *ngFor="let pb of launchOldBuilds" [value]="pb.build_number">{{pb.version}}</option>
+                        <option *ngFor="let pb of launchOldBuilds" [value]="pb.build_number">{{ 'v' + pb.version}}</option>
                     </sm-select>
                 </div>
                 <div class="field" *ngIf="currentHash">
