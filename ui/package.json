@@ -42,7 +42,7 @@
     "ng2-completer": "^1.4.0",
     "ng2-dragula": "^1.2.1",
     "ng2-translate": "^4.2.0",
-    "ngx-auto-scroll": "^1.0.15",
+    "ngx-auto-scroll": "https://github.com/NagRock/ngx-auto-scroll/tarball/master",
     "rxjs": "5.1.0",
     "semantic-ui": "2.2.10",
     "ts-helpers": "^1.1.1",
