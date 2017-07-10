@@ -12,6 +12,7 @@ import (
 
 	ctx "github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
@@ -33,7 +34,7 @@ func GetDriver(c context.Context, mode string, options interface{}, storeOptions
 	log.Info("Auth> Intializing driver (%s)", mode)
 	store, err := sessionstore.Get(c, storeOptions.Mode, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get AuthDriver : %s\n", err)
+		return nil, fmt.Errorf("unable to get AuthDriver : %v", err)
 	}
 
 	var d Driver
@@ -209,8 +210,9 @@ func GetWorker(db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
 	return w, nil
 }
 
-func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *ctx.Ctx) error {
-	id, err := base64.StdEncoding.DecodeString(auth)
+// CheckWorkerAuth checks worker authentication
+func CheckWorkerAuth(db *gorp.DbMap, headers http.Header, ctx *ctx.Ctx) error {
+	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return fmt.Errorf("bad worker key syntax: %s", err)
 	}
@@ -223,5 +225,22 @@ func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *ctx.Ctx) error {
 	ctx.User = &sdk.User{Username: w.Name}
 	ctx.Worker = w
 
+	return nil
+}
+
+// CheckHatcheryAuth checks hatchery authentication
+func CheckHatcheryAuth(db *gorp.DbMap, headers http.Header, c *ctx.Ctx) error {
+	uid, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
+	if err != nil {
+		return fmt.Errorf("bad worker key syntax: %s", err)
+	}
+
+	h, err := hatchery.LoadHatchery(db, string(uid))
+	if err != nil {
+		return fmt.Errorf("Invalid Hatchery UID:%s err:%s", string(uid), err)
+	}
+
+	c.User = &sdk.User{Username: h.Name}
+	c.Hatchery = h
 	return nil
 }

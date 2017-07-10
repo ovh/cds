@@ -2,7 +2,6 @@ package main
 
 import (
 	"compress/gzip"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -18,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -408,29 +406,15 @@ func Auth(v bool) RouterConfigParam {
 
 func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *businesscontext.Ctx) error {
 	c.Agent = headers.Get("User-Agent")
+
 	switch headers.Get("User-Agent") {
-	// TODO: case sdk.WorkerAgent should be moved here
 	case sdk.HatcheryAgent:
-		return r.checkHatcheryAuth(db, headers, c)
+		return auth.CheckHatcheryAuth(db, headers, c)
+	case sdk.WorkerAgent:
+		return auth.CheckWorkerAuth(db, headers, c)
 	default:
 		return r.authDriver.CheckAuthHeader(db, headers, c)
 	}
-}
-
-func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *businesscontext.Ctx) error {
-	uid, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
-	if err != nil {
-		return fmt.Errorf("bad worker key syntax: %s", err)
-	}
-
-	h, err := hatchery.LoadHatchery(db, string(uid))
-	if err != nil {
-		return fmt.Errorf("Invalid Hatchery UID:%s err:%s", string(uid), err)
-	}
-
-	c.User = &sdk.User{Username: h.Name}
-	c.Hatchery = h
-	return nil
 }
 
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
