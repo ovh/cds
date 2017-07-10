@@ -59,6 +59,7 @@ import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigg
 import {RouterModule} from '@angular/router';
 import {ForMapPipe} from './pipes/map.pipe';
 import {PermissionEnvironmentFormComponent} from './permission/environment/form/permission.env.form.component';
+import {NgxAutoScroll} from 'ngx-auto-scroll/lib/ngx-auto-scroll.directive';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -76,6 +77,7 @@ import {PermissionEnvironmentFormComponent} from './permission/environment/form/
         HistoryComponent,
         KeysPipe,
         NgForNumber,
+        NgxAutoScroll,
         ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,
@@ -137,6 +139,7 @@ import {PermissionEnvironmentFormComponent} from './permission/environment/form/
         MomentModule,
         NgForNumber,
         NgSemanticModule,
+        NgxAutoScroll,
         ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,
