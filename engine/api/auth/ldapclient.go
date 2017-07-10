@@ -318,13 +318,6 @@ func (c *LDAPClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password s
 
 //CheckAuthHeader returns the func to heck http headers.
 func (c *LDAPClient) CheckAuthHeader(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
-	//Check if its a worker
-	if h := headers.Get(sdk.AuthHeader); h != "" {
-		if err := checkWorkerAuth(db, h, ctx); err != nil {
-			return err
-		}
-		return nil
-	}
 	//Check if its coming from CLI
 	if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 		if getUserPersistentSession(db, c.Store(), headers, ctx) {

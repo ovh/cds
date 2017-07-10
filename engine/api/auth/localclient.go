@@ -49,13 +49,6 @@ func (c *LocalClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password 
 
 //CheckAuthHeader checks http headers.
 func (c *LocalClient) CheckAuthHeader(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
-	//Check if its a worker
-	if h := headers.Get(sdk.AuthHeader); h != "" {
-		if err := checkWorkerAuth(db, h, ctx); err != nil {
-			return err
-		}
-		return nil
-	}
 	//Check if its coming from CLI
 	if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 		if getUserPersistentSession(db, c.Store(), headers, ctx) {

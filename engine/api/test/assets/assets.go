@@ -112,6 +112,7 @@ func InsertLambaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, stri
 
 // AuthentifyRequestFromWorker have to be used only for tests
 func AuthentifyRequestFromWorker(t *testing.T, req *http.Request, w *sdk.Worker) {
+	req.Header.Set("User-Agent", string(sdk.WorkerAgent))
 	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(w.ID)))
 }
 
