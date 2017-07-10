@@ -115,6 +115,12 @@ func (w *currentWorker) replaceBuildVariablesPlaceholder(a *sdk.Action) {
 func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string) sdk.Result {
 	// Replace build variable placeholder that may have been added by last step
 	w.replaceBuildVariablesPlaceholder(a)
+	// Set the params
+	w.currentJob.params = params
+	// Unset the params at the end
+	defer func() {
+		w.currentJob.params = nil
+	}()
 
 	if a.Type == sdk.BuiltinAction {
 		return w.runBuiltin(ctx, a, buildID, params, stepOrder)
