@@ -96,6 +96,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
+	req.Header.Set("User-Agent", string(sdk.WorkerAgent))
 
 	//Do the request
 	w := httptest.NewRecorder()
