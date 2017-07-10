@@ -160,6 +160,7 @@ func request(method string, path string, args []byte) ([]byte, int, error) {
 	}
 
 	basedHash := base64.StdEncoding.EncodeToString([]byte(auth.Hash()))
+	req.Header.Set("User-Agent", "CDS/worker")
 	req.Header.Set(AuthHeader, basedHash)
 	req.Header.Set(RequestedWithHeader, RequestedWithValue)
 	resp, err := client.Do(req)
