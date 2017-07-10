@@ -39,6 +39,7 @@ type currentWorker struct {
 		buildVariables []sdk.Variable
 		pkey           string
 		gitsshPath     string
+		params         []sdk.Parameter
 	}
 	status struct {
 		Name      string    `json:"name"`
@@ -61,6 +62,7 @@ func main() {
 	cmd := cmdMain(w)
 	cmd.AddCommand(cmdExport)
 	cmd.AddCommand(cmdUpload(w))
+	cmd.AddCommand(cmdTmpl(w))
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister(w))
 	cmd.Execute()
