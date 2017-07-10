@@ -61,7 +61,7 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="nextBuilds">
+        <div class="row" *ngIf="nextBuilds && nextBuilds.length > 0">
             <div class="column">
                 <h3>{{ 'pipeline_triggered' | translate }}</h3>
                 <ul>

@@ -9,6 +9,7 @@ import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {CDSWorker} from '../../shared/worker/worker';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
 import {DurationService} from '../../shared/duration/duration.service';
+import {RouterService} from '../../service/router/router.service';
 
 declare var Duration: any;
 
@@ -50,7 +51,8 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
 
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-                private _router: Router, private _appPipService: ApplicationPipelineService, private _durationService: DurationService) {
+                private _router: Router, private _appPipService: ApplicationPipelineService, private _durationService: DurationService,
+                private _routerService: RouterService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         // Get from pipeline resolver
@@ -74,22 +76,24 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 this.appVersionFilter = q['version'];
             }
             if (q['ts'] && this.project && this.application && this.currentBuildNumber) {
-                this.startWorker();
+                this.startWorker(this._activatedRoute);
                 this.currentBuild = undefined;
                 this.histories = undefined;
             }
         });
+        // Current route param
         this._activatedRoute.params.subscribe(params => {
             let buildNumber = params['buildNumber'];
-
             if (buildNumber && this.envName) {
                 this.currentBuildNumber = Number(buildNumber);
-                this.startWorker();
+                this.startWorker(this._activatedRoute);
             }
         });
     }
 
-    startWorker(): void {
+    startWorker(_activatedRoute: ActivatedRoute): void {
+        let paramSnap = this._routerService.getRouteSnapshotParams({}, _activatedRoute.snapshot);
+        let querySnap = this._routerService.getRouteSnapshotQueryParams({}, _activatedRoute.snapshot);
         if (this.workerSubscription) {
             this.workerSubscription.unsubscribe();
         }
@@ -101,11 +105,11 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             user: this._authStore.getUser(),
             session: this._authStore.getSessionToken(),
             api: environment.apiURL,
-            key: this.project.key,
-            appName: this.application.name,
-            pipName: this.pipeline.name,
-            envName: this.envName,
-            buildNumber: this.currentBuildNumber
+            key: paramSnap['key'],
+            appName: paramSnap['appName'],
+            pipName: paramSnap['pipName'],
+            envName: querySnap['envName'],
+            buildNumber: paramSnap['buildNumber']
         });
 
         this.worker.response().subscribe(msg => {
