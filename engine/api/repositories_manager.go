@@ -506,13 +506,11 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
 		return sdk.ErrApplicationNotFound
-
 	}
 
 	pipeline, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		return sdk.ErrPipelineNotFound
-
 	}
 
 	if !permission.AccessToPipeline(sdk.DefaultEnv.ID, pipeline.ID, c.User, permission.PermissionReadWriteExecute) {
@@ -525,53 +523,39 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	if err != nil {
 		log.Warning("addHookOnRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
 		return sdk.ErrNoReposManager
-
 	}
 
 	b, e := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
 	if e != nil {
 		log.Warning("addHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s): %s", rmName, projectKey, appName, e)
 		return e
-
 	}
 
 	if !b {
 		return sdk.ErrNoReposManagerClientAuth
-
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot start transaction: %s", err)
-		return err
-
+		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot start transaction")
 	}
 	defer tx.Rollback()
 
-	_, err = hook.CreateHook(tx, projectKey, rm, repoFullname, app, pipeline)
-	if err != nil {
-		return err
-
+	if _, err := hook.CreateHook(tx, projectKey, rm, repoFullname, app, pipeline); err != nil {
+		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot create hook")
 	}
 
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
-		return err
-
+		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot update application last modified date")
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot commit transaction: %s", err)
-		return err
-
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot commit transaction")
 	}
 
 	app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
 	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot load application hooks: %s", err)
-		return err
-
+		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot load application hooks")
 	}
 
 	return WriteJSON(w, r, app, http.StatusCreated)
