@@ -16,8 +16,9 @@ import {Application} from '../../model/application.model';
 import {Pipeline} from '../../model/pipeline.model';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
+import {RouterService} from '../../service/router/router.service';
 
-describe('App: CDS', () => {
+describe('CDS: Application Run Component', () => {
 
     let injector: Injector;
 
@@ -31,6 +32,7 @@ describe('App: CDS', () => {
                 TranslateParser,
                 ApplicationPipelineService,
                 AuthentificationStore,
+                RouterService,
                 TranslateLoader,
                 TranslateService,
                 TranslateParser
@@ -63,6 +65,7 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.params = Observable.of({buildNumber: '123'});
 
         this.snapshot = new ActivatedRouteSnapshot();
+        Object.defineProperty(this.snapshot, 'children', []);
         this.snapshot.queryParams = { envName: 'NoEnv'};
 
         this.queryParams = Observable.of({ envName: 'NoEnv'});
@@ -75,6 +78,9 @@ class MockActivatedRoutes extends ActivatedRoute {
 
         let pipeline = new Pipeline();
         pipeline.name = 'pipName';
+
         this.data = Observable.of({ project: project, application: application, pipeline: pipeline });
+
+
     }
 }
