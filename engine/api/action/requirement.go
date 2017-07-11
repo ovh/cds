@@ -60,6 +60,9 @@ func LoadActionRequirements(db gorp.SqlExecutor, actionID int64) ([]sdk.Requirem
 
 // InsertActionRequirement inserts given requirement in database
 func InsertActionRequirement(db gorp.SqlExecutor, actionID int64, r sdk.Requirement) error {
+	if r.Name == "" || r.Type == "" || r.Value == "" {
+		return sdk.ErrInvalidJobRequirement
+	}
 	query := `INSERT INTO action_requirement (action_id, name, type, value) VALUES ($1, $2, $3, $4)`
 	_, err := db.Exec(query, actionID, r.Name, string(r.Type), r.Value)
 	return err
