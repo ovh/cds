@@ -65,6 +65,7 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.params = Observable.of({buildNumber: '123'});
 
         this.snapshot = new ActivatedRouteSnapshot();
+        Object.defineProperty(this.snapshot, 'children', []);
         this.snapshot.queryParams = { envName: 'NoEnv'};
 
         this.queryParams = Observable.of({ envName: 'NoEnv'});
@@ -77,6 +78,9 @@ class MockActivatedRoutes extends ActivatedRoute {
 
         let pipeline = new Pipeline();
         pipeline.name = 'pipName';
+
         this.data = Observable.of({ project: project, application: application, pipeline: pipeline });
+
+
     }
 }
