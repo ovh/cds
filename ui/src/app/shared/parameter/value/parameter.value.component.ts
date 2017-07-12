@@ -99,8 +99,7 @@ export class ParameterValueComponent implements OnInit {
         } else if (this.type === 'list') {
             if (this.editList) {
                 this.editableValue = data;
-            }
-            else if (!this.list) {
+            } else if (!this.list) {
                 this.list = (<string>data).split(';');
                 this.editableValue = this.list[0];
             }
