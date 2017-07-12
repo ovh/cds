@@ -185,6 +185,9 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			LatestCommit: b.Commit.Sha,
 			Default:      *b.Name == *repo.DefaultBranch,
 		}
+		for _, p := range b.Commit.Parents {
+			branch.Parents = append(branch.Parents, p.Sha)
+		}
 		branchesResult = append(branchesResult, branch)
 	}
 
@@ -192,25 +195,56 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 }
 
 // Branch returns only detail of a branch
-func (g *GithubClient) Branch(fullname, branch string) (sdk.VCSBranch, error) {
-	//https://developer.github.com/v3/repos/branches/#get-branch
-	//Get branch is still in developper preview, so were are using list branch
-	branches, err := g.Branches(fullname)
+func (g *GithubClient) Branch(fullname, theBranch string) (sdk.VCSBranch, error) {
+	vcsbranch := sdk.VCSBranch{}
+	repo, err := g.repoByFullname(fullname)
 	if err != nil {
-		return sdk.VCSBranch{}, err
+		return vcsbranch, err
 	}
 
-	for _, b := range branches {
-		if b.DisplayID == branch {
-			return b, nil
+	url := "/repos/" + fullname + "/branches" + theBranch
+	status, body, _, err := g.get(url)
+	if err != nil {
+		log.Warning("GithubClient.Branch> Error %s", err)
+		return vcsbranch, err
+	}
+	if status >= 400 {
+		return vcsbranch, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
+	}
+
+	//Github may return 304 status because we are using conditional request with ETag based headers
+	var branch Branch
+	if status == http.StatusNotModified {
+		//If repos aren't updated, lets get them from cache
+		cache.Get(cache.Key("reposmanager", "github", "branch", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch), &branch)
+	} else {
+		if err := json.Unmarshal(body, &branch); err != nil {
+			log.Warning("GithubClient.Branch> Unable to parse github branch: %s", err)
+			return vcsbranch, err
 		}
 	}
-	return sdk.VCSBranch{}, sdk.ErrNoBranch
+
+	//Put the body on cache for one hour and one minute
+	cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch), branch, 61*60)
+
+	branchResult := &sdk.VCSBranch{
+		DisplayID:    *branch.Name,
+		ID:           *branch.Name,
+		LatestCommit: branch.Commit.Sha,
+		Default:      *branch.Name == *repo.DefaultBranch,
+	}
+
+	if branch.Commit != nil {
+		for _, p := range branch.Commit.Parents {
+			branchResult.Parents = append(branchResult.Parents, p.Sha)
+		}
+	}
+
+	return vcsbranch, nil
 }
 
-// Commits returns the commits list on a branch between a commit SHA (since) until anotger commit SHA (until). The branch is given by the branch of the first commit SHA (since)
+// Commits returns the commits list on a branch between a commit SHA (since) until another commit SHA (until). The branch is given by the branch of the first commit SHA (since)
 func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSCommit, error) {
-	var theCommits []Commit
 	var commitsResult []sdk.VCSCommit
 
 	log.Debug("Looking for commits on repo %s since = %s until = %s", repo, since, until)
@@ -218,14 +252,49 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		return commitsResult, nil
 	}
 
-	theCommits, err := g.allCommitsForBranch(repo, theBranch)
+	var sinceDate time.Time
+	// Calculate since commit
+	if since == "" {
+		// If no since commit, take from the begining of the branch
+		b, errB := g.Branch(repo, theBranch)
+		if errB != nil {
+			return nil, errB
+		}
+		for _, c := range b.Parents {
+			cp, errCP := g.Commit(repo, c)
+			if errCP != nil {
+				return nil, errCP
+			}
+			d := time.Unix(cp.Timestamp, 0)
+			if d.After(sinceDate) {
+				sinceDate = d
+			}
+		}
+	} else {
+		sinceCommit, errC := g.Commit(repo, since)
+		if errC != nil {
+			return nil, errC
+		}
+		sinceDate = time.Unix(sinceCommit.Timestamp, 0)
+	}
+
+	var untilDate time.Time
+	if until == "" {
+		// If no until commit take until the end of the branch
+		untilDate = time.Now()
+	} else {
+		untilCommit, errC := g.Commit(repo, until)
+		if errC != nil {
+			return nil, errC
+		}
+		untilDate = time.Unix(untilCommit.Timestamp, 0)
+	}
+
+	//Get Commit List
+	theCommits, err := g.allCommitBetween(repo, untilDate, sinceDate, theBranch)
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debug("Found %d commits for branch %s", len(theCommits), theBranch)
-
-	//4. find the commits in the branch between SHA=since and SHA=until
 	if since != "" {
 		log.Debug("filter commit between %s and %s", since, until)
 		theCommits = filterCommits(theCommits, since, until)
@@ -284,10 +353,12 @@ func (g *GithubClient) User(username string) (User, error) {
 	return user, nil
 }
 
-func (g *GithubClient) allCommitsForBranch(repo, branch string) ([]Commit, error) {
+func (g *GithubClient) allCommitBetween(repo string, untilDate time.Time, sinceDate time.Time, branch string) ([]Commit, error) {
 	var commits = []Commit{}
 	urlValues := url.Values{}
 	urlValues.Add("sha", branch)
+	urlValues.Add("since", sinceDate.Format(time.RFC3339))
+	urlValues.Add("until", untilDate.Format(time.RFC3339))
 	var nextPage = "/repos/" + repo + "/commits"
 
 	for {

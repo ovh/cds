@@ -341,10 +341,11 @@ type VCSCommit struct {
 
 //VCSBranch reprensents branches known by the repositories manager
 type VCSBranch struct {
-	ID           string `json:"id"`
-	DisplayID    string `json:"display_id"`
-	LatestCommit string `json:"latest_commit"`
-	Default      bool   `json:"default"`
+	ID           string   `json:"id"`
+	DisplayID    string   `json:"display_id"`
+	LatestCommit string   `json:"latest_commit"`
+	Default      bool     `json:"default"`
+	Parents      []string `json:"default"`
 }
 
 //VCSPushEvent represents a push events for polling
