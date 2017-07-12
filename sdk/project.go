@@ -496,6 +496,7 @@ func GetProject(key string, mods ...RequestModifier) (Project, error) {
 			q.Set("withApplications", "true")
 			q.Set("withPipelines", "true")
 			q.Set("withEnvironments", "true")
+			q.Set("withGroups", "true")
 			r.URL.RawQuery = q.Encode()
 		})
 	}

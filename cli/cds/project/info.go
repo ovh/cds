@@ -40,6 +40,13 @@ func getProject(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	if project.Environments != nil {
+		fmt.Printf("Environments:\n")
+		for _, elt := range project.Environments {
+			fmt.Printf(" - %s\n", elt.Name)
+		}
+	}
+
 	if project.Pipelines != nil {
 		fmt.Printf("Pipelines:\n")
 		for _, elt := range project.Pipelines {
