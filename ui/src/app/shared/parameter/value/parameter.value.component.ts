@@ -1,4 +1,4 @@
-import {Component, Input, EventEmitter, OnInit, ViewChild, Output} from '@angular/core';
+import {Component, Input, EventEmitter, OnInit, ViewChild, Output, ChangeDetectorRef} from '@angular/core';
 import {SharedService} from '../../shared.service';
 import {Project} from '../../../model/project.model';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
@@ -86,18 +86,23 @@ export class ParameterValueComponent implements OnInit {
         if (!this.suggest) {
             this.suggest = new Array<string>();
         }
+        setTimeout(() => {
+            this.valueChange.emit(this.editableValue);
+        }, 1);
+
     }
 
     castValue(data: string|number|boolean): string|number|boolean {
         if (this.type === 'boolean') {
             this.editableValue = (data === 'true' || data === true);
             return;
-        } else if (this.type === 'list' && !this.editList) {
-            if (!this.list) {
+        } else if (this.type === 'list') {
+            if (this.editList) {
+                this.editableValue = data;
+            } else if (!this.list) {
                 this.list = (<string>data).split(';');
-                return this.editableValue = this.list[0];
+                this.editableValue = this.list[0];
             }
-            return;
         } else {
             this.editableValue = data;
         }

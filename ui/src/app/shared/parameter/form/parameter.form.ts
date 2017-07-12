@@ -31,6 +31,18 @@ export class ParameterFormComponent {
 
     create(): void {
         let event: ParameterEvent = new ParameterEvent('add', this.newParameter);
+        if (!this.newParameter.value) {
+            switch (this.newParameter.type) {
+                case 'number':
+                    this.newParameter.value = '0';
+                    break;
+                case 'boolean':
+                    this.newParameter.value = 'false';
+                    break;
+                default:
+                    this.newParameter.value = '';
+            }
+        }
         this.createParameterEvent.emit(event);
         this.newParameter = new Parameter();
     }

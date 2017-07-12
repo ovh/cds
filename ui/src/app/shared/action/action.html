@@ -31,6 +31,7 @@
                             <div class="ui form">
                                 <div class="field">
                                     <app-requirements-list [requirements]="editableAction.requirements" [edit]="edit"
+                                                           (onChange)="editableAction.hasChanged = true"
                                                            (event)="requirementEvent($event)"></app-requirements-list>
                                     <div class="requirementForm" *ngIf="edit">
                                         <app-requirements-form (event)="requirementEvent($event)"></app-requirements-form>

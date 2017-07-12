@@ -16,6 +16,7 @@ export class RequirementsListComponent extends Table {
     @Input() requirements: Requirement[];
     @Input() edit: boolean;
     @Output() event = new EventEmitter<RequirementEvent>();
+    @Output() onChange = new EventEmitter<Requirement[]>();
 
     availableRequirements: Array<string>;
     workerModels: Array<WorkerModel>;
@@ -39,5 +40,9 @@ export class RequirementsListComponent extends Table {
 
     deleteEvent(r: Requirement): void {
         this.event.emit(new RequirementEvent('delete', r));
+    }
+
+    change(): void {
+        this.onChange.emit(this.requirements);
     }
 }

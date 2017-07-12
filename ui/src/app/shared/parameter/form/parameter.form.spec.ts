@@ -89,6 +89,7 @@ describe('CDS: parameter From Component', () => {
         spyOn(fixture.componentInstance.createParameterEvent, 'emit');
         compiled.querySelector('.ui.blue.button').click();
 
+        parameter.value = '';
         expect(fixture.componentInstance.createParameterEvent.emit).toHaveBeenCalledWith(new ParameterEvent('add', parameter));
     }));
 });
