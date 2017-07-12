@@ -20,6 +20,7 @@ import {Scheduler} from '../../../../../../model/scheduler.model';
 import {Hook} from '../../../../../../model/hook.model';
 import {RepositoryPoller} from '../../../../../../model/polling.model';
 import {PipelineLaunchModalComponent} from '../../../../../../shared/pipeline/launch/pipeline.launch.modal.component';
+import {PermissionValue} from '../../../../../../model/permission.model';
 import {cloneDeep} from 'lodash';
 
 @Component({
@@ -39,6 +40,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     oldPipelineStatus: string;
 
     pipelineStatusEnum = PipelineStatus;
+    permissionEnum = PermissionValue;
 
     // Triggers modals
     @ViewChild('editTriggerModal')

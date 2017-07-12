@@ -3,6 +3,8 @@ export class RepositoriesManager {
     type: string;
     name: string;
     url: string;
+    polling_supported?: boolean;
+    hooks_supported?: boolean;
 }
 
 export interface Repository {

@@ -67,7 +67,7 @@ export class ParameterListComponent extends Table {
 
     getRef(p: Parameter): Parameter {
         if (this.paramsRef) {
-            return this.paramsRef.find(r => r.name === p.name)
+            return this.paramsRef.find(r => r.name === p.name);
         }
         return null;
     }
