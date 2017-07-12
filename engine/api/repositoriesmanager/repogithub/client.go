@@ -240,7 +240,7 @@ func (g *GithubClient) Branch(fullname, theBranch string) (sdk.VCSBranch, error)
 		}
 	}
 
-	return vcsbranch, nil
+	return *branchResult, nil
 }
 
 // Commits returns the commits list on a branch between a commit SHA (since) until another commit SHA (until). The branch is given by the branch of the first commit SHA (since)
@@ -265,7 +265,7 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 			if errCP != nil {
 				return nil, errCP
 			}
-			d := time.Unix(cp.Timestamp, 0)
+			d := time.Unix(cp.Timestamp/1000, 0)
 			if d.After(sinceDate) {
 				sinceDate = d
 			}
@@ -275,7 +275,7 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		if errC != nil {
 			return nil, errC
 		}
-		sinceDate = time.Unix(sinceCommit.Timestamp, 0)
+		sinceDate = time.Unix(sinceCommit.Timestamp/1000, 0)
 	}
 
 	var untilDate time.Time
@@ -287,7 +287,7 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		if errC != nil {
 			return nil, errC
 		}
-		untilDate = time.Unix(untilCommit.Timestamp, 0)
+		untilDate = time.Unix(untilCommit.Timestamp/1000, 0)
 	}
 
 	//Get Commit List
@@ -296,7 +296,7 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		return nil, err
 	}
 	if since != "" {
-		log.Debug("filter commit between %s and %s", since, until)
+		log.Debug("filter commit (%d) between %s and %s", len(theCommits), since, until)
 		theCommits = filterCommits(theCommits, since, until)
 	}
 
