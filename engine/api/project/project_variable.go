@@ -284,15 +284,16 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 
 // UpdateVariable Update a variable in the given project
 func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
+	varValue := variable.Value
 	// Clear password for audit
 	previousVar, err := GetVariableByID(db, proj.ID, variable.ID, WithClearPassword())
 
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
-		return nil
+		varValue = previousVar.Value
 	}
 
-	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
+	clear, cipher, err := secret.EncryptS(variable.Type, varValue)
 	if err != nil {
 		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret %s", variable.Name)
 	}

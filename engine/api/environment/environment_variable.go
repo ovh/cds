@@ -344,6 +344,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 
 // UpdateVariable Update a variable in the given environment
 func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u *sdk.User) error {
+	varValue := variable.Value
 	varBefore, errV := GetVariableByID(db, envID, variable.ID, WithClearPassword())
 	if errV != nil {
 		return sdk.WrapError(errV, "UpdateVariable> Cannot load variable %d", variable.ID)
@@ -351,10 +352,10 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
-		return nil
+		varValue = varBefore.Value
 	}
 
-	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
+	clear, cipher, err := secret.EncryptS(variable.Type, varValue)
 	if err != nil {
 		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret")
 	}
