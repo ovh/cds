@@ -1,4 +1,4 @@
-<div class="requirement">
+<div class="requirement" *ngIf="requirements">
     <table class="ui fixed celled table">
         <thead>
         <tr>
@@ -11,12 +11,9 @@
         <tbody>
         <tr *ngFor="let r of getDataForCurrentPage()">
             <td>
-                <div *ngIf="edit;then wName;else rName"></div>
-                <ng-template #wName>
-                    <div class="ui fluid input">
-                        <input [(ngModel)]="r.name" name="requirementname" (keypress)="fillValue($select)">
-                    </div>
-                </ng-template>
+                <div class="ui fluid input" *ngIf="edit;else rName">
+                    <input [(ngModel)]="r.name" name="requirementname" (ngModelChange)="change()">
+                </div>
                 <ng-template #rName>
                     <span>{{r.name}}</span>
                 </ng-template>
@@ -27,7 +24,8 @@
                         <sm-select class="search"
                             *ngIf="availableRequirements.length > 0"
                             [options]="{'fullTextSearch': true}"
-                            [(model)]="r.type">
+                            [(model)]="r.type"
+                            (modelChange)="change()">
                             <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
                         </sm-select>
                     </div>
@@ -42,7 +40,8 @@
                     <sm-select class="search"
                         *ngIf="r.type === 'model' && workerModels"
                         [options]="{'fullTextSearch': true}"
-                        [(model)]="r.value">
+                        [(model)]="r.value"
+                        (modelChange)="change()">
                         <option *ngFor="let wm of workerModels" value="{{wm.name}}">{{wm.name}}</option>
                     </sm-select>
                 </div>
