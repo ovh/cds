@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // GetWorkflowStatus Get workflow updated builds status + scheduler and poller executions
@@ -35,9 +34,12 @@ func GetWorkflowStatus(db gorp.SqlExecutor, projectkey, appName string, user *sd
 }
 
 func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineScheduler, pollers *[]sdk.RepositoryPoller, hooks *[]sdk.Hook, cdPip sdk.CDPipeline) {
-	if cdPip.Pipeline.LastPipelineBuild != nil {
+	if len(cdPip.Application.PipelinesBuild) > 0 {
+		*pbs = append(*pbs, cdPip.Application.PipelinesBuild...)
+	} else if cdPip.Pipeline.LastPipelineBuild != nil {
 		*pbs = append(*pbs, *cdPip.Pipeline.LastPipelineBuild)
 	}
+
 	if cdPip.Schedulers != nil {
 		*schedulers = append(*schedulers, cdPip.Schedulers...)
 	}
@@ -293,9 +295,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 								return nil, sdk.WrapError(errP, "LoadCDTree> Cannot load project")
 							}
 							for _, e := range p.Environments {
-								log.Warning("BIMM %s %d", e.Name, e.ID)
 								builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, e.ID, 1, "", branchName)
-								log.Warning("BIMM (%d)", len(builds))
 								if errPB != nil {
 									return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build for env %s", e.Name)
 								}
