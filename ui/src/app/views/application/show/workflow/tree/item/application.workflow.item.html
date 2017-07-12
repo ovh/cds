@@ -19,7 +19,7 @@
                       [class.red]="workflowItem.pipeline.last_pipeline_build.status === pipelineStatusEnum.FAIL"
 
                 >
-                    <div smDirTooltip="{{getTriggerSource(workflowItem.pipeline.last_pipeline_build)}}"><i class="user icon"></i>{{getTriggerSource(workflowItem.pipeline.last_pipeline_build) | truncate : 13 }}</div>
+                    <div smDirTooltip="{{getTriggerSource(workflowItem.pipeline.last_pipeline_build)}}, {{workflowItem.pipeline.last_pipeline_build.done | date:'dd/MM/yy HH:mm'}}"><i class="user icon"></i>{{getTriggerSource(workflowItem.pipeline.last_pipeline_build) | truncate : 13 }}</div>
                 </span>
 
                 <!-- Env -->
