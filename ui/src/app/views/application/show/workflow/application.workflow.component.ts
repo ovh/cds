@@ -165,7 +165,7 @@ export class ApplicationWorkflowComponent implements OnInit {
     }
 
         // Update parent info
-        if (w.parent) {
+        if (w.parent && Array.isArray(resp.builds)) {
             let parentUpdated = resp.builds.filter(
                 p => p.pipeline.id === w.parent.pipeline_id &&
                 p.environment.id === w.parent.environment_id &&
