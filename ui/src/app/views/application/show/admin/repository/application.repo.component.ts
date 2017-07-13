@@ -24,7 +24,6 @@ export class ApplicationRepositoryComponent implements OnInit {
     public loadingBtn = false;
 
     repos: Repository[];
-    reposTmp: Repository[];
     model: string;
 
     @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
@@ -47,7 +46,7 @@ export class ApplicationRepositoryComponent implements OnInit {
         } else {
             this.loadingBtn = true;
             this._appStore.removeRepository(this.project.key, this.application.name, this.application.repositories_manager.name)
-                .subscribe( () => {
+                .subscribe(() => {
                     delete this.application.repositories_manager;
                     delete this.application.repository_fullname;
                     this.loadingBtn = false;
@@ -58,16 +57,6 @@ export class ApplicationRepositoryComponent implements OnInit {
         }
     }
 
-    filterRepositories(filter: string): void {
-        if (filter.length >= 3) {
-            this.reposTmp = this.repos.filter(r => {
-                return r.fullname.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
-            });
-        } else {
-            this.reposTmp = new Array<Repository>();
-        }
-    }
-
     /**
      * Update list of repo when changing repo manager
      */
@@ -75,12 +64,11 @@ export class ApplicationRepositoryComponent implements OnInit {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
             this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, sync).first()
-                .subscribe( repos => {
-                    this.repos = repos;
-                    this.loadingRepos = false;
-                }, () => {
-                    this.loadingRepos = false;
-                });
+                .subscribe(
+                    repos => this.repos = repos,
+                    null,
+                    () => this.loadingRepos = false
+                );
         }
     }
 
