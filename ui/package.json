@@ -46,7 +46,7 @@
     "rxjs": "5.1.0",
     "semantic-ui": "2.2.10",
     "ts-helpers": "^1.1.1",
-    "zone.js": "^0.8.4"
+    "zone.js": "0.8.12"
   },
   "devDependencies": {
     "@angular/cli": "^1.2.0",

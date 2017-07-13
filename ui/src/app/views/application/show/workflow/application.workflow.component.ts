@@ -139,38 +139,41 @@ export class ApplicationWorkflowComponent implements OnInit {
         }
 
         if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
-        // If current item is a deploy or testing pipeline without environment
-        // Then add new item on workflow
-        this.project.environments.forEach((env, index) => {
-            let pbToAssign: PipelineBuild;
-            if (resp.builds) {
-                let pipelineBuild = resp.builds.filter(p => p.application.id === w.application.id &&
+            // If current item is a deploy or testing pipeline without environment
+            // Then add new item on workflow
+            this.project.environments.forEach((env, index) => {
+                let pbToAssign: PipelineBuild;
+                if (resp.builds) {
+                    let pipelineBuild = resp.builds.filter(p => p.application.id === w.application.id &&
                     p.pipeline.id === w.pipeline.id &&
                     p.environment.id === env.id);
 
-                if (pipelineBuild && pipelineBuild.length === 1) {
-                    pbToAssign = pipelineBuild[0];
+                    if (pipelineBuild && pipelineBuild.length === 1) {
+                        pbToAssign = pipelineBuild[0];
+                    }
                 }
-            }
-            if (index === 0) {
-                w.environment = env;
-                w.pipeline.last_pipeline_build = pbToAssign;
-            } else {
-                let newItem = cloneDeep(w);
-                newItem.environment = env;
-                newItem.pipeline.last_pipeline_build = pbToAssign;
-                this.application.workflows.push(newItem);
-            }
-        });
-    }
+                if (index === 0) {
+                    w.environment = env;
+                    w.pipeline.last_pipeline_build = pbToAssign;
+                } else {
+                    let newItem = cloneDeep(w);
+                    newItem.environment = env;
+                    newItem.pipeline.last_pipeline_build = pbToAssign;
+                    this.application.workflows.push(newItem);
+                }
+            });
+        }
 
         // Update parent info
         if (w.parent) {
-            let parentUpdated = resp.builds.filter(
-                p => p.pipeline.id === w.parent.pipeline_id &&
-                p.environment.id === w.parent.environment_id &&
-                p.application.id === w.parent.application_id
-            );
+            let parentUpdated: Array<PipelineBuild>;
+            if (resp.builds) {
+                parentUpdated = resp.builds.filter(
+                    p => p.pipeline.id === w.parent.pipeline_id &&
+                    p.environment.id === w.parent.environment_id &&
+                    p.application.id === w.parent.application_id
+                );
+            }
             if (parentUpdated && parentUpdated.length === 1) {
                 w.parent.buildNumber = parentUpdated[0].build_number;
                 w.parent.version = parentUpdated[0].version;
