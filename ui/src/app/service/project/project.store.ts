@@ -60,8 +60,8 @@ export class ProjectStore {
      * @returns {Observable<R>}
      */
     resync(key: string): Observable<Project> {
-        let store = this._projectCache.getValue();
         return this._projectService.getProject(key).map( res => {
+            let store = this._projectCache.getValue();
             this._projectCache.next(store.set(key, res));
             return res;
         });
