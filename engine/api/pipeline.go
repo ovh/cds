@@ -523,7 +523,7 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	// Update project
 	proj, errP := project.Load(tx, key, c.User)
 	if errP != nil {
-		return sdk.WrapError(err, "updatePipelineHandler> cannot load project %s", key)
+		return sdk.WrapError(errP, "updatePipelineHandler> cannot load project %s", key)
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
