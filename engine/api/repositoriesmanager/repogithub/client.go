@@ -202,10 +202,9 @@ func (g *GithubClient) Branch(fullname, theBranch string) (sdk.VCSBranch, error)
 		return vcsbranch, err
 	}
 
-	url := "/repos/" + fullname + "/branches" + theBranch
+	url := "/repos/" + fullname + "/branches/" + theBranch
 	status, body, _, err := g.get(url)
 	if err != nil {
-		log.Warning("GithubClient.Branch> Error %s", err)
 		return vcsbranch, err
 	}
 	if status >= 400 {
@@ -267,7 +266,8 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 			}
 			d := time.Unix(cp.Timestamp/1000, 0)
 			if d.After(sinceDate) {
-				sinceDate = d
+				// To not get the parent commit
+				sinceDate = d.Add(1* time.Second)
 			}
 		}
 	} else {
