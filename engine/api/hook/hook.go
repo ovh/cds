@@ -72,7 +72,7 @@ func UpdateHook(db gorp.SqlExecutor, h sdk.Hook) error {
 
 // InsertHook add link between git repository and pipeline in database
 func InsertHook(db gorp.SqlExecutor, h *sdk.Hook) error {
-	query := `INSERT INTO hook (pipeline_id, kind, host, project, repository, application_id,enabled, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+	query := `INSERT INTO hook (pipeline_id, kind, host, project, repository, application_id, enabled, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 
 	// Generate UID
 	uid, err := generateHash()

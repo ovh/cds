@@ -566,7 +566,6 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
-	rmName := vars["name"]
 	hookIDString := vars["hookId"]
 
 	hookID, errparse := strconv.ParseInt(hookIDString, 10, 64)
@@ -608,18 +607,15 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 		return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
 	}
 
-	b, errcheck := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
-	if errcheck != nil {
-		return sdk.WrapError(errcheck, "deleteHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s)", rmName, projectKey, appName)
+	var errR error
+	_, app.RepositoriesManager, errR = repositoriesmanager.LoadFromApplicationByID(db, app.ID)
+	if errR != nil {
+		return sdk.WrapError(errR, "deleteHookOnRepositoriesManagerHandler> Cannot load repository manager from application %s", appName)
 	}
 
-	if !b {
-		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "deleteHookOnRepositoriesManagerHandler> Application %s is not attached to any repository", appName)
-	}
-
-	client, errauth := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
+	client, errauth := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
 	if errauth != nil {
-		return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, rmName)
+		return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, app.RepositoriesManager.Name)
 	}
 
 	t := strings.Split(app.RepositoryFullname, "/")

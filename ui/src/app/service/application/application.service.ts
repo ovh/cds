@@ -182,8 +182,8 @@ export class ApplicationService {
      * @param hookId Hook id to delete
      * @returns {Observable<R>}
      */
-    deleteHook(key: string, appName: string, repoManName: string, hookId: number): Observable<Application> {
-        let url = '/project/' + key + '/application/' + appName + '/repositories_manager/' + repoManName + '/hook/' + hookId;
+    deleteHook(key: string, appName: string, hookId: number): Observable<Application> {
+        let url = '/project/' + key + '/application/' + appName + '/repositories_manager/hook/' + hookId;
         return this._http.delete(url, null).map(res => res.json());
     }
 
