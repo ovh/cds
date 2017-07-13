@@ -493,29 +493,57 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	var p sdk.Pipeline
 	if err := UnmarshalBody(r, &p); err != nil {
-		return err
+		return sdk.WrapError(err, "updatePipelineHandler> Cannot read body")
 	}
 
 	// check pipeline name pattern
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(p.Name) {
-		log.Warning("updatePipelineHandler: Pipeline name %s do not respect pattern %s", p.Name, sdk.NamePattern)
-		return sdk.ErrInvalidPipelinePattern
+		return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updatePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 	}
 
 	pipelineDB, err := pipeline.LoadPipeline(db, key, name, false)
 	if err != nil {
-		log.Warning("updatePipelineHandler> cannot load pipeline %s: %s\n", name, err)
-		return err
+		return sdk.WrapError(err, "updatePipelineHandler> cannot load pipeline %s", name)
 	}
 
 	pipelineDB.Name = p.Name
 	pipelineDB.Type = p.Type
 
-	err = pipeline.UpdatePipeline(db, pipelineDB)
-	if err != nil {
-		log.Warning("updatePipelineHandler> cannot update pipeline %s: %s\n", name, err)
-		return err
+	tx, errB := db.Begin()
+	if errB != nil {
+		sdk.WrapError(errB, "updatePipelineHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	if err := pipeline.UpdatePipeline(tx, pipelineDB); err != nil {
+		return sdk.WrapError(err, "updatePipelineHandler> cannot update pipeline %s", name)
+	}
+
+	// Update project
+	proj, errP := project.Load(tx, key, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "updatePipelineHandler> cannot load project %s", key)
+	}
+
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		return sdk.WrapError(err, "updatePipelineHandler> cannot update project last modified date")
+	}
+
+	// Update applications
+	apps, errA := application.LoadByPipeline(tx, p.ID, c.User)
+	if errA != nil {
+		return sdk.WrapError(errA, "updatePipelineHandler> Cannot load application using pipeline %s", p.Name)
+	}
+
+	for _, app := range apps {
+		if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
+			return sdk.WrapError(err, "updatePipelineHandler> Cannot update application last modified date")
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "updatePipelineHandler> Cannot commit transaction")
 	}
 
 	cache.DeleteAll(cache.Key("application", key, "*"))
