@@ -21,7 +21,6 @@ export class AppService {
         if (!lastUpdates) {
             return;
         }
-
         // Get current route params
         let params = this._routerService.getRouteParams({}, this._routeActivated);
 
@@ -46,7 +45,7 @@ export class AppService {
 
                         // If working on sub resources - resync project
                         if (params['pipName'] || params['appName'] || plu.username === this._authStore.getUser().username) {
-                            this._projStore.resync(plu.name).first().subscribe();
+                            this._projStore.resync(plu.name).first().subscribe(() => {});
                         }
                     } else {
                         // remove from cache
