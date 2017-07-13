@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/sdk"
 )
@@ -33,9 +34,12 @@ func GetWorkflowStatus(db gorp.SqlExecutor, projectkey, appName string, user *sd
 }
 
 func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineScheduler, pollers *[]sdk.RepositoryPoller, hooks *[]sdk.Hook, cdPip sdk.CDPipeline) {
-	if cdPip.Pipeline.LastPipelineBuild != nil {
+	if len(cdPip.Application.PipelinesBuild) > 0 {
+		*pbs = append(*pbs, cdPip.Application.PipelinesBuild...)
+	} else if cdPip.Pipeline.LastPipelineBuild != nil {
 		*pbs = append(*pbs, *cdPip.Pipeline.LastPipelineBuild)
 	}
+
 	if cdPip.Schedulers != nil {
 		*schedulers = append(*schedulers, cdPip.Schedulers...)
 	}
@@ -284,17 +288,52 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 				// Load Status
 				if branchName != "" {
 					var pbs []sdk.PipelineBuild
-					var errPB error
 					if version == 0 {
-						pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, 1, "", branchName)
+						if root.Pipeline.Type != sdk.BuildPipeline {
+							p, errP := project.Load(db, projectkey, user, project.LoadOptions.WithEnvironments)
+							if errP != nil {
+								return nil, sdk.WrapError(errP, "LoadCDTree> Cannot load project")
+							}
+							for _, e := range p.Environments {
+								builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, e.ID, 1, "", branchName)
+								if errPB != nil {
+									return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build for env %s", e.Name)
+								}
+								pbs = append(pbs, builds...)
+							}
+						} else {
+							builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, 1, "", branchName)
+							if errPB != nil {
+								return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
+							}
+							pbs = builds
+						}
+
 					} else {
-						pbs, errPB = pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, version, 1)
+						if root.Pipeline.Type != sdk.BuildPipeline {
+							p, errP := project.Load(db, projectkey, user, project.LoadOptions.WithEnvironments)
+							if errP != nil {
+								return nil, sdk.WrapError(errP, "LoadCDTree> Cannot load project")
+							}
+							for _, e := range p.Environments {
+								builds, errPB := pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, root.Application.ID, root.Pipeline.ID, e.ID, version, 1)
+								if errPB != nil {
+									return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build for env %s", e.Name)
+								}
+								pbs = append(pbs, builds...)
+							}
+						} else {
+							builds, errPB := pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, version, 1)
+							if errPB != nil {
+								return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
+							}
+							pbs = builds
+						}
 					}
-					if errPB != nil {
-						return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
-					}
+
 					if len(pbs) > 0 {
 						root.Pipeline.LastPipelineBuild = &pbs[0]
+						root.Application.PipelinesBuild = pbs
 					}
 				}
 
