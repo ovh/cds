@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"strings"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -245,4 +247,39 @@ func loadTagsByRunID(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunTag, er
 		tags = append(tags, sdk.WorkflowRunTag(dbTags[i]))
 	}
 	return tags, nil
+}
+
+// GetTagsAndValue returns a map of tags and all the values available on all runs of a workflow
+func GetTagsAndValue(db gorp.SqlExecutor, key, name string) (map[string][]string, error) {
+	query := `
+SELECT tags.tag "tag", STRING_AGG(tags.value, ',') "values"
+FROM (
+        SELECT distinct tag "tag", value "value"
+        FROM workflow_run_tag
+		JOIN workflow_run ON workflow_run_tag.workflow_run_id = workflow_run.id
+		JOIN workflow ON workflow_run.workflow_id = workflow.id
+		JOIN project ON workflow.project_id = project.id
+		WHERE project.projectkey = $1
+		AND workflow.name = $2
+		order by value
+    ) AS "tags"
+GROUP BY tags.tag
+ORDER BY tags.tag;
+`
+
+	res := []struct {
+		Tag    string `db:"tag"`
+		Values string `db:"values"`
+	}{}
+
+	if _, err := db.Select(&res, query, key, name); err != nil {
+		return nil, sdk.WrapError(err, "GetTagsAndValue> Unable to load tags and values")
+	}
+
+	rmap := map[string][]string{}
+	for _, r := range res {
+		rmap[r.Tag] = strings.Split(r.Values, ",")
+	}
+
+	return rmap, nil
 }

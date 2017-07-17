@@ -222,6 +222,10 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		_, err = workflow.ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
+			Payload: map[string]string{
+				"git.branch": "master",
+				"git.hash":   fmt.Sprintf("%d", i),
+			},
 		})
 		test.NoError(t, err)
 	}
@@ -246,6 +250,22 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(10), wr.Number)
+
+	//Test getWorkflowRunTagsHandler
+	uri = router.getRoute("GET", getWorkflowRunTagsHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+	//Do the request
+	rec = httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	tags := map[string][]string{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &tags))
+	assert.Len(t, tags, 2)
+	assert.Len(t, tags["git.branch"], 1)
+	assert.Len(t, tags["git.hash"], 10)
+
 }
 
 func Test_getWorkflowRunHandler(t *testing.T) {
