@@ -91,6 +91,9 @@ func TestManualRun1(t *testing.T) {
 
 	_, err = ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
+		Payload: map[string]string{
+			"git.branch": "master",
+		},
 	})
 	test.NoError(t, err)
 

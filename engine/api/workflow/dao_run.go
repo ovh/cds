@@ -47,6 +47,10 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "Run.PostInsert> Unable to store marshalled infos")
 	}
 
+	if err := updateTags(db, r); err != nil {
+		return sdk.WrapError(err, "Run.PostInsert> Unable to store insert tags")
+	}
+
 	return nil
 }
 
@@ -80,6 +84,27 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 			return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal infos")
 		}
 		r.Infos = i
+	}
+
+	return nil
+}
+
+func updateTags(db gorp.SqlExecutor, r *Run) error {
+	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
+		return sdk.WrapError(err, "Run.updateTags> Unable to store delete tags")
+	}
+
+	tags := []interface{}{}
+	for i := range r.Tags {
+		r.Tags[i].WorkflowRunID = r.ID
+		t := RunTag(r.Tags[i])
+		tags = append(tags, &t)
+	}
+
+	if len(tags) > 0 {
+		if err := db.Insert(tags...); err != nil {
+			return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
+		}
 	}
 
 	return nil
@@ -201,5 +226,23 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], wnr)
 	}
 
+	tags, errT := loadTagsByRunID(db, wr.ID)
+	if errT != nil {
+		return nil, sdk.WrapError(errT, "loadRun> Error loading tags for run %d", wr.ID)
+	}
+	wr.Tags = tags
+
 	return &wr, nil
+}
+
+func loadTagsByRunID(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunTag, error) {
+	tags := []sdk.WorkflowRunTag{}
+	dbTags := []sdk.WorkflowRunTag{}
+	if _, err := db.Select(&dbTags, "select * from workflow_run_tag where workflow_run_id = $1", runID); err != nil {
+		return nil, sdk.WrapError(err, "loadTagsByRunID> Unable to load tags for run %d", runID)
+	}
+	for i := range dbTags {
+		tags = append(tags, sdk.WorkflowRunTag(dbTags[i]))
+	}
+	return tags, nil
 }

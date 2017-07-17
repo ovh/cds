@@ -310,6 +310,13 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 	}
 	run.BuildParameters = jobParams
 
+	for _, p := range jobParams {
+		switch p.Name {
+		case "git.hash", "git.branch", "git.tag":
+			w.Tag(p.Name, p.Value)
+		}
+	}
+
 	if err := insertWorkflowNodeRun(db, run); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run")
 	}
