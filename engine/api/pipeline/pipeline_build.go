@@ -624,7 +624,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 	} else {
 		//If we only have the current branch, search for the branch
 		br, err := client.Branch(app.RepositoryFullname, cur.Branch)
-		if err != nil {
+		if err != nil || br == nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get branch %s", cur.Branch)
 		}
 		if br.LatestCommit == "" {
