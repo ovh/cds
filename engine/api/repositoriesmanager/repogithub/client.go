@@ -195,20 +195,19 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 }
 
 // Branch returns only detail of a branch
-func (g *GithubClient) Branch(fullname, theBranch string) (sdk.VCSBranch, error) {
-	vcsbranch := sdk.VCSBranch{}
+func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error) {
 	repo, err := g.repoByFullname(fullname)
 	if err != nil {
-		return vcsbranch, err
+		return nil, err
 	}
 
 	url := "/repos/" + fullname + "/branches/" + theBranch
 	status, body, _, err := g.get(url)
 	if err != nil {
-		return vcsbranch, err
+		return nil, err
 	}
 	if status >= 400 {
-		return vcsbranch, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
+		return nil, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
 	}
 
 	//Github may return 304 status because we are using conditional request with ETag based headers
@@ -219,7 +218,7 @@ func (g *GithubClient) Branch(fullname, theBranch string) (sdk.VCSBranch, error)
 	} else {
 		if err := json.Unmarshal(body, &branch); err != nil {
 			log.Warning("GithubClient.Branch> Unable to parse github branch: %s", err)
-			return vcsbranch, err
+			return nil, err
 		}
 	}
 
@@ -239,7 +238,7 @@ func (g *GithubClient) Branch(fullname, theBranch string) (sdk.VCSBranch, error)
 		}
 	}
 
-	return *branchResult, nil
+	return branchResult, nil
 }
 
 // Commits returns the commits list on a branch between a commit SHA (since) until another commit SHA (until). The branch is given by the branch of the first commit SHA (since)
@@ -259,6 +258,9 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		if errB != nil {
 			return nil, errB
 		}
+		if b == nil {
+			return nil, fmt.Errorf("Commits>Cannot find branch %s", theBranch)
+		}
 		for _, c := range b.Parents {
 			cp, errCP := g.Commit(repo, c)
 			if errCP != nil {
@@ -267,7 +269,7 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 			d := time.Unix(cp.Timestamp/1000, 0)
 			if d.After(sinceDate) {
 				// To not get the parent commit
-				sinceDate = d.Add(1* time.Second)
+				sinceDate = d.Add(1 * time.Second)
 			}
 		}
 	} else {
@@ -579,12 +581,12 @@ func (g *GithubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk
 	res := []sdk.VCSPushEvent{}
 	for b, c := range lastCommitPerBranch {
 		branch, err := g.Branch(fullname, b)
-		if err != nil {
+		if err != nil || branch == nil {
 			log.Warning("GithubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			continue
 		}
 		res = append(res, sdk.VCSPushEvent{
-			Branch: branch,
+			Branch: *branch,
 			Commit: c,
 		})
 	}
@@ -607,12 +609,12 @@ func (g *GithubClient) CreateEvents(fullname string, iEvents []interface{}) ([]s
 	for _, e := range events {
 		b := e.Payload.Ref
 		branch, err := g.Branch(fullname, b)
-		if err != nil {
+		if err != nil || branch == nil {
 			log.Warning("GithubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			continue
 		}
 		event := sdk.VCSCreateEvent{
-			Branch: branch,
+			Branch: *branch,
 		}
 
 		c, err := g.Commit(fullname, branch.LatestCommit)

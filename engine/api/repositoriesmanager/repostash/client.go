@@ -144,17 +144,16 @@ func (s *StashClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 }
 
 //Branch retrieves the branch from Stash
-func (s *StashClient) Branch(fullname, branchName string) (sdk.VCSBranch, error) {
-	branch := sdk.VCSBranch{}
+func (s *StashClient) Branch(fullname, branchName string) (*sdk.VCSBranch, error) {
 	t := strings.Split(fullname, "/")
 	if len(t) != 2 {
-		return branch, sdk.ErrRepoNotFound
+		return nil, sdk.ErrRepoNotFound
 	}
 	stashBranch, err := s.client.Branches.Find(t[0], t[1], branchName)
 	if err != nil {
-		return branch, err
+		return nil, err
 	}
-	branch = sdk.VCSBranch{
+	branch := &sdk.VCSBranch{
 		ID:           stashBranch.ID,
 		DisplayID:    stashBranch.DisplayID,
 		LatestCommit: stashBranch.LatestHash,

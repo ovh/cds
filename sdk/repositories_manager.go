@@ -290,7 +290,7 @@ type RepositoriesManagerClient interface {
 
 	//Branches
 	Branches(string) ([]VCSBranch, error)
-	Branch(string, string) (VCSBranch, error)
+	Branch(string, string) (*VCSBranch, error)
 
 	//Commits
 	Commits(repo, branch, since, until string) ([]VCSCommit, error)
