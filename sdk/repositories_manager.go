@@ -251,8 +251,8 @@ func AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullnam
 }
 
 //DeleteHookOnRepositoriesManager delete hook on stash
-func DeleteHookOnRepositoriesManager(projectKey, appName, reposManager string, hookID int64) error {
-	uri := fmt.Sprintf("/project/%s/application/%s/repositories_manager/%s/hook/%d", projectKey, appName, reposManager, hookID)
+func DeleteHookOnRepositoriesManager(projectKey, appName string, hookID int64) error {
+	uri := fmt.Sprintf("/project/%s/application/%s/repositories_manager/hook/%d", projectKey, appName, hookID)
 	_, code, err := Request("DELETE", uri, nil)
 	if err != nil {
 		return err
