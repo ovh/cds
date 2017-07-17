@@ -196,6 +196,7 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 
 // Branch returns only detail of a branch
 func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error) {
+	cacheBranchKey := cache.Key("reposmanager", "github", "branch", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch)
 	repo, err := g.repoByFullname(fullname)
 	if err != nil {
 		return nil, err
@@ -204,9 +205,11 @@ func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 	url := "/repos/" + fullname + "/branches/" + theBranch
 	status, body, _, err := g.get(url)
 	if err != nil {
+		cache.Delete(cacheBranchKey)
 		return nil, err
 	}
 	if status >= 400 {
+		cache.Delete(cacheBranchKey)
 		return nil, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
 	}
 
@@ -214,12 +217,18 @@ func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 	var branch Branch
 	if status == http.StatusNotModified {
 		//If repos aren't updated, lets get them from cache
-		cache.Get(cache.Key("reposmanager", "github", "branch", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch), &branch)
+		cache.Get(cacheBranchKey, &branch)
 	} else {
 		if err := json.Unmarshal(body, &branch); err != nil {
 			log.Warning("GithubClient.Branch> Unable to parse github branch: %s", err)
 			return nil, err
 		}
+	}
+
+	if branch.Name == nil {
+		log.Warning("GithubClient.Branch> Cannot find branch %s: %v", branch, theBranch)
+		cache.Delete(cacheBranchKey)
+		return nil, fmt.Errorf("GithubClient.Branch > Cannot find branch %s", theBranch)
 	}
 
 	//Put the body on cache for one hour and one minute
