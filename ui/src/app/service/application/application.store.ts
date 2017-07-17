@@ -316,7 +316,7 @@ export class ApplicationStore {
      * @returns {Observable<Application>}
      */
     removeHook(p: Project, a: Application, h: Hook): Observable<Application> {
-        return this._applicationService.deleteHook(p.key, a.name, a.repositories_manager.name, h.id).map(app => {
+        return this._applicationService.deleteHook(p.key, a.name, h.id).map(app => {
             return this.refreshApplicationWorkflowCache(p.key, a.name, app);
         });
     }
