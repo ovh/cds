@@ -32,12 +32,10 @@ export class NotificationService {
         return new Observable((obs: any) => {
 
             if (!('Notification' in window)) {
-                obs.error('Notifications are not available in this environment');
                 obs.complete();
             }
 
             if (this.permission !== 'granted') {
-                obs.error(`The user hasn't granted you permission to send push notifications`);
                 obs.complete();
             }
 
