@@ -3,7 +3,6 @@ package keychain
 import (
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/docker/docker-credential-helpers/credentials"
@@ -11,7 +10,7 @@ import (
 )
 
 func checkLibSecretAvailable() (bool, error) {
-	cliexec, err := filepath.Abs(os.Args[0])
+	cliexec, err := os.Executable()
 	if err != nil {
 		return false, ErrExecNotFound
 	}
@@ -21,7 +20,7 @@ func checkLibSecretAvailable() (bool, error) {
 		return false, ErrLdd
 	}
 
-	if strings.Contains(string(out), "libsecret-1.so.0 => not found") {
+	if strings.Contains(string(out), "libsecret-1.so.0 => not found. Please install it with your packet manager.") {
 		return false, nil
 	}
 

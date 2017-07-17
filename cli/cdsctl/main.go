@@ -45,7 +45,7 @@ func main() {
 		}
 
 		config, err := loadConfig(configFile)
-		cli.ExitOnError(err)
+		cli.ExitOnError(err, login.Help)
 
 		client, err = loadClient(config)
 		cli.ExitOnError(err)

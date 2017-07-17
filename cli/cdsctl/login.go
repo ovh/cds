@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
+	"path"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -116,27 +118,34 @@ func doLogin(url, username, password string, env bool) error {
 		return nil
 	}
 
-	if configFile != "" {
-		//Check if file exists
-		if _, err := os.Stat(configFile); err == nil {
-			fmt.Printf("File %s exists, do you want to overwrite? [y/N]: ", configFile)
-			if !cli.AskForConfirmation(fmt.Sprintf("File %s exists, do you want to overwrite ? ", configFile)) {
-				return fmt.Errorf("aborted")
-			}
+	if configFile == "" {
+		u, err := user.Current()
+		if err != nil {
+			return err
 		}
+		configFile = path.Join(u.HomeDir, ".cdsrc")
+		fmt.Printf("You didn't specify config file location; %s Will be used.", configFile)
+	}
 
-		tomlConf := config{
-			Host: url,
-			InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
+	//Check if file exists
+	if _, err := os.Stat(configFile); err == nil {
+		fmt.Printf("File %s exists, do you want to overwrite? [y/N]: ", configFile)
+		if !cli.AskForConfirmation(fmt.Sprintf("File %s exists, do you want to overwrite ? ", configFile)) {
+			return fmt.Errorf("aborted")
 		}
-		var buf = new(bytes.Buffer)
-		e := toml.NewEncoder(buf)
-		if err := e.Encode(tomlConf); err != nil {
-			return err
-		}
-		if err := ioutil.WriteFile(configFile, buf.Bytes(), os.FileMode(0644)); err != nil {
-			return err
-		}
+	}
+
+	tomlConf := config{
+		Host: url,
+		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
+	}
+	var buf = new(bytes.Buffer)
+	e := toml.NewEncoder(buf)
+	if err := e.Encode(tomlConf); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(configFile, buf.Bytes(), os.FileMode(0644)); err != nil {
+		return err
 	}
 
 	if err := keychain.StoreSecret(url, username, token); err != nil {
