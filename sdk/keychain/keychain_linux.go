@@ -20,7 +20,7 @@ func checkLibSecretAvailable() (bool, error) {
 		return false, ErrLdd
 	}
 
-	if strings.Contains(string(out), "libsecret-1.so.0 => not found. Please install it with your package manager.") {
+	if strings.Contains(string(out), "libsecret-1.so.0 => not found") {
 		return false, nil
 	}
 
