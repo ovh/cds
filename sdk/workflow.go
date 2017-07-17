@@ -182,6 +182,7 @@ type WorkflowNodeJoinTrigger struct {
 //WorkflowNode represents a node in w workflow tree
 type WorkflowNode struct {
 	ID               int64                 `json:"id" db:"id"`
+	Name             string                `json:"name" db:"name"`
 	Ref              string                `json:"ref,omitempty" db:"-"`
 	WorkflowID       int64                 `json:"workflow_id" db:"workflow_id"`
 	PipelineID       int64                 `json:"pipeline_id" db:"pipeline_id"`

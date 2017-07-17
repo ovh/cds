@@ -38,6 +38,10 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	n.WorkflowID = w.ID
 	n.ID = 0
 
+	if n.Name == "" {
+		n.Name = n.Pipeline.Name
+	}
+
 	if n.PipelineID == 0 {
 		n.PipelineID = n.Pipeline.ID
 	}
@@ -178,6 +182,10 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 		return nil, sdk.WrapError(err, "LoadNode> Unable to load pipeline of %d", id)
 	}
 	wn.Pipeline = *pip
+
+	if wn.Name == "" {
+		wn.Name = pip.Name
+	}
 
 	return &wn, nil
 }
