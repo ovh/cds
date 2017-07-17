@@ -124,7 +124,7 @@ func doLogin(url, username, password string, env bool) error {
 			return err
 		}
 		configFile = path.Join(u.HomeDir, ".cdsrc")
-		fmt.Printf("You didn't specify config file location; %s Will be used.", configFile)
+		fmt.Printf("You didn't specify config file location; %s will be used.", configFile)
 	}
 
 	//Check if file exists
