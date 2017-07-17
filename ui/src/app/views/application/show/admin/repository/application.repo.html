@@ -21,7 +21,7 @@
                     [options]="{'fullTextSearch': true}"
                     (onSearchChange)="filterRepositories($event)"
                     [disabled]="loadingRepos">
-                    <option *ngFor="let r of reposTmp"  value="{{r.fullname}}">{{r.fullname}}</option>
+                    <option *ngFor="let r of reposFiltered"  value="{{r.fullname}}">{{r.fullname}}</option>
                 </sm-select>
             </div>
             <div class="four wide field">

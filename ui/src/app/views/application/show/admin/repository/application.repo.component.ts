@@ -24,7 +24,7 @@ export class ApplicationRepositoryComponent implements OnInit {
     public loadingBtn = false;
 
     repos: Repository[];
-    reposTmp: Repository[];
+    reposFiltered: Repository[];
     model: string;
 
     @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
@@ -60,11 +60,11 @@ export class ApplicationRepositoryComponent implements OnInit {
 
     filterRepositories(filter: string): void {
         if (filter.length >= 3) {
-            this.reposTmp = this.repos.filter(r => {
+            this.reposFiltered = this.repos.filter(r => {
                 return r.fullname.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
             });
         } else {
-            this.reposTmp = new Array<Repository>();
+            this.reposFiltered = this.repos.slice(0, 50);
         }
     }
 
@@ -75,12 +75,13 @@ export class ApplicationRepositoryComponent implements OnInit {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
             this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, sync).first()
-                .subscribe( repos => {
+                .subscribe(repos => {
                     this.repos = repos;
-                    this.loadingRepos = false;
-                }, () => {
-                    this.loadingRepos = false;
-                });
+                    this.reposFiltered = repos.slice(0, 50);
+                },
+                null,
+                () => this.loadingRepos = false
+            );
         }
     }
 
