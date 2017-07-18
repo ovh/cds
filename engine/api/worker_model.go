@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
@@ -182,7 +183,13 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 				return sdk.WrapError(err, "updateWorkerModel> cannot get pipeline")
 			}
 			log.Debug("updateWorkerModel> Updating pipeline %d", id)
-			if err := pipeline.UpdatePipelineLastModified(tx, &sdk.Pipeline{ID: id}); err != nil {
+			//Load the project
+			proj, errproj := project.LoadByPipelineID(tx, c.User, id)
+			if errproj != nil {
+				return sdk.WrapError(errproj, "updateWorkerModel> unable to load project")
+			}
+
+			if err := pipeline.UpdatePipelineLastModified(tx, proj, &sdk.Pipeline{ID: id}, c.User); err != nil {
 				return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
 			}
 

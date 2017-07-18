@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -26,6 +27,11 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 
 	if groupName != groupPipeline.Group.Name {
 		return sdk.ErrGroupNotFound
+	}
+
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "updateGroupRoleOnPipelineHandler> unable to load project")
 	}
 
 	p, errLoadP := pipeline.LoadPipeline(db, key, pipelineName, false)
@@ -66,7 +72,7 @@ func updateGroupRoleOnPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot add group %s in pipeline %s", g.Name, p.Name)
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot update pipeline last_modified date")
 	}
 
@@ -85,6 +91,11 @@ func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *g
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
+
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "updateGroupsOnPipelineHandler> unable to load project")
+	}
 
 	var groupsPermission []sdk.GroupPermission
 	if err := UnmarshalBody(r, &groupsPermission); err != nil {
@@ -132,7 +143,7 @@ func updateGroupsOnPipelineHandler(w http.ResponseWriter, r *http.Request, db *g
 		}
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		return sdk.WrapError(err, "updateGroupsOnPipelineHandler: Cannot update pipeline last_modified date")
 	}
 
@@ -147,6 +158,11 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
+
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "addGroupInPipelineHandler> unable to load project")
+	}
 
 	var groupPermission sdk.GroupPermission
 	if err := UnmarshalBody(r, &groupPermission); err != nil {
@@ -182,7 +198,7 @@ func addGroupInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return sdk.WrapError(err, "addGroupInPipeline: Cannot add group %s in pipeline %s", g.Name, p.Name)
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		return sdk.WrapError(err, "addGroupInPipeline: Cannot update pipeline last_modified date")
 	}
 
@@ -222,7 +238,12 @@ func deleteGroupFromPipelineHandler(w http.ResponseWriter, r *http.Request, db *
 		return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot delete group %s from project %s", g.Name, p.Name)
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "deleteGroupFromPipelineHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot update pipeline last_modified date")
 	}
 
