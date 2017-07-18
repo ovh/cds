@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"context"
 )
 
 var (
@@ -27,6 +28,7 @@ var (
 	panicked  bool
 	nbPanic   int
 	lastPanic *time.Time
+	lastUpdateBroker *Broker
 )
 
 const nbPanicsBeforeFail = 50
@@ -48,6 +50,17 @@ type routerConfig struct {
 	needUsernameOrAdmin bool
 	needHatchery        bool
 	needWorker          bool
+}
+
+func init() {
+	lastUpdateBroker = &Broker{
+		make(map[chan string]bool),
+		make(chan (chan string)),
+		make(chan (chan string)),
+		make(chan string),
+	}
+	// Start processing events
+	lastUpdateBroker.Start()
 }
 
 // ServeAbsoluteFile Serve file to download
@@ -151,6 +164,8 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
+		req = req.WithContext(context.Background())
+
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true
 		// Authorization
@@ -287,6 +302,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
 		}()
 
+		c.LastUpdateChan = lastUpdateBroker.messages
 		if req.Method == "GET" && rc.get != nil {
 			if err := rc.get(w, req, db, c); err != nil {
 				WriteError(w, req, err)

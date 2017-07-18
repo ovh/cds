@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/spf13/viper"
+	"github.com/ovh/cds/engine/api/cache"
 )
 
 func (router *Router) init() {
@@ -281,6 +282,8 @@ func (router *Router) init() {
 	router.Handle("/worker/model/{permModelID}/instances", GET(getWorkerModelInstances))
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
 	router.Handle("/worker/model/{permModelID}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
+
+	router.Handle("/mon/lastupdates/events", GET(lastUpdateBroker.ServeHTTP))
 
 	//Not Found handler
 	router.mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)

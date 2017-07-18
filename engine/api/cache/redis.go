@@ -16,12 +16,12 @@ import (
 //RedisStore a redis client and a default ttl
 type RedisStore struct {
 	ttl    int
-	Client redisClient
+	Client *redis.Client
 }
 
 //NewRedisStore initiate a new redisStore
 func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
-	var client redisClient
+	var client *redis.Client
 
 	//if host is line master@localhost:26379,localhost:26380 => it's a redis sentinel cluster
 	if strings.Contains(host, "@") && strings.Contains(host, ",") {
@@ -209,4 +209,34 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 		b := []byte(elem)
 		json.Unmarshal(b, value)
 	}
+}
+
+// Publish a msg in a channel
+func (s *RedisStore) Publish(channel string, value interface{}) {
+	msg, err := json.Marshal(value)
+	if err != nil {
+		log.Warning("redis.Publish> Cannot push in channel %s: %v, %s", channel, value, err)
+		return
+	}
+	s.Client.Publish(channel, string(msg))
+}
+
+// Subscribe to a channel
+func (s *RedisStore)  Subscribe(channel string) PubSub {
+	return  s.Client.Subscribe(channel)
+}
+
+// GetMessage from a redis PubSub
+func (s *RedisStore) GetMessage(pb PubSub) (string, error) {
+	rps, ok := pb.(*redis.PubSub)
+	if !ok {
+		return "", fmt.Errorf("GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
+	}
+
+	redisMsg, err := rps.ReceiveMessage()
+	if err != nil {
+		log.Warning("redis.GetMessage> Cannot receive message: %s", err)
+		return "", err
+	}
+	return redisMsg.Payload, nil
 }

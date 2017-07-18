@@ -3,6 +3,7 @@ package cache
 import (
 	"container/list"
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -11,6 +12,10 @@ import (
 
 //Status : local ok redis
 var Status string
+
+type PubSub interface {
+	Unsubscribe(channels ...string) error
+}
 
 //Key make a key as expected
 func Key(args ...string) string {
@@ -28,6 +33,9 @@ type Store interface {
 	Dequeue(queueName string, value interface{})
 	DequeueWithContext(c context.Context, queueName string, value interface{})
 	QueueLen(queueName string) int
+	Publish(queueName string, value interface{})
+	Subscribe(queueName string) PubSub
+	GetMessage(pb PubSub) (string, error)
 }
 
 //Initialize the global cache in memory, or redis
@@ -128,3 +136,26 @@ func QueueLen(queueName string) int {
 	}
 	return s.QueueLen(queueName)
 }
+
+func Publish(queueName string, value interface{}) {
+	if s == nil {
+		return
+	}
+	s.Publish(queueName, value)
+}
+
+func Subscribe(queueName string) PubSub {
+	if s == nil {
+		return nil
+	}
+	return s.Subscribe(queueName)
+}
+
+
+func GetMessage(pb PubSub) (string, error) {
+	if s == nil {
+		return "", fmt.Errorf("Cache > Client store is nil")
+	}
+	return s.GetMessage(pb)
+}
+

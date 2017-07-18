@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk/log"
+	"fmt"
 )
 
 var s Store
@@ -185,3 +186,48 @@ func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, val
 	})
 	return
 }
+
+type LocalPubSub struct {
+	queueName string
+}
+
+func (s *LocalPubSub) Unsubscribe(channels ...string) error {
+	return nil
+}
+
+// Publish a msg in a queue
+func (s *LocalStore) Publish(channel string, value interface{}) {
+	s.Mutex.Lock()
+	l := s.Queues[channel]
+	if l == nil {
+		s.Queues[channel] = &list.List{}
+		l = s.Queues[channel]
+	}
+	s.Mutex.Unlock()
+	b, err := json.Marshal(value)
+	if err != nil {
+		return
+	}
+	s.Mutex.Lock()
+	l.PushBack(b)
+	s.Mutex.Unlock()
+}
+
+// Subscribe to a channel
+func (s *LocalStore) Subscribe(channel string) PubSub {
+	return &LocalPubSub{
+		queueName: channel,
+	}
+}
+
+// GetMessage from a queue
+func (s *LocalStore) GetMessage(pb PubSub) (string, error) {
+	lps, ok := pb.(*LocalPubSub)
+	if !ok {
+		return "", fmt.Errorf("GetMessage> PubSub is not a LocalPubSub. Got %T", pb)
+	}
+	var msg string
+	Dequeue(lps.queueName, &msg)
+	return msg, nil
+}
+
