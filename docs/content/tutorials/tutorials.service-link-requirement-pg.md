@@ -23,7 +23,7 @@ And a requirement model which allow you to execute `apt-get install -y postgresq
 
 #### Add a step of type `script`
 
-docker image `postgres:9.5.3` start a nginx at startup. So, it's now available on `http://mynginx`
+docker image `postgres:9.5.3` start a postgresql at startup. So, it's now available on `mypg`
 
 ```bash
 #!/bin/bash
