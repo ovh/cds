@@ -181,3 +181,46 @@ func deleteActionChildren(db gorp.SqlExecutor, actionID int64) error {
 
 	return nil
 }
+
+// LoadJoinedActionsByActionID returns all joind action (aka jobs) using any of actionID
+func LoadJoinedActionsByActionID(db gorp.SqlExecutor, actionIDs []int64) ([]sdk.Action, error) {
+	query := `
+WITH RECURSIVE parent_action(id, name, parent_id) AS (
+    SELECT action.id, action.name, action_edge.parent_id 
+        FROM action, action_edge
+        WHERE action.id = action_edge.child_id
+        AND action.id = ANY(string_to_array($1, ',')::int[])
+    UNION ALL
+    SELECT action.id, action.name, action_edge.parent_id
+        FROM parent_action, action, action_edge
+        WHERE action.id = action_edge.child_id
+        AND parent_action.parent_id = action.id
+)
+SELECT parent_id FROM parent_action
+UNION ALL
+SELECT action.id FROM action WHERE type = $2 and id = ANY(string_to_array($1, ',')::int[])
+`
+
+	ids := []string{}
+	for _, i := range actionIDs {
+		ids = append(ids, fmt.Sprintf("%d", i))
+	}
+
+	s := strings.Join(ids, ",")
+
+	joinedActionIDs := []int64{}
+	if _, err := db.Select(&joinedActionIDs, query, s, sdk.JoinedAction); err != nil {
+		return nil, err
+	}
+
+	joinedActions := []sdk.Action{}
+	for _, id := range joinedActionIDs {
+		a, err := LoadActionByID(db, id)
+		if err != nil {
+			return nil, err
+		}
+		joinedActions = append(joinedActions, *a)
+	}
+
+	return joinedActions, nil
+}

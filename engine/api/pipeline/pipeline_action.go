@@ -227,3 +227,18 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 	}
 	return nil
 }
+
+// GetPipelineIDFromJoinedActionID returns the pipeline id from any joined action
+func GetPipelineIDFromJoinedActionID(db gorp.SqlExecutor, id int64) (int64, error) {
+	query := `
+	SELECT 	pipeline_stage.pipeline_id
+	FROM 	pipeline_action, pipeline_stage
+	WHERE 	pipeline_action.pipeline_stage_id = pipeline_stage.id
+	AND 	pipeline_action.action_id = $1
+	`
+	id, err := db.SelectInt(query, id)
+	if err != nil {
+		return 0, sdk.WrapError(err, "GetPipelineIDFromJoinedActionID")
+	}
+	return id, nil
+}

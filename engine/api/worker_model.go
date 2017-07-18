@@ -6,9 +6,12 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
@@ -91,6 +94,12 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		model.Name = old.Name
 	}
 
+	//If the model has been renamed, we will have to update requirements
+	var renamed bool
+	if model.Name != old.Name {
+		renamed = true
+	}
+
 	//If the model image has not been set, keep the old image
 	if model.Image == "" {
 		model.Image = old.Image
@@ -137,9 +146,63 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return sdk.WrapError(sdk.ErrInvalidID, "updateWorkerModel> wrong ID")
 	}
 
+	tx, errtx := db.Begin()
+	if errtx != nil {
+		return sdk.WrapError(errtx, "updateWorkerModel> unable to start transaction")
+	}
+
+	defer tx.Rollback()
+
 	// update model in db
-	if err := worker.UpdateWorkerModel(db, model); err != nil {
+	if err := worker.UpdateWorkerModel(tx, model); err != nil {
 		return sdk.WrapError(err, "updateWorkerModel> cannot update worker model")
+	}
+
+	// update requirements if needed
+	if renamed {
+		actionsID, erru := action.UpdateAllRequirements(tx, old.Name, model.Name, sdk.ModelRequirement)
+		if erru != nil {
+			return sdk.WrapError(erru, "updateWorkerModel> cannot update action requirements")
+		}
+
+		log.Debug("updateWorkerModel> Update action %v", actionsID)
+
+		//update all the pipelines using this action
+		actions, erra := action.LoadJoinedActionsByActionID(tx, actionsID)
+		if erra != nil {
+			return sdk.WrapError(erra, "updateWorkerModel> cannot load joined actions")
+		}
+
+		log.Debug("updateWorkerModel> Loaded action %v", actions)
+
+		for _, a := range actions {
+			log.Debug("updateWorkerModel> Loading pipeline for action %d", a.ID)
+			id, err := pipeline.GetPipelineIDFromJoinedActionID(tx, a.ID)
+			if err != nil {
+				return sdk.WrapError(err, "updateWorkerModel> cannot get pipeline")
+			}
+			log.Debug("updateWorkerModel> Updating pipeline %d", id)
+			if err := pipeline.UpdatePipelineLastModified(tx, &sdk.Pipeline{ID: id}); err != nil {
+				return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
+			}
+
+			apps, errA := application.LoadByPipeline(tx, id, c.User)
+			if errA != nil {
+				return sdk.WrapError(errA, "updateWorkerModel> Cannot load application using pipeline %d", id)
+			}
+
+			for _, app := range apps {
+				log.Debug("updateWorkerModel> update application %s", app.Name)
+				if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
+					return sdk.WrapError(err, "updateWorkerModel> Cannot update application last modified date")
+				}
+			}
+		}
+
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "updateWorkerModel> unable to commit transaction")
 	}
 
 	// Recompute warnings
