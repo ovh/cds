@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
@@ -191,18 +190,6 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 			if err := pipeline.UpdatePipelineLastModified(tx, proj, &sdk.Pipeline{ID: id}, c.User); err != nil {
 				return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
-			}
-
-			apps, errA := application.LoadByPipeline(tx, id, c.User)
-			if errA != nil {
-				return sdk.WrapError(errA, "updateWorkerModel> Cannot load application using pipeline %d", id)
-			}
-
-			for _, app := range apps {
-				log.Debug("updateWorkerModel> update application %s", app.Name)
-				if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
-					return sdk.WrapError(err, "updateWorkerModel> Cannot update application last modified date")
-				}
 			}
 		}
 
