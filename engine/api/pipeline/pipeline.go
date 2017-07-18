@@ -12,33 +12,35 @@ import (
 )
 
 type structarg struct {
-	//clearsecret    bool
 	loadstages     bool
 	loadparameters bool
 }
 
 // UpdatePipelineLastModified Update last_modified date on pipeline
-func UpdatePipelineLastModified(db gorp.SqlExecutor, p *sdk.Pipeline) error {
+func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
 	query := "UPDATE pipeline SET last_modified = current_timestamp WHERE id = $1 RETURNING last_modified"
 	var lastModified time.Time
 	err := db.QueryRow(query, p.ID).Scan(&lastModified)
 	if err == nil {
 		p.LastModified = lastModified.Unix()
 	}
+
+	t := time.Now()
+
+	if u != nil {
+		cache.SetWithTTL(cache.Key("lastModified", proj.Key, "pipeline", p.Name), sdk.LastModification{
+			Name:         p.Name,
+			Username:     u.Username,
+			LastModified: t.Unix(),
+		}, 0)
+	}
+
 	return err
 }
 
 // LoadPipeline loads a pipeline from database
 func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
 	var p sdk.Pipeline
-
-	//Try to find pipeline in cache
-	_ = cache.Key("pipeline", projectKey, name)
-	//FIXME cache
-	//cache.Get(k, &p)
-	//if p.ID != 0 && p.Name != "" && len(p.Stages) > 0 {
-	//	return &p, nil
-	//}
 
 	var lastModified time.Time
 	query := `SELECT pipeline.id, pipeline.name, pipeline.project_id, pipeline.type, pipeline.last_modified FROM pipeline

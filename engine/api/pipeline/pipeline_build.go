@@ -624,20 +624,22 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 	} else {
 		//If we only have the current branch, search for the branch
 		br, err := client.Branch(app.RepositoryFullname, cur.Branch)
-		if err != nil || br == nil {
+		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get branch %s", cur.Branch)
 		}
-		if br.LatestCommit == "" {
-			return nil, sdk.WrapError(sdk.ErrNoBranch, "UpdatePipelineBuildCommits> Branch or lastest commit not found")
-		}
+		if br != nil {
+			if br.LatestCommit == "" {
+				return nil, sdk.WrapError(sdk.ErrNoBranch, "UpdatePipelineBuildCommits> Branch or lastest commit not found")
+			}
 
-		//and return the last commit of the branch
-		log.Debug("get the last commit : %s", br.LatestCommit)
-		cm, errcm := client.Commit(app.RepositoryFullname, br.LatestCommit)
-		if errcm != nil {
-			return nil, sdk.WrapError(errcm, "UpdatePipelineBuildCommits> Cannot get commits")
+			//and return the last commit of the branch
+			log.Debug("get the last commit : %s", br.LatestCommit)
+			cm, errcm := client.Commit(app.RepositoryFullname, br.LatestCommit)
+			if errcm != nil {
+				return nil, sdk.WrapError(errcm, "UpdatePipelineBuildCommits> Cannot get commits")
+			}
+			res = []sdk.VCSCommit{cm}
 		}
-		res = []sdk.VCSCommit{cm}
 	}
 
 	if err := updatePipelineBuildCommits(db, pb.ID, res); err != nil {

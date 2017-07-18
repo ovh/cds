@@ -39,6 +39,7 @@ func (s *LocalStore) Get(key string, value interface{}) bool {
 
 //SetWithTTL a value in local store with a specific ttl (in seconds): (0 for eternity)
 func (s *LocalStore) SetWithTTL(key string, value interface{}, ttl int) {
+	log.Info("cache.local> Set in local cache")
 	b, err := json.Marshal(value)
 	if err != nil {
 		log.Warning("Error caching %s", key)

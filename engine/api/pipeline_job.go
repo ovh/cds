@@ -8,9 +8,10 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
@@ -71,7 +72,12 @@ func addJobToStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 		return sdk.WrapError(err, "addJobToStageHandler> Cannot insert job in database")
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
 		return sdk.WrapError(err, "addJobToStageHandler> Cannot update pipeline last modified date")
 	}
 
@@ -164,7 +170,12 @@ func updateJobHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		return sdk.WrapError(err, "updateJobHandler> Cannot compute registration needs")
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User); err != nil {
 		return sdk.WrapError(err, "updateJobHandler> Cannot update pipeline last_modified")
 	}
 
@@ -227,7 +238,12 @@ stageLoop:
 		return sdk.WrapError(err, "deleteJobHandler> Cannot delete pipeline action")
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "deleteJobHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User); err != nil {
 		return sdk.WrapError(err, "deleteJobHandler> Cannot update pipeline last_modified")
 	}
 
