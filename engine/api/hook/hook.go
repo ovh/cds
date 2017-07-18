@@ -285,8 +285,8 @@ func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesMana
 
 	if err := client.CreateHook(repoFullName, link); err != nil {
 		log.Warning("Cannot create hook on repository manager: %s", err)
-		if !strings.Contains(err.Error(), "Not yet implemented") {
-			return nil, sdk.WrapError(err, "CreateHook> Cannot create hook on repository manager")
+		if strings.Contains(err.Error(), "Not yet implemented") {
+			return nil, sdk.WrapError(sdk.ErrNotImplemented, "CreateHook> Cannot create hook on repository manager")
 		}
 		if err := DeleteHook(tx, h.ID); err != nil {
 			return nil, sdk.WrapError(err, "CreateHook> Cannot rollback hook creation")

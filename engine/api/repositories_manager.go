@@ -558,6 +558,12 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot load application hooks")
 	}
 
+	var errW error
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", 0)
+	if errW != nil {
+		return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
+	}
+
 	return WriteJSON(w, r, app, http.StatusCreated)
 }
 
