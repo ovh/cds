@@ -415,7 +415,13 @@ func updatePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return err
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData)
+	//Load the project
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "updatePipelineActionHandler> Unable to load project %s", key)
+	}
+
+	err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User)
 	if err != nil {
 		log.Warning("updatePipelineActionHandler> Cannot update pipeline last_modified: %s\n", err)
 		return err
@@ -467,20 +473,22 @@ func deletePipelineActionHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return err
 	}
 
-	err = pipeline.UpdatePipelineLastModified(tx, pipelineData)
+	//Load the project
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "updatePipelineActionHandler> Unable to load project %s", key)
+	}
+
+	err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User)
 	if err != nil {
 		log.Warning("deletePipelineActionHandler> Cannot update pipeline last_modified: %s", err)
 		return err
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		log.Warning("deletePipelineActionHandler> Cannot commit transaction: %s", err)
 		return err
 	}
-
-	k := cache.Key("application", key, "*")
-	cache.DeleteAll(k)
 
 	return nil
 }
@@ -921,7 +929,7 @@ func updateJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return sdk.WrapError(err, "updateJoinedAction> cannot update action")
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
 		return sdk.WrapError(err, "updateJoinedAction> cannot update pipeline last_modified date")
 	}
 
@@ -975,9 +983,14 @@ func deleteJoinedAction(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return sdk.WrapError(err, "deleteJoinedAction> Cannot delete joined action")
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
-		log.Warning("deleteJoinedAction> Cannot update last_modified pipeline date: %s", err)
-		return err
+	//Load the project
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "deleteJoinedAction> Unable to load project %s", projectKey)
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
+		return sdk.WrapError(err, "deleteJoinedAction> cannot update pipeline last_modified date")
 	}
 
 	if err := tx.Commit(); err != nil {

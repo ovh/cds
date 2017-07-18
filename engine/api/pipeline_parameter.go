@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -56,7 +57,12 @@ func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "deleteParameterFromPipelineHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		log.Warning("deleteParameterFromPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		return err
 	}
@@ -169,7 +175,12 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 		return err
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "UpdatePipelineParameters> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
 		log.Warning("UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
 		return err
 	}
@@ -222,7 +233,12 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		}
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "updateParameterInPipelineHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		log.Warning("updateParameterInPipelineHandler: Cannot update pipeline last_modified date:  %s\n", err)
 		return err
 	}
@@ -285,7 +301,12 @@ func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *g
 		}
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "addParameterInPipelineHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		log.Warning("addParameterInPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		return err
 	}

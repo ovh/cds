@@ -442,10 +442,6 @@ func MoveStage(db *gorp.DbMap, stageToMove *sdk.Stage, newBuildOrder int, p *sdk
 		return err
 	}
 
-	if err := UpdatePipelineLastModified(tx, p); err != nil {
-		return err
-	}
-
 	return tx.Commit()
 }
 
