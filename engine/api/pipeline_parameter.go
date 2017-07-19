@@ -6,12 +6,12 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/engine/api/application"
 )
 
 func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -86,7 +86,6 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
-
 
 	proj, errP := project.Load(db, key, c.User)
 	if errP != nil {

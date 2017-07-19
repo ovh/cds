@@ -52,8 +52,8 @@ type LastModification struct {
 
 const (
 	ApplicationLastModificationType = "application"
-	PipelineLastModificationType = "pipeline"
-	ProjectLastModiciationType = "project"
+	PipelineLastModificationType    = "pipeline"
+	ProjectLastModiciationType      = "project"
 )
 
 //ProjectLastUpdates update times of project, application and pipelines

@@ -4,12 +4,12 @@ import (
 	"container/list"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/ovh/cds/sdk/log"
-	"fmt"
 )
 
 var s Store
@@ -231,4 +231,3 @@ func (s *LocalStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 	DequeueWithContext(c, lps.queueName, &msg)
 	return msg, nil
 }
-

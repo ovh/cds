@@ -222,8 +222,8 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 }
 
 // Subscribe to a channel
-func (s *RedisStore)  Subscribe(channel string) PubSub {
-	return  s.Client.Subscribe(channel)
+func (s *RedisStore) Subscribe(channel string) PubSub {
+	return s.Client.Subscribe(channel)
 }
 
 // GetMessageFromSubscription from a redis PubSub

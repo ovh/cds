@@ -6,15 +6,15 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/environment"
 )
 
 func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -82,7 +82,6 @@ func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		}
 	}
 
-
 	for _, pg := range g.PipelineGroups {
 		p := &sdk.Project{
 			Key: pg.Pipeline.ProjectKey,
@@ -92,13 +91,11 @@ func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		}
 	}
 
-
 	for _, pg := range g.EnvironmentGroups {
 		if err := environment.UpdateLastModified(tx, c.User, &pg.Environment); err != nil {
 			return sdk.WrapError(err, "deleteGroupHandler> Cannot update environment last modified date")
 		}
 	}
-
 
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "deleteGroupHandler> cannot commit transaction")

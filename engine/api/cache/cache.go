@@ -160,4 +160,3 @@ func GetMessageFromSubscription(pb PubSub, c context.Context) (string, error) {
 	}
 	return s.GetMessageFromSubscription(c, pb)
 }
-

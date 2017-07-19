@@ -774,7 +774,6 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *b
 		return sdk.WrapError(errP, "deletePipeline> Cannot load project")
 	}
 
-
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
 		return sdk.WrapError(err, "deletePipeline> Cannot load pipeline %s", pipelineName)
