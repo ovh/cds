@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Deprecated
 func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -30,7 +31,7 @@ func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
-//Deprecated
+// Deprecated
 func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -67,11 +68,6 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 		return errBegin
 	}
 	defer tx.Rollback()
-
-	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
-		log.Warning("restoreEnvironmentAuditHandler: Cannot create audit: %s\n", err)
-		return err
-	}
 
 	if err := environment.DeleteAllVariable(tx, env.ID); err != nil {
 		log.Warning("restoreEnvironmentAuditHandler> Cannot delete variables on environments for update: %s\n", err)
@@ -206,12 +202,6 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer tx.Rollback()
 
-	// DEPRECATED
-	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
-		return err
-	}
-
 	// clear passwordfor audit
 	varToDelete, errV := environment.GetVariable(tx, key, envName, varName, environment.WithClearPassword())
 	if errV != nil {
@@ -280,13 +270,7 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	}
 	defer tx.Rollback()
 
-	// DEPRECATED
-	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
-		return err
-	}
-
-	if err := environment.UpdateVariable(tx, env.ID, &newVar, c.User); err != nil {
+	if err := environment.UpdateVariable(db, env.ID, &newVar, c.User); err != nil {
 		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
 	}
 
@@ -355,12 +339,6 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 		return sdk.WrapError(errBegin, "addVariableInEnvironmentHandler: cannot begin tx")
 	}
 	defer tx.Rollback()
-
-	// DEPRECATED
-	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
-		log.Warning("addVariableInEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
-		return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot create audit for env %s", envName)
-	}
 
 	var errInsert error
 	switch newVar.Type {

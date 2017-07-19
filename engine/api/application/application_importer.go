@@ -90,10 +90,6 @@ func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 			log.Warning("importVariables> Cannot add variable %s in application %s:  %s\n", newVar.Name, app.Name, errCreate)
 			return errCreate
 		}
-		if err := CreateAudit(db, newVar.Name, app, u); err != nil {
-			log.Warning("importVariabitles> Cannot create variable audit for application %s:  %s\n", app.Name, err)
-			return err
-		}
 	}
 
 	if msgChan != nil {

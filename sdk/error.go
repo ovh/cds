@@ -112,6 +112,7 @@ var (
 	ErrWorkflowInvalid                       = &Error{ID: 96, Status: http.StatusBadRequest}
 	ErrWorkflowNodeJoinNotFound              = &Error{ID: 97, Status: http.StatusNotFound}
 	ErrInvalidJobRequirement                 = &Error{ID: 98, Status: http.StatusBadRequest}
+	ErrNotImplemented                        = &Error{ID: 99, Status: http.StatusNotImplemented}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -213,6 +214,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowInvalid.ID:                       "Invalid workflow",
 	ErrWorkflowNodeJoinNotFound.ID:              "Workflow node join not found",
 	ErrInvalidJobRequirement.ID:                 "Invalid job requirement",
+	ErrNotImplemented.ID:                        "This functionality isn't implemented",
 }
 
 var errorsFrench = map[int]string{
@@ -314,6 +316,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowInvalid.ID:                       "Workflow invalide",
 	ErrWorkflowNodeJoinNotFound.ID:              "Jointure introuvable",
 	ErrInvalidJobRequirement.ID:                 "Pré-requis de Job invalide",
+	ErrNotImplemented.ID:                        "La fonctionnalité n'est pas implémentée",
 }
 
 var errorsLanguages = []map[int]string{
