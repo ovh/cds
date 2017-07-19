@@ -295,6 +295,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				req.Method == http.MethodPut && rc.putDeprecated ||
 				req.Method == http.MethodDelete && rc.deleteDeprecated {
 				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
+				w.Header().Add("X-CDS-WARNING", "deprecated route")
 			} else {
 				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
 			}
