@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
@@ -31,6 +31,7 @@ func getVariablesAuditInApplicationHandler(w http.ResponseWriter, r *http.Reques
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
+// Deprecated
 func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -67,12 +68,6 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.ErrUnknownError
 	}
 	defer tx.Rollback()
-
-	err = application.CreateAudit(tx, key, app, c.User)
-	if err != nil {
-		log.Warning("restoreAuditHandler: Cannot create audit: %s\n", err)
-		return err
-	}
 
 	err = application.DeleteAllVariable(tx, app.ID)
 	if err != nil {
@@ -199,11 +194,6 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer tx.Rollback()
 
-	// DEPRECATED
-	if err := application.CreateAudit(tx, key, app, c.User); err != nil {
-		return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot create variable audit for application %s", appName)
-	}
-
 	// Clear password for audit
 	varToDelete, errV := application.LoadVariable(db, app.ID, varName, application.WithClearPassword())
 	if errV != nil {
@@ -261,11 +251,6 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return sdk.ErrUnknownError
 	}
 	defer tx.Rollback()
-
-	if err := application.CreateAudit(tx, key, app, c.User); err != nil {
-		log.Warning("updateVariablesInProjectHandler: Cannot create audit: %s\n", err)
-		return err
-	}
 
 	// Preload values, if one password variable has a password placeholder, we can't just insert
 	// the placeholder !
@@ -372,11 +357,6 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 	}
 	defer tx.Rollback()
 
-	// DEPRECATED
-	if err := application.CreateAudit(tx, key, app, c.User); err != nil {
-		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot create audit")
-	}
-
 	if err := application.UpdateVariable(tx, app, &newVar, c.User); err != nil {
 		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot update variable %s for application %s", varName, appName)
 	}
@@ -436,12 +416,6 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 		return err
 	}
 	defer tx.Rollback()
-
-	// DEPRECATED
-	if err = application.CreateAudit(tx, key, app, c.User); err != nil {
-		log.Warning("addVariableInApplicationHandler: Cannot create variable audit for application %s:  %s\n", appName, err)
-		return err
-	}
 
 	switch newVar.Type {
 	case sdk.KeyVariable:

@@ -74,12 +74,6 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		env.ProjectID = proj.ID
 
 		if env.ID != 0 {
-			err = environment.CreateAudit(tx, key, env, c.User)
-			if err != nil {
-				log.Warning("updateEnvironmentsHandler> Cannot create audit for env %s: %s\n", env.Name, err)
-				return err
-			}
-
 			err = environment.UpdateEnvironment(tx, env)
 			if err != nil {
 				log.Warning("updateEnvironmentsHandler> Cannot update environment: %s\n", err)
@@ -368,11 +362,6 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return errBegin
 	}
 	defer tx.Rollback()
-
-	if err := environment.CreateAudit(tx, projectKey, env, c.User); err != nil {
-		log.Warning("updateEnvironmentHandler> Cannot create audit for env %s: %s\n", env.Name, err)
-		return err
-	}
 
 	if err := environment.UpdateEnvironment(tx, env); err != nil {
 		log.Warning("updateEnvironmentHandler> Cannot update environment %s: %s\n", environmentName, err)

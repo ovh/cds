@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"runtime"
 	"time"
 
@@ -39,9 +40,13 @@ type RouterConfigParam func(rc *routerConfig)
 
 type routerConfig struct {
 	get                 Handler
+	getDeprecated       bool
 	post                Handler
+	postDeprecated      bool
 	put                 Handler
+	putDeprecated       bool
 	deleteHandler       Handler
+	deleteDeprecated    bool
 	auth                bool
 	isExecution         bool
 	needAdmin           bool
@@ -284,7 +289,15 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		defer func() {
 			end := time.Now()
 			latency := end.Sub(start)
-			log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+			if req.Method == http.MethodGet && rc.getDeprecated ||
+				req.Method == http.MethodPost && rc.postDeprecated ||
+				req.Method == http.MethodPut && rc.putDeprecated ||
+				req.Method == http.MethodDelete && rc.deleteDeprecated {
+				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
+				w.Header().Add("X-CDS-WARNING", "deprecated route")
+			} else {
+				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+			}
 		}()
 
 		if req.Method == "GET" && rc.get != nil {
@@ -322,35 +335,76 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 	router.mux.HandleFunc(uri, compress(recoverWrap(f)))
 }
 
+// DEPRECATED marks the handler as deprecated
+var DEPRECATED = func(rc *routerConfig) {}
+
 // GET will set given handler only for GET request
-func GET(h Handler) RouterConfigParam {
+func GET(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.get = h
+		for _, c := range cfg {
+			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
+				rc.getDeprecated = true
+				continue
+			}
+		}
 	}
 	return f
 }
 
 // POST will set given handler only for POST request
-func POST(h Handler) RouterConfigParam {
+func POST(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.post = h
+		for _, c := range cfg {
+			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
+				rc.postDeprecated = true
+				continue
+			}
+		}
 	}
 	return f
 }
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
-func POSTEXECUTE(h Handler) RouterConfigParam {
+func POSTEXECUTE(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.post = h
 		rc.isExecution = true
+		for _, c := range cfg {
+			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
+				rc.postDeprecated = true
+				continue
+			}
+		}
 	}
 	return f
 }
 
 // PUT will set given handler only for PUT request
-func PUT(h Handler) RouterConfigParam {
+func PUT(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.put = h
+		for _, c := range cfg {
+			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
+				rc.putDeprecated = true
+				continue
+			}
+		}
+	}
+	return f
+}
+
+// DELETE will set given handler only for DELETE request
+func DELETE(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
+	f := func(rc *routerConfig) {
+		rc.deleteHandler = h
+		for _, c := range cfg {
+			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
+				rc.deleteDeprecated = true
+				continue
+			}
+		}
 	}
 	return f
 }
@@ -383,14 +437,6 @@ func NeedHatchery() RouterConfigParam {
 func NeedWorker() RouterConfigParam {
 	f := func(rc *routerConfig) {
 		rc.needWorker = true
-	}
-	return f
-}
-
-// DELETE will set given handler only for DELETE request
-func DELETE(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.deleteHandler = h
 	}
 	return f
 }
