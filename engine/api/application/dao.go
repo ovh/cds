@@ -2,6 +2,7 @@ package application
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -212,6 +213,17 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) 
 		}, 0)
 	}
 
+	updates := sdk.LastModification{
+		Key:          app.ProjectKey,
+		Name:         app.Name,
+		LastModified: lastModified.Unix(),
+		Username:     u.Username,
+		Type:         sdk.ApplicationLastModificationType,
+	}
+	b, errP := json.Marshal(updates)
+	if errP == nil {
+		cache.Publish("lastUpdates", string(b))
+	}
 	return sdk.WrapError(err, "application.UpdateLastModified %s(%d)", app.Name, app.ID)
 }
 

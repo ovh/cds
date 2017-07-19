@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -29,7 +30,6 @@ type LastUpdateBroker struct {
 }
 
 var lastUpdateBroker *LastUpdateBroker
-var cacheQueueName = "lastUpdates"
 
 func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
 	lastUpdateBroker = &LastUpdateBroker{
@@ -48,7 +48,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
 
 // CacheSubscribe subscribe to a channel and push received message in a channel
 func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
-	pubSub := cache.Subscribe(cacheQueueName)
+	pubSub := cache.Subscribe("lastupdates")
 	tick := time.NewTicker(250 * time.Millisecond).C
 	for {
 		select {
@@ -74,6 +74,16 @@ func (b *LastUpdateBroker) Start(c context.Context, db gorp.SqlExecutor) {
 
 	for {
 		select {
+		case <-c.Done():
+			// Close all channels
+			for c := range b.clients {
+				delete(b.clients, c)
+				close(c)
+			}
+			if c.Err() != nil {
+				log.Warning("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
+				return
+			}
 		case s := <-b.newClients:
 			// Register new client
 			b.clients[s.Queue] = s.User
@@ -82,9 +92,43 @@ func (b *LastUpdateBroker) Start(c context.Context, db gorp.SqlExecutor) {
 			delete(b.clients, s)
 			close(s)
 		case msg := <-b.messages:
+			var lastModif sdk.LastModification
+			if err := json.Unmarshal([]byte(msg), &lastModif); err != nil {
+				log.Warning("lastUpdate.CacheSubscribe> Cannot unmarshal message: %s", msg)
+				continue
+			}
+
 			//Receive new message
-			for s := range b.clients {
-				s <- msg
+			for c, u := range b.clients {
+				if err := loadUserPermissions(db, u); err != nil {
+					log.Warning("lastUpdate.CacheSubscribe> Cannot load auser permission: %s", err)
+					continue
+				}
+
+				hasPermission := false
+			groups:
+				for _, g := range u.Groups {
+					hasPermission = false
+					switch lastModif.Type {
+					case sdk.ApplicationLastModificationType:
+						for _, ag := range g.ApplicationGroups {
+							if ag.Application.Name == lastModif.Name && ag.Application.ProjectKey == lastModif.Key {
+								hasPermission = true
+								break groups
+							}
+						}
+					case sdk.PipelineLastModificationType:
+						for _, pg := range g.PipelineGroups {
+							if pg.Pipeline.Name == lastModif.Name && pg.Pipeline.ProjectKey == lastModif.Key {
+								hasPermission = true
+								break groups
+							}
+						}
+					}
+				}
+				if hasPermission {
+					c <- msg
+				}
 			}
 		}
 	}

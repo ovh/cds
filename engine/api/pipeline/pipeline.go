@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -33,6 +34,18 @@ func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.P
 			Username:     u.Username,
 			LastModified: t.Unix(),
 		}, 0)
+	}
+
+	updates := sdk.LastModification{
+		Key:          proj.Key,
+		Name:         p.Name,
+		LastModified: lastModified.Unix(),
+		Username:     u.Username,
+		Type:         sdk.PipelineLastModificationType,
+	}
+	b, errP := json.Marshal(updates)
+	if errP == nil {
+		cache.Publish("lastUpdates", string(b))
 	}
 
 	return err

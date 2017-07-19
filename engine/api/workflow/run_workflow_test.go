@@ -31,7 +31,7 @@ func TestManualRun1(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true

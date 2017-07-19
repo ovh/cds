@@ -2,6 +2,7 @@ package project
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"encoding/json"
 )
 
 // LoadAll returns all projects
@@ -151,14 +151,14 @@ func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) err
 	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
 	proj.LastModified = t
 
-	projLastUpdate := sdk.ProjectLastUpdates{
-		LastModification: sdk.LastModification{
-			Name:         proj.Key,
-			LastModified: t.Unix(),
-			Username:     u.Username,
-		},
+	updates := sdk.LastModification{
+		Key:          proj.Key,
+		Name:         proj.Name,
+		LastModified: t.Unix(),
+		Username:     u.Username,
+		Type:         sdk.ProjectLastModiciationType,
 	}
-	b, errP := json.Marshal(projLastUpdate)
+	b, errP := json.Marshal(updates)
 	if errP == nil {
 		cache.Publish("lastUpdates", string(b))
 	}
