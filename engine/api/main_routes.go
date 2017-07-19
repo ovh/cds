@@ -5,7 +5,6 @@ import (
 	"path"
 
 	"github.com/spf13/viper"
-	"github.com/ovh/cds/engine/api/cache"
 )
 
 func (router *Router) init() {

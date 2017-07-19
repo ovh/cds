@@ -114,21 +114,8 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 		return err
 	}
 
-	// Update project
-	query := `
-		UPDATE project
-		SET last_modified = current_timestamp
-		WHERE id in (
-			SELECT project_id from pipeline WHERE id = $1
-		)
-	`
-
-	if _, err := db.Exec(query, pipelineID); err != nil {
-		return err
-	}
-
 	// Delete pipeline groups
-	query = `DELETE FROM pipeline_group WHERE pipeline_id = $1`
+	query := `DELETE FROM pipeline_group WHERE pipeline_id = $1`
 	if _, err := db.Exec(query, pipelineID); err != nil {
 		return err
 	}
@@ -316,42 +303,16 @@ func LoadGroupByPipeline(db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
 	return nil
 }
 
-// UpdateLastModified updates last_modified on pipeline
-func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, pip *sdk.Pipeline) error {
-	if u != nil {
-		cache.SetWithTTL(cache.Key("lastModified", pip.ProjectKey, "pipeline", pip.Name), sdk.LastModification{
-			Name:         pip.Name,
-			Username:     u.Username,
-			LastModified: time.Now().Unix(),
-		}, 0)
-	}
-
-	query := `UPDATE pipeline SET last_modified = current_timestamp WHERE id=$1`
-	_, err := db.Exec(query, pip.ID)
-	return err
-}
-
 // UpdatePipeline update the pipeline
 func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
-	// Update project
-	query := `
-		UPDATE project
-		SET last_modified = current_timestamp
-		WHERE id IN (SELECT project_id from pipeline WHERE id = $1)
-	`
-	_, err := db.Exec(query, p.ID)
-	if err != nil {
-		return err
-	}
-
 	//Update pipeline
-	query = `UPDATE pipeline SET name=$1, type=$2, last_modified = current_timestamp WHERE id=$3`
-	_, err = db.Exec(query, p.Name, string(p.Type), p.ID)
+	query := `UPDATE pipeline SET name=$1, type=$2 WHERE id=$3`
+	_, err := db.Exec(query, p.Name, string(p.Type), p.ID)
 	return err
 }
 
 // InsertPipeline inserts pipeline informations in database
-func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline, u *sdk.User) error {
+func InsertPipeline(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
 	query := `INSERT INTO pipeline (name, project_id, type, last_modified) VALUES ($1,$2,$3, current_timestamp) RETURNING id`
 
 	if p.Name == "" {
@@ -376,7 +337,7 @@ func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline, u *sdk.User) error {
 		}
 	}
 
-	return UpdateLastModified(db, u, p)
+	return UpdatePipelineLastModified(db, proj, p, u)
 }
 
 // ExistPipeline Check if the given pipeline exist in database

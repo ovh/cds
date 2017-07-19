@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"encoding/json"
 )
 
 // LoadAll returns all projects
@@ -149,6 +150,18 @@ func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) err
 
 	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
 	proj.LastModified = t
+
+	projLastUpdate := sdk.ProjectLastUpdates{
+		LastModification: sdk.LastModification{
+			Name:         proj.Key,
+			LastModified: t.Unix(),
+			Username:     u.Username,
+		},
+	}
+	b, errP := json.Marshal(projLastUpdate)
+	if errP == nil {
+		cache.Publish("lastUpdates", string(b))
+	}
 	return err
 }
 
@@ -203,6 +216,11 @@ var LoadOptions = struct {
 	WithVariables:            &loadVariables,
 	WithApplicationPipelines: &loadApplicationPipelines,
 	WithApplicationVariables: &loadApplicationVariables,
+}
+
+// LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
+func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	return load(db, u, opts, "select * from project where id = $1", id)
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions

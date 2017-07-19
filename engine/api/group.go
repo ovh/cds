@@ -11,6 +11,10 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/environment"
 )
 
 func getGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -40,6 +44,22 @@ func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return sdk.WrapError(errl, "deleteGroupHandler: Cannot load %s", name)
 	}
 
+	if err := project.LoadPermissions(db, g); err != nil {
+		return sdk.WrapError(err, "deleteGroupHandler: Cannot load projects for group")
+	}
+
+	if err := application.LoadPermissions(db, g); err != nil {
+		return sdk.WrapError(err, "deleteGroupHandler: Cannot load application for group")
+	}
+
+	if err := pipeline.LoadPipelineByGroup(db, g); err != nil {
+		return sdk.WrapError(err, "deleteGroupHandler: Cannot load pipeline for group")
+	}
+
+	if err := environment.LoadEnvironmentByGroup(db, g); err != nil {
+		return sdk.WrapError(err, "deleteGroupHandler: Cannot load environment for group")
+	}
+
 	tx, errb := db.Begin()
 	if errb != nil {
 		return sdk.WrapError(errb, "deleteGroupHandler> cannot start transaction")
@@ -49,6 +69,36 @@ func deleteGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	if err := group.DeleteGroupAndDependencies(tx, g); err != nil {
 		return sdk.WrapError(err, "deleteGroupHandler> cannot delete group")
 	}
+
+	for _, pg := range g.ProjectGroups {
+		if err := project.UpdateLastModified(tx, c.User, &pg.Project); err != nil {
+			return sdk.WrapError(err, "deleteGroupHandler> Cannot update project last modified date")
+		}
+	}
+
+	for _, pg := range g.ApplicationGroups {
+		if err := application.UpdateLastModified(tx, &pg.Application, c.User); err != nil {
+			return sdk.WrapError(err, "deleteGroupHandler> Cannot update application last modified date")
+		}
+	}
+
+
+	for _, pg := range g.PipelineGroups {
+		p := &sdk.Project{
+			Key: pg.Pipeline.ProjectKey,
+		}
+		if err := pipeline.UpdatePipelineLastModified(tx, p, &pg.Pipeline, c.User); err != nil {
+			return sdk.WrapError(err, "deleteGroupHandler> Cannot update pipeline last modified date")
+		}
+	}
+
+
+	for _, pg := range g.EnvironmentGroups {
+		if err := environment.UpdateLastModified(tx, c.User, &pg.Environment); err != nil {
+			return sdk.WrapError(err, "deleteGroupHandler> Cannot update environment last modified date")
+		}
+	}
+
 
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "deleteGroupHandler> cannot commit transaction")

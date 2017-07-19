@@ -221,14 +221,14 @@ func (s *LocalStore) Subscribe(channel string) PubSub {
 	}
 }
 
-// GetMessage from a queue
-func (s *LocalStore) GetMessage(pb PubSub) (string, error) {
+// GetMessageFromSubscription from a queue
+func (s *LocalStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
 	lps, ok := pb.(*LocalPubSub)
 	if !ok {
 		return "", fmt.Errorf("GetMessage> PubSub is not a LocalPubSub. Got %T", pb)
 	}
 	var msg string
-	Dequeue(lps.queueName, &msg)
+	DequeueWithContext(c, lps.queueName, &msg)
 	return msg, nil
 }
 

@@ -30,6 +30,7 @@ func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
+//Deprecated
 func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -212,13 +213,17 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// clear passwordfor audit
-	varToDelete, errV := environment.GetVariable(db, key, envName, varName, environment.WithClearPassword())
+	varToDelete, errV := environment.GetVariable(tx, key, envName, varName, environment.WithClearPassword())
 	if errV != nil {
 		return sdk.WrapError(errV, "deleteVariableFromEnvironmentHandler> Cannot load variable %s", varName)
 	}
 
-	if err := environment.DeleteVariable(db, env.ID, varToDelete, c.User); err != nil {
+	if err := environment.DeleteVariable(tx, env.ID, varToDelete, c.User); err != nil {
 		return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
+	}
+
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update environment last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
@@ -281,8 +286,12 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	if err := environment.UpdateVariable(db, env.ID, &newVar, c.User); err != nil {
+	if err := environment.UpdateVariable(tx, env.ID, &newVar, c.User); err != nil {
 		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
+	}
+
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update environment last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
@@ -362,6 +371,10 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	}
 	if errInsert != nil {
 		return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
+	}
+
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "addVariableInEnvironmentHandler> Cannot update environment last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {

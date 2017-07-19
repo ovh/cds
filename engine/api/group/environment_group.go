@@ -71,34 +71,13 @@ func UpdateGroupRoleInEnvironment(db gorp.SqlExecutor, key, envName, groupName s
 	if _, err := db.Exec(query, role, envName, key, groupName); err != nil {
 		return err
 	}
-
-	// Update project
-	query = `
-		UPDATE project
-		SET last_modified = current_timestamp
-		WHERE id IN (
-			SELECT id
-			FROM project
-			WHERE projectKey = $1
-		)
-	`
-	_, err := db.Exec(query, key)
-	return err
+	return nil
 }
 
 // DeleteAllGroupFromEnvironment remove all group from the given environment
 func DeleteAllGroupFromEnvironment(db gorp.SqlExecutor, environmentID int64) error {
-	// Update environment
-	query := `
-		UPDATE environment
-		SET last_modified = current_timestamp
-		WHERE id = $1
-	`
-	if _, err := db.Exec(query, environmentID); err != nil {
-		return err
-	}
 	//Delete association
-	query = `DELETE FROM environment_group
+	query := `DELETE FROM environment_group
 		  WHERE environment_id=$1`
 	_, err := db.Exec(query, environmentID)
 	return err
@@ -106,21 +85,7 @@ func DeleteAllGroupFromEnvironment(db gorp.SqlExecutor, environmentID int64) err
 
 // DeleteGroupFromEnvironment removes access to environment to group members
 func DeleteGroupFromEnvironment(db gorp.SqlExecutor, key, envName, groupName string) error {
-	// Update project
-	query := `
-		UPDATE project
-		SET last_modified = current_timestamp
-		WHERE id IN (
-			SELECT id
-			FROM project
-			WHERE projectKey = $1
-		)
-	`
-	if _, err := db.Exec(query, key); err != nil {
-		return err
-	}
-
-	query = `DELETE FROM environment_group
+	query := `DELETE FROM environment_group
 		  USING environment, project, "group"
 		  WHERE environment.id = environment_group.environment_id AND environment.project_id = project.id AND "group".id = environment_group.group_id
 		  AND environment.name = $1 AND  project.projectKey = $2 AND "group".name = $3`

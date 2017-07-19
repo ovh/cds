@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -96,6 +97,11 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
 
+	proj, errP := project.Load(db, projectKey, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
+	}
+
 	//Load the repositories manager from the DB
 	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
 	var lastModified time.Time
@@ -116,11 +122,13 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 		}
 		defer tx.Rollback()
 
-		var errI error
-		lastModified, errI = repositoriesmanager.InsertForProject(tx, rm, projectKey)
-		if errI != nil {
+		if errI := repositoriesmanager.InsertForProject(tx, rm, projectKey); errI != nil {
 			log.Warning("repositoriesManagerAuthorize> error while inserting repositories manager for project %s: %s\n", projectKey, errI)
 			return errI
+		}
+
+		if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+			return sdk.WrapError(err, "repositoriesManagerAuthorize> Cannot update project last modified")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -146,6 +154,7 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 		"repositories_manager": rmName,
 		"url":           url,
 		"request_token": token,
+		"username":      c.User.Username,
 	}
 
 	cache.Set(cache.Key("reposmanager", "oauth", token), data)
@@ -171,6 +180,17 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	cache.Get(cache.Key("reposmanager", "oauth", state), &data)
 	projectKey := data["project_key"]
 	rmName := data["repositories_manager"]
+	username := data["username"]
+
+	u, errU := user.LoadUserWithoutAuth(db, username)
+	if errU != nil {
+		return sdk.WrapError(errU, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+	}
+
+	proj, errP := project.Load(db, projectKey, u)
+	if errP != nil {
+		return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
+	}
 
 	//Load the repositories manager from the DB
 	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
@@ -195,13 +215,27 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 		"access_token_secret":  accessTokenSecret,
 	}
 
-	if err := repositoriesmanager.SaveDataForProject(db, rm, projectKey, result); err != nil {
+	tx, errT := db.Begin()
+	if errT != nil {
+		return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	if err := repositoriesmanager.SaveDataForProject(tx, rm, projectKey, result); err != nil {
 		log.Warning("repositoriesManagerAuthorizeCallback> Error with SaveDataForProject: %s", err)
 		return err
 	}
 
+	if err := project.UpdateLastModified(tx, u, proj); err != nil {
+		return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
+	}
+
 	//Redirect on UI advanced project page
-	url := fmt.Sprintf("%s/#/project/%s?tab=advanced", baseURL, projectKey)
+	url := fmt.Sprintf("%s/project/%s?tab=advanced", baseURL, projectKey)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 
 	return nil
@@ -283,7 +317,7 @@ func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db
 
 	}
 
-	//Load the repositories manager from the DB
+	// Load the repositories manager from the DB
 	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
 	if err != nil {
 		log.Warning("deleteRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
@@ -305,8 +339,11 @@ func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db
 
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot update project last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteRepositoriesManagerHandler> Cannot commit transaction: %s\n", err)
 		return err
 
@@ -415,10 +452,24 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = fullname
 
-	if err := repositoriesmanager.InsertForApplication(db, app, projectKey); err != nil {
+	tx, errT := db.Begin()
+	if errT != nil {
+		return sdk.WrapError(errT, "attachRepositoriesManager> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	if err := repositoriesmanager.InsertForApplication(tx, app, projectKey); err != nil {
 		log.Warning("attachRepositoriesManager> Cannot insert for application: %s", err)
 		return err
 
+	}
+
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		return sdk.WrapError(err, "attachRepositoriesManager> Cannot update application last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "attachRepositoriesManager> Cannot commit transaction")
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)
@@ -447,7 +498,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	tx, err := db.Begin()
 	defer tx.Rollback()
 
-	if err := repositoriesmanager.DeleteForApplication(tx, projectKey, app); err != nil {
+	if err := repositoriesmanager.DeleteForApplication(tx, app); err != nil {
 		log.Warning("detachRepositoriesManager> Cannot delete for application: %s", err)
 		return err
 
@@ -473,6 +524,10 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	if err := poller.DeleteAll(tx, app.ID); err != nil {
 		return err
 
+	}
+
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		return sdk.WrapError(err, "detachRepositoriesManager> Cannot update application last modified date")
 	}
 
 	if err := tx.Commit(); err != nil {

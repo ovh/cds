@@ -35,7 +35,7 @@ type Store interface {
 	QueueLen(queueName string) int
 	Publish(queueName string, value interface{})
 	Subscribe(queueName string) PubSub
-	GetMessage(pb PubSub) (string, error)
+	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 }
 
 //Initialize the global cache in memory, or redis
@@ -137,6 +137,7 @@ func QueueLen(queueName string) int {
 	return s.QueueLen(queueName)
 }
 
+// Publish a message on a channel
 func Publish(queueName string, value interface{}) {
 	if s == nil {
 		return
@@ -144,6 +145,7 @@ func Publish(queueName string, value interface{}) {
 	s.Publish(queueName, value)
 }
 
+// Subscribe to a channel
 func Subscribe(queueName string) PubSub {
 	if s == nil {
 		return nil
@@ -151,11 +153,11 @@ func Subscribe(queueName string) PubSub {
 	return s.Subscribe(queueName)
 }
 
-
-func GetMessage(pb PubSub) (string, error) {
+// GetMessageFromSubscription Get a message from a subscription
+func GetMessageFromSubscription(pb PubSub, c context.Context) (string, error) {
 	if s == nil {
 		return "", fmt.Errorf("Cache > Client store is nil")
 	}
-	return s.GetMessage(pb)
+	return s.GetMessageFromSubscription(c, pb)
 }
 

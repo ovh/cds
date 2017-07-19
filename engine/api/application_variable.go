@@ -31,6 +31,7 @@ func getVariablesAuditInApplicationHandler(w http.ResponseWriter, r *http.Reques
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
+// Must be deprecated have on handler to restore 1 variable at once
 func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]

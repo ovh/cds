@@ -195,13 +195,10 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 
 // UpdateEnvironment Update an environment
 func UpdateEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
-	var lastModified time.Time
-	query := `UPDATE environment SET name=$1, last_modified=current_timestamp WHERE id=$2 RETURNING last_modified`
-	err := db.QueryRow(query, environment.Name, environment.ID).Scan(&lastModified)
-	if err != nil {
+	query := `UPDATE environment SET name=$1 WHERE id=$2`
+	if _, err := db.Exec(query, environment.Name, environment.ID); err != nil {
 		return err
 	}
-	environment.LastModified = lastModified.Unix()
 	return nil
 }
 

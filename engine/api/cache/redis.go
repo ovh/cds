@@ -226,17 +226,33 @@ func (s *RedisStore)  Subscribe(channel string) PubSub {
 	return  s.Client.Subscribe(channel)
 }
 
-// GetMessage from a redis PubSub
-func (s *RedisStore) GetMessage(pb PubSub) (string, error) {
+// GetMessageFromSubscription from a redis PubSub
+func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
 	rps, ok := pb.(*redis.PubSub)
 	if !ok {
-		return "", fmt.Errorf("GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
+		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
 	}
+	rps.ReceiveTimeout(200 * time.Millisecond)
 
-	redisMsg, err := rps.ReceiveMessage()
-	if err != nil {
-		log.Warning("redis.GetMessage> Cannot receive message: %s", err)
-		return "", err
+	var redisMsg *redis.Message
+	ticker := time.NewTicker(250 * time.Second).C
+	for redisMsg == nil {
+		select {
+		case <-ticker:
+			msg, err := rps.ReceiveTimeout(200 * time.Millisecond)
+			if err != nil {
+				log.Warning("redis.GetMessage> Cannot receive message: %s", err)
+				return "", err
+			}
+			var ok bool
+			redisMsg, ok = msg.(*redis.Message)
+			if !ok {
+				continue
+			}
+
+		case <-c.Done():
+			return "", nil
+		}
 	}
 	return redisMsg.Payload, nil
 }

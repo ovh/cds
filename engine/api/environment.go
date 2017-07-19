@@ -109,8 +109,7 @@ func updateEnvironmentsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 			return sdk.ErrGroupNeedWrite
 		}
 
-		err = group.DeleteAllGroupFromEnvironment(tx, env.ID)
-		if err != nil {
+		if err := group.DeleteAllGroupFromEnvironment(tx, env.ID); err != nil {
 			log.Warning("updateEnvironmentsHandler> Cannot delete groups from environment %s for update: %s\n", env.Name, err)
 			return err
 		}
@@ -414,6 +413,10 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 				return err
 			}
 		}
+	}
+
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update environment last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {

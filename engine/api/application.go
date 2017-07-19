@@ -399,6 +399,11 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
 
+	proj, errP := project.Load(db, projectKey, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "deleteApplicationHandler> Cannot load project")
+	}
+
 	app, err := application.LoadByName(db, projectKey, applicationName, c.User)
 	if err != nil {
 		if err != sdk.ErrApplicationNotFound {
@@ -425,14 +430,16 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 	defer tx.Rollback()
 
-	err = application.DeleteApplication(tx, app.ID)
-	if err != nil {
+	if err := application.DeleteApplication(tx, app.ID); err != nil {
 		log.Warning("deleteApplicationHandler> Cannot delete application: %s\n", err)
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		return sdk.WrapError(err, "deleteApplicationHandler> Cannot update project last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteApplicationHandler> Cannot commit transaction: %s\n", err)
 		return err
 	}

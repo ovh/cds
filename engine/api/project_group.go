@@ -155,8 +155,7 @@ func updateGroupsInProject(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 	defer tx.Rollback()
 
-	err = group.DeleteGroupProjectByProject(tx, p.ID)
-	if err != nil {
+	if err := group.DeleteGroupProjectByProject(tx, p.ID); err != nil {
 		return sdk.WrapError(err, "updateGroupsInProject: Cannot delete groups from project %s", p.Name)
 	}
 

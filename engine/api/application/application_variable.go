@@ -391,10 +391,7 @@ func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 	if err != nil {
 		return err
 	}
-
-	query = "UPDATE application SET last_modified = current_timestamp WHERE id=$1"
-	_, err = db.Exec(query, applicationID)
-	return err
+	return nil
 }
 
 // AddKeyPairToApplication generate a ssh key pair and add them as application variables

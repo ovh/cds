@@ -332,14 +332,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 	if err := InsertAudit(db, eva); err != nil {
 		return sdk.WrapError(err, "InsertVariable> Cannot add audit")
 	}
-
-	query = `
-		UPDATE environment 
-		SET last_modified = current_timestamp
-		WHERE id=$1
-	`
-	_, err = db.Exec(query, environmentID)
-	return err
+	return nil
 }
 
 // UpdateVariable Update a variable in the given environment
@@ -387,13 +380,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 	if err := InsertAudit(db, eva); err != nil {
 		return sdk.WrapError(err, "UpdateVariable> Cannot add audit")
 	}
-
-	query = `
-		UPDATE environment
-		SET last_modified = current_timestamp
-		WHERE id=$1`
-	_, err = db.Exec(query, envID)
-	return err
+	return nil
 }
 
 // DeleteVariable Delete a variable from the given pipeline
@@ -420,13 +407,7 @@ func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 	if err := InsertAudit(db, eva); err != nil {
 		return sdk.WrapError(err, "DeleteVariable> Cannot add audit")
 	}
-
-	query = `
-		UPDATE environment
-		SET last_modified = current_timestamp
-		WHERE id = $1`
-	_, err = db.Exec(query, envID)
-	return err
+	return nil
 }
 
 // DeleteAllVariable Delete all variables from the given pipeline
@@ -437,13 +418,7 @@ func DeleteAllVariable(db gorp.SqlExecutor, environmentID int64) error {
 	if err != nil {
 		return err
 	}
-
-	query = `
-		UPDATE environment
-		SET last_modified = current_timestamp
-		WHERE id=$1`
-	_, err = db.Exec(query, environmentID)
-	return err
+	return nil
 }
 
 // InsertAudit Insert an audit for an environment variable

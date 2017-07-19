@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/application"
 )
 
 func getParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -85,6 +86,12 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	vars := mux.Vars(r)
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
+
+
+	proj, errP := project.Load(db, key, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "updateParametersInPipelineHandler: Cannot load project")
+	}
 
 	var pipParams []sdk.Parameter
 	if err := UnmarshalBody(r, &pipParams); err != nil {
@@ -163,26 +170,21 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 		}
 	}
 
-	query := `
-			UPDATE application
-			SET last_modified = current_timestamp
-			FROM application_pipeline
-			WHERE application_pipeline.application_id = application.id
-			AND application_pipeline.pipeline_id = $1
-		`
-	if _, err := tx.Exec(query, pip.ID); err != nil {
-		log.Warning("UpdatePipelineParameters> Cannot update linked application [%d]: %s", pip.ID, err)
-		return err
-	}
-
-	proj, errproj := project.Load(db, key, c.User)
-	if errproj != nil {
-		return sdk.WrapError(errproj, "UpdatePipelineParameters> unable to load project")
-	}
-
 	if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
+
 		log.Warning("UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
 		return err
+	}
+
+	apps, errA := application.LoadByPipeline(tx, pip.ID, c.User)
+	if errA != nil {
+		return sdk.WrapError(errA, "UpdatePipelineParameters> Cannot load applications using pipeline")
+	}
+
+	for _, app := range apps {
+		if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
+			return sdk.WrapError(errA, "UpdatePipelineParameters> Cannot update application last modified date")
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

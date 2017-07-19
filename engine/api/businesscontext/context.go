@@ -10,5 +10,4 @@ type Ctx struct {
 	User           *sdk.User
 	Worker         *sdk.Worker
 	Hatchery       *sdk.Hatchery
-	LastUpdateChan chan string
 }
