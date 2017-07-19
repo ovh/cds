@@ -188,10 +188,12 @@ func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, val
 	return
 }
 
+// LocalPubSub local subscriber
 type LocalPubSub struct {
 	queueName string
 }
 
+// Unsubscribe a subscriber
 func (s *LocalPubSub) Unsubscribe(channels ...string) error {
 	return nil
 }

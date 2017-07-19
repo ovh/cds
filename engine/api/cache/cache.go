@@ -13,6 +13,7 @@ import (
 //Status : local ok redis
 var Status string
 
+// PubSub represents a subscriber
 type PubSub interface {
 	Unsubscribe(channels ...string) error
 }
