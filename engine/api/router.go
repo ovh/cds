@@ -191,13 +191,60 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			}
 		}
 
-		if c.User != nil {
-			if err := loadUserPermissions(db, c.User); err != nil {
-				log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
-				return
+		permissionOk := false
+		if !rc.auth {
+			permissionOk = true
+		} else {
+			if rc.needHatchery && c.Hatchery != nil {
+				permissionOk = true
+			}
+			if rc.needWorker {
+				permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
+			}
+
+			if rc.needUsernameOrAdmin && (c.User.Admin || (c.User.Username == mux.Vars(req)["username"])) {
+				// get / update / delete user -> for admin or current user
+				// if not admin and currentUser != username in request -> ko
+				permissionOk = true
+			}
+
+			if rc.needAdmin && c.User.Admin {
+				permissionOk = true
+			}
+			if !rc.needAdmin && !c.User.Admin {
+				permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
+			}
+
+			// else case, just need auth
+			if !rc.needAdmin && !rc.needHatchery && !rc.needWorker && !rc.needUsernameOrAdmin {
+				permissionOk = true
 			}
 		}
+
+		if !permissionOk {
+			WriteError(w, req, sdk.ErrForbidden)
+			return
+		}
+
+		if err := businessContext(db, c, req, w); err != nil {
+			WriteError(w, req, err)
+			return
+		}
+
+		start := time.Now()
+		defer func() {
+			end := time.Now()
+			latency := end.Sub(start)
+			if req.Method == http.MethodGet && rc.getDeprecated ||
+				req.Method == http.MethodPost && rc.postDeprecated ||
+				req.Method == http.MethodPut && rc.putDeprecated ||
+				req.Method == http.MethodDelete && rc.deleteDeprecated {
+				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
+				w.Header().Add("X-CDS-WARNING", "deprecated route")
+			} else {
+				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+			}
+		}()
 
 		if c.Hatchery != nil {
 			g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
@@ -249,56 +296,6 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				}
 			}
 		}
-
-		permissionOk := false
-		if !rc.auth {
-			permissionOk = true
-		} else {
-			if rc.needHatchery && c.Hatchery != nil {
-				permissionOk = true
-			}
-			if rc.needWorker {
-				permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
-			}
-
-			if rc.needUsernameOrAdmin && (c.User.Admin || (c.User.Username == mux.Vars(req)["username"])) {
-				// get / update / delete user -> for admin or current user
-				// if not admin and currentUser != username in request -> ko
-				permissionOk = true
-			}
-
-			if rc.needAdmin && c.User.Admin {
-				permissionOk = true
-			}
-			if !rc.needAdmin && !c.User.Admin {
-				permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
-			}
-
-			// else case, just need auth
-			if !rc.needAdmin && !rc.needHatchery && !rc.needWorker && !rc.needUsernameOrAdmin {
-				permissionOk = true
-			}
-		}
-
-		if !permissionOk {
-			WriteError(w, req, sdk.ErrForbidden)
-			return
-		}
-
-		start := time.Now()
-		defer func() {
-			end := time.Now()
-			latency := end.Sub(start)
-			if req.Method == http.MethodGet && rc.getDeprecated ||
-				req.Method == http.MethodPost && rc.postDeprecated ||
-				req.Method == http.MethodPut && rc.putDeprecated ||
-				req.Method == http.MethodDelete && rc.deleteDeprecated {
-				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
-				w.Header().Add("X-CDS-WARNING", "deprecated route")
-			} else {
-				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
-			}
-		}()
 
 		if req.Method == "GET" && rc.get != nil {
 			if err := rc.get(w, req, db, c); err != nil {
@@ -471,4 +468,62 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 		log.Warning("%-7s | %13v | %v", req.Method, latency, req.URL)
 	}()
 	WriteError(w, req, sdk.ErrNotFound)
+}
+
+// businessContext completes the business context with functionnal stuff
+func businessContext(db gorp.SqlExecutor, c *businesscontext.Ctx, req *http.Request, w http.ResponseWriter) error {
+
+	if c.User != nil {
+		if err := loadUserPermissions(db, c.User); err != nil {
+			log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
+			return sdk.ErrUnauthorized
+		}
+	}
+
+	if c.Hatchery != nil {
+		g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
+		if err != nil {
+			log.Warning("Router> cannot load group permissions for GroupID %d err:%s", c.Hatchery.GroupID, err)
+			return sdk.ErrUnauthorized
+		}
+		c.User.Groups = append(c.User.Groups, *g)
+	}
+
+	if c.Worker != nil {
+		if err := worker.RefreshWorker(db, c.Worker.ID); err != nil {
+			log.Warning("Router> Unable to refresh worker: %s", err)
+			return err
+		}
+
+		g, err := loadGroupPermissions(db, c.Worker.GroupID)
+		if err != nil {
+			log.Warning("Router> cannot load group permissions: %s", err)
+			return sdk.ErrUnauthorized
+		}
+		c.User.Groups = append(c.User.Groups, *g)
+
+		if c.Worker.Model != 0 {
+			//Load model
+			m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
+			if err != nil {
+				log.Warning("Router> cannot load worker: %s", err)
+				return sdk.ErrUnauthorized
+			}
+
+			//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
+			if m.GroupID == group.SharedInfraGroup.ID {
+				c.User.Groups = append(c.User.Groups, *group.SharedInfraGroup)
+			} else {
+				log.Debug("Router> loading groups permission for model %d", c.Worker.Model)
+				modelGroup, errLoad2 := loadGroupPermissions(db, m.GroupID)
+				if errLoad2 != nil {
+					log.Warning("Router> Cannot load group: %s", errLoad2)
+					return sdk.ErrUnauthorized
+				}
+				//Anyway, add the group of the model as a group of the user
+				c.User.Groups = append(c.User.Groups, *modelGroup)
+			}
+		}
+	}
+	return nil
 }
