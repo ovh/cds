@@ -211,19 +211,20 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) 
 			Username:     u.Username,
 			LastModified: lastModified.Unix(),
 		}, 0)
+
+		updates := sdk.LastModification{
+			Key:          app.ProjectKey,
+			Name:         app.Name,
+			LastModified: lastModified.Unix(),
+			Username:     u.Username,
+			Type:         sdk.ApplicationLastModificationType,
+		}
+		b, errP := json.Marshal(updates)
+		if errP == nil {
+			cache.Publish("lastUpdates", string(b))
+		}
 	}
 
-	updates := sdk.LastModification{
-		Key:          app.ProjectKey,
-		Name:         app.Name,
-		LastModified: lastModified.Unix(),
-		Username:     u.Username,
-		Type:         sdk.ApplicationLastModificationType,
-	}
-	b, errP := json.Marshal(updates)
-	if errP == nil {
-		cache.Publish("lastUpdates", string(b))
-	}
 	return sdk.WrapError(err, "application.UpdateLastModified %s(%d)", app.Name, app.ID)
 }
 

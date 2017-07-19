@@ -2,7 +2,6 @@ package main
 
 import (
 	"compress/gzip"
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -157,7 +156,6 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
-		req = req.WithContext(context.Background())
 
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true

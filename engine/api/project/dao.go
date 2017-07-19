@@ -151,18 +151,21 @@ func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) err
 	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
 	proj.LastModified = t
 
-	updates := sdk.LastModification{
-		Key:          proj.Key,
-		Name:         proj.Name,
-		LastModified: t.Unix(),
-		Username:     u.Username,
-		Type:         sdk.ProjectLastModiciationType,
+	if u != nil {
+		updates := sdk.LastModification{
+			Key:          proj.Key,
+			Name:         proj.Name,
+			LastModified: t.Unix(),
+			Username:     u.Username,
+			Type:         sdk.ProjectLastModiciationType,
+		}
+		b, errP := json.Marshal(updates)
+		if errP == nil {
+			cache.Publish("lastUpdates", string(b))
+		}
+		return err
 	}
-	b, errP := json.Marshal(updates)
-	if errP == nil {
-		cache.Publish("lastUpdates", string(b))
-	}
-	return err
+	return nil
 }
 
 // DeleteByID removes given project from database (project and project_group table)

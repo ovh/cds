@@ -94,7 +94,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, &p, pip, nil))
 
 	pip1, err := pipeline.LoadPipeline(db, p.Key, "Name", true)
 	test.NoError(t, err)
