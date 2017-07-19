@@ -60,7 +60,7 @@ func (router *Router) init() {
 	router.Handle("/mon/building", GET(getBuildingPipelines))
 	router.Handle("/mon/building/{hash}", GET(getPipelineBuildingCommit))
 	router.Handle("/mon/warning", GET(getUserWarnings))
-	router.Handle("/mon/lastupdates", GET(getUserLastUpdates, DEPRECATED))
+	router.Handle("/mon/lastupdates", GET(getUserLastUpdates))
 
 	// Project
 	router.Handle("/project", GET(getProjectsHandler), POST(addProjectHandler))
@@ -163,7 +163,7 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/environment/import/{permEnvironmentName}", POST(importIntoEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}", GET(getEnvironmentHandler), PUT(updateEnvironmentHandler), DELETE(deleteEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/clone", POST(cloneEnvironmentHandler))
-	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit", GET(getEnvironmentsAuditHandler))
+	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit", GET(getEnvironmentsAuditHandler, DEPRECATED))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit/{auditID}", PUT(restoreEnvironmentAuditHandler, DEPRECATED))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/group", POST(addGroupInEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/groups", POST(addGroupsInEnvironmentHandler))

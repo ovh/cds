@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Deprecated
 func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
