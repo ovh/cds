@@ -12,5 +12,4 @@ type Ctx struct {
 	Hatchery    *sdk.Hatchery
 	Project     *sdk.Project
 	Application *sdk.Application
-	Pipeline    *sdk.Pipeline
 }
