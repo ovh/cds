@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// Deprecated
 // GetAudit retrieve the current environment variable audit
 func GetAudit(db gorp.SqlExecutor, auditID int64) ([]sdk.Variable, error) {
 	query := `

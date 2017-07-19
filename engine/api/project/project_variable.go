@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// Deprecated
 // GetVariableAudit Get variable audit for the given project
 func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
@@ -53,6 +54,7 @@ func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, err
 	return audits, nil
 }
 
+// Deprecated
 // GetAudit retrieve the current project variable audit
 func GetAudit(db gorp.SqlExecutor, key string, auditID int64) ([]sdk.Variable, error) {
 	query := `
