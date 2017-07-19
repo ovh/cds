@@ -222,7 +222,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Type:      sdk.BuildPipeline,
 	}
 
-	err = pipeline.InsertPipeline(db, pipelinePip1, nil)
+	err = pipeline.InsertPipeline(db, project1, pipelinePip1, nil)
 	if err != nil {
 		t.Fatalf("cannot insert pipeline: %s", err)
 	}

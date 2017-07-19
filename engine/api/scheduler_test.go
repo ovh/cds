@@ -43,7 +43,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -131,7 +131,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -195,7 +195,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -275,7 +275,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 

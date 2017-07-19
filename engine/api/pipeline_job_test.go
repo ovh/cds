@@ -40,7 +40,7 @@ func TestAddJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -109,7 +109,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -193,7 +193,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{

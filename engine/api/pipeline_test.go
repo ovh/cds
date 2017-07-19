@@ -36,7 +36,7 @@ func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project
 	}
 
 	test.NoError(t, application.Insert(db, projectFoo, app, nil))
-	test.NoError(t, pipeline.InsertPipeline(db, p, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, projectFoo, p, nil))
 
 	return projectFoo, p, app
 }
@@ -61,7 +61,7 @@ func Test_runPipelineHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
@@ -139,7 +139,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
@@ -205,7 +205,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip2, u)
+	err = pipeline.InsertPipeline(db, proj, pip2, u)
 	test.NoError(t, err)
 
 	//11. Insert another Application
