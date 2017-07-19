@@ -12,35 +12,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// DEPRECATED
-// CreateAudit Create environment variable audit for the given project
-func CreateAudit(db gorp.SqlExecutor, key string, env *sdk.Environment, u *sdk.User) error {
-
-	vars, err := GetAllVariable(db, key, env.Name, WithEncryptPassword())
-	if err != nil {
-		return err
-	}
-
-	for i := range vars {
-		v := &vars[i]
-		if sdk.NeedPlaceholder(v.Type) {
-			v.Value = base64.StdEncoding.EncodeToString([]byte(v.Value))
-		}
-	}
-
-	data, err := json.Marshal(vars)
-	if err != nil {
-		return err
-	}
-
-	query := `
-		INSERT INTO environment_variable_audit_old (versionned, environment_id, data, author)
-		VALUES (NOW(), $1, $2, $3)
-	`
-	_, err = db.Exec(query, env.ID, string(data), u.Username)
-	return err
-}
-
 // GetAudit retrieve the current environment variable audit
 func GetAudit(db gorp.SqlExecutor, auditID int64) ([]sdk.Variable, error) {
 	query := `
@@ -68,6 +39,7 @@ func GetAudit(db gorp.SqlExecutor, auditID int64) ([]sdk.Variable, error) {
 	return vars, err
 }
 
+//Deprecated
 // GetEnvironmentAudit Get environment audit for the given project
 func GetEnvironmentAudit(db gorp.SqlExecutor, key, envName string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
@@ -329,7 +301,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 		VariableID:    variable.ID,
 		Versionned:    time.Now(),
 	}
-	if err := InsertAudit(db, eva); err != nil {
+	if err := insertAudit(db, eva); err != nil {
 		return sdk.WrapError(err, "InsertVariable> Cannot add audit")
 	}
 
@@ -384,7 +356,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 		VariableID:     variable.ID,
 		Versionned:     time.Now(),
 	}
-	if err := InsertAudit(db, eva); err != nil {
+	if err := insertAudit(db, eva); err != nil {
 		return sdk.WrapError(err, "UpdateVariable> Cannot add audit")
 	}
 
@@ -417,7 +389,7 @@ func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 		VariableID:     variable.ID,
 		Versionned:     time.Now(),
 	}
-	if err := InsertAudit(db, eva); err != nil {
+	if err := insertAudit(db, eva); err != nil {
 		return sdk.WrapError(err, "DeleteVariable> Cannot add audit")
 	}
 
@@ -446,8 +418,8 @@ func DeleteAllVariable(db gorp.SqlExecutor, environmentID int64) error {
 	return err
 }
 
-// InsertAudit Insert an audit for an environment variable
-func InsertAudit(db gorp.SqlExecutor, eva *sdk.EnvironmentVariableAudit) error {
+// insertAudit Insert an audit for an environment variable
+func insertAudit(db gorp.SqlExecutor, eva *sdk.EnvironmentVariableAudit) error {
 	dbEnvVarAudit := dbEnvironmentVariableAudit(*eva)
 	if err := db.Insert(&dbEnvVarAudit); err != nil {
 		return sdk.WrapError(err, "Cannot insert audit for variable %d", eva.VariableID)

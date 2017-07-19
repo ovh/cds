@@ -302,12 +302,6 @@ func TestGetEnvironmentsAuditHandler(t *testing.T) {
 		return
 	}
 
-	//4. add an audit
-	if err := environment.CreateAudit(db, proj.Key, &env, u); err != nil {
-		t.Fail()
-		return
-	}
-
 	vars := map[string]string{
 		"key": proj.Key,
 		"permEnvironmentName": "Prod",
@@ -360,12 +354,6 @@ func TestRestoreEnvironmentAuditHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
-		t.Fail()
-		return
-	}
-
-	//5. add an audit
-	if err := environment.CreateAudit(db, proj.Key, &env, u); err != nil {
 		t.Fail()
 		return
 	}

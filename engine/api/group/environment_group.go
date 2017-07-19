@@ -86,6 +86,7 @@ func UpdateGroupRoleInEnvironment(db gorp.SqlExecutor, key, envName, groupName s
 	return err
 }
 
+// Deprecated
 // DeleteAllGroupFromEnvironment remove all group from the given environment
 func DeleteAllGroupFromEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 	// Update environment
