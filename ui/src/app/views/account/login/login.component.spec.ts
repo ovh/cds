@@ -12,8 +12,10 @@ import {UserService} from '../../../service/user/user.service';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {AppModule} from '../../../app.module';
 import {User} from '../../../model/user.model';
-import {Router} from '@angular/router';
+import {Router, ActivatedRoute} from '@angular/router';
 import {AccountModule} from '../account.module';
+
+import {Observable} from 'rxjs/Rx';
 
 describe('CDS: LoginComponent', () => {
 
@@ -25,7 +27,8 @@ describe('CDS: LoginComponent', () => {
                 { provide: XHRBackend, useClass: MockBackend },
                 UserService,
                 AuthentificationStore,
-                { provide: Router, useClass: MockRouter}
+                { provide: Router, useClass: MockRouter},
+                { provide: ActivatedRoute, useValue: { queryParams: Observable.of({redirection: null})} },
             ],
             imports : [
                 AppModule,
@@ -36,7 +39,7 @@ describe('CDS: LoginComponent', () => {
     });
 
 
-    it('Click on Login button', fakeAsync(  inject([XHRBackend], (backend: MockBackend) => {
+    it('Click on Login button', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
         // Create loginComponent
         let fixture = TestBed.createComponent(LoginComponent);
         let component = fixture.debugElement.componentInstance;
