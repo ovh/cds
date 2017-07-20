@@ -367,6 +367,9 @@ type WorkflowHookModel struct {
 	ID            int64                  `json:"id" db:"id" cli:"-"`
 	Name          string                 `json:"name" db:"name" cli:"name"`
 	Type          string                 `json:"type"  db:"type"`
+	Author        string                 `json:"author" db:"author"`
+	Description   string                 `json:"description" db:"description"`
+	Identifier    string                 `json:"identifier" db:"identifier"`
 	Image         string                 `json:"image" db:"image"`
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`

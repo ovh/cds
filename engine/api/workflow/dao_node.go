@@ -224,7 +224,7 @@ func loadNodeContext(db gorp.SqlExecutor, wn *sdk.WorkflowNode, u *sdk.User) (*s
 		}
 	}
 
-	//Load the application in the context
+	//Load the application in the contextq
 	if ctx.ApplicationID != 0 {
 		app, err := application.LoadByID(db, ctx.ApplicationID, u)
 		if err != nil {

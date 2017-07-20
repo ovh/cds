@@ -6,12 +6,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// InsertOrUpdateHook inserts or updates a hook
+// insertHook inserts a hook
 func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeHook) error {
+	hook.WorkflowNodeID = node.ID
+
 	return nil
 }
 
 // DeleteHook deletes a hook
-func deleteHook(db gorp.SqlExecutor, hook *sdk.WorkflowNodeHook) error {
+func deleteHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeHook) error {
+
 	return nil
 }
