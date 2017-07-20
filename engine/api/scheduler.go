@@ -22,29 +22,19 @@ import (
 
 func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
-	key := vars["key"]
-	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	///Load application
-	app, errA := application.LoadByName(db, key, appName, c.User)
-	if errA != nil {
-		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
-		return errA
-
-	}
-
 	//Load pipeline
-	pip, errP := pipeline.LoadPipeline(db, key, pipelineName, false)
+	pip, errP := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
 	if errP != nil {
-		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
+		log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s", pipelineName, errP)
 		return errP
 
 	}
 
 	//Load environment
 	if err := r.ParseForm(); err != nil {
-		log.Warning("getSchedulerApplicationPipelineHandler> Cannot parse form: %s\n", err)
+		log.Warning("getSchedulerApplicationPipelineHandler> Cannot parse form: %s", err)
 		return sdk.ErrUnknownError
 
 	}
@@ -52,7 +42,7 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	var env *sdk.Environment
 	if envName != "" {
 		var err error
-		env, err = environment.LoadEnvironmentByName(db, key, envName)
+		env, err = environment.LoadEnvironmentByName(db, c.Project.Key, envName)
 		if err != nil {
 			return err
 
@@ -63,17 +53,17 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	var schedulers []sdk.PipelineScheduler
 	if env == nil {
 		var err error
-		schedulers, err = scheduler.GetByApplicationPipeline(db, app, pip)
+		schedulers, err = scheduler.GetByApplicationPipeline(db, c.Application, pip)
 		if err != nil {
-			log.Warning("getSchedulerApplicationPipelineHandler> cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers: %s\n", err)
+			log.Warning("getSchedulerApplicationPipelineHandler> cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers: %s", err)
 			return err
 
 		}
 	} else {
 		var err error
-		schedulers, err = scheduler.GetByApplicationPipelineEnv(db, app, pip, env)
+		schedulers, err = scheduler.GetByApplicationPipelineEnv(db, c.Application, pip, env)
 		if err != nil {
-			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
+			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s", err)
 			return err
 
 		}
@@ -84,29 +74,19 @@ func getSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 
 func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
-	key := vars["key"]
-	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	///Load application
-	app, errA := application.LoadByName(db, key, appName, c.User)
-	if errA != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
-		return errA
-
-	}
-
 	//Load pipeline
-	pip, errP := pipeline.LoadPipeline(db, key, pipelineName, false)
+	pip, errP := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
 	if errP != nil {
-		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
+		log.Warning("addSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s", pipelineName, errP)
 		return errP
 
 	}
 
 	//Load environment
 	if err := r.ParseForm(); err != nil {
-		log.Warning("getSchedulerApplicationPipelineHandler> Cannot parse form: %s\n", err)
+		log.Warning("getSchedulerApplicationPipelineHandler> Cannot parse form: %s", err)
 		return sdk.ErrUnknownError
 
 	}
@@ -114,7 +94,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	var env *sdk.Environment
 	if envName != "" {
 		var err error
-		env, err = environment.LoadEnvironmentByName(db, key, envName)
+		env, err = environment.LoadEnvironmentByName(db, c.Project.Key, envName)
 		if err != nil {
 			return err
 
@@ -133,17 +113,17 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	if env == nil {
 		var err error
 		env = &sdk.DefaultEnv
-		schedulers, err = scheduler.GetByApplicationPipeline(db, app, pip)
+		schedulers, err = scheduler.GetByApplicationPipeline(db, c.Application, pip)
 		if err != nil {
-			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
+			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s", err)
 			return err
 
 		}
 	} else {
 		var err error
-		schedulers, err = scheduler.GetByApplicationPipelineEnv(db, app, pip, env)
+		schedulers, err = scheduler.GetByApplicationPipelineEnv(db, c.Application, pip, env)
 		if err != nil {
-			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
+			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s", err)
 			return err
 
 		}
@@ -162,7 +142,7 @@ func addSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Reque
 	//Check timezone
 	if s.Timezone != "" {
 		if _, err := time.LoadLocation(s.Timezone); err != nil {
-			log.Warning("addSchedulerApplicationPipelineHandler> invalid timezone %s  %s\n", s.Timezone, err)
+			log.Warning("addSchedulerApplicationPipelineHandler> invalid timezone %s  %s", s.Timezone, err)
 			return sdk.ErrInvalidTimezone
 		}
 	}
@@ -195,7 +175,7 @@ check:
 	}
 
 	//Insert scheduler
-	s.ApplicationID = app.ID
+	s.ApplicationID = c.Application.ID
 	s.PipelineID = pip.ID
 	s.EnvironmentID = env.ID
 
@@ -210,7 +190,7 @@ check:
 
 	}
 
-	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+	if err := application.UpdateLastModified(tx, c.Application, c.User); err != nil {
 		return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot update application last modified date")
 	}
 
@@ -219,19 +199,15 @@ check:
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", 0)
+	c.Application.Workflows, errW = workflow.LoadCDTree(db, c.Project.Key, c.Application.Name, c.User, "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "addSchedulerApplicationPipelineHandler> cannot reload workflow")
 	}
 
-	return WriteJSON(w, r, app, http.StatusCreated)
+	return WriteJSON(w, r, c.Application, http.StatusCreated)
 }
 
 func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	key := vars["key"]
-	appName := vars["permApplicationName"]
-
 	// Unmarshal args
 	s := &sdk.PipelineScheduler{}
 	if err := UnmarshalBody(r, s); err != nil {
@@ -249,7 +225,7 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	var env *sdk.Environment
 	if envName != "" && envName != sdk.DefaultEnv.Name {
 		var err error
-		env, err = environment.LoadEnvironmentByName(db, key, envName)
+		env, err = environment.LoadEnvironmentByName(db, c.Project.Key, envName)
 		if err != nil {
 			log.Warning("updateSchedulerApplicationPipelineHandler> %s", err)
 			return err
@@ -260,12 +236,6 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 			return sdk.ErrForbidden
 
 		}
-	}
-
-	// Load application
-	app, errA := application.LoadByName(db, key, appName, c.User)
-	if errA != nil {
-		return sdk.WrapError(errA, "updateSchedulerApplicationPipelineHandler> Cannot load application %s", appName)
 	}
 
 	//Load the scheduler
@@ -310,7 +280,7 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+	if err := application.UpdateLastModified(tx, c.Application, c.User); err != nil {
 		return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot update application last modified date")
 	}
 
@@ -319,29 +289,22 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", 0)
+	c.Application.Workflows, errW = workflow.LoadCDTree(db, c.Project.Key, c.Application.Name, c.User, "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "updateSchedulerApplicationPipelineHandler> Cannot load workflow")
 	}
 
-	return WriteJSON(w, r, app, http.StatusOK)
+	return WriteJSON(w, r, c.Application, http.StatusOK)
 }
 
 func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
-	key := vars["key"]
-	appName := vars["permApplicationName"]
 
 	idString := vars["id"]
 
 	id, errInt := strconv.ParseInt(idString, 10, 64)
 	if errInt != nil {
 		return sdk.ErrInvalidID
-	}
-
-	app, errA := application.LoadByName(db, key, appName, c.User)
-	if errA != nil {
-		return sdk.WrapError(errA, "deleteSchedulerApplicationPipelineHandler> Cannot load application %s", appName)
 	}
 
 	//Load the scheduler
@@ -361,7 +324,7 @@ func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+	if err := application.UpdateLastModified(tx, c.Application, c.User); err != nil {
 		return sdk.WrapError(err, "deleteSchedulerApplicationPipelineHandler> Cannot update application last modified date")
 	}
 
@@ -370,10 +333,10 @@ func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", 0)
+	c.Application.Workflows, errW = workflow.LoadCDTree(db, c.Project.Key, c.Application.Name, c.User, "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "deleteSchedulerApplicationPipelineHandler> Cannot load workflow")
 	}
 
-	return WriteJSON(w, r, app, http.StatusOK)
+	return WriteJSON(w, r, c.Application, http.StatusOK)
 }

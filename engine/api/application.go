@@ -11,7 +11,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/businesscontext"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -28,20 +27,10 @@ import (
 )
 
 func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-
-	applications, err := application.LoadAll(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("getApplicationsHandler: Cannot load applications from db: %s\n", err)
-		return err
-	}
-
-	return WriteJSON(w, r, applications, http.StatusOK)
+	return WriteJSON(w, r, c.Project.Applications, http.StatusOK)
 }
 
 func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
@@ -56,11 +45,6 @@ func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 }
 
 func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get pipeline and action name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
-
 	err := r.ParseForm()
 	if err != nil {
 		log.Warning("getPipelineBranchHistoryHandler> Cannot parse form: %s\n", err)
@@ -90,7 +74,7 @@ func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request
 		nbPerPage = 0
 	}
 
-	pbs, err := pipeline.GetBranchHistory(db, projectKey, appName, page, nbPerPage)
+	pbs, err := pipeline.GetBranchHistory(db, c.Project.Key, c.Application.Name, page, nbPerPage)
 	if err != nil {
 		log.Warning("getPipelineBranchHistoryHandler> Cannot get history by branch: %s", err)
 		return fmt.Errorf("Cannot load pipeline branch history: %s", err)
@@ -100,12 +84,7 @@ func getPipelineBuildBranchHistoryHandler(w http.ResponseWriter, r *http.Request
 }
 
 func getApplicationDeployHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get pipeline and action name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
-
-	pbs, err := pipeline.GetDeploymentHistory(db, projectKey, appName)
+	pbs, err := pipeline.GetDeploymentHistory(db, c.Project.Key, c.Application.Name)
 	if err != nil {
 		log.Warning("getPipelineDeployHistoryHandler> Cannot get history by env: %s", err)
 		return fmt.Errorf("Cannot load pipeline deployment history: %s", err)
@@ -137,10 +116,6 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 func getApplicationTreeStatusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	applicationName := vars["permApplicationName"]
-
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
@@ -153,14 +128,9 @@ func getApplicationTreeStatusHandler(w http.ResponseWriter, r *http.Request, db 
 		}
 	}
 
-	app, errApp := application.LoadByName(db, projectKey, applicationName, c.User)
-	if errApp != nil {
-		return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
-	}
-
-	pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(db, projectKey, applicationName, c.User, branchName, version)
+	pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(db, c.Project.Key, c.Application.Name, c.User, branchName, version)
 	if errPB != nil {
-		return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status %s", app.Name)
+		return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status")
 	}
 
 	response := struct {
@@ -300,32 +270,22 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 }
 
 func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	applicationName := vars["permApplicationName"]
-
-	app, err := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
-	if err != nil {
-		log.Warning("getApplicationBranchHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
-		return err
-	}
-
 	var branches []sdk.VCSBranch
-	if app.RepositoryFullname != "" && app.RepositoriesManager != nil {
-		client, erra := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
+	if c.Application.RepositoryFullname != "" && c.Application.RepositoriesManager != nil {
+		client, erra := repositoriesmanager.AuthorizedClient(db, c.Project.Key, c.Application.RepositoriesManager.Name)
 		if erra != nil {
-			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
+			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", c.Project.Key, c.Application.RepositoriesManager.Name, erra)
 			return sdk.ErrNoReposManagerClientAuth
 		}
 		var errb error
-		branches, errb = client.Branches(app.RepositoryFullname)
+		branches, errb = client.Branches(c.Application.RepositoryFullname)
 		if errb != nil {
-			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
+			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", c.Application.RepositoryFullname, errb)
 			return sdk.ErrNoReposManagerClientAuth
 		}
 	} else {
 		var errg error
-		branches, errg = pipeline.GetBranches(db, app)
+		branches, errg = pipeline.GetBranches(db, c.Application)
 		if errg != nil {
 			log.Warning("getApplicationBranchHandler> Cannot get branches from builds: %s", errg)
 			return errg
@@ -338,16 +298,6 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gor
 }
 
 func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	key := vars["permProjectKey"]
-
-	proj, errl := project.Load(db, key, c.User)
-	if errl != nil {
-		log.Warning("addApplicationHandler: Cannot load %s: %s\n", key, errl)
-		return errl
-	}
-
 	var app sdk.Application
 	if err := UnmarshalBody(r, &app); err != nil {
 		return err
@@ -368,17 +318,17 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	defer tx.Rollback()
 
-	if err := application.Insert(tx, proj, &app, c.User); err != nil {
+	if err := application.Insert(tx, c.Project, &app, c.User); err != nil {
 		log.Warning("addApplicationHandler> Cannot insert pipeline: %s\n", err)
 		return err
 	}
 
-	if err := group.LoadGroupByProject(tx, proj); err != nil {
+	if err := group.LoadGroupByProject(tx, c.Project); err != nil {
 		log.Warning("addApplicationHandler> Cannot load group from project: %s\n", err)
 		return err
 	}
 
-	if err := application.AddGroup(tx, proj, &app, c.User, proj.ProjectGroups...); err != nil {
+	if err := application.AddGroup(tx, c.Project, &app, c.User, c.Project.ProjectGroups...); err != nil {
 		log.Warning("addApplicationHandler> Cannot add groups on application: %s\n", err)
 		return err
 	}
@@ -391,30 +341,14 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 }
 
 func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get pipeline and action name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	applicationName := vars["permApplicationName"]
-
-	cache.DeleteAll(cache.Key("application", projectKey, "*"))
-	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
-
-	app, err := application.LoadByName(db, projectKey, applicationName, c.User)
-	if err != nil {
-		if err != sdk.ErrApplicationNotFound {
-			log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
-		}
-		return err
-	}
-
-	nb, errNb := pipeline.CountBuildingPipelineByApplication(db, app.ID)
+	nb, errNb := pipeline.CountBuildingPipelineByApplication(db, c.Application.ID)
 	if errNb != nil {
-		log.Warning("deleteApplicationHandler> Cannot count pipeline build for application %d: %s\n", app.ID, errNb)
+		log.Warning("deleteApplicationHandler> Cannot count pipeline build for application %d: %s\n", c.Application.ID, errNb)
 		return errNb
 	}
 
 	if nb > 0 {
-		log.Warning("deleteApplicationHandler> Cannot delete application [%d], there are building pipelines: %d\n", app.ID, nb)
+		log.Warning("deleteApplicationHandler> Cannot delete application [%d], there are building pipelines: %d\n", c.Application.ID, nb)
 		return sdk.ErrAppBuildingPipelines
 	}
 
@@ -425,7 +359,7 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 	defer tx.Rollback()
 
-	err = application.DeleteApplication(tx, app.ID)
+	err = application.DeleteApplication(tx, c.Application.ID)
 	if err != nil {
 		log.Warning("deleteApplicationHandler> Cannot delete application: %s\n", err)
 		return err
@@ -436,41 +370,26 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		log.Warning("deleteApplicationHandler> Cannot commit transaction: %s\n", err)
 		return err
 	}
-
-	cache.DeleteAll(cache.Key("application", projectKey, "*"))
-	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
-
 	return nil
 }
 
 func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get pipeline and action name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	applicationName := vars["permApplicationName"]
-
-	proj, errProj := project.Load(db, projectKey, c.User)
-	if errProj != nil {
-		log.Warning("cloneApplicationHandler> Cannot load %s: %s\n", projectKey, errProj)
-		return sdk.ErrNoProject
-	}
-
-	envs, errE := environment.LoadEnvironments(db, projectKey, true, c.User)
-	if errProj != nil {
-		log.Warning("cloneApplicationHandler> Cannot load Environments %s: %s\n", projectKey, errProj)
+	envs, errE := environment.LoadEnvironments(db, c.Project.Key, true, c.User)
+	if errE != nil {
+		log.Warning("cloneApplicationHandler> Cannot load Environments %s: %s\n", c.Project.Key, errE)
 		return errE
 
 	}
-	proj.Environments = envs
+	c.Project.Environments = envs
 
 	var newApp sdk.Application
 	if err := UnmarshalBody(r, &newApp); err != nil {
 		return err
 	}
 
-	appToClone, errApp := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default, application.LoadOptions.WithGroups)
+	appToClone, errApp := application.LoadByName(db, c.Project.Key, c.Application.Name, c.User, application.LoadOptions.Default, application.LoadOptions.WithGroups)
 	if errApp != nil {
-		log.Warning("cloneApplicationHandler> Cannot load application %s: %s\n", applicationName, errApp)
+		log.Warning("cloneApplicationHandler> Cannot load application %s: %s\n", c.Application.Name, errApp)
 		return errApp
 	}
 
@@ -481,12 +400,12 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 	defer tx.Rollback()
 
-	if err := cloneApplication(tx, proj, &newApp, appToClone, c.User); err != nil {
+	if err := cloneApplication(tx, c.Project, &newApp, appToClone, c.User); err != nil {
 		log.Warning("cloneApplicationHandler> Cannot insert new application %s: %s\n", newApp.Name, err)
 		return err
 	}
 
-	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+	if err := project.UpdateLastModified(tx, c.User, c.Project); err != nil {
 		log.Warning("cloneApplicationHandler: Cannot update last modified date: %s\n", err)
 		return err
 	}
@@ -495,10 +414,6 @@ func cloneApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		log.Warning("cloneApplicationHandler> Cannot commit transaction : %s\n", err)
 		return err
 	}
-
-	cache.DeleteAll(cache.Key("application", projectKey, "*"))
-	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
-
 	return WriteJSON(w, r, newApp, http.StatusOK)
 }
 
@@ -596,28 +511,12 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 }
 
 func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get pipeline and action name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	applicationName := vars["permApplicationName"]
-
-	p, errload := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
-	if errload != nil {
-		log.Warning("updateApplicationHandler> Cannot load project %s: %s\n", projectKey, errload)
-		return errload
-	}
-	envs, errloadenv := environment.LoadEnvironments(db, projectKey, true, c.User)
+	envs, errloadenv := environment.LoadEnvironments(db, c.Project.Key, true, c.User)
 	if errloadenv != nil {
-		log.Warning("updateApplicationHandler> Cannot load environments %s: %s\n", projectKey, errloadenv)
+		log.Warning("updateApplicationHandler> Cannot load environments %s: %s\n", c.Project.Key, errloadenv)
 		return errloadenv
 	}
-	p.Environments = envs
-
-	app, errloadbyname := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
-	if errloadbyname != nil {
-		log.Warning("updateApplicationHandler> Cannot load application %s: %s\n", applicationName, errloadbyname)
-		return errloadbyname
-	}
+	c.Project.Environments = envs
 
 	var appPost sdk.Application
 	if err := UnmarshalBody(r, &appPost); err != nil {
@@ -632,8 +531,8 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 	}
 
 	//Update name and Metadata
-	app.Name = appPost.Name
-	app.Metadata = appPost.Metadata
+	c.Application.Name = appPost.Name
+	c.Application.Metadata = appPost.Metadata
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -641,12 +540,12 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 	defer tx.Rollback()
-	if err := application.Update(tx, app, c.User); err != nil {
-		log.Warning("updateApplicationHandler> Cannot delete application %s: %s\n", applicationName, err)
+	if err := application.Update(tx, c.Application, c.User); err != nil {
+		log.Warning("updateApplicationHandler> Cannot delete application %s: %s\n", c.Application.Name, err)
 		return err
 	}
 
-	if err := sanity.CheckApplication(tx, p, app); err != nil {
+	if err := sanity.CheckApplication(tx, c.Project, c.Application); err != nil {
 		log.Warning("updateApplicationHandler: Cannot check application sanity: %s\n", err)
 		return err
 	}
@@ -656,9 +555,6 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 
-	cache.DeleteAll(cache.Key("application", projectKey, "*"))
-	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
-
-	return WriteJSON(w, r, app, http.StatusOK)
+	return WriteJSON(w, r, c.Application, http.StatusOK)
 
 }
