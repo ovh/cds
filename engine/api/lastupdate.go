@@ -11,31 +11,31 @@ import (
 
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // LastUpdateBrokerSubscribe is the information need to to subscribe
 type LastUpdateBrokerSubscribe struct {
+	UIID  string
 	User  *sdk.User
 	Queue chan string
 }
 
 // LastUpdateBroker keeps connected client of the current route,
 type LastUpdateBroker struct {
-	clients     map[chan string]*sdk.User
-	newClients  chan LastUpdateBrokerSubscribe
-	exitClients chan chan string
-	messages    chan string
+	clients    map[string]*LastUpdateBrokerSubscribe
+	newClients chan *LastUpdateBrokerSubscribe
+	messages   chan string
 }
 
 var lastUpdateBroker *LastUpdateBroker
 
-func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
+func InitLastUpdateBroker(c context.Context, DBFunc func() *gorp.DbMap) {
 	lastUpdateBroker = &LastUpdateBroker{
-		make(map[chan string]*sdk.User),
-		make(chan LastUpdateBrokerSubscribe),
-		make(chan (chan string)),
+		make(map[string]*LastUpdateBrokerSubscribe),
+		make(chan *LastUpdateBrokerSubscribe),
 		make(chan string),
 	}
 
@@ -48,7 +48,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
 
 // CacheSubscribe subscribe to a channel and push received message in a channel
 func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
-	pubSub := cache.Subscribe("lastupdates")
+	pubSub := cache.Subscribe("lastUpdates")
 	tick := time.NewTicker(250 * time.Millisecond).C
 	for {
 		select {
@@ -60,7 +60,7 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
 		case <-tick:
 			msg, err := cache.GetMessageFromSubscription(pubSub, c)
 			if err != nil {
-				log.Warning("lastUpdate.CacheSubscribe> Cannot get message")
+				log.Warning("lastUpdate.CacheSubscribe> Cannot get message %s: %s", msg, err)
 				time.Sleep(5 * time.Second)
 				continue
 			}
@@ -76,9 +76,9 @@ func (b *LastUpdateBroker) Start(c context.Context, db gorp.SqlExecutor) {
 		select {
 		case <-c.Done():
 			// Close all channels
-			for c := range b.clients {
+			for c, v := range b.clients {
 				delete(b.clients, c)
-				close(c)
+				close(v.Queue)
 			}
 			if c.Err() != nil {
 				log.Warning("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
@@ -86,11 +86,7 @@ func (b *LastUpdateBroker) Start(c context.Context, db gorp.SqlExecutor) {
 			}
 		case s := <-b.newClients:
 			// Register new client
-			b.clients[s.Queue] = s.User
-		case s := <-b.exitClients:
-			// Deleting client
-			delete(b.clients, s)
-			close(s)
+			b.clients[s.UIID] = s
 		case msg := <-b.messages:
 			var lastModif sdk.LastModification
 			if err := json.Unmarshal([]byte(msg), &lastModif); err != nil {
@@ -99,35 +95,40 @@ func (b *LastUpdateBroker) Start(c context.Context, db gorp.SqlExecutor) {
 			}
 
 			//Receive new message
-			for c, u := range b.clients {
-				if err := loadUserPermissions(db, u); err != nil {
+			for _, i := range b.clients {
+				if err := loadUserPermissions(db, i.User); err != nil {
 					log.Warning("lastUpdate.CacheSubscribe> Cannot load auser permission: %s", err)
 					continue
 				}
 
 				hasPermission := false
-			groups:
-				for _, g := range u.Groups {
-					hasPermission = false
-					switch lastModif.Type {
-					case sdk.ApplicationLastModificationType:
-						for _, ag := range g.ApplicationGroups {
-							if ag.Application.Name == lastModif.Name && ag.Application.ProjectKey == lastModif.Key {
-								hasPermission = true
-								break groups
+				if i.User.Admin {
+					hasPermission = true
+				} else {
+				groups:
+					for _, g := range i.User.Groups {
+						hasPermission = false
+						switch lastModif.Type {
+						case sdk.ApplicationLastModificationType:
+							for _, ag := range g.ApplicationGroups {
+								if ag.Application.Name == lastModif.Name && ag.Application.ProjectKey == lastModif.Key {
+									hasPermission = true
+									break groups
+								}
 							}
-						}
-					case sdk.PipelineLastModificationType:
-						for _, pg := range g.PipelineGroups {
-							if pg.Pipeline.Name == lastModif.Name && pg.Pipeline.ProjectKey == lastModif.Key {
-								hasPermission = true
-								break groups
+						case sdk.PipelineLastModificationType:
+							for _, pg := range g.PipelineGroups {
+								if pg.Pipeline.Name == lastModif.Name && pg.Pipeline.ProjectKey == lastModif.Key {
+									hasPermission = true
+									break groups
+								}
 							}
 						}
 					}
 				}
+
 				if hasPermission {
-					c <- msg
+					i.Queue <- msg
 				}
 			}
 		}
@@ -136,14 +137,19 @@ func (b *LastUpdateBroker) Start(c context.Context, db gorp.SqlExecutor) {
 }
 
 func (b *LastUpdateBroker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-
 	// Make sure that the writer supports flushing.
 	f, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
 		return nil
 	}
-	messageChan := LastUpdateBrokerSubscribe{
+
+	uuid, errS := sessionstore.NewSessionKey()
+	if errS != nil {
+		return sdk.WrapError(errS, "LastUpdateBroker.Serve> Cannot generate UUID")
+	}
+	messageChan := &LastUpdateBrokerSubscribe{
+		UIID:  string(uuid),
 		User:  c.User,
 		Queue: make(chan string),
 	}
@@ -156,19 +162,19 @@ func (b *LastUpdateBroker) ServeHTTP(w http.ResponseWriter, r *http.Request, db 
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
+leave:
 	for {
-
 		select {
-		case <-r.Context().Done():
-			// Close
-			b.exitClients <- messageChan.Queue
+		case <-w.(http.CloseNotifier).CloseNotify():
+			delete(b.clients, messageChan.UIID)
+			close(messageChan.Queue)
+			break leave
 		case msg, open := <-messageChan.Queue:
 			if !open {
-				break
+				delete(b.clients, messageChan.UIID)
+				break leave
 			}
-
-			// Message must start with data: https://developer.mozilla.org/fr/docs/Server-sent_events/Using_server-sent_events
-			fmt.Fprintf(w, "data: %s", msg)
+			fmt.Fprintf(w, "data: %s\n\n", msg)
 			f.Flush()
 		}
 	}
