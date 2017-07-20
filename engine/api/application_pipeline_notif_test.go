@@ -17,8 +17,8 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/notification"
@@ -244,7 +244,9 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsEmptyUserNotificat
 		router.HandleFunc("/test1/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification",
 			func(w http.ResponseWriter, r *http.Request) {
 				getUserNotificationApplicationPipelineHandler(w, r, db, &businesscontext.Ctx{
-					User: u,
+					User:        u,
+					Project:     proj,
+					Application: app,
 				})
 			})
 		http.Handle("/test1/", router)
@@ -299,7 +301,9 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotifi
 		router.HandleFunc("/test2/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification",
 			func(w http.ResponseWriter, r *http.Request) {
 				getUserNotificationApplicationPipelineHandler(w, r, db, &businesscontext.Ctx{
-					User: u,
+					User:        u,
+					Project:     proj,
+					Application: app,
 				})
 			})
 		http.Handle("/test2/", router)
@@ -402,7 +406,9 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 		router.HandleFunc("/test4/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification",
 			func(w http.ResponseWriter, r *http.Request) {
 				updateUserNotificationApplicationPipelineHandler(w, r, db, &businesscontext.Ctx{
-					User: u,
+					User:        u,
+					Project:     proj,
+					Application: app,
 				})
 			})
 
