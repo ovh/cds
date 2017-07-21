@@ -84,20 +84,14 @@ func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, 
 // Deprecated
 func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
-	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
-
-	proj, errP := project.Load(db, key, c.User)
-	if errP != nil {
-		return sdk.WrapError(errP, "updateParametersInPipelineHandler: Cannot load project")
-	}
 
 	var pipParams []sdk.Parameter
 	if err := UnmarshalBody(r, &pipParams); err != nil {
 		return err
 	}
 
-	pip, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+	pip, err := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
 	if err != nil {
 		log.Warning("updateParametersInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
 		return err
@@ -169,7 +163,7 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 		}
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
+	if err := pipeline.UpdatePipelineLastModified(tx, c.Project, pip, c.User); err != nil {
 
 		log.Warning("UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
 		return err

@@ -3,7 +3,7 @@ import {Http, RequestOptions, ConnectionBackend, RequestOptionsArgs, Response, H
 import {Observable} from 'rxjs/Rx';
 import {environment} from '../../environments/environment';
 import {AuthentificationStore} from './auth/authentification.store';
-import {Router} from '@angular/router';
+import {Router, NavigationExtras} from '@angular/router';
 import {ToastService} from '../shared/toast/ToastService';
 
 @Injectable()
@@ -53,8 +53,14 @@ export class HttpService extends Http {
                 this._toast.error(err.statusText, JSON.parse(err._body).message);
             }
             if (err.status === 401) {
+                let navigationExtras: NavigationExtras = {
+                    queryParams: {
+                        redirect: window.location.pathname + window.location.search
+                    }
+                };
+
                 this._authStore.removeUser();
-                this._router.navigate(['/account', 'login']);
+                this._router.navigate(['/account/login'], navigationExtras);
                 return Observable.throw(err);
             } else {
                 return Observable.throw(err);
