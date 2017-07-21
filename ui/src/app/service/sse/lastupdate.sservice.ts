@@ -24,12 +24,11 @@ export class LastUpdateService {
         }
 
         return Observable.create((observer) => {
-            let eventSource = new EventSourcePolyfill(environment.apiURL + '/mon/lastupdates/events', {headers: authHeader});
+            let eventSource = new EventSourcePolyfill(environment.apiURL + '/mon/lastupdates/events', {headers: authHeader, errorOnTimeout: true});
             eventSource.onmessage = (data => {
                 this.zone.run(() => {
                     observer.next(data.data);
                 });
-
             });
         });
     }
