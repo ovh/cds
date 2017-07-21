@@ -8,7 +8,9 @@ export class ProjectLastUpdates {
 }
 
 export class LastModification {
+    key: string;
     name: string;
     username: string;
     last_modified: number;
+    type: string;
 }
