@@ -345,7 +345,7 @@ type VCSBranch struct {
 	DisplayID    string   `json:"display_id"`
 	LatestCommit string   `json:"latest_commit"`
 	Default      bool     `json:"default"`
-	Parents      []string `json:"default"`
+	Parents      []string `json:"parents"`
 }
 
 //VCSPushEvent represents a push events for polling
