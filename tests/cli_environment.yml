@@ -14,7 +14,7 @@ testcases:
 
 - name: environment list
   steps:
-  - script: {{.cds.build.cds}} environment list TEST
+  - script: {{.cds.build.cds}} environment list ITCLIENVPRJ
 
 - name: environment show
   steps:
