@@ -529,31 +529,33 @@ func businessContext(db gorp.SqlExecutor, c *businesscontext.Ctx, req *http.Requ
 		}
 	}
 
-	vars := mux.Vars(req)
-	key := vars["key"]
-	if key == "" {
-		key = vars["permProjectKey"]
-	}
-
-	if key != "" {
-		proj, errproj := project.Load(db, key, c.User, project.LoadOptions.Default)
-		if errproj != nil {
-			return errproj
+	if c.User != nil {
+		vars := mux.Vars(req)
+		key := vars["key"]
+		if key == "" {
+			key = vars["permProjectKey"]
 		}
-		c.Project = proj
-	}
 
-	app := vars["permApplicationName"]
-	if app == "" {
-		app = vars["app"]
-	}
-
-	if app != "" {
-		app, errapp := application.LoadByName(db, key, app, c.User, application.LoadOptions.Default)
-		if errapp != nil {
-			return errapp
+		if key != "" {
+			proj, errproj := project.Load(db, key, c.User, project.LoadOptions.Default)
+			if errproj != nil {
+				return errproj
+			}
+			c.Project = proj
 		}
-		c.Application = app
+
+		app := vars["permApplicationName"]
+		if app == "" {
+			app = vars["app"]
+		}
+
+		if app != "" {
+			app, errapp := application.LoadByName(db, key, app, c.User, application.LoadOptions.Default)
+			if errapp != nil {
+				return errapp
+			}
+			c.Application = app
+		}
 	}
 
 	return nil

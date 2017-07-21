@@ -94,16 +94,10 @@ func getRepositoriesManagerForProjectHandler(w http.ResponseWriter, r *http.Requ
 func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
 
-	proj, errP := project.Load(db, projectKey, c.User)
-	if errP != nil {
-		return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
-	}
-
 	//Load the repositories manager from the DB
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
+	rm, err := repositoriesmanager.LoadForProject(db, c.Project.Key, rmName)
 	var lastModified time.Time
 
 	//If we don't find any repositories manager for the project, let's insert it
@@ -122,12 +116,12 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 		}
 		defer tx.Rollback()
 
-		if errI := repositoriesmanager.InsertForProject(tx, rm, projectKey); errI != nil {
-			log.Warning("repositoriesManagerAuthorize> error while inserting repositories manager for project %s: %s\n", projectKey, errI)
+		if errI := repositoriesmanager.InsertForProject(tx, rm, c.Project.Key); errI != nil {
+			log.Warning("repositoriesManagerAuthorize> error while inserting repositories manager for project %s: %s\n", c.Project.Key, errI)
 			return errI
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		if err := project.UpdateLastModified(tx, c.User, c.Project); err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorize> Cannot update project last modified")
 		}
 
@@ -146,10 +140,10 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 		return sdk.ErrNoReposManagerAuth
 
 	}
-	log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", projectKey, token, url)
+	log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", c.Project.Key, token, url)
 
 	data := map[string]string{
-		"project_key":          projectKey,
+		"project_key":          c.Project.Key,
 		"last_modified":        strconv.FormatInt(lastModified.Unix(), 10),
 		"repositories_manager": rmName,
 		"url":           url,

@@ -155,7 +155,7 @@ func Subscribe(queueName string) PubSub {
 }
 
 // GetMessageFromSubscription Get a message from a subscription
-func GetMessageFromSubscription(pb PubSub, c context.Context) (string, error) {
+func GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
 	if s == nil {
 		return "", fmt.Errorf("Cache > Client store is nil")
 	}

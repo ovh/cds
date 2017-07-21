@@ -43,22 +43,23 @@ func InitLastUpdateBroker(c context.Context, DBFunc func() *gorp.DbMap) {
 	go CacheSubscribe(c, lastUpdateBroker.messages)
 
 	// Start processing events
-	go lastUpdateBroker.Start(c, DBFunc())
+	go lastUpdateBroker.Start(c, DBFunc)
 }
 
 // CacheSubscribe subscribe to a channel and push received message in a channel
 func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
 	pubSub := cache.Subscribe("lastUpdates")
-	tick := time.NewTicker(250 * time.Millisecond).C
+	tick := time.NewTicker(250 * time.Millisecond)
+	defer tick.Stop()
 	for {
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Warning("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
+				log.Error("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
 				return
 			}
-		case <-tick:
-			msg, err := cache.GetMessageFromSubscription(pubSub, c)
+		case <-tick.C:
+			msg, err := cache.GetMessageFromSubscription(c, pubSub)
 			if err != nil {
 				log.Warning("lastUpdate.CacheSubscribe> Cannot get message %s: %s", msg, err)
 				time.Sleep(5 * time.Second)
@@ -70,9 +71,9 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
 }
 
 // Start the broker
-func (b *LastUpdateBroker) Start(c context.Context, db gorp.SqlExecutor) {
-
+func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 	for {
+		db := DBFunc()
 		select {
 		case <-c.Done():
 			// Close all channels
@@ -81,7 +82,7 @@ func (b *LastUpdateBroker) Start(c context.Context, db gorp.SqlExecutor) {
 				close(v.Queue)
 			}
 			if c.Err() != nil {
-				log.Warning("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
+				log.Error("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
 				return
 			}
 		case s := <-b.newClients:
