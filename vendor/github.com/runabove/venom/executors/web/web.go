@@ -78,6 +78,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			if err := s.Fill(f.Text); err != nil {
 				return nil, err
 			}
+			if f.Key != nil {
+				if err := s.SendKeys(Keys[*f.Key]); err != nil {
+					return nil, err
+				}
+			}
 		}
 
 	} else if t.Action.Find != "" {
@@ -97,6 +102,8 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 				return nil, err
 			}
 		}
+	} else if t.Action.Wait != 0 {
+		time.Sleep(time.Duration(t.Action.Wait) * time.Second)
 	}
 
 	// take a screenshot
@@ -152,7 +159,7 @@ func findOne(page *agouti.Page, search string, r *Result) (*agouti.Selection, er
 		return nil, fmt.Errorf("Cannot find element %s: %s", search, errC)
 	}
 	if nbElement != 1 {
-		return nil, fmt.Errorf("Find %s elements", nbElement)
+		return nil, fmt.Errorf("Find %d elements", nbElement)
 	}
 	return s, nil
 }

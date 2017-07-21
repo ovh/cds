@@ -8,7 +8,9 @@ Venom allows you to navigate into it and execute actions.
 ## Input
 
 * Action (https://github.com/runabove/venom/tree/master/executors/web/types.go)
-* Screenshot
+* Format
+
+Parameters `debug` (default: false) and `timeout` (default: 180 seconds) are optional.
 
 ```yaml
 name: TestSuite Web
@@ -19,6 +21,8 @@ testcases:
     width: 1920
     height: 1080
     driver: phantomjs
+    timeout: 60
+    debug: true
   steps:
   - action:
       navigate:
