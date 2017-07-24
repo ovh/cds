@@ -80,7 +80,7 @@ func TestAddPollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
@@ -152,7 +152,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
@@ -245,7 +245,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
@@ -341,7 +341,7 @@ func TestGetPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
@@ -433,7 +433,7 @@ func TestDeletePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)

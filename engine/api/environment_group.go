@@ -136,6 +136,10 @@ func addGroupsInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *g
 		return sdk.WrapError(errP, "addGroupsInEnvironmentHandler: Cannot load project %s", env.Name)
 	}
 
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "addGroupsInEnvironmentHandler: Cannot update environment last modified date")
+	}
+
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
 		return sdk.WrapError(errP, "addGroupsInEnvironmentHandler: Cannot update project %s", p.Key)
 	}
@@ -197,14 +201,35 @@ func addGroupInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 func deleteGroupFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
-	key := vars["key"]
 	envName := vars["permEnvironmentName"]
 	groupName := vars["group"]
 
-	err := group.DeleteGroupFromEnvironment(db, key, envName, groupName)
-	if err != nil {
-		log.Warning("deleteGroupFromEnvironmentHandler: Cannot delete group %s from pipeline %s:  %s\n", groupName, envName, err)
-		return err
+	env, errE := environment.LoadEnvironmentByName(db, c.Project.Key, envName)
+	if errE != nil {
+		return sdk.WrapError(errE, "deleteGroupFromEnvironmentHandler: Cannot load environment")
 	}
+
+	tx, errT := db.Begin()
+	if errT != nil {
+		return sdk.WrapError(errT, "deleteGroupFromEnvironmentHandler: Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	if err := group.DeleteGroupFromEnvironment(tx, c.Project.Key, envName, groupName); err != nil {
+		return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot delete group %s from pipeline %s", groupName, envName)
+	}
+
+	if err := project.UpdateLastModified(tx, c.User, c.Project); err != nil {
+		return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot update project last modified date")
+	}
+
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot update environment last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(errT, "deleteGroupFromEnvironmentHandler: Cannot commit transaction")
+	}
+
 	return nil
 }

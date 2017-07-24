@@ -175,6 +175,9 @@ var mainCmd = &cobra.Command{
 			log.Error("Cannot setup databases: %s", err)
 		}
 
+		cache.Initialize(viper.GetString(viperCacheMode), viper.GetString(viperCacheRedisHost), viper.GetString(viperCacheRedisPassword), viper.GetInt(viperCacheTTL))
+		InitLastUpdateBroker(ctx, database.GetDBMap)
+
 		router = &Router{
 			mux: mux.NewRouter(),
 		}
@@ -235,8 +238,6 @@ var mainCmd = &cobra.Command{
 		if errdriver != nil {
 			log.Fatalf("Error: %v", errdriver)
 		}
-
-		cache.Initialize(viper.GetString(viperCacheMode), viper.GetString(viperCacheRedisHost), viper.GetString(viperCacheRedisPassword), viper.GetInt(viperCacheTTL))
 
 		kafkaOptions := event.KafkaConfig{
 			Enabled:         viper.GetBool(viperEventsKafkaEnabled),

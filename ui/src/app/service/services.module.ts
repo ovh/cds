@@ -39,6 +39,7 @@ import {WorkflowStore} from './workflow/workflow.store';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
 import {RouterService} from './router/router.service';
 import {WarningService} from './warning/warning.service';
+import {LastUpdateService} from './sse/lastupdate.sservice';
 
 @NgModule({})
 export class ServicesModule {
@@ -63,6 +64,7 @@ export class ServicesModule {
                 EnvironmentAuditService,
                 GroupService,
                 LanguageStore,
+                LastUpdateService,
                 NotificationService,
                 ParameterService,
                 PipelineResolver,
@@ -119,6 +121,7 @@ export {
     EnvironmentAuditService,
     GroupService,
     LanguageStore,
+    LastUpdateService,
     ParameterService,
     PipelineResolver,
     PipelineStore,

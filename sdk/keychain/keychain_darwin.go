@@ -2,10 +2,8 @@ package keychain
 
 import (
 	"github.com/docker/docker-credential-helpers/credentials"
-"github.com/docker/docker-credential-helpers/osxkeychain"
+	"github.com/docker/docker-credential-helpers/osxkeychain"
 )
-
-
 
 //StoreSecret store a credential through libsecret
 func StoreSecret(url, username, secret string) error {

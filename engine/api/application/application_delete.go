@@ -93,15 +93,5 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 		log.Warning("DeleteApplication> Cannot delete application: %s\n", err)
 		return err
 	}
-
-	// Update project
-	query = `
-		UPDATE project
-		SET last_modified = current_timestamp
-		WHERE id IN (
-			select project_id from application where id = $1
-		)
-	`
-	_, err = db.Exec(query, applicationID)
-	return err
+	return nil
 }

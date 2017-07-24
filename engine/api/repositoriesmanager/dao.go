@@ -4,11 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"strings"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -175,8 +173,7 @@ func Update(db gorp.SqlExecutor, rm *sdk.RepositoriesManager) error {
 }
 
 //InsertForProject associates a repositories manager with a project
-func InsertForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, projectKey string) (time.Time, error) {
-	var lastModified time.Time
+func InsertForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, projectKey string) error {
 	query := `INSERT INTO
 							repositories_manager_project (id_repositories_manager, id_project)
 						VALUES (
@@ -185,19 +182,7 @@ func InsertForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, projectK
 						)`
 
 	_, err := db.Exec(query, rm.ID, projectKey)
-	if err != nil {
-		return lastModified, err
-	}
-	// Update project
-	query = `
-		UPDATE project
-		SET last_modified = current_timestamp
-		WHERE projectkey = $1 RETURNING last_modified
-	`
-	if err = db.QueryRow(query, projectKey).Scan(&lastModified); err != nil {
-		return lastModified, err
-	}
-	return lastModified, nil
+	return err
 }
 
 //DeleteForProject removes association between  a repositories manager and a project
@@ -213,17 +198,6 @@ func DeleteForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, project 
 	if err != nil {
 		return err
 	}
-	// Update project
-	query = `
-		UPDATE project
-		SET last_modified = current_timestamp
-		WHERE projectkey = $1 RETURNING last_modified
-	`
-	var lastModified time.Time
-	if err = db.QueryRow(query, project.Key).Scan(&lastModified); err != nil {
-		return err
-	}
-	project.LastModified = lastModified
 	return nil
 }
 
@@ -239,15 +213,6 @@ func SaveDataForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, projec
 	b, _ := json.Marshal(data)
 	_, err := db.Exec(query, string(b), rm.ID, projectKey)
 	if err != nil {
-		return err
-	}
-	// Update project
-	query = `
-		UPDATE project
-		SET last_modified = current_timestamp
-		WHERE projectkey = $1
-	`
-	if _, err = db.Exec(query, projectKey); err != nil {
 		return err
 	}
 	return nil
@@ -291,46 +256,31 @@ func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey 
 	query := `UPDATE application
 						SET
 							repositories_manager_id =  $1,
-							repo_fullname = $2,
-							last_modified = current_timestamp
+							repo_fullname = $2
 						WHERE
 							id = $3
-						RETURNING last_modified
 						`
 
-	var lastModified time.Time
-	err := db.QueryRow(query, app.RepositoriesManager.ID, app.RepositoryFullname, app.ID).Scan(&lastModified)
-	if err != nil {
+	if _, err := db.Exec(query, app.RepositoriesManager.ID, app.RepositoryFullname, app.ID); err != nil {
 		return err
 	}
-	app.LastModified = lastModified
-
-	k := cache.Key("application", projectKey, "*"+app.Name+"*")
-	cache.DeleteAll(k)
 	return nil
 }
 
 //DeleteForApplication removes association between  a repositories manager and an application
 //it deletes the corresponding line in repositories_manager_project
-func DeleteForApplication(db gorp.SqlExecutor, projectKey string, app *sdk.Application) error {
+func DeleteForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
 	query := `UPDATE application
 						SET
 							repositories_manager_id =  NULL,
-							repo_fullname = '',
-							last_modified = current_timestamp
+							repo_fullname = ''
 						WHERE
 							id = $1
-						RETURNING last_modified
 						`
-	var lastModified time.Time
-	err := db.QueryRow(query, app.ID).Scan(&lastModified)
-	if err != nil {
+
+	if _, err := db.Exec(query, app.ID); err != nil {
 		return err
 	}
-	app.LastModified = lastModified
-
-	k := cache.Key("application", projectKey, "*"+app.Name+"*")
-	cache.DeleteAll(k)
 	return nil
 }
 

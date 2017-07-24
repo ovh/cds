@@ -499,6 +499,11 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	key := vars["key"]
 	name := vars["permPipelineKey"]
 
+	proj, errP := project.Load(db, key, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "updatePipelineHandler> Cannot load project")
+	}
+
 	var p sdk.Pipeline
 	if err := UnmarshalBody(r, &p); err != nil {
 		return sdk.WrapError(err, "updatePipelineHandler> Cannot read body")
@@ -528,10 +533,8 @@ func updatePipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 		return sdk.WrapError(err, "updatePipelineHandler> cannot update pipeline %s", name)
 	}
 
-	// Update project
-	proj, errP := project.Load(tx, key, c.User)
-	if errP != nil {
-		return sdk.WrapError(errP, "updatePipelineHandler> cannot load project %s", key)
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineDB, c.User); err != nil {
+		return sdk.WrapError(err, "updatePipelineHandler> Cannot update pipeline last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
@@ -618,7 +621,7 @@ func addPipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busi
 	defer tx.Rollback()
 
 	p.ProjectID = proj.ID
-	if err := pipeline.InsertPipeline(tx, &p, c.User); err != nil {
+	if err := pipeline.InsertPipeline(tx, proj, &p, c.User); err != nil {
 		return sdk.WrapError(err, "Cannot insert pipeline")
 	}
 
@@ -763,49 +766,44 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
-	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 
-	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	p, err := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
 	if err != nil {
-		if err != sdk.ErrPipelineNotFound {
-			log.Warning("deletePipeline> Cannot load pipeline %s: %s\n", pipelineName, err)
-		}
-		return err
+		return sdk.WrapError(err, "deletePipeline> Cannot load pipeline %s", pipelineName)
 	}
 
 	used, err := application.CountPipeline(db, p.ID)
 	if err != nil {
-		log.Warning("deletePipeline> Cannot check if pipeline is used by an application: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deletePipeline> Cannot check if pipeline is used by an application")
 	}
 
 	if used {
-		log.Warning("deletePipeline> Cannot delete a pipeline used by at least 1 application\n")
-		return sdk.ErrPipelineHasApplication
+		return sdk.WrapError(sdk.ErrPipelineHasApplication, "deletePipeline> Cannot delete a pipeline used by at least 1 application")
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deletePipeline> Cannot begin transaction: %s\n", err)
-		return err
+	tx, errT := db.Begin()
+	if errT != nil {
+		return sdk.WrapError(errT, "deletePipeline> Cannot begin transaction")
 	}
 	defer tx.Rollback()
 
-	err = pipeline.DeletePipeline(tx, p.ID, c.User.ID)
-	if err != nil {
+	if err := pipeline.DeletePipeline(tx, p.ID, c.User.ID); err != nil {
 		log.Warning("deletePipeline> Cannot delete pipeline %s: %s\n", pipelineName, err)
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := project.UpdateLastModified(db, c.User, c.Project); err != nil {
+		return sdk.WrapError(err, "deletePipeline> Cannot update project last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("deletePipeline> Cannot commit transaction: %s\n", err)
 		return err
 	}
 
-	cache.DeleteAll(cache.Key("application", projectKey, "*"))
-	cache.Delete(cache.Key("pipeline", projectKey, pipelineName))
+	cache.DeleteAll(cache.Key("application", c.Project.Key, "*"))
+	cache.Delete(cache.Key("pipeline", c.Project.Key, pipelineName))
 
 	return nil
 }

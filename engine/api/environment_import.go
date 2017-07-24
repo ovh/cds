@@ -215,6 +215,10 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 		return err
 	}
 
+	if err := project.UpdateLastModified(db, c.User, proj); err != nil {
+		return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot update project last modified date")
+	}
+
 	close(msgChan)
 	<-done
 

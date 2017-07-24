@@ -282,6 +282,9 @@ func (router *Router) init() {
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
 	router.Handle("/worker/model/{permModelID}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
 
+	// SSE
+	router.Handle("/mon/lastupdates/events", GET(lastUpdateBroker.ServeHTTP))
+
 	//Not Found handler
 	router.mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 }

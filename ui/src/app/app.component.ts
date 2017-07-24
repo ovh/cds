@@ -9,6 +9,8 @@ import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
 import {AppService} from './app.service';
+import {LastUpdateService} from './service/sse/lastupdate.sservice';
+import {LastModification} from './model/lastupdate.model';
 
 @Component({
     selector: 'app-root',
@@ -22,7 +24,6 @@ export class AppComponent  implements OnInit {
     isConnected = false;
     warningWorker: CDSWorker;
     versionWorker: CDSWorker;
-    lastUpdateWorker: CDSWorker;
     zone: NgZone;
 
     currentVersion = 0;
@@ -31,11 +32,10 @@ export class AppComponent  implements OnInit {
     warningWorkerSubscription: Subscription;
     languageSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
-    lastUpdateWorkerSubscription: Subscription;
 
     constructor(private _translate: TranslateService, private _language: LanguageStore,
                 private _authStore: AuthentificationStore, private _warnStore: WarningStore,
-                private _notification: NotificationService, private _appService: AppService) {
+                private _notification: NotificationService, private _appService: AppService, private _last: LastUpdateService) {
         this.zone = new NgZone({enableLongStackTrace: false});
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');
@@ -60,7 +60,7 @@ export class AppComponent  implements OnInit {
                 this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
             } else {
                 this.isConnected = true;
-                this.startLastUpdateWorker();
+                this.startLastUpdateSSE();
                 this.startWarningWorker();
             }
             this.startVersionWorker();
@@ -76,21 +76,11 @@ export class AppComponent  implements OnInit {
         }
     }
 
-    startLastUpdateWorker(): void {
-        this.stopWorker(this.lastUpdateWorker, this.lastUpdateWorkerSubscription);
-        this.lastUpdateWorker = new CDSWorker('./assets/worker/web/lastupdate.js');
-        this.lastUpdateWorker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL
-        });
-        this.lastUpdateWorker.response().subscribe(msg => {
-            if (msg) {
-                this.zone.run(() => {
-                    let lastUpdates = JSON.parse(msg);
-                    this._appService.updateCache(lastUpdates);
-                });
-            }
+    startLastUpdateSSE(): void {
+        this._last.getLastUpdate().subscribe(msg => {
+            console.log(msg);
+            let lastUpdateEvent: LastModification = JSON.parse(msg);
+            this._appService.updateCache(lastUpdateEvent);
         });
     }
 

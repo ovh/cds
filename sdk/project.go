@@ -43,12 +43,21 @@ type Metadata map[string]string
 
 //LastModification is stored in cache and used for ProjectLastUpdates computing
 type LastModification struct {
+	Key          string `json:"key,omitempty""`
 	Name         string `json:"name"`
 	Username     string `json:"username"`
 	LastModified int64  `json:"last_modified"`
+	Type         string `json:"type,omitempty"`
 }
 
+const (
+	ApplicationLastModificationType = "application"
+	PipelineLastModificationType    = "pipeline"
+	ProjectLastModiciationType      = "project"
+)
+
 //ProjectLastUpdates update times of project, application and pipelines
+// Deprecated
 type ProjectLastUpdates struct {
 	LastModification
 	Applications []LastModification `json:"applications"`
