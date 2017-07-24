@@ -198,6 +198,14 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		if !rc.auth {
 			permissionOk = true
 		} else {
+			if c.User != nil {
+				if err := loadUserPermissions(db, c.User); err != nil {
+					log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
+					WriteError(w, req, sdk.ErrUnauthorized)
+					return
+				}
+			}
+
 			if rc.needHatchery && c.Hatchery != nil {
 				permissionOk = true
 			}
@@ -475,13 +483,6 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 
 // businessContext completes the business context with functionnal stuff
 func businessContext(db gorp.SqlExecutor, c *businesscontext.Ctx, req *http.Request, w http.ResponseWriter) error {
-
-	if c.User != nil {
-		if err := loadUserPermissions(db, c.User); err != nil {
-			log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
-			return sdk.ErrUnauthorized
-		}
-	}
 
 	if c.Hatchery != nil {
 		g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
