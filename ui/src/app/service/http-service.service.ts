@@ -53,14 +53,8 @@ export class HttpService extends Http {
                 this._toast.error(err.statusText, JSON.parse(err._body).message);
             }
             if (err.status === 401) {
-                let navigationExtras: NavigationExtras = {
-                    queryParams: {
-                        redirect: window.location.pathname + window.location.search
-                    }
-                };
-
                 this._authStore.removeUser();
-                this._router.navigate(['/account/login'], navigationExtras);
+                this._router.navigate(['/account/login']);
                 return Observable.throw(err);
             } else {
                 return Observable.throw(err);
