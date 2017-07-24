@@ -48,7 +48,7 @@
                 </a>
             </td>
             <td class="center">
-                <app-delete-button></app-delete-button>
+                <app-delete-button [loading]="loading" (event)="deleteBuild(pb)"></app-delete-button>
             </td>
         </tr>
         </tbody>

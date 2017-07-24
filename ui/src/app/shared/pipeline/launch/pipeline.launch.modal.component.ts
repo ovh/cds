@@ -82,7 +82,11 @@ export class PipelineLaunchModalComponent {
 
     runManual() {
         let request: PipelineRunRequest = new PipelineRunRequest();
-        request.parameters = this.launchPipelineParams;
+        request.parameters = new Array<Parameter>();
+        if (this.launchPipelineParams) {
+            request.parameters.push(...this.launchPipelineParams);
+        }
+
         request.env = cloneDeep(this.workflowItem.environment);
         delete request.env.variables;
         delete request.env.groups;
