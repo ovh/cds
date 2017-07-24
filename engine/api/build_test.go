@@ -46,7 +46,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(db, proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -142,7 +142,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(db, proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 

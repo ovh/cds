@@ -81,7 +81,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
@@ -181,7 +181,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
@@ -296,7 +296,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
@@ -422,7 +422,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err := pipeline.InsertPipeline(db, pip, u)
+	err := pipeline.InsertPipeline(db, proj, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -544,7 +544,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.InsertPipeline(db, pip, u)
+	err = pipeline.InsertPipeline(db, proj, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application

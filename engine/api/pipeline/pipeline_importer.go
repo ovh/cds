@@ -251,7 +251,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.User) error {
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
-	if err := InsertPipeline(db, pip, u); err != nil {
+	if err := InsertPipeline(db, proj, pip, u); err != nil {
 		return err
 	}
 

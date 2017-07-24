@@ -130,7 +130,7 @@ func AddGroup(db gorp.SqlExecutor, proj *sdk.Project, a *sdk.Application, u *sdk
 					return sdk.WrapError(err, "AddGroup> Cannot add group %s in pipeline %s", g.Name, p.Pipeline.Name)
 				}
 
-				if err := pipeline.UpdateLastModified(db, u, &p.Pipeline); err != nil {
+				if err := pipeline.UpdatePipelineLastModified(db, proj, &p.Pipeline, u); err != nil {
 					return sdk.WrapError(err, "AddGroup> Cannot update pipeline %s", p.Pipeline.Name)
 				}
 			}

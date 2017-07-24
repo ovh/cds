@@ -111,7 +111,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
@@ -155,7 +155,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
@@ -226,7 +226,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
