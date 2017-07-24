@@ -19,7 +19,7 @@ export class CanActivateAuthAdminRoute implements CanActivate , CanActivateChild
 
         let navigationExtras: NavigationExtras = {
             queryParams: {
-                redirect: window.location.pathname + window.location.search
+                redirect: window.location.pathname.replace('/cds/ui', '') + window.location.search
             }
         };
         this._router.navigate(['account/login'], navigationExtras);
@@ -35,7 +35,7 @@ export class CanActivateAuthAdminRoute implements CanActivate , CanActivateChild
         }
         let navigationExtras: NavigationExtras = {
             queryParams: {
-                redirect: window.location.pathname + window.location.search
+                redirect: window.location.pathname.replace('/cds/ui', '') + window.location.search
             }
         };
         this._router.navigate(['account/login'], navigationExtras);

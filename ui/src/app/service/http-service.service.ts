@@ -55,7 +55,7 @@ export class HttpService extends Http {
             if (err.status === 401) {
                 let navigationExtras: NavigationExtras = {
                     queryParams: {
-                        redirect: window.location.pathname + window.location.search
+                        redirect: window.location.pathname.replace('/cds/ui', '') + window.location.search
                     }
                 };
 
