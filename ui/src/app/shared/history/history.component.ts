@@ -33,10 +33,14 @@ export class HistoryComponent extends Table {
     }
 
     deleteBuild(pb: PipelineBuild): void {
+        this.loading = true;
         this._appBuildSerivce.deleteBuild(
             this.project.key, pb.application.name, pb.pipeline.name, pb.environment.name, pb.build_number).subscribe(() => {
            this._toast.success('', this._translate.instant('pipeline_build_deleted'));
+           this.loading = false;
            this.buildDeletedEvent.emit(true);
+        }, () => {
+            this.loading = false;
         });
     }
 }
