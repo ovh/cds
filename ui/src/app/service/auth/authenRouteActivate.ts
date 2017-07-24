@@ -19,7 +19,7 @@ export class CanActivateAuthRoute implements CanActivate , CanActivateChild {
 
         let navigationExtras: NavigationExtras = {
             queryParams: {
-                redirect: window.location.pathname + window.location.search
+                redirect: state.url
             }
         };
 
@@ -36,7 +36,7 @@ export class CanActivateAuthRoute implements CanActivate , CanActivateChild {
         }
         let navigationExtras: NavigationExtras = {
             queryParams: {
-                redirect: window.location.pathname + window.location.search
+                redirect: state.url
             }
         };
 
