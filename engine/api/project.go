@@ -56,8 +56,11 @@ func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	}
 
 	// Check is project exist
-	p := c.Project
-
+	p, errProj := project.Load(db, key, c.User)
+	if errProj != nil {
+		log.Warning("updateProject: Cannot load project from db: %s\n", errProj)
+		return errProj
+	}
 	// Update in DB is made given the primary key
 	proj.ID = p.ID
 	if errUp := project.Update(db, proj, c.User); errUp != nil {
@@ -212,7 +215,7 @@ func deleteProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	p, errProj := project.Load(db, key, c.User, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.WithPipelines)
 	if errProj != nil {
 		if errProj != sdk.ErrNoProject {
 			log.Warning("deleteProject: load project '%s' from db: %s\n", key, errProj)

@@ -9,10 +9,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -22,122 +24,180 @@ import (
 // Deprecated
 func attachPipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	pipeline, err := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, true)
+	proj, err := project.Load(db, key, c.User, project.LoadOptions.Default)
 	if err != nil {
-		log.Warning("addPipelineInApplicationHandler: Cannot load pipeline %s: %s", c.Application.Name, err)
+		log.Warning("addPipelineInApplicationHandler: Cannot load project: %s: %s\n", key, err)
+		return err
+	}
+
+	pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, true)
+	if err != nil {
+		log.Warning("addPipelineInApplicationHandler: Cannot load pipeline %s: %s\n", appName, err)
 		return sdk.ErrNotFound
 	}
 
-	if _, err := application.AttachPipeline(db, c.Application.ID, pipeline.ID); err != nil {
-		log.Warning("addPipelineInApplicationHandler: Cannot attach pipeline %s to application %s:  %s", pipelineName, c.Application.Name, err)
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+	if err != nil {
+		log.Warning("addPipelineInApplicationHandler: Cannot load application %s: %s\n", appName, err)
+		return sdk.ErrNotFound
+	}
+
+	if _, err := application.AttachPipeline(db, app.ID, pipeline.ID); err != nil {
+		log.Warning("addPipelineInApplicationHandler: Cannot attach pipeline %s to application %s:  %s\n", pipelineName, appName, err)
 		return err
 	}
 
-	if err := sanity.CheckPipeline(db, c.Project, pipeline); err != nil {
-		log.Warning("addPipelineInApplicationHandler: Cannot check pipeline sanity: %s", err)
+	if err := sanity.CheckPipeline(db, proj, pipeline); err != nil {
+		log.Warning("addPipelineInApplicationHandler: Cannot check pipeline sanity: %s\n", err)
 		return err
 	}
 
-	return WriteJSON(w, r, c.Application, http.StatusOK)
+	k := cache.Key("application", key, "*"+appName+"*")
+	cache.DeleteAll(k)
+
+	return WriteJSON(w, r, app, http.StatusOK)
 }
 
 func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+
 	var pipelines []string
 	if err := UnmarshalBody(r, &pipelines); err != nil {
 		return err
 	}
 
+	project, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+	if err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot load project: %s: %s\n", key, err)
+		return err
+	}
+
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+	if err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
+		return err
+	}
+
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		log.Warning("attachPipelinesToApplicationHandler: Cannot begin transaction: %s", errBegin)
+		log.Warning("attachPipelinesToApplicationHandler: Cannot begin transaction: %s\n", errBegin)
 		return errBegin
 	}
 
 	for _, pipName := range pipelines {
-		pipeline, err := pipeline.LoadPipeline(tx, c.Project.Key, pipName, true)
+		pipeline, err := pipeline.LoadPipeline(tx, key, pipName, true)
 		if err != nil {
-			log.Warning("attachPipelinesToApplicationHandler: Cannot load pipeline %s: %s", pipName, err)
+			log.Warning("attachPipelinesToApplicationHandler: Cannot load pipeline %s: %s\n", pipName, err)
 			return err
 		}
 
-		id, errA := application.AttachPipeline(tx, c.Application.ID, pipeline.ID)
+		id, errA := application.AttachPipeline(tx, app.ID, pipeline.ID)
 		if errA != nil {
-			log.Warning("attachPipelinesToApplicationHandler: Cannot attach pipeline %s to application:  %s", pipName, errA)
+			log.Warning("attachPipelinesToApplicationHandler: Cannot attach pipeline %s to application %s:  %s\n", pipName, appName, errA)
 			return errA
 		}
 
-		c.Application.Pipelines = append(c.Application.Pipelines, sdk.ApplicationPipeline{
+		app.Pipelines = append(app.Pipelines, sdk.ApplicationPipeline{
 			Pipeline: *pipeline,
 			ID:       id,
 		})
 
 	}
 
-	if err := application.UpdateLastModified(tx, c.Application, c.User); err != nil {
-		log.Warning("attachPipelinesToApplicationHandler: Cannot update application last modified date: %s", err)
+	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot update application last modified date: %s\n", err)
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("attachPipelinesToApplicationHandler: Cannot commit transaction: %s", err)
+		log.Warning("attachPipelinesToApplicationHandler: Cannot commit transaction: %s\n", err)
 		return err
 	}
 
-	if err := sanity.CheckProjectPipelines(db, c.Project); err != nil {
-		log.Warning("attachPipelinesToApplicationHandler: Cannot check project sanity: %s", err)
+	if err := sanity.CheckProjectPipelines(db, project); err != nil {
+		log.Warning("attachPipelinesToApplicationHandler: Cannot check project sanity: %s\n", err)
 		return err
 	}
 
 	var errW error
-	c.Application.Workflows, errW = workflow.LoadCDTree(db, c.Project.Key, c.Application.Name, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, project.Key, app.Name, c.User, "", 0)
 	if errW != nil {
-		log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s", errW)
+		log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s\n", errW)
 		return errW
 	}
 
-	return WriteJSON(w, r, c.Application, http.StatusOK)
+	k := cache.Key("application", key, "*"+appName+"*")
+	cache.DeleteAll(k)
+
+	return WriteJSON(w, r, app, http.StatusOK)
 }
 
 func updatePipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+
 	var appPipelines []sdk.ApplicationPipeline
 	if err := UnmarshalBody(r, &appPipelines); err != nil {
 		return err
 	}
 
+	app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+	if err != nil {
+		log.Warning("updatePipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
+		return sdk.ErrApplicationNotFound
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("updatePipelinesToApplicationHandler: Cannot start transaction: %s", err)
+		log.Warning("updatePipelinesToApplicationHandler: Cannot start transaction: %s\n", err)
 		return sdk.ErrUnknownError
 	}
 	defer tx.Rollback()
 
 	for _, appPip := range appPipelines {
-		err = application.UpdatePipelineApplication(tx, c.Application, appPip.Pipeline.ID, appPip.Parameters, c.User)
+		err = application.UpdatePipelineApplication(tx, app, appPip.Pipeline.ID, appPip.Parameters, c.User)
 		if err != nil {
-			log.Warning("updatePipelinesToApplicationHandler: Cannot update  application pipeline  %s parameters: %s", appPip.Pipeline.Name, err)
+			log.Warning("updatePipelinesToApplicationHandler: Cannot update  application pipeline  %s/%s parameters: %s\n", appName, appPip.Pipeline.Name, err)
 			return sdk.ErrUnknownError
 		}
 	}
 	err = tx.Commit()
 	if err != nil {
-		log.Warning("updatePipelinesToApplicationHandler: Cannot commit transaction: %s", err)
+		log.Warning("updatePipelinesToApplicationHandler: Cannot commit transaction: %s\n", err)
 		return sdk.ErrUnknownError
 	}
 
-	return WriteJSON(w, r, c.Application, http.StatusOK)
+	k := cache.Key("application", key, "*"+appName+"*")
+	cache.DeleteAll(k)
+
+	return WriteJSON(w, r, app, http.StatusOK)
 }
 
 // DEPRECATED
 func updatePipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	pipeline, err := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
+	pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, false)
 	if err != nil {
-		log.Warning("updatePipelineToApplicationHandler: Cannot load pipeline %s: %s", pipelineName, err)
+		log.Warning("updatePipelineToApplicationHandler: Cannot load pipeline %s: %s\n", appName, err)
 		return sdk.ErrNotFound
+	}
+
+	app, err := application.LoadByName(db, key, appName, c.User)
+	if err != nil {
+		log.Warning("updatePipelineToApplicationHandler: Cannot load application %s: %s\n", appName, err)
+		return sdk.ErrNotFound
+
 	}
 
 	// Get args in body
@@ -146,19 +206,26 @@ func updatePipelineToApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return sdk.ErrWrongRequest
 	}
 
-	err = application.UpdatePipelineApplicationString(db, c.Application, pipeline.ID, string(data), c.User)
+	err = application.UpdatePipelineApplicationString(db, app, pipeline.ID, string(data), c.User)
 	if err != nil {
-		log.Warning("updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s:  %s", c.Application.Name, pipelineName, err)
+		log.Warning("updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s:  %s\n", appName, pipelineName, err)
 		return err
 	}
 
-	return WriteJSON(w, r, c.Application, http.StatusOK)
+	k := cache.Key("application", key, "*"+appName+"*")
+	cache.DeleteAll(k)
+
+	return WriteJSON(w, r, app, http.StatusOK)
 }
 
 func getPipelinesInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	pipelines, err := application.GetAllPipelines(db, c.Project.Key, c.Project.Name)
+	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
+
+	pipelines, err := application.GetAllPipelines(db, key, appName)
 	if err != nil {
-		log.Warning("getPipelinesInApplicationHandler: Cannot load pipelines for application %s: %s", c.Application.Name, err)
+		log.Warning("getPipelinesInApplicationHandler: Cannot load pipelines for application %s: %s\n", appName, err)
 		return sdk.ErrNotFound
 	}
 
@@ -167,41 +234,45 @@ func getPipelinesInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 
 func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
+	key := vars["key"]
 	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	a, errA := application.LoadByName(db, c.Project.Key, appName, c.User, application.LoadOptions.WithPipelines)
+	a, errA := application.LoadByName(db, key, appName, c.User, application.LoadOptions.WithPipelines)
 	if errA != nil {
-		log.Warning("removePipelineFromApplicationHandler> Cannot load application: %s", errA)
+		log.Warning("removePipelineFromApplicationHandler> Cannot load application: %s\n", errA)
 		return errA
 	}
 
 	tx, errB := db.Begin()
 	if errB != nil {
-		log.Warning("removePipelineFromApplicationHandler> Cannot start tx: %s", errB)
+		log.Warning("removePipelineFromApplicationHandler> Cannot start tx: %s\n", errB)
 		return errB
 	}
 	defer tx.Rollback()
 
-	if err := application.RemovePipeline(tx, c.Project.Key, appName, pipelineName); err != nil {
-		log.Warning("removePipelineFromApplicationHandler: Cannot detach pipeline %s from %s: %s", pipelineName, appName, err)
+	if err := application.RemovePipeline(tx, key, appName, pipelineName); err != nil {
+		log.Warning("removePipelineFromApplicationHandler: Cannot detach pipeline %s from %s: %s\n", pipelineName, appName, err)
 		return err
 	}
 
 	if err := application.UpdateLastModified(tx, a, c.User); err != nil {
-		log.Warning("removePipelineFromApplicationHandler> Cannot update application last modified date: %s", err)
+		log.Warning("removePipelineFromApplicationHandler> Cannot update application last modified date: %s\n", err)
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("removePipelineFromApplicationHandler> Cannot commit tx: %s", err)
+		log.Warning("removePipelineFromApplicationHandler> Cannot commit tx: %s\n", err)
 		return err
 	}
 
+	k := cache.Key("application", key, "*"+appName+"*")
+	cache.DeleteAll(k)
+
 	var errW error
-	a.Workflows, errW = workflow.LoadCDTree(db, c.Project.Key, a.Name, c.User, "", 0)
+	a.Workflows, errW = workflow.LoadCDTree(db, key, a.Name, c.User, "", 0)
 	if errW != nil {
-		log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s", errW)
+		log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s\n", errW)
 		return errW
 	}
 
@@ -230,28 +301,37 @@ func getUserNotificationStateValueHandler(w http.ResponseWriter, r *http.Request
 
 func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
 	err := r.ParseForm()
 	if err != nil {
-		log.Warning("getPipelineHistoryHandler> Cannot parse form: %s", err)
+		log.Warning("getPipelineHistoryHandler> Cannot parse form: %s\n", err)
 		return sdk.ErrUnknownError
 	}
 	envName := r.Form.Get("envName")
 
-	//Load pipeline
-	pipeline, err := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
+	//Load application
+	application, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
-		log.Warning("getUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s", pipelineName, err)
+		log.Warning("getUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
+		return err
+	}
+
+	//Load pipeline
+	pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+	if err != nil {
+		log.Warning("getUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 		return err
 	}
 
 	//Load environment
 	env := &sdk.DefaultEnv
 	if envName != "" {
-		env, err = environment.LoadEnvironmentByName(db, c.Project.Key, envName)
+		env, err = environment.LoadEnvironmentByName(db, key, envName)
 		if err != nil {
-			log.Warning("getUserNotificationApplicationPipelineHandler> cannot load environment %s: %s", envName, err)
+			log.Warning("getUserNotificationApplicationPipelineHandler> cannot load environment %s: %s\n", envName, err)
 			return err
 		}
 	}
@@ -262,9 +342,9 @@ func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *htt
 	}
 
 	//Load notifs
-	notifs, err := notification.LoadUserNotificationSettings(db, c.Application.ID, pipeline.ID, env.ID)
+	notifs, err := notification.LoadUserNotificationSettings(db, application.ID, pipeline.ID, env.ID)
 	if err != nil {
-		log.Warning("getUserNotificationApplicationPipelineHandler> cannot load notification settings %s", err)
+		log.Warning("getUserNotificationApplicationPipelineHandler> cannot load notification settings %s\n", err)
 		return err
 	}
 	if notifs == nil {
@@ -276,20 +356,30 @@ func getUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *htt
 
 func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
 	err := r.ParseForm()
 	if err != nil {
-		log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot parse form: %s", err)
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot parse form: %s\n", err)
 		return sdk.ErrUnknownError
 
 	}
 	envName := r.Form.Get("envName")
 
-	//Load pipeline
-	pipeline, err := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
+	///Load application
+	applicationData, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
-		log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s", pipelineName, err)
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
+		return err
+
+	}
+
+	//Load pipeline
+	pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+	if err != nil {
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 		return err
 
 	}
@@ -297,9 +387,9 @@ func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 	//Load environment
 	env := &sdk.DefaultEnv
 	if envName != "" && envName != sdk.DefaultEnv.Name {
-		env, err = environment.LoadEnvironmentByName(db, c.Project.Key, envName)
+		env, err = environment.LoadEnvironmentByName(db, key, envName)
 		if err != nil {
-			log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load environment %s: %s", envName, err)
+			log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load environment %s: %s\n", envName, err)
 			return err
 
 		}
@@ -312,36 +402,39 @@ func deleteUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot start transaction: %s", err)
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot start transaction: %s\n", err)
 		return err
 	}
 
-	err = notification.DeleteNotification(tx, c.Application.ID, pipeline.ID, env.ID)
+	err = notification.DeleteNotification(tx, applicationData.ID, pipeline.ID, env.ID)
 	if err != nil {
-		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot delete user notification %s", err)
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot delete user notification %s\n", err)
 		return err
 	}
 
-	err = application.UpdateLastModified(tx, c.Application, c.User)
+	err = application.UpdateLastModified(tx, applicationData, c.User)
 	if err != nil {
-		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot update application last_modified date: %s", err)
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot update application last_modified date: %s\n", err)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot commit transaction: %s", err)
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot commit transaction: %s\n", err)
 		return err
 
 	}
 
+	k := cache.Key("application", key, "*"+appName+"*")
+	cache.DeleteAll(k)
+
 	var errN error
-	c.Application.Notifications, errN = notification.LoadAllUserNotificationSettings(db, c.Application.ID)
+	applicationData.Notifications, errN = notification.LoadAllUserNotificationSettings(db, applicationData.ID)
 	if errN != nil {
-		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load notifications: %s", errN)
+		log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load notifications: %s\n", errN)
 		return errN
 	}
-	return WriteJSON(w, r, c.Application, http.StatusOK)
+	return WriteJSON(w, r, applicationData, http.StatusOK)
 }
 
 func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -356,7 +449,7 @@ func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	app, errApp := application.LoadByName(db, key, appName, c.User, application.LoadOptions.WithPipelines)
 	if errApp != nil {
-		log.Warning("addNotificationsHandler: Cannot load application: %s", errApp)
+		log.Warning("addNotificationsHandler: Cannot load application: %s\n", errApp)
 		return sdk.ErrWrongRequest
 	}
 
@@ -367,14 +460,14 @@ func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		log.Warning("addNotificationsHandler: Cannot begin transaction: %s", errBegin)
+		log.Warning("addNotificationsHandler: Cannot begin transaction: %s\n", errBegin)
 		return errBegin
 	}
 	defer tx.Rollback()
 
 	for _, n := range notifs {
 		if _, ok := mapID[n.ApplicationPipelineID]; !ok {
-			log.Warning("addNotificationsHandler: Cannot get pipeline for this application: %s")
+			log.Warning("addNotificationsHandler: Cannot get pipeline for this application: %s\n")
 			return sdk.ErrWrongRequest
 		}
 
@@ -390,27 +483,27 @@ func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 		// Insert or update notification
 		if err := notification.InsertOrUpdateUserNotificationSettings(tx, app.ID, n.Pipeline.ID, n.Environment.ID, &n); err != nil {
-			log.Warning("addNotificationsHandler> cannot update user notification %s", err)
+			log.Warning("addNotificationsHandler> cannot update user notification %s\n", err)
 			return err
 
 		}
 	}
 
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
-		log.Warning("addNotificationsHandler> cannot update application last_modified date: %s", err)
+		log.Warning("addNotificationsHandler> cannot update application last_modified date: %s\n", err)
 		return err
 
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("addNotificationsHandler: Cannot commit transaction: %s", err)
+		log.Warning("addNotificationsHandler: Cannot commit transaction: %s\n", err)
 		return err
 	}
 
 	var errNotif error
 	app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, app.ID)
 	if errNotif != nil {
-		log.Warning("addNotificationsHandler> cannot load notifications: %s", errNotif)
+		log.Warning("addNotificationsHandler> cannot load notifications: %s\n", errNotif)
 		return errNotif
 	}
 
@@ -419,12 +512,21 @@ func addNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 
 func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
+	key := vars["key"]
+	appName := vars["permApplicationName"]
 	pipelineName := vars["permPipelineKey"]
 
-	//Load pipeline
-	pipeline, err := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
+	///Load application
+	applicationData, err := application.LoadByName(db, key, appName, c.User)
 	if err != nil {
-		log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s", pipelineName, err)
+		log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
+		return err
+	}
+
+	//Load pipeline
+	pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+	if err != nil {
+		log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 		return err
 
 	}
@@ -447,40 +549,43 @@ func updateUserNotificationApplicationPipelineHandler(w http.ResponseWriter, r *
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot start transaction: %s", err)
+		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot start transaction: %s\n", err)
 		return err
 
 	}
 	defer tx.Rollback()
 
 	// Insert or update notification
-	if err := notification.InsertOrUpdateUserNotificationSettings(tx, c.Application.ID, pipeline.ID, notifs.Environment.ID, notifs); err != nil {
-		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot update user notification %s", err)
+	if err := notification.InsertOrUpdateUserNotificationSettings(tx, applicationData.ID, pipeline.ID, notifs.Environment.ID, notifs); err != nil {
+		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot update user notification %s\n", err)
 		return err
 
 	}
 
-	err = application.UpdateLastModified(tx, c.Application, c.User)
+	err = application.UpdateLastModified(tx, applicationData, c.User)
 	if err != nil {
-		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot update application last_modified date: %s", err)
+		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot update application last_modified date: %s\n", err)
 		return err
 
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot commit transaction: %s", err)
+		log.Warning("updateUserNotificationApplicationPipelineHandler> cannot commit transaction: %s\n", err)
 		return err
 
 	}
 
+	k := cache.Key("application", key, "*"+appName+"*")
+	cache.DeleteAll(k)
+
 	var errNotif error
-	c.Application.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, c.Application.ID)
+	applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, applicationData.ID)
 	if errNotif != nil {
-		log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load notifications: %s", errNotif)
+		log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load notifications: %s\n", errNotif)
 		return errNotif
 	}
 
-	return WriteJSON(w, r, c.Application, http.StatusOK)
+	return WriteJSON(w, r, applicationData, http.StatusOK)
 
 }

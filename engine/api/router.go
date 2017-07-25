@@ -14,12 +14,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -194,68 +192,13 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			}
 		}
 
-		permissionOk := false
-		if !rc.auth {
-			permissionOk = true
-		} else {
-			if c.User != nil {
-				if err := loadUserPermissions(db, c.User); err != nil {
-					log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
-					WriteError(w, req, sdk.ErrUnauthorized)
-					return
-				}
-			}
-
-			if rc.needHatchery && c.Hatchery != nil {
-				permissionOk = true
-			}
-			if rc.needWorker {
-				permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
-			}
-
-			if rc.needUsernameOrAdmin && (c.User.Admin || (c.User.Username == mux.Vars(req)["username"])) {
-				// get / update / delete user -> for admin or current user
-				// if not admin and currentUser != username in request -> ko
-				permissionOk = true
-			}
-
-			if rc.needAdmin && c.User.Admin {
-				permissionOk = true
-			}
-			if !rc.needAdmin && !c.User.Admin {
-				permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
-			}
-
-			// else case, just need auth
-			if !rc.needAdmin && !rc.needHatchery && !rc.needWorker && !rc.needUsernameOrAdmin {
-				permissionOk = true
+		if c.User != nil {
+			if err := loadUserPermissions(db, c.User); err != nil {
+				log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
+				WriteError(w, req, sdk.ErrUnauthorized)
+				return
 			}
 		}
-
-		if !permissionOk {
-			WriteError(w, req, sdk.ErrForbidden)
-			return
-		}
-
-		if err := businessContext(db, c, req, w); err != nil {
-			WriteError(w, req, err)
-			return
-		}
-
-		start := time.Now()
-		defer func() {
-			end := time.Now()
-			latency := end.Sub(start)
-			if req.Method == http.MethodGet && rc.getDeprecated ||
-				req.Method == http.MethodPost && rc.postDeprecated ||
-				req.Method == http.MethodPut && rc.putDeprecated ||
-				req.Method == http.MethodDelete && rc.deleteDeprecated {
-				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
-				w.Header().Add("X-CDS-WARNING", "deprecated route")
-			} else {
-				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
-			}
-		}()
 
 		if c.Hatchery != nil {
 			g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
@@ -307,6 +250,56 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				}
 			}
 		}
+
+		permissionOk := false
+		if !rc.auth {
+			permissionOk = true
+		} else {
+			if rc.needHatchery && c.Hatchery != nil {
+				permissionOk = true
+			}
+			if rc.needWorker {
+				permissionOk = checkWorkerPermission(db, rc, mux.Vars(req), c)
+			}
+
+			if rc.needUsernameOrAdmin && (c.User.Admin || (c.User.Username == mux.Vars(req)["username"])) {
+				// get / update / delete user -> for admin or current user
+				// if not admin and currentUser != username in request -> ko
+				permissionOk = true
+			}
+
+			if rc.needAdmin && c.User.Admin {
+				permissionOk = true
+			}
+			if !rc.needAdmin && !c.User.Admin {
+				permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
+			}
+
+			// else case, just need auth
+			if !rc.needAdmin && !rc.needHatchery && !rc.needWorker && !rc.needUsernameOrAdmin {
+				permissionOk = true
+			}
+		}
+
+		if !permissionOk {
+			WriteError(w, req, sdk.ErrForbidden)
+			return
+		}
+
+		start := time.Now()
+		defer func() {
+			end := time.Now()
+			latency := end.Sub(start)
+			if req.Method == http.MethodGet && rc.getDeprecated ||
+				req.Method == http.MethodPost && rc.postDeprecated ||
+				req.Method == http.MethodPut && rc.putDeprecated ||
+				req.Method == http.MethodDelete && rc.deleteDeprecated {
+				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
+				w.Header().Add("X-CDS-WARNING", "deprecated route")
+			} else {
+				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+			}
+		}()
 
 		if req.Method == "GET" && rc.get != nil {
 			if err := rc.get(w, req, db, c); err != nil {
@@ -481,6 +474,7 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	WriteError(w, req, sdk.ErrNotFound)
 }
 
+/*
 // businessContext completes the business context with functionnal stuff
 func businessContext(db gorp.SqlExecutor, c *businesscontext.Ctx, req *http.Request, w http.ResponseWriter) error {
 
@@ -561,3 +555,4 @@ func businessContext(db gorp.SqlExecutor, c *businesscontext.Ctx, req *http.Requ
 
 	return nil
 }
+*/
