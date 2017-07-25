@@ -201,10 +201,16 @@ func addGroupInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 func deleteGroupFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get project name in URL
 	vars := mux.Vars(r)
+	key := vars["key"]
 	envName := vars["permEnvironmentName"]
 	groupName := vars["group"]
 
-	env, errE := environment.LoadEnvironmentByName(db, c.Project.Key, envName)
+	proj, errP := project.Load(db, key, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "deleteGroupFromEnvironmentHandler> Cannot load project")
+	}
+
+	env, errE := environment.LoadEnvironmentByName(db, proj.Key, envName)
 	if errE != nil {
 		return sdk.WrapError(errE, "deleteGroupFromEnvironmentHandler: Cannot load environment")
 	}
@@ -215,11 +221,11 @@ func deleteGroupFromEnvironmentHandler(w http.ResponseWriter, r *http.Request, d
 	}
 	defer tx.Rollback()
 
-	if err := group.DeleteGroupFromEnvironment(tx, c.Project.Key, envName, groupName); err != nil {
+	if err := group.DeleteGroupFromEnvironment(tx, proj.Key, envName, groupName); err != nil {
 		return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot delete group %s from pipeline %s", groupName, envName)
 	}
 
-	if err := project.UpdateLastModified(tx, c.User, c.Project); err != nil {
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
 		return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot update project last modified date")
 	}
 
