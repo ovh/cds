@@ -65,6 +65,7 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
 				time.Sleep(5 * time.Second)
 				continue
 			}
+			log.Info("lastUpdate.CacheSubscribe> New Message from Cache")
 			cacheMsgChan <- msg
 		}
 	}
@@ -138,6 +139,7 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 }
 
 func (b *LastUpdateBroker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	log.Info("LastUpdateBroker.ServeHTTP: Connection new User: %s", c.User.Username)
 	// Make sure that the writer supports flushing.
 	f, ok := w.(http.Flusher)
 	if !ok {
@@ -175,6 +177,7 @@ leave:
 				delete(b.clients, messageChan.UIID)
 				break leave
 			}
+			log.Info("LastUpdateBroker.ServeHTTP: Sending msg to User %s: %s", c.User.Username, msg)
 			fmt.Fprintf(w, "data: %s\n\n", msg)
 			f.Flush()
 		}
