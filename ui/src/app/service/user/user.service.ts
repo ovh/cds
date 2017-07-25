@@ -1,14 +1,14 @@
 import {Injectable} from '@angular/core';
-import {Http, Response, RequestOptions, Headers} from '@angular/http';
 import {User} from '../../model/user.model';
 import {Groups} from '../../model/group.model';
 import {Observable} from 'rxjs/Rx';
 import {AuthentificationStore} from '../auth/authentification.store';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 
 @Injectable()
 export class UserService {
 
-    constructor(private _http: Http, private _authStore: AuthentificationStore) {
+    constructor(private _http: HttpClient, private _authStore: AuthentificationStore) {
     }
 
     /**
@@ -25,9 +25,10 @@ export class UserService {
      * @returns {Observable<User>}
      */
     login(user: User): Observable<User> {
-        return this._http.post('/login', user).map(res => {
-            let u = res.json().user;
-            let headers: Headers = res.headers;
+        return this._http.post<any>('/login', user, {observe: 'response'}).map(res => {
+            debugger;
+            let u = res.body.user;
+            let headers: HttpHeaders = res.headers;
 
             let sessionToken: string = null;
             if (headers) {
@@ -50,7 +51,7 @@ export class UserService {
             user: user,
             callback: href + 'account/verify/%s/%s'
         };
-        return this._http.post('/user/' + user.username + '/reset', request).map(res => {
+        return this._http.post('/user/' + user.username + '/reset', request).map(() => {
             return true;
         });
     }
@@ -65,7 +66,7 @@ export class UserService {
             user: user,
             callback: href + 'account/verify/%s/%s'
         };
-        return this._http.post('/user/signup', request).map(res => {
+        return this._http.post('/user/signup', request).map(() => {
             return true;
         });
     }
@@ -77,9 +78,7 @@ export class UserService {
      * @returns {Observable<Response>}
      */
     verify(username: string, token: string): Observable<Response> {
-        let options: RequestOptions = new RequestOptions();
-        options.withCredentials = false;
-        return this._http.get('/user/' + username + '/confirm/' + token, options).map(res => res.json());
+        return this._http.get('/user/' + username + '/confirm/' + token);
     }
 
     /**
@@ -87,7 +86,7 @@ export class UserService {
      * @returns {Observable<User[]>}
      */
     getUsers(): Observable<User[]> {
-        return this._http.get('/user').map(res => res.json());
+        return this._http.get('/user');
     }
 
     /**
@@ -95,7 +94,7 @@ export class UserService {
      * @returns {Observable<User[]>}
      */
     getGroups(username: string): Observable<Groups> {
-        return this._http.get('/user/' + username + '/groups').map(res => res.json());
+        return this._http.get('/user/' + username + '/groups');
     }
 
     /**
@@ -104,7 +103,7 @@ export class UserService {
      * @returns {Observable<User>}
      */
     getUser(username: string): Observable<User> {
-        return this._http.get('/user/' + username).map(res => res.json());
+        return this._http.get('/user/' + username);
     }
 
     /**
@@ -114,7 +113,7 @@ export class UserService {
      * @returns {Observable<User>}
      */
     updateUser(username: string, user: User): Observable<User> {
-        return this._http.put('/user/' + username, user).map(res => res.json());
+        return this._http.put('/user/' + username, user);
     }
 
     /**

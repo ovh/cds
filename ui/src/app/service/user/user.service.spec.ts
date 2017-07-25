@@ -7,7 +7,6 @@ import {Http, RequestOptions, Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {AppModule} from '../../app.module';
 import {AuthentificationStore} from '../auth/authentification.store';
-import {HttpService} from '../http-service.service';
 import {User} from '../../model/user.model';
 import {UserService} from './user.service';
 import {RouterModule, Router} from '@angular/router';

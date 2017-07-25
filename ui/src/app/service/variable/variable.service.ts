@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
+import {HttpClient} from '@angular/common/http';
 
 /**
  * Service to access Variable commons.
@@ -11,7 +11,7 @@ export class VariableService {
 
     private variablesType: string[];
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     /**
@@ -27,10 +27,7 @@ export class VariableService {
      * @returns {Observable<string[]>}
      */
     getTypesFromAPI(): Observable<string[]> {
-        return this._http.get('/variable/type').map(res => {
-            this.variablesType = res.json();
-            return this.variablesType;
-        });
+        return this._http.get('/variable/type');
     }
 
     /**
@@ -39,6 +36,6 @@ export class VariableService {
      * @returns {Observable<Array<string>>}
      */
     getContextVariable(key: string): Observable<Array<string>> {
-        return this._http.get('/suggest/variable/' + key).map(res => res.json());
+        return this._http.get('/suggest/variable/' + key);
     }
 }

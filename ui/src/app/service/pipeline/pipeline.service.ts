@@ -1,5 +1,4 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Pipeline} from '../../model/pipeline.model';
 import {Application} from '../../model/application.model';
@@ -7,6 +6,7 @@ import {GroupPermission} from '../../model/group.model';
 import {Stage} from '../../model/stage.model';
 import {Job} from '../../model/job.model';
 import {Parameter} from '../../model/parameter.model';
+import {HttpClient} from '@angular/common/http';
 
 /**
  * Service to access Pipeline from API.
@@ -15,7 +15,7 @@ import {Parameter} from '../../model/parameter.model';
 @Injectable()
 export class PipelineService {
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     /**
@@ -24,7 +24,7 @@ export class PipelineService {
      * @param pipName Pipeline Name
      */
     getPipeline(key: string, pipName: string): Observable<Pipeline> {
-        return this._http.get('/project/' + key + '/pipeline/' + pipName).map(res => res.json());
+        return this._http.get('/project/' + key + '/pipeline/' + pipName);
     }
 
     /**
@@ -34,7 +34,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     updatePipeline(key: string, oldName: string, pipeline: Pipeline): Observable<Pipeline> {
-        return this._http.put('/project/' + key + '/pipeline/' + oldName, pipeline).map(res => res.json());
+        return this._http.put('/project/' + key + '/pipeline/' + oldName, pipeline);
     }
 
     /**
@@ -56,7 +56,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     createPipeline(key: string, pipeline: Pipeline): Observable<Pipeline> {
-        return this._http.post('/project/' + key + '/pipeline', pipeline).map(res => res.json());
+        return this._http.post('/project/' + key + '/pipeline', pipeline);
     }
 
     /**
@@ -66,7 +66,7 @@ export class PipelineService {
      * @returns {Observable<Application[]>}
      */
     getApplications(key: string,  pipName: string): Observable<Application[]> {
-        return this._http.get('/project/' + key + '/pipeline/' + pipName + '/application').map(res => res.json());
+        return this._http.get('/project/' + key + '/pipeline/' + pipName + '/application');
     }
 
     /**
@@ -74,7 +74,7 @@ export class PipelineService {
      * @returns {Observable<Array<string>>}
      */
     getPipelineTypes(): Observable<Array<string>> {
-        return this._http.get('/pipeline/type').map(res => res.json());
+        return this._http.get('/pipeline/type');
     }
 
     /**
@@ -85,7 +85,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     insertStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
-        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/stage', stage).map(res => res.json());
+        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/stage', stage);
     }
 
     /**
@@ -96,7 +96,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     updateStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
-        return this._http.put('/project/' + key + '/pipeline/' + pipName + '/stage/' + stage.id, stage).map(res => res.json());
+        return this._http.put('/project/' + key + '/pipeline/' + pipName + '/stage/' + stage.id, stage);
     }
 
     /**
@@ -107,7 +107,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     deleteStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
-        return this._http.delete('/project/' + key + '/pipeline/' + pipName + '/stage/' + stage.id).map(res => res.json());
+        return this._http.delete('/project/' + key + '/pipeline/' + pipName + '/stage/' + stage.id);
     }
 
     /**
@@ -119,7 +119,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     addJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
-        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/stage/' + stageID + '/job', job).map(res => res.json());
+        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/stage/' + stageID + '/job', job);
     }
 
     /**
@@ -132,7 +132,7 @@ export class PipelineService {
      */
     updateJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
         let url = '/project/' + key + '/pipeline/' + pipName + '/stage/' + stageID + '/job/' + job.pipeline_action_id;
-        return this._http.put(url, job).map(res => res.json());
+        return this._http.put(url, job);
     }
 
     /**
@@ -145,7 +145,7 @@ export class PipelineService {
      */
     removeJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
         let url = '/project/' + key + '/pipeline/' + pipName + '/stage/' + stageID + '/job/' + job.pipeline_action_id;
-        return this._http.delete(url).map(res => res.json());
+        return this._http.delete(url);
     }
 
     /**
@@ -156,7 +156,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     addPermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/group', gp).map(res => res.json());
+        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/group', gp);
     }
 
     /**
@@ -167,7 +167,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     updatePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._http.put('/project/' + key + '/pipeline/' + pipName + '/group/' + gp.group.name, gp).map(res => res.json());
+        return this._http.put('/project/' + key + '/pipeline/' + pipName + '/group/' + gp.group.name, gp);
     }
 
     /**
@@ -178,7 +178,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     removePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._http.delete('/project/' + key + '/pipeline/' + pipName + '/group/' + gp.group.name).map(res => res.json());
+        return this._http.delete('/project/' + key + '/pipeline/' + pipName + '/group/' + gp.group.name);
     }
 
     /**
@@ -189,7 +189,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     addParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name, param).map(res => res.json());
+        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name, param);
     }
 
     /**
@@ -200,7 +200,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     updateParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._http.put('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name, param).map(res => res.json());
+        return this._http.put('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name, param);
     }
 
     /**
@@ -211,7 +211,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     removeParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._http.delete('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name).map(res => res.json());
+        return this._http.delete('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name);
     }
 
     /**
@@ -221,6 +221,6 @@ export class PipelineService {
      * @param stage stage to move
      */
     moveStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
-        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/stage/move', stage).map(res => res.json());
+        return this._http.post('/project/' + key + '/pipeline/' + pipName + '/stage/move', stage);
     }
 }

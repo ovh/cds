@@ -118,7 +118,7 @@ export class WorkflowStore {
         return this._workflowService.getTriggerCondition(key, workflowName, nodeID);
     }
 
-    getTriggerJoinCondition(key: string, workflowName: string, joinID: number) {
+    getTriggerJoinCondition(key: string, workflowName: string, joinID: number): any {
         return this._workflowService.getTriggerJoinCondition(key, workflowName, joinID);
     }
 

@@ -1,13 +1,11 @@
 import {NgModule, ModuleWithProviders, SkipSelf, Optional} from '@angular/core';
 import {ProjectService} from './project/project.service';
 import {ProjectStore} from './project/project.store';
-import {RequestOptions, XHRBackend, Http} from '@angular/http';
-import {HttpService} from './http-service.service';
+import {Http} from '@angular/http';
 import {AuthentificationStore} from './auth/authentification.store';
 import {UserService} from './user/user.service';
 import {CanActivateAuthRoute} from './auth/authenRouteActivate';
 import {CanActivateAuthAdminRoute} from './auth/authenAdminRouteActivate';
-import {Router} from '@angular/router';
 import {WarningStore} from './warning/warning.store';
 import {PipelineStore} from './pipeline/pipeline.store';
 import {PipelineService} from './pipeline/pipeline.service';
@@ -17,7 +15,6 @@ import {ApplicationPipelineService} from './application/pipeline/application.pip
 import {VariableService} from './variable/variable.service';
 import {GroupService} from './group/group.service';
 import {RepoManagerService} from './repomanager/project.repomanager.service';
-import {ToastService} from '../shared/toast/ToastService';
 import {ApplicationWorkflowService} from './application/application.workflow.service';
 import {RequirementService} from './worker-model/requirement/requirement.service';
 import {RequirementStore} from './worker-model/requirement/requirement.store';
@@ -40,6 +37,9 @@ import {WorkflowRunService} from './workflow/run/workflow.run.service';
 import {RouterService} from './router/router.service';
 import {WarningService} from './warning/warning.service';
 import {LastUpdateService} from './sse/lastupdate.sservice';
+import {HTTP_INTERCEPTORS} from '@angular/common/http';
+import {AuthentificationInterceptor} from './auth.interceptor.service';
+import {LogoutInterceptor} from './logout.interceptor.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -85,11 +85,15 @@ export class ServicesModule {
                 WorkerModelService,
                 WorkflowService, WorkflowStore, WorkflowRunService,
                 {
-                    provide: Http,
-                    useFactory: (httpFactory),
-                    deps: [XHRBackend, RequestOptions, ToastService, AuthentificationStore, Router]
+                    provide: HTTP_INTERCEPTORS,
+                    useClass: AuthentificationInterceptor,
+                    multi: true
                 },
-
+                {
+                    provide: HTTP_INTERCEPTORS,
+                    useClass: LogoutInterceptor,
+                    multi: true
+                }
             ]
         };
     }
@@ -100,11 +104,6 @@ export class ServicesModule {
                 'ServicesModule is already loaded. Import it in the AppModule only');
         }
     }
-}
-
-export function httpFactory(backend: XHRBackend, defaultOptions: RequestOptions,
-                            toast: ToastService, authStore: AuthentificationStore, router: Router) {
-    return new HttpService(backend, defaultOptions, toast, authStore, router);
 }
 
 export {
