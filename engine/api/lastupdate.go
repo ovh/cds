@@ -164,6 +164,7 @@ func (b *LastUpdateBroker) ServeHTTP(w http.ResponseWriter, r *http.Request, db 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
 
 leave:
 	for {
