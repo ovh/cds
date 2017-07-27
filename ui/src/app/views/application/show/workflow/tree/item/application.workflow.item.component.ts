@@ -203,6 +203,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
                 break;
             case 'update':
                 this.editTriggerModal.hide();
+                this.triggerInModal.parameters = Parameter.formatForAPI(this.triggerInModal.parameters);
                 this._appStore.updateTrigger(
                     this.project.key,
                     this.workflowItem.application.name,
