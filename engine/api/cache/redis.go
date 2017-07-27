@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
@@ -215,10 +216,17 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 func (s *RedisStore) Publish(channel string, value interface{}) {
 	msg, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis.Publish> Cannot push in channel %s: %v, %s", channel, value, err)
+		log.Warning("redis.Publish> Marshall error, cannot push in channel %s: %v, %s", channel, value, err)
 		return
 	}
-	s.Client.Publish(channel, string(msg))
+	iUnquoted, err := strconv.Unquote(string(msg))
+
+	if err != nil {
+		log.Warning("redis.Publish> Unquote error, cannot push in channel %s: %v, %s", channel, string(msg), err)
+		return
+	}
+
+	s.Client.Publish(channel, iUnquoted)
 }
 
 // Subscribe to a channel
@@ -235,18 +243,20 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 	rps.ReceiveTimeout(200 * time.Millisecond)
 
 	var redisMsg *redis.Message
-	ticker := time.NewTicker(250 * time.Second).C
+	ticker := time.NewTicker(250 * time.Millisecond).C
 	for redisMsg == nil {
 		select {
 		case <-ticker:
-			msg, err := rps.ReceiveTimeout(200 * time.Millisecond)
-			if err != nil {
-				log.Warning("redis.GetMessage> Cannot receive message: %s", err)
-				return "", err
+			msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
+
+			if msg == nil {
+				continue
 			}
+
 			var ok bool
 			redisMsg, ok = msg.(*redis.Message)
 			if !ok {
+				log.Warning("redis.GetMessage> Message casting error for %v of type %T", msg, msg)
 				continue
 			}
 

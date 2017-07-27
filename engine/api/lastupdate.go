@@ -129,10 +129,9 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 					}
 				}
 
-				fmt.Println(hasPermission)
-				// if hasPermission {
-				i.Queue <- msg
-				// }
+				if hasPermission {
+					i.Queue <- msg
+				}
 			}
 		}
 	}
