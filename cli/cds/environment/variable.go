@@ -2,6 +2,7 @@ package environment
 
 import (
 	"fmt"
+	"sort"
 
 	"gopkg.in/yaml.v2"
 
@@ -16,6 +17,8 @@ var environmentVariableCmd = &cobra.Command{
 	Long:    ``,
 	Aliases: []string{"v"},
 }
+
+var force *bool
 
 func init() {
 	environmentVariableCmd.AddCommand(cmdEnvironmentShowVariable())
@@ -61,10 +64,13 @@ func cmdEnvironmentAddVariable() *cobra.Command {
 		Long:  ``,
 		Run:   addEnvironmentVariable,
 	}
+	force = cmd.Flags().BoolP("force", "", false, "force update if variable already exist")
+
 	return cmd
 }
 
 func addEnvironmentVariable(cmd *cobra.Command, args []string) {
+	var err error
 	if len(args) != 5 {
 		sdk.Exit("Wrong usage: %s\n", cmd.Short)
 	}
@@ -74,7 +80,24 @@ func addEnvironmentVariable(cmd *cobra.Command, args []string) {
 	varValue := args[3]
 	varType := args[4]
 
-	if err := sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, varType); err != nil {
+	if *force {
+		variables, errSh := sdk.ShowEnvironmentVariable(projectKey, envName)
+		if errSh != nil {
+			sdk.Exit("Error: cannot show existing variables for environment %s (%s)\n", envName, err)
+		}
+
+		iFound := sort.Search(len(variables), func(i int) bool { return variables[i].Name == varName })
+		if iFound == len(variables) {
+			err = sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, varType)
+		} else {
+			err = sdk.UpdateEnvironmentVariable(projectKey, envName, varName, varName, varValue, varType)
+		}
+
+	} else {
+		err = sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, varType)
+	}
+
+	if err != nil {
 		sdk.Exit("Error: cannot add variable %s in environment %s (%s)\n", varName, envName, err)
 	}
 	fmt.Printf("OK\n")
