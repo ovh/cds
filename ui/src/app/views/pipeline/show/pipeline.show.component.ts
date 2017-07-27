@@ -108,7 +108,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                             this.applications = apps;
                         });
                     } else if (pipelineUpdated && pipelineUpdated.externalChange) {
-                        // TODO show warning
+                        this._toast.info('', this._translate.instant('warning_pipeline'));
                     }
                 }
             }, () => {

@@ -445,6 +445,7 @@
   "warning_pipeline_title" : "Liste des warnings sur le pipeline {{pip}}",
   "warning_application" : "Un autre utilisateur vient de modifier l'application.",
   "warning_application_title" : "Liste des warnings sur l'application {{app}}",
+  "warning_pipeline" : "Un autre utilisateur vient de modifier le pipeline.",
 
   "wizard_app_clone" : "Cloner une application",
   "wizard_app_empty" : "Application vide",
