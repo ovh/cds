@@ -1,8 +1,5 @@
 :2015 {
     ext .html
-    gzip {
-        not /cdsapi/mon/lastupdates/events
-    }
 
     errors {
         404 index.html
