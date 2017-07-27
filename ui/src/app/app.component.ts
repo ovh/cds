@@ -78,7 +78,6 @@ export class AppComponent  implements OnInit {
 
     startLastUpdateSSE(): void {
         this._last.getLastUpdate().subscribe(msg => {
-            console.log(msg);
             let lastUpdateEvent: LastModification = JSON.parse(msg);
             this._appService.updateCache(lastUpdateEvent);
         });
@@ -110,7 +109,7 @@ export class AppComponent  implements OnInit {
         this.versionWorker = new CDSWorker('./assets/worker/web/version.js');
         this.versionWorker.start({});
         this.versionWorker.response().subscribe( msg => {
-            if (msg !== null && msg !== undefined) {
+            if (msg) {
                 this.zone.run(() => {
                     let versionJSON = JSON.parse(msg).version;
                     if (this.currentVersion === 0) {
