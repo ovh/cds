@@ -39,6 +39,9 @@ type NodeRunArtifact sdk.WorkflowNodeRunArtifact
 // NodeHook is a gorp wrapper around sdk.WorkflowNodeHook
 type NodeHook sdk.WorkflowNodeHook
 
+// NodeHookModel is a gorp wrapper around sdk.WorkflowHookModel
+type NodeHookModel sdk.WorkflowHookModel
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(Workflow{}, "workflow", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Node{}, "workflow_node", true, "id"))

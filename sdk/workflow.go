@@ -262,7 +262,7 @@ func (n *WorkflowNode) References() []string {
 	return res
 }
 
-//InvolvedApplications returns all applications used in the workflow
+//InvolvedApplications reLOCK TABLE pipeline_scheduler_execution IN ACCESS EXCLUSIVE MODE NOWAITturns all applications used in the workflow
 func (n *WorkflowNode) InvolvedApplications() []int64 {
 	res := []int64{}
 	if n.Context != nil {
@@ -359,6 +359,8 @@ type WorkflowNodeHook struct {
 	Config              WorkflowNodeHookConfig     `json:"config" db:"-"`
 }
 
+var WorkflowHookModelBuiltin = "builtin"
+
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]string
 
@@ -370,6 +372,7 @@ type WorkflowHookModel struct {
 	Author        string                 `json:"author" db:"author"`
 	Description   string                 `json:"description" db:"description"`
 	Identifier    string                 `json:"identifier" db:"identifier"`
+	Icon          string                 `json:"-" db:"icon"`
 	Image         string                 `json:"image" db:"image"`
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
