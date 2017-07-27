@@ -89,6 +89,10 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bu
 	output = append(output, database.Status())
 	log.Debug("Status> %s", database.Status())
 
+	// Check LastUpdate Connected User
+	output = append(output, fmt.Sprintf("LastUpdate Connected: %d", len(lastUpdateBroker.clients)))
+	log.Debug("LastUpdate ConnectedUser> %d", len(lastUpdateBroker.clients))
+
 	var status = http.StatusOK
 	if panicked {
 		status = http.StatusServiceUnavailable
