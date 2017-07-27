@@ -2,21 +2,24 @@ package webctx
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/sclevine/agouti"
 
 	"github.com/runabove/venom"
 )
 
-// Context Type name
+// Name of the Context
 const Name = "web"
 
 // Key of context element in testsuite file
 const (
-	Width  = "width"
-	Height = "height"
-	Driver = "driver"
-	Args   = "args"
+	Width   = "width"
+	Height  = "height"
+	Driver  = "driver"
+	Args    = "args"
+	Timeout = "timeout"
+	Debug   = "debug"
 )
 
 // New returns a new TestCaseContext
@@ -26,17 +29,16 @@ func New() venom.TestCaseContext {
 	return ctx
 }
 
-// TestCaseContex represents the context of a testcase
+// WebTestCaseContext represents the context of a testcase
 type WebTestCaseContext struct {
 	venom.CommonTestCaseContext
 	wd   *agouti.WebDriver
 	Page *agouti.Page
 }
 
-// BuildContext build context of type web.
+// Init build context of type web.
 // It creates a new browser
 func (tcc *WebTestCaseContext) Init() error {
-
 	var driver string
 	if _, ok := tcc.TestCase.Context[Driver]; !ok {
 		driver = "phantomjs"
@@ -53,6 +55,7 @@ func (tcc *WebTestCaseContext) Init() error {
 			}
 		}
 	}
+
 	switch driver {
 	case "chrome":
 		tcc.wd = agouti.ChromeDriver(agouti.Desired(
@@ -60,10 +63,27 @@ func (tcc *WebTestCaseContext) Init() error {
 				"chromeOptions": map[string][]string{
 					"args": args,
 				},
-			}),
-		)
+			}))
 	default:
 		tcc.wd = agouti.PhantomJS()
+	}
+
+	timeout, existTimeout, errTimeout := isIntInContext(tcc.TestCase, Timeout)
+	if errTimeout != nil {
+		return errTimeout
+	}
+	if existTimeout {
+		tcc.wd.Timeout = time.Duration(timeout) * time.Second
+	} else {
+		tcc.wd.Timeout = 180 * time.Second // default value
+	}
+	if v, exist := tcc.TestCase.Context[Debug]; exist {
+		switch tcc.TestCase.Context[Debug].(type) {
+		case bool:
+			tcc.wd.Debug = v.(bool)
+		default:
+			return fmt.Errorf("%s is not an boolean: %s", Debug, fmt.Sprintf("%s", tcc.TestCase.Context[Debug]))
+		}
 	}
 
 	if err := tcc.wd.Start(); err != nil {
@@ -86,25 +106,32 @@ func (tcc *WebTestCaseContext) Init() error {
 
 	// Resize Page
 	if resizePage {
-		var width, height int
-		switch tcc.TestCase.Context[Width].(type) {
-		case int:
-			width = tcc.TestCase.Context[Width].(int)
-		default:
-			return fmt.Errorf("%s is not an integer: %s", Width, fmt.Sprintf("%s", tcc.TestCase.Context[Width]))
+		width, _, errWidth := isIntInContext(tcc.TestCase, Width)
+		if errWidth != nil {
+			return errWidth
 		}
-		switch tcc.TestCase.Context[Height].(type) {
-		case int:
-			height = tcc.TestCase.Context[Height].(int)
-		default:
-			return fmt.Errorf("%s is not an integer: %s", Height, fmt.Sprintf("%s", tcc.TestCase.Context[Height]))
+		height, _, errHeight := isIntInContext(tcc.TestCase, Height)
+		if errHeight != nil {
+			return errHeight
 		}
-
 		if err := tcc.Page.Size(width, height); err != nil {
 			return fmt.Errorf("Cannot resize page: %s", err)
 		}
 	}
 	return nil
+}
+
+// isIntInContext returns  valueOfKey, existOrNot in Context, Error
+func isIntInContext(t venom.TestCase, n string) (int, bool, error) {
+	if _, exist := t.Context[n]; !exist {
+		return -1, false, nil
+	}
+	switch t.Context[n].(type) {
+	case int:
+		return t.Context[n].(int), true, nil
+	default:
+		return -1, true, fmt.Errorf("%s is not an integer: %s", n, fmt.Sprintf("%s", t.Context[n]))
+	}
 }
 
 // Close web driver

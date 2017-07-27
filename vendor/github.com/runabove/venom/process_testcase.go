@@ -7,6 +7,12 @@ import (
 
 func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l Logger, detailsLevel string) {
 	l.Debugf("Init context")
+	var errContext error
+	tc.Context, errContext = ts.Templater.ApplyOnContext(tc.Context)
+	if errContext != nil {
+		tc.Errors = append(tc.Errors, Failure{Value: errContext.Error()})
+		return
+	}
 	tcc, errContext := ContextWrap(tc)
 	if errContext != nil {
 		tc.Errors = append(tc.Errors, Failure{Value: errContext.Error()})

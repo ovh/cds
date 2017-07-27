@@ -11,7 +11,6 @@ import (
 
 // Process runs tests suite and return a Tests result
 func Process(path []string, variables map[string]string, exclude []string, parallel int, logLevel string, detailsLevel string, writer io.Writer) (*Tests, error) {
-
 	switch logLevel {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
