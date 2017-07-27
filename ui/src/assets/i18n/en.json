@@ -443,7 +443,9 @@
   "warning_project" : "Another user has just updated the project.",
   "warning_project_title" : "Project warning list",
   "warning_pipeline_title" : "Warnings list for pipeline {{pip}}",
+  "warning_application" : "Another user has just updated the application.",
   "warning_application_title" : "Warnings list for application {{app}}",
+  "warning_pipeline" : "Another user has just updated the pipeline.",
 
   "wizard_app_clone" : "Clone an application",
   "wizard_app_empty" : "Empty application",
