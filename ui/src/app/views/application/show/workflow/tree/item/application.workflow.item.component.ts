@@ -193,6 +193,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         switch (type) {
             case 'add':
                 this.createTriggerModal.hide();
+                this.triggerInModal.parameters = Parameter.formatForAPI(this.triggerInModal.parameters);
                 this._appStore.addTrigger(
                     this.project.key,
                     this.workflowItem.application.name,
@@ -203,6 +204,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
                 break;
             case 'update':
                 this.editTriggerModal.hide();
+                this.triggerInModal.parameters = Parameter.formatForAPI(this.triggerInModal.parameters);
                 this._appStore.updateTrigger(
                     this.project.key,
                     this.workflowItem.application.name,
@@ -214,6 +216,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             case 'delete':
                 this.triggerLoading = true;
                 this.editTriggerModal.hide();
+                this.triggerInModal.parameters = Parameter.formatForAPI(this.triggerInModal.parameters);
                 this._appStore.removeTrigger(
                     this.project.key,
                     this.triggerInModal.src_application.name,
