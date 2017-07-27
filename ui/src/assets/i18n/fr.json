@@ -443,6 +443,7 @@
   "warning_project" : "Un autre utilisateur vient de modifier le projet.",
   "warning_project_title" : "Liste des warnings sur le project",
   "warning_pipeline_title" : "Liste des warnings sur le pipeline {{pip}}",
+  "warning_application" : "Un autre utilisateur vient de modifier l'application.",
   "warning_application_title" : "Liste des warnings sur l'application {{app}}",
 
   "wizard_app_clone" : "Cloner une application",

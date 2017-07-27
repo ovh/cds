@@ -112,7 +112,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                                     this.workflowComponentList.first.switchApplication();
                                 }
                             } else if (updatedApplication && updatedApplication.externalChange) {
-                                // TODO show warning
+                                this._toast.info('', this._translate.instant('warning_application'));
                             }
                         }
                     }, () => {
