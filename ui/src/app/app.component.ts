@@ -78,7 +78,6 @@ export class AppComponent  implements OnInit {
 
     startLastUpdateSSE(): void {
         this._last.getLastUpdate().subscribe(msg => {
-            console.log(msg);
             let lastUpdateEvent: LastModification = JSON.parse(msg);
             this._appService.updateCache(lastUpdateEvent);
         });
