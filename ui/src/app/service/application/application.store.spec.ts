@@ -3,15 +3,12 @@
 import {async, fakeAsync, getTestBed, TestBed} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {MockBackend} from '@angular/http/testing';
-import {Http, RequestOptions, Response, ResponseOptions} from '@angular/http';
+import {Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {AppModule} from '../../app.module';
-import {AuthentificationStore} from '../auth/authentification.store';
-import {HttpService} from '../http-service.service';
-import {Router, RouterModule} from '@angular/router';
+import {RouterModule} from '@angular/router';
 import {ApplicationStore} from './application.store';
 import {Application} from '../../model/application.model';
-import {ToastService} from '../../shared/toast/ToastService';
 import {RepositoryPoller} from '../../model/polling.model';
 import {Pipeline} from '../../model/pipeline.model';
 import {Project} from '../../model/project.model';
@@ -20,6 +17,7 @@ import {GroupPermission} from '../../model/group.model';
 import {Trigger} from '../../model/trigger.model';
 import {ApplyTemplateRequest} from '../../model/template.model';
 import {ProjectStore} from '../project/project.store';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 
 describe('CDS: application Store', () => {
 
@@ -34,20 +32,11 @@ describe('CDS: application Store', () => {
             providers: [
                 {provide: APP_BASE_HREF, useValue: '/'},
                 MockBackend,
-                {
-                    provide: Http,
-                    useFactory: (backendParam: MockBackend,
-                                 defaultOptions: RequestOptions,
-                                 toast: ToastService,
-                                 authStore: AuthentificationStore,
-                                 router: Router) =>
-                        new HttpService(backendParam, defaultOptions, toast, authStore, router),
-                    deps: [MockBackend, RequestOptions, ToastService, AuthentificationStore]
-                }
             ],
             imports: [
                 AppModule,
-                RouterModule
+                RouterModule,
+                HttpClientTestingModule
             ]
         });
         injector = getTestBed();
@@ -63,58 +52,49 @@ describe('CDS: application Store', () => {
     });
 
     it('should create and delete an Application', fakeAsync(() => {
-        let call = 0;
-        let projectKey = 'key1';
-        // Mock Http application request
-        backend.connections.subscribe(connection => {
-            switch (call) {
-                case 0:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myApplication" }'})));
-                    break;
-                case 1:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myApplication2" }'})));
-                    break;
-                case 2:
-                case 3:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{}'})));
-                    break;
-            }
+        const http = TestBed.get(HttpTestingController);
+
+        let app1 = new Application();
+        app1.name = 'myApplication';
+
+        let app2 = new Application();
+        app2.name = 'myApplication2';
 
 
-        });
         // Create Get application
         let checkApplicationCreated = false;
-        applicationStore.getApplicationResolver(projectKey, 'myApplication').subscribe(res => {
+        applicationStore.getApplicationResolver('key1', 'myApplication').subscribe(res => {
             expect(res.name).toBe('myApplication', 'Wrong application name');
             checkApplicationCreated = true;
         }).unsubscribe();
-        expect(call).toBe(1, 'Need to have done 1 http call');
+        http.expectOne('foo.bar/project/key1/application/myApplication').flush(app1);
 
         // check get application (get from cache)
         let checkedSingleApplication = false;
-        applicationStore.getApplications(projectKey, 'myApplication').subscribe(apps => {
-            expect(apps.get(projectKey + '-myApplication').name).toBe('myApplication', 'Wrong application name. Must be myApplication');
+        applicationStore.getApplications('key1', 'myApplication').subscribe(apps => {
+            expect(apps.get('key1' + '-myApplication').name).toBe('myApplication', 'Wrong application name. Must be myApplication');
             checkedSingleApplication = true;
         }).unsubscribe();
         expect(checkedSingleApplication).toBeTruthy('Need to get application myApplication');
-        expect(call).toBe(1, 'Need to have done 1 http call');
 
 
         let checkedDeleteApp = false;
-        applicationStore.deleteApplication(projectKey, 'myApplication2').subscribe(() => {
+        applicationStore.deleteApplication('key1', 'myApplication2').subscribe(() => {
         });
-        applicationStore.getApplications(projectKey, 'myApplication2').subscribe(() => {
+        http.expectOne('foo.bar/project/key1/application/myApplication2').flush(null);
+        applicationStore.getApplications('key1', 'myApplication2').subscribe(() => {
             checkedDeleteApp = true;
         }).unsubscribe();
-        // 1 call for update + 1 for get because app was deleted from cache
-        expect(call).toBe(3, 'Need to have done 3 http call');
+        expect(checkedDeleteApp).toBeTruthy()
+        http.expectOne('foo.bar/project/key1/application/myApplication2').flush(app2);
 
     }));
 
     it('should update the application', async(() => {
+        let application = new Application();
+        application.name = 'myApplication';
+
+
         let call = 0;
         let projectKey = 'key1';
         // Mock Http application request

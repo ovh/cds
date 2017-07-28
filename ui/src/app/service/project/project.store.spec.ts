@@ -3,15 +3,12 @@
 import {async, getTestBed, TestBed} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {MockBackend} from '@angular/http/testing';
-import {Http, RequestOptions, Response, ResponseOptions} from '@angular/http';
+import {Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {AppModule} from '../../app.module';
-import {AuthentificationStore} from '../auth/authentification.store';
-import {HttpService} from '../http-service.service';
-import {Router, RouterModule} from '@angular/router';
+import {RouterModule} from '@angular/router';
 import {ProjectStore} from './project.store';
 import {Project} from '../../model/project.model';
-import {ToastService} from '../../shared/toast/ToastService';
 import {Variable} from '../../model/variable.model';
 import {Group, GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
@@ -28,17 +25,7 @@ describe('CDS: project Store', () => {
             declarations: [],
             providers: [
                 {provide: APP_BASE_HREF, useValue: '/'},
-                MockBackend,
-                {
-                    provide: Http,
-                    useFactory: (backendParam: MockBackend,
-                                 defaultOptions: RequestOptions,
-                                 toast: ToastService,
-                                 authStore: AuthentificationStore,
-                                 router: Router) =>
-                        new HttpService(backendParam, defaultOptions, toast, authStore, router),
-                    deps: [MockBackend, RequestOptions, ToastService, AuthentificationStore]
-                }
+                MockBackend
             ],
             imports: [
                 AppModule,

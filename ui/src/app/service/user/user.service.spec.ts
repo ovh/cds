@@ -3,14 +3,13 @@
 import {TestBed, async, getTestBed} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {MockBackend} from '@angular/http/testing';
-import {Http, RequestOptions, Response, ResponseOptions} from '@angular/http';
+import {Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {AppModule} from '../../app.module';
 import {AuthentificationStore} from '../auth/authentification.store';
 import {User} from '../../model/user.model';
 import {UserService} from './user.service';
-import {RouterModule, Router} from '@angular/router';
-import {ToastService} from '../../shared/toast/ToastService';
+import {RouterModule} from '@angular/router';
 
 describe('CDS: User Service + Authent Store', () => {
 
@@ -25,16 +24,6 @@ describe('CDS: User Service + Authent Store', () => {
             providers: [
                 { provide: APP_BASE_HREF, useValue: '/' },
                 MockBackend,
-                {
-                    provide: Http,
-                    useFactory: (backendParam: MockBackend,
-                                 defaultOptions: RequestOptions,
-                                 toast: ToastService,
-                                 authStore: AuthentificationStore,
-                                 router: Router) =>
-                        new HttpService(backendParam, defaultOptions, toast, authStore, router),
-                    deps: [MockBackend, RequestOptions, ToastService, AuthentificationStore]
-                },
                 AuthentificationStore,
                 UserService
             ],

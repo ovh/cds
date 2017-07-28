@@ -5,7 +5,6 @@ import {AppModule} from './app.module';
 import {AppComponent} from './app.component';
 
 import {MockBackend} from '@angular/http/testing';
-import { Http, RequestOptions, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {User} from './model/user.model';
@@ -13,15 +12,13 @@ import {SharedModule} from './shared/shared.module';
 import {ProjectStore} from './service/project/project.store';
 import {ApplicationStore} from './service/application/application.store';
 import {ProjectService} from './service/project/project.service';
-import {ActivatedRoute, ActivatedRouteSnapshot, Router, RouterModule} from '@angular/router';
-import {ToastService} from './shared/toast/ToastService';
-import {HttpService} from './service/http-service.service';
+import {ActivatedRoute} from '@angular/router';
 import {APP_BASE_HREF} from '@angular/common';
 import {Observable} from 'rxjs/Observable';
 import {ApplicationService} from './service/application/application.service';
 import {PipelineService} from './service/pipeline/pipeline.service';
 import {PipelineStore} from './service/pipeline/pipeline.store';
-import {LastModification, ProjectLastUpdates} from './model/lastupdate.model';
+import {LastModification} from './model/lastupdate.model';
 import {AppService} from './app.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Pipeline} from './model/pipeline.model';
@@ -43,16 +40,6 @@ describe('App: CDS', () => {
             providers: [
                 { provide: APP_BASE_HREF, useValue: '/' },
                 MockBackend,
-                {
-                    provide: Http,
-                    useFactory: (backendParam: MockBackend,
-                                 defaultOptions: RequestOptions,
-                                 toast: ToastService,
-                                 authStore2: AuthentificationStore,
-                                 router: Router) =>
-                        new HttpService(backendParam, defaultOptions, toast, authStore2, router),
-                    deps: [MockBackend, RequestOptions, ToastService, AuthentificationStore]
-                },
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService},
