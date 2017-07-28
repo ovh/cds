@@ -54,7 +54,7 @@
                     <app-commit-list [commits]="currentBuild?.commits"></app-commit-list>
                 </div>
                 <div *ngSwitchCase="'history'">
-                    <app-history [history]="histories" [currentBuild]="currentBuild" [project]="project" *ngIf="histories"></app-history>
+                    <app-history [history]="histories" [currentBuild]="currentBuild" [project]="project" *ngIf="histories" (buildDeletedEvent)="loadHistory(currentBuild)"></app-history>
                 </div>
             </div>
 

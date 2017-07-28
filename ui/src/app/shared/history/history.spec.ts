@@ -10,6 +10,8 @@ import {SharedModule} from '../shared.module';
 import {HistoryComponent} from './history.component';
 import {PipelineBuild, PipelineBuildTrigger} from '../../model/pipeline.model';
 import {User} from '../../model/user.model';
+import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
+import {ToasterService} from 'angular2-toaster';
 
 describe('CDS: History component', () => {
 
@@ -26,6 +28,8 @@ describe('CDS: History component', () => {
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
+                ApplicationPipelineService,
+                ToasterService
             ],
             imports : [
                 SharedModule,

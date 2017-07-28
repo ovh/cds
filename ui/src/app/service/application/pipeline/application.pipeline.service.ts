@@ -122,4 +122,21 @@ export class ApplicationPipelineService {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/triggered';
         return this._http.get(url);
     }
+
+    /**
+     * Delete a build
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pipName Pipeline name
+     * @param envName Environment name
+     * @param buildNumber BuildNumber
+     * @returns {Observable<Boolean>}
+     */
+    deleteBuild(key: string, appName: string, pipName: string, envName: string, buildNumber: number): Observable<boolean> {
+        let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber;
+        let options = new RequestOptions();
+        options.params = new URLSearchParams();
+        options.params.set('envName', envName);
+        return this._http.delete(url, options).map(res => true);
+    }
 }

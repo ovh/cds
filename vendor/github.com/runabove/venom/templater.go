@@ -50,6 +50,23 @@ func (tmpl *Templater) ApplyOnStep(step TestStep) (TestStep, error) {
 	return t, nil
 }
 
+//ApplyOnContext executes the template on a context
+func (tmpl *Templater) ApplyOnContext(ctx map[string]interface{}) (map[string]interface{}, error) {
+	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
+	s, err := yaml.Marshal(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
+	}
+	sb := tmpl.apply(s)
+
+	var t map[string]interface{}
+	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
+		return nil, fmt.Errorf("templater> Error while unmarshal: %s, content:%s", err, sb)
+	}
+
+	return t, nil
+}
+
 func (tmpl *Templater) apply(in []byte) []byte {
 	out := string(in)
 	for k, v := range tmpl.Values {

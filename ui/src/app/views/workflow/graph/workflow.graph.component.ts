@@ -131,7 +131,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.svgWidth = window.innerWidth;
         this.svgHeight = window.innerHeight;
         // this.g = new dagreD3.graphlib.Graph().setGraph({ directed: false, rankDir: 'LR'});
-        this.g = new dagreD3.graphlib.Graph().setGraph({directed: false, rankDir: this.direction});
+        this.g = new dagreD3.graphlib.Graph().setGraph({rankdir: this.direction});
         if (this.workflow.root) {
             this.createNode(this.workflow.root);
         }

@@ -766,9 +766,15 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
+	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 
-	p, err := pipeline.LoadPipeline(db, c.Project.Key, pipelineName, false)
+	proj, errP := project.Load(db, key, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "deletePipeline> Cannot load project")
+	}
+
+	p, err := pipeline.LoadPipeline(db, proj.Key, pipelineName, false)
 	if err != nil {
 		return sdk.WrapError(err, "deletePipeline> Cannot load pipeline %s", pipelineName)
 	}
@@ -793,7 +799,7 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *b
 		return err
 	}
 
-	if err := project.UpdateLastModified(db, c.User, c.Project); err != nil {
+	if err := project.UpdateLastModified(db, c.User, proj); err != nil {
 		return sdk.WrapError(err, "deletePipeline> Cannot update project last modified date")
 	}
 
@@ -802,8 +808,8 @@ func deletePipeline(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *b
 		return err
 	}
 
-	cache.DeleteAll(cache.Key("application", c.Project.Key, "*"))
-	cache.Delete(cache.Key("pipeline", c.Project.Key, pipelineName))
+	cache.DeleteAll(cache.Key("application", proj.Key, "*"))
+	cache.Delete(cache.Key("pipeline", proj.Key, pipelineName))
 
 	return nil
 }
