@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -60,13 +62,18 @@ func New(ClientID, ClientSecret, AuthorizationCallbackURL string) *GithubConsume
 }
 
 func (g *GithubConsumer) getClientSecretValue() ([]byte, error) {
-	b, err := ioutil.ReadFile(g.ClientSecret)
-	if err != nil {
-		log.Error("GithubConsumer> Unable to read client secret value %s : %s", g.ClientSecret, err)
-		return nil, err
+	switch secret.Client.(type) {
+	case *filesecretbackend.FileSecretBackend:
+		return []byte(g.ClientSecret), nil
+	default:
+		b, err := ioutil.ReadFile(g.ClientSecret)
+		if err != nil {
+			log.Error("GithubConsumer> Unable to read client secret value %s : %s", g.ClientSecret, err)
+			return nil, err
+		}
+		b = bytes.Replace(b, []byte{'\n'}, []byte{}, -1)
+		return b, err
 	}
-	b = bytes.Replace(b, []byte{'\n'}, []byte{}, -1)
-	return b, err
 }
 
 //Data returns a serilized version of specific data

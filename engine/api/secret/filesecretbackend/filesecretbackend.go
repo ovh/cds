@@ -9,22 +9,22 @@ import (
 	"github.com/ovh/cds/engine/api/secret/secretbackend"
 )
 
-type fileSecretBackend struct {
+type FileSecretBackend struct {
 	secrets map[string]string
 }
 
 //Client return a SecretBackend
 func Client(opts map[string]string) secretbackend.Driver {
-	c := &fileSecretBackend{}
+	c := &FileSecretBackend{}
 	c.Init(secretbackend.NewOptions(opts))
 	return c
 }
 
-func (c *fileSecretBackend) Name() string {
+func (c *FileSecretBackend) Name() string {
 	return "File Secret Backend - CDS Embbeded"
 }
 
-func (c *fileSecretBackend) Init(opts secretbackend.MapVar) error {
+func (c *FileSecretBackend) Init(opts secretbackend.MapVar) error {
 	dir := opts.Get("secret_directory")
 	if dir == "" {
 		dir = ".secrets"
@@ -33,7 +33,7 @@ func (c *fileSecretBackend) Init(opts secretbackend.MapVar) error {
 }
 
 //Load Loads secrets from a directory
-func (c *fileSecretBackend) load(dirname string) error {
+func (c *FileSecretBackend) load(dirname string) error {
 	c.secrets = map[string]string{}
 	d, err := os.Open(dirname)
 	if err != nil {
@@ -72,6 +72,6 @@ func (c *fileSecretBackend) load(dirname string) error {
 }
 
 //GetSecrets is for dev purpose only
-func (c *fileSecretBackend) GetSecrets() secretbackend.Secrets {
+func (c *FileSecretBackend) GetSecrets() secretbackend.Secrets {
 	return *secretbackend.NewSecrets(c.secrets)
 }
