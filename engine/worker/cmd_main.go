@@ -231,7 +231,8 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				// Unregister from engine
+				// Unregister from engine and stop the register goroutine
+				registerTick.Stop()
 				log.Debug("Job is done. Unregistering...")
 				if err := w.unregister(); err != nil {
 					log.Warning("takeJob> could not unregister: %s", err)
