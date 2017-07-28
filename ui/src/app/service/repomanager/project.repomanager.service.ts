@@ -29,7 +29,7 @@ export class RepoManagerService {
      */
     getRepositories(key: string, repoManName: string, sync: boolean): Observable<Repository[]> {
         let params = new HttpParams();
-        params.append('synchronize', sync.toString());
+        params = params.append('synchronize', sync.toString());
         return this._http.get('/project/' + key + '/repositories_manager/' + repoManName + '/repos', {params: params});
     }
 }

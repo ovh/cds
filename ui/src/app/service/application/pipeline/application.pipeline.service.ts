@@ -14,7 +14,7 @@ export class ApplicationPipelineService {
     stop(key: string, appName: string, pipName: string, buildNumber: number, envName: string): Observable<boolean> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/stop';
         let params = new HttpParams();
-        params.append('envName', envName);
+        params = params.append('envName', envName);
         return this._http.post(url, null, {params: params}).map(res => true);
     }
 
@@ -30,7 +30,7 @@ export class ApplicationPipelineService {
     runAgain(key: string, appName: string, pipName: string, buildNumber: number, envName: string): Observable<PipelineBuild> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/restart';
         let params = new HttpParams();
-        params.append('envName', envName);
+        params = params.append('envName', envName);
         return this._http.post(url, null, {params: params});
     }
 
@@ -76,10 +76,10 @@ export class ApplicationPipelineService {
                  envName: string, limit: number, status: string, branchName: string): Observable<Array<PipelineBuild>> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/history';
         let params = new HttpParams();
-        params.append('envName', envName);
-        params.append('limit', String(limit));
-        params.append('status', status);
-        params.append('branchName', branchName);
+        params = params.append('envName', envName);
+        params = params.append('limit', String(limit));
+        params = params.append('status', status);
+        params = params.append('branchName', branchName);
         return this._http.get(url, {params: params});
     }
 
@@ -95,8 +95,8 @@ export class ApplicationPipelineService {
     getCommits(key: string, appName: string, pipName: string, envName: string, hash: string): Observable<Array<Commit>> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/commits';
         let params = new HttpParams();
-        params.append('envName', envName);
-        params.append('hash', hash);
+        params = params.append('envName', envName);
+        params = params.append('hash', hash);
         return this._http.get(url, {params: params});
     }
 
@@ -134,9 +134,8 @@ export class ApplicationPipelineService {
      */
     deleteBuild(key: string, appName: string, pipName: string, envName: string, buildNumber: number): Observable<boolean> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber;
-        let options = new RequestOptions();
-        options.params = new URLSearchParams();
-        options.params.set('envName', envName);
-        return this._http.delete(url, options).map(res => true);
+        let params = new HttpParams();
+        params = params.append('envName', envName);
+        return this._http.delete(url, {params: params}).map(res => true);
     }
 }

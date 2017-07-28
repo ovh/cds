@@ -25,11 +25,11 @@ export class ApplicationService {
      */
     getApplication(key: string, appName: string): Observable<Application> {
         let params = new HttpParams();
-        params.append('withPollers', 'true');
-        params.append('withHooks', 'true');
-        params.append('withWorkflow', 'true');
-        params.append('withNotifs', 'true');
-        params.append('withRepoMan', 'true');
+        params = params.append('withPollers', 'true');
+        params = params.append('withHooks', 'true');
+        params = params.append('withWorkflow', 'true');
+        params = params.append('withNotifs', 'true');
+        params = params.append('withRepoMan', 'true');
         return this._http.get('/project/' + key + '/application/' + appName, {params: params});
     }
 
@@ -101,7 +101,7 @@ export class ApplicationService {
         let headers = new HttpHeaders();
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
         let params = new HttpParams();
-        params.append('fullname', repoFullName);
+        params = params.append('fullname', repoFullName);
         return this._http.post(url, params.toString(), {headers: headers, params: params});
     }
 
@@ -325,7 +325,7 @@ export class ApplicationService {
      */
     deleteNotification(key: string, appName: string, pipName: string, envName?: string): Observable<Application> {
         let params = new HttpParams();
-        params.append('envName', envName);
+        params = params.append('envName', envName);
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
         return this._http.delete(url, {params: params});
     }
@@ -360,7 +360,7 @@ export class ApplicationService {
      */
     addScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
         let params = new HttpParams();
-        params.append('envName', scheduler.environment_name);
+        params = params.append('envName', scheduler.environment_name);
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler';
         return this._http.post(url, scheduler, {params: params});
 

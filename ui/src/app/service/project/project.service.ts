@@ -25,14 +25,14 @@ export class ProjectService {
      */
     getProject(key: string): Observable<Project> {
         let params = new HttpParams();
-        params.append('withVariables', 'true');
-        params.append('withApplications', 'true');
-        params.append('withApplicationPipelines', 'true');
-        params.append('withPipelines', 'true');
-        params.append('withEnvironments', 'true');
-        params.append('withGroups', 'true');
-        params.append('withPermission', 'true');
-        params.append('withRepositoriesManagers', 'true');
+        params = params.append('withVariables', 'true');
+        params = params.append('withApplications', 'true');
+        params = params.append('withApplicationPipelines', 'true');
+        params = params.append('withPipelines', 'true');
+        params = params.append('withEnvironments', 'true');
+        params = params.append('withGroups', 'true');
+        params = params.append('withPermission', 'true');
+        params = params.append('withRepositoriesManagers', 'true');
         return this._http.get('/project/' + key, {params: params});
     }
 
@@ -42,7 +42,7 @@ export class ProjectService {
      */
     getProjects(): Observable<Project[]> {
         let params = new HttpParams();
-        params.append('application', 'true');
+        params = params.append('application', 'true');
         return this._http.get('/project', {params: params});
     }
 

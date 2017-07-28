@@ -10,7 +10,6 @@ export class AuthentificationInterceptor implements  HttpInterceptor {
     constructor(private _authStore: AuthentificationStore) {}
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        debugger;
         if (req.url.indexOf('assets/i18n') !== -1) {
             const clone = req.clone();
             return next.handle(clone);
