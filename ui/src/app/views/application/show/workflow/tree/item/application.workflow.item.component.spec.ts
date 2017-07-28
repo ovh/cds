@@ -366,6 +366,7 @@ describe('CDS: Application Workflow Item', () => {
         fixture.componentInstance.triggerInModal = new Trigger();
         fixture.componentInstance.triggerInModal.src_application = workflowItem.application;
         fixture.componentInstance.triggerInModal.src_pipeline = workflowItem.pipeline;
+        fixture.componentInstance.triggerInModal.parameters = new Array<Parameter>()
 
         // Add trigger
 
