@@ -26,30 +26,4 @@ export class LogoutInterceptor implements HttpInterceptor {
             }
         });
     }
-
-    /*
-
-     return observable.catch((err) => {
-     if (err.status === 0) {
-     this._toast.error('API Unreachable', '');
-     } else {
-     this._toast.error(err.statusText, JSON.parse(err._body).message);
-     }
-     if (err.status === 401) {
-     let navigationExtras: NavigationExtras = {
-     queryParams: {
-     redirect: window.location.pathname + window.location.search
-     }
-     };
-
-     this._authStore.removeUser();
-     this._router.navigate(['/account/login'], navigationExtras);
-     return Observable.throw(err);
-     } else {
-     return Observable.throw(err);
-     }
-     });
-
-
-     */
 }

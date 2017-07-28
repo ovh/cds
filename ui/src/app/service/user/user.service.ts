@@ -26,7 +26,6 @@ export class UserService {
      */
     login(user: User): Observable<User> {
         return this._http.post<any>('/login', user, {observe: 'response'}).map(res => {
-            debugger;
             let u = res.body.user;
             let headers: HttpHeaders = res.headers;
 
