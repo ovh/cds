@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/token"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -50,6 +51,10 @@ func InitiliazeDB(defaultValues DefaultValues, DBFunc func() *gorp.DbMap) error 
 
 	if err := environment.CreateBuiltinEnvironments(dbGorp); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin environments")
+	}
+
+	if err := workflow.CreateBuiltinWorkflowHookModels(dbGorp); err != nil {
+		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin workflow hook models")
 	}
 
 	return nil
