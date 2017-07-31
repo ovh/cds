@@ -35,6 +35,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/stats"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -267,6 +268,8 @@ var mainCmd = &cobra.Command{
 		go stats.StartRoutine(ctx, database.GetDBMap)
 		go action.RequirementsCacheLoader(ctx, 5*time.Second, database.GetDBMap)
 		go hookRecoverer(ctx, database.GetDBMap)
+
+		go user.PersistentSessionTokenCleaner(ctx, database.GetDBMap)
 
 		if !viper.GetBool(viperVCSPollingDisabled) {
 			go poller.Initialize(ctx, 10, database.GetDBMap)

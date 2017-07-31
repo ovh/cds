@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -66,8 +67,8 @@ func LoadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, erro
 	}
 
 	// Load user
-	u, err := sdk.NewUser(username).FromJSON(jsonUser)
-	if err != nil {
+	u := &sdk.User{}
+	if err := json.Unmarshal(jsonUser, u); err != nil {
 		return nil, err
 	}
 
@@ -91,8 +92,8 @@ func LoadUserWithoutAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	}
 
 	// Load user
-	u, err := sdk.NewUser(name).FromJSON(jsonUser)
-	if err != nil {
+	u := &sdk.User{}
+	if err := json.Unmarshal(jsonUser, u); err != nil {
 		return nil, err
 	}
 
@@ -117,14 +118,14 @@ func LoadUserAndAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	}
 
 	// Load user
-	u, err := sdk.NewUser(name).FromJSON(jsonUser)
-	if err != nil {
+	u := &sdk.User{}
+	if err := json.Unmarshal(jsonUser, u); err != nil {
 		return nil, err
 	}
 
 	// Load Auth
-	a, err := sdk.NewAuth("").FromJSON(jsonAuth)
-	if err != nil {
+	a := &sdk.Auth{}
+	if err := json.Unmarshal(jsonAuth, a); err != nil {
 		return nil, err
 	}
 
@@ -203,17 +204,29 @@ func CountUser(db gorp.SqlExecutor) (int64, error) {
 
 // UpdateUser update given user
 func UpdateUser(db gorp.SqlExecutor, u sdk.User) error {
+	su, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
 	query := `UPDATE "user" SET username=$1, admin=$2, data=$3 WHERE id=$4`
 	u.Groups = nil
-	_, err := db.Exec(query, u.Username, u.Admin, u.JSON(), u.ID)
+	_, err = db.Exec(query, u.Username, u.Admin, su, u.ID)
 	return err
 }
 
 // UpdateUserAndAuth update given user
 func UpdateUserAndAuth(db gorp.SqlExecutor, u sdk.User) error {
+	su, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+	sa, err := json.Marshal(u.Auth)
+	if err != nil {
+		return err
+	}
 	query := `UPDATE "user" SET username=$1, admin=$2, data=$3, auth=$4 WHERE id=$5`
 	u.Groups = nil
-	_, err := db.Exec(query, u.Username, u.Admin, u.JSON(), u.Auth.JSON(), u.ID)
+	_, err = db.Exec(query, u.Username, u.Admin, su, sa, u.ID)
 	return err
 }
 
@@ -252,9 +265,16 @@ func deleteUser(db gorp.SqlExecutor, u *sdk.User) error {
 
 // InsertUser Insert new user
 func InsertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
+	su, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+	sa, err := json.Marshal(u.Auth)
+	if err != nil {
+		return err
+	}
 	query := `INSERT INTO "user" (username, admin, data, auth, created, origin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`
-	err := db.QueryRow(query, u.Username, u.Admin, u.JSON(), a.JSON(), time.Now(), u.Origin).Scan(&u.ID)
-	return err
+	return db.QueryRow(query, u.Username, u.Admin, su, sa, time.Now(), u.Origin).Scan(&u.ID)
 }
 
 // NewPersistentSession creates a new persistent session token in database
@@ -263,15 +283,95 @@ func NewPersistentSession(db gorp.SqlExecutor, u *sdk.User) (sessionstore.Sessio
 	if errSession != nil {
 		return "", errSession
 	}
-	log.Info("NewPersistentSession> New Persistent Session for %s", u.Username)
 	newToken := sdk.UserToken{
-		Token:     string(t),
-		Timestamp: time.Now().Unix(),
-		Comment:   "",
+		Token:              string(t),
+		Comment:            fmt.Sprintf("New persistent session for %s", u.Username),
+		CreationDate:       time.Now(),
+		LastConnectionDate: time.Now(),
+		UserID:             u.ID,
 	}
-	u.Auth.Tokens = append(u.Auth.Tokens, newToken)
-	if err := UpdateUserAndAuth(db, *u); err != nil {
+
+	if err := InsertPersistentSessionToken(db, newToken); err != nil {
 		return "", err
 	}
 	return t, nil
+}
+
+// LoadPersistentSessionToken load a token from the database
+func LoadPersistentSessionToken(db gorp.SqlExecutor, k sessionstore.SessionKey) (*sdk.UserToken, error) {
+	tdb := persistentSessionToken{}
+	if err := db.SelectOne(&tdb, "select * from user_persistent_session where token = $1", string(k)); err != nil {
+		return nil, err
+	}
+	t := sdk.UserToken(tdb)
+	return &t, nil
+}
+
+// InsertPersistentSessionToken create a new persistent session
+func InsertPersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
+	tdb := persistentSessionToken(t)
+	if err := db.Insert(&tdb); err != nil {
+		return sdk.WrapError(err, "InsertPersistentSessionToken> Unable to insert persistent session token for user %d", t.UserID)
+	}
+	return nil
+}
+
+// UpdatePersistentSessionToken updates a persistent session
+func UpdatePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
+	tdb := persistentSessionToken(t)
+	if _, err := db.Update(&tdb); err != nil {
+		return sdk.WrapError(err, "UpdatePersistentSessionToken> Unable to update persistent session token for user %d", t.UserID)
+	}
+	return nil
+}
+
+// DeletePersistentSessionToken deletes a persistent session
+func DeletePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
+	tdb := persistentSessionToken(t)
+	if _, err := db.Delete(&tdb); err != nil {
+		return sdk.WrapError(err, "DeletePersistentSessionToken> Unable to delete persistent session token for user %d", t.UserID)
+	}
+	return nil
+}
+
+// PersistentSessionTokenCleaner cleans unused session token in DB
+func PersistentSessionTokenCleaner(c context.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(10 * time.Minute)
+
+	for {
+		select {
+		case <-c.Done():
+			tick.Stop()
+			log.Error("Exiting user.PersistentSessionTokenCleaner: %v", c.Err())
+			return
+		case <-tick.C:
+			tx, err := DBFunc().Begin()
+			if err != nil {
+				continue
+			}
+
+			query := "select * from user_persistent_session where last_connection_date < $1"
+			tokens := []sdk.UserToken{}
+
+			if _, err := tx.Select(&tokens, query, time.Now().Add(-3*30*24*time.Hour)); err != nil {
+				log.Error("PersistentSessionTokenCleaner> %s", err)
+				tx.Rollback()
+				continue
+			}
+
+			for _, t := range tokens {
+				if err := DeletePersistentSessionToken(tx, t); err != nil {
+					log.Error("PersistentSessionTokenCleaner> %s", err)
+					tx.Rollback()
+					break
+				}
+			}
+
+			if err := tx.Commit(); err != nil {
+				log.Error("PersistentSessionTokenCleaner> %s", err)
+				tx.Rollback()
+				continue
+			}
+		}
+	}
 }
