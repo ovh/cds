@@ -16,6 +16,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const (
+	threeMonthsAgo = -3 * 30 * 24 * time.Hour
+)
+
 // Verify verify user token
 func Verify(u *sdk.User, token string) (string, string, error) {
 	if u.Auth.EmailVerified && u.Auth.DateReset == 0 {
@@ -353,7 +357,7 @@ func PersistentSessionTokenCleaner(c context.Context, DBFunc func() *gorp.DbMap)
 			query := "select * from user_persistent_session where last_connection_date < $1"
 			tokens := []sdk.UserToken{}
 
-			if _, err := tx.Select(&tokens, query, time.Now().Add(-3*30*24*time.Hour)); err != nil {
+			if _, err := tx.Select(&tokens, query, time.Now().Add(threeMonthsAgo)); err != nil {
 				log.Error("PersistentSessionTokenCleaner> %s", err)
 				tx.Rollback()
 				continue
