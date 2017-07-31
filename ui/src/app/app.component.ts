@@ -111,12 +111,11 @@ export class AppComponent  implements OnInit {
         this.versionWorker.response().subscribe( msg => {
             if (msg) {
                 this.zone.run(() => {
-                    let versionJSON = JSON.parse(msg).version;
+                    let versionJSON = Number(JSON.parse(msg).version);
                     if (this.currentVersion === 0) {
-                        this.currentVersion = JSON.parse(msg).version;
+                        this.currentVersion = versionJSON;
                     }
-
-                    if (this.currentVersion < versionJSON.version) {
+                    if (this.currentVersion < versionJSON) {
                         this.showUIUpdatedBanner = true;
                     }
                 });
