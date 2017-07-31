@@ -273,7 +273,7 @@ func InsertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
 	if err != nil {
 		return err
 	}
-	sa, err := json.Marshal(u.Auth)
+	sa, err := json.Marshal(a)
 	if err != nil {
 		return err
 	}
