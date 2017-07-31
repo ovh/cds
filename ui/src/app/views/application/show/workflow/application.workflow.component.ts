@@ -16,6 +16,7 @@ import {Observable} from 'rxjs/Observable';
     styleUrls: ['./application.workflow.scss']
 })
 export class ApplicationWorkflowComponent implements OnInit {
+    readonly ORIENTATION_KEY = 'CDS-ORIENTATION';
 
     @Input() project: Project;
     @Input() application: Application;
@@ -26,7 +27,14 @@ export class ApplicationWorkflowComponent implements OnInit {
     zone: NgZone;
 
     // Worflow to display
-    workflowOrientation = 'horizontal';
+    private _workflowOrientationValue = localStorage.getItem(this.ORIENTATION_KEY) || 'horizontal';
+    set workflowOrientation(orientation: string) {
+        this._workflowOrientationValue = orientation;
+        localStorage.setItem(this.ORIENTATION_KEY, orientation);
+    }
+    get workflowOrientation() {
+        return this._workflowOrientationValue;
+    }
 
     // Filter values
     branches: Array<Branch>;
