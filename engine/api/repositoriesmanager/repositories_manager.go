@@ -7,14 +7,12 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
-	"github.com/ovh/cds/engine/api/secret/secretbackend"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -26,7 +24,6 @@ var (
 
 //InitializeOpts is the struct to init the package
 type InitializeOpts struct {
-	SecretClient           secretbackend.Driver
 	KeysDirectory          string
 	UIBaseURL              string
 	APIBaseURL             string
@@ -35,12 +32,11 @@ type InitializeOpts struct {
 	DisableGithubStatusURL bool
 	GithubSecret           string
 	StashPrivateKey        string
+	StashConsumerKey       string
 }
 
-//Initialize initialize private keys stored in Vault
-//CDS private keys in repositories manager have to be stored as secrets in Vault
+//Initialize initialize private keys
 //For instance for a repositories manager named "github.com/ovh", the private key
-//is stored in a secret name "repositoriesmanager-secrets-github.com/ovh-privateKey"
 func Initialize(o InitializeOpts) error {
 	options = o
 	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
@@ -51,48 +47,31 @@ func Initialize(o InitializeOpts) error {
 		return fmt.Errorf("Unable to init repositories manager")
 	}
 	if db := database.DBMap(_db); db != nil {
-		secrets := o.SecretClient.GetSecrets()
-		if secrets.Err() != nil {
-			return secrets.Err()
-		}
-
 		repositoriesManager, err := LoadAll(db)
 		if err != nil {
 			return err
 		}
 		for _, rm := range repositoriesManager {
 			var found bool
-			log.Info("RepositoriesManager> Searching key for %s", rm.Name)
-			s := fmt.Sprintf("cds/repositoriesmanager-secrets-%s-", rm.Name)
+			// log.Info("RepositoriesManager> Searching key for %s", rm.Name)
+			// s := fmt.Sprintf("cds/repositoriesmanager-secrets-%s-", rm.Name)
 			rmSecrets := map[string]string{}
-			all, _ := secrets.All()
-			for k, v := range all {
-				if strings.HasPrefix(k, s) {
-					found = true
+
+			switch rm.Type {
+			case sdk.Stash:
+				if o.StashPrivateKey != "" {
 					log.Info("RepositoriesManager> Found a key for %s", rm.Name)
-					rmSecrets[strings.Replace(k, s, "", -1)] = v
+					rmSecrets["privatekey"] = o.StashPrivateKey
+					found = true
+				}
+			case sdk.Github:
+				if o.GithubSecret != "" {
+					log.Info("RepositoriesManager> Found a key for %s", rm.Name)
+					rmSecrets["client-secret"] = o.GithubSecret
+					found = true
 				}
 			}
-			if !found {
-				switch rm.Type {
-				case sdk.Stash:
-					if o.StashPrivateKey != "" {
-						log.Info("RepositoriesManager> Found a key for %s", rm.Name)
-						btes, err := ioutil.ReadFile(o.StashPrivateKey)
-						if err != nil {
-							log.Warning("RepositoriesManager> Unable to load private key %s : %s", o.StashPrivateKey, err)
-						}
-						rmSecrets["privatekey"] = string(btes)
-						found = true
-					}
-				case sdk.Github:
-					if o.GithubSecret != "" {
-						log.Info("RepositoriesManager> Found a key for %s", rm.Name)
-						rmSecrets["client-secret"] = o.GithubSecret
-						found = true
-					}
-				}
-			}
+
 			if found {
 				if err := initRepositoriesManager(db, &rm, o.KeysDirectory, rmSecrets); err != nil {
 					log.Warning("RepositoriesManager> Unable init %s", rm.Name)
@@ -119,8 +98,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 			if len(args) != 1 || args["key"] == "" {
 				return nil, fmt.Errorf("key args is mandatory to connect to stash")
 			}
-			//FIXME: Stash consumerKey is always CDS, maybe we should take it as argument ?
-			stash = repostash.New(URL, "CDS", args["key"])
+			stash = repostash.New(URL, options.StashConsumerKey, args["key"])
 		} else {
 			//It's coming from the database, we just have to unmarshal data from the DB to get consumerData
 			var data map[string]interface{}
@@ -227,7 +205,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 	return nil, fmt.Errorf("Unknown type %s. Cannot instanciate repositories manager t=%s id=%d name=%s url=%s args=%s consumerData=%s", t, t, id, name, URL, args, consumerData)
 }
 
-//Init initializes all repositories with secrets coming from Vault
+//Init initializes all repositories
 func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, directory string, secrets map[string]string) error {
 	if rm.Type == sdk.Stash {
 		privateKey := secrets["privatekey"]

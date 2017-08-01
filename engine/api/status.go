@@ -17,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -51,10 +50,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bu
 	//Nb Panics
 	output = append(output, fmt.Sprintf("Nb of Panics: %d", nbPanic))
 	log.Debug("Status> Nb of Panics: %d", nbPanic)
-
-	// Check vault
-	output = append(output, fmt.Sprintf("Secret Backend: %s", secret.Status()))
-	log.Debug("Status> Secret Backend: %s", secret.Status())
 
 	// Check Scheduler
 	output = append(output, fmt.Sprintf("Scheduler: %s", scheduler.Status()))
