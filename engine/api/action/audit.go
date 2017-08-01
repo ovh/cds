@@ -1,6 +1,8 @@
 package action
 
 import (
+	"encoding/json"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -32,10 +34,11 @@ func LoadAuditAction(db gorp.SqlExecutor, actionID int, public bool) ([]sdk.Acti
 			return nil, err
 		}
 
-		a, err := sdk.NewAction("").FromJSON([]byte(actionData))
-		if err != nil {
+		a := &sdk.Action{}
+		if err := json.Unmarshal([]byte(actionData), a); err != nil {
 			return nil, err
 		}
+
 		audit.Action = *a
 		audits = append(audits, audit)
 	}

@@ -54,11 +54,7 @@ func (c *LocalClient) CheckAuthHeader(db *gorp.DbMap, headers http.Header, ctx *
 		if getUserPersistentSession(db, c.Store(), headers, ctx) {
 			return nil
 		}
-		if reloadUserPersistentSession(db, c.Store(), headers, ctx) {
-			return nil
-		}
 	}
-
 	return c.checkUserSessionAuth(db, headers, ctx)
 }
 

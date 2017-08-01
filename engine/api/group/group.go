@@ -2,6 +2,7 @@ package group
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -123,10 +124,11 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 			return err
 		}
 
-		u, err := sdk.NewUser(username).FromJSON(jsonUser)
-		if err != nil {
+		u := &sdk.User{}
+		if err := json.Unmarshal(jsonUser, u); err != nil {
 			return sdk.WrapError(err, "LoadUserGroup> Error while converting jsonUser")
 		}
+
 		if admin {
 			group.Admins = append(group.Admins, *u)
 		} else {

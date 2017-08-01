@@ -42,23 +42,6 @@ func NewStage(name string) *Stage {
 	return s
 }
 
-// JSON return the marshalled string of Stage object
-func (s *Stage) JSON() string {
-
-	data, err := json.Marshal(s)
-	if err != nil {
-		fmt.Printf("Action.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into Stage object
-func (s *Stage) FromJSON(data []byte) (*Stage, error) {
-	return s, json.Unmarshal(data, &s)
-}
-
 // AddStage creates a new stage
 func AddStage(projectKey, pipelineName, name string) error {
 

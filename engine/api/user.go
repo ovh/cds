@@ -242,15 +242,12 @@ func ResetUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busine
 	userDb.Auth.DateReset = time.Now().Unix()
 
 	// Update in db
-	query := `UPDATE "user" SET auth = $1 WHERE username = $2`
-	_, err = db.Exec(query, userDb.Auth.JSON(), userDb.Username)
-	if err != nil {
+	if err := user.UpdateUserAndAuth(db, *userDb); err != nil {
 		return sdk.WrapError(err, "ResetUser: Cannot update user %s", userDb.Username)
 	}
 
 	go mail.SendMailVerifyToken(userDb.Email, userDb.Username, tokenVerify, resetUserRequest.Callback)
 
-	log.Warning("POST /user/%s/reset: User reset OK\n", userDb.Username)
 	return WriteJSON(w, r, userDb, http.StatusCreated)
 }
 
@@ -299,8 +296,7 @@ func ConfirmUser(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busi
 	u.Auth.DateReset = 0
 
 	// Update in db
-	query := `UPDATE "user" SET data = $1, auth = $2 WHERE username = $3`
-	if _, err := db.Exec(query, u.JSON(), u.Auth.JSON(), u.Username); err != nil {
+	if err := user.UpdateUserAndAuth(db, *u); err != nil {
 		return err
 	}
 
