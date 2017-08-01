@@ -291,6 +291,8 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	if err := DeleteActionRequirements(db, a.ID); err != nil {
 		return err
 	}
+
+	//TODO we don't need to compute all job requirements here, but only when running the job
 	// Requirements of children are requirement of parent
 	for _, c := range a.Actions {
 		// Now for each requirement of child, check if it exists in parent
@@ -307,6 +309,16 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 			}
 		}
 	}
+
+	// Checks if multiple requirements have the same name
+	for i := range a.Requirements {
+		for j := range a.Requirements {
+			if a.Requirements[i].Name == a.Requirements[j].Name && i != j {
+				return sdk.ErrInvalidJobRequirement
+			}
+		}
+	}
+
 	for i := range a.Requirements {
 		if err := InsertActionRequirement(db, a.ID, a.Requirements[i]); err != nil {
 			return err
