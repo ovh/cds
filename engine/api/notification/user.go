@@ -9,6 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -117,7 +118,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 						username = pb.Trigger.VCSChangesAuthor
 					}
 					if username != "" {
-						u, err := pipelineInitiator(db, username)
+						u, err := user.LoadUserWithoutAuth(db, username)
 						if err != nil {
 							log.Warning("notification[Email].SendPipelineBuild> Cannot load author %s: %s", username, err)
 							continue
@@ -422,20 +423,4 @@ func InsertOrUpdateUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, e
 	}
 
 	return nil
-}
-
-func pipelineInitiator(db gorp.SqlExecutor, username string) (*sdk.User, error) {
-	query := `
-		SELECT data FROM "user"
-		WHERE "user".username = $1
-	`
-	var data string
-	err := db.QueryRow(query, username).Scan(&data)
-	if err != nil {
-		return nil, err
-	}
-
-	// Load user
-	u, err := sdk.NewUser(username).FromJSON([]byte(data))
-	return u, err
 }

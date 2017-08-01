@@ -323,10 +323,8 @@ func (c *LDAPClient) CheckAuthHeader(db *gorp.DbMap, headers http.Header, ctx *b
 		if getUserPersistentSession(db, c.Store(), headers, ctx) {
 			return nil
 		}
-		if reloadUserPersistentSession(db, c.Store(), headers, ctx) {
-			return nil
-		}
 	}
+
 	//Get the session token
 	sessionToken := headers.Get(sdk.SessionTokenHeader)
 	if sessionToken == "" {

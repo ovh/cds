@@ -53,8 +53,6 @@ func Initialize(o InitializeOpts) error {
 		}
 		for _, rm := range repositoriesManager {
 			var found bool
-			// log.Info("RepositoriesManager> Searching key for %s", rm.Name)
-			// s := fmt.Sprintf("cds/repositoriesmanager-secrets-%s-", rm.Name)
 			rmSecrets := map[string]string{}
 
 			switch rm.Type {

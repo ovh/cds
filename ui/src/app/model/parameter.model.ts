@@ -10,14 +10,17 @@ export class Parameter {
     updating: boolean;
 
     static formatForAPI(parameters: Array<Parameter>): Array<Parameter> {
-        return parameters.map(p => {
-            let pa = new Parameter();
-            pa.name = p.name;
-            pa.id = p.id;
-            pa.type = p.type;
-            pa.description = p.description;
-            pa.value = p.value.toString();
-           return pa;
-        });
+        if (parameters) {
+            return parameters.map(p => {
+                let pa = new Parameter();
+                pa.name = p.name;
+                pa.id = p.id;
+                pa.type = p.type;
+                pa.description = p.description;
+                pa.value = p.value.toString();
+                return pa;
+            });
+        }
+        return new Array<Parameter>();
     }
 }

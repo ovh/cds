@@ -48,22 +48,6 @@ func NewUser(username string) *User {
 	return u
 }
 
-// JSON return the marshalled string of User object
-func (u *User) JSON() string {
-	data, err := json.Marshal(u)
-	if err != nil {
-		fmt.Printf("User.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into User object
-func (u *User) FromJSON(data []byte) (*User, error) {
-	return u, json.Unmarshal(data, &u)
-}
-
 //LoginUser call the /login handler
 func LoginUser(username, password string) (bool, *UserAPIResponse, error) {
 	request := UserLoginRequest{

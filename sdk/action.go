@@ -169,23 +169,6 @@ func (a *Action) Add(child Action) *Action {
 	return a
 }
 
-// JSON return the marshalled string of Action object
-func (a *Action) JSON() string {
-
-	data, err := json.Marshal(a)
-	if err != nil {
-		fmt.Printf("Action.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into Action object
-func (a *Action) FromJSON(data []byte) (*Action, error) {
-	return a, json.Unmarshal(data, &a)
-}
-
 // AddAction creates a new action available only to creator by default
 // params are stringParameter only (for now), with no description
 func AddAction(name string, params []Parameter, requirements []Requirement) error {

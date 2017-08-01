@@ -2,6 +2,7 @@ package action
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -417,7 +418,12 @@ func insertAudit(db gorp.SqlExecutor, actionID, userID int64, change string) err
 	query := `INSERT INTO action_audit (action_id, user_id, change, versionned, action_json)
 			VALUES ($1, $2, $3, NOW(), $4)`
 
-	if _, err := db.Exec(query, actionID, userID, change, a.JSON()); err != nil {
+	b, errJSON := json.Marshal(a)
+	if errJSON != nil {
+		return errJSON
+	}
+
+	if _, err := db.Exec(query, actionID, userID, change, b); err != nil {
 		return err
 	}
 

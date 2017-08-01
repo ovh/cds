@@ -2,6 +2,7 @@ package permission
 
 import (
 	"database/sql"
+	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
@@ -206,8 +207,9 @@ func ApplicationPipelineEnvironmentUsers(db gorp.SqlExecutor, appID, pipID, envI
 			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while scanning user : %s", err)
 			continue
 		}
-		uTemp, err := u.FromJSON([]byte(data))
-		if err != nil {
+
+		uTemp := &sdk.User{}
+		if err := json.Unmarshal([]byte(data), uTemp); err != nil {
 			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while parsing user : %s", err)
 			continue
 		}
