@@ -63,13 +63,12 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		resp, errDo := client.Do(req)
 		if errDo != nil {
-			sdk.Exit("cannot post worker upload (Do): %s\n", errDo)
+			sdk.Exit("cannot post worker tmpl (Do): %s\n", errDo)
 		}
 
 		if resp.StatusCode >= 300 {
-			sdk.Exit("cannot artefact upload HTTP %d\n", resp.StatusCode)
+			sdk.Exit("tmpl failed: %d\n", resp.StatusCode)
 		}
-
 	}
 }
 
@@ -101,6 +100,8 @@ func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {
 	res, err := sdk.Interpolate(string(btes), vars)
 	if err != nil {
 		log.Error("Unable to interpolate: %v", err)
+		s, _ := sdk.ProcessError(err, "")
+		w.Write([]byte(s))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -110,5 +111,4 @@ func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 }
