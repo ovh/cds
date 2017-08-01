@@ -372,7 +372,7 @@ func ProcessError(target error, al string) (string, int) {
 		if ok {
 			rootMsg, _ = ProcessError(cdsErrRoot, al)
 		} else {
-			rootMsg = fmt.Sprintf("%s [%T]", cdsErr.Root.Error(), cdsErr.Root)
+			rootMsg = fmt.Sprintf("%v", cdsErr.Root.Error())
 		}
 
 		msg = fmt.Sprintf("%s (caused by: %s)", msg, rootMsg)
