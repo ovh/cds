@@ -165,7 +165,7 @@ func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, hea
 //GetWorker returns the worker instance from its id
 func GetWorker(db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
 	// Load worker
-	var w *sdk.Worker
+	var w = &sdk.Worker{}
 
 	key := cache.Key("worker", workerID)
 	// Else load it from DB
