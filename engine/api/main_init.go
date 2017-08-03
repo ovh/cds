@@ -12,8 +12,10 @@ import (
 	_ "github.com/spf13/viper/remote"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -76,19 +78,24 @@ const (
 	viperVCSRepoBitbucketStatusDisabled = "vcs.repositories.bitbucket.statuses_disabled"
 	viperVCSRepoBitbucketConsumerKey    = "vcs.repositories.bitbucket.consumerkey"
 	viperVCSRepoBitbucketPrivateKey     = "vcs.repositories.bitbucket.privatekey"
+	vaultConfKey                        = "/secret/cds/conf"
+	vaultDBKey                          = "/secret/cds/db-password"
 )
 
 var (
 	cfgFile      string
 	remoteCfg    string
 	remoteCfgKey string
+	vaultAddr    string
+	vaultToken   string
 )
 
 func init() {
 	mainCmd.Flags().StringVar(&cfgFile, "config", "", "config file")
-	mainCmd.Flags().StringVar(&remoteCfg, "remote-config", "", "consul configuration store")
-	mainCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "consul configuration store key")
-
+	mainCmd.Flags().StringVar(&remoteCfg, "remote-config", "", "(optional) consul configuration store")
+	mainCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
+	mainCmd.Flags().StringVar(&vaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
+	mainCmd.Flags().StringVar(&vaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
 	//Database command
 	mainCmd.AddCommand(database.DBCmd)
 }
@@ -122,29 +129,74 @@ func initConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." and "-" by "_" for env variable lookup
 }
 
+type defaultValues struct {
+	ServerSecretsKey     string
+	AuthSharedInfraToken string
+	DBPassword           string
+	// For LDAP Client
+	LDAPBase  string
+	GivenName string
+	SN        string
+}
+
 func generateConfigTemplate() {
-	type defaultValues struct {
-		ServerSecretsKey     string
-		AuthSharedInfraToken string
-	}
+	var v defaultValues
+	var tmplContent string
 
 	token, err := token.GenerateToken()
 	if err != nil {
-		fmt.Println("generateConfigTemplate> cannot generate token")
+		log.Error("generateConfigTemplate> cannot generate token")
 		os.Exit(1)
 	}
 
-	v := defaultValues{
-		ServerSecretsKey:     sdk.RandomString(32),
-		AuthSharedInfraToken: token,
+	// Generate config with local
+	if vaultAddr == "" {
+		v = defaultValues{
+			ServerSecretsKey:     sdk.RandomString(32),
+			AuthSharedInfraToken: token,
+			DBPassword:           "cds",
+			LDAPBase:             "{{.ldapBase}}",
+			SN:                   "{{.sn}}",
+			GivenName:            "{{.givenName}}",
+		}
+		tmplContent = tmpl
+	} else { // Generate config with vault
+		s, err := secret.New(vaultToken, vaultAddr)
+		if err != nil {
+			log.Warning("Error when creating vault config")
+			os.Exit(1)
+		}
+		// Get raw config file from vault
+		cfgFileContent, err := s.GetFromVault(vaultConfKey)
+		if err != nil {
+			log.Warning("Error when fetch secret %s from vault", vaultConfKey)
+			os.Exit(1)
+		}
+		tmplContent = cfgFileContent
+
+		// Get database password from vault
+		dbPassword, err := s.GetFromVault(vaultDBKey)
+		if err != nil {
+			log.Warning("Error when fetch secret %s from vault", vaultDBKey)
+			os.Exit(1)
+		}
+
+		v = defaultValues{
+			AuthSharedInfraToken: token,
+			DBPassword:           dbPassword,
+			LDAPBase:             "{{.ldapBase}}",
+			SN:                   "{{.sn}}",
+			GivenName:            "{{.givenName}}",
+		}
 	}
-	tmpl, err := template.New("test").Parse(tmpl)
+
+	tmplI, err := template.New("test").Parse(tmplContent)
 	if err != nil {
 		fmt.Println("Error new: ", err)
 		os.Exit(1)
 	}
 	var tpl bytes.Buffer
-	if err := tmpl.Execute(&tpl, v); err != nil {
+	if err := tmplI.Execute(&tpl, v); err != nil {
 		fmt.Println("Error execute: ", err)
 		os.Exit(1)
 	}
@@ -261,12 +313,13 @@ keys = "/app/keys"
 		# This is mandatory
     key = "{{.ServerSecretsKey}}"
 
+
 ################################
 # Postgresql Database settings #
 ################################
 [db]
 user = "cds"
-password = "cds"
+password = "{{.DBPassword}}" # set /secret/cds/db-password in vault if you use it
 name = "cds"
 host = "localhost"
 port = 5432
@@ -274,6 +327,7 @@ port = 5432
 sslmode = "disable"
 maxconn = 20
 timeout = 3000
+
 
 ######################
 # CDS Cache Settings #
@@ -288,7 +342,7 @@ ttl = 60
     # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
     [cache.redis]
     host = "localhost:6379" # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
-    password = "cds"
+    password = ""
 
 ##############################
 # CDS Authentication Settings#
@@ -311,9 +365,9 @@ defaultgroup = ""
 	# LDAP Base
 	base = ""
 	# LDAP Bind DN
-	dn = "uid=%s,ou=people,{{"{{"}}.ldapBase{{"}}"}}"
+	dn = "uid=%s,ou=people,{{.LDAPBase}}"
 	# Define CDS user fullname from LDAP attribute
-	fullname = "{{"{{"}}.givenName{{"}}"}} {{"{{"}}.sn{{"}}"}}"
+	fullname = "{{.GivenName}} {{.SN}}"
 
 #####################
 # CDS SMTP Settings #
@@ -341,7 +395,7 @@ mode = "local"
     [artifact.openstack]
     url = "<OS_AUTH_URL>"
     username = "<OS_USERNAME>"
-    password = "<OS_PASSWORD>"
+    password = ""
     tenant = "<OS_TENANT_NAME>"
     region = "<OS_REGION_NAME>"
     containerprefix = "" # Use if your want to prefix containers
@@ -356,7 +410,7 @@ mode = "local"
     broker = "<Kafka SASK/SSL addresses>"
     topic = "<Kafka topic>"
     user = "<Kafka username>"
-    password = "<Kafka password>"
+    password = ""
 
 ###########################
 # CDS Schedulers Settings #
@@ -376,10 +430,9 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     [vcs.repositories.github]
     statuses_disabled = false # Set to true if you don't want CDS to push statuses on Github API
     statuses_url_disabled = false # Set to true if you don't want CDS to push CDS URL in statuses on Github API
-    clientsecret = "" # You can define here your github client secret
+    clientsecret = ""
 
     [vcs.repositories.bitbucket]
     statuses_disabled = false
-    consumerkey = "CDS"
-    privatekey = "" # You can define here your bickcket private key
+    privatekey = ""
 `
