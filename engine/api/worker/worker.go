@@ -228,7 +228,7 @@ func RefreshWorker(db gorp.SqlExecutor, workerID string) error {
 	}
 
 	if n != 1 {
-		return sdk.NewError(sdk.ErrNotFound, fmt.Errorf("cds: cannot refresh worker '%s', not found", workerID))
+		return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("unknown worker '%s'", workerID))
 	}
 
 	return nil

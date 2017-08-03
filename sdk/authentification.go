@@ -4,11 +4,10 @@ import "time"
 
 // Auth Authentifaction Struct for user
 type Auth struct {
-	HashedPassword    string      `json:"hashedPassword"`
-	HashedTokenVerify string      `json:"hashedTokenVerify"`
-	EmailVerified     bool        `json:"emailVerified"`
-	DateReset         int64       `json:"dateReset"`
-	Tokens            []UserToken `json:"tokens,omitempty"`
+	HashedPassword    string `json:"hashedPassword"`
+	HashedTokenVerify string `json:"hashedTokenVerify"`
+	EmailVerified     bool   `json:"emailVerified"`
+	DateReset         int64  `json:"dateReset"`
 }
 
 // UserToken for user persistent session

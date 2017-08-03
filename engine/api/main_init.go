@@ -79,7 +79,6 @@ const (
 	viperVCSRepoBitbucketConsumerKey    = "vcs.repositories.bitbucket.consumerkey"
 	viperVCSRepoBitbucketPrivateKey     = "vcs.repositories.bitbucket.privatekey"
 	vaultConfKey                        = "/secret/cds/conf"
-	vaultDBKey                          = "/secret/cds/db-password"
 )
 
 var (
@@ -132,7 +131,6 @@ func initConfig() {
 type defaultValues struct {
 	ServerSecretsKey     string
 	AuthSharedInfraToken string
-	DBPassword           string
 	// For LDAP Client
 	LDAPBase  string
 	GivenName string
@@ -154,7 +152,6 @@ func generateConfigTemplate() {
 		v = defaultValues{
 			ServerSecretsKey:     sdk.RandomString(32),
 			AuthSharedInfraToken: token,
-			DBPassword:           "cds",
 			LDAPBase:             "{{.ldapBase}}",
 			SN:                   "{{.sn}}",
 			GivenName:            "{{.givenName}}",
@@ -174,16 +171,8 @@ func generateConfigTemplate() {
 		}
 		tmplContent = cfgFileContent
 
-		// Get database password from vault
-		dbPassword, err := s.GetFromVault(vaultDBKey)
-		if err != nil {
-			log.Warning("Error when fetch secret %s from vault", vaultDBKey)
-			os.Exit(1)
-		}
-
 		v = defaultValues{
 			AuthSharedInfraToken: token,
-			DBPassword:           dbPassword,
 			LDAPBase:             "{{.ldapBase}}",
 			SN:                   "{{.sn}}",
 			GivenName:            "{{.givenName}}",
@@ -319,7 +308,7 @@ keys = "/app/keys"
 ################################
 [db]
 user = "cds"
-password = "{{.DBPassword}}" # set /secret/cds/db-password in vault if you use it
+password = "cds"
 name = "cds"
 host = "localhost"
 port = 5432
@@ -395,7 +384,7 @@ mode = "local"
     [artifact.openstack]
     url = "<OS_AUTH_URL>"
     username = "<OS_USERNAME>"
-    password = ""
+    password = "<OS_PASSWORD>"
     tenant = "<OS_TENANT_NAME>"
     region = "<OS_REGION_NAME>"
     containerprefix = "" # Use if your want to prefix containers
@@ -410,7 +399,7 @@ mode = "local"
     broker = "<Kafka SASK/SSL addresses>"
     topic = "<Kafka topic>"
     user = "<Kafka username>"
-    password = ""
+    password = "<Kafka password>"
 
 ###########################
 # CDS Schedulers Settings #
