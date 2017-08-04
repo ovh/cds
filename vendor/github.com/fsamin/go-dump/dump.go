@@ -8,8 +8,6 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 // KeyFormatterFunc is a type for key formatting
@@ -75,7 +73,12 @@ func Fdump(w io.Writer, i interface{}, formatters ...KeyFormatterFunc) (err erro
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		_, err := fmt.Fprintf(w, "%s: %s\n", k, res[k])
+		var err error
+		if res[k] == "" {
+			_, err = fmt.Fprintf(w, "%s:\n", k)
+		} else {
+			_, err = fmt.Fprintf(w, "%s: %s\n", k, res[k])
+		}
 		if err != nil {
 			return err
 		}
@@ -99,163 +102,101 @@ func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
 	return res, nil
 }
 
-func fdumpStructField(w map[string]string, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
+func fdumpStruct(w map[string]string, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
+
 	for i := 0; i < s.NumField(); i++ {
-		f := s.Field(i)
-		if f.Kind() == reflect.Ptr {
-			f = f.Elem()
-		}
-		switch f.Kind() {
-		case reflect.Struct:
-			if validAndNotEmpty(f) {
-				if err := fdumpStructField(w, f, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
-					return err
-				}
-			}
-		case reflect.Array, reflect.Slice, reflect.Map:
-			var data interface{}
-			if validAndNotEmpty(f) {
-				data = f.Interface()
-			} else {
-				data = nil
-			}
-			if err := fdumpStruct(w, data, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
-				return err
-			}
-		default:
-			var data interface{}
-			if validAndNotEmpty(f) {
-				data = f.Interface()
-				if f.Kind() == reflect.Interface {
-					im := map[string]interface{}{}
-					if mapstructure.Decode(data, im) != nil {
-						if err := fDumpMap(w, im, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
-							return err
-						}
-						continue
-					}
-					am, ok := data.([]interface{})
-					if ok {
-						if err := fDumpArray(w, am, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
-							return err
-						}
-						continue
-					}
-				}
-				k := fmt.Sprintf("%s.%s", strings.Join(sliceFormat(roots, formatters), "."), format(s.Type().Field(i).Name, formatters))
-				w[k] = fmt.Sprintf("%v", data)
-			}
+
+		croots := append(roots, s.Type().Field(i).Name)
+		if err := fdumpInterface(w, s.Field(i).Interface(), croots, formatters...); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func fdumpStruct(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
-	var s reflect.Value
+func valueFromInterface(i interface{}) reflect.Value {
+	var f reflect.Value
 	if reflect.ValueOf(i).Kind() == reflect.Ptr {
-		s = reflect.ValueOf(i).Elem()
+		f = reflect.ValueOf(i).Elem()
 	} else {
-		s = reflect.ValueOf(i)
+		f = reflect.ValueOf(i)
 	}
 
-	if !validAndNotEmpty(s) {
+	if f.Kind() == reflect.Interface {
+		if reflect.ValueOf(f.Interface()).Kind() == reflect.Ptr {
+			f = reflect.ValueOf(f.Interface()).Elem()
+		} else {
+			f = reflect.ValueOf(f.Interface())
+		}
+	}
+	return f
+}
+
+func fdumpInterface(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
+
+	f := valueFromInterface(i)
+
+	if !validAndNotEmpty(f) {
+		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, formatters), "."))
+		w[k] = ""
 		return nil
 	}
-	switch s.Kind() {
+
+	switch f.Kind() {
 	case reflect.Struct:
-		roots = append(roots, s.Type().Name())
-		if err := fdumpStructField(w, s, roots, formatters...); err != nil {
+		nodeType := append(roots, "__Type__")
+		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, formatters), ".")
+		w[nodeTypeFormatted] = f.Type().Name()
+		croots := roots
+		if len(roots) == 0 {
+			croots = append(roots, f.Type().Name())
+		}
+		if err := fdumpStruct(w, f, croots, formatters...); err != nil {
 			return err
 		}
 	case reflect.Array, reflect.Slice:
+		nodeType := append(roots, "__Type__")
+		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, formatters), ".")
+		w[nodeTypeFormatted] = "Array"
 		if err := fDumpArray(w, i, roots, formatters...); err != nil {
 			return err
 		}
 		return nil
 	case reflect.Map:
+		nodeType := append(roots, "__Type__")
+		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, formatters), ".")
+		w[nodeTypeFormatted] = "Map"
 		if err := fDumpMap(w, i, roots, formatters...); err != nil {
 			return err
 		}
 		return nil
 	default:
-		roots = append(roots, s.Type().Name())
-		var data interface{}
-		if validAndNotEmpty(s) {
-			data = s.Interface()
-			if s.Kind() == reflect.Interface {
-				im := map[string]interface{}{}
-				if mapstructure.Decode(data, im) != nil {
-					return fDumpMap(w, im, roots, formatters...)
-				}
-				am, ok := data.([]interface{})
-				if ok {
-					return fDumpArray(w, am, roots, formatters...)
-				}
-			}
-			k := fmt.Sprintf("%s.%s", strings.Join(sliceFormat(roots, formatters), "."), format(s.Type().Name(), formatters))
-			w[k] = fmt.Sprintf("%v", data)
-		}
-		return nil
+		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, formatters), "."))
+		w[k] = fmt.Sprintf("%v", f.Interface())
 	}
-
 	return nil
 }
 
 func fDumpArray(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
+
+	nodeLen := append(roots, "__Len__")
+	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
+	w[nodeLenFormatted] = fmt.Sprintf("%d", v.Len())
+
 	for i := 0; i < v.Len(); i++ {
 		var l string
+		//croots := roots
 		var croots []string
 		if len(roots) > 0 {
 			l = roots[len(roots)-1:][0]
-			croots = roots[:len(roots)-1]
+			croots = append(roots, fmt.Sprintf("%s%d", l, i))
+		} else {
+			croots = append(roots, fmt.Sprintf("%s%d", l, i))
 		}
-		croots = append(roots, fmt.Sprintf("%s%d", l, i))
 		f := v.Index(i)
-		if f.Kind() == reflect.Ptr {
-			f = f.Elem()
-		}
-		switch f.Kind() {
-		case reflect.Struct:
-			if f.IsValid() {
-				if err := fdumpStructField(w, f, croots, formatters...); err != nil {
-					return err
-				}
-			}
-		case reflect.Array, reflect.Slice, reflect.Map:
-			var data interface{}
-			if f.IsValid() {
-				data = f.Interface()
-			} else {
-				data = nil
-			}
-			if err := fdumpStruct(w, data, croots, formatters...); err != nil {
-				return err
-			}
-		default:
-			var data interface{}
-			if validAndNotEmpty(f) {
-				data = f.Interface()
-				if f.Kind() == reflect.Interface {
-					im := map[string]interface{}{}
-					if mapstructure.Decode(data, im) != nil {
-						if err := fDumpMap(w, im, croots, formatters...); err != nil {
-							return err
-						}
-						continue
-					}
-					am, ok := data.([]interface{})
-					if ok {
-						if err := fDumpArray(w, am, croots, formatters...); err != nil {
-							return err
-						}
-						continue
-					}
-				}
-
-				k := strings.Join(sliceFormat(croots, formatters), ".")
-				w[k] = fmt.Sprintf("%v", data)
-			}
+		if err := fdumpInterface(w, f.Interface(), croots, formatters...); err != nil {
+			return err
 		}
 	}
 
@@ -264,47 +205,26 @@ func fDumpArray(w map[string]string, i interface{}, roots []string, formatters .
 
 func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
+
 	keys := v.MapKeys()
+
+	nodeLen := append(roots, "__Len__")
+	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
+	w[nodeLenFormatted] = fmt.Sprintf("%d", len(keys))
+
 	for _, k := range keys {
 		key := fmt.Sprintf("%v", k.Interface())
-		roots := append(roots, key)
+		croots := append(roots, key)
 		value := v.MapIndex(k)
-		if value.Kind() == reflect.Ptr {
-			value = value.Elem()
+
+		f := valueFromInterface(value.Interface())
+
+		if validAndNotEmpty(f) && f.Type().Kind() == reflect.Struct {
+			croots = append(croots, f.Type().Name())
 		}
-		switch v.MapIndex(k).Kind() {
-		case reflect.Array, reflect.Slice, reflect.Map, reflect.Struct:
-			if err := fdumpStruct(w, value.Interface(), roots, formatters...); err != nil {
-				return err
-			}
-		default:
-			if value.Kind() == reflect.Interface {
-				im := map[string]interface{}{}
-				if mapstructure.Decode(value.Interface(), &im) != nil {
-					if len(im) > 0 {
-						if err := fDumpMap(w, im, roots, formatters...); err != nil {
-							return err
-						}
-						continue
-					}
-				}
-				am, ok := value.Interface().([]interface{})
-				if ok {
-					if err := fDumpArray(w, am, roots, formatters...); err != nil {
-						return err
-					}
-					continue
-				}
-				mi, ok := value.Interface().(map[string]interface{})
-				if ok {
-					if err := fDumpMap(w, mi, roots, formatters...); err != nil {
-						return err
-					}
-					continue
-				}
-			}
-			k := strings.Join(sliceFormat(roots, formatters), ".")
-			w[k] = fmt.Sprintf("%v", value.Interface())
+
+		if err := fdumpInterface(w, value.Interface(), croots, formatters...); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -323,7 +243,7 @@ func ToMap(i interface{}, formatters ...KeyFormatterFunc) (res map[string]string
 		}
 	}()
 	res = map[string]string{}
-	if err = fdumpStruct(res, i, nil, formatters...); err != nil {
+	if err = fdumpInterface(res, i, nil, formatters...); err != nil {
 		return
 	}
 	return
