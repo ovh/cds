@@ -799,6 +799,12 @@
 			"revisionTime": "2016-10-20T16:18:36Z"
 		},
 		{
+			"checksumSHA1": "c5hakzLdIs8FHELPiiM2/Xz1ekk=",
+			"path": "github.com/mndrix/tap-go",
+			"revision": "56cca451570bb0366b29f30e1aeb5cf9736a1e18",
+			"revisionTime": "2017-01-13T19:23:35Z"
+		},
+		{
 			"checksumSHA1": "pqTEAm1W2tlmdHJ6b/J0no+cfso=",
 			"path": "github.com/nsf/termbox-go",
 			"revision": "b6acae516ace002cb8105a89024544a1480655a5",
