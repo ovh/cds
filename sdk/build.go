@@ -3,6 +3,7 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -129,7 +130,7 @@ func GetBuildQueue() ([]PipelineBuildJob, error) {
 func GetBuildState(projectKey, appName, pipelineName, env, buildID string) (PipelineBuild, error) {
 	var buildState PipelineBuild
 
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s?envName=%s", projectKey, appName, pipelineName, buildID, env)
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s?envName=%s", projectKey, appName, pipelineName, buildID, url.QueryEscape(env))
 	data, code, err := Request("GET", path, nil)
 	if err != nil {
 		return buildState, err

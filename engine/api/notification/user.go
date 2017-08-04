@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -45,7 +46,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 	}
 	params["cds.status"] = pb.Status.String()
 	//Set PipelineBuild UI URL
-	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s", uiURL, pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
+	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s", uiURL, pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, url.QueryEscape(pb.Environment.Name))
 	//find author (triggeredBy user or changes author)
 	if pb.Trigger.TriggeredBy != nil {
 		params["cds.author"] = pb.Trigger.TriggeredBy.Username
