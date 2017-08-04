@@ -1,9 +1,6 @@
 # Venom - Executor HTTP
 
-Step for sending SMTP
-
-Use case: you software have to check mails for doing something with them ?
-Venom can send mail then execute some tests on your software.
+Step for execute a HTTP Request
 
 ## Input
 In your yaml file, you can use:

@@ -19,6 +19,7 @@ testcases:
     mboxonsuccess: mailsMatches
     searchfrom: '.*@your-domain.localhost'
     searchsubject: 'Title of mail with *'
+    searchbody: '.*a body content.*'
     assertions:
     - result.err ShouldNotExist
 ```
@@ -29,6 +30,7 @@ testcases:
 * imappassword: imap password
 * searchfrom: optional
 * searchsubject: optional
+* searchbody: optional
 * mbox: optional, default is INBOX
 * mboxonsuccess: optional. If not empty, move found mail (matching criteria) to another mbox.
 
