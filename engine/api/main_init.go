@@ -158,14 +158,14 @@ func generateConfigTemplate() {
 		}
 		tmplContent = tmpl
 	} else { // Generate config with vault
-		s, err := secret.New(vaultToken, vaultAddr)
-		if err != nil {
+		s, errS := secret.New(vaultToken, vaultAddr)
+		if errS != nil {
 			log.Warning("Error when creating vault config")
 			os.Exit(1)
 		}
 		// Get raw config file from vault
-		cfgFileContent, err := s.GetFromVault(vaultConfKey)
-		if err != nil {
+		cfgFileContent, errV := s.GetFromVault(vaultConfKey)
+		if errV != nil {
 			log.Warning("Error when fetch secret %s from vault", vaultConfKey)
 			os.Exit(1)
 		}

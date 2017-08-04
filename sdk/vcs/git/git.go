@@ -59,6 +59,9 @@ type OutputOpts struct {
 func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) error {
 	if verbose {
 		t1 := time.Now()
+		if opts != nil && opts.CheckoutCommit != "" {
+			defer LogFunc("Checkout commit %s\n", opts.CheckoutCommit)
+		}
 		defer LogFunc("Git clone %s (%v s)\n", path, int(time.Since(t1).Seconds()))
 	}
 
