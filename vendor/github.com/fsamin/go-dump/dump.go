@@ -102,18 +102,6 @@ func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
 	return res, nil
 }
 
-func fdumpStruct(w map[string]string, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
-
-	for i := 0; i < s.NumField(); i++ {
-
-		croots := append(roots, s.Type().Field(i).Name)
-		if err := fdumpInterface(w, s.Field(i).Interface(), croots, formatters...); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func valueFromInterface(i interface{}) reflect.Value {
 	var f reflect.Value
 	if reflect.ValueOf(i).Kind() == reflect.Ptr {
@@ -224,6 +212,20 @@ func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...
 		}
 
 		if err := fdumpInterface(w, value.Interface(), croots, formatters...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func fdumpStruct(w map[string]string, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
+
+	for i := 0; i < s.NumField(); i++ {
+		if !s.Field(i).CanInterface() {
+			continue
+		}
+		croots := append(roots, s.Type().Field(i).Name)
+		if err := fdumpInterface(w, s.Field(i).Interface(), croots, formatters...); err != nil {
 			return err
 		}
 	}
