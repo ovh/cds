@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/mndrix/tap-go"
 	"gopkg.in/yaml.v2"
 )
 
@@ -132,6 +134,11 @@ func OutputResult(format string, resume, resumeFailures bool, outputDir string, 
 		if err != nil {
 			log.Fatalf("Error: cannot format output json (%s)", err)
 		}
+	case "tap":
+		data, err = outputTapFormat(tests)
+		if err != nil {
+			log.Fatalf("Error: cannot format output tap (%s)", err)
+		}
 	case "yml", "yaml":
 		data, err = yaml.Marshal(tests)
 		if err != nil {
@@ -160,6 +167,42 @@ func OutputResult(format string, resume, resumeFailures bool, outputDir string, 
 		}
 	}
 	return nil
+}
+
+func outputTapFormat(tests Tests) ([]byte, error) {
+	t := tap.New()
+	buf := new(bytes.Buffer)
+	t.Writer = buf
+	t.Header(tests.Total)
+	for _, ts := range tests.TestSuites {
+		for _, tc := range ts.TestCases {
+			name := ts.Name + " / " + tc.Name
+			if tc.Skipped > 0 {
+				t.Skip(1, name)
+				continue
+			}
+
+			if len(tc.Errors) > 0 {
+				t.Fail(name)
+				for _, e := range tc.Errors {
+					t.Diagnosticf("Error: %s", e.Value)
+				}
+				continue
+			}
+
+			if len(tc.Failures) > 0 {
+				t.Fail(name)
+				for _, e := range tc.Failures {
+					t.Diagnosticf("Failure: %s", e.Value)
+				}
+				continue
+			}
+
+			t.Pass(name)
+		}
+	}
+
+	return buf.Bytes(), nil
 }
 
 func outputResume(tests Tests, elapsed time.Duration, resumeFailures bool) {

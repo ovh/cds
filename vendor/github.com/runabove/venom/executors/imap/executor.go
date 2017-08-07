@@ -35,6 +35,7 @@ type Executor struct {
 	MBoxOnSuccess string `json:"mboxonsuccess,omitempty" yaml:"mboxonsuccess,omitempty"`
 	SearchFrom    string `json:"searchfrom,omitempty" yaml:"searchfrom,omitempty"`
 	SearchSubject string `json:"searchsubject,omitempty" yaml:"searchsubject,omitempty"`
+	SearchBody    string `json:"searchbody,omitempty" yaml:"searchbody,omitempty"`
 }
 
 // Mail contains an analyzed mail
@@ -90,8 +91,8 @@ func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestSt
 }
 
 func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
-	if e.SearchFrom == "" && e.SearchSubject == "" {
-		return nil, fmt.Errorf("You have to use searchfrom and/or searchsubject")
+	if e.SearchFrom == "" && e.SearchSubject == "" && e.SearchBody == "" {
+		return nil, fmt.Errorf("You have to use searchfrom and/or searchsubject and/or searchbody")
 	}
 
 	c, errc := connect(e.IMAPHost, e.IMAPPort, e.IMAPUser, e.IMAPPassword)
@@ -150,34 +151,25 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 }
 
 func (e *Executor) isSearched(m *Mail) (bool, error) {
-	if e.SearchFrom != "" && e.SearchSubject != "" {
-		ma, erra := regexp.MatchString(e.SearchFrom, m.From)
-		mb, errb := regexp.MatchString(e.SearchSubject, m.Subject)
-		if erra != nil {
-			return false, erra
-		}
-		if errb != nil {
-			return false, errb
-		}
-		return ma && mb, nil
-	}
-
 	if e.SearchFrom != "" {
 		ma, erra := regexp.MatchString(e.SearchFrom, m.From)
-		if erra != nil {
+		if erra != nil || !ma {
 			return false, erra
 		}
-		return ma, nil
 	}
 	if e.SearchSubject != "" {
 		mb, errb := regexp.MatchString(e.SearchSubject, m.Subject)
-		if errb != nil {
+		if errb != nil || !mb {
 			return false, errb
 		}
-		return mb, nil
 	}
-
-	return false, nil
+	if e.SearchBody != "" {
+		mc, errc := regexp.MatchString(e.SearchBody, m.Body)
+		if errc != nil || !mc {
+			return false, errc
+		}
+	}
+	return true, nil
 }
 
 func (m *Mail) move(c *imap.Client, mbox string) error {
