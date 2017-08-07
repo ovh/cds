@@ -26,7 +26,7 @@ At the minimum, CDS needs a PostgreSQL Database >= 9.4. But for serious usage yo
 - A SMTP Server for mails
 - A [Kafka](https://kafka.apache.org/) Broker to manage CDS events
 - A [Openstack Swift](https://docs.openstack.org/developer/swift/) Tenant to store builds artifacts
-- A [Vault](https://www.vaultproject.io/) server for cipher and app keys
+- A [Vault](https://www.vaultproject.io/) server for CDS configuration
 - A [Consul](https://www.consul.io/) to manage CDS Configuration
 
 See Configuration template for more details

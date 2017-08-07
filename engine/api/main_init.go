@@ -195,6 +195,8 @@ func generateConfigTemplate() {
 		fmt.Println("Error write file: ", err)
 		os.Exit(1)
 	}
+
+	fmt.Printf("You can now launch: 'api --config %s' to run CDS API\n", cfgFile)
 	os.Exit(0)
 }
 

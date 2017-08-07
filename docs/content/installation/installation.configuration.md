@@ -284,3 +284,18 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     consumerkey = "CDS"
     privatekey = "" # You can define here your bitbucket private key
 ```
+
+### Generate your TOML configuration with vault
+
+```bash
+$ $PATH_TO_CDS/api --config myCustomConfigPath/conf.toml --vault-addr=http://myvault.com  --vault-token=XXXX
+Generating default config file myCustomConfigPath/conf.toml
+```
+
+Then you can run CDS
+
+```bash
+$ $PATH_TO_CDS/api --config myCustomConfigPath/conf.toml
+Reading configuration from file myCustomConfigPath/conf.toml
+...
+```
