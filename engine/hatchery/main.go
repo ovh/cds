@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/gops/agent"
+
 	"github.com/ovh/cds/engine/hatchery/docker"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -45,6 +47,13 @@ var rootCmd = &cobra.Command{
 
 		if viper.GetString("token") == "" {
 			sdk.Exit("Worker token not provided. See help on flag --token\n")
+		}
+
+		if viper.GetString("remote-debug-url") != "" {
+			log.Info("Starting gops agent on %s", viper.GetString("remote-debug-url"))
+			if err := agent.Listen(&agent.Options{Addr: viper.GetString("remote-debug-url")}); err != nil {
+				sdk.Exit("Error on starting gops agent", err)
+			}
 		}
 	},
 }
@@ -130,4 +139,7 @@ func addFlags() {
 
 	rootCmd.PersistentFlags().String("graylog-extra-value", "", "Ex: --graylog-extra-value=xxxx-yyyy")
 	viper.BindPFlag("graylog_extra_value", rootCmd.PersistentFlags().Lookup("graylog-extra-value"))
+
+	rootCmd.PersistentFlags().String("remote-debug-url", "", "If not empty, start a gops agent on specified URL. Ex: --remote-debug-url=localhost:9999")
+	viper.BindPFlag("remote-debug-url", rootCmd.PersistentFlags().Lookup("remote-debug-url"))
 }
