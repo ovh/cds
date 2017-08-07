@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"path/filepath"
 
 	"github.com/ovh/cds/sdk"
@@ -76,7 +77,7 @@ func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
 			return res
 		}
 
-		uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, envName)
+		uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, url.QueryEscape(envName))
 		_, code, err := sdk.Request("POST", uri, data)
 		if err == nil && code > 300 {
 			err = fmt.Errorf("HTTP %d", code)

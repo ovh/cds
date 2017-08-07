@@ -105,8 +105,6 @@ Reading configuration from localhost:8500
 # CDS_SERVER_HTTP_SESSIONTTL
 # CDS_SERVER_GRPC_PORT
 # CDS_SERVER_SECRETS_KEY
-# CDS_SERVER_SECRETS_BACKEND
-# CDS_SERVER_SECRETS_BACKEND_OPTION
 # CDS_LOG_LEVEL
 # CDS_DB_USER
 # CDS_DB_PASSWORD
@@ -197,10 +195,6 @@ keys = "/app/keys"
 		# AES Cypher key for database encryption. 32 char.
 		# This is mandatory
     key = "changeitchangeitchangeitchangeit"
-    # Uncomment this two lines to user a secret backend manager such as Vault.
-    # More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
-    # backend = "path/to/secret-backend-vault"
-    # backendoptions = "vault_addr=https://vault.mydomain.net:8200 vault_token=09d1f099-3d41-666e-8337-492226789599 vault_namespace=/secret/cds"
 
 ################################
 # Postgresql Database settings #
@@ -215,14 +209,6 @@ port = 5432
 sslmode = "disable"
 maxconn = 20
 timeout = 3000
-
-# Uncomment this to retreive database credentials from secret-backend
-# secret = "cds/db"
-# The value must be as below
-# {
-#     "user": "STRING",
-#     "password": "STRING"
-# }
 
 ######################
 # CDS Cache Settings #
@@ -325,9 +311,10 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     [vcs.repositories.github]
     statuses_disabled = false # Set to true if you don't want CDS to push statuses on Github API
     statuses_url_disabled = false # Set to true if you don't want CDS to push CDS URL in statuses on Github API
-    clientsecret = "" # You can define here your github client secret if you don't use secret-backend-manager
+    clientsecret = "" # You can define here your github client secret
 
     [vcs.repositories.bitbucket]
     statuses_disabled = false
-    privatekey = "" # You can define here your bickcket private key if you don't use secret-backend-manager
+    consumerkey = "CDS"
+    privatekey = "" # You can define here your bickcket private key
 ```

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fsamin/go-dump"
+	dump "github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
