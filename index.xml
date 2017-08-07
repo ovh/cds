@@ -42,7 +42,7 @@ $ cds generate token -g yourgroup -e persistent  </description>
       <description>Authorize CDS on Github Create a CDS application on Github Go to https://github.com/settings/developers and Register a new application: set an application name, the url and a description. Dont set up Authorization callback URL.
 On the next page Github give you a Client ID and a Client Secret
 Connect CDS To Github With CDS CLI run :
- $ cds admin reposmanager add GITHUB github http://github.com client-id=&amp;lt;your_client_id&amp;gt; client-secret=&amp;lt;client-secret&amp;gt;  If you use Vault as Secret Manager: Set in Vault you CDS Client Secret in a secret named : cds/repositoriesmanager-secrets-github.</description>
+ $ cds admin reposmanager add GITHUB github http://github.com client-id=&amp;lt;your_client_id&amp;gt; client-secret=&amp;lt;client-secret&amp;gt;  Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with &amp;lt;client-secret&amp;gt;:</description>
     </item>
     
     <item>
@@ -77,7 +77,7 @@ In CDS there is several types of pipeline : build, testing and deployment. In Pi
       <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
  as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4. But for serious usage your may need :
- A Redis server or sentinels based cluster used as a cache and session store A LDAP Server for authentication A SMTP Server for mails A Kafka Broker to manage CDS events A Openstack Swift Tenant to store builds artifacts A Vault server for cipher and app keys A Consul to manage CDS Configuration  See Configuration template for more details</description>
+ A Redis server or sentinels based cluster used as a cache and session store A LDAP Server for authentication A SMTP Server for mails A Kafka Broker to manage CDS events A Openstack Swift Tenant to store builds artifacts A Vault server for CDS configuration A Consul to manage CDS Configuration  See Configuration template for more details</description>
     </item>
     
     <item>

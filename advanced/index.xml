@@ -30,7 +30,7 @@ $ cds generate token -g yourgroup -e persistent  </description>
       <description>Authorize CDS on Github Create a CDS application on Github Go to https://github.com/settings/developers and Register a new application: set an application name, the url and a description. Dont set up Authorization callback URL.
 On the next page Github give you a Client ID and a Client Secret
 Connect CDS To Github With CDS CLI run :
- $ cds admin reposmanager add GITHUB github http://github.com client-id=&amp;lt;your_client_id&amp;gt; client-secret=&amp;lt;client-secret&amp;gt;  If you use Vault as Secret Manager: Set in Vault you CDS Client Secret in a secret named : cds/repositoriesmanager-secrets-github.</description>
+ $ cds admin reposmanager add GITHUB github http://github.com client-id=&amp;lt;your_client_id&amp;gt; client-secret=&amp;lt;client-secret&amp;gt;  Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with &amp;lt;client-secret&amp;gt;:</description>
     </item>
     
     <item>

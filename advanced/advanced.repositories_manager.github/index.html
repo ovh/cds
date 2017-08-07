@@ -443,11 +443,7 @@
 <pre><code> $ cds admin reposmanager add GITHUB github http://github.com client-id=&lt;your_client_id&gt; client-secret=&lt;client-secret&gt;
 </code></pre>
 
-<p>If you use Vault as Secret Manager:
-Set in Vault you CDS <strong>Client Secret</strong> in a secret named : <code>cds/repositoriesmanager-secrets-github.com.net-client-secret</code></p>
-
-<p>If you&rsquo;re not using vault:
-Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with <code>&lt;client-secret&gt;</code>:</p>
+<p>Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with <code>&lt;client-secret&gt;</code>:</p>
 
 <pre><code class="language-toml">[vcs.repositories.github]
 clientsecret = &quot;&lt;client-secret&gt;&quot;
