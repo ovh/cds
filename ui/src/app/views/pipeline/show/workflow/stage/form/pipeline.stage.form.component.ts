@@ -20,7 +20,7 @@ export class PipelineStageFormComponent implements OnInit {
 
     availablePrerequisites: Array<Prerequisite>;
     permissionEnum = PermissionValue;
-    
+
     constructor() { }
 
     ngOnInit(): void {
