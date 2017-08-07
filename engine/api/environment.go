@@ -429,31 +429,19 @@ func updateEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 }
 
 func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	environmentName := vars["permEnvironmentName"]
+	cloneName := vars["cloneName"]
 
 	env, errEnv := environment.LoadEnvironmentByName(db, projectKey, environmentName)
 	if errEnv != nil {
-		log.Warning("cloneEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
-		return errEnv
+		return sdk.WrapError(errEnv, "cloneEnvironmentHandler> Cannot load environment %s: %s", environmentName, errEnv)
 	}
 
 	p, errProj := project.Load(db, projectKey, c.User)
 	if errProj != nil {
-		log.Warning("cloneEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
-		return errProj
-	}
-
-	var envPost sdk.Environment
-	if err := UnmarshalBody(r, &envPost); err != nil {
-		return err
-	}
-
-	//Check if the new environment has a name
-	if envPost.Name == "" {
-		return sdk.ErrWrongRequest
+		return sdk.WrapError(errProj, "cloneEnvironmentHandler> Cannot load project %s: %s", projectKey, errProj)
 	}
 
 	//Load all environments to check if there is another environment with the same name
@@ -463,64 +451,61 @@ func cloneEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	for _, e := range envs {
-		if e.Name == envPost.Name {
-			return sdk.ErrConflict
+		if e.Name == cloneName {
+			return sdk.WrapError(sdk.ErrConflict, "cloneEnvironmentHandler> an environment was found with the same name: %s", cloneName)
 		}
 	}
 
 	//Set all the data of the environment we want to clone
-	envPost.ProjectID = p.ID
-	envPost.ProjectKey = p.Key
-	envPost.Variable = env.Variable
-	envPost.EnvironmentGroups = env.EnvironmentGroups
-	envPost.Permission = env.Permission
+	envPost := sdk.Environment{
+		Name:              cloneName,
+		ProjectID:         p.ID,
+		ProjectKey:        p.Key,
+		Variable:          env.Variable,
+		EnvironmentGroups: env.EnvironmentGroups,
+		Permission:        env.Permission,
+	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("cloneEnvironmentHandler> Unable to start a transaction: %s", err)
-		return err
+		return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to start a transaction: %s", err)
 	}
 
 	defer tx.Rollback()
 
 	//Insert environment
 	if err := environment.InsertEnvironment(tx, &envPost); err != nil {
-		log.Warning("cloneEnvironmentHandler> Unable to insert environment %s: %s", envPost.Name, err)
-		return err
+		return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert environment %s: %s", envPost.Name, err)
 	}
 
 	//Insert variables
 	for _, v := range envPost.Variable {
 		if environment.InsertVariable(tx, envPost.ID, &v, c.User); err != nil {
-			log.Warning("cloneEnvironmentHandler> Unable to insert variable: %s", err)
-			return err
+			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert variable: %s", err)
 		}
 	}
 
 	//Insert environment
 	for _, e := range envPost.EnvironmentGroups {
 		if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
-			log.Warning("cloneEnvironmentHandler> Unable to insert group in environment: %s", err)
-			return err
+			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert group in environment: %s", err)
 		}
 	}
 
 	//Update the poroject
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
-		log.Warning("cloneEnvironmentHandler> Cannot update last modified date: %s\n", err)
-		return err
+		return sdk.WrapError(err, "cloneEnvironmentHandler> Cannot update last modified date: %s", err)
 	}
 
 	if err := tx.Commit(); err != nil {
 		return err
 	}
 
-	//return the project wil all environment
+	//return the project with all environments
 	var errEnvs error
 	p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
 	if errEnvs != nil {
-		log.Warning("cloneEnvironmentHandler> Cannot load environments: %s\n", errEnvs)
-		return errEnvs
+		return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 	}
 
 	return WriteJSON(w, r, p, http.StatusOK)

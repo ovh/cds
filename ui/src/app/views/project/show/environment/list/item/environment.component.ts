@@ -16,9 +16,11 @@ export class ProjectEnvironmentComponent {
 
     editableEnvironment: Environment;
     oldEnvName: string;
+    cloneName: string;
 
     hasChanged = false;
     loading = false;
+    cloneLoading = false;
     addVarLoading = false;
 
     @Input('environment')
@@ -40,6 +42,18 @@ export class ProjectEnvironmentComponent {
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('environment_renamed'));
             });
+    }
+
+    cloneEnvironment(cloneModal?: any): void {
+        this.cloneLoading = true;
+
+        this._projectStore.cloneProjectEnvironment(this.project.key, this.editableEnvironment, this.cloneName)
+            .finally(() => {
+                this.cloneLoading = false;
+                this.cloneName = '';
+                cloneModal.hide();
+            })
+            .subscribe(() => this._toast.success('', this._translate.instant('environment_cloned')));
     }
 
     deleteEnvironment(): void {
