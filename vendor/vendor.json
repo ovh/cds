@@ -439,6 +439,24 @@
 			"revisionTime": "2017-01-11T10:11:55Z"
 		},
 		{
+			"checksumSHA1": "GEOcEfTErKBV6xEvZGjYy2LV0PI=",
+			"path": "github.com/google/gops/agent",
+			"revision": "806455e841dcb0614891ad847500aaa6b10d3d1d",
+			"revisionTime": "2017-07-28T21:45:08Z"
+		},
+		{
+			"checksumSHA1": "JReTqQzncYSyvJbrmfBWZHMZfQU=",
+			"path": "github.com/google/gops/internal",
+			"revision": "806455e841dcb0614891ad847500aaa6b10d3d1d",
+			"revisionTime": "2017-07-28T21:45:08Z"
+		},
+		{
+			"checksumSHA1": "OPlS4cJsOSpZ/FrUOJtfJXikjII=",
+			"path": "github.com/google/gops/signal",
+			"revision": "806455e841dcb0614891ad847500aaa6b10d3d1d",
+			"revisionTime": "2017-07-28T21:45:08Z"
+		},
+		{
 			"checksumSHA1": "cuTQkSEiIoMhDhB7xCbYDwDhrgw=",
 			"path": "github.com/gophercloud/gophercloud",
 			"revision": "baa2eb4d1d56e7f2c29a30bbcfeb5f7fd441eb01",
