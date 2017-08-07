@@ -137,14 +137,14 @@ export class ParameterValueComponent implements OnInit {
             this.codemirror.instance.setOption('mode', this.codeMirrorConfig.mode);
         }
         this.codemirror.instance.on('keyup', (cm, event) => {
-           if (!cm.state.completionActive && event.keyCode !== 13) {
-               CodeMirror.showHint(cm, CodeMirror.hint.cds, {
-                   completeSingle: true,
-                   closeCharacters: / /,
-                   cdsCompletionList: this.suggest,
-                   specialChars: ''
-               });
-           }
+            if (!cm.state.completionActive && (event.keyCode > 46 || event.keyCode === 32)) {
+                CodeMirror.showHint(cm, CodeMirror.hint.cds, {
+                    completeSingle: true,
+                    closeCharacters: / /,
+                    cdsCompletionList: this.suggest,
+                    specialChars: ''
+                });
+            }
         });
     }
 

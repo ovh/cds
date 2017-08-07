@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -101,7 +102,7 @@ func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, env)
+	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, url.QueryEscape(env))
 	_, code, err := sdk.Request("POST", uri, data)
 	if err == nil && code > 300 {
 		err = fmt.Errorf("HTTP %d", code)
