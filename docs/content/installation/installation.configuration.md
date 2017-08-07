@@ -287,6 +287,14 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
 
 ### Generate your TOML configuration with vault
 
+You have to put your configuration in a TOML format like above with good values into a secret named `/secret/cds/conf` in your vault.
+For example if you use the vault CLI :
+
+```bash
+$ myConfig=`cat conf.toml`
+$ vault write secret/cds/conf data=$myConfig
+```
+
 ```bash
 $ $PATH_TO_CDS/api --config myCustomConfigPath/conf.toml --vault-addr=http://myvault.com  --vault-token=XXXX
 Generating default config file myCustomConfigPath/conf.toml
