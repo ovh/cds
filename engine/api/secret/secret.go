@@ -7,15 +7,14 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/secret/filesecretbackend"
-	"github.com/ovh/cds/engine/api/secret/secretbackend"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+
+	vault "github.com/hashicorp/vault/api"
 )
 
 // AES key fetched
@@ -26,95 +25,53 @@ const (
 )
 
 var (
-	key                            []byte
-	prefix                         = "3DICC3It"
-	testingPrefix                  = "3IFCC4Ib"
-	SecretUsername, SecretPassword string
-	//Client is a shared instance
-	Client secretbackend.Driver
+	key    []byte
+	prefix = "3DICC3It"
 )
 
-type databaseInstance struct {
-	Port int    `json:"port"`
-	Host string `json:"host"`
+type Secret struct {
+	Token  string
+	Client *vault.Client
 }
 
-type databaseCredentials struct {
-	Readers  []databaseInstance `json:"readers"`
-	Writers  []databaseInstance `json:"writers"`
-	Database string             `json:"database"`
-	Password string             `json:"password"`
-	User     string             `json:"user"`
-	Type     string             `json:"type"`
-}
-
-// Init secrets: cipherKey and dbSecrets
-// cipherKey and dbSecrets can be set from viper configuration
-// They can be overrided by secrets backend
-// Default secrets backend if filesecretbackend
-func Init(dbSecret, cipherKey, secretBackendBinary string, opts map[string]string) error {
+// Init secrets: cipherKey
+// cipherKey is set from viper configuration
+func Init(cipherKey string) {
 	key = []byte(cipherKey)
+}
 
-	//Initializing secret backend
-	var err error
-	if secretBackendBinary == "" {
-		//Default is embedded file secretbackend
-		prefix = testingPrefix
-		log.Warning("Using default file secret backend")
-		Client = filesecretbackend.Client(opts)
-	} else {
-		//Load the secretbackend plugin
-		log.Info("Loading Secret Backend Plugin %s", secretBackendBinary)
-		client := secretbackend.NewClient(secretBackendBinary, opts)
-		Client, err = client.Instance()
-		if err != nil {
-			return err
-		}
-	}
-	// Get all secrets
-	secrets := Client.GetSecrets()
-	if secrets.Err() != nil {
-		log.Error("Error: %v", secrets.Err())
-		return secrets.Err()
-	}
-	//Get the key from secret backend
-	aesKey, _ := secrets.Get("cds/aes-key")
-	if aesKey != "" {
-		key = []byte(aesKey)
+// Create new secret client
+func New(token, addr string) (*Secret, error) {
+	client, err := vault.NewClient(vault.DefaultConfig())
+	if err != nil {
+		return nil, err
 	}
 
-	//If key hasn't been initilized with default key
-	if len(key) != 0 {
-		if len(key) > 32 {
-			key = []byte(key[:32])
-		} else {
-			for len(key) != 32 {
-				key = append(key, '\x00')
-			}
-		}
+	client.SetToken(token)
+	client.SetAddress(addr)
+	return &Secret{
+		Client: client,
+		Token:  token,
+	}, nil
+}
+
+// Get secret from vault
+func (secret *Secret) GetFromVault(s string) (string, error) {
+	conf, err := secret.Client.Logical().Read(s)
+	if err != nil {
+		return "", err
+	} else if conf == nil {
+		log.Warning("vault> no value found at %q", s)
+		return "", nil
 	}
 
-	//dbSecret default is cds/db
-	if dbSecret == "" {
-		return nil
-	}
-	cdsDBCredS, _ := secrets.Get(dbSecret)
-	if cdsDBCredS == "" {
-		log.Error("secret.Init> %s not found", dbSecret)
-		return nil
+	value, exists := conf.Data["data"]
+	if !exists {
+		log.Warning("vault> no 'data' field found for %q (you must add a field with a key named data)", s)
+		return "", nil
 	}
 
-	var cdsDBCred = databaseCredentials{}
-	if err := json.Unmarshal([]byte(cdsDBCredS), &cdsDBCred); err != nil {
-		log.Error("secret.Init> Unable to unmarshal secret %s", err)
-		return nil
-	}
-
-	log.Info("secret.Init> Database credentials found")
-	SecretUsername = cdsDBCred.User
-	SecretPassword = cdsDBCred.Password
-
-	return nil
+	return fmt.Sprintf("%v", value), nil
 }
 
 // Encrypt data using aes+hmac algorithm

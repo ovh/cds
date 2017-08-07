@@ -21,10 +21,6 @@ With CDS CLI run :
  $ cds admin reposmanager add GITHUB github http://github.com client-id=<your_client_id> client-secret=<client-secret>
  ```
 
-If you use Vault as Secret Manager:
-Set in Vault you CDS **Client Secret** in a secret named : `cds/repositoriesmanager-secrets-github.com.net-client-secret`
-
-If you're not using vault:
 Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with `<client-secret>`:
 
 ```toml
