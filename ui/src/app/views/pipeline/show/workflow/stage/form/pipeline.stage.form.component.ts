@@ -1,5 +1,6 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Stage} from '../../../../../../model/stage.model';
+import {PermissionValue} from '../../../../../../model/permission.model';
 import {Pipeline} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {PrerequisiteEvent} from '../../../../../../shared/prerequisites/prerequisite.event.model';
@@ -18,6 +19,7 @@ export class PipelineStageFormComponent implements OnInit {
     @Input() stage: Stage;
 
     availablePrerequisites: Array<Prerequisite>;
+    permissionEnum = PermissionValue;
 
     constructor() { }
 

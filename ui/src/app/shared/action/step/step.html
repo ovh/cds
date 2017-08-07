@@ -26,7 +26,12 @@
 <div class="ui stackable grid">
     <div class="row" *ngFor="let p of step.parameters">
         <div class="two wide column">
-            <label><b>{{p.name}}</b></label>
+            <label>
+              <b>{{p.name}}</b>
+              <span *ngIf="p.description" [smDirTooltip]="p.description" smDirPosition="right center">
+                <i class="info circle icon"></i>
+              </span>
+            </label>
         </div>
         <div class="fourteen wide column">
             <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
