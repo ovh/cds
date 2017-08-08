@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
+import {Http, RequestOptions, URLSearchParams} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 
 /**
@@ -38,7 +38,12 @@ export class VariableService {
      * @param key
      * @returns {Observable<Array<string>>}
      */
-    getContextVariable(key: string): Observable<Array<string>> {
-        return this._http.get('/suggest/variable/' + key).map(res => res.json());
+    getContextVariable(key: string, pipelineId?: number): Observable<Array<string>> {
+        let options = new RequestOptions();
+        options.params = new URLSearchParams();
+        if (pipelineId) {
+            options.params.set('pipId', pipelineId.toString());
+        }
+        return this._http.get('/suggest/variable/' + key, options).map(res => res.json());
     }
 }
