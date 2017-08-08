@@ -67,7 +67,7 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 			viper.GetString("api"),
 			viper.GetString("token"),
 			viper.GetInt("max-worker"),
-			viper.GetInt("provision"),
+			viper.GetBool("provision-disabled"),
 			viper.GetInt("request-api-timeout"),
 			viper.GetInt("max-failures-heartbeat"),
 			viper.GetBool("insecure"),

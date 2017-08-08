@@ -16,7 +16,7 @@ import (
 )
 
 // Create creates hatchery
-func Create(h Interface, api, token string, maxWorkers, provision int, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, registerSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
+func Create(h Interface, api, token string, maxWorkers int, provisionDisabled bool, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, registerSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
 	Client = &http.Client{
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
@@ -51,12 +51,12 @@ func Create(h Interface, api, token string, maxWorkers, provision int, requestSe
 	for {
 		select {
 		case <-tickerRoutine:
-			spawnIds, errR = routine(h, maxWorkers, provision, hostname, time.Now().Unix(), spawnIds, warningSeconds, criticalSeconds, graceSeconds)
+			spawnIds, errR = routine(h, maxWorkers, hostname, time.Now().Unix(), spawnIds, warningSeconds, criticalSeconds, graceSeconds)
 			if errR != nil {
 				log.Warning("Error on routine: %s", errR)
 			}
 		case <-tickerProvision:
-			provisioning(h, provision)
+			provisioning(h, provisionDisabled)
 		case <-tickerRegister:
 			if err := workerRegister(h); err != nil {
 				log.Warning("Error on workerRegister: %s", err)

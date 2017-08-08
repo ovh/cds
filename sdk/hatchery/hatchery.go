@@ -43,7 +43,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func routine(h Interface, maxWorkers, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
+func routine(h Interface, maxWorkers int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
 	defer logTime(fmt.Sprintf("routine> %d", timestamp), time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d enter", timestamp)
 
@@ -178,9 +178,9 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 	return spawnedIDs, nil
 }
 
-func provisioning(h Interface, provision int) {
-	if provision == 0 {
-		log.Debug("provisioning> no provisioning to do")
+func provisioning(h Interface, provisionDisabled bool) {
+	if provisionDisabled {
+		log.Debug("provisioning> disabled on this hatchery")
 		return
 	}
 
@@ -193,7 +193,7 @@ func provisioning(h Interface, provision int) {
 	for k := range models {
 		if models[k].Type == h.ModelType() {
 			existing := h.WorkersStartedByModel(&models[k])
-			for i := existing; i < provision; i++ {
+			for i := existing; i < int(models[k].Provision); i++ {
 				go func(m sdk.Model) {
 					if name, err := h.SpawnWorker(&m, nil, false, "spawn for provision"); err != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, err)
