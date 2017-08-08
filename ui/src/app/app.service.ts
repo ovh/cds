@@ -111,16 +111,15 @@ export class AppService {
             if ((new Date(pips.get(pipKey).last_modified)).getTime() < lastUpdate.last_modified * 1000) {
                 let params = this._routerService.getRouteParams({}, this._routeActivated);
 
-                // this._appStore.resync(lastUpdate.key, );
-                if (params['key'] && params['key'] !== lastUpdate.key) {
+                if (!params['key'] || params['key'] !== lastUpdate.key) {
                     return;
                 }
 
-                // //update applications linked to this pipeline
+                // mark to update applications linked to this pipeline
                 this._pipStore.getPipelineResolver(params['key'], lastUpdate.name)
                     .subscribe((pip) => {
                         if (pip && Array.isArray(pip.attached_application)) {
-                            pip.attached_application.forEach((app) => this._appStore.markUpdate(params['key']));
+                            pip.attached_application.forEach((app) => this._appStore.markUpdate(params['key'], app.name));
                         }
                     });
 

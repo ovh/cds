@@ -123,7 +123,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     }
 
     parameterEvent(event: ParameterEvent, skip?: boolean): void {
-        console.log(event);
         if (!skip && this.pipeline.externalChange) {
             this.parameterModalWarning.show(event);
         } else {

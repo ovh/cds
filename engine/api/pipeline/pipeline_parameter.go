@@ -25,6 +25,21 @@ func CheckParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, paramName s
 	return false, nil
 }
 
+// CheckParameterInPipelineByID check if the parameter is already in the pipeline or not with parameter ID
+func CheckParameterInPipelineByID(db gorp.SqlExecutor, pipelineID, paramID int64) (bool, error) {
+	query := `SELECT COUNT(id) FROM pipeline_parameter WHERE pipeline_id = $1 AND pipeline_parameter.id = $2`
+
+	var nb int64
+	err := db.QueryRow(query, pipelineID, paramID).Scan(&nb)
+	if err != nil {
+		return false, err
+	}
+	if nb != 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
 // GetAllParametersInPipeline Get all parameters for the given pipeline
 func GetAllParametersInPipeline(db gorp.SqlExecutor, pipelineID int64 /*, args ...FuncArg*/) ([]sdk.Parameter, error) {
 	/*

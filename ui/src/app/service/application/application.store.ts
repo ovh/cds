@@ -53,7 +53,8 @@ export class ApplicationStore {
     getApplicationResolver(key: string, appName: string): Observable<Application> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
-        if (store.size === 0 || !store.get(appKey) || store.get(appKey).updated) {
+
+        if (store.size === 0 || !store.get(appKey) || store.get(appKey).toUpdate) {
             return this._applicationService.getApplication(key, appName).map( res => {
                 this._application.next(store.set(appKey, res));
                 return res;
@@ -85,11 +86,13 @@ export class ApplicationStore {
         this._recentApplications.next(List(currentRecentApps));
     }
 
-    markUpdate(appKey: string) {
+    markUpdate(key: string, appName: string) {
         let cache = this._application.getValue();
+        let appKey = key + '-' + appName;
         let appToUpdate = cache.get(appKey);
+
         if (appToUpdate) {
-            appToUpdate.updated = true;
+            appToUpdate.toUpdate = true;
             this._application.next(cache.set(appKey, appToUpdate));
         }
     }
@@ -110,7 +113,8 @@ export class ApplicationStore {
     getApplications(key: string, appName?: string): Observable<Map<string, Application>> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
-        if (appName && !store.get(appKey)) {
+
+        if (appName && (!store.get(appKey) || (store.get(appKey) && store.get(appKey).toUpdate))) {
             this.resync(key, appName);
         }
         return new Observable<Map<string, Application>>(fn => this._application.subscribe(fn));

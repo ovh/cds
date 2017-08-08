@@ -372,15 +372,34 @@ export class PipelineStore {
         });
     }
 
+
+    /**
+     * Refresh pipeline cache
+     * @param key Project unique key
+     * @param pipName Pipeline Name
+     * @param pipeline updated stages pipeline
+     * @returns {Pipeline}
+     */
+    refreshPipelineApplicationsCache(key: string, pipName: string, apps: Array<Application>): Pipeline {
+        let cache = this._pipeline.getValue();
+        let pipKey = key + '-' + pipName;
+        let pipelineToUpdate = cache.get(pipKey);
+        if (pipelineToUpdate) {
+            pipelineToUpdate.attached_application = apps;
+            this._pipeline.next(cache.set(pipKey, pipelineToUpdate));
+        }
+        return pipelineToUpdate;
+    }
+
     /**
      * Move a stage
      * @param key Project unique key
      * @param name Pipeline name
      * @param stageMoved Stage to move
      */
-    getLinkedApplications(key: string, pipName: string): Array<Application> {
-        return this.appService.getLinked(key, pipName, stageMoved).map( pip => {
-           return this.refreshPipelineStageCache(key, pipName, pip);
+    getLinkedApplications(key: string, pipName: string): Observable<Pipeline> {
+        return this._pipelineService.getApplications(key, pipName).map(apps => {
+           return this.refreshPipelineApplicationsCache(key, pipName, apps);
         });
     }
 }
