@@ -198,6 +198,17 @@ export class ProjectService {
     }
 
     /**
+     * Clone an environment in the given project
+     * @param key Project unique key
+     * @param environment Environment to clone
+     * @param cloneName for the new environment cloned
+     * @returns {Observable<Project>}
+     */
+    cloneEnvironment(key: string, environment: Environment, cloneName: string): Observable<Project> {
+        return this._http.post(`/project/${key}/environment/${environment.name}/clone/${cloneName}`, {}).map(res => res.json());
+    }
+
+    /**
      * Remove an environment in the given project
      * @param key Project unique key
      * @param environment Environment to remove

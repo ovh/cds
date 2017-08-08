@@ -150,12 +150,16 @@
   "common_workflow" : "Workflow",
   "common_url" : "URL",
   "common_yes" : "Oui",
+  "common_clone" : "Cloner",
 
   "danger_zone" : "Zone dangereuse",
 
   "environment_created" : "Environnement créé",
-  "environment_create_placeholder" : "Nouvel environnement",
   "environment_deleted" : "Environnement supprimé",
+  "environment_cloned" : "Environnement cloné sans les variables mots de passe",
+  "environment_title_clone" : "Cloner l'environnement",
+  "environment_clone_placeholder" : "Nom du nouvel environnement",
+  "environment_create_placeholder" : "Nouvel environnement",
   "environment_name" : "Nom de l'environnement",
   "environment_no" : "Il n'y a aucun environnement défini",
   "environment_renamed" : "Environnement renommé",

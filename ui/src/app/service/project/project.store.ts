@@ -404,6 +404,18 @@ export class ProjectStore {
     }
 
     /**
+     * Clone an environment
+     * @param key Project unique key
+     * @param environment Environment to clone
+     * @param cloneName for the new environment cloned
+     */
+    cloneProjectEnvironment(key: string, environment: Environment, cloneName: string) {
+        return this._projectService.cloneEnvironment(key, environment, cloneName).map(res => {
+            return this.refreshProjectEnvironmentCache(key, res);
+        });
+    }
+
+    /**
      * Remove an environment
      * @param key Project unique key
      * @param environment Environment to rename

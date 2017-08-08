@@ -162,7 +162,7 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/environment/import", POST(importNewEnvironmentHandler))
 	router.Handle("/project/{permProjectKey}/environment/import/{permEnvironmentName}", POST(importIntoEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}", GET(getEnvironmentHandler), PUT(updateEnvironmentHandler), DELETE(deleteEnvironmentHandler))
-	router.Handle("/project/{key}/environment/{permEnvironmentName}/clone", POST(cloneEnvironmentHandler))
+	router.Handle("/project/{key}/environment/{permEnvironmentName}/clone/{cloneName}", POST(cloneEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit", GET(getEnvironmentsAuditHandler, DEPRECATED))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit/{auditID}", PUT(restoreEnvironmentAuditHandler, DEPRECATED))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/group", POST(addGroupInEnvironmentHandler))
