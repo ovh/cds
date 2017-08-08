@@ -12,9 +12,11 @@ type Templater struct {
 	Values map[string]string
 }
 
-func newTemplater(values map[string]string) *Templater {
-	if values == nil {
-		values = make(map[string]string)
+func newTemplater(inputValues map[string]string) *Templater {
+	// Copy map to be thread safe with parallel > 1
+	values := make(map[string]string)
+	for key, value := range inputValues {
+		values[key] = value
 	}
 	return &Templater{Values: values}
 }
