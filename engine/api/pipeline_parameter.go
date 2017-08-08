@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -219,6 +220,7 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 		log.Warning("updateParameterInPipelineHandler: Cannot check if parameter %s is already in the pipeline %s: %s\n", paramName, pipelineName, err)
 		return err
 	}
+	fmt.Println(paramInPipeline)
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -232,6 +234,8 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 			log.Warning("updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s:  %s\n", paramName, pipelineName, err)
 			return err
 		}
+	} else {
+		return sdk.WrapError(sdk.ErrParameterNotExists, "updateParameterInPipelineHandler> unable to find parameter %s", paramName)
 	}
 
 	proj, errproj := project.Load(db, key, c.User)

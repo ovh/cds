@@ -41,17 +41,17 @@
                 </span>
             </td>
             <td>
-                <app-parameter-value [project]="project"
-                                     [suggest]="suggest"
-                                     [ref]="getRef(p)"
-                                     [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'"
-                                     [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true"></app-parameter-value>
+            <app-parameter-value [project]="project"
+                 [suggest]="suggest"
+                 [ref]="getRef(p)"
+                 [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'"
+                 [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true; sendEvent()"></app-parameter-value>
             </td>
             <td *ngIf="mode !== 'launcher' && mode !== 'job'">
                 <textarea *ngIf="mode !== launcher && p.description && p.description !== ''" class="ui textarea" [class.lock]="mode !== 'edit'" [(ngModel)]="p.description" rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'"></textarea>
                 <span *ngIf="mode === 'launcher' && (!p.description && p.description === '')">{{'common_no_description' | translate}}</span>
             </td>
-            <td class="center"  *ngIf="mode !=='launcher' && mode !== 'job'">
+            <td class="center" *ngIf="mode !== 'launcher' && mode !== 'job'">
                 <ng-container *ngIf="mode === 'edit'">
                     <div *ngIf="p.hasChanged;then save;else remove"></div>
                     <ng-template #save>

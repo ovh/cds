@@ -53,7 +53,7 @@ export class ApplicationStore {
     getApplicationResolver(key: string, appName: string): Observable<Application> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
-        if (store.size === 0 || !store.get(appKey)) {
+        if (store.size === 0 || !store.get(appKey) || store.get(appKey).updated) {
             return this._applicationService.getApplication(key, appName).map( res => {
                 this._application.next(store.set(appKey, res));
                 return res;
@@ -83,6 +83,15 @@ export class ApplicationStore {
         currentRecentApps = currentRecentApps.splice(0, 15);
         localStorage.setItem(ApplicationStore.RECENT_APPLICATION_KEY, JSON.stringify(currentRecentApps));
         this._recentApplications.next(List(currentRecentApps));
+    }
+
+    markUpdate(appKey: string) {
+        let cache = this._application.getValue();
+        let appToUpdate = cache.get(appKey);
+        if (appToUpdate) {
+            appToUpdate.updated = true;
+            this._application.next(cache.set(appKey, appToUpdate));
+        }
     }
 
     externalModification(appKey: string) {

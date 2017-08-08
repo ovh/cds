@@ -103,19 +103,31 @@ export class AppService {
                 return;
             }
 
-
             let pipKey = lastUpdate.key + '-' + lastUpdate.name;
             if (!pips.get(pipKey)) {
                 return;
             }
 
-            if (pips.get(pipKey).last_modified < lastUpdate.last_modified) {
+            if ((new Date(pips.get(pipKey).last_modified)).getTime() < lastUpdate.last_modified * 1000) {
                 let params = this._routerService.getRouteParams({}, this._routeActivated);
 
-                if (params['key'] && params['key'] === lastUpdate.key && params['pipName'] === lastUpdate.name) {
-                    this._pipStore.externalModification(pipKey);
+                // this._appStore.resync(lastUpdate.key, );
+                if (params['key'] && params['key'] !== lastUpdate.key) {
+                    return;
+                }
 
+                // //update applications linked to this pipeline
+                this._pipStore.getPipelineResolver(params['key'], lastUpdate.name)
+                    .subscribe((pip) => {
+                        if (pip && Array.isArray(pip.attached_application)) {
+                            pip.attached_application.forEach((app) => this._appStore.markUpdate(params['key']));
+                        }
+                    });
+
+                // update pipeline
+                if (params['pipName'] === lastUpdate.name) {
                     if (lastUpdate.username !== this._authStore.getUser().username) {
+                        this._pipStore.externalModification(pipKey);
                         this._notif.create(this._translate.instant('pipeline_modification', {username: lastUpdate.username}));
                     }
 

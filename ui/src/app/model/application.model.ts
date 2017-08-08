@@ -30,6 +30,7 @@ export class Application {
 
     // true if someone has updated the application ( used for warnings )
     externalChange: boolean;
+    updated: boolean;
 
     // workflow depth for horizontal tree view
     horizontalDepth: number;
