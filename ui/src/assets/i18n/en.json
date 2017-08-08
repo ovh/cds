@@ -470,7 +470,7 @@
   "worker_model_help_line_2": "The goal of a worker model is to describe the capabilities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries..",
   "worker_model_help_howtos": "Howtos :",
   "worker_model_help_howto_link_1": "Create a worker model based on a docker image from Docker Hub",
-  "worker_model_help_howto_link_2": "Create a worker model with you own image",
+  "worker_model_help_howto_link_2": "Create a worker model with your own image",
   "worker_model_help_howto_link_3": "Create a worker model based on a Openstack image",
   "worker_model_help_howto_link_4": "Read more",
   "worker_model_image": "Image",
