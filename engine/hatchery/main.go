@@ -37,10 +37,6 @@ var rootCmd = &cobra.Command{
 			sdk.Exit("max-worker have to be > 0\n")
 		}
 
-		if viper.GetInt("provision") < 0 {
-			sdk.Exit("provision have to be >= 0\n")
-		}
-
 		if viper.GetString("api") == "" {
 			sdk.Exit("CDS api endpoint not provided. See help on flag --api\n")
 		}
