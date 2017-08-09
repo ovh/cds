@@ -24,14 +24,15 @@ Flags:
       --details string        Output Details Level : low, medium, high (default "medium")
       --env                   Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
       --exclude stringSlice   --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
-      --format string         --format:yaml, json, xml (default "xml")
+      --format string         --format:yaml, json, xml, tap (default "xml")
       --log string            Log Level : debug, info or warn (default "warn")
       --output-dir string     Output Directory: create tests results file inside this directory
       --parallel int          --parallel=2 : launches 2 Test Suites in parallel (default 1)
       --resume                Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
       --resumeFailures        Output Resume Failures (default true)
       --var stringSlice       --var cds='cds -f config.json' --var cds2='cds -f config.json'
-```
+      --var-from-file         --var-from-file filename.yaml : yaml|json, must contains map[string]string
+
 
 ## TestSuite files
 
@@ -136,6 +137,19 @@ testcases:
 ```bash
 cd $GOPATH/src/github.com/ovh/cds/tests
 venom run --var cdsro='cds -f $HOME/.cds/it.user.ro.json' --var cds='cds -f $HOME/.cds/it.user.rw.json' --parallel=5
+```
+
+## RUN Venom with file var
+
+vars.yaml :
+```yaml
+cdsro: 'cds -f $HOME/.cds/it.user.ro.json'
+cds: 'cds -f $HOME/.cds/it.user.rw.json'
+```
+
+```bash
+cd $GOPATH/src/github.com/ovh/cds/tests
+venom run --var-from-file vars.yaml --parallel=5
 ```
 
 ## RUN Venom, with an export xUnit

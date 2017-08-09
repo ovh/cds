@@ -1,9 +1,14 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk/plugin"
 	"github.com/runabove/venom"
@@ -50,6 +55,7 @@ func (s VenomPlugin) Parameters() plugin.Parameters {
 	params.Add("details", plugin.StringParameter, "Output Details Level: low, medium, high", "low")
 	params.Add("loglevel", plugin.StringParameter, "Log Level: debug, info, warn or error", "error")
 	params.Add("vars", plugin.StringParameter, "Empty: all {{.cds...}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty", "")
+	params.Add("vars-from-file", plugin.StringParameter, "filename.yaml or filename.json. See https://github.com/runabove/venom#run-venom-with-file-var", "")
 	return params
 }
 
@@ -72,6 +78,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	details := a.Arguments().Get("details")
 	loglevel := a.Arguments().Get("loglevel")
 	vars := a.Arguments().Get("vars")
+	varsFromFile := a.Arguments().Get("vars-from-file")
 
 	if path == "" {
 		path = "."
@@ -128,6 +135,34 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 			}
 		}
 	}
+
+	if varsFromFile != "" {
+		varFileMap := make(map[string]string)
+		bytes, err := ioutil.ReadFile(varsFromFile)
+		if err != nil {
+			plugin.SendLog(a, "VENOM - Error while reading file: %s\n", err)
+			return plugin.Fail
+		}
+		switch filepath.Ext(varsFromFile) {
+		case ".json":
+			err = json.Unmarshal(bytes, &varFileMap)
+		case ".yaml":
+			err = yaml.Unmarshal(bytes, &varFileMap)
+		default:
+			plugin.SendLog(a, "VENOM - unsupported varFile format")
+			return plugin.Fail
+		}
+
+		if err != nil {
+			plugin.SendLog(a, "VENOM - Error on unmarshal file: %s\n", err)
+			return plugin.Fail
+		}
+
+		for key, value := range varFileMap {
+			data[key] = value
+		}
+	}
+
 	tests, err := venom.Process([]string{path}, data, []string{exclude}, p, loglevel, details, w)
 	if err != nil {
 		plugin.SendLog(a, "VENOM - Fail on venom: %s\n", err)
