@@ -157,7 +157,7 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 		}
 	}
 	for _, p := range updated {
-		if err := pipeline.UpdateParameterInPipeline(tx, pip.ID, p); err != nil {
+		if err := pipeline.UpdateParameterInPipeline(tx, pip.ID, p.Name, p); err != nil {
 			log.Warning("UpdatePipelineParameters> Cannot update parameter %s: %s", p.Name, err)
 			return err
 		}
@@ -204,16 +204,13 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	if err := UnmarshalBody(r, &newParam); err != nil {
 		return err
 	}
-	if newParam.Name != paramName {
-		return sdk.ErrWrongRequest
-	}
 
 	p, err := pipeline.LoadPipeline(db, key, pipelineName, false)
 	if err != nil {
 		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
 	}
 
-	paramInPipeline, err := pipeline.CheckParameterInPipelineByID(db, p.ID, newParam.ID)
+	paramInPipeline, err := pipeline.CheckParameterInPipeline(db, p.ID, paramName)
 	if err != nil {
 		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot check if parameter %s is already in the pipeline %s", paramName, pipelineName)
 	}
@@ -228,7 +225,7 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	}
 	defer tx.Rollback()
 
-	if err := pipeline.UpdateParameterInPipeline(tx, p.ID, newParam); err != nil {
+	if err := pipeline.UpdateParameterInPipeline(tx, p.ID, paramName, newParam); err != nil {
 		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s", paramName, pipelineName)
 	}
 

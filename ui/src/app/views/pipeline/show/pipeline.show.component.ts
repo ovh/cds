@@ -98,16 +98,13 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             this.pipeline = undefined;
         }
         if (!this.pipeline) {
-            this.pipelineSubscriber = this._pipStore.getPipelines(key, pipName).subscribe( pip => {
+            this.pipelineSubscriber = this._pipStore.getPipelines(key, pipName, true).subscribe( pip => {
                 if (pip) {
                     let pipelineUpdated = pip.get(key + '-' + pipName);
                     if (pipelineUpdated && !pipelineUpdated.externalChange &&
                         (!this.pipeline || this.pipeline.last_modified < pipelineUpdated.last_modified)) {
                         this.pipeline = pipelineUpdated;
-                        this._pipStore.getLinkedApplications(this.project.key, this.pipeline.name).first()
-                            .subscribe(p => {
-                                this.applications = p.attached_application;
-                            });
+                        this.applications = pipelineUpdated.attached_application || [];
                     } else if (pipelineUpdated && pipelineUpdated.externalChange) {
                         this._toast.info('', this._translate.instant('warning_pipeline'));
                     }

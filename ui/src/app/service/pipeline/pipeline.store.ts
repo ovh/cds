@@ -59,16 +59,16 @@ export class PipelineStore {
         return new Observable<List<string>>(fn => this._pipelineType.subscribe(fn));
     }
 
-    getPipelines(key: string, pipName?: string): Observable<Map<string, Pipeline>> {
+    getPipelines(key: string, pipName?: string, withApplication?: boolean): Observable<Map<string, Pipeline>> {
       let store = this._pipeline.getValue();
       let pipKey = key + '-' + pipName;
       if (pipName && !store.get(pipKey)) {
-        this.resync(key, pipName);
+        this.resync(key, pipName, withApplication);
       }
       return new Observable<Map<string, Pipeline>>(fn => this._pipeline.subscribe(fn));
     }
 
-    resync(key: string, pipName: string) {
+    resync(key: string, pipName: string, withApplication?: boolean) {
         let store = this._pipeline.getValue();
         let pipKey = key + '-' + pipName;
         this._pipelineService.getPipeline(key, pipName).subscribe(res => {
@@ -389,17 +389,5 @@ export class PipelineStore {
             this._pipeline.next(cache.set(pipKey, pipelineToUpdate));
         }
         return pipelineToUpdate;
-    }
-
-    /**
-     * Move a stage
-     * @param key Project unique key
-     * @param name Pipeline name
-     * @param stageMoved Stage to move
-     */
-    getLinkedApplications(key: string, pipName: string): Observable<Pipeline> {
-        return this._pipelineService.getApplications(key, pipName).map(apps => {
-           return this.refreshPipelineApplicationsCache(key, pipName, apps);
-        });
     }
 }

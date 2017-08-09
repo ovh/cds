@@ -108,23 +108,11 @@ export class AppService {
                 return;
             }
 
-            if ((new Date(pips.get(pipKey).last_modified)).getTime() < lastUpdate.last_modified * 1000) {
+            if (pips.get(pipKey).last_modified < lastUpdate.last_modified) {
                 let params = this._routerService.getRouteParams({}, this._routeActivated);
 
-                if (!params['key'] || params['key'] !== lastUpdate.key) {
-                    return;
-                }
-
-                // mark to update applications linked to this pipeline
-                this._pipStore.getPipelineResolver(params['key'], lastUpdate.name)
-                    .subscribe((pip) => {
-                        if (pip && Array.isArray(pip.attached_application)) {
-                            pip.attached_application.forEach((app) => this._appStore.markUpdate(params['key'], app.name));
-                        }
-                    });
-
                 // update pipeline
-                if (params['pipName'] === lastUpdate.name) {
+                if (params['key'] && params['key'] === lastUpdate.key && params['pipName'] === lastUpdate.name) {
                     if (lastUpdate.username !== this._authStore.getUser().username) {
                         this._pipStore.externalModification(pipKey);
                         this._notif.create(this._translate.instant('pipeline_modification', {username: lastUpdate.username}));
@@ -134,6 +122,13 @@ export class AppService {
                         this._pipStore.resync(lastUpdate.key, lastUpdate.name);
                     }
                 } else {
+                    // mark to update applications linked to this pipeline
+                    this._pipStore.getPipelineResolver(lastUpdate.key, lastUpdate.name)
+                        .subscribe((pip) => {
+                            if (pip && Array.isArray(pip.attached_application)) {
+                                pip.attached_application.forEach((app) => this._appStore.removeFromStore(lastUpdate.key + '-' + app.name));
+                            }
+                        });
                     this._pipStore.removeFromStore(pipKey);
                 }
             }

@@ -54,7 +54,7 @@ export class ApplicationStore {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
 
-        if (store.size === 0 || !store.get(appKey) || store.get(appKey).toUpdate) {
+        if (store.size === 0 || !store.get(appKey)) {
             return this._applicationService.getApplication(key, appName).map( res => {
                 this._application.next(store.set(appKey, res));
                 return res;
@@ -86,17 +86,6 @@ export class ApplicationStore {
         this._recentApplications.next(List(currentRecentApps));
     }
 
-    markUpdate(key: string, appName: string) {
-        let cache = this._application.getValue();
-        let appKey = key + '-' + appName;
-        let appToUpdate = cache.get(appKey);
-
-        if (appToUpdate) {
-            appToUpdate.toUpdate = true;
-            this._application.next(cache.set(appKey, appToUpdate));
-        }
-    }
-
     externalModification(appKey: string) {
         let cache = this._application.getValue();
         let appToUpdate = cache.get(appKey);
@@ -113,8 +102,7 @@ export class ApplicationStore {
     getApplications(key: string, appName?: string): Observable<Map<string, Application>> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
-
-        if (appName && (!store.get(appKey) || (store.get(appKey) && store.get(appKey).toUpdate))) {
+        if (appName && !store.get(appKey)) {
             this.resync(key, appName);
         }
         return new Observable<Map<string, Application>>(fn => this._application.subscribe(fn));
