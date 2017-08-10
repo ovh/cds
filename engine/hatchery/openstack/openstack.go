@@ -245,7 +245,7 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 	if err != nil {
 		log.Error("killAwolServersComputeImage> error on create image for worker model %s: %s", workerModelName, err)
 	} else {
-		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelName, hatcheryOpenStack.createImageTimeout)
+		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelName, h.createImageTimeout)
 
 		startTime := time.Now().Unix()
 		var newImageIsActive bool
@@ -264,7 +264,7 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 		}
 
 		if !newImageIsActive {
-			log.Info("killAwolServersComputeImage> deleting new image for %s with ID %s", workerModelName, imageID)
+			log.Info("killAwolServersComputeImage> timeout while creating new image. Deleting new image for %s with ID %s", workerModelName, imageID)
 			if err := images.Delete(h.client, imageID).ExtractErr(); err != nil {
 				log.Error("killAwolServersComputeImage> error while deleting new image %s", imageID)
 			}
