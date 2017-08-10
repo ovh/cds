@@ -87,33 +87,33 @@ $ CDS_OPENSTACK_USER=<user> \
 	PreRun: func(cmd *cobra.Command, args []string) {
 		hatcheryOpenStack.tenant = viper.GetString("openstack-tenant")
 		if hatcheryOpenStack.tenant == "" {
-			sdk.Exit("flag or environmnent variable openstack-tenant not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-tenant not provided, aborting\n")
 		}
 
 		hatcheryOpenStack.user = viper.GetString("openstack-user")
 		if hatcheryOpenStack.user == "" {
-			sdk.Exit("flag or environmnent variable openstack-user not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-user not provided, aborting\n")
 		}
 
 		hatcheryOpenStack.address = viper.GetString("openstack-auth-endpoint")
 		if hatcheryOpenStack.address == "" {
-			sdk.Exit("flag or environmnent variable openstack-auth-endpoint not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-auth-endpoint not provided, aborting\n")
 		}
 
 		hatcheryOpenStack.password = viper.GetString("openstack-password")
 		if hatcheryOpenStack.password == "" {
-			sdk.Exit("flag or environmnent variable openstack-password not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-password not provided, aborting\n")
 		}
 
 		hatcheryOpenStack.region = viper.GetString("openstack-region")
 		if hatcheryOpenStack.region == "" {
-			sdk.Exit("flag or environmnent variable openstack-region not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-region not provided, aborting\n")
 		}
 
 		if viper.GetString("openstack-ip-range") != "" {
 			ips, err := IPinRanges(viper.GetString("openstack-ip-range"))
 			if err != nil {
-				sdk.Exit("flag or environmnent variable openstack-ip-range error: %s\n", err)
+				sdk.Exit("flag or environment variable openstack-ip-range error: %s\n", err)
 			}
 			for _, ip := range ips {
 				ipsInfos.ips[ip] = ipInfos{}

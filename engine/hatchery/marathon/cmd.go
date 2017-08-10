@@ -82,20 +82,20 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 		hatcheryMarathon.token = viper.GetString("token")
 
 		if viper.GetString("marathon-host") == "" {
-			sdk.Exit("flag or environmnent variable marathon-host not provided, aborting\n")
+			sdk.Exit("flag or environment variable marathon-host not provided, aborting\n")
 		}
 
 		hatcheryMarathon.marathonID = viper.GetString("marathon-id")
 		if hatcheryMarathon.marathonID == "" {
-			sdk.Exit("flag or environmnent variable marathon-id not provided, aborting\n")
+			sdk.Exit("flag or environment variable marathon-id not provided, aborting\n")
 		}
 
 		if viper.GetString("marathon-user") == "" {
-			sdk.Exit("flag or environmnent variable marathon-user not provided, aborting\n")
+			sdk.Exit("flag or environment variable marathon-user not provided, aborting\n")
 		}
 
 		if viper.GetString("marathon-password") == "" {
-			sdk.Exit("flag or environmnent variable marathon-password not provided, aborting\n")
+			sdk.Exit("flag or environment variable marathon-password not provided, aborting\n")
 		}
 
 		hatcheryMarathon.marathonLabelsString = viper.GetString("marathon-labels")
@@ -108,7 +108,7 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 				}
 				tuple := strings.Split(s, "=")
 				if len(tuple) != 2 {
-					sdk.Exit("malformatted flag or environmnent variable marathon-labels")
+					sdk.Exit("malformatted flag or environment variable marathon-labels")
 				}
 				hatcheryMarathon.marathonLabels[tuple[0]] = tuple[1]
 			}
