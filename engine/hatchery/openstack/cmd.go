@@ -42,6 +42,9 @@ func init() {
 
 	Cmd.Flags().BoolVar(&hatcheryOpenStack.disableCreateImage, "disable-create-image", false, `if true: hatchery does not create openstack image when a worker model is updated`)
 	viper.BindPFlag("disable-create-image", Cmd.Flags().Lookup("disable-create-image"))
+
+	Cmd.Flags().IntVar(&hatcheryOpenStack.createImageTimeout, "create-image-timeout", 180, `max wait for create an openstack image (in seconds)`)
+	viper.BindPFlag("create-image-timeout", Cmd.Flags().Lookup("create-image-timeout"))
 }
 
 // Cmd configures comamnd for HatcheryCloud

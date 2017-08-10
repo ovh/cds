@@ -53,6 +53,7 @@ type HatcheryCloud struct {
 	networkID          string // computed from networkString
 	workerTTL          int
 	disableCreateImage bool
+	createImageTimeout int
 }
 
 // ID returns hatchery id
@@ -244,13 +245,35 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 	if err != nil {
 		log.Error("killAwolServersComputeImage> error on create image for worker model %s: %s", workerModelName, err)
 	} else {
-		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting 180s for saving created img...", imageID, workerModelName)
-		time.Sleep(180 * time.Second)
-		log.Debug("killAwolServersComputeImage> end wait...", imageID, workerModelName)
+		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelName, hatcheryOpenStack.createImageTimeout)
+
+		startTime := time.Now().Unix()
+		var newImageIsActive bool
+		for time.Now().Unix()-startTime < int64(hatcheryOpenStack.createImageTimeout) {
+			newImage, err := images.Get(h.client, imageID).Extract()
+			if err != nil {
+				log.Error("killAwolServersComputeImage> error on get new image %s for worker model %s: %s", imageID, workerModelName, err)
+			}
+			if newImage.Status == "ACTIVE" {
+				// new image is created, end wait
+				log.Info("killAwolServersComputeImage> image %s created for worker model %s is active", imageID, workerModelName)
+				newImageIsActive = true
+				break
+			}
+			time.Sleep(15 * time.Second)
+		}
+
+		if !newImageIsActive {
+			log.Info("killAwolServersComputeImage> deleting new image for %s with ID %s", workerModelName, imageID)
+			if err := images.Delete(h.client, imageID).ExtractErr(); err != nil {
+				log.Error("killAwolServersComputeImage> error while deleting new image %s", imageID)
+			}
+		}
+
 		if oldImageID != "" {
 			log.Info("killAwolServersComputeImage> deleting old image for %s with ID %s", workerModelName, oldImageID)
 			if err := images.Delete(h.client, oldImageID).ExtractErr(); err != nil {
-				log.Error("killAwolServersComputeImage> error while deleting old image")
+				log.Error("killAwolServersComputeImage> error while deleting old image %s", oldImageID)
 			}
 		}
 		h.resetImagesCache()
