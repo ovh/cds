@@ -62,7 +62,6 @@ $ CDS_OPENSTACK_USER=<user> \
   CDS_API=https://api.domain \
   CDS_MAX-worker=10 \
   CDS_MODE=openstack \
-  CDS_PROVISION=1 \
   CDS_TOKEN=2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4 \
 	./hatchery
 
