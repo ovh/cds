@@ -97,8 +97,8 @@ func addFlags() {
 	rootCmd.PersistentFlags().Int("request-api-timeout", 10, "Request CDS API: timeout in seconds")
 	viper.BindPFlag("request-api-timeout", rootCmd.PersistentFlags().Lookup("request-api-timeout"))
 
-	rootCmd.PersistentFlags().Int("provision", 0, "Allowed worker model provisioning")
-	viper.BindPFlag("provision", rootCmd.PersistentFlags().Lookup("provision"))
+	rootCmd.PersistentFlags().Bool("provision-disabled", false, "Disabled provisionning")
+	viper.BindPFlag("provision-disabled", rootCmd.PersistentFlags().Lookup("provision-disabled"))
 
 	rootCmd.PersistentFlags().Int("provision-seconds", 30, "Check provisioning each n Seconds")
 	viper.BindPFlag("provision-seconds", rootCmd.PersistentFlags().Lookup("provision-seconds"))
