@@ -39,7 +39,7 @@ function httpCall (path, host, user, session, additionnalHeaders) {
         }
 
         xhr.send(null);
-        if (xhr.status === 401 || xhr.status === 403) {
+        if (xhr.status === 401 || xhr.status === 403 || xhr.status === 404) {
             close();
         }
         return xhr;
