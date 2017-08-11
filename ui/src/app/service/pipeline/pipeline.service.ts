@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
+import {Http, RequestOptions, URLSearchParams} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Pipeline} from '../../model/pipeline.model';
 import {Application} from '../../model/application.model';
@@ -24,7 +24,12 @@ export class PipelineService {
      * @param pipName Pipeline Name
      */
     getPipeline(key: string, pipName: string): Observable<Pipeline> {
-        return this._http.get('/project/' + key + '/pipeline/' + pipName).map(res => res.json());
+        let params = new URLSearchParams();
+        let options = new RequestOptions();
+        params.set('withApplications', 'true');
+        options.search = params;
+
+        return this._http.get('/project/' + key + '/pipeline/' + pipName, options).map(res => res.json());
     }
 
     /**
@@ -57,16 +62,6 @@ export class PipelineService {
      */
     createPipeline(key: string, pipeline: Pipeline): Observable<Pipeline> {
         return this._http.post('/project/' + key + '/pipeline', pipeline).map(res => res.json());
-    }
-
-    /**
-     * Get the list of applications that use the given pipeline
-     * @param key Project unique key
-     * @param pipName Pipeline name
-     * @returns {Observable<Application[]>}
-     */
-    getApplications(key: string,  pipName: string): Observable<Application[]> {
-        return this._http.get('/project/' + key + '/pipeline/' + pipName + '/application').map(res => res.json());
     }
 
     /**
@@ -200,7 +195,8 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     updateParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._http.put('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name, param).map(res => res.json());
+        return this._http.put(`/project/${key}/pipeline/${pipName}/parameter/${param.previousName || param.name}`, Parameter.format(param))
+            .map(res => res.json());
     }
 
     /**

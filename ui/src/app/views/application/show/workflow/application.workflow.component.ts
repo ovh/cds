@@ -53,7 +53,6 @@ export class ApplicationWorkflowComponent implements OnInit {
         // Load branches
         this._appWorkflow.getBranches(this.project.key, this.application.name).subscribe(branches => {
             this.branches = branches;
-
             this.branches.forEach(b => {
                 if (b.default && !this.applicationFilter.branch) {
                     this.applicationFilter.branch = b.display_id;
@@ -251,4 +250,3 @@ export class ApplicationWorkflowComponent implements OnInit {
         }
     }
 }
-

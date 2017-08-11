@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -105,35 +106,25 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 }
 
 // UpdateParameterInPipeline Update a parameter in the given pipeline
-func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param sdk.Parameter) error {
-	/* DEPRECATED: no more password in parameter
-		clear, cipher, err := secret.EncryptS(param.Type, param.Value)
-	if err != nil {
-		return err
-	}
-
+func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamName string, param sdk.Parameter) error {
 	// update parameter
-	query := `UPDATE pipeline_parameter SET value=$1, cipher_value=$2, type=$3, description=$4, name=$6 WHERE pipeline_id=$5 AND id=$7`
-	_, err = db.Exec(query, clear, cipher, string(param.Type), param.Description, pipelineID, param.Name, param.ID)
+	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$4 WHERE pipeline_id=$5 AND id=$6`
+	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, param.ID)
 	if err != nil {
-		return err
-	}
-	*/
-	// update parameter
-	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$5 WHERE pipeline_id=$4 AND id=$6`
-	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, pipelineID, param.Name, param.ID)
-	if err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
+			return sdk.ErrParameterExists
+		}
 		return err
 	}
 
 	// Update this parameter in triggers as well
-	query = `UPDATE pipeline_trigger_parameter SET type=$1, description=$2 WHERE id IN (
+	query = `UPDATE pipeline_trigger_parameter SET type=$1, description=$2, name=$3 WHERE id IN (
 		SELECT pipeline_trigger_parameter.id FROM pipeline_trigger_parameter
 		JOIN pipeline_trigger ON pipeline_trigger.id = pipeline_trigger_parameter.pipeline_trigger_id
-		WHERE pipeline_trigger.dest_pipeline_id = $3
-		AND pipeline_trigger_parameter.name = $4
+		WHERE pipeline_trigger.dest_pipeline_id = $4
+		AND pipeline_trigger_parameter.name = $5
 	)`
-	_, err = db.Exec(query, string(param.Type), param.Description, pipelineID, param.Name)
+	_, err = db.Exec(query, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
 	return err
 }
 

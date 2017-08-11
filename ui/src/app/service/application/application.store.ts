@@ -53,6 +53,7 @@ export class ApplicationStore {
     getApplicationResolver(key: string, appName: string): Observable<Application> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
+
         if (store.size === 0 || !store.get(appKey)) {
             return this._applicationService.getApplication(key, appName).map( res => {
                 this._application.next(store.set(appKey, res));

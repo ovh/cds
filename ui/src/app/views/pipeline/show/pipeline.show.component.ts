@@ -104,9 +104,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                     if (pipelineUpdated && !pipelineUpdated.externalChange &&
                         (!this.pipeline || this.pipeline.last_modified < pipelineUpdated.last_modified)) {
                         this.pipeline = pipelineUpdated;
-                        this._appPipService.getApplicationFromPipeline(this.project.key, this.pipeline.name).first().subscribe(apps => {
-                            this.applications = apps;
-                        });
+                        this.applications = pipelineUpdated.attached_application || [];
                     } else if (pipelineUpdated && pipelineUpdated.externalChange) {
                         this._toast.info('', this._translate.instant('warning_pipeline'));
                     }
@@ -125,16 +123,15 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         if (!skip && this.pipeline.externalChange) {
             this.parameterModalWarning.show(event);
         } else {
-            event.parameter.value = String(event.parameter.value);
+            if (event.parameter) {
+                event.parameter.value = String(event.parameter.value);
+            }
             switch (event.type) {
                 case 'add':
                     this.paramFormLoading = true;
-                    this._pipStore.addParameter(this.project.key, this.pipeline.name, event.parameter).subscribe(() => {
-                        this._toast.success('', this._translate.instant('parameter_added'));
-                        this.paramFormLoading = false;
-                    }, () => {
-                        this.paramFormLoading = false;
-                    });
+                    this._pipStore.addParameter(this.project.key, this.pipeline.name, event.parameter)
+                        .finally(() => this.paramFormLoading = false)
+                        .subscribe(() => this._toast.success('', this._translate.instant('parameter_added')));
                     break;
                 case 'update':
                     this._pipStore.updateParameter(this.project.key, this.pipeline.name, event.parameter).subscribe(() => {

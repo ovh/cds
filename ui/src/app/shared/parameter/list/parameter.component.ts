@@ -13,7 +13,20 @@ import {Project} from '../../../model/project.model';
 })
 export class ParameterListComponent extends Table {
 
-    @Input() parameters: Array<Parameter>;
+    @Input('parameters')
+    set parameters(newP: Array<Parameter>) {
+        if (Array.isArray(newP)) {
+            this._parameters = newP.map((d) => {
+                d.previousName = d.name;
+                return d;
+            });
+        } else {
+            this._parameters = newP;
+        }
+    }
+    get parameters() {
+        return this._parameters;
+    }
     @Input() paramsRef: Array<Parameter>;
     @Input() project: Project;
     @Input() suggest: Array<string>;
@@ -24,6 +37,8 @@ export class ParameterListComponent extends Table {
 
     public ready = false;
     public parameterTypes: string[];
+
+    private _parameters: Array<Parameter>;
 
     constructor(private _paramService: ParameterService, public _sharedService: SharedService) {
         super();
