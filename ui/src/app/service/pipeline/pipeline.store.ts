@@ -59,16 +59,16 @@ export class PipelineStore {
         return new Observable<List<string>>(fn => this._pipelineType.subscribe(fn));
     }
 
-    getPipelines(key: string, pipName?: string, withApplication?: boolean): Observable<Map<string, Pipeline>> {
+    getPipelines(key: string, pipName?: string): Observable<Map<string, Pipeline>> {
       let store = this._pipeline.getValue();
       let pipKey = key + '-' + pipName;
       if (pipName && !store.get(pipKey)) {
-        this.resync(key, pipName, withApplication);
+        this.resync(key, pipName);
       }
       return new Observable<Map<string, Pipeline>>(fn => this._pipeline.subscribe(fn));
     }
 
-    resync(key: string, pipName: string, withApplication?: boolean) {
+    resync(key: string, pipName: string) {
         let store = this._pipeline.getValue();
         let pipKey = key + '-' + pipName;
         this._pipelineService.getPipeline(key, pipName).subscribe(res => {
