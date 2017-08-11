@@ -60,8 +60,17 @@ func (h *HatcheryCloud) getImages() []images.Image {
 			return limages.list
 		}
 
+		activeImages := []images.Image{}
+		for i := range imgs {
+			log.Debug("getImages> image %s status %s progress %d all:%+v", imgs[i].Name, imgs[i].Status, imgs[i].Progress, imgs[i])
+			if imgs[i].Status == "ACTIVE" {
+				log.Debug("getImages> add %s to activeImages", imgs[i].Name)
+				activeImages = append(activeImages, imgs[i])
+			}
+		}
+
 		limages.mu.Lock()
-		limages.list = imgs
+		limages.list = activeImages
 		limages.mu.Unlock()
 		//Remove data from the cache after 2 seconds
 		go func() {
