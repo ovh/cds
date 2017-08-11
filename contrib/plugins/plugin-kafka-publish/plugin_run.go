@@ -138,15 +138,23 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 	//Log every 5 sesonds
 	ticker := time.NewTicker(time.Second * 5)
+	stop := make(chan bool, 1)
+	defer func() {
+		stop <- true
+		ticker.Stop()
+	}()
 	go func() {
 		t0 := time.Now()
-		for t := range ticker.C {
-			delta := math.Floor(t.Sub(t0).Seconds())
-			Logf("[%d seconds] Please wait...\n", int(delta))
+		for {
+			select {
+			case t := <-ticker.C:
+				delta := math.Floor(t.Sub(t0).Seconds())
+				Logf("[%d seconds] Please wait...\n", int(delta))
+			case <-stop:
+				return
+			}
 		}
 	}()
-
-	defer ticker.Stop()
 
 	//Wait for ack
 	ack, err := ackFromKafka(kafka, ackTopic, group, user, password, time.Duration(timeout)*time.Second, job.ID())

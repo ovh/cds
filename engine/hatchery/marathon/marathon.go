@@ -199,11 +199,23 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	}
 
 	ticker := time.NewTicker(time.Second * 5)
+	// ticker.Stop -> do not close goroutine..., so
+	// if we range t := ticker.C --> leak goroutine
+	stop := make(chan bool, 1)
+	defer func() {
+		stop <- true
+		ticker.Stop()
+	}()
 	go func() {
 		t0 := time.Now()
-		for t := range ticker.C {
-			delta := math.Floor(t.Sub(t0).Seconds())
-			log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress [%d seconds] please wait...", logJob, application.ID, int(delta))
+		for {
+			select {
+			case t := <-ticker.C:
+				delta := math.Floor(t.Sub(t0).Seconds())
+				log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress [%d seconds] please wait...", logJob, application.ID, int(delta))
+			case <-stop:
+				return
+			}
 		}
 	}()
 
@@ -226,6 +238,7 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	for _, deploy := range deployments {
 		wg.Add(1)
 		go func(id string) {
+			defer wg.Done()
 			go func() {
 				time.Sleep((time.Duration(m.workerSpawnTimeout) + 1) * time.Second)
 				if done {
@@ -236,23 +249,18 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 				if _, err := m.client.DeleteDeployment(id, true); err != nil {
 					log.Warning("spawnMarathonDockerWorker> %s error on delete timeouted deployment %s: %s", logJob, id, err.Error())
 				}
-				ticker.Stop()
 				successChan <- false
 				wg.Done()
 			}()
 
 			if err := m.client.WaitOnDeployment(id, time.Duration(m.workerSpawnTimeout)*time.Second); err != nil {
 				log.Warning("spawnMarathonDockerWorker> %s error on deployment %s: %s", logJob, id, err.Error())
-				ticker.Stop()
 				successChan <- false
-				wg.Done()
 				return
 			}
 
 			log.Debug("spawnMarathonDockerWorker> %s deployment %s succeeded", logJob, id)
-			ticker.Stop()
 			successChan <- true
-			wg.Done()
 		}(deploy.DeploymentID)
 	}
 
@@ -265,7 +273,6 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 			break
 		}
 	}
-	ticker.Stop()
 	close(successChan)
 	done = true
 
