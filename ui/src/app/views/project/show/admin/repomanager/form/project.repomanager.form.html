@@ -1,12 +1,12 @@
 <form class="ui form" *ngIf="ready" (ngSubmit)="create(verificationModal)" novalidate>
     <div class="fields">
         <div class="seven wide field">
-            <sm-select [(model)]="selectedRepo" [disabled]="connectLoading">
-                <option *ngFor="let r of reposManagerList" value="{{r.name}}">{{r.name}}</option>
+            <sm-select [(model)]="selectedRepoId" [disabled]="connectLoading">
+                <option *ngFor="let r of reposManagerList; let i = index;" [value]="i">{{r.name}}</option>
             </sm-select>
         </div>
         <div class="nine wide right aligned field">
-            <button type="submit" [class.disabled]="!selectedRepo" class="ui green button" [class.loading]="connectLoading" name="addrepo">
+            <button type="submit" [class.disabled]="selectedRepoId == null" class="ui green button" [class.loading]="connectLoading" name="addrepo">
                 {{ 'btn_link' | translate }}
             </button>
         </div>
@@ -17,9 +17,9 @@
     <modal-content>
         <div>
             {{ 'repoman_modal_verif_text' | translate}}
-            <a href="{{addRepoResponse?.url}}" target="_blank">Click me</a>
+            <a href="{{addRepoResponse?.url}}" target="_blank">{{ 'common_click_here' | translate}}</a>
         </div>
-        <div class="ui input" *ngIf="selectedRepo !==  'github'">
+        <div class="ui input" *ngIf="selectedRepoId != null && reposManagerList[selectedRepoId].type ===  'GITHUB'">
             <input type="text" name="verifiercode" placeholder="{{ 'repoman_modal_verif_code_placeholder' | translate }}" [(ngModel)]="validationToken">
             <button name="validationbtn" class="ui green button" [class.loading]="verificationLoading" (click)="sendVerificationCode()">{{ 'btn_validate' | translate }}</button>
         </div>
