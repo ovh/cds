@@ -42,6 +42,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     pipelineStatusEnum = PipelineStatus;
     permissionEnum = PermissionValue;
 
+    loadingPipAction = false;
+
     // Triggers modals
     @ViewChild('editTriggerModal')
     editTriggerModal: SemanticModalComponent;
@@ -116,13 +118,34 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         branchParam.value = currentBranch;
         runRequest.parameters.push(branchParam);
 
+        this.loadingPipAction = true;
         // Run pipeline
         this._appPipService.run(
             this.workflowItem.project.key,
             this.workflowItem.application.name,
-            this.workflowItem.pipeline.name, runRequest).subscribe(pipelineBuild => {
+            this.workflowItem.pipeline.name,
+            runRequest
+        ).finally(() => setTimeout(() => this.loadingPipAction = false, 1000))
+        .subscribe(pipelineBuild => {
             this.navigateToBuild(pipelineBuild);
         });
+
+    }
+
+    stopPipeline(): void {
+      if (!this.workflowItem.pipeline.last_pipeline_build) {
+        return;
+      }
+      this.loadingPipAction = true;
+      // Stop pipeline
+      this._appPipService.stop(
+        this.workflowItem.project.key,
+        this.workflowItem.application.name,
+        this.workflowItem.pipeline.name,
+        this.workflowItem.pipeline.last_pipeline_build.build_number,
+        this.workflowItem.environment.name
+      ).finally(() => this.loadingPipAction = false)
+      .subscribe(() => this.workflowItem.pipeline.last_pipeline_build.status = this.pipelineStatusEnum.FAIL);
 
     }
 
