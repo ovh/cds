@@ -108,8 +108,8 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 // UpdateParameterInPipeline Update a parameter in the given pipeline
 func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamName string, param sdk.Parameter) error {
 	// update parameter
-	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$4 WHERE pipeline_id=$5 AND id=$6`
-	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, param.ID)
+	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$4 WHERE pipeline_id=$5 AND name=$6`
+	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
 	if err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
 			return sdk.ErrParameterExists

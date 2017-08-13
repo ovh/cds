@@ -38,7 +38,7 @@ testcases:
 
 - name: pipeline parameter update
   steps:
-  - script: {{.cds.build.cds}} pipeline parameter update ITCLIPIPPRJ HelloPipeline VAR_1 varValueUpdated TEXTE "Le parametre var1"
+  - script: {{.cds.build.cds}} pipeline parameter update ITCLIPIPPRJ HelloPipeline VAR_1 VAR_1 varValueUpdated TEXTE "Le parametre var1"
 
 - name: pipeline parameter show
   steps:

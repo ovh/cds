@@ -618,10 +618,10 @@ func AddParameterInPipeline(projectKey, pipelineName, paramName, paramValue, par
 }
 
 // UpdateParameterInPipeline update a variable in a pipeline
-func UpdateParameterInPipeline(projectKey, pipelineName, paramName, paramValue, paramType, paramDescription string) error {
+func UpdateParameterInPipeline(projectKey, pipelineName, paramName, newParamName, paramValue, paramType, paramDescription string) error {
 
 	newParam := Parameter{
-		Name:        paramName,
+		Name:        newParamName,
 		Value:       paramValue,
 		Type:        paramType,
 		Description: paramDescription,
