@@ -156,7 +156,6 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
-
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true
 		// Authorization
@@ -186,16 +185,14 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if rc.auth {
 			if err := r.checkAuthentication(db, req.Header, c); err != nil {
-				log.Warning("Router> Authorization denied on %s %s for %s: %s", req.Method, req.URL, req.RemoteAddr, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
+				WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, c.Agent, err))
 				return
 			}
 		}
 
 		if c.User != nil {
 			if err := loadUserPermissions(db, c.User); err != nil {
-				log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
+				WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", c.User.ID, err))
 				return
 			}
 		}
@@ -203,8 +200,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		if c.Hatchery != nil {
 			g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
 			if err != nil {
-				log.Warning("Router> cannot load group permissions for GroupID %d err:%s", c.Hatchery.GroupID, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
+				WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions for GroupID %d err:%s", c.Hatchery.GroupID, err))
 				return
 			}
 			c.User.Groups = append(c.User.Groups, *g)
@@ -212,15 +208,13 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if c.Worker != nil {
 			if err := worker.RefreshWorker(db, c.Worker.ID); err != nil {
-				log.Warning("Router> Unable to refresh worker: %s", err)
-				WriteError(w, req, err)
+				WriteError(w, req, sdk.WrapError(err, "Router> Unable to refresh worker"))
 				return
 			}
 
 			g, err := loadGroupPermissions(db, c.Worker.GroupID)
 			if err != nil {
-				log.Warning("Router> cannot load group permissions: %s", err)
-				WriteError(w, req, sdk.ErrUnauthorized)
+				WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err))
 				return
 			}
 			c.User.Groups = append(c.User.Groups, *g)
@@ -229,8 +223,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				//Load model
 				m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
 				if err != nil {
-					log.Warning("Router> cannot load worker: %s", err)
-					WriteError(w, req, sdk.ErrUnauthorized)
+					WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err))
 					return
 				}
 
@@ -241,8 +234,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 					log.Debug("Router> loading groups permission for model %d", c.Worker.Model)
 					modelGroup, errLoad2 := loadGroupPermissions(db, m.GroupID)
 					if errLoad2 != nil {
-						log.Warning("Router> Cannot load group: %s", errLoad2)
-						WriteError(w, req, sdk.ErrUnauthorized)
+						WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2))
 						return
 					}
 					//Anyway, add the group of the model as a group of the user
