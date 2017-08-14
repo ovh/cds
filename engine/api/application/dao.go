@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
@@ -174,6 +175,9 @@ func Insert(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk
 	app.LastModified = time.Now()
 	dbApp := dbApplication(*app)
 	if err := db.Insert(&dbApp); err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
+			err = sdk.ErrApplicationExist
+		}
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
 	}
 	*app = sdk.Application(dbApp)
