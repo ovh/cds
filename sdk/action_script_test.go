@@ -139,7 +139,7 @@ steps  = [{
 func TestTestLoadFromActionScriptWithArtifactUpload(t *testing.T) {
 	b := []byte(`
 steps  = [{
-	final = true
+	always_executed = true
 	enabled = true
 	artifactUpload = {
         path = "myartifact"
@@ -154,7 +154,7 @@ steps  = [{
 
 	assert.Equal(t, ArtifactUpload, a.Actions[0].Name)
 	assert.Equal(t, BuiltinAction, a.Actions[0].Type)
-	assert.Equal(t, true, a.Actions[0].Final)
+	assert.Equal(t, true, a.Actions[0].AlwaysExecuted)
 	assert.Equal(t, true, a.Actions[0].Enabled)
 	var pathFound, tagFound bool
 	for _, p := range a.Actions[0].Parameters {
@@ -265,14 +265,14 @@ func TestTestDefautValues(t *testing.T) {
 				tag = "{{.cds.version}}"
 		}
 	},{
-	final = false
+	always_executed = false
 	enabled = false
 	artifactDownload = {
 				path = "myartifact"
 				tag = "{{.cds.version}}"
 		}
 	},{
-	final = true
+	always_executed = true
 	enabled = true
 	artifactDownload = {
 				path = "myartifact"
@@ -285,11 +285,11 @@ func TestTestDefautValues(t *testing.T) {
 	assert.NoError(t, err)
 	t.Logf("Action : %v", a)
 
-	assert.Equal(t, false, a.Actions[0].Final)
+	assert.Equal(t, false, a.Actions[0].AlwaysExecuted)
 	assert.Equal(t, true, a.Actions[0].Enabled)
-	assert.Equal(t, false, a.Actions[1].Final)
+	assert.Equal(t, false, a.Actions[1].AlwaysExecuted)
 	assert.Equal(t, false, a.Actions[1].Enabled)
-	assert.Equal(t, true, a.Actions[2].Final)
+	assert.Equal(t, true, a.Actions[2].AlwaysExecuted)
 	assert.Equal(t, true, a.Actions[2].Enabled)
 
 }

@@ -19,7 +19,7 @@ type ActionScript struct {
 	Parameters   map[string]Parameter   `json:"parameters,omitempty"`
 	Steps        []struct {
 		Enabled          *bool                        `json:"enabled"`
-		Final            bool                         `json:"final"`
+		AlwaysExecuted   bool                         `json:"always_executed"`
 		ArtifactUpload   map[string]string            `json:"artifactUpload,omitempty"`
 		ArtifactDownload map[string]string            `json:"artifactDownload,omitempty"`
 		GitClone         map[string]string            `json:"gitClone,omitempty"`
@@ -211,7 +211,7 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 		} else {
 			newAction.Enabled = true
 		}
-		newAction.Final = v.Final
+		newAction.AlwaysExecuted = v.AlwaysExecuted
 		a.Actions = append(a.Actions, newAction)
 	}
 
