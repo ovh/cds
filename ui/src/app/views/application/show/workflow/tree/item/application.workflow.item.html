@@ -40,6 +40,7 @@
                                 <a class="pointing" (click)="runPipeline()"
                                   *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status !== pipelineStatusEnum.BUILDING">
                                   <i class="video play outline icon run"></i>
+
                                 </a>
                                 <a class="pointing" (click)="stopPipeline()"
                                   *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING">
