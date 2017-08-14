@@ -80,10 +80,11 @@ $itemWidthDepth8: 220px;
           }
           i {
             &.run {
-              font-size: 2em;
+              font-size: 2.1em;
             }
             &.circular.icon.build {
               box-shadow: 0em 0em 0em 0.2em black inset;
+              margin-bottom: 8px;
             }
           }
 
@@ -211,6 +212,7 @@ $itemWidthDepth8: 220px;
     }
     i.circular.icon.build {
       box-shadow: 0em 0em 0em 0.2em black inset;
+      margin-bottom: 8px;
     }
     .icon {
       &.run {
@@ -235,6 +237,7 @@ $itemWidthDepth8: 220px;
     }
     i.circular.icon.build {
       box-shadow: 0em 0em 0em 0.2em black inset;
+      margin-bottom: 8px;
     }
     .icon{
       &.run {
