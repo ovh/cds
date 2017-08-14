@@ -111,7 +111,7 @@ describe('CDS: Project RepoManager Form Component', () => {
         expect(call).toBe(2, 'Get project mast have been called');
 
         // Add a repo
-        fixture.componentInstance.selectedRepo = 'stash.com';
+        fixture.componentInstance.selectedRepoId = 0;
 
         let p: Project = new Project();
         p.key = 'key1';
@@ -141,4 +141,3 @@ describe('CDS: Project RepoManager Form Component', () => {
         */
     })));
 });
-
