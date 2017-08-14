@@ -217,24 +217,24 @@ describe('CDS: Action Component', () => {
 
 
             let step = new Action();
-            step.final = false;
+            step.always_executed = false;
             step.name = 'action1';
             let event = new StepEvent('add', step);
             fixture.componentInstance.stepManagement(event);
 
-            expect(fixture.componentInstance.nonFinalSteps.length).toBe(1, 'Action must have 1 non final step');
-            expect(fixture.componentInstance.nonFinalSteps[0].name).toBe('action1');
+            expect(fixture.componentInstance.steps.length).toBe(1, 'Action must have 1 step');
+            expect(fixture.componentInstance.steps[0].name).toBe('action1');
 
             event.type = 'add';
-            step.final = true;
+            step.always_executed = true;
             step.name = 'action2';
             fixture.componentInstance.stepManagement(event);
-            expect(fixture.componentInstance.finalSteps.length).toBe(1, 'Action must have 1 final step');
-            expect(fixture.componentInstance.finalSteps[0].name).toBe('action2');
+            expect(fixture.componentInstance.steps.length).toBe(2, 'Action must have 2 steps');
+            expect(fixture.componentInstance.steps[1].name).toBe('action2');
         })
     ));
 
-    it('should init nonFinalSteps and finalSteps', fakeAsync( () => {
+    it('should init step not always executed and step always executed', fakeAsync( () => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -244,18 +244,17 @@ describe('CDS: Action Component', () => {
         action.name = 'rootAction';
 
         let step1 = new Action();
-        step1.final = true;
+        step1.always_executed = true;
 
         let step2 = new Action();
-        step2.final = false;
+        step2.always_executed = false;
 
         action.actions = new Array<Action>();
         action.actions.push(step1, step2);
 
         fixture.componentInstance.action = action;
 
-        expect(fixture.componentInstance.nonFinalSteps.length).toBe(1);
-        expect(fixture.componentInstance.finalSteps.length).toBe(1);
+        expect(fixture.componentInstance.steps.length).toBe(2);
 
     }));
 });

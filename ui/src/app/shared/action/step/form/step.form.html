@@ -19,11 +19,10 @@
         </div>
     </div>
     <div class="field" *ngIf="showAddStep">
-      <div class="ui buttons">
+      <div class="ui buttons fluid">
           <button class="ui green button" (click)="addStep(false)"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
           <div class="or"></div>
-          <button class="ui blue button" (click)="addStep(true)"><i class="plus icon"></i>{{ 'job_add_step_final' | translate }}</button>
+          <button class="ui grey button" (click)="cancel()">{{'btn_cancel' | translate}}</button>
       </div>
-      <button class="ui right floated grey button" (click)="cancel()">{{'btn_cancel' | translate}}</button>
     </div>
 </div>

@@ -61,7 +61,7 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.edit = true;
 
         let step = new Action();
-        step.final = true;
+        step.always_executed = true;
         fixture.componentInstance.step = step;
 
         fixture.detectChanges();
@@ -85,4 +85,3 @@ describe('CDS: Action Component', () => {
         );
     }));
 });
-
