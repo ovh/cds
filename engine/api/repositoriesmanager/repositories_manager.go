@@ -64,8 +64,9 @@ func Initialize(o InitializeOpts) error {
 				}
 			case sdk.Github:
 				if o.GithubSecret != "" {
-					log.Info("RepositoriesManager> Found a key for %s", rm.Name)
-					rmSecrets["client-secret"] = o.GithubSecret
+					log.Info("RepositoriesManager> Found a client-secret for %s", rm.Name)
+					// rmSecrets does not need to contains ["client-secret"] = o.GithubSecret
+					// GithubSecret is already the real secret, not a path to a file
 					found = true
 				}
 			}
@@ -154,7 +155,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				return nil, err
 			}
 
-			github = repogithub.New(data["client-id"].(string), data["client-secret"].(string), options.APIBaseURL+"/repositories_manager/oauth2/callback")
+			github = repogithub.New(data["client-id"].(string), options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback")
 			if data["with-hooks"] != nil {
 				b, ok := data["with-hooks"].(bool)
 				if !ok {
@@ -225,21 +226,7 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 	}
 
 	if rm.Type == sdk.Github {
-		clientSecret := secrets["client-secret"]
-		if clientSecret == "" {
-			return fmt.Errorf("Cannot init %s. Missing client secret", clientSecret)
-		}
-		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "clientSecret"))
-		log.Info("RepositoriesManager> Writing github client secret %s", path)
-		if err := ioutil.WriteFile(path, []byte(clientSecret), 0600); err != nil {
-			log.Warning("RepositoriesManager> Unable to write stash private key %s : %s", path, err)
-			return err
-		}
-		gh := rm.Consumer.(*repogithub.GithubConsumer)
-		gh.ClientSecret = path
-		if err := Update(db, rm); err != nil {
-			return err
-		}
+		// nothing to do here for github
 		return nil
 	}
 	return fmt.Errorf("Unsupported repositories manager : %s: %s", rm.Name, rm.Type)

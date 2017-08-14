@@ -10,7 +10,7 @@ identifier = "repositories_manager_github"
 
 ## Authorize CDS on Github
 ### Create a CDS application on Github
-Go to `https://github.com/settings/developers` and **Register a new application**: set an application name, the url and a description. Dont set up `Authorization callback URL`.
+Go to `https://github.com/settings/developers` and **Register a new application**: set an application name, the url and a description. `Authorization callback URL`: `http(s)://<your-cds-api>/repositories_manager/oauth2/callback`
 
 On the next page Github give you a **Client ID** and a **Client Secret**
 
