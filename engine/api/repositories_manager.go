@@ -51,13 +51,13 @@ func addRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *g
 
 	for k, v := range args.(map[string]interface{}) {
 		if k != "type" && k != "name" && k != "url" {
-			// example: for github, we get client-id and client-secret here
+			// example: for github, we need client-id here
 			options[k] = v.(string)
 		}
 	}
 
 	if t == "" || name == "" || url == "" {
-		return sdk.WrapError(sdk.ErrWrongRequest, "addProjectVCSHandler> Bad request : type=%s name=%s url=%s", t, name, url)
+		return sdk.WrapError(sdk.ErrWrongRequest, "addRepositoriesManagerHandler> Bad request: type=%s name=%s url=%s", t, name, url)
 	}
 
 	rm, err := repositoriesmanager.New(sdk.RepositoriesManagerType(t), 0, name, url, options, "")
@@ -97,9 +97,10 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 
 	//If we don't find any repositories manager for the project, let's insert it
 	if errFind == sql.ErrNoRows {
-		rm, err := repositoriesmanager.LoadByName(db, rmName)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManager, "repositoriesManagerAuthorize> error while loading repositories manager %s")
+		var errLoad error
+		rm, errLoad = repositoriesmanager.LoadByName(db, rmName)
+		if errLoad != nil {
+			return sdk.WrapError(sdk.ErrNoReposManager, "repositoriesManagerAuthorize> error while loading repositories manager %s", errLoad)
 		}
 
 		tx, err := db.Begin()
@@ -353,11 +354,11 @@ func getRepoFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reques
 
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Cannot get client got %s %s : %s", projectKey, rmName, err)
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
 	}
 	repo, err := client.RepoByFullname(repoName)
 	if err != nil {
-		return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot get repos")
+		return sdk.WrapError(err, "getRepoFromRepositoriesManagerHandler> Cannot get repos")
 	}
 	return WriteJSON(w, r, repo, http.StatusOK)
 }
@@ -636,19 +637,19 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 		return sdk.WrapError(sdk.ErrWrongRequest, "addApplicationFromRepositoriesManagerHandler>Repository fullname is mandatory")
 	}
 
-	proj, err := project.Load(db, projectKey, c.User)
-	if err != nil {
-		return sdk.WrapError(sdk.ErrInvalidProject, "addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s", projectKey, err)
+	proj, errlp := project.Load(db, projectKey, c.User)
+	if errlp != nil {
+		return sdk.WrapError(sdk.ErrInvalidProject, "addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s", projectKey, errlp)
 	}
 
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		return sdk.WrapError(sdk.ErrNoReposManager, "addApplicationFromRepositoriesManagerHandler> error loading %s-%s: %s", projectKey, rmName, err)
+	rm, errlrm := repositoriesmanager.LoadForProject(db, projectKey, rmName)
+	if errlrm != nil {
+		return sdk.WrapError(sdk.ErrNoReposManager, "addApplicationFromRepositoriesManagerHandler> error loading %s-%s: %s", projectKey, rmName, errlrm)
 	}
 
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addApplicationFromRepositoriesManagerHandler> Cannot get client got %s %s: %s", projectKey, rmName, err)
+	client, errac := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
+	if errac != nil {
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addApplicationFromRepositoriesManagerHandler> Cannot get client got %s %s: %s", projectKey, rmName, errac)
 	}
 
 	repo, errlr := client.RepoByFullname(repoFullname)
@@ -691,7 +692,7 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 	}
 
 	//Commit the transaction
-	if err = tx.Commit(); err != nil {
+	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot commit transaction")
 	}
 

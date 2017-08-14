@@ -126,14 +126,15 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 	case sdk.Github:
 		var github *repogithub.GithubConsumer
 		var withHook, withPolling *bool
+
 		//Check if it isn't coming from the DB
 		if id == 0 || consumerData == "" {
 			//Check args
-			if len(args) < 2 || args["client-id"] == "" || args["client-secret"] == "" {
-				return nil, fmt.Errorf("client-id args and client-secret are mandatory to connect to github : %v", args)
+			if len(args) < 1 || args["client-id"] == "" || options.GithubSecret == "" {
+				return nil, fmt.Errorf("client-id args and client-secret (in cds configuration) are mandatory to connect to github : %v", args)
 			}
 
-			github = repogithub.New(args["client-id"], args["client-secret"], options.APIBaseURL+"/repositories_manager/oauth2/callback")
+			github = repogithub.New(args["client-id"], options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback")
 			if args["with-hooks"] != "" {
 				b, err := strconv.ParseBool(args["with-hooks"])
 				if err == nil {

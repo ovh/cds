@@ -15,11 +15,6 @@ Go to `https://github.com/settings/developers` and **Register a new application*
 On the next page Github give you a **Client ID** and a **Client Secret**
 
 ### Connect CDS To Github
-With CDS CLI run :
-
- ```
- $ cds admin reposmanager add GITHUB github http://github.com client-id=<your_client_id> client-secret=<client-secret>
- ```
 
 Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with `<client-secret>`:
 
@@ -28,9 +23,15 @@ Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration fi
 clientsecret = "<client-secret>"
 ```
 
-Then restart CDS.
+**Then restart CDS**
+
+With CDS CLI run :
+
+```bash
+$ cds admin reposmanager add GITHUB github http://github.com client-id=<your_client_id>
+```
 
 Now check everything is OK with :
- ```
- $ cds admin reposmanager list
- ```
+```bash
+$ cds admin reposmanager list
+```
