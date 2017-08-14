@@ -40,7 +40,7 @@ func generateHash() (string, error) {
 //GithubConsumer embeds a github oauth2 consumer
 type GithubConsumer struct {
 	ClientID                 string `json:"client-id"`
-	ClientSecret             string `json:"client-secret"`
+	ClientSecret             string `json:"-"`
 	AuthorizationCallbackURL string `json:"-"`
 	WithHooks                bool   `json:"with-hooks"`
 	WithPolling              bool   `json:"with-polling"`

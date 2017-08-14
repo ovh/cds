@@ -12,7 +12,6 @@ func listReposManagerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "cds reposmanager list",
-		Long:  ``,
 		Run:   listReposManager,
 	}
 

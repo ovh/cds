@@ -107,7 +107,6 @@ func AddReposManager(args map[string]string) (*RepositoriesManager, error) {
 		return nil, err
 	}
 	return &rm, nil
-
 }
 
 //ConnectReposManager add a new repositories manager in CDS for a project
