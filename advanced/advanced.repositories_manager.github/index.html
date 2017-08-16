@@ -432,16 +432,11 @@
 
 <h3 id="create-a-cds-application-on-github">Create a CDS application on Github</h3>
 
-<p>Go to <code>https://github.com/settings/developers</code> and <strong>Register a new application</strong>: set an application name, the url and a description. Dont set up <code>Authorization callback URL</code>.</p>
+<p>Go to <code>https://github.com/settings/developers</code> and <strong>Register a new application</strong>: set an application name, the url and a description. <code>Authorization callback URL</code>: <code>http(s)://&lt;your-cds-api&gt;/repositories_manager/oauth2/callback</code></p>
 
 <p>On the next page Github give you a <strong>Client ID</strong> and a <strong>Client Secret</strong></p>
 
 <h3 id="connect-cds-to-github">Connect CDS To Github</h3>
-
-<p>With CDS CLI run :</p>
-
-<pre><code> $ cds admin reposmanager add GITHUB github http://github.com client-id=&lt;your_client_id&gt; client-secret=&lt;client-secret&gt;
-</code></pre>
 
 <p>Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with <code>&lt;client-secret&gt;</code>:</p>
 
@@ -449,11 +444,16 @@
 clientsecret = &quot;&lt;client-secret&gt;&quot;
 </code></pre>
 
-<p>Then restart CDS.</p>
+<p><strong>Then restart CDS</strong></p>
+
+<p>With CDS CLI run :</p>
+
+<pre><code class="language-bash">$ cds admin reposmanager add GITHUB github http://github.com client-id=&lt;your_client_id&gt;
+</code></pre>
 
 <p>Now check everything is OK with :</p>
 
-<pre><code> $ cds admin reposmanager list
+<pre><code class="language-bash">$ cds admin reposmanager list
 </code></pre>
 
 
