@@ -2,7 +2,9 @@ package ui
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -298,7 +300,7 @@ func (ui *Termui) updateBuilding(baseURL string) string {
 		items = append(items, t)
 
 		if i == ui.building.Cursor-1 {
-			ui.currentURL = computeURL(baseURL, pb.Application.ProjectKey, pb.Application.Name, pb.Pipeline.Name, fmt.Sprintf("%d", pb.BuildNumber), pb.Environment.Name)
+			ui.currentURL = computeURL(baseURL, pb.Application.ProjectKey, pb.Application.Name, pb.Pipeline.Name, fmt.Sprintf("%d", pb.BuildNumber), pb.Environment.Name, pb.Trigger.VCSChangesBranch, strconv.FormatInt(pb.Version, 10))
 		}
 	}
 	ui.building.Items = items
@@ -541,6 +543,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		build := getVarsInPbj("cds.buildNumber", job.Parameters)
 		env := getVarsInPbj("cds.environment", job.Parameters)
 		bra := getVarsInPbj("git.branch", job.Parameters)
+		version := getVarsInPbj("cds.version", job.Parameters)
 		duration := time.Since(job.Queued)
 		if maxQueued < duration {
 			maxQueued = duration
@@ -571,7 +574,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		items = append(items, item)
 
 		if i == ui.queue.Cursor-1 {
-			ui.currentURL = computeURL(baseURL, prj, app, pip, build, env)
+			ui.currentURL = computeURL(baseURL, prj, app, pip, build, env, bra, version)
 		}
 	}
 	ui.queue.Items = items
@@ -601,9 +604,10 @@ func statusShort(status string) (string, string) {
 	}
 	return status, "fg-default"
 }
-func computeURL(baseURL, prj, app, pip, build, env string) string {
-	return fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%s?env=%s",
-		baseURL, prj, app, pip, build, env,
+
+func computeURL(baseURL, prj, app, pip, build, env, branch, version string) string {
+	return fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%s?envName=%s&branch=%s&version=%s",
+		baseURL, prj, app, pip, build, url.QueryEscape(env), url.QueryEscape(branch), version,
 	)
 }
 
