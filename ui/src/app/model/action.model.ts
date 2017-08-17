@@ -30,3 +30,8 @@ export class PipelineUsingAction {
     key: string;
     stage_id: number;
 }
+
+export class ActionWarning {
+  type: string;
+  action: Action;
+}

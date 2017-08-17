@@ -1,10 +1,13 @@
 <div class="log" *ngIf="currentStatus">
     <div class="logHeader pointing" (click)="toggleLogs()">
-        <div class="status" [class.icon]="currentStatus !== 'Building'">
+        <div class="status" [class.icon]="currentStatus !== pipelineBuildStatusEnum.BUILDING">
             <app-status-icon [status]="currentStatus"></app-status-icon>
         </div>
         <div class="title">
             {{step.name}}
+        </div>
+        <div class="right floated flags" *ngIf="step.optional">
+            <i class="warning sign icon orange stepWarn" *ngIf="currentStatus === pipelineBuildStatusEnum.FAIL && step.optional"></i>{{ 'action_optional' | translate }}
         </div>
     </div>
     <div class="logs" *ngIf="logs" [hidden]="!showLog">

@@ -14,14 +14,20 @@
                 <div class="five wide field">
                     <div class="ui checkbox" *ngIf="edit">
                         <input type="checkbox" name="active" [checked]="step.optional" (change)="step.optional = updateStepBool(step.optional)">
-                        <label>Optionnelle</label>
+                        <label>{{ 'action_optional' | translate}}</label>
                     </div>
+                    <span [smDirTooltip]="'action_optional_details' | translate" smDirPosition="top center">
+                      <i class="info circle icon"></i>
+                    </span>
                 </div>
                 <div class="five wide field">
                     <div class="ui checkbox" *ngIf="edit">
                         <input type="checkbox" name="active" [checked]="step.always_executed" (change)="step.always_executed = updateStepBool(step.always_executed)">
-                        <label>Toujours executée</label>
+                        <label>{{ 'action_always_executed' | translate}}</label>
                     </div>
+                    <span [smDirTooltip]="'action_always_executed_details' | translate" smDirPosition="top center">
+                      <i class="info circle icon"></i>
+                    </span>
                 </div>
             <!-- </div> -->
             <ng-container *ngIf="!edit">

@@ -6,7 +6,7 @@ import {AuthentificationStore} from '../../../../service/auth/authentification.s
 import {environment} from '../../../../../environments/environment';
 import {Project} from '../../../../model/project.model';
 import {Application} from '../../../../model/application.model';
-import {Pipeline, PipelineBuild, Log, BuildResult} from '../../../../model/pipeline.model';
+import {Pipeline, PipelineBuild, Log, BuildResult, PipelineStatus} from '../../../../model/pipeline.model';
 
 declare var ansi_up: any;
 
@@ -43,6 +43,8 @@ export class StepLogComponent implements OnInit, OnDestroy {
     workerSubscription: Subscription;
 
     zone: NgZone;
+
+    pipelineBuildStatusEnum = PipelineStatus;
 
     constructor(private _authStore: AuthentificationStore) { }
 
