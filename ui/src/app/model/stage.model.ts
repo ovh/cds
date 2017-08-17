@@ -1,6 +1,7 @@
 import {Prerequisite} from './prerequisite.model';
 import {Job} from './job.model';
 import {PipelineBuildJob} from './pipeline.model';
+import {ActionWarning} from './action.model';
 import {WorkflowNodeJobRun} from './workflow.run.model';
 
 export class Stage {
@@ -13,7 +14,7 @@ export class Stage {
   run_jobs: Array<WorkflowNodeJobRun>;
   prerequisites: Array<Prerequisite>;
   last_modified: number;
-
+  warnings: Array<ActionWarning>;
   // UI params
   hasChanged: boolean;
   edit: boolean;

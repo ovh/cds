@@ -30,6 +30,10 @@
   "action_none": "No action",
   "action_saved": "Action saved",
   "action_type": "Type",
+  "action_optional": "Optional",
+  "action_optional_details": "If checked, even if this step fails, the stage execution will continue",
+  "action_always_executed": "Always executed",
+  "action_always_executed_details": "If checked, this step will be executed even if previous steps fail",
 
   "application_create" : "Create a new application",
   "application_created" : "Application created",
@@ -451,6 +455,7 @@
   "warning_application" : "Another user has just updated the application.",
   "warning_application_title" : "Warnings list for application {{app}}",
   "warning_pipeline" : "Another user has just updated the pipeline.",
+  "warning_build_title" : "The build is in success state but there are/is {{nb}} optional step(s) in error",
 
   "wizard_app_clone" : "Clone an application",
   "wizard_app_empty" : "Empty application",

@@ -8,17 +8,18 @@ import (
 
 // Stage Pipeline step that parallelize actions by order
 type Stage struct {
-	ID                int64                `json:"id" yaml:"pipeline_stage_id"`
-	Name              string               `json:"name"`
-	PipelineID        int64                `json:"-" yaml:"-"`
-	BuildOrder        int                  `json:"build_order"`
-	Enabled           bool                 `json:"enabled"`
-	PipelineBuildJobs []PipelineBuildJob   `json:"builds"`
-	RunJobs           []WorkflowNodeJobRun `json:"run_jobs"`
-	Prerequisites     []Prerequisite       `json:"prerequisites"`
-	LastModified      int64                `json:"last_modified"`
-	Jobs              []Job                `json:"jobs"`
-	Status            Status               `json:"status"`
+	ID                int64                  `json:"id" yaml:"pipeline_stage_id"`
+	Name              string                 `json:"name"`
+	PipelineID        int64                  `json:"-" yaml:"-"`
+	BuildOrder        int                    `json:"build_order"`
+	Enabled           bool                   `json:"enabled"`
+	PipelineBuildJobs []PipelineBuildJob     `json:"builds"`
+	RunJobs           []WorkflowNodeJobRun   `json:"run_jobs"`
+	Prerequisites     []Prerequisite         `json:"prerequisites"`
+	LastModified      int64                  `json:"last_modified"`
+	Jobs              []Job                  `json:"jobs"`
+	Status            Status                 `json:"status"`
+	Warnings          []PipelineBuildWarning `json:"warnings"`
 }
 
 // Conditions returns stage prerequisites as a set of WorkflowTriggerCondition regex

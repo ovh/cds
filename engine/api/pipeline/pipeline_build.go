@@ -238,7 +238,14 @@ func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, a
 	if err := db.SelectOne(&row, query, applicationID, pipelineID, environmentID, buildNumber); err != nil {
 		return nil, err
 	}
-	return scanPipelineBuild(row)
+	pb, errS := scanPipelineBuild(row)
+
+	if errS != nil {
+		return nil, errS
+	}
+	attachPipelineWarnings(pb)
+
+	return pb, nil
 }
 
 // LoadPipelineBuildByHash look for a pipeline build triggered by a change with given hash
@@ -297,6 +304,8 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 		}
 		pbs = append(pbs, *pb)
 	}
+	AttachPipelinesWarnings(&pbs)
+
 	return pbs, nil
 }
 

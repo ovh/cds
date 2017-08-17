@@ -36,10 +36,11 @@ var (
 								Actions: []sdk.Action{
 									{
 
-										Type:    sdk.BuiltinAction,
-										Name:    sdk.ScriptAction,
-										Enabled: true,
-										Final:   true,
+										Type:           sdk.BuiltinAction,
+										Name:           sdk.ScriptAction,
+										Enabled:        true,
+										AlwaysExecuted: true,
+										Optional:       false,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "script",
@@ -62,9 +63,10 @@ var (
 									},
 									{
 
-										Type:  sdk.BuiltinAction,
-										Name:  sdk.JUnitAction,
-										Final: true,
+										Type:           sdk.BuiltinAction,
+										Name:           sdk.JUnitAction,
+										AlwaysExecuted: true,
+										Optional:       false,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "path",
@@ -190,10 +192,11 @@ var (
 								},
 								{
 
-									Type:    sdk.BuiltinAction,
-									Name:    sdk.ScriptAction,
-									Enabled: false,
-									Final:   true,
+									Type:           sdk.BuiltinAction,
+									Name:           sdk.ScriptAction,
+									Enabled:        false,
+									AlwaysExecuted: true,
+									Optional:       false,
 									Parameters: []sdk.Parameter{
 										{
 											Name:  "script",
@@ -288,10 +291,11 @@ var (
 								},
 								{
 
-									Type:    sdk.BuiltinAction,
-									Name:    sdk.ScriptAction,
-									Enabled: false,
-									Final:   true,
+									Type:           sdk.BuiltinAction,
+									Name:           sdk.ScriptAction,
+									Enabled:        false,
+									AlwaysExecuted: true,
+									Optional:       false,
 									Parameters: []sdk.Parameter{
 										{
 											Name:  "script",
@@ -369,10 +373,11 @@ var (
 								},
 								{
 
-									Type:    sdk.BuiltinAction,
-									Name:    sdk.ScriptAction,
-									Enabled: false,
-									Final:   true,
+									Type:           sdk.BuiltinAction,
+									Name:           sdk.ScriptAction,
+									Enabled:        false,
+									AlwaysExecuted: true,
+									Optional:       false,
 									Parameters: []sdk.Parameter{
 										{
 											Name:  "script",
@@ -465,13 +470,15 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 						assert.Equal(t, j.Enabled, j1.Enabled)
 						assert.Equal(t, j.Action.Name, j1.Action.Name)
 						assert.Equal(t, j.Enabled, j1.Action.Enabled)
-						assert.Equal(t, j.Action.Final, j1.Action.Final)
+						assert.Equal(t, j.Action.AlwaysExecuted, j1.Action.AlwaysExecuted)
+						assert.Equal(t, j.Action.Optional, j1.Action.Optional)
 
 						for i, s := range j.Action.Actions {
 							s1 := j1.Action.Actions[i]
 							if s.Name == s1.Name {
 								assert.Equal(t, s.Enabled, s1.Enabled, s.Name, s1.Name)
-								assert.Equal(t, s.Final, s1.Final)
+								assert.Equal(t, s.AlwaysExecuted, s1.AlwaysExecuted)
+								assert.Equal(t, s.Optional, s1.Optional)
 								test.EqualValuesWithoutOrder(t, s.Parameters, s1.Parameters)
 							}
 						}

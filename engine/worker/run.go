@@ -151,32 +151,17 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 		}
 	}
 
-	finalActions := []sdk.Action{}
-	noFinalActions := []sdk.Action{}
-	for _, child := range a.Actions {
-		if child.Final {
-			finalActions = append(finalActions, child)
-		} else {
-			noFinalActions = append(noFinalActions, child)
-		}
-	}
-
-	r, nDisabled := w.runSteps(ctx, noFinalActions, a, buildID, params, stepOrder, stepName, 0)
+	r, nDisabled := w.runSteps(ctx, a.Actions, a, buildID, params, stepOrder, stepName, 0)
 	//If all steps are disabled, set action status to disabled
-	if nDisabled >= (len(a.Actions) - len(finalActions)) {
+	if nDisabled >= len(a.Actions) {
 		r.Status = sdk.StatusDisabled.String()
 	}
 
-	rFinal, _ := w.runSteps(ctx, finalActions, a, buildID, params, stepOrder, stepName, len(noFinalActions))
-
-	if r.Status == sdk.StatusFail.String() {
-		return r
-	}
-	return rFinal
+	return r
 }
 
 func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
-	var doNotRunChildrenAnymore bool
+	var criticalStepFailed bool
 	var nbDisabledChildren int
 
 	// Nothing to do, success !
@@ -210,7 +195,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			continue
 		}
 
-		if !doNotRunChildrenAnymore {
+		if !criticalStepFailed || child.AlwaysExecuted {
 			log.Debug("Running %s", childName)
 			// Update step status
 			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
@@ -219,9 +204,8 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			w.sendLog(buildID, fmt.Sprintf("Starting step %s", childName), w.currentJob.currentStep, false)
 
 			r = w.startAction(ctx, &child, buildID, params, w.currentJob.currentStep, childName)
-			if r.Status != sdk.StatusSuccess.String() {
-				log.Debug("Stopping %s at step %s", a.Name, childName)
-				doNotRunChildrenAnymore = true
+			if r.Status != sdk.StatusSuccess.String() && !child.Optional {
+				criticalStepFailed = true
 			}
 
 			w.sendLog(buildID, fmt.Sprintf("End of step %s [%s]", childName, r.Status), w.currentJob.currentStep, true)
@@ -230,8 +214,20 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, r.Status); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
+		} else if criticalStepFailed && !child.AlwaysExecuted { // Update status of steps which are never built
+			// Update step status
+			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusNeverBuilt.String()); err != nil {
+				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusNeverBuilt.String(), buildID, err)
+			}
 		}
 	}
+
+	if criticalStepFailed {
+		r.Status = sdk.StatusFail.String()
+	} else {
+		r.Status = sdk.StatusSuccess.String()
+	}
+
 	return r, nbDisabledChildren
 }
 

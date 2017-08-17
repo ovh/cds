@@ -22,6 +22,11 @@
                                          [class.fail]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.FAIL"
                                          [class.building]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.BUILDING"
                                          (click)="selectedJob(j, stage)">
+                                        <div class="warningPip"
+                                            *ngIf=" j.warnings && j.warnings.length"
+                                            [smDirTooltip]="'warning_build_title' | translate: {nb: j.warnings.length}">
+                                            <i class="warning sign icon orange"></i>
+                                        </div>
                                         <div class="truncate">
                                             <app-status-icon [status]="mapJobStatus[j.pipeline_action_id]" [value]="mapJobProgression[j.pipeline_action_id]"></app-status-icon>
                                             {{j.action.name}}

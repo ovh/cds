@@ -69,6 +69,11 @@
                                     <span class="break" *ngIf="workflowItem.pipeline.name.length > 17"
                                           smDirTooltip="{{workflowItem.pipeline.name}}">{{workflowItem.pipeline.name | truncate:17}}</span>
                                 </div>
+                                <div class="pipelineWarning"
+                                    *ngIf="workflowItem.pipeline.last_pipeline_build && workflowItem.pipeline.last_pipeline_build.warnings && workflowItem.pipeline.last_pipeline_build.warnings.length"
+                                    [smDirTooltip]="'warning_build_title' | translate: {nb: workflowItem.pipeline.last_pipeline_build.warnings.length}">
+                                    <i class="warning sign icon orange"></i>
+                                </div>
                             </div>
                         </div>
                         <div class="three wide column verticalDetailIcon" *ngIf="workflowItem.pipeline.last_pipeline_build">

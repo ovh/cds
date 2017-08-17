@@ -63,34 +63,17 @@
     <div class="subtitle normalStep">
         <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
     </div>
-    <div class="ui segment" *ngIf="nonFinalSteps.length > 0" [class.off]="!editableAction.enabled">
-        <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="nonFinalSteps" *ngIf="nonFinalSteps">
-            <div *ngFor="let step of nonFinalSteps" class="step" [class.off]="!step.enabled">
+    <div class="ui segment" *ngIf="steps.length > 0" [class.off]="!editableAction.enabled">
+        <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="steps" *ngIf="steps">
+            <div *ngFor="let step of steps" class="step" [class.off]="!step.enabled">
                 <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest"
                                  (removeEvent)="stepManagement($event)"></app-action-step>
                 <hr>
             </div>
         </div>
     </div>
-    <div class="ui info message" *ngIf="nonFinalSteps.length === 0">
+    <div class="ui info message" *ngIf="steps.length === 0">
         {{ 'step_nonfinal_no' | translate }}
-    </div>
-
-    <div class="subtitle finalStep">
-        <h3 class="inline">{{ 'action_step_final_title' | translate }}</h3>
-    </div>
-
-    <div class="ui segment" *ngIf="finalSteps.length > 0" [class.off]="!editableAction.enabled">
-        <div class="dragula-container" [dragula]="'bag-final'" [dragulaModel]="finalSteps" *ngIf="finalSteps">
-            <div *ngFor="let step of finalSteps" class="step" [class.off]="!step.enabled">
-                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest"
-                                 (removeEvent)="stepManagement($event)"></app-action-step>
-                <hr>
-            </div>
-        </div>
-    </div>
-    <div class="ui info message" *ngIf="finalSteps.length === 0">
-        {{ 'step_final_no' | translate }}
     </div>
 
     <div class="ui bottomBtnsWrapper segment">
