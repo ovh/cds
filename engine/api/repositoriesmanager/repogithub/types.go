@@ -331,6 +331,7 @@ type Event struct {
 	} `json:"repo"`
 	Payload struct {
 		PushID       int    `json:"push_id"`
+		Action       string `json:"action"`
 		Size         int    `json:"size"`
 		DistinctSize int    `json:"distinct_size"`
 		Ref          string `json:"ref"`
@@ -346,6 +347,7 @@ type Event struct {
 			Distinct bool   `json:"distinct"`
 			URL      string `json:"url"`
 		} `json:"commits"`
+		PullRequest PullRequest `json:"pull_request"`
 	} `json:"payload"`
 	Public    bool      `json:"public"`
 	CreatedAt Timestamp `json:"created_at"`
@@ -420,4 +422,50 @@ type RateLimit struct {
 
 func (r *RateLimit) String() string {
 	return fmt.Sprintf("Limit: %d - Remaining: %d - Reset: %d", r.Rate.Limit, r.Rate.Remaining, r.Rate.Reset)
+}
+
+type Cursor struct {
+	Label string     `json:"label"`
+	Ref   string     `json:"ref"`
+	Sha   string     `json:"sha"`
+	User  User       `json:"user"`
+	Repo  Repository `json:"repo"`
+}
+
+type PullRequest struct {
+	URL                 string    `json:"url"`
+	ID                  int       `json:"id"`
+	HTMLURL             string    `json:"html_url"`
+	DiffURL             string    `json:"diff_url"`
+	PatchURL            string    `json:"patch_url"`
+	IssueURL            string    `json:"issue_url"`
+	Number              int       `json:"number"`
+	State               string    `json:"state"`
+	Locked              bool      `json:"locked"`
+	Title               string    `json:"title"`
+	User                User      `json:"user"`
+	Body                string    `json:"body"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+	ClosedAt            time.Time `json:"closed_at"`
+	MergedAt            time.Time `json:"merged_at"`
+	MergeCommitSha      string    `json:"merge_commit_sha"`
+	CommitsURL          string    `json:"commits_url"`
+	ReviewCommentsURL   string    `json:"review_comments_url"`
+	ReviewCommentURL    string    `json:"review_comment_url"`
+	CommentsURL         string    `json:"comments_url"`
+	StatusesURL         string    `json:"statuses_url"`
+	Head                Cursor    `json:"head"`
+	Base                Cursor    `json:"base"`
+	Merged              bool      `json:"merged"`
+	Mergeable           bool      `json:"mergeable"`
+	Rebaseable          bool      `json:"rebaseable"`
+	MergeableState      string    `json:"mergeable_state"`
+	Comments            int       `json:"comments"`
+	ReviewComments      int       `json:"review_comments"`
+	MaintainerCanModify bool      `json:"maintainer_can_modify"`
+	Commits             int       `json:"commits"`
+	Additions           int       `json:"additions"`
+	Deletions           int       `json:"deletions"`
+	ChangedFiles        int       `json:"changed_files"`
 }

@@ -509,6 +509,7 @@ func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 		log.Warning("GithubClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
+
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
 		var skipEvent bool
@@ -535,6 +536,7 @@ func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 				}
 			}
 
+			fmt.Println(events)
 			if !skipEvent {
 				events = append(events, e)
 			}
@@ -668,5 +670,42 @@ func (g *GithubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]s
 
 //PullRequestEvents checks pull request events from a event list
 func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
-	return nil, nil
+	fmt.Println("coucou")
+	fmt.Println(iEvents)
+	events := Events{}
+	//Cast all the events
+	for _, i := range iEvents {
+		e := i.(Event)
+		if e.Type == "PullRequestEvent" {
+			events = append(events, e)
+		}
+	}
+
+	res := []sdk.VCSPullRequestEvent{}
+	for _, e := range events {
+		event := sdk.VCSPullRequestEvent{
+			Action: e.Payload.Action,
+			Base: sdk.VCSPushEvent{
+				Branch: sdk.VCSBranch{
+					ID:           e.Payload.PullRequest.Base.Ref,
+					DisplayID:    e.Payload.PullRequest.Base.Ref,
+					LatestCommit: e.Payload.PullRequest.Base.Sha,
+				},
+				Commit: sdk.VCSCommit{
+					// Author: sdk.VCSAuthor{
+					// 	Name:        e.Payload.PullRequest.Base.User.Name,
+					// 	DisplayName: e.Payload.PullRequest.Base.User.Login,
+					// 	Email:       e.Payload.PullRequest.Base.User.Email,
+					// },
+					Hash:    e.Payload.PullRequest.Base.Sha,
+					Message: e.Payload.PullRequest.Base.Label,
+				},
+				CloneURL: *e.Payload.PullRequest.Base.Repo.CloneURL,
+			},
+		}
+		res = append(res, event)
+	}
+
+	log.Debug("GithubClient.PullRequestEvents> found %d pull request events : %#v", len(res), res)
+	return res, nil
 }
