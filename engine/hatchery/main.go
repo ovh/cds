@@ -31,6 +31,11 @@ var rootCmd = &cobra.Command{
 			GraylogExtraValue: viper.GetString("graylog_extra_value"),
 		})
 
+		if cmd.Name() == "version" {
+			// no check other args for ./hatchery version
+			return
+		}
+
 		sdk.SetAgent(sdk.HatcheryAgent)
 
 		if viper.GetInt("max-worker") < 1 {
@@ -54,6 +59,11 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+var (
+	//VERSION is set with -ldflags "-X main.VERSION={{.cds.proj.version}}+{{.cds.version}}"
+	VERSION = "snapshot"
+)
+
 func main() {
 	addFlags()
 	addCommands()
@@ -70,6 +80,7 @@ func addCommands() {
 	rootCmd.AddCommand(marathon.Cmd)
 	rootCmd.AddCommand(swarm.Cmd)
 	rootCmd.AddCommand(openstack.Cmd)
+	rootCmd.AddCommand(cmdVersion)
 }
 
 // Cannot rely on viper.AutomaticEnv here because of the presence of hyphen '-'
