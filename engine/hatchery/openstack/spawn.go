@@ -66,17 +66,17 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 	}
 
 	graylog := ""
-	if viper.GetString("graylog_host") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_HOST=%s ", viper.GetString("graylog_host"))
+	if viper.GetString("worker_graylog_host") != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_HOST=%s ", viper.GetString("worker_graylog_host"))
 	}
-	if viper.GetString("graylog_port") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_PORT=%s ", viper.GetString("graylog_port"))
+	if viper.GetString("worker_graylog_port") != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_PORT=%s ", viper.GetString("worker_graylog_port"))
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s ", viper.GetString("graylog_extra_key"))
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s ", viper.GetString("worker_graylog_extra_key"))
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", viper.GetString("graylog_extra_value"))
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", viper.GetString("worker_graylog_extra_value"))
 	}
 
 	udataEnd := `
