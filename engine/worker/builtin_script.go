@@ -55,7 +55,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			}
 
 			// Create a tmp file
-			tmpscript, err := ioutil.TempFile(os.TempDir(), "cds-")
+			tmpscript, err := ioutil.TempFile(w.basedir, "cds-")
 			if err != nil {
 				log.Warning("Cannot create tmp file: %s", err)
 				res.Reason = fmt.Sprintf("cannot create temporary file, aborting\n")

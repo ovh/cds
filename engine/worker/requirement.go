@@ -55,11 +55,11 @@ func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	pluginBinary := path.Join(os.TempDir(), r.Name)
+	pluginBinary := path.Join(w.basedir, r.Name)
 
 	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
 		//If the file doesn't exist. Download it.
-		if err := sdk.DownloadPlugin(r.Name, os.TempDir()); err != nil {
+		if err := sdk.DownloadPlugin(r.Name, w.basedir); err != nil {
 			return false, err
 		}
 		if err := os.Chmod(pluginBinary, 0700); err != nil {
