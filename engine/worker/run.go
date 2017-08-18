@@ -113,6 +113,8 @@ func (w *currentWorker) replaceBuildVariablesPlaceholder(a *sdk.Action) {
 }
 
 func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string) sdk.Result {
+	log.Debug("runJob> start run %d stepOrder:%d", buildID, stepOrder)
+	defer log.Debug("runJob> end run %d stepOrder:%d", buildID, stepOrder)
 	// Replace build variable placeholder that may have been added by last step
 	w.replaceBuildVariablesPlaceholder(a)
 	// Set the params
@@ -161,6 +163,8 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 }
 
 func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
+	log.Debug("runSteps> start run %d stepOrder:%d len(steps):%d", buildID, stepOrder, len(steps))
+	defer log.Debug("runSteps> end run %d stepOrder:%d len(steps):%d", buildID, stepOrder, len(steps))
 	var criticalStepFailed bool
 	var nbDisabledChildren int
 
@@ -300,7 +304,7 @@ func workingDirectory(basedir, jobPath string) string {
 
 func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.WorkflowNodeJobRunInfo) sdk.Result {
 	t0 := time.Now()
-	defer func() { log.Info("Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
+	defer func() { log.Info("processJob> Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
 	defer cancel()
@@ -312,9 +316,12 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 		fmt.Sprintf("%d", jobInfo.SubNumber),
 		fmt.Sprintf("%s", jobInfo.NodeJobRun.Job.Action.Name))
 
+	log.Debug("processJob> init workingDirectory basedir:%s pbJobPath:%s", w.basedir, pbJobPath)
 	wd := workingDirectory(w.basedir, pbJobPath)
 
+	log.Debug("processJob> setupBuildDirectory:%s", wd)
 	if err := setupBuildDirectory(wd); err != nil {
+		log.Debug("processJob> setupBuildDirectory error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
@@ -336,11 +343,16 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	})
 
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
+	log.Debug("processJob> call processJobParameter")
 	processJobParameter(&jobInfo.NodeJobRun.Parameters, jobInfo.Secrets)
 
+	log.Debug("processJob> call w.processActionVariables")
 	if err := w.processActionVariables(&jobInfo.NodeJobRun.Job.Action, nil, jobInfo.NodeJobRun.Parameters, jobInfo.Secrets); err != nil {
 		log.Warning("run> Cannot process action %s parameters: %s", jobInfo.NodeJobRun.Job.Action.Name, err)
-		return sdk.Result{Status: sdk.StatusFail.String()}
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Error: cannot process action %s parameters", jobInfo.NodeJobRun.Job.Action.Name),
+		}
 	}
 
 	// Add secrets as string or password in ActionBuild.Args
@@ -355,16 +367,21 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	}
 
 	// Setup user ssh keys
+	log.Debug("processJob> Setup user ssh keys")
 	keysDirectory = workingDirectory(w.basedir, pbJobPath)
+	log.Debug("processJob> Setup user ssh keys - mkdir %s", keysDirectory)
 	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
+		log.Debug("processJob> call os.MkdirAll error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
+			Reason: fmt.Sprintf("Error: cannot setup workingDirectory (%s)", err),
 		}
 	}
 
 	// DEPRECATED - BEGIN
+	log.Debug("processJob> call w.setupSSHKey")
 	if err := w.setupSSHKey(jobInfo.Secrets, keysDirectory); err != nil {
+		log.Debug("processJob> call w.setupSSHKey error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
@@ -373,10 +390,12 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	// DEPRECATED - END
 
 	// The right way to go is :
+	log.Debug("processJob> call vcs.SetupSSHKey")
 	if err := vcs.SetupSSHKey(jobInfo.Secrets, keysDirectory, nil); err != nil {
+		log.Debug("processJob> call vcs.SetupSSHKey error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
+			Reason: fmt.Sprintf("Error: cannot setup vcs ssh key (%s)", err),
 		}
 	}
 
@@ -384,6 +403,7 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	res := w.startAction(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.NodeJobRun.Parameters, -1, "")
 	logsecrets = nil
 
+	log.Debug("processJob> call teardownBuildDirectory wd:%s", wd)
 	if err := teardownBuildDirectory(wd); err != nil {
 		log.Error("Cannot remove build directory: %s", err)
 	}
@@ -395,7 +415,9 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 
 func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobInfo) sdk.Result {
 	t0 := time.Now()
-	defer func() { log.Info("Run Pipeline Build Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
+	defer func() {
+		log.Info("run> Run Pipeline Build Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String())
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
 	defer cancel()
@@ -408,7 +430,9 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 		fmt.Sprintf("%d", pbji.BuildNumber))
 	wd := workingDirectory(w.basedir, pbJobPath)
 
+	log.Debug("run> setupBuildDirectory %s", setupBuildDirectory)
 	if err := setupBuildDirectory(wd); err != nil {
+		log.Debug("run> setupBuildDirectory error %s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
@@ -430,11 +454,16 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	})
 
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
+	log.Debug("run> processJobParameter")
 	processJobParameter(&pbji.PipelineBuildJob.Parameters, pbji.Secrets)
 
+	log.Debug("run> processActionVariables")
 	if err := w.processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob.Parameters, pbji.Secrets); err != nil {
 		log.Warning("run> Cannot process action %s parameters: %s", pbji.PipelineBuildJob.Job.Action.Name, err)
-		return sdk.Result{Status: sdk.StatusFail.String()}
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Error: cannot process action %s parameters", pbji.PipelineBuildJob.Job.Action.Name),
+		}
 	}
 
 	// Add secrets as string or password in ActionBuild.Args
@@ -449,8 +478,10 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	}
 
 	// Setup user ssh keys
+	log.Debug("run> workingDirectory w.basedir:%s pbJobPath:%s", w.basedir, pbJobPath)
 	keysDirectory = workingDirectory(w.basedir, pbJobPath)
 	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
+		log.Debug("run> error on MkdirAll %s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
@@ -458,7 +489,9 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	}
 
 	// DEPRECATED - BEGIN
+	log.Debug("run> w.setupSSHKey keysDirectory:%s", keysDirectory)
 	if err := w.setupSSHKey(pbji.Secrets, keysDirectory); err != nil {
+		log.Debug("run> error on w.setupSSHKey %s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
@@ -467,7 +500,9 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	// DEPRECATED - END
 
 	// The right way to go is :
+	log.Debug("run> vcs.SetupSSHKey %s", keysDirectory)
 	if err := vcs.SetupSSHKey(pbji.Secrets, keysDirectory, nil); err != nil {
+		log.Debug("run> error vcs.SetupSSHKey %s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
@@ -476,6 +511,7 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 
 	logsecrets = pbji.Secrets
 
+	log.Debug("run> run startAction")
 	res := w.startAction(ctx, &pbji.PipelineBuildJob.Job.Action, pbji.PipelineBuildJob.ID, pbji.PipelineBuildJob.Parameters, -1, "")
 	logsecrets = nil
 
