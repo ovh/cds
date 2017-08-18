@@ -116,6 +116,10 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, re
 	if viper.GetString("worker_graylog_extra_value") != "" {
 		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", viper.GetString("worker_graylog_extra_value")))
 	}
+	if viper.GetString("grpc_api") != "" && wm.Communication == sdk.GRPC {
+		args = append(args, fmt.Sprintf("--grpc-api=%s", viper.GetString("grpc_api")))
+		args = append(args, fmt.Sprintf("--grpc-insecure=%t", viper.GetBool("grpc_insecure")))
+	}
 
 	args = append(args, "--single-use")
 

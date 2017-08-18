@@ -79,6 +79,12 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", viper.GetString("worker_graylog_extra_value"))
 	}
 
+	grpc := ""
+	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
+		grpc += fmt.Sprintf("export CDS_GRPC_API=%s ", viper.GetString("grpc_api"))
+		grpc += fmt.Sprintf("export CDS_GRPC_INSECURE=%t ", viper.GetBool("grpc_insecure"))
+	}
+
 	udataEnd := `
 cd $HOME
 # Download and start worker with curl
@@ -96,6 +102,7 @@ export CDS_HATCHERY_NAME={{.HatcheryName}}
 export CDS_BOOKED_JOB_ID={{.JobID}}
 export CDS_TTL={{.TTL}}
 {{.Graylog}}
+{{.Grpc}}
 ./worker`
 
 	if registerOnly {
@@ -142,6 +149,7 @@ export CDS_TTL={{.TTL}}
 		JobID        int64
 		TTL          int
 		Graylog      string
+		Grpc         string
 	}{
 		API:          viper.GetString("api"),
 		Name:         name,
@@ -152,6 +160,7 @@ export CDS_TTL={{.TTL}}
 		JobID:        jobID,
 		TTL:          h.workerTTL,
 		Graylog:      graylog,
+		Grpc:         grpc,
 	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
