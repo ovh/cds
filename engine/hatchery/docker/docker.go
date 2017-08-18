@@ -214,6 +214,10 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 	if viper.GetString("worker_graylog_extra_value") != "" {
 		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_VALUE=%s", viper.GetString("worker_graylog_extra_value")))
 	}
+	if viper.GetString("grpc_api") != "" && wm.Communication == sdk.GRPC {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_API=%s", viper.GetString("grpc_api")))
+		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
+	}
 
 	if job != nil {
 		args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", job.ID))

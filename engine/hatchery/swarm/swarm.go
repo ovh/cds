@@ -287,6 +287,10 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 	if viper.GetString("worker_graylog_extra_value") != "" {
 		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("worker_graylog_extra_value"))
 	}
+	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
+		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", viper.GetString("grpc_api")))
+		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
+	}
 
 	if job != nil {
 		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(job.ID, 10))

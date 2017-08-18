@@ -151,6 +151,10 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	if viper.GetString("worker_graylog_extra_value") != "" {
 		env["CDS_GRAYLOG_EXTRA_VALUE"] = viper.GetString("worker_graylog_extra_value")
 	}
+	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
+		env["CDS_GRPC_API"] = viper.GetString("grpc_api")
+		env["CDS_GRPC_INSECURE"] = strconv.FormatBool(viper.GetBool("grpc_insecure"))
+	}
 
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit

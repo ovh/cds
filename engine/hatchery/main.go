@@ -162,6 +162,12 @@ func addFlags() {
 	rootCmd.PersistentFlags().String("worker-graylog-extra-value", "", "Ex: --worker-graylog-extra-value=xxxx-yyyy")
 	viper.BindPFlag("worker_graylog_extra_value", rootCmd.PersistentFlags().Lookup("graylog-extra-value"))
 
+	rootCmd.PersistentFlags().String("grpc-api", "", "CDS GRPC tcp address")
+	viper.BindPFlag("grpc_api", rootCmd.PersistentFlags().Lookup("grpc-api"))
+
+	rootCmd.PersistentFlags().Bool("grpc-insecure", false, "Disable GRPC TLS encryption")
+	viper.BindPFlag("grpc_insecure", rootCmd.PersistentFlags().Lookup("grpc-insecure"))
+
 	rootCmd.PersistentFlags().String("remote-debug-url", "", "If not empty, start a gops agent on specified URL. Ex: --remote-debug-url=localhost:9999")
 	viper.BindPFlag("remote-debug-url", rootCmd.PersistentFlags().Lookup("remote-debug-url"))
 }
