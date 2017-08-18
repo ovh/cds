@@ -147,6 +147,21 @@ func addFlags() {
 	rootCmd.PersistentFlags().String("graylog-extra-value", "", "Ex: --graylog-extra-value=xxxx-yyyy")
 	viper.BindPFlag("graylog_extra_value", rootCmd.PersistentFlags().Lookup("graylog-extra-value"))
 
+	rootCmd.PersistentFlags().String("worker-graylog-protocol", "", "Ex: --worker-graylog-protocol=xxxx-yyyy")
+	viper.BindPFlag("worker_graylog_protocol", rootCmd.PersistentFlags().Lookup("worker-graylog-protocol"))
+
+	rootCmd.PersistentFlags().String("worker-graylog-host", "", "Ex: --worker-graylog-host=xxxx-yyyy")
+	viper.BindPFlag("worker_graylog_host", rootCmd.PersistentFlags().Lookup("worker-graylog-host"))
+
+	rootCmd.PersistentFlags().String("worker-graylog-port", "", "Ex: --worker-graylog-port=12202")
+	viper.BindPFlag("worker_graylog_port", rootCmd.PersistentFlags().Lookup("worker-graylog-port"))
+
+	rootCmd.PersistentFlags().String("worker-graylog-extra-key", "", "Ex: --worker-graylog-extra-key=xxxx-yyyy")
+	viper.BindPFlag("worker_graylog_extra_key", rootCmd.PersistentFlags().Lookup("worker-graylog-extra-key"))
+
+	rootCmd.PersistentFlags().String("worker-graylog-extra-value", "", "Ex: --worker-graylog-extra-value=xxxx-yyyy")
+	viper.BindPFlag("worker_graylog_extra_value", rootCmd.PersistentFlags().Lookup("graylog-extra-value"))
+
 	rootCmd.PersistentFlags().String("remote-debug-url", "", "If not empty, start a gops agent on specified URL. Ex: --remote-debug-url=localhost:9999")
 	viper.BindPFlag("remote-debug-url", rootCmd.PersistentFlags().Lookup("remote-debug-url"))
 }

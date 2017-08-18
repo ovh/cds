@@ -275,17 +275,17 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		"CDS_SINGLE_USE=1",
 	}
 
-	if viper.GetString("graylog_host") != "" {
-		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("graylog_host"))
+	if viper.GetString("worker_graylog_host") != "" {
+		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("worker_graylog_host"))
 	}
-	if viper.GetString("graylog_port") != "" {
-		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("graylog_port"))
+	if viper.GetString("worker_graylog_port") != "" {
+		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("worker_graylog_port"))
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("graylog_extra_key"))
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("worker_graylog_extra_key"))
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("graylog_extra_value"))
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("worker_graylog_extra_value"))
 	}
 
 	if job != nil {

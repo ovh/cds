@@ -139,17 +139,17 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 		"CDS_TTL":           fmt.Sprintf("%d", m.workerTTL),
 	}
 
-	if viper.GetString("graylog_host") != "" {
-		env["CDS_GRAYLOG_HOST"] = viper.GetString("graylog_host")
+	if viper.GetString("worker_graylog_host") != "" {
+		env["CDS_GRAYLOG_HOST"] = viper.GetString("worker_graylog_host")
 	}
-	if viper.GetString("graylog_port") != "" {
-		env["CDS_GRAYLOG_PORT"] = viper.GetString("graylog_port")
+	if viper.GetString("worker_graylog_port") != "" {
+		env["CDS_GRAYLOG_PORT"] = viper.GetString("worker_graylog_port")
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		env["CDS_GRAYLOG_EXTRA_KEY"] = viper.GetString("graylog_extra_key")
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		env["CDS_GRAYLOG_EXTRA_KEY"] = viper.GetString("worker_graylog_extra_key")
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		env["CDS_GRAYLOG_EXTRA_VALUE"] = viper.GetString("graylog_extra_value")
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		env["CDS_GRAYLOG_EXTRA_VALUE"] = viper.GetString("worker_graylog_extra_value")
 	}
 
 	//Check if there is a memory requirement

@@ -202,17 +202,17 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY_NAME=%s", hd.hatch.Name))
 
-	if viper.GetString("graylog_host") != "" {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_HOST=%s", viper.GetString("graylog_host")))
+	if viper.GetString("worker_graylog_host") != "" {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_HOST=%s", viper.GetString("worker_graylog_host")))
 	}
-	if viper.GetString("graylog_port") != "" {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_PORT=%s", viper.GetString("graylog_port")))
+	if viper.GetString("worker_graylog_port") != "" {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_PORT=%s", viper.GetString("worker_graylog_port")))
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_KEY=%s", viper.GetString("graylog_extra_key")))
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_KEY=%s", viper.GetString("worker_graylog_extra_key")))
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_VALUE=%s", viper.GetString("graylog_extra_value")))
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_VALUE=%s", viper.GetString("worker_graylog_extra_value")))
 	}
 
 	if job != nil {

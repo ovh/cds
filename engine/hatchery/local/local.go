@@ -104,17 +104,17 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, re
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
 	args = append(args, fmt.Sprintf("--hatchery-name=%s", h.hatch.Name))
 
-	if viper.GetString("graylog_host") != "" {
-		args = append(args, fmt.Sprintf("--graylog-host=%s", viper.GetString("graylog_host")))
+	if viper.GetString("worker_graylog_host") != "" {
+		args = append(args, fmt.Sprintf("--graylog-host=%s", viper.GetString("worker_graylog_host")))
 	}
-	if viper.GetString("graylog_port") != "" {
-		args = append(args, fmt.Sprintf("--graylog-port=%s", viper.GetString("graylog_port")))
+	if viper.GetString("worker_graylog_port") != "" {
+		args = append(args, fmt.Sprintf("--graylog-port=%s", viper.GetString("worker_graylog_port")))
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", viper.GetString("graylog_extra_key")))
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", viper.GetString("worker_graylog_extra_key")))
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", viper.GetString("graylog_extra_value")))
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", viper.GetString("worker_graylog_extra_value")))
 	}
 
 	args = append(args, "--single-use")
