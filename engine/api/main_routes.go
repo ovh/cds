@@ -277,10 +277,8 @@ func (router *Router) init() {
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
 	router.Handle("/worker/model/communication", GET(getWorkerModelCommunications))
 	router.Handle("/worker/model/{permModelID}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
-	router.Handle("/worker/model/{permModelID}/capability", POST(addWorkerModelCapa))
 	router.Handle("/worker/model/{permModelID}/instances", GET(getWorkerModelInstances))
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
-	router.Handle("/worker/model/{permModelID}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
 
 	// SSE
 	router.Handle("/mon/lastupdates/events", GET(lastUpdateBroker.ServeHTTP))

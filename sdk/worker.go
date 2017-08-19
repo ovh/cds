@@ -234,68 +234,6 @@ func getWorkerModels(withDisabled bool) ([]Model, error) {
 func DeleteWorkerModel(workerModelID int64) error {
 	uri := fmt.Sprintf("/worker/model/%d", workerModelID)
 
-	_, _, err := Request("DELETE", uri, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// AddCapabilityToWorkerModel adds a capability to given model
-func AddCapabilityToWorkerModel(modelID int64, name string, capaType string, value string) error {
-	uri := fmt.Sprintf("/worker/model/%d/capability", modelID)
-
-	r := Requirement{
-		Name:  name,
-		Type:  capaType,
-		Value: value,
-	}
-	data, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("POST", uri, data)
-	if err != nil {
-		return err
-	}
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
-}
-
-// UpdateCapabilityToWorkerModel updates a capability to given model
-func UpdateCapabilityToWorkerModel(modelID int64, name string, capaType string, value string) error {
-	uri := fmt.Sprintf("/worker/model/%d/capability/%s", modelID, name)
-
-	r := Requirement{
-		Name:  name,
-		Type:  capaType,
-		Value: value,
-	}
-	data, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("PUT", uri, data)
-	if err != nil {
-		return err
-	}
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
-}
-
-// DeleteWorkerCapability removes a capability from given worker model
-func DeleteWorkerCapability(workerModelID int64, capaName string) error {
-	uri := fmt.Sprintf("/worker/model/%d/capability/%s", workerModelID, capaName)
-
 	if _, _, err := Request("DELETE", uri, nil); err != nil {
 		return err
 	}

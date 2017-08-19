@@ -173,26 +173,6 @@ func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Req
 	return capas, nil
 }
 
-// DeleteWorkerModelCapability removes a capability from existing worker model
-func DeleteWorkerModelCapability(db gorp.SqlExecutor, workerID int64, capaName string) error {
-	query := `DELETE FROM worker_capability WHERE worker_model_id = $1 AND name = $2`
-
-	res, err := db.Exec(query, workerID, capaName)
-	if err != nil {
-		return err
-	}
-
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows <= 0 {
-		return sdk.ErrNoWorkerModelCapa
-	}
-
-	return nil
-}
-
 // ComputeRegistrationNeeds checks if worker models need to be register
 // if requirements contains "binary" type: all workers model need to be registered again by
 // setting flag need_registration to true in DB.
@@ -243,22 +223,5 @@ func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
 		return sdk.WrapError(err, "updateRegistration>")
 	}
 	log.Debug("updateRegistration> %d worker model updated", rows)
-	return nil
-}
-
-// UpdateWorkerModelCapability update a worker model capability
-func UpdateWorkerModelCapability(db gorp.SqlExecutor, capa sdk.Requirement, modelID int64) error {
-	query := `UPDATE worker_capability SET type=$1, argument=$2 WHERE worker_model_id = $3 AND name = $4`
-	res, err := db.Exec(query, string(capa.Type), capa.Value, modelID, capa.Name)
-	if err != nil {
-		return err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows <= 0 {
-		return sdk.ErrNoWorkerModelCapa
-	}
 	return nil
 }

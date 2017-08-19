@@ -10,40 +10,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func cmdWorkerModelCapabilityUpdate() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "update",
-		Short: "cds worker model capability update <workerModelName> <name> <type> <value>",
-		Long: `
-		Available capability types:
-		- Binary installed ("binary")
-		- Network access ("network")
-		`,
-		Run: updateWorkerModelCapability,
-	}
-
-	return cmd
-}
-
-func updateWorkerModelCapability(cmd *cobra.Command, args []string) {
-	if len(args) != 4 {
-		sdk.Exit("Wrong usage: %s\n", cmd.Short)
-	}
-	workerModelName := args[0]
-	name := args[1]
-	typeS := args[2]
-	value := args[3]
-
-	m, err := sdk.GetWorkerModel(workerModelName)
-	if err != nil {
-		sdk.Exit("Error: cannot retrieve worker model %s (%s)\n", workerModelName, err)
-	}
-	err = sdk.UpdateCapabilityToWorkerModel(m.ID, name, typeS, value)
-	if err != nil {
-		sdk.Exit("Error: cannot update capability to model (%s)\n", err)
-	}
-}
-
 func cmdWorkerModelUpdate() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",

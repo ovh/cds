@@ -175,6 +175,7 @@ func workerRegister(h Interface) error {
 			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
 			if _, err := h.SpawnWorker(&m, nil, true, "spawn for register"); err != nil {
 				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, err)
+				// TODO yesnault send err on worker model
 			}
 			nRegistered++
 		} else {
