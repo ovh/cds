@@ -71,6 +71,38 @@ func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *b
 	return WriteJSON(w, r, model, http.StatusOK)
 }
 
+func spawnErrorWorkerModelHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	spawnErrorForm := &sdk.SpawnErrorForm{}
+	if err := UnmarshalBody(r, spawnErrorForm); err != nil {
+		return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Unable to parse spawn error form")
+	}
+
+	log.Debug("spawnErrorWorkerModelHandler> context: %+v", c)
+
+	// TODO yesnault check if hatchery can update worker model
+
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		return sdk.WrapError(errBegin, "spawnErrorWorkerModelHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	model, errLoad := worker.LoadWorkerModelByID(db, spawnErrorForm.Model)
+	if errLoad != nil {
+		return sdk.WrapError(errLoad, "spawnErrorWorkerModelHandler> cannot load worker model by id")
+	}
+
+	if err := worker.UpdateSpawnErrorWorkerModel(tx, model.ID, spawnErrorForm.Error); err != nil {
+		return sdk.WrapError(err, "spawnErrorWorkerModelHandler> cannot update spawn error on worker model")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Cannot commit tx")
+	}
+
+	return WriteJSON(w, r, nil, http.StatusOK)
+}
+
 func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workerModelID, errr := requestVarInt(r, "permModelID")
 	if errr != nil {
@@ -359,23 +391,4 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}()
 
 	return WriteJSON(w, r, res, http.StatusAccepted)
-}
-
-func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	workerModelID, errr := requestVarInt(r, "permModelID")
-	if errr != nil {
-		return sdk.WrapError(errr, "getWorkerModelInstances> Invalid permModelID")
-	}
-
-	m, errLoad := worker.LoadWorkerModelByID(db, workerModelID)
-	if errLoad != nil {
-		return sdk.WrapError(errLoad, "getWorkerModelInstances> cannot load worker model")
-	}
-
-	ws, errW := worker.LoadWorkersByModel(db, m.ID)
-	if errW != nil {
-		return sdk.WrapError(errW, "getWorkerModelInstances> cannot load workers by model id")
-	}
-
-	return WriteJSON(w, r, ws, http.StatusOK)
 }

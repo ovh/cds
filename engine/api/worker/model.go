@@ -26,6 +26,10 @@ const columns = `
 	worker_model.communication,
 	worker_model.run_script,
 	worker_model.provision,
+	worker_model.user_last_modified,
+	worker_model.last_spawn_err,
+	worker_model.nb_spawn_err,
+	worker_model.date_last_spawn_err,
 	"group".name as groupname`
 
 type dbResultWMS struct {
@@ -210,10 +214,26 @@ func updateAllToNeedRegistration(db gorp.SqlExecutor) error {
 	return nil
 }
 
-// updateRegistration updates need_registration to false and last_registration time
+// UpdateSpawnErrorWorkerModel updates worker model error registration
+func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, info string) error {
+	query := `UPDATE worker_model SET nb_spawn_err=nb_spawn_err+1, last_spawn_err=$1, date_last_spawn_err=$2 WHERE id = $3`
+	res, err := db.Exec(query, info, time.Now(), modelID)
+	if err != nil {
+		return sdk.WrapError(err, "UpdateSpawnErrorWorkerModel>")
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return sdk.WrapError(err, "UpdateSpawnErrorWorkerModel>")
+	}
+	log.Debug("UpdateSpawnErrorWorkerModel> %d worker model updated", rows)
+	return nil
+}
+
+// updateRegistration updates need_registration to false and last_registration time, reset err registration
 func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
-	query := `UPDATE worker_model SET need_registration=$1, last_registration = $2 WHERE id = $3`
-	res, err := db.Exec(query, false, time.Now(), modelID)
+	query := `UPDATE worker_model SET need_registration=$1, last_registration = $2, nb_spawn_err=$3, last_spawn_err=$4 WHERE id = $5`
+	res, err := db.Exec(query, false, time.Now(), 0, "", modelID)
 	if err != nil {
 		return sdk.WrapError(err, "updateRegistration>")
 	}

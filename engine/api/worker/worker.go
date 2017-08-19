@@ -102,35 +102,6 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	return w, nil
 }
 
-// LoadWorkersByModel load workers by model
-func LoadWorkersByModel(db gorp.SqlExecutor, modelID int64) ([]sdk.Worker, error) {
-	w := []sdk.Worker{}
-	var statusS string
-	query := `SELECT worker.id, worker.name, worker.last_beat, worker.group_id, worker.model, worker.status, worker.hatchery_id, worker.hatchery_name
-	          FROM worker
-	          WHERE worker.model = $1
-	          ORDER BY worker.name ASC`
-
-	rows, err := db.Query(query, modelID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var worker sdk.Worker
-
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID, &worker.HatcheryName)
-		if err != nil {
-			return nil, err
-		}
-		worker.Status = sdk.StatusFromString(statusS)
-		w = append(w, worker)
-	}
-
-	return w, nil
-}
-
 // LoadWorkersByPipelineJobID load all workers in db by pipeline job id
 func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}

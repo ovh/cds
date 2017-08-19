@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -39,9 +40,10 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	}
 
 	//only local hatcheries declare model on registration
-	h.Model.CreatedBy = sdk.User{Username: h.Name}
+	h.Model.CreatedBy = sdk.User{Fullname: "Hatchery", Username: h.Name}
 	h.Model.Type = string(sdk.HostProcess)
 	h.Model.GroupID = h.GroupID
+	h.Model.UserLastModified = time.Now()
 
 	if err := worker.InsertWorkerModel(tx, &h.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
 		return sdk.ErrModelNameExist

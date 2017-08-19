@@ -54,7 +54,7 @@ func GetModelCapabilities(db gorp.SqlExecutor, modelID int64) ([]sdk.Requirement
 		var err error
 		req, err = LoadWorkerModelCapabilities(db, modelID)
 		if err != nil {
-			return nil, fmt.Errorf("GetModelCapabilities> cannot loadWorkerModelCapabilities: %s\n", err)
+			return nil, fmt.Errorf("GetModelCapabilities> cannot loadWorkerModelCapabilities: %s", err)
 		}
 		cache.Set(modelKey, req)
 	}

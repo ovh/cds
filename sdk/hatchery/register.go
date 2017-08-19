@@ -167,15 +167,19 @@ func workerRegister(h Interface) error {
 		if m.Type != h.ModelType() {
 			continue
 		}
+
 		// limit to 5 registration per ticker
 		if nRegistered > 5 {
 			break
 		}
 		if h.NeedRegistration(&m) {
 			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
-			if _, err := h.SpawnWorker(&m, nil, true, "spawn for register"); err != nil {
-				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, err)
-				// TODO yesnault send err on worker model
+			if _, errSpawn := h.SpawnWorker(&m, nil, true, "spawn for register"); errSpawn != nil {
+				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, errSpawn)
+				if err := sdk.SpawnErrorWorkerModel(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
+					log.Error("workerRegister> error on call sdk.SpawnErrorWorkerModel on worker model %s for register: %s", m.Name, errSpawn)
+				}
+				continue
 			}
 			nRegistered++
 		} else {
