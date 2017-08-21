@@ -215,7 +215,8 @@ func canRunJob(h Interface, timestamp int64, job *sdk.PipelineBuildJob, model *s
 		return false
 	}
 
-	if model.NbSpawnErr > 5 {
+	// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
+	if model.NbSpawnErr > 5 && h.Hatchery().GroupID != model.ID {
 		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}
