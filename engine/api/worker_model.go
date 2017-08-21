@@ -79,7 +79,10 @@ func spawnErrorWorkerModelHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	log.Debug("spawnErrorWorkerModelHandler> context: %+v", c)
 
-	// TODO yesnault check if hatchery can update worker model
+	workerModelID, errr := requestVarInt(r, "permModelID")
+	if errr != nil {
+		return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
+	}
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
@@ -87,7 +90,7 @@ func spawnErrorWorkerModelHandler(w http.ResponseWriter, r *http.Request, db *go
 	}
 	defer tx.Rollback()
 
-	model, errLoad := worker.LoadWorkerModelByID(db, spawnErrorForm.Model)
+	model, errLoad := worker.LoadWorkerModelByID(db, workerModelID)
 	if errLoad != nil {
 		return sdk.WrapError(errLoad, "spawnErrorWorkerModelHandler> cannot load worker model by id")
 	}
@@ -283,7 +286,6 @@ func getWorkerModelsEnabled(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	if errgroup != nil {
 		return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", c.Hatchery.ID, c.Hatchery.GroupID)
 	}
-	log.Debug("getWorkerModels> for hatchery %s with group %s : %s", c.Hatchery.ID, c.Hatchery.GroupID, models)
 	return WriteJSON(w, r, models, http.StatusOK)
 }
 

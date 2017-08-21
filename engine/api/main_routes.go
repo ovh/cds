@@ -271,7 +271,7 @@ func (router *Router) init() {
 
 	// Worker models
 	router.Handle("/worker/model", POST(addWorkerModel), GET(getWorkerModels))
-	router.Handle("/worker/model/error", NeedHatchery(), PUT(spawnErrorWorkerModelHandler))
+	router.Handle("/worker/model/error/{permModelID}", NeedHatchery(), PUT(spawnErrorWorkerModelHandler))
 	router.Handle("/worker/model/enabled", GET(getWorkerModelsEnabled))
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
 	router.Handle("/worker/model/communication", GET(getWorkerModelCommunications))

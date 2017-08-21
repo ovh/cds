@@ -51,7 +51,6 @@ var (
 
 // SpawnErrorForm represents the arguments needed to add error registration on worker model
 type SpawnErrorForm struct {
-	Model int64
 	Error string
 }
 
@@ -199,9 +198,9 @@ func UpdateWorkerModel(id int64, name string, t string, value string) error {
 
 // SpawnErrorWorkerModel updates registration infos on worker model
 func SpawnErrorWorkerModel(id int64, info string) error {
-	uri := "/worker/model/error"
+	uri := fmt.Sprintf("/worker/model/error/%d", id)
 
-	data, err := json.Marshal(SpawnErrorForm{Model: id, Error: info})
+	data, err := json.Marshal(SpawnErrorForm{Error: info})
 	if err != nil {
 		return err
 	}
