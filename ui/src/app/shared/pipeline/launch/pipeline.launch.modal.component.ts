@@ -53,9 +53,12 @@ export class PipelineLaunchModalComponent {
         this.launchGitParams.push(gitBranchParam);
 
         if (this.workflowItem.trigger) {
-            this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, this.workflowItem.trigger.parameters);
+            this.launchPipelineParams = Pipeline.mergeParams(
+                cloneDeep(this.workflowItem.pipeline.parameters),
+                cloneDeep(this.workflowItem.trigger.parameters)
+            );
         } else {
-            this.launchPipelineParams = Pipeline.mergeParams(this.workflowItem.pipeline.parameters, []);
+            this.launchPipelineParams = Pipeline.mergeParams(cloneDeep(this.workflowItem.pipeline.parameters), []);
         }
 
         // Init parent version
@@ -84,7 +87,7 @@ export class PipelineLaunchModalComponent {
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.parameters = new Array<Parameter>();
         if (this.launchPipelineParams) {
-            request.parameters.push(...this.launchPipelineParams);
+            request.parameters = request.parameters.concat(this.launchPipelineParams);
         }
 
         request.env = cloneDeep(this.workflowItem.environment);
