@@ -97,38 +97,3 @@ func addWorkerModel(cmd *cobra.Command, args []string) {
 		sdk.Exit("Error: cannot add worker model (%s)\n", err)
 	}
 }
-
-func cmdWorkerModelCapabilityAdd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "add",
-		Short: "cds worker model capability add <workerModelName> <name> <type> <value>",
-		Long: `
-		Available capability types:
-		- Binary installed ("binary")
-		- Network access ("network")
-		`,
-		Run: addWorkerModelCapability,
-	}
-
-	return cmd
-}
-
-func addWorkerModelCapability(cmd *cobra.Command, args []string) {
-	if len(args) != 4 {
-		sdk.Exit("Wrong usage: %s\n", cmd.Short)
-	}
-	workerModelName := args[0]
-	name := args[1]
-	typeS := args[2]
-	value := args[3]
-
-	m, err := sdk.GetWorkerModel(workerModelName)
-	if err != nil {
-		sdk.Exit("Error: cannot retrieve worker model %s (%s)\n", workerModelName, err)
-	}
-
-	err = sdk.AddCapabilityToWorkerModel(m.ID, name, typeS, value)
-	if err != nil {
-		sdk.Exit("Error: cannot add capability to model (%s)\n", err)
-	}
-}

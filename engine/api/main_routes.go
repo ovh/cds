@@ -52,9 +52,7 @@ func (router *Router) init() {
 	// Overall health
 	router.Handle("/mon/status", Auth(false), GET(statusHandler))
 	router.Handle("/mon/smtp/ping", Auth(true), GET(smtpPingHandler))
-	router.Handle("/mon/sla/{date}", POST(slaHandler))
 	router.Handle("/mon/version", Auth(false), GET(getVersionHandler))
-	router.Handle("/mon/error", Auth(false), GET(getError))
 	router.Handle("/mon/stats", Auth(false), GET(getStats))
 	router.Handle("/mon/models", Auth(false), GET(getWorkerModelsStatsHandler))
 	router.Handle("/mon/building", GET(getBuildingPipelines))
@@ -273,14 +271,12 @@ func (router *Router) init() {
 
 	// Worker models
 	router.Handle("/worker/model", POST(addWorkerModel), GET(getWorkerModels))
+	router.Handle("/worker/model/error/{permModelID}", NeedHatchery(), PUT(spawnErrorWorkerModelHandler))
 	router.Handle("/worker/model/enabled", GET(getWorkerModelsEnabled))
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
 	router.Handle("/worker/model/communication", GET(getWorkerModelCommunications))
 	router.Handle("/worker/model/{permModelID}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
-	router.Handle("/worker/model/{permModelID}/capability", POST(addWorkerModelCapa))
-	router.Handle("/worker/model/{permModelID}/instances", GET(getWorkerModelInstances))
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
-	router.Handle("/worker/model/{permModelID}/capability/{capa}", PUT(updateWorkerModelCapa), DELETE(deleteWorkerModelCapa))
 
 	// SSE
 	router.Handle("/mon/lastupdates/events", GET(lastUpdateBroker.ServeHTTP))

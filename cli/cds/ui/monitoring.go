@@ -246,6 +246,7 @@ func (ui *Termui) updateStatus() string {
 			strings.HasPrefix(l, "Cache: local") ||
 			strings.HasPrefix(l, "Session-Store: In Memory") ||
 			strings.HasPrefix(l, "LastUpdate Connected") ||
+			strings.HasPrefix(l, "Worker Model Errors: 0") ||
 			strings.Contains(l, "OK") {
 			items = append(items, fmt.Sprintf("[%s](%s)", l, selected))
 		} else {

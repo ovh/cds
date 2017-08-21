@@ -29,7 +29,7 @@ func auditCleanerRoutine(c context.Context, DBFunc func() *gorp.DbMap) {
 			if db != nil {
 				err := actionAuditCleaner(db)
 				if err != nil {
-					log.Warning("AuditCleanerRoutine> Action clean failed: %s\n", err)
+					log.Warning("AuditCleanerRoutine> Action clean failed: %s", err)
 				}
 			}
 		}
@@ -73,14 +73,12 @@ func actionAuditCleaner(db *gorp.DbMap) error {
 		OFFSET $2
 	)`
 	for _, id := range toDel {
-		_, err = tx.Exec(query, id, maxVersion)
-		if err != nil {
+		if _, err := tx.Exec(query, id, maxVersion); err != nil {
 			return err
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 

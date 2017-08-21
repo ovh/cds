@@ -236,6 +236,9 @@ func checkWorkerModelPermissions(modelID string, c *businesscontext.Ctx, permiss
 		return false
 	}
 
+	if c.Hatchery != nil {
+		return c.Hatchery.GroupID == group.SharedInfraGroup.ID || m.GroupID == c.Hatchery.GroupID
+	}
 	return checkWorkerModelPermissionsByUser(m, c.User, permissionValue)
 }
 
