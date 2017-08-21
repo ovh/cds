@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // RepositoryPoller is a gorp wrapper around sdk.RepositoryPoller
@@ -48,13 +47,11 @@ func (p *RepositoryPoller) PreDelete(s gorp.SqlExecutor) error {
 func (p *RepositoryPoller) PostGet(db gorp.SqlExecutor) error {
 	app, err := application.LoadByID(db, p.ApplicationID, nil, application.LoadOptions.Default)
 	if err != nil {
-		log.Warning("PostGet> error loading application %d : %s", p.ApplicationID, err)
-		return err
+		return sdk.WrapError(err, "PostGet> error loading application %d", p.ApplicationID)
 	}
 	pip, err := pipeline.LoadPipelineByID(db, p.PipelineID, true)
 	if err != nil {
-		log.Warning("PostGet> error loading pipeline %d : %s", p.PipelineID, err)
-		return err
+		return sdk.WrapError(err, "PostGet> error loading pipeline %d", p.PipelineID)
 	}
 	p.Application = *app
 	p.Pipeline = *pip
