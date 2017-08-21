@@ -172,7 +172,8 @@ func workerRegister(h Interface) error {
 		if nRegistered > 5 {
 			break
 		}
-		if m.NbSpawnErr > 5 {
+		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
+		if m.NbSpawnErr > 5 && h.Hatchery().GroupID != m.ID {
 			log.Warning("workerRegister> Too many errors on spawn with model %s, please check this worker model", m.Name)
 			continue
 		}
