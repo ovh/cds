@@ -172,6 +172,10 @@ func workerRegister(h Interface) error {
 		if nRegistered > 5 {
 			break
 		}
+		if m.NbSpawnErr > 5 {
+			log.Warning("workerRegister> Too many errors on spawn with model %s, please check this worker model", m.Name)
+			continue
+		}
 		if h.NeedRegistration(&m) {
 			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
 			if _, errSpawn := h.SpawnWorker(&m, nil, true, "spawn for register"); errSpawn != nil {

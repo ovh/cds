@@ -215,6 +215,11 @@ func canRunJob(h Interface, timestamp int64, job *sdk.PipelineBuildJob, model *s
 		return false
 	}
 
+	if model.NbSpawnErr > 5 {
+		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
+		return false
+	}
+
 	// Common check
 	for _, r := range job.Job.Action.Requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run

@@ -646,7 +646,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 		log.Info("killAwolWorker> Delete network %s", n.Name)
 		if err := h.dockerClient.RemoveNetwork(n.ID); err != nil {
-			log.Warning("killAwolWorker> Unable to delete network %s", n.Name)
+			log.Warning("killAwolWorker> Unable to delete network %s err:%s", n.Name, err)
 		}
 	}
 }
