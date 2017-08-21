@@ -551,7 +551,7 @@ func AddPipelineScheduler(projectKey, appName, pipelineName, cronExpr, envName s
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
 	if envName != "" {
-		path = path + url.QueryEscape("?envName="+envName)
+		path = path + "?envName=" + url.QueryEscape(envName)
 	}
 	data, code, err := Request("POST", path, b)
 	if err != nil {
