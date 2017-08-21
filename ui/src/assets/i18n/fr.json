@@ -489,7 +489,7 @@
   "worker_model_help_error_docker_2": "Vérifiez que vous avez curl dans le PATH de l'image docker",
   "worker_model_help_error_host_1": "Vérifiez que le binaire 'worker' est présent dans votre $PATH, sur le host où vous avez lancez la hatchery locale",
   "worker_model_help_error_host_2": "Vérifiez que vous avez les droits d'écriture dans $TMPDIR ou modifiez le paramètre 'basedir' de votre hatchery locale",
-  "worker_model_help_error_openstack_1": "vérifiez que vous avez curl dans le PATH de l'image openstack",
+  "worker_model_help_error_openstack_1": "Vérifiez que vous avez curl dans le PATH de l'image openstack",
   "worker_model_help_error_openstack_2": "Vérifiez que vous avez les droits d'écriture dans $TMPDIR ou modifiez le paramètre 'basedir' de votre hatchery openstack",
   "worker_model_image": "Image",
   "worker_model_last_modified": "Dernière modification",
