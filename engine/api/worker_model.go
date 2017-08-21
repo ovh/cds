@@ -77,8 +77,6 @@ func spawnErrorWorkerModelHandler(w http.ResponseWriter, r *http.Request, db *go
 		return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Unable to parse spawn error form")
 	}
 
-	log.Debug("spawnErrorWorkerModelHandler> context: %+v", c)
-
 	workerModelID, errr := requestVarInt(r, "permModelID")
 	if errr != nil {
 		return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
