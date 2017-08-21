@@ -34,24 +34,21 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.RepositoryPollerExecution, 
 	log.Debug("poller.CleanerRun> Deleting old executions...")
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("poller.CleanerRun> Unable to start a transaction : %s", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "poller.CleanerRun> Unable to start a transaction")
 	}
 	defer tx.Rollback()
 
 	//Load pollers
 	ps, err := LoadAll(tx)
 	if err != nil {
-		log.Warning("poller.CleanerRun> Unable to load pipeline pollers : %s", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "poller.CleanerRun> Unable to load pipeline pollers")
 	}
 
 	deleted := []sdk.RepositoryPollerExecution{}
 	for _, s := range ps {
 		exs, err := LoadPastExecutions(tx, s.ApplicationID, s.PipelineID)
 		if err != nil {
-			log.Warning("poller.CleanerRun> Unable to load pipeline pollers execution : %s", err)
-			return nil, err
+			return nil, sdk.WrapError(err, "poller.CleanerRun> Unable to load pipeline pollers execution")
 		}
 
 		nbToDelete := len(exs) - nbToKeep
@@ -69,8 +66,8 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.RepositoryPollerExecution, 
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("poller.CleanerRun> Unable to commit a transaction : %s", err)
-		return nil, err
+
+		return nil, sdk.WrapError(err, "poller.CleanerRun> Unable to commit a transaction")
 	}
 
 	return deleted, nil

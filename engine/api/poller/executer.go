@@ -44,8 +44,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, error) {
 	//Load pending executions
 	exs, err := LoadPendingExecutions(db)
 	if err != nil {
-		log.Warning("poller.ExecuterRun> Unable to load pending execution : %s", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "poller.ExecuterRun> Unable to load pending execution")
 	}
 
 	//Process all
@@ -140,15 +139,13 @@ func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 	//get the client for the repositories manager
 	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name)
 	if err != nil {
-		log.Warning("Polling> Unable to get client for %s %s : %s\n", projectKey, rm.Name, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "Polling> Unable to get client for %s %s", projectKey, rm.Name)
 	}
 
-	var events = []interface{}{}
+	var events []interface{}
 	events, pollingDelay, err = client.GetEvents(p.Application.RepositoryFullname, p.DateCreation)
 	if err != nil && err.Error() != "No new events" {
-		log.Warning("Polling> Unable to get events for %s %s : %s\n", projectKey, rm.Name, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "Polling> Unable to get events for %s %s", projectKey, rm.Name)
 	}
 	e.PushEvents, err = client.PushEvents(p.Application.RepositoryFullname, events)
 	if err != nil {
@@ -175,8 +172,7 @@ func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 		var err error
 		pbs, err = triggerPipelines(tx, projectKey, rm, p, e)
 		if err != nil {
-			log.Warning("Polling> Unable to trigger pipeline %s for repository %s\n", p.Pipeline.Name, p.Application.RepositoryFullname)
-			return nil, err
+			return nil, sdk.WrapError(err, "Polling> Unable to trigger pipeline %s for repository %s", p.Pipeline.Name, p.Application.RepositoryFullname)
 		}
 	}
 
@@ -190,8 +186,7 @@ func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.Reposi
 func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) ([]sdk.PipelineBuild, error) {
 	proj, err := project.LoadByPipelineID(tx, nil, poller.Pipeline.ID)
 	if err != nil {
-		log.Warning("Polling.triggerPipelines> Cannot load project for pipeline %s: %s\n", poller.Pipeline.Name, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "Polling.triggerPipelines> Cannot load project for pipeline %s", poller.Pipeline.Name)
 	}
 
 	e.PipelineBuildVersions = map[string]int64{}
@@ -200,8 +195,7 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 	for _, event := range e.PushEvents {
 		pb, err := triggerPipeline(tx, rm, poller, event, proj)
 		if err != nil {
-			log.Error("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
-			return nil, err
+			return nil, sdk.WrapError(err, "Polling.triggerPipelines> cannot trigger pipeline %d", poller.Pipeline.ID)
 		}
 
 		if pb != nil {
@@ -214,8 +208,7 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 	for _, event := range e.CreateEvents {
 		pb, err := triggerPipeline(tx, rm, poller, sdk.VCSPushEvent(event), proj)
 		if err != nil {
-			log.Error("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
-			return nil, err
+			return nil, sdk.WrapError(err, "Polling.triggerPipelines> cannot trigger pipeline %d", poller.Pipeline.ID)
 		}
 
 		if pb != nil {
@@ -228,8 +221,7 @@ func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.Repositori
 	for _, e := range e.DeleteEvents {
 		if err := pipeline.DeleteBranchBuilds(tx, poller.Application.ID, e.Branch.DisplayID); err != nil {
 			if err != sql.ErrNoRows {
-				log.Error("Polling.triggerPipelines> cannot delete pipeline build for branch %s: %s", e.Branch.DisplayID, err)
-				return nil, err
+				return nil, sdk.WrapError(err, "Polling.triggerPipelines> cannot delete pipeline build for branch %s", e.Branch.DisplayID)
 			}
 		}
 	}
@@ -244,15 +236,15 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 	var params []sdk.Parameter
 
 	// Load pipeline Argument
-	parameters, err := pipeline.GetAllParametersInPipeline(tx, poller.Pipeline.ID)
-	if err != nil {
-		return nil, err
+	parameters, errg := pipeline.GetAllParametersInPipeline(tx, poller.Pipeline.ID)
+	if errg != nil {
+		return nil, errg
 	}
 	poller.Pipeline.Parameter = parameters
 
-	applicationPipelineArgs, err := application.GetAllPipelineParam(tx, poller.Application.ID, poller.Pipeline.ID)
-	if err != nil {
-		return nil, err
+	applicationPipelineArgs, errga := application.GetAllPipelineParam(tx, poller.Application.ID, poller.Pipeline.ID)
+	if errga != nil {
+		return nil, errga
 	}
 
 	trigger := sdk.PipelineBuildTrigger{
@@ -263,12 +255,12 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 	}
 
 	// Get commit message to check if we have to skip the build
-	match, err := regexp.Match(".*\\[ci skip\\].*|.*\\[cd skip\\].*", []byte(e.Commit.Message))
-	if err != nil {
-		log.Warning("polling> Cannot check %s/%s for commit %s by %s : %s (%s)\n", proj.Key, poller.Application.Name, trigger.VCSChangesHash, trigger.VCSChangesAuthor, e.Commit.Message, err)
+	match, errm := regexp.Match(".*\\[ci skip\\].*|.*\\[cd skip\\].*", []byte(e.Commit.Message))
+	if errm != nil {
+		log.Warning("polling> Cannot check %s/%s for commit %s by %s : %s (%s)", proj.Key, poller.Application.Name, trigger.VCSChangesHash, trigger.VCSChangesAuthor, e.Commit.Message, errm)
 	}
 	if match {
-		log.Debug("polling> Skipping build of %s/%s for commit %s by %s\n", proj.Key, poller.Application.Name, trigger.VCSChangesHash, trigger.VCSChangesAuthor)
+		log.Debug("polling> Skipping build of %s/%s for commit %s by %s", proj.Key, poller.Application.Name, trigger.VCSChangesHash, trigger.VCSChangesAuthor)
 		return nil, nil
 	}
 
