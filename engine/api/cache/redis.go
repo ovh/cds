@@ -240,15 +240,21 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 	if !ok {
 		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
 	}
-	rps.ReceiveTimeout(200 * time.Millisecond)
 
-	var redisMsg *redis.Message
+	msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
+	redisMsg, ok := msg.(*redis.Message)
+	if msg != nil {
+		if ok {
+			return redisMsg.Payload, nil
+		}
+		log.Warning("redis.GetMessage> Message casting error for %v of type %T", msg, msg)
+	}
+
 	ticker := time.NewTicker(250 * time.Millisecond).C
 	for redisMsg == nil {
 		select {
 		case <-ticker:
 			msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
-
 			if msg == nil {
 				continue
 			}

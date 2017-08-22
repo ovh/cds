@@ -67,7 +67,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		//For the moment we consider that plugin name = action name = plugin binary file name
 		pluginName := a.Name
 		//The binary file has been downloaded during requirement check in /tmp
-		pluginBinary := path.Join(os.TempDir(), a.Name)
+		pluginBinary := path.Join(w.basedir, a.Name)
 
 		var tlsskipverify bool
 		if os.Getenv("CDS_SKIP_VERIFY") != "" {

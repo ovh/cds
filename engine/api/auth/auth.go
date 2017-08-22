@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -103,108 +103,79 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 //CheckPersistentSession check persistent session token from CLI
 func CheckPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *ctx.Ctx) bool {
 	if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-		if getUserPersistentSession(db, store, headers, ctx) {
-			return true
-		}
-		if reloadUserPersistentSession(db, store, headers, ctx) {
-			return true
-		}
+		return getUserPersistentSession(db, store, headers, ctx)
 	}
 	return false
 }
 
 func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *ctx.Ctx) bool {
 	h := headers.Get(sdk.SessionTokenHeader)
-	if h != "" {
-		ok, _ := store.Exists(sessionstore.SessionKey(h))
-		if ok {
-			var usr string
-			store.Get(sessionstore.SessionKey(h), "username", &usr)
-			//Set user in ctx
-			u, err := user.LoadUserWithoutAuth(db, usr)
-			if err != nil {
-				log.Warning("getUserPersistentSession> Unable to load user %s", usr)
-				return false
-			}
-			ctx.User = u
-			return true
+	if h == "" {
+		return false
+	}
+
+	key := sessionstore.SessionKey(h)
+	ok, _ := store.Exists(key)
+	var err error
+	var u *sdk.User
+
+	if !ok {
+		//Reload the persistent session from the database
+		token, err := user.LoadPersistentSessionToken(db, key)
+		if err != nil {
+			log.Warning("getUserPersistentSession> Unable to load user by token %s", key)
+			return false
 		}
-	}
-	return false
-}
+		u, err = user.LoadUserWithoutAuthByID(db, token.UserID)
+		store.New(key)
+		store.Set(key, "username", u.Username)
 
-func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *ctx.Ctx) bool {
-	authHeaderValue := headers.Get("Authorization")
-	if authHeaderValue == "" {
-		log.Warning("ReloadUserPersistentSession> No Authorization Header")
-		return false
-	}
-	// Split Basic and (user:pass)64
-	auth := strings.SplitN(authHeaderValue, " ", 2)
-	if len(auth) != 2 || auth[0] != "Basic" {
-		log.Warning("ReloadUserPersistentSession> Wrong Authorization header syntax")
-		return false
+	} else {
+		//The session is in the session store
+		var usr string
+		store.Get(sessionstore.SessionKey(h), "username", &usr)
+		u, err = user.LoadUserWithoutAuth(db, usr)
 	}
 
-	userPwd, _ := base64.StdEncoding.DecodeString(auth[1])
-	userPwdArray := strings.SplitN(string(userPwd), ":", 2)
-	if len(userPwdArray) != 2 {
-		log.Warning("ReloadUserPersistentSession> Authorization failed")
+	//Check previous errors
+	if err != nil {
+		log.Warning("getUserPersistentSession> Unable to load user")
 		return false
 	}
 
-	// Load user
-	u, err1 := user.LoadUserAndAuth(db, userPwdArray[0])
-	if err1 != nil {
-		log.Warning("ReloadUserPersistentSession> Authorization failed")
-		return false
-	}
+	//Set user in ctx
 	ctx.User = u
 
-	// Verify token
-	for _, t := range u.Auth.Tokens {
-		if t.Token == userPwdArray[1] {
-			log.Debug("ReloadUserPersistentSession> Persistent session successfully reloaded %s %s", u.Username, t.Token)
-			if _, err := store.New(sessionstore.SessionKey(t.Token)); err != nil {
-				log.Warning("ReloadUserPersistentSession> Unable to create new session %s:%s", t.Token, err)
-				return false
-			}
-			store.Set(sessionstore.SessionKey(t.Token), "username", u.Username)
-			return true
+	//Launch update of the persistent session token in background
+	defer func(key sessionstore.SessionKey) {
+		token, err := user.LoadPersistentSessionToken(db, key)
+		if err != nil {
+			log.Warning("getUserPersistentSession> Unable to load user by token %s: %v", key, err)
+			return
 		}
-	}
+		token.LastConnectionDate = time.Now()
+		if err := user.UpdatePersistentSessionToken(db, *token); err != nil {
+			log.Error("getUserPersistentSession> Unable to update token")
+		}
+	}(key)
 
-	log.Warning("ReloadUserPersistentSession> failed for username:%s", u.Username)
-	return false
+	return true
 }
 
 //GetWorker returns the worker instance from its id
 func GetWorker(db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
 	// Load worker
-	var w *sdk.Worker
-	var oldWorker sdk.Worker
+	var w = &sdk.Worker{}
 
-	// Try to load worker from cache
 	key := cache.Key("worker", workerID)
-	cache.Get(key, &oldWorker)
-	var putWorkerInCache bool
-	if oldWorker.ID != "" {
-		w = &oldWorker
-	}
-
 	// Else load it from DB
-	if w == nil {
+	if !cache.Get(key, w) {
 		var err error
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
 			return nil, fmt.Errorf("cannot load worker: %s", err)
 		}
-		putWorkerInCache = true
-	}
-
-	if putWorkerInCache {
-		//Set the worker in cache
-		cache.Set(key, *w)
+		cache.Set(key, w)
 	}
 
 	return w, nil

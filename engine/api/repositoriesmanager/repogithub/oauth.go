@@ -1,11 +1,9 @@
 package repogithub
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net/url"
 	"strings"
@@ -42,7 +40,7 @@ func generateHash() (string, error) {
 //GithubConsumer embeds a github oauth2 consumer
 type GithubConsumer struct {
 	ClientID                 string `json:"client-id"`
-	ClientSecret             string `json:"client-secret"`
+	ClientSecret             string `json:"-"`
 	AuthorizationCallbackURL string `json:"-"`
 	WithHooks                bool   `json:"with-hooks"`
 	WithPolling              bool   `json:"with-polling"`
@@ -57,16 +55,6 @@ func New(ClientID, ClientSecret, AuthorizationCallbackURL string) *GithubConsume
 		ClientSecret:             ClientSecret,
 		AuthorizationCallbackURL: AuthorizationCallbackURL,
 	}
-}
-
-func (g *GithubConsumer) getClientSecretValue() ([]byte, error) {
-	b, err := ioutil.ReadFile(g.ClientSecret)
-	if err != nil {
-		log.Error("GithubConsumer> Unable to read client secret value %s : %s", g.ClientSecret, err)
-		return nil, err
-	}
-	b = bytes.Replace(b, []byte{'\n'}, []byte{}, -1)
-	return b, err
 }
 
 //Data returns a serilized version of specific data
@@ -108,14 +96,9 @@ func (g *GithubConsumer) AuthorizeToken(state, code string) (string, string, err
 	//	code
 	//	state
 
-	secret, err := g.getClientSecretValue()
-	if err != nil {
-		return "", "", err
-	}
-
 	params := url.Values{}
 	params.Add("client_id", g.ClientID)
-	params.Add("client_secret", string(secret))
+	params.Add("client_secret", g.ClientSecret)
 	params.Add("code", code)
 	params.Add("state", state)
 

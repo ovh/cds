@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -79,7 +80,7 @@ func UpdateEnvironment(key, oldName, newName string) error {
 		return err
 	}
 
-	url := fmt.Sprintf("/project/%s/environment/%s", key, oldName)
+	url := fmt.Sprintf("/project/%s/environment/%s", key, url.QueryEscape(oldName))
 	data, code, err := Request("PUT", url, data)
 	if err != nil {
 		return err
@@ -121,7 +122,7 @@ func ListEnvironments(key string) ([]Environment, error) {
 func GetEnvironment(pk, name string) (*Environment, error) {
 	var e Environment
 
-	path := fmt.Sprintf("/project/%s/environment/%s", pk, name)
+	path := fmt.Sprintf("/project/%s/environment/%s", pk, url.QueryEscape(name))
 	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -138,7 +139,7 @@ func GetEnvironment(pk, name string) (*Environment, error) {
 // DeleteEnvironment delete an environment from CDS
 func DeleteEnvironment(pk, name string) error {
 
-	path := fmt.Sprintf("/project/%s/environment/%s", pk, name)
+	path := fmt.Sprintf("/project/%s/environment/%s", pk, url.QueryEscape(name))
 	_, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
@@ -148,14 +149,8 @@ func DeleteEnvironment(pk, name string) error {
 
 // CloneEnvironment clone the given environment in CDS
 func CloneEnvironment(pk, name, new string) (*Environment, error) {
-	var e = Environment{Name: new}
-	b, err := json.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-
-	path := fmt.Sprintf("/project/%s/environment/%s/clone", pk, name)
-	if _, _, err := Request("POST", path, b); err != nil {
+	path := fmt.Sprintf("/project/%s/environment/%s/clone/%s", pk, name, url.QueryEscape(new))
+	if _, _, err := Request("POST", path, nil); err != nil {
 		return nil, err
 	}
 
@@ -165,7 +160,7 @@ func CloneEnvironment(pk, name, new string) (*Environment, error) {
 // ShowEnvironmentVariable  show variables for an environment
 func ShowEnvironmentVariable(projectKey, envName string) ([]Variable, error) {
 
-	path := fmt.Sprintf("/project/%s/environment/%s/variable", projectKey, envName)
+	path := fmt.Sprintf("/project/%s/environment/%s/variable", projectKey, url.QueryEscape(envName))
 	data, code, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -197,7 +192,7 @@ func AddEnvironmentVariable(projectKey, envName, varName, varValue string, varTy
 		return err
 	}
 
-	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, envName, varName)
+	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, url.QueryEscape(envName), varName)
 	data, code, err := Request("POST", path, data)
 	if err != nil {
 		return err
@@ -216,7 +211,7 @@ func AddEnvironmentVariable(projectKey, envName, varName, varValue string, varTy
 
 // GetEnvironmentVariable Get a specific variable from the given environment
 func GetEnvironmentVariable(projectKey, envName, varName string) (*Variable, error) {
-	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, envName, varName)
+	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, url.QueryEscape(envName), varName)
 	data, code, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -255,7 +250,7 @@ func UpdateEnvironmentVariable(projectKey, envName, oldVarName, varName, varValu
 		return err
 	}
 
-	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, envName, varName)
+	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, url.QueryEscape(envName), varName)
 	data, code, err := Request("PUT", path, data)
 	if err != nil {
 		return err
@@ -274,7 +269,7 @@ func UpdateEnvironmentVariable(projectKey, envName, oldVarName, varName, varValu
 
 // RemoveEnvironmentVariable  remove a variable from an environment
 func RemoveEnvironmentVariable(projectKey, envName, varName string) error {
-	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, envName, varName)
+	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, url.QueryEscape(envName), varName)
 	data, code, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
@@ -293,7 +288,7 @@ func RemoveEnvironmentVariable(projectKey, envName, varName string) error {
 
 // RemoveGroupFromEnvironment  call api to remove a group from the given environment
 func RemoveGroupFromEnvironment(projectKey, envName, groupName string) error {
-	path := fmt.Sprintf("/project/%s/environment/%s/group/%s", projectKey, envName, groupName)
+	path := fmt.Sprintf("/project/%s/environment/%s/group/%s", projectKey, url.QueryEscape(envName), groupName)
 	data, code, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
@@ -328,7 +323,7 @@ func UpdateGroupInEnvironment(projectKey, envName, groupName string, permission 
 		return err
 	}
 
-	path := fmt.Sprintf("/project/%s/environment/%s/group/%s", projectKey, envName, groupName)
+	path := fmt.Sprintf("/project/%s/environment/%s/group/%s", projectKey, url.QueryEscape(envName), groupName)
 	data, code, err := Request("PUT", path, data)
 	if err != nil {
 		return err
@@ -363,7 +358,7 @@ func AddGroupInEnvironment(projectKey, envName, groupName string, permission int
 		return err
 	}
 
-	path := fmt.Sprintf("/project/%s/environment/%s/group", projectKey, envName)
+	path := fmt.Sprintf("/project/%s/environment/%s/group", projectKey, url.QueryEscape(envName))
 	data, code, err := Request("POST", path, data)
 	if err != nil {
 		return err

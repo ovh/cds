@@ -27,9 +27,10 @@ export class ActionStepFormComponent implements OnInit {
         }
     };
 
-    addStep(final: boolean): void {
+    addStep(optional: boolean, always_executed: boolean): void {
         if (this.step) {
-            this.step.final = final;
+            this.step.optional = optional;
+            this.step.always_executed = always_executed;
             this.step.enabled = true;
             this.showAddStep = false;
             this.create.emit(new StepEvent('add', this.step));

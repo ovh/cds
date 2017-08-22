@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Rx';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
  * Service to access Variable commons.
@@ -35,7 +35,11 @@ export class VariableService {
      * @param key
      * @returns {Observable<Array<string>>}
      */
-    getContextVariable(key: string): Observable<Array<string>> {
-        return this._http.get('/suggest/variable/' + key);
+    getContextVariable(key: string, pipelineId?: number): Observable<Array<string>> {
+        let params = new HttpParams();
+        if (pipelineId) {
+            params.append('pipId', pipelineId.toString());
+        }
+        return this._http.get('/suggest/variable/' + key, {params: params}).map(res => res.json());
     }
 }

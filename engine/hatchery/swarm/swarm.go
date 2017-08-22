@@ -275,17 +275,21 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		"CDS_SINGLE_USE=1",
 	}
 
-	if viper.GetString("graylog_host") != "" {
-		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("graylog_host"))
+	if viper.GetString("worker_graylog_host") != "" {
+		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("worker_graylog_host"))
 	}
-	if viper.GetString("graylog_port") != "" {
-		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("graylog_port"))
+	if viper.GetString("worker_graylog_port") != "" {
+		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("worker_graylog_port"))
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("graylog_extra_key"))
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("worker_graylog_extra_key"))
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("graylog_extra_value"))
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("worker_graylog_extra_value"))
+	}
+	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
+		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", viper.GetString("grpc_api")))
+		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
 	}
 
 	if job != nil {
@@ -642,7 +646,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 		log.Info("killAwolWorker> Delete network %s", n.Name)
 		if err := h.dockerClient.RemoveNetwork(n.ID); err != nil {
-			log.Warning("killAwolWorker> Unable to delete network %s", n.Name)
+			log.Warning("killAwolWorker> Unable to delete network %s err:%s", n.Name, err)
 		}
 	}
 }

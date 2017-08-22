@@ -257,7 +257,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	//Load the project
 	proj, errproj := project.Load(db, projectKey, c.User)
 	if errproj != nil {
-		return sdk.WrapError(errproj, "rollbackPipelineHandler> Unable to load project %s", projectKey)
+		return sdk.WrapError(errproj, "runPipelineHandler> Unable to load project %s", projectKey)
 	}
 
 	app, errln := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
@@ -664,6 +664,7 @@ func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	pipelineName := vars["permPipelineKey"]
+	withApp := FormBool(r, "withApplications")
 
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, true)
 	if err != nil {
@@ -672,6 +673,14 @@ func getPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 
 	p.Permission = permission.PipelinePermission(p.ID, c.User)
+
+	if withApp {
+		apps, errA := application.LoadByPipeline(db, p.ID, c.User)
+		if errA != nil {
+			return sdk.WrapError(errA, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", p.Name)
+		}
+		p.AttachedApplication = apps
+	}
 
 	return WriteJSON(w, r, p, http.StatusOK)
 }

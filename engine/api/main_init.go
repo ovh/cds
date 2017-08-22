@@ -12,8 +12,10 @@ import (
 	_ "github.com/spf13/viper/remote"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -23,8 +25,6 @@ const (
 	viperServerSessionTTL               = "server.http.sessionTTL"
 	viperServerGRPCPort                 = "server.grpc.port"
 	viperServerSecretKey                = "server.secrets.key"
-	viperServerSecretBackend            = "server.secrets.backend"
-	viperServerSecretBackendOption      = "server.secrets.backend.option"
 	viperLogLevel                       = "log.level"
 	viperDBUser                         = "db.user"
 	viperDBPassword                     = "db.password"
@@ -76,20 +76,25 @@ const (
 	viperVCSRepoGithubStatusURLDisabled = "vcs.repositories.github.statuses_url_disabled"
 	viperVCSRepoGithubSecret            = "vcs.repositories.github.clientsecret"
 	viperVCSRepoBitbucketStatusDisabled = "vcs.repositories.bitbucket.statuses_disabled"
+	viperVCSRepoBitbucketConsumerKey    = "vcs.repositories.bitbucket.consumerkey"
 	viperVCSRepoBitbucketPrivateKey     = "vcs.repositories.bitbucket.privatekey"
+	vaultConfKey                        = "/secret/cds/conf"
 )
 
 var (
 	cfgFile      string
 	remoteCfg    string
 	remoteCfgKey string
+	vaultAddr    string
+	vaultToken   string
 )
 
 func init() {
 	mainCmd.Flags().StringVar(&cfgFile, "config", "", "config file")
-	mainCmd.Flags().StringVar(&remoteCfg, "remote-config", "", "consul configuration store")
-	mainCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "consul configuration store key")
-
+	mainCmd.Flags().StringVar(&remoteCfg, "remote-config", "", "(optional) consul configuration store")
+	mainCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
+	mainCmd.Flags().StringVar(&vaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
+	mainCmd.Flags().StringVar(&vaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
 	//Database command
 	mainCmd.AddCommand(database.DBCmd)
 }
@@ -123,29 +128,64 @@ func initConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." and "-" by "_" for env variable lookup
 }
 
+type defaultValues struct {
+	ServerSecretsKey     string
+	AuthSharedInfraToken string
+	// For LDAP Client
+	LDAPBase  string
+	GivenName string
+	SN        string
+}
+
 func generateConfigTemplate() {
-	type defaultValues struct {
-		ServerSecretsKey     string
-		AuthSharedInfraToken string
-	}
+	var v defaultValues
+	var tmplContent string
 
 	token, err := token.GenerateToken()
 	if err != nil {
-		fmt.Println("generateConfigTemplate> cannot generate token")
+		log.Error("generateConfigTemplate> cannot generate token")
 		os.Exit(1)
 	}
 
-	v := defaultValues{
-		ServerSecretsKey:     sdk.RandomString(32),
-		AuthSharedInfraToken: token,
+	// Generate config with local
+	if vaultAddr == "" {
+		v = defaultValues{
+			ServerSecretsKey:     sdk.RandomString(32),
+			AuthSharedInfraToken: token,
+			LDAPBase:             "{{.ldapBase}}",
+			SN:                   "{{.sn}}",
+			GivenName:            "{{.givenName}}",
+		}
+		tmplContent = tmpl
+	} else { // Generate config with vault
+		s, errS := secret.New(vaultToken, vaultAddr)
+		if errS != nil {
+			log.Warning("Error when creating vault config")
+			os.Exit(1)
+		}
+		// Get raw config file from vault
+		cfgFileContent, errV := s.GetFromVault(vaultConfKey)
+		if errV != nil {
+			log.Warning("Error when fetch secret %s from vault", vaultConfKey)
+			os.Exit(1)
+		}
+		tmplContent = cfgFileContent
+
+		v = defaultValues{
+			AuthSharedInfraToken: token,
+			LDAPBase:             "{{.ldapBase}}",
+			SN:                   "{{.sn}}",
+			GivenName:            "{{.givenName}}",
+		}
 	}
-	tmpl, err := template.New("test").Parse(tmpl)
+
+	tmplI, err := template.New("test").Parse(tmplContent)
 	if err != nil {
 		fmt.Println("Error new: ", err)
 		os.Exit(1)
 	}
 	var tpl bytes.Buffer
-	if err := tmpl.Execute(&tpl, v); err != nil {
+	if err := tmplI.Execute(&tpl, v); err != nil {
 		fmt.Println("Error execute: ", err)
 		os.Exit(1)
 	}
@@ -155,6 +195,8 @@ func generateConfigTemplate() {
 		fmt.Println("Error write file: ", err)
 		os.Exit(1)
 	}
+
+	fmt.Printf("You can now launch: 'api --config %s' to run CDS API\n", cfgFile)
 	os.Exit(0)
 }
 
@@ -170,8 +212,6 @@ const tmpl = `###################################
 # CDS_SERVER_HTTP_SESSIONTTL
 # CDS_SERVER_GRPC_PORT
 # CDS_SERVER_SECRETS_KEY
-# CDS_SERVER_SECRETS_BACKEND
-# CDS_SERVER_SECRETS_BACKEND_OPTION
 # CDS_LOG_LEVEL
 # CDS_DB_USER
 # CDS_DB_PASSWORD
@@ -223,6 +263,7 @@ const tmpl = `###################################
 # CDS_VCS_REPOSITORIES_GITHUB_STATUSES_URL_DISABLED
 # CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET
 # CDS_VCS_REPOSITORIES_BITBUCKET_STATUSES_DISABLED
+# CDS_VCS_REPOSITORIES_BITBUCKET_CONSUMERKEY
 # CDS_VCS_REPOSITORIES_BITBUCKET_PRIVATEKEY
 
 
@@ -262,10 +303,7 @@ keys = "/app/keys"
 		# AES Cypher key for database encryption. 32 char.
 		# This is mandatory
     key = "{{.ServerSecretsKey}}"
-    # Uncomment this two lines to user a secret backend manager such as Vault.
-    # More details on https://github.com/ovh/cds/tree/configFile/contrib/secret-backends/secret-backend-vault
-    # backend = "path/to/secret-backend-vault"
-    # backendoptions = "vault_addr=https://vault.mydomain.net:8200 vault_token=09d1f099-3d41-666e-8337-492226789599 vault_namespace=/secret/cds"
+
 
 ################################
 # Postgresql Database settings #
@@ -281,13 +319,6 @@ sslmode = "disable"
 maxconn = 20
 timeout = 3000
 
-# Uncomment this to retreive database credentials from secret-backend
-# secret = "cds/db"
-# The value must be as below
-# {
-#     "user": "STRING",
-#     "password": "STRING"
-# }
 
 ######################
 # CDS Cache Settings #
@@ -302,7 +333,7 @@ ttl = 60
     # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
     [cache.redis]
     host = "localhost:6379" # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
-    password = "cds"
+    password = ""
 
 ##############################
 # CDS Authentication Settings#
@@ -325,9 +356,9 @@ defaultgroup = ""
 	# LDAP Base
 	base = ""
 	# LDAP Bind DN
-	dn = "uid=%s,ou=people,{{"{{"}}.ldapBase{{"}}"}}"
+	dn = "uid=%s,ou=people,{{.LDAPBase}}"
 	# Define CDS user fullname from LDAP attribute
-	fullname = "{{"{{"}}.givenName{{"}}"}} {{"{{"}}.sn{{"}}"}}"
+	fullname = "{{.GivenName}} {{.SN}}"
 
 #####################
 # CDS SMTP Settings #
@@ -390,9 +421,9 @@ disabled = false #This is mainly for dev purpose, you should not have to change 
     [vcs.repositories.github]
     statuses_disabled = false # Set to true if you don't want CDS to push statuses on Github API
     statuses_url_disabled = false # Set to true if you don't want CDS to push CDS URL in statuses on Github API
-    clientsecret = "" # You can define here your github client secret if you don't use secret-backend-manager
+    clientsecret = ""
 
     [vcs.repositories.bitbucket]
     statuses_disabled = false
-    privatekey = "" # You can define here your bickcket private key if you don't use secret-backend-manager
+    privatekey = ""
 `

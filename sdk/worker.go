@@ -49,6 +49,11 @@ var (
 	}
 )
 
+// SpawnErrorForm represents the arguments needed to add error registration on worker model
+type SpawnErrorForm struct {
+	Error string
+}
+
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 type Model struct {
@@ -68,17 +73,9 @@ type Model struct {
 	Provision        int64              `json:"provision" db:"provision"`
 	GroupID          int64              `json:"group_id" db:"group_id"`
 	Group            Group              `json:"group" db:"-"`
-}
-
-// ModelStatus sums up the number of worker deployed and wanted for a given model
-type ModelStatus struct {
-	ModelID       int64         `json:"model_id" yaml:"-"`
-	ModelName     string        `json:"model_name" yaml:"name"`
-	ModelGroupID  int64         `json:"model_group_id" yaml:"model_group_id"`
-	CurrentCount  int64         `json:"current_count" yaml:"current"`
-	WantedCount   int64         `json:"wanted_count" yaml:"wanted"`
-	BuildingCount int64         `json:"building_count" yaml:"building"`
-	Requirements  []Requirement `json:"requirements"`
+	NbSpawnErr       int64              `json:"nb_spawn_err" db:"nb_spawn_err"`
+	LastSpawnErr     string             `json:"last_spawn_err" db:"last_spawn_err"`
+	DateLastSpawnErr *time.Time         `json:"date_last_spawn_err" db:"date_last_spawn_err"`
 }
 
 // OpenstackModelData type details the "Image" field of Openstack type model
@@ -199,6 +196,26 @@ func UpdateWorkerModel(id int64, name string, t string, value string) error {
 	return nil
 }
 
+// SpawnErrorWorkerModel updates registration infos on worker model
+func SpawnErrorWorkerModel(id int64, info string) error {
+	uri := fmt.Sprintf("/worker/model/error/%d", id)
+
+	data, err := json.Marshal(SpawnErrorForm{Error: info})
+	if err != nil {
+		return err
+	}
+
+	_, code, err := Request("PUT", uri, data)
+	if err != nil {
+		return err
+	}
+	if code > 300 {
+		return fmt.Errorf("HTTP %d", code)
+	}
+
+	return nil
+}
+
 // GetWorkerModelsEnabled retrieves all worker models enabled and available to user
 func GetWorkerModelsEnabled() ([]Model, error) {
 	return getWorkerModels(false)
@@ -233,68 +250,6 @@ func getWorkerModels(withDisabled bool) ([]Model, error) {
 // DeleteWorkerModel deletes a worker model and all its capabilities
 func DeleteWorkerModel(workerModelID int64) error {
 	uri := fmt.Sprintf("/worker/model/%d", workerModelID)
-
-	_, _, err := Request("DELETE", uri, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// AddCapabilityToWorkerModel adds a capability to given model
-func AddCapabilityToWorkerModel(modelID int64, name string, capaType string, value string) error {
-	uri := fmt.Sprintf("/worker/model/%d/capability", modelID)
-
-	r := Requirement{
-		Name:  name,
-		Type:  capaType,
-		Value: value,
-	}
-	data, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("POST", uri, data)
-	if err != nil {
-		return err
-	}
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
-}
-
-// UpdateCapabilityToWorkerModel updates a capability to given model
-func UpdateCapabilityToWorkerModel(modelID int64, name string, capaType string, value string) error {
-	uri := fmt.Sprintf("/worker/model/%d/capability/%s", modelID, name)
-
-	r := Requirement{
-		Name:  name,
-		Type:  capaType,
-		Value: value,
-	}
-	data, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("PUT", uri, data)
-	if err != nil {
-		return err
-	}
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
-}
-
-// DeleteWorkerCapability removes a capability from given worker model
-func DeleteWorkerCapability(workerModelID int64, capaName string) error {
-	uri := fmt.Sprintf("/worker/model/%d/capability/%s", workerModelID, capaName)
 
 	if _, _, err := Request("DELETE", uri, nil); err != nil {
 		return err

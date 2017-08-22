@@ -17,15 +17,11 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	return sdk.ErrInvalidProjectKey
-}
 
 func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	s := struct {
@@ -51,10 +47,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bu
 	//Nb Panics
 	output = append(output, fmt.Sprintf("Nb of Panics: %d", nbPanic))
 	log.Debug("Status> Nb of Panics: %d", nbPanic)
-
-	// Check vault
-	output = append(output, fmt.Sprintf("Secret Backend: %s", secret.Status()))
-	log.Debug("Status> Secret Backend: %s", secret.Status())
 
 	// Check Scheduler
 	output = append(output, fmt.Sprintf("Scheduler: %s", scheduler.Status()))
@@ -91,7 +83,12 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bu
 
 	// Check LastUpdate Connected User
 	output = append(output, fmt.Sprintf("LastUpdate Connected: %d", len(lastUpdateBroker.clients)))
-	log.Debug("LastUpdate ConnectedUser> %d", len(lastUpdateBroker.clients))
+	log.Debug("Status> LastUpdate ConnectedUser> %d", len(lastUpdateBroker.clients))
+
+	// Check Worker Model Error
+	wmStatus := worker.Status(db)
+	output = append(output, fmt.Sprintf("Worker Model Errors: %s", wmStatus))
+	log.Debug("Status> Worker Model Errors: %s", wmStatus)
 
 	var status = http.StatusOK
 	if panicked {

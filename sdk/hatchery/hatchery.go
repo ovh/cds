@@ -43,7 +43,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func routine(h Interface, maxWorkers, provision int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
+func routine(h Interface, maxWorkers int, hostname string, timestamp int64, lastSpawnedIDs []int64, warningSeconds, criticalSeconds, graceSeconds int) ([]int64, error) {
 	defer logTime(fmt.Sprintf("routine> %d", timestamp), time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d enter", timestamp)
 
@@ -138,15 +138,18 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
 						},
 					}
-					workerName, err := h.SpawnWorker(&model, job, false, "spawn for job")
-					if err != nil {
-						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, err)
+					workerName, errSpawn := h.SpawnWorker(&model, job, false, "spawn for job")
+					if errSpawn != nil {
+						log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, job.ID, errSpawn)
 						infos = append(infos, sdk.SpawnInfo{
 							RemoteTime: time.Now(),
-							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), err.Error()}},
+							Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
 						})
 						if err := sdk.AddSpawnInfosPipelineBuildJob(job.ID, infos); err != nil {
 							log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job (err spawn)%d: %s", timestamp, job.ID, err)
+						}
+						if err := sdk.SpawnErrorWorkerModel(model.ID, fmt.Sprintf("routine> cannot spawn worker %s for job %d: %s", model.Name, job.ID, errSpawn)); err != nil {
+							log.Error("routine> error on call sdk.SpawnErrorWorkerModel on worker model %s for register: %s", model.Name, errSpawn)
 						}
 						continue // try another model
 					}
@@ -178,9 +181,9 @@ func routine(h Interface, maxWorkers, provision int, hostname string, timestamp 
 	return spawnedIDs, nil
 }
 
-func provisioning(h Interface, provision int) {
-	if provision == 0 {
-		log.Debug("provisioning> no provisioning to do")
+func provisioning(h Interface, provisionDisabled bool) {
+	if provisionDisabled {
+		log.Debug("provisioning> disabled on this hatchery")
 		return
 	}
 
@@ -193,10 +196,13 @@ func provisioning(h Interface, provision int) {
 	for k := range models {
 		if models[k].Type == h.ModelType() {
 			existing := h.WorkersStartedByModel(&models[k])
-			for i := existing; i < provision; i++ {
+			for i := existing; i < int(models[k].Provision); i++ {
 				go func(m sdk.Model) {
-					if name, err := h.SpawnWorker(&m, nil, false, "spawn for provision"); err != nil {
-						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, err)
+					if name, errSpawn := h.SpawnWorker(&m, nil, false, "spawn for provision"); errSpawn != nil {
+						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
+						if err := sdk.SpawnErrorWorkerModel(m.ID, fmt.Sprintf("routine> cannot spawn worker %s for provisioning: %s", m.Name, errSpawn)); err != nil {
+							log.Error("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
+						}
 					}
 				}(models[k])
 			}
@@ -206,6 +212,12 @@ func provisioning(h Interface, provision int) {
 
 func canRunJob(h Interface, timestamp int64, job *sdk.PipelineBuildJob, model *sdk.Model, hostname string) bool {
 	if model.Type != h.ModelType() {
+		return false
+	}
+
+	// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
+	if model.NbSpawnErr > 5 && h.Hatchery().GroupID != model.ID {
+		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}
 

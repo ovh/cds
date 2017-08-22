@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild, DoCheck} from '@angular/core';
+import {Component, Input, ViewChild, DoCheck, ChangeDetectorRef} from '@angular/core';
 import {Subscription} from 'rxjs/Subscription';
 import {WorkflowItem} from '../../../../../../model/application.workflow.model';
 import {Application} from '../../../../../../model/application.model';
@@ -42,6 +42,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     pipelineStatusEnum = PipelineStatus;
     permissionEnum = PermissionValue;
 
+    loadingPipAction = false;
+
     // Triggers modals
     @ViewChild('editTriggerModal')
     editTriggerModal: SemanticModalComponent;
@@ -68,7 +70,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
 
     constructor(private _router: Router, private _appPipService: ApplicationPipelineService, private _pipStore: PipelineStore,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
-                private _notification: NotificationService) {
+                private _notification: NotificationService, private _changeDetectorRef: ChangeDetectorRef) {
 
     }
 
@@ -116,14 +118,38 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         branchParam.value = currentBranch;
         runRequest.parameters.push(branchParam);
 
+        this.loadingPipAction = true;
         // Run pipeline
         this._appPipService.run(
             this.workflowItem.project.key,
             this.workflowItem.application.name,
-            this.workflowItem.pipeline.name, runRequest).subscribe(pipelineBuild => {
+            this.workflowItem.pipeline.name,
+            runRequest
+        ).finally(() => setTimeout(() => this.loadingPipAction = false, 1000))
+        .subscribe(pipelineBuild => {
             this.navigateToBuild(pipelineBuild);
         });
 
+    }
+
+    stopPipeline(): void {
+        if (!this.workflowItem.pipeline.last_pipeline_build) {
+            return;
+        }
+        this.loadingPipAction = true;
+        // Stop pipeline
+        this._appPipService.stop(
+            this.workflowItem.project.key,
+            this.workflowItem.application.name,
+            this.workflowItem.pipeline.name,
+            this.workflowItem.pipeline.last_pipeline_build.build_number,
+            this.workflowItem.environment.name
+        ).finally(() => this.loadingPipAction = false)
+        .subscribe(() => {
+            this.workflowItem.pipeline.last_pipeline_build.status = this.pipelineStatusEnum.FAIL;
+            this._changeDetectorRef.detach();
+            setTimeout(() => this._changeDetectorRef.reattach(), 2000);
+        });
     }
 
     navigateToBuild(pb: PipelineBuild): void {

@@ -75,10 +75,19 @@ $itemWidthDepth8: 220px;
           display: flex;
           align-items: center;
           height: 38px;
-
-          i.run {
-            font-size: 2em;
+          .ui.text.loader {
+            margin-top: 0.3rem;
           }
+          i {
+            &.run {
+              font-size: 2.1em;
+            }
+            &.circular.icon.build {
+              box-shadow: 0em 0em 0em 0.2em black inset;
+              margin-bottom: 8px;
+            }
+          }
+
         }
 
         .verticalDetailIcon {
@@ -97,6 +106,11 @@ $itemWidthDepth8: 220px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+          }
+
+          .pipelineWarning {
+            padding-left: 5px;
+            font-size: 1.2rem;
           }
         }
 
@@ -198,9 +212,19 @@ $itemWidthDepth8: 220px;
 .ui.one.column.grid.horizontal.five {
   width: $itemWidthDepth5;
   .column.verticalPlayIcon {
-    .icon.run {
-      font-size: 1rem;
+    .ui.text.loader {
+      margin-top: 0.3rem;
     }
+    i.circular.icon.build {
+      box-shadow: 0em 0em 0em 0.2em black inset;
+      margin-bottom: 8px;
+    }
+    .icon {
+      &.run {
+        font-size: 1rem;
+      }
+    }
+
   }
 
   .column.label {
@@ -213,8 +237,17 @@ $itemWidthDepth8: 220px;
 .ui.one.column.grid.horizontal.six {
   width: $itemWidthDepth6;
   .column.verticalPlayIcon {
-    .icon.run {
-      font-size: 1rem;
+    .ui.text.loader {
+      margin-top: 0.3rem;
+    }
+    i.circular.icon.build {
+      box-shadow: 0em 0em 0em 0.2em black inset;
+      margin-bottom: 8px;
+    }
+    .icon{
+      &.run {
+        font-size: 1rem;
+      }
     }
   }
   .column.verticalDetailIcon {
@@ -241,4 +274,3 @@ $itemWidthDepth8: 220px;
     padding-right: 7px;
   }
 }
-

@@ -367,3 +367,36 @@ func ExistPipeline(db gorp.SqlExecutor, projectID int64, name string) (bool, err
 	}
 	return false, nil
 }
+
+// AttachPipelinesWarnings add warnings about optional steps for several PipelineBuild
+func AttachPipelinesWarnings(pbs *[]sdk.PipelineBuild) {
+	for iPb := range *pbs {
+		pb := &(*pbs)[iPb]
+		attachPipelineWarnings(pb)
+	}
+}
+
+// attachPipelineWarnings add warnings about optional steps for one PipelineBuild
+func attachPipelineWarnings(pb *sdk.PipelineBuild) {
+	if pb.Status == sdk.StatusSuccess {
+		for iS := range pb.Stages {
+			stage := &pb.Stages[iS]
+			if stage.Enabled {
+				for iB := range stage.PipelineBuildJobs {
+					build := &stage.PipelineBuildJobs[iB]
+					job := &stage.Jobs[iB]
+					for iSt := range build.Job.StepStatus {
+						step := &build.Job.StepStatus[iSt]
+						if build.Job.Action.Actions[iSt].Enabled && build.Job.Action.Actions[iSt].Optional && step.Status == sdk.StatusFail.String() {
+							w := sdk.PipelineBuildWarning{Type: sdk.OptionalStepFailed, Action: build.Job.Action.Actions[iSt]}
+							pb.Warnings = append(pb.Warnings, w)
+							stage.Warnings = append(stage.Warnings, w)
+							build.Warnings = append(build.Warnings, w)
+							job.Warnings = append(job.Warnings, w)
+						}
+					}
+				}
+			}
+		}
+	}
+}

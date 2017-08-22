@@ -3,23 +3,25 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 )
 
 // PipelineBuildJob represents an action to be run
 type PipelineBuildJob struct {
-	ID              int64       `json:"id" db:"id"`
-	Job             ExecutedJob `json:"job" db:"-"`
-	Parameters      []Parameter `json:"parameters,omitempty" db:"-"`
-	Status          string      `json:"status"  db:"status"`
-	Queued          time.Time   `json:"queued,omitempty" db:"queued"`
-	QueuedSeconds   int64       `json:"queued_seconds,omitempty" db:"-"`
-	Start           time.Time   `json:"start,omitempty" db:"start"`
-	Done            time.Time   `json:"done,omitempty" db:"done"`
-	Model           string      `json:"model,omitempty" db:"model"`
-	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
-	BookedBy        Hatchery    `json:"bookedby" db:"-"`
-	SpawnInfos      []SpawnInfo `json:"spawninfos" db:"-"`
+	ID              int64                  `json:"id" db:"id"`
+	Job             ExecutedJob            `json:"job" db:"-"`
+	Parameters      []Parameter            `json:"parameters,omitempty" db:"-"`
+	Status          string                 `json:"status"  db:"status"`
+	Warnings        []PipelineBuildWarning `json:"warnings"  db:"-"`
+	Queued          time.Time              `json:"queued,omitempty" db:"queued"`
+	QueuedSeconds   int64                  `json:"queued_seconds,omitempty" db:"-"`
+	Start           time.Time              `json:"start,omitempty" db:"start"`
+	Done            time.Time              `json:"done,omitempty" db:"done"`
+	Model           string                 `json:"model,omitempty" db:"model"`
+	PipelineBuildID int64                  `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
+	BookedBy        Hatchery               `json:"bookedby" db:"-"`
+	SpawnInfos      []SpawnInfo            `json:"spawninfos" db:"-"`
 }
 
 // SpawnInfo contains an information about spawning
@@ -129,7 +131,7 @@ func GetBuildQueue() ([]PipelineBuildJob, error) {
 func GetBuildState(projectKey, appName, pipelineName, env, buildID string) (PipelineBuild, error) {
 	var buildState PipelineBuild
 
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s?envName=%s", projectKey, appName, pipelineName, buildID, env)
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s?envName=%s", projectKey, appName, pipelineName, buildID, url.QueryEscape(env))
 	data, code, err := Request("GET", path, nil)
 	if err != nil {
 		return buildState, err

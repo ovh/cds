@@ -6,7 +6,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Insert insert a new poller in DB
@@ -15,8 +14,7 @@ func Insert(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	dbPoller := RepositoryPoller(*poller)
 
 	if err := db.Insert(&dbPoller); err != nil {
-		log.Warning("InsertPoller> Error :%s", err)
-		return err
+		return sdk.WrapError(err, "InsertPoller> Error")
 	}
 
 	newPoller := sdk.RepositoryPoller(dbPoller)
@@ -29,8 +27,7 @@ func Insert(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 func Delete(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	dbPoller := RepositoryPoller(*poller)
 	if _, err := db.Delete(&dbPoller); err != nil {
-		log.Warning("DeletePoller> Error :%s", err)
-		return err
+		return sdk.WrapError(err, "DeletePoller> Error")
 	}
 	return nil
 }
@@ -39,8 +36,7 @@ func Delete(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 func DeleteAll(db gorp.SqlExecutor, appID int64) error {
 	query := "DELETE FROM poller WHERE application_id = $1"
 	if _, err := db.Exec(query, appID); err != nil {
-		log.Warning("DeleteAllPoller> Error :%s", err)
-		return err
+		return sdk.WrapError(err, "DeleteAllPoller> Error")
 	}
 	return nil
 }
@@ -48,14 +44,13 @@ func DeleteAll(db gorp.SqlExecutor, appID int64) error {
 //Update update the poller
 func Update(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	query := `
-        UPDATE  poller 
+        UPDATE  poller
         SET enabled = $3, name = $4
         WHERE application_id = $1
         AND pipeline_id  = $2
     `
 	if _, err := db.Exec(query, poller.Application.ID, poller.Pipeline.ID, poller.Enabled, poller.Name); err != nil {
-		log.Warning("UpdatePoller> Error :%s", err)
-		return err
+		return sdk.WrapError(err, "UpdatePoller> Error")
 	}
 	return nil
 }

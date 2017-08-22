@@ -46,7 +46,7 @@ type Step map[string]interface{}
 func (s Step) IsValid() bool {
 	keys := []string{}
 	for k := range s {
-		if k != "enabled" && k != "final" {
+		if k != "enabled" && k != "optional" && k != "always_executed" {
 			keys = append(keys, k)
 		}
 	}
@@ -56,7 +56,7 @@ func (s Step) IsValid() bool {
 func (s Step) key() string {
 	keys := []string{}
 	for k := range s {
-		if k != "enabled" && k != "final" {
+		if k != "enabled" && k != "optional" && k != "always_executed" {
 			keys = append(keys, k)
 		}
 	}
@@ -82,11 +82,15 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 	a := sdk.NewStepScript(bS)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
@@ -121,11 +125,15 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 		return nil, true, err
 	}
 
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
@@ -151,11 +159,11 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	a := sdk.NewStepJUnitReport(bS)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
 	if err != nil {
 		return nil, true, err
 	}
@@ -186,11 +194,15 @@ func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 	a := sdk.NewStepGitClone(argss)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
@@ -221,11 +233,15 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	a := sdk.NewStepArtifactUpload(argss)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
@@ -251,11 +267,15 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	a := sdk.NewStepArtifactDownload(argss)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
@@ -263,28 +283,15 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
-//IsEnabled returns true the step is enabled
-func (s Step) IsEnabled() (bool, error) {
-	bI, ok := s["enabled"]
+//Is returns true the step has the flag set
+func (s Step) IsFlagged(flag string) (bool, error) {
+	bI, ok := s[flag]
 	if !ok {
 		return true, nil
 	}
 	bS, ok := bI.(bool)
 	if !ok {
-		return false, fmt.Errorf("Malformatted Step : enabled attribute must be true|false")
-	}
-	return bS, nil
-}
-
-//IsFinal returns true the step is final
-func (s Step) IsFinal() (bool, error) {
-	bI, ok := s["final"]
-	if !ok {
-		return false, nil
-	}
-	bS, ok := bI.(bool)
-	if !ok {
-		return false, fmt.Errorf("Malformatted Step : final attribute must be true|false (%v)", bI)
+		return false, fmt.Errorf("Malformatted Step : %s attribute must be true|false", flag)
 	}
 	return bS, nil
 }
@@ -440,8 +447,11 @@ func newSteps(a sdk.Action) []Step {
 		if !a.Enabled {
 			s["enabled"] = a.Enabled
 		}
-		if a.Final {
-			s["final"] = a.Final
+		if a.Optional {
+			s["optional"] = a.Optional
+		}
+		if a.AlwaysExecuted {
+			s["always_executed"] = a.AlwaysExecuted
 		}
 
 		switch a.Type {

@@ -76,6 +76,8 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 				dbHost = cfg["dbHost"]
 				dbPort = cfg["dbPort"]
 				dbSSLMode = cfg["sslMode"]
+			} else {
+				t.Errorf("Error when unmarshal config %s", err)
 			}
 		}
 	} else {
@@ -91,7 +93,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 
 	cache.Initialize("local", "", "", 30)
 
-	secret.Init("", "test-key", "", nil)
+	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")

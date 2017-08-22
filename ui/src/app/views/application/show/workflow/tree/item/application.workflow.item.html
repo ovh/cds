@@ -3,6 +3,7 @@
      [class.seven]="application.horizontalDepth >= 7"
      [class.six]="application.horizontalDepth === 6"
      [class.five]="application.horizontalDepth === 5">
+
     <div class="column">
         <div class="ui compact segments">
             <div class="ui raised segment"
@@ -36,7 +37,16 @@
                     <div class="row">
                         <div class="three wide column verticalPlayIcon">
                             <div *ngIf="application.permission > permissionEnum.READ">
-                                <a class="pointing" (click)="runPipeline()"><i class="video play outline icon run"></i></a>
+                                <a class="pointing" (click)="runPipeline()"
+                                  *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status !== pipelineStatusEnum.BUILDING">
+                                  <i class="video play outline icon run"></i>
+
+                                </a>
+                                <a class="pointing" (click)="stopPipeline()"
+                                  *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING">
+                                  <i class="circular black stop icon build"></i>
+                                </a>
+                                <div *ngIf="loadingPipAction" class="ui text active loader"></div>
                             </div>
                         </div>
                         <div class="ten wide column label">
@@ -58,6 +68,11 @@
                                           *ngIf="workflowItem.pipeline.name.length <= 17">{{workflowItem.pipeline.name}}</span>
                                     <span class="break" *ngIf="workflowItem.pipeline.name.length > 17"
                                           smDirTooltip="{{workflowItem.pipeline.name}}">{{workflowItem.pipeline.name | truncate:17}}</span>
+                                </div>
+                                <div class="pipelineWarning"
+                                    *ngIf="workflowItem.pipeline.last_pipeline_build && workflowItem.pipeline.last_pipeline_build.warnings && workflowItem.pipeline.last_pipeline_build.warnings.length"
+                                    [smDirTooltip]="'warning_build_title' | translate: {nb: workflowItem.pipeline.last_pipeline_build.warnings.length}">
+                                    <i class="warning sign icon orange"></i>
                                 </div>
                             </div>
                         </div>

@@ -32,9 +32,7 @@ import (
 func getRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	rms, err := repositoriesmanager.LoadAll(db)
 	if err != nil {
-		log.Warning("getRepositoriesManagerHandler> error %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "getRepositoriesManagerHandler> error")
 	}
 	return WriteJSON(w, r, rms, http.StatusOK)
 }
@@ -53,46 +51,37 @@ func addRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *g
 
 	for k, v := range args.(map[string]interface{}) {
 		if k != "type" && k != "name" && k != "url" {
+			// example: for github, we need client-id here
 			options[k] = v.(string)
 		}
 	}
 
 	if t == "" || name == "" || url == "" {
-		log.Warning("addProjectVCSHandler> Bad request : type=%s name=%s url=%s\n", t, name, url)
-		return sdk.ErrWrongRequest
-
+		return sdk.WrapError(sdk.ErrWrongRequest, "addRepositoriesManagerHandler> Bad request: type=%s name=%s url=%s", t, name, url)
 	}
 
 	rm, err := repositoriesmanager.New(sdk.RepositoriesManagerType(t), 0, name, url, options, "")
 	if err != nil {
-		log.Warning("addRepositoriesManagerHandler> cannot create %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "addRepositoriesManagerHandler> cannot create %s")
 	}
 	if err := repositoriesmanager.Insert(db, rm); err != nil {
-		log.Warning("addRepositoriesManagerHandler> cannot insert %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "addRepositoriesManagerHandler> cannot insert %s")
 	}
 	return WriteJSON(w, r, rm, http.StatusCreated)
 }
 
 func getRepositoriesManagerForProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
 	rms, err := repositoriesmanager.LoadAllForProject(db, key)
 	if err != nil {
-		log.Warning("getRepositoriesManagerForProjectHandler> error %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "getRepositoriesManagerForProjectHandler> error %s")
 	}
 	return WriteJSON(w, r, rms, http.StatusOK)
 }
 
 func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	rmName := vars["name"]
@@ -103,28 +92,25 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 	}
 
 	//Load the repositories manager from the DB
-	rm, err := repositoriesmanager.LoadForProject(db, proj.Key, rmName)
+	rm, errFind := repositoriesmanager.LoadForProject(db, proj.Key, rmName)
 	var lastModified time.Time
 
 	//If we don't find any repositories manager for the project, let's insert it
-	if err == sql.ErrNoRows {
-		var err error
-		rm, err = repositoriesmanager.LoadByName(db, rmName)
-		if err != nil {
-			log.Warning("repositoriesManagerAuthorize> error while loading repositories manager %s\n", err)
-			return sdk.ErrNoReposManager
+	if errFind == sql.ErrNoRows {
+		var errLoad error
+		rm, errLoad = repositoriesmanager.LoadByName(db, rmName)
+		if errLoad != nil {
+			return sdk.WrapError(sdk.ErrNoReposManager, "repositoriesManagerAuthorize> error while loading repositories manager %s", errLoad)
 		}
 
 		tx, err := db.Begin()
 		if err != nil {
-			log.Warning("repositoriesManagerAuthorize> Cannot start transaction %s\n", err)
-			return err
+			return sdk.WrapError(err, "repositoriesManagerAuthorize> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if errI := repositoriesmanager.InsertForProject(tx, rm, proj.Key); errI != nil {
-			log.Warning("repositoriesManagerAuthorize> error while inserting repositories manager for project %s: %s\n", proj.Key, errI)
-			return errI
+			return sdk.WrapError(errI, "repositoriesManagerAuthorize> error while inserting repositories manager for project %s", proj.Key)
 		}
 
 		if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
@@ -132,21 +118,17 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("repositoriesManagerAuthorize> Cannot commit transaction %s\n", err)
-			return err
+			return sdk.WrapError(err, "repositoriesManagerAuthorize> Cannot commit transaction")
 		}
-	} else if err != nil {
-		log.Warning("repositoriesManagerAuthorize> error %s\n", err)
-		return err
+	} else if errFind != nil {
+		return sdk.WrapError(errFind, "repositoriesManagerAuthorize> error")
 	}
 
 	token, url, err := rm.Consumer.AuthorizeRedirect()
 	if err != nil {
-		log.Warning("repositoriesManagerAuthorize> error with AuthorizeRedirect %s\n", err)
-		return sdk.ErrNoReposManagerAuth
-
+		return sdk.WrapError(sdk.ErrNoReposManagerAuth, "repositoriesManagerAuthorize> error with AuthorizeRedirect %s", err)
 	}
-	log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", proj.Key, token, url)
+	log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s", proj.Key, token, url)
 
 	data := map[string]string{
 		"project_key":          proj.Key,
@@ -158,7 +140,6 @@ func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *go
 	}
 
 	cache.Set(cache.Key("reposmanager", "oauth", token), data)
-
 	return WriteJSON(w, r, data, http.StatusOK)
 }
 
@@ -207,7 +188,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 
 	}
 
-	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
+	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s", projectKey, accessToken, accessTokenSecret)
 	result := map[string]string{
 		"project_key":          projectKey,
 		"repositories_manager": rmName,
@@ -222,8 +203,7 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	defer tx.Rollback()
 
 	if err := repositoriesmanager.SaveDataForProject(tx, rm, projectKey, result); err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Error with SaveDataForProject: %s", err)
-		return err
+		return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
 	}
 
 	if err := project.UpdateLastModified(tx, u, proj); err != nil {
@@ -242,16 +222,13 @@ func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
 
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot find repository manager %s for project %s\n", rmName, projectKey)
-		return sdk.ErrNoReposManager
-
+	rm, errl := repositoriesmanager.LoadForProject(db, projectKey, rmName)
+	if errl != nil {
+		return sdk.WrapError(sdk.ErrNoReposManager, "repositoriesManagerAuthorizeCallback> Cannot find repository manager %s for project %s err:%s", rmName, projectKey, errl)
 	}
 
 	var tv map[string]interface{}
@@ -268,16 +245,12 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 	}
 
 	if token == "" || verifier == "" {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot get token nor verifier from data")
-		return sdk.ErrWrongRequest
-
+		return sdk.WrapError(sdk.ErrWrongRequest, "repositoriesManagerAuthorizeCallback> Cannot get token nor verifier from data")
 	}
 
-	accessToken, accessTokenSecret, err := rm.Consumer.AuthorizeToken(token, verifier)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
-		return sdk.ErrNoReposManagerClientAuth
-
+	accessToken, accessTokenSecret, erra := rm.Consumer.AuthorizeToken(token, verifier)
+	if erra != nil {
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", erra)
 	}
 
 	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
@@ -289,54 +262,41 @@ func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := repositoriesmanager.SaveDataForProject(db, rm, projectKey, result); err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Error with SaveDataForProject: %s", err)
-		return err
-
+		return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
 	}
 
 	p, err := project.Load(db, projectKey, c.User, project.LoadOptions.WithRepositoriesManagers)
 	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load project %s: %s\n", projectKey, err)
-		return err
-
+		return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load project %s", projectKey)
 	}
 
 	return WriteJSON(w, r, p, http.StatusOK)
 }
 
 func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
 
-	p, err := project.Load(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> Cannot load project %s: %s\n", projectKey, err)
-		return err
-
+	p, errl := project.Load(db, projectKey, c.User)
+	if errl != nil {
+		return sdk.WrapError(errl, "deleteRepositoriesManagerHandler> Cannot load project %s", projectKey)
 	}
 
 	// Load the repositories manager from the DB
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
-		return sdk.ErrNoReposManager
-
+	rm, errlp := repositoriesmanager.LoadForProject(db, projectKey, rmName)
+	if errlp != nil {
+		return sdk.WrapError(sdk.ErrNoReposManager, "deleteRepositoriesManagerHandler> error loading %s-%s: %s", projectKey, rmName, errlp)
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> Cannot start transaction: %s\n", err)
-		return err
-
+	tx, errb := db.Begin()
+	if errb != nil {
+		return sdk.WrapError(errb, "deleteRepositoriesManagerHandler> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
 	if err := repositoriesmanager.DeleteForProject(tx, rm, p); err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> error deleting %s-%s: %s\n", projectKey, rmName, err)
-		return err
-
+		return sdk.WrapError(err, "deleteRepositoriesManagerHandler> error deleting %s-%s", projectKey, rmName)
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
@@ -344,28 +304,22 @@ func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> Cannot commit transaction: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot commit transaction")
 	}
 
-	p.ReposManager, err = repositoriesmanager.LoadAllForProject(db, p.Key)
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> Cannot load repos manager for project %s: %s\n", p.Key, err)
-		return err
-
+	var errla error
+	p.ReposManager, errla = repositoriesmanager.LoadAllForProject(db, p.Key)
+	if errla != nil {
+		return sdk.WrapError(errla, "deleteRepositoriesManagerHandler> Cannot load repos manager for project %s", p.Key)
 	}
 
 	return WriteJSON(w, r, p, http.StatusOK)
-
 }
 
 func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	rmName := vars["name"]
-
 	sync := FormBool(r, "synchronize")
 
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
@@ -400,21 +354,16 @@ func getRepoFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reques
 
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
 	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
 	}
 	repo, err := client.RepoByFullname(repoName)
 	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot get repos: %s", err)
-		return err
-
+		return sdk.WrapError(err, "getRepoFromRepositoriesManagerHandler> Cannot get repos")
 	}
 	return WriteJSON(w, r, repo, http.StatusOK)
 }
 
 func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -423,30 +372,23 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 
 	app, err := application.LoadByName(db, projectKey, appName, c.User)
 	if err != nil {
-		log.Warning("attachRepositoriesManager> Cannot load application %s: %s\n", appName, err)
-		return err
-
+		return sdk.WrapError(err, "attachRepositoriesManager> Cannot load application %s", appName)
 	}
 
 	//Load the repositoriesManager for the project
 	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
 	if err != nil {
-		log.Warning("attachRepositoriesManager> error loading %s-%s: %s\n", projectKey, rmName, err)
-		return sdk.ErrNoReposManager
-
+		return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s: %s", projectKey, rmName, err)
 	}
 
 	//Get an authorized Client
 	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
 	if err != nil {
-		log.Warning("attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
 	}
 
-	_, errR := client.RepoByFullname(fullname)
-	if errR != nil {
-		log.Warning("attachRepositoriesManager> Cannot get repo %s: %s", fullname, errR)
-		return sdk.ErrRepoNotFound
+	if _, err := client.RepoByFullname(fullname); err != nil {
+		return sdk.WrapError(sdk.ErrRepoNotFound, "attachRepositoriesManager> Cannot get repo %s: %s", fullname, err)
 	}
 
 	app.RepositoriesManager = rm
@@ -459,9 +401,7 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	defer tx.Rollback()
 
 	if err := repositoriesmanager.InsertForApplication(tx, app, projectKey); err != nil {
-		log.Warning("attachRepositoriesManager> Cannot insert for application: %s", err)
-		return err
-
+		return sdk.WrapError(err, "attachRepositoriesManager> Cannot insert for application")
 	}
 
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
@@ -476,54 +416,49 @@ func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 }
 
 func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
 	rmName := vars["name"]
 
-	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
-	if err != nil {
-		return err
+	app, errl := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
+	if errl != nil {
+		return sdk.WrapError(errl, "detachRepositoriesManager> error on load project %s", projectKey)
 	}
 
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("detachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-
+	client, erra := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
+	if erra != nil {
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "detachRepositoriesManager> Cannot get client got %s %s: %s", projectKey, rmName, erra)
 	}
 
 	//Remove all the things in a transaction
-	tx, err := db.Begin()
+	tx, errT := db.Begin()
+	if errT != nil {
+		return sdk.WrapError(errT, "detachRepositoriesManager> Cannot start transaction")
+	}
 	defer tx.Rollback()
 
 	if err := repositoriesmanager.DeleteForApplication(tx, app); err != nil {
-		log.Warning("detachRepositoriesManager> Cannot delete for application: %s", err)
-		return err
-
+		return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete for application")
 	}
 
 	for _, h := range app.Hooks {
 		s := viper.GetString(viperURLAPI) + hook.HookLink
 		link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
 
-		if err = client.DeleteHook(h.Project+"/"+h.Repository, link); err != nil {
+		if err := client.DeleteHook(h.Project+"/"+h.Repository, link); err != nil {
 			log.Warning("detachRepositoriesManager> Cannot delete hook on stash: %s", err)
 			//do no return, try to delete the hook in database
 		}
 
 		if err := hook.DeleteHook(tx, h.ID); err != nil {
-			log.Warning("detachRepositoriesManager> Cannot get hook: %s", err)
-			return err
-
+			return sdk.WrapError(err, "detachRepositoriesManager> Cannot get hook")
 		}
 	}
 
 	// Remove reposmanager poller
 	if err := poller.DeleteAll(tx, app.ID); err != nil {
-		return err
-
+		return sdk.WrapError(err, "detachRepositoriesManager> error on poller.DeleteAll")
 	}
 
 	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
@@ -531,9 +466,7 @@ func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("detachRepositoriesManager> Cannot commit transaction: %s", err)
-		return err
-
+		return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit transaction")
 	}
 
 	return WriteJSON(w, r, app, http.StatusOK)
@@ -544,7 +477,6 @@ func getRepositoriesManagerForApplicationsHandler(w http.ResponseWriter, r *http
 }
 
 func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -558,41 +490,37 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	repoFullname := data["repository_fullname"]
 	pipelineName := data["pipeline_name"]
 
-	app, err := application.LoadByName(db, projectKey, appName, c.User)
-	if err != nil {
+	app, errla := application.LoadByName(db, projectKey, appName, c.User)
+	if errla != nil {
 		return sdk.ErrApplicationNotFound
 	}
 
-	pipeline, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if err != nil {
+	pipeline, errl := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+	if errl != nil {
 		return sdk.ErrPipelineNotFound
 	}
 
 	if !permission.AccessToPipeline(sdk.DefaultEnv.ID, pipeline.ID, c.User, permission.PermissionReadWriteExecute) {
-		log.Warning("addHookOnRepositoriesManagerHandler> You don't have enought right on this pipeline %s", pipeline.Name)
-		return sdk.ErrForbidden
-
+		return sdk.WrapError(sdk.ErrForbidden, "addHookOnRepositoriesManagerHandler> You don't have enought right on this pipeline %s", pipeline.Name)
 	}
 
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
-		return sdk.ErrNoReposManager
+	rm, errlp := repositoriesmanager.LoadForProject(db, projectKey, rmName)
+	if errlp != nil {
+		return sdk.WrapError(sdk.ErrNoReposManager, "addHookOnRepositoriesManagerHandler> error loading %s-%s: %s", projectKey, rmName, errlp)
 	}
 
 	b, e := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
 	if e != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s): %s", rmName, projectKey, appName, e)
-		return e
+		return sdk.WrapError(e, "addHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s)", rmName, projectKey, appName)
 	}
 
 	if !b {
 		return sdk.ErrNoReposManagerClientAuth
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot start transaction")
+	tx, errb := db.Begin()
+	if errb != nil {
+		return sdk.WrapError(errb, "addHookOnRepositoriesManagerHandler> cannot start transaction")
 	}
 	defer tx.Rollback()
 
@@ -608,9 +536,10 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot commit transaction")
 	}
 
-	app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
-	if err != nil {
-		return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot load application hooks")
+	var errlah error
+	app.Hooks, errlah = hook.LoadApplicationHooks(db, app.ID)
+	if errlah != nil {
+		return sdk.WrapError(errlah, "addHookOnRepositoriesManagerHandler> cannot load application hooks")
 	}
 
 	var errW error
@@ -623,7 +552,6 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 }
 
 func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	appName := vars["permApplicationName"]
@@ -706,35 +634,27 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 
 	repoFullname := data["repository_fullname"]
 	if repoFullname == "" {
-		log.Warning("addApplicationFromRepositoriesManagerHandler>Repository fullname is mandatory")
-		return sdk.ErrWrongRequest
-
+		return sdk.WrapError(sdk.ErrWrongRequest, "addApplicationFromRepositoriesManagerHandler>Repository fullname is mandatory")
 	}
 
-	proj, err := project.Load(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s\n", projectKey, err)
-		return sdk.ErrInvalidProject
+	proj, errlp := project.Load(db, projectKey, c.User)
+	if errlp != nil {
+		return sdk.WrapError(sdk.ErrInvalidProject, "addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s", projectKey, errlp)
 	}
 
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
-		return sdk.ErrNoReposManager
-
+	rm, errlrm := repositoriesmanager.LoadForProject(db, projectKey, rmName)
+	if errlrm != nil {
+		return sdk.WrapError(sdk.ErrNoReposManager, "addApplicationFromRepositoriesManagerHandler> error loading %s-%s: %s", projectKey, rmName, errlrm)
 	}
 
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-
+	client, errac := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
+	if errac != nil {
+		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addApplicationFromRepositoriesManagerHandler> Cannot get client got %s %s: %s", projectKey, rmName, errac)
 	}
 
-	repo, err := client.RepoByFullname(repoFullname)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot get repo: %s", err)
-		return sdk.ErrRepoNotFound
+	repo, errlr := client.RepoByFullname(repoFullname)
+	if errlr != nil {
+		return sdk.WrapError(sdk.ErrRepoNotFound, "addApplicationFromRepositoriesManagerHandler> Cannot get repo: %s", errlr)
 	}
 
 	app := sdk.Application{
@@ -749,46 +669,38 @@ func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http
 		},
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot start transaction: %s\n", err)
-		return err
-
+	tx, errb := db.Begin()
+	if errb != nil {
+		return sdk.WrapError(errb, "addApplicationFromRepositoriesManagerHandler> Cannot start transaction")
 	}
 
 	defer tx.Rollback()
 
 	//Insert application in database
 	if err := application.Insert(tx, proj, &app, c.User); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline")
 	}
 
 	//Fetch groups from project
 	if err := group.LoadGroupByProject(tx, proj); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot load group from project: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot load group from project")
 	}
 
 	//Add the  groups on the application
 	if err := application.AddGroup(tx, proj, &app, c.User, proj.ProjectGroups...); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot add groups on application: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot add groups on application")
 	}
 
 	//Commit the transaction
-	if err = tx.Commit(); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot commit transaction: %s\n", err)
-		return err
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot commit transaction")
 	}
 
 	//Attach the application to the repositories manager
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = repoFullname
 	if err := repositoriesmanager.InsertForApplication(db, &app, projectKey); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot attach application: %s", err)
-		return err
+		return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot attach application")
 	}
 
 	return nil

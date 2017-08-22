@@ -9,7 +9,8 @@ export class Action {
     requirements: Array<Requirement>;
     parameters: Array<Parameter>;
     actions: Array<Action>;
-    final: boolean;
+    optional: boolean;
+    always_executed: boolean;
     last_modified: boolean;
     enabled: boolean;
 
@@ -28,4 +29,9 @@ export class PipelineUsingAction {
     project_name: string;
     key: string;
     stage_id: number;
+}
+
+export class ActionWarning {
+  type: string;
+  action: Action;
 }

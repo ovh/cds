@@ -6,7 +6,7 @@ import {GroupPermission} from '../../model/group.model';
 import {Stage} from '../../model/stage.model';
 import {Job} from '../../model/job.model';
 import {Parameter} from '../../model/parameter.model';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
  * Service to access Pipeline from API.
@@ -24,7 +24,9 @@ export class PipelineService {
      * @param pipName Pipeline Name
      */
     getPipeline(key: string, pipName: string): Observable<Pipeline> {
-        return this._http.get('/project/' + key + '/pipeline/' + pipName);
+        let params = new HttpParams();
+        params.append('withApplications', 'true');
+        return this._http.get('/project/' + key + '/pipeline/' + pipName, {params: params}).map(res => res.json());
     }
 
     /**
@@ -200,7 +202,8 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     updateParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._http.put('/project/' + key + '/pipeline/' + pipName + '/parameter/' + param.name, param);
+        return this._http.put(`/project/${key}/pipeline/${pipName}/parameter/${param.previousName || param.name}`, Parameter.format(param))
+            .map(res => res.json());
     }
 
     /**

@@ -18,7 +18,6 @@ import (
 )
 
 func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Unmarshal body
 	params := &worker.RegistrationForm{}
 	if err := UnmarshalBody(r, params); err != nil {
 		return sdk.WrapError(err, "registerWorkerHandler> Unable to parse registration form")
@@ -49,22 +48,9 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	return WriteJSON(w, r, worker, http.StatusOK)
 }
 
-func getOrphanWorker(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	workers, err := worker.LoadWorkersByModel(db, 0)
-	if err != nil {
-		return sdk.WrapError(err, "getOrphanWorker> Cannot load workers")
-	}
-	return WriteJSON(w, r, workers, http.StatusOK)
-}
-
 func getWorkersHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	if err := r.ParseForm(); err != nil {
 		return sdk.WrapError(err, "getWorkerModels> cannot parse form")
-	}
-
-	name := r.FormValue("orphan")
-	if name == "true" {
-		return getOrphanWorker(w, r, db, c)
 	}
 
 	workers, errl := worker.LoadWorkers(db)

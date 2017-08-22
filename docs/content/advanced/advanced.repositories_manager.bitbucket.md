@@ -24,7 +24,7 @@ In Bitbucket go to *Administration Settings* / *Application Links*. Create a new
 
 On this application, you just have to set up *OAuth Incoming Authentication* :
 
- - Consumer Key : **CDS**
+ - Consumer Key : **CDS** (you can change it in your configuration file)
  - Consumer Name : **CDS**
  - Public Key : *Your CDS RSA public key*
  - Consumer Callback URL : None
@@ -41,7 +41,7 @@ With CDS CLI run :
 
 And follow instructions.
 
-Set in Vault you CDS **private key** in a secret named : `cds/repositoriesmanager-secrets-mystash.mynetwork.net-privatekey`
+Set in your configuration file the CDS **private key**
 
 Restart CDS.
 

@@ -112,6 +112,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             buildNumber: paramSnap['buildNumber']
         });
 
+        this.currentBuild = undefined;
         this.worker.response().subscribe(msg => {
             if (msg) {
                 let build: PipelineBuild = JSON.parse(msg);

@@ -123,6 +123,7 @@ describe('CDS: Application Workflow Item', () => {
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
@@ -138,7 +139,6 @@ describe('CDS: Application Workflow Item', () => {
         request.parent_pipeline_id = 2;
 
         expect(appPipStore.run).toHaveBeenCalledWith('key1', 'app1', 'pip1', request);
-
     }));
 
     it('should run a pipeline without parent', fakeAsync(() => {
@@ -203,6 +203,7 @@ describe('CDS: Application Workflow Item', () => {
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
@@ -269,6 +270,7 @@ describe('CDS: Application Workflow Item', () => {
         });
 
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         expect(fixture.componentInstance.runWithParameters).toHaveBeenCalled();
     }));
@@ -325,6 +327,7 @@ describe('CDS: Application Workflow Item', () => {
             return true;
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         expect(fixture.componentInstance.runWithParameters).toHaveBeenCalled();
     }));

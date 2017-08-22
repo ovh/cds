@@ -3,6 +3,7 @@ import {List, Map} from 'immutable';
 import {BehaviorSubject, Observable} from 'rxjs/Rx';
 
 import {Pipeline} from '../../model/pipeline.model';
+import {Application} from '../../model/application.model';
 import {PipelineService} from './pipeline.service';
 import {Stage} from '../../model/stage.model';
 import {Job} from '../../model/job.model';
@@ -369,5 +370,24 @@ export class PipelineStore {
         return this._pipelineService.moveStage(key, pipName, stageMoved).map( pip => {
            return this.refreshPipelineStageCache(key, pipName, pip);
         });
+    }
+
+
+    /**
+     * Refresh pipeline cache
+     * @param key Project unique key
+     * @param pipName Pipeline Name
+     * @param pipeline updated stages pipeline
+     * @returns {Pipeline}
+     */
+    refreshPipelineApplicationsCache(key: string, pipName: string, apps: Array<Application>): Pipeline {
+        let cache = this._pipeline.getValue();
+        let pipKey = key + '-' + pipName;
+        let pipelineToUpdate = cache.get(pipKey);
+        if (pipelineToUpdate) {
+            pipelineToUpdate.attached_application = apps;
+            this._pipeline.next(cache.set(pipKey, pipelineToUpdate));
+        }
+        return pipelineToUpdate;
     }
 }

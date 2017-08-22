@@ -74,7 +74,7 @@ func (m *HatcheryMarathon) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob)
 	//Service requirement are not supported
 	for _, r := range job.Job.Action.Requirements {
 		if r.Type == sdk.ServiceRequirement {
-			log.Info("CanSpawn> Job %d has a service requirement. Marathon can't spawn a worker for this job", job.ID)
+			log.Debug("CanSpawn> Job %d has a service requirement. Marathon can't spawn a worker for this job", job.ID)
 			return false
 		}
 	}
@@ -139,17 +139,21 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 		"CDS_TTL":           fmt.Sprintf("%d", m.workerTTL),
 	}
 
-	if viper.GetString("graylog_host") != "" {
-		env["CDS_GRAYLOG_HOST"] = viper.GetString("graylog_host")
+	if viper.GetString("worker_graylog_host") != "" {
+		env["CDS_GRAYLOG_HOST"] = viper.GetString("worker_graylog_host")
 	}
-	if viper.GetString("graylog_port") != "" {
-		env["CDS_GRAYLOG_PORT"] = viper.GetString("graylog_port")
+	if viper.GetString("worker_graylog_port") != "" {
+		env["CDS_GRAYLOG_PORT"] = viper.GetString("worker_graylog_port")
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		env["CDS_GRAYLOG_EXTRA_KEY"] = viper.GetString("graylog_extra_key")
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		env["CDS_GRAYLOG_EXTRA_KEY"] = viper.GetString("worker_graylog_extra_key")
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		env["CDS_GRAYLOG_EXTRA_VALUE"] = viper.GetString("graylog_extra_value")
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		env["CDS_GRAYLOG_EXTRA_VALUE"] = viper.GetString("worker_graylog_extra_value")
+	}
+	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
+		env["CDS_GRPC_API"] = viper.GetString("grpc_api")
+		env["CDS_GRPC_INSECURE"] = strconv.FormatBool(viper.GetBool("grpc_insecure"))
 	}
 
 	//Check if there is a memory requirement
@@ -199,11 +203,23 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	}
 
 	ticker := time.NewTicker(time.Second * 5)
+	// ticker.Stop -> do not close goroutine..., so
+	// if we range t := ticker.C --> leak goroutine
+	stop := make(chan bool, 1)
+	defer func() {
+		stop <- true
+		ticker.Stop()
+	}()
 	go func() {
 		t0 := time.Now()
-		for t := range ticker.C {
-			delta := math.Floor(t.Sub(t0).Seconds())
-			log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress [%d seconds] please wait...", logJob, application.ID, int(delta))
+		for {
+			select {
+			case t := <-ticker.C:
+				delta := math.Floor(t.Sub(t0).Seconds())
+				log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress [%d seconds] please wait...", logJob, application.ID, int(delta))
+			case <-stop:
+				return
+			}
 		}
 	}()
 
@@ -226,6 +242,7 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 	for _, deploy := range deployments {
 		wg.Add(1)
 		go func(id string) {
+			defer wg.Done()
 			go func() {
 				time.Sleep((time.Duration(m.workerSpawnTimeout) + 1) * time.Second)
 				if done {
@@ -236,23 +253,18 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 				if _, err := m.client.DeleteDeployment(id, true); err != nil {
 					log.Warning("spawnMarathonDockerWorker> %s error on delete timeouted deployment %s: %s", logJob, id, err.Error())
 				}
-				ticker.Stop()
 				successChan <- false
 				wg.Done()
 			}()
 
 			if err := m.client.WaitOnDeployment(id, time.Duration(m.workerSpawnTimeout)*time.Second); err != nil {
 				log.Warning("spawnMarathonDockerWorker> %s error on deployment %s: %s", logJob, id, err.Error())
-				ticker.Stop()
 				successChan <- false
-				wg.Done()
 				return
 			}
 
 			log.Debug("spawnMarathonDockerWorker> %s deployment %s succeeded", logJob, id)
-			ticker.Stop()
 			successChan <- true
-			wg.Done()
 		}(deploy.DeploymentID)
 	}
 
@@ -265,7 +277,6 @@ func (m *HatcheryMarathon) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJ
 			break
 		}
 	}
-	ticker.Stop()
 	close(successChan)
 	done = true
 

@@ -32,6 +32,13 @@
             return null
         }
 
+        // If the previous value was already completed
+        if (text.lastIndexOf('}}') !== -1 && text.lastIndexOf('}}') >= cur.ch) {
+            cdsCompletionList = cdsCompletionList.map(function (suggest) {
+                return suggest.replace('}}', '');
+            });
+        }
+
         return {
             list: cdsCompletionList.filter(function (l) {
                 return l.indexOf(areaBefore.substring(areaBefore.lastIndexOf('{{.'))) !== -1;

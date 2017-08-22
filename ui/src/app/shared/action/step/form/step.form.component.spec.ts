@@ -56,7 +56,7 @@ describe('CDS: Step Form Component', () => {
 
 
         let step = new Action();
-        step.final = true;
+        step.always_executed = true;
         fixture.componentInstance.step = step;
         fixture.componentInstance.publicActions = new Array<Action>();
         let a = new Action();

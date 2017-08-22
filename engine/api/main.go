@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -35,6 +34,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/stats"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -90,26 +90,7 @@ var mainCmd = &cobra.Command{
 		}()
 
 		//Initialize secret driver
-		secretBackend := viper.GetString(viperServerSecretBackend)
-		secretBackendOptions := viper.GetStringSlice(viperServerSecretBackendOption)
-		secretBackendOptionsMap := map[string]string{}
-		for _, o := range secretBackendOptions {
-			if !strings.Contains(o, "=") {
-				log.Warning("Malformated options : %s", o)
-				continue
-			}
-			t := strings.Split(o, "=")
-			secretBackendOptionsMap[t[0]] = t[1]
-		}
-		if err := secret.Init(viper.GetString(viperDBSecret), viper.GetString(viperServerSecretKey), secretBackend, secretBackendOptionsMap); err != nil {
-			log.Error("Cannot initialize secret manager: %s", err)
-		}
-		if secret.SecretUsername != "" {
-			database.SecretDBUser = secret.SecretUsername
-		}
-		if secret.SecretPassword != "" {
-			database.SecretDBPassword = secret.SecretPassword
-		}
+		secret.Init(viper.GetString(viperServerSecretKey))
 
 		//Initialize mail package
 		mail.Init(viper.GetString(viperSMTPUser),
@@ -188,7 +169,6 @@ var mainCmd = &cobra.Command{
 
 		//Intialize repositories manager
 		rmInitOpts := repositoriesmanager.InitializeOpts{
-			SecretClient:           secret.Client,
 			KeysDirectory:          viper.GetString(viperKeysDirectory),
 			UIBaseURL:              baseURL,
 			APIBaseURL:             viper.GetString(viperURLAPI),
@@ -197,6 +177,7 @@ var mainCmd = &cobra.Command{
 			DisableStashSetStatus:  viper.GetBool(viperVCSRepoBitbucketStatusDisabled),
 			GithubSecret:           viper.GetString(viperVCSRepoGithubSecret),
 			StashPrivateKey:        viper.GetString(viperVCSRepoBitbucketPrivateKey),
+			StashConsumerKey:       viper.GetString(viperVCSRepoBitbucketConsumerKey),
 		}
 		if err := repositoriesmanager.Initialize(rmInitOpts); err != nil {
 			log.Warning("Error initializing repositories manager connections: %s", err)
@@ -267,6 +248,8 @@ var mainCmd = &cobra.Command{
 		go stats.StartRoutine(ctx, database.GetDBMap)
 		go action.RequirementsCacheLoader(ctx, 5*time.Second, database.GetDBMap)
 		go hookRecoverer(ctx, database.GetDBMap)
+
+		go user.PersistentSessionTokenCleaner(ctx, database.GetDBMap)
 
 		if !viper.GetBool(viperVCSPollingDisabled) {
 			go poller.Initialize(ctx, 10, database.GetDBMap)

@@ -5,6 +5,7 @@ import {User} from './user.model';
 import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {Artifact} from './artifact.model';
+import {ActionWarning} from './action.model';
 import {Job} from './job.model';
 import {Commit} from './repositories.model';
 
@@ -15,6 +16,7 @@ export class PipelineStatus {
     static WAITING = 'Waiting';
     static DISABLED = 'Disabled';
     static SKIPPED = 'Skipped';
+    static NEVER_BUILT = 'Never Built';
 }
 
 export class Pipeline {
@@ -99,6 +101,7 @@ export class PipelineBuild {
     artifacts: Array<Artifact>;
     tests: Tests;
     commits: Array<Commit>;
+    warnings: Array<ActionWarning>;
 
     public static GetTriggerSource(pb: PipelineBuild): string {
         if (pb.trigger.scheduled_trigger) {
@@ -127,6 +130,7 @@ export class PipelineBuildJob {
     model: number;
     pipeline_build_id: number;
     spawninfos: Array<SpawnInfo>;
+    warnings: Array<ActionWarning>;
 }
 
 export class SpawnInfo {

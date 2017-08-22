@@ -90,7 +90,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.applicationSubscription.unsubscribe();
                 }
                 if (this.application && this.application.name !== appName) {
-                     this.application = undefined;
+                    this.application = undefined;
                     this.stopWorker();
                 }
                 if (!this.application) {
@@ -176,9 +176,11 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
      * Reinit worker the the current tab.
      *
      */
-    changeWorkerFilter(): void {
+    changeWorkerFilter(destroy: boolean): void {
         this.stopWorker();
-        this.startWorker(this.project.key);
+        if (!destroy) {
+            this.startWorker(this.project.key);
+        }
     }
 
     showTab(tab: string): void {
