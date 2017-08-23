@@ -37,9 +37,9 @@ func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
 
 //Run is the core function of Scheduler goroutine
 func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, "Run> Unable to start a transaction", err
+	tx, errb := db.Begin()
+	if errb != nil {
+		return nil, "Run> Unable to start a transaction", errb
 	}
 	defer tx.Rollback()
 
@@ -49,9 +49,9 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 	}
 
 	//Load unscheduled pipelines
-	ps, err := LoadUnscheduledPipelines(tx)
-	if err != nil {
-		return nil, "Run> Unable to load unscheduled pipelines : %s", err
+	ps, errl := LoadUnscheduledPipelines(tx)
+	if errl != nil {
+		return nil, "Run> Unable to load unscheduled pipelines : %s", errl
 	}
 
 	execs := []sdk.PipelineSchedulerExecution{}
@@ -63,8 +63,8 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 		}
 
 		//Compute a new execution
-		e, err := Next(tx, &ps[i])
-		if err != nil {
+		e, errn := Next(tx, &ps[i])
+		if errn != nil {
 			//Nothing to compute
 			continue
 		}

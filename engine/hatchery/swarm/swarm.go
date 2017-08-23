@@ -171,7 +171,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 		ID:     ID,
 		Signal: docker.SIGKILL,
 	}); err != nil {
-		if !strings.Contains(err.Error(), "is not running") {
+		if !strings.Contains(err.Error(), "is not running") && !strings.Contains(err.Error(), "No such container") {
 			log.Warning("killAndRemove> Unable to kill container %s", err)
 		}
 	}
@@ -305,7 +305,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 
 	//start the worker
 	if err := h.createAndStartContainer(name, model.Image, network, "worker", cmd, env, labels, memory); err != nil {
-		log.Warning("SpawnWorker> Unable to start container %s", err)
+		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, model.Image, err)
 	}
 
 	return name, nil
