@@ -40,6 +40,6 @@ export class VariableService {
         if (pipelineId) {
             params.append('pipId', pipelineId.toString());
         }
-        return this._http.get('/suggest/variable/' + key, {params: params}).map(res => res.json());
+        return this._http.get('/suggest/variable/' + key, {params: params});
     }
 }

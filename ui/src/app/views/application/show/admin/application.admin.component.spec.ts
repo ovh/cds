@@ -1,18 +1,15 @@
 /* tslint:disable:no-unused-variable */
 
 import {RouterTestingModule} from '@angular/router/testing';
-import {TestBed, fakeAsync, getTestBed, tick, inject} from '@angular/core/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Router, ActivatedRoute} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
-import {Injector, Component} from '@angular/core';
+import {fakeAsync, getTestBed, TestBed, tick} from '@angular/core/testing';
+import {Router} from '@angular/router';
+import {Component, Injector} from '@angular/core';
 import {Application} from '../../../../model/application.model';
 import {ApplicationStore} from '../../../../service/application/application.store';
 import {ApplicationAdminComponent} from './application.admin.component';
 import {ApplicationService} from '../../../../service/application/application.service';
 import {SharedModule} from '../../../../shared/shared.module';
-import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import {TranslateLoader, TranslateService} from 'ng2-translate/ng2-translate';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {Project} from '../../../../model/project.model';
 import {RepoManagerService} from '../../../../service/repomanager/project.repomanager.service';
@@ -21,8 +18,9 @@ import {Pipeline} from '../../../../model/pipeline.model';
 import {ProjectStore} from '../../../../service/project/project.store';
 import {ProjectService} from '../../../../service/project/project.service';
 import {TranslateParser} from 'ng2-translate';
-import {ProjectModule} from '../../../project/project.module';
 import {RepositoriesManager} from '../../../../model/repositories.model';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 @Component({
     template: ''
@@ -42,24 +40,24 @@ describe('CDS: Application Admin Component', () => {
                 DummyComponent
             ],
             providers: [
-                { provide: XHRBackend, useClass: MockBackend },
                 ApplicationStore,
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
-                { provide: ToastService, useClass: MockToast },
+                {provide: ToastService, useClass: MockToast},
                 TranslateLoader,
                 TranslateService,
                 TranslateParser,
                 RepoManagerService
             ],
-            imports : [
+            imports: [
                 RouterTestingModule.withRoutes([
-                    { path: 'project/:key', component: DummyComponent },
-                    { path: 'project/:key/application/:appName', component: DummyComponent }
+                    {path: 'project/:key', component: DummyComponent},
+                    {path: 'project/:key/application/:appName', component: DummyComponent}
                 ]),
                 ApplicationModule,
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
@@ -75,52 +73,58 @@ describe('CDS: Application Admin Component', () => {
         router = undefined;
     });
 
-    it('Load component + renamed app', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
+    it('Load component + renamed app', fakeAsync(() => {
+        const http = TestBed.get(HttpTestingController);
 
-            // Mock Http login request
-            backend.connections.subscribe(connection => {
-                connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "appRenamed", "permission": 7 }'})));
-            });
+        let appRenamed = new Application();
+        appRenamed.name = 'appRenamed';
+        appRenamed.permission = 7;
 
-            let fixture = TestBed.createComponent(ApplicationAdminComponent);
-            let component = fixture.debugElement.componentInstance;
-            expect(component).toBeTruthy();
 
-            let app: Application = new Application();
-            app.name = 'app';
-            app.permission = 7;
-            let p: Project = new Project();
-            p.key = 'key1';
-            p.name = 'proj1';
-            p.repositories_manager = new Array<RepositoriesManager>();
-            let rm = new RepositoriesManager();
-            p.repositories_manager.push(rm);
+        let fixture = TestBed.createComponent(ApplicationAdminComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
 
-            let pip: Pipeline = new Pipeline();
-            pip.name = 'myPipeline';
-            p.pipelines = new Array<Pipeline>();
-            p.pipelines.push(pip);
+        let app: Application = new Application();
+        app.name = 'app';
+        app.permission = 7;
+        let p: Project = new Project();
+        p.key = 'key1';
+        p.name = 'proj1';
+        p.repositories_manager = new Array<RepositoriesManager>();
+        let rm = new RepositoriesManager();
+        p.repositories_manager.push(rm);
 
-            fixture.componentInstance.application = app;
-            fixture.componentInstance.project = p;
+        let pip: Pipeline = new Pipeline();
+        pip.name = 'myPipeline';
+        p.pipelines = new Array<Pipeline>();
+        p.pipelines.push(pip);
 
-            fixture.detectChanges();
-            tick(50);
+        fixture.componentInstance.application = app;
+        fixture.componentInstance.project = p;
 
-            let compiled = fixture.debugElement.nativeElement;
+        fixture.detectChanges();
+        tick(50);
 
-            let inputName = compiled.querySelector('input[name="formApplicationUpdateName"]');
-            inputName.value = 'appRenamed';
-            inputName.dispatchEvent(new Event('input'));
+        let compiled = fixture.debugElement.nativeElement;
 
-            spyOn(router, 'navigate');
-            compiled.querySelector('button[name="updateNameButton"]').click();
+        let inputName = compiled.querySelector('input[name="formApplicationUpdateName"]');
+        inputName.value = 'appRenamed';
+        inputName.dispatchEvent(new Event('input'));
 
-            expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1', 'application', 'appRenamed']);
+        spyOn(router, 'navigate');
+        compiled.querySelector('button[name="updateNameButton"]').click();
 
-            tick(50);
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/key1/application/app';
+        })).flush(appRenamed);
 
-    })));
+
+        expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1', 'application', 'appRenamed']);
+
+        tick(50);
+
+    }));
 });
 
 class MockToast {

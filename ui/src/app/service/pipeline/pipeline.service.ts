@@ -26,7 +26,7 @@ export class PipelineService {
     getPipeline(key: string, pipName: string): Observable<Pipeline> {
         let params = new HttpParams();
         params.append('withApplications', 'true');
-        return this._http.get('/project/' + key + '/pipeline/' + pipName, {params: params}).map(res => res.json());
+        return this._http.get('/project/' + key + '/pipeline/' + pipName, {params: params});
     }
 
     /**
@@ -202,8 +202,7 @@ export class PipelineService {
      * @returns {Observable<Pipeline>}
      */
     updateParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._http.put(`/project/${key}/pipeline/${pipName}/parameter/${param.previousName || param.name}`, Parameter.format(param))
-            .map(res => res.json());
+        return this._http.put(`/project/${key}/pipeline/${pipName}/parameter/${param.previousName || param.name}`, Parameter.format(param));
     }
 
     /**

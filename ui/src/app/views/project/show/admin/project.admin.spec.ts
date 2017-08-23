@@ -18,6 +18,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {ProjectModule} from '../../project.module';
 import {SharedModule} from '../../../../shared/shared.module';
 import {Project} from '../../../../model/project.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Project Admin Component', () => {
 
@@ -45,7 +46,7 @@ describe('CDS: Project Admin Component', () => {
                 ProjectModule,
                 SharedModule,
                 RouterTestingModule.withRoutes([]),
-
+                HttpClientTestingModule
             ],
             schemas: [
                 CUSTOM_ELEMENTS_SCHEMA

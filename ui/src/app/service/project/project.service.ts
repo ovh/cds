@@ -200,7 +200,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     cloneEnvironment(key: string, environment: Environment, cloneName: string): Observable<Project> {
-        return this._http.post(`/project/${key}/environment/${environment.name}/clone/${cloneName}`, {}).map(res => res.json());
+        return this._http.post(`/project/${key}/environment/${environment.name}/clone/${cloneName}`, {});
     }
 
     /**

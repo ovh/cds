@@ -5,6 +5,7 @@ import {SharedService} from '../../shared.service';
 import {ParameterValueComponent} from './parameter.value.component';
 import {SharedModule} from '../../shared.module';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Parameter Value Component', () => {
 
@@ -17,7 +18,8 @@ describe('CDS: Parameter Value Component', () => {
                 RepoManagerService,
             ],
             imports : [
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
     });

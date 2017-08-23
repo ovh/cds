@@ -18,6 +18,7 @@ import {Pipeline} from '../../../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline.link.component';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {ToasterService} from 'angular2-toaster';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application pipeline link', () => {
 
@@ -42,7 +43,8 @@ describe('CDS: Application pipeline link', () => {
             imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

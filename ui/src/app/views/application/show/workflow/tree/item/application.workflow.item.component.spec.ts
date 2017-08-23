@@ -28,6 +28,7 @@ import {ProjectService} from '../../../../../../service/project/project.service'
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {Scheduler} from '../../../../../../model/scheduler.model';
 import {NotificationService} from '../../../../../../service/notification/notification.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Workflow Item', () => {
 
@@ -48,7 +49,8 @@ describe('CDS: Application Workflow Item', () => {
             imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

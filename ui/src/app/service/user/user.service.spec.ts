@@ -10,43 +10,30 @@ import {AuthentificationStore} from '../auth/authentification.store';
 import {User} from '../../model/user.model';
 import {UserService} from './user.service';
 import {RouterModule} from '@angular/router';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: User Service + Authent Store', () => {
-
-    let injector: Injector;
-    let backendUser: MockBackend;
-    let authenStore: AuthentificationStore;
-    let userService: UserService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 { provide: APP_BASE_HREF, useValue: '/' },
-                MockBackend,
                 AuthentificationStore,
                 UserService
             ],
             imports : [
                 AppModule,
-                RouterModule
+                RouterModule,
+                HttpClientTestingModule
             ]
         });
-        injector = getTestBed();
-        backendUser = injector.get(MockBackend);
-        authenStore = injector.get(AuthentificationStore);
-        userService = injector.get(UserService);
 
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backendUser = undefined;
-        authenStore = undefined;
-        userService = undefined;
     });
 
     it('login', async( () => {
+        const http = TestBed.get(HttpTestingController);
         let connectedChecked = false;
         let started = false;
 
@@ -55,11 +42,14 @@ describe('CDS: User Service + Authent Store', () => {
         u.id = 1;
         u.username = 'foo';
 
-        // Mock Http login request
-        backendUser.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({body: '{ "user": { "id": 1, "username": "foo" } }'})));
-        });
+        let loginResponse = {
+            'user': {
+                'id': 1,
+                'username': 'foo'
+            }
+        };
 
+        let authenStore = TestBed.get(AuthentificationStore);
         // Assertion
         authenStore.getUserlst().subscribe( user => {
             if (started) {
@@ -71,7 +61,12 @@ describe('CDS: User Service + Authent Store', () => {
 
         // Begin test
         started = true;
+        let userService = TestBed.get(UserService);
         userService.login(u).subscribe( () => {});
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/login';
+        })).flush(loginResponse);
+
 
         // Final assertion
         expect(connectedChecked).toBeTruthy('User never connected');

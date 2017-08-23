@@ -13,6 +13,7 @@ import {GroupService} from '../../../service/group/group.service';
 import {Variable} from '../../../model/variable.model';
 import {VariableEvent} from '../variable.event.model';
 import {SharedModule} from '../../shared.module';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Variable From Component', () => {
 
@@ -35,7 +36,8 @@ describe('CDS: Variable From Component', () => {
             ],
             imports : [
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 

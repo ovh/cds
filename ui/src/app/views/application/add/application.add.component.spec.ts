@@ -24,6 +24,7 @@ import {Parameter} from '../../../model/parameter.model';
 import {Application} from '../../../model/application.model';
 import {Variable} from '../../../model/variable.model';
 import {VariableService} from '../../../service/variable/variable.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Add Component', () => {
 
@@ -57,7 +58,8 @@ describe('CDS: Application Add Component', () => {
             imports : [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
