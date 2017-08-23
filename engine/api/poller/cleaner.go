@@ -66,7 +66,6 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.RepositoryPollerExecution, 
 	}
 
 	if err := tx.Commit(); err != nil {
-
 		return nil, sdk.WrapError(err, "poller.CleanerRun> Unable to commit a transaction")
 	}
 
