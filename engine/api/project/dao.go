@@ -208,6 +208,7 @@ var LoadOptions = struct {
 	WithRepositoriesManagers LoadOptionFunc
 	WithApplicationPipelines LoadOptionFunc
 	WithApplicationVariables LoadOptionFunc
+	WithKeys                 LoadOptionFunc
 }{
 	Default:                  &loadDefault,
 	WithPipelines:            &loadPipelines,
@@ -219,6 +220,7 @@ var LoadOptions = struct {
 	WithVariables:            &loadVariables,
 	WithApplicationPipelines: &loadApplicationPipelines,
 	WithApplicationVariables: &loadApplicationVariables,
+	WithKeys:                 &loadKeys,
 }
 
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions

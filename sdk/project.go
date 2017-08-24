@@ -24,6 +24,7 @@ type Project struct {
 	LastModified  time.Time             `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
 	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-" cli:"-"`
 	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
+	Keys          []ProjectKey          `json:"keys" yaml:"keys" db:"-" cli:"-"`
 }
 
 // ProjectVariableAudit represents an audit on a project variable
