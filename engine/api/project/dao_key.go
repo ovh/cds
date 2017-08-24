@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/sdk"
 )
 
 // Insert a new project key in database
