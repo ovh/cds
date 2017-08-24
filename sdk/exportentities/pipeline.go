@@ -163,6 +163,10 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	if err != nil {
 		return nil, true, err
 	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
+	if err != nil {
+		return nil, true, err
+	}
 	a.Optional, err = s.IsFlagged("optional")
 	if err != nil {
 		return nil, true, err
@@ -283,11 +287,12 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
-//Is returns true the step has the flag set
+// Is returns true the step has the flag set
 func (s Step) IsFlagged(flag string) (bool, error) {
 	bI, ok := s[flag]
 	if !ok {
-		return true, nil
+		// enabled is true by default
+		return flag == "enabled", nil
 	}
 	bS, ok := bI.(bool)
 	if !ok {
@@ -442,102 +447,96 @@ func newJobs(jobs []sdk.Job) map[string]Job {
 func newSteps(a sdk.Action) []Step {
 	res := []Step{}
 	for i := range a.Actions {
-		a := &a.Actions[i]
+		act := &a.Actions[i]
 		s := Step{}
-		if !a.Enabled {
-			s["enabled"] = a.Enabled
-		}
-		if a.Optional {
-			s["optional"] = a.Optional
-		}
-		if a.AlwaysExecuted {
-			s["always_executed"] = a.AlwaysExecuted
-		}
+		s["enabled"] = act.Enabled
+		s["optional"] = act.Optional
+		s["always_executed"] = act.AlwaysExecuted
 
-		switch a.Type {
+		switch act.Type {
 		case sdk.BuiltinAction:
-			switch a.Name {
+			switch act.Name {
 			case sdk.ScriptAction:
-				script := sdk.ParameterFind(a.Parameters, "script")
+				script := sdk.ParameterFind(act.Parameters, "script")
 				if script != nil {
 					s["script"] = script.Value
 				}
 			case sdk.ArtifactDownload:
 				artifactDownloadArgs := map[string]string{}
-				path := sdk.ParameterFind(a.Parameters, "path")
+				path := sdk.ParameterFind(act.Parameters, "path")
 				if path != nil {
 					artifactDownloadArgs["path"] = path.Value
 				}
-				tag := sdk.ParameterFind(a.Parameters, "tag")
+				tag := sdk.ParameterFind(act.Parameters, "tag")
 				if tag != nil {
 					artifactDownloadArgs["tag"] = tag.Value
 				}
-				application := sdk.ParameterFind(a.Parameters, "application")
+				application := sdk.ParameterFind(act.Parameters, "application")
 				if application != nil {
 					artifactDownloadArgs["application"] = application.Value
 				}
-				pipeline := sdk.ParameterFind(a.Parameters, "pipeline")
+				pipeline := sdk.ParameterFind(act.Parameters, "pipeline")
 				if pipeline != nil {
 					artifactDownloadArgs["pipeline"] = pipeline.Value
 				}
 				s["artifactDownload"] = artifactDownloadArgs
 			case sdk.ArtifactUpload:
 				artifactUploadArgs := map[string]string{}
-				path := sdk.ParameterFind(a.Parameters, "path")
+				path := sdk.ParameterFind(act.Parameters, "path")
 				if path != nil {
 					artifactUploadArgs["path"] = path.Value
 				}
-				tag := sdk.ParameterFind(a.Parameters, "tag")
+				tag := sdk.ParameterFind(act.Parameters, "tag")
 				if tag != nil {
 					artifactUploadArgs["tag"] = tag.Value
 				}
 				s["artifactUpload"] = artifactUploadArgs
 			case sdk.GitCloneAction:
 				gitCloneArgs := map[string]string{}
-				branch := sdk.ParameterFind(a.Parameters, "branch")
+				branch := sdk.ParameterFind(act.Parameters, "branch")
 				if branch != nil {
 					gitCloneArgs["branch"] = branch.Value
 				}
-				commit := sdk.ParameterFind(a.Parameters, "commit")
+				commit := sdk.ParameterFind(act.Parameters, "commit")
 				if commit != nil {
 					gitCloneArgs["commit"] = commit.Value
 				}
-				directory := sdk.ParameterFind(a.Parameters, "directory")
+				directory := sdk.ParameterFind(act.Parameters, "directory")
 				if directory != nil {
 					gitCloneArgs["directory"] = directory.Value
 				}
-				password := sdk.ParameterFind(a.Parameters, "password")
+				password := sdk.ParameterFind(act.Parameters, "password")
 				if password != nil {
 					gitCloneArgs["password"] = password.Value
 				}
-				privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
+				privateKey := sdk.ParameterFind(act.Parameters, "privateKey")
 				if privateKey != nil {
 					gitCloneArgs["privateKey"] = privateKey.Value
 				}
-				url := sdk.ParameterFind(a.Parameters, "url")
+				url := sdk.ParameterFind(act.Parameters, "url")
 				if url != nil {
 					gitCloneArgs["url"] = url.Value
 				}
-				user := sdk.ParameterFind(a.Parameters, "user")
+				user := sdk.ParameterFind(act.Parameters, "user")
 				if user != nil {
 					gitCloneArgs["user"] = user.Value
 				}
 
 				s["gitClone"] = gitCloneArgs
 			case sdk.JUnitAction:
-				path := sdk.ParameterFind(a.Parameters, "path")
+				path := sdk.ParameterFind(act.Parameters, "path")
 				if path != nil {
 					s["jUnitReport"] = path.Value
 				}
 			}
 		default:
 			args := map[string]string{}
-			for _, p := range a.Parameters {
+			for _, p := range act.Parameters {
 				if p.Value != "" {
 					args[p.Name] = p.Value
 				}
 			}
-			s[a.Name] = args
+			s[act.Name] = args
 		}
 		res = append(res, s)
 	}
