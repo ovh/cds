@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -29,6 +28,39 @@ func getKeysInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	return WriteJSON(w, r, p.Keys, http.StatusOK)
 }
 
+func deleteKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	key := vars["permProjectKey"]
+	keyName := vars["name"]
+
+	p, errP := project.Load(db, key, c.User, project.LoadOptions.WithKeys)
+	if errP != nil {
+		return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
+	}
+
+	tx, errT := db.Begin()
+	if errT != nil {
+		return sdk.WrapError(errT, "deleteKeyInProjectHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+	for _, k := range p.Keys {
+		if k.Name == keyName {
+			if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
+				return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
+			}
+			if err := project.UpdateLastModified(db, c.User, p); err != nil {
+				return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot commit transaction")
+	}
+
+	return WriteJSON(w, r, nil, http.StatusOK)
+}
+
 func addKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
@@ -52,7 +84,7 @@ func addKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		}
 		newKey.Public = pub
 		newKey.Private = priv
-	case sdk.KeyTypeGpg:
+	case sdk.KeyTypePgp:
 		pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name, c.User)
 		if errGenerate != nil {
 			return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate pgpKey")
@@ -60,7 +92,7 @@ func addKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		newKey.Public = pub
 		newKey.Private = priv
 	default:
-		return sdk.WrapError(fmt.Errorf("addKeyInProjectHandler> unknown key of type: %s", newKey.Type), "")
+		return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)
 	}
 
 	tx, errT := db.Begin()
