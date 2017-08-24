@@ -1,11 +1,8 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync, inject} from '@angular/core/testing';
+import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {RequirementService} from '../../../service/worker-model/requirement/requirement.service';
 import {RequirementsListComponent} from './requirements.list.component';
@@ -13,6 +10,8 @@ import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: Requirement List Component', () => {
 
@@ -26,30 +25,31 @@ describe('CDS: Requirement List Component', () => {
                 TranslateService,
                 RequirementStore,
                 WorkerModelService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
     });
 
 
-    it('should load component + delete requirement', fakeAsync(  inject([XHRBackend], (backend: MockBackend) => {
-        // Mock Http request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '["binary", "network"]'})));
-        });
+    it('should load component + delete requirement', fakeAsync(  () => {
+        const http = TestBed.get(HttpTestingController);
+        let mock = ['binary', 'network'];
+
 
         // Create component
         let fixture = TestBed.createComponent(RequirementsListComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/worker/model/capability/type';
+        })).flush(mock);
 
-        expect(backend.connectionsArray[0].request.url).toBe('/worker/model/capability/type', 'Component must load requirement type');
         expect(JSON.stringify(fixture.componentInstance.availableRequirements)).toBe(JSON.stringify(['binary', 'network']));
 
         let reqs: Requirement[] = [];
@@ -83,5 +83,5 @@ describe('CDS: Requirement List Component', () => {
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
             new RequirementEvent('delete', fixture.componentInstance.requirements[0])
         );
-    })));
+    }));
 });

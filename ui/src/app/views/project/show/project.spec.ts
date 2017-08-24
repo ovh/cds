@@ -22,6 +22,7 @@ import {Variable} from '../../../model/variable.model';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {GroupPermission} from '../../../model/group.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Project Show Component', () => {
 
@@ -48,7 +49,7 @@ describe('CDS: Project Show Component', () => {
                 ProjectModule,
                 SharedModule,
                 RouterTestingModule.withRoutes([]),
-
+                HttpClientTestingModule
             ],
             schemas: [
                 CUSTOM_ELEMENTS_SCHEMA

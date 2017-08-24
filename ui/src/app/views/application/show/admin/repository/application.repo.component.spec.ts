@@ -19,6 +19,8 @@ import {Observable} from 'rxjs/Rx';
 import {ApplicationModule} from '../../../application.module';
 import {TranslateParser} from 'ng2-translate';
 import {ProjectModule} from '../../../../project/project.module';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 @Component({
     template: ''
@@ -38,7 +40,6 @@ describe('CDS: Application Repo Component', () => {
                 DummyComponent
             ],
             providers: [
-                { provide: XHRBackend, useClass: MockBackend },
                 { provide: ApplicationStore, useClass: MockStore },
                 ApplicationService,
                 { provide: ToastService, useClass: MockToast },
@@ -53,7 +54,8 @@ describe('CDS: Application Repo Component', () => {
                 ]),
                 ProjectModule,
                 ApplicationModule,
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ],
             schemas: [ NO_ERRORS_SCHEMA ]
         });
@@ -68,73 +70,67 @@ describe('CDS: Application Repo Component', () => {
         toast = undefined;
     });
 
-    it('Load component + select repository', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
-        TestBed.compileComponents().then(() => {
-            let call = 0;
-            // Mock Http login request
-            backend.connections.subscribe(connection => {
-                call++;
-                connection.mockRespond(new Response(new ResponseOptions({
-                    body: `[
-                    { "name" : "repo1", "fullname": "frepo1" },
-                    { "name" : "repo2", "fullname": "frepo2" },
-                    { "name" : "repo3", "fullname": "frepo3" },
-                    { "name" : "repo4", "fullname": "frepo4" },
-                    { "name" : "repo5", "fullname": "frepo5" }
-                ]`
-                })));
-            });
+    it('Load component + select repository', fakeAsync(() => {
+        const http = TestBed.get(HttpTestingController);
+        let mockResponse = [
+            { 'name' : 'repo1', 'fullname': 'frepo1' },
+            { 'name' : 'repo2', 'fullname': 'frepo2' },
+            { 'name' : 'repo3', 'fullname': 'frepo3' },
+            { 'name' : 'repo4', 'fullname': 'frepo4' },
+            { 'name' : 'repo5', 'fullname': 'frepo5' }
+        ];
 
-            let fixture = TestBed.createComponent(ApplicationRepositoryComponent);
-            let component = fixture.debugElement.componentInstance;
-            expect(component).toBeTruthy();
+        let fixture = TestBed.createComponent(ApplicationRepositoryComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
 
+        let app: Application = new Application();
+        app.name = 'app';
+        app.permission = 7;
+        let p: Project = new Project();
+        p.key = 'key1';
+        p.name = 'proj1';
 
-            let app: Application = new Application();
-            app.name = 'app';
-            app.permission = 7;
-            let p: Project = new Project();
-            p.key = 'key1';
-            p.name = 'proj1';
+        let repoMan: RepositoriesManager = {id: 1, name: 'RepoManager', type: 'typeR', url: 'foo.bar',
+            hooks_supported: false, polling_supported: false};
+        p.repositories_manager = new Array<RepositoriesManager>();
+        p.repositories_manager.push(repoMan);
 
-            let repoMan: RepositoriesManager = {id: 1, name: 'RepoManager', type: 'typeR', url: 'foo.bar'};
-            p.repositories_manager = new Array<RepositoriesManager>();
-            p.repositories_manager.push(repoMan);
+        fixture.componentInstance.application = app;
+        fixture.componentInstance.project = p;
 
-            fixture.componentInstance.application = app;
-            fixture.componentInstance.project = p;
+        fixture.componentInstance.ngOnInit();
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/key1/repositories_manager/RepoManager/repos';
+        })).flush(mockResponse);
 
-            // Init component
-            expect(call).toBe(0, 'No http call yet');
-            fixture.componentInstance.ngOnInit();
-            expect(call).toBe(1, 'Get repo list must have been called');
-            expect(fixture.componentInstance.selectedRepoManager).toBe('RepoManager');
-            expect(fixture.componentInstance.repos.length).toBe(5, 'Must have 5 repositories in list');
+        expect(fixture.componentInstance.selectedRepoManager).toBe('RepoManager');
+        expect(fixture.componentInstance.repos.length).toBe(5, 'Must have 5 repositories in list');
 
-            // Select repo + link
-            fixture.componentInstance.selectedRepo = 'frepo3';
+        // Select repo + link
+        fixture.componentInstance.selectedRepo = 'frepo3';
 
-            fixture.detectChanges();
-            tick(50);
+        fixture.detectChanges();
+        tick(50);
 
-            spyOn(toast, 'success');
-            let compiled = fixture.debugElement.nativeElement;
-            compiled.querySelector('button[name="addrepobtn"]').click();
-            expect(toast.success).toHaveBeenCalledTimes(1);
+        spyOn(toast, 'success');
+        let compiled = fixture.debugElement.nativeElement;
+        compiled.querySelector('button[name="addrepobtn"]').click();
 
-            fixture.componentInstance.application.repositories_manager = repoMan;
-            fixture.componentInstance.application.repository_fullname = 'frepo3';
+        expect(toast.success).toHaveBeenCalledTimes(1);
 
-            tick(100);
+        fixture.componentInstance.application.repositories_manager = repoMan;
+        fixture.componentInstance.application.repository_fullname = 'frepo3';
 
-            // Detach repo
-            compiled.querySelector('.ui.red.button').click();
-            fixture.detectChanges();
-            tick(50);
-            compiled.querySelector('.ui.red.button.active').click();
-            expect(toast.success).toHaveBeenCalledTimes(2);
-        });
-    })));
+        tick(100);
+
+        // Detach repo
+        compiled.querySelector('.ui.red.button').click();
+        fixture.detectChanges();
+        tick(50);
+        compiled.querySelector('.ui.red.button.active').click();
+        expect(toast.success).toHaveBeenCalledTimes(2);
+    }));
 });
 
 class MockRouter {

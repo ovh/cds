@@ -1,13 +1,13 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
 import {Observable} from 'rxjs/Observable';
 import {Workflow} from '../../../model/workflow.model';
 import {WorkflowRun} from '../../../model/workflow.run.model';
+import {HttpClient} from '@angular/common/http';
 
 @Injectable()
 export class WorkflowRunService {
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     /**
@@ -16,6 +16,6 @@ export class WorkflowRunService {
      * @param workflow Workflow to create
      */
     runWorkflow(key: string, workflow: Workflow, payload: {}): Observable<WorkflowRun> {
-        return this._http.post('/project/' + key + '/workflows/' + workflow.name + '/runs', payload).map(res => res.json());
+        return this._http.post('/project/' + key + '/workflows/' + workflow.name + '/runs', payload);
     }
 }

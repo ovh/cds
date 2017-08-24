@@ -9,6 +9,7 @@ import {NavbarModule} from './views/navbar/navbar.module';
 import {SharedModule} from './shared/shared.module';
 import {ToasterModule} from 'angular2-toaster/angular2-toaster';
 import {AppService} from './app.service';
+import {HttpClientModule} from '@angular/common/http';
 
 @NgModule({
     declarations: [
@@ -16,6 +17,7 @@ import {AppService} from './app.service';
     ],
     imports: [
         BrowserModule,
+        HttpClientModule,
         NavbarModule,
         SharedModule,
         ServicesModule.forRoot(),

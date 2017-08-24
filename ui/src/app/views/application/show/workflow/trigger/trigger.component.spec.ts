@@ -24,6 +24,7 @@ import {Observable} from 'rxjs/Rx';
 import {Parameter} from '../../../../../model/parameter.model';
 import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
 import {Prerequisite} from '../../../../../model/prerequisite.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Workflow', () => {
 
@@ -47,7 +48,8 @@ describe('CDS: Application Workflow', () => {
             imports : [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

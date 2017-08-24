@@ -1,10 +1,10 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, fakeAsync, tick, getTestBed, inject} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {fakeAsync, TestBed, tick} from '@angular/core/testing';
+import {TranslateLoader, TranslateParser, TranslateService} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, ResponseOptions, Response, ConnectionBackend, Http, RequestOptions} from '@angular/http';
+import {XHRBackend} from '@angular/http';
 import {ActionComponent} from './action.component';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
@@ -19,17 +19,17 @@ import {ParameterEvent} from '../parameter/parameter.event.model';
 import {ActionEvent} from './action.event.model';
 import {ActionStore} from '../../service/action/action.store';
 import {ActionService} from '../../service/action/action.service';
-import {Injector} from '@angular/core';
 import {RepoManagerService} from '../../service/repomanager/project.repomanager.service';
 import {StepEvent} from './step/step.event';
 import {WorkerModelService} from '../../service/worker-model/worker-model.service';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: Action Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 SharedService,
                 TranslateService,
@@ -40,17 +40,17 @@ describe('CDS: Action Component', () => {
                 ActionStore,
                 ActionService,
                 WorkerModelService,
-                { provide: XHRBackend, useClass: MockBackend},
+                {provide: XHRBackend, useClass: MockBackend},
                 TranslateLoader,
                 TranslateParser
             ],
-            imports : [
+            imports: [
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
     });
-
 
 
     it('should create and then delete a requirement', fakeAsync(() => {
@@ -89,7 +89,7 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.editableAction.requirements.length).toBe(0, 'Action must have 0 requirement');
     }));
 
-    it('should create and then delete a parameter', fakeAsync( () => {
+    it('should create and then delete a parameter', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -121,7 +121,7 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.editableAction.parameters.length).toBe(0, 'Action must have 0 parameter');
     }));
 
-    it('should send delete action event', fakeAsync( () => {
+    it('should send delete action event', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -157,7 +157,7 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('delete', action));
     }));
 
-    it('should send insert action event', fakeAsync( () => {
+    it('should send insert action event', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -190,21 +190,21 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('insert', action));
     }));
 
-    it('should add and then remove a step', fakeAsync(
-        inject([
-            XHRBackend,
-        ], (backend: MockBackend) => {
+    it('should add and then remove a step', fakeAsync(() => {
+            const http = TestBed.get(HttpTestingController);
 
-            backend.connections.subscribe(connection => {
-                connection.mockRespond(new Response(new ResponseOptions({ body : '[{ "name" : "action1" }]'})));
-            });
+            let actionMock = new Action();
+            actionMock.name = 'action1';
+
 
             // Create component
             let fixture = TestBed.createComponent(ActionComponent);
             let component = fixture.debugElement.componentInstance;
             expect(component).toBeTruthy();
 
-            expect(backend.connectionsArray[0].request.url).toBe('/action', 'Component must load public action');
+            http.expectOne(((req: HttpRequest<any>) => {
+                return req.url === '/action';
+            })).flush(actionMock);
 
             let action: Action = new Action();
             action.name = 'FooAction';
@@ -232,9 +232,9 @@ describe('CDS: Action Component', () => {
             expect(fixture.componentInstance.steps.length).toBe(2, 'Action must have 2 steps');
             expect(fixture.componentInstance.steps[1].name).toBe('action2');
         })
-    ));
+    );
 
-    it('should init step not always executed and step always executed', fakeAsync( () => {
+    it('should init step not always executed and step always executed', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -257,4 +257,5 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.steps.length).toBe(2);
 
     }));
-});
+})
+;

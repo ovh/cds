@@ -8,10 +8,12 @@ import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {GroupService} from '../../../service/group/group.service';
 import {PermissionFormComponent} from './permission.form.component';
-import {GroupPermission} from '../../../model/group.model';
+import {Group, GroupPermission} from '../../../model/group.model';
 import {PermissionService} from '../permission.service';
 import {PermissionEvent} from '../permission.event.model';
 import {SharedModule} from '../../shared.module';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: Permission From Component', () => {
 
@@ -29,7 +31,8 @@ describe('CDS: Permission From Component', () => {
             ],
             imports : [
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 
@@ -37,17 +40,26 @@ describe('CDS: Permission From Component', () => {
 
 
     it('should create new permission', fakeAsync( inject([XHRBackend], (backend: MockBackend) => {
-        // Mock Http login request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '[ { "id": 1, "name": "grp1", "admins": [], "users": [] },' +
-            ' { "id": 2, "name": "grp2", "users": [], "admins": []  }]'})));
-        });
+        const http = TestBed.get(HttpTestingController);
 
+        let groupsMock = new Array<Group>();
+
+        let groupMock = new Group();
+        groupMock.id = 1;
+        groupMock.name = 'grp1';
+        groupMock.admins = [];
+        groupMock.users = [];
+
+        groupsMock.push(groupMock);
 
         // Create component
         let fixture = TestBed.createComponent(PermissionFormComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
+
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/group';
+        })).flush(groupsMock);
 
         fixture.detectChanges();
         tick(50);
@@ -73,6 +85,7 @@ describe('CDS: Permission From Component', () => {
 
         // Check if creation evant has been emitted
         expect(fixture.componentInstance.createGroupPermissionEvent.emit).toHaveBeenCalledWith(new PermissionEvent('add', gp));
+
     })));
 });
 
