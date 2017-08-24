@@ -13,19 +13,19 @@ type Key struct {
 	Type    string `json:"type" db:"type" cli:"type"`
 }
 
-// Key represent a key attach to a project
+// ProjectKey represent a key attach to a project
 type ProjectKey struct {
 	Key
 	ProjectID int64 `json:"project_id" db:"project_id" cli:"-"`
 }
 
-// Key represent a key attach to an application
+// ApplicationKey represent a key attach to an application
 type ApplicationKey struct {
 	Key
 	ApplicationID int64 `json:"application_id" db:"application_id"`
 }
 
-// Key represent a key attach to an environment
+// EnvironmentKey represent a key attach to an environment
 type EnvironmentKey struct {
 	Key
 	EnvironmentID int64 `json:"environment_id" db:"environment_id"`

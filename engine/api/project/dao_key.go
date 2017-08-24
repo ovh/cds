@@ -20,7 +20,7 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey) error {
 	key.Private = string(s)
 
 	if err := db.Insert(&dbProjKey); err != nil {
-		return err
+		return sdk.WrapError(err, "InsertKey> Cannot insert project key")
 	}
 	*key = sdk.ProjectKey(dbProjKey)
 	return nil
@@ -33,7 +33,7 @@ func LoadAllKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return err
+		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
 	}
 
 	keys := make([]sdk.ProjectKey, len(res))
@@ -48,5 +48,5 @@ func LoadAllKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 // DeleteProjectKey Delete the given key from the given project
 func DeleteProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) error {
 	_, err := db.Exec("DELETE FROM project_key WHERE project_id = $1 AND name = $2", projectID, keyName)
-	return err
+	return sdk.WrapError(err, "DeleteProjectKey> Cannot delete key %s", keyName)
 }
