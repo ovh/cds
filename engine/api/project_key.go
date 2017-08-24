@@ -101,7 +101,7 @@ func addKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	}
 	defer tx.Rollback()
 
-	if err := project.InsertKey(tx, &newKey, c.User); err != nil {
+	if err := project.InsertKey(tx, &newKey); err != nil {
 		return sdk.WrapError(err, "addKeyInProjectHandler> Cannot insert project key")
 	}
 

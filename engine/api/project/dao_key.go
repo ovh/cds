@@ -6,11 +6,19 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/secret"
 )
 
 // Insert a new project key in database
-func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey, u *sdk.User) error {
+func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey) error {
 	dbProjKey := dbProjectKey(*key)
+
+	s, errE := secret.Encrypt([]byte(key.Private))
+	if errE != nil {
+		return sdk.WrapError(errE, "InsertKey> Cannot encrypt private key")
+	}
+	key.Private = string(s)
+
 	if err := db.Insert(&dbProjKey); err != nil {
 		return err
 	}
