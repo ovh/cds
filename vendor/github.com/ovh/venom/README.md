@@ -9,8 +9,8 @@ It can also output xUnit results files.
 
 Install with:
 ```bash
-$ go get github.com/runabove/venom
-$ go install github.com/runabove/venom/cli/venom
+$ go get github.com/ovh/venom
+$ go install github.com/ovh/venom/cli/venom
 ```
 
 ```bash
@@ -160,13 +160,13 @@ venom run  --details=low --format=xml --output-dir="."
 
 ## Executors
 
-* **exec**: https://github.com/runabove/venom/tree/master/executors/exec `exec` is the default type for a step
-* **http**: https://github.com/runabove/venom/tree/master/executors/http
-* **imap**: https://github.com/runabove/venom/tree/master/executors/imap
-* **readfile**: https://github.com/runabove/venom/tree/master/executors/readfile
-* **smtp**: https://github.com/runabove/venom/tree/master/executors/smtp
-* **ssh**: https://github.com/runabove/venom/tree/master/executors/ssh
-* **web**: https://github.com/runabove/venom/tree/master/executors/web
+* **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
+* **http**: https://github.com/ovh/venom/tree/master/executors/http
+* **imap**: https://github.com/ovh/venom/tree/master/executors/imap
+* **readfile**: https://github.com/ovh/venom/tree/master/executors/readfile
+* **smtp**: https://github.com/ovh/venom/tree/master/executors/smtp
+* **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
+* **web**: https://github.com/ovh/venom/tree/master/executors/web
 
 
 ## Assertion

@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 func runParseJunitTestResultAction(*currentWorker) BuiltInAction {

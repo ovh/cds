@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
@@ -17,8 +17,8 @@ import (
 func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, id int64) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
 
-	query := `select workflow_node_run.* 
-	from workflow_node_run 
+	query := `select workflow_node_run.*
+	from workflow_node_run
 	join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
 	join project on project.id = workflow_run.project_id
 	join workflow on workflow.id = workflow_run.workflow_id
@@ -51,8 +51,8 @@ func LoadAndLockNodeRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun
 //LoadNodeRunByID load a specific node run on a workflow
 func LoadNodeRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
-	query := `select workflow_node_run.* 
-	from workflow_node_run 
+	query := `select workflow_node_run.*
+	from workflow_node_run
 	where workflow_node_run.id = $1`
 	if err := db.SelectOne(&rr, query, id); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadNodeRunByID> Unable to load workflow_node_run node=%d", id)
