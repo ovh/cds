@@ -1,64 +1,133 @@
 package hatchery
 
 import (
-	"crypto/tls"
-	"encoding/json"
+	"context"
 	"fmt"
-	"net/http"
 	"os"
+	"os/signal"
+	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-	"github.com/facebookgo/httpcontrol"
+	"github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // Create creates hatchery
-func Create(h Interface, api, token string, maxWorkers int, provisionDisabled bool, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, registerSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
-	Client = &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
-			MaxTries:        5,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
-		},
-	}
+func Create(h Interface, name, api, token string, maxWorkers int64, provisionDisabled bool, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, registerSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
 
-	sdk.SetHTTPClient(Client)
-	// No user / password, only token used for auth hatchery
-	sdk.Options(api, "", "", token)
+	// Gracefully shutdown connections
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+	defer func() {
+		signal.Stop(c)
+		cancel()
+	}()
 
-	if err := h.Init(); err != nil {
+	go func() {
+		select {
+		case <-c:
+			defer cancel()
+			return
+		case <-ctx.Done():
+			return
+		}
+	}()
+
+	if err := h.Init(name, api, token, registerSeconds, insecureSkipVerifyTLS); err != nil {
 		log.Error("Create> Init error: %s", err)
 		os.Exit(10)
 	}
 
-	hostname, err := os.Hostname()
-	if err != nil {
-		log.Error("Create> Cannot retrieve hostname: %s", err)
+	hostname, errh := os.Hostname()
+	if errh != nil {
+		log.Error("Create> Cannot retrieve hostname: %s", errh)
 		os.Exit(10)
 	}
 
 	go hearbeat(h, token, maxFailures)
 
-	var spawnIds []int64
-	var errR error
+	pbjobs := make(chan sdk.PipelineBuildJob, 1)
+	wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
+	errs := make(chan error, 1)
+	var nRoutines, workersStarted int64
 
-	tickerRoutine := time.NewTicker(2 * time.Second).C
-	tickerProvision := time.NewTicker(time.Duration(provisionSeconds) * time.Second).C
-	tickerRegister := time.NewTicker(time.Duration(registerSeconds) * time.Second).C
+	go func(ctx context.Context) {
+		if err := h.Client().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second); err != nil {
+			log.Error("Queues polling stopped: %v", err)
+		}
+	}(ctx)
+
+	// Create a cache with a default expiration time of 3 second, and which
+	// purges expired items every minute
+	spawnIDs := cache.New(3*time.Second, 60*time.Second)
+
+	tickerProvision := time.NewTicker(time.Duration(provisionSeconds) * time.Second)
+	tickerRegister := time.NewTicker(time.Duration(registerSeconds) * time.Second)
+	tickerCountWorkersStarted := time.NewTicker(time.Duration(2 * time.Second))
+	tickerGetModels := time.NewTicker(time.Duration(3 * time.Second))
+
+	var maxWorkersReached bool
+	var models []sdk.Model
+
 	for {
 		select {
-		case <-tickerRoutine:
-			spawnIds, errR = routine(h, maxWorkers, hostname, time.Now().Unix(), spawnIds, warningSeconds, criticalSeconds, graceSeconds)
-			if errR != nil {
-				log.Warning("Error on routine: %s", errR)
+		case <-ctx.Done():
+			if err := ctx.Err(); err != nil {
+				log.Error("Exiting Hatchery: %v", err)
+			} else {
+				log.Info("Exiting Hatchery")
 			}
-		case <-tickerProvision:
-			provisioning(h, provisionDisabled)
-		case <-tickerRegister:
-			if err := workerRegister(h); err != nil {
+			tickerRegister.Stop()
+			return
+		case <-tickerCountWorkersStarted.C:
+			workersStarted = int64(h.WorkersStarted())
+			if workersStarted > maxWorkers {
+				log.Info("max workers reached. current:%d max:%d", workersStarted, maxWorkers)
+				maxWorkersReached = true
+			} else {
+				maxWorkersReached = false
+			}
+			log.Debug("workers already started:%d", workersStarted)
+		case <-tickerGetModels.C:
+			var errwm error
+			models, errwm = h.Client().WorkerModelsEnabled()
+			if errwm != nil {
+				log.Error("error on h.Client().WorkerModelsEnabled():%e", errwm)
+			}
+		case j := <-pbjobs:
+			if maxWorkersReached {
+				log.Debug("maxWorkerReached:%d", workersStarted)
+				continue
+			}
+			go func(job sdk.PipelineBuildJob) {
+				if isRun := receiveJob(h, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
+					atomic.AddInt64(&workersStarted, 1)
+					spawnIDs.SetDefault(string(job.ID), job.ID)
+				}
+			}(j)
+		case j := <-wjobs:
+			if maxWorkersReached {
+				log.Debug("maxWorkerReached:%d", workersStarted)
+				continue
+			}
+			go func(job sdk.WorkflowNodeJobRun) {
+				if isRun := receiveJob(h, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
+					atomic.AddInt64(&workersStarted, 1)
+					spawnIDs.SetDefault(string(job.ID), job.ID)
+				}
+			}(j)
+		case err := <-errs:
+			log.Error("%v", err)
+		case <-tickerProvision.C:
+			provisioning(h, provisionDisabled, models)
+		case <-tickerRegister.C:
+			if err := workerRegister(h, models); err != nil {
 				log.Warning("Error on workerRegister: %s", err)
 			}
 		}
@@ -66,33 +135,21 @@ func Create(h Interface, api, token string, maxWorkers int, provisionDisabled bo
 }
 
 // Register calls CDS API to register current hatchery
-func Register(h *sdk.Hatchery, token string) error {
-	log.Info("Register> Hatchery %s", h.Name)
-
-	h.UID = token
-	data, errm := json.Marshal(h)
-	if errm != nil {
-		return errm
+func Register(h Interface) error {
+	newHatchery, err := h.Client().HatcheryRegister(*h.Hatchery())
+	if err != nil {
+		return sdk.WrapError(err, "register> Got HTTP exiting")
 	}
+	h.Hatchery().ID = newHatchery.ID
+	h.Hatchery().GroupID = newHatchery.GroupID
+	h.Hatchery().Model = newHatchery.Model
+	sdk.Authorization(newHatchery.UID)
+	sdk.SetAgent(sdk.HatcheryAgent)
+	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
 
-	data, code, errr := sdk.Request("POST", "/hatchery", data)
-	if errr != nil {
-		return errr
+	if !newHatchery.Uptodate {
+		log.Warning("-=-=-=-=- Please update your hatchery binary -=-=-=-=-")
 	}
-
-	if code >= 300 {
-		return fmt.Errorf("Register> HTTP %d", code)
-	}
-
-	if err := json.Unmarshal(data, h); err != nil {
-		return err
-	}
-
-	// Here, h.UID contains token generated by API
-	sdk.Authorization(h.UID)
-
-	log.Info("Register> Hatchery %s registered with id:%d", h.Name, h.ID)
-
 	return nil
 }
 
@@ -121,7 +178,7 @@ func hearbeat(m Interface, token string, maxFailures int) {
 		time.Sleep(5 * time.Second)
 		if m.Hatchery().ID == 0 {
 			log.Info("hearbeat> %s Disconnected from CDS engine, trying to register...", m.Hatchery().Name)
-			if err := Register(m.Hatchery(), token); err != nil {
+			if err := Register(m); err != nil {
 				log.Info("hearbeat> %s Cannot register: %s", m.Hatchery().Name, err)
 				checkFailures(maxFailures, failures)
 				continue
@@ -151,12 +208,7 @@ func checkFailures(maxFailures, nb int) {
 	}
 }
 
-func workerRegister(h Interface) error {
-	models, errwm := sdk.GetWorkerModelsEnabled()
-	if errwm != nil {
-		return fmt.Errorf("workerRegister> error on GetWorkerModels: %e", errwm)
-	}
-
+func workerRegister(h Interface, models []sdk.Model) error {
 	if len(models) == 0 {
 		return fmt.Errorf("workerRegister> No model returned by GetWorkerModels")
 	}
@@ -179,7 +231,7 @@ func workerRegister(h Interface) error {
 		}
 		if h.NeedRegistration(&m) {
 			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
-			if _, errSpawn := h.SpawnWorker(&m, nil, true, "spawn for register"); errSpawn != nil {
+			if _, errSpawn := h.SpawnWorker(&m, 0, nil, true, "spawn for register"); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, errSpawn)
 				if err := sdk.SpawnErrorWorkerModel(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
 					log.Error("workerRegister> error on call sdk.SpawnErrorWorkerModel on worker model %s for register: %s", m.Name, errSpawn)

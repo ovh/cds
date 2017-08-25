@@ -19,7 +19,9 @@ import (
 )
 
 func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration) error {
-	defer c.WorkerSetStatus(sdk.StatusWaiting)
+	if c.isWorker {
+		defer c.WorkerSetStatus(sdk.StatusWaiting)
+	}
 
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
@@ -186,5 +188,5 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 		time.Sleep(1 * time.Second)
 	}
 
-	return fmt.Errorf("x%s: %v", c.config.Retry, err)
+	return fmt.Errorf("x%d: %v", c.config.Retry, err)
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	hatcheryOpenStack = &HatcheryCloud{}
+	hatcheryOpenStack = &HatcheryOpenstack{}
 
 	Cmd.Flags().StringVar(&hatcheryOpenStack.tenant, "openstack-tenant", "", "")
 	viper.BindPFlag("openstack-tenant", Cmd.Flags().Lookup("openstack-tenant"))
@@ -47,7 +47,7 @@ func init() {
 	viper.BindPFlag("create-image-timeout", Cmd.Flags().Lookup("create-image-timeout"))
 }
 
-// Cmd configures comamnd for HatcheryCloud
+// Cmd configures comamnd for HatcheryOpenstack
 var Cmd = &cobra.Command{
 	Use:   "cloud",
 	Short: "Hatchery Cloud commands: hatchery cloud --help",
@@ -71,8 +71,10 @@ $ CDS_OPENSTACK_USER=<user> \
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		hatchery.Create(hatcheryOpenStack,
+			viper.GetString("name"),
 			viper.GetString("api"),
-			viper.GetString("token"), viper.GetInt("max-worker"),
+			viper.GetString("token"),
+			viper.GetInt64("max-worker"),
 			viper.GetBool("provision-disabled"),
 			viper.GetInt("request-api-timeout"),
 			viper.GetInt("max-failures-heartbeat"),

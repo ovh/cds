@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/viper"
@@ -22,6 +23,7 @@ var hatcherySwarm *HatcherySwarm
 type HatcherySwarm struct {
 	hatch         *sdk.Hatchery
 	dockerClient  *docker.Client
+	client        cdsclient.Interface
 	ratioService  int
 	maxContainers int
 	defaultMemory int
@@ -29,7 +31,14 @@ type HatcherySwarm struct {
 }
 
 //Init connect the hatchery to the docker api
-func (h *HatcherySwarm) Init() error {
+func (h *HatcherySwarm) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+	sdk.Options(api, "", "", token)
+
+	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	if err := hatchery.Register(h); err != nil {
+		return fmt.Errorf("Cannot register: %s", err)
+	}
+
 	var errc error
 	h.dockerClient, errc = docker.NewClientFromEnv()
 	if errc != nil {
@@ -43,15 +52,8 @@ func (h *HatcherySwarm) Init() error {
 	}
 
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("swarm", viper.GetString("name")),
+		Name: hatchery.GenerateName("swarm", name),
 	}
-
-	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
-		log.Warning("Cannot register hatchery: %s", err)
-		return err
-	}
-
-	log.Info("Swarm Hatchery ready to run !")
 
 	go h.killAwolWorkerRoutine()
 	return nil
@@ -189,7 +191,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 }
 
 //SpawnWorker start a new docker container
-func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	if registerOnly {
@@ -207,8 +209,8 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 
 	services := []string{}
 
-	if job != nil {
-		for _, r := range job.Job.Action.Requirements {
+	if jobID > 0 {
+		for _, r := range requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
@@ -292,8 +294,8 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
 	}
 
-	if job != nil {
-		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(job.ID, 10))
+	if jobID > 0 {
+		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(jobID, 10))
 	}
 
 	//labels are used to make container cleanup easier
@@ -378,7 +380,7 @@ func (*HatcherySwarm) ModelType() string {
 }
 
 // CanSpawn checks if the model can be spawned by this hatchery
-func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
+func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	//List all containers to check if we can spawn a new one
 	cs, errList := h.getContainers()
 	if errList != nil {
@@ -394,7 +396,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	//Get links from requirements
 	links := map[string]string{}
 
-	for _, r := range job.Job.Action.Requirements {
+	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement {
 			links[r.Name] = strings.Split(r.Value, " ")[0]
 		}
@@ -531,6 +533,11 @@ func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
 // Hatchery returns Hatchery instances
 func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
 	return h.hatch
+}
+
+//Client returns cdsclient instance
+func (h *HatcherySwarm) Client() cdsclient.Interface {
+	return h.client
 }
 
 // ID returns ID of the Hatchery
