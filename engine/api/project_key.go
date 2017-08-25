@@ -22,7 +22,7 @@ func getKeysInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 	}
 
 	if errK := project.LoadAllKeys(db, p); errK != nil {
-		return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project keys")
+		return sdk.WrapError(errK, "getKeysInProjectHandler> Cannot load project keys")
 	}
 
 	return WriteJSON(w, r, p.Keys, http.StatusOK)

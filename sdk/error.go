@@ -218,7 +218,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidJobRequirement.ID:                 "Invalid job requirement",
 	ErrNotImplemented.ID:                        "This functionality isn't implemented",
 	ErrParameterNotExists.ID:                    "This parameter doesn't exist",
-	ErrUnknownKeyType.ID:                        "Unkown key type",
+	ErrUnknownKeyType.ID:                        "Unknown key type",
 }
 
 var errorsFrench = map[int]string{

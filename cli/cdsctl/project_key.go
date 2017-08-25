@@ -9,8 +9,8 @@ import (
 
 var (
 	projectKeyCmd = cli.Command{
-		Name:  "key",
-		Short: "Manage CDS project key",
+		Name:  "keys",
+		Short: "Manage CDS project keys",
 	}
 
 	projectKey = cli.NewCommand(projectKeyCmd, nil,

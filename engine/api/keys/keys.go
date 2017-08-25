@@ -47,7 +47,7 @@ func Generatekeypair(keyname string) (string, string, error) {
 	return pub, priv, err
 }
 
-// GenerateGPGKeyPair generates a private / public PGP key
+// GeneratePGPKeyPair generates a private / public PGP key
 func GeneratePGPKeyPair(keyname string, u *sdk.User) (string, string, error) {
 	key, errE := openpgp.NewEntity(keyname, keyname, u.Email, nil)
 	if errE != nil {

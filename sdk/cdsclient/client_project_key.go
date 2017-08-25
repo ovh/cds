@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -31,7 +32,7 @@ func (c *client) ProjectKeyCreate(projectKey string, keyProject *sdk.ProjectKey)
 }
 
 func (c *client) ProjectKeysDelete(projectKey string, keyName string) error {
-	_, code, err := c.Request("DELETE", "/project/"+projectKey+"/keys/"+keyName, nil)
+	_, code, err := c.Request("DELETE", "/project/"+projectKey+"/keys/"+url.QueryEscape(keyName), nil)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
