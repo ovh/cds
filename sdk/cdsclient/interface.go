@@ -20,6 +20,13 @@ type Interface interface {
 	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
 	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
 	ApplicationKeysDelete(string, string, string) error
+	EnvironmentCreate(string, *sdk.Environment) error
+	EnvironmentDelete(string, string) error
+	EnvironmentGet(string, string, ...RequestModifier) (*sdk.Environment, error)
+	EnvironmentList(string) ([]sdk.Environment, error)
+	EnvironmentKeysList(string, string) ([]sdk.EnvironmentKey, error)
+	EnvironmentKeyCreate(string, string, *sdk.EnvironmentKey) error
+	EnvironmentKeysDelete(string, string, string) error
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
 	MonStatus() ([]string, error)
 	ProjectCreate(*sdk.Project) error
