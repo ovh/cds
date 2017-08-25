@@ -27,6 +27,7 @@ type Interface interface {
 	EnvironmentKeysList(string, string) ([]sdk.EnvironmentKey, error)
 	EnvironmentKeyCreate(string, string, *sdk.EnvironmentKey) error
 	EnvironmentKeysDelete(string, string, string) error
+	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
 	MonStatus() ([]string, error)
 	ProjectCreate(*sdk.Project) error
 	ProjectDelete(string) error
