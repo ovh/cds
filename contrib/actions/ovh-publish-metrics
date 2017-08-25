@@ -62,7 +62,7 @@ EOF`
 
 echo "// {{.name}}{ $labels } {{.value}}" >> .metrics
 
-curl -f -X POST https://warp10.{{.region}}.metrics.ovh.net/update \
+curl -f -X POST https://warp10.{{.region}}.metrics.ovh.net/api/v0/update \
 		-H 'X-Warp10-Token: {{.token}}' \
     --data-binary @.metrics
 
@@ -70,7 +70,7 @@ fi;
 
 
 if [ "x{{.file}}" != "x" ]; then
-curl -f -X POST https://warp10.{{.region}}.metrics.ovh.net/update \
+curl -f -X POST https://warp10.{{.region}}.metrics.ovh.net/api/v0/update \
 		-H 'X-Warp10-Token: {{.token}}' \
     --data-binary @{{.file}}
 fi;
