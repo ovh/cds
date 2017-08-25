@@ -29,7 +29,7 @@ env {{.cds.environment}}"
 	}
 	 "value" = {
 		type = "string"
-		description = "Value of your metric"
+		description = "Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/"
 		value = "T"
 	}
 	 "file" = {
