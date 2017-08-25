@@ -1,6 +1,6 @@
 
-name = "OVH_PublishMetric"
-description = "Publish a metric"
+name = "CDS_PublishOVHMetrics"
+description = "Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/"
 
 // Requirements
 requirements = {
