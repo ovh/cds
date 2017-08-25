@@ -11,7 +11,8 @@ Test with prove on perl source code
 
 ## Parameters
 
-* **testDirectory**: Directory where is Perl Source Code
+* **proveOptions**: Options passed to prove
+* **testDirectory**: Directory in which prove will be launched
 
 
 ## Requirements
