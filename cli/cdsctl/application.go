@@ -22,7 +22,7 @@ var (
 
 var applicationListCmd = cli.Command{
 	Name:  "list",
-	Short: "List CDS application",
+	Short: "List CDS applications",
 	Args: []cli.Arg{
 		{Name: "key"},
 	},

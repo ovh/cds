@@ -64,7 +64,7 @@ func applicationListKeyRun(v cli.Values) (cli.ListResult, error) {
 
 var applicationKeyDeleteCmd = cli.Command{
 	Name:  "delete",
-	Short: "Delete CDS application key",
+	Short: "Delete CDS an application key",
 	Args: []cli.Arg{
 		{Name: "key"},
 		{Name: "appName"},
