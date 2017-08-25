@@ -58,7 +58,8 @@
                             <li *ngFor="let a of d.value.actions">
                                 {{a.message}}
                                 <a href="#"
-                                   [routerLink]="['/project', project.key, 'application', d.key, 'pipeline', a.message_param['PipelineName']]"
+                                   [routerLink]="['/project', project.key, 'pipeline', a.message_param['PipelineName'] ]"
+                                   [queryParams]="{ application: d.key }"
                                 >
                                     [{{ 'warning_goto_job' | translate}}]
                                 </a>
@@ -70,4 +71,3 @@
         </div>
     </div>
 </div>
-
