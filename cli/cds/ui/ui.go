@@ -6,6 +6,7 @@ import (
 	"github.com/gizak/termui"
 	"github.com/skratchdot/open-golang/open"
 
+	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -18,12 +19,12 @@ type Termui struct {
 	selected string
 
 	// monitoring
-	queue                   *ScrollableList
-	building                *ScrollableList
-	statusWorkerList        *ScrollableList
-	statusHatcheriesWorkers *ScrollableList
-	statusWorkerModels      *ScrollableList
-	status                  *ScrollableList
+	queue                   *cli.ScrollableList
+	building                *cli.ScrollableList
+	statusWorkerList        *cli.ScrollableList
+	statusHatcheriesWorkers *cli.ScrollableList
+	statusWorkerModels      *cli.ScrollableList
+	status                  *cli.ScrollableList
 	currentURL              string
 }
 
