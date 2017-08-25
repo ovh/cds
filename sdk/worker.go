@@ -216,11 +216,6 @@ func SpawnErrorWorkerModel(id int64, info string) error {
 	return nil
 }
 
-// GetWorkerModelsEnabled retrieves all worker models enabled and available to user
-func GetWorkerModelsEnabled() ([]Model, error) {
-	return getWorkerModels(false)
-}
-
 // GetWorkerModels retrieves all worker models available to user (enabled or not)
 func GetWorkerModels() ([]Model, error) {
 	return getWorkerModels(true)

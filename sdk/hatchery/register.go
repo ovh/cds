@@ -127,9 +127,9 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 		case err := <-errs:
 			log.Error("%v", err)
 		case <-tickerProvision.C:
-			provisioning(h, provisionDisabled)
+			provisioning(h, provisionDisabled, models)
 		case <-tickerRegister.C:
-			if err := workerRegister(h); err != nil {
+			if err := workerRegister(h, models); err != nil {
 				log.Warning("Error on workerRegister: %s", err)
 			}
 		}
@@ -210,12 +210,7 @@ func checkFailures(maxFailures, nb int) {
 	}
 }
 
-func workerRegister(h Interface) error {
-	models, errwm := sdk.GetWorkerModelsEnabled()
-	if errwm != nil {
-		return fmt.Errorf("workerRegister> error on GetWorkerModels: %e", errwm)
-	}
-
+func workerRegister(h Interface, models []sdk.Model) error {
 	if len(models) == 0 {
 		return fmt.Errorf("workerRegister> No model returned by GetWorkerModels")
 	}

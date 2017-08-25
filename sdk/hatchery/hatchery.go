@@ -154,15 +154,9 @@ func routine(h Interface, models []sdk.Model, jobID int64, requirements []sdk.Re
 	return nil
 }
 
-func provisioning(h Interface, provisionDisabled bool) {
+func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
 	if provisionDisabled {
 		log.Debug("provisioning> disabled on this hatchery")
-		return
-	}
-
-	models, errwm := sdk.GetWorkerModelsEnabled()
-	if errwm != nil {
-		log.Error("provisioning> error on GetWorkerModels:%e", errwm)
 		return
 	}
 
