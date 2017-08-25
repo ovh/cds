@@ -13,4 +13,6 @@ type Hatchery struct {
 	GroupID  int64     `json:"group_id"`
 	LastBeat time.Time `json:"-"`
 	Model    Model     `json:"model"`
+	Uptodate bool      `json:"up_to_date"`
+	Version  string    `json:"version"`
 }

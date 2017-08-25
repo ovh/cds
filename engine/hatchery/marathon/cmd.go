@@ -64,9 +64,10 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		hatchery.Create(hatcheryMarathon,
+			viper.GetString("name"),
 			viper.GetString("api"),
 			viper.GetString("token"),
-			viper.GetInt("max-worker"),
+			viper.GetInt64("max-worker"),
 			viper.GetBool("provision-disabled"),
 			viper.GetInt("request-api-timeout"),
 			viper.GetInt("max-failures-heartbeat"),
@@ -129,12 +130,11 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 		config.HTTPBasicPassword = hatcheryMarathon.marathonPassword
 		config.HTTPClient = httpClient
 
-		client, err := marathon.NewClient(config)
+		marathonClient, err := marathon.NewClient(config)
 		if err != nil {
 			sdk.Exit("Connection failed on %s\n", viper.GetString("marathon-host"))
 		}
 
-		hatcheryMarathon.client = client
-
+		hatcheryMarathon.marathonClient = marathonClient
 	},
 }

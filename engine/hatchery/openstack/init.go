@@ -8,9 +8,9 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -18,11 +18,16 @@ import (
 // Init fetch uri from nova
 // then list available models
 // then list available images
-func (h *HatcheryCloud) Init() error {
-	// Register without declaring model
+func (h *HatcheryOpenstack) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+	sdk.Options(api, "", "", token)
+
+	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	if err := hatchery.Register(h); err != nil {
+		return fmt.Errorf("Cannot register: %s", err)
+	}
+
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("openstack", viper.GetString("name")),
-		UID:  viper.GetString("uk"),
+		Name: hatchery.GenerateName("openstack", name),
 	}
 
 	workersAlive = map[string]int64{}
@@ -41,12 +46,12 @@ func (h *HatcheryCloud) Init() error {
 		os.Exit(11)
 	}
 
-	client, errn := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{Region: h.region})
+	openstackClient, errn := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{Region: h.region})
 	if errn != nil {
 		log.Error("Unable to openstack.NewComputeV2: %s", errn)
 		os.Exit(12)
 	}
-	h.client = client
+	h.openstackClient = openstackClient
 
 	if err := h.initFlavors(); err != nil {
 		log.Warning("Error getting flavors: %s", err)
@@ -60,17 +65,13 @@ func (h *HatcheryCloud) Init() error {
 		log.Warning("Error on initIPStatus(): %s", err)
 	}
 
-	if errRegistrer := hatchery.Register(h.hatch, viper.GetString("token")); errRegistrer != nil {
-		log.Warning("Cannot register hatchery: %s", errRegistrer)
-	}
-
 	go h.main()
 
 	return nil
 }
 
-func (h *HatcheryCloud) initFlavors() error {
-	all, err := flavors.ListDetail(h.client, nil).AllPages()
+func (h *HatcheryOpenstack) initFlavors() error {
+	all, err := flavors.ListDetail(h.openstackClient, nil).AllPages()
 	if err != nil {
 		return fmt.Errorf("initFlavors> error on flavors.ListDetail: %s", err)
 	}
@@ -82,8 +83,8 @@ func (h *HatcheryCloud) initFlavors() error {
 	return nil
 }
 
-func (h *HatcheryCloud) initNetworks() error {
-	all, err := tenantnetworks.List(h.client).AllPages()
+func (h *HatcheryOpenstack) initNetworks() error {
+	all, err := tenantnetworks.List(h.openstackClient).AllPages()
 	if err != nil {
 		return fmt.Errorf("initNetworks> Unable to get Network: %s", err)
 	}
@@ -103,7 +104,7 @@ func (h *HatcheryCloud) initNetworks() error {
 // initIPStatus initializes ipsInfos to
 // add workername on ip belong to openstack-ip-range
 // this func is called once, when hatchery is starting
-func (h *HatcheryCloud) initIPStatus() error {
+func (h *HatcheryOpenstack) initIPStatus() error {
 	srvs := h.getServers()
 	log.Info("initIPStatus> %d srvs", len(srvs))
 	for ip := range ipsInfos.ips {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/viper"
@@ -24,19 +25,25 @@ type HatcheryDocker struct {
 	workers map[string]*exec.Cmd
 	hatch   *sdk.Hatchery
 	addhost string
+	client  cdsclient.Interface
 }
 
 // ID must returns hatchery id
-func (hd *HatcheryDocker) ID() int64 {
-	if hd.hatch == nil {
+func (h *HatcheryDocker) ID() int64 {
+	if h.hatch == nil {
 		return 0
 	}
-	return hd.hatch.ID
+	return h.hatch.ID
 }
 
 //Hatchery returns hatchery instance
-func (hd *HatcheryDocker) Hatchery() *sdk.Hatchery {
-	return hd.hatch
+func (h *HatcheryDocker) Hatchery() *sdk.Hatchery {
+	return h.hatch
+}
+
+//Client returns cdsclient instance
+func (h *HatcheryDocker) Client() cdsclient.Interface {
+	return h.client
 }
 
 // ModelType returns type of hatchery
@@ -46,8 +53,8 @@ func (*HatcheryDocker) ModelType() string {
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirement are not supported
-func (hd *HatcheryDocker) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-	for _, r := range job.Job.Action.Requirements {
+func (h *HatcheryDocker) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false
 		}
@@ -58,8 +65,19 @@ func (hd *HatcheryDocker) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) 
 
 // Init starts cleaning routine
 // and check hatchery can run in docker mode with given configuration
-func (hd *HatcheryDocker) Init() error {
-	hd.workers = make(map[string]*exec.Cmd)
+func (h *HatcheryDocker) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+	h.workers = make(map[string]*exec.Cmd)
+
+	sdk.Options(api, "", "", token)
+
+	h.hatch = &sdk.Hatchery{
+		Name: hatchery.GenerateName("docker", name),
+	}
+
+	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	if err := hatchery.Register(h); err != nil {
+		return fmt.Errorf("Cannot register: %s", err)
+	}
 
 	ok, err := hatchery.CheckRequirement(sdk.Requirement{Type: sdk.BinaryRequirement, Value: "docker"})
 	if err != nil {
@@ -69,65 +87,56 @@ func (hd *HatcheryDocker) Init() error {
 		return fmt.Errorf("Docker not found on this host")
 	}
 
-	hd.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("docker", viper.GetString("name")),
-		UID:  viper.GetString("token"),
-	}
-
-	if err := hatchery.Register(hd.hatch, viper.GetString("token")); err != nil {
-		log.Warning("Cannot register hatchery: %s\n", err)
-	}
-
-	go hd.workerIndexCleanupRoutine()
-	go hd.killAwolWorkerRoutine()
+	go h.workerIndexCleanupRoutine()
+	go h.killAwolWorkerRoutine()
 	return nil
 }
 
-func (hd *HatcheryDocker) workerIndexCleanupRoutine() {
+func (h *HatcheryDocker) workerIndexCleanupRoutine() {
 	for {
 		time.Sleep(1 * time.Second)
-		hd.Lock()
+		h.Lock()
 
-		for name, cmd := range hd.workers {
+		for name, cmd := range h.workers {
 			if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
-				log.Debug("HatcheryDocker.IndexCleanup: removing exited %s\n", name)
-				delete(hd.workers, name)
+				log.Debug("HatcheryDocker.IndexCleanup: removing exited %s", name)
+				delete(h.workers, name)
 				break
 			}
 		}
-		hd.Unlock()
+		h.Unlock()
 	}
 }
 
-func (hd *HatcheryDocker) killAwolWorkerRoutine() {
+func (h *HatcheryDocker) killAwolWorkerRoutine() {
 	for {
 		time.Sleep(5 * time.Second)
-		hd.killAwolWorker()
+		h.killAwolWorker()
 	}
 }
 
-func (hd *HatcheryDocker) killAwolWorker() {
+func (h *HatcheryDocker) killAwolWorker() {
 	apiworkers, err := sdk.GetWorkers()
 	if err != nil {
 		log.Warning("Cannot get workers: %s", err)
 		return
 	}
 
-	hd.Lock()
-	defer hd.Unlock()
-	log.Debug("Hatchery has %d processes in index\n", len(hd.workers))
+	h.Lock()
+	defer h.Unlock()
+	log.Debug("Hatchery has %d processes in index", len(h.workers))
 
-	for name, cmd := range hd.workers {
+	for name, cmd := range h.workers {
 		for _, n := range apiworkers {
 			// If worker is disabled, kill it
 			if n.Name == name && n.Status == sdk.StatusDisabled {
-				log.Debug("Worker %s is disabled. Kill it with fire !\n", name)
+				log.Debug("Worker %s is disabled. Kill it with fire !", name)
 
 				// if process not killed, kill it
 				if cmd.ProcessState == nil || (cmd.ProcessState != nil && !cmd.ProcessState.Exited()) {
 					err = cmd.Process.Kill()
 					if err != nil {
-						log.Warning("HatcheryDocker.killAwolWorker: cannot kill %s: %s\n", name, err)
+						log.Warning("HatcheryDocker.killAwolWorker: cannot kill %s: %s", name, err)
 					}
 				}
 
@@ -136,12 +145,12 @@ func (hd *HatcheryDocker) killAwolWorker() {
 					cmd := exec.Command("docker", "rm", "-f", name)
 					err = cmd.Run()
 					if err != nil {
-						log.Warning("HatcheryDocker.killAwolWorker: cannot rm container %s: %s\n", name, err)
+						log.Warning("HatcheryDocker.killAwolWorker: cannot rm container %s: %s", name, err)
 					}
 				}()
 
-				delete(hd.workers, name)
-				log.Info("HatcheryDocker.killAwolWorker> Killed disabled worker %s\n", name)
+				delete(h.workers, name)
+				log.Info("HatcheryDocker.killAwolWorker> Killed disabled worker %s", name)
 				return
 			}
 		}
@@ -150,15 +159,15 @@ func (hd *HatcheryDocker) killAwolWorker() {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (hd *HatcheryDocker) WorkersStarted() int {
-	return len(hd.workers)
+func (h *HatcheryDocker) WorkersStarted() int {
+	return len(h.workers)
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
-func (hd *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
+func (h *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 	var x int
-	for name := range hd.workers {
+	for name := range h.workers {
 		if strings.Contains(name, model.Name) {
 			x++
 		}
@@ -167,17 +176,17 @@ func (hd *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	if wm.Type != sdk.Docker {
 		return "", fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
 
-	if len(hd.workers) >= viper.GetInt("max-worker") {
+	if len(h.workers) >= viper.GetInt("max-worker") {
 		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
 	}
 
-	if job != nil {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, job.ID, logInfo)
+	if jobID > 0 {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, jobID, logInfo)
 	} else {
 		log.Info("spawnWorker> spawning worker %s (%s) - %s", wm.Name, wm.Image, logInfo)
 	}
@@ -199,8 +208,8 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 	args = append(args, "-e", fmt.Sprintf("CDS_NAME=%s", name))
 	args = append(args, "-e", fmt.Sprintf("CDS_TOKEN=%s", viper.GetString("token")))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
-	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", hd.hatch.ID))
-	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY_NAME=%s", hd.hatch.Name))
+	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", h.hatch.ID))
+	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY_NAME=%s", h.hatch.Name))
 
 	if viper.GetString("worker_graylog_host") != "" {
 		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_HOST=%s", viper.GetString("worker_graylog_host")))
@@ -219,12 +228,12 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
 	}
 
-	if job != nil {
-		args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", job.ID))
+	if jobID > 0 {
+		args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", jobID))
 	}
 
-	if hd.addhost != "" {
-		args = append(args, fmt.Sprintf("--add-host=%s", hd.addhost))
+	if h.addhost != "" {
+		args = append(args, fmt.Sprintf("--add-host=%s", h.addhost))
 	}
 	args = append(args, wm.Image)
 	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", sdk.Host))
@@ -238,9 +247,9 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 	if err := cmd.Start(); err != nil {
 		return "", err
 	}
-	hd.Lock()
-	hd.workers[name] = cmd
-	hd.Unlock()
+	h.Lock()
+	h.workers[name] = cmd
+	h.Unlock()
 
 	// Wait in a goroutine so that when process exits, Wait() update cmd.ProcessState
 	// ProcessState is then checked in nextAvailableLocalID
@@ -254,11 +263,11 @@ func (hd *HatcheryDocker) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, 
 }
 
 // KillWorker stops a worker locally
-func (hd *HatcheryDocker) KillWorker(worker sdk.Worker) error {
-	hd.Lock()
-	defer hd.Unlock()
+func (h *HatcheryDocker) KillWorker(worker sdk.Worker) error {
+	h.Lock()
+	defer h.Unlock()
 
-	for name, cmd := range hd.workers {
+	for name, cmd := range h.workers {
 		if worker.Name == name {
 			log.Debug("HatcheryDocker.KillWorker> %s", name)
 			if err := cmd.Process.Kill(); err != nil {
@@ -271,7 +280,7 @@ func (hd *HatcheryDocker) KillWorker(worker sdk.Worker) error {
 				return fmt.Errorf("HatcheryDocker.KillWorker: cannot rm container %s: %s", name, err)
 			}
 
-			delete(hd.workers, worker.Name)
+			delete(h.workers, worker.Name)
 			return nil
 		}
 	}
@@ -291,7 +300,7 @@ func randSeq(n int) (string, error) {
 }
 
 // NeedRegistration return true if worker model need regsitration
-func (hd *HatcheryDocker) NeedRegistration(m *sdk.Model) bool {
+func (h *HatcheryDocker) NeedRegistration(m *sdk.Model) bool {
 	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
 		return true
 	}

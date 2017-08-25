@@ -11,7 +11,7 @@ import (
 )
 
 // for each ip in the range, look for the first free ones
-func (h *HatcheryCloud) findAvailableIP(workerName string) (string, error) {
+func (h *HatcheryOpenstack) findAvailableIP(workerName string) (string, error) {
 	srvs := h.getServers()
 
 	ipsInfos.mu.Lock()

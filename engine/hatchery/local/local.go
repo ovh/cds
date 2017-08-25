@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/viper"
@@ -24,6 +25,7 @@ type HatcheryLocal struct {
 	hatch   *sdk.Hatchery
 	basedir string
 	workers map[string]*exec.Cmd
+	client  cdsclient.Interface
 }
 
 // ID must returns hatchery id
@@ -39,6 +41,11 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
+//Client returns cdsclient instance
+func (h *HatcheryLocal) Client() cdsclient.Interface {
+	return h.client
+}
+
 // ModelType returns type of hatchery
 func (*HatcheryLocal) ModelType() string {
 	return sdk.HostProcess
@@ -46,7 +53,7 @@ func (*HatcheryLocal) ModelType() string {
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
+func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	if h.Hatchery() == nil {
 		log.Debug("CanSpawn false Hatchery nil")
 		return false
@@ -55,12 +62,12 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 		log.Debug("CanSpawn false ID different model.ID:%d h.workerModelID:%d ", model.ID, h.Hatchery().Model.ID)
 		return false
 	}
-	for _, r := range job.Job.Action.Requirements {
+	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false
 		}
 	}
-	log.Debug("CanSpawn true for job %d", job.ID)
+	log.Debug("CanSpawn true for job %d", jobID)
 	return true
 }
 
@@ -77,15 +84,15 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	var err error
 
 	if len(h.workers) >= viper.GetInt("max-worker") {
 		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
 	}
 
-	if job != nil {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, job.ID, logInfo)
+	if jobID > 0 {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, jobID, logInfo)
 	} else {
 		log.Info("spawnWorker> spawning worker %s (%s) - %s", wm.Name, wm.Image, logInfo)
 	}
@@ -123,8 +130,8 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, job *sdk.PipelineBuildJob, re
 
 	args = append(args, "--single-use")
 
-	if job != nil {
-		args = append(args, fmt.Sprintf("--booked-job-id=%d", job.ID))
+	if jobID > 0 {
+		args = append(args, fmt.Sprintf("--booked-job-id=%d", jobID))
 	}
 
 	if registerOnly {
@@ -201,8 +208,10 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 }
 
 // Init register local hatchery with its worker model
-func (h *HatcheryLocal) Init() error {
+func (h *HatcheryLocal) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	h.workers = make(map[string]*exec.Cmd)
+
+	sdk.Options(api, "", "", token)
 
 	req, err := sdk.GetRequirements()
 	if err != nil {
@@ -214,23 +223,18 @@ func (h *HatcheryLocal) Init() error {
 		return fmt.Errorf("Cannot check local capabilities: %s", err)
 	}
 
-	name := hatchery.GenerateName("local", viper.GetString("name"))
-
 	h.hatch = &sdk.Hatchery{
 		Name: name,
-		UID:  viper.GetString("token"),
 		Model: sdk.Model{
-			Name:         name,
+			Name:         hatchery.GenerateName("local", name),
 			Image:        name,
 			Capabilities: capa,
 		},
 	}
 
-	log.Info("Call hatchery.Register Init()")
-
-	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
-		log.Warning("Cannot register hatchery: %s", err)
-		return err
+	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	if err := hatchery.Register(h); err != nil {
+		return fmt.Errorf("Cannot register: %s", err)
 	}
 
 	go h.startKillAwolWorkerRoutine()
