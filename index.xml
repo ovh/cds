@@ -743,7 +743,7 @@ Parameters  file: Template file to use output: Output path for generated file (d
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/</guid>
-      <description>This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
+      <description>This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
 Add an extra step of type junit on your job to view tests results on CDS UI.
 Parameters  details: Output Details Level: low, medium, high exclude: Exclude some files, one file per line loglevel: Log Level: debug, info, warn or error output: Directory where output xunit result file parallel: Launch Test Suites in parallel. Enter here number of routines path: Path containers yml venom files.</description>
     </item>
