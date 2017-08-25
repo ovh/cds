@@ -35,10 +35,11 @@ type Interface interface {
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UserReset(username, email string) error
 	UserConfirm(username, token string) (bool, string, error)
-	WorkerRegister(worker.RegistrationForm) (string, bool, error)
-	WorkerSetStatus(sdk.Status) error
+	WorkerList() ([]sdk.Worker, error)
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerModels() ([]sdk.Model, error)
+	WorkerRegister(worker.RegistrationForm) (string, bool, error)
+	WorkerSetStatus(sdk.Status) error
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
 	WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)

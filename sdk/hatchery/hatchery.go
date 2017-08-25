@@ -97,7 +97,7 @@ func routine(h Interface, models []sdk.Model, jobID int64, requirements []sdk.Re
 	}
 
 	if len(models) == 0 {
-		return fmt.Errorf("routine> %d - No model returned by GetWorkerModels", timestamp)
+		return fmt.Errorf("routine> %d - No model returned by CDS api", timestamp)
 	}
 	log.Debug("routine> %d - models received: %d", timestamp, len(models))
 

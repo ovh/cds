@@ -100,7 +100,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 			var errwm error
 			models, errwm = h.Client().WorkerModelsEnabled()
 			if errwm != nil {
-				log.Error("error on GetWorkerModels:%e", errwm)
+				log.Error("error on h.Client().WorkerModelsEnabled():%e", errwm)
 			}
 		case j := <-pbjobs:
 			if maxWorkersReached {
