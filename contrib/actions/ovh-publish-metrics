@@ -56,11 +56,11 @@ set -e
 
 if [ "x{{name}}" != "x" ]; then
 
-labels=`cat << EOF | sed 's/ /%20/g' | sed 's/%20/ /1' | tr '\n' ' '
+labels=`cat << EOF | sed 's/ /%20/g' | sed 's/%20/=/1' | tr '\n' ',' | sed 's/, *$//'
 {{.labels}}
 EOF`
 
-echo "// {{.name}}{ $labels } {{.value}}" >> .metrics
+echo "// {{.name}}{$labels} {{.value}}" >> .metrics
 
 curl -f -X POST https://warp10.{{.region}}.metrics.ovh.net/api/v0/update \
 		-H 'X-Warp10-Token: {{.token}}' \
