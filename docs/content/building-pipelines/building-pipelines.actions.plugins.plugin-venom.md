@@ -7,7 +7,7 @@ identifier = "plugin-venom"
 
 +++
 
-This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
+This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
 
 Add an extra step of type junit on your job to view tests results on CDS UI.
 
@@ -24,4 +24,3 @@ Add an extra step of type junit on your job to view tests results on CDS UI.
 ## More
 
 More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-venom/README.md)
-

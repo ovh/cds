@@ -136,7 +136,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 
 // Register calls CDS API to register current hatchery
 func Register(h Interface) error {
-	newHatchery, err := h.Client().HatcheryRegister(*h.Hatchery())
+	newHatchery, uptodate, err := h.Client().HatcheryRegister(*h.Hatchery())
 	if err != nil {
 		return sdk.WrapError(err, "register> Got HTTP exiting")
 	}
@@ -147,7 +147,7 @@ func Register(h Interface) error {
 	sdk.SetAgent(sdk.HatcheryAgent)
 	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
 
-	if !newHatchery.Uptodate {
+	if !uptodate {
 		log.Warning("-=-=-=-=- Please update your hatchery binary -=-=-=-=-")
 	}
 	return nil

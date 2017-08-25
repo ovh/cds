@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/cds/engine/api/application"

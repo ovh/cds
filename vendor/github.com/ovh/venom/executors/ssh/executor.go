@@ -13,7 +13,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 // Name for test ssh

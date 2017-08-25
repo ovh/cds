@@ -11,7 +11,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/yesnault/go-imap/imap"
 
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 // Name for test imap

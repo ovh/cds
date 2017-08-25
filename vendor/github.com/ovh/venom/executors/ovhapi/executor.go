@@ -11,8 +11,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/go-ovh/ovh"
 
-	"github.com/runabove/venom"
-	defaultctx "github.com/runabove/venom/context/default"
+	"github.com/ovh/venom"
+	defaultctx "github.com/ovh/venom/context/default"
 )
 
 // Name of executor

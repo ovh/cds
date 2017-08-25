@@ -11,16 +11,16 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk/plugin"
-	"github.com/runabove/venom"
-	"github.com/runabove/venom/context/default"
-	"github.com/runabove/venom/context/webctx"
-	"github.com/runabove/venom/executors/exec"
-	"github.com/runabove/venom/executors/http"
-	"github.com/runabove/venom/executors/imap"
-	"github.com/runabove/venom/executors/readfile"
-	"github.com/runabove/venom/executors/smtp"
-	"github.com/runabove/venom/executors/ssh"
-	"github.com/runabove/venom/executors/web"
+	"github.com/ovh/venom"
+	"github.com/ovh/venom/context/default"
+	"github.com/ovh/venom/context/webctx"
+	"github.com/ovh/venom/executors/exec"
+	"github.com/ovh/venom/executors/http"
+	"github.com/ovh/venom/executors/imap"
+	"github.com/ovh/venom/executors/readfile"
+	"github.com/ovh/venom/executors/smtp"
+	"github.com/ovh/venom/executors/ssh"
+	"github.com/ovh/venom/executors/web"
 )
 
 // VenomPlugin implements plugin interface
@@ -35,7 +35,7 @@ func (s VenomPlugin) Name() string {
 
 // Description returns the plugin description
 func (s VenomPlugin) Description() string {
-	return `This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
+	return `This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
 
 Add an extra step of type junit on your job to view tests results on CDS UI.`
 }
@@ -55,7 +55,7 @@ func (s VenomPlugin) Parameters() plugin.Parameters {
 	params.Add("details", plugin.StringParameter, "Output Details Level: low, medium, high", "low")
 	params.Add("loglevel", plugin.StringParameter, "Log Level: debug, info, warn or error", "error")
 	params.Add("vars", plugin.StringParameter, "Empty: all {{.cds...}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty", "")
-	params.Add("vars-from-file", plugin.StringParameter, "filename.yaml or filename.json. See https://github.com/runabove/venom#run-venom-with-file-var", "")
+	params.Add("vars-from-file", plugin.StringParameter, "filename.yaml or filename.json. See https://github.com/ovh/venom#run-venom-with-file-var", "")
 	return params
 }
 
