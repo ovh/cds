@@ -14,7 +14,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/yesnault/go-imap/imap"
 
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 func decodeHeader(msg *mail.Message, headerName string) (string, error) {

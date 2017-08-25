@@ -10,6 +10,6 @@ for GOOS in windows darwin linux freebsd; do
         echo "Building ${architecture} ${path}"
         export GOOS=$GOOS
         export GOARCH=$GOARCH
-        go build -ldflags "-X github.com/runabove/venom/cli/venom/update.architecture=${architecture}" -o bin/venom-${architecture}
+        go build -ldflags "-X github.com/ovh/venom/cli/venom/update.architecture=${architecture}" -o bin/venom-${architecture}
     done
 done

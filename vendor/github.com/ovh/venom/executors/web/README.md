@@ -7,7 +7,7 @@ Venom allows you to navigate into it and execute actions.
 
 ## Input
 
-* Action (https://github.com/runabove/venom/tree/master/executors/web/types.go)
+* Action (https://github.com/ovh/venom/tree/master/executors/web/types.go)
 * Format
 
 Parameters `debug` (default: false) and `timeout` (default: 180 seconds) are optional.
@@ -37,7 +37,7 @@ testcases:
   - action:
       fill:
       - find: input[name="q"]
-        text: "venom runabove"
+        text: "venom ovh"
   - action:
       click:
         find: input[value="Recherche Google"]

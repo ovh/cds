@@ -11,7 +11,7 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 // Pipeline represents the complete behavior of CDS for each projects

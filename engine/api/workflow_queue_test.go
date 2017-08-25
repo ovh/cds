@@ -14,7 +14,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/mux"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/auth"
