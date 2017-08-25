@@ -80,6 +80,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	WithGroups := FormBool(r, "withGroups")
 	WithPermission := FormBool(r, "withPermission")
 	WithRepositoriesManagers := FormBool(r, "withRepositoriesManagers")
+	WithKeys := FormBool(r, "withKeys")
 
 	opts := []project.LoadOptionFunc{}
 	if WithVariables {
@@ -105,6 +106,9 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 	if WithRepositoriesManagers {
 		opts = append(opts, project.LoadOptions.WithRepositoriesManagers)
+	}
+	if WithKeys {
+		opts = append(opts, project.LoadOptions.WithKeys)
 	}
 
 	p, errProj := project.Load(db, key, c.User, opts...)

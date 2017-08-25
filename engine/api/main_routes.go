@@ -72,6 +72,8 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/variable/{name}/audit", GET(getVariableAuditInProjectHandler))
 	router.Handle("/project/{permProjectKey}/applications", GET(getApplicationsHandler), POST(addApplicationHandler))
 	router.Handle("/project/{permProjectKey}/notifications", GET(getProjectNotificationsHandler))
+	router.Handle("/project/{permProjectKey}/keys", GET(getKeysInProjectHandler), POST(addKeyInProjectHandler))
+	router.Handle("/project/{permProjectKey}/keys/{name}", DELETE(deleteKeyInProjectHandler))
 
 	// Application
 	router.Handle("/project/{key}/application/{permApplicationName}", GET(getApplicationHandler), PUT(updateApplicationHandler), DELETE(deleteApplicationHandler))

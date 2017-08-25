@@ -114,6 +114,7 @@ var (
 	ErrInvalidJobRequirement                 = &Error{ID: 98, Status: http.StatusBadRequest}
 	ErrNotImplemented                        = &Error{ID: 99, Status: http.StatusNotImplemented}
 	ErrParameterNotExists                    = &Error{ID: 100, Status: http.StatusNotFound}
+	ErrUnknownKeyType                        = &Error{ID: 101, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -217,6 +218,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidJobRequirement.ID:                 "Invalid job requirement",
 	ErrNotImplemented.ID:                        "This functionality isn't implemented",
 	ErrParameterNotExists.ID:                    "This parameter doesn't exist",
+	ErrUnknownKeyType.ID:                        "Unknown key type",
 }
 
 var errorsFrench = map[int]string{
@@ -320,6 +322,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidJobRequirement.ID:                 "Pré-requis de Job invalide",
 	ErrNotImplemented.ID:                        "La fonctionnalité n'est pas implémentée",
 	ErrParameterNotExists.ID:                    "Ce paramètre n'existe pas",
+	ErrUnknownKeyType.ID:                        "Le type de clé n'est pas connu",
 }
 
 var errorsLanguages = []map[int]string{
