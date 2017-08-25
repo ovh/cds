@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -47,7 +47,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func receiveJob(h Interface, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *lru.Cache, warningSeconds, criticalSeconds, graceSeconds int, hostname string) bool {
+func receiveJob(h Interface, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, warningSeconds, criticalSeconds, graceSeconds int, hostname string) bool {
 	if jobID == 0 {
 		return false
 	}
@@ -58,7 +58,7 @@ func receiveJob(h Interface, jobID int64, jobQueuedSeconds int64, jobBookedBy sd
 		return false
 	}
 
-	if spawnIDs.Contains(jobID) {
+	if _, exist := spawnIDs.Get(string(jobID)); exist {
 		log.Debug("job %d already spawned in previous routine", jobID)
 		return false
 	}

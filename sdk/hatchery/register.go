@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -63,11 +63,9 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 		}
 	}(ctx)
 
-	spawnIDs, errn := lru.New(10000)
-	if errn != nil {
-		log.Error("Create> Cannot create spawnIDs cache %s", errn)
-		os.Exit(10)
-	}
+	// Create a cache with a default expiration time of 3 second, and which
+	// purges expired items every minute
+	spawnIDs := cache.New(3*time.Second, 60*time.Second)
 
 	tickerProvision := time.NewTicker(time.Duration(provisionSeconds) * time.Second)
 	tickerRegister := time.NewTicker(time.Duration(registerSeconds) * time.Second)
@@ -110,7 +108,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 			go func(job sdk.PipelineBuildJob) {
 				if isRun := receiveJob(h, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
-					spawnIDs.Add(job.ID, job.ID)
+					spawnIDs.SetDefault(string(job.ID), job.ID)
 				}
 			}(j)
 		case j := <-wjobs:
@@ -121,7 +119,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 			go func(job sdk.WorkflowNodeJobRun) {
 				if isRun := receiveJob(h, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
-					spawnIDs.Add(job.ID, job.ID)
+					spawnIDs.SetDefault(string(job.ID), job.ID)
 				}
 			}(j)
 		case err := <-errs:
