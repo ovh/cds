@@ -29,6 +29,7 @@ var LoadOptions = struct {
 	WithHooks                      LoadOptionFunc
 	WithNotifs                     LoadOptionFunc
 	WithRepositoryManager          LoadOptionFunc
+	WithKeys                       LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,
 	WithVariables:                  &loadVariables,
@@ -39,6 +40,7 @@ var LoadOptions = struct {
 	WithHooks:                      &loadHooks,
 	WithNotifs:                     &loadNotifs,
 	WithRepositoryManager:          &loadRepositoryManager,
+	WithKeys:                       &loadKeys,
 }
 
 // LoadByName load an application from DB

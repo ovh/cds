@@ -191,6 +191,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	withRepoManager := FormBool(r, "withRepoMan")
 	withTriggers := FormBool(r, "withTriggers")
 	withSchedulers := FormBool(r, "withSchedulers")
+	withKeys := FormBool(r, "withKeys")
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
@@ -208,6 +209,9 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 	if withNotifs {
 		loadOptions = append(loadOptions, application.LoadOptions.WithNotifs)
+	}
+	if withKeys {
+		loadOptions = append(loadOptions, application.LoadOptions.WithKeys)
 	}
 
 	app, errApp := application.LoadByName(db, projectKey, applicationName, c.User, loadOptions...)

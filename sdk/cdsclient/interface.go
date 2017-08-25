@@ -13,6 +13,13 @@ import (
 // Interface is the main interface for cdsclient package
 type Interface interface {
 	APIURL() string
+	ApplicationCreate(string, *sdk.Application) error
+	ApplicationDelete(string, string) error
+	ApplicationGet(string, string, ...RequestModifier) (*sdk.Application, error)
+	ApplicationList(string) ([]sdk.Application, error)
+	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
+	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
+	ApplicationKeysDelete(string, string, string) error
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, error)
 	MonStatus() ([]string, error)
 	ProjectCreate(*sdk.Project) error

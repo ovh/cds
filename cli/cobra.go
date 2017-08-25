@@ -302,10 +302,11 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 		switch f.Kind() {
 		case reflect.Array, reflect.Slice, reflect.Map:
 			continue
-		case reflect.Struct:
-			res = listItem(f.Interface(), filters, quiet, fields, verbose, res)
-			continue
 		default:
+			if structField.Anonymous && f.Kind() == reflect.Struct {
+				res = listItem(f.Interface(), filters, quiet, fields, verbose, res)
+				continue
+			}
 			if s.IsValid() && s.CanInterface() {
 				var isKey bool
 				tag := structField.Tag.Get("cli")
