@@ -13,10 +13,11 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
-var hatcheryOpenStack *HatcheryCloud
+var hatcheryOpenStack *HatcheryOpenstack
 
 var workersAlive map[string]int64
 
@@ -33,14 +34,15 @@ var ipsInfos = struct {
 	ips: map[string]ipInfos{},
 }
 
-// HatcheryCloud spawns instances of worker model with type 'ISO'
+// HatcheryOpenstack spawns instances of worker model with type 'ISO'
 // by startup up virtual machines on /cloud
-type HatcheryCloud struct {
-	hatch    *sdk.Hatchery
-	flavors  []flavors.Flavor
-	networks []tenantnetworks.Network
-	images   []images.Image
-	client   *gophercloud.ServiceClient
+type HatcheryOpenstack struct {
+	hatch           *sdk.Hatchery
+	flavors         []flavors.Flavor
+	networks        []tenantnetworks.Network
+	images          []images.Image
+	openstackClient *gophercloud.ServiceClient
+	client          cdsclient.Interface
 
 	// User provided parameters
 	address            string
@@ -57,7 +59,7 @@ type HatcheryCloud struct {
 }
 
 // ID returns hatchery id
-func (h *HatcheryCloud) ID() int64 {
+func (h *HatcheryOpenstack) ID() int64 {
 	if h.hatch == nil {
 		return 0
 	}
@@ -65,19 +67,24 @@ func (h *HatcheryCloud) ID() int64 {
 }
 
 //Hatchery returns hatchery instance
-func (h *HatcheryCloud) Hatchery() *sdk.Hatchery {
+func (h *HatcheryOpenstack) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
+//Client returns cdsclient instance
+func (h *HatcheryOpenstack) Client() cdsclient.Interface {
+	return h.client
+}
+
 // ModelType returns type of hatchery
-func (*HatcheryCloud) ModelType() string {
+func (*HatcheryOpenstack) ModelType() string {
 	return sdk.Openstack
 }
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryCloud) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
-	for _, r := range job.Job.Action.Requirements {
+func (h *HatcheryOpenstack) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false
 		}
@@ -85,7 +92,7 @@ func (h *HatcheryCloud) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	return true
 }
 
-func (h *HatcheryCloud) main() {
+func (h *HatcheryOpenstack) main() {
 	serverListTick := time.NewTicker(10 * time.Second).C
 	killAwolServersTick := time.NewTicker(30 * time.Second).C
 	killErrorServersTick := time.NewTicker(60 * time.Second).C
@@ -110,7 +117,7 @@ func (h *HatcheryCloud) main() {
 	}
 }
 
-func (h *HatcheryCloud) updateServerList() {
+func (h *HatcheryOpenstack) updateServerList() {
 	var out string
 	var total int
 	status := map[string]int{}
@@ -133,7 +140,7 @@ func (h *HatcheryCloud) updateServerList() {
 	}
 }
 
-func (h *HatcheryCloud) killAwolServers() {
+func (h *HatcheryOpenstack) killAwolServers() {
 	workers, err := sdk.GetWorkers()
 	now := time.Now().Unix()
 	if err != nil {
@@ -194,7 +201,7 @@ func (h *HatcheryCloud) killAwolServers() {
 			}
 
 			log.Info("killAwolServers> Deleting server %s status: %s last update: %s registerOnly:%s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), registerOnly, toDeleteKilled, inWorkersList)
-			if err := servers.Delete(h.client, s.ID).ExtractErr(); err != nil {
+			if err := servers.Delete(h.openstackClient, s.ID).ExtractErr(); err != nil {
 				log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
 				continue
 			}
@@ -213,7 +220,7 @@ func (h *HatcheryCloud) killAwolServers() {
 	log.Debug("killAwolServers> workersAlive: %+v", workersAlive)
 }
 
-func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModelNameLastModified, serverID, model, flavor string) {
+func (h *HatcheryOpenstack) killAwolServersComputeImage(workerModelName, workerModelNameLastModified, serverID, model, flavor string) {
 	var oldImageID string
 	var oldDateLastModified string
 	for _, img := range h.getImages() {
@@ -232,7 +239,7 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 	}
 
 	log.Info("killAwolServersComputeImage> create image before deleting server")
-	imageID, err := servers.CreateImage(h.client, serverID, servers.CreateImageOpts{
+	imageID, err := servers.CreateImage(h.openstackClient, serverID, servers.CreateImageOpts{
 		Name: "cds_image_" + workerModelName,
 		Metadata: map[string]string{
 			"worker_model_name":          workerModelName,
@@ -250,7 +257,7 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 		startTime := time.Now().Unix()
 		var newImageIsActive bool
 		for time.Now().Unix()-startTime < int64(hatcheryOpenStack.createImageTimeout) {
-			newImage, err := images.Get(h.client, imageID).Extract()
+			newImage, err := images.Get(h.openstackClient, imageID).Extract()
 			if err != nil {
 				log.Error("killAwolServersComputeImage> error on get new image %s for worker model %s: %s", imageID, workerModelName, err)
 			}
@@ -265,14 +272,14 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 
 		if !newImageIsActive {
 			log.Info("killAwolServersComputeImage> timeout while creating new image. Deleting new image for %s with ID %s", workerModelName, imageID)
-			if err := images.Delete(h.client, imageID).ExtractErr(); err != nil {
+			if err := images.Delete(h.openstackClient, imageID).ExtractErr(); err != nil {
 				log.Error("killAwolServersComputeImage> error while deleting new image %s", imageID)
 			}
 		}
 
 		if oldImageID != "" {
 			log.Info("killAwolServersComputeImage> deleting old image for %s with ID %s", workerModelName, oldImageID)
-			if err := images.Delete(h.client, oldImageID).ExtractErr(); err != nil {
+			if err := images.Delete(h.openstackClient, oldImageID).ExtractErr(); err != nil {
 				log.Error("killAwolServersComputeImage> error while deleting old image %s", oldImageID)
 			}
 		}
@@ -280,14 +287,14 @@ func (h *HatcheryCloud) killAwolServersComputeImage(workerModelName, workerModel
 	}
 }
 
-func (h *HatcheryCloud) killErrorServers() {
+func (h *HatcheryOpenstack) killErrorServers() {
 	for _, s := range h.getServers() {
 		//Remove server without IP Address
 		if s.Status == "ACTIVE" {
 			if len(s.Addresses) == 0 && time.Since(s.Updated) > 10*time.Minute {
 				log.Info("Deleting server %s without IP Address", s.Name)
 
-				r := servers.Delete(h.client, s.ID)
+				r := servers.Delete(h.openstackClient, s.ID)
 				if err := r.ExtractErr(); err != nil {
 					log.Warning("killErrorServers> Cannot remove worker %s: %s", s.Name, err)
 					continue
@@ -299,7 +306,7 @@ func (h *HatcheryCloud) killErrorServers() {
 		if s.Status == "ERROR" {
 			log.Info("Deleting server %s in error", s.Name)
 
-			r := servers.Delete(h.client, s.ID)
+			r := servers.Delete(h.openstackClient, s.ID)
 			if err := r.ExtractErr(); err != nil {
 				log.Warning("killErrorServers> Cannot remove worker in error %s: %s", s.Name, err)
 				continue
@@ -308,7 +315,7 @@ func (h *HatcheryCloud) killErrorServers() {
 	}
 }
 
-func (h *HatcheryCloud) killDisabledWorkers() {
+func (h *HatcheryOpenstack) killDisabledWorkers() {
 	workers, err := sdk.GetWorkers()
 	if err != nil {
 		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
@@ -325,7 +332,7 @@ func (h *HatcheryCloud) killDisabledWorkers() {
 		for _, s := range srvs {
 			if s.Name == w.Name {
 				log.Info("Deleting disabled worker %s", w.Name)
-				r := servers.Delete(h.client, s.ID)
+				r := servers.Delete(h.openstackClient, s.ID)
 				if err := r.ExtractErr(); err != nil {
 					log.Warning("killDisabledWorkers> Cannot disabled worker %s: %s", s.Name, err)
 					continue
@@ -337,13 +344,13 @@ func (h *HatcheryCloud) killDisabledWorkers() {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryCloud) WorkersStarted() int {
+func (h *HatcheryOpenstack) WorkersStarted() int {
 	return len(h.getServers())
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
-func (h *HatcheryCloud) WorkersStartedByModel(model *sdk.Model) int {
+func (h *HatcheryOpenstack) WorkersStartedByModel(model *sdk.Model) int {
 	var x int
 	for _, s := range h.getServers() {
 		if strings.Contains(strings.ToLower(s.Name), strings.ToLower(model.Name)) {
@@ -355,7 +362,7 @@ func (h *HatcheryCloud) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // NeedRegistration return true if worker model need regsitration
-func (h *HatcheryCloud) NeedRegistration(m *sdk.Model) bool {
+func (h *HatcheryOpenstack) NeedRegistration(m *sdk.Model) bool {
 	var oldDateLastModified string
 	for _, img := range h.getImages() {
 		w, _ := img.Metadata["worker_model_name"]
@@ -376,11 +383,11 @@ func (h *HatcheryCloud) NeedRegistration(m *sdk.Model) bool {
 }
 
 // KillWorker delete cloud instances
-func (h *HatcheryCloud) KillWorker(worker sdk.Worker) error {
+func (h *HatcheryOpenstack) KillWorker(worker sdk.Worker) error {
 	log.Info("KillWorker> Kill %s", worker.Name)
 	for _, s := range h.getServers() {
 		if s.Name == worker.Name {
-			r := servers.Delete(h.client, s.ID)
+			r := servers.Delete(h.openstackClient, s.ID)
 			if err := r.ExtractErr(); err != nil {
 				return err
 			}

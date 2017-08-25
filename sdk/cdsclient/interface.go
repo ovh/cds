@@ -13,6 +13,7 @@ import (
 // Interface is the main interface for cdsclient package
 type Interface interface {
 	APIURL() string
+	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, error)
 	MonStatus() ([]string, error)
 	ProjectCreate(*sdk.Project) error
 	ProjectDelete(string) error
@@ -36,6 +37,8 @@ type Interface interface {
 	UserConfirm(username, token string) (bool, string, error)
 	WorkerRegister(worker.RegistrationForm) (string, bool, error)
 	WorkerSetStatus(sdk.Status) error
+	WorkerModelsEnabled() ([]sdk.Model, error)
+	WorkerModels() ([]sdk.Model, error)
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
 	WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)

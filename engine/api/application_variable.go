@@ -172,7 +172,6 @@ func getVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request, db
 }
 
 func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-
 	vars := mux.Vars(r)
 	key := vars["key"]
 	appName := vars["permApplicationName"]
