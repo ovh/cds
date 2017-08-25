@@ -9,7 +9,7 @@ import (
 
 func (c *client) EnvironmentKeysList(key string, envName string) ([]sdk.EnvironmentKey, error) {
 	k := []sdk.EnvironmentKey{}
-	code, err := c.GetJSON("/project/"+key+"/environment/"+envName+"/keys", &k)
+	code, err := c.GetJSON("/project/"+key+"/environment/"+url.QueryEscape(envName)+"/keys", &k)
 	if code != 200 {
 		if err == nil {
 			return nil, fmt.Errorf("HTTP Code %d", code)
@@ -22,7 +22,7 @@ func (c *client) EnvironmentKeysList(key string, envName string) ([]sdk.Environm
 }
 
 func (c *client) EnvironmentKeyCreate(projectKey string, envName string, keyEnvironment *sdk.EnvironmentKey) error {
-	code, err := c.PostJSON("/project/"+projectKey+"/environment/"+envName+"/keys", keyEnvironment, keyEnvironment)
+	code, err := c.PostJSON("/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/keys", keyEnvironment, keyEnvironment)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
@@ -32,7 +32,7 @@ func (c *client) EnvironmentKeyCreate(projectKey string, envName string, keyEnvi
 }
 
 func (c *client) EnvironmentKeysDelete(projectKey string, envName string, keyName string) error {
-	_, code, err := c.Request("DELETE", "/project/"+projectKey+"/environment/"+envName+"/keys/"+url.QueryEscape(keyName), nil)
+	_, code, err := c.Request("DELETE", "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/keys/"+url.QueryEscape(keyName), nil)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)

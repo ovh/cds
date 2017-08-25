@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -20,7 +21,7 @@ func (c *client) EnvironmentCreate(key string, env *sdk.Environment) error {
 }
 
 func (c *client) EnvironmentDelete(key string, envName string) error {
-	code, err := c.DeleteJSON("/project/"+key+"/environment/"+envName, nil, nil)
+	code, err := c.DeleteJSON("/project/"+key+"/environment/"+url.QueryEscape(envName), nil, nil)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
@@ -34,7 +35,7 @@ func (c *client) EnvironmentDelete(key string, envName string) error {
 
 func (c *client) EnvironmentGet(key string, envName string, mods ...RequestModifier) (*sdk.Environment, error) {
 	env := &sdk.Environment{}
-	code, err := c.GetJSON("/project/"+key+"/environment/"+envName, env)
+	code, err := c.GetJSON("/project/"+key+"/environment/"+url.QueryEscape(envName), env)
 	if code != 200 {
 		if err == nil {
 			return nil, fmt.Errorf("HTTP Code %d", code)
