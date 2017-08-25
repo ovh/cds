@@ -108,6 +108,10 @@ var (
 		return nil
 	}
 
+	loadKeys = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+		return LoadAllKeys(db, app)
+	}
+
 	loadGroups = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
 		if err := LoadGroupByApplication(db, app); err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadGroups> Unable to load group permission for application %d", app.ID)
