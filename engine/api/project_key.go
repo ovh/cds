@@ -48,7 +48,7 @@ func deleteKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 			if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
 				return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
 			}
-			if err := project.UpdateLastModified(db, c.User, p); err != nil {
+			if err := project.UpdateLastModified(tx, c.User, p); err != nil {
 				return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
 			}
 		}
