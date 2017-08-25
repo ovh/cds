@@ -34,6 +34,10 @@ type HatcherySwarm struct {
 func (h *HatcherySwarm) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	sdk.Options(api, "", "", token)
 
+	h.hatch = &sdk.Hatchery{
+		Name: hatchery.GenerateName("swarm", name),
+	}
+
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
@@ -49,10 +53,6 @@ func (h *HatcherySwarm) Init(name, api, token string, requestSecondsTimeout int,
 	if errPing := h.dockerClient.Ping(); errPing != nil {
 		log.Error("Unable to ping docker host:%s", errPing)
 		return errPing
-	}
-
-	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("swarm", name),
 	}
 
 	go h.killAwolWorkerRoutine()

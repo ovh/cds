@@ -21,13 +21,13 @@ import (
 func (h *HatcheryOpenstack) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	sdk.Options(api, "", "", token)
 
+	h.hatch = &sdk.Hatchery{
+		Name: hatchery.GenerateName("openstack", name),
+	}
+
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
-	}
-
-	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("openstack", name),
 	}
 
 	workersAlive = map[string]int64{}
