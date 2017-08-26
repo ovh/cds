@@ -745,19 +745,6 @@ func GetBuildingPipelineByHash(hash string) ([]PipelineBuild, error) {
 	return pbs, nil
 }
 
-// BookPipelineBuildJob books a job for a Hatchery
-func BookPipelineBuildJob(pipelineBuildJobID int64) error {
-	path := fmt.Sprintf("/queue/%d/book", pipelineBuildJobID)
-	data, code, err := Request("POST", path, nil)
-	if err != nil {
-		return fmt.Errorf("HTTP %d err:%s", code, err)
-	}
-	if code != http.StatusOK {
-		return fmt.Errorf("HTTP %d body:%s", code, string(data))
-	}
-	return nil
-}
-
 // AddSpawnInfosPipelineBuildJob books a job for a Hatchery
 func AddSpawnInfosPipelineBuildJob(pipelineBuildJobID int64, infos []SpawnInfo) error {
 	data, errm := json.Marshal(infos)

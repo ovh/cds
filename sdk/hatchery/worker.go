@@ -8,7 +8,7 @@ import (
 // killWorker gets all workers spawned by current hatchery
 // and kill all workers with status Waiting
 func killWorker(h Interface, model *sdk.Model) error {
-	workers, errW := sdk.GetWorkers()
+	workers, errW := h.Client().WorkerList()
 	if errW != nil {
 		return errW
 	}

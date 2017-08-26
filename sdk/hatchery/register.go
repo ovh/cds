@@ -106,7 +106,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 				continue
 			}
 			go func(job sdk.PipelineBuildJob) {
-				if isRun := receiveJob(h, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
+				if isRun := receiveJob(h, false, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				}
@@ -117,7 +117,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 				continue
 			}
 			go func(job sdk.WorkflowNodeJobRun) {
-				if isRun := receiveJob(h, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
+				if isRun := receiveJob(h, true, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				}
@@ -143,8 +143,8 @@ func Register(h Interface) error {
 	h.Hatchery().ID = newHatchery.ID
 	h.Hatchery().GroupID = newHatchery.GroupID
 	h.Hatchery().Model = newHatchery.Model
-	sdk.Authorization(newHatchery.UID)
-	sdk.SetAgent(sdk.HatcheryAgent)
+	h.Hatchery().Name = newHatchery.Name
+
 	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
 
 	if !uptodate {
@@ -191,7 +191,7 @@ func hearbeat(m Interface, token string, maxFailures int) {
 			log.Info("hearbeat> %s Registered back: ID %d with model ID %d", m.Hatchery().Name, m.Hatchery().ID, m.Hatchery().Model.ID)
 		}
 
-		if _, _, err := sdk.Request("PUT", fmt.Sprintf("/hatchery/%d", m.Hatchery().ID), nil); err != nil {
+		if err := m.Client().HatcheryRefresh(m.Hatchery().ID); err != nil {
 			log.Info("heartbeat> %s cannot refresh beat: %s", m.Hatchery().Name, err)
 			m.Hatchery().ID = 0
 			checkFailures(maxFailures, failures)
@@ -233,8 +233,8 @@ func workerRegister(h Interface, models []sdk.Model) error {
 			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
 			if _, errSpawn := h.SpawnWorker(&m, 0, nil, true, "spawn for register"); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, errSpawn)
-				if err := sdk.SpawnErrorWorkerModel(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
-					log.Error("workerRegister> error on call sdk.SpawnErrorWorkerModel on worker model %s for register: %s", m.Name, errSpawn)
+				if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
+					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, errSpawn)
 				}
 				continue
 			}
