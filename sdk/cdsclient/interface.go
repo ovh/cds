@@ -20,6 +20,7 @@ type Interface interface {
 	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
 	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
 	ApplicationKeysDelete(string, string, string) error
+	ConfigUser() (map[string]string, error)
 	EnvironmentCreate(string, *sdk.Environment) error
 	EnvironmentDelete(string, string) error
 	EnvironmentGet(string, string, ...RequestModifier) (*sdk.Environment, error)

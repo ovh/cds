@@ -1,4 +1,4 @@
-package ui
+package main
 
 import (
 	"fmt"
@@ -9,10 +9,130 @@ import (
 	"time"
 
 	"github.com/gizak/termui"
-
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/skratchdot/open-golang/open"
 )
+
+var monitoringCmd = cli.Command{
+	Name:  "monitoring",
+	Short: "CDS monitoring",
+}
+
+func monitoringRun(v cli.Values) (interface{}, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("cds UI crashed :(\n%s\n", r)
+			termui.Close()
+		}
+	}()
+
+	ui := &Termui{}
+	ui.init()
+	ui.draw(0)
+
+	defer termui.Close()
+	termui.Loop()
+	return nil, nil
+}
+
+// Termui wrapper designed for dashboard creation
+type Termui struct {
+	header *termui.Par
+	msg    string
+
+	current  string
+	selected string
+
+	// monitoring
+	queue                   *cli.ScrollableList
+	building                *cli.ScrollableList
+	statusWorkerList        *cli.ScrollableList
+	statusHatcheriesWorkers *cli.ScrollableList
+	statusWorkerModels      *cli.ScrollableList
+	status                  *cli.ScrollableList
+	currentURL              string
+}
+
+// Constants for each view of cds ui
+const (
+	QueueSelected             = "queue"
+	BuildingSelected          = "building"
+	WorkersListSelected       = "workersList"
+	WorkerModelsSelected      = "workerModels"
+	HatcheriesWorkersSelected = "hatcheriesWorkers"
+	StatusSelected            = "status"
+)
+
+func (ui *Termui) init() {
+	if err := termui.Init(); err != nil {
+		panic(err)
+	}
+
+	termui.Handle("/timer/1s", func(e termui.Event) {
+		t := e.Data.(termui.EvtTimer)
+		ui.draw(int(t.Count))
+	})
+
+	termui.Handle("/sys/kbd/q", func(termui.Event) {
+		termui.StopLoop()
+	})
+
+	termui.Handle("/sys/kbd", func(e termui.Event) {
+		ui.msg = fmt.Sprintf("No command for %v", e)
+	})
+
+	termui.Handle("/sys/kbd/<tab>", func(e termui.Event) {
+		ui.monitoringSelectNext()
+	})
+
+	termui.Handle("/sys/kbd/<down>", func(e termui.Event) {
+		ui.monitoringCursorDown()
+	})
+	termui.Handle("/sys/kbd/<up>", func(e termui.Event) {
+		ui.monitoringCursorUp()
+	})
+
+	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) {
+		if ui.currentURL != "" {
+			open.Run(ui.currentURL)
+		}
+	})
+
+	ui.initHeader()
+	go ui.showMonitoring()
+}
+
+func (ui *Termui) draw(i int) {
+	checking, checkingColor := statusShort(sdk.StatusChecking.String())
+	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
+	building, buildingColor := statusShort(sdk.StatusBuilding.String())
+	success, successColor := statusShort(sdk.StatusSuccess.String())
+	fail, failColor := statusShort(sdk.StatusFail.String())
+	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
+	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s) | %s",
+		checking, checkingColor,
+		waiting, waitingColor,
+		building, buildingColor,
+		success, successColor,
+		fail, failColor,
+		disabled, disabledColor,
+		ui.msg)
+	termui.Body.Align()
+	termui.Render(termui.Body)
+}
+
+func (ui *Termui) initHeader() {
+	p := termui.NewPar("")
+	p.Height = 1
+	p.TextFgColor = termui.ColorWhite
+	p.BorderLabel = ""
+	p.BorderFg = termui.ColorCyan
+	p.Border = false
+	ui.header = p
+}
+
+////////////
 
 func (ui *Termui) showMonitoring() {
 	termui.Body.Rows = nil
@@ -107,7 +227,7 @@ func (ui *Termui) showMonitoring() {
 	termui.Render()
 
 	baseURL := "http://cds.ui/"
-	urlUI, err := sdk.GetConfigUser()
+	urlUI, err := client.ConfigUser()
 	if err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 	}
@@ -224,7 +344,7 @@ func (ui *Termui) monitoringColorSelected() {
 
 func (ui *Termui) updateStatus() string {
 	start := time.Now()
-	status, err := sdk.GetStatus()
+	status, err := client.MonStatus()
 	if err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 		return ""
@@ -260,6 +380,7 @@ func (ui *Termui) updateStatus() string {
 
 func (ui *Termui) updateBuilding(baseURL string) string {
 	start := time.Now()
+	//TODO yesnault
 	pbs, err := sdk.GetBuildingPipelines()
 	if err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
@@ -345,7 +466,7 @@ func jobLine(name string, status string) string {
 
 func (ui *Termui) updateQueueWorkers() string {
 	start := time.Now()
-	workers, err := sdk.GetWorkers()
+	workers, err := client.WorkerList()
 	if err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 		return ""
@@ -455,7 +576,7 @@ func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[int
 
 func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[int64]sdk.Model) {
 	start := time.Now()
-	workerModels, errwm := sdk.GetWorkerModels()
+	workerModels, errwm := client.WorkerModels()
 	if errwm != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", errwm.Error())
 		return "", nil
@@ -519,6 +640,7 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 
 func (ui *Termui) updateQueue(baseURL string) string {
 	start := time.Now()
+	//TODO yesnault
 	pbJobs, err := sdk.GetBuildQueue()
 	if err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
