@@ -50,7 +50,7 @@ func deleteKeyInApplicationHandler(w http.ResponseWriter, r *http.Request, db *g
 			if err := application.DeleteApplicationKey(tx, app.ID, keyName); err != nil {
 				return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot delete key %s", k.Name)
 			}
-			if err := application.UpdateLastModified(db, app, c.User); err != nil {
+			if err := application.UpdateLastModified(tx, app, c.User); err != nil {
 				return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot update application last modified date")
 			}
 		}

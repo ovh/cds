@@ -164,7 +164,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var key sdk.ApplicationKey
-	tester.AddCall("Test_addKeyInProjectHandler", "POST", route, k).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.UnmarshalResponse(&key))
+	tester.AddCall("Test_addKeyInApplicationHandler", "POST", route, k).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.UnmarshalResponse(&key))
 	tester.Run()
 
 	assert.Equal(t, app.ID, key.ApplicationID)

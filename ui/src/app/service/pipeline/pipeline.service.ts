@@ -25,7 +25,7 @@ export class PipelineService {
      */
     getPipeline(key: string, pipName: string): Observable<Pipeline> {
         let params = new HttpParams();
-        params.append('withApplications', 'true');
+        params = params.append('withApplications', 'true');
         return this._http.get('/project/' + key + '/pipeline/' + pipName, {params: params});
     }
 
