@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
@@ -519,8 +520,18 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 
 func (ui *Termui) updateQueue(baseURL string) string {
 	start := time.Now()
-	pbJobs, err := sdk.GetBuildQueue()
+	var pbJobs []sdk.PipelineBuildJob
+	data, code, err := sdk.Request("GET", "/queue?status=all", nil)
 	if err != nil {
+		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+		return ""
+	}
+	if code >= 300 {
+		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+		return ""
+	}
+
+	if err = json.Unmarshal(data, &pbJobs); err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 		return ""
 	}

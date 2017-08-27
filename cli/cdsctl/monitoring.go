@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -46,7 +45,6 @@ type Termui struct {
 
 	// monitoring
 	queue                   *cli.ScrollableList
-	building                *cli.ScrollableList
 	statusWorkerList        *cli.ScrollableList
 	statusHatcheriesWorkers *cli.ScrollableList
 	statusWorkerModels      *cli.ScrollableList
@@ -142,7 +140,7 @@ func (ui *Termui) showMonitoring() {
 	ui.queue.ItemBgColor = termui.ColorBlack
 
 	heightBottom := 16
-	heightQueue := ((termui.TermHeight() - heightBottom) / 2) - 3
+	heightQueue := (termui.TermHeight() - heightBottom)
 	if heightQueue <= 0 {
 		heightQueue = 4
 	}
@@ -155,22 +153,6 @@ func (ui *Termui) showMonitoring() {
 	ui.queue.BorderRight = false
 
 	ui.selected = QueueSelected
-
-	ui.building = cli.NewScrollableList()
-	ui.building.ItemFgColor = termui.ColorWhite
-	ui.building.ItemBgColor = termui.ColorBlack
-
-	heightBuilding := ((termui.TermHeight() - heightBottom) / 2) + 3
-	if heightBuilding <= 0 {
-		heightBuilding = 3
-	}
-	ui.building.BorderLabel = " Building "
-	ui.building.Height = heightBuilding
-	ui.building.Width = termui.TermWidth()
-	ui.building.Items = []string{"Loading..."}
-	ui.building.BorderBottom = false
-	ui.building.BorderLeft = false
-	ui.building.BorderRight = false
 
 	ui.statusWorkerList = cli.NewScrollableList()
 	ui.statusWorkerList.ItemFgColor = termui.ColorWhite
@@ -213,7 +195,6 @@ func (ui *Termui) showMonitoring() {
 
 	termui.Body.AddRows(
 		termui.NewCol(12, 0, ui.queue),
-		termui.NewCol(12, 0, ui.building),
 	)
 	termui.Body.AddRows(
 		termui.NewRow(
@@ -239,16 +220,15 @@ func (ui *Termui) showMonitoring() {
 	ticker := time.NewTicker(2 * time.Second).C
 
 	for {
-		var a, b, c, d string
+		var a, b, c string
 		select {
 		case <-ticker:
 			ui.monitoringColorSelected()
 			a = ui.updateQueue(baseURL)
 			b = ui.updateQueueWorkers()
-			c = ui.updateBuilding(baseURL)
-			d = ui.updateStatus()
+			c = ui.updateStatus()
 		}
-		ui.msg = fmt.Sprintf("%s | %s | %s | %s", a, b, c, d)
+		ui.msg = fmt.Sprintf("%s | %s | %s", a, b, c)
 		termui.Render()
 	}
 }
@@ -257,8 +237,6 @@ func (ui *Termui) monitoringCursorDown() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.CursorDown()
-	case BuildingSelected:
-		ui.building.CursorDown()
 	case WorkersListSelected:
 		ui.statusWorkerList.CursorDown()
 	case WorkerModelsSelected:
@@ -274,8 +252,6 @@ func (ui *Termui) monitoringCursorUp() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.CursorUp()
-	case BuildingSelected:
-		ui.building.CursorUp()
 	case WorkersListSelected:
 		ui.statusWorkerList.CursorUp()
 	case WorkerModelsSelected:
@@ -293,9 +269,6 @@ func (ui *Termui) monitoringSelectNext() {
 	case QueueSelected:
 		ui.selected = BuildingSelected
 		ui.queue.Cursor = 0
-	case BuildingSelected:
-		ui.selected = WorkersListSelected
-		ui.building.Cursor = 0
 	case WorkersListSelected:
 		ui.selected = WorkerModelsSelected
 		ui.statusWorkerList.Cursor = 0
@@ -314,7 +287,6 @@ func (ui *Termui) monitoringSelectNext() {
 
 func (ui *Termui) monitoringColorSelected() {
 	ui.queue.BorderFg = termui.ColorDefault
-	ui.building.BorderFg = termui.ColorDefault
 	ui.statusWorkerList.BorderFg = termui.ColorDefault
 	ui.statusWorkerModels.BorderFg = termui.ColorDefault
 	ui.statusHatcheriesWorkers.BorderFg = termui.ColorDefault
@@ -323,8 +295,6 @@ func (ui *Termui) monitoringColorSelected() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.BorderFg = termui.ColorRed
-	case BuildingSelected:
-		ui.building.BorderFg = termui.ColorRed
 	case WorkersListSelected:
 		ui.statusWorkerList.BorderFg = termui.ColorRed
 	case WorkerModelsSelected:
@@ -335,7 +305,6 @@ func (ui *Termui) monitoringColorSelected() {
 		ui.status.BorderFg = termui.ColorRed
 	}
 	termui.Render(ui.queue,
-		ui.building,
 		ui.statusWorkerList,
 		ui.statusWorkerModels,
 		ui.statusHatcheriesWorkers,
@@ -375,65 +344,6 @@ func (ui *Termui) updateStatus() string {
 		}
 	}
 	ui.status.Items = items
-	return msg
-}
-
-func (ui *Termui) updateBuilding(baseURL string) string {
-	start := time.Now()
-	//TODO yesnault
-	pbs, err := sdk.GetBuildingPipelines()
-	if err != nil {
-		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
-		return ""
-	}
-	elapsed := time.Since(start)
-	msg := fmt.Sprintf("[buildingPipelines %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
-
-	statusTitle := []string{}
-	status := make(map[string]int)
-
-	items := []string{fmt.Sprintf("[  %s➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("project/application", 35), pad("pipeline", 25), pad("branch/env", 19), "stage: jobs...")}
-	for i, pb := range pbs {
-		if _, ok := status[pb.Status.String()]; !ok {
-			statusTitle = append(statusTitle, pb.Status.String())
-		}
-		status[pb.Status.String()] = status[pb.Status.String()] + 1
-
-		t := ui.pipelineLine(pb.Application.ProjectKey, pb.Application, pb)
-		for _, s := range pb.Stages {
-			switch s.Status {
-			case sdk.StatusWaiting:
-				t += fmt.Sprintf("[ ➤ %s ](fg-yellow,bg-default)", s.Name)
-			case sdk.StatusBuilding:
-				t += fmt.Sprintf("[ ➤ %s ](fg-blue,bg-default)", s.Name)
-				if len(s.PipelineBuildJobs) > 0 {
-					t += "[:](fg-cyan,bg-default)"
-				}
-				for _, pbj := range s.PipelineBuildJobs {
-					t += jobLine(pbj.Job.Action.Name, pbj.Status)
-				}
-			case sdk.StatusSuccess:
-				t += fmt.Sprintf("[ ➤ %s ](fg-green,bg-default)", s.Name)
-			case sdk.StatusFail:
-				t += fmt.Sprintf("[ ➤ %s ](fg-red,bg-default)", s.Name)
-			default:
-				t += fmt.Sprintf("[ ➤ %s %s ](fg-cyan,bg-default)", s.Name, s.Status)
-			}
-		}
-		items = append(items, t)
-
-		if i == ui.building.Cursor-1 {
-			ui.currentURL = computeURL(baseURL, pb.Application.ProjectKey, pb.Application.Name, pb.Pipeline.Name, fmt.Sprintf("%d", pb.BuildNumber), pb.Environment.Name, pb.Trigger.VCSChangesBranch, strconv.FormatInt(pb.Version, 10))
-		}
-	}
-	ui.building.Items = items
-	sort.Strings(statusTitle)
-	title := " Pipelines  "
-	for _, s := range statusTitle {
-		icon, color := statusShort(s)
-		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
-	}
-	ui.building.BorderLabel = title
 	return msg
 }
 
@@ -640,8 +550,7 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 
 func (ui *Termui) updateQueue(baseURL string) string {
 	start := time.Now()
-	//TODO yesnault
-	pbJobs, err := sdk.GetBuildQueue()
+	wJobs, pbJobs, err := client.Queue()
 	if err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 		return ""
@@ -656,50 +565,17 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		fmt.Sprintf("[  %s %s%s %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("since", 9), pad("booked", 27), pad("job", 7), pad("project/application", 35), pad("pipeline/branch/env", 33), "requirements"),
 	}
 
-	for i, job := range pbJobs {
-		req := ""
-		for _, r := range job.Job.Action.Requirements {
-			req += fmt.Sprintf("%s(%s):%s ", r.Name, r.Type, r.Value)
-		}
-		prj := getVarsInPbj("cds.project", job.Parameters)
-		app := getVarsInPbj("cds.application", job.Parameters)
-		pip := getVarsInPbj("cds.pipeline", job.Parameters)
-		build := getVarsInPbj("cds.buildNumber", job.Parameters)
-		env := getVarsInPbj("cds.environment", job.Parameters)
-		bra := getVarsInPbj("git.branch", job.Parameters)
-		version := getVarsInPbj("cds.version", job.Parameters)
-		duration := time.Since(job.Queued)
-		if maxQueued < duration {
-			maxQueued = duration
-		}
-
-		row := make([]string, 5)
-		var c string
-		if duration > 60*time.Second {
-			c = "bg-red"
-		} else if duration > 15*time.Second {
-			c = "bg-yellow"
-		} else {
-			c = "bg-default"
-		}
-		row[0] = pad(fmt.Sprintf(sdk.Round(duration, time.Second).String()), 9)
-
-		if job.BookedBy.ID != 0 {
-			row[1] = pad(fmt.Sprintf(" %s.%d ", job.BookedBy.Name, job.BookedBy.ID), 27)
-			booked[fmt.Sprintf("%s.%d", job.BookedBy.Name, job.BookedBy.ID)] = booked[job.BookedBy.Name] + 1
-		} else {
-			row[1] = pad("", 27)
-		}
-		row[2] = pad(fmt.Sprintf("%d", job.ID), 7)
-		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 35), pad(pip+"/"+bra+"/"+env, 33))
-		row[4] = fmt.Sprintf("➤ %s", req)
-
-		item := fmt.Sprintf("  [%s](%s)[%s %s %s %s](bg-default)", row[0], c, row[1], row[2], row[3], row[4])
+	var idx int
+	var item string
+	for _, job := range pbJobs {
+		item, maxQueued = ui.updateQueueJob(idx, booked, maxQueued, job.ID, false, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
 		items = append(items, item)
-
-		if i == ui.queue.Cursor-1 {
-			ui.currentURL = computeURL(baseURL, prj, app, pip, build, env, bra, version)
-		}
+		idx++
+	}
+	for _, job := range wJobs {
+		item, maxQueued = ui.updateQueueJob(idx, booked, maxQueued, job.ID, true, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
+		items = append(items, item)
+		idx++
 	}
 	ui.queue.Items = items
 
@@ -709,6 +585,56 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	}
 	ui.queue.BorderLabel = t
 	return msg
+}
+
+func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, requirements []sdk.Requirement, queued time.Time, bookedBy sdk.Hatchery, baseURL string) (string, time.Duration) {
+	req := ""
+	for _, r := range requirements {
+		req += fmt.Sprintf("%s(%s):%s ", r.Name, r.Type, r.Value)
+	}
+	prj := getVarsInPbj("cds.project", parameters)
+	app := getVarsInPbj("cds.application", parameters)
+	pip := getVarsInPbj("cds.pipeline", parameters)
+	build := getVarsInPbj("cds.buildNumber", parameters)
+	env := getVarsInPbj("cds.environment", parameters)
+	bra := getVarsInPbj("git.branch", parameters)
+	version := getVarsInPbj("cds.version", parameters)
+	duration := time.Since(queued)
+
+	row := make([]string, 5)
+	var c string
+	if duration > 60*time.Second {
+		c = "bg-red"
+	} else if duration > 15*time.Second {
+		c = "bg-yellow"
+	} else {
+		c = "bg-default"
+	}
+	if isWJob {
+		row[0] = pad(fmt.Sprintf("W %s", sdk.Round(duration, time.Second).String()), 9)
+	} else {
+		row[0] = pad(fmt.Sprintf(sdk.Round(duration, time.Second).String()), 9)
+	}
+
+	if bookedBy.ID != 0 {
+		row[1] = pad(fmt.Sprintf(" %s.%d ", bookedBy.Name, bookedBy.ID), 27)
+		booked[fmt.Sprintf("%s.%d", bookedBy.Name, bookedBy.ID)] = booked[bookedBy.Name] + 1
+	} else {
+		row[1] = pad("", 27)
+	}
+	row[2] = pad(fmt.Sprintf("%d", id), 7)
+	row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 35), pad(pip+"/"+bra+"/"+env, 33))
+	row[4] = fmt.Sprintf("➤ %s", req)
+
+	item := fmt.Sprintf("  [%s](%s)[%s %s %s %s](bg-default)", row[0], c, row[1], row[2], row[3], row[4])
+
+	if idx == ui.queue.Cursor-1 {
+		ui.currentURL = computeURL(baseURL, prj, app, pip, build, env, bra, version)
+	}
+	if maxQueued < duration {
+		return item, duration
+	}
+	return item, maxQueued
 }
 
 func statusShort(status string) (string, string) {

@@ -2,9 +2,8 @@ package cdsclient
 
 import (
 	"context"
-	"time"
-
 	"io"
+	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
@@ -38,6 +37,7 @@ type Interface interface {
 	ProjectKeysList(string) ([]sdk.ProjectKey, error)
 	ProjectKeyCreate(string, *sdk.ProjectKey) error
 	ProjectKeysDelete(string, string) error
+	Queue() ([]sdk.WorkflowNodeJobRun, []sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
 	QueueJobBook(isWorkflowJob bool, id int64) error
