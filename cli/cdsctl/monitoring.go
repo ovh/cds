@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/gizak/termui"
+	"github.com/skratchdot/open-golang/open"
+
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
-	"github.com/skratchdot/open-golang/open"
 )
 
 var monitoringCmd = cli.Command{

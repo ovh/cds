@@ -20,7 +20,8 @@ import (
 // then list available images
 func (h *HatcheryOpenstack) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("openstack", name),
+		Name:    hatchery.GenerateName("openstack", name),
+		Version: sdk.VERSION,
 	}
 
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)

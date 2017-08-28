@@ -23,7 +23,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 
 	log.Debug("Checking %d requirements", len(requirements))
 	form.BinaryCapabilities = LoopPath(w, requirements)
-	form.Version = VERSION
+	form.Version = sdk.VERSION
 	form.OS = runtime.GOOS
 	form.Arch = runtime.GOOS
 

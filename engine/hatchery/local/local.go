@@ -234,6 +234,7 @@ func (h *HatcheryLocal) Init(name, api, token string, requestSecondsTimeout int,
 			Image:        genname,
 			Capabilities: capa,
 		},
+		Version: sdk.VERSION,
 	}
 
 	if err := hatchery.Register(h); err != nil {

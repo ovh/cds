@@ -59,11 +59,6 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-var (
-	//VERSION is set with -ldflags "-X main.VERSION={{.cds.proj.version}}+{{.cds.version}}"
-	VERSION = "snapshot"
-)
-
 func main() {
 	addFlags()
 	addCommands()

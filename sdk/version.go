@@ -1,4 +1,4 @@
 package sdk
 
-// VERSION of CDS SDK
-const VERSION = "0.1.0"
+//VERSION is set with -ldflags "-X main.VERSION={{.cds.proj.version}}+{{.cds.version}}"
+const VERSION = "snapshot"

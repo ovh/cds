@@ -69,7 +69,8 @@ func (h *HatcheryDocker) Init(name, api, token string, requestSecondsTimeout int
 	h.workers = make(map[string]*exec.Cmd)
 
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("docker", name),
+		Name:    hatchery.GenerateName("docker", name),
+		Version: sdk.VERSION,
 	}
 
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)

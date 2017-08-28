@@ -33,7 +33,8 @@ type HatcherySwarm struct {
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("swarm", name),
+		Name:    hatchery.GenerateName("swarm", name),
+		Version: sdk.VERSION,
 	}
 
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)

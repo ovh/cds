@@ -329,7 +329,8 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("marathon", name),
+		Name:    hatchery.GenerateName("marathon", name),
+		Version: sdk.VERSION,
 	}
 
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
