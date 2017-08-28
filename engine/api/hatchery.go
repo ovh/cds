@@ -8,7 +8,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/internal"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -34,7 +33,7 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		return sdk.WrapError(err, "registerHatchery> Error")
 	}
 
-	hatch.Uptodate = hatch.Version == internal.VERSION
+	hatch.Uptodate = hatch.Version == sdk.VERSION
 
 	log.Debug("registerHatchery> Welcome %d", hatch.ID)
 	return WriteJSON(w, r, hatch, http.StatusOK)
