@@ -92,12 +92,6 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot update worker status")
 	}
 
-	//Load the secrets
-	secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, job)
-	if errSecret != nil {
-		return sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
-	}
-
 	//Load the node run
 	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID)
 	if errn != nil {
@@ -109,16 +103,43 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
 	}
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot commit transaction")
+
+
+	//Load workflow node run
+	nodeRun, err := workflow.LoadNodeRunByID(db, job.WorkflowNodeRunID)
+	if err != nil {
+		return  sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load node run")
+	}
+
+	//Load workflow run
+	workflowRun, err := workflow.LoadRunByID(db, nodeRun.WorkflowRunID)
+	if err != nil {
+		return sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load workflow run")
+	}
+
+	//Load the secrets
+	secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, job, nodeRun, workflowRun)
+	if errSecret != nil {
+		return sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
 	}
 
 	//Feed the worker
 	pbji := worker.WorkflowNodeJobRunInfo{}
 	pbji.NodeJobRun = *job
-	pbji.Secrets = secrets
 	pbji.Number = noderun.Number
 	pbji.SubNumber = noderun.SubNumber
+	pbji.Secrets = secrets
+
+	params, secretsKeys, errK :=  workflow.LoadNodeJobRunKeys(tx,job, nodeRun, workflowRun)
+	if errK != nil {
+		return sdk.WrapError(errK, "postTakeWorkflowJobHandler> Cannot load keys")
+	}
+	pbji.Secrets = append(pbji.Secrets, secretsKeys...)
+	pbji.NodeJobRun.Parameters = append(pbji.NodeJobRun.Parameters, params...)
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot commit transaction")
+	}
 
 	return WriteJSON(w, r, pbji, http.StatusOK)
 }

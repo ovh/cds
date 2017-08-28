@@ -13,6 +13,8 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/environment"
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
@@ -152,20 +154,77 @@ func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerNam
 	return job, nil
 }
 
+// LoadNodeJobRunKeys loads all keys for a job run
+func LoadNodeJobRunKeys(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun) ([]sdk.Parameter, []sdk.Variable, error) {
+	params := []sdk.Parameter{}
+	secrets := []sdk.Variable{}
+
+	p, errP := project.LoadByID(db, w.Workflow.ProjectID, nil, project.LoadOptions.WithKeys)
+	if errP != nil {
+		return nil, nil, sdk.WrapError(errP, "LoadNodeJobRunKeys> Cannot load project keys")
+	}
+	for _, k := range p.Keys {
+		params = append(params, sdk.Parameter{
+			Name:  "cds.proj." + k.Name + ".pub",
+			Type:  "string",
+			Value: k.Public,
+		})
+		secrets = append(secrets, sdk.Variable{
+			Name:  "cds.proj." + k.Name + ".priv",
+			Type:  "string",
+			Value: k.Private,
+		})
+	}
+
+
+	//Load node definition
+	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
+	if n == nil {
+		return nil, nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+	}
+	if n.Context != nil && n.Context.Application != nil {
+		a, errA := application.LoadByID(db, n.Context.Application.ID, nil, application.LoadOptions.WithKeys)
+		if errA != nil {
+			return nil, nil, sdk.WrapError(errA, "loadActionBuildKeys> Cannot load application keys")
+		}
+		for _, k := range a.Keys {
+			params = append(params, sdk.Parameter{
+				Name:  "cds.app." + k.Name + ".pub",
+				Type:  "string",
+				Value: k.Public,
+			})
+			secrets = append(secrets, sdk.Variable{
+				Name:  "cds.app." + k.Name + ".priv",
+				Type:  "string",
+				Value: k.Private,
+			})
+		}
+	}
+
+	if n.Context != nil && n.Context.Environment != nil && n.Context.Environment.ID != sdk.DefaultEnv.ID {
+		e, errE := environment.LoadEnvironmentByID(db, n.Context.Environment.ID)
+		if errE != nil {
+			return nil, nil, sdk.WrapError(errE, "loadActionBuildKeys> Cannot load environment keys")
+		}
+		for _, k := range e.Keys {
+			params = append(params, sdk.Parameter{
+				Name:  "cds.env." + k.Name + ".pub",
+				Type:  "string",
+				Value: k.Public,
+			})
+			secrets = append(secrets, sdk.Variable{
+				Name:  "cds.env." + k.Name + ".priv",
+				Type:  "string",
+				Value: k.Private,
+			})
+		}
+
+	}
+	return params, secrets, nil
+}
+
 // LoadNodeJobRunSecrets loads all secrets for a job run
-func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun) ([]sdk.Variable, error) {
-	//Load workflow node run
-	node, err := LoadNodeRunByID(db, job.WorkflowNodeRunID)
-	if err != nil {
-		return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Unable to load node run")
-	}
-
-	//Load workflow run
-	w, err := loadRunByID(db, node.WorkflowRunID)
-	if err != nil {
-		return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Unable to load workflow run")
-	}
-
+func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun) ([]sdk.Variable, error) {
 	var secrets []sdk.Variable
 
 	// Load project secrets
@@ -178,9 +237,9 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun) ([]
 	secrets = append(secrets, pv...)
 
 	//Load node definition
-	n := w.Workflow.GetNode(node.WorkflowNodeID)
+	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
 	if n == nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", node.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
 	}
 
 	//Application variables

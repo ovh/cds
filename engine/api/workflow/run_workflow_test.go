@@ -176,7 +176,7 @@ func TestManualRun1(t *testing.T) {
 	assert.Len(t, runs, 2)
 
 	//TestLoadRunByID
-	_, err = LoadRunByID(db, proj.Key, wr2.ID)
+	_, err = LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID)
 	test.NoError(t, err)
 
 }
