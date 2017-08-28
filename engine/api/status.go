@@ -36,8 +36,8 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bu
 	var output []string
 
 	// Version
-	output = append(output, fmt.Sprintf("Version: %s", internal.VERSION))
-	log.Debug("Status> Version: %s", internal.VERSION)
+	output = append(output, fmt.Sprintf("Version: %s", sdk.VERSION))
+	log.Debug("Status> Version: %s", sdk.VERSION)
 
 	// Uptime
 	output = append(output, fmt.Sprintf("Uptime: %s", time.Since(startupTime)))
