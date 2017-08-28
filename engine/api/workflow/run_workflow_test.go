@@ -408,8 +408,20 @@ func TestManualRun3(t *testing.T) {
 			},
 		})
 
+		//Load workflow node run
+		nodeRun, err := LoadNodeRunByID(db, j.WorkflowNodeRunID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		//Load workflow run
+		workflowRun, err := LoadRunByID(db, nodeRun.WorkflowRunID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		//TestLoadNodeJobRunSecrets
-		secrets, err := LoadNodeJobRunSecrets(db, j)
+		secrets, err := LoadNodeJobRunSecrets(db, j, nodeRun, workflowRun)
 		assert.NoError(t, err)
 		assert.Len(t, secrets, 1)
 
