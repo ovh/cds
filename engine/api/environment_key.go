@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"regexp"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -77,6 +78,12 @@ func addKeyInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	var newKey sdk.EnvironmentKey
 	if err := UnmarshalBody(r, &newKey); err != nil {
 		return err
+	}
+
+	// check application name pattern
+	regexp := regexp.MustCompile(sdk.NamePattern)
+	if !regexp.MatchString(newKey.Name) {
+		return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInEnvironmentHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 	}
 
 	p, errP := project.Load(db, key, c.User)
