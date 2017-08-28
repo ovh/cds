@@ -367,22 +367,3 @@ func ImportAction(action *Action) (*Action, error) {
 	}
 	return &act, nil
 }
-
-//GetRequirements returns the list of all used requirements
-func GetRequirements() ([]Requirement, error) {
-	path := "/action/requirement"
-
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	var req []Requirement
-	if err := json.Unmarshal(data, &req); err != nil {
-		return nil, err
-	}
-	return req, nil
-}

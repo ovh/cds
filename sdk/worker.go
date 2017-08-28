@@ -196,26 +196,6 @@ func UpdateWorkerModel(id int64, name string, t string, value string) error {
 	return nil
 }
 
-// SpawnErrorWorkerModel updates registration infos on worker model
-func SpawnErrorWorkerModel(id int64, info string) error {
-	uri := fmt.Sprintf("/worker/model/error/%d", id)
-
-	data, err := json.Marshal(SpawnErrorForm{Error: info})
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("PUT", uri, data)
-	if err != nil {
-		return err
-	}
-	if code > 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
-}
-
 // GetWorkerModels retrieves all worker models available to user (enabled or not)
 func GetWorkerModels() ([]Model, error) {
 	return getWorkerModels(true)

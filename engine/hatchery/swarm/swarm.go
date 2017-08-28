@@ -32,10 +32,9 @@ type HatcherySwarm struct {
 
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
-	sdk.Options(api, "", "", token)
-
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("swarm", name),
+		Name:    hatchery.GenerateName("swarm", name),
+		Version: sdk.VERSION,
 	}
 
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
@@ -263,11 +262,11 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 	}
 
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", sdk.Host, registerCmd)}
+	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
 
 	//CDS env needed by the worker binary
 	env := []string{
-		"CDS_API" + "=" + sdk.Host,
+		"CDS_API" + "=" + h.Client().APIURL(),
 		"CDS_NAME" + "=" + name,
 		"CDS_TOKEN" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
@@ -556,7 +555,7 @@ func (h *HatcherySwarm) killAwolWorkerRoutine() {
 }
 
 func (h *HatcherySwarm) killAwolWorker() {
-	apiworkers, err := sdk.GetWorkers()
+	apiworkers, err := h.Client().WorkerList()
 	if err != nil {
 		log.Warning("killAwolWorker> Cannot get workers: %s", err)
 		os.Exit(1)

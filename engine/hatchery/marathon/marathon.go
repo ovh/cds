@@ -136,7 +136,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 	forcePull := strings.HasSuffix(model.Image, ":latest")
 
 	env := map[string]string{
-		"CDS_API":           sdk.Host,
+		"CDS_API":           h.Client().APIURL(),
 		"CDS_TOKEN":         h.token,
 		"CDS_NAME":          workerName,
 		"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
@@ -328,10 +328,9 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
-	sdk.Options(api, "", "", token)
-
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("marathon", name),
+		Name:    hatchery.GenerateName("marathon", name),
+		Version: sdk.VERSION,
 	}
 
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
@@ -364,7 +363,7 @@ func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
 }
 
 func (h *HatcheryMarathon) killDisabledWorkers() error {
-	workers, err := sdk.GetWorkers()
+	workers, err := h.Client().WorkerList()
 	if err != nil {
 		return err
 	}
@@ -396,7 +395,7 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 
 func (h *HatcheryMarathon) killAwolWorkers() error {
 	log.Debug("killAwolWorkers>")
-	workers, err := sdk.GetWorkers()
+	workers, err := h.Client().WorkerList()
 	if err != nil {
 		return err
 	}
