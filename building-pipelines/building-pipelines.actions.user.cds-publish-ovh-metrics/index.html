@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
-    <title>cds-go-build :: CDS Documentation</title>
+    <title>cds-publish-ovh-metrics :: CDS Documentation</title>
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/hybrid.css" rel="stylesheet">
@@ -20,7 +20,7 @@
     
 
   </head>
-  <body class="" data-url="/building-pipelines/building-pipelines.actions.user.cds-go-build/">
+  <body class="" data-url="/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/">
     
 <nav id="sidebar">
   <div id="header-wrapper">
@@ -231,17 +231,13 @@
     
 
     <li data-nav-id="/building-pipelines/building-pipelines.actions.user.cds-go-build/" class="dd-item
-    active
+    
     ">
         <a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/">
             cds-go-build
             
             
         </a>
-        
-            
-            
-            
         
     </li>
 
@@ -289,13 +285,17 @@
     
 
     <li data-nav-id="/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/" class="dd-item
-    
+    active
     ">
         <a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/">
             cds-publish-ovh-metrics
             
             
         </a>
+        
+            
+            
+            
         
     </li>
 
@@ -519,7 +519,7 @@
                 
                 
               <div id="top-github-link">
-                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/building-pipelines/building-pipelines.actions.user.cds-go-build.md" target="blank">
+                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics.md" target="blank">
                     <i class="fa fa-code-fork"></i>
                     Edit this page
                   </a>
@@ -539,7 +539,7 @@
                       <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span>
                       CDS Documentation</a>
                       
-                         / <a href='https://ovh.github.io/cds/building-pipelines/building-pipelines/'>Building Pipelines</a> / <a href='https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/'>Actions</a> / <a href='https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/'>User Actions</a> / <a href='https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/'>cds-go-build</a>
+                         / <a href='https://ovh.github.io/cds/building-pipelines/building-pipelines/'>Building Pipelines</a> / <a href='https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/'>Actions</a> / <a href='https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/'>User Actions</a> / <a href='https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/'>cds-publish-ovh-metrics</a>
                       
                       
               </div>
@@ -563,37 +563,32 @@
               
             <div id="body-inner">
               
-              <h1>cds-go-build</h1>
+              <h1>cds-publish-ovh-metrics</h1>
               
 
 
 
-<p>Go Build: compile a go program</p>
+<p>Publish a metric on OVH Metrics. See <a href="https://www.ovh.com/fr/data-platforms/metrics/">https://www.ovh.com/fr/data-platforms/metrics/</a> and doc on <a href="https://docs.ovh.com/gb/en/cloud/metrics/">https://docs.ovh.com/gb/en/cloud/metrics/</a></p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>architecture</strong>: GOOS</li>
-<li><strong>artifactUpload</strong>: Upload Binary as CDS Artifact</li>
-<li><strong>binary</strong>: Binary name: Put foo for go build -o foo</li>
-<li><strong>cgoDisabled</strong>: if true (checked) -&gt; export CGO_ENABLED=0 before go build</li>
-<li><strong>detectRaceCondition</strong>: Enable data race detection. It&rsquo;s flag -race</li>
-<li><strong>flags</strong>: flags for go build. Put -ldflags &ldquo;-X main.xyz=abc&rdquo; for go build -ldflags &ldquo;-X main.xyz=abc&rdquo;</li>
-<li><strong>gopath</strong>: set a $GOPATH. If empty, this action try to get env $GOPATH. If $GOPATH is empty, action will set it to $HOME/go</li>
-<li><strong>os</strong>: GOOS</li>
-<li><strong>package</strong>: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar</li>
-<li><strong>preRun</strong>: Pre-command. Example: export CGO_ENABLED=0</li>
-<li><strong>runGoGet</strong>: Run go get -u before go build</li>
+<li><strong>file</strong>: Metrics file to push (optional) See: <a href="http://www.warp10.io/apis/ingress/">http://www.warp10.io/apis/ingress/</a></li>
+<li><strong>labels</strong>: Labels of your metric (one K/V per line separated by a space)</li>
+<li><strong>name</strong>: Name of you metric (optional)</li>
+<li><strong>region</strong>: Metrics region</li>
+<li><strong>token</strong>: Metrics write token</li>
+<li><strong>value</strong>: Value of your metric (T=true) See: <a href="http://www.warp10.io/apis/ingress/">http://www.warp10.io/apis/ingress/</a></li>
 </ul>
 
 <h2 id="requirements">Requirements</h2>
 
 <ul>
 <li><strong>bash</strong>: type: binary Value: bash</li>
-<li><strong>go</strong>: type: binary Value: go</li>
+<li><strong>curl</strong>: type: binary Value: curl</li>
 </ul>
 
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/actions/cds-go-build.hcl">Github</a></p>
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/actions/cds-publish-ovh-metrics.hcl">Github</a></p>
 
 
 <footer class=" footline" >
@@ -625,16 +620,7 @@
             
                 
                     
-                    
-                
-            
-                
-                    
                         
-                        
-                            
-                                
-                            
                         
                     
                 
@@ -643,8 +629,6 @@
                     
                         
                         
-                            
-                        
                     
                 
             
@@ -652,17 +636,18 @@
                     
                         
                         
-                            
-                        
+                    
+                
+            
+                
+                    
                     
                 
             
 
             
-                <a class="nav nav-prev" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/" title="cds-docker-package"> <i class="fa fa-chevron-left"></i></a>
+                <a class="nav nav-prev" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/" title="cds-perl-test"> <i class="fa fa-chevron-left"></i></a>
             
-            
-                <a class="nav nav-next" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/" title="cds-nexus-upload" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
             
         
     </div>

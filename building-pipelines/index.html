@@ -406,7 +406,7 @@ Parameters  dockerOpts: Docker options, Enter &ndash;no-cache &ndash;pull if you
     </header>
     <section class="post-excerpt">
         <p>Go Build: compile a go program
-Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo detectRaceCondition: Enable data race detection. It&rsquo;s flag -race flags: flags for go build. Put -ldflags &ldquo;-X main.xyz=abc&rdquo; for go build -ldflags &ldquo;-X main.xyz=abc&rdquo; gopath: set a $GOPATH. If empty, this action try to get env $GOPATH. If $GOPATH is empty, action will set it to $HOME/go os: GOOS package: go package to compile. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/">&raquo;</a></p>
+Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: if true (checked) -&gt; export CGO_ENABLED=0 before go build detectRaceCondition: Enable data race detection. It&rsquo;s flag -race flags: flags for go build. Put -ldflags &ldquo;-X main.xyz=abc&rdquo; for go build -ldflags &ldquo;-X main.xyz=abc&rdquo; gopath: set a $GOPATH. If empty, this action try to get env $GOPATH. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -450,7 +450,7 @@ Parameters  artifactId: Artifact id of the artifact extension: Extension of the 
     </header>
     <section class="post-excerpt">
         <p>Test with prove on perl source code
-Parameters  testDirectory: Directory where is Perl Source Code  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/">&raquo;</a></p>
+Parameters  proveOptions: Options passed to prove testDirectory: Directory in which prove will be launched  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -468,13 +468,11 @@ Parameters  testDirectory: Directory where is Perl Source Code  Requirements  ba
 
    <article class="post building-pipelines">
     <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/">cds-template-cds-plugin</a></h2>
+        <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/">cds-publish-ovh-metrics</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>This template creates a pipeline for building CDS Plugin with:
- A &ldquo;Commit Stage&rdquo; with one job &ldquo;Compile&rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the plugin. Enter &ldquo;contrib/plugins/your-plugin&rdquo; for github.com/ovh/cds/contrib/plugins/your-plugin
- repo: Your source code repository
-  More More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/">&raquo;</a></p>
+        <p>Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/
+Parameters  file: Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/ labels: Labels of your metric (one K/V per line separated by a space) name: Name of you metric (optional) region: Metrics region token: Metrics write token value: Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/  Requirements  bash: type: binary Value: bash curl: type: binary Value: curl  More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          

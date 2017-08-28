@@ -89,7 +89,7 @@ There is are two ways to set up CDS:
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/</guid>
       <description>CDS User Actions are developed in CDS. There are available on all CDS Installation.
 Built-in actions :
-cds-docker-package cds-go-build cds-nexus-upload cds-perl-test </description>
+cds-docker-package cds-go-build cds-nexus-upload cds-perl-test cds-publish-ovh-metrics </description>
     </item>
     
     <item>
@@ -583,7 +583,7 @@ Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pul
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/</guid>
       <description>Go Build: compile a go program
-Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; gopath: set a $GOPATH. If empty, this action try to get env $GOPATH. If $GOPATH is empty, action will set it to $HOME/go os: GOOS package: go package to compile.</description>
+Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: if true (checked) -&amp;gt; export CGO_ENABLED=0 before go build detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; gopath: set a $GOPATH. If empty, this action try to get env $GOPATH.</description>
     </item>
     
     <item>
@@ -603,7 +603,17 @@ Parameters  artifactId: Artifact id of the artifact extension: Extension of the 
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/</guid>
       <description>Test with prove on perl source code
-Parameters  testDirectory: Directory where is Perl Source Code  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on Github</description>
+Parameters  proveOptions: Options passed to prove testDirectory: Directory in which prove will be launched  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>cds-publish-ovh-metrics</title>
+      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/</guid>
+      <description>Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/
+Parameters  file: Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/ labels: Labels of your metric (one K/V per line separated by a space) name: Name of you metric (optional) region: Metrics region token: Metrics write token value: Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/  Requirements  bash: type: binary Value: bash curl: type: binary Value: curl  More documentation on Github</description>
     </item>
     
     <item>

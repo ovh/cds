@@ -261,6 +261,30 @@
 
    <article class="post building-pipelines">
     <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/">cds-template-cds-plugin</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>This template creates a pipeline for building CDS Plugin with:
+ A &ldquo;Commit Stage&rdquo; with one job &ldquo;Compile&rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the plugin. Enter &ldquo;contrib/plugins/your-plugin&rdquo; for github.com/ovh/cds/contrib/plugins/your-plugin
+ repo: Your source code repository
+  More More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
         <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-template/">cds-template-cds-template</a></h2>
     </header>
     <section class="post-excerpt">
@@ -451,29 +475,6 @@ Parameters  configuration: Marathon application configuration file (json format)
     <section class="post-excerpt">
         <p>This plugin helps you to run cmd on remote server over ssh.
 Parameters  command: Command commandTimeout: Command Timeout (seconds) hostnames: Hostnames (comma separated values) privateKey: SSH RSA private key timeout: Timeout (seconds) username: Username  More More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/">plugin-tmpl</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>This action helps you generates a file using a template file and text/template golang package.
-Check documentation on text/template for more information https://golang.org/pkg/text/template.
-Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          

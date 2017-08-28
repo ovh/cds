@@ -258,6 +258,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/</loc>
   </url>
   

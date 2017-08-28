@@ -261,6 +261,29 @@
 
    <article class="post building-pipelines">
     <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/">plugin-tmpl</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>This action helps you generates a file using a template file and text/template golang package.
+Check documentation on text/template for more information https://golang.org/pkg/text/template.
+Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post building-pipelines">
+    <header class="post-header">
         <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/">plugin-venom</a></h2>
     </header>
     <section class="post-excerpt">
@@ -313,7 +336,7 @@ Artifact Download Artifact Upload GitClone JUnit Script  <a class="read-more" hr
     <section class="post-excerpt">
         <p>CDS User Actions are developed in CDS. There are available on all CDS Installation.
 Built-in actions :
-cds-docker-package cds-go-build cds-nexus-upload cds-perl-test  <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/">&raquo;</a></p>
+cds-docker-package cds-go-build cds-nexus-upload cds-perl-test cds-publish-ovh-metrics  <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -451,30 +474,6 @@ Types of actions :
         <p>CDS models allow users to:
  quickly create a workflow, with applications, pipelines and triggers reuse best practices for some use cases  Templates from CDS Contributions :
 cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-app cds-template-only-git-clone-job cds-template-plain  <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.templates/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post building-pipelines">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.variables/">Variables</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>In CDS, it is possible to define variables at different levels:
- Project Environment Application  Variable types Existing variable types:
- String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
- Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.variables/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
