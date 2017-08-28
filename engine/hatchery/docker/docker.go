@@ -68,10 +68,9 @@ func (h *HatcheryDocker) CanSpawn(model *sdk.Model, jobID int64, requirements []
 func (h *HatcheryDocker) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	h.workers = make(map[string]*exec.Cmd)
 
-	sdk.Options(api, "", "", token)
-
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("docker", name),
+		Name:    hatchery.GenerateName("docker", name),
+		Version: sdk.VERSION,
 	}
 
 	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
@@ -116,7 +115,7 @@ func (h *HatcheryDocker) killAwolWorkerRoutine() {
 }
 
 func (h *HatcheryDocker) killAwolWorker() {
-	apiworkers, err := sdk.GetWorkers()
+	apiworkers, err := h.Client().WorkerList()
 	if err != nil {
 		log.Warning("Cannot get workers: %s", err)
 		return
@@ -204,7 +203,7 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 	args = append(args, "run", "--rm", "-a", "STDOUT", "-a", "STDERR")
 	args = append(args, fmt.Sprintf("--name=%s", name))
 	args = append(args, "-e", "CDS_SINGLE_USE=1")
-	args = append(args, "-e", fmt.Sprintf("CDS_API=%s", sdk.Host))
+	args = append(args, "-e", fmt.Sprintf("CDS_API=%s", h.Client().APIURL()))
 	args = append(args, "-e", fmt.Sprintf("CDS_NAME=%s", name))
 	args = append(args, "-e", fmt.Sprintf("CDS_TOKEN=%s", viper.GetString("token")))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
@@ -236,7 +235,7 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 		args = append(args, fmt.Sprintf("--add-host=%s", h.addhost))
 	}
 	args = append(args, wm.Image)
-	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", sdk.Host))
+	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", h.Client().APIURL()))
 
 	if registerOnly {
 		args = append(args, "register")

@@ -1,4 +1,4 @@
-package ui
+package cli
 
 /*
 Code from https://raw.githubusercontent.com/mikepea/go-jira-ui/a76c2a5cbfc0f3ccf063390e10957d3820af5d50/scrollablelist.go

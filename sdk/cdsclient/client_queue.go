@@ -76,8 +76,8 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			}
 
 			if pbjobs != nil {
-				queue, err := sdk.GetBuildQueue()
-				if err != nil {
+				queue := []sdk.PipelineBuildJob{}
+				if _, err := c.GetJSON("/queue?status=all", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load pipeline build jobs")
 				}
 				for _, j := range queue {
@@ -88,13 +88,27 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	}
 }
 
+func (c *client) Queue() ([]sdk.WorkflowNodeJobRun, []sdk.PipelineBuildJob, error) {
+	wJobs := []sdk.WorkflowNodeJobRun{}
+	if _, err := c.GetJSON("/queue/workflows", &wJobs); err != nil {
+		return nil, nil, err
+	}
+
+	pbJobs := []sdk.PipelineBuildJob{}
+	if _, err := c.GetJSON("/queue?status=all", &pbJobs); err != nil {
+		return nil, nil, err
+	}
+
+	return wJobs, pbJobs, nil
+}
+
 func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worker.WorkflowNodeJobRunInfo, error) {
 	in := worker.TakeForm{Time: time.Now()}
 	if isBooked {
 		in.BookedJobID = job.ID
 	}
 
-	var path = fmt.Sprintf("/queue/workflows/%d/take", job.ID)
+	path := fmt.Sprintf("/queue/workflows/%d/take", job.ID)
 	var info worker.WorkflowNodeJobRunInfo
 
 	if code, err := c.PostJSON(path, &in, &info); err != nil {
@@ -106,20 +120,51 @@ func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worke
 	return &info, nil
 }
 
+// QueueJobInfo returns information about a job
 func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
-	var path = fmt.Sprintf("/queue/workflows/%d/infos", id)
+	path := fmt.Sprintf("/queue/workflows/%d/infos", id)
 	var job sdk.WorkflowNodeJobRun
 
-	if code, err := c.PostJSON(path, nil, &job); err != nil {
+	if code, err := c.GetJSON(path, &job); err != nil {
 		return nil, err
 	} else if code != http.StatusOK {
-		return nil, nil
+		return nil, fmt.Errorf("HTTP Error: %d", code)
 	}
 	return &job, nil
 }
 
+// QueueJobSendSpawnInfo sends a spawn info on a job
+func (c *client) QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error {
+	path := fmt.Sprintf("/queue/workflows/%d/spawn/infos", id)
+	if !isWorkflowJob {
+		// DEPRECATED code -> it's for pipelineBuildJob
+		path = fmt.Sprintf("/queue/%d/spawn/infos", id)
+	}
+	if code, err := c.PostJSON(path, &in, nil); err != nil {
+		return err
+	} else if code != http.StatusOK {
+		return fmt.Errorf("HTTP Error: %d", code)
+	}
+	return nil
+}
+
+// QueueJobBook books a job for a Hatchery
+func (c *client) QueueJobBook(isWorkflowJob bool, id int64) error {
+	path := fmt.Sprintf("/queue/workflows/%d/book", id)
+	if !isWorkflowJob {
+		// DEPRECATED code -> it's for pipelineBuildJob
+		path = fmt.Sprintf("/queue/%d/book", id)
+	}
+	if code, err := c.PostJSON(path, nil, nil); err != nil {
+		return err
+	} else if code != http.StatusOK {
+		return fmt.Errorf("HTTP Error: %d", code)
+	}
+	return nil
+}
+
 func (c *client) QueueSendResult(id int64, res sdk.Result) error {
-	var path = fmt.Sprintf("/queue/workflows/%d/result", id)
+	path := fmt.Sprintf("/queue/workflows/%d/result", id)
 
 	if code, err := c.PostJSON(path, res, nil); err != nil {
 		return err

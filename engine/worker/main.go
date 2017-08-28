@@ -50,11 +50,6 @@ type currentWorker struct {
 	client cdsclient.Interface
 }
 
-var (
-	//VERSION is set with -ldflags "-X main.VERSION={{.cds.proj.version}}+{{.cds.version}}"
-	VERSION = "snapshot"
-)
-
 func main() {
 	sdk.SetAgent(sdk.WorkerAgent)
 
