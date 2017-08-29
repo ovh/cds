@@ -376,6 +376,7 @@ type WorkflowHookModel struct {
 	Image         string                 `json:"image" db:"image"`
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
+	Disabled      bool                   `json:"disabled" db:"disabled"`
 }
 
 //WorkflowList return the list of the workflows for a project
