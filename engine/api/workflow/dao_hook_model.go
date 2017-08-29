@@ -131,7 +131,21 @@ func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 	return models, nil
 }
 
-// LoadHookModelByName returns a hook model by it's name, if not founc, it returns an error
+// LoadHookModelByID returns a hook model by it's id, if not found, it returns an error
+func LoadHookModelByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowHookModel, error) {
+	m := NodeHookModel{}
+	query := "select id, name, type, image, command, default_config, author, description, identifier, icon from workflow_hook_model where id = $1"
+	if err := db.SelectOne(&m, query, id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.WrapError(sdk.ErrNotFound, "LoadHookModelByID> Unable to load WorkflowHookModel")
+		}
+		return nil, sdk.WrapError(err, "LoadHookModelByID> Unable to load WorkflowHookModel")
+	}
+	model := sdk.WorkflowHookModel(m)
+	return &model, nil
+}
+
+// LoadHookModelByName returns a hook model by it's name, if not found, it returns an error
 func LoadHookModelByName(db gorp.SqlExecutor, name string) (*sdk.WorkflowHookModel, error) {
 	m := NodeHookModel{}
 	query := "select id, name, type, image, command, default_config, author, description, identifier, icon from workflow_hook_model where name = $1"

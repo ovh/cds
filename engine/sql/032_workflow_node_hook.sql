@@ -14,4 +14,4 @@ ALTER TABLE workflow_hook_model
     DROP COLUMN description, 
     DROP COLUMN identifier, 
     DROP COLUMN icon, 
-    DROP COLUMN disable;
+    DROP COLUMN disabled;
