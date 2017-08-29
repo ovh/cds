@@ -10,7 +10,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -19,7 +18,7 @@ import (
 )
 
 func TestManualRun1(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -182,7 +181,7 @@ func TestManualRun1(t *testing.T) {
 }
 
 func TestManualRun2(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -279,7 +278,7 @@ func TestManualRun2(t *testing.T) {
 }
 
 func TestManualRun3(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
