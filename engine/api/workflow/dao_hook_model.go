@@ -73,6 +73,7 @@ func (r *NodeHookModel) PostGet(db gorp.SqlExecutor) error {
 	if err := json.Unmarshal([]byte(confStr), &conf); err != nil {
 		return err
 	}
+	r.DefaultConfig = conf
 	return nil
 }
 

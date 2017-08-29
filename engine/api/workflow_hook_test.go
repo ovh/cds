@@ -92,7 +92,7 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 	assert.Equal(t, workflow.WebHookModel.Command, model.Command)
 	assert.Equal(t, workflow.WebHookModel.Description, model.Description)
 	assert.Equal(t, workflow.WebHookModel.Disabled, model.Disabled)
-	assert.EqualValues(t, workflow.WebHookModel.DefaultConfig, model.DefaultConfig)
+	assert.Len(t, model.DefaultConfig, len(workflow.WebHookModel.DefaultConfig))
 }
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
