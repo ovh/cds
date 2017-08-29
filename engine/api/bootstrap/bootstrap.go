@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // DefaultValues contains default user values for init DB
@@ -55,7 +54,6 @@ func InitiliazeDB(defaultValues DefaultValues, DBFunc func() *gorp.DbMap) error 
 	}
 
 	if err := workflow.CreateBuiltinWorkflowHookModels(dbGorp); err != nil {
-		log.Error("InitiliazeDB> CreateBuiltinWorkflowHookModels failed: %v", err)
 		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin workflow hook models")
 	}
 

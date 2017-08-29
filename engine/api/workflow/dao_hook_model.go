@@ -14,7 +14,7 @@ var (
 	WebHookModel = &sdk.WorkflowHookModel{
 		Author:     "CDS",
 		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: sdk.WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/webhook",
 		Name:       "WebHook",
 		Icon:       "",
 	}
@@ -22,7 +22,7 @@ var (
 	GitPollerModel = &sdk.WorkflowHookModel{
 		Author:     "CDS",
 		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: sdk.WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/poller",
 		Name:       "Git Repository Poller",
 		Icon:       "",
 	}
@@ -30,7 +30,7 @@ var (
 	SchedulerModel = &sdk.WorkflowHookModel{
 		Author:     "CDS",
 		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: sdk.WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/scheduler",
 		Name:       "Scheduler",
 		Icon:       "",
 	}
@@ -80,23 +80,23 @@ func (r *NodeHookModel) PostGet(db gorp.SqlExecutor) error {
 func CreateBuiltinWorkflowHookModels(db *gorp.DbMap) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels> Unable to start transaction")
 	}
 	defer tx.Rollback()
 
 	if _, err := tx.Exec("LOCK TABLE workflow_hook_model IN ACCESS EXCLUSIVE MODE"); err != nil {
-		return err
+		return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels> Unable to lock table")
 	}
 
 	for _, h := range builtinModels {
 		ok, err := checkBuiltinWorkflowHookModelExist(tx, h)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels")
 		}
 
 		if !ok {
 			if err := InsertHookModel(tx, h); err != nil {
-				return err
+				return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels")
 			}
 		}
 	}
@@ -109,7 +109,7 @@ func checkBuiltinWorkflowHookModelExist(db gorp.SqlExecutor, h *sdk.WorkflowHook
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
-		return false, err
+		return false, sdk.WrapError(err, "checkBuiltinWorkflowHookModelExist")
 	}
 	return count > 0, nil
 }
@@ -124,7 +124,7 @@ func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 	for i := range dbModels {
 		m := dbModels[i]
 		if err := m.PostGet(db); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "LoadHookModels> Unable to load WorkflowHookModel")
 		}
 		models = append(models, sdk.WorkflowHookModel(m))
 	}
@@ -137,9 +137,9 @@ func LoadHookModelByName(db gorp.SqlExecutor, name string) (*sdk.WorkflowHookMod
 	query := "select id, name, type, image, command, default_config, author, description, identifier, icon from workflow_hook_model where name = $1"
 	if err := db.SelectOne(&m, query, name); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNotFound
+			return nil, sdk.WrapError(sdk.ErrNotFound, "LoadHookModels> Unable to load WorkflowHookModel")
 		}
-		return nil, err
+		return nil, sdk.WrapError(err, "LoadHookModels> Unable to load WorkflowHookModel")
 	}
 	model := sdk.WorkflowHookModel(m)
 	return &model, nil
